@@ -36,6 +36,10 @@ interface ModelDefaults {
       enabled: boolean;
       default: string;
     };
+    video: {
+      enabled: boolean;
+      default: string;
+    };
     deepResearch: {
       enabled: boolean;
       defaultModel: string;
@@ -107,6 +111,10 @@ const multiProviderDefaults = {
       enabled: false,
       default: "google/gemini-3-pro-image",
     },
+    video: {
+      enabled: false,
+      default: "xai/grok-imagine-video",
+    },
     deepResearch: {
       enabled: false,
       defaultModel: "google/gemini-2.5-flash-lite",
@@ -165,6 +173,10 @@ const openaiOnlyDefaults = {
     image: {
       enabled: false,
       default: "gpt-image-1",
+    },
+    video: {
+      enabled: false,
+      default: "",
     },
     deepResearch: {
       enabled: false,

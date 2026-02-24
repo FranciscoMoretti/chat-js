@@ -5,6 +5,7 @@ import type {
   GatewayType,
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
+import { GATEWAY_MODEL_DEFAULTS } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
 
 const DEFAULT_GATEWAY = "vercel" as const satisfies GatewayType;
@@ -407,18 +408,20 @@ type DeepResearchToolInputFor<G extends GatewayType> = Omit<
   defaultModel: GatewayModelIdMap[G];
   finalReportModel: GatewayModelIdMap[G];
 };
-type ImageToolInputFor<G extends GatewayType> = Omit<
-  AiToolsShape["image"],
-  "default"
-> & {
-  default: GatewayImageModelIdMap[G];
-};
-type VideoToolInputFor<G extends GatewayType> = Omit<
-  AiToolsShape["video"],
-  "default"
-> & {
-  default: GatewayVideoModelIdMap[G];
-};
+type ImageToolInputFor<G extends GatewayType> = [
+  GatewayImageModelIdMap[G],
+] extends [never]
+  ? { enabled: false }
+  : Omit<AiToolsShape["image"], "default"> & {
+      default: GatewayImageModelIdMap[G];
+    };
+type VideoToolInputFor<G extends GatewayType> = [
+  GatewayVideoModelIdMap[G],
+] extends [never]
+  ? { enabled: false }
+  : Omit<AiToolsShape["video"], "default"> & {
+      default: GatewayVideoModelIdMap[G];
+    };
 type FollowupSuggestionsToolInputFor<G extends GatewayType> = Omit<
   AiToolsShape["followupSuggestions"],
   "default"
@@ -470,7 +473,51 @@ export type ConfigInput = {
   [G in GatewayType]: ConfigInputForGateway<G>;
 }[GatewayType];
 
+function mergeToolsConfig(
+  defaults: (typeof GATEWAY_MODEL_DEFAULTS)[GatewayType]["tools"],
+  user: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!user) return defaults as Record<string, unknown>;
+  const result: Record<string, unknown> = {
+    ...(defaults as Record<string, unknown>),
+  };
+  for (const [key, val] of Object.entries(user)) {
+    const defVal = result[key];
+    if (
+      val !== null &&
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      defVal !== null &&
+      typeof defVal === "object" &&
+      !Array.isArray(defVal)
+    ) {
+      result[key] = { ...defVal, ...(val as object) };
+    } else {
+      result[key] = val;
+    }
+  }
+  return result;
+}
+
 // Apply defaults to partial config
 export function applyDefaults(input: ConfigInput): Config {
-  return configSchema.parse(input);
+  const gateway = (input.ai?.gateway ?? DEFAULT_GATEWAY) as GatewayType;
+  const gatewayDefaults = GATEWAY_MODEL_DEFAULTS[gateway];
+  const aiInput = input.ai as Record<string, unknown> | undefined;
+
+  const mergedAi = {
+    gateway,
+    ...gatewayDefaults,
+    ...aiInput,
+    workflows: {
+      ...gatewayDefaults.workflows,
+      ...(aiInput?.workflows as Record<string, unknown> | undefined),
+    },
+    tools: mergeToolsConfig(
+      gatewayDefaults.tools,
+      aiInput?.tools as Record<string, unknown> | undefined,
+    ),
+  };
+
+  return configSchema.parse({ ...input, ai: mergedAi });
 }

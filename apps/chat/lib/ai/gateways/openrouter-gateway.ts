@@ -96,7 +96,7 @@ function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
 }
 
 export class OpenRouterGateway
-  implements GatewayProvider<"openrouter", string, string, never>
+  implements GatewayProvider<"openrouter", string, never, never>
 {
   readonly type = "openrouter" as const;
 
@@ -113,7 +113,7 @@ export class OpenRouterGateway
     return provider.chat(modelId);
   }
 
-  createImageModel(_modelId: string): ImageModel | null {
+  createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
     return null;

@@ -68,7 +68,7 @@ const config = {
     vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
   ai: {
-    gateway: "vercel",
+    gateway: "openrouter",
     providerOrder: ["openai", "google", "anthropic", "xai"],
     disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
     curatedDefaults: [
@@ -89,15 +89,15 @@ const config = {
     ],
     anonymousModels: [
       "google/gemini-2.5-flash-lite",
-      "openai/gpt-5-mini",
-      "openai/gpt-5-nano",
-      "anthropic/claude-haiku-4.5",
+      "gpt-5-mini",
+      "gpt-5-nano",
+      "claude-haiku-4.5",
     ],
     workflows: {
-      chat: "openai/gpt-5-mini",
-      title: "openai/gpt-5-nano",
-      pdf: "openai/gpt-5-mini",
-      chatImageCompatible: "openai/gpt-4o-mini",
+      chat: "gpt-5-mini",
+      title: "gpt-5-nano",
+      pdf: "gpt-5-mini",
+      chatImageCompatible: "gpt-4o-mini",
     },
     tools: {
       webSearch: {
@@ -120,15 +120,15 @@ const config = {
         polish: "openai/gpt-5-mini",
       },
       sheet: {
-        format: "openai/gpt-5-mini",
-        analyze: "openai/gpt-5-mini",
+        format: "gpt-5-mini",
+        analyze: "gpt-5-mini",
       },
       code: {
         edits: "openai/gpt-5-mini",
       },
       image: {
         enabled: true, // Requires BLOB_READ_WRITE_TOKEN
-        default: "google/gemini-3-pro-image",
+        default: "gpt-image",
       },
       video: {
         enabled: true, // Requires BLOB_READ_WRITE_TOKEN
