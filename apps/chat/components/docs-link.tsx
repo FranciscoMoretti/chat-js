@@ -7,6 +7,7 @@ export function DocsLink() {
 	return (
 		<Button asChild size="icon" type="button" variant="ghost">
 			<a
+				aria-label="Open documentation"
 				className="flex items-center justify-center"
 				href={DOCS_URL}
 				rel="noopener noreferrer"
