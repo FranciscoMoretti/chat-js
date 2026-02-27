@@ -95,7 +95,7 @@ const config = {
     ],
     workflows: {
       chat: "openai/gpt-5-mini",
-      title: "openai/gpt-5-nano",
+      title: "google/gemini-2.5-flash-lite",
       pdf: "openai/gpt-5-mini",
       chatImageCompatible: "openai/gpt-4o-mini",
     },
@@ -114,7 +114,7 @@ const config = {
       },
       followupSuggestions: {
         enabled: true,
-        default: "openai/gpt-5-nano",
+        default: "google/gemini-2.5-flash-lite",
       },
       text: {
         polish: "openai/gpt-5-mini",
