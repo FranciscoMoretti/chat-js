@@ -1,50 +1,50 @@
 {
-  "name": "@chat-js/cli",
-  "version": "0.2.0",
-  "description": "CLI for creating and extending ChatJS apps",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/franciscomoretti/chat.js.git",
-    "directory": "packages/cli"
-  },
-  "homepage": "https://github.com/franciscomoretti/chat.js/tree/main/packages/cli",
-  "bugs": {
-    "url": "https://github.com/franciscomoretti/chat.js/issues"
-  },
-  "keywords": [
-    "chatjs",
-    "ai",
-    "cli",
-    "scaffold",
-    "nextjs"
-  ],
-  "dependencies": {
-    "@clack/prompts": "^1.0.1",
-    "commander": "^14.0.0",
-    "kleur": "^4.1.5",
-    "ora": "^8.2.0",
-    "zod": "^4.3.6"
-  },
-  "bin": {
-    "chat-js": "./dist/index.js"
-  },
-  "files": [
-    "dist",
-    "templates"
-  ],
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "start": "bun src/index.ts",
-    "build": "bun build ./src/index.ts --target=node --format=esm --outfile ./dist/index.js",
-    "template:sync": "bun ../../scripts/sync-template.ts",
-    "prepublishOnly": "bun run template:sync && bun run build && node ./dist/index.js --help >/dev/null"
-  },
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  }
+	"name": "@chat-js/cli",
+	"version": "0.2.0",
+	"description": "CLI for creating and extending ChatJS apps",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/franciscomoretti/chat-js.git",
+		"directory": "packages/cli"
+	},
+	"homepage": "https://github.com/franciscomoretti/chat-js/tree/main/packages/cli",
+	"bugs": {
+		"url": "https://github.com/franciscomoretti/chat-js/issues"
+	},
+	"keywords": [
+		"chatjs",
+		"ai",
+		"cli",
+		"scaffold",
+		"nextjs"
+	],
+	"dependencies": {
+		"@clack/prompts": "^1.0.1",
+		"commander": "^14.0.0",
+		"kleur": "^4.1.5",
+		"ora": "^8.2.0",
+		"zod": "^4.3.6"
+	},
+	"bin": {
+		"chat-js": "./dist/index.js"
+	},
+	"files": [
+		"dist",
+		"templates"
+	],
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"start": "bun src/index.ts",
+		"build": "bun build ./src/index.ts --target=node --format=esm --outfile ./dist/index.js",
+		"template:sync": "bun ../../scripts/sync-template.ts",
+		"prepublishOnly": "bun run template:sync && bun run build && node ./dist/index.js --help >/dev/null"
+	},
+	"type": "module",
+	"devDependencies": {
+		"@types/bun": "latest"
+	}
 }
