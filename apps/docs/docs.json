@@ -71,12 +71,20 @@
             ]
           },
           {
+            "group": "CLI",
+            "pages": [
+              "reference/cli/index",
+              "reference/cli/create",
+              "reference/cli/add",
+              "reference/cli/config"
+            ]
+          },
+          {
             "group": "Reference",
             "pages": [
               "project-structure",
               "reference/config",
               "reference/env-vars",
-              "reference/cli",
               "reference/database",
               "reference/routing",
               "reference/testing",

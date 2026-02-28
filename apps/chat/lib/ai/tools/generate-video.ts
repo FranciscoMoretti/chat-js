@@ -48,6 +48,9 @@ async function resolveVideoModel(selectedModel?: string): Promise<string> {
       // Not in app models registry, fall through
     }
   }
+  if (!config.ai.tools.video.enabled) {
+    throw new Error("Video generation is not enabled");
+  }
   return config.ai.tools.video.default;
 }
 

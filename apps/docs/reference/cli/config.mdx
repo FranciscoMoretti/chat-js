@@ -1,0 +1,55 @@
+---
+title: config
+description: Print the resolved configuration for the current ChatJS project
+---
+
+Print the fully resolved configuration for the current ChatJS project. Defaults from `applyDefaults` are merged into your `chat.config.ts`, and the result is printed as JSON.
+
+```bash
+npx @chat-js/cli@latest config [options]
+```
+
+## Options
+
+| Flag              | Default | Description                                            |
+| ----------------- | ------- | ------------------------------------------------------ |
+| `-c, --cwd <cwd>` | `cwd`   | The working directory (defaults to current directory). |
+
+## How it works
+
+The command spawns a short-lived process using your package manager inside your project directory that:
+
+1. Imports your `chat.config.ts`
+2. Passes it through `applyDefaults` from `@/lib/config-schema`
+3. Prints the result as formatted JSON to stdout
+
+This means the output always reflects the effective configuration your app will use at runtime, including any defaults that are not explicitly set in `chat.config.ts`.
+
+## Example
+
+```bash
+npx @chat-js/cli@latest config
+```
+
+```json
+{
+  "appName": "My Chat App",
+  "gateway": {
+    "provider": "vercel",
+    "model": "gpt-4o"
+  },
+  "features": {
+    "webSearch": false,
+    "imageGeneration": false
+  },
+  "auth": {
+    "providers": ["github"]
+  }
+}
+```
+
+Run from a different directory:
+
+```bash
+npx @chat-js/cli@latest config --cwd ./apps/chat
+```

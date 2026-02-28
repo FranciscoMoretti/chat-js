@@ -106,14 +106,26 @@ function createAiSchema<G extends GatewayType>(g: G) {
         code: z.object({
           edits: gatewayModelId<G>(),
         }),
-        image: z.object({
-          enabled: z.boolean(),
-          default: gatewayImageModelId<G>(),
-        }),
-        video: z.object({
-          enabled: z.boolean(),
-          default: gatewayVideoModelId<G>(),
-        }),
+        image: z.discriminatedUnion("enabled", [
+          z.object({
+            enabled: z.literal(true),
+            default: gatewayImageModelId<G>(),
+          }),
+          z.object({
+            enabled: z.literal(false),
+            default: gatewayImageModelId<G>().optional(),
+          }),
+        ]),
+        video: z.discriminatedUnion("enabled", [
+          z.object({
+            enabled: z.literal(true),
+            default: gatewayVideoModelId<G>(),
+          }),
+          z.object({
+            enabled: z.literal(false),
+            default: gatewayVideoModelId<G>().optional(),
+          }),
+        ]),
         deepResearch: deepResearchToolConfigSchema.extend({
           enabled: z.boolean(),
           defaultModel: gatewayModelId<G>(),
@@ -143,77 +155,7 @@ export const aiConfigSchema = z
   ])
   .default({
     gateway: DEFAULT_GATEWAY,
-    providerOrder: ["openai", "google", "anthropic"],
-    disabledModels: [],
-    curatedDefaults: [
-      // OpenAI
-      "openai/gpt-5-nano",
-      "openai/gpt-5-mini",
-      "openai/gpt-5.2",
-      "openai/gpt-5.2-chat",
-
-      // Google
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-3-flash",
-      "google/gemini-3-pro-preview",
-      // Anthropic
-      "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-opus-4.5",
-      // xAI
-      "xai/grok-4",
-    ],
-    anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
-    workflows: {
-      chat: "openai/gpt-5-mini",
-      title: "openai/gpt-5-nano",
-      pdf: "openai/gpt-5-mini",
-      chatImageCompatible: "openai/gpt-4o-mini",
-    },
-    tools: {
-      webSearch: {
-        enabled: false,
-      },
-      urlRetrieval: {
-        enabled: false,
-      },
-      codeExecution: {
-        enabled: false,
-      },
-      mcp: {
-        enabled: false,
-      },
-      followupSuggestions: {
-        enabled: false,
-        default: "google/gemini-2.5-flash-lite",
-      },
-      text: {
-        polish: "openai/gpt-5-mini",
-      },
-      sheet: {
-        format: "openai/gpt-5-mini",
-        analyze: "openai/gpt-5-mini",
-      },
-      code: {
-        edits: "openai/gpt-5-mini",
-      },
-      image: {
-        enabled: false,
-        default: "google/gemini-3-pro-image",
-      },
-      video: {
-        enabled: false,
-        default: "xai/grok-imagine-video",
-      },
-      deepResearch: {
-        enabled: false,
-        defaultModel: "google/gemini-2.5-flash-lite",
-        finalReportModel: "google/gemini-3-flash",
-        allowClarification: true,
-        maxResearcherIterations: 1,
-        maxConcurrentResearchUnits: 2,
-        maxSearchQueries: 2,
-      },
-    },
+    ...GATEWAY_MODEL_DEFAULTS[DEFAULT_GATEWAY],
   });
 
 export const pricingConfigSchema = z.object({
@@ -401,65 +343,57 @@ type ZodConfigInput = z.input<typeof configSchema>;
 // Use vercel variant as shape reference (all variants share the same structure)
 type AiShape = z.input<typeof gatewaySchemaMap.vercel>;
 type AiToolsShape = AiShape["tools"];
-type DeepResearchToolInputFor<G extends GatewayType> = Omit<
-  AiToolsShape["deepResearch"],
-  "defaultModel" | "finalReportModel"
-> & {
-  defaultModel: GatewayModelIdMap[G];
-  finalReportModel: GatewayModelIdMap[G];
-};
+
+// All helper types are Partial — fields not provided are filled by applyDefaults
+type DeepResearchToolInputFor<G extends GatewayType> = Partial<
+  Omit<AiToolsShape["deepResearch"], "defaultModel" | "finalReportModel"> & {
+    defaultModel: GatewayModelIdMap[G];
+    finalReportModel: GatewayModelIdMap[G];
+  }
+>;
 type ImageToolInputFor<G extends GatewayType> = [
   GatewayImageModelIdMap[G],
 ] extends [never]
-  ? { enabled: false }
-  : Omit<AiToolsShape["image"], "default"> & {
-      default: GatewayImageModelIdMap[G];
-    };
+  ? { enabled?: false }
+  :
+      | { enabled: true; default: GatewayImageModelIdMap[G] }
+      | { enabled?: false; default?: GatewayImageModelIdMap[G] };
 type VideoToolInputFor<G extends GatewayType> = [
   GatewayVideoModelIdMap[G],
 ] extends [never]
-  ? { enabled: false }
-  : Omit<AiToolsShape["video"], "default"> & {
-      default: GatewayVideoModelIdMap[G];
-    };
-type FollowupSuggestionsToolInputFor<G extends GatewayType> = Omit<
-  AiToolsShape["followupSuggestions"],
-  "default"
-> & {
+  ? { enabled?: false }
+  :
+      | { enabled: true; default: GatewayVideoModelIdMap[G] }
+      | { enabled?: false; default?: GatewayVideoModelIdMap[G] };
+type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
+  enabled: boolean;
   default: GatewayModelIdMap[G];
-};
+}>;
 interface AiToolsInputFor<G extends GatewayType> {
-  code: {
-    [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G];
-  };
-  codeExecution: AiToolsShape["codeExecution"];
-  deepResearch: DeepResearchToolInputFor<G>;
-  followupSuggestions: FollowupSuggestionsToolInputFor<G>;
-  image: ImageToolInputFor<G>;
-  mcp: AiToolsShape["mcp"];
-  sheet: {
-    [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G];
-  };
-  text: {
-    [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G];
-  };
-  urlRetrieval: AiToolsShape["urlRetrieval"];
-  video: VideoToolInputFor<G>;
-  webSearch: AiToolsShape["webSearch"];
+  code?: Partial<{ [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G] }>;
+  codeExecution?: Partial<AiToolsShape["codeExecution"]>;
+  deepResearch?: DeepResearchToolInputFor<G>;
+  followupSuggestions?: FollowupSuggestionsToolInputFor<G>;
+  image?: ImageToolInputFor<G>;
+  mcp?: Partial<AiToolsShape["mcp"]>;
+  sheet?: Partial<{ [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G] }>;
+  text?: Partial<{ [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G] }>;
+  urlRetrieval?: Partial<AiToolsShape["urlRetrieval"]>;
+  video?: VideoToolInputFor<G>;
+  webSearch?: Partial<AiToolsShape["webSearch"]>;
 }
 
+// Only gateway is required; everything else is an override on top of GATEWAY_MODEL_DEFAULTS
 type AiInputFor<G extends GatewayType> = {
-  [K in keyof AiShape]: K extends "gateway"
-    ? G
-    : K extends "workflows"
-      ? {
-          [W in keyof AiShape["workflows"]]: GatewayModelIdMap[G];
-        }
-      : K extends "tools"
-        ? AiToolsInputFor<G>
-        : K extends "disabledModels" | "curatedDefaults" | "anonymousModels"
-          ? GatewayModelIdMap[G][]
-          : AiShape[K];
+  gateway: G;
+  providerOrder?: AiShape["providerOrder"];
+  disabledModels?: GatewayModelIdMap[G][];
+  curatedDefaults?: GatewayModelIdMap[G][];
+  anonymousModels?: GatewayModelIdMap[G][];
+  workflows?: Partial<{
+    [W in keyof AiShape["workflows"]]: GatewayModelIdMap[G];
+  }>;
+  tools?: AiToolsInputFor<G>;
 };
 
 type ConfigInputForGateway<G extends GatewayType> = Omit<
@@ -473,14 +407,26 @@ export type ConfigInput = {
   [G in GatewayType]: ConfigInputForGateway<G>;
 }[GatewayType];
 
+/**
+ * Type-safe config helper. Infers the gateway type from `ai.gateway` so
+ * autocomplete and error messages are scoped to the chosen gateway's model IDs.
+ * Only `ai.gateway` is required — all other `ai` fields are optional overrides
+ * on top of the gateway defaults supplied by `applyDefaults`.
+ */
+export function defineConfig<G extends GatewayType>(
+  config: ConfigInputForGateway<G>
+): ConfigInput {
+  return config as ConfigInput;
+}
+
 function mergeToolsConfig(
-  defaults: (typeof GATEWAY_MODEL_DEFAULTS)[GatewayType]["tools"],
-  user: Record<string, unknown> | undefined,
+  defaults: Record<string, unknown>,
+  user: Record<string, unknown> | undefined
 ): Record<string, unknown> {
-  if (!user) return defaults as Record<string, unknown>;
-  const result: Record<string, unknown> = {
-    ...(defaults as Record<string, unknown>),
-  };
+  if (!user) {
+    return defaults;
+  }
+  const result: Record<string, unknown> = { ...defaults };
   for (const [key, val] of Object.entries(user)) {
     const defVal = result[key];
     if (
@@ -501,7 +447,7 @@ function mergeToolsConfig(
 
 // Apply defaults to partial config
 export function applyDefaults(input: ConfigInput): Config {
-  const gateway = (input.ai?.gateway ?? DEFAULT_GATEWAY) as GatewayType;
+  const gateway = input.ai?.gateway ?? DEFAULT_GATEWAY;
   const gatewayDefaults = GATEWAY_MODEL_DEFAULTS[gateway];
   const aiInput = input.ai as Record<string, unknown> | undefined;
 
@@ -515,7 +461,7 @@ export function applyDefaults(input: ConfigInput): Config {
     },
     tools: mergeToolsConfig(
       gatewayDefaults.tools,
-      aiInput?.tools as Record<string, unknown> | undefined,
+      aiInput?.tools as Record<string, unknown> | undefined
     ),
   };
 

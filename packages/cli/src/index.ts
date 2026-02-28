@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import packageJson from "../package.json";
 import { add } from "./commands/add";
+import { config } from "./commands/config";
 import { create } from "./commands/create";
 
 process.on("SIGINT", () => process.exit(0));
@@ -14,5 +15,6 @@ const program = new Command()
 
 program.addCommand(create, { isDefault: true });
 program.addCommand(add);
+program.addCommand(config);
 
 program.parse();
