@@ -18,9 +18,9 @@ OPENAI_API_KEY=sk-...
 
 ```typescript title="chat.config.ts"
 const config: ConfigInput = {
-  models: {
+  ai: {
     gateway: "openai",
-    defaults: {
+    workflows: {
       chat: "gpt-5-mini",
       title: "gpt-5-nano",
       // ...

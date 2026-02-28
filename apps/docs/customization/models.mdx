@@ -5,7 +5,7 @@ description: Add, remove, or configure AI models
 
 ## Overview
 
-Configure which AI models are available in your app and how they behave. All model configuration lives in `chat.config.ts` under `config.models`.
+Configure which AI models are available in your app and how they behave. All model configuration lives in `chat.config.ts` under `config.ai`.
 
 <Frame>
   <img src="/images/ai-models.gif" alt="Selecting AI models in the chat interface" />
@@ -14,28 +14,31 @@ Configure which AI models are available in your app and how they behave. All mod
 ## Configuration Options
 
 ```ts
-models: {
+ai: {
   gateway: "vercel";              // "vercel" | "openrouter" | "openai" | "openai-compatible"
   providerOrder: string[];        // Provider sort order in model selector
   disabledModels: AppModelId[];   // Models hidden from all users
   curatedDefaults: AppModelId[];  // Default models enabled for new users
   anonymousModels: AppModelId[];  // Models available to anonymous users
-  defaults: {                     // Default model for each task type
+  workflows: {                    // Default model for shared app workflows
     chat: AppModelId;
     title: AppModelId;
     pdf: AppModelId;
-    artifact: AppModelId;
-    artifactSuggestion: AppModelId;
-    followupSuggestions: AppModelId;
-    suggestions: AppModelId;
-    polishText: AppModelId;
-    formatSheet: AppModelId;
-    analyzeSheet: AppModelId;
-    codeEdits: AppModelId;
     chatImageCompatible: AppModelId;
-    image: AppModelId;
-    deepResearch: AppModelId;
-    deepResearchFinalReport: AppModelId;
+  };
+  tools: {                        // Per-tool model and enablement config
+    followupSuggestions: { enabled: boolean; default: AppModelId };
+    text: { polish: AppModelId };
+    sheet: { format: AppModelId; analyze: AppModelId };
+    code: { edits: AppModelId };
+    image: { enabled: boolean; default?: ImageModelId };
+    video: { enabled: boolean; default?: VideoModelId };
+    deepResearch: {
+      enabled: boolean;
+      defaultModel: AppModelId;
+      finalReportModel: AppModelId;
+    };
+    // ... plus webSearch, urlRetrieval, codeExecution, mcp (no model field)
   };
 }
 ```
@@ -45,7 +48,9 @@ models: {
 Control the display order of providers in the model selector:
 
 ```ts
-providerOrder: ["openai", "google", "anthropic", "xai"],
+ai: {
+  providerOrder: ["openai", "google", "anthropic", "xai"],
+}
 ```
 
 Providers not in this list appear after those listed.
@@ -55,7 +60,9 @@ Providers not in this list appear after those listed.
 Hide specific models from all users:
 
 ```ts
-disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
+ai: {
+  disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
+}
 ```
 
 ## Curated Defaults
@@ -63,12 +70,14 @@ disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
 Models enabled by default for new users. Users can enable additional models in settings.
 
 ```ts
-curatedDefaults: [
-  "openai/gpt-5-nano",
-  "openai/gpt-5-mini",
-  "google/gemini-2.5-flash-lite",
-  "anthropic/claude-sonnet-4.5",
-],
+ai: {
+  curatedDefaults: [
+    "openai/gpt-5-nano",
+    "openai/gpt-5-mini",
+    "google/gemini-2.5-flash-lite",
+    "anthropic/claude-sonnet-4.5",
+  ],
+}
 ```
 
 ## Anonymous Models
@@ -76,35 +85,71 @@ curatedDefaults: [
 Restrict which models anonymous (non-authenticated) users can access:
 
 ```ts
-anonymousModels: [
-  "google/gemini-2.5-flash-lite",
-  "openai/gpt-5-mini",
-  "openai/gpt-5-nano",
-  "anthropic/claude-haiku-4.5",
-],
+ai: {
+  anonymousModels: [
+    "google/gemini-2.5-flash-lite",
+    "openai/gpt-5-mini",
+    "openai/gpt-5-nano",
+    "anthropic/claude-haiku-4.5",
+  ],
+}
 ```
 
-## Task-Specific Defaults
+## Workflow Defaults
 
-Different tasks use different models by default. This lets you optimize for cost and quality per use case.
+`ai.workflows` sets the default model for shared app workflows (tasks that don't have a user-facing model picker):
 
-| Task                  | Description                                                           |
-| --------------------- | --------------------------------------------------------------------- |
-| `chat`                      | Main conversation model                                               |
-| `title`                     | Generates chat titles                                                 |
-| `pdf`                       | PDF document analysis                                                 |
-| `artifact`                  | Creates artifacts (documents, code, sheets)                           |
-| `artifactSuggestion`        | Suggests artifact improvements                                        |
-| `followupSuggestions`       | Generates follow-up questions                                         |
-| `suggestions`               | General suggestions                                                   |
-| `polishText`                | Text refinement                                                       |
-| `formatSheet`               | Spreadsheet formatting                                                |
-| `analyzeSheet`              | Spreadsheet analysis                                                  |
-| `codeEdits`                 | Code modifications                                                    |
-| `chatImageCompatible`       | Chat with image input support                                         |
-| `image`                     | Image generation (see [Image Generation](/features/image-generation)) |
-| `deepResearch`              | Research and supervision agent (see [Deep Research](/features/deep-research)) |
-| `deepResearchFinalReport`   | Final report synthesis for deep research                              |
+| Field               | Description                                              |
+| ------------------- | -------------------------------------------------------- |
+| `chat`              | Main conversation model                                  |
+| `title`             | Generates chat titles                                    |
+| `pdf`               | PDF document analysis                                    |
+| `chatImageCompatible` | Chat fallback model when image input is required       |
+
+```ts
+ai: {
+  workflows: {
+    chat: "openai/gpt-5-mini",
+    title: "openai/gpt-5-nano",
+    pdf: "openai/gpt-5-mini",
+    chatImageCompatible: "openai/gpt-4o-mini",
+  },
+}
+```
+
+## Tool Model Defaults
+
+`ai.tools` configures the default model for each tool. These are merged with the gateway defaults — only fields you provide override the defaults.
+
+| Tool field                          | Description                                                           |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| `followupSuggestions.default`       | Generates follow-up questions                                         |
+| `text.polish`                       | Text refinement                                                       |
+| `sheet.format`                      | Spreadsheet formatting                                                |
+| `sheet.analyze`                     | Spreadsheet analysis                                                  |
+| `code.edits`                        | Code modifications                                                    |
+| `image.default`                     | Image generation (see [Image Generation](/features/image-generation)) |
+| `video.default`                     | Video generation (see [Video Generation](/features/video-generation)) |
+| `deepResearch.defaultModel`         | Research and supervision agent (see [Deep Research](/features/deep-research)) |
+| `deepResearch.finalReportModel`     | Final report synthesis for deep research                              |
+
+```ts
+ai: {
+  tools: {
+    followupSuggestions: { enabled: true, default: "google/gemini-2.5-flash-lite" },
+    text: { polish: "openai/gpt-5-mini" },
+    sheet: { format: "openai/gpt-5-mini", analyze: "openai/gpt-5-mini" },
+    code: { edits: "openai/gpt-5-mini" },
+    image: { enabled: true, default: "google/gemini-3-pro-image" },
+    video: { enabled: false },
+    deepResearch: {
+      enabled: true,
+      defaultModel: "google/gemini-2.5-flash-lite",
+      finalReportModel: "google/gemini-3-flash",
+    },
+  },
+}
+```
 
 ## AI Providers
 
@@ -122,4 +167,4 @@ Model selection and routing is handled through the active [gateway](/gateways/ov
 
 ## Image Models
 
-Set the default image model in `defaults.image` (gateway-specific model ID). The `generateImage` tool resolves the model at runtime: if the user's selected chat model supports image output (per the app model registry), it uses that; otherwise it uses `config.models.defaults.image`. Resolution uses the dynamic gateway-based registry, not a static snapshot. See [Image Generation](/features/image-generation) for details.
+Set the default image model in `ai.tools.image.default` (gateway-specific model ID). The `generateImage` tool resolves the model at runtime: if the user's selected chat model supports image output (per the app model registry), it uses that; otherwise it uses this default. Resolution uses the dynamic gateway-based registry, not a static snapshot. See [Image Generation](/features/image-generation) for details.

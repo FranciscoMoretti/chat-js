@@ -29,7 +29,7 @@ Set the gateway in `chat.config.ts`:
 
 ```typescript title="chat.config.ts"
 const config: ConfigInput = {
-  models: {
+  ai: {
     gateway: "openrouter", // "vercel" | "openrouter" | "openai" | "openai-compatible"
     // ...
   },
@@ -37,7 +37,7 @@ const config: ConfigInput = {
 ```
 
 <Note>
-The `gateway` field lives inside the `models` key and defaults to `"vercel"` when omitted.
+The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when omitted.
 </Note>
 
 ## How Model Fetching Works
@@ -67,7 +67,7 @@ bun fetch:models
 
 ### Snapshot Gateway Validation
 
-The snapshot file records which gateway generated it via a `generatedForGateway` export. When you run `bun check-env`, it compares this value against `config.models.gateway` and warns if they don't match:
+The snapshot file records which gateway generated it via a `generatedForGateway` export. When you run `bun check-env`, it compares this value against `config.ai.gateway` and warns if they don't match:
 
 ```
 ⚠️  models.generated.ts was built for "vercel" but config uses "openrouter".
@@ -77,7 +77,7 @@ The snapshot file records which gateway generated it via a `generatedForGateway`
 This is caught at two levels:
 
 - **Build time**: `bun check-env` prints the warning shown above.
-- **Runtime**: each gateway checks `generatedForGateway` before using the fallback. If it doesn't match, the fallback is skipped and an empty model list is returned instead of wrong model IDs.
+- **Runtime**: each gateway checks `generatedForGateway` before using the fallback. If it doesn't match, the fallback is skipped and an empty model list is returned instead of stale model IDs.
 
 <Tip>
 After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to keep the fallback snapshot in sync.
