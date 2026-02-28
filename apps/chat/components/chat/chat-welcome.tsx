@@ -43,6 +43,7 @@ function PureChatWelcome({
           <WelcomeMessage />
         </div>
         <MultimodalInput
+          autoFocus
           chatId={chatId}
           parentMessageId={parentMessageId}
           status={status}

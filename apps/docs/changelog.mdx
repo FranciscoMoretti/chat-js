@@ -12,6 +12,26 @@ All notable changes to ChatJS are documented here.
 
 ## February 2026
 
+### Video Generation
+
+Generate short video clips from text prompts directly in chat, with inline playback. Enable via `config.ai.tools.videoGeneration.enabled` (requires a gateway with video model support).
+
+### Interactive Charts
+
+The Python sandbox now renders interactive ECharts (line, scatter, bar) alongside matplotlib PNGs. Assign a value to the `chart` variable in your code to get an interactive chart.
+
+### Configuration Refactor
+
+AI config is now unified under `config.ai` with `workflows` and `tools` blocks, replacing `config.models` and most `config.features` flags. In `chat.config.ts`, rename `models` → `ai`, move `defaults` → `ai.workflows`, and move tool flags into `ai.tools.*.enabled`.
+
+### Performance Improvements
+
+Parallelized server-side fetches in the chat layout, API, and stream routes. Heavy UI components (editors, charts, code blocks) are now lazy-loaded with skeleton placeholders.
+
+### E2E Testing
+
+Added a Playwright test suite covering auth, chat, reasoning, and artifact flows.
+
 ### CLI (`@chat-js/cli`)
 
 New scaffolding CLI to create ChatJS apps without cloning the repo. Run `npx @chat-js/cli@latest create my-app` to get an interactive setup that configures your AI gateway, features, and auth providers out of the box.

@@ -1,18 +1,19 @@
-import { GitIcon } from "@/components/icons";
+import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const GITHUB_URL = "https://github.com/franciscomoretti/chat-js";
+const DOCS_URL = "https://chatjs.dev/docs";
 
-export function GitHubLink() {
+export function DocsLink() {
 	return (
 		<Button asChild size="icon" type="button" variant="ghost">
 			<a
+				aria-label="Open documentation"
 				className="flex items-center justify-center"
-				href={GITHUB_URL}
+				href={DOCS_URL}
 				rel="noopener noreferrer"
 				target="_blank"
 			>
-				<GitIcon size={20} />
+				<BookOpen size={20} />
 			</a>
 		</Button>
 	);

@@ -133,6 +133,7 @@ export function ProjectHome({
           />
 
           <MultimodalInput
+            autoFocus
             chatId={chatId}
             parentMessageId={parentMessageId}
             status={status}

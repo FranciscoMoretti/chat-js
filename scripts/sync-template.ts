@@ -53,10 +53,14 @@ function shouldCopyFilePath(filePath: string): boolean {
 }
 
 /** Files removed from the template after copying (relative to destination). */
-const TEMPLATE_REMOVED_FILES = ["components/github-link.tsx"];
+const TEMPLATE_REMOVED_FILES = [
+  "components/github-link.tsx",
+  "components/docs-link.tsx",
+];
 
 /** Import lines stripped from template files after copying. */
 const TEMPLATE_STRIPPED_IMPORTS = [
+  'import { DocsLink } from "@/components/docs-link";',
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
@@ -75,10 +79,20 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     for (const imp of TEMPLATE_STRIPPED_IMPORTS) {
       content = content.replace(`${imp}\n`, "");
     }
-    // Remove JSX usage of the stripped component
+    // Remove JSX usage of the stripped components
+    content = content.replace(/\s*<DocsLink \/>/g, "");
     content = content.replace(/\s*<GitHubLink \/>/g, "");
     await writeFile(headerPath, content);
   }
+
+  // Replace monorepo-aware @source paths with single-app path in globals.css
+  const globalsCssPath = join(destination, "app", "globals.css");
+  let globalsCss = await readFile(globalsCssPath, "utf8");
+  globalsCss = globalsCss.replace(
+    /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/,
+    '@source "../node_modules/streamdown/dist/*.js";'
+  );
+  await writeFile(globalsCssPath, globalsCss);
 }
 
 async function copyTemplate(destination: string): Promise<void> {

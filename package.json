@@ -1,39 +1,40 @@
 {
-  "name": "chatjs-monorepo",
-  "private": true,
-  "packageManager": "bun@1.3.1",
-  "license": "Apache-2.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev": "dotenv -e .env.local -- turbo run dev --parallel",
-    "dev:chat": "dotenv -e .env.local -- turbo run dev --filter=@chatjs/chat",
-    "dev:docs": "turbo run dev --filter=@chatjs/docs",
-    "build": "dotenv -e .env.local -- turbo run build",
-    "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
-    "test:e2e": "dotenv -e .env.local -- turbo run test:e2e --filter=@chatjs/chat",
-    "format": "turbo run format",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "test:unit": "turbo run test:unit",
-    "test:types": "turbo run test:types",
-    "docs:links": "turbo run docs:links --filter=@chatjs/docs",
-    "template:sync": "bun scripts/sync-template.ts",
-    "template:check": "bun scripts/sync-template.ts --check",
-    "chat-js": "bun --filter @chat-js/cli start",
-    "skiller:apply": "bunx skiller@latest apply && turbo run skiller:apply",
-    "publish:cli": "echo 'Legacy CLI-only publish path. Prefer bun run release for standard releases.' && bun run template:sync && bun --filter @chat-js/cli build && npm publish --ignore-scripts -w packages/cli",
-    "release": "changeset publish"
-  },
-  "overrides": {
-    "@lobehub/ui": "~2.24.3"
-  },
-  "devDependencies": {
-    "@changesets/changelog-github": "^0.5.2",
-    "@changesets/cli": "^2.29.8",
-    "dotenv-cli": "^8.0.0",
-    "turbo": "^2.5.8"
-  }
+	"name": "chatjs-monorepo",
+	"private": true,
+	"packageManager": "bun@1.3.1",
+	"license": "Apache-2.0",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev": "dotenv -e .env.local -- turbo run dev --parallel",
+		"dev:chat": "dotenv -e .env.local -- turbo run dev --filter=@chatjs/chat",
+		"dev:docs": "turbo run dev --filter=@chatjs/docs",
+		"build": "dotenv -e .env.local -- turbo run build",
+		"fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
+		"test:e2e": "dotenv -e .env.local -- turbo run test:e2e --filter=@chatjs/chat",
+		"format": "turbo run format",
+		"lint": "turbo run lint",
+		"test": "turbo run test",
+		"test:unit": "turbo run test:unit",
+		"test:types": "turbo run test:types",
+		"docs:links": "turbo run docs:links --filter=@chatjs/docs",
+		"template:sync": "bun scripts/sync-template.ts",
+		"template:check": "bun scripts/sync-template.ts --check",
+		"chat-js": "bun --filter @chat-js/cli start",
+		"skiller:apply": "bunx skiller@latest apply && turbo run skiller:apply",
+		"publish:cli": "echo 'Legacy CLI-only publish path. Prefer bun run release for standard releases.' && bun run template:sync && bun --filter @chat-js/cli build && npm publish --ignore-scripts -w packages/cli",
+		"start:chat": "dotenv -e .env.local -- bun --filter=@chatjs/chat run start",
+		"release": "changeset publish"
+	},
+	"overrides": {
+		"@lobehub/ui": "~2.24.3"
+	},
+	"devDependencies": {
+		"@changesets/changelog-github": "^0.5.2",
+		"@changesets/cli": "^2.29.8",
+		"dotenv-cli": "^8.0.0",
+		"turbo": "^2.8.11"
+	}
 }

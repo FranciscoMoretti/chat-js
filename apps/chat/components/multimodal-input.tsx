@@ -83,6 +83,7 @@ function PureMultimodalInput({
   chatId,
   status,
   className,
+  autoFocus = false,
   isEditMode = false,
   parentMessageId,
   onSendMessage,
@@ -90,6 +91,7 @@ function PureMultimodalInput({
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   className?: string;
+  autoFocus?: boolean;
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
@@ -642,7 +644,7 @@ function PureMultimodalInput({
           />
 
           <LexicalChatInput
-            autoFocus
+            autoFocus={autoFocus}
             className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
             data-testid="multimodal-input"
             initialValue={getInitialInput()}
@@ -919,6 +921,9 @@ export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
     if (prevProps.status !== nextProps.status) {
+      return false;
+    }
+    if (prevProps.autoFocus !== nextProps.autoFocus) {
       return false;
     }
     if (prevProps.isEditMode !== nextProps.isEditMode) {

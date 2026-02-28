@@ -5,16 +5,19 @@ import type { StreamWriter } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { generateUUID } from "@/lib/utils";
 
+const FOLLOWUP_CONTEXT_MESSAGES = 2;
+
 export async function generateFollowupSuggestions(
   modelMessages: ModelMessage[]
 ) {
   const maxQuestionCount = 5;
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
+  const recentMessages = modelMessages.slice(-FOLLOWUP_CONTEXT_MESSAGES);
   return streamText({
     model: await getLanguageModel(config.ai.tools.followupSuggestions.default),
     messages: [
-      ...modelMessages,
+      ...recentMessages,
       {
         role: "user",
         content: `What question should I ask next? Return an array of suggested questions (minimum ${minQuestionCount}, maximum ${maxQuestionCount}). Each question should be no more than ${maxCharactersPerQuestion} characters.`,
