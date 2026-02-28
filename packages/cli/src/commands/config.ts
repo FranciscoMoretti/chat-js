@@ -7,7 +7,7 @@ import type { PackageManager } from "../types";
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
-import { applyDefaults } from "@/lib/config-schema";
+import { applyDefaults } from "./lib/config-schema";
 console.log(JSON.stringify(applyDefaults(userConfig), null, 2));
 `;
 

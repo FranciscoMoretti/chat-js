@@ -420,10 +420,10 @@ export function defineConfig<G extends GatewayType>(
   return config as ConfigInput;
 }
 
-function mergeToolsConfig(
-  defaults: Record<string, unknown>,
+function mergeToolsConfig<T extends Record<string, unknown>>(
+  defaults: T,
   user: Record<string, unknown> | undefined
-): Record<string, unknown> {
+): T {
   if (!user) {
     return defaults;
   }
@@ -443,7 +443,7 @@ function mergeToolsConfig(
       result[key] = val;
     }
   }
-  return result;
+  return result as T;
 }
 
 // Apply defaults to partial config
