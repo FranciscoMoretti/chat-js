@@ -73,10 +73,10 @@
           {
             "group": "CLI",
             "pages": [
-              "reference/cli/index",
-              "reference/cli/create",
-              "reference/cli/add",
-              "reference/cli/config"
+              "cli/index",
+              "cli/create",
+              "cli/add",
+              "cli/config"
             ]
           },
           {
