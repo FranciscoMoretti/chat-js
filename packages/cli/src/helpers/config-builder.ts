@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { GATEWAY_MODEL_DEFAULTS } from "../../../../apps/chat/lib/ai/gateway-model-defaults";
 import { configSchema } from "../../../../apps/chat/lib/config-schema";
 import type { AuthProvider, FeatureKey, Gateway } from "../types";
+import type { Config } from "../../../../apps/chat/lib/config-schema";
 
 function extractDescriptions(
   schema: z.ZodType,
@@ -105,8 +105,7 @@ export function buildConfigTs(input: {
   features: Record<FeatureKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }): string {
-  const modelDefaults = GATEWAY_MODEL_DEFAULTS[input.gateway];
-  const fullConfig: Record<string, unknown> = {
+  const fullConfig: Omit<Config, "ai"> & { ai: { gateway: Gateway } } = {
     appPrefix: input.appPrefix,
     appName: input.appName,
     appDescription: "AI chat powered by ChatJS",
@@ -134,7 +133,7 @@ export function buildConfigTs(input: {
       terms: { title: "Terms of Service" },
     },
     authentication: input.auth,
-    models: { gateway: input.gateway, ...modelDefaults },
+    ai: { gateway: input.gateway },
     anonymous: {
       credits: 10,
       availableTools: [],
@@ -152,15 +151,9 @@ export function buildConfigTs(input: {
         "application/pdf": [".pdf"],
       },
     },
-    deepResearch: {
-      allowClarification: true,
-      maxResearcherIterations: 1,
-      maxConcurrentResearchUnits: 2,
-      maxSearchQueries: 2,
-    },
   };
 
-  return `import type { ConfigInput } from "@/lib/config-schema";
+  return `import { defineConfig } from "@/lib/config-schema";
 
 /**
  * ChatJS Configuration
@@ -168,9 +161,9 @@ export function buildConfigTs(input: {
  * Edit this file to customize your app.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config: ConfigInput = {
+const config = defineConfig({
 ${generateConfig(fullConfig, 1, "", descriptions)}
-};
+});
 
 export default config;
 `;

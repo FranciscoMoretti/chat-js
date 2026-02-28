@@ -1,164 +1,172 @@
 {
-	"$schema": "https://mintlify.com/docs.json",
-	"theme": "almond",
-	"name": "ChatJS",
-	"metadata": {
-		"og:site_name": "ChatJS Documentation",
-		"og:title": "ChatJS Docs - Build Production-Ready AI Chat Applications",
-		"og:description": "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
-	},
-	"colors": {
-		"primary": "#171717",
-		"light": "#525252",
-		"dark": "#0a0a0a"
-	},
-	"favicon": "/favicon.svg",
-	"navigation": {
-		"tabs": [
-			{
-				"tab": "Docs",
-				"groups": [
-					{
-						"group": "Getting Started",
-						"pages": ["index", "quickstart", "changelog"]
-					},
-					{
-						"group": "Core Concepts",
-						"pages": [
-							"core/architecture",
-							"core/configuration",
-							"core/authentication",
-							"core/multi-model",
-							"core/syntax-highlighting"
-						]
-					},
-					{
-						"group": "Features",
-						"pages": [
-							"features/overview",
-							"features/web-search",
-							"features/url-retrieval",
-							"features/deep-research",
-							"features/code-execution",
-							"features/image-generation",
-							"features/video-generation",
-							"features/attachments",
-							"features/mcp",
-							"features/canvas",
-							"features/reasoning",
-							"features/sharing",
-							"features/branching",
-							"features/projects",
-							"features/follow-up-suggestions"
-						]
-					},
-					{
-						"group": "Customization",
-						"pages": [
-							"customization/theming",
-							"customization/fonts",
-							"customization/branding",
-							"customization/models",
-							"customization/prompts"
-						]
-					},
-					{
-						"group": "Deployment",
-						"pages": [
-							"deployment/vercel",
-							"deployment/docker",
-							"deployment/self-hosted"
-						]
-					},
-					{
-						"group": "Reference",
-						"pages": [
-							"project-structure",
-							"reference/config",
-							"reference/env-vars",
-							"reference/cli",
-							"reference/database",
-							"reference/routing",
-							"reference/testing",
-							"reference/evaluations",
-							{
-								"group": "Gateways",
-								"pages": [
-									"gateways/overview",
-									"gateways/vercel",
-									"gateways/openrouter",
-									"gateways/openai",
-									"gateways/openai-compatible",
-									"gateways/custom"
-								]
-							}
-						]
-					}
-				]
-			},
-			{
-				"tab": "Cookbook",
-				"groups": [
-					{
-						"group": "Recipes",
-						"pages": [
-							"cookbook/index",
-							"cookbook/resumable-streams",
-							"cookbook/stop-resumable-streams",
-							"cookbook/tool-part",
-							"cookbook/provisional-ids",
-							"cookbook/credit-tracking",
-							"cookbook/neon-branching",
-							"cookbook/dev-auth-bypass",
-							"cookbook/follow-up-questions",
-							"cookbook/explicit-tool-selection",
-							"cookbook/chat-layout",
-							"cookbook/component-registries",
-							"cookbook/auto-updating-models",
-							"cookbook/git-worktrees"
-						]
-					}
-				]
-			}
-		],
-		"global": {
-			"anchors": [
-				{
-					"anchor": "GitHub",
-					"href": "https://github.com/franciscomoretti/chat-js",
-					"icon": "github"
-				},
-				{
-					"anchor": "Demo",
-					"href": "https://chatjs.dev",
-					"icon": "sparkles"
-				}
-			]
-		}
-	},
-	"logo": {
-		"light": "/logo/light.svg",
-		"dark": "/logo/dark.svg"
-	},
-	"navbar": {
-		"links": [
-			{
-				"label": "Demo",
-				"href": "https://chatjs.dev"
-			}
-		],
-		"primary": {
-			"type": "github",
-			"href": "https://github.com/franciscomoretti/chat-js"
-		}
-	},
-	"footer": {
-		"socials": {
-			"x": "https://x.com/franmoretti_",
-			"github": "https://github.com/franciscomoretti/chat-js"
-		}
-	},
-	"contextual": {
-		"options": ["copy"]
-	}
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "almond",
+  "name": "ChatJS",
+  "metadata": {
+    "og:site_name": "ChatJS Documentation",
+    "og:title": "ChatJS Docs - Build Production-Ready AI Chat Applications",
+    "og:description": "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
+  },
+  "colors": {
+    "primary": "#171717",
+    "light": "#525252",
+    "dark": "#0a0a0a"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["index", "quickstart", "changelog"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "core/architecture",
+              "core/configuration",
+              "core/authentication",
+              "core/multi-model",
+              "core/syntax-highlighting"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/overview",
+              "features/web-search",
+              "features/url-retrieval",
+              "features/deep-research",
+              "features/code-execution",
+              "features/image-generation",
+              "features/video-generation",
+              "features/attachments",
+              "features/mcp",
+              "features/canvas",
+              "features/reasoning",
+              "features/sharing",
+              "features/branching",
+              "features/projects",
+              "features/follow-up-suggestions"
+            ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "customization/theming",
+              "customization/fonts",
+              "customization/branding",
+              "customization/models",
+              "customization/prompts"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/vercel",
+              "deployment/docker",
+              "deployment/self-hosted"
+            ]
+          },
+          {
+            "group": "CLI",
+            "pages": [
+              "cli/index",
+              "cli/create",
+              "cli/add",
+              "cli/config"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "project-structure",
+              "reference/config",
+              "reference/env-vars",
+              "reference/database",
+              "reference/routing",
+              "reference/testing",
+              "reference/evaluations",
+              {
+                "group": "Gateways",
+                "pages": [
+                  "gateways/overview",
+                  "gateways/vercel",
+                  "gateways/openrouter",
+                  "gateways/openai",
+                  "gateways/openai-compatible",
+                  "gateways/custom"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Cookbook",
+        "groups": [
+          {
+            "group": "Recipes",
+            "pages": [
+              "cookbook/index",
+              "cookbook/resumable-streams",
+              "cookbook/stop-resumable-streams",
+              "cookbook/tool-part",
+              "cookbook/provisional-ids",
+              "cookbook/credit-tracking",
+              "cookbook/neon-branching",
+              "cookbook/dev-auth-bypass",
+              "cookbook/follow-up-questions",
+              "cookbook/explicit-tool-selection",
+              "cookbook/chat-layout",
+              "cookbook/component-registries",
+              "cookbook/auto-updating-models",
+              "cookbook/git-worktrees"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/franciscomoretti/chat-js",
+          "icon": "github"
+        },
+        {
+          "anchor": "Demo",
+          "href": "https://chatjs.dev",
+          "icon": "sparkles"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Demo",
+        "href": "https://chatjs.dev"
+      }
+    ],
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/franciscomoretti/chat-js"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/franmoretti_",
+      "github": "https://github.com/franciscomoretti/chat-js"
+    }
+  },
+  "contextual": {
+    "options": ["copy"]
+  }
 }

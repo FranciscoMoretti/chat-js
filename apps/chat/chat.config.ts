@@ -1,4 +1,4 @@
-import type { ConfigInput } from "@/lib/config-schema";
+import { defineConfig } from "@/lib/config-schema";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -8,7 +8,7 @@ const isProd = process.env.NODE_ENV === "production";
  * Edit this file to customize your app.
  * @see https://chatjs.dev/docs/reference/config
  */
-const config = {
+const config = defineConfig({
   appPrefix: "chatjs",
   appName: "ChatJS",
   appTitle: "ChatJS - The prod ready AI chat app",
@@ -68,36 +68,12 @@ const config = {
     vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
   },
   ai: {
-    gateway: "vercel",
-    providerOrder: ["openai", "google", "anthropic", "xai"],
-    disabledModels: ["morph/morph-v3-large", "morph/morph-v3-fast"],
-    curatedDefaults: [
-      // OpenAI
-      "openai/gpt-5-nano",
-      "openai/gpt-5-mini",
-      "openai/gpt-5.2",
-      "openai/gpt-5.2-chat",
-      // Google
-      "google/gemini-2.5-flash-lite",
-      "google/gemini-3-flash",
-      "google/gemini-3-pro-preview",
-      // Anthropic
-      "anthropic/claude-sonnet-4.5",
-      "anthropic/claude-opus-4.5",
-      // xAI
-      "xai/grok-4",
-    ],
-    anonymousModels: [
-      "google/gemini-2.5-flash-lite",
-      "openai/gpt-5-mini",
-      "openai/gpt-5-nano",
-      "anthropic/claude-haiku-4.5",
-    ],
+    gateway: "openai",
+    providerOrder: ["openai"],
+    disabledModels: [],
+    anonymousModels: ["gpt-5-nano"],
     workflows: {
-      chat: "openai/gpt-5-mini",
-      title: "google/gemini-2.5-flash-lite",
-      pdf: "openai/gpt-5-mini",
-      chatImageCompatible: "openai/gpt-4o-mini",
+      chatImageCompatible: "gpt-4o-mini",
     },
     tools: {
       webSearch: {
@@ -114,30 +90,25 @@ const config = {
       },
       followupSuggestions: {
         enabled: true,
-        default: "google/gemini-2.5-flash-lite",
       },
       text: {
-        polish: "openai/gpt-5-mini",
+        polish: "gpt-5-mini",
       },
       sheet: {
-        format: "openai/gpt-5-mini",
-        analyze: "openai/gpt-5-mini",
+        format: "gpt-5-mini",
+        analyze: "gpt-5-mini",
       },
       code: {
-        edits: "openai/gpt-5-mini",
+        edits: "gpt-5-mini",
       },
       image: {
         enabled: true, // Requires BLOB_READ_WRITE_TOKEN
-        default: "google/gemini-3-pro-image",
-      },
-      video: {
-        enabled: true, // Requires BLOB_READ_WRITE_TOKEN
-        default: "xai/grok-imagine-video",
+        default: "gpt-image-1",
       },
       deepResearch: {
         enabled: true, // Requires webSearch
-        defaultModel: "google/gemini-2.5-flash-lite",
-        finalReportModel: "google/gemini-3-flash",
+        defaultModel: "gpt-5-nano",
+        finalReportModel: "gpt-5-mini",
         allowClarification: true,
         maxResearcherIterations: 1,
         maxConcurrentResearchUnits: 2,
@@ -162,6 +133,6 @@ const config = {
       "application/pdf": [".pdf"],
     },
   },
-} satisfies ConfigInput;
+});
 
 export default config;

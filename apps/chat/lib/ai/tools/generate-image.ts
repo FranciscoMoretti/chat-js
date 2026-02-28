@@ -41,6 +41,9 @@ async function resolveImageModel(selectedModel?: string): Promise<{
   }
 
   // Fall back to the configured default image model
+  if (!config.ai.tools.image.enabled) {
+    throw new Error("Image generation is not enabled");
+  }
   const defaultId = config.ai.tools.image.default;
   try {
     const model = await getAppModelDefinition(defaultId as AppModelId);
@@ -134,6 +137,10 @@ async function runGenerateImageTraditional({
   startMs: number;
   costAccumulator?: CostAccumulator;
 }): Promise<{ imageUrl: string; prompt: string }> {
+  if (!config.ai.tools.image.enabled) {
+    throw new Error("Image generation is not enabled");
+  }
+  const imageDefault = config.ai.tools.image.default;
   let promptInput:
     | string
     | {
@@ -161,7 +168,7 @@ async function runGenerateImageTraditional({
   }
 
   const res = await generateImage({
-    model: getImageModel(config.ai.tools.image.default),
+    model: getImageModel(imageDefault),
     prompt: promptInput,
     n: 1,
     providerOptions: {
@@ -184,7 +191,7 @@ async function runGenerateImageTraditional({
 
   if (res.usage) {
     costAccumulator?.addLLMCost(
-      config.ai.tools.image.default as AppModelId,
+      imageDefault as AppModelId,
       {
         inputTokens: res.usage.inputTokens,
         outputTokens: res.usage.outputTokens,

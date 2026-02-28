@@ -101,7 +101,7 @@ type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 type retrieveUrlTool = InferUITool<typeof retrieveUrl>;
 
-// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
+// biome-ignore lint/style/useConsistentTypeDefinitions: using type for mapped type compatibility
 export type ChatTools = {
   codeExecution: codeExecutionTool;
   createCodeDocument: createCodeDocumentToolType;
@@ -123,7 +123,7 @@ interface FollowupSuggestions {
   suggestions: string[];
 }
 
-// biome-ignore lint/style/useConsistentTypeDefinitions: <explanation>
+// biome-ignore lint/style/useConsistentTypeDefinitions: using type for mapped type compatibility
 export type CustomUIDataTypes = {
   appendMessage: string;
   chatConfirmed: {

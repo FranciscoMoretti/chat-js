@@ -28,9 +28,9 @@ OPENAI_COMPATIBLE_API_KEY=                             # Optional, depends on pr
 
 ```typescript title="chat.config.ts"
 const config: ConfigInput = {
-  models: {
+  ai: {
     gateway: "openai-compatible",
-    defaults: {
+    workflows: {
       chat: "llama3.2",
       title: "llama3.2",
       // ...
