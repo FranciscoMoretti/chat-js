@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/franciscomoretti-chat-js-badge.png)](https://mseep.ai/app/franciscomoretti-chat-js)
+
 <div align="center">
 
 <img src="apps/chat/app/icon.svg" alt="ChatJS" width="64" height="64">
