@@ -1,5 +1,13 @@
 # @chat-js/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- [#201](https://github.com/FranciscoMoretti/chat-js/pull/201) [`dbd6cb0`](https://github.com/FranciscoMoretti/chat-js/commit/dbd6cb0cfa8ed5ae497fa500e1f45a869974f235) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Add LiteLLM gateway scaffolding support, including generated config defaults,
+  environment checklist coverage for `LITELLM_BASE_URL`, and optional
+  `LITELLM_API_KEY` documentation for authenticated proxies.
+
 ## 0.6.5
 
 ### Patch Changes
