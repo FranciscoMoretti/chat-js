@@ -5,12 +5,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/franciscomoretti/chat-js.git",
+    "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
     "directory": "packages/registry"
   },
-  "homepage": "https://github.com/franciscomoretti/chat-js/tree/main/packages/registry",
+  "homepage": "https://github.com/FranciscoMoretti/chat-js/tree/main/packages/registry",
   "bugs": {
-    "url": "https://github.com/franciscomoretti/chat-js/issues"
+    "url": "https://github.com/FranciscoMoretti/chat-js/issues"
   },
   "keywords": [
     "chatjs",
