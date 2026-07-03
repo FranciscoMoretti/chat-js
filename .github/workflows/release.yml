@@ -49,3 +49,4 @@ jobs:
           commit: "chore: version releases"
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
