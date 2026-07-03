@@ -37,7 +37,9 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - name: Update npm for trusted publishing
-        run: npm install -g npm@latest
+        run: |
+          npm install --global npm@latest --prefix ~/.npm-global
+          echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
