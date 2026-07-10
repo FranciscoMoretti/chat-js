@@ -79,8 +79,9 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun lint`: run workspace lint
 - `bun test:types`: run chat app typecheck
 
-Set `CHATJS_DEV_SLOT` in `.env.local` to give each worktree a stable port:
-slot `0` uses port `3000`, slot `1` uses `3010`, and so on.
+Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to give each worktree a stable
+port. Slot `0` uses port `3000`, slot `1` uses `3010`, and so on. This file is
+ignored by Git and kept separate from Vercel-managed `.env.local`.
 
 ## Releases
 
