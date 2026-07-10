@@ -74,10 +74,13 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 
 ## Development
 
-- `bun dev:chat`: run chat app
+- `bun dev`: run chat app
 - `bun dev:docs`: run docs
 - `bun lint`: run workspace lint
 - `bun test:types`: run chat app typecheck
+
+Set `CHATJS_DEV_SLOT` in `.env.local` to give each worktree a stable port:
+slot `0` uses port `3000`, slot `1` uses `3010`, and so on.
 
 ## Releases
 

@@ -27,6 +27,8 @@
     "VERCEL_TOKEN",
     "VERCEL_SANDBOX_RUNTIME",
     "APP_URL",
+    "ELECTRON_APP_URL",
+    "PORT",
     "VERCEL_URL"
   ],
   "tasks": {

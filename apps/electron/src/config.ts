@@ -6,6 +6,7 @@ const DEFAULT_DEV_APP_URL = "http://localhost:3000";
 
 export const APP_URL =
   process.env.ELECTRON_APP_URL ||
+  process.env.APP_URL ||
   (process.env.NODE_ENV === "production" ? config.appUrl : DEFAULT_DEV_APP_URL);
 
 export const WINDOW_DEFAULTS = {
