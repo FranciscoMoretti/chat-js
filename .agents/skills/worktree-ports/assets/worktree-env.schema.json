@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "worktree-env.schema.json",
+  "title": "Worktree environment configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slot", "range", "url", "apps"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["env", "default"],
+      "properties": {
+        "env": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "default": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "stride"],
+      "properties": {
+        "base": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535
+        },
+        "stride": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "apps": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["offset"],
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "exports": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

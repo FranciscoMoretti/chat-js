@@ -3,7 +3,7 @@
 
 # To specify which agents are active by default when --agents is not used,
 # uncomment and populate the following line. If omitted, all agents are active.
-default_agents = ["cursor", "claude"]
+default_agents = ["cursor", "claude-code"]
 
 # Enable nested rule loading from nested .claude directories
 # When enabled, skiller will search for and process .claude directories throughout the project hierarchy

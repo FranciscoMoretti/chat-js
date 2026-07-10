@@ -1,0 +1,33 @@
+{
+  "$schema": "./.agents/skills/worktree-ports/assets/worktree-env.schema.json",
+  "slot": {
+    "env": "CHATJS_DEV_SLOT",
+    "default": 0
+  },
+  "range": {
+    "base": 3000,
+    "stride": 10
+  },
+  "url": "http://localhost:{port}",
+  "apps": {
+    "chat": {
+      "offset": 0,
+      "exports": {
+        "APP_URL": "{url}",
+        "PORT": "{port}"
+      }
+    },
+    "electron": {
+      "offset": 1,
+      "exports": {
+        "ELECTRON_APP_URL": "{apps.chat.url}"
+      }
+    },
+    "site": {
+      "offset": 2,
+      "exports": {
+        "PORT": "{port}"
+      }
+    }
+  }
+}

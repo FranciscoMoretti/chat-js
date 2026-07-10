@@ -21,7 +21,9 @@ const electronAuthPlugin = electron({
   clientID: ELECTRON_AUTH_CLIENT_ID,
   cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
 }) as unknown as BetterAuthPlugin;
-const baseUrl = getBaseUrl();
+const baseUrl =
+  env.APP_URL ||
+  (process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl());
 
 export const auth = betterAuth({
   baseURL: baseUrl,
