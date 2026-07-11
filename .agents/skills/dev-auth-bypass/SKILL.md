@@ -1,9 +1,6 @@
 ---
-description: Authenticate a browser against a local ChatJS app without OAuth. Use for development login, local auth bypass, authenticated browser or Playwright testing, and the /api/dev-login route.
 name: dev-auth-bypass
-metadata:
-  skiller:
-    source: .agents/rules/dev-auth-bypass.mdc
+description: Authenticate a browser against a local ChatJS app without OAuth. Use for development login, local auth bypass, authenticated browser or Playwright testing, and the /api/dev-login route.
 ---
 
 # Dev Auth Bypass

@@ -1,9 +1,6 @@
 ---
-description: Discover and use stable per-app ports assigned to a local monorepo worktree. Use when starting, opening, testing, or debugging local apps, or when worktree slots, localhost ports, PORT, app URLs, or .worktree-env.json are involved.
 name: worktree-ports
-metadata:
-  skiller:
-    source: .agents/rules/worktree-ports.mdc
+description: Discover and use stable per-app ports assigned to a local monorepo worktree. Use when starting, opening, testing, or debugging local apps, or when worktree slots, localhost ports, PORT, app URLs, or .worktree-env.json are involved.
 ---
 
 # Worktree Ports

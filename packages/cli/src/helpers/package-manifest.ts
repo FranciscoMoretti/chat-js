@@ -77,7 +77,6 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   scripts["db:branch:stop"] =
     `bash -c 'N=${defaultBranchName}; bash scripts/db-branch-use.sh main && bash scripts/db-branch-delete.sh "$N"' --`;
   scripts["db:branch:list"] = "npx neonctl branches list";
-  scripts["skiller:apply"] = "npx skiller@latest apply";
   scripts.test =
     "export PLAYWRIGHT=True && playwright test --workers=4 && vitest run";
   scripts["test:e2e"] = "export PLAYWRIGHT=True && playwright test --workers=4";

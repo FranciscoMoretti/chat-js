@@ -9,7 +9,6 @@
   },
   "scripts": {
     "dev": "bunx mintlify@latest dev",
-    "docs:links": "bunx mintlify@latest broken-links",
-    "skiller:apply": "bunx skiller@latest apply"
+    "docs:links": "bunx mintlify@latest broken-links"
   }
 }

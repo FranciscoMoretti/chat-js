@@ -30,7 +30,6 @@
     "db:branch:list": "bunx neonctl branches list",
     "eval:dev": "evalite watch",
     "eval:serve": "evalite serve",
-    "skiller:apply": "bunx skiller@latest apply",
     "test": "bun test:e2e && bun test:unit",
     "test:e2e": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",

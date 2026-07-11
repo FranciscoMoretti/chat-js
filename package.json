@@ -26,7 +26,6 @@
 		"template:sync": "bun scripts/sync-template.ts",
 		"template:check": "bun scripts/sync-template.ts --check",
 		"chat-js": "bun --filter @chat-js/cli start",
-		"skiller:apply": "bunx skiller@latest apply && turbo run skiller:apply",
 		"db:generate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:generate",
 		"db:migrate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:migrate",
 		"db:branch:start": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:branch:start",

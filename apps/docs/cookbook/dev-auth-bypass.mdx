@@ -16,20 +16,9 @@ creates a dev user session and redirects to the app with valid auth cookies.
 
 ## Agent Setup
 
-<Tabs>
-  <Tab title="Cursor">
-    Works out of the box with Cursor's built-in browser integration. Instruct the agent to visit `/api/dev-login` on the app URL before testing authenticated features.
-  </Tab>
-  <Tab title="Claude Code / Other Agents">
-    Install the [Playwright MCP](https://github.com/microsoft/playwright-mcp) server:
-
-    ```bash
-    npx @anthropic-ai/claude-code mcp add playwright -- npx @anthropic-ai/mcp-server-playwright
-    ```
-
-    Then instruct the agent to visit `/api/dev-login` on the app URL before running tests.
-  </Tab>
-</Tabs>
+Use any browser-capable agent or browser automation tool. Navigate to
+`/api/dev-login` on the app URL before testing authenticated features so that
+the browser receives the session cookie.
 
 ## How It Works
 
