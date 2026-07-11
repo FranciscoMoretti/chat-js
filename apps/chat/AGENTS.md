@@ -1,6 +1,6 @@
 # Chat application instructions
 
-These instructions apply to `apps/chat/`.
+These instructions apply to this application directory.
 
 ## Stack and structure
 
