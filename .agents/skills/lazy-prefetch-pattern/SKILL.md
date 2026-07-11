@@ -8,9 +8,9 @@ description: Use the ChatJS React Query v5 lazy-prefetch pattern without blockin
 Start optional server prefetches early without awaiting them so they can stream
 through React hydration without blocking rendering.
 
-- Get the request-scoped query client from `@/trpc/server`.
-- Start optional prefetches with
-  `void queryClient.prefetchQuery(trpc.foo.bar.queryOptions(...))`.
+- Use the exported `prefetch()` helper from `@/trpc/server`:
+  `prefetch(trpc.foo.bar.queryOptions(...))`. It handles both paginated and
+  non-paginated queries.
 - Await only data required before rendering.
 - Render through the existing `HydrateClient` or `HydrationBoundary`.
 

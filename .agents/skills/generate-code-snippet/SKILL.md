@@ -12,7 +12,7 @@ description: Generate a concise, shareable code snippet URL for code.franciscomo
 Base64url-encode the snippet without padding, then construct:
 
 ```text
-https://code.franciscomoretti.com//#code=<base64url>&theme=sparka&darkMode=true&padding=64&language=<language>
+https://code.franciscomoretti.com/#code=<base64url>&theme=sparka&darkMode=true&padding=64&language=<language>
 ```
 
 Return the snippet in a fenced code block and the complete URL.
