@@ -1,7 +1,7 @@
 {
   "description": "Shared renderer helpers for installable ChatJS tools",
   "hidden": true,
-  "extraDependencies": ["ai"],
+  "extraDependencies": ["@ai-sdk/provider", "ai"],
   "registryDependencies": [],
   "files": [
     {
@@ -12,6 +12,11 @@
     {
       "source": "tool-part.ts",
       "target": "_shared/lib/tool-part.ts",
+      "type": "lib"
+    },
+    {
+      "source": "runtime.ts",
+      "target": "_shared/lib/runtime.ts",
       "type": "lib"
     },
     {

@@ -1,11 +1,11 @@
 "use client";
 import { memo, useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
+import { ImageModal } from "@/components/ui/image-modal";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatId, useMessageById } from "@/lib/stores/base";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
 import { AttachmentList } from "./attachment-list";
-import { ImageModal } from "./image-modal";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { ParallelResponseCards } from "./parallel-response-cards";

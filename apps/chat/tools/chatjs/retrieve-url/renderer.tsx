@@ -5,7 +5,9 @@ import ReactMarkdown from "react-markdown";
 import type { TypelessToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 import type { retrieveUrl } from "./tool";
 
-type RetrieveUrlRendererTool = TypelessToolPartFromTool<typeof retrieveUrl>;
+type RetrieveUrlRendererTool = TypelessToolPartFromTool<
+  ReturnType<typeof retrieveUrl.createTool>
+>;
 
 function LoadingState() {
   return (

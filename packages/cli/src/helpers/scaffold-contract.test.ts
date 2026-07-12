@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectEnvChecklist } from "./env-checklist";
 import { buildConfigTs } from "./config-builder";
+import { scaffoldFromTemplate } from "./scaffold";
 import { fetchRegistryIndex } from "../registry/fetch";
 import { resolveRegistryItems } from "../registry/resolve";
 import { installRegistryTools } from "../utils/install-registry-tools";
@@ -95,6 +96,7 @@ describe("scaffold contracts", () => {
 			.map((item) => item.name);
 		const cwd = await makeTempDir("registry");
 		const toolsDir = join(cwd, "tools", "chatjs");
+		const uiDir = join(cwd, "components", "ui");
 
 		await mkdir(cwd, { recursive: true });
 		await writeFile(
@@ -107,6 +109,8 @@ describe("scaffold contracts", () => {
 			cwd,
 			toolsDir,
 			toolsAlias: "@/tools/chatjs",
+			uiDir,
+			uiAlias: "@/components/ui",
 			registryUrl: localRegistryUrl,
 			installDependenciesNow: false,
 			packageManager: "npm",
@@ -119,6 +123,11 @@ describe("scaffold contracts", () => {
 		};
 		const toolsSource = await readFile(join(toolsDir, "tools.ts"), "utf8");
 		const uiSource = await readFile(join(toolsDir, "ui.ts"), "utf8");
+		const generateImageRenderer = await readFile(
+			join(toolsDir, "generate-image", "renderer.tsx"),
+			"utf8",
+		);
+		const imageModal = await readFile(join(uiDir, "image-modal.tsx"), "utf8");
 		const envEntries = collectEnvChecklist({
 			gateway: "vercel",
 			coreFeatures: {
@@ -152,16 +161,53 @@ describe("scaffold contracts", () => {
 		expect(uiSource).toContain('"tool-getWeather"');
 		expect(uiSource).toContain('"tool-wordCount"');
 		expect(uiSource).toContain('"tool-retrieveUrl"');
+		expect(generateImageRenderer).toContain(
+			'from "@/components/ui/image-modal"',
+		);
+		expect(imageModal).toContain("export function ImageModal");
 		expect(envEntries.some((entry) => entry.vars === "FIRECRAWL_API_KEY")).toBe(
 			true,
 		);
+	});
+
+	it("installs a tool whose UI file already exists identically in the scaffold", async () => {
+		const cwd = await makeTempDir("registry-existing-ui");
+		await scaffoldFromTemplate(cwd);
+		const imageModalPath = join(cwd, "components", "ui", "image-modal.tsx");
+		const existingImageModal = await readFile(imageModalPath, "utf8");
+
+		await installRegistryTools({
+			tools: ["generate-image"],
+			cwd,
+			toolsDir: join(cwd, "tools", "chatjs"),
+			toolsAlias: "@/tools/chatjs",
+			uiDir: join(cwd, "components", "ui"),
+			uiAlias: "@/components/ui",
+			registryUrl: localRegistryUrl,
+			installDependenciesNow: false,
+			packageManager: "bun",
+		});
+
+		expect(
+			await readFile(join(cwd, "tools", "chatjs", "tools.ts"), "utf8"),
+		).toContain("generateImage");
+		expect(await readFile(imageModalPath, "utf8")).toBe(existingImageModal);
+		expect(
+			await readFile(
+				join(cwd, "tools", "chatjs", "generate-image", "renderer.tsx"),
+				"utf8",
+			),
+		).toContain('from "@/components/ui/image-modal"');
 	});
 
 	it("requires shared registry dependencies when renderer files import shared toolkit code", async () => {
 		const visibleTools = (await fetchRegistryIndex(localRegistryUrl))
 			.filter((item) => !item.hidden)
 			.map((item) => item.name);
-		const resolution = await resolveRegistryItems(visibleTools, localRegistryUrl);
+		const resolution = await resolveRegistryItems(
+			visibleTools,
+			localRegistryUrl,
+		);
 
 		for (const item of resolution.items) {
 			const importsSharedToolkit = item.files.some((file) =>
@@ -173,5 +219,38 @@ describe("scaffold contracts", () => {
 
 			expect(item.registryDependencies).toContain("toolkit-renderer");
 		}
+	});
+
+	it("rejects standalone registry tools without the shared runtime", async () => {
+		const cwd = await makeTempDir("registry-runtime");
+		await mkdir(cwd, { recursive: true });
+		const itemPath = join(cwd, "standalone.json");
+		await writeFile(
+			itemPath,
+			JSON.stringify({
+				name: "standalone",
+				files: [
+					{
+						path: "tool.ts",
+						target: "standalone/tool.ts",
+						type: "tool",
+						content: "export const standalone = {};",
+					},
+				],
+			}),
+		);
+
+		await expect(
+			installRegistryTools({
+				tools: ["standalone"],
+				cwd,
+				toolsDir: join(cwd, "tools/chatjs"),
+				toolsAlias: "@/tools/chatjs",
+				uiDir: join(cwd, "components/ui"),
+				uiAlias: "@/components/ui",
+				registryUrl: itemPath,
+				installDependenciesNow: false,
+			}),
+		).rejects.toThrow('must declare "toolkit-renderer"');
 	});
 });

@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { confirm, intro, isCancel, log, outro } from "@clack/prompts";
 import { Command } from "commander";
-import { loadProjectConfig, resolveToolsPath } from "../utils/get-config";
+import {
+	loadProjectConfig,
+	loadProjectUiConfig,
+	resolveProjectPath,
+} from "../utils/get-config";
 import { handleError } from "../utils/handle-error";
 import { installRegistryTools } from "../utils/install-registry-tools";
 import { spinner } from "../utils/spinner";
@@ -46,20 +50,36 @@ export const add = new Command()
 				process.exit(1);
 			}
 
+			try {
+				await fs.stat(path.join(cwd, "components.json"));
+			} catch {
+				log.error(
+					'No components.json found. Add one with an "aliases.ui" entry or re-run `chat-js create`.',
+				);
+				process.exit(1);
+			}
+
 			intro("chatjs add");
 
 			const configSpinner = spinner("Loading project config...");
 			configSpinner.start();
 			let config: { paths: { tools: string } };
+			let uiConfig: { alias: string };
 			try {
-				config = await loadProjectConfig(cwd);
+				[config, uiConfig] = await Promise.all([
+					loadProjectConfig(cwd),
+					loadProjectUiConfig(cwd),
+				]);
 				configSpinner.succeed("Project config loaded");
 			} catch (err) {
 				configSpinner.fail("Failed to load project config");
 				throw err;
 			}
 
-			const toolsDir = resolveToolsPath(config.paths.tools, cwd);
+			const [toolsDir, uiDir] = await Promise.all([
+				resolveProjectPath(config.paths.tools, cwd),
+				resolveProjectPath(uiConfig.alias, cwd),
+			]);
 
 			if (!opts.yes) {
 				const answer = await confirm({
@@ -76,6 +96,8 @@ export const add = new Command()
 				cwd,
 				toolsDir,
 				toolsAlias: config.paths.tools,
+				uiDir,
+				uiAlias: uiConfig.alias,
 				overwrite: opts.overwrite as boolean,
 				registryUrl: opts.registry,
 				confirmOverwrite: async (existingFiles) => {

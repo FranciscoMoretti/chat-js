@@ -19,7 +19,7 @@ Installing a tool does three things:
 
 1. Copies the tool implementation and renderer into the project
 2. Injects the tool into `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts`, the two files the CLI manages
-3. The static wrappers (`installed-tools.ts`, `tool-renderer-registry.ts`) automatically pick up the new entries while built-in tools stay under `tools/platform`
+3. The static wrappers (`installed-tools.ts`, `tool-renderer-registry.ts`) automatically pick up the new entries while tightly coupled tools remain under `tools/platform`
 
 ```mermaid
 flowchart TD

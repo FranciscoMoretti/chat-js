@@ -40,6 +40,8 @@
   },
   "scripts": {
     "build": "bun build.ts",
+    "build:check": "bun build.ts --check",
+    "test:unit": "bun run build:check && bun test registry-integrity.test.ts",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {

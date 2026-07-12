@@ -52,18 +52,24 @@ function formatValue(value: unknown, indent: number): string {
 
   if (value === null || value === undefined) return "undefined";
   if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number" || typeof value === "boolean") {
+  if (typeof value === "number") {
+    return Number.isInteger(value) && Math.abs(value) >= 10_000
+      ? value.toLocaleString("en-US").replaceAll(",", "_")
+      : String(value);
+  }
+  if (typeof value === "boolean") {
     return String(value);
   }
 
   if (Array.isArray(value)) {
     if (value.length === 0) return "[]";
-    if (value.every((v) => typeof v === "string")) {
-      return `[${value.map((v) => JSON.stringify(v)).join(", ")}]`;
+    if (value.every((item) => typeof item === "string")) {
+      const inline = `[${value.map((item) => JSON.stringify(item)).join(", ")}]`;
+      if (spaces.length + inline.length <= 80) return inline;
     }
     return `[\n${value
-      .map((v) => `${inner}${formatValue(v, indent + 1)}`)
-      .join(",\n")}\n${spaces}]`;
+      .map((v) => `${inner}${formatValue(v, indent + 1)},`)
+      .join("\n")}\n${spaces}]`;
   }
 
   if (typeof value === "object") {

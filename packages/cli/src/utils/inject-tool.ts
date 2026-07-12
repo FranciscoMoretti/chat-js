@@ -134,19 +134,29 @@ export function injectTool(
 }
 
 /** Template used when the managed tools file doesn't exist yet. */
-export function createEmptyToolsTemplate(): string {
+export function createEmptyToolsTemplate(
+  toolsAlias = "@/tools/chatjs"
+): string {
   return (
     `// Server-side tools installed via \`chatjs add\`.\n` +
     `// This file is fully managed by the CLI — do not edit manually.\n` +
     `\n` +
+    `import {\n` +
+    `  createRegistryTools,\n` +
+    `  type ToolRuntimeContext,\n` +
+    `} from "${toolsAlias}/_shared/lib/runtime";\n` +
+    `\n` +
     `${MARKERS.toolImports.open}\n` +
     `${MARKERS.toolImports.close}\n` +
     `\n` +
-    `export const tools = {\n` +
+    `export const toolEntries = {\n` +
     `  ${MARKERS.tools.open}\n` +
     `  ${MARKERS.tools.close}\n` +
     `} as const;\n` +
-    `\n`
+    `\n` +
+    `export function createTools(ctx: ToolRuntimeContext) {\n` +
+    `  return createRegistryTools(toolEntries, ctx);\n` +
+    `}\n`
   );
 }
 

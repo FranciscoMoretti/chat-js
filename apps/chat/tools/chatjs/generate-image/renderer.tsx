@@ -2,19 +2,25 @@
 
 import { ImageOffIcon } from "lucide-react";
 import { useState } from "react";
-import { ImageActions, ImageModal } from "@/components/image-modal";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { ChatMessage } from "@/lib/ai/types";
+import { ImageActions, ImageModal } from "@/components/ui/image-modal";
+import type { TypelessToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { generateImage } from "./tool";
 
-export type GenerateImageTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-generateImage" }
+type GenerateImageRendererTool = TypelessToolPartFromTool<
+  ReturnType<typeof generateImage.createTool>
 >;
 
-export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
+export function GenerateImageRenderer({
+  tool,
+}: {
+  tool: GenerateImageRendererTool;
+  messageId: string;
+  isReadonly: boolean;
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const imageUrl = tool.output?.imageUrl;
-  const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
+  const imageUnavailable = Boolean(imageUrl && failedImageUrl === imageUrl);
 
   if (tool.state === "input-available") {
     return (
@@ -28,7 +34,11 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
   }
   const output = tool.output;
   if (!output) {
-    return null;
+    return (
+      <div className="rounded-lg border p-4 text-muted-foreground text-sm">
+        Couldn&apos;t generate image.
+      </div>
+    );
   }
 
   return (
@@ -55,7 +65,7 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
                   alt={output.prompt}
                   className="h-auto w-full max-w-full"
                   height={512}
-                  onError={handleImageError}
+                  onError={() => setFailedImageUrl(imageUrl ?? null)}
                   src={output.imageUrl}
                   width={512}
                 />

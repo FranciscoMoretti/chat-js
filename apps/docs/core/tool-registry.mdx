@@ -5,7 +5,7 @@ description: "Install and distribute ChatJS tools through the registry"
 
 The ChatJS tool registry is the distribution layer for installable tools. It lets you ship a tool's server logic, UI renderer, and supporting files as a portable package that another ChatJS app can install with `chatjs add`.
 
-This is the extension surface for ChatJS. Built-in product tools stay in `tools/platform`. Installable tools live in `tools/chatjs` and are managed by the CLI.
+This is the extension surface for ChatJS. Portable product tools can ship through `tools/chatjs`; tightly coupled internal tools stay in `tools/platform`.
 
 ## What You Install
 
@@ -58,8 +58,8 @@ ChatJS separates tools into two layers:
 
 | Location | Ownership | Purpose |
 | --- | --- | --- |
-| `tools/platform` | ChatJS platform | Built-in product tools and tightly coupled internal tooling |
-| `tools/chatjs` | Registry + app | Installable tools distributed through `chatjs add` |
+| `tools/platform` | ChatJS platform | Tightly coupled product and infrastructure tools |
+| `tools/chatjs` | Registry + app | Portable built-in and third-party tools distributed through `chatjs add` |
 
 Use `tools/platform` when a tool depends on internal app contracts or product infrastructure.
 
@@ -78,6 +78,8 @@ export default defineConfig({
 ```
 
 The CLI uses this path both to decide where files should be written and which import alias should be used inside the generated registry index.
+
+UI files use `aliases.ui` from `components.json`. Both aliases must resolve through `compilerOptions.paths` in the project's `tsconfig.json` or `jsconfig.json`; the CLI rejects aliases that resolve outside the project.
 
 ## Tool Environment Variables
 
@@ -106,6 +108,10 @@ npx @chat-js/cli@latest add word-count \
 ```
 
 You can also set a default registry URL template with `CHATJS_REGISTRY_URL`.
+
+Every tool item in a custom registry must declare `toolkit-renderer` in `registryDependencies`. The CLI-managed server registry imports the shared runtime from that item even when the tool itself is a plain AI SDK `tool()`. Custom registries must therefore publish `toolkit-renderer` alongside their tools.
+
+Tools that need project-level storage configuration must declare `"projectRequirements": ["storage"]` in both their item manifest and registry index entry. `chatjs create` reads the index before scaffolding and prompts for storage when any selected installable tool declares this requirement. A top-level tool's index entry must include its complete project requirements, including requirements introduced by its registry dependencies.
 
 ## Manual Update And Troubleshooting
 

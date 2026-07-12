@@ -1,14 +1,12 @@
 "use client";
 
 import { format, isWithinInterval } from "date-fns";
+import { useToolIsCompact } from "@toolkit/hooks/use-tool-is-compact";
 import { cx } from "@toolkit/lib/cx";
 import type { TypelessToolPartFromTool } from "@toolkit/lib/tool-part";
-import { useToolIsCompact } from "@toolkit/hooks/use-tool-is-compact";
-import { getWeather, type WeatherAtLocation } from "./tool";
+import type { getWeather, WeatherAtLocation } from "./tool";
 
-type GetWeatherRendererTool = TypelessToolPartFromTool<
-  typeof getWeather
->;
+type GetWeatherRendererTool = TypelessToolPartFromTool<typeof getWeather>;
 
 const SAMPLE = {
   latitude: 37.763_283,
@@ -31,9 +29,7 @@ const SAMPLE = {
       "2024-10-08T00:00",
       "2024-10-08T01:00",
     ],
-    temperature_2m: [
-      33.9, 32.1, 28.9, 26.9, 25.2, 23, 21.1,
-    ],
+    temperature_2m: [33.9, 32.1, 28.9, 26.9, 25.2, 23, 21.1],
   },
   daily_units: {
     time: "iso8601",

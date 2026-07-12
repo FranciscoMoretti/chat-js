@@ -26,9 +26,12 @@ import {
 	scaffoldFromTemplate,
 } from "../helpers/scaffold";
 import { storageEnvRequirements } from "../helpers/storage-provider";
-import type { EnvRequirement as RegistryEnvRequirement } from "../registry/schema";
+import type {
+	EnvRequirement as RegistryEnvRequirement,
+	RegistryIndexItem,
+} from "../registry/schema";
 import { fetchRegistryIndex } from "../registry/fetch";
-import { resolveToolsPath } from "../utils/get-config";
+import { loadProjectUiConfig, resolveProjectPath } from "../utils/get-config";
 import { inferPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 import { highlighter } from "../utils/highlighter";
@@ -86,6 +89,19 @@ function printEnvChecklist(entries: EnvVarEntry[]): void {
 		}
 		i -= 1;
 	}
+}
+
+export function selectedRegistryToolsRequireStorage(
+	registryItems: RegistryIndexItem[],
+	selectedToolNames: string[],
+): boolean {
+	const selectedTools = new Set(selectedToolNames);
+
+	return registryItems.some(
+		(item) =>
+			selectedTools.has(item.name) &&
+			item.projectRequirements?.includes("storage"),
+	);
 }
 
 const createOptionsSchema = z.object({
@@ -195,6 +211,10 @@ export const create = new Command()
 				coreFeatures.attachments ||
 				assistantTools.builtInTools.imageGeneration ||
 				assistantTools.builtInTools.videoGeneration ||
+				selectedRegistryToolsRequireStorage(
+					registryItems,
+					assistantTools.installableTools,
+				) ||
 				options.storageProvider !== undefined ||
 				options.storageConfig !== undefined;
 			const storage = usesStorage
@@ -271,12 +291,18 @@ export const create = new Command()
 
 			let installableToolEnvRequirements: RegistryEnvRequirement[] = [];
 			if (assistantTools.installableTools.length > 0) {
-				const toolsDir = resolveToolsPath("@/tools/chatjs", targetDir);
+				const uiConfig = await loadProjectUiConfig(targetDir);
+				const [toolsDir, uiDir] = await Promise.all([
+					resolveProjectPath("@/tools/chatjs", targetDir),
+					resolveProjectPath(uiConfig.alias, targetDir),
+				]);
 				const registryInstall = await installRegistryTools({
 					tools: assistantTools.installableTools,
 					cwd: targetDir,
 					toolsDir,
 					toolsAlias: "@/tools/chatjs",
+					uiDir,
+					uiAlias: uiConfig.alias,
 					registryUrl: options.registry,
 					installDependenciesNow: false,
 					packageManager,

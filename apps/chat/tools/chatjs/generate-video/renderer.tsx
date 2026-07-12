@@ -1,13 +1,19 @@
 "use client";
 
-import type { ChatMessage } from "@/lib/ai/types";
+import type { TypelessToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { generateVideo } from "./tool";
 
-export type GenerateVideoTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-generateVideo" }
+type GenerateVideoRendererTool = TypelessToolPartFromTool<
+  ReturnType<typeof generateVideo.createTool>
 >;
 
-export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
+export function GenerateVideoRenderer({
+  tool,
+}: {
+  tool: GenerateVideoRendererTool;
+  messageId: string;
+  isReadonly: boolean;
+}) {
   if (tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">

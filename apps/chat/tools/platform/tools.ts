@@ -1,13 +1,29 @@
-import type { FileUIPart, ModelMessage, Tool } from "ai";
-import type { ModelId } from "@/lib/ai/app-models";
-import { installedTools } from "@/lib/ai/installed-tools";
+import type { FilePart, FileUIPart, ModelMessage, Tool } from "ai";
+import {
+  type AppModelDefinition,
+  type AppModelId,
+  getAppModelDefinition,
+} from "@/lib/ai/app-models";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
 import { createToolId } from "@/lib/ai/mcp-name-id";
+import {
+  getImageModel,
+  getLanguageModel,
+  getMultimodalImageModel,
+  getVideoModel,
+} from "@/lib/ai/providers";
 import type { StreamWriter } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
+import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
+import { getBaseUrl } from "@/lib/url";
+import type {
+  ToolNeed,
+  ToolRuntimeContext,
+} from "@/tools/chatjs/_shared/lib/runtime";
+import { createTools as createInstalledTools } from "@/tools/chatjs/tools";
 import { codeExecution } from "./code-execution";
 import { deepResearch } from "./deep-research/deep-research";
 import { createCodeDocumentTool } from "./documents/create-code-document";
@@ -16,13 +32,172 @@ import { createTextDocumentTool } from "./documents/create-text-document";
 import { editCodeDocumentTool } from "./documents/edit-code-document";
 import { editSheetDocumentTool } from "./documents/edit-sheet-document";
 import { editTextDocumentTool } from "./documents/edit-text-document";
-import { generateImageTool } from "./generate-image";
-import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
 import { tavilyWebSearch } from "./web-search";
 
 const log = createModuleLogger("tools:mcp");
+
+function createCapabilities(): ReadonlySet<ToolNeed> {
+  const capabilities = new Set<ToolNeed>([
+    "env.read",
+    "files.attachments",
+    "files.previous",
+  ]);
+
+  capabilities.add("models.language");
+  capabilities.add("media.write");
+  if (config.ai.tools.image.enabled) {
+    capabilities.add("models.image");
+  }
+  if (config.ai.tools.video.enabled) {
+    capabilities.add("models.video");
+  }
+  if (config.ai.tools.urlRetrieval.enabled) {
+    capabilities.add("url.retrieve");
+  }
+
+  return capabilities;
+}
+
+function fileUiPartToFilePart(part: FileUIPart): FilePart {
+  return {
+    data: new URL(part.url, getBaseUrl()),
+    filename: part.filename,
+    mediaType: part.mediaType,
+    type: "file",
+  };
+}
+
+function createToolRuntimeContext({
+  attachments,
+  costAccumulator,
+  lastGeneratedImage,
+}: {
+  attachments: FileUIPart[];
+  costAccumulator: CostAccumulator;
+  lastGeneratedImage: {
+    imageUrl: string;
+    mediaType: string;
+    name: string;
+  } | null;
+}): ToolRuntimeContext {
+  return {
+    capabilities: createCapabilities(),
+    env: {
+      get: (name) => process.env[name],
+      require: (name) => {
+        const value = process.env[name];
+        if (!value) {
+          throw new Error(`Missing required env var: ${name}`);
+        }
+        return value;
+      },
+    },
+    files: {
+      attachments: async ({ mediaTypes } = {}) =>
+        attachments
+          .filter((part) => {
+            if (!mediaTypes?.length) {
+              return true;
+            }
+            return mediaTypes.some((mediaType) =>
+              part.mediaType.startsWith(mediaType)
+            );
+          })
+          .map(fileUiPartToFilePart),
+      previous: ({ kind, limit } = {}) => {
+        if (kind && kind !== "image") {
+          return Promise.resolve([]);
+        }
+        if (!lastGeneratedImage) {
+          return Promise.resolve([]);
+        }
+        const file: FilePart = {
+          data: new URL(lastGeneratedImage.imageUrl, getBaseUrl()),
+          filename: lastGeneratedImage.name,
+          mediaType: lastGeneratedImage.mediaType,
+          type: "file",
+        };
+        return Promise.resolve([file].slice(0, limit));
+      },
+    },
+    media: {
+      write: async ({ bytes, filename, mediaType }) => {
+        const finalFilename =
+          filename ?? `generated-media-${crypto.randomUUID()}`;
+        const uploaded = await uploadFile(
+          finalFilename,
+          Buffer.from(bytes),
+          mediaType
+        );
+        return {
+          filename: finalFilename,
+          mediaType,
+          size: bytes.byteLength,
+          url: uploaded.url,
+        };
+      },
+    },
+    models: {
+      image: ({ model } = {}) =>
+        Promise.resolve().then(() => {
+          if (!config.ai.tools.image.enabled) {
+            throw new Error("Image generation is not enabled");
+          }
+          return getImageModel(model ?? config.ai.tools.image.default);
+        }),
+      imageGeneration: async ({ model } = {}) => {
+        if (!config.ai.tools.image.enabled) {
+          throw new Error("Image generation is not enabled");
+        }
+
+        const modelId = model ?? config.ai.tools.image.default;
+        let modelDefinition: AppModelDefinition | null = null;
+        try {
+          modelDefinition = await getAppModelDefinition(modelId as AppModelId);
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            error.message !== `Model ${modelId} not found`
+          ) {
+            throw error;
+          }
+        }
+        if (modelDefinition?.output.image) {
+          return {
+            model: getMultimodalImageModel(modelId),
+            modelId,
+            type: "language" as const,
+          };
+        }
+
+        return {
+          model: getImageModel(modelId),
+          modelId,
+          type: "image" as const,
+        };
+      },
+      language: async ({ model } = {}) =>
+        getLanguageModel((model ?? config.ai.workflows.chat) as AppModelId),
+      video: ({ model } = {}) =>
+        Promise.resolve().then(() => {
+          if (!config.ai.tools.video.enabled) {
+            throw new Error("Video generation is not enabled");
+          }
+          return getVideoModel(model ?? config.ai.tools.video.default);
+        }),
+    },
+    cost: {
+      addAPICost: (apiName, cost) => {
+        costAccumulator.addAPICost(apiName, cost);
+      },
+      addLLMCost: (modelId, usage, source) => {
+        costAccumulator.addLLMCost(modelId as AppModelId, usage, source);
+      },
+    },
+  };
+}
 
 export function getTools({
   dataStream,
@@ -37,9 +212,13 @@ export function getTools({
   dataStream: StreamWriter;
   session: ToolSession;
   messageId: string;
-  selectedModel: ModelId;
+  selectedModel: AppModelId;
   attachments: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
+  lastGeneratedImage: {
+    imageUrl: string;
+    mediaType: string;
+    name: string;
+  } | null;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
 }) {
@@ -49,11 +228,12 @@ export function getTools({
     selectedModel,
     costAccumulator,
   };
-  const enabledInstalledTools = Object.fromEntries(
-    Object.entries(installedTools).filter(
-      ([name]) => name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled
-    )
-  );
+  const installedRuntimeContext = createToolRuntimeContext({
+    attachments,
+    costAccumulator,
+    lastGeneratedImage,
+  });
+  const installedTools = createInstalledTools(installedRuntimeContext);
   const documentTypes = config.ai.tools.documents.types;
   const documentsEnabled = config.ai.tools.documents.enabled;
   const hasEnabledDocumentType =
@@ -103,16 +283,6 @@ export function getTools({
     ...(config.ai.tools.codeExecution.enabled
       ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
-    ...(config.ai.tools.image.enabled
-      ? {
-          generateImage: generateImageTool({
-            attachments,
-            lastGeneratedImage,
-            selectedModel,
-            costAccumulator,
-          }),
-        }
-      : {}),
     ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
@@ -124,12 +294,7 @@ export function getTools({
           }),
         }
       : {}),
-    ...(config.ai.tools.video.enabled
-      ? {
-          generateVideo: generateVideoTool({ selectedModel, costAccumulator }),
-        }
-      : {}),
-    ...enabledInstalledTools,
+    ...installedTools,
   };
 }
 

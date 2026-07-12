@@ -13,8 +13,6 @@ import type { createTextDocumentTool } from "@/tools/platform/documents/create-t
 import type { editCodeDocumentTool } from "@/tools/platform/documents/edit-code-document";
 import type { editSheetDocumentTool } from "@/tools/platform/documents/edit-sheet-document";
 import type { editTextDocumentTool } from "@/tools/platform/documents/edit-text-document";
-import type { generateImageTool as generateImageToolFactory } from "@/tools/platform/generate-image";
-import type { generateVideoTool as generateVideoToolFactory } from "@/tools/platform/generate-video";
 import type { readDocument } from "@/tools/platform/read-document";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import type { tavilyWebSearch } from "@/tools/platform/web-search";
@@ -160,12 +158,6 @@ type editSheetDocumentToolType = InferUITool<
 >;
 type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-type generateImageTool = InferUITool<
-  ReturnType<typeof generateImageToolFactory>
->;
-type generateVideoTool = InferUITool<
-  ReturnType<typeof generateVideoToolFactory>
->;
 type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
 type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 
@@ -178,8 +170,6 @@ export type ChatTools = {
   editCodeDocument: editCodeDocumentToolType;
   editSheetDocument: editSheetDocumentToolType;
   editTextDocument: editTextDocumentToolType;
-  generateImage: generateImageTool;
-  generateVideo: generateVideoTool;
   readDocument: readDocumentTool;
   webSearch: webSearchTool;
 } & InstalledTools;

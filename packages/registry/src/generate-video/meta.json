@@ -1,0 +1,5 @@
+{
+  "description": "Generate a short video clip from a text prompt",
+  "projectRequirements": ["storage"],
+  "registryDependencies": ["toolkit-renderer"]
+}

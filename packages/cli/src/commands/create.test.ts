@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { create } from "./create";
+import { create, selectedRegistryToolsRequireStorage } from "./create";
 
 const tempDirs: string[] = [];
 
@@ -19,6 +19,21 @@ afterEach(async () => {
 });
 
 describe("create command", () => {
+  it("detects storage requirements only for selected registry tools", () => {
+    const registryItems = [
+      { name: "generate-image", projectRequirements: ["storage" as const] },
+      { name: "word-count" },
+    ];
+
+    expect(
+      selectedRegistryToolsRequireStorage(registryItems, ["generate-image"])
+    ).toBe(true);
+    expect(selectedRegistryToolsRequireStorage(registryItems, ["word-count"])).toBe(
+      false
+    );
+    expect(selectedRegistryToolsRequireStorage(registryItems, [])).toBe(false);
+  });
+
   it("ships the selected Files SDK provider without unrelated provider peers", async () => {
     const tempParent = makeTempDir("s3-app");
     const appName = "s3-chat-app";

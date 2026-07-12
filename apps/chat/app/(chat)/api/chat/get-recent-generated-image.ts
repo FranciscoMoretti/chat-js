@@ -2,7 +2,7 @@ import type { ChatMessage } from "@/lib/ai/types";
 
 export function getRecentGeneratedImage(
   messages: ChatMessage[]
-): { imageUrl: string; name: string } | null {
+): { imageUrl: string; mediaType: string; name: string } | null {
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
@@ -14,9 +14,12 @@ export function getRecentGeneratedImage(
         part.state === "output-available" &&
         part.output?.imageUrl
       ) {
+        const mediaType = part.output.mediaType ?? "image/png";
+        const extension = mediaType.split("/")[1]?.split(";")[0] || "png";
         return {
           imageUrl: part.output.imageUrl,
-          name: `generated-image-${part.toolCallId}.png`,
+          mediaType,
+          name: `generated-image-${part.toolCallId}.${extension}`,
         };
       }
     }

@@ -29,6 +29,24 @@ const appToolsDir = fileURLToPath(
 );
 const itemsDir = fileURLToPath(new URL("./items", import.meta.url));
 const indexPath = fileURLToPath(new URL("./index.json", import.meta.url));
+const checkMode = process.argv.includes("--check");
+
+async function emitGeneratedFile(
+  filePath: string,
+  content: string
+): Promise<void> {
+  if (!checkMode) {
+    await fs.writeFile(filePath, content);
+    return;
+  }
+
+  const existing = await fs.readFile(filePath, "utf8").catch(() => null);
+  if (existing !== content) {
+    throw new Error(
+      `Generated registry file is out of date: ${path.relative(process.cwd(), filePath)}`
+    );
+  }
+}
 
 // Node.js built-in module names (node: prefix is handled separately)
 const NODE_BUILTINS = new Set([
@@ -102,7 +120,8 @@ function getImportPackage(spec: string): string | null {
     spec.startsWith("/") || // absolute path
     spec.startsWith("node:") || // explicit node: protocol
     spec.startsWith("@/") || // app path alias
-    spec.startsWith("@toolkit/") // registry-owned shared helpers
+    spec.startsWith("@toolkit/") || // registry-owned shared helpers
+    spec.startsWith("@ui/") // consumer UI components
   ) {
     return null;
   }
@@ -117,13 +136,14 @@ function getImportPackage(spec: string): string | null {
 type Meta = {
   description: string;
   hidden?: boolean;
+  projectRequirements?: Array<"storage">;
   extraDependencies?: string[];
   devDependencies?: string[];
   registryDependencies?: string[];
   files?: Array<{
     source: string;
     target: string;
-    type: "tool" | "renderer" | "lib" | "component" | "hook";
+    type: "tool" | "renderer" | "lib" | "component" | "hook" | "ui";
   }>;
 };
 
@@ -137,14 +157,19 @@ async function fileExists(filePath: string): Promise<boolean> {
 async function main(): Promise<void> {
   await fs.mkdir(itemsDir, { recursive: true });
 
-  const entries = await fs.readdir(srcDir);
+  const entries = (await fs.readdir(srcDir)).sort();
   const dirs: string[] = [];
   for (const entry of entries) {
     const stat = await fs.stat(path.join(srcDir, entry));
     if (stat.isDirectory()) dirs.push(entry);
   }
 
-  const index: Array<{ name: string; description: string; hidden?: boolean }> = [];
+  const index: Array<{
+    name: string;
+    description: string;
+    hidden?: boolean;
+    projectRequirements?: Array<"storage">;
+  }> = [];
 
   for (const name of dirs) {
     const dir = path.join(srcDir, name);
@@ -155,7 +180,7 @@ async function main(): Promise<void> {
     const appDir = path.join(appToolsDir, name);
     const registryFiles: Array<{
       path: string;
-      type: "tool" | "renderer" | "lib" | "component" | "hook";
+      type: "tool" | "renderer" | "lib" | "component" | "hook" | "ui";
       target: string;
       content: string;
     }> = [];
@@ -217,6 +242,9 @@ async function main(): Promise<void> {
 
     for (const dep of meta.extraDependencies ?? []) detected.add(dep);
     const dependencies = [...detected].sort();
+    const projectRequirements = [
+      ...new Set(meta.projectRequirements ?? []),
+    ].sort();
 
     const item = {
       name,
@@ -234,10 +262,11 @@ async function main(): Promise<void> {
           }
         : {}),
       ...(toolEnvVars.length > 0 ? { envRequirements: toolEnvVars } : {}),
+      ...(projectRequirements.length > 0 ? { projectRequirements } : {}),
       files: registryFiles,
     };
 
-    await fs.writeFile(
+    await emitGeneratedFile(
       path.join(itemsDir, `${name}.json`),
       JSON.stringify(item, null, 2) + "\n"
     );
@@ -246,15 +275,33 @@ async function main(): Promise<void> {
       name,
       description: meta.description,
       ...(meta.hidden ? { hidden: true } : {}),
+      ...(projectRequirements.length > 0 ? { projectRequirements } : {}),
     });
     console.log(
       `  built ${name} (deps: ${dependencies.join(", ") || "none"})`
     );
   }
 
-  await fs.writeFile(indexPath, JSON.stringify(index, null, 2) + "\n");
+  const expectedItemFiles = new Set(dirs.map((name) => `${name}.json`));
+  const orphanedItemFiles = (await fs.readdir(itemsDir)).filter(
+    (file) => file.endsWith(".json") && !expectedItemFiles.has(file)
+  );
+  if (orphanedItemFiles.length > 0) {
+    if (checkMode) {
+      throw new Error(
+        `Orphaned registry item file(s): ${orphanedItemFiles.join(", ")}`
+      );
+    }
+    await Promise.all(
+      orphanedItemFiles.map((file) => fs.rm(path.join(itemsDir, file)))
+    );
+  }
 
-  console.log(`\n✓ ${dirs.length} tool(s) → items/ + index.json`);
+  await emitGeneratedFile(indexPath, JSON.stringify(index, null, 2) + "\n");
+
+  console.log(
+    `\n✓ ${dirs.length} tool(s) ${checkMode ? "verified" : "→ items/ + index.json"}`
+  );
 }
 
 main().catch((error) => {

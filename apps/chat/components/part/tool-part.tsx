@@ -10,8 +10,6 @@ import type { ChatTools } from "@/lib/ai/types";
 import { CodeExecution } from "./code-execution";
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
-import { GenerateImage } from "./generate-image";
-import { GenerateVideo } from "./generate-video";
 import { ReadDocument } from "./read-document";
 import { WebSearch } from "./web-search";
 
@@ -69,14 +67,6 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
 
   if (type === "tool-codeExecution") {
     return <CodeExecution tool={part} />;
-  }
-
-  if (type === "tool-generateImage") {
-    return <GenerateImage tool={part} />;
-  }
-
-  if (type === "tool-generateVideo") {
-    return <GenerateVideo tool={part} />;
   }
 
   if (type === "tool-deepResearch") {

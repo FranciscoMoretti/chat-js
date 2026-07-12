@@ -1,8 +1,8 @@
 "use client";
 
 import { format, isWithinInterval } from "date-fns";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { useToolIsCompact } from "@/tools/chatjs/_shared/hooks/use-tool-is-compact";
+import { cx } from "@/tools/chatjs/_shared/lib/cx";
 import type { TypelessToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 import type { getWeather, WeatherAtLocation } from "./tool";
 
@@ -21,25 +21,6 @@ const SAMPLE = {
   hourly_units: { time: "iso8601", temperature_2m: "°C" },
   hourly: {
     time: [
-      "2024-10-07T00:00",
-      "2024-10-07T01:00",
-      "2024-10-07T02:00",
-      "2024-10-07T03:00",
-      "2024-10-07T04:00",
-      "2024-10-07T05:00",
-      "2024-10-07T06:00",
-      "2024-10-07T07:00",
-      "2024-10-07T08:00",
-      "2024-10-07T09:00",
-      "2024-10-07T10:00",
-      "2024-10-07T11:00",
-      "2024-10-07T12:00",
-      "2024-10-07T13:00",
-      "2024-10-07T14:00",
-      "2024-10-07T15:00",
-      "2024-10-07T16:00",
-      "2024-10-07T17:00",
-      "2024-10-07T18:00",
       "2024-10-07T19:00",
       "2024-10-07T20:00",
       "2024-10-07T21:00",
@@ -47,91 +28,8 @@ const SAMPLE = {
       "2024-10-07T23:00",
       "2024-10-08T00:00",
       "2024-10-08T01:00",
-      "2024-10-08T02:00",
-      "2024-10-08T03:00",
-      "2024-10-08T04:00",
-      "2024-10-08T05:00",
-      "2024-10-08T06:00",
-      "2024-10-08T07:00",
-      "2024-10-08T08:00",
-      "2024-10-08T09:00",
-      "2024-10-08T10:00",
-      "2024-10-08T11:00",
-      "2024-10-08T12:00",
-      "2024-10-08T13:00",
-      "2024-10-08T14:00",
-      "2024-10-08T15:00",
-      "2024-10-08T16:00",
-      "2024-10-08T17:00",
-      "2024-10-08T18:00",
-      "2024-10-08T19:00",
-      "2024-10-08T20:00",
-      "2024-10-08T21:00",
-      "2024-10-08T22:00",
-      "2024-10-08T23:00",
-      "2024-10-09T00:00",
-      "2024-10-09T01:00",
-      "2024-10-09T02:00",
-      "2024-10-09T03:00",
-      "2024-10-09T04:00",
-      "2024-10-09T05:00",
-      "2024-10-09T06:00",
-      "2024-10-09T07:00",
-      "2024-10-09T08:00",
-      "2024-10-09T09:00",
-      "2024-10-09T10:00",
-      "2024-10-09T11:00",
-      "2024-10-09T12:00",
-      "2024-10-09T13:00",
-      "2024-10-09T14:00",
-      "2024-10-09T15:00",
-      "2024-10-09T16:00",
-      "2024-10-09T17:00",
-      "2024-10-09T18:00",
-      "2024-10-09T19:00",
-      "2024-10-09T20:00",
-      "2024-10-09T21:00",
-      "2024-10-09T22:00",
-      "2024-10-09T23:00",
-      "2024-10-10T00:00",
-      "2024-10-10T01:00",
-      "2024-10-10T02:00",
-      "2024-10-10T03:00",
-      "2024-10-10T04:00",
-      "2024-10-10T05:00",
-      "2024-10-10T06:00",
-      "2024-10-10T07:00",
-      "2024-10-10T08:00",
-      "2024-10-10T09:00",
-      "2024-10-10T10:00",
-      "2024-10-10T11:00",
-      "2024-10-10T12:00",
-      "2024-10-10T13:00",
-      "2024-10-10T14:00",
-      "2024-10-10T15:00",
-      "2024-10-10T16:00",
-      "2024-10-10T17:00",
-      "2024-10-10T18:00",
-      "2024-10-10T19:00",
-      "2024-10-10T20:00",
-      "2024-10-10T21:00",
-      "2024-10-10T22:00",
-      "2024-10-10T23:00",
-      "2024-10-11T00:00",
-      "2024-10-11T01:00",
-      "2024-10-11T02:00",
-      "2024-10-11T03:00",
     ],
-    temperature_2m: [
-      36.6, 32.8, 29.5, 28.6, 29.2, 28.2, 27.5, 26.6, 26.5, 26, 25, 23.5, 23.9,
-      24.2, 22.9, 21, 24, 28.1, 31.4, 33.9, 32.1, 28.9, 26.9, 25.2, 23, 21.1,
-      19.6, 18.6, 17.7, 16.8, 16.2, 15.5, 14.9, 14.4, 14.2, 13.7, 13.3, 12.9,
-      12.5, 13.5, 15.8, 17.7, 19.6, 21, 21.9, 22.3, 22, 20.7, 18.9, 17.9, 17.3,
-      17, 16.7, 16.2, 15.6, 15.2, 15, 15, 15.1, 14.8, 14.8, 14.9, 14.7, 14.8,
-      15.3, 16.2, 17.9, 19.6, 20.5, 21.6, 21, 20.7, 19.3, 18.7, 18.4, 17.9,
-      17.3, 17, 17, 16.8, 16.4, 16.2, 16, 15.8, 15.7, 15.4, 15.4, 16.1, 16.7,
-      17, 18.6, 19, 19.5, 19.4, 18.5, 17.9, 17.5, 16.7, 16.3, 16.1,
-    ],
+    temperature_2m: [33.9, 32.1, 28.9, 26.9, 25.2, 23, 21.1],
   },
   daily_units: {
     time: "iso8601",
@@ -139,27 +37,9 @@ const SAMPLE = {
     sunset: "iso8601",
   },
   daily: {
-    time: [
-      "2024-10-07",
-      "2024-10-08",
-      "2024-10-09",
-      "2024-10-10",
-      "2024-10-11",
-    ],
-    sunrise: [
-      "2024-10-07T07:15",
-      "2024-10-08T07:16",
-      "2024-10-09T07:17",
-      "2024-10-10T07:18",
-      "2024-10-11T07:19",
-    ],
-    sunset: [
-      "2024-10-07T19:00",
-      "2024-10-08T18:58",
-      "2024-10-09T18:57",
-      "2024-10-10T18:55",
-      "2024-10-11T18:54",
-    ],
+    time: ["2024-10-07"],
+    sunrise: ["2024-10-07T07:15"],
+    sunset: ["2024-10-07T19:00"],
   },
 };
 
@@ -184,35 +64,39 @@ function WeatherCard({
     end: new Date(weatherAtLocation.daily.sunset[0]),
   });
 
-  const isMobile = useIsMobile();
-  const hoursToShow = isMobile ? 5 : 6;
+  const isCompact = useToolIsCompact();
+  const hoursToShow = isCompact ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
     (time) => new Date(time) >= new Date(weatherAtLocation.current.time)
   );
+  const startIndex =
+    currentTimeIndex >= 0
+      ? currentTimeIndex
+      : Math.max(0, weatherAtLocation.hourly.time.length - hoursToShow);
   const displayTimes = weatherAtLocation.hourly.time.slice(
-    currentTimeIndex,
-    currentTimeIndex + hoursToShow
+    startIndex,
+    startIndex + hoursToShow
   );
   const displayTemperatures = weatherAtLocation.hourly.temperature_2m.slice(
-    currentTimeIndex,
-    currentTimeIndex + hoursToShow
+    startIndex,
+    startIndex + hoursToShow
   );
 
   return (
     <div
-      className={cn(
+      className={cx(
         "skeleton-bg flex max-w-[500px] flex-col gap-4 rounded-2xl p-4",
-        { "bg-blue-400": isDay },
-        { "bg-indigo-900": !isDay }
+        isDay && "bg-blue-400",
+        !isDay && "bg-indigo-900"
       )}
     >
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-2">
           <div
-            className={cn(
+            className={cx(
               "skeleton-div size-10 rounded-full",
-              { "bg-yellow-300": isDay },
-              { "bg-indigo-100": !isDay }
+              isDay && "bg-yellow-300",
+              !isDay && "bg-indigo-100"
             )}
           />
           <div className="font-medium text-4xl text-blue-50">
@@ -231,10 +115,10 @@ function WeatherCard({
               {format(new Date(time), "ha")}
             </div>
             <div
-              className={cn(
+              className={cx(
                 "skeleton-div size-6 rounded-full",
-                { "bg-yellow-300": isDay },
-                { "bg-indigo-200": !isDay }
+                isDay && "bg-yellow-300",
+                !isDay && "bg-indigo-200"
               )}
             />
             <div className="text-blue-50 text-sm">
