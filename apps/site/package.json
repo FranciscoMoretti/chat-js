@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "bun --filter @chatjs/thread build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -11,7 +12,10 @@
     "format": "ultracite fix"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.152",
+    "@chatjs/thread": "workspace:*",
     "@vercel/analytics": "^1.5.0",
+    "ai": "^6.0.150",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "0.553.0",
