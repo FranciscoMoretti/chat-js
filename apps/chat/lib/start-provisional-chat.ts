@@ -78,6 +78,8 @@ export function useStartProvisionalChat(chatId: string) {
         return false;
       }
 
+      storeState.setStatus("submitted");
+
       registerProvisionalChatConfirmation(chatId, {
         parallelGroupId: message.metadata.parallelGroupId ?? null,
         userMessageId: message.id,

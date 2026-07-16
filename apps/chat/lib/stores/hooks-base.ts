@@ -95,3 +95,6 @@ export const useMessageMetadataById = (
 
 export const useLastMessageId = () =>
   useBaseChatStore((state) => state.getLastMessageId());
+
+export const useLastMessageMetadata = () =>
+  useBaseChatStore((state) => state.getThrottledMessages().at(-1)?.metadata);

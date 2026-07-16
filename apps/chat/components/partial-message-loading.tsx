@@ -7,7 +7,9 @@ import { Skeleton } from "./ui/skeleton";
 export function PartialMessageLoading({ messageId }: { messageId: string }) {
   const metadata = useMessageMetadataById(messageId);
   const status = useChatStatus();
-  const isLoading = metadata.activeStreamId && status === "submitted";
+  const isLoading =
+    metadata.activeStreamId?.startsWith("pending:") ||
+    (metadata.activeStreamId && status === "submitted");
 
   if (!isLoading) {
     return null;

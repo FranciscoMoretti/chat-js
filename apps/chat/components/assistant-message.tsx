@@ -26,9 +26,14 @@ const PureAssistantMessage = ({
   const isPendingLastMessage =
     messageId === lastMessageId &&
     (status === "submitted" || status === "streaming");
-  const shouldHideCompletionActions = isLoading || isPendingLastMessage;
+  const activeStreamId = metadata.activeStreamId;
+  const hasActiveResponse = activeStreamId !== null;
+  const shouldHideCompletionActions =
+    isLoading || hasActiveResponse || isPendingLastMessage;
   const isReconnectingToMessageStream =
-    metadata.activeStreamId !== null && status === "submitted";
+    hasActiveResponse &&
+    !activeStreamId.startsWith("pending:") &&
+    status === "submitted";
 
   if (!chatId || isReconnectingToMessageStream) {
     return null;
