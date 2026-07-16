@@ -1,4 +1,5 @@
 export { getMessageText, ROOT_PARENT_ID } from "./message-tree";
+export { createThreadChat, ThreadChat } from "./thread-chat";
 
 export type {
 	MessageTreeNode,
