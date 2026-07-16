@@ -47,7 +47,7 @@
 	"scripts": {
 		"build": "bun -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json && bun build ./src/index.ts --outfile ./dist/index.js --target=browser --format=esm --packages external && bun build ./src/use-thread.ts --outfile ./dist/react.js --target=browser --format=esm --packages external --banner='\"use client\";'",
 		"format": "bunx @biomejs/biome@2.4.10 check --write src test *.md package.json tsconfig.json tsconfig.build.json biome.jsonc",
-		"lint": "bunx @biomejs/biome@2.4.10 check src test ARCHITECTURE.md package.json tsconfig.json tsconfig.build.json biome.jsonc",
+		"lint": "bunx @biomejs/biome@2.4.10 check src test README.md ARCHITECTURE.md package.json tsconfig.json tsconfig.build.json biome.jsonc",
 		"prepublishOnly": "bun run build",
 		"test": "bun test --pass-with-no-tests",
 		"test:unit": "bun test --pass-with-no-tests",
