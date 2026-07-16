@@ -47,6 +47,7 @@
     "@ai-sdk/openai-compatible": "2.0.56",
     "@ai-sdk/provider": "3.0.13",
     "@ai-sdk/react": "3.0.221",
+    "@chatjs/thread": "workspace:*",
     "@better-auth/core": "1.5.6",
     "@better-auth/electron": "^1.5.6",
     "@codemirror/lang-javascript": "^6.2.2",
