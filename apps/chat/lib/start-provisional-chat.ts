@@ -79,6 +79,8 @@ export function useStartProvisionalChat(chatId: string) {
         return false;
       }
 
+      storeState.setStatus("submitted");
+
       registerProvisionalChatConfirmation(chatId, {
         message,
         projectId: currentRoute.projectId,

@@ -46,7 +46,10 @@ import {
 } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions, useChatStoreApi } from "@/lib/stores/base";
-import { useLastMessageId } from "@/lib/stores/hooks-base";
+import {
+  useLastMessageId,
+  useLastMessageMetadata,
+} from "@/lib/stores/hooks-base";
 import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn } from "@/lib/utils";
@@ -57,6 +60,7 @@ import { useTRPC } from "@/trpc/react";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
+import { getResponseAwareStatus } from "./parallel-response-status";
 import { ResponsiveTools } from "./responsive-tools";
 import {
   DropdownMenu,
@@ -117,12 +121,18 @@ function PureMultimodalInput({
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
   const {
+    setStatus,
     setMessages,
     sendMessage,
     startRun,
     stop: stopHelper,
   } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
+  const lastMessageMetadata = useLastMessageMetadata();
+  const responseAwareStatus = getResponseAwareStatus(
+    status,
+    lastMessageMetadata ? { metadata: lastMessageMetadata } : null
+  );
   const {
     editorRef,
     selectedTool,
@@ -223,7 +233,7 @@ function PureMultimodalInput({
     if (isModelDisallowedForAnonymous) {
       return { enabled: false, message: "Log in to use this model" };
     }
-    if (status !== "ready" && status !== "error") {
+    if (responseAwareStatus !== "ready" && responseAwareStatus !== "error") {
       return {
         enabled: false,
         message: "Please wait for the model to finish its response!",
@@ -248,7 +258,7 @@ function PureMultimodalInput({
     isModelDisallowedForAnonymous,
     isParallelModelRequest,
     session?.user,
-    status,
+    responseAwareStatus,
     uploadQueue.length,
   ]);
 
@@ -385,6 +395,7 @@ function PureMultimodalInput({
     }
 
     if (primaryRequest) {
+      setStatus("submitted");
       sendMessage(message, {
         body: {
           ...createParallelRequestBody(primaryRequest, true),
@@ -423,6 +434,7 @@ function PureMultimodalInput({
           toast.error("Failed to complete all parallel responses");
         });
     } else {
+      setStatus("submitted");
       sendMessage(
         message,
         currentRoute.projectId
@@ -454,6 +466,7 @@ function PureMultimodalInput({
     parallelResponsesEnabled,
     selectedTool,
     sendMessage,
+    setStatus,
     startProvisionalChat,
     startRun,
     trimMessagesInEditMode,
@@ -531,7 +544,7 @@ function PureMultimodalInput({
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent) => {
-      if (status !== "ready") {
+      if (responseAwareStatus !== "ready") {
         return;
       }
 
@@ -589,7 +602,7 @@ function PureMultimodalInput({
     [
       setAttachments,
       processFiles,
-      status,
+      responseAwareStatus,
       session,
       uploadFile,
       attachmentsEnabled,
@@ -644,7 +657,7 @@ function PureMultimodalInput({
       }
     },
     noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: status !== "ready" || !attachmentsEnabled,
+    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
     noDrag: !attachmentsEnabled,
     accept: acceptedTypes,
   });
@@ -758,7 +771,7 @@ function PureMultimodalInput({
             selectedModelSelection={selectedModelSelection}
             selectedTool={selectedTool}
             setSelectedTool={setSelectedTool}
-            status={status}
+            status={responseAwareStatus}
             submission={submission}
             submitForm={submitForm}
           />
