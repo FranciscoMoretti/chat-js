@@ -9,8 +9,8 @@ import {
   addPendingAssistantMessages,
   createParallelRequestBody,
 } from "@/lib/parallel-chat-requests";
+import { registerProvisionalChatConfirmation } from "@/lib/provisional-chat-confirmations";
 import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
-import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { useModelChange } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
@@ -46,7 +46,6 @@ export function useStartProvisionalChat(chatId: string) {
   const { data: session } = useSession();
   const addMessageToTree = useAddMessageToTree();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
-  const { setPendingChatConfirmation } = useChatPersistenceActions();
 
   return useCallback(
     ({
@@ -80,7 +79,7 @@ export function useStartProvisionalChat(chatId: string) {
         return false;
       }
 
-      setPendingChatConfirmation({
+      registerProvisionalChatConfirmation(chatId, {
         message,
         projectId: currentRoute.projectId,
         requestSpecs,
@@ -126,7 +125,6 @@ export function useStartProvisionalChat(chatId: string) {
       chatId,
       currentRoute,
       session?.user,
-      setPendingChatConfirmation,
       storeApi,
     ]
   );

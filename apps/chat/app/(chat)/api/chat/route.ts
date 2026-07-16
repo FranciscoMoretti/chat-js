@@ -354,12 +354,17 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
-      if (isNewChat) {
+      // Release provisional parallel responses only after this exact user
+      // message has been persisted by the primary request.
+      if (isNewChat && userId && isPrimaryParallel !== false) {
         dataStream.write({
           id: generateUUID(),
-          type: "data-chatConfirmed",
-          data: { chatId },
+          type: "data-userMessagePersisted",
+          data: {
+            chatId,
+            parallelGroupId,
+            userMessageId: userMessage.id,
+          },
           transient: true,
         });
       }
@@ -534,7 +539,7 @@ async function executeChatRequest({
   const streamId = generateUUID();
 
   if (!isAnonymous) {
-    // The first provisional request can replay before chatConfirmed arrives, so
+    // The first provisional request can replay before its persistence acknowledgment arrives, so
     // placeholder creation must be idempotent.
     const insertedMessage = await saveMessageIfNotExists({
       id: messageId,

@@ -190,8 +190,10 @@ interface FollowupSuggestions {
 
 export type CustomUIDataTypes = {
   appendMessage: string;
-  chatConfirmed: {
+  userMessagePersisted: {
     chatId: string;
+    parallelGroupId: string | null;
+    userMessageId: string;
   };
   followupSuggestions: FollowupSuggestions;
   researchUpdate: ResearchUpdate;
