@@ -321,7 +321,6 @@ async function createChatStream({
   userId,
   abortController,
   isAnonymous,
-  isNewChat,
   timeoutId,
   mcpConnectors,
   streamId,
@@ -339,7 +338,6 @@ async function createChatStream({
   userId: string | null;
   abortController: AbortController;
   isAnonymous: boolean;
-  isNewChat: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
@@ -354,12 +352,17 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
-      if (isNewChat) {
+      // Release provisional parallel responses only after this exact user
+      // message has been persisted by the primary request.
+      if (userId && isPrimaryParallel !== false) {
         dataStream.write({
           id: generateUUID(),
-          type: "data-chatConfirmed",
-          data: { chatId },
+          type: "data-userMessagePersisted",
+          data: {
+            chatId,
+            parallelGroupId,
+            userMessageId: userMessage.id,
+          },
           transient: true,
         });
       }
@@ -501,14 +504,12 @@ async function executeChatRequest({
   userMessage,
   previousMessages,
   selectedModelId,
-  assistantMessageId,
   parallelGroupId,
   parallelIndex,
   isPrimaryParallel,
   explicitlyRequestedTools,
   userId,
   isAnonymous,
-  isNewChat,
   abortController,
   timeoutId,
   mcpConnectors,
@@ -517,24 +518,22 @@ async function executeChatRequest({
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
   selectedModelId: AppModelId;
-  assistantMessageId?: string;
   parallelGroupId: string | null;
   parallelIndex: number | null;
   isPrimaryParallel: boolean | null;
   explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   isAnonymous: boolean;
-  isNewChat: boolean;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
-  const messageId = assistantMessageId ?? generateUUID();
+  const messageId = generateUUID();
   const streamId = generateUUID();
 
   if (!isAnonymous) {
-    // The first provisional request can replay before chatConfirmed arrives, so
+    // The first provisional request can replay before its persistence acknowledgment arrives, so
     // placeholder creation must be idempotent.
     const insertedMessage = await saveMessageIfNotExists({
       id: messageId,
@@ -592,7 +591,6 @@ async function executeChatRequest({
     userId,
     abortController,
     isAnonymous,
-    isNewChat,
     timeoutId,
     mcpConnectors,
     streamId,
@@ -822,7 +820,6 @@ async function finalizeMessageAndCredits({
 }
 
 type ChatPostBody = {
-  assistantMessageId?: string;
   id: string;
   isPrimaryParallel?: boolean | null;
   message: ChatMessage;
@@ -961,7 +958,6 @@ async function readChatPostBody(
   return {
     success: true,
     body: {
-      assistantMessageId: optionalString(rawBody.assistantMessageId),
       id: rawBody.id,
       isPrimaryParallel: optionalNullableBoolean(rawBody.isPrimaryParallel),
       message: userMessage,
@@ -1067,7 +1063,6 @@ export async function POST(request: NextRequest) {
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
       projectId,
-      assistantMessageId,
       selectedModelId: requestSelectedModelId,
       parallelGroupId,
       parallelIndex,
@@ -1138,14 +1133,12 @@ export async function POST(request: NextRequest) {
       userMessage,
       previousMessages: executionInputs.previousMessages,
       selectedModelId,
-      assistantMessageId,
       parallelGroupId: responseParallelGroupId,
       parallelIndex: parallelIndex ?? null,
       isPrimaryParallel: isPrimaryParallel ?? null,
       explicitlyRequestedTools,
       userId,
       isAnonymous,
-      isNewChat: persistenceResult.isNewChat,
       abortController,
       timeoutId,
       mcpConnectors: executionInputs.mcpConnectors,

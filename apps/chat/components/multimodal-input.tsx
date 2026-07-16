@@ -38,15 +38,11 @@ import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
-import {
-  createParallelRequestBody,
-  runParallelThreadRequestSpecs,
-} from "@/lib/parallel-chat-requests";
+import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
 import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
-import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
@@ -112,11 +108,10 @@ function PureMultimodalInput({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const addMessageToTree = useAddMessageToTree();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
   const {
-    sendMessage,
+    setStatus,
     startRun,
     stop: stopHelper,
   } = useChatActions<ChatMessage>();
@@ -355,21 +350,15 @@ function PureMultimodalInput({
     }
 
     if (primaryRequest) {
-      sendMessage(message, {
-        body: {
-          ...createParallelRequestBody(primaryRequest, true),
-          projectId: currentRoute.projectId ?? undefined,
-        },
-      });
-
-      addMessageToTree(message);
+      setStatus("submitted");
       handleModelChange(primaryRequest.modelId);
 
       runParallelThreadRequestSpecs({
         chatId,
+        isAuthenticated: !!session?.user,
         message,
         projectId: currentRoute.projectId,
-        requestSpecs: requestSpecs.slice(1),
+        requestSpecs,
         startRun,
       })
         .then(async (failedRequestSpecs) => {
@@ -383,13 +372,7 @@ function PureMultimodalInput({
           toast.error("Failed to complete all parallel responses");
         });
     } else {
-      sendMessage(
-        message,
-        currentRoute.projectId
-          ? { body: { projectId: currentRoute.projectId } }
-          : undefined
-      );
-      addMessageToTree(message);
+      toast.error("No model selected");
     }
 
     // Refocus after submit
@@ -397,7 +380,6 @@ function PureMultimodalInput({
       editorRef.current?.focus();
     }
   }, [
-    addMessageToTree,
     attachments,
     isMobile,
     chatId,
@@ -413,7 +395,8 @@ function PureMultimodalInput({
     parentMessageId,
     parallelResponsesEnabled,
     selectedTool,
-    sendMessage,
+    session?.user,
+    setStatus,
     startProvisionalChat,
     startRun,
     trimMessagesInEditMode,

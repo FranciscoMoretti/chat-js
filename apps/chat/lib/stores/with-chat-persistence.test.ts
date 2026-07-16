@@ -12,7 +12,7 @@ describe("withChatPersistence", () => {
     assert.equal(store.getState().isChatPersisted, true);
   });
 
-  it("tracks app-level chat persistence outside the runtime registry", () => {
+  it("resets app-level chat persistence", () => {
     const store = createCustomChatStore<ChatMessage>();
 
     assert.equal(store.getState().isChatPersisted, false);
@@ -20,30 +20,8 @@ describe("withChatPersistence", () => {
     store.getState().setChatPersisted(true);
     assert.equal(store.getState().isChatPersisted, true);
 
-    store.getState().setPendingChatConfirmation({
-      message: {
-        id: "message-1",
-        metadata: {
-          activeStreamId: null,
-          createdAt: new Date("2024-01-01T00:00:00.000Z"),
-          parentMessageId: null,
-          selectedModel: "openai/gpt-4o-mini",
-          selectedTool: undefined,
-        },
-        parts: [],
-        role: "user",
-      },
-      projectId: null,
-      requestSpecs: [],
-    });
-    assert.equal(
-      store.getState().pendingChatConfirmation?.message.id,
-      "message-1"
-    );
-
     store.getState().reset();
 
     assert.equal(store.getState().isChatPersisted, false);
-    assert.equal(store.getState().pendingChatConfirmation, null);
   });
 });

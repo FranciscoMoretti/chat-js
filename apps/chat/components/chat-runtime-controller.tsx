@@ -9,34 +9,27 @@ import {
   getAppRuntimeStore,
   getAppRuntimeThread,
 } from "@/lib/app-chat-runtime";
-import {
-  markParallelRequestSpecsFailed,
-  runParallelRequestSpecs,
-} from "@/lib/parallel-chat-requests";
+import { claimConfirmedProvisionalChat } from "@/lib/provisional-chat-confirmations";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
-import {
-  useChatPersistenceActions,
-  useIsChatPersisted,
-  usePendingChatConfirmation,
-} from "@/lib/stores/hooks-chat-persistence";
-import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
+import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useTRPC } from "@/trpc/react";
 
 function ChatConfirmationEffects({ chatId }: { chatId: string }) {
-  const addMessageToTree = useAddMessageToTree();
   const isChatPersisted = useIsChatPersisted(chatId);
-  const pendingConfirmation = usePendingChatConfirmation();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const { clearPendingChatConfirmation } = useChatPersistenceActions();
   const handledConfirmationRef = useRef(false);
 
   useEffect(() => {
-    if (!(isChatPersisted && pendingConfirmation)) {
+    if (!isChatPersisted) {
       return;
     }
 
     if (handledConfirmationRef.current) {
+      return;
+    }
+
+    if (!claimConfirmedProvisionalChat(chatId)) {
       return;
     }
 
@@ -61,57 +54,10 @@ function ChatConfirmationEffects({ chatId }: { chatId: string }) {
       ]);
     };
 
-    const secondaryRequestSpecs = pendingConfirmation.requestSpecs.slice(1);
-
-    if (secondaryRequestSpecs.length === 0) {
-      invalidatePersistedChatQueries()
-        .catch(() => {
-          toast.error("Failed to refresh chat history");
-        })
-        .finally(clearPendingChatConfirmation);
-      return;
-    }
-
-    runParallelRequestSpecs({
-      chatId,
-      message: pendingConfirmation.message,
-      projectId: pendingConfirmation.projectId,
-      requestSpecs: secondaryRequestSpecs,
-    })
-      .then((failedRequestSpecs) => {
-        if (failedRequestSpecs.length > 0) {
-          markParallelRequestSpecsFailed({
-            addMessageToTree,
-            message: pendingConfirmation.message,
-            requestSpecs: failedRequestSpecs,
-          });
-          toast.error("Failed to complete all parallel responses");
-        }
-      })
-      .catch(() => {
-        markParallelRequestSpecsFailed({
-          addMessageToTree,
-          message: pendingConfirmation.message,
-          requestSpecs: secondaryRequestSpecs,
-        });
-        toast.error("Failed to complete all parallel responses");
-      })
-      .finally(() => {
-        invalidatePersistedChatQueries()
-          .catch(() => {
-            toast.error("Failed to refresh chat history");
-          })
-          .finally(clearPendingChatConfirmation);
-      });
-  }, [
-    addMessageToTree,
-    chatId,
-    clearPendingChatConfirmation,
-    isChatPersisted,
-    pendingConfirmation,
-    queryClient,
-    trpc,
-  ]);
+    invalidatePersistedChatQueries().catch(() => {
+      toast.error("Failed to refresh chat history");
+    });
+  }, [chatId, isChatPersisted, queryClient, trpc]);
 
   return null;
 }

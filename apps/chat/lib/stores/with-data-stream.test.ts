@@ -7,8 +7,12 @@ describe("withDataStream", () => {
   it("stores transient stream parts on the chat store", () => {
     const store = createCustomChatStore<ChatMessage>();
     const streamPart = {
-      type: "data-chatConfirmed",
-      data: { chatId: "chat-1" },
+      type: "data-userMessagePersisted",
+      data: {
+        chatId: "chat-1",
+        parallelGroupId: "group-1",
+        userMessageId: "user-1",
+      },
     } as const;
 
     store.getState().setDataStream([streamPart]);

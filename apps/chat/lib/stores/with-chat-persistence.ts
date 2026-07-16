@@ -4,25 +4,12 @@
 
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
-import type { ChatMessage } from "@/lib/ai/types";
-import type { ParallelRequestSpec } from "@/lib/draft-chat-submission";
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
-
-export interface PendingChatConfirmation {
-  message: ChatMessage;
-  projectId: string | null;
-  requestSpecs: ParallelRequestSpec[];
-}
 
 export type ChatPersistenceAugmentedState<UM extends UIMessage> =
   BaseChatStoreState<UM> & {
     isChatPersisted: boolean;
-    pendingChatConfirmation: PendingChatConfirmation | null;
-    clearPendingChatConfirmation: () => void;
     setChatPersisted: (isPersisted: boolean) => void;
-    setPendingChatConfirmation: (
-      pendingConfirmation: PendingChatConfirmation | null
-    ) => void;
   };
 
 export const withChatPersistence =
@@ -37,26 +24,14 @@ export const withChatPersistence =
     return {
       ...base,
       isChatPersisted: options.initialIsChatPersisted ?? false,
-      pendingChatConfirmation: null,
-      clearPendingChatConfirmation: () => {
-        set({ pendingChatConfirmation: null } as Partial<
-          T & ChatPersistenceAugmentedState<UI_MESSAGE>
-        >);
-      },
       reset: () => {
         originalReset();
         set({
           isChatPersisted: false,
-          pendingChatConfirmation: null,
         } as Partial<T & ChatPersistenceAugmentedState<UI_MESSAGE>>);
       },
       setChatPersisted: (isPersisted) => {
         set({ isChatPersisted: isPersisted } as Partial<
-          T & ChatPersistenceAugmentedState<UI_MESSAGE>
-        >);
-      },
-      setPendingChatConfirmation: (pendingChatConfirmation) => {
-        set({ pendingChatConfirmation } as Partial<
           T & ChatPersistenceAugmentedState<UI_MESSAGE>
         >);
       },

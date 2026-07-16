@@ -9,6 +9,9 @@ import { createCompletionQueue } from "@/lib/ai/completion-queue";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
+import { createGatedChatTransport } from "@/lib/gated-chat-transport";
+import { acknowledgeParallelUserMessagePersistence } from "@/lib/parallel-chat-requests";
+import { acknowledgeProvisionalUserMessagePersistence } from "@/lib/provisional-chat-confirmations";
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
@@ -32,7 +35,6 @@ export function ChatSync({
   const { setDataStream } = useDataStream();
 
   const isAuthenticated = !!session?.user;
-  const hasReportedConfirmationRef = useRef(false);
   const completionQueueRef = useRef(
     createCompletionQueue((error) => {
       console.error("Failed to reconcile completed message", error);
@@ -51,37 +53,33 @@ export function ChatSync({
   const resumeAttemptRef = useRef<string | null>(null);
   const transport = useMemo(
     () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        fetch: fetchWithErrorHandlers as typeof fetch,
-        prepareSendMessagesRequest({ messages, id: requestId, body }) {
-          return {
-            body: {
-              id: requestId,
-              message: messages.at(-1),
-              prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-              ...body,
-            },
-          };
-        },
-        prepareReconnectToStreamRequest({ body, id: chatId }) {
-          const current = thread.getSnapshot().messages.at(-1);
-          const activeStreamId = current?.metadata?.activeStreamId ?? null;
-          const runMessageId =
-            typeof body?.assistantMessageId === "string"
-              ? body.assistantMessageId
-              : null;
-          const partialMessageId =
-            runMessageId ??
-            (isResumableActiveStreamId(activeStreamId)
+      createGatedChatTransport(
+        new DefaultChatTransport({
+          api: "/api/chat",
+          fetch: fetchWithErrorHandlers as typeof fetch,
+          prepareSendMessagesRequest({ messages, id: requestId, body }) {
+            return {
+              body: {
+                id: requestId,
+                message: messages.at(-1),
+                prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                ...body,
+              },
+            };
+          },
+          prepareReconnectToStreamRequest({ id: chatId }) {
+            const current = thread.getSnapshot().messages.at(-1);
+            const activeStreamId = current?.metadata?.activeStreamId ?? null;
+            const partialMessageId = isResumableActiveStreamId(activeStreamId)
               ? (current?.id ?? null)
-              : null);
+              : null;
 
-          return {
-            api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
-          };
-        },
-      }),
+            return {
+              api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
+            };
+          },
+        })
+      ),
     [isAuthenticated, thread]
   );
 
@@ -99,12 +97,16 @@ export function ChatSync({
         completeDataPart({ dataPart, thread })
       );
       if (
-        !hasReportedConfirmationRef.current &&
-        dataPart.type === "data-chatConfirmed" &&
+        dataPart.type === "data-userMessagePersisted" &&
         dataPart.data.chatId === id
       ) {
-        hasReportedConfirmationRef.current = true;
-        setChatPersisted(true);
+        acknowledgeParallelUserMessagePersistence(dataPart.data);
+        const matchesPendingChat = acknowledgeProvisionalUserMessagePersistence(
+          dataPart.data
+        );
+        if (matchesPendingChat) {
+          setChatPersisted(true);
+        }
       }
       setDataStream((ds) =>
         ds ? [...ds, dataPart as (typeof ds)[number]] : []

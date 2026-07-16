@@ -1,11 +1,46 @@
 import assert from "node:assert/strict";
-import type { TreeHelpers } from "@chatjs/thread/react";
+import { Thread } from "@chatjs/thread";
+import type { ChatTransport, UIMessageChunk } from "ai";
 import { afterEach, describe, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ParallelRequestSpec } from "./draft-chat-submission";
-import { runParallelThreadRequestSpecs } from "./parallel-chat-requests";
+import { createGatedChatTransport } from "./gated-chat-transport";
+import {
+  acknowledgeParallelUserMessagePersistence,
+  clearParallelPersistenceGates,
+  runParallelThreadRequestSpecs,
+} from "./parallel-chat-requests";
 
-const message = {
+class ControlledTransport implements ChatTransport<ChatMessage> {
+  readonly requests: Array<{
+    body: object | undefined;
+    controller: ReadableStreamDefaultController<UIMessageChunk>;
+  }> = [];
+
+  reconnectToStream() {
+    return Promise.resolve(null);
+  }
+
+  sendMessages: ChatTransport<ChatMessage>["sendMessages"] = (options) =>
+    Promise.resolve(
+      new ReadableStream<UIMessageChunk>({
+        start: (controller) => {
+          this.requests.push({ body: options.body, controller });
+        },
+      })
+    );
+
+  finish(requestIndex: number, messageId: string) {
+    const controller = this.requests[requestIndex]?.controller;
+    controller?.enqueue({ messageId, type: "start" });
+    controller?.enqueue({ id: "text", type: "text-start" });
+    controller?.enqueue({ delta: "done", id: "text", type: "text-delta" });
+    controller?.enqueue({ id: "text", type: "text-end" });
+    controller?.close();
+  }
+}
+
+const message: ChatMessage = {
   id: "user-follow-up",
   metadata: {
     activeStreamId: null,
@@ -18,142 +53,78 @@ const message = {
   },
   parts: [{ type: "text", text: "Compare both approaches" }],
   role: "user",
-} satisfies ChatMessage;
-
-type RunHandle = Awaited<ReturnType<TreeHelpers<ChatMessage>["startRun"]>>;
-type RunSnapshot = NonNullable<ReturnType<RunHandle["getSnapshot"]>>;
+};
 
 const requestSpecs = [
   {
-    assistantMessageId: "assistant-mini",
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    isPrimary: false,
+    createdAt: new Date("2026-01-01T00:00:00.001Z"),
+    isPrimary: true,
     modelId: "openai/gpt-5-mini",
     parallelGroupId: "response-group-1",
-    parallelIndex: 1,
+    parallelIndex: 0,
   },
   {
-    assistantMessageId: "assistant-nano",
-    createdAt: new Date("2026-01-01T00:00:00.001Z"),
+    createdAt: new Date("2026-01-01T00:00:00.002Z"),
     isPrimary: false,
     modelId: "openai/gpt-5-nano",
     parallelGroupId: "response-group-1",
-    parallelIndex: 2,
+    parallelIndex: 1,
   },
 ] satisfies ParallelRequestSpec[];
 
 afterEach(() => {
-  vi.unstubAllGlobals();
+  clearParallelPersistenceGates();
 });
 
 describe("runParallelThreadRequestSpecs", () => {
-  it("starts secondary responses as live thread runs with response-group identity", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(null, { status: 200 }))
-    );
-
-    const finishResolvers: Array<() => void> = [];
-    const startRun = vi.fn<TreeHelpers<ChatMessage>["startRun"]>(() => {
-      const finished = new Promise<void>((resolve) => {
-        finishResolvers.push(resolve);
-      });
-      return Promise.resolve({
-        assistantMessageId: "unused",
-        finished,
-        getSnapshot: () => undefined,
-        id: "unused",
-        stop: () => Promise.resolve(),
-      });
+  it("creates every run immediately and gates only secondary transport", async () => {
+    const underlyingTransport = new ControlledTransport();
+    const chat = new Thread<ChatMessage>({
+      transport: createGatedChatTransport(underlyingTransport),
     });
 
-    let settled = false;
-    const resultPromise = runParallelThreadRequestSpecs({
+    const result = runParallelThreadRequestSpecs({
       chatId: "chat-1",
+      isAuthenticated: true,
       message,
       projectId: "project-1",
       requestSpecs,
-      startRun,
-    }).then((result) => {
-      settled = true;
-      return result;
+      startRun: chat.startRun,
     });
 
     await vi.waitFor(() => {
-      assert.equal(startRun.mock.calls.length, 2);
+      assert.equal(chat.getSnapshot().runs.length, 2);
     });
-
-    assert.deepEqual(startRun.mock.calls[0]?.[0], {
-      follow: false,
-      from: message.id,
-      request: {
-        body: {
-          assistantMessageId: "assistant-mini",
-          isPrimaryParallel: false,
-          parallelGroupId: "response-group-1",
-          parallelIndex: 1,
-          projectId: "project-1",
-          selectedModelId: "openai/gpt-5-mini",
-        },
-      },
-    });
-    assert.deepEqual(startRun.mock.calls[1]?.[0], {
-      follow: false,
-      from: message.id,
-      request: {
-        body: {
-          assistantMessageId: "assistant-nano",
-          isPrimaryParallel: false,
-          parallelGroupId: "response-group-1",
-          parallelIndex: 2,
-          projectId: "project-1",
-          selectedModelId: "openai/gpt-5-nano",
-        },
-      },
-    });
-    assert.equal(settled, false);
-
-    for (const resolve of finishResolvers) {
-      resolve();
-    }
-
-    assert.deepEqual(await resultPromise, []);
-  });
-
-  it("reports only runs whose final snapshots failed", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(null, { status: 200 }))
-    );
-    const failure = new Error("secondary response failed");
-    const snapshots = [
-      { error: failure, id: "failed-run", status: "error" },
-      { error: undefined, id: "ready-run", status: "ready" },
-    ] satisfies RunSnapshot[];
-    let runIndex = 0;
-    const startRun = vi.fn<TreeHelpers<ChatMessage>["startRun"]>(() => {
-      const snapshot = snapshots[runIndex++];
-      if (!snapshot) {
-        throw new Error("Unexpected parallel run");
-      }
-
-      return Promise.resolve({
-        finished: Promise.resolve(),
-        getSnapshot: () => snapshot,
-        id: snapshot.id,
-        stop: () => Promise.resolve(),
-      });
-    });
-
+    assert.equal(underlyingTransport.requests.length, 1);
+    assert.deepEqual(chat.getChildren(message.id), []);
     assert.deepEqual(
-      await runParallelThreadRequestSpecs({
+      chat.getSnapshot().runs.map(({ status }) => status),
+      ["submitted", "submitted"]
+    );
+    assert.equal(
+      "assistantMessageId" in (underlyingTransport.requests[0]?.body ?? {}),
+      false
+    );
+
+    assert.equal(
+      acknowledgeParallelUserMessagePersistence({
         chatId: "chat-1",
-        message,
-        projectId: null,
-        requestSpecs,
-        startRun,
+        parallelGroupId: "response-group-1",
+        userMessageId: message.id,
       }),
-      [requestSpecs[0]]
+      true
+    );
+    await vi.waitFor(() => {
+      assert.equal(underlyingTransport.requests.length, 2);
+    });
+
+    underlyingTransport.finish(0, "server-primary");
+    underlyingTransport.finish(1, "server-secondary");
+
+    assert.deepEqual(await result, []);
+    assert.deepEqual(
+      chat.getChildren(message.id).map(({ id }) => id),
+      ["server-primary", "server-secondary"]
     );
   });
 });
