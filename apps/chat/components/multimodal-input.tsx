@@ -588,10 +588,10 @@ function PureMultimodalInput({
 
   const handleStop = useCallback(() => {
     if (session?.user && lastMessageId) {
-      stopStreamMutation.mutate({ messageId: lastMessageId });
+      stopStreamMutation.mutate({ chatId, messageId: lastMessageId });
     }
     stopHelper?.();
-  }, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
+  }, [chatId, lastMessageId, session?.user, stopHelper, stopStreamMutation]);
 
   return (
     <div className="relative">

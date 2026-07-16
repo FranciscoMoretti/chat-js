@@ -1074,10 +1074,13 @@ export async function updateMessageCanceledAt({
   canceledAt: Date | null;
 }) {
   try {
-    return await db
+    const updatedMessages = await db
       .update(message)
       .set({ canceledAt })
-      .where(eq(message.id, messageId));
+      .where(eq(message.id, messageId))
+      .returning({ id: message.id });
+
+    return updatedMessages.length > 0;
   } catch (error) {
     logger.error({ error, messageId }, "updateMessageCanceledAt failed");
     throw error;

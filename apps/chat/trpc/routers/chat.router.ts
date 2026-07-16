@@ -188,19 +188,23 @@ export const chatRouter = createTRPCRouter({
   stopStream: protectedProcedure
     .input(
       z.object({
+        chatId: z.string().uuid(),
         messageId: z.string().uuid(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [msg] = await getMessageById({ id: input.messageId });
-      if (!msg) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
-        });
+      // A new chat can still be generating its title when the client stops.
+      // Wait for its reserved assistant row so request ordering cannot lose cancellation.
+      const deadline = Date.now() + 30_000;
+      let retryDelay = 25;
+      let chat = await getChatById({ id: input.chatId });
+
+      while (!chat && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay = Math.min(retryDelay * 2, 250);
+        chat = await getChatById({ id: input.chatId });
       }
 
-      const chat = await getChatById({ id: msg.chatId });
       if (!chat || chat.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -208,10 +212,24 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
-      await updateMessageCanceledAt({
-        messageId: input.messageId,
-        canceledAt: new Date(),
-      });
+      const canceledAt = new Date();
+
+      while (
+        !(await updateMessageCanceledAt({
+          messageId: input.messageId,
+          canceledAt,
+        }))
+      ) {
+        if (Date.now() >= deadline) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Message not found",
+          });
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay = Math.min(retryDelay * 2, 250);
+      }
 
       return { success: true };
     }),
