@@ -1,3 +1,4 @@
+import type { AppModelId } from "@/lib/ai/app-models";
 import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
 
 export type RetryMessageResult =
@@ -5,6 +6,7 @@ export type RetryMessageResult =
       message: ChatMessage;
       messagesBeforeRetry: ChatMessage[];
       ok: true;
+      selectedModelId: AppModelId;
     }
   | {
       ok: false;
@@ -54,7 +56,7 @@ export function getRetryMessageInput({
 
   return {
     ok: true,
-    messagesBeforeRetry: messages.slice(0, parentMessageIndex),
+    messagesBeforeRetry: messages.slice(0, parentMessageIndex + 1),
     message: {
       ...parentMessage,
       metadata: {
@@ -68,6 +70,7 @@ export function getRetryMessageInput({
         selectedModel: retryModelId,
       },
     },
+    selectedModelId: retryModelId as AppModelId,
   };
 }
 

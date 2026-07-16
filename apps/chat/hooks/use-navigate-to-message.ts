@@ -6,17 +6,19 @@ import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useSwitchToMessage } from "@/lib/stores/hooks-threads";
 
 export function useNavigateToMessage() {
-  const { stop } = useChatActions<ChatMessage>();
+  const { setMessages } = useChatActions<ChatMessage>();
   const { setDataStream } = useDataStream();
   const { artifact, closeArtifact } = useArtifact();
   const switchToMessage = useSwitchToMessage();
 
   return useCallback(
     (messageId: string) => {
-      stop?.();
       setDataStream([]);
 
       const newThread = switchToMessage(messageId);
+      if (newThread) {
+        setMessages(newThread);
+      }
 
       if (
         newThread &&
@@ -34,7 +36,7 @@ export function useNavigateToMessage() {
       artifact.messageId,
       closeArtifact,
       setDataStream,
-      stop,
+      setMessages,
       switchToMessage,
     ]
   );
