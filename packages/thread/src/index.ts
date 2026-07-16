@@ -1,3 +1,5 @@
+export { getMessageText, ROOT_PARENT_ID } from "./message-tree";
+
 export type {
 	MessageTreeNode,
 	MessageTreeSnapshot,
