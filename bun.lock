@@ -26,6 +26,7 @@
         "@ai-sdk/react": "3.0.221",
         "@better-auth/core": "1.5.6",
         "@better-auth/electron": "^1.5.6",
+        "@chatjs/thread": "workspace:*",
         "@codemirror/lang-javascript": "^6.2.2",
         "@codemirror/lang-python": "^6.1.6",
         "@codemirror/state": "^6.5.0",
