@@ -1,4 +1,5 @@
 export { getMessageText } from "./message-utils";
+export { createThreadChat, ThreadChat } from "./thread-chat";
 
 export type {
 	MessageTreeNode,
