@@ -42,7 +42,7 @@ function PureMessageActions({
   // Version selector and model tag handled by MessageVersionAndModel component
 
   if (isLoading) {
-    return <div className="h-7" />;
+    return null;
   }
 
   const showActionsWithoutHover = isMobile || isEditing || role === "assistant";

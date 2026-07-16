@@ -36,6 +36,7 @@ export function ChatSync({
   const isLastMessagePartial = isResumableActiveStreamId(
     lastMessage?.metadata?.activeStreamId
   );
+  const resumeOnMountRef = useRef(isLastMessagePartial);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -51,15 +52,21 @@ export function ChatSync({
             },
           };
         },
-        prepareReconnectToStreamRequest({ id: chatId }) {
+        prepareReconnectToStreamRequest({ body, id: chatId }) {
           const current = thread.getSnapshot().messages.at(-1);
           const activeStreamId = current?.metadata?.activeStreamId ?? null;
-          const partialMessageId = isResumableActiveStreamId(activeStreamId)
-            ? (current?.id ?? null)
-            : null;
+          const runMessageId =
+            typeof body?.assistantMessageId === "string"
+              ? body.assistantMessageId
+              : null;
+          const partialMessageId =
+            runMessageId ??
+            (isResumableActiveStreamId(activeStreamId)
+              ? (current?.id ?? null)
+              : null);
 
           return {
-            api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${partialMessageId}` : ""}`,
+            api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
           };
         },
       }),
@@ -72,7 +79,7 @@ export function ChatSync({
     onFinish: ({ message }) => {
       saveChatMessage({ message, chatId: id });
     },
-    resume: isLastMessagePartial,
+    resume: resumeOnMountRef.current,
     transport,
     onData: (dataPart) => {
       if (
