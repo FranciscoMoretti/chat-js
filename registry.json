@@ -1,0 +1,72 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "chatjs",
+  "homepage": "https://chatjs.dev/threads",
+  "items": [
+    {
+      "name": "thread",
+      "type": "registry:item",
+      "title": "AI SDK Message Threads",
+      "description": "A headless useChat-compatible message tree with branching, cursor navigation, and concurrent response streams.",
+      "author": "ChatJS",
+      "dependencies": ["@ai-sdk/react@^3.0.0", "ai@^6.0.0", "react@>=18"],
+      "docs": "Import useThread from '@/lib/thread/react'. chat.messages is the active cursor path and chat.tree exposes the complete message tree.",
+      "categories": ["ai", "chat", "hooks"],
+      "files": [
+		{
+			"path": "packages/thread/src/message-tree.ts",
+			"type": "registry:lib",
+			"target": "@lib/thread/message-tree.ts"
+		},
+        {
+          "path": "packages/thread/src/thread-chat.ts",
+          "type": "registry:lib",
+          "target": "@lib/thread/thread-chat.ts"
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "type": "registry:lib",
+          "target": "@lib/thread/ai-sdk-run-chat.ts"
+        },
+        {
+          "path": "packages/thread/src/types.ts",
+          "type": "registry:lib",
+          "target": "@lib/thread/types.ts"
+        },
+        {
+          "path": "packages/thread/src/use-thread.ts",
+          "type": "registry:hook",
+          "target": "@lib/thread/use-thread.ts"
+        },
+        {
+          "path": "packages/thread/src/index.ts",
+          "type": "registry:lib",
+          "target": "@lib/thread/index.ts"
+        },
+        {
+          "path": "packages/thread/src/react.ts",
+          "type": "registry:lib",
+          "target": "@lib/thread/react.ts"
+        }
+      ]
+    },
+    {
+      "name": "thread-demo",
+      "type": "registry:component",
+      "title": "Threaded Chat Demo",
+      "description": "An editable conversation and message-tree interface for demonstrating useThread in an application.",
+      "author": "ChatJS",
+      "dependencies": ["lucide-react"],
+      "registryDependencies": ["FranciscoMoretti/chat-js/thread"],
+      "docs": "Render <ThreadDemo transport={transport} /> with any AI SDK ChatTransport. The component is intentionally application-owned and can be restyled or extended.",
+      "categories": ["ai", "chat", "demo"],
+      "files": [
+        {
+          "path": "packages/registry/src/thread-demo/thread-demo.tsx",
+          "type": "registry:component",
+          "target": "@components/thread/thread-demo.tsx"
+        }
+      ]
+    }
+  ]
+}

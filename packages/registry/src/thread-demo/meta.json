@@ -1,0 +1,12 @@
+{
+  "description": "An editable conversation and message-tree interface for demonstrating useThread in an application.",
+  "hidden": true,
+  "registryDependencies": ["FranciscoMoretti/chat-js/thread"],
+  "files": [
+    {
+      "source": "thread-demo.tsx",
+      "target": "components/thread/thread-demo.tsx",
+      "type": "component"
+    }
+  ]
+}
