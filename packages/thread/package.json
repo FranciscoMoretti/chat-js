@@ -1,0 +1,58 @@
+{
+	"name": "@chatjs/thread",
+	"version": "0.0.0",
+	"description": "Headless threaded chat engine for AI SDK UI messages",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/franciscomoretti/chat-js.git",
+		"directory": "packages/thread"
+	},
+	"homepage": "https://github.com/franciscomoretti/chat-js/tree/main/packages/thread",
+	"bugs": {
+		"url": "https://github.com/franciscomoretti/chat-js/issues"
+	},
+	"keywords": [
+		"chatjs",
+		"ai",
+		"ai-sdk",
+		"thread",
+		"chat"
+	],
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"bun": "./src/index.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"types": "./src/index.ts",
+	"files": [
+		"dist",
+		"src",
+		"README.md",
+		"ARCHITECTURE.md"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json && bun build ./src/index.ts --outfile ./dist/index.js --target=browser --format=esm --packages external",
+		"format": "bunx @biomejs/biome@2.4.10 check --write src *.md package.json tsconfig.json tsconfig.build.json biome.jsonc",
+		"lint": "bunx @biomejs/biome@2.4.10 check src ARCHITECTURE.md package.json tsconfig.json tsconfig.build.json biome.jsonc",
+		"prepublishOnly": "bun run build",
+		"test": "bun test ./test",
+		"test:unit": "bun test ./test",
+		"test:types": "tsc --noEmit"
+	},
+	"peerDependencies": {
+		"ai": "^6.0.0"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.3.12",
+		"ai": "^6.0.150",
+		"typescript": "6.0.2"
+	}
+}
