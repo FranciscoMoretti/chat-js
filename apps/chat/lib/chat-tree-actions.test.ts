@@ -30,7 +30,7 @@ function message({
 }
 
 describe("getRetryMessageInput", () => {
-  it("builds a retry message from an assistant response and trims before the parent user message", () => {
+  it("builds a retry message from an assistant response and keeps the parent user visible", () => {
     const root = message({ id: "root", role: "user" });
     const assistant = message({
       id: "assistant",
@@ -46,7 +46,7 @@ describe("getRetryMessageInput", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      messagesBeforeRetry: [],
+      messagesBeforeRetry: [root],
       message: {
         id: root.id,
         role: "user",
@@ -59,6 +59,7 @@ describe("getRetryMessageInput", () => {
           selectedModel: "openai/gpt-5-nano",
         },
       },
+      selectedModelId: "openai/gpt-5-nano",
     });
   });
 

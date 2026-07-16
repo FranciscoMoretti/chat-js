@@ -18,7 +18,6 @@ import { useSession } from "@/providers/session-provider";
 import { enabledTools, toolDefinitions } from "./chat-features-definitions";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 export function ResponsiveTools({
@@ -57,20 +56,16 @@ export function ResponsiveTools({
     <div className="flex items-center @[500px]:gap-2 gap-1">
       {isAnonymous ? (
         <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <Button
-                  className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5"
-                  variant="ghost"
-                >
-                  <Settings2 size={14} />
-                  <span className="@[500px]:inline hidden">Tools</span>
-                </Button>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Select Tools</TooltipContent>
-          </Tooltip>
+          <PopoverTrigger asChild>
+            <Button
+              className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5"
+              title="Select Tools"
+              variant="ghost"
+            >
+              <Settings2 size={14} />
+              <span className="@[500px]:inline hidden">Tools</span>
+            </Button>
+          </PopoverTrigger>
           <PopoverContent align="start" className="w-80 p-0">
             <LoginPrompt
               description="Access web search, deep research, and more to get better answers."
@@ -80,21 +75,17 @@ export function ResponsiveTools({
         </Popover>
       ) : (
         <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <Settings2 size={14} />
-                  <span className="@[500px]:inline hidden">Tools</span>
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Select Tools</TooltipContent>
-          </Tooltip>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
+              size="sm"
+              title="Select Tools"
+              variant="ghost"
+            >
+              <Settings2 size={14} />
+              <span className="@[500px]:inline hidden">Tools</span>
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
             className="w-48"

@@ -17,12 +17,12 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const { setMessages, sendMessage } = useChatActions<ChatMessage>();
+  const { setMessages, regenerate } = useChatActions<ChatMessage>();
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
   const handleRetry = useCallback(() => {
-    if (!sendMessage) {
+    if (!regenerate) {
       toast.error("Cannot retry this message");
       return;
     }
@@ -47,11 +47,15 @@ export function RetryButton({
 
     setMessages(retryInput.messagesBeforeRetry);
 
-    // Resend the parent user message
-    sendMessage(retryInput.message, {});
+    regenerate({
+      body: {
+        selectedModelId: retryInput.selectedModelId,
+      },
+      messageId,
+    });
 
     toast.success("Retrying message...");
-  }, [sendMessage, messageId, setMessages, chatStore]);
+  }, [regenerate, messageId, setMessages, chatStore]);
 
   if (status === "streaming" || status === "submitted") {
     return null;

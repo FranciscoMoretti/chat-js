@@ -391,6 +391,15 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
   const liveStore = existingStore;
   const hasLiveRuntime = !!(liveRuntime && liveStore);
   const liveRuntimeMessages = liveStore?.getState().messages;
+
+  useEffect(() => {
+    if (!(liveStore && persistedMessages)) {
+      return;
+    }
+
+    liveStore.getState().setAllMessages(persistedMessages);
+  }, [liveStore, persistedMessages]);
+
   const initialMessages =
     liveRuntimeMessages ?? persistedInitialState.initialMessages;
   const initialTool =
