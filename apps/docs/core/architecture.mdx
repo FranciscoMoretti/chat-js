@@ -20,6 +20,7 @@ The application uses:
 - **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for persistent data (users, chats, messages, documents)
 - **Redis** for ephemeral data (resumable streams, caching). See [Resumable Streams](/cookbook/resumable-streams)
 - **AI SDK** to connect to multiple AI providers through a [gateway abstraction](/gateways/overview)
+- **`useThread`** to manage the selected conversation path, message tree, and independent response runs. See [useThread](./use-thread)
 - **Files SDK** through a configured [file storage provider](./file-storage) for attachments and generated media
 - **tRPC** for end-to-end type-safe API routes between client and server
 - **Langfuse** (optional) for LLM observability, tracing, and analytics
@@ -30,15 +31,27 @@ When a user sends a message:
 
 ```mermaid
 sequenceDiagram
-    Client->>API: Send message
+    participant Client
+    participant Thread as useThread
+    participant API
+    participant DB
+    participant AI
+    participant Cache
+    Client->>Thread: Send message or start run
+    Thread->>API: Send selected path
     API->>DB: Save messages
     API->>AI: Stream response
-    AI-->>Client: Token stream (SSE)
+    AI-->>API: Model stream
+    API-->>Thread: UI message stream (SSE)
+    Thread-->>Client: Update reserved response node
     Note over API,Cache: Chunks stored in Redis for resumability
     API->>DB: Save final response
 ```
 
-Messages are stored with normalized **parts** (text, tool calls, files, reasoning) allowing efficient querying and streaming updates.
+Messages are stored with normalized **parts** (text, tool calls, files,
+reasoning) allowing efficient querying and streaming updates. Each active
+assistant response has its own run, so navigating to another branch does not
+redirect or stop that response.
 
 If [resumable streams](/cookbook/resumable-streams) are enabled, response chunks are published to Redis so clients can reconnect mid-generation without losing progress.
 

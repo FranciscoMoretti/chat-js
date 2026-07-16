@@ -3,64 +3,59 @@ title: Branching
 description: Explore alternative conversation paths without losing context
 ---
 
-Branching lets you fork a conversation at any point and explore different directions. When you re-submit a message or the AI generates a new response, a branch is created automatically. You can navigate between branches using the sibling controls that appear on messages.
+Branching lets you fork a conversation at any message and explore another
+direction without replacing the original path. Editing a message or generating
+another response creates a sibling that you can return to later.
 
 <Frame>
   <img src="/docs/images/branching.gif" alt="Navigating between conversation branches" />
 </Frame>
 
-## How It Works
+## How it works
 
-Every message stores a `parentMessageId` that forms a tree structure. When you edit a message or regenerate a response, a new child is added under the same parent, creating siblings. The UI displays the active thread (a single root-to-leaf path through the tree) while keeping all branches available.
+Every message has a parent, which forms a conversation tree. ChatJS displays
+one root-to-message path at a time while keeping the other branches available.
 
-## Navigating Branches
+```mermaid
+flowchart TD
+    U1[User: Plan a launch] --> A1[Assistant: Start with architecture]
+    A1 --> U2[User: Make it technical]
+    U2 --> A2[Assistant: Define service indicators]
+    U2 --> A3[Assistant: Use staged environments]
+```
 
-When a message has siblings (alternative versions), arrow controls appear next to it showing the current position (e.g., "2/3"). Click the left or right arrows to switch between branches.
+The selected message is the cursor. Sending a message continues from that
+cursor, so selecting an earlier node before sending creates a new branch.
+
+## Navigate branches
+
+When a message has siblings, arrow controls show the current position, such as
+`2/3`. Use the arrows to move to the previous or next branch.
 
 Switching branches:
 
-- Stops any active stream
-- Clears buffered data
-- Closes artifacts that belong to the previous branch
-- Loads the full thread from the selected sibling down to its most recent leaf
+- changes the active conversation path
+- preserves responses that are still streaming on other branches
+- clears transient data that belongs to the previous path
+- closes an open artifact when its message is not in the selected path
+- follows the selected branch to its latest descendant
 
-## Data Model
+## Edit a message
 
-Messages are stored with a `parentMessageId` column in the database. Root messages have a `null` parent. This creates a tree where each node can have multiple children (siblings).
+Editing creates a replacement branch. The original message and all of its
+descendants remain in the tree, so you can switch back with the same sibling
+controls.
 
-```mermaid
-graph TD
-    A[User: Hello] --> B[AI: Hi there!]
-    A --> C[AI: Hey! How can I help?]
-    B --> D[User: Tell me about X]
-    C --> E[User: Tell me about Y]
-    D --> F[AI: X is...]
-    E --> G[AI: Y is...]
-```
+## Data model
 
-## Architecture
+Messages are persisted with a parent message ID. Root messages have no parent.
+The client uses `useThread` to project the selected path and to keep each active
+assistant response attached to its own reserved node.
 
-The branching system has three layers:
+See [useThread](../core/use-thread) for the tree, cursor, active-path, and run
+model.
 
-### Tree Utilities (`lib/thread-utils.ts`)
+## Related
 
-Pure functions that operate on the message tree:
-
-- `buildThreadFromLeaf` - walks `parentMessageId` links from a leaf to the root to construct the active thread
-- `buildChildrenMap` - creates a parent-to-children index sorted by creation time
-- `getDefaultThread` - finds the most recent leaf and builds the thread to it
-- `findLeafDfsToRightFromMessageId` - DFS to find the rightmost leaf from a given node (used when switching branches)
-
-### Zustand Middleware (`lib/stores/with-threads.ts`)
-
-A `withThreads` middleware wraps the base chat store and adds:
-
-- `allMessages` - the complete message tree (all branches)
-- `childrenMap` - reactive parent-to-children index, rebuilt when `allMessages` changes
-- `getMessageSiblingInfo` - looks up siblings and current index for any message
-- `switchToSibling` - finds the target sibling, walks to its rightmost leaf, builds the new thread, and swaps it in
-- `threadEpoch` - a counter that bumps on thread switches, used as a React key to remount `useChat`
-
-### Server Sync (`components/message-tree-sync.tsx`)
-
-`MessageTreeSync` is a renderless component that fetches the full message tree from the server via React Query and feeds it into the Zustand store with `setAllMessages`. It also handles resetting state when navigating to the home page.
+- [Parallel Responses](./parallel-responses)
+- [Architecture](../core/architecture)

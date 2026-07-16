@@ -69,6 +69,7 @@ export default defineConfig({
           items: [
             "/core/architecture",
             "/core/configuration",
+            "/core/use-thread",
             "/core/file-storage",
             "/core/authentication",
             "/core/tool-registry",
