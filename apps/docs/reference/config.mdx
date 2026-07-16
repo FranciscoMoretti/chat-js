@@ -134,6 +134,8 @@ export type Config = {
   features: {
     /** File attachments (requires durable file storage) */
     attachments: boolean;
+    /** Generate multiple independent responses for one message */
+    parallelResponses: boolean;
   };
 
   pricing?: PricingConfig;
@@ -205,6 +207,7 @@ Feature flags live under `ai.tools`, `features`, and `authentication`. They're v
 ### Features
 
 - **`features.attachments`**: requires a configured file storage provider - file uploads (images and PDFs)
+- **`features.parallelResponses`**: no extra environment variables - generate multiple independent responses for one message
 
 ### Authentication
 
