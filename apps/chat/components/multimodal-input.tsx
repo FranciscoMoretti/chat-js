@@ -42,7 +42,7 @@ import {
   addPendingAssistantMessages,
   createParallelRequestBody,
   markParallelRequestSpecsFailed,
-  runParallelRequestSpecs,
+  runParallelThreadRequestSpecs,
 } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
@@ -117,7 +117,11 @@ function PureMultimodalInput({
   const addMessageToTree = useAddMessageToTree();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const { sendMessage, stop: stopHelper } = useChatActions<ChatMessage>();
+  const {
+    sendMessage,
+    startRun,
+    stop: stopHelper,
+  } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -368,11 +372,12 @@ function PureMultimodalInput({
         requestSpecs,
       });
 
-      runParallelRequestSpecs({
+      runParallelThreadRequestSpecs({
         chatId,
         message,
         projectId: currentRoute.projectId,
         requestSpecs: requestSpecs.slice(1),
+        startRun,
       })
         .then(async (failedRequestSpecs) => {
           if (failedRequestSpecs.length > 0) {
@@ -422,6 +427,7 @@ function PureMultimodalInput({
     selectedTool,
     sendMessage,
     startProvisionalChat,
+    startRun,
     trimMessagesInEditMode,
   ]);
 
