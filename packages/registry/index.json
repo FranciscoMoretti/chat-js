@@ -9,6 +9,11 @@
     "hidden": true
   },
   {
+    "name": "thread-demo",
+    "description": "An editable conversation and message-tree interface for demonstrating useThread in an application.",
+    "hidden": true
+  },
+  {
     "name": "word-count",
     "description": "Count words, characters, and sentences in text"
   },

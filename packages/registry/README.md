@@ -11,3 +11,13 @@ This package contains:
 - `index.json` with the registry index
 - `items/*.json` with generated registry tool manifests
 - `ToolEnvVars` for typing static `toolEnvVars` exports in `tool.ts`
+
+The repository root also exposes a shadcn-compatible source registry for
+reusable hooks and components. For example:
+
+```bash
+bunx shadcn@latest add FranciscoMoretti/chat-js/thread#main
+```
+
+The source registry is declared in `/registry.json` and is intentionally
+separate from the ChatJS CLI tool manifests in this package.
