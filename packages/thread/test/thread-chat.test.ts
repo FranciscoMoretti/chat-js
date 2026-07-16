@@ -35,8 +35,18 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 		);
 	};
 
-	reconnectToStream() {
+	reconnectToStream(
+		_options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0],
+	): Promise<ReadableStream<UIMessageChunk> | null> {
 		return Promise.resolve(null);
+	}
+
+	emit(assistantMessageId: string, chunk: UIMessageChunk) {
+		this.requests.get(assistantMessageId)?.controller.enqueue(chunk);
+	}
+
+	finish(assistantMessageId: string) {
+		this.requests.get(assistantMessageId)?.controller.close();
 	}
 
 	emitText(assistantMessageId: string, text: string) {
@@ -46,6 +56,33 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 		controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
 		controller?.enqueue({ id: "text", type: "text-end" });
 		controller?.close();
+	}
+}
+
+class ResumeTransport extends ControlledTransport {
+	lastReconnectOptions:
+		| Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
+		| undefined;
+
+	override reconnectToStream(
+		options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0],
+	) {
+		this.lastReconnectOptions = options;
+		return Promise.resolve(
+			new ReadableStream<UIMessageChunk>({
+				start(controller) {
+					controller.enqueue({ id: "text", type: "text-start" });
+					controller.enqueue({
+						delta: "resumed",
+						id: "text",
+						type: "text-delta",
+					});
+					controller.enqueue({ id: "text", type: "text-end" });
+					controller.enqueue({ finishReason: "stop", type: "finish" });
+					controller.close();
+				},
+			}),
+		);
 	}
 }
 
@@ -201,5 +238,100 @@ describe("ThreadChat", () => {
 		).toBeFalse();
 		transport.emitText("assistant-2", "complete");
 		await second.finished;
+	});
+
+	test("regenerates an assistant as a sibling response", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const first = await chat.startRun({
+			message: user("user-1"),
+			request: { body: { assistantMessageId: "assistant-1" } },
+		});
+		await waitFor(() => transport.requests.has("assistant-1"));
+		transport.emitText("assistant-1", "first");
+		await first.finished;
+
+		const regeneration = chat.regenerate({
+			body: { assistantMessageId: "assistant-2" },
+			messageId: "assistant-1",
+		});
+		await waitFor(() => transport.requests.has("assistant-2"));
+		transport.emitText("assistant-2", "second");
+		await regeneration;
+
+		expect(chat.getSiblings("assistant-1").map(({ id }) => id)).toEqual([
+			"assistant-1",
+			"assistant-2",
+		]);
+		expect(chat.getSnapshot().cursorId).toBe("assistant-2");
+	});
+
+	test("routes tool output to the run that owns the tool call", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const runA = await chat.startRun({
+			message: user("user-a"),
+			request: { body: { assistantMessageId: "assistant-a" } },
+		});
+		const runB = await chat.startRun({
+			follow: false,
+			from: null,
+			message: user("user-b"),
+			request: { body: { assistantMessageId: "assistant-b" } },
+		});
+		await waitFor(() => transport.requests.size === 2);
+		for (const [assistantMessageId, toolCallId] of [
+			["assistant-a", "tool-a"],
+			["assistant-b", "tool-b"],
+		] as const) {
+			transport.emit(assistantMessageId, {
+				dynamic: true,
+				input: { branch: assistantMessageId },
+				toolCallId,
+				toolName: "branch-tool",
+				type: "tool-input-available",
+			});
+		}
+		await waitFor(
+			() =>
+				chat.getMessage("assistant-a")?.parts.length === 1 &&
+				chat.getMessage("assistant-b")?.parts.length === 1,
+		);
+		transport.finish("assistant-a");
+		transport.finish("assistant-b");
+		await Promise.all([runA.finished, runB.finished]);
+
+		await chat.addToolOutput({
+			output: "A only",
+			tool: "branch-tool",
+			toolCallId: "tool-a",
+		});
+
+		expect(chat.getMessage("assistant-a")?.parts).toContainEqual(
+			expect.objectContaining({ output: "A only", toolCallId: "tool-a" }),
+		);
+		expect(chat.getMessage("assistant-b")?.parts).toContainEqual(
+			expect.not.objectContaining({ output: "A only" }),
+		);
+	});
+
+	test("resumes a restored assistant through its reconstructed run", async () => {
+		const transport = new ResumeTransport();
+		const chat = new ThreadChat({
+			messages: [
+				user("user-1"),
+				{ id: "assistant-1", parts: [], role: "assistant" },
+			],
+			transport,
+		});
+
+		await chat.resumeStream();
+
+		expect(getMessageText(chat.getMessage("assistant-1") as UIMessage)).toBe(
+			"resumed",
+		);
+		expect(transport.lastReconnectOptions?.body).toEqual(
+			expect.objectContaining({ assistantMessageId: "assistant-1" }),
+		);
 	});
 });

@@ -1,4 +1,5 @@
 import {
+	type AbstractChat,
 	type ChatRequestOptions,
 	type ChatStatus,
 	type ChatTransport,
@@ -117,6 +118,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	readonly #assistantStarted = new Set<string>();
 	readonly #concurrency: Required<ThreadConcurrency>;
 	readonly #listeners = new Set<() => void>();
+	readonly #runIdByApprovalId = new Map<string, string>();
+	readonly #runIdByToolCallId = new Map<string, string>();
 	readonly #runsById = new Map<string, RunRecord<TMessage>>();
 	readonly #tree: MessageTree<TMessage>;
 	#lastEvent = "Ready";
@@ -174,6 +177,25 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.upsertMessage(message, parentId);
 	}
 
+	addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
+		async (response) => {
+			const run = this.getRunForApproval(response.id);
+			await run.chat.addToolApprovalResponse({
+				...response,
+				options: this.withRunRequestBody(run.spec, response.options),
+			});
+		};
+
+	addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (output) => {
+		const run = this.getRunForToolCall(output.toolCallId);
+		await run.chat.addToolOutput({
+			...output,
+			options: this.withRunRequestBody(run.spec, output.options),
+		});
+	};
+
+	addToolResult: AbstractChat<TMessage>["addToolResult"] = this.addToolOutput;
+
 	getTreeSnapshot() {
 		return this.#tree.getSnapshot();
 	}
@@ -225,6 +247,39 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.#assistantStarted.add(assistantMessageId);
 	}
 
+	regenerate: AbstractChat<TMessage>["regenerate"] = async ({
+		messageId,
+		...options
+	} = {}) => {
+		const target =
+			(messageId ? this.#tree.getMessage(messageId) : undefined) ??
+			(this.#tree.cursorId
+				? this.#tree.getMessage(this.#tree.cursorId)
+				: undefined);
+		if (!target) return;
+
+		const userMessageId =
+			target.role === "assistant"
+				? this.#tree.getParentId(target.id)
+				: target.id;
+		if (!userMessageId) return;
+
+		this.assertCanStartRun(userMessageId);
+		const assistantMessageId = this.reserveAssistantMessageId(
+			options,
+			userMessageId,
+		);
+		const run = this.startAssistantForUser({
+			assistantMessageId,
+			follow: true,
+			options,
+			originCursorId: target.id,
+			parentMessageId: this.#tree.getParentId(userMessageId) ?? null,
+			userMessageId,
+		});
+		await run.finished;
+	};
+
 	upsertMessage(
 		message: TMessage,
 		parentId: string | null,
@@ -254,6 +309,19 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	mergeRunPath(messages: TMessage[]) {
 		this.#tree.reconcilePath(messages, { moveCursor: false });
 	}
+
+	resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
+		options = {},
+	) => {
+		const run =
+			this.getSelectedRunRecord() ?? this.createRunForSelectedAssistant();
+		if (!run) return;
+		await this.resumeRunRequest(run, options);
+	};
+
+	resumeRun = async (runId: string, options: ChatRequestOptions = {}) => {
+		await this.resumeRunRequest(this.getRunRecord(runId), options);
+	};
 
 	restore(
 		snapshot: MessageTreeSnapshot<TMessage>,
@@ -421,9 +489,57 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.emit(isAbort ? `Stopping ${runId}` : `Received ${runId}`);
 	}
 
-	registerToolCall() {}
+	registerToolCall(runId: string, toolCallId: string) {
+		this.assertOwnershipAvailable(
+			this.#runIdByToolCallId,
+			toolCallId,
+			runId,
+			"tool call",
+		);
+		this.#runIdByToolCallId.set(toolCallId, runId);
+	}
 
-	indexMessageOwnership() {}
+	indexMessageOwnership(runId: string, message: TMessage) {
+		const toolCallIds: string[] = [];
+		const approvalIds: string[] = [];
+		for (const part of message.parts) {
+			if ("toolCallId" in part && typeof part.toolCallId === "string") {
+				toolCallIds.push(part.toolCallId);
+			}
+			if (
+				"approval" in part &&
+				part.approval &&
+				typeof part.approval === "object" &&
+				"id" in part.approval &&
+				typeof part.approval.id === "string"
+			) {
+				approvalIds.push(part.approval.id);
+			}
+		}
+
+		for (const toolCallId of toolCallIds) {
+			this.assertOwnershipAvailable(
+				this.#runIdByToolCallId,
+				toolCallId,
+				runId,
+				"tool call",
+			);
+		}
+		for (const approvalId of approvalIds) {
+			this.assertOwnershipAvailable(
+				this.#runIdByApprovalId,
+				approvalId,
+				runId,
+				"tool approval",
+			);
+		}
+		for (const toolCallId of toolCallIds) {
+			this.#runIdByToolCallId.set(toolCallId, runId);
+		}
+		for (const approvalId of approvalIds) {
+			this.#runIdByApprovalId.set(approvalId, runId);
+		}
+	}
 
 	private buildSnapshot(): ThreadStateSnapshot<TMessage> {
 		const tree = this.#tree.getSnapshot();
@@ -482,6 +598,57 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			.find((run) => pathIds.has(run.spec.assistantMessageId));
 	}
 
+	private getRunRecord(runId: string) {
+		const run = this.#runsById.get(runId);
+		if (!run) throw new Error(`Unknown run ${runId}`);
+		return run;
+	}
+
+	private getRunForToolCall(toolCallId: string) {
+		const runId = this.#runIdByToolCallId.get(toolCallId);
+		if (!runId) throw new Error(`No run owns tool call ${toolCallId}`);
+		return this.getRunRecord(runId);
+	}
+
+	private getRunForApproval(approvalId: string) {
+		const runId = this.#runIdByApprovalId.get(approvalId);
+		if (!runId) throw new Error(`No run owns tool approval ${approvalId}`);
+		return this.getRunRecord(runId);
+	}
+
+	private createRunForSelectedAssistant() {
+		const assistantMessageId = this.#tree.cursorId;
+		if (!assistantMessageId) return undefined;
+		const assistantMessage = this.#tree.getMessage(assistantMessageId);
+		if (!assistantMessage || assistantMessage.role !== "assistant") {
+			return undefined;
+		}
+		const userMessageId = this.#tree.getParentId(assistantMessageId);
+		if (!userMessageId) return undefined;
+
+		const spec: ThreadRunSpec = {
+			assistantMessageId,
+			follow: true,
+			originCursorId: assistantMessageId,
+			parentMessageId: this.#tree.getParentId(userMessageId) ?? null,
+			runId: assistantMessageId,
+			userMessageId,
+		};
+		const record: RunRecord<TMessage> = {
+			aborted: false,
+			chat: new ThreadRunChat(this, spec),
+			error: undefined,
+			finished: Promise.resolve(),
+			spec,
+			status: "ready",
+		};
+		this.#runsById.set(spec.runId, record);
+		this.markAssistantStarted(assistantMessageId);
+		this.indexMessageOwnership(spec.runId, assistantMessage);
+		this.emit(`Restored ${spec.runId}`);
+		return record;
+	}
+
 	private assertCanResetTree() {
 		if (this.getActiveRunRecords().length > 0) {
 			throw new Error("Cannot replace the tree while runs are active");
@@ -490,7 +657,23 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	private clearRunState() {
 		this.#assistantStarted.clear();
+		this.#runIdByApprovalId.clear();
+		this.#runIdByToolCallId.clear();
 		this.#runsById.clear();
+	}
+
+	private assertOwnershipAvailable(
+		owners: Map<string, string>,
+		id: string,
+		runId: string,
+		label: string,
+	) {
+		const existingRunId = owners.get(id);
+		if (existingRunId && existingRunId !== runId) {
+			throw new Error(
+				`${label} ${id} is already owned by run ${existingRunId}`,
+			);
+		}
 	}
 
 	private reserveAssistantMessageId(
@@ -593,6 +776,20 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			id,
 			stop: () => this.stopRun(id),
 		};
+	}
+
+	private async resumeRunRequest(
+		run: RunRecord<TMessage>,
+		options: ChatRequestOptions,
+	) {
+		run.aborted = false;
+		run.error = undefined;
+		const finished = run.chat
+			.resumeStream(this.withRunRequestBody(run.spec, options))
+			.finally(() => this.completeRun(run.spec.runId));
+		run.finished = finished;
+		this.emit(`Resuming ${run.spec.runId}`);
+		await finished;
 	}
 
 	private emitRunEvent(
