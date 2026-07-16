@@ -4,7 +4,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "bun run check-env",
+    "prebuild": "bun --filter @chatjs/thread build && bun run check-env",
     "dev": "bun run check-env && bash scripts/with-db.sh next dev",
     "dev:inspect": "bash scripts/with-db.sh next dev --inspect",
     "build": "tsx lib/db/migrate && next build",
