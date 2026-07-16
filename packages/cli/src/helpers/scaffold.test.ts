@@ -212,10 +212,11 @@ describe("scaffoldFromTemplate", () => {
 			true,
 		);
 		const chatStoreSource = await readFile(
-			join(destination, "lib", "stores", "with-threads.ts"),
+			join(destination, "lib", "stores", "base", "use-chat.ts"),
 			"utf8",
 		);
 		expect(chatStoreSource).toContain('from "@/lib/thread"');
+		expect(chatStoreSource).toContain('from "@/lib/thread/react"');
 	});
 
 	it("rewrites the generated web app to be npm-friendly", async () => {
