@@ -7,7 +7,6 @@ import {
 } from "@ai-sdk/react";
 import {
   type MessageTreeSnapshot,
-  ROOT_PARENT_ID,
   type ThreadChatOptions,
 } from "@chatjs/thread";
 import {
@@ -55,28 +54,15 @@ function getInitialTree<TMessage extends UIMessage>(
 
   const state = (store as any).getState?.();
   const messages = fallbackMessages ?? [];
-  const childrenByParentId = Object.fromEntries(
-    messages.map((message, index, allMessages) => [
-      index === 0 ? ROOT_PARENT_ID : allMessages[index - 1]?.id,
-      [message.id],
-    ])
-  );
 
   return (
     (state?.treeSnapshot as MessageTreeSnapshot<TMessage> | undefined) ??
     ({
-      childrenByParentId,
       cursorId: messages.at(-1)?.id ?? null,
-      messagesById: Object.fromEntries(
-        messages.map((message) => [message.id, message])
-      ),
-      parentById: Object.fromEntries(
-        messages.map((message, index, allMessages) => [
-          message.id,
-          index === 0 ? null : allMessages[index - 1]?.id,
-        ])
-      ),
-      rootIds: messages[0] ? [messages[0].id] : [],
+      nodes: messages.map((message, index, allMessages) => ({
+        message,
+        parentId: index === 0 ? null : (allMessages[index - 1]?.id ?? null),
+      })),
       version: 1,
     } satisfies MessageTreeSnapshot<TMessage>)
   );
@@ -89,13 +75,7 @@ function messagesSignature<TMessage extends UIMessage>(messages: TMessage[]) {
 function treeSignature<TMessage extends UIMessage>(
   snapshot: MessageTreeSnapshot<TMessage>
 ) {
-  return JSON.stringify({
-    childrenByParentId: snapshot.childrenByParentId,
-    cursorId: snapshot.cursorId,
-    messagesById: snapshot.messagesById,
-    parentById: snapshot.parentById,
-    rootIds: snapshot.rootIds,
-  });
+  return JSON.stringify(snapshot);
 }
 
 export function useChat<TMessage extends UIMessage = UIMessage>(
@@ -116,7 +96,9 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
   // Use custom store if provided, otherwise use the context store
   const contextStore = useChatStoreApi<TMessage>();
   const store = customStore || contextStore;
-  const initialTreeRef = useRef<MessageTreeSnapshot<TMessage> | null>(null);
+  const initialTreeRef = useRef<MessageTreeSnapshot<TMessage> | undefined>(
+    undefined
+  );
   if (!initialTreeRef.current) {
     initialTreeRef.current = getInitialTree(
       store,
