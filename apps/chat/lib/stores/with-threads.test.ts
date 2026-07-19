@@ -57,7 +57,23 @@ function createThreadStore(initialMessages: ChatMessage[]) {
 }
 
 describe("withThreads", () => {
-  it("preserves hidden branches when ThreadChat publishes an active-path snapshot", () => {
+  it("describes a parallel group before any assistant message exists", () => {
+    const user = createMessage({
+      id: "user-root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      parallelGroupId: "group-root",
+    });
+    const store = createThreadStore([user]);
+
+    assert.deepEqual(store.getState().getParallelGroupInfo(user.id), {
+      messages: [],
+      parallelGroupId: "group-root",
+      selectedMessageId: null,
+    });
+  });
+
+  it("preserves hidden branches when Thread publishes an active-path snapshot", () => {
     const userA = createMessage({
       id: "user-a",
       role: "user",
@@ -84,20 +100,11 @@ describe("withThreads", () => {
 
     store.getState().setAllMessages([userA, assistantA, userB, assistantB]);
     store.getState().setTreeSnapshot({
-      childrenByParentId: {
-        __root__: [userB.id],
-        [userB.id]: [assistantB.id],
-      },
       cursorId: assistantB.id,
-      messagesById: {
-        [userB.id]: userB,
-        [assistantB.id]: assistantB,
-      },
-      parentById: {
-        [userB.id]: null,
-        [assistantB.id]: userB.id,
-      },
-      rootIds: [userB.id],
+      nodes: [
+        { message: userB, parentId: null },
+        { message: assistantB, parentId: userB.id },
+      ],
       version: 1,
     });
 
@@ -205,7 +212,7 @@ describe("withThreads", () => {
     );
   });
 
-  it("preserves a pending stream marker when a run inserts its assistant shell", () => {
+  it("preserves existing metadata when a message update omits it", () => {
     const rootUser = createMessage({
       id: "user-root",
       role: "user",
@@ -286,7 +293,7 @@ describe("withThreads", () => {
     );
   });
 
-  it("fills metadata for ThreadChat assistant shells in tree snapshots", () => {
+  it("fills fallback metadata for assistant messages in tree snapshots", () => {
     const rootUser = createMessage({
       id: "user-root",
       role: "user",
@@ -301,20 +308,11 @@ describe("withThreads", () => {
     const store = createThreadStore([rootUser]);
 
     store.getState().setTreeSnapshot({
-      childrenByParentId: {
-        __root__: [rootUser.id],
-        [rootUser.id]: [assistantWithoutMetadata.id],
-      },
       cursorId: assistantWithoutMetadata.id,
-      messagesById: {
-        [rootUser.id]: rootUser,
-        [assistantWithoutMetadata.id]: assistantWithoutMetadata,
-      },
-      parentById: {
-        [rootUser.id]: null,
-        [assistantWithoutMetadata.id]: rootUser.id,
-      },
-      rootIds: [rootUser.id],
+      nodes: [
+        { message: rootUser, parentId: null },
+        { message: assistantWithoutMetadata, parentId: rootUser.id },
+      ],
       version: 1,
     });
 
