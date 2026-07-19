@@ -7,18 +7,13 @@ import type {
 } from "ai";
 
 export type ThreadRun = {
-	assistantMessageId: string;
 	error: Error | undefined;
-	follow: boolean;
 	id: string;
-	originCursorId: string | null;
-	parentMessageId: string | null;
 	status: ChatStatus;
 	userMessageId: string;
 };
 
 export type ThreadRunHandle = {
-	readonly assistantMessageId: string;
 	readonly finished: Promise<void>;
 	readonly id: string;
 	getSnapshot: () => ThreadRun | undefined;
@@ -92,13 +87,4 @@ export type ThreadChatOptions<TMessage extends UIMessage = UIMessage> = Omit<
 	initialTree?: MessageTreeSnapshot<TMessage>;
 	messages?: TMessage[];
 	onThreadEvent?: (event: ThreadEvent) => void;
-};
-
-export type ThreadRunSpec = {
-	assistantMessageId: string;
-	follow: boolean;
-	originCursorId: string | null;
-	parentMessageId: string | null;
-	runId: string;
-	userMessageId: string;
 };
