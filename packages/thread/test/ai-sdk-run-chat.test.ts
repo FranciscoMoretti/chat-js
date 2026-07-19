@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { ChatStatus, ChatTransport, UIMessage, UIMessageChunk } from "ai";
-import { ThreadRunChat, type ThreadRunHost } from "../src/ai-sdk-run-chat";
+import {
+	ThreadRunChat,
+	type ThreadRunHost,
+	type ThreadRunSpec,
+} from "../src/ai-sdk-run-chat";
 import { MessageTree } from "../src/message-tree";
-import type { ThreadRunSpec } from "../src/types";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
 	controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
@@ -36,6 +39,8 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 	readonly dataPartSchemas = undefined;
 	readonly id = "thread-chat";
 	readonly messageMetadataSchema = undefined;
+	readonly generateMessageId = () => "client-response";
+	readonly spec: ThreadRunSpec;
 	readonly tree: MessageTree<UIMessage>;
 	onData: ThreadRunHost<UIMessage>["onData"];
 	onError: ThreadRunHost<UIMessage>["onError"];
@@ -43,34 +48,37 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 	onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
 	sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<UIMessage>;
-	readonly started = new Set<string>();
 	status: ChatStatus = "ready";
 
-	constructor(transport: ChatTransport<UIMessage>, userMessage: UIMessage) {
+	constructor(
+		transport: ChatTransport<UIMessage>,
+		userMessage: UIMessage,
+		spec: ThreadRunSpec,
+	) {
 		this.transport = transport;
+		this.spec = spec;
 		this.tree = new MessageTree({ messages: [userMessage] });
 	}
 
-	finishRequest() {}
-	getPath = (messageId: string) => this.tree.getPath(messageId);
-	hasAssistantStarted = (messageId: string) => this.started.has(messageId);
-	indexMessageOwnership() {}
-	markAssistantStarted = (messageId: string) => {
-		this.started.add(messageId);
-	};
+	getRunPath = () =>
+		this.tree.getPath(this.spec.assistantMessageId ?? this.spec.userMessageId);
 	mergeRunPath = (messages: UIMessage[]) => {
 		this.tree.reconcilePath(messages, { moveCursor: false });
 	};
 	registerToolCall() {}
 	removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
 	setRunError = (_runId: string, error: Error | undefined) => {
-		this.onError?.(error as Error);
+		if (error) this.onError?.(error);
 	};
 	setRunStatus = (_runId: string, status: ChatStatus) => {
 		this.status = status;
 	};
 	upsertMessage = (message: UIMessage, parentId: string | null) => {
 		this.tree.upsertMessage(message, parentId);
+	};
+	writeRunAssistantMessage = (_runId: string, message: UIMessage) => {
+		this.spec.assistantMessageId = message.id;
+		this.tree.upsertMessage(message, this.spec.userMessageId);
 	};
 }
 
@@ -82,14 +90,15 @@ function userMessage(): UIMessage {
 	};
 }
 
-const spec: ThreadRunSpec = {
-	assistantMessageId: "assistant-1",
-	follow: true,
-	originCursorId: null,
-	parentMessageId: null,
-	runId: "assistant-1",
-	userMessageId: "user-1",
-};
+function createSpec(): ThreadRunSpec {
+	return {
+		id: "run-1",
+		originCursorId: null,
+		parentMessageId: null,
+		siblingOrder: 0,
+		userMessageId: "user-1",
+	};
+}
 
 function emitRichResponse(transport: ControlledTransport) {
 	transport.emit(
@@ -107,15 +116,16 @@ function emitRichResponse(transport: ControlledTransport) {
 
 describe("ThreadRunChat", () => {
 	test("matches the AI SDK React Chat reducer for one response", async () => {
+		const spec = createSpec();
 		const standardTransport = new ControlledTransport();
 		const threadTransport = new ControlledTransport();
 		const input = userMessage();
 		const standardChat = new Chat<UIMessage>({
-			generateId: () => spec.assistantMessageId,
+			generateId: () => "client-response",
 			id: "standard-chat",
 			transport: standardTransport,
 		});
-		const host = new TestRunHost(threadTransport, input);
+		const host = new TestRunHost(threadTransport, input, spec);
 		const threadRunChat = new ThreadRunChat(host, spec);
 
 		const standardRequest = standardChat.sendMessage(input);
@@ -125,16 +135,17 @@ describe("ThreadRunChat", () => {
 		emitRichResponse(threadTransport);
 		await Promise.all([standardRequest, threadRequest]);
 
-		expect(host.tree.getMessage(spec.assistantMessageId)).toEqual(
+		expect(host.tree.getMessage("assistant-1")).toEqual(
 			standardChat.messages.at(-1),
 		);
 		expect(host.status).toBe("ready");
 	});
 
-	test("keeps the reserved assistant identity when the stream sends another ID", async () => {
+	test("adopts the server response identity from the start chunk", async () => {
+		const spec = createSpec();
 		const transport = new ControlledTransport();
 		const input = userMessage();
-		const host = new TestRunHost(transport, input);
+		const host = new TestRunHost(transport, input, spec);
 		const chat = new ThreadRunChat(host, spec);
 
 		const request = chat.sendMessage(input);
@@ -148,9 +159,8 @@ describe("ThreadRunChat", () => {
 		transport.finish();
 		await request;
 
-		expect(host.tree.getMessage("server-id")).toBeUndefined();
-		expect(host.tree.getMessage(spec.assistantMessageId)?.id).toBe(
-			spec.assistantMessageId,
-		);
+		expect(host.tree.getMessage("client-response")).toBeUndefined();
+		expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
+		expect(spec.assistantMessageId).toBe("server-id");
 	});
 });
