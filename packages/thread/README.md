@@ -174,8 +174,13 @@ resolves when the request and automatic tool follow-ups finish. Use
 First add a user message and start its primary response:
 
 ```ts
+const prompt = {
+  id: crypto.randomUUID(),
+  role: "user" as const,
+  parts: [{ type: "text" as const, text: "Give me three implementation plans" }],
+};
 const primary = await chat.tree.startRun({
-  message: { text: "Give me three implementation plans" },
+  message: prompt,
   follow: true,
 });
 ```
@@ -184,12 +189,12 @@ Then start more assistant responses from the same user node:
 
 ```ts
 const alternativeA = await chat.tree.startRun({
-  from: primary.getSnapshot()?.userMessageId,
+  from: prompt.id,
   follow: false,
 });
 
 const alternativeB = await chat.tree.startRun({
-  from: primary.getSnapshot()?.userMessageId,
+  from: prompt.id,
   follow: false,
 });
 
@@ -204,8 +209,7 @@ await Promise.all([
 the tree. Each returned handle can be inspected or stopped independently:
 
 ```ts
-primary.id;
-primary.assistantMessageId;
+primary.id; // stable run ID
 primary.getSnapshot();
 await primary.stop();
 ```
@@ -348,42 +352,15 @@ Resumable assistant messages can be restored and resumed through
 `useThread` accepts AI SDK `ChatTransport` implementations directly. It does
 not define another transport protocol or parse stream chunks itself.
 
-Every request includes branch context in its body while preserving your custom
-request body fields:
+The active branch is sent as the transport's linear message history.
+`ChatRequestOptions` are forwarded unchanged, so application body and metadata
+fields remain entirely application-owned.
 
-```ts
-{
-  assistantMessageId,
-  tree: {
-    assistantMessageId,
-    cursorId,
-    originCursorId,
-    parentMessageId,
-    pathIds,
-    userMessageId
-  }
-}
-```
-
-Servers that only need a linear model history can ignore this metadata; the
-transport still receives the selected path. Persist the IDs when the server
-also needs to reconstruct branches or associate streams with message nodes.
-
-For resumable HTTP streams, reconnect by assistant message ID using AI SDK's
-native transport hook. Your server can resolve that stable message identity to
-an infrastructure-specific stream ID:
-
-```ts
-const transport = new DefaultChatTransport({
-  api: "/api/chat",
-  prepareReconnectToStreamRequest({ body, id }) {
-    const messageId = body?.assistantMessageId;
-    return {
-      api: `/api/chat/${id}/stream?messageId=${messageId}`,
-    };
-  },
-});
-```
+Like AI SDK's `useChat`, `useThread` keeps a submitted response outside the
+public message collection. The assistant node is inserted on the first stream
+write, using the server's `start.messageId` when provided and the AI SDK
+client-generated ID otherwise. Applications can render queued work from
+`tree.activeRuns` without creating placeholder `UIMessage` values.
 
 ## Externally owned ThreadChat
 
@@ -428,8 +405,8 @@ controller. All runs use the caller-provided transport.
 This design matters because one linear `useChat` instance has one active
 message array and request lifecycle. Replacing that array during branch
 navigation can abort, reconnect, or misroute an in-flight response. Isolated
-runs continue writing to their reserved assistant nodes regardless of which
-path is visible.
+runs continue writing to their own assistant nodes regardless of which path is
+visible.
 
 The implementation deliberately reuses AI SDK's `AbstractChat` orchestration
 instead of maintaining a custom stream reducer. That preserves standard stream
@@ -456,11 +433,9 @@ Chat engine APIs and types are exported from `@chatjs/thread`:
 createThreadChat;
 ThreadChat;
 getMessageText;
-ROOT_PARENT_ID;
 
 type MessageTreeSnapshot;
 type ThreadConcurrency;
-type ThreadEvent;
 type ThreadRun;
 type ThreadRunHandle;
 type ThreadChatOptions;
