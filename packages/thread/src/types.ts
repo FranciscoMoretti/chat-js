@@ -29,7 +29,6 @@ export type TreeSendOptions = ChatRequestOptions & {
 	tree?: {
 		follow?: boolean;
 		from?: string | null;
-		[key: string]: unknown;
 	};
 };
 
@@ -57,23 +56,30 @@ export type ThreadEvent =
 			type: "run-aborted" | "run-completed" | "run-failed";
 	  };
 
+export type MessageTreeNode<TMessage extends UIMessage = UIMessage> = {
+	message: TMessage;
+	parentId: string | null;
+};
+
 export type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = {
-	childrenByParentId: Record<string, string[]>;
 	cursorId: string | null;
-	messagesById: Record<string, TMessage>;
-	parentById: Record<string, string | null>;
-	rootIds: string[];
+	nodes: MessageTreeNode<TMessage>[];
 	version: 1;
 };
 
 export type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
 	MessageTreeSnapshot<TMessage> & {
+		activeRuns: ThreadRun[];
+		childrenByParentId: Record<string, string[]>;
 		error: Error | undefined;
+		/** Free-form diagnostic description of the latest state transition. */
 		lastEvent: string;
 		messages: TMessage[];
-		status: ChatStatus;
-		activeRuns: ThreadRun[];
+		messagesById: Record<string, TMessage>;
+		parentById: Record<string, string | null>;
+		rootIds: string[];
 		runs: ThreadRun[];
+		status: ChatStatus;
 		storeVersion: number;
 		treeStatus: ChatStatus;
 	};

@@ -1,5 +1,7 @@
 export type {
+	MessageTreeNode,
 	MessageTreeSnapshot,
+	SendMessageInput,
 	ThreadChatOptions,
 	ThreadConcurrency,
 	ThreadEvent,
@@ -8,4 +10,4 @@ export type {
 	ThreadStartRunOptions,
 	ThreadStateSnapshot,
 	TreeSendOptions,
-} from "./types";
+} from "./types.js";
