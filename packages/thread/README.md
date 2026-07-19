@@ -204,8 +204,7 @@ await Promise.all([
 the tree. Each returned handle can be inspected or stopped independently:
 
 ```ts
-primary.id;
-primary.assistantMessageId;
+primary.id; // reserved assistant message ID
 primary.getSnapshot();
 await primary.stop();
 ```
