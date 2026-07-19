@@ -404,7 +404,7 @@ export function ThreadPlayground() {
     const primaryRun = await chat.tree.startRun({
       message: messageInput(text, "Playground message", userMessageId),
       request: {
-        tree: {
+        body: {
           responseLabel:
             responseCount === 1
               ? "Assistant reply"
@@ -420,7 +420,7 @@ export function ThreadPlayground() {
           follow: false,
           from: userMessageId,
           request: {
-            tree: {
+            body: {
               responseLabel: `Response ${index + 1} of ${responseCount}`,
             },
           },
@@ -441,7 +441,7 @@ export function ThreadPlayground() {
     chat.tree.setCursor(messageId);
     if (message.role === "user") {
       chat.sendMessage(undefined, {
-        tree: { responseLabel: "Alternative response" },
+        body: { responseLabel: "Alternative response" },
       });
       return;
     }
@@ -450,7 +450,7 @@ export function ThreadPlayground() {
         `Take another direction from ${messageId}.`,
         "Branch prompt"
       ),
-      { tree: { responseLabel: "Branch response" } }
+      { body: { responseLabel: "Branch response" } }
     );
   }
 
