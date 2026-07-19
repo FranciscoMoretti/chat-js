@@ -84,20 +84,11 @@ describe("withThreads", () => {
 
     store.getState().setAllMessages([userA, assistantA, userB, assistantB]);
     store.getState().setTreeSnapshot({
-      childrenByParentId: {
-        __root__: [userB.id],
-        [userB.id]: [assistantB.id],
-      },
       cursorId: assistantB.id,
-      messagesById: {
-        [userB.id]: userB,
-        [assistantB.id]: assistantB,
-      },
-      parentById: {
-        [userB.id]: null,
-        [assistantB.id]: userB.id,
-      },
-      rootIds: [userB.id],
+      nodes: [
+        { message: userB, parentId: null },
+        { message: assistantB, parentId: userB.id },
+      ],
       version: 1,
     });
 
@@ -301,20 +292,11 @@ describe("withThreads", () => {
     const store = createThreadStore([rootUser]);
 
     store.getState().setTreeSnapshot({
-      childrenByParentId: {
-        __root__: [rootUser.id],
-        [rootUser.id]: [assistantWithoutMetadata.id],
-      },
       cursorId: assistantWithoutMetadata.id,
-      messagesById: {
-        [rootUser.id]: rootUser,
-        [assistantWithoutMetadata.id]: assistantWithoutMetadata,
-      },
-      parentById: {
-        [rootUser.id]: null,
-        [assistantWithoutMetadata.id]: rootUser.id,
-      },
-      rootIds: [rootUser.id],
+      nodes: [
+        { message: rootUser, parentId: null },
+        { message: assistantWithoutMetadata, parentId: rootUser.id },
+      ],
       version: 1,
     });
 

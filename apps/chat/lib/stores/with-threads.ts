@@ -103,33 +103,73 @@ function buildTreeSnapshotFromMessages<UM extends UIMessage>(
   messages: UM[],
   cursorId: string | null = messages.at(-1)?.id ?? null
 ): MessageTreeSnapshot<UM> {
-  const messagesById: Record<string, UM> = {};
-  const parentById: Record<string, string | null> = {};
-  const childrenByParentId: Record<string, string[]> = {};
+  const messagesById = new Map(
+    messages.map((message) => [message.id, message])
+  );
+  const childrenByParentId = new Map<string | null, UM[]>();
 
   for (const message of messages) {
-    const parentId = getMetadataParentId(message);
-    messagesById[message.id] = message;
-    parentById[message.id] = parentId;
-
-    const key = parentKey(parentId);
-    childrenByParentId[key] = [...(childrenByParentId[key] ?? []), message.id];
+    const metadataParentId = getMetadataParentId(message);
+    const parentId =
+      metadataParentId && messagesById.has(metadataParentId)
+        ? metadataParentId
+        : null;
+    childrenByParentId.set(parentId, [
+      ...(childrenByParentId.get(parentId) ?? []),
+      message,
+    ]);
   }
 
-  for (const childIds of Object.values(childrenByParentId)) {
-    childIds.sort((a, b) =>
-      compareSiblingMessages(messagesById[a] as UM, messagesById[b] as UM)
-    );
+  for (const children of childrenByParentId.values()) {
+    children.sort(compareSiblingMessages);
+  }
+
+  const nodes: MessageTreeSnapshot<UM>["nodes"] = [];
+  const visited = new Set<string>();
+  const visit = (message: UM, parentId: string | null) => {
+    if (visited.has(message.id)) {
+      return;
+    }
+    visited.add(message.id);
+    nodes.push({ message, parentId });
+    for (const child of childrenByParentId.get(message.id) ?? []) {
+      visit(child, message.id);
+    }
+  };
+
+  for (const root of childrenByParentId.get(null) ?? []) {
+    visit(root, null);
+  }
+  for (const message of messages) {
+    visit(message, null);
   }
 
   return {
-    childrenByParentId,
     cursorId,
-    messagesById,
-    parentById,
-    rootIds: childrenByParentId[ROOT_PARENT_ID] ?? [],
+    nodes,
     version: 1,
   };
+}
+
+function getSnapshotIndexes<UM extends UIMessage>(
+  snapshot: MessageTreeSnapshot<UM>
+) {
+  const childrenByParentId: Record<string, string[]> = {};
+  const messagesById: Record<string, UM> = {};
+  const parentById: Record<string, string | null> = {};
+  const rootIds: string[] = [];
+
+  for (const { message, parentId } of snapshot.nodes) {
+    const key = parentKey(parentId);
+    childrenByParentId[key] = [...(childrenByParentId[key] ?? []), message.id];
+    messagesById[message.id] = message;
+    parentById[message.id] = parentId;
+    if (parentId === null) {
+      rootIds.push(message.id);
+    }
+  }
+
+  return { childrenByParentId, messagesById, parentById, rootIds };
 }
 
 function buildChildrenMapFromSnapshot<UM extends UIMessage>(
@@ -140,8 +180,9 @@ function buildChildrenMapFromSnapshot<UM extends UIMessage>(
     messages.map((message) => [message.id, message])
   );
   const map = new Map<string | null, UM[]>();
+  const { childrenByParentId } = getSnapshotIndexes(snapshot);
 
-  for (const [key, childIds] of Object.entries(snapshot.childrenByParentId)) {
+  for (const [key, childIds] of Object.entries(childrenByParentId)) {
     const parentId = key === ROOT_PARENT_ID ? null : key;
     map.set(
       parentId,
@@ -162,6 +203,7 @@ function buildThreadFromSnapshot<UM extends UIMessage>(
   const messagesById = new Map(
     messages.map((message) => [message.id, message])
   );
+  const { parentById } = getSnapshotIndexes(snapshot);
   const thread: UM[] = [];
   let currentMessageId: string | null = leafMessageId;
   let iteration = 0;
@@ -178,7 +220,7 @@ function buildThreadFromSnapshot<UM extends UIMessage>(
     }
 
     thread.unshift(currentMessage);
-    currentMessageId = snapshot.parentById[currentMessageId] ?? null;
+    currentMessageId = parentById[currentMessageId] ?? null;
   }
 
   return thread;
@@ -188,7 +230,8 @@ function findLeafDfsToRightFromSnapshot<UM extends UIMessage>(
   snapshot: MessageTreeSnapshot<UM>,
   messageId: string
 ): string | null {
-  const children = snapshot.childrenByParentId[messageId] ?? [];
+  const { childrenByParentId } = getSnapshotIndexes(snapshot);
+  const children = childrenByParentId[messageId] ?? [];
   const rightmostChild = children.at(-1);
 
   if (!rightmostChild) {
@@ -203,13 +246,7 @@ function findLeafDfsToRightFromSnapshot<UM extends UIMessage>(
 function getSnapshotSignature<UM extends UIMessage>(
   snapshot: MessageTreeSnapshot<UM>
 ) {
-  return JSON.stringify({
-    childrenByParentId: snapshot.childrenByParentId,
-    cursorId: snapshot.cursorId,
-    messagesById: snapshot.messagesById,
-    parentById: snapshot.parentById,
-    rootIds: snapshot.rootIds,
-  });
+  return JSON.stringify(snapshot);
 }
 
 type MetadataWithSelectedModel = MessageNode["metadata"] & {
@@ -365,12 +402,13 @@ export const withThreads =
 
       setTreeSnapshot: (snapshot: MessageTreeSnapshot<UI_MESSAGE>) => {
         const state = get();
-        const snapshotMessages = Object.values(snapshot.messagesById);
+        const snapshotIndexes = getSnapshotIndexes(snapshot);
+        const snapshotMessages = snapshot.nodes.map(({ message }) => message);
         const mergedMessages = mergeTreeMessages(
           snapshotMessages,
           state.allMessages,
           [],
-          snapshot.parentById
+          snapshotIndexes.parentById
         );
         const mergedSnapshot = buildTreeSnapshotFromMessages(
           mergedMessages,
@@ -505,7 +543,7 @@ export const withThreads =
         }
 
         const parentId =
-          state.treeSnapshot.parentById[message.id] ??
+          getSnapshotIndexes(state.treeSnapshot).parentById[message.id] ??
           getMetadataParentId(message);
         const siblings = (childrenMap.get(parentId) ?? []) as UI_MESSAGE[];
         const siblingIndex = siblings.findIndex((s) => s.id === messageId);
@@ -527,7 +565,7 @@ export const withThreads =
         const parentId =
           message.role === "user"
             ? message.id
-            : (state.treeSnapshot.parentById[message.id] ??
+            : (getSnapshotIndexes(state.treeSnapshot).parentById[message.id] ??
               metadata?.parentMessageId ??
               null);
 
