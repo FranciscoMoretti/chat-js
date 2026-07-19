@@ -12,9 +12,9 @@ export type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
 export type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
 
 interface StreamBody {
+  responseLabel?: string;
   tree?: {
     assistantMessageId?: string;
-    responseLabel?: string;
   };
 }
 
@@ -48,74 +48,75 @@ function createMessage({
   };
 }
 
-const initialMessages = [
-  createMessage({
-    id: "msg_01",
-    role: "user",
-    text: "Plan a production launch.",
-    title: "Initial prompt",
-  }),
-  createMessage({
-    id: "msg_02",
-    role: "assistant",
-    text: "Start with architecture, rollout, and observability as separate workstreams.",
-    title: "Initial answer",
-  }),
-  createMessage({
-    id: "msg_03",
-    role: "user",
-    text: "Make the plan technical.",
-    title: "Follow-up",
-  }),
-  createMessage({
-    id: "msg_04a",
-    role: "assistant",
-    text: "Use staged environments, immutable builds, and progressive traffic shifting.",
-    title: "Deployment branch",
-  }),
-  createMessage({
-    id: "msg_05a",
-    role: "user",
-    text: "Add the deployment sequence.",
-    title: "Deployment follow-up",
-  }),
-  createMessage({
-    id: "msg_04b",
-    role: "assistant",
-    text: "Define service-level indicators before rollout and attach alerts to user impact.",
-    title: "Observability branch",
-  }),
-  createMessage({
-    id: "msg_05b",
-    role: "user",
-    text: "Focus on monitoring first.",
-    title: "Observability follow-up",
-  }),
-] satisfies PlaygroundMessage[];
+const initialNodes = [
+  {
+    message: createMessage({
+      id: "msg_01",
+      role: "user",
+      text: "Plan a production launch.",
+      title: "Initial prompt",
+    }),
+    parentId: null,
+  },
+  {
+    message: createMessage({
+      id: "msg_02",
+      role: "assistant",
+      text: "Start with architecture, rollout, and observability as separate workstreams.",
+      title: "Initial answer",
+    }),
+    parentId: "msg_01",
+  },
+  {
+    message: createMessage({
+      id: "msg_03",
+      role: "user",
+      text: "Make the plan technical.",
+      title: "Follow-up",
+    }),
+    parentId: "msg_02",
+  },
+  {
+    message: createMessage({
+      id: "msg_04a",
+      role: "assistant",
+      text: "Use staged environments, immutable builds, and progressive traffic shifting.",
+      title: "Deployment branch",
+    }),
+    parentId: "msg_03",
+  },
+  {
+    message: createMessage({
+      id: "msg_05a",
+      role: "user",
+      text: "Add the deployment sequence.",
+      title: "Deployment follow-up",
+    }),
+    parentId: "msg_04a",
+  },
+  {
+    message: createMessage({
+      id: "msg_04b",
+      role: "assistant",
+      text: "Define service-level indicators before rollout and attach alerts to user impact.",
+      title: "Observability branch",
+    }),
+    parentId: "msg_03",
+  },
+  {
+    message: createMessage({
+      id: "msg_05b",
+      role: "user",
+      text: "Focus on monitoring first.",
+      title: "Observability follow-up",
+    }),
+    parentId: "msg_04b",
+  },
+] satisfies MessageTreeSnapshot<PlaygroundMessage>["nodes"];
 
 export const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
-  childrenByParentId: {
-    __root__: ["msg_01"],
-    msg_01: ["msg_02"],
-    msg_02: ["msg_03"],
-    msg_03: ["msg_04a", "msg_04b"],
-    msg_04a: ["msg_05a"],
-    msg_04b: ["msg_05b"],
-  },
   cursorId: "msg_05a",
-  messagesById: Object.fromEntries(
-    initialMessages.map((message) => [message.id, message])
-  ),
-  parentById: {
-    msg_01: null,
-    msg_02: "msg_01",
-    msg_03: "msg_02",
-    msg_04a: "msg_03",
-    msg_04b: "msg_03",
-    msg_05a: "msg_04a",
-    msg_05b: "msg_04b",
-  },
-  rootIds: ["msg_01"],
+  nodes: initialNodes,
   version: 1,
 };
 
@@ -147,7 +148,7 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
     const requestBody = body as StreamBody | undefined;
     const assistantMessageId =
       requestBody?.tree?.assistantMessageId ?? "assistant";
-    const responseLabel = requestBody?.tree?.responseLabel ?? "Assistant";
+    const responseLabel = requestBody?.responseLabel ?? "Assistant";
     const userMessage = messages.at(-1);
     const prompt = userMessage ? getMessageText(userMessage) : "this branch";
     const response = `${responseLabel}: I am streaming independently from "${prompt}". Select another node while I run, or start more responses from the same prompt.`;
