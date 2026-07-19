@@ -5,7 +5,14 @@ import {
 	type ChatTransport,
 	type UIMessage,
 } from "ai";
-import type { ThreadChatOptions, ThreadRunSpec } from "./types";
+import type { ThreadChatOptions } from "./types";
+
+export type ThreadRunSpec = {
+	assistantMessageId: string;
+	originCursorId: string | null;
+	parentMessageId: string | null;
+	userMessageId: string;
+};
 
 export interface ThreadRunHost<TMessage extends UIMessage> {
 	readonly dataPartSchemas: ThreadChatOptions<TMessage>["dataPartSchemas"];
@@ -53,7 +60,7 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	set error(error: Error | undefined) {
 		this.#error = error;
-		this.#host.setRunError(this.#spec.runId, error);
+		this.#host.setRunError(this.#spec.assistantMessageId, error);
 	}
 
 	get messages() {
@@ -73,7 +80,7 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	set status(status: ChatStatus) {
 		this.#status = status;
-		this.#host.setRunStatus(this.#spec.runId, status);
+		this.#host.setRunStatus(this.#spec.assistantMessageId, status);
 	}
 
 	popMessage = () => {
@@ -101,7 +108,10 @@ class ThreadChatState<TMessage extends UIMessage>
 			};
 			this.#host.markAssistantStarted(this.#spec.assistantMessageId);
 			this.#host.upsertMessage(assistantMessage, this.#spec.userMessageId);
-			this.#host.indexMessageOwnership(this.#spec.runId, assistantMessage);
+			this.#host.indexMessageOwnership(
+				this.#spec.assistantMessageId,
+				assistantMessage,
+			);
 			return;
 		}
 
@@ -124,7 +134,7 @@ export class ThreadRunChat<
 			messageMetadataSchema: host.messageMetadataSchema,
 			onData: (event) => host.onData?.(event),
 			onError: (error) => {
-				host.setRunError(spec.runId, error);
+				host.setRunError(spec.assistantMessageId, error);
 				host.onError?.(error);
 			},
 			onFinish: (event) => {
@@ -135,8 +145,8 @@ export class ThreadRunChat<
 				host.upsertMessage(assistantMessage, spec.userMessageId, {
 					silent: true,
 				});
-				host.indexMessageOwnership(spec.runId, assistantMessage);
-				host.finishRequest(spec.runId, event.isAbort);
+				host.indexMessageOwnership(spec.assistantMessageId, assistantMessage);
+				host.finishRequest(spec.assistantMessageId, event.isAbort);
 				host.onFinish?.({
 					...event,
 					message: assistantMessage,
@@ -144,7 +154,10 @@ export class ThreadRunChat<
 				});
 			},
 			onToolCall: async (event) => {
-				host.registerToolCall(spec.runId, event.toolCall.toolCallId);
+				host.registerToolCall(
+					spec.assistantMessageId,
+					event.toolCall.toolCallId,
+				);
 				await host.onToolCall?.(event);
 			},
 			sendAutomaticallyWhen: (event) =>

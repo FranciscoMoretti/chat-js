@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { ChatStatus, ChatTransport, UIMessage, UIMessageChunk } from "ai";
-import { ThreadRunChat, type ThreadRunHost } from "../src/ai-sdk-run-chat";
+import {
+	ThreadRunChat,
+	type ThreadRunHost,
+	type ThreadRunSpec,
+} from "../src/ai-sdk-run-chat";
 import { MessageTree } from "../src/message-tree";
-import type { ThreadRunSpec } from "../src/types";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
 	controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
@@ -84,10 +87,8 @@ function userMessage(): UIMessage {
 
 const spec: ThreadRunSpec = {
 	assistantMessageId: "assistant-1",
-	follow: true,
 	originCursorId: null,
 	parentMessageId: null,
-	runId: "assistant-1",
 	userMessageId: "user-1",
 };
 
