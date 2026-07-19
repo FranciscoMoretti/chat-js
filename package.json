@@ -10,6 +10,7 @@
 	"scripts": {
 		"worktree-env": "bun .agents/skills/worktree-ports/scripts/worktree-env.ts",
 		"dev": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run dev --filter=@chatjs/chat",
+		"dev:workgrove": "bun scripts/dev-workgrove.ts",
 		"dev:info": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env --info",
 		"dev:docs": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env docs -- turbo run dev --filter=@chatjs/docs",
 		"dev:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- turbo run dev --filter=@chatjs/site",

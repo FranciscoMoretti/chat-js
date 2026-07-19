@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/FranciscoMoretti/workgrove/main/schema/workgrove.schema.json",
+  "version": 1,
+  "setup": { "argv": ["bun", "install"] },
+  "appGroups": {
+    "Chat": {
+      "start": { "argv": ["bun", "run", "dev:workgrove"] },
+      "stop": "process",
+      "env": {
+        "CHAT_PORT": "{apps.chat.port}",
+        "CHAT_URL": "{apps.chat.url}"
+      },
+      "apps": {
+        "chat": { "protocol": "http", "readiness": "tcp" }
+      }
+    },
+    "Website": {
+      "start": { "argv": ["bun", "scripts/dev-workgrove.ts", "site"] },
+      "stop": "process",
+      "env": {
+        "SITE_PORT": "{apps.site.port}"
+      },
+      "apps": {
+        "site": { "protocol": "http", "readiness": "tcp" }
+      }
+    }
+  }
+}

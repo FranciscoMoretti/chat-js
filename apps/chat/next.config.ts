@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
+function appHostname(): string[] {
+  if (!process.env.APP_URL) {
+    return [];
+  }
+  try {
+    return [new URL(process.env.APP_URL).hostname];
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: appHostname(),
   typedRoutes: true,
   cacheComponents: false,
   experimental: {
