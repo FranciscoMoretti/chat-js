@@ -628,10 +628,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 		const spec: ThreadRunSpec = {
 			assistantMessageId,
-			follow: true,
 			originCursorId: assistantMessageId,
 			parentMessageId: this.#tree.getParentId(userMessageId) ?? null,
-			runId: assistantMessageId,
 			userMessageId,
 		};
 		const record: RunRecord<TMessage> = {
@@ -642,10 +640,10 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			spec,
 			status: "ready",
 		};
-		this.#runsById.set(spec.runId, record);
+		this.#runsById.set(assistantMessageId, record);
 		this.markAssistantStarted(assistantMessageId);
-		this.indexMessageOwnership(spec.runId, assistantMessage);
-		this.emit(`Restored ${spec.runId}`);
+		this.indexMessageOwnership(assistantMessageId, assistantMessage);
+		this.emit(`Restored ${assistantMessageId}`);
 		return record;
 	}
 
@@ -786,9 +784,9 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		run.error = undefined;
 		const finished = run.chat
 			.resumeStream(this.withRunRequestBody(run.spec, options))
-			.finally(() => this.completeRun(run.spec.runId));
+			.finally(() => this.completeRun(run.spec.assistantMessageId));
 		run.finished = finished;
-		this.emit(`Resuming ${run.spec.runId}`);
+		this.emit(`Resuming ${run.spec.assistantMessageId}`);
 		await finished;
 	}
 
