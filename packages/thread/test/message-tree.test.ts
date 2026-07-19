@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { UIMessage } from "ai";
-import { MessageTree, ROOT_PARENT_ID } from "../src/message-tree";
+import { MessageTree } from "../src/message-tree";
 
 function message(id: string, role: UIMessage["role"] = "user"): UIMessage {
 	return { id, parts: [{ text: id, type: "text" }], role };
@@ -24,7 +24,7 @@ describe("MessageTree", () => {
 			"a2",
 		]);
 		expect(tree.getSiblings("a2").map(({ id }) => id)).toEqual(["a2", "a3"]);
-		expect(tree.getSnapshot().messagesById.a3?.id).toBe("a3");
+		expect(tree.getMessage("a3")?.id).toBe("a3");
 	});
 
 	test("reconciles a selected path without deleting hidden descendants", () => {
@@ -41,7 +41,7 @@ describe("MessageTree", () => {
 		]);
 
 		expect(tree.getPath().map(({ id }) => id)).toEqual(["u1", "a1", "u3"]);
-		expect(tree.getSnapshot().messagesById.a2?.id).toBe("a2");
+		expect(tree.getMessage("a2")?.id).toBe("a2");
 	});
 
 	test("validates a path before changing existing nodes", () => {
@@ -78,7 +78,17 @@ describe("MessageTree", () => {
 		tree.removeLeaf("a1");
 
 		expect(tree.cursorId).toBe("u1");
-		expect(tree.getSnapshot().messagesById.a1).toBeUndefined();
+		expect(tree.getMessage("a1")).toBeUndefined();
+	});
+
+	test("inserts a message at an explicit sibling position", () => {
+		const tree = new MessageTree({
+			messages: [message("u1")],
+		});
+		tree.upsertMessage(message("a2", "assistant"), "u1", { index: 1 });
+		tree.upsertMessage(message("a1", "assistant"), "u1", { index: 0 });
+
+		expect(tree.getChildren("u1").map(({ id }) => id)).toEqual(["a1", "a2"]);
 	});
 
 	test("round-trips a serializable snapshot", () => {
@@ -88,8 +98,36 @@ describe("MessageTree", () => {
 		const restored = new MessageTree({ snapshot: tree.getSnapshot() });
 
 		expect(restored.getSnapshot()).toEqual(tree.getSnapshot());
-		expect(restored.getSnapshot().childrenByParentId[ROOT_PARENT_ID]).toEqual([
-			"u1",
-		]);
+		expect(
+			restored.getSnapshot().nodes.map(({ message }) => message.id),
+		).toEqual(["u1", "a1"]);
+		expect(restored.getIndexes().rootIds).toEqual(["u1"]);
+	});
+
+	test("rejects unordered and duplicate snapshot nodes", () => {
+		expect(
+			() =>
+				new MessageTree({
+					snapshot: {
+						cursorId: null,
+						nodes: [{ message: message("a1"), parentId: "u1" }],
+						version: 1,
+					},
+				}),
+		).toThrow("Unknown parent message u1");
+
+		expect(
+			() =>
+				new MessageTree({
+					snapshot: {
+						cursorId: null,
+						nodes: [
+							{ message: message("u1"), parentId: null },
+							{ message: message("u1"), parentId: null },
+						],
+						version: 1,
+					},
+				}),
+		).toThrow("Duplicate message id u1 in snapshot");
 	});
 });

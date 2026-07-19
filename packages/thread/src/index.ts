@@ -1,4 +1,4 @@
-export { getMessageText, ROOT_PARENT_ID } from "./message-tree";
+export { getMessageText } from "./message-tree";
 
 export type {
 	MessageTreeNode,
