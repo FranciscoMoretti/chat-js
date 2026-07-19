@@ -284,7 +284,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
   );
   const activeIds = new Set(chat.messages.map((message) => message.id));
   const runByMessageId = new Map(
-    chat.tree.activeRuns.map((run) => [run.assistantMessageId, run])
+    chat.tree.activeRuns.map((run) => [run.id, run])
   );
 
   return (
