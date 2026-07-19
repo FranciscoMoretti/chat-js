@@ -183,13 +183,16 @@ const primary = await chat.tree.startRun({
 Then start more assistant responses from the same user node:
 
 ```ts
+const promptId = chat.tree.parentById[primary.id];
+if (!promptId) throw new Error("The response has no parent message");
+
 const alternativeA = await chat.tree.startRun({
-  from: primary.getSnapshot()?.userMessageId,
+  from: promptId,
   follow: false,
 });
 
 const alternativeB = await chat.tree.startRun({
-  from: primary.getSnapshot()?.userMessageId,
+  from: promptId,
   follow: false,
 });
 

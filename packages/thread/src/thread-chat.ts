@@ -807,7 +807,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			error: run.error,
 			id: run.spec.assistantMessageId,
 			status: run.status,
-			userMessageId: run.spec.userMessageId,
 		};
 	}
 

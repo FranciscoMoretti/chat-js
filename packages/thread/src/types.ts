@@ -10,7 +10,6 @@ export type ThreadRun = {
 	error: Error | undefined;
 	id: string;
 	status: ChatStatus;
-	userMessageId: string;
 };
 
 export type ThreadRunHandle = {
