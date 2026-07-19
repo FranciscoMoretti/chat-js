@@ -8,7 +8,11 @@ import {
 	generateId,
 	type UIMessage,
 } from "ai";
-import { ThreadRunChat, type ThreadRunHost } from "./ai-sdk-run-chat";
+import {
+	ThreadRunChat,
+	type ThreadRunHost,
+	type ThreadRunSpec,
+} from "./ai-sdk-run-chat";
 import { MessageTree } from "./message-tree";
 import type {
 	MessageTreeSnapshot,
@@ -17,7 +21,6 @@ import type {
 	ThreadConcurrency,
 	ThreadRun,
 	ThreadRunHandle,
-	ThreadRunSpec,
 	ThreadStartRunOptions,
 	ThreadStateSnapshot,
 	TreeSendOptions,
@@ -424,6 +427,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	private buildSnapshot(): ThreadStateSnapshot<TMessage> {
 		const tree = this.#tree.getSnapshot();
+		const indexes = this.#tree.getIndexes();
 		const runs = Array.from(this.#runsById.values()).map((run) =>
 			this.toRunSnapshot(run),
 		);
@@ -433,6 +437,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		const selectedRun = this.getSelectedRunRecord();
 		return {
 			...tree,
+			...indexes,
 			activeRuns,
 			error: selectedRun?.error,
 			lastEvent: this.#lastEvent,
@@ -518,13 +523,11 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		originCursorId,
 		parentMessageId,
 		userMessageId,
-	}: Omit<ThreadRunSpec, "runId"> & { options?: TreeSendOptions }) {
+	}: ThreadRunSpec & { follow: boolean; options?: TreeSendOptions }) {
 		const spec: ThreadRunSpec = {
 			assistantMessageId,
-			follow,
 			originCursorId,
 			parentMessageId,
-			runId: assistantMessageId,
 			userMessageId,
 		};
 		if (!this.#tree.has(assistantMessageId)) {
@@ -547,8 +550,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			spec,
 			status: "submitted",
 		};
-		this.#runsById.set(spec.runId, record);
-		this.emit(`Started ${spec.runId}`);
+		this.#runsById.set(spec.assistantMessageId, record);
+		this.emit(`Started ${spec.assistantMessageId}`);
 		this.emitRunEvent(record, "run-started");
 		const userMessage = this.#tree.getMessage(spec.userMessageId);
 		const finished = chat
@@ -557,11 +560,11 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			})
 			.catch((error: unknown) => {
 				this.setRunError(
-					spec.runId,
+					spec.assistantMessageId,
 					error instanceof Error ? error : new Error(String(error)),
 				);
 			})
-			.finally(() => this.completeRun(spec.runId));
+			.finally(() => this.completeRun(spec.assistantMessageId));
 		record.finished = finished;
 		return this.createRunHandle(record);
 	}
@@ -583,12 +586,12 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	private createRunHandle(run: RunRecord<TMessage>): ThreadRunHandle {
+		const id = run.spec.assistantMessageId;
 		return {
-			assistantMessageId: run.spec.assistantMessageId,
 			finished: run.finished,
-			getSnapshot: () => this.getRun(run.spec.runId),
-			id: run.spec.runId,
-			stop: () => this.stopRun(run.spec.runId),
+			getSnapshot: () => this.getRun(id),
+			id,
+			stop: () => this.stopRun(id),
 		};
 	}
 
@@ -606,21 +609,17 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	private toRunSnapshot(run: RunRecord<TMessage>): ThreadRun {
 		return {
-			assistantMessageId: run.spec.assistantMessageId,
 			error: run.error,
-			follow: run.spec.follow,
-			id: run.spec.runId,
-			originCursorId: run.spec.originCursorId,
-			parentMessageId: run.spec.parentMessageId,
+			id: run.spec.assistantMessageId,
 			status: run.status,
 			userMessageId: run.spec.userMessageId,
 		};
 	}
 
 	private resolveStatus(runs: ThreadRun[]) {
-		if (runs.some((run) => run.status === "error")) return "error";
 		if (runs.some((run) => run.status === "streaming")) return "streaming";
 		if (runs.some((run) => run.status === "submitted")) return "submitted";
+		if (runs.some((run) => run.status === "error")) return "error";
 		return "ready";
 	}
 
