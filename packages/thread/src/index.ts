@@ -1,10 +1,8 @@
 export type {
 	MessageTreeNode,
 	MessageTreeSnapshot,
-	SendMessageInput,
 	ThreadChatOptions,
 	ThreadConcurrency,
-	ThreadEvent,
 	ThreadRun,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
