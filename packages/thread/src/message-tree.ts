@@ -119,14 +119,33 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 	}
 
 	getSnapshot(): MessageTreeSnapshot<TMessage> {
+		const nodes: MessageTreeSnapshot<TMessage>["nodes"] = [];
+		const visit = (messageId: string, parentId: string | null) => {
+			const message = this.#messagesById.get(messageId);
+			if (!message) return;
+			nodes.push({ message: clone(message), parentId });
+			for (const childId of this.#childrenByParentId.get(messageId) ?? []) {
+				visit(childId, messageId);
+			}
+		};
+		for (const rootId of this.#childrenByParentId.get(ROOT_PARENT_ID) ?? []) {
+			visit(rootId, null);
+		}
+
+		return {
+			cursorId: this.#cursorId,
+			nodes,
+			version: 1,
+		};
+	}
+
+	getIndexes() {
 		return {
 			childrenByParentId: Object.fromEntries(
-				Array.from(this.#childrenByParentId.entries(), ([id, children]) => [
-					id,
-					[...children],
-				]),
+				Array.from(this.#childrenByParentId.entries())
+					.filter(([id]) => id !== ROOT_PARENT_ID)
+					.map(([id, children]) => [id, [...children]]),
 			),
-			cursorId: this.#cursorId,
 			messagesById: Object.fromEntries(
 				Array.from(this.#messagesById.entries(), ([id, message]) => [
 					id,
@@ -135,7 +154,6 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 			),
 			parentById: Object.fromEntries(this.#parentById.entries()),
 			rootIds: [...(this.#childrenByParentId.get(ROOT_PARENT_ID) ?? [])],
-			version: 1,
 		};
 	}
 
@@ -229,50 +247,13 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 
 	restore(snapshot: MessageTreeSnapshot<TMessage>) {
 		const restored = new MessageTree<TMessage>();
-		for (const id of Object.keys(snapshot.messagesById)) {
-			const message = snapshot.messagesById[id];
-			if (!message) {
-				continue;
+		for (const { message, parentId } of snapshot.nodes) {
+			if (restored.has(message.id)) {
+				throw new Error(`Duplicate message id ${message.id} in snapshot`);
 			}
-			const parentId = snapshot.parentById[id];
-			if (parentId === undefined) {
-				throw new Error(`Missing parent for message ${id}`);
-			}
-			if (parentId !== null && !snapshot.messagesById[parentId]) {
-				throw new Error(`Unknown parent message ${parentId}`);
-			}
+			restored.upsertMessage(message, parentId);
 		}
-
-		const visit = (id: string, ancestors: Set<string>) => {
-			if (ancestors.has(id)) {
-				throw new Error(`Cannot restore a cycle involving ${id}`);
-			}
-			const nextAncestors = new Set(ancestors).add(id);
-			for (const childId of snapshot.childrenByParentId[id] ?? []) {
-				visit(childId, nextAncestors);
-			}
-		};
-		for (const rootId of snapshot.rootIds) {
-			visit(rootId, new Set());
-		}
-
-		restored.#messagesById.clear();
-		for (const [id, message] of Object.entries(snapshot.messagesById)) {
-			restored.#messagesById.set(id, clone(message));
-		}
-		for (const [id, parentId] of Object.entries(snapshot.parentById)) {
-			restored.#parentById.set(id, parentId);
-		}
-		for (const [id, children] of Object.entries(snapshot.childrenByParentId)) {
-			restored.#childrenByParentId.set(id, [...children]);
-		}
-		if (
-			snapshot.cursorId !== null &&
-			!restored.#messagesById.has(snapshot.cursorId)
-		) {
-			throw new Error(`Unknown message ${snapshot.cursorId}`);
-		}
-		restored.#cursorId = snapshot.cursorId;
+		restored.setCursor(snapshot.cursorId);
 
 		this.clear();
 		for (const [id, message] of restored.#messagesById) {
