@@ -4,21 +4,16 @@ import { getMessageText } from "../src/message-tree";
 import { ThreadChat } from "../src/thread-chat";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
-	readonly requests = new Map<
-		string,
-		{
-			abortSignal: AbortSignal | undefined;
-			controller: ReadableStreamDefaultController<UIMessageChunk>;
-		}
-	>();
+	readonly requests: Array<{
+		abortSignal: AbortSignal | undefined;
+		controller: ReadableStreamDefaultController<UIMessageChunk>;
+	}> = [];
 
 	sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
-		const assistantMessageId = (options.body as { assistantMessageId: string })
-			.assistantMessageId;
 		return Promise.resolve(
 			new ReadableStream({
 				start: (controller) => {
-					this.requests.set(assistantMessageId, {
+					this.requests.push({
 						abortSignal: options.abortSignal,
 						controller,
 					});
@@ -35,13 +30,27 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 		);
 	};
 
-	reconnectToStream() {
+	reconnectToStream(
+		_options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0],
+	): Promise<ReadableStream<UIMessageChunk> | null> {
 		return Promise.resolve(null);
 	}
 
-	emitText(assistantMessageId: string, text: string) {
-		const controller = this.requests.get(assistantMessageId)?.controller;
-		controller?.enqueue({ messageId: assistantMessageId, type: "start" });
+	emit(requestIndex: number, chunk: UIMessageChunk) {
+		this.requests[requestIndex]?.controller.enqueue(chunk);
+	}
+
+	finish(requestIndex: number) {
+		this.requests[requestIndex]?.controller.close();
+	}
+
+	fail(requestIndex: number, error: Error) {
+		this.requests[requestIndex]?.controller.error(error);
+	}
+
+	emitText(requestIndex: number, messageId: string, text: string) {
+		const controller = this.requests[requestIndex]?.controller;
+		controller?.enqueue({ messageId, type: "start" });
 		controller?.enqueue({ id: "text", type: "text-start" });
 		controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
 		controller?.enqueue({ id: "text", type: "text-end" });
@@ -51,6 +60,11 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 
 function user(id: string): UIMessage {
 	return { id, parts: [{ text: id, type: "text" }], role: "user" };
+}
+
+function requireMessage(message: UIMessage | undefined) {
+	if (!message) throw new Error("Expected message to exist");
+	return message;
 }
 
 async function waitFor(predicate: () => boolean) {
@@ -68,17 +82,15 @@ describe("ThreadChat", () => {
 		const primary = await chat.startRun({
 			follow: true,
 			message: user("user-1"),
-			request: { body: { assistantMessageId: "assistant-1" } },
 		});
 		const alternative = await chat.startRun({
 			follow: false,
 			from: "user-1",
-			request: { body: { assistantMessageId: "assistant-2" } },
 		});
-		await waitFor(() => transport.requests.size === 2);
+		await waitFor(() => transport.requests.length === 2);
 
-		transport.emitText("assistant-2", "second");
-		transport.emitText("assistant-1", "first");
+		transport.emitText(1, "assistant-2", "second");
+		transport.emitText(0, "assistant-1", "first");
 		await Promise.all([primary.finished, alternative.finished]);
 
 		expect(chat.getSiblings("assistant-1").map(({ id }) => id)).toEqual([
@@ -88,54 +100,53 @@ describe("ThreadChat", () => {
 		expect(chat.getSnapshot().cursorId).toBe("assistant-1");
 	});
 
-	test("claims an optimistic assistant placeholder for its reserved run", async () => {
+	test("keeps a submitted response out of the tree until streaming starts", async () => {
 		const transport = new ControlledTransport();
 		const chat = new ThreadChat({ transport });
-		chat.addMessage(user("user-1"), null);
-		chat.addMessage(
-			{
-				id: "assistant-1",
-				metadata: { lifecycle: "pending" },
-				parts: [],
-				role: "assistant",
-			},
-			"user-1",
-		);
-
 		const run = await chat.startRun({
-			from: "user-1",
-			request: { body: { assistantMessageId: "assistant-1" } },
+			message: user("user-1"),
 		});
-		await waitFor(() => transport.requests.has("assistant-1"));
+		await waitFor(() => transport.requests.length === 1);
 
-		expect(chat.getMessage("assistant-1")?.metadata).toEqual({
-			lifecycle: "pending",
-		});
-		transport.emitText("assistant-1", "claimed");
+		const runId = run.id;
+		expect(chat.getChildren("user-1")).toEqual([]);
+		expect(chat.getSnapshot().messages.map(({ id }) => id)).toEqual(["user-1"]);
+		expect(run.getSnapshot()?.status).toBe("submitted");
+		transport.emitText(0, "server-assistant", "claimed");
 		await run.finished;
-		expect(getMessageText(chat.getMessage("assistant-1") as UIMessage)).toBe(
-			"claimed",
-		);
+		expect(run.id).toBe(runId);
+		expect(
+			getMessageText(requireMessage(chat.getMessage("server-assistant"))),
+		).toBe("claimed");
+		const snapshotMessage = chat
+			.getSnapshot()
+			.nodes.find(({ message }) => message.id === "server-assistant")?.message;
+		expect(getMessageText(requireMessage(snapshotMessage))).toBe("claimed");
 	});
 
-	test("does not claim a populated assistant as a new run", async () => {
-		const chat = new ThreadChat();
-		chat.addMessage(user("user-1"), null);
-		chat.addMessage(
-			{
-				id: "assistant-1",
-				parts: [{ text: "complete", type: "text" }],
-				role: "assistant",
-			},
-			"user-1",
-		);
+	test("uses AI SDK's client response ID when the stream omits one", async () => {
+		const generatedIds = ["run-1", "client-response"];
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({
+			generateId: () => generatedIds.shift() ?? "unexpected-id",
+			id: "thread-1",
+			transport,
+		});
+		const run = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
 
-		await expect(
-			chat.startRun({
-				from: "user-1",
-				request: { body: { assistantMessageId: "assistant-1" } },
-			}),
-		).rejects.toThrow("unavailable");
+		transport.emit(0, { id: "text", type: "text-start" });
+		transport.emit(0, {
+			delta: "client identity",
+			id: "text",
+			type: "text-delta",
+		});
+		transport.emit(0, { id: "text", type: "text-end" });
+		transport.finish(0);
+		await run.finished;
+
+		expect(run.id).toBe("run-1");
+		expect(chat.getMessage("client-response")?.id).toBe("client-response");
 	});
 
 	test("keeps hidden branches when reconciling the selected path", () => {
@@ -159,7 +170,21 @@ describe("ThreadChat", () => {
 		]);
 	});
 
-	test("rejects concurrency before adding optimistic nodes", async () => {
+	test("does not follow a delayed run after the active path changes", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const primary = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+
+		chat.setMessages([user("user-1")]);
+		transport.emitText(0, "assistant-1", "primary");
+		await primary.finished;
+
+		expect(chat.getMessage("assistant-1")?.id).toBe("assistant-1");
+		expect(chat.getSnapshot().cursorId).toBe("user-1");
+	});
+
+	test("rejects concurrency before adding another user message", async () => {
 		const transport = new ControlledTransport();
 		const chat = new ThreadChat({
 			concurrency: { maxActiveRuns: 1 },
@@ -167,13 +192,11 @@ describe("ThreadChat", () => {
 		});
 		await chat.startRun({
 			message: user("user-1"),
-			request: { body: { assistantMessageId: "assistant-1" } },
 		});
 
 		await expect(
 			chat.startRun({
 				message: user("user-2"),
-				request: { body: { assistantMessageId: "assistant-2" } },
 			}),
 		).rejects.toThrow("max active runs");
 		expect(chat.getMessage("user-2")).toBeUndefined();
@@ -184,22 +207,38 @@ describe("ThreadChat", () => {
 		const chat = new ThreadChat({ transport });
 		const first = await chat.startRun({
 			message: user("user-1"),
-			request: { body: { assistantMessageId: "assistant-1" } },
 		});
 		const second = await chat.startRun({
 			from: "user-1",
-			request: { body: { assistantMessageId: "assistant-2" } },
 		});
-		await waitFor(() => transport.requests.size === 2);
+		await waitFor(() => transport.requests.length === 2);
 
 		await first.stop();
-		expect(
-			transport.requests.get("assistant-1")?.abortSignal?.aborted,
-		).toBeTrue();
-		expect(
-			transport.requests.get("assistant-2")?.abortSignal?.aborted,
-		).toBeFalse();
-		transport.emitText("assistant-2", "complete");
+		expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
+		expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+		expect(chat.getChildren("user-1")).toEqual([]);
+		transport.emitText(1, "assistant-2", "complete");
 		await second.finished;
+	});
+
+	test("keeps creation order after an earlier run fails without a message", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const failed = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+		transport.fail(0, new Error("failed before start"));
+		await failed.finished;
+
+		const second = await chat.startRun({ from: "user-1" });
+		const third = await chat.startRun({ follow: false, from: "user-1" });
+		await waitFor(() => transport.requests.length === 3);
+		transport.emitText(2, "assistant-3", "third");
+		transport.emitText(1, "assistant-2", "second");
+		await Promise.all([second.finished, third.finished]);
+
+		expect(chat.getChildren("user-1").map(({ id }) => id)).toEqual([
+			"assistant-2",
+			"assistant-3",
+		]);
 	});
 });

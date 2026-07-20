@@ -1,8 +1,8 @@
 import {
+	type AbstractChat,
 	type ChatRequestOptions,
 	type ChatStatus,
 	type ChatTransport,
-	type CreateUIMessage,
 	convertFileListToFileUIParts,
 	DefaultChatTransport,
 	generateId,
@@ -16,7 +16,6 @@ import {
 import { MessageTree } from "./message-tree";
 import type {
 	MessageTreeSnapshot,
-	SendMessageInput,
 	ThreadChatOptions,
 	ThreadConcurrency,
 	ThreadRun,
@@ -26,21 +25,17 @@ import type {
 	TreeSendOptions,
 } from "./types";
 
+type SendMessageInput<TMessage extends UIMessage> = Parameters<
+	AbstractChat<TMessage>["sendMessage"]
+>[0];
+
 type RunRecord<TMessage extends UIMessage> = {
-	aborted: boolean;
 	chat: ThreadRunChat<TMessage>;
 	error: Error | undefined;
 	finished: Promise<void>;
 	spec: ThreadRunSpec;
 	status: ChatStatus;
 };
-
-function getAssistantMessageIdFromOptions(options?: TreeSendOptions) {
-	const assistantMessageId = (
-		options?.body as Record<string, unknown> | undefined
-	)?.assistantMessageId;
-	return typeof assistantMessageId === "string" ? assistantMessageId : null;
-}
 
 function getInputMessageId<TMessage extends UIMessage>(
 	input: NonNullable<SendMessageInput<TMessage>>,
@@ -51,8 +46,10 @@ function getInputMessageId<TMessage extends UIMessage>(
 	return input.messageId;
 }
 
-function createEmptyAssistantMessage<TMessage extends UIMessage>(id: string) {
-	return { id, parts: [], role: "assistant" } as unknown as TMessage;
+function specializeMessage<TMessage extends UIMessage>(message: UIMessage) {
+	// Like AI SDK's AbstractChat, construction crosses a generic boundary here:
+	// TMessage may narrow metadata or parts beyond the base UIMessage shape.
+	return message as TMessage;
 }
 
 async function createUserMessageFromInput<TMessage extends UIMessage>({
@@ -64,37 +61,37 @@ async function createUserMessageFromInput<TMessage extends UIMessage>({
 }): Promise<TMessage> {
 	const messageId = getInputMessageId(input) ?? fallbackId;
 	const metadata = "metadata" in input ? input.metadata : undefined;
-	if ("text" in input) {
+	if ("text" in input && typeof input.text === "string") {
 		const fileParts =
 			"files" in input && input.files
 				? Array.isArray(input.files)
 					? input.files
 					: await convertFileListToFileUIParts(input.files)
 				: [];
-		return {
+		return specializeMessage<TMessage>({
 			id: messageId,
 			metadata,
 			parts: [...fileParts, { text: input.text, type: "text" }],
 			role: "user",
-		} as TMessage;
+		});
 	}
 	if ("files" in input && input.files) {
-		return {
+		return specializeMessage<TMessage>({
 			id: messageId,
 			metadata,
 			parts: Array.isArray(input.files)
 				? input.files
 				: await convertFileListToFileUIParts(input.files),
 			role: "user",
-		} as TMessage;
+		});
 	}
-	return {
+	return specializeMessage<TMessage>({
 		...input,
 		id: messageId,
 		metadata,
 		parts: "parts" in input ? input.parts : [],
 		role: "user",
-	} as TMessage;
+	});
 }
 
 export class ThreadChat<TMessage extends UIMessage = UIMessage>
@@ -109,19 +106,18 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	onData: ThreadChatOptions<TMessage>["onData"];
 	onError: ThreadChatOptions<TMessage>["onError"];
 	onFinish: ThreadChatOptions<TMessage>["onFinish"];
-	onThreadEvent: ThreadChatOptions<TMessage>["onThreadEvent"];
 	onToolCall: ThreadChatOptions<TMessage>["onToolCall"];
 	sendAutomaticallyWhen: ThreadChatOptions<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 
-	readonly #assistantStarted = new Set<string>();
 	readonly #concurrency: Required<ThreadConcurrency>;
 	readonly #listeners = new Set<() => void>();
+	readonly #runIdByApprovalId = new Map<string, string>();
+	readonly #runIdByToolCallId = new Map<string, string>();
 	readonly #runsById = new Map<string, RunRecord<TMessage>>();
 	readonly #tree: MessageTree<TMessage>;
-	#lastEvent = "Ready";
+	#selectedRunId: string | null = null;
 	#snapshot: ThreadStateSnapshot<TMessage>;
-	#storeVersion = 0;
 
 	constructor(options: ThreadChatOptions<TMessage> = {}) {
 		this.id = options.id ?? generateId();
@@ -131,7 +127,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.onData = options.onData;
 		this.onError = options.onError;
 		this.onFinish = options.onFinish;
-		this.onThreadEvent = options.onThreadEvent;
 		this.onToolCall = options.onToolCall;
 		this.sendAutomaticallyWhen = options.sendAutomaticallyWhen;
 		this.transport = options.transport ?? new DefaultChatTransport();
@@ -155,9 +150,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		if ("onData" in options) this.onData = options.onData;
 		if ("onError" in options) this.onError = options.onError;
 		if ("onFinish" in options) this.onFinish = options.onFinish;
-		if ("onThreadEvent" in options) {
-			this.onThreadEvent = options.onThreadEvent;
-		}
 		if ("onToolCall" in options) this.onToolCall = options.onToolCall;
 		if ("sendAutomaticallyWhen" in options) {
 			this.sendAutomaticallyWhen = options.sendAutomaticallyWhen;
@@ -173,6 +165,19 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	addMessage(message: TMessage, parentId: string | null) {
 		this.upsertMessage(message, parentId);
 	}
+
+	addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
+		async (response) => {
+			const run = this.getRunForApproval(response.id);
+			await run.chat.addToolApprovalResponse(response);
+		};
+
+	addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (output) => {
+		const run = this.getRunForToolCall(output.toolCallId);
+		await run.chat.addToolOutput(output);
+	};
+
+	addToolResult: AbstractChat<TMessage>["addToolResult"] = this.addToolOutput;
 
 	getTreeSnapshot() {
 		return this.#tree.getSnapshot();
@@ -203,27 +208,98 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	setCursor(messageId: string | null) {
+		this.#selectedRunId = null;
 		this.#tree.setCursor(messageId);
-		this.emit(`Set cursor ${messageId ?? "root"}`);
-		this.onThreadEvent?.({ cursorId: messageId, type: "cursor-changed" });
+		this.emit();
 	}
 
 	setCursorToParentOf(messageId: string) {
+		this.#selectedRunId = null;
 		this.#tree.setCursorToParentOf(messageId);
-		this.emit(`Set cursor ${this.#tree.cursorId ?? "root"}`);
-		this.onThreadEvent?.({
-			cursorId: this.#tree.cursorId,
-			type: "cursor-changed",
+		this.emit();
+	}
+
+	getRunPath(runId: string) {
+		const run = this.getRunRecord(runId);
+		return this.#tree.getPath(
+			run.spec.assistantMessageId ?? run.spec.userMessageId,
+		);
+	}
+
+	writeRunAssistantMessage(runId: string, message: TMessage) {
+		const run = this.getRunRecord(runId);
+		const currentMessageId = run.spec.assistantMessageId;
+		if (currentMessageId && currentMessageId !== message.id) {
+			throw new Error(
+				`Run ${runId} is already bound to message ${currentMessageId}`,
+			);
+		}
+		if (!currentMessageId) {
+			const existingMessage = this.#tree.getMessage(message.id);
+			if (existingMessage) {
+				throw new Error(`Message ${message.id} already exists`);
+			}
+			run.spec.assistantMessageId = message.id;
+		}
+
+		const siblingOrderByMessageId = new Map<string, number>();
+		for (const candidate of this.#runsById.values()) {
+			if (candidate.spec.assistantMessageId) {
+				siblingOrderByMessageId.set(
+					candidate.spec.assistantMessageId,
+					candidate.spec.siblingOrder,
+				);
+			}
+		}
+		const insertionIndex = this.#tree
+			.getChildren(run.spec.userMessageId)
+			.filter((child) => {
+				const siblingOrder = siblingOrderByMessageId.get(child.id);
+				return (
+					siblingOrder === undefined || siblingOrder < run.spec.siblingOrder
+				);
+			}).length;
+		this.#tree.upsertMessage(message, run.spec.userMessageId, {
+			index: insertionIndex,
 		});
+		this.indexMessageOwnership(runId, message);
+		if (
+			this.#selectedRunId === runId &&
+			this.#tree.cursorId === run.spec.userMessageId
+		) {
+			this.#tree.setCursor(message.id);
+		}
+		this.emit();
 	}
 
-	hasAssistantStarted(assistantMessageId: string) {
-		return this.#assistantStarted.has(assistantMessageId);
-	}
+	regenerate: AbstractChat<TMessage>["regenerate"] = async ({
+		messageId,
+		...options
+	} = {}) => {
+		const target =
+			(messageId ? this.#tree.getMessage(messageId) : undefined) ??
+			(this.#tree.cursorId
+				? this.#tree.getMessage(this.#tree.cursorId)
+				: undefined);
+		if (!target) return;
 
-	markAssistantStarted(assistantMessageId: string) {
-		this.#assistantStarted.add(assistantMessageId);
-	}
+		const userMessageId =
+			target.role === "assistant"
+				? this.#tree.getParentId(target.id)
+				: target.id;
+		if (!userMessageId) return;
+
+		this.assertCanStartRun(userMessageId);
+		const run = this.startAssistantForUser({
+			follow: true,
+			id: this.reserveRunId(),
+			options,
+			originCursorId: target.id,
+			parentMessageId: this.#tree.getParentId(userMessageId) ?? null,
+			userMessageId,
+		});
+		await run.finished;
+	};
 
 	upsertMessage(
 		message: TMessage,
@@ -231,29 +307,42 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		options: { silent?: boolean } = {},
 	) {
 		this.#tree.upsertMessage(message, parentId);
-		if (!options.silent) this.emit(`Upserted ${message.id}`);
+		if (!options.silent) this.emit();
 	}
 
 	removeMessage(messageId: string) {
 		this.#tree.removeLeaf(messageId);
-		this.emit(`Removed ${messageId}`);
+		this.emit();
 	}
 
 	replacePath(messages: TMessage[], options: { silent?: boolean } = {}) {
 		this.assertCanResetTree();
 		this.clearRunState();
 		this.#tree.replacePath(messages);
-		if (!options.silent) this.emit("Replaced active path");
+		if (!options.silent) this.emit();
 	}
 
 	mergePath(messages: TMessage[], options: { silent?: boolean } = {}) {
 		this.#tree.reconcilePath(messages);
-		if (!options.silent) this.emit("Reconciled active path");
+		if (!options.silent) this.emit();
 	}
 
 	mergeRunPath(messages: TMessage[]) {
 		this.#tree.reconcilePath(messages, { moveCursor: false });
 	}
+
+	resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
+		options = {},
+	) => {
+		const run =
+			this.getSelectedRunRecord() ?? this.createRunForSelectedAssistant();
+		if (!run) return;
+		await this.resumeRunRequest(run, options);
+	};
+
+	resumeRun = async (runId: string, options: ChatRequestOptions = {}) => {
+		await this.resumeRunRequest(this.getRunRecord(runId), options);
+	};
 
 	restore(
 		snapshot: MessageTreeSnapshot<TMessage>,
@@ -262,7 +351,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.assertCanResetTree();
 		this.clearRunState();
 		this.#tree.restore(snapshot);
-		if (!options.silent) this.emit("Restored tree");
+		if (!options.silent) this.emit();
 	}
 
 	setMessages(messages: TMessage[] | ((messages: TMessage[]) => TMessage[])) {
@@ -270,6 +359,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			typeof messages === "function"
 				? messages(this.#snapshot.messages)
 				: messages;
+		this.#selectedRunId = null;
 		this.mergePath(nextMessages);
 	}
 
@@ -277,14 +367,12 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		input?: SendMessageInput<TMessage>,
 		options?: TreeSendOptions,
 	) => {
+		const { tree, ...request } = options ?? {};
 		const run = await this.startRun({
-			follow: options?.tree?.follow,
-			from:
-				options?.tree && "from" in options.tree
-					? (options.tree.from ?? null)
-					: undefined,
+			follow: tree?.follow,
+			from: tree && "from" in tree ? (tree.from ?? null) : undefined,
 			message: input,
-			request: options,
+			request,
 		});
 		await run.finished;
 	};
@@ -310,11 +398,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			}
 			this.assertCanStartRun(originMessage.id);
 			return this.startAssistantForUser({
-				assistantMessageId: this.reserveAssistantMessageId(
-					options,
-					originMessage.id,
-				),
 				follow,
+				id: this.reserveRunId(),
 				options,
 				originCursorId,
 				parentMessageId: this.#tree.getParentId(originMessage.id) ?? null,
@@ -331,10 +416,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			throw new Error(`Message ${userMessage.id} is not a user message`);
 		}
 		this.assertCanStartRun(userMessage.id);
-		const assistantMessageId = this.reserveAssistantMessageId(
-			options,
-			userMessage.id,
-		);
 		const attachmentId = existingMessage
 			? (this.#tree.getParentId(userMessage.id) ?? null)
 			: originCursorId;
@@ -342,8 +423,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		if (follow) this.#tree.setCursor(userMessage.id);
 
 		return this.startAssistantForUser({
-			assistantMessageId,
 			follow,
+			id: this.reserveRunId(),
 			options,
 			originCursorId,
 			parentMessageId: attachmentId,
@@ -356,7 +437,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		if (run) {
 			run.error = undefined;
 			run.chat.clearError();
-			this.emit("Cleared error");
+			this.emit();
 		}
 	};
 
@@ -403,27 +484,67 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		if (!run) return;
 		run.error = error;
 		run.status = error ? "error" : run.status;
-		this.emit(error ? `Error in ${runId}` : "Cleared error");
-		this.emitRunEvent(run, "run-updated");
+		this.emit();
 	}
 
 	setRunStatus(runId: string, status: ChatStatus) {
 		const run = this.#runsById.get(runId);
 		if (!run) return;
 		run.status = status;
-		this.emit(`${runId} is ${status}`);
-		this.emitRunEvent(run, "run-updated");
+		this.emit();
 	}
 
-	finishRequest(runId: string, isAbort: boolean) {
-		const run = this.#runsById.get(runId);
-		if (run) run.aborted ||= isAbort;
-		this.emit(isAbort ? `Stopping ${runId}` : `Received ${runId}`);
+	registerToolCall(runId: string, toolCallId: string) {
+		this.assertOwnershipAvailable(
+			this.#runIdByToolCallId,
+			toolCallId,
+			runId,
+			"tool call",
+		);
+		this.#runIdByToolCallId.set(toolCallId, runId);
 	}
 
-	registerToolCall() {}
+	indexMessageOwnership(runId: string, message: TMessage) {
+		const toolCallIds: string[] = [];
+		const approvalIds: string[] = [];
+		for (const part of message.parts) {
+			if ("toolCallId" in part && typeof part.toolCallId === "string") {
+				toolCallIds.push(part.toolCallId);
+			}
+			if (
+				"approval" in part &&
+				part.approval &&
+				typeof part.approval === "object" &&
+				"id" in part.approval &&
+				typeof part.approval.id === "string"
+			) {
+				approvalIds.push(part.approval.id);
+			}
+		}
 
-	indexMessageOwnership() {}
+		for (const toolCallId of toolCallIds) {
+			this.assertOwnershipAvailable(
+				this.#runIdByToolCallId,
+				toolCallId,
+				runId,
+				"tool call",
+			);
+		}
+		for (const approvalId of approvalIds) {
+			this.assertOwnershipAvailable(
+				this.#runIdByApprovalId,
+				approvalId,
+				runId,
+				"tool approval",
+			);
+		}
+		for (const toolCallId of toolCallIds) {
+			this.#runIdByToolCallId.set(toolCallId, runId);
+		}
+		for (const approvalId of approvalIds) {
+			this.#runIdByApprovalId.set(approvalId, runId);
+		}
+	}
 
 	private buildSnapshot(): ThreadStateSnapshot<TMessage> {
 		const tree = this.#tree.getSnapshot();
@@ -440,18 +561,14 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			...indexes,
 			activeRuns,
 			error: selectedRun?.error,
-			lastEvent: this.#lastEvent,
 			messages: this.#tree.getPath(),
 			runs,
 			status: selectedRun?.status ?? "ready",
-			storeVersion: this.#storeVersion,
 			treeStatus: this.resolveStatus(runs),
 		};
 	}
 
-	private emit(event: string) {
-		this.#lastEvent = event;
-		this.#storeVersion += 1;
+	private emit() {
 		this.#snapshot = this.buildSnapshot();
 		for (const listener of this.#listeners) listener();
 	}
@@ -476,10 +593,81 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	private getSelectedRunRecord() {
+		if (this.#selectedRunId) {
+			const selectedRun = this.#runsById.get(this.#selectedRunId);
+			if (selectedRun) return selectedRun;
+		}
 		const pathIds = new Set(this.#tree.getPathIds());
-		return Array.from(this.#runsById.values())
-			.reverse()
-			.find((run) => pathIds.has(run.spec.assistantMessageId));
+		const runs = Array.from(this.#runsById.values()).reverse();
+		const responseRun = runs.find(
+			(run) =>
+				run.spec.assistantMessageId !== undefined &&
+				pathIds.has(run.spec.assistantMessageId),
+		);
+		if (responseRun) return responseRun;
+
+		const cursorId = this.#tree.cursorId;
+		const cursor = cursorId ? this.#tree.getMessage(cursorId) : undefined;
+		if (cursor?.role !== "user") return undefined;
+		return (
+			runs.find(
+				(run) =>
+					run.spec.userMessageId === cursor.id &&
+					(run.status === "submitted" || run.status === "streaming"),
+			) ?? runs.find((run) => run.spec.userMessageId === cursor.id)
+		);
+	}
+
+	private getRunRecord(runId: string) {
+		const run = this.#runsById.get(runId);
+		if (!run) throw new Error(`Unknown run ${runId}`);
+		return run;
+	}
+
+	private getRunForToolCall(toolCallId: string) {
+		const runId = this.#runIdByToolCallId.get(toolCallId);
+		if (!runId) throw new Error(`No run owns tool call ${toolCallId}`);
+		return this.getRunRecord(runId);
+	}
+
+	private getRunForApproval(approvalId: string) {
+		const runId = this.#runIdByApprovalId.get(approvalId);
+		if (!runId) throw new Error(`No run owns tool approval ${approvalId}`);
+		return this.getRunRecord(runId);
+	}
+
+	private createRunForSelectedAssistant() {
+		const assistantMessageId = this.#tree.cursorId;
+		if (!assistantMessageId) return undefined;
+		const assistantMessage = this.#tree.getMessage(assistantMessageId);
+		if (!assistantMessage || assistantMessage.role !== "assistant") {
+			return undefined;
+		}
+		const userMessageId = this.#tree.getParentId(assistantMessageId);
+		if (!userMessageId) return undefined;
+
+		const spec: ThreadRunSpec = {
+			assistantMessageId,
+			siblingOrder: this.#tree
+				.getChildren(userMessageId)
+				.findIndex((message) => message.id === assistantMessageId),
+			id: this.reserveRunId(),
+			originCursorId: assistantMessageId,
+			parentMessageId: this.#tree.getParentId(userMessageId) ?? null,
+			userMessageId,
+		};
+		const record: RunRecord<TMessage> = {
+			chat: new ThreadRunChat(this, spec),
+			error: undefined,
+			finished: Promise.resolve(),
+			spec,
+			status: "ready",
+		};
+		this.#runsById.set(spec.id, record);
+		this.#selectedRunId = spec.id;
+		this.indexMessageOwnership(spec.id, assistantMessage);
+		this.emit();
+		return record;
 	}
 
 	private assertCanResetTree() {
@@ -489,130 +677,118 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	private clearRunState() {
-		this.#assistantStarted.clear();
+		this.#selectedRunId = null;
+		this.#runIdByApprovalId.clear();
+		this.#runIdByToolCallId.clear();
 		this.#runsById.clear();
 	}
 
-	private reserveAssistantMessageId(
-		options: TreeSendOptions | undefined,
-		userMessageId: string,
+	private assertOwnershipAvailable(
+		owners: Map<string, string>,
+		id: string,
+		runId: string,
+		label: string,
 	) {
-		const assistantMessageId =
-			getAssistantMessageIdFromOptions(options) ?? this.generateMessageId();
-		const existingMessage = this.#tree.getMessage(assistantMessageId);
-		const isClaimablePlaceholder =
-			existingMessage?.role === "assistant" &&
-			existingMessage.parts.length === 0 &&
-			this.#tree.getParentId(assistantMessageId) === userMessageId;
-		if (
-			assistantMessageId === userMessageId ||
-			(existingMessage && !isClaimablePlaceholder) ||
-			this.#runsById.has(assistantMessageId)
-		) {
+		const existingRunId = owners.get(id);
+		if (existingRunId && existingRunId !== runId) {
 			throw new Error(
-				`Assistant message id ${assistantMessageId} is unavailable`,
+				`${label} ${id} is already owned by run ${existingRunId}`,
 			);
 		}
-		return assistantMessageId;
+	}
+
+	private reserveRunId() {
+		const runId = this.generateMessageId();
+		if (this.#runsById.has(runId)) {
+			throw new Error(`Run ${runId} already exists`);
+		}
+		return runId;
 	}
 
 	private startAssistantForUser({
-		assistantMessageId,
 		follow,
+		id,
 		options,
 		originCursorId,
 		parentMessageId,
 		userMessageId,
-	}: ThreadRunSpec & { follow: boolean; options?: TreeSendOptions }) {
+	}: Omit<ThreadRunSpec, "assistantMessageId" | "siblingOrder"> & {
+		follow: boolean;
+		options?: ChatRequestOptions;
+	}) {
 		const spec: ThreadRunSpec = {
-			assistantMessageId,
+			id,
 			originCursorId,
 			parentMessageId,
+			siblingOrder: this.reserveSiblingOrder(userMessageId),
 			userMessageId,
 		};
-		if (!this.#tree.has(assistantMessageId)) {
-			this.#tree.upsertMessage(
-				createEmptyAssistantMessage<TMessage>(assistantMessageId),
-				userMessageId,
-			);
+		if (follow) {
+			this.#selectedRunId = id;
+			this.#tree.setCursor(userMessageId);
 		}
-		if (follow) this.#tree.setCursor(assistantMessageId);
 		return this.startRunRequest(spec, options);
 	}
 
-	private startRunRequest(spec: ThreadRunSpec, options?: TreeSendOptions) {
+	private reserveSiblingOrder(userMessageId: string) {
+		const existingMessageOrder =
+			this.#tree.getChildren(userMessageId).length - 1;
+		const runOrders = Array.from(this.#runsById.values())
+			.filter((run) => run.spec.userMessageId === userMessageId)
+			.map((run) => run.spec.siblingOrder);
+		return Math.max(existingMessageOrder, ...runOrders) + 1;
+	}
+
+	private startRunRequest(spec: ThreadRunSpec, options?: ChatRequestOptions) {
 		const chat = new ThreadRunChat(this, spec);
 		const record: RunRecord<TMessage> = {
-			aborted: false,
 			chat,
 			error: undefined,
 			finished: Promise.resolve(),
 			spec,
 			status: "submitted",
 		};
-		this.#runsById.set(spec.assistantMessageId, record);
-		this.emit(`Started ${spec.assistantMessageId}`);
-		this.emitRunEvent(record, "run-started");
+		this.#runsById.set(spec.id, record);
+		this.emit();
 		const userMessage = this.#tree.getMessage(spec.userMessageId);
 		const finished = chat
-			.sendMessage(userMessage as CreateUIMessage<TMessage>, {
-				...this.withRunRequestBody(spec, options),
-			})
+			.sendMessage(userMessage, options)
 			.catch((error: unknown) => {
 				this.setRunError(
-					spec.assistantMessageId,
+					spec.id,
 					error instanceof Error ? error : new Error(String(error)),
 				);
 			})
-			.finally(() => this.completeRun(spec.assistantMessageId));
+			.finally(() => this.emit());
 		record.finished = finished;
 		return this.createRunHandle(record);
 	}
 
-	private completeRun(runId: string) {
-		const run = this.#runsById.get(runId);
-		if (!run) return;
-		this.emit(
-			run.aborted
-				? `Stopped ${runId}`
-				: run.error
-					? `Failed ${runId}`
-					: `Finished ${runId}`,
-		);
-		this.emitRunEvent(
-			run,
-			run.aborted ? "run-aborted" : run.error ? "run-failed" : "run-completed",
-		);
-	}
-
 	private createRunHandle(run: RunRecord<TMessage>): ThreadRunHandle {
-		const id = run.spec.assistantMessageId;
 		return {
 			finished: run.finished,
-			getSnapshot: () => this.getRun(id),
-			id,
-			stop: () => this.stopRun(id),
+			id: run.spec.id,
+			getSnapshot: () => this.getRun(run.spec.id),
+			stop: () => run.chat.stop(),
 		};
 	}
 
-	private emitRunEvent(
+	private async resumeRunRequest(
 		run: RunRecord<TMessage>,
-		type:
-			| "run-aborted"
-			| "run-completed"
-			| "run-failed"
-			| "run-started"
-			| "run-updated",
+		options: ChatRequestOptions,
 	) {
-		this.onThreadEvent?.({ run: this.toRunSnapshot(run), type });
+		run.error = undefined;
+		const finished = run.chat.resumeStream(options).finally(() => this.emit());
+		run.finished = finished;
+		this.emit();
+		await finished;
 	}
 
 	private toRunSnapshot(run: RunRecord<TMessage>): ThreadRun {
 		return {
 			error: run.error,
-			id: run.spec.assistantMessageId,
+			id: run.spec.id,
 			status: run.status,
-			userMessageId: run.spec.userMessageId,
 		};
 	}
 
@@ -621,27 +797,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		if (runs.some((run) => run.status === "submitted")) return "submitted";
 		if (runs.some((run) => run.status === "error")) return "error";
 		return "ready";
-	}
-
-	private withRunRequestBody(
-		spec: ThreadRunSpec,
-		options: ChatRequestOptions | undefined,
-	): ChatRequestOptions {
-		return {
-			...options,
-			body: {
-				...(options?.body ?? {}),
-				assistantMessageId: spec.assistantMessageId,
-				tree: {
-					assistantMessageId: spec.assistantMessageId,
-					cursorId: spec.assistantMessageId,
-					originCursorId: spec.originCursorId,
-					parentMessageId: spec.parentMessageId,
-					pathIds: this.#tree.getPathIds(spec.assistantMessageId),
-					userMessageId: spec.userMessageId,
-				},
-			},
-		};
 	}
 }
 
