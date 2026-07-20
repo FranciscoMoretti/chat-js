@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import type { MessageTreeSnapshot } from "./types";
 
-export const ROOT_PARENT_ID = "__root__";
+const ROOT_PARENT_ID = "__root__";
 
 function parentKey(parentId: string | null) {
 	return parentId ?? ROOT_PARENT_ID;
@@ -171,7 +171,11 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		this.setCursor(this.#parentById.get(messageId) ?? null);
 	}
 
-	upsertMessage(message: TMessage, parentId: string | null) {
+	upsertMessage(
+		message: TMessage,
+		parentId: string | null,
+		options: { index?: number } = {},
+	) {
 		if (parentId !== null && !this.#messagesById.has(parentId)) {
 			throw new Error(`Unknown parent message ${parentId}`);
 		}
@@ -195,7 +199,12 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		const key = parentKey(parentId);
 		const children = this.#childrenByParentId.get(key) ?? [];
 		if (!children.includes(message.id)) {
-			this.#childrenByParentId.set(key, [...children, message.id]);
+			const index = Math.min(options.index ?? children.length, children.length);
+			this.#childrenByParentId.set(key, [
+				...children.slice(0, index),
+				message.id,
+				...children.slice(index),
+			]);
 		}
 	}
 

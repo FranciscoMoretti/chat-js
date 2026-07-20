@@ -26,29 +26,17 @@ export type TreeSendOptions = ChatRequestOptions & {
 	};
 };
 
-export type SendMessageInput<TMessage extends UIMessage> = Parameters<
-	AbstractChat<TMessage>["sendMessage"]
->[0];
-
 export type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = {
 	follow?: boolean;
 	from?: string | null;
-	message?: SendMessageInput<TMessage>;
-	request?: TreeSendOptions;
+	message?: Parameters<AbstractChat<TMessage>["sendMessage"]>[0];
+	request?: ChatRequestOptions;
 };
 
 export type ThreadConcurrency = {
 	maxActiveRuns?: number;
 	maxActiveRunsPerMessage?: number;
 };
-
-export type ThreadEvent =
-	| { cursorId: string | null; type: "cursor-changed" }
-	| { run: ThreadRun; type: "run-started" | "run-updated" }
-	| {
-			run: ThreadRun;
-			type: "run-aborted" | "run-completed" | "run-failed";
-	  };
 
 export type MessageTreeNode<TMessage extends UIMessage = UIMessage> = {
 	message: TMessage;
@@ -66,24 +54,22 @@ export type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
 		activeRuns: ThreadRun[];
 		childrenByParentId: Record<string, string[]>;
 		error: Error | undefined;
-		/** Free-form diagnostic description of the latest state transition. */
-		lastEvent: string;
 		messages: TMessage[];
 		messagesById: Record<string, TMessage>;
 		parentById: Record<string, string | null>;
 		rootIds: string[];
 		runs: ThreadRun[];
 		status: ChatStatus;
-		storeVersion: number;
 		treeStatus: ChatStatus;
 	};
+
+type ThreadInitialState<TMessage extends UIMessage> =
+	| { initialTree: MessageTreeSnapshot<TMessage>; messages?: never }
+	| { initialTree?: never; messages?: TMessage[] };
 
 export type ThreadChatOptions<TMessage extends UIMessage = UIMessage> = Omit<
 	ChatInit<TMessage>,
 	"messages"
 > & {
 	concurrency?: ThreadConcurrency;
-	initialTree?: MessageTreeSnapshot<TMessage>;
-	messages?: TMessage[];
-	onThreadEvent?: (event: ThreadEvent) => void;
-};
+} & ThreadInitialState<TMessage>;

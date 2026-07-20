@@ -57,6 +57,22 @@ function createThreadStore(initialMessages: ChatMessage[]) {
 }
 
 describe("withThreads", () => {
+  it("describes a parallel group before any assistant message exists", () => {
+    const user = createMessage({
+      id: "user-root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      parallelGroupId: "group-root",
+    });
+    const store = createThreadStore([user]);
+
+    assert.deepEqual(store.getState().getParallelGroupInfo(user.id), {
+      messages: [],
+      parallelGroupId: "group-root",
+      selectedMessageId: null,
+    });
+  });
+
   it("preserves hidden branches when ThreadChat publishes an active-path snapshot", () => {
     const userA = createMessage({
       id: "user-a",
@@ -196,7 +212,7 @@ describe("withThreads", () => {
     );
   });
 
-  it("preserves a pending stream marker when a run inserts its assistant shell", () => {
+  it("preserves existing metadata when a message update omits it", () => {
     const rootUser = createMessage({
       id: "user-root",
       role: "user",
@@ -277,7 +293,7 @@ describe("withThreads", () => {
     );
   });
 
-  it("fills metadata for ThreadChat assistant shells in tree snapshots", () => {
+  it("fills fallback metadata for assistant messages in tree snapshots", () => {
     const rootUser = createMessage({
       id: "user-root",
       role: "user",

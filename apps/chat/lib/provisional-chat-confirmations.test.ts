@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "vitest";
-import type { PendingChatConfirmation } from "@/lib/stores/with-chat-persistence";
 import {
   acknowledgeProvisionalUserMessagePersistence,
   claimConfirmedProvisionalChat,
@@ -8,22 +7,16 @@ import {
   registerProvisionalChatConfirmation,
 } from "./provisional-chat-confirmations";
 
-const confirmation = {
-  message: {
-    id: "user-1",
-    metadata: { parallelGroupId: "group-1" },
-  },
-  projectId: null,
-  requestSpecs: [],
-} as unknown as PendingChatConfirmation;
-
 describe("provisional chat confirmations", () => {
   afterEach(clearProvisionalChatConfirmations);
 
   it("releases only after the expected user message and group are persisted", () => {
-    registerProvisionalChatConfirmation("chat-1", confirmation);
+    registerProvisionalChatConfirmation("chat-1", {
+      parallelGroupId: "group-1",
+      userMessageId: "user-1",
+    });
 
-    assert.equal(claimConfirmedProvisionalChat("chat-1"), null);
+    assert.equal(claimConfirmedProvisionalChat("chat-1"), false);
     assert.equal(
       acknowledgeProvisionalUserMessagePersistence({
         chatId: "chat-1",
@@ -32,7 +25,7 @@ describe("provisional chat confirmations", () => {
       }),
       false
     );
-    assert.equal(claimConfirmedProvisionalChat("chat-1"), null);
+    assert.equal(claimConfirmedProvisionalChat("chat-1"), false);
 
     assert.equal(
       acknowledgeProvisionalUserMessagePersistence({
@@ -42,7 +35,7 @@ describe("provisional chat confirmations", () => {
       }),
       true
     );
-    assert.equal(claimConfirmedProvisionalChat("chat-1"), confirmation);
-    assert.equal(claimConfirmedProvisionalChat("chat-1"), null);
+    assert.equal(claimConfirmedProvisionalChat("chat-1"), true);
+    assert.equal(claimConfirmedProvisionalChat("chat-1"), false);
   });
 });

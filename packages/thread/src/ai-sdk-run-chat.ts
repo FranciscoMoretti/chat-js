@@ -8,9 +8,11 @@ import {
 import type { ThreadChatOptions } from "./types";
 
 export type ThreadRunSpec = {
-	assistantMessageId: string;
+	assistantMessageId?: string;
+	id: string;
 	originCursorId: string | null;
 	parentMessageId: string | null;
+	siblingOrder: number;
 	userMessageId: string;
 };
 
@@ -24,16 +26,14 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
 	onToolCall: ThreadChatOptions<TMessage>["onToolCall"];
 	sendAutomaticallyWhen: ThreadChatOptions<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
-	finishRequest: (runId: string, isAbort: boolean) => void;
-	getPath: (messageId: string) => TMessage[];
-	hasAssistantStarted: (messageId: string) => boolean;
-	indexMessageOwnership: (runId: string, message: TMessage) => void;
-	markAssistantStarted: (messageId: string) => void;
+	generateMessageId: () => string;
+	getRunPath: (runId: string) => TMessage[];
 	mergeRunPath: (messages: TMessage[]) => void;
 	registerToolCall: (runId: string, toolCallId: string) => void;
 	removeMessage: (messageId: string) => void;
 	setRunError: (runId: string, error: Error | undefined) => void;
 	setRunStatus: (runId: string, status: ChatStatus) => void;
+	writeRunAssistantMessage: (runId: string, message: TMessage) => void;
 	upsertMessage: (
 		message: TMessage,
 		parentId: string | null,
@@ -60,14 +60,11 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	set error(error: Error | undefined) {
 		this.#error = error;
-		this.#host.setRunError(this.#spec.assistantMessageId, error);
+		this.#host.setRunError(this.#spec.id, error);
 	}
 
 	get messages() {
-		const leafId = this.#host.hasAssistantStarted(this.#spec.assistantMessageId)
-			? this.#spec.assistantMessageId
-			: this.#spec.userMessageId;
-		return this.#host.getPath(leafId);
+		return this.#host.getRunPath(this.#spec.id);
 	}
 
 	set messages(messages: TMessage[]) {
@@ -80,7 +77,7 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	set status(status: ChatStatus) {
 		this.#status = status;
-		this.#host.setRunStatus(this.#spec.assistantMessageId, status);
+		this.#host.setRunStatus(this.#spec.id, status);
 	}
 
 	popMessage = () => {
@@ -102,16 +99,7 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	private writeMessage(message: TMessage) {
 		if (message.role === "assistant") {
-			const assistantMessage = {
-				...message,
-				id: this.#spec.assistantMessageId,
-			};
-			this.#host.markAssistantStarted(this.#spec.assistantMessageId);
-			this.#host.upsertMessage(assistantMessage, this.#spec.userMessageId);
-			this.#host.indexMessageOwnership(
-				this.#spec.assistantMessageId,
-				assistantMessage,
-			);
+			this.#host.writeRunAssistantMessage(this.#spec.id, message);
 			return;
 		}
 
@@ -129,35 +117,24 @@ export class ThreadRunChat<
 		};
 		super({
 			dataPartSchemas: host.dataPartSchemas,
-			generateId: () => spec.assistantMessageId,
+			generateId: host.generateMessageId,
 			id: host.id,
 			messageMetadataSchema: host.messageMetadataSchema,
 			onData: (event) => host.onData?.(event),
 			onError: (error) => {
-				host.setRunError(spec.assistantMessageId, error);
+				host.setRunError(spec.id, error);
 				host.onError?.(error);
 			},
 			onFinish: (event) => {
-				const assistantMessage = {
-					...event.message,
-					id: spec.assistantMessageId,
-				};
-				host.upsertMessage(assistantMessage, spec.userMessageId, {
-					silent: true,
-				});
-				host.indexMessageOwnership(spec.assistantMessageId, assistantMessage);
-				host.finishRequest(spec.assistantMessageId, event.isAbort);
+				const assistantMessage = event.message;
 				host.onFinish?.({
 					...event,
 					message: assistantMessage,
-					messages: host.getPath(spec.assistantMessageId),
+					messages: host.getRunPath(spec.id),
 				});
 			},
 			onToolCall: async (event) => {
-				host.registerToolCall(
-					spec.assistantMessageId,
-					event.toolCall.toolCallId,
-				);
+				host.registerToolCall(spec.id, event.toolCall.toolCallId);
 				await host.onToolCall?.(event);
 			},
 			sendAutomaticallyWhen: (event) =>

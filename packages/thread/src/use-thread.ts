@@ -1,5 +1,5 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
+import type { ChatRequestOptions, UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { ThreadChat } from "./thread-chat";
 import type {
@@ -48,7 +48,7 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 	getSnapshot: () => MessageTreeSnapshot<TMessage>;
 	messagesById: Record<string, TMessage>;
 	parentById: Record<string, string | null>;
-	resumeRun: (runId: string, options?: TreeSendOptions) => Promise<void>;
+	resumeRun: (runId: string, options?: ChatRequestOptions) => Promise<void>;
 	rootIds: string[];
 	runs: ThreadRun[];
 	setCursor: (messageId: string | null) => void;
@@ -64,7 +64,6 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 
 export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
 	UseChatHelpers<TMessage> & {
-		lastEvent: string;
 		sendMessage: (
 			message?: Parameters<UseChatHelpers<TMessage>["sendMessage"]>[0],
 			options?: TreeSendOptions,
@@ -144,7 +143,6 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 		clearError: chat.clearError,
 		error: snapshot.error,
 		id: chat.id,
-		lastEvent: snapshot.lastEvent,
 		messages: snapshot.messages,
 		regenerate: chat.regenerate,
 		resumeStream: chat.resumeStream,

@@ -278,7 +278,7 @@ export default function ThreadsPage() {
                 <p className="mt-5 max-w-xl text-foreground/68 leading-7">
                   A single linear chat engine cannot safely own several branch
                   streams. useThread isolates each response while routing every
-                  update into its reserved assistant node.
+                  update into its own assistant node once streaming begins.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-foreground/65 text-sm">
                   <span className="flex items-center gap-2">

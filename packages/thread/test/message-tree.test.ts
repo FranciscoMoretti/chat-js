@@ -81,6 +81,16 @@ describe("MessageTree", () => {
 		expect(tree.getMessage("a1")).toBeUndefined();
 	});
 
+	test("inserts a message at an explicit sibling position", () => {
+		const tree = new MessageTree({
+			messages: [message("u1")],
+		});
+		tree.upsertMessage(message("a2", "assistant"), "u1", { index: 1 });
+		tree.upsertMessage(message("a1", "assistant"), "u1", { index: 0 });
+
+		expect(tree.getChildren("u1").map(({ id }) => id)).toEqual(["a1", "a2"]);
+	});
+
 	test("round-trips a serializable snapshot", () => {
 		const tree = new MessageTree({
 			messages: [message("u1"), message("a1", "assistant")],

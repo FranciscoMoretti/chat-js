@@ -1,28 +1,24 @@
-import type { PendingChatConfirmation } from "@/lib/stores/with-chat-persistence";
-
 interface UserMessagePersistenceAcknowledgment {
   chatId: string;
   parallelGroupId: string | null;
   userMessageId: string;
 }
 
-interface ProvisionalChatConfirmationEntry {
-  acknowledgment: UserMessagePersistenceAcknowledgment | null;
-  confirmation: PendingChatConfirmation;
+interface ProvisionalChatConfirmation {
+  acknowledged: boolean;
+  parallelGroupId: string | null;
+  userMessageId: string;
 }
 
-const pendingConfirmations = new Map<
-  string,
-  ProvisionalChatConfirmationEntry
->();
+const pendingConfirmations = new Map<string, ProvisionalChatConfirmation>();
 
 export function registerProvisionalChatConfirmation(
   chatId: string,
-  confirmation: PendingChatConfirmation
+  confirmation: Omit<ProvisionalChatConfirmation, "acknowledged">
 ) {
   pendingConfirmations.set(chatId, {
-    acknowledgment: null,
-    confirmation,
+    ...confirmation,
+    acknowledged: false,
   });
 }
 
@@ -30,30 +26,25 @@ export function acknowledgeProvisionalUserMessagePersistence(
   acknowledgment: UserMessagePersistenceAcknowledgment
 ) {
   const entry = pendingConfirmations.get(acknowledgment.chatId);
-  if (!entry) {
-    return false;
-  }
-
-  const expectedParallelGroupId =
-    entry.confirmation.message.metadata.parallelGroupId ?? null;
   if (
-    entry.confirmation.message.id !== acknowledgment.userMessageId ||
-    expectedParallelGroupId !== acknowledgment.parallelGroupId
+    !entry ||
+    entry.userMessageId !== acknowledgment.userMessageId ||
+    entry.parallelGroupId !== acknowledgment.parallelGroupId
   ) {
     return false;
   }
 
-  entry.acknowledgment = acknowledgment;
+  entry.acknowledged = true;
   return true;
 }
 
 export function claimConfirmedProvisionalChat(chatId: string) {
-  const entry = pendingConfirmations.get(chatId) ?? null;
-  if (entry?.acknowledgment) {
-    pendingConfirmations.delete(chatId);
-    return entry.confirmation;
+  const entry = pendingConfirmations.get(chatId);
+  if (!entry?.acknowledged) {
+    return false;
   }
-  return null;
+  pendingConfirmations.delete(chatId);
+  return true;
 }
 
 export function clearProvisionalChatConfirmations() {

@@ -4,11 +4,13 @@
 // and complete message tree management for branching/sibling navigation.
 // The store owns allMessages (the full tree); React Query feeds data into it.
 
-import { type MessageTreeSnapshot, ROOT_PARENT_ID } from "@chatjs/thread";
+import type { MessageTreeSnapshot } from "@chatjs/thread";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
 import type { MessageNode } from "@/lib/thread-utils";
+
+const ROOT_PARENT_KEY = "__root__";
 
 export interface MessageSiblingInfo<UM> {
   siblingIndex: number;
@@ -61,7 +63,7 @@ export type ThreadAugmentedState<UM extends UIMessage> =
   };
 
 function parentKey(parentId: string | null) {
-  return parentId ?? ROOT_PARENT_ID;
+  return parentId ?? ROOT_PARENT_KEY;
 }
 
 function getMetadataParentId<UM extends UIMessage>(message: UM) {
@@ -183,7 +185,7 @@ function buildChildrenMapFromSnapshot<UM extends UIMessage>(
   const { childrenByParentId } = getSnapshotIndexes(snapshot);
 
   for (const [key, childIds] of Object.entries(childrenByParentId)) {
-    const parentId = key === ROOT_PARENT_ID ? null : key;
+    const parentId = key === ROOT_PARENT_KEY ? null : key;
     map.set(
       parentId,
       childIds
@@ -458,12 +460,9 @@ export const withThreads =
           currentVisibleMessages.at(-1)?.id ?? null
         );
 
-        // While the SDK is actively streaming, updating the visible thread with
-        // server data would mix the SDK's client-generated message ID with the
-        // server's assistantMessageId. The mismatch causes the SDK to push a
-        // second assistant message on the next chunk, bumping the epoch and
-        // remounting ChatSync mid-stream. Only update the tree index here and
-        // let the normal post-stream invalidation apply the full visible update.
+        // The live runtime remains authoritative while streaming. Query data can
+        // lag behind stream chunks, so merge it into the tree index without
+        // replacing the visible path until post-stream invalidation.
         if (state.status === "streaming" || state.status === "submitted") {
           set((prev) => ({
             ...prev,
@@ -595,10 +594,6 @@ export const withThreads =
 
             return 0;
           });
-
-        if (groupMessages.length <= 1) {
-          return null;
-        }
 
         const visibleMessageIds = new Set(state.messages.map((m) => m.id));
         const selectedMessageId =

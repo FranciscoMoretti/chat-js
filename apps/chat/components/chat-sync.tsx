@@ -1,12 +1,14 @@
 "use client";
 
 import { DefaultChatTransport } from "ai";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
+import { createGatedChatTransport } from "@/lib/gated-chat-transport";
+import { acknowledgeParallelUserMessagePersistence } from "@/lib/parallel-chat-requests";
 import { acknowledgeProvisionalUserMessagePersistence } from "@/lib/provisional-chat-confirmations";
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
@@ -31,8 +33,6 @@ export function ChatSync({ id }: { id: string }) {
   const isAuthenticated = !!session?.user;
   const threadInitialMessages = useThreadInitialMessages();
   const addMessageToTree = useAddMessageToTree();
-  const hasReportedConfirmationRef = useRef(false);
-
   const lastMessage = threadInitialMessages.at(-1);
   const lastMessageRef = useRef(lastMessage);
   lastMessageRef.current = lastMessage;
@@ -40,6 +40,37 @@ export function ChatSync({ id }: { id: string }) {
     lastMessage?.metadata?.activeStreamId
   );
   const resumeOnMountRef = useRef(isLastMessagePartial);
+  const transport = useMemo(
+    () =>
+      createGatedChatTransport(
+        new DefaultChatTransport({
+          api: "/api/chat",
+          fetch: fetchWithErrorHandlers as typeof fetch,
+          prepareSendMessagesRequest({ messages, id: requestId, body }) {
+            return {
+              body: {
+                id: requestId,
+                message: messages.at(-1),
+                prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                ...body,
+              },
+            };
+          },
+          prepareReconnectToStreamRequest({ id: chatId }) {
+            const current = lastMessageRef.current;
+            const activeStreamId = current?.metadata?.activeStreamId ?? null;
+            const partialMessageId = isResumableActiveStreamId(activeStreamId)
+              ? (current?.id ?? null)
+              : null;
+
+            return {
+              api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
+            };
+          },
+        })
+      ),
+    [isAuthenticated]
+  );
 
   useChat<ChatMessage>({
     experimental_throttle: 100,
@@ -54,48 +85,17 @@ export function ChatSync({ id }: { id: string }) {
       saveChatMessage({ message, chatId: id });
     },
     resume: resumeOnMountRef.current,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: fetchWithErrorHandlers as typeof fetch,
-      prepareSendMessagesRequest({ messages, id: requestId, body }) {
-        return {
-          body: {
-            id: requestId,
-            message: messages.at(-1),
-            prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-            ...body,
-          },
-        };
-      },
-      prepareReconnectToStreamRequest({ body, id: chatId }) {
-        const current = lastMessageRef.current;
-        const activeStreamId = current?.metadata?.activeStreamId ?? null;
-        const runMessageId =
-          typeof body?.assistantMessageId === "string"
-            ? body.assistantMessageId
-            : null;
-        const partialMessageId =
-          runMessageId ??
-          (isResumableActiveStreamId(activeStreamId)
-            ? (current?.id ?? null)
-            : null);
-
-        return {
-          api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
-        };
-      },
-    }),
+    transport,
     onData: (dataPart) => {
       if (
-        !hasReportedConfirmationRef.current &&
         dataPart.type === "data-userMessagePersisted" &&
         dataPart.data.chatId === id
       ) {
+        acknowledgeParallelUserMessagePersistence(dataPart.data);
         const matchesPendingChat = acknowledgeProvisionalUserMessagePersistence(
           dataPart.data
         );
         if (matchesPendingChat) {
-          hasReportedConfirmationRef.current = true;
           setChatPersisted(true);
         }
       }
