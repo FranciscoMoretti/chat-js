@@ -149,6 +149,43 @@ describe("ThreadChat", () => {
 		expect(chat.getMessage("client-response")?.id).toBe("client-response");
 	});
 
+	test("attaches streamed output without requiring a user parent", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const run = await chat.startRun({
+			message: {
+				id: "context-1",
+				parts: [{ text: "System context", type: "text" }],
+				role: "system",
+			},
+		});
+		await waitFor(() => transport.requests.length === 1);
+
+		transport.emitText(0, "response-1", "complete");
+		await run.finished;
+
+		expect(chat.getMessage("context-1")?.role).toBe("system");
+		expect(chat.getParent("response-1")?.id).toBe("context-1");
+	});
+
+	test("creates a child response after an assistant message", async () => {
+		const transport = new ControlledTransport();
+		const parent: UIMessage = {
+			id: "assistant-parent",
+			parts: [{ text: "first", type: "text" }],
+			role: "assistant",
+		};
+		const chat = new ThreadChat({ messages: [parent], transport });
+		const run = await chat.startRun({ from: parent.id });
+		await waitFor(() => transport.requests.length === 1);
+
+		transport.emitText(0, "assistant-child", "second");
+		await run.finished;
+
+		expect(chat.getMessage(parent.id)).toEqual(parent);
+		expect(chat.getParent("assistant-child")?.id).toBe(parent.id);
+	});
+
 	test("keeps hidden branches when reconciling the selected path", () => {
 		const chat = new ThreadChat({
 			messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
