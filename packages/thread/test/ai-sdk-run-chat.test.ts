@@ -9,16 +9,24 @@ import {
 import { MessageTree } from "../src/message-tree";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
-	controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
+	readonly requests: Array<{
+		controller: ReadableStreamDefaultController<UIMessageChunk>;
+		options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
+	}> = [];
 
-	sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-		Promise.resolve(
+	get request() {
+		return this.requests.at(-1)?.options;
+	}
+
+	sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
+		return Promise.resolve(
 			new ReadableStream({
 				start: (controller) => {
-					this.controller = controller;
+					this.requests.push({ controller, options });
 				},
 			}),
 		);
+	};
 
 	reconnectToStream() {
 		return Promise.resolve(null);
@@ -26,12 +34,16 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 
 	emit(...chunks: UIMessageChunk[]) {
 		for (const chunk of chunks) {
-			this.controller?.enqueue(chunk);
+			this.requests.at(-1)?.controller.enqueue(chunk);
 		}
 	}
 
 	finish() {
-		this.controller?.close();
+		this.requests.at(-1)?.controller.close();
+	}
+
+	fail(error: Error) {
+		this.requests.at(-1)?.controller.error(error);
 	}
 }
 
@@ -49,6 +61,7 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 	sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<UIMessage>;
 	status: ChatStatus = "ready";
+	readonly errors: Error[] = [];
 
 	constructor(
 		transport: ChatTransport<UIMessage>,
@@ -61,24 +74,27 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 	}
 
 	getRunPath = () =>
-		this.tree.getPath(this.spec.assistantMessageId ?? this.spec.userMessageId);
+		this.tree.getPath(this.spec.messageId ?? this.spec.parentMessageId);
 	mergeRunPath = (messages: UIMessage[]) => {
 		this.tree.reconcilePath(messages, { moveCursor: false });
 	};
 	registerToolCall() {}
 	removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
 	setRunError = (_runId: string, error: Error | undefined) => {
-		if (error) this.onError?.(error);
+		if (error) this.errors.push(error);
 	};
 	setRunStatus = (_runId: string, status: ChatStatus) => {
 		this.status = status;
 	};
-	upsertMessage = (message: UIMessage, parentId: string | null) => {
-		this.tree.upsertMessage(message, parentId);
-	};
-	writeRunAssistantMessage = (_runId: string, message: UIMessage) => {
-		this.spec.assistantMessageId = message.id;
-		this.tree.upsertMessage(message, this.spec.userMessageId);
+	writeRunMessage = (_runId: string, message: UIMessage) => {
+		if (this.spec.messageId && this.spec.messageId !== message.id) {
+			throw new Error("Run message identity changed");
+		}
+		if (!this.spec.messageId && this.tree.has(message.id)) {
+			throw new Error("Run message identity already exists");
+		}
+		this.spec.messageId = message.id;
+		this.tree.upsertMessage(message, this.spec.parentMessageId);
 	};
 }
 
@@ -93,10 +109,8 @@ function userMessage(): UIMessage {
 function createSpec(): ThreadRunSpec {
 	return {
 		id: "run-1",
-		originCursorId: null,
-		parentMessageId: null,
+		parentMessageId: "user-1",
 		siblingOrder: 0,
-		userMessageId: "user-1",
 	};
 }
 
@@ -114,6 +128,14 @@ function emitRichResponse(transport: ControlledTransport) {
 	transport.finish();
 }
 
+async function waitFor(predicate: () => boolean) {
+	for (let attempt = 0; attempt < 500; attempt += 1) {
+		if (predicate()) return;
+		await Bun.sleep(1);
+	}
+	throw new Error("Timed out waiting for request");
+}
+
 describe("ThreadRunChat", () => {
 	test("matches the AI SDK React Chat reducer for one response", async () => {
 		const spec = createSpec();
@@ -129,8 +151,14 @@ describe("ThreadRunChat", () => {
 		const threadRunChat = new ThreadRunChat(host, spec);
 
 		const standardRequest = standardChat.sendMessage(input);
-		const threadRequest = threadRunChat.sendMessage(input);
+		const threadRequest = threadRunChat.start();
 		await Bun.sleep(0);
+		expect(threadTransport.request?.messages).toEqual(
+			standardTransport.request?.messages,
+		);
+		expect(threadTransport.request?.messageId).toBe(
+			standardTransport.request?.messageId,
+		);
 		emitRichResponse(standardTransport);
 		emitRichResponse(threadTransport);
 		await Promise.all([standardRequest, threadRequest]);
@@ -148,7 +176,7 @@ describe("ThreadRunChat", () => {
 		const host = new TestRunHost(transport, input, spec);
 		const chat = new ThreadRunChat(host, spec);
 
-		const request = chat.sendMessage(input);
+		const request = chat.start();
 		await Bun.sleep(0);
 		transport.emit(
 			{ messageId: "server-id", type: "start" },
@@ -161,6 +189,93 @@ describe("ThreadRunChat", () => {
 
 		expect(host.tree.getMessage("client-response")).toBeUndefined();
 		expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
-		expect(spec.assistantMessageId).toBe("server-id");
+		expect(spec.messageId).toBe("server-id");
+	});
+
+	test("creates a distinct response after an assistant parent", async () => {
+		const parent: UIMessage = {
+			id: "assistant-parent",
+			parts: [{ text: "first", type: "text" }],
+			role: "assistant",
+		};
+		const spec: ThreadRunSpec = {
+			id: "run-1",
+			parentMessageId: parent.id,
+			siblingOrder: 0,
+		};
+		const transport = new ControlledTransport();
+		const host = new TestRunHost(transport, parent, spec);
+		const chat = new ThreadRunChat(host, spec);
+
+		const request = chat.start();
+		await Bun.sleep(0);
+		transport.emit(
+			{ messageId: "assistant-child", type: "start" },
+			{ id: "text-1", type: "text-start" },
+			{ delta: "second", id: "text-1", type: "text-delta" },
+			{ id: "text-1", type: "text-end" },
+		);
+		transport.finish();
+		await request;
+
+		expect(host.tree.getMessage(parent.id)).toEqual(parent);
+		expect(host.tree.getParentId("assistant-child")).toBe(parent.id);
+	});
+
+	test("reports a failed stream exactly once without adding a response", async () => {
+		const error = new Error("stream failed");
+		const callbackErrors: Error[] = [];
+		const spec = createSpec();
+		const transport = new ControlledTransport();
+		const host = new TestRunHost(transport, userMessage(), spec);
+		host.onError = (callbackError) => callbackErrors.push(callbackError);
+		const chat = new ThreadRunChat(host, spec);
+
+		const request = chat.start();
+		await waitFor(() => transport.requests.length === 1);
+		transport.fail(error);
+		await request;
+
+		expect(host.errors).toEqual([error]);
+		expect(callbackErrors).toEqual([error]);
+		expect(host.status).toBe("error");
+		expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
+	});
+
+	test("continues one response across automatic follow-up requests", async () => {
+		const spec = createSpec();
+		const transport = new ControlledTransport();
+		const host = new TestRunHost(transport, userMessage(), spec);
+		host.sendAutomaticallyWhen = () => transport.requests.length < 2;
+		const chat = new ThreadRunChat(host, spec);
+
+		const request = chat.start();
+		await waitFor(() => transport.requests.length === 1);
+		transport.emit(
+			{ messageId: "assistant-1", type: "start" },
+			{ id: "first", type: "text-start" },
+			{ delta: "one", id: "first", type: "text-delta" },
+			{ id: "first", type: "text-end" },
+		);
+		transport.finish();
+
+		await waitFor(() => transport.requests.length === 2);
+		transport.emit(
+			{ id: "second", type: "text-start" },
+			{ delta: "two", id: "second", type: "text-delta" },
+			{ id: "second", type: "text-end" },
+		);
+		transport.finish();
+		await request;
+
+		expect(transport.requests).toHaveLength(2);
+		expect(
+			host.tree.getChildren(spec.parentMessageId).map(({ id }) => id),
+		).toEqual(["assistant-1"]);
+		expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
+			expect.objectContaining({ text: "one", type: "text" }),
+			expect.objectContaining({ text: "two", type: "text" }),
+		]);
+		expect(host.status).toBe("ready");
 	});
 });
