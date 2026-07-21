@@ -1,12 +1,6 @@
 import type { UIMessage } from "ai";
 import type { MessageTreeSnapshot } from "./types";
 
-const ROOT_PARENT_ID = "__root__";
-
-function parentKey(parentId: string | null) {
-	return parentId ?? ROOT_PARENT_ID;
-}
-
 function clone<T>(value: T): T {
 	return structuredClone(value);
 }
@@ -18,7 +12,7 @@ export function getMessageText(message: UIMessage) {
 }
 
 export class MessageTree<TMessage extends UIMessage = UIMessage> {
-	readonly #childrenByParentId = new Map<string, string[]>();
+	readonly #childrenByParentId = new Map<string | null, string[]>();
 	readonly #messagesById = new Map<string, TMessage>();
 	readonly #parentById = new Map<string, string | null>();
 	#cursorId: string | null = null;
@@ -59,7 +53,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 	}
 
 	getChildren(messageId: string | null) {
-		return (this.#childrenByParentId.get(parentKey(messageId)) ?? [])
+		return (this.#childrenByParentId.get(messageId) ?? [])
 			.map((id) => this.#messagesById.get(id))
 			.filter((message): message is TMessage => Boolean(message))
 			.map(clone);
@@ -75,7 +69,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 	getLeaves(messageId: string | null = null) {
 		const leaves: TMessage[] = [];
 		const visit = (id: string) => {
-			const children = this.#childrenByParentId.get(parentKey(id)) ?? [];
+			const children = this.#childrenByParentId.get(id) ?? [];
 			if (children.length === 0) {
 				const message = this.#messagesById.get(id);
 				if (message) {
@@ -88,8 +82,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 			}
 		};
 
-		for (const childId of this.#childrenByParentId.get(parentKey(messageId)) ??
-			[]) {
+		for (const childId of this.#childrenByParentId.get(messageId) ?? []) {
 			visit(childId);
 		}
 		return leaves;
@@ -128,7 +121,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 				visit(childId, messageId);
 			}
 		};
-		for (const rootId of this.#childrenByParentId.get(ROOT_PARENT_ID) ?? []) {
+		for (const rootId of this.#childrenByParentId.get(null) ?? []) {
 			visit(rootId, null);
 		}
 
@@ -143,7 +136,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		return {
 			childrenByParentId: Object.fromEntries(
 				Array.from(this.#childrenByParentId.entries())
-					.filter(([id]) => id !== ROOT_PARENT_ID)
+					.filter((entry): entry is [string, string[]] => entry[0] !== null)
 					.map(([id, children]) => [id, [...children]]),
 			),
 			messagesById: Object.fromEntries(
@@ -153,7 +146,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 				]),
 			),
 			parentById: Object.fromEntries(this.#parentById.entries()),
-			rootIds: [...(this.#childrenByParentId.get(ROOT_PARENT_ID) ?? [])],
+			rootIds: [...(this.#childrenByParentId.get(null) ?? [])],
 		};
 	}
 
@@ -196,11 +189,10 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 
 		this.#messagesById.set(message.id, clone(message));
 		this.#parentById.set(message.id, parentId);
-		const key = parentKey(parentId);
-		const children = this.#childrenByParentId.get(key) ?? [];
+		const children = this.#childrenByParentId.get(parentId) ?? [];
 		if (!children.includes(message.id)) {
 			const index = Math.min(options.index ?? children.length, children.length);
-			this.#childrenByParentId.set(key, [
+			this.#childrenByParentId.set(parentId, [
 				...children.slice(0, index),
 				message.id,
 				...children.slice(index),
@@ -212,17 +204,17 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		if (!this.#messagesById.has(messageId)) {
 			return;
 		}
-		const children = this.#childrenByParentId.get(parentKey(messageId)) ?? [];
+		const children = this.#childrenByParentId.get(messageId) ?? [];
 		if (children.length > 0) {
 			throw new Error(`Cannot remove non-leaf message ${messageId}`);
 		}
 		const parentId = this.#parentById.get(messageId) ?? null;
 		this.#messagesById.delete(messageId);
 		this.#parentById.delete(messageId);
-		this.#childrenByParentId.delete(parentKey(messageId));
+		this.#childrenByParentId.delete(messageId);
 		this.#childrenByParentId.set(
-			parentKey(parentId),
-			(this.#childrenByParentId.get(parentKey(parentId)) ?? []).filter(
+			parentId,
+			(this.#childrenByParentId.get(parentId) ?? []).filter(
 				(id) => id !== messageId,
 			),
 		);

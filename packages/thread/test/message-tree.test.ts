@@ -67,6 +67,15 @@ describe("MessageTree", () => {
 		);
 	});
 
+	test("allows message IDs that resemble internal root keys", () => {
+		const tree = new MessageTree({ messages: [message("__root__")] });
+		tree.upsertMessage(message("child"), "__root__");
+
+		expect(tree.getIndexes().rootIds).toEqual(["__root__"]);
+		expect(tree.getChildren("__root__").map(({ id }) => id)).toEqual(["child"]);
+		expect(tree.getLeaves().map(({ id }) => id)).toEqual(["child"]);
+	});
+
 	test("only removes leaves and moves the selected cursor to the parent", () => {
 		const tree = new MessageTree({
 			messages: [message("u1"), message("a1", "assistant")],
@@ -129,5 +138,19 @@ describe("MessageTree", () => {
 					},
 				}),
 		).toThrow("Duplicate message id u1 in snapshot");
+
+		expect(
+			() =>
+				new MessageTree({
+					snapshot: {
+						cursorId: null,
+						nodes: [
+							{ message: message("a"), parentId: "b" },
+							{ message: message("b"), parentId: "a" },
+						],
+						version: 1,
+					},
+				}),
+		).toThrow("Unknown parent message b");
 	});
 });
