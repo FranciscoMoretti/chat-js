@@ -49,8 +49,12 @@ export const builtInToolEnvRequirements: Record<
 	EnvRequirement | undefined
 > = {
 	webSearch: {
-		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"], ["SERPDIVE_API_KEY"]],
-		description: "TAVILY_API_KEY, FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
+		// SERPdive is deliberately absent here: the direct webSearch tool is
+		// Tavily-backed, so accepting a SERPdive-only setup would pass config
+		// validation and then fail at runtime. It is offered for deepResearch,
+		// which does select a provider from the configured keys.
+		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
+		description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
 	},
 	urlRetrieval: {
 		options: [["FIRECRAWL_API_KEY"]],
