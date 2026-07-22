@@ -10,6 +10,9 @@ import {
 
 const TAVILY_COST_CENTS = 5;
 const FIRECRAWL_COST_CENTS = 5;
+// One mako search is 1 credit at $5 per 1,000 credits, i.e. 0.5c. Rounded up
+// to stay an integer like the others, so cost is never under-reported.
+const SERPDIVE_COST_CENTS = 1;
 
 const DEFAULT_MAX_RESULTS = 5;
 
@@ -248,6 +251,67 @@ Avoid:
 
       // Report API cost
       costAccumulator?.addAPICost("webSearch", FIRECRAWL_COST_CENTS);
+
+      return result;
+    },
+  });
+
+export const serpdiveWebSearch = ({
+  dataStream,
+  writeTopLevelUpdates,
+  costAccumulator,
+  toolCallIdOverride,
+}: {
+  dataStream: StreamWriter;
+  writeTopLevelUpdates: boolean;
+  costAccumulator?: CostAccumulator;
+  toolCallIdOverride?: string;
+}) =>
+  tool({
+    description: `Multi-query web search using SERPdive, which returns extracted, answer-ready page content instead of links. Always cite sources inline.
+
+Use for:
+- General information gathering where the answer matters more than the link list
+- Keeping context small: results are extracted and sized for a model
+
+Avoid:
+- Pulling content from a single known URL (use retrieveUrl instead)`,
+    inputSchema: z.object({
+      search_queries: searchQueriesSchema,
+    }),
+    execute: async (
+      {
+        search_queries,
+      }: {
+        search_queries: { query: string; maxResults: number | null }[];
+      },
+      { toolCallId: sdkToolCallId }: { toolCallId: string }
+    ) => {
+      const toolCallId = toolCallIdOverride ?? sdkToolCallId;
+      const log = createModuleLogger("tools/web-search");
+      log.debug(
+        { queriesCount: search_queries.length },
+        "serpdiveWebSearch.execute"
+      );
+      const result = await executeMultiQuerySearch({
+        search_queries: search_queries.map((query) => ({
+          query: query.query,
+          maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+        })),
+        options: {
+          baseProviderOptions: {
+            provider: "serpdive",
+          },
+        },
+        dataStream,
+        toolCallId,
+        writeTopLevelUpdates,
+        title: "Searching with SERPdive",
+        completeTitle: "SERPdive search complete",
+      });
+
+      // Report API cost
+      costAccumulator?.addAPICost("webSearch", SERPDIVE_COST_CENTS);
 
       return result;
     },

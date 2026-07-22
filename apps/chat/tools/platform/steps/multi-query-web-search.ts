@@ -73,6 +73,12 @@ export async function multiQueryWebSearchStep({
         queryProviderOptions = {
           ...baseProviderOptions,
         };
+      } else if (baseProviderOptions.provider === "serpdive") {
+        // SERPdive infers freshness and locale from the query itself, so
+        // there is no per-query topic or recency window to forward.
+        queryProviderOptions = {
+          ...baseProviderOptions,
+        };
       } else {
         queryProviderOptions = baseProviderOptions;
       }

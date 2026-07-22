@@ -3,7 +3,11 @@ import type { ToolSet } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
-import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
+import {
+  firecrawlWebSearch,
+  serpdiveWebSearch,
+  tavilyWebSearch,
+} from "../web-search";
 import type { DeepResearchRuntimeConfig, SearchAPI } from "./configuration";
 
 // MCP Utils
@@ -93,6 +97,15 @@ function getSearchTool(
   if (searchApi === "firecrawl") {
     return {
       webSearch: firecrawlWebSearch({
+        dataStream,
+        writeTopLevelUpdates: false,
+        toolCallIdOverride: parentToolCallId,
+      }),
+    };
+  }
+  if (searchApi === "serpdive") {
+    return {
+      webSearch: serpdiveWebSearch({
         dataStream,
         writeTopLevelUpdates: false,
         toolCallIdOverride: parentToolCallId,

@@ -1,7 +1,7 @@
 import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 
-export type SearchAPI = "firecrawl" | "tavily" | "none";
+export type SearchAPI = "firecrawl" | "serpdive" | "tavily" | "none";
 
 export interface DeepResearchRuntimeConfig {
   allow_clarification: boolean;
@@ -41,6 +41,9 @@ function getSearchApi(): SearchAPI {
   }
   if (env.FIRECRAWL_API_KEY) {
     return "firecrawl";
+  }
+  if (env.SERPDIVE_API_KEY) {
+    return "serpdive";
   }
   return "none";
 }

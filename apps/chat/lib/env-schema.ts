@@ -99,6 +99,10 @@ export const serverEnvSchema = {
     .optional()
     .describe("Tavily API key for web search"),
   EXA_API_KEY: z.string().optional().describe("Exa API key for web search"),
+  SERPDIVE_API_KEY: z
+    .string()
+    .optional()
+    .describe("SERPdive API key for web search"),
   FIRECRAWL_API_KEY: z
     .string()
     .optional()

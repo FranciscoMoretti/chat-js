@@ -1,5 +1,6 @@
 import FirecrawlApp, { type SearchParams } from "@mendable/firecrawl-js";
 import { type TavilySearchOptions, tavily } from "@tavily/core";
+import { SerpDive, type SearchOptions as SerpDiveSearchOptions } from "serpdive";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -9,7 +10,10 @@ export type SearchProviderOptions =
     } & Omit<TavilySearchOptions, "limit">)
   | ({
       provider: "firecrawl";
-    } & SearchParams);
+    } & SearchParams)
+  | ({
+      provider: "serpdive";
+    } & Omit<SerpDiveSearchOptions, "maxResults">);
 
 export interface WebSearchResult {
   content: string;
@@ -27,6 +31,9 @@ export interface WebSearchResponse {
 const tvly = env.TAVILY_API_KEY ? tavily({ apiKey: env.TAVILY_API_KEY }) : null;
 const firecrawl = env.FIRECRAWL_API_KEY
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
+  : null;
+const serpdive = env.SERPDIVE_API_KEY
+  ? new SerpDive({ apiKey: env.SERPDIVE_API_KEY })
   : null;
 
 const log = createModuleLogger("tools/steps/web-search");
@@ -120,6 +127,26 @@ export async function webSearchStep({
         title: item.title || "",
         url: item.url || "",
         content: item.markdown || "",
+      }));
+    } else if (providerOptions.provider === "serpdive") {
+      if (!serpdive) {
+        return {
+          results: [],
+          error:
+            "SERPdive is not configured. Set SERPDIVE_API_KEY or choose a different provider.",
+        };
+      }
+      const { provider: _provider, ...searchOptions } = providerOptions;
+      const response = await serpdive.search(query, {
+        maxResults,
+        ...searchOptions,
+      });
+
+      results = response.results.map((r) => ({
+        source: "web",
+        title: r.title || "",
+        url: r.url,
+        content: r.content,
       }));
     }
 

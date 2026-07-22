@@ -44,12 +44,12 @@ export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
 > = {
   webSearch: {
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
+    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"], ["SERPDIVE_API_KEY"]],
+    description: "TAVILY_API_KEY, FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
   },
   deepResearch: {
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
+    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"], ["SERPDIVE_API_KEY"]],
+    description: "TAVILY_API_KEY, FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
   },
   mcp: {
     options: [["MCP_ENCRYPTION_KEY"]],
