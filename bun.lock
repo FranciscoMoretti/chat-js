@@ -117,6 +117,7 @@
         "react-resizable-panels": "^3.0.6",
         "redis": "^5.5.6",
         "resumable-stream": "2.2.10",
+        "serpdive": "^0.1.0",
         "server-only": "^0.0.1",
         "shiki": "^3.19.0",
         "sonner": "^2.0.7",
@@ -3167,6 +3168,7 @@
 
     "server-destroy": ["server-destroy@1.0.1", "", {}, "sha512-rb+9B5YBIEzYcD6x2VKidaa+cqYBJQKnU4oe4E3ANwRRN56yk/ua1YCJT1n21NTS8w6CcOclAKNP3PhdCXKYtQ=="],
 
+    "serpdive": ["serpdive@0.1.0", "", {}, "sha512-3Cgroym2pmdSUSX/LIczCVB2cqcd8Nt8MGWwTIyVCsZ76zj80FOpjTBr+xuWFjxxdbmd1gwd8x0JfxcfVrRmLA=="],
     "server-only": ["server-only@0.0.1", "", {}, "sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA=="],
 
     "set-cookie-parser": ["set-cookie-parser@3.1.0", "", {}, "sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw=="],
