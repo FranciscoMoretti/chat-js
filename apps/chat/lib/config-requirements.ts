@@ -48,11 +48,11 @@ export const aiToolEnvRequirements: Partial<
     // (same priority as deepResearch: Tavily, then Firecrawl, then SERPdive),
     // so any one of these keys enables it.
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"], ["SERPDIVE_API_KEY"]],
-    description: "TAVILY_API_KEY, FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
+    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
   },
   deepResearch: {
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"], ["SERPDIVE_API_KEY"]],
-    description: "TAVILY_API_KEY, FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
+    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY or SERPDIVE_API_KEY",
   },
   mcp: {
     options: [["MCP_ENCRYPTION_KEY"]],
