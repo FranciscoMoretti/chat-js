@@ -209,10 +209,12 @@ type RunRecord<TMessage extends UIMessage> = {
 };
 ```
 
-Run IDs and message IDs are deliberately separate. A run exists before its
-assistant message and keeps the same ID if the server supplies a canonical
-message ID. Stop and resume operations address the stable run ID; message-based
-helpers resolve the run currently associated with that node.
+Run IDs and response message IDs are deliberately separate. Multiple runs can
+be submitted before any response message exists, so each run needs a stable
+identity immediately for status, cancellation, and ownership. Its response
+message ID remains unknown until AI SDK first publishes the response and may
+then come from the server. Message-based helpers resolve the run associated with
+that node after this binding occurs.
 
 `ThreadChat` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
 reconnection needs an AI SDK request lifecycle. Completed run records are
