@@ -20,7 +20,7 @@ import { generateImageTool } from "./generate-image";
 import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
-import { tavilyWebSearch } from "./web-search";
+import { webSearch } from "./web-search";
 
 const log = createModuleLogger("tools:mcp");
 
@@ -92,7 +92,7 @@ export function getTools({
       : {}),
     ...(config.ai.tools.webSearch.enabled
       ? {
-          webSearch: tavilyWebSearch({
+          webSearch: webSearch({
             dataStream,
             writeTopLevelUpdates: true,
             costAccumulator,

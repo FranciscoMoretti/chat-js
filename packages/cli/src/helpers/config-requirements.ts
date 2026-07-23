@@ -57,12 +57,11 @@ export const builtInToolEnvRequirements: Record<
 		description: "FIRECRAWL_API_KEY",
 	},
 	deepResearch: {
-		// The CLI keeps the pre-SERPdive requirement on purpose: selecting
-		// deepResearch here force-enables webSearch (prompts.ts), whose direct
-		// tool is Tavily-backed, so a SERPdive-only scaffold would be told its
-		// env is fine and then fail the webSearch check. SERPdive stays a
-		// deepResearch option in the app's config-requirements, where the two
-		// tools are toggled independently.
+		// The CLI scaffolder does not offer SERPdive as a search provider, so its
+		// checklist stays on the keys the scaffold prompts for (Tavily/Firecrawl).
+		// The generated app itself does support SERPdive for both webSearch and
+		// deepResearch (see the app's config-requirements); this file only governs
+		// what the `create` prompts validate.
 		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
 		description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
 	},

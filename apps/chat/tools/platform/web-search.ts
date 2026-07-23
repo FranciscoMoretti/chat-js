@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { StreamWriter } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
+import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import {
   type MultiQuerySearchOptions,
@@ -316,3 +317,24 @@ Avoid:
       return result;
     },
   });
+
+type WebSearchToolParams = {
+  dataStream: StreamWriter;
+  writeTopLevelUpdates: boolean;
+  costAccumulator?: CostAccumulator;
+  toolCallIdOverride?: string;
+};
+
+// Selects the web-search tool matching the configured provider, using the same
+// priority as deep research (getSearchApi): Tavily, then Firecrawl, then
+// SERPdive. Callers gate this behind the `webSearch` requirement, so at least
+// one of the three keys is guaranteed to be present.
+export const webSearch = (params: WebSearchToolParams) => {
+  if (env.TAVILY_API_KEY) {
+    return tavilyWebSearch(params);
+  }
+  if (env.FIRECRAWL_API_KEY) {
+    return firecrawlWebSearch(params);
+  }
+  return serpdiveWebSearch(params);
+};
