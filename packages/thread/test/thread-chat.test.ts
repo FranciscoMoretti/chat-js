@@ -438,6 +438,52 @@ describe("ThreadChat", () => {
 		expect(chat.getSnapshot().cursorId).toBe("assistant-2");
 	});
 
+	test("rejects regeneration when the response parent is an assistant", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({
+			messages: [
+				{ ...user("assistant-parent"), role: "assistant" },
+				{ ...user("assistant-child"), role: "assistant" },
+			],
+			transport,
+		});
+
+		await expect(
+			chat.regenerate({ messageId: "assistant-child" }),
+		).rejects.toThrow(
+			"Cannot start a new run directly from assistant message assistant-parent; attach an input message first",
+		);
+		expect(transport.requests).toHaveLength(0);
+		expect(chat.getSnapshot().runs).toHaveLength(0);
+	});
+
+	test("restores assistant-to-assistant edges as tree data", () => {
+		const assistantParent = {
+			...user("assistant-parent"),
+			role: "assistant" as const,
+		};
+		const assistantChild = {
+			...user("assistant-child"),
+			role: "assistant" as const,
+		};
+		const chat = new ThreadChat({
+			initialTree: {
+				cursorId: assistantChild.id,
+				nodes: [
+					{ message: assistantParent, parentId: null },
+					{ message: assistantChild, parentId: assistantParent.id },
+				],
+				version: 1,
+			},
+		});
+
+		expect(chat.getParent(assistantChild.id)?.id).toBe(assistantParent.id);
+		expect(chat.getSnapshot().messages.map(({ id }) => id)).toEqual([
+			assistantParent.id,
+			assistantChild.id,
+		]);
+	});
+
 	test("routes tool output to the run that owns the tool call", async () => {
 		const transport = new ControlledTransport();
 		const chat = new ThreadChat({ transport });

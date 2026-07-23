@@ -192,36 +192,6 @@ describe("ThreadRunChat", () => {
 		expect(spec.messageId).toBe("server-id");
 	});
 
-	test("creates a distinct response after an assistant parent", async () => {
-		const parent: UIMessage = {
-			id: "assistant-parent",
-			parts: [{ text: "first", type: "text" }],
-			role: "assistant",
-		};
-		const spec: ThreadRunSpec = {
-			id: "run-1",
-			parentMessageId: parent.id,
-			siblingOrder: 0,
-		};
-		const transport = new ControlledTransport();
-		const host = new TestRunHost(transport, parent, spec);
-		const chat = new ThreadRunChat(host, spec);
-
-		const request = chat.start();
-		await Bun.sleep(0);
-		transport.emit(
-			{ messageId: "assistant-child", type: "start" },
-			{ id: "text-1", type: "text-start" },
-			{ delta: "second", id: "text-1", type: "text-delta" },
-			{ id: "text-1", type: "text-end" },
-		);
-		transport.finish();
-		await request;
-
-		expect(host.tree.getMessage(parent.id)).toEqual(parent);
-		expect(host.tree.getParentId("assistant-child")).toBe(parent.id);
-	});
-
 	test("reports a failed stream exactly once without adding a response", async () => {
 		const error = new Error("stream failed");
 		const callbackErrors: Error[] = [];
@@ -242,7 +212,7 @@ describe("ThreadRunChat", () => {
 		expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
 	});
 
-	test("continues one response across automatic follow-up requests", async () => {
+	test("continues one response after an automatic tool follow-up", async () => {
 		const spec = createSpec();
 		const transport = new ControlledTransport();
 		const host = new TestRunHost(transport, userMessage(), spec);
@@ -253,17 +223,31 @@ describe("ThreadRunChat", () => {
 		await waitFor(() => transport.requests.length === 1);
 		transport.emit(
 			{ messageId: "assistant-1", type: "start" },
-			{ id: "first", type: "text-start" },
-			{ delta: "one", id: "first", type: "text-delta" },
-			{ id: "first", type: "text-end" },
+			{
+				dynamic: true,
+				input: { city: "London" },
+				toolCallId: "tool-1",
+				toolName: "weather",
+				type: "tool-input-available",
+			},
+			{
+				dynamic: true,
+				output: { temperature: 22 },
+				toolCallId: "tool-1",
+				type: "tool-output-available",
+			},
+			{ finishReason: "tool-calls", type: "finish" },
 		);
 		transport.finish();
 
 		await waitFor(() => transport.requests.length === 2);
+		expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
 		transport.emit(
+			{ messageId: "assistant-1", type: "start" },
 			{ id: "second", type: "text-start" },
-			{ delta: "two", id: "second", type: "text-delta" },
+			{ delta: "It is 22 degrees.", id: "second", type: "text-delta" },
 			{ id: "second", type: "text-end" },
+			{ finishReason: "stop", type: "finish" },
 		);
 		transport.finish();
 		await request;
@@ -273,8 +257,16 @@ describe("ThreadRunChat", () => {
 			host.tree.getChildren(spec.parentMessageId).map(({ id }) => id),
 		).toEqual(["assistant-1"]);
 		expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
-			expect.objectContaining({ text: "one", type: "text" }),
-			expect.objectContaining({ text: "two", type: "text" }),
+			expect.objectContaining({
+				output: { temperature: 22 },
+				state: "output-available",
+				toolCallId: "tool-1",
+				type: "dynamic-tool",
+			}),
+			expect.objectContaining({
+				text: "It is 22 degrees.",
+				type: "text",
+			}),
 		]);
 		expect(host.status).toBe("ready");
 	});
