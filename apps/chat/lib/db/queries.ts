@@ -7,6 +7,7 @@ import {
   gt,
   gte,
   inArray,
+  isNotNull,
   isNull,
   type SQL,
 } from "drizzle-orm";
@@ -474,7 +475,7 @@ export async function updateMessage({
       dbMessage.id = id;
 
       // Update message (without parts - parts are stored in Part table)
-      await tx
+      const updatedMessages = await tx
         .update(message)
         .set({
           annotations: dbMessage.annotations,
@@ -489,7 +490,12 @@ export async function updateMessage({
           lastContext: dbMessage.lastContext,
           activeStreamId: dbMessage.activeStreamId,
         })
-        .where(eq(message.id, id));
+        .where(and(eq(message.id, id), isNull(message.canceledAt)))
+        .returning({ id: message.id });
+
+      if (updatedMessages.length === 0) {
+        return false;
+      }
 
       // Update parts in Part table
       // Delete existing parts
@@ -501,7 +507,7 @@ export async function updateMessage({
         await tx.insert(part).values(mappedDBParts);
       }
 
-      return;
+      return true;
     });
   } catch (error) {
     logger.error({ error, messageId: id, chatId }, "updateMessage failed");
@@ -841,6 +847,58 @@ export async function getMessageById({ id }: { id: string }) {
   }
 }
 
+export async function getCancelableResponseMessage({
+  chatId,
+  parentMessageId,
+  stoppedAt,
+}: {
+  chatId: string;
+  parentMessageId: string;
+  stoppedAt: Date;
+}) {
+  try {
+    const [activeResponse] = await db
+      .select({ id: message.id })
+      .from(message)
+      .where(
+        and(
+          eq(message.chatId, chatId),
+          eq(message.parentMessageId, parentMessageId),
+          eq(message.role, "assistant"),
+          isNotNull(message.activeStreamId)
+        )
+      )
+      .orderBy(asc(message.createdAt))
+      .limit(1);
+
+    if (activeResponse) {
+      return activeResponse;
+    }
+
+    const [responseCreatedAfterStop] = await db
+      .select({ id: message.id })
+      .from(message)
+      .where(
+        and(
+          eq(message.chatId, chatId),
+          eq(message.parentMessageId, parentMessageId),
+          eq(message.role, "assistant"),
+          gte(message.createdAt, stoppedAt)
+        )
+      )
+      .orderBy(asc(message.createdAt))
+      .limit(1);
+
+    return responseCreatedAfterStop;
+  } catch (error) {
+    logger.error(
+      { chatId, error, parentMessageId },
+      "getCancelableResponseMessage failed"
+    );
+    throw error;
+  }
+}
+
 export async function getChatMessageWithPartsById({
   id,
 }: {
@@ -1074,11 +1132,19 @@ export async function updateMessageCanceledAt({
   canceledAt: Date | null;
 }) {
   try {
-    const updatedMessages = await db
-      .update(message)
-      .set({ canceledAt })
-      .where(eq(message.id, messageId))
-      .returning({ id: message.id });
+    const updatedMessages = await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(message)
+        .set({ activeStreamId: null, canceledAt })
+        .where(eq(message.id, messageId))
+        .returning({ id: message.id });
+
+      if (updated.length > 0 && canceledAt !== null) {
+        await tx.delete(part).where(eq(part.messageId, messageId));
+      }
+
+      return updated;
+    });
 
     return updatedMessages.length > 0;
   } catch (error) {

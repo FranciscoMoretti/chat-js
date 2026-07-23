@@ -12,6 +12,7 @@ import {
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
   getAllMessagesByChatId,
+  getCancelableResponseMessage,
   getChatById,
   getChatsByUserId,
   getDocumentsByMessageIds,
@@ -193,8 +194,8 @@ export const chatRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // A new chat can still be generating its title when the client stops.
-      // Wait for its reserved assistant row so request ordering cannot lose cancellation.
+      // New-chat persistence and the assistant start chunk can both lag the stop click.
+      // Resolve the eventual response row before recording cancellation.
       const deadline = Date.now() + 30_000;
       let retryDelay = 25;
       let chat = await getChatById({ id: input.chatId });
@@ -213,10 +214,48 @@ export const chatRouter = createTRPCRouter({
       }
 
       const canceledAt = new Date();
+      let [targetMessage] = await getMessageById({ id: input.messageId });
+
+      while (!targetMessage && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay = Math.min(retryDelay * 2, 250);
+        [targetMessage] = await getMessageById({ id: input.messageId });
+      }
+
+      if (!targetMessage || targetMessage.chatId !== input.chatId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      let responseMessageId =
+        targetMessage.role === "assistant" ? input.messageId : null;
+
+      while (!responseMessageId && Date.now() < deadline) {
+        const response = await getCancelableResponseMessage({
+          chatId: input.chatId,
+          parentMessageId: input.messageId,
+          stoppedAt: canceledAt,
+        });
+        responseMessageId = response?.id ?? null;
+
+        if (!responseMessageId) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          retryDelay = Math.min(retryDelay * 2, 250);
+        }
+      }
+
+      if (!responseMessageId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Response message not found",
+        });
+      }
 
       while (
         !(await updateMessageCanceledAt({
-          messageId: input.messageId,
+          messageId: responseMessageId,
           canceledAt,
         }))
       ) {

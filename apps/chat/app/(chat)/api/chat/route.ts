@@ -789,7 +789,7 @@ async function finalizeMessageAndCredits({
     }
 
     if (!isAnonymous) {
-      await updateMessage({
+      const messageSaved = await updateMessage({
         id: assistantMessage.id,
         chatId,
         message: {
@@ -811,6 +811,12 @@ async function finalizeMessageAndCredits({
           },
         },
       });
+      if (!messageSaved) {
+        log.info(
+          { messageId: assistantMessage.id },
+          "Skipped finalizing canceled message"
+        );
+      }
     }
 
     // Get total cost from accumulator (includes all LLM calls + external API costs)
