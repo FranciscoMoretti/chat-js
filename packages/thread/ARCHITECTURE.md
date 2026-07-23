@@ -196,7 +196,7 @@ receiving stream updates even when their snapshots are not currently rendered.
 
 ## Run Model
 
-Every assistant response has one `RunRecord`:
+Every assistant response lifecycle has one `RunRecord`:
 
 ```ts
 type RunRecord<TMessage extends UIMessage> = {
@@ -222,6 +222,18 @@ addressable.
 Starting multiple runs from the same user message creates assistant siblings.
 Starting runs from separate leaves updates those branches concurrently. Each
 run has independent status, error, request serialization, and cancellation.
+Automatic tool continuations remain in the same run and update the same
+assistant response node.
+
+A new live run requires a non-assistant response parent. AI SDK interprets an
+assistant message at the end of a request as the response to continue, not as
+the parent of another response. Therefore, a bare `startRun` from an assistant
+message is rejected. Branching from an assistant remains supported by attaching
+a new input message with `sendMessage` and generating from that input.
+
+This is a `ThreadChat` live-run invariant, not a `MessageTree` invariant. The
+tree remains role-agnostic so persisted, restored, or server-created data may
+contain assistant-to-assistant edges.
 
 ## AI SDK Integration
 
@@ -240,6 +252,13 @@ behavior for:
 The internal `ThreadChatState` presents one linear branch path to
 `AbstractChat`. It writes accumulated assistant snapshots into `ThreadChat`
 when AI SDK publishes the streaming response.
+
+`ThreadRunChat` does not insert a synthetic response into that path. AI SDK
+creates the provisional assistant response using its normal last-message rules
+and a generated response ID reserved by the run. The first unbound request
+clears its transport `messageId`, matching `useChat.sendMessage(input)`; after
+the response is bound, automatic follow-up requests carry that assistant ID and
+continue the same node.
 
 The supplied AI SDK `ChatTransport` remains the request and stream boundary.
 The package does not define another transport protocol or manually parse
@@ -261,7 +280,8 @@ position so concurrent streams remain ordered by creation rather than arrival.
 A normal `sendMessage` follows this sequence:
 
 1. Resolve the origin from the active cursor or an explicit `tree.from` value.
-2. Check concurrency limits and reject without mutating the tree when exceeded.
+2. Validate that the response parent is not an assistant and check concurrency
+   limits, rejecting without mutating the tree when either condition fails.
 3. Create or update the user message under that origin.
 4. Create a stable run ID and reserve its sibling position without adding a
    placeholder message.

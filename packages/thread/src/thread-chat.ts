@@ -405,6 +405,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			fallbackId: getInputMessageId(input) ?? this.generateMessageId(),
 			input,
 		});
+		this.assertValidRunParent(message);
 		const existingMessage = this.#tree.getMessage(message.id);
 		this.assertCanStartRun(message.id);
 		const attachmentId = existingMessage
@@ -561,6 +562,9 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	private assertCanStartRun(parentMessageId: string) {
+		const parentMessage = this.#tree.getMessage(parentMessageId);
+		if (parentMessage) this.assertValidRunParent(parentMessage);
+
 		const activeRuns = this.getActiveRunRecords();
 		if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
 			throw new Error("Cannot start run: max active runs reached");
@@ -570,6 +574,14 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		).length;
 		if (activeFromMessage >= this.#concurrency.maxActiveRunsPerMessage) {
 			throw new Error(`Cannot start another run from ${parentMessageId}`);
+		}
+	}
+
+	private assertValidRunParent(message: TMessage) {
+		if (message.role === "assistant") {
+			throw new Error(
+				`Cannot start a new run directly from assistant message ${message.id}; attach an input message first`,
+			);
 		}
 	}
 

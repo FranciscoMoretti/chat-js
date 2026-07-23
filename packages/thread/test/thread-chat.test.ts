@@ -168,7 +168,7 @@ describe("ThreadChat", () => {
 		expect(chat.getParent("response-1")?.id).toBe("context-1");
 	});
 
-	test("creates a child response after an assistant message", async () => {
+	test("rejects a bare run from an assistant before transport", async () => {
 		const transport = new ControlledTransport();
 		const parent: UIMessage = {
 			id: "assistant-parent",
@@ -176,14 +176,32 @@ describe("ThreadChat", () => {
 			role: "assistant",
 		};
 		const chat = new ThreadChat({ messages: [parent], transport });
-		const run = await chat.startRun({ from: parent.id });
-		await waitFor(() => transport.requests.length === 1);
 
-		transport.emitText(0, "assistant-child", "second");
-		await run.finished;
+		await expect(chat.startRun({ from: parent.id })).rejects.toThrow(
+			"Cannot start a new run directly from assistant message assistant-parent; attach an input message first",
+		);
+		expect(transport.requests).toHaveLength(0);
+		expect(chat.getTreeSnapshot().nodes).toHaveLength(1);
+		expect(chat.getSnapshot().runs).toHaveLength(0);
+	});
 
-		expect(chat.getMessage(parent.id)).toEqual(parent);
-		expect(chat.getParent("assistant-child")?.id).toBe(parent.id);
+	test("rejects an assistant input without mutating the tree", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ messages: [user("user-1")], transport });
+
+		await expect(
+			chat.sendMessage({
+				id: "assistant-input",
+				parts: [{ text: "prebuilt response", type: "text" }],
+				role: "assistant",
+			}),
+		).rejects.toThrow(
+			"Cannot start a new run directly from assistant message assistant-input; attach an input message first",
+		);
+		expect(transport.requests).toHaveLength(0);
+		expect(chat.getMessage("assistant-input")).toBeUndefined();
+		expect(chat.getSnapshot().cursorId).toBe("user-1");
+		expect(chat.getSnapshot().runs).toHaveLength(0);
 	});
 
 	test("keeps hidden branches when reconciling the selected path", () => {
