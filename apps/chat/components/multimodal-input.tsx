@@ -40,6 +40,10 @@ import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
+import {
+  clearResponseActiveStream,
+  isPendingResponseStream,
+} from "@/lib/stop-response";
 import { useChatActions } from "@/lib/stores/base";
 import {
   useApplicationThread,
@@ -602,8 +606,15 @@ function PureMultimodalInput({
   });
 
   const handleStop = useCallback(() => {
+    const isPendingResponse = isPendingResponseStream(
+      lastMessageMetadata?.activeStreamId
+    );
     const lastMessage = thread.getSnapshot().messages.at(-1);
-    if (session?.user && lastMessage?.role === "assistant") {
+    if (
+      session?.user &&
+      lastMessage?.role === "assistant" &&
+      !isPendingResponse
+    ) {
       stopStreamMutation.mutate({
         chatId,
         messageId: lastMessage.id,
@@ -611,7 +622,20 @@ function PureMultimodalInput({
       });
     }
     stopHelper?.();
-  }, [chatId, session?.user, stopHelper, stopStreamMutation, thread]);
+    if (lastMessageId) {
+      thread.setMessages(
+        clearResponseActiveStream(thread.getSnapshot().messages, lastMessageId)
+      );
+    }
+  }, [
+    chatId,
+    lastMessageId,
+    lastMessageMetadata?.activeStreamId,
+    session?.user,
+    stopHelper,
+    stopStreamMutation,
+    thread,
+  ]);
 
   return (
     <div className="relative">
