@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
-import { getMessageText } from "../src/message-tree";
+import { getMessageText } from "../src/message-utils";
 import { ThreadChat } from "../src/thread-chat";
 
 class ControlledTransport implements ChatTransport<UIMessage> {

@@ -14,11 +14,10 @@ import {
 	type ThreadRunSpec,
 } from "./ai-sdk-run-chat";
 import { MessageTree } from "./message-tree";
+import { type RunRecord, RunRegistry } from "./run-registry";
 import type {
 	MessageTreeSnapshot,
 	ThreadChatOptions,
-	ThreadConcurrency,
-	ThreadRun,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
 	ThreadStateSnapshot,
@@ -28,14 +27,6 @@ import type {
 type SendMessageInput<TMessage extends UIMessage> = Parameters<
 	AbstractChat<TMessage>["sendMessage"]
 >[0];
-
-type RunRecord<TMessage extends UIMessage> = {
-	chat: ThreadRunChat<TMessage>;
-	error: Error | undefined;
-	finished: Promise<void>;
-	spec: ThreadRunSpec;
-	status: ChatStatus;
-};
 
 function getInputMessageId<TMessage extends UIMessage>(
 	input: NonNullable<SendMessageInput<TMessage>>,
@@ -110,13 +101,9 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	sendAutomaticallyWhen: ThreadChatOptions<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 
-	readonly #concurrency: Required<ThreadConcurrency>;
 	readonly #listeners = new Set<() => void>();
-	readonly #runIdByApprovalId = new Map<string, string>();
-	readonly #runIdByToolCallId = new Map<string, string>();
-	readonly #runsById = new Map<string, RunRecord<TMessage>>();
+	readonly #runs: RunRegistry<TMessage>;
 	readonly #tree: MessageTree<TMessage>;
-	#selectedRunId: string | null = null;
 	#snapshot: ThreadStateSnapshot<TMessage>;
 
 	constructor(options: ThreadChatOptions<TMessage> = {}) {
@@ -130,13 +117,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.onToolCall = options.onToolCall;
 		this.sendAutomaticallyWhen = options.sendAutomaticallyWhen;
 		this.transport = options.transport ?? new DefaultChatTransport();
-		this.#concurrency = {
-			maxActiveRuns:
-				options.concurrency?.maxActiveRuns ?? Number.POSITIVE_INFINITY,
-			maxActiveRunsPerMessage:
-				options.concurrency?.maxActiveRunsPerMessage ??
-				Number.POSITIVE_INFINITY,
-		};
+		this.#runs = new RunRegistry(options.concurrency);
 		this.#tree = new MessageTree({
 			messages: options.messages,
 			snapshot: options.initialTree,
@@ -168,12 +149,12 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
 		async (response) => {
-			const run = this.getRunForApproval(response.id);
+			const run = this.#runs.getForApproval(response.id);
 			await run.chat.addToolApprovalResponse(response);
 		};
 
 	addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (output) => {
-		const run = this.getRunForToolCall(output.toolCallId);
+		const run = this.#runs.getForToolCall(output.toolCallId);
 		await run.chat.addToolOutput(output);
 	};
 
@@ -208,24 +189,24 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	setCursor(messageId: string | null) {
-		this.#selectedRunId = null;
+		this.#runs.select(null);
 		this.#tree.setCursor(messageId);
 		this.emit();
 	}
 
 	setCursorToParentOf(messageId: string) {
-		this.#selectedRunId = null;
+		this.#runs.select(null);
 		this.#tree.setCursorToParentOf(messageId);
 		this.emit();
 	}
 
 	getRunPath(runId: string) {
-		const run = this.getRunRecord(runId);
+		const run = this.#runs.require(runId);
 		return this.#tree.getPath(run.spec.messageId ?? run.spec.parentMessageId);
 	}
 
 	writeRunMessage(runId: string, message: TMessage) {
-		const run = this.getRunRecord(runId);
+		const run = this.#runs.require(runId);
 		const currentMessageId = run.spec.messageId;
 		if (currentMessageId && currentMessageId !== message.id) {
 			throw new Error(
@@ -240,29 +221,19 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			run.spec.messageId = message.id;
 		}
 
-		const siblingOrderByMessageId = new Map<string, number>();
-		for (const candidate of this.#runsById.values()) {
-			if (candidate.spec.messageId) {
-				siblingOrderByMessageId.set(
-					candidate.spec.messageId,
-					candidate.spec.siblingOrder,
-				);
-			}
-		}
-		const insertionIndex = this.#tree
-			.getChildren(run.spec.parentMessageId)
-			.filter((child) => {
-				const siblingOrder = siblingOrderByMessageId.get(child.id);
-				return (
-					siblingOrder === undefined || siblingOrder < run.spec.siblingOrder
-				);
-			}).length;
+		const insertionIndex = this.#runs.getInsertionIndex({
+			childIds: this.#tree
+				.getChildren(run.spec.parentMessageId)
+				.map((child) => child.id),
+			parentMessageId: run.spec.parentMessageId,
+			siblingOrder: run.spec.siblingOrder,
+		});
 		this.#tree.upsertMessage(message, run.spec.parentMessageId, {
 			index: insertionIndex,
 		});
 		this.indexMessageOwnership(runId, message);
 		if (
-			this.#selectedRunId === runId &&
+			this.#runs.isExplicitlySelected(runId) &&
 			this.#tree.cursorId === run.spec.parentMessageId
 		) {
 			this.#tree.setCursor(message.id);
@@ -290,7 +261,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.assertCanStartRun(parentMessageId);
 		const run = this.startRunFromParent({
 			follow: true,
-			id: this.reserveRunId(),
+			id: this.#runs.reserveId(this.generateMessageId),
 			options,
 			parentMessageId,
 		});
@@ -311,20 +282,13 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.emit();
 	}
 
-	replacePath(messages: TMessage[], options: { silent?: boolean } = {}) {
-		this.assertCanResetTree();
-		this.clearRunState();
-		this.#tree.replacePath(messages);
-		if (!options.silent) this.emit();
-	}
-
 	mergePath(messages: TMessage[], options: { silent?: boolean } = {}) {
-		this.#tree.reconcilePath(messages);
+		this.#tree.mergePath(messages);
 		if (!options.silent) this.emit();
 	}
 
 	mergeRunPath(messages: TMessage[]) {
-		this.#tree.reconcilePath(messages, { moveCursor: false });
+		this.#tree.mergePath(messages, { moveCursor: false });
 	}
 
 	resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
@@ -337,7 +301,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	};
 
 	resumeRun = async (runId: string, options: ChatRequestOptions = {}) => {
-		await this.resumeRunRequest(this.getRunRecord(runId), options);
+		await this.resumeRunRequest(this.#runs.require(runId), options);
 	};
 
 	restore(
@@ -345,7 +309,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		options: { silent?: boolean } = {},
 	) {
 		this.assertCanResetTree();
-		this.clearRunState();
+		this.#runs.clear();
 		this.#tree.restore(snapshot);
 		if (!options.silent) this.emit();
 	}
@@ -355,7 +319,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			typeof messages === "function"
 				? messages(this.#snapshot.messages)
 				: messages;
-		this.#selectedRunId = null;
+		this.#runs.select(null);
 		this.mergePath(nextMessages);
 	}
 
@@ -395,7 +359,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			this.assertCanStartRun(originMessage.id);
 			return this.startRunFromParent({
 				follow,
-				id: this.reserveRunId(),
+				id: this.#runs.reserveId(this.generateMessageId),
 				options,
 				parentMessageId: originMessage.id,
 			});
@@ -416,7 +380,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 		return this.startRunFromParent({
 			follow,
-			id: this.reserveRunId(),
+			id: this.#runs.reserveId(this.generateMessageId),
 			options,
 			parentMessageId: message.id,
 		});
@@ -435,12 +399,12 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	stopAll() {
 		return Promise.all(
-			this.getActiveRunRecords().map((run) => run.chat.stop()),
+			this.#runs.getActive().map((run) => run.chat.stop()),
 		).then(() => undefined);
 	}
 
 	stopRun(runId: string) {
-		return this.#runsById.get(runId)?.chat.stop() ?? Promise.resolve();
+		return this.#runs.get(runId)?.chat.stop() ?? Promise.resolve();
 	}
 
 	stopRunForMessage(messageId: string) {
@@ -449,110 +413,47 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 
 	getRun(runId: string) {
-		const run = this.#runsById.get(runId);
-		return run ? this.toRunSnapshot(run) : undefined;
+		const run = this.#runs.get(runId);
+		return run ? this.#runs.toSnapshot(run) : undefined;
 	}
 
 	getRunForMessage(messageId: string) {
-		const runs = Array.from(this.#runsById.values()).reverse();
-		const run =
-			runs.find((candidate) => candidate.spec.messageId === messageId) ??
-			runs.find(
-				(candidate) =>
-					candidate.spec.parentMessageId === messageId &&
-					(candidate.status === "submitted" ||
-						candidate.status === "streaming"),
-			) ??
-			runs.find((candidate) => candidate.spec.parentMessageId === messageId);
-		return run ? this.toRunSnapshot(run) : undefined;
+		const run = this.#runs.getForMessage(messageId);
+		return run ? this.#runs.toSnapshot(run) : undefined;
 	}
 
 	setRunError(runId: string, error: Error | undefined) {
-		const run = this.#runsById.get(runId);
-		if (!run) return;
-		run.error = error;
-		run.status = error ? "error" : run.status;
+		this.#runs.setError(runId, error);
 		this.emit();
 	}
 
 	setRunStatus(runId: string, status: ChatStatus) {
-		const run = this.#runsById.get(runId);
-		if (!run) return;
-		run.status = status;
+		this.#runs.setStatus(runId, status);
 		this.emit();
 	}
 
 	registerToolCall(runId: string, toolCallId: string) {
-		this.assertOwnershipAvailable(
-			this.#runIdByToolCallId,
-			toolCallId,
-			runId,
-			"tool call",
-		);
-		this.#runIdByToolCallId.set(toolCallId, runId);
+		this.#runs.registerToolCall(runId, toolCallId);
 	}
 
 	indexMessageOwnership(runId: string, message: TMessage) {
-		const toolCallIds: string[] = [];
-		const approvalIds: string[] = [];
-		for (const part of message.parts) {
-			if ("toolCallId" in part && typeof part.toolCallId === "string") {
-				toolCallIds.push(part.toolCallId);
-			}
-			if (
-				"approval" in part &&
-				part.approval &&
-				typeof part.approval === "object" &&
-				"id" in part.approval &&
-				typeof part.approval.id === "string"
-			) {
-				approvalIds.push(part.approval.id);
-			}
-		}
-
-		for (const toolCallId of toolCallIds) {
-			this.assertOwnershipAvailable(
-				this.#runIdByToolCallId,
-				toolCallId,
-				runId,
-				"tool call",
-			);
-		}
-		for (const approvalId of approvalIds) {
-			this.assertOwnershipAvailable(
-				this.#runIdByApprovalId,
-				approvalId,
-				runId,
-				"tool approval",
-			);
-		}
-		for (const toolCallId of toolCallIds) {
-			this.#runIdByToolCallId.set(toolCallId, runId);
-		}
-		for (const approvalId of approvalIds) {
-			this.#runIdByApprovalId.set(approvalId, runId);
-		}
+		this.#runs.indexMessageOwnership(runId, message);
 	}
 
 	private buildSnapshot(): ThreadStateSnapshot<TMessage> {
 		const tree = this.#tree.getSnapshot();
 		const indexes = this.#tree.getIndexes();
-		const runs = Array.from(this.#runsById.values()).map((run) =>
-			this.toRunSnapshot(run),
-		);
-		const activeRuns = runs.filter(
-			(run) => run.status === "submitted" || run.status === "streaming",
-		);
+		const runSnapshot = this.#runs.getSnapshot();
 		const selectedRun = this.getSelectedRunRecord();
 		return {
 			...tree,
 			...indexes,
-			activeRuns,
+			activeRuns: runSnapshot.activeRuns,
 			error: selectedRun?.error,
 			messages: this.#tree.getPath(),
-			runs,
+			runs: runSnapshot.runs,
 			status: selectedRun?.status ?? "ready",
-			treeStatus: this.resolveStatus(runs),
+			treeStatus: runSnapshot.status,
 		};
 	}
 
@@ -564,17 +465,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	private assertCanStartRun(parentMessageId: string) {
 		const parentMessage = this.#tree.getMessage(parentMessageId);
 		if (parentMessage) this.assertValidRunParent(parentMessage);
-
-		const activeRuns = this.getActiveRunRecords();
-		if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
-			throw new Error("Cannot start run: max active runs reached");
-		}
-		const activeFromMessage = activeRuns.filter(
-			(run) => run.spec.parentMessageId === parentMessageId,
-		).length;
-		if (activeFromMessage >= this.#concurrency.maxActiveRunsPerMessage) {
-			throw new Error(`Cannot start another run from ${parentMessageId}`);
-		}
+		this.#runs.assertCanStart(parentMessageId);
 	}
 
 	private assertValidRunParent(message: TMessage) {
@@ -585,52 +476,11 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		}
 	}
 
-	private getActiveRunRecords() {
-		return Array.from(this.#runsById.values()).filter(
-			(run) => run.status === "submitted" || run.status === "streaming",
-		);
-	}
-
 	private getSelectedRunRecord() {
-		if (this.#selectedRunId) {
-			const selectedRun = this.#runsById.get(this.#selectedRunId);
-			if (selectedRun) return selectedRun;
-		}
-		const pathIds = new Set(this.#tree.getPathIds());
-		const runs = Array.from(this.#runsById.values()).reverse();
-		const responseRun = runs.find(
-			(run) =>
-				run.spec.messageId !== undefined && pathIds.has(run.spec.messageId),
-		);
-		if (responseRun) return responseRun;
-
-		const cursorId = this.#tree.cursorId;
-		if (!cursorId) return undefined;
-		return (
-			runs.find(
-				(run) =>
-					run.spec.parentMessageId === cursorId &&
-					(run.status === "submitted" || run.status === "streaming"),
-			) ?? runs.find((run) => run.spec.parentMessageId === cursorId)
-		);
-	}
-
-	private getRunRecord(runId: string) {
-		const run = this.#runsById.get(runId);
-		if (!run) throw new Error(`Unknown run ${runId}`);
-		return run;
-	}
-
-	private getRunForToolCall(toolCallId: string) {
-		const runId = this.#runIdByToolCallId.get(toolCallId);
-		if (!runId) throw new Error(`No run owns tool call ${toolCallId}`);
-		return this.getRunRecord(runId);
-	}
-
-	private getRunForApproval(approvalId: string) {
-		const runId = this.#runIdByApprovalId.get(approvalId);
-		if (!runId) throw new Error(`No run owns tool approval ${approvalId}`);
-		return this.getRunRecord(runId);
+		return this.#runs.resolveSelected({
+			cursorId: this.#tree.cursorId,
+			pathIds: new Set(this.#tree.getPathIds()),
+		});
 	}
 
 	private createRunForSelectedAssistant() {
@@ -649,7 +499,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			siblingOrder: this.#tree
 				.getChildren(parentMessageId)
 				.findIndex((child) => child.id === messageId),
-			id: this.reserveRunId(),
+			id: this.#runs.reserveId(this.generateMessageId),
 		};
 		const record: RunRecord<TMessage> = {
 			chat: new ThreadRunChat(this, spec),
@@ -658,46 +508,17 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			spec,
 			status: "ready",
 		};
-		this.#runsById.set(spec.id, record);
-		this.#selectedRunId = spec.id;
+		this.#runs.add(record);
+		this.#runs.select(spec.id);
 		this.indexMessageOwnership(spec.id, message);
 		this.emit();
 		return record;
 	}
 
 	private assertCanResetTree() {
-		if (this.getActiveRunRecords().length > 0) {
+		if (this.#runs.getActive().length > 0) {
 			throw new Error("Cannot replace the tree while runs are active");
 		}
-	}
-
-	private clearRunState() {
-		this.#selectedRunId = null;
-		this.#runIdByApprovalId.clear();
-		this.#runIdByToolCallId.clear();
-		this.#runsById.clear();
-	}
-
-	private assertOwnershipAvailable(
-		owners: Map<string, string>,
-		id: string,
-		runId: string,
-		label: string,
-	) {
-		const existingRunId = owners.get(id);
-		if (existingRunId && existingRunId !== runId) {
-			throw new Error(
-				`${label} ${id} is already owned by run ${existingRunId}`,
-			);
-		}
-	}
-
-	private reserveRunId() {
-		const runId = this.generateMessageId();
-		if (this.#runsById.has(runId)) {
-			throw new Error(`Run ${runId} already exists`);
-		}
-		return runId;
 	}
 
 	private startRunFromParent({
@@ -713,22 +534,16 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		const spec: ThreadRunSpec & { parentMessageId: string } = {
 			id,
 			parentMessageId,
-			siblingOrder: this.reserveSiblingOrder(parentMessageId),
+			siblingOrder: this.#runs.reserveSiblingOrder(
+				parentMessageId,
+				this.#tree.getChildren(parentMessageId).length,
+			),
 		};
 		if (follow) {
-			this.#selectedRunId = id;
+			this.#runs.select(id);
 			this.#tree.setCursor(parentMessageId);
 		}
 		return this.startRunRequest(spec, options);
-	}
-
-	private reserveSiblingOrder(parentMessageId: string | null) {
-		const existingMessageOrder =
-			this.#tree.getChildren(parentMessageId).length - 1;
-		const runOrders = Array.from(this.#runsById.values())
-			.filter((run) => run.spec.parentMessageId === parentMessageId)
-			.map((run) => run.spec.siblingOrder);
-		return Math.max(existingMessageOrder, ...runOrders) + 1;
 	}
 
 	private startRunRequest(
@@ -747,7 +562,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 			spec,
 			status: "submitted",
 		};
-		this.#runsById.set(spec.id, record);
+		this.#runs.add(record);
 		this.emit();
 		const finished = chat
 			.start(options)
@@ -780,21 +595,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		run.finished = finished;
 		this.emit();
 		await finished;
-	}
-
-	private toRunSnapshot(run: RunRecord<TMessage>): ThreadRun {
-		return {
-			error: run.error,
-			id: run.spec.id,
-			status: run.status,
-		};
-	}
-
-	private resolveStatus(runs: ThreadRun[]) {
-		if (runs.some((run) => run.status === "streaming")) return "streaming";
-		if (runs.some((run) => run.status === "submitted")) return "submitted";
-		if (runs.some((run) => run.status === "error")) return "error";
-		return "ready";
 	}
 }
 
