@@ -3,7 +3,7 @@ title: "useThread"
 description: "Build branching AI conversations with a useChat-compatible interface"
 ---
 
-`useThread` is the React interface to the `ThreadChat` engine behind branching
+`useThread` is the React interface to the `Thread` controller behind branching
 conversations in ChatJS. It keeps the familiar AI SDK `useChat` interface for
 the selected conversation while storing every message and response branch in a
 complete tree.
@@ -81,24 +81,25 @@ Each assistant response is an independent run. Start the first response with a
 new user message, then start alternatives from that same user node:
 
 ```ts
+const userMessageId = crypto.randomUUID();
 const primary = await chat.tree.startRun({
-  message: { text: "Give me three options" },
+  message: {
+    id: userMessageId,
+    role: "user",
+    parts: [{ type: "text", text: "Give me three options" }],
+  },
   follow: true,
 });
 
-const userMessageId = primary.getSnapshot()?.userMessageId;
+const alternatives = await Promise.all([
+  chat.tree.startRun({ from: userMessageId, follow: false }),
+  chat.tree.startRun({ from: userMessageId, follow: false }),
+]);
 
-if (userMessageId) {
-  const alternatives = await Promise.all([
-    chat.tree.startRun({ from: userMessageId, follow: false }),
-    chat.tree.startRun({ from: userMessageId, follow: false }),
-  ]);
-
-  await Promise.all([
-    primary.finished,
-    ...alternatives.map((run) => run.finished),
-  ]);
-}
+await Promise.all([
+  primary.finished,
+  ...alternatives.map((run) => run.finished),
+]);
 ```
 
 `follow: false` leaves the cursor unchanged while the response streams into its
@@ -152,4 +153,4 @@ Snapshots contain messages, parent links, child ordering, roots, and the
 cursor. Active request objects are not persisted.
 
 The package README documents the complete interface, transport metadata, and
-`ThreadChat` exports.
+`Thread` exports.

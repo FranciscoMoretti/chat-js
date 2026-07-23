@@ -22,10 +22,11 @@ Using message-level cancellation (instead of chat-level) is more precise since e
 ## How it works
 
 1. Client calls `chat.stopStream` with the current `messageId`
-2. Server persists `canceledAt` on the message row
-3. The `onChunk` callback (throttled to 1/sec) polls `canceledAt` on each token
-4. When `canceledAt` is set, calls `abortController.abort()`
-5. The provider stops and no more tokens are generated
+2. If streaming has not published an assistant yet, the server resolves the new response from the user message ID
+3. Server atomically persists `canceledAt`, clears `activeStreamId`, and removes finalized parts
+4. The `onChunk` callback (throttled to 1/sec) polls `canceledAt` on each token
+5. When `canceledAt` is set, calls `abortController.abort()`
+6. Finalization skips canceled messages, closing the race where a fast response finishes between polling checks
 
 ## Basic use case
 
@@ -98,6 +99,8 @@ const stream = await createChatStream({
 ```
 
 The `onChunk` callback is passed through `createChatStream` into `createCoreChatAgent`, which forwards it to the AI SDK's `streamText` call. Each chunk emitted by the model triggers the throttled check.
+
+The final database write must also require `canceledAt IS NULL`. Chunk polling is intentionally throttled, so a fast response can finish between checks. Cancellation and finalization therefore form a database race: cancellation clears any already-finalized parts, while finalization refuses to overwrite a cancellation that committed first.
 
 ## Flow
 
