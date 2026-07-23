@@ -80,9 +80,10 @@ await chat.tree.startRun({ follow: false, from: userMessageId });
 ```
 
 `from` selects the node that receives the new user message. `follow` controls
-whether the cursor moves with the new user and assistant nodes; it defaults to
-`true` when the resolved origin equals the active cursor and `false` otherwise.
-This includes an explicit `from` whose value equals the current `cursorId`.
+whether the cursor selects the new user immediately and its assistant once
+streaming begins; it defaults to `true` when the resolved origin equals the
+active cursor and `false` otherwise. This includes an explicit `from` whose
+value equals the current `cursorId`.
 
 Top-level fields always describe the selected path:
 
@@ -168,14 +169,16 @@ role as AI SDK's `Chat.id`, remains stable as messages are added, and is sent to
 the transport as `chatId` on every request.
 
 Within that conversation, each `message.id` identifies one immutable tree node.
-An assistant message ID also identifies the run that produces that node. A
-branch does not have another stored ID: a message ID identifies its current
-head, and following parent links identifies the complete root-to-head path.
+Each run has a separate stable ID identifying its request lifecycle. A run is
+present while submitted even though no assistant message exists yet, then binds
+to the assistant ID produced by AI SDK's stream reducer. A message ID identifies
+a branch head, and following parent links identifies the complete root-to-head
+path.
 
 `cursorId` is the mutable selection of one such head. A followed send attaches
-the new user and assistant nodes beneath the selected head and advances the
-cursor to those nodes. Starting from an earlier node creates siblings without
-changing existing identities or ancestry.
+the new user beneath the selected head, then attaches and selects the assistant
+when AI SDK first publishes it. Starting from an earlier node creates siblings
+without changing existing identities or ancestry.
 
 Tree snapshots persist topology and cursor selection, but not `ThreadChat.id`.
 Callers that restore a conversation associate the snapshot with its stable
@@ -206,9 +209,10 @@ type RunRecord<TMessage extends UIMessage> = {
 };
 ```
 
-The assistant message ID is also the run ID. Requests, stream updates, stop
-operations, reconnection, and the resulting assistant node therefore share one
-stable identity.
+Run IDs and message IDs are deliberately separate. A run exists before its
+assistant message and keeps the same ID if the server supplies a canonical
+message ID. Stop and resume operations address the stable run ID; message-based
+helpers resolve the run currently associated with that node.
 
 `ThreadChat` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
 reconnection needs an AI SDK request lifecycle. Completed run records are
@@ -234,33 +238,23 @@ behavior for:
 - regeneration and reconnection
 
 The internal `ThreadChatState` presents one linear branch path to
-`AbstractChat`. It writes accumulated assistant snapshots back to the reserved
-assistant node in `ThreadChat`.
+`AbstractChat`. It writes accumulated assistant snapshots into `ThreadChat`
+when AI SDK publishes the streaming response.
 
 The supplied AI SDK `ChatTransport` remains the request and stream boundary.
 The package does not define another transport protocol or manually parse
 `UIMessageChunk` values. A delegating transport ensures new and reconnected
 runs use the latest transport configured on `ThreadChat`.
 
-Each request receives the selected linear path. Optional tree context is added
-to `ChatRequestOptions.body`:
+Each request receives the selected linear path. `ChatRequestOptions` are passed
+to the configured transport unchanged; tree controls never leak into the
+application request body.
 
-```ts
-{
-  assistantMessageId,
-  tree: {
-    assistantMessageId,
-    cursorId,
-    originCursorId,
-    parentMessageId,
-    pathIds,
-    userMessageId,
-  },
-}
-```
-
-The transport can ignore this context when its server only needs linear
-messages.
+As in AI SDK's `AbstractChat`, a submitted response remains private streaming
+state until the first stream write. A server-provided `messageId` in the AI SDK
+`start` chunk replaces the provisional ID before publication, so the tree only
+ever observes the canonical assistant node. Runs reserve an internal sibling
+position so concurrent streams remain ordered by creation rather than arrival.
 
 ## Send Lifecycle
 
@@ -269,12 +263,14 @@ A normal `sendMessage` follows this sequence:
 1. Resolve the origin from the active cursor or an explicit `tree.from` value.
 2. Check concurrency limits and reject without mutating the tree when exceeded.
 3. Create or update the user message under that origin.
-4. Reserve an assistant message ID and add an assistant shell to the tree.
+4. Create a stable run ID and reserve its sibling position without adding a
+   placeholder message.
 5. Create a `RunRecord` and its internal `ThreadRunChat`.
 6. Send the selected path through the configured `ChatTransport`.
-7. Commit each accumulated assistant snapshot to the reserved tree node.
-8. Publish status, error, and finish events for that run.
-9. Move the cursor with the run when `follow` is enabled.
+7. Let AI SDK apply a server response ID from the start chunk when provided.
+8. Insert the assistant node on AI SDK's first write and update it thereafter.
+9. Publish status, error, and finish events for that run.
+10. Move the cursor with the run when `follow` is enabled.
 
 `sendMessage` waits for the request and automatic follow-ups to finish, matching
 the AI SDK contract. `tree.startRun` returns a handle immediately for callers
@@ -376,7 +372,7 @@ useThread({
 
 `maxActiveRuns` limits the complete conversation. `maxActiveRunsPerMessage`
 limits assistant siblings generated from one user message. A rejected run does
-not leave optimistic user or assistant nodes behind.
+not leave an extra user message behind.
 
 ## Package Boundary
 
@@ -385,7 +381,7 @@ not leave optimistic user or assistant nodes behind.
 - the `useThread` React contract
 - tree topology and cursor projection
 - run creation, registration, and cancellation
-- stable assistant/run identity
+- stable run identity and server-owned assistant identity
 - routing tool and approval mutations to their owning runs
 - adaptation between the tree and AI SDK's linear `AbstractChat`
 
