@@ -1,456 +1,133 @@
 # @chatjs/thread
 
-Build branching AI chats without giving up the `useChat` API.
+Build branching AI SDK conversations without mounting one `useChat` hook per
+branch.
 
-`@chatjs/thread` turns a linear AI SDK conversation into a message tree. Users
-can edit an earlier message, compare multiple responses, move between branches,
-and keep streams running on branches that are not currently visible.
+`useThread` preserves the `useChat` interface for the selected path and adds a
+`tree` namespace for navigation, sibling responses, concurrent runs, and
+run-specific cancellation.
 
-```tsx
-const chat = useThread({ transport });
-
-chat.messages; // The selected conversation path, just like useChat
-chat.tree.setCursor(messageId); // Select any point in the tree
-await chat.sendMessage({ text: "Try another direction" }); // Branch from it
-```
-
-The package is headless. It owns message topology and request lifecycles, while
-your application owns the conversation UI, branch controls, and persistence.
-
-## Why useThread?
-
-- **A familiar migration path.** `useThread` is assignable to AI SDK's
-  `UseChatHelpers`. Existing chat rendering and composer code can keep using
-  `messages`, `sendMessage`, `regenerate`, `stop`, `status`, and `error`.
-- **Branch from any message.** Move a cursor to an earlier node and send as
-  usual. Existing descendants are preserved as another branch.
-- **Run branches concurrently.** Every response has an isolated AI SDK request
-  lifecycle. Switching branches does not abort streams on hidden branches.
-- **Keep AI SDK behavior.** `ThreadChat` uses the caller's `ChatTransport` and
-  AI SDK's request orchestration, including tools, approvals, data parts,
-  automatic follow-ups, cancellation, and reconnection.
-- **Bring your own UI and storage.** The public tree is plain messages, IDs, and
-  edges. No component library or database model is imposed.
-
-## Installation
-
-Install the package and its AI SDK peer dependencies:
+## Install
 
 ```bash
 bun add @chatjs/thread ai @ai-sdk/react
 ```
 
-Or copy the source into an application with the ChatJS shadcn registry:
-
-```bash
-bunx shadcn@latest add FranciscoMoretti/chat-js/thread#main
-```
-
-The optional registry demo includes an application-owned conversation and tree
-UI:
-
-```bash
-bunx shadcn@latest add FranciscoMoretti/chat-js/thread-demo#main
-```
-
-## Quick start
-
-Use the same transport you would pass to `useChat`:
+## Use
 
 ```tsx
-"use client";
-
-import { DefaultChatTransport } from "ai";
 import { useThread } from "@chatjs/thread/react";
-import { useState } from "react";
+import { DefaultChatTransport } from "ai";
 
-const transport = new DefaultChatTransport({ api: "/api/chat" });
-
-export function Chat() {
-  const [input, setInput] = useState("");
-  const chat = useThread({ transport });
+function Conversation() {
+  const chat = useThread({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+  });
 
   return (
-    <main>
+    <>
       {chat.messages.map((message) => (
-        <article key={message.id}>
-          <strong>{message.role}</strong>
-          {message.parts.map((part, index) =>
-            part.type === "text" ? <p key={index}>{part.text}</p> : null
-          )}
-        </article>
+        <div key={message.id}>{message.role}</div>
       ))}
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!input.trim()) return;
-          chat.sendMessage({ text: input });
-          setInput("");
-        }}
+      <button
+        type="button"
+        onClick={() => chat.sendMessage({ text: "Continue" })}
       >
-        <input
-          onChange={(event) => setInput(event.target.value)}
-          value={input}
-        />
-        <button disabled={chat.status !== "ready"} type="submit">
-          Send
-        </button>
-      </form>
-    </main>
+        Send
+      </button>
+    </>
   );
 }
 ```
 
-At the top level, the hook behaves like a normal linear chat. The difference is
-that `messages` is a projection of the tree from its root to `tree.cursorId`.
-
-## The mental model
-
-`ThreadChat` stores every message once and records its parent:
-
-```text
-user: Plan a launch
-└── assistant: Start with architecture
-    └── user: Make it technical
-        ├── assistant: Define service-level indicators  <- selected cursor
-        └── assistant: Use staged environments
-```
-
-There are three distinct concepts:
-
-1. **Tree:** all messages and parent-child relationships.
-2. **Cursor:** the last message in the path currently shown by `chat.messages`.
-3. **Run:** one assistant request, with its own status, error, and abort
-   controller.
-
-Moving the cursor only changes the visible path. It does not delete descendants
-or stop active runs.
-
-## Create a branch
-
-Select the message to continue from, then call `sendMessage` normally:
-
-```ts
-chat.tree.setCursor(messageId);
-await chat.sendMessage({ text: "Explore a different approach" });
-```
-
-The new user message becomes a child of `messageId`, followed by its assistant
-response. Because `sendMessage` follows the selected cursor by default, the new
-branch becomes the active conversation.
-
-This is also the edit-message pattern. Editing is an application-level action:
-select the edited message's parent and send the replacement as a new message.
-The original message and its descendants remain available.
-
-```ts
-chat.tree.setCursorToParentOf(originalUserMessageId);
-await chat.sendMessage({
-  id: crypto.randomUUID(),
-  role: "user",
-  parts: [{ type: "text", text: editedText }],
-});
-```
-
-To display sibling controls:
-
-```ts
-const siblings = chat.tree.getSiblings(messageId);
-const index = siblings.findIndex((message) => message.id === messageId);
-
-function showSibling(offset: number) {
-  const sibling = siblings[index + offset];
-  if (sibling) chat.tree.setCursor(sibling.id);
-}
-```
-
-## Request parallel responses
-
-`sendMessage` intentionally keeps the AI SDK completion contract: its promise
-resolves when the request and automatic tool follow-ups finish. Use
-`tree.startRun` when you need an immediate run handle or multiple responses.
-
-First add a user message and start its primary response:
-
-```ts
-const prompt = {
-  id: crypto.randomUUID(),
-  role: "user" as const,
-  parts: [{ type: "text" as const, text: "Give me three implementation plans" }],
-};
-const primary = await chat.tree.startRun({
-  message: prompt,
-  follow: true,
-});
-```
-
-Then start more assistant responses from the same user node:
-
-```ts
-const alternativeA = await chat.tree.startRun({
-  from: prompt.id,
-  follow: false,
-});
-
-const alternativeB = await chat.tree.startRun({
-  from: prompt.id,
-  follow: false,
-});
-
-await Promise.all([
-  primary.finished,
-  alternativeA.finished,
-  alternativeB.finished,
-]);
-```
-
-`follow: false` leaves the cursor where it is while the response streams into
-the tree. Each returned handle can be inspected or stopped independently:
-
-```ts
-primary.id; // stable run ID
-primary.getSnapshot();
-await primary.stop();
-```
-
-Set concurrency limits when creating the hook:
-
-```ts
-const chat = useThread({
-  transport,
-  concurrency: {
-    maxActiveRuns: 4,
-    maxActiveRunsPerMessage: 3,
-  },
-});
-```
-
-## Active path versus whole tree
-
-The top-level API always describes the selected path and selected run:
+Existing rendering and composer code can continue using:
 
 ```ts
 chat.messages;
 chat.status;
 chat.error;
-await chat.stop();
-chat.clearError();
-await chat.resumeStream();
+chat.sendMessage();
+chat.regenerate();
+chat.stop();
 ```
 
-Whole-tree state and controls live under `tree`:
+The selected path is a projection of the complete tree:
 
 ```ts
 chat.tree.cursorId;
-chat.tree.status;
-chat.tree.activeRuns;
-chat.tree.runs;
-
-chat.tree.messagesById;
-chat.tree.parentById;
-chat.tree.childrenByParentId;
-chat.tree.rootIds;
-
-chat.tree.getMessage(messageId);
-chat.tree.getParent(messageId);
 chat.tree.getChildren(messageId);
 chat.tree.getSiblings(messageId);
-chat.tree.getLeaves(messageId);
-chat.tree.getPath(messageId);
+chat.tree.setCursor(messageId);
 ```
 
-`chat.status` uses AI SDK's `submitted`, `streaming`, `ready`, and `error`
-states for the selected path. `chat.tree.status` aggregates every run. A run is
-included in `activeRuns` while it is `submitted` or `streaming`.
-
-Target a specific run without moving the cursor:
+Start independent responses without mounting another hook:
 
 ```ts
-const run = chat.tree.getRun(runId);
-const messageRun = chat.tree.getRunForMessage(assistantMessageId);
+const first = await chat.tree.startRun({ from: messageId });
+const second = await chat.tree.startRun({
+  follow: false,
+  from: messageId,
+});
 
-await chat.tree.stopRun(runId);
-await chat.tree.stopRunForMessage(assistantMessageId);
-await chat.tree.resumeRun(runId);
+await Promise.all([first.finished, second.finished]);
+```
+
+Each run has independent status, error, stream state, and cancellation:
+
+```ts
+await chat.tree.stopRun(second.id);
 await chat.tree.stopAll();
 ```
 
-## Migrating from useChat
+## External Ownership
 
-For a conventional chat component, the initial migration is usually an import
-change:
-
-```diff
-- import { useChat } from "@ai-sdk/react";
-+ import { useThread } from "@chatjs/thread/react";
-
-- const chat = useChat({ transport });
-+ const chat = useThread({ transport });
-```
-
-`UseThreadHelpers<TMessage>` extends `UseChatHelpers<TMessage>`. These standard
-helpers retain their normal signatures:
-
-- `messages`, `sendMessage`, and `setMessages`
-- `status`, `error`, `stop`, and `clearError`
-- `regenerate` and `resumeStream`
-- `addToolOutput`, `addToolResult`, and `addToolApprovalResponse`
-
-There are two tree-specific behavioral details:
-
-- Top-level state refers to the selected path, not every active branch.
-- `setMessages` reconciles the selected path. Truncating it moves the cursor
-  backward without deleting hidden descendants; changing its suffix creates a
-  branch. A message ID cannot be reused under a different parent.
-
-## Tools and approvals
-
-Tool outputs and approval responses use the standard `useChat` signatures.
-`ThreadChat` records which run emitted each tool call or approval ID and routes
-the response back to that run, even when another branch is selected.
-
-Tool call and approval IDs must be unique across active runs.
-
-## Persistence
-
-Save the complete tree rather than only `chat.messages`:
+By default, `useThread` creates and retains a `Thread` for the hook lifetime.
+Create the controller yourself when it must outlive a particular component:
 
 ```ts
-const snapshot = chat.tree.getSnapshot();
-await saveThread(snapshot);
-```
+import { createThread } from "@chatjs/thread";
 
-Restore it when creating the hook:
+const thread = createThread({ transport });
 
-```ts
-const chat = useThread({
-  initialTree: savedSnapshot,
-  transport,
-});
-```
-
-Snapshots contain serializable message and topology state:
-
-```ts
-type MessageTreeSnapshot<TMessage> = {
-  version: 1;
-  cursorId: string | null;
-  messagesById: Record<string, TMessage>;
-  parentById: Record<string, string | null>;
-  childrenByParentId: Record<string, string[]>;
-  rootIds: string[];
-};
-```
-
-Runs are request-lifecycle state and are not persisted in the tree snapshot.
-Resumable assistant messages can be restored and resumed through
-`resumeStream` or `tree.resumeRun`.
-
-## Transport and server integration
-
-`useThread` accepts AI SDK `ChatTransport` implementations directly. It does
-not define another transport protocol or parse stream chunks itself.
-
-The active branch is sent as the transport's linear message history.
-`ChatRequestOptions` are forwarded unchanged, so application body and metadata
-fields remain entirely application-owned.
-
-Like AI SDK's `useChat`, `useThread` keeps a submitted response outside the
-public message collection. The assistant node is inserted on the first stream
-write, using the server's `start.messageId` when provided and the AI SDK
-client-generated ID otherwise. Applications can render queued work from
-`tree.activeRuns` without creating placeholder `UIMessage` values.
-
-## Externally owned ThreadChat
-
-Create `ThreadChat` outside React when it must outlive a component or be shared
-with application infrastructure:
-
-```tsx
-import { createThreadChat } from "@chatjs/thread";
-import { useThread } from "@chatjs/thread/react";
-
-const threadChat = createThreadChat({ transport });
-
-function Chat() {
-  const chat = useThread({ chat: threadChat });
+function Conversation() {
+  const chat = useThread({ thread });
   // ...
 }
 ```
 
-This is the instance-level equivalent of supplying an externally owned chat to
-`useChat`.
-
-## How it works
-
-`ThreadChat` uses a canonical tree plus one isolated AI SDK chat engine per
-active request:
-
-```text
-useThread
-  └── ThreadChat
-      ├── message tree (nodes, edges, cursor)
-      ├── run registry
-      │   ├── run A -> AI SDK AbstractChat -> ChatTransport
-      │   ├── run B -> AI SDK AbstractChat -> ChatTransport
-      │   └── run C -> AI SDK AbstractChat -> ChatTransport
-      └── React subscription snapshot
-```
-
-`ThreadChat` owns tree topology, cursor selection, run identity, and
-concurrency policy. Each run owns one AI SDK request lifecycle and abort
-controller. All runs use the caller-provided transport.
-
-This design matters because one linear `useChat` instance has one active
-message array and request lifecycle. Replacing that array during branch
-navigation can abort, reconnect, or misroute an in-flight response. Isolated
-runs continue writing to their own assistant nodes regardless of which path is
-visible.
-
-The implementation deliberately reuses AI SDK's `AbstractChat` orchestration
-instead of maintaining a custom stream reducer. That preserves standard stream
-parts, tools, approvals, callbacks, automatic sends, cancellation, and resume
-behavior while the package adds tree ownership around it.
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the ownership model, evaluated
-alternatives, and the differential coverage behind this decision.
-
-## Exports
-
-React APIs are exported from `@chatjs/thread/react`:
+`Thread` extends the framework-independent `AbstractThread`. It accepts an
+optional `ThreadState` implementation for integration with an application
+state container:
 
 ```ts
-useThread;
-type UseThreadOptions;
-type UseThreadHelpers;
-type TreeHelpers;
+import { MemoryThreadState, Thread } from "@chatjs/thread";
+
+const state = new MemoryThreadState({ messages: initialMessages });
+const thread = new Thread({ state, transport });
 ```
 
-Chat engine APIs and types are exported from `@chatjs/thread`:
+`ThreadState.update` invokes its updater exactly once, synchronously and
+atomically. The controller must remain the only writer so concurrent streams
+cannot overwrite each other.
+
+## Persistence
+
+Persist the serializable message tree, not the live controller:
 
 ```ts
-createThreadChat;
-ThreadChat;
-getMessageText;
+const snapshot = chat.tree.getSnapshot();
 
-type MessageTreeSnapshot;
-type ThreadConcurrency;
-type ThreadRun;
-type ThreadRunHandle;
-type ThreadChatOptions;
-type ThreadStartRunOptions;
-type TreeSendOptions;
-type ThreadStateSnapshot;
+const restored = useThread({
+  id: conversationId,
+  initialTree: snapshot,
+  transport,
+});
 ```
 
-## Scope
+The snapshot contains ordered nodes, parent IDs, and the selected cursor.
+Active requests, abort controllers, errors, and run adapters are runtime state
+and are not serialized.
 
-The package does not include chat components, branch controls, tree diagrams,
-storage adapters, or server routes. Those remain application concerns because
-their design and persistence requirements vary substantially. The package
-provides the headless state and controls needed to build them.
-
-## License
-
-Apache-2.0
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for lifecycle, identity, status, and
+AI SDK compatibility decisions.
