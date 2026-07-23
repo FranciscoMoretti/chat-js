@@ -27,18 +27,14 @@ describe("MessageTree", () => {
 		expect(tree.getMessage("a3")?.id).toBe("a3");
 	});
 
-	test("reconciles a selected path without deleting hidden descendants", () => {
+	test("merges a selected path without deleting hidden descendants", () => {
 		const tree = new MessageTree({
 			messages: [message("u1"), message("a1", "assistant")],
 		});
 		tree.upsertMessage(message("u2"), "a1");
 		tree.upsertMessage(message("a2", "assistant"), "u2");
 
-		tree.reconcilePath([
-			message("u1"),
-			message("a1", "assistant"),
-			message("u3"),
-		]);
+		tree.mergePath([message("u1"), message("a1", "assistant"), message("u3")]);
 
 		expect(tree.getPath().map(({ id }) => id)).toEqual(["u1", "a1", "u3"]);
 		expect(tree.getMessage("a2")?.id).toBe("a2");
@@ -50,7 +46,7 @@ describe("MessageTree", () => {
 		});
 		tree.upsertMessage(message("u2"), "a1");
 
-		expect(() => tree.reconcilePath([message("u1"), message("u2")])).toThrow(
+		expect(() => tree.mergePath([message("u1"), message("u2")])).toThrow(
 			"Cannot move message u2",
 		);
 		expect(tree.getParentId("u2")).toBe("a1");

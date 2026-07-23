@@ -5,12 +5,6 @@ function clone<T>(value: T): T {
 	return structuredClone(value);
 }
 
-export function getMessageText(message: UIMessage) {
-	return message.parts
-		.map((part) => (part.type === "text" ? part.text : ""))
-		.join("");
-}
-
 export class MessageTree<TMessage extends UIMessage = UIMessage> {
 	readonly #childrenByParentId = new Map<string | null, string[]>();
 	readonly #messagesById = new Map<string, TMessage>();
@@ -26,7 +20,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		if (options.snapshot) {
 			this.restore(options.snapshot);
 		} else if (options.messages) {
-			this.replacePath(options.messages);
+			this.mergePath(options.messages);
 		}
 	}
 
@@ -223,18 +217,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		}
 	}
 
-	replacePath(messages: TMessage[]) {
-		this.validatePath(messages);
-		this.clear();
-		let parentId: string | null = null;
-		for (const message of messages) {
-			this.upsertMessage(message, parentId);
-			parentId = message.id;
-		}
-		this.#cursorId = messages.at(-1)?.id ?? null;
-	}
-
-	reconcilePath(messages: TMessage[], options: { moveCursor?: boolean } = {}) {
+	mergePath(messages: TMessage[], options: { moveCursor?: boolean } = {}) {
 		this.validatePath(messages, true);
 		let parentId: string | null = null;
 		for (const message of messages) {

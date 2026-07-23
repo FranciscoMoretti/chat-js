@@ -1,4 +1,4 @@
-export { getMessageText } from "./message-tree";
+export { getMessageText } from "./message-utils";
 
 export type {
 	MessageTreeNode,
