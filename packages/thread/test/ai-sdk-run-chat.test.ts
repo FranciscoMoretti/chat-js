@@ -76,7 +76,7 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 	getRunPath = () =>
 		this.tree.getPath(this.spec.messageId ?? this.spec.parentMessageId);
 	mergeRunPath = (messages: UIMessage[]) => {
-		this.tree.reconcilePath(messages, { moveCursor: false });
+		this.tree.mergePath(messages, { moveCursor: false });
 	};
 	registerToolCall() {}
 	removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
