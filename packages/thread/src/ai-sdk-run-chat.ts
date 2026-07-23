@@ -35,29 +35,16 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
 	writeRunMessage: (runId: string, message: TMessage) => void;
 }
 
-function createPendingMessage<TMessage extends UIMessage>(id: string) {
-	// AbstractChat crosses the same generic boundary when it creates a response:
-	// TMessage may narrow metadata or parts beyond the base UIMessage shape.
-	const message: UIMessage = { id, parts: [], role: "assistant" };
-	return message as TMessage;
-}
-
 class ThreadChatState<TMessage extends UIMessage>
 	implements ChatState<TMessage>
 {
 	#error: Error | undefined;
 	readonly #host: ThreadRunHost<TMessage>;
-	readonly #pendingMessage: TMessage;
 	readonly #spec: ThreadRunSpec;
 	#status: ChatStatus = "ready";
 
-	constructor(
-		host: ThreadRunHost<TMessage>,
-		spec: ThreadRunSpec,
-		pendingMessage: TMessage,
-	) {
+	constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
 		this.#host = host;
-		this.#pendingMessage = pendingMessage;
 		this.#spec = spec;
 	}
 
@@ -71,19 +58,11 @@ class ThreadChatState<TMessage extends UIMessage>
 	}
 
 	get messages() {
-		const path = this.#host.getRunPath(this.#spec.id);
-		return this.#spec.messageId === undefined
-			? [...path, this.#pendingMessage]
-			: path;
+		return this.#host.getRunPath(this.#spec.id);
 	}
 
 	set messages(messages: TMessage[]) {
-		const pendingIndex = messages.findIndex(
-			(message) => message.id === this.#pendingMessage.id,
-		);
-		this.#host.mergeRunPath(
-			pendingIndex === -1 ? messages : messages.slice(0, pendingIndex),
-		);
+		this.#host.mergeRunPath(messages);
 	}
 
 	get status() {
@@ -97,9 +76,7 @@ class ThreadChatState<TMessage extends UIMessage>
 
 	popMessage = () => {
 		const lastMessage = this.messages.at(-1);
-		if (lastMessage && lastMessage.id !== this.#pendingMessage.id) {
-			this.#host.removeMessage(lastMessage.id);
-		}
+		if (lastMessage) this.#host.removeMessage(lastMessage.id);
 	};
 
 	pushMessage = (message: TMessage) => {
@@ -124,26 +101,20 @@ export class ThreadRunChat<
 	TMessage extends UIMessage,
 > extends AbstractChat<TMessage> {
 	constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
-		const pendingMessageId = host.generateMessageId();
-		const pendingMessage = createPendingMessage<TMessage>(pendingMessageId);
+		const responseMessageId = host.generateMessageId();
 		const transport: ChatTransport<TMessage> = {
 			reconnectToStream: (options) => host.transport.reconnectToStream(options),
 			sendMessages: (options) => {
-				const hasPendingMessage =
-					spec.messageId === undefined &&
-					options.messages.at(-1)?.id === pendingMessageId;
 				return host.transport.sendMessages({
 					...options,
-					messageId: hasPendingMessage ? undefined : options.messageId,
-					messages: hasPendingMessage
-						? options.messages.slice(0, -1)
-						: options.messages,
+					messageId:
+						spec.messageId === undefined ? undefined : options.messageId,
 				});
 			},
 		};
 		super({
 			dataPartSchemas: host.dataPartSchemas,
-			generateId: () => pendingMessageId,
+			generateId: () => responseMessageId,
 			id: host.id,
 			messageMetadataSchema: host.messageMetadataSchema,
 			onData: (event) => host.onData?.(event),
@@ -162,7 +133,7 @@ export class ThreadRunChat<
 			},
 			sendAutomaticallyWhen: (event) =>
 				host.sendAutomaticallyWhen?.(event) ?? false,
-			state: new ThreadChatState(host, spec, pendingMessage),
+			state: new ThreadChatState(host, spec),
 			transport,
 		});
 	}
