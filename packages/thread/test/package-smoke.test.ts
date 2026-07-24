@@ -69,9 +69,16 @@ test("the packed package loads its core and React entry points", async () => {
 			join(installedPackage, "dist/react.js"),
 			"utf8",
 		);
+		const packageMetadata = await Bun.file(
+			join(installedPackage, "package.json"),
+		).json();
 		const indexChunk = indexSource.match(/from "(\.\/chunk-[^"]+\.js)"/)?.[1];
 		const reactChunk = reactSource.match(/from "(\.\/chunk-[^"]+\.js)"/)?.[1];
 
+		expect(packageMetadata.peerDependenciesMeta).toEqual({
+			"@ai-sdk/react": { optional: true },
+			react: { optional: true },
+		});
 		expect(reactSource.startsWith('"use client";')).toBeTrue();
 		expect(indexChunk).toBeDefined();
 		expect(reactChunk).toBe(indexChunk);
@@ -90,10 +97,14 @@ if (typeof chat.id !== "string" || typeof useThread !== "function") {
   throw new Error("Package exports did not load");
 }
 `;
-		const consumerPath = join(temporaryDirectory, "consumer.ts");
-		await writeFile(consumerPath, consumerSource);
+		const runtimeConsumerPath = join(temporaryDirectory, "consumer.mjs");
+		const typeConsumerPath = join(temporaryDirectory, "consumer.ts");
+		await Promise.all([
+			writeFile(runtimeConsumerPath, consumerSource),
+			writeFile(typeConsumerPath, consumerSource),
+		]);
 
-		run(["bun", consumerPath], temporaryDirectory);
+		run(["node", runtimeConsumerPath], temporaryDirectory);
 		run(
 			[
 				join(packageDirectory, "node_modules/.bin/tsc"),
@@ -107,7 +118,7 @@ if (typeof chat.id !== "string" || typeof useThread !== "function") {
 				"ESNext",
 				"--moduleResolution",
 				"Bundler",
-				consumerPath,
+				typeConsumerPath,
 			],
 			temporaryDirectory,
 		);
