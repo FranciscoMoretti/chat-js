@@ -282,13 +282,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		this.emit();
 	}
 
-	mergePath(messages: TMessage[], options: { silent?: boolean } = {}) {
-		this.#tree.mergePath(messages);
-		if (!options.silent) this.emit();
-	}
-
-	mergeRunPath(messages: TMessage[]) {
-		this.#tree.mergePath(messages, { moveCursor: false });
+	updateRunPath(messages: TMessage[]) {
+		this.#tree.updatePath(messages);
 	}
 
 	resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
@@ -320,7 +315,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 				? messages(this.#snapshot.messages)
 				: messages;
 		this.#runs.select(null);
-		this.mergePath(nextMessages);
+		this.#tree.setPath(nextMessages);
+		this.emit();
 	}
 
 	sendMessage = async (
