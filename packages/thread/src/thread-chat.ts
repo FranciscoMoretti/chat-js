@@ -115,17 +115,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	getSnapshot = () => this.#snapshot;
 
-	updateOptions(options: ThreadChatOptions<TMessage>) {
-		if ("onData" in options) this.onData = options.onData;
-		if ("onError" in options) this.onError = options.onError;
-		if ("onFinish" in options) this.onFinish = options.onFinish;
-		if ("onToolCall" in options) this.onToolCall = options.onToolCall;
-		if ("sendAutomaticallyWhen" in options) {
-			this.sendAutomaticallyWhen = options.sendAutomaticallyWhen;
-		}
-		if (options.transport) this.transport = options.transport;
-	}
-
 	subscribe = (listener: () => void) => {
 		this.#listeners.add(listener);
 		return () => this.#listeners.delete(listener);
