@@ -20,7 +20,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		if (options.snapshot) {
 			this.restore(options.snapshot);
 		} else if (options.messages) {
-			this.mergePath(options.messages);
+			this.setPath(options.messages);
 		}
 	}
 
@@ -217,15 +217,17 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		}
 	}
 
-	mergePath(messages: TMessage[], options: { moveCursor?: boolean } = {}) {
+	setPath(messages: TMessage[]) {
+		this.updatePath(messages);
+		this.#cursorId = messages.at(-1)?.id ?? null;
+	}
+
+	updatePath(messages: TMessage[]) {
 		this.validatePath(messages, true);
 		let parentId: string | null = null;
 		for (const message of messages) {
 			this.upsertMessage(message, parentId);
 			parentId = message.id;
-		}
-		if (options.moveCursor ?? true) {
-			this.#cursorId = messages.at(-1)?.id ?? null;
 		}
 	}
 

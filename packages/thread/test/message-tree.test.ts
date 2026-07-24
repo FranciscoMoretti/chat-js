@@ -27,17 +27,48 @@ describe("MessageTree", () => {
 		expect(tree.getMessage("a3")?.id).toBe("a3");
 	});
 
-	test("merges a selected path without deleting hidden descendants", () => {
+	test("sets the selected path without deleting hidden descendants", () => {
 		const tree = new MessageTree({
 			messages: [message("u1"), message("a1", "assistant")],
 		});
 		tree.upsertMessage(message("u2"), "a1");
 		tree.upsertMessage(message("a2", "assistant"), "u2");
 
-		tree.mergePath([message("u1"), message("a1", "assistant"), message("u3")]);
+		tree.setPath([message("u1"), message("a1", "assistant"), message("u3")]);
 
 		expect(tree.getPath().map(({ id }) => id)).toEqual(["u1", "a1", "u3"]);
 		expect(tree.getMessage("a2")?.id).toBe("a2");
+	});
+
+	test("clears the selected path without deleting tree nodes", () => {
+		const tree = new MessageTree({
+			messages: [message("u1"), message("a1", "assistant")],
+		});
+
+		tree.setPath([]);
+
+		expect(tree.cursorId).toBeNull();
+		expect(tree.getPath()).toEqual([]);
+		expect(tree.getMessage("a1")?.id).toBe("a1");
+	});
+
+	test("updates a path without changing the selected path", () => {
+		const tree = new MessageTree({
+			messages: [message("u1"), message("a1", "assistant")],
+		});
+		tree.upsertMessage(message("u2"), "a1");
+		tree.setCursor("u2");
+
+		tree.updatePath([
+			message("u1"),
+			message("a1", "assistant"),
+			message("u3"),
+			message("a3", "assistant"),
+		]);
+
+		expect(tree.cursorId).toBe("u2");
+		expect(tree.getPath().map(({ id }) => id)).toEqual(["u1", "a1", "u2"]);
+		expect(tree.getMessage("a3")?.id).toBe("a3");
 	});
 
 	test("validates a path before changing existing nodes", () => {
@@ -46,7 +77,7 @@ describe("MessageTree", () => {
 		});
 		tree.upsertMessage(message("u2"), "a1");
 
-		expect(() => tree.mergePath([message("u1"), message("u2")])).toThrow(
+		expect(() => tree.setPath([message("u1"), message("u2")])).toThrow(
 			"Cannot move message u2",
 		);
 		expect(tree.getParentId("u2")).toBe("a1");
