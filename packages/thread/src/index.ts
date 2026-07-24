@@ -1,3 +1,5 @@
+export { getMessageText } from "./message-utils";
+
 export type {
 	MessageTreeNode,
 	MessageTreeSnapshot,
