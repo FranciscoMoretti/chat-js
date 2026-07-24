@@ -62,23 +62,17 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 
 	getLeaves(messageId: string | null = null) {
 		const leaves: TMessage[] = [];
-		const visit = (id: string) => {
+
+		for (const id of this.walkDescendantIds(messageId)) {
 			const children = this.#childrenByParentId.get(id) ?? [];
 			if (children.length === 0) {
 				const message = this.#messagesById.get(id);
 				if (message) {
 					leaves.push(clone(message));
 				}
-				return;
 			}
-			for (const childId of children) {
-				visit(childId);
-			}
-		};
-
-		for (const childId of this.#childrenByParentId.get(messageId) ?? []) {
-			visit(childId);
 		}
+
 		return leaves;
 	}
 
@@ -107,16 +101,15 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 
 	getSnapshot(): MessageTreeSnapshot<TMessage> {
 		const nodes: MessageTreeSnapshot<TMessage>["nodes"] = [];
-		const visit = (messageId: string, parentId: string | null) => {
+
+		for (const messageId of this.walkDescendantIds(null)) {
 			const message = this.#messagesById.get(messageId);
-			if (!message) return;
-			nodes.push({ message: clone(message), parentId });
-			for (const childId of this.#childrenByParentId.get(messageId) ?? []) {
-				visit(childId, messageId);
+			if (message) {
+				nodes.push({
+					message: clone(message),
+					parentId: this.#parentById.get(messageId) ?? null,
+				});
 			}
-		};
-		for (const rootId of this.#childrenByParentId.get(null) ?? []) {
-			visit(rootId, null);
 		}
 
 		return {
@@ -259,6 +252,13 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 		this.#messagesById.clear();
 		this.#parentById.clear();
 		this.#cursorId = null;
+	}
+
+	private *walkDescendantIds(parentId: string | null): Generator<string> {
+		for (const childId of this.#childrenByParentId.get(parentId) ?? []) {
+			yield childId;
+			yield* this.walkDescendantIds(childId);
+		}
 	}
 
 	private validatePath(messages: TMessage[], validateExistingParents = false) {
