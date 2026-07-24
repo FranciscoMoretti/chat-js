@@ -196,7 +196,7 @@ receiving stream updates even when their snapshots are not currently rendered.
 
 ## Run Model
 
-Every assistant response has one `RunRecord`:
+Every assistant response lifecycle has one `RunRecord`:
 
 ```ts
 type RunRecord<TMessage extends UIMessage> = {
@@ -209,10 +209,12 @@ type RunRecord<TMessage extends UIMessage> = {
 };
 ```
 
-Run IDs and message IDs are deliberately separate. A run exists before its
-assistant message and keeps the same ID if the server supplies a canonical
-message ID. Stop and resume operations address the stable run ID; message-based
-helpers resolve the run currently associated with that node.
+Run IDs and response message IDs are deliberately separate. Multiple runs can
+be submitted before any response message exists, so each run needs a stable
+identity immediately for status, cancellation, and ownership. Its response
+message ID remains unknown until AI SDK first publishes the response and may
+then come from the server. Message-based helpers resolve the run associated with
+that node after this binding occurs.
 
 `ThreadChat` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
 reconnection needs an AI SDK request lifecycle. Completed run records are
@@ -222,6 +224,18 @@ addressable.
 Starting multiple runs from the same user message creates assistant siblings.
 Starting runs from separate leaves updates those branches concurrently. Each
 run has independent status, error, request serialization, and cancellation.
+Automatic tool continuations remain in the same run and update the same
+assistant response node.
+
+A new live run requires a non-assistant response parent. AI SDK interprets an
+assistant message at the end of a request as the response to continue, not as
+the parent of another response. Therefore, a bare `startRun` from an assistant
+message is rejected. Branching from an assistant remains supported by attaching
+a new input message with `sendMessage` and generating from that input.
+
+This is a `ThreadChat` live-run invariant, not a `MessageTree` invariant. The
+tree remains role-agnostic so persisted, restored, or server-created data may
+contain assistant-to-assistant edges.
 
 ## AI SDK Integration
 
@@ -240,6 +254,13 @@ behavior for:
 The internal `ThreadChatState` presents one linear branch path to
 `AbstractChat`. It writes accumulated assistant snapshots into `ThreadChat`
 when AI SDK publishes the streaming response.
+
+`ThreadRunChat` does not insert a synthetic response into that path. AI SDK
+creates the provisional assistant response using its normal last-message rules
+and a generated response ID reserved by the run. The first unbound request
+clears its transport `messageId`, matching `useChat.sendMessage(input)`; after
+the response is bound, automatic follow-up requests carry that assistant ID and
+continue the same node.
 
 The supplied AI SDK `ChatTransport` remains the request and stream boundary.
 The package does not define another transport protocol or manually parse
@@ -261,7 +282,8 @@ position so concurrent streams remain ordered by creation rather than arrival.
 A normal `sendMessage` follows this sequence:
 
 1. Resolve the origin from the active cursor or an explicit `tree.from` value.
-2. Check concurrency limits and reject without mutating the tree when exceeded.
+2. Validate that the response parent is not an assistant and check concurrency
+   limits, rejecting without mutating the tree when either condition fails.
 3. Create or update the user message under that origin.
 4. Create a stable run ID and reserve its sibling position without adding a
    placeholder message.
@@ -275,6 +297,13 @@ A normal `sendMessage` follows this sequence:
 `sendMessage` waits for the request and automatic follow-ups to finish, matching
 the AI SDK contract. `tree.startRun` returns a handle immediately for callers
 that need to start, inspect, or stop multiple responses independently.
+The handle's `finished` property always reads the run's current request promise,
+including a later request started by `resumeRun`.
+
+As in AI SDK, expected transport and stream failures resolve after publishing
+`error` status. Unexpected application or state-layer exceptions that escape
+`AbstractChat` reject `sendMessage`, `resumeRun`, and the corresponding
+`finished` promise.
 
 ## Status and Cancellation
 
@@ -289,16 +318,18 @@ Runs use the AI SDK `ChatStatus` values:
 with `chat.messages` and `chat.error`, it always describes the active path and
 never aggregates hidden branches.
 
-`chat.tree.status` aggregates all runs with active work taking precedence:
+`chat.tree.status` aggregates current activity across all runs:
 
 1. `streaming` when any run is streaming
 2. `submitted` when no run is streaming and any run is submitted
-3. `error` when no run is active and any run has failed
-4. `ready` otherwise
+3. `ready` otherwise
 
 A run is included in `tree.activeRuns` while it is `submitted` or `streaming`.
-Consumers that need to distinguish simultaneous states inspect `tree.runs`;
-the aggregate is intentionally only a whole-tree activity projection.
+Historical failures remain available on their entries in `tree.runs`, but do not
+affect the aggregate after activity finishes. Consumers that need to distinguish
+simultaneous or historical states inspect `tree.runs`; the aggregate is
+intentionally only a whole-tree activity projection and has no aggregate error
+object.
 
 Cancellation is scoped by run:
 
