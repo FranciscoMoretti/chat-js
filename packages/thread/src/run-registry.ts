@@ -32,7 +32,7 @@ export class RunRegistry<TMessage extends UIMessage> {
 		this.#runsById.set(record.spec.id, record);
 	}
 
-	assertCanStart(parentMessageId: string) {
+	assertCanStart(parentMessageId: string | null) {
 		const activeRuns = this.getActive();
 		if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
 			throw new Error("Cannot start run: max active runs reached");

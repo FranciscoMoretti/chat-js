@@ -234,11 +234,14 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		...options
 	} = {}) => {
 		const target =
-			(messageId ? this.#tree.getMessage(messageId) : undefined) ??
-			(this.#tree.cursorId
-				? this.#tree.getMessage(this.#tree.cursorId)
-				: undefined);
-		if (!target) return;
+			messageId == null
+				? this.#tree.cursorId
+					? this.#tree.getMessage(this.#tree.cursorId)
+					: undefined
+				: this.#tree.getMessage(messageId);
+		if (!target) {
+			throw new Error(`message ${messageId} not found`);
+		}
 
 		const parentMessageId =
 			target.role === "assistant"
@@ -442,8 +445,11 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		for (const listener of this.#listeners) listener();
 	}
 
-	private assertCanStartRun(parentMessageId: string) {
-		const parentMessage = this.#tree.getMessage(parentMessageId);
+	private assertCanStartRun(parentMessageId: string | null) {
+		const parentMessage =
+			parentMessageId == null
+				? undefined
+				: this.#tree.getMessage(parentMessageId);
 		if (parentMessage) this.assertValidRunParent(parentMessage);
 		this.#runs.assertCanStart(parentMessageId);
 	}
@@ -564,6 +570,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		run: RunRecord<TMessage>,
 		options: ChatRequestOptions,
 	) {
+		this.assertCanStartRun(run.spec.parentMessageId);
 		const finished = run.chat.resumeStream(options).finally(() => this.emit());
 		run.finished = finished;
 		this.emit();
