@@ -1,4 +1,4 @@
-import type { ChatStatus, UIMessage } from "ai";
+import { type ChatStatus, isToolUIPart, type UIMessage } from "ai";
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
 import type { ThreadConcurrency, ThreadRun } from "./types";
 
@@ -162,18 +162,9 @@ export class RunRegistry<TMessage extends UIMessage> {
 		const toolCallIds: string[] = [];
 		const approvalIds: string[] = [];
 		for (const part of message.parts) {
-			if ("toolCallId" in part && typeof part.toolCallId === "string") {
-				toolCallIds.push(part.toolCallId);
-			}
-			if (
-				"approval" in part &&
-				part.approval &&
-				typeof part.approval === "object" &&
-				"id" in part.approval &&
-				typeof part.approval.id === "string"
-			) {
-				approvalIds.push(part.approval.id);
-			}
+			if (!isToolUIPart(part)) continue;
+			toolCallIds.push(part.toolCallId);
+			if (part.approval) approvalIds.push(part.approval.id);
 		}
 
 		for (const toolCallId of toolCallIds) {

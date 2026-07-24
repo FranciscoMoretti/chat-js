@@ -31,10 +31,7 @@ type SendMessageInput<TMessage extends UIMessage> = Parameters<
 function getInputMessageId<TMessage extends UIMessage>(
 	input: NonNullable<SendMessageInput<TMessage>>,
 ) {
-	if ("id" in input && typeof input.id === "string") {
-		return input.id;
-	}
-	return input.messageId;
+	return "id" in input ? (input.id ?? input.messageId) : input.messageId;
 }
 
 function specializeMessage<TMessage extends UIMessage>(message: UIMessage) {
@@ -51,28 +48,20 @@ async function createMessageFromInput<TMessage extends UIMessage>({
 	input: NonNullable<SendMessageInput<TMessage>>;
 }): Promise<TMessage> {
 	const messageId = getInputMessageId(input) ?? fallbackId;
-	const metadata = "metadata" in input ? input.metadata : undefined;
-	if ("text" in input && typeof input.text === "string") {
-		const fileParts =
-			"files" in input && input.files
-				? Array.isArray(input.files)
-					? input.files
-					: await convertFileListToFileUIParts(input.files)
-				: [];
+	const metadata = input.metadata;
+	if ("text" in input || "files" in input) {
+		const fileParts = Array.isArray(input.files)
+			? input.files
+			: await convertFileListToFileUIParts(input.files);
 		return specializeMessage<TMessage>({
 			id: messageId,
 			metadata,
-			parts: [...fileParts, { text: input.text, type: "text" }],
-			role: "user",
-		});
-	}
-	if ("files" in input && input.files) {
-		return specializeMessage<TMessage>({
-			id: messageId,
-			metadata,
-			parts: Array.isArray(input.files)
-				? input.files
-				: await convertFileListToFileUIParts(input.files),
+			parts: [
+				...fileParts,
+				...("text" in input && input.text != null
+					? [{ text: input.text, type: "text" as const }]
+					: []),
+			],
 			role: "user",
 		});
 	}
@@ -80,7 +69,6 @@ async function createMessageFromInput<TMessage extends UIMessage>({
 		...input,
 		id: messageId,
 		metadata,
-		parts: "parts" in input ? input.parts : [],
 		role: input.role ?? "user",
 	});
 }
