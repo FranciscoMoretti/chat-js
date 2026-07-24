@@ -8,6 +8,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 		abortSignal: AbortSignal | undefined;
 		controller: ReadableStreamDefaultController<UIMessageChunk>;
 	}> = [];
+	#reconnectStream: ReadableStream<UIMessageChunk> | null = null;
 
 	sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
 		return Promise.resolve(
@@ -33,7 +34,20 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 	reconnectToStream(
 		_options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0],
 	): Promise<ReadableStream<UIMessageChunk> | null> {
-		return Promise.resolve(null);
+		const stream = this.#reconnectStream;
+		this.#reconnectStream = null;
+		return Promise.resolve(stream);
+	}
+
+	prepareReconnect() {
+		let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
+		this.#reconnectStream = new ReadableStream({
+			start(value) {
+				controller = value;
+			},
+		});
+		if (!controller) throw new Error("Expected reconnect controller");
+		return controller;
 	}
 
 	emit(requestIndex: number, chunk: UIMessageChunk) {
@@ -295,5 +309,83 @@ describe("ThreadChat", () => {
 			"assistant-2",
 			"assistant-3",
 		]);
+	});
+
+	test("preserves an error when resume finds no stream", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const run = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+		transport.fail(0, new Error("failed"));
+		await run.finished;
+		const error = run.getSnapshot()?.error;
+
+		await chat.resumeRun(run.id);
+
+		expect(run.getSnapshot()).toMatchObject({ error, status: "error" });
+		chat.clearError();
+		expect(run.getSnapshot()).toMatchObject({
+			error: undefined,
+			status: "ready",
+		});
+	});
+
+	test("run handles expose the current resumed request", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const run = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+		transport.emitText(0, "assistant-1", "first");
+		await run.finished;
+		const initialFinished = run.finished;
+		const reconnect = transport.prepareReconnect();
+
+		const resumed = chat.resumeRun(run.id);
+
+		expect(run.finished).not.toBe(initialFinished);
+		let finished = false;
+		void run.finished.then(() => {
+			finished = true;
+		});
+		await Bun.sleep(0);
+		expect(finished).toBeFalse();
+		reconnect.close();
+		await Promise.all([resumed, run.finished]);
+	});
+
+	test("aggregate status ignores historical run errors", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({ transport });
+		const failed = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+		transport.fail(0, new Error("failed"));
+		await failed.finished;
+		expect(chat.getSnapshot().treeStatus).toBe("ready");
+		expect(failed.getSnapshot()?.status).toBe("error");
+
+		const successful = await chat.startRun({ from: "user-1" });
+		await waitFor(() => transport.requests.length === 2);
+		expect(chat.getSnapshot().treeStatus).toBe("submitted");
+		transport.emitText(1, "assistant-1", "recovered");
+		await successful.finished;
+
+		expect(chat.getSnapshot().status).toBe("ready");
+		expect(chat.getSnapshot().treeStatus).toBe("ready");
+		expect(failed.getSnapshot()?.status).toBe("error");
+	});
+
+	test("unexpected application errors reject the run promise", async () => {
+		const transport = new ControlledTransport();
+		const chat = new ThreadChat({
+			sendAutomaticallyWhen: () => {
+				throw new Error("application callback failed");
+			},
+			transport,
+		});
+		const run = await chat.startRun({ message: user("user-1") });
+		await waitFor(() => transport.requests.length === 1);
+		transport.emitText(0, "assistant-1", "complete");
+
+		await expect(run.finished).rejects.toThrow("application callback failed");
 	});
 });

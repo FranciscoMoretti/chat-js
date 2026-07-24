@@ -121,12 +121,10 @@ export class RunRegistry<TMessage extends UIMessage> {
 			(run) => run.status === "submitted" || run.status === "streaming",
 		);
 		let status: ChatStatus = "ready";
-		if (runs.some((run) => run.status === "streaming")) {
+		if (activeRuns.some((run) => run.status === "streaming")) {
 			status = "streaming";
-		} else if (runs.some((run) => run.status === "submitted")) {
+		} else if (activeRuns.some((run) => run.status === "submitted")) {
 			status = "submitted";
-		} else if (runs.some((run) => run.status === "error")) {
-			status = "error";
 		}
 		return { activeRuns, runs, status };
 	}
@@ -249,7 +247,6 @@ export class RunRegistry<TMessage extends UIMessage> {
 		const run = this.#runsById.get(runId);
 		if (!run) return;
 		run.error = error;
-		run.status = error ? "error" : run.status;
 	}
 
 	setStatus(runId: string, status: ChatStatus) {

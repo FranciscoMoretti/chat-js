@@ -384,11 +384,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 
 	clearError = () => {
 		const run = this.getSelectedRunRecord();
-		if (run) {
-			run.error = undefined;
-			run.chat.clearError();
-			this.emit();
-		}
+		if (run) run.chat.clearError();
 	};
 
 	stop = () => this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve();
@@ -560,22 +556,16 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		};
 		this.#runs.add(record);
 		this.emit();
-		const finished = chat
-			.start(options)
-			.catch((error: unknown) => {
-				this.setRunError(
-					spec.id,
-					error instanceof Error ? error : new Error(String(error)),
-				);
-			})
-			.finally(() => this.emit());
+		const finished = chat.start(options).finally(() => this.emit());
 		record.finished = finished;
 		return this.createRunHandle(record);
 	}
 
 	private createRunHandle(run: RunRecord<TMessage>): ThreadRunHandle {
 		return {
-			finished: run.finished,
+			get finished() {
+				return run.finished;
+			},
 			id: run.spec.id,
 			getSnapshot: () => this.getRun(run.spec.id),
 			stop: () => run.chat.stop(),
@@ -586,7 +576,6 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 		run: RunRecord<TMessage>,
 		options: ChatRequestOptions,
 	) {
-		run.error = undefined;
 		const finished = run.chat.resumeStream(options).finally(() => this.emit());
 		run.finished = finished;
 		this.emit();

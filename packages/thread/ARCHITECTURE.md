@@ -297,6 +297,13 @@ A normal `sendMessage` follows this sequence:
 `sendMessage` waits for the request and automatic follow-ups to finish, matching
 the AI SDK contract. `tree.startRun` returns a handle immediately for callers
 that need to start, inspect, or stop multiple responses independently.
+The handle's `finished` property always reads the run's current request promise,
+including a later request started by `resumeRun`.
+
+As in AI SDK, expected transport and stream failures resolve after publishing
+`error` status. Unexpected application or state-layer exceptions that escape
+`AbstractChat` reject `sendMessage`, `resumeRun`, and the corresponding
+`finished` promise.
 
 ## Status and Cancellation
 
@@ -311,16 +318,18 @@ Runs use the AI SDK `ChatStatus` values:
 with `chat.messages` and `chat.error`, it always describes the active path and
 never aggregates hidden branches.
 
-`chat.tree.status` aggregates all runs with active work taking precedence:
+`chat.tree.status` aggregates current activity across all runs:
 
 1. `streaming` when any run is streaming
 2. `submitted` when no run is streaming and any run is submitted
-3. `error` when no run is active and any run has failed
-4. `ready` otherwise
+3. `ready` otherwise
 
 A run is included in `tree.activeRuns` while it is `submitted` or `streaming`.
-Consumers that need to distinguish simultaneous states inspect `tree.runs`;
-the aggregate is intentionally only a whole-tree activity projection.
+Historical failures remain available on their entries in `tree.runs`, but do not
+affect the aggregate after activity finishes. Consumers that need to distinguish
+simultaneous or historical states inspect `tree.runs`; the aggregate is
+intentionally only a whole-tree activity projection and has no aggregate error
+object.
 
 Cancellation is scoped by run:
 
