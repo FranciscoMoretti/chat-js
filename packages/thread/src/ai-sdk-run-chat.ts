@@ -27,7 +27,7 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
 	transport: ChatTransport<TMessage>;
 	generateMessageId: () => string;
 	getRunPath: (runId: string) => TMessage[];
-	mergeRunPath: (messages: TMessage[]) => void;
+	updateRunPath: (messages: TMessage[]) => void;
 	registerToolCall: (runId: string, toolCallId: string) => void;
 	removeMessage: (messageId: string) => void;
 	setRunError: (runId: string, error: Error | undefined) => void;
@@ -62,7 +62,7 @@ class ThreadChatState<TMessage extends UIMessage>
 	}
 
 	set messages(messages: TMessage[]) {
-		this.#host.mergeRunPath(messages);
+		this.#host.updateRunPath(messages);
 	}
 
 	get status() {
