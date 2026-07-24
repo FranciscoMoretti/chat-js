@@ -8,8 +8,10 @@ function run(command: string[], cwd: string) {
 	const result = Bun.spawnSync({
 		cmd: command,
 		cwd,
+		killSignal: "SIGKILL",
 		stderr: "pipe",
 		stdout: "pipe",
+		timeout: 25_000,
 	});
 	if (result.exitCode !== 0) {
 		throw new Error(
