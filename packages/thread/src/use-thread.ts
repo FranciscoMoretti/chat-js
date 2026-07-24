@@ -8,6 +8,7 @@ import type {
 	ThreadRun,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
+	ThreadStateSnapshot,
 	TreeSendOptions,
 } from "./types";
 
@@ -80,9 +81,25 @@ function useThreadChatSnapshot<TMessage extends UIMessage>(
 	chat: ThreadChat<TMessage>,
 	throttleWaitMs?: number,
 ) {
+	const stateRef = useRef({
+		chat,
+		snapshot: chat.getSnapshot(),
+	});
+	if (stateRef.current.chat !== chat) {
+		stateRef.current = {
+			chat,
+			snapshot: chat.getSnapshot(),
+		};
+	}
+
 	const subscribe = useCallback(
 		(listener: () => void) => {
-			if (!throttleWaitMs) return chat.subscribe(listener);
+			stateRef.current.snapshot = chat.getSnapshot();
+			const publish = () => {
+				stateRef.current.snapshot = chat.getSnapshot();
+				listener();
+			};
+			if (!throttleWaitMs) return chat.subscribe(publish);
 
 			let lastCall = 0;
 			let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -90,14 +107,14 @@ function useThreadChatSnapshot<TMessage extends UIMessage>(
 				const elapsed = Date.now() - lastCall;
 				if (elapsed >= throttleWaitMs) {
 					lastCall = Date.now();
-					listener();
+					publish();
 					return;
 				}
 				if (timeout) return;
 				timeout = setTimeout(() => {
 					timeout = undefined;
 					lastCall = Date.now();
-					listener();
+					publish();
 				}, throttleWaitMs - elapsed);
 			};
 
@@ -109,8 +126,21 @@ function useThreadChatSnapshot<TMessage extends UIMessage>(
 		},
 		[chat, throttleWaitMs],
 	);
+	const getSnapshot = useCallback(() => stateRef.current.snapshot, []);
 
-	return useSyncExternalStore(subscribe, chat.getSnapshot, chat.getSnapshot);
+	return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function useThreadChatField<
+	TMessage extends UIMessage,
+	TKey extends keyof ThreadStateSnapshot<TMessage>,
+>(chat: ThreadChat<TMessage>, key: TKey) {
+	const subscribe = useCallback(
+		(listener: () => void) => chat.subscribe(listener),
+		[chat],
+	);
+	const getSnapshot = useCallback(() => chat.getSnapshot()[key], [chat, key]);
+	return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useThread<TMessage extends UIMessage = UIMessage>(
@@ -163,6 +193,9 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 	}
 
 	const snapshot = useThreadChatSnapshot(chat, options.experimental_throttle);
+	const status = useThreadChatField(chat, "status");
+	const error = useThreadChatField(chat, "error");
+	const treeStatus = useThreadChatField(chat, "treeStatus");
 
 	useEffect(() => {
 		if (options.resume) chatRef.current?.resumeStream();
@@ -178,14 +211,14 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 		addToolOutput: chat.addToolOutput,
 		addToolResult: chat.addToolResult,
 		clearError: chat.clearError,
-		error: snapshot.error,
+		error,
 		id: chat.id,
 		messages: snapshot.messages,
 		regenerate: chat.regenerate,
 		resumeStream: chat.resumeStream,
 		sendMessage: chat.sendMessage,
 		setMessages,
-		status: snapshot.status,
+		status,
 		stop: chat.stop,
 		tree: {
 			activeRuns: snapshot.activeRuns,
@@ -209,7 +242,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 			setCursor: (messageId) => chat.setCursor(messageId),
 			setCursorToParentOf: (messageId) => chat.setCursorToParentOf(messageId),
 			startRun: (runOptions) => chat.startRun(runOptions),
-			status: snapshot.treeStatus,
+			status: treeStatus,
 			stopAll: () => chat.stopAll(),
 			stopRun: (runId) => chat.stopRun(runId),
 			stopRunForMessage: (messageId) => chat.stopRunForMessage(messageId),
