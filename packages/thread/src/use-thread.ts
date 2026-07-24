@@ -16,6 +16,11 @@ type ThreadHookOptions = {
 	resume?: boolean;
 };
 
+type ThreadCallbacks<TMessage extends UIMessage> = Pick<
+	ThreadChatOptions<TMessage>,
+	"onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
+>;
+
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
 	chat: ThreadChat<TMessage>;
 };
@@ -111,29 +116,61 @@ function useThreadChatSnapshot<TMessage extends UIMessage>(
 export function useThread<TMessage extends UIMessage = UIMessage>(
 	options: UseThreadOptions<TMessage> = {},
 ): UseThreadHelpers<TMessage> {
-	const chatRef = useRef<ThreadChat<TMessage> | null>(null);
-	const suppliedChat = hasSuppliedChat(options) ? options.chat : undefined;
-	const chatOptions = hasSuppliedChat(options) ? undefined : options;
-	if (suppliedChat) {
-		chatRef.current = suppliedChat;
-	} else if (
-		!chatRef.current ||
-		(chatOptions?.id !== undefined && chatRef.current.id !== chatOptions.id)
-	) {
-		chatRef.current = new ThreadChat(chatOptions);
+	const hasExternalChat = hasSuppliedChat(options);
+	const callbacksRef = useRef<ThreadCallbacks<TMessage>>(
+		hasExternalChat
+			? {}
+			: {
+					onData: options.onData,
+					onError: options.onError,
+					onFinish: options.onFinish,
+					onToolCall: options.onToolCall,
+					sendAutomaticallyWhen: options.sendAutomaticallyWhen,
+				},
+	);
+
+	if (!hasExternalChat) {
+		callbacksRef.current = {
+			onData: options.onData,
+			onError: options.onError,
+			onFinish: options.onFinish,
+			onToolCall: options.onToolCall,
+			sendAutomaticallyWhen: options.sendAutomaticallyWhen,
+		};
 	}
 
-	const chat = chatRef.current;
-	if (chatOptions) chat.updateOptions(chatOptions);
+	const chatOptions: ThreadChatOptions<TMessage> | undefined = hasExternalChat
+		? undefined
+		: {
+				...options,
+				onData: (dataPart) => callbacksRef.current.onData?.(dataPart),
+				onError: (error) => callbacksRef.current.onError?.(error),
+				onFinish: (event) => callbacksRef.current.onFinish?.(event),
+				onToolCall: (event) => callbacksRef.current.onToolCall?.(event),
+				sendAutomaticallyWhen: (event) =>
+					callbacksRef.current.sendAutomaticallyWhen?.(event) ?? false,
+			};
+
+	const chatRef = useRef<ThreadChat<TMessage> | null>(null);
+	let chat = chatRef.current;
+	if (
+		chat === null ||
+		(hasExternalChat && options.chat !== chat) ||
+		(!hasExternalChat && options.id !== undefined && chat.id !== options.id)
+	) {
+		chat = hasExternalChat ? options.chat : new ThreadChat(chatOptions);
+		chatRef.current = chat;
+	}
+
 	const snapshot = useThreadChatSnapshot(chat, options.experimental_throttle);
 
 	useEffect(() => {
-		if (options.resume) chat.resumeStream();
-	}, [options.resume, chat]);
+		if (options.resume) chatRef.current?.resumeStream();
+	}, [options.resume]);
 
 	const setMessages = useCallback<UseChatHelpers<TMessage>["setMessages"]>(
-		(messages) => chat.setMessages(messages),
-		[chat],
+		(messages) => chatRef.current?.setMessages(messages),
+		[],
 	);
 
 	return {
