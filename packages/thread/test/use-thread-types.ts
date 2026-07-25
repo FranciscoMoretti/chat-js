@@ -2,6 +2,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { type UseThreadHelpers, useThread } from "../src/react";
 import { Thread } from "../src/thread";
+import { MemoryThreadState } from "../src/thread-state";
 
 declare const messageId: string;
 
@@ -35,5 +36,14 @@ function useExternalThreadCheck() {
 	return useThread({ thread });
 }
 
+function useInvalidOwnershipChecks() {
+	const state = new MemoryThreadState<UIMessage>();
+	// @ts-expect-error An external state already owns initial messages.
+	new Thread({ messages: [], state });
+	// @ts-expect-error useThread accepts a thread, not a chat projection.
+	useThread({ chat: new Thread<UIMessage>() });
+}
+
 void useCompatibilityCheck;
 void useExternalThreadCheck;
+void useInvalidOwnershipChecks;

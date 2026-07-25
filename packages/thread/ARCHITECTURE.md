@@ -13,15 +13,20 @@ parallel responses do not require additional hooks or mounted components.
 ```text
 useThread
   -> Thread
-     -> message tree
-     -> RunRecord A -> ThreadRunChat A -> ChatTransport
-     -> RunRecord B -> ThreadRunChat B -> ChatTransport
+     -> AbstractThread
+        -> ThreadState
+           -> message tree
+           -> observable snapshots
+        -> RunRecord A -> ThreadRunChat A -> ChatTransport
+        -> RunRecord B -> ThreadRunChat B -> ChatTransport
 ```
 
-The three layers have separate responsibilities:
+The layers have separate responsibilities:
 
 - `useThread` is the public React interface.
-- `Thread` is the observable, tree-backed chat engine.
+- `Thread` is the concrete observable controller accepted by `useThread`.
+- `AbstractThread` owns framework-independent thread and request orchestration.
+- `ThreadState` owns the canonical observable tree state.
 - `ThreadRunChat` is an internal AI SDK request engine for one response.
 
 ## Compatibility Decision Rule
@@ -112,8 +117,9 @@ if (threadRef.current === null) {
 
 The same `Thread` is retained while its identity inputs remain unchanged.
 Supplying a different external `thread` or a different defined `id` replaces
-the controller, including its tree and active runs. Updated callbacks and
-transports do not replace the retained controller.
+the controller, including its state and active runs. Otherwise, callback
+wrappers read the latest React callbacks without replacing the retained
+controller.
 
 An existing `Thread` can also be supplied:
 
@@ -134,22 +140,67 @@ React hooks or components.
 
 ## Thread State
 
-`Thread` is the canonical state owner. It stores:
+`AbstractThread` receives a `ThreadState`, following the same separation as AI
+SDK's `AbstractChat` and `ChatState`. `ThreadState` has a deliberately small
+interface:
+
+```ts
+interface ThreadState<TMessage extends UIMessage> {
+  getSnapshot(): ThreadStateSnapshot<TMessage>;
+  update(
+    updater: (
+      snapshot: ThreadStateSnapshot<TMessage>
+    ) => ThreadStateSnapshot<TMessage>,
+  ): void;
+  subscribe(listener: () => void): () => void;
+}
+```
+
+`update` must invoke its updater exactly once and synchronously.
+`AbstractThread` uses it as the atomic write boundary so interleaved streams
+cannot read an old tree and overwrite a newer branch update. The controller is
+the sole writer; external code navigates and mutates through `Thread` commands
+rather than editing a snapshot directly.
+
+The default `Thread` creates a `MemoryThreadState`. A caller may instead supply
+another implementation:
+
+```ts
+const thread = new Thread({
+  state: applicationThreadState,
+  transport,
+});
+
+const chat = useThread({ thread });
+```
+
+This allows an application store to own observable state without moving
+transport objects, promises, abort controllers, or internal run adapters into
+that store.
+
+`ThreadState` stores:
 
 - each message once, keyed by message ID
 - one parent ID per message
 - ordered child IDs per parent
 - root message IDs
 - the selected cursor
-- run records and per-run status
+- public run status and errors
+- the selected-path and aggregate projections
+- the immutable snapshot consumed by React
+
+`AbstractThread` stores operational state that cannot be serialized:
+
+- `RunRecord` request handles
 - tool-call and approval ownership
 - concurrency limits
-- the immutable snapshot consumed by React
+- active `ThreadRunChat` instances
+- promises and abortable request lifecycles
 
 The selected linear history is derived from the tree:
 
 ```ts
-messages = threadChat.getPath(cursorId);
+messages = threadState.getSnapshot().messages;
 ```
 
 Changing the cursor selects another root-to-node path. It does not delete
@@ -187,7 +238,8 @@ conversation ID and supply that ID to the new `Thread` instance.
 
 ## React Subscription
 
-`useThread` subscribes to `Thread` with `useSyncExternalStore`. A tree
+`useThread` subscribes to `ThreadState` through `Thread` with
+`useSyncExternalStore`. A tree
 mutation, cursor change, stream update, or run status change publishes a new
 snapshot.
 

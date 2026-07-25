@@ -82,13 +82,13 @@ function useThreadSnapshot<TMessage extends UIMessage>(
 	throttleWaitMs?: number,
 ) {
 	const stateRef = useRef({
-		thread,
 		snapshot: thread.getSnapshot(),
+		thread,
 	});
 	if (stateRef.current.thread !== thread) {
 		stateRef.current = {
-			thread,
 			snapshot: thread.getSnapshot(),
+			thread,
 		};
 	}
 

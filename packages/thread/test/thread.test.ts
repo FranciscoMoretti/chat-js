@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
+import { MemoryThreadState } from "../src/thread-state";
+import type { ThreadState } from "../src/types";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
 	readonly requests: Array<{
@@ -99,6 +101,23 @@ class ResumeTransport extends ControlledTransport {
 	}
 }
 
+class RecordingThreadState implements ThreadState<UIMessage> {
+	readonly #state: MemoryThreadState<UIMessage>;
+	updateCount = 0;
+
+	constructor(messages: UIMessage[]) {
+		this.#state = new MemoryThreadState({ messages });
+	}
+
+	getSnapshot = () => this.#state.getSnapshot();
+	subscribe = (listener: () => void) => this.#state.subscribe(listener);
+
+	update: ThreadState<UIMessage>["update"] = (updater) => {
+		this.updateCount += 1;
+		this.#state.update(updater);
+	};
+}
+
 function user(id: string): UIMessage {
 	return { id, parts: [{ text: id, type: "text" }], role: "user" };
 }
@@ -117,6 +136,39 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("Thread", () => {
+	test("publishes through an injected state implementation", () => {
+		const state = new RecordingThreadState([user("user-1")]);
+		const thread = new Thread({ state });
+		let notifications = 0;
+		const unsubscribe = state.subscribe(() => {
+			notifications += 1;
+		});
+
+		thread.setCursor(null);
+		thread.setCursor("user-1");
+
+		expect(state.getSnapshot().cursorId).toBe("user-1");
+		expect(state.getSnapshot().messages.map(({ id }) => id)).toEqual([
+			"user-1",
+		]);
+		expect(state.updateCount).toBe(3);
+		expect(notifications).toBe(2);
+		unsubscribe();
+	});
+
+	test("rejects a state implementation that does not update synchronously", () => {
+		const memory = new MemoryThreadState<UIMessage>();
+		const state: ThreadState<UIMessage> = {
+			getSnapshot: memory.getSnapshot,
+			subscribe: memory.subscribe,
+			update: () => undefined,
+		};
+
+		expect(() => new Thread({ state })).toThrow(
+			"ThreadState.update must invoke its updater exactly once and synchronously",
+		);
+	});
+
 	test("streams concurrent responses into separate assistant siblings", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({ transport });

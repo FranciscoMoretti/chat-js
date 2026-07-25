@@ -58,9 +58,8 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 class ResumeTransport implements ChatTransport<UIMessage> {
 	reconnects = 0;
 
-	sendMessages() {
-		throw new Error("Unexpected send");
-	}
+	sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
+		Promise.reject(new Error("Unexpected send"));
 
 	reconnectToStream() {
 		this.reconnects += 1;
@@ -125,7 +124,7 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("useThread", () => {
-	test("uses current callbacks without replacing the thread transport", async () => {
+	test("uses current callbacks without replacing the chat transport", async () => {
 		const firstTransport = new RejectingTransport();
 		const secondTransport = new RejectingTransport();
 		const firstError = mock(() => {});
@@ -181,7 +180,7 @@ describe("useThread", () => {
 			messages: [user("user-1"), assistant("assistant-1")],
 			transport,
 		});
-		const hook = renderUseThread({ thread, resume: true });
+		const hook = renderUseThread({ resume: true, thread });
 
 		await act(async () => {
 			await Bun.sleep(0);

@@ -6,7 +6,7 @@ import {
 	type ChatTransport,
 	type UIMessage,
 } from "ai";
-import type { ThreadInit } from "./types";
+import type { AbstractThreadInit } from "./types";
 
 export type ThreadRunSpec = {
 	id: string;
@@ -16,14 +16,14 @@ export type ThreadRunSpec = {
 };
 
 export interface ThreadRunHost<TMessage extends UIMessage> {
-	readonly dataPartSchemas: ThreadInit<TMessage>["dataPartSchemas"];
+	readonly dataPartSchemas: AbstractThreadInit<TMessage>["dataPartSchemas"];
 	readonly id: string;
-	readonly messageMetadataSchema: ThreadInit<TMessage>["messageMetadataSchema"];
-	onData: ThreadInit<TMessage>["onData"];
-	onError: ThreadInit<TMessage>["onError"];
-	onFinish: ThreadInit<TMessage>["onFinish"];
-	onToolCall: ThreadInit<TMessage>["onToolCall"];
-	sendAutomaticallyWhen: ThreadInit<TMessage>["sendAutomaticallyWhen"];
+	readonly messageMetadataSchema: AbstractThreadInit<TMessage>["messageMetadataSchema"];
+	onData: AbstractThreadInit<TMessage>["onData"];
+	onError: AbstractThreadInit<TMessage>["onError"];
+	onFinish: AbstractThreadInit<TMessage>["onFinish"];
+	onToolCall: AbstractThreadInit<TMessage>["onToolCall"];
+	sendAutomaticallyWhen: AbstractThreadInit<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 	generateMessageId: () => string;
 	getRunPath: (runId: string) => TMessage[];
