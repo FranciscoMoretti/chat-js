@@ -67,7 +67,7 @@ type ThreadInitialState<TMessage extends UIMessage> =
 	| { initialTree: MessageTreeSnapshot<TMessage>; messages?: never }
 	| { initialTree?: never; messages?: TMessage[] };
 
-export type ThreadChatOptions<TMessage extends UIMessage = UIMessage> = Omit<
+export type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
 	ChatInit<TMessage>,
 	"messages"
 > & {

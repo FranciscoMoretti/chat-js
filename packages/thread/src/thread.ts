@@ -17,7 +17,7 @@ import { MessageTree } from "./message-tree";
 import { type RunRecord, RunRegistry } from "./run-registry";
 import type {
 	MessageTreeSnapshot,
-	ThreadChatOptions,
+	ThreadInit,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
 	ThreadStateSnapshot,
@@ -73,20 +73,18 @@ async function createMessageFromInput<TMessage extends UIMessage>({
 	});
 }
 
-export class ThreadChat<TMessage extends UIMessage = UIMessage>
+export class Thread<TMessage extends UIMessage = UIMessage>
 	implements ThreadRunHost<TMessage>
 {
 	readonly id: string;
-	readonly dataPartSchemas: ThreadChatOptions<TMessage>["dataPartSchemas"];
-	readonly generateMessageId: NonNullable<
-		ThreadChatOptions<TMessage>["generateId"]
-	>;
-	readonly messageMetadataSchema: ThreadChatOptions<TMessage>["messageMetadataSchema"];
-	onData: ThreadChatOptions<TMessage>["onData"];
-	onError: ThreadChatOptions<TMessage>["onError"];
-	onFinish: ThreadChatOptions<TMessage>["onFinish"];
-	onToolCall: ThreadChatOptions<TMessage>["onToolCall"];
-	sendAutomaticallyWhen: ThreadChatOptions<TMessage>["sendAutomaticallyWhen"];
+	readonly dataPartSchemas: ThreadInit<TMessage>["dataPartSchemas"];
+	readonly generateMessageId: NonNullable<ThreadInit<TMessage>["generateId"]>;
+	readonly messageMetadataSchema: ThreadInit<TMessage>["messageMetadataSchema"];
+	onData: ThreadInit<TMessage>["onData"];
+	onError: ThreadInit<TMessage>["onError"];
+	onFinish: ThreadInit<TMessage>["onFinish"];
+	onToolCall: ThreadInit<TMessage>["onToolCall"];
+	sendAutomaticallyWhen: ThreadInit<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 
 	readonly #listeners = new Set<() => void>();
@@ -94,7 +92,7 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	readonly #tree: MessageTree<TMessage>;
 	#snapshot: ThreadStateSnapshot<TMessage>;
 
-	constructor(options: ThreadChatOptions<TMessage> = {}) {
+	constructor(options: ThreadInit<TMessage> = {}) {
 		this.id = options.id ?? generateId();
 		this.dataPartSchemas = options.dataPartSchemas;
 		this.generateMessageId = options.generateId ?? generateId;
@@ -567,8 +565,8 @@ export class ThreadChat<TMessage extends UIMessage = UIMessage>
 	}
 }
 
-export function createThreadChat<TMessage extends UIMessage = UIMessage>(
-	options: ThreadChatOptions<TMessage> = {},
+export function createThread<TMessage extends UIMessage = UIMessage>(
+	options: ThreadInit<TMessage> = {},
 ) {
-	return new ThreadChat(options);
+	return new Thread(options);
 }

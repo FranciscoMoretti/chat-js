@@ -3,7 +3,7 @@ import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { getMessageText } from "../src/message-utils";
-import { ThreadChat } from "../src/thread-chat";
+import { Thread } from "../src/thread";
 import {
 	type UseThreadHelpers,
 	type UseThreadOptions,
@@ -125,7 +125,7 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("useThread", () => {
-	test("uses current callbacks without replacing the chat transport", async () => {
+	test("uses current callbacks without replacing the thread transport", async () => {
 		const firstTransport = new RejectingTransport();
 		const secondTransport = new RejectingTransport();
 		const firstError = mock(() => {});
@@ -164,24 +164,24 @@ describe("useThread", () => {
 		hook.unmount();
 	});
 
-	test("resubscribes when the supplied chat changes", () => {
-		const first = new ThreadChat({ messages: [user("user-a")] });
-		const second = new ThreadChat({ messages: [user("user-b")] });
-		const hook = renderUseThread({ chat: first });
+	test("resubscribes when the supplied thread changes", () => {
+		const first = new Thread({ messages: [user("user-a")] });
+		const second = new Thread({ messages: [user("user-b")] });
+		const hook = renderUseThread({ thread: first });
 
 		expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-a"]);
-		hook.update({ chat: second });
+		hook.update({ thread: second });
 		expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
 		hook.unmount();
 	});
 
-	test("automatically resumes the supplied chat", async () => {
+	test("automatically resumes the supplied thread", async () => {
 		const transport = new ResumeTransport();
-		const chat = new ThreadChat({
+		const thread = new Thread({
 			messages: [user("user-1"), assistant("assistant-1")],
 			transport,
 		});
-		const hook = renderUseThread({ chat, resume: true });
+		const hook = renderUseThread({ thread, resume: true });
 
 		await act(async () => {
 			await Bun.sleep(0);

@@ -84,17 +84,17 @@ test("the packed package loads its core and React entry points", async () => {
 		expect(reactSource.startsWith('"use client";')).toBeTrue();
 		expect(indexChunk).toBeDefined();
 		expect(reactChunk).toBe(indexChunk);
-		expect(reactSource).not.toContain("class ThreadChat");
+		expect(reactSource).not.toContain("class Thread");
 		if (!reactChunk) throw new Error("Expected a shared package chunk");
 		expect(
 			await Bun.file(resolve(installedPackage, "dist", reactChunk)).exists(),
 		).toBeTrue();
 
 		const consumerSource = `
-import { ThreadChat } from "@chatjs/thread";
+import { Thread } from "@chatjs/thread";
 import { useThread } from "@chatjs/thread/react";
 
-const chat = new ThreadChat();
+const chat = new Thread();
 if (typeof chat.id !== "string" || typeof useThread !== "function") {
   throw new Error("Package exports did not load");
 }
