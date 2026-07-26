@@ -110,9 +110,10 @@ if (threadRef.current === null) {
 }
 ```
 
-The same `Thread` is used for the lifetime of that hook instance. Updated
-callbacks and transports are applied to it without replacing its tree or
-active runs.
+The same `Thread` is retained while its identity inputs remain unchanged.
+Supplying a different external `thread` or a different defined `id` replaces
+the controller, including its tree and active runs. Updated callbacks and
+transports do not replace the retained controller.
 
 An existing `Thread` can also be supplied:
 
