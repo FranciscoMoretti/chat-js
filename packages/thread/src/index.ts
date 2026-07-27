@@ -1,11 +1,11 @@
 export { getMessageText } from "./message-utils";
-export { createThreadChat, ThreadChat } from "./thread-chat";
+export { createThread, Thread } from "./thread";
 
 export type {
 	MessageTreeNode,
 	MessageTreeSnapshot,
-	ThreadChatOptions,
 	ThreadConcurrency,
+	ThreadInit,
 	ThreadRun,
 	ThreadRunHandle,
 	ThreadStartRunOptions,

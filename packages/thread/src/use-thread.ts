@@ -1,10 +1,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ChatRequestOptions, UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
-import { ThreadChat } from "./thread-chat";
+import { Thread } from "./thread";
 import type {
 	MessageTreeSnapshot,
-	ThreadChatOptions,
+	ThreadInit,
 	ThreadRun,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
@@ -18,25 +18,25 @@ type ThreadHookOptions = {
 };
 
 type ThreadCallbacks<TMessage extends UIMessage> = Pick<
-	ThreadChatOptions<TMessage>,
+	ThreadInit<TMessage>,
 	"onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
 >;
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
-	chat: ThreadChat<TMessage>;
+	thread: Thread<TMessage>;
 };
 
 export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
 	| ExternalThreadOptions<TMessage>
 	| (ThreadHookOptions &
-			ThreadChatOptions<TMessage> & {
-				chat?: never;
+			ThreadInit<TMessage> & {
+				thread?: never;
 			});
 
-function hasSuppliedChat<TMessage extends UIMessage>(
+function hasSuppliedThread<TMessage extends UIMessage>(
 	options: UseThreadOptions<TMessage>,
 ): options is ExternalThreadOptions<TMessage> {
-	return "chat" in options && options.chat !== undefined;
+	return "thread" in options && options.thread !== undefined;
 }
 
 export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
@@ -62,7 +62,7 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 	startRun: (
 		options?: ThreadStartRunOptions<TMessage>,
 	) => Promise<ThreadRunHandle>;
-	status: ReturnType<ThreadChat<TMessage>["getSnapshot"]>["treeStatus"];
+	status: ReturnType<Thread<TMessage>["getSnapshot"]>["treeStatus"];
 	stopAll: () => Promise<void>;
 	stopRun: (runId: string) => Promise<void>;
 	stopRunForMessage: (messageId: string) => Promise<void>;
@@ -77,29 +77,29 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
 		tree: TreeHelpers<TMessage>;
 	};
 
-function useThreadChatSnapshot<TMessage extends UIMessage>(
-	chat: ThreadChat<TMessage>,
+function useThreadSnapshot<TMessage extends UIMessage>(
+	thread: Thread<TMessage>,
 	throttleWaitMs?: number,
 ) {
 	const stateRef = useRef({
-		chat,
-		snapshot: chat.getSnapshot(),
+		thread,
+		snapshot: thread.getSnapshot(),
 	});
-	if (stateRef.current.chat !== chat) {
+	if (stateRef.current.thread !== thread) {
 		stateRef.current = {
-			chat,
-			snapshot: chat.getSnapshot(),
+			thread,
+			snapshot: thread.getSnapshot(),
 		};
 	}
 
 	const subscribe = useCallback(
 		(listener: () => void) => {
-			stateRef.current.snapshot = chat.getSnapshot();
+			stateRef.current.snapshot = thread.getSnapshot();
 			const publish = () => {
-				stateRef.current.snapshot = chat.getSnapshot();
+				stateRef.current.snapshot = thread.getSnapshot();
 				listener();
 			};
-			if (!throttleWaitMs) return chat.subscribe(publish);
+			if (!throttleWaitMs) return thread.subscribe(publish);
 
 			let lastCall = 0;
 			let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -118,37 +118,40 @@ function useThreadChatSnapshot<TMessage extends UIMessage>(
 				}, throttleWaitMs - elapsed);
 			};
 
-			const unsubscribe = chat.subscribe(notify);
+			const unsubscribe = thread.subscribe(notify);
 			return () => {
 				unsubscribe();
 				if (timeout) clearTimeout(timeout);
 			};
 		},
-		[chat, throttleWaitMs],
+		[thread, throttleWaitMs],
 	);
 	const getSnapshot = useCallback(() => stateRef.current.snapshot, []);
 
 	return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-function useThreadChatField<
+function useThreadField<
 	TMessage extends UIMessage,
 	TKey extends keyof ThreadStateSnapshot<TMessage>,
->(chat: ThreadChat<TMessage>, key: TKey) {
+>(thread: Thread<TMessage>, key: TKey) {
 	const subscribe = useCallback(
-		(listener: () => void) => chat.subscribe(listener),
-		[chat],
+		(listener: () => void) => thread.subscribe(listener),
+		[thread],
 	);
-	const getSnapshot = useCallback(() => chat.getSnapshot()[key], [chat, key]);
+	const getSnapshot = useCallback(
+		() => thread.getSnapshot()[key],
+		[thread, key],
+	);
 	return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useThread<TMessage extends UIMessage = UIMessage>(
 	options: UseThreadOptions<TMessage> = {},
 ): UseThreadHelpers<TMessage> {
-	const hasExternalChat = hasSuppliedChat(options);
+	const hasExternalThread = hasSuppliedThread(options);
 	const callbacksRef = useRef<ThreadCallbacks<TMessage>>(
-		hasExternalChat
+		hasExternalThread
 			? {}
 			: {
 					onData: options.onData,
@@ -159,7 +162,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 				},
 	);
 
-	if (!hasExternalChat) {
+	if (!hasExternalThread) {
 		callbacksRef.current = {
 			onData: options.onData,
 			onError: options.onError,
@@ -169,7 +172,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 		};
 	}
 
-	const chatOptions: ThreadChatOptions<TMessage> | undefined = hasExternalChat
+	const threadOptions: ThreadInit<TMessage> | undefined = hasExternalThread
 		? undefined
 		: {
 				...options,
@@ -181,71 +184,71 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 					callbacksRef.current.sendAutomaticallyWhen?.(event) ?? false,
 			};
 
-	const chatRef = useRef<ThreadChat<TMessage> | null>(null);
-	let chat = chatRef.current;
+	const threadRef = useRef<Thread<TMessage> | null>(null);
+	let thread = threadRef.current;
 	if (
-		chat === null ||
-		(hasExternalChat && options.chat !== chat) ||
-		(!hasExternalChat && options.id !== undefined && chat.id !== options.id)
+		thread === null ||
+		(hasExternalThread && options.thread !== thread) ||
+		(!hasExternalThread && options.id !== undefined && thread.id !== options.id)
 	) {
-		chat = hasExternalChat ? options.chat : new ThreadChat(chatOptions);
-		chatRef.current = chat;
+		thread = hasExternalThread ? options.thread : new Thread(threadOptions);
+		threadRef.current = thread;
 	}
 
-	const snapshot = useThreadChatSnapshot(chat, options.experimental_throttle);
-	const status = useThreadChatField(chat, "status");
-	const error = useThreadChatField(chat, "error");
-	const treeStatus = useThreadChatField(chat, "treeStatus");
+	const snapshot = useThreadSnapshot(thread, options.experimental_throttle);
+	const status = useThreadField(thread, "status");
+	const error = useThreadField(thread, "error");
+	const treeStatus = useThreadField(thread, "treeStatus");
 
 	useEffect(() => {
-		if (options.resume) chatRef.current?.resumeStream();
+		if (options.resume) threadRef.current?.resumeStream();
 	}, [options.resume]);
 
 	const setMessages = useCallback<UseChatHelpers<TMessage>["setMessages"]>(
-		(messages) => chatRef.current?.setMessages(messages),
+		(messages) => threadRef.current?.setMessages(messages),
 		[],
 	);
 
 	return {
-		addToolApprovalResponse: chat.addToolApprovalResponse,
-		addToolOutput: chat.addToolOutput,
-		addToolResult: chat.addToolResult,
-		clearError: chat.clearError,
+		addToolApprovalResponse: thread.addToolApprovalResponse,
+		addToolOutput: thread.addToolOutput,
+		addToolResult: thread.addToolResult,
+		clearError: thread.clearError,
 		error,
-		id: chat.id,
+		id: thread.id,
 		messages: snapshot.messages,
-		regenerate: chat.regenerate,
-		resumeStream: chat.resumeStream,
-		sendMessage: chat.sendMessage,
+		regenerate: thread.regenerate,
+		resumeStream: thread.resumeStream,
+		sendMessage: thread.sendMessage,
 		setMessages,
 		status,
-		stop: chat.stop,
+		stop: thread.stop,
 		tree: {
 			activeRuns: snapshot.activeRuns,
 			childrenByParentId: snapshot.childrenByParentId,
 			cursorId: snapshot.cursorId,
-			getChildren: (messageId) => chat.getChildren(messageId),
-			getLeaves: (messageId) => chat.getLeaves(messageId),
-			getMessage: (messageId) => chat.getMessage(messageId),
-			getParent: (messageId) => chat.getParent(messageId),
-			getPath: (messageId) => chat.getPath(messageId),
-			getRun: (runId) => chat.getRun(runId),
-			getRunForMessage: (messageId) => chat.getRunForMessage(messageId),
-			getSiblings: (messageId) => chat.getSiblings(messageId),
-			getSnapshot: () => chat.getTreeSnapshot(),
+			getChildren: (messageId) => thread.getChildren(messageId),
+			getLeaves: (messageId) => thread.getLeaves(messageId),
+			getMessage: (messageId) => thread.getMessage(messageId),
+			getParent: (messageId) => thread.getParent(messageId),
+			getPath: (messageId) => thread.getPath(messageId),
+			getRun: (runId) => thread.getRun(runId),
+			getRunForMessage: (messageId) => thread.getRunForMessage(messageId),
+			getSiblings: (messageId) => thread.getSiblings(messageId),
+			getSnapshot: () => thread.getTreeSnapshot(),
 			messagesById: snapshot.messagesById,
 			parentById: snapshot.parentById,
 			resumeRun: (runId, requestOptions) =>
-				chat.resumeRun(runId, requestOptions),
+				thread.resumeRun(runId, requestOptions),
 			rootIds: snapshot.rootIds,
 			runs: snapshot.runs,
-			setCursor: (messageId) => chat.setCursor(messageId),
-			setCursorToParentOf: (messageId) => chat.setCursorToParentOf(messageId),
-			startRun: (runOptions) => chat.startRun(runOptions),
+			setCursor: (messageId) => thread.setCursor(messageId),
+			setCursorToParentOf: (messageId) => thread.setCursorToParentOf(messageId),
+			startRun: (runOptions) => thread.startRun(runOptions),
 			status: treeStatus,
-			stopAll: () => chat.stopAll(),
-			stopRun: (runId) => chat.stopRun(runId),
-			stopRunForMessage: (messageId) => chat.stopRunForMessage(messageId),
+			stopAll: () => thread.stopAll(),
+			stopRun: (runId) => thread.stopRun(runId),
+			stopRunForMessage: (messageId) => thread.stopRunForMessage(messageId),
 		},
 	};
 }

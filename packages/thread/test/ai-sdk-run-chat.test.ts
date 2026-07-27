@@ -49,7 +49,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 
 class TestRunHost implements ThreadRunHost<UIMessage> {
 	readonly dataPartSchemas = undefined;
-	readonly id = "thread-chat";
+	readonly id = "thread";
 	readonly messageMetadataSchema = undefined;
 	readonly generateMessageId = () => "client-response";
 	readonly spec: ThreadRunSpec;

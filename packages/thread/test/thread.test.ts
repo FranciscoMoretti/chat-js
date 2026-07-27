@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { getMessageText } from "../src/message-utils";
-import { ThreadChat } from "../src/thread-chat";
+import { Thread } from "../src/thread";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
 	readonly requests: Array<{
@@ -116,10 +116,10 @@ async function waitFor(predicate: () => boolean) {
 	throw new Error("Timed out waiting for request");
 }
 
-describe("ThreadChat", () => {
+describe("Thread", () => {
 	test("streams concurrent responses into separate assistant siblings", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const primary = await chat.startRun({
 			follow: true,
 			message: user("user-1"),
@@ -143,7 +143,7 @@ describe("ThreadChat", () => {
 
 	test("keeps a submitted response out of the tree until streaming starts", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const run = await chat.startRun({
 			message: user("user-1"),
 		});
@@ -168,7 +168,7 @@ describe("ThreadChat", () => {
 	test("uses AI SDK's client response ID when the stream omits one", async () => {
 		const generatedIds = ["run-1", "client-response"];
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			generateId: () => generatedIds.shift() ?? "unexpected-id",
 			id: "thread-1",
 			transport,
@@ -192,7 +192,7 @@ describe("ThreadChat", () => {
 
 	test("attaches streamed output without requiring a user parent", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const run = await chat.startRun({
 			message: {
 				id: "context-1",
@@ -216,7 +216,7 @@ describe("ThreadChat", () => {
 			parts: [{ text: "first", type: "text" }],
 			role: "assistant",
 		};
-		const chat = new ThreadChat({ messages: [parent], transport });
+		const chat = new Thread({ messages: [parent], transport });
 
 		await expect(chat.startRun({ from: parent.id })).rejects.toThrow(
 			"Cannot start a new run directly from assistant message assistant-parent; attach an input message first",
@@ -228,7 +228,7 @@ describe("ThreadChat", () => {
 
 	test("rejects an assistant input without mutating the tree", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ messages: [user("user-1")], transport });
+		const chat = new Thread({ messages: [user("user-1")], transport });
 
 		await expect(
 			chat.sendMessage({
@@ -246,7 +246,7 @@ describe("ThreadChat", () => {
 	});
 
 	test("keeps hidden branches when reconciling the selected path", () => {
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
 		});
 		chat.addMessage(user("user-2"), "assistant-1");
@@ -268,7 +268,7 @@ describe("ThreadChat", () => {
 
 	test("does not follow a delayed run after the active path changes", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const primary = await chat.startRun({ message: user("user-1") });
 		await waitFor(() => transport.requests.length === 1);
 
@@ -282,7 +282,7 @@ describe("ThreadChat", () => {
 
 	test("rejects concurrency before adding another user message", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			concurrency: { maxActiveRuns: 1 },
 			transport,
 		});
@@ -300,7 +300,7 @@ describe("ThreadChat", () => {
 
 	test("stopping one run does not abort another", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const first = await chat.startRun({
 			message: user("user-1"),
 		});
@@ -319,7 +319,7 @@ describe("ThreadChat", () => {
 
 	test("keeps creation order after an earlier run fails without a message", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const failed = await chat.startRun({ message: user("user-1") });
 		await waitFor(() => transport.requests.length === 1);
 		transport.fail(0, new Error("failed before start"));
@@ -340,7 +340,7 @@ describe("ThreadChat", () => {
 
 	test("preserves an error when resume finds no stream", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const run = await chat.startRun({ message: user("user-1") });
 		await waitFor(() => transport.requests.length === 1);
 		transport.fail(0, new Error("failed"));
@@ -359,7 +359,7 @@ describe("ThreadChat", () => {
 
 	test("run handles expose the current resumed request", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const run = await chat.startRun({ message: user("user-1") });
 		await waitFor(() => transport.requests.length === 1);
 		transport.emitText(0, "assistant-1", "first");
@@ -382,7 +382,7 @@ describe("ThreadChat", () => {
 
 	test("aggregate status ignores historical run errors", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const failed = await chat.startRun({ message: user("user-1") });
 		await waitFor(() => transport.requests.length === 1);
 		transport.fail(0, new Error("failed"));
@@ -403,7 +403,7 @@ describe("ThreadChat", () => {
 
 	test("unexpected application errors reject the run promise", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			sendAutomaticallyWhen: () => {
 				throw new Error("application callback failed");
 			},
@@ -418,7 +418,7 @@ describe("ThreadChat", () => {
 
 	test("regenerates an assistant as a sibling response", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const first = await chat.startRun({
 			message: user("user-1"),
 		});
@@ -440,7 +440,7 @@ describe("ThreadChat", () => {
 
 	test("rejects an unknown explicit regeneration target", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
 			transport,
 		});
@@ -454,7 +454,7 @@ describe("ThreadChat", () => {
 
 	test("rejects regeneration when the response parent is an assistant", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			messages: [
 				{ ...user("assistant-parent"), role: "assistant" },
 				{ ...user("assistant-child"), role: "assistant" },
@@ -480,7 +480,7 @@ describe("ThreadChat", () => {
 			...user("assistant-child"),
 			role: "assistant" as const,
 		};
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			initialTree: {
 				cursorId: assistantChild.id,
 				nodes: [
@@ -500,7 +500,7 @@ describe("ThreadChat", () => {
 
 	test("routes tool output and approval to their owning runs", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({ transport });
+		const chat = new Thread({ transport });
 		const runA = await chat.startRun({
 			message: user("user-a"),
 		});
@@ -570,7 +570,7 @@ describe("ThreadChat", () => {
 
 	test("enforces the global concurrency limit before resuming", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			concurrency: { maxActiveRuns: 1 },
 			transport,
 		});
@@ -595,7 +595,7 @@ describe("ThreadChat", () => {
 
 	test("enforces the per-message concurrency limit before resuming", async () => {
 		const transport = new ControlledTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			concurrency: { maxActiveRunsPerMessage: 1 },
 			transport,
 		});
@@ -619,7 +619,7 @@ describe("ThreadChat", () => {
 
 	test("resumes a restored assistant through its reconstructed run", async () => {
 		const transport = new ResumeTransport();
-		const chat = new ThreadChat({
+		const chat = new Thread({
 			messages: [
 				user("user-1"),
 				{ id: "assistant-1", parts: [], role: "assistant" },

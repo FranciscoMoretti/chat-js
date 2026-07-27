@@ -6,7 +6,7 @@ import {
 	type ChatTransport,
 	type UIMessage,
 } from "ai";
-import type { ThreadChatOptions } from "./types";
+import type { ThreadInit } from "./types";
 
 export type ThreadRunSpec = {
 	id: string;
@@ -16,14 +16,14 @@ export type ThreadRunSpec = {
 };
 
 export interface ThreadRunHost<TMessage extends UIMessage> {
-	readonly dataPartSchemas: ThreadChatOptions<TMessage>["dataPartSchemas"];
+	readonly dataPartSchemas: ThreadInit<TMessage>["dataPartSchemas"];
 	readonly id: string;
-	readonly messageMetadataSchema: ThreadChatOptions<TMessage>["messageMetadataSchema"];
-	onData: ThreadChatOptions<TMessage>["onData"];
-	onError: ThreadChatOptions<TMessage>["onError"];
-	onFinish: ThreadChatOptions<TMessage>["onFinish"];
-	onToolCall: ThreadChatOptions<TMessage>["onToolCall"];
-	sendAutomaticallyWhen: ThreadChatOptions<TMessage>["sendAutomaticallyWhen"];
+	readonly messageMetadataSchema: ThreadInit<TMessage>["messageMetadataSchema"];
+	onData: ThreadInit<TMessage>["onData"];
+	onError: ThreadInit<TMessage>["onError"];
+	onFinish: ThreadInit<TMessage>["onFinish"];
+	onToolCall: ThreadInit<TMessage>["onToolCall"];
+	sendAutomaticallyWhen: ThreadInit<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 	generateMessageId: () => string;
 	getRunPath: (runId: string) => TMessage[];
@@ -35,7 +35,7 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
 	writeRunMessage: (runId: string, message: TMessage) => void;
 }
 
-class ThreadChatState<TMessage extends UIMessage>
+class ThreadRunState<TMessage extends UIMessage>
 	implements ChatState<TMessage>
 {
 	#error: Error | undefined;
@@ -133,7 +133,7 @@ export class ThreadRunChat<
 			},
 			sendAutomaticallyWhen: (event) =>
 				host.sendAutomaticallyWhen?.(event) ?? false,
-			state: new ThreadChatState(host, spec),
+			state: new ThreadRunState(host, spec),
 			transport,
 		});
 	}

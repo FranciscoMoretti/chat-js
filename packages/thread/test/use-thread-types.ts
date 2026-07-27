@@ -1,7 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { type UseThreadHelpers, useThread } from "../src/react";
-import { ThreadChat } from "../src/thread-chat";
+import { Thread } from "../src/thread";
 
 declare const messageId: string;
 
@@ -30,10 +30,10 @@ function useCompatibilityCheck() {
 	return explicitHelpers;
 }
 
-function useExternalChatCheck() {
-	const chat = new ThreadChat<UIMessage>();
-	return useThread({ chat });
+function useExternalThreadCheck() {
+	const thread = new Thread<UIMessage>();
+	return useThread({ thread });
 }
 
 void useCompatibilityCheck;
-void useExternalChatCheck;
+void useExternalThreadCheck;

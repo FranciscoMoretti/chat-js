@@ -12,7 +12,7 @@ parallel responses do not require additional hooks or mounted components.
 
 ```text
 useThread
-  -> ThreadChat
+  -> Thread
      -> message tree
      -> RunRecord A -> ThreadRunChat A -> ChatTransport
      -> RunRecord B -> ThreadRunChat B -> ChatTransport
@@ -21,7 +21,7 @@ useThread
 The three layers have separate responsibilities:
 
 - `useThread` is the public React interface.
-- `ThreadChat` is the observable, tree-backed chat engine.
+- `Thread` is the observable, tree-backed chat engine.
 - `ThreadRunChat` is an internal AI SDK request engine for one response.
 
 ## Compatibility Decision Rule
@@ -101,26 +101,27 @@ Whole-conversation state is exposed through `tree`:
 
 ## Hook Ownership
 
-By default, `useThread` creates one `ThreadChat` and keeps it in a React ref:
+By default, `useThread` creates one `Thread` and keeps it in a React ref:
 
 ```ts
-const chatRef = useRef<ThreadChat | null>(null);
-if (chatRef.current === null) {
-	chatRef.current = new ThreadChat(options);
+const threadRef = useRef<Thread | null>(null);
+if (threadRef.current === null) {
+	threadRef.current = new Thread(options);
 }
 ```
 
-The same `ThreadChat` is used for the lifetime of that hook instance. Updated
-callbacks and transports are applied to it without replacing its tree or
-active runs.
+The same `Thread` is retained while its identity inputs remain unchanged.
+Supplying a different external `thread` or a different defined `id` replaces
+the controller, including its tree and active runs. Updated callbacks and
+transports do not replace the retained controller.
 
-An existing `ThreadChat` can also be supplied:
+An existing `Thread` can also be supplied:
 
 ```ts
-const threadChat = createThreadChat({ transport });
+const thread = createThread({ transport });
 
 function useConversation() {
-  return useThread({ chat: threadChat });
+  return useThread({ thread });
 }
 ```
 
@@ -128,12 +129,12 @@ In this mode, `useThread` subscribes to the supplied engine instead of creating
 one. This changes engine ownership, not the returned hook interface.
 
 In both modes there is one mounted `useThread`. `ThreadRunChat` instances are
-ordinary class instances created imperatively by `ThreadChat`; they are not
+ordinary class instances created imperatively by `Thread`; they are not
 React hooks or components.
 
-## ThreadChat State
+## Thread State
 
-`ThreadChat` is the canonical state owner. It stores:
+`Thread` is the canonical state owner. It stores:
 
 - each message once, keyed by message ID
 - one parent ID per message
@@ -164,7 +165,7 @@ Tree mutations enforce these invariants:
 
 ## Identity and Continuity
 
-`ThreadChat.id` identifies the complete threaded conversation. It has the same
+`Thread.id` identifies the complete threaded conversation. It has the same
 role as AI SDK's `Chat.id`, remains stable as messages are added, and is sent to
 the transport as `chatId` on every request.
 
@@ -180,13 +181,13 @@ the new user beneath the selected head, then attaches and selects the assistant
 when AI SDK first publishes it. Starting from an earlier node creates siblings
 without changing existing identities or ancestry.
 
-Tree snapshots persist topology and cursor selection, but not `ThreadChat.id`.
+Tree snapshots persist topology and cursor selection, but not `Thread.id`.
 Callers that restore a conversation associate the snapshot with its stable
-conversation ID and supply that ID to the new `ThreadChat` instance.
+conversation ID and supply that ID to the new `Thread` instance.
 
 ## React Subscription
 
-`useThread` subscribes to `ThreadChat` with `useSyncExternalStore`. A tree
+`useThread` subscribes to `Thread` with `useSyncExternalStore`. A tree
 mutation, cursor change, stream update, or run status change publishes a new
 snapshot.
 
@@ -216,7 +217,7 @@ message ID remains unknown until AI SDK first publishes the response and may
 then come from the server. Message-based helpers resolve the run associated with
 that node after this binding occurs.
 
-`ThreadChat` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
+`Thread` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
 reconnection needs an AI SDK request lifecycle. Completed run records are
 currently retained so their status and ownership information remain
 addressable.
@@ -233,7 +234,7 @@ the parent of another response. Therefore, a bare `startRun` from an assistant
 message is rejected. Branching from an assistant remains supported by attaching
 a new input message with `sendMessage` and generating from that input.
 
-This is a `ThreadChat` live-run invariant, not a `MessageTree` invariant. The
+This is a `Thread` live-run invariant, not a `MessageTree` invariant. The
 tree remains role-agnostic so persisted, restored, or server-created data may
 contain assistant-to-assistant edges.
 
@@ -251,8 +252,8 @@ behavior for:
 - `sendAutomaticallyWhen`
 - regeneration and reconnection
 
-The internal `ThreadChatState` presents one linear branch path to
-`AbstractChat`. It writes accumulated assistant snapshots into `ThreadChat`
+The internal `ThreadRunState` presents one linear branch path to
+`AbstractChat`. It writes accumulated assistant snapshots into `Thread`
 when AI SDK publishes the streaming response.
 
 `ThreadRunChat` does not insert a synthetic response into that path. AI SDK
@@ -265,7 +266,7 @@ continue the same node.
 The supplied AI SDK `ChatTransport` remains the request and stream boundary.
 The package does not define another transport protocol or manually parse
 `UIMessageChunk` values. A delegating transport ensures new and reconnected
-runs use the latest transport configured on `ThreadChat`.
+runs use the latest transport configured on `Thread`.
 
 Each request receives the selected linear path. `ChatRequestOptions` are passed
 to the configured transport unchanged; tree controls never leak into the
@@ -343,7 +344,7 @@ cursor.
 ## Tool Ownership
 
 Tool output and approval APIs retain their standard `useChat` signatures.
-`ThreadChat` indexes each tool call and approval ID to the run that emitted it,
+`Thread` indexes each tool call and approval ID to the run that emitted it,
 then routes subsequent mutations back to that run's `ThreadRunChat`.
 
 Tool-call and approval IDs must be unique across all retained, addressable
@@ -382,14 +383,14 @@ The snapshot can be supplied later as `initialTree`. Active request objects,
 abort controllers, and `ThreadRunChat` instances are not serialized.
 Restoration rebuilds tool-call and approval ownership from the serialized
 assistant messages. When a standard tool-output or approval helper targets a
-restored message, `ThreadChat` lazily creates the owning branch's internal run
+restored message, `Thread` lazily creates the owning branch's internal run
 adapter before applying the mutation. Reconnection uses the same lazy adapter
 creation. This preserves `useChat` tool behavior without eagerly retaining an
 adapter for every historical assistant message.
 
 ## Concurrency
 
-`ThreadChat` enforces optional limits before mutating the tree:
+`Thread` enforces optional limits before mutating the tree:
 
 ```ts
 useThread({
