@@ -57,6 +57,205 @@ function createThreadStore(initialMessages: ChatMessage[]) {
 }
 
 describe("withThreads", () => {
+  it("preserves explicit topology for messages without app metadata", () => {
+    const root = {
+      id: "root",
+      parts: [{ type: "text", text: "Root" }],
+      role: "user",
+    } as ChatMessage;
+    const assistant = {
+      id: "assistant",
+      parts: [{ type: "text", text: "Response" }],
+      role: "assistant",
+    } as ChatMessage;
+    const store = createThreadStore([]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: assistant.id,
+      nodes: [
+        { message: root, parentId: null },
+        { message: assistant, parentId: root.id },
+      ],
+      version: 1,
+    });
+
+    assert.deepEqual(
+      store.getState().messages.map((message) => message.id),
+      [root.id, assistant.id]
+    );
+    assert.deepEqual(
+      store
+        .getState()
+        .treeSnapshot.nodes.map(({ message, parentId }) => [
+          message.id,
+          parentId,
+        ]),
+      [
+        [root.id, null],
+        [assistant.id, root.id],
+      ]
+    );
+  });
+
+  it("treats a null cursor as an empty selected path", () => {
+    const root = createMessage({
+      id: "root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+    const store = createThreadStore([root]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: null,
+      nodes: [{ message: root, parentId: null }],
+      version: 1,
+    });
+
+    assert.deepEqual(store.getState().messages, []);
+    assert.deepEqual(
+      store.getState().allMessages.map((message) => message.id),
+      [root.id]
+    );
+  });
+
+  it("preserves paths deeper than 100 messages", () => {
+    const messages = Array.from({ length: 125 }, (_, index) =>
+      createMessage({
+        id: `message-${index}`,
+        role: index % 2 === 0 ? "user" : "assistant",
+        createdAt: new Date(index * 1000).toISOString(),
+        parentMessageId: index === 0 ? null : `message-${index - 1}`,
+      })
+    );
+    const store = createThreadStore([]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: messages.at(-1)?.id ?? null,
+      nodes: messages.map((message, index) => ({
+        message,
+        parentId: index === 0 ? null : (messages[index - 1]?.id ?? null),
+      })),
+      version: 1,
+    });
+
+    assert.equal(store.getState().messages.length, messages.length);
+    assert.equal(store.getState().messages.at(0)?.id, messages.at(0)?.id);
+  });
+
+  it("keeps known root parents when metadata points outside the tree", () => {
+    const rootA = createMessage({
+      id: "root-a",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      parentMessageId: "missing-parent",
+    });
+    const rootB = createMessage({
+      id: "root-b",
+      role: "user",
+      createdAt: "2024-01-01T00:00:01.000Z",
+      parentMessageId: "missing-parent",
+    });
+    const store = createThreadStore([]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: rootB.id,
+      nodes: [
+        { message: rootA, parentId: null },
+        { message: rootB, parentId: null },
+      ],
+      version: 1,
+    });
+
+    assert.deepEqual(
+      store
+        .getState()
+        .getMessageSiblingInfo(rootB.id)
+        ?.siblings.map((message) => message.id),
+      [rootA.id, rootB.id]
+    );
+  });
+
+  it("hydrates an empty visible path from the server tree", () => {
+    const root = createMessage({
+      id: "root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+    const assistant = createMessage({
+      id: "assistant",
+      role: "assistant",
+      createdAt: "2024-01-01T00:00:01.000Z",
+      parentMessageId: root.id,
+    });
+    const store = createThreadStore([]);
+
+    store.getState().setAllMessages([root, assistant]);
+
+    assert.deepEqual(
+      store.getState().messages.map((message) => message.id),
+      [root.id, assistant.id]
+    );
+    assert.equal(store.getState().treeSnapshot.cursorId, assistant.id);
+  });
+
+  it("inherits deterministic fallback metadata from the parent", () => {
+    const root = createMessage({
+      id: "root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+    const assistant = {
+      id: "assistant",
+      parts: [],
+      role: "assistant",
+    } as unknown as ChatMessage;
+    const store = createThreadStore([root]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: assistant.id,
+      nodes: [
+        { message: root, parentId: null },
+        { message: assistant, parentId: root.id },
+      ],
+      version: 1,
+    });
+
+    assert.deepEqual(
+      store.getState().messages.at(-1)?.metadata.createdAt,
+      root.metadata.createdAt
+    );
+  });
+
+  it("keeps initial messages stable across server synchronization", () => {
+    const root = createMessage({
+      id: "root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+    const placeholder = createMessage({
+      id: "assistant",
+      role: "assistant",
+      createdAt: "2024-01-01T00:00:01.000Z",
+      parentMessageId: root.id,
+    });
+    const completed = createMessage({
+      id: placeholder.id,
+      role: "assistant",
+      createdAt: "2024-01-01T00:00:01.000Z",
+      parentMessageId: root.id,
+      text: "Completed",
+    });
+    const store = createThreadStore([root, placeholder]);
+
+    store.getState().setAllMessages([root, completed]);
+
+    assert.deepEqual(store.getState().threadInitialMessages, [
+      root,
+      placeholder,
+    ]);
+    assert.equal(store.getState().messages.at(-1)?.parts.at(0)?.type, "text");
+  });
+
   it("describes a parallel group before any assistant message exists", () => {
     const user = createMessage({
       id: "user-root",
