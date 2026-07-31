@@ -10,6 +10,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 	readonly requests: Array<{
 		abortSignal: AbortSignal | undefined;
 		controller: ReadableStreamDefaultController<UIMessageChunk>;
+		options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
 	}> = [];
 	#reconnectStream: ReadableStream<UIMessageChunk> | null = null;
 
@@ -20,6 +21,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 					this.requests.push({
 						abortSignal: options.abortSignal,
 						controller,
+						options,
 					});
 					options.abortSignal?.addEventListener(
 						"abort",
@@ -294,23 +296,61 @@ describe("Thread", () => {
 		expect(chat.getSnapshot().runs).toHaveLength(0);
 	});
 
-	test("rejects an assistant input without mutating the tree", async () => {
+	test("continues an explicit assistant input in the same tree node", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({ messages: [user("user-1")], transport });
 
-		await expect(
-			chat.sendMessage({
-				id: "assistant-input",
-				parts: [{ text: "prebuilt response", type: "text" }],
-				role: "assistant",
-			}),
-		).rejects.toThrow(
-			"Cannot start a new run directly from assistant message assistant-input; attach an input message first",
+		const sending = chat.sendMessage({
+			id: "assistant-input",
+			parts: [{ text: "prebuilt response", type: "text" }],
+			role: "assistant",
+		});
+		await waitFor(() => transport.requests.length === 1);
+
+		expect(transport.requests[0]?.options.trigger).toBe("submit-message");
+		expect(transport.requests[0]?.options.messageId).toBeUndefined();
+		expect(transport.requests[0]?.options.messages.map(({ id }) => id)).toEqual(
+			["user-1", "assistant-input"],
 		);
-		expect(transport.requests).toHaveLength(0);
-		expect(chat.getMessage("assistant-input")).toBeUndefined();
-		expect(chat.getSnapshot().cursorId).toBe("user-1");
-		expect(chat.getSnapshot().runs).toHaveLength(0);
+		expect(chat.getParent("assistant-input")?.id).toBe("user-1");
+		expect(chat.getSnapshot().cursorId).toBe("assistant-input");
+
+		transport.emitText(0, "assistant-input", "continued");
+		await sending;
+
+		expect(chat.getChildren("user-1").map(({ id }) => id)).toEqual([
+			"assistant-input",
+		]);
+		expect(
+			getMessageText(requireMessage(chat.getMessage("assistant-input"))),
+		).toBe("prebuilt responsecontinued");
+	});
+
+	test("continues the selected assistant without creating a sibling", async () => {
+		const transport = new ControlledTransport();
+		const assistant = {
+			...user("assistant-1"),
+			role: "assistant" as const,
+		};
+		const chat = new Thread({
+			messages: [user("user-1"), assistant],
+			transport,
+		});
+
+		const sending = chat.sendMessage();
+		await waitFor(() => transport.requests.length === 1);
+
+		expect(transport.requests[0]?.options.trigger).toBe("submit-message");
+		expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
+		transport.emitText(0, "assistant-1", " continued");
+		await sending;
+
+		expect(chat.getChildren("user-1").map(({ id }) => id)).toEqual([
+			"assistant-1",
+		]);
+		expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
+			"assistant-1 continued",
+		);
 	});
 
 	test("keeps hidden branches when reconciling the selected path", () => {
@@ -496,6 +536,11 @@ describe("Thread", () => {
 
 		const regeneration = chat.regenerate({ messageId: "assistant-1" });
 		await waitFor(() => transport.requests.length === 2);
+		expect(transport.requests[1]?.options.trigger).toBe("regenerate-message");
+		expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+		expect(transport.requests[1]?.options.messages.map(({ id }) => id)).toEqual(
+			["user-1"],
+		);
 		transport.emitText(1, "assistant-2", "second");
 		await regeneration;
 
@@ -504,6 +549,50 @@ describe("Thread", () => {
 			"assistant-2",
 		]);
 		expect(chat.getSnapshot().cursorId).toBe("assistant-2");
+	});
+
+	test("regenerates a root assistant as a root sibling", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({
+			messages: [{ ...user("assistant-1"), role: "assistant" }],
+			transport,
+		});
+
+		const regeneration = chat.regenerate({ messageId: "assistant-1" });
+		await waitFor(() => transport.requests.length === 1);
+		expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
+		expect(transport.requests[0]?.options.messageId).toBe("assistant-1");
+		expect(transport.requests[0]?.options.messages).toEqual([]);
+
+		transport.emitText(0, "assistant-2", "second");
+		await regeneration;
+
+		expect(chat.getSiblings("assistant-1").map(({ id }) => id)).toEqual([
+			"assistant-1",
+			"assistant-2",
+		]);
+		expect(chat.getSnapshot().cursorId).toBe("assistant-2");
+	});
+
+	test("does not follow regeneration after navigating to another branch", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({
+			messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+			transport,
+		});
+		chat.addMessage(user("other-root"), null);
+
+		const regeneration = chat.regenerate({ messageId: "assistant-1" });
+		await waitFor(() => transport.requests.length === 1);
+		chat.setCursor("other-root");
+		transport.emitText(0, "assistant-2", "second");
+		await regeneration;
+
+		expect(chat.getParent("assistant-2")?.id).toBe("user-1");
+		expect(chat.getSnapshot().cursorId).toBe("other-root");
+		expect(chat.getSnapshot().messages.map(({ id }) => id)).toEqual([
+			"other-root",
+		]);
 	});
 
 	test("rejects an unknown explicit regeneration target", async () => {
@@ -533,7 +622,7 @@ describe("Thread", () => {
 		await expect(
 			chat.regenerate({ messageId: "assistant-child" }),
 		).rejects.toThrow(
-			"Cannot start a new run directly from assistant message assistant-parent; attach an input message first",
+			"Cannot regenerate assistant message assistant-child because its parent assistant-parent is also an assistant",
 		);
 		expect(transport.requests).toHaveLength(0);
 		expect(chat.getSnapshot().runs).toHaveLength(0);
@@ -636,6 +725,52 @@ describe("Thread", () => {
 		);
 	});
 
+	test("reconstructs tool and approval ownership after restoring a tree", async () => {
+		const source = new Thread();
+		source.addMessage(user("user-1"), null);
+		source.addMessage(
+			{
+				id: "assistant-1",
+				parts: [
+					{
+						approval: { id: "approval-1" },
+						input: { value: 1 },
+						state: "approval-requested",
+						toolCallId: "tool-1",
+						toolName: "test-tool",
+						type: "dynamic-tool",
+					},
+				],
+				role: "assistant",
+			},
+			"user-1",
+		);
+		source.setCursor("assistant-1");
+		const restored = new Thread();
+		restored.restore(source.getTreeSnapshot());
+
+		await restored.addToolApprovalResponse({
+			approved: true,
+			id: "approval-1",
+		});
+		await restored.addToolOutput({
+			output: "restored output",
+			tool: "test-tool",
+			toolCallId: "tool-1",
+		});
+
+		expect(restored.getMessage("assistant-1")?.parts).toContainEqual(
+			expect.objectContaining({
+				approval: expect.objectContaining({
+					approved: true,
+					id: "approval-1",
+				}),
+				output: "restored output",
+				toolCallId: "tool-1",
+			}),
+		);
+	});
+
 	test("enforces the global concurrency limit before resuming", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({
@@ -701,5 +836,70 @@ describe("Thread", () => {
 			"resumed",
 		);
 		expect(transport.lastReconnectOptions?.body).toBeUndefined();
+	});
+
+	test("resumes a restored root assistant", async () => {
+		const transport = new ResumeTransport();
+		const chat = new Thread({
+			initialTree: {
+				cursorId: "assistant-root",
+				nodes: [
+					{
+						message: {
+							id: "assistant-root",
+							parts: [],
+							role: "assistant",
+						},
+						parentId: null,
+					},
+				],
+				version: 1,
+			},
+			transport,
+		});
+
+		await chat.resumeStream();
+
+		expect(
+			getMessageText(requireMessage(chat.getMessage("assistant-root"))),
+		).toBe("resumed");
+	});
+
+	test("resumes a restored assistant whose parent is an assistant", async () => {
+		const transport = new ResumeTransport();
+		const chat = new Thread({
+			initialTree: {
+				cursorId: "assistant-child",
+				nodes: [
+					{
+						message: {
+							id: "assistant-parent",
+							parts: [{ text: "parent", type: "text" }],
+							role: "assistant",
+						},
+						parentId: null,
+					},
+					{
+						message: {
+							id: "assistant-child",
+							parts: [],
+							role: "assistant",
+						},
+						parentId: "assistant-parent",
+					},
+				],
+				version: 1,
+			},
+			transport,
+		});
+
+		await chat.resumeStream();
+
+		expect(
+			getMessageText(requireMessage(chat.getMessage("assistant-parent"))),
+		).toBe("parent");
+		expect(
+			getMessageText(requireMessage(chat.getMessage("assistant-child"))),
+		).toBe("resumed");
 	});
 });

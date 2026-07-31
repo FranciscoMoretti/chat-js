@@ -32,7 +32,7 @@ export class RunRegistry<TMessage extends UIMessage> {
 		this.#runsById.set(record.spec.id, record);
 	}
 
-	assertCanStart(parentMessageId: string | null) {
+	assertHasCapacity(parentMessageId: string | null) {
 		const activeRuns = this.getActive();
 		if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
 			throw new Error("Cannot start run: max active runs reached");
@@ -62,10 +62,9 @@ export class RunRegistry<TMessage extends UIMessage> {
 		);
 	}
 
-	getForApproval(approvalId: string) {
+	findForApproval(approvalId: string) {
 		const runId = this.#runIdByApprovalId.get(approvalId);
-		if (!runId) throw new Error(`No run owns tool approval ${approvalId}`);
-		return this.require(runId);
+		return runId ? this.#runsById.get(runId) : undefined;
 	}
 
 	getForMessage(messageId: string) {
@@ -82,10 +81,15 @@ export class RunRegistry<TMessage extends UIMessage> {
 		);
 	}
 
-	getForToolCall(toolCallId: string) {
+	findForToolCall(toolCallId: string) {
 		const runId = this.#runIdByToolCallId.get(toolCallId);
-		if (!runId) throw new Error(`No run owns tool call ${toolCallId}`);
-		return this.require(runId);
+		return runId ? this.#runsById.get(runId) : undefined;
+	}
+
+	getForResponseMessage(messageId: string) {
+		return this.values()
+			.reverse()
+			.find((candidate) => candidate.spec.messageId === messageId);
 	}
 
 	getInsertionIndex({

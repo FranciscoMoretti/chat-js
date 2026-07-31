@@ -280,7 +280,7 @@ message ID remains unknown until AI SDK first publishes the response and may
 then come from the server. Message-based helpers resolve the run associated with
 that node after this binding occurs.
 
-`Thread` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
+`AbstractThread` creates a `ThreadRunChat` when `sendMessage`, `startRun`, or a
 reconnection needs an AI SDK request lifecycle. Completed run records are
 currently retained so their status and ownership information remain
 addressable.
@@ -291,15 +291,26 @@ run has independent status, error, request serialization, and cancellation.
 Automatic tool continuations remain in the same run and update the same
 assistant response node.
 
-A new live run requires a non-assistant response parent. AI SDK interprets an
-assistant message at the end of a request as the response to continue, not as
-the parent of another response. Therefore, a bare `startRun` from an assistant
-message is rejected. Branching from an assistant remains supported by attaching
-a new input message with `sendMessage` and generating from that input.
+A new independent response requires a non-assistant response parent. AI SDK
+interprets an assistant message at the end of a request as the response to
+continue, not as the parent of another response. Therefore, a bare `startRun`
+from an assistant message is rejected.
+
+The `useChat`-compatible `sendMessage` surface keeps AI SDK's continuation
+semantics. Calling `sendMessage()` on a selected assistant continues that node,
+and passing an explicit assistant message attaches and streams into that same
+message ID. Neither operation creates a child response under the assistant.
+Applications create a branch below an assistant by attaching a new input
+message and generating from that input.
 
 This is a `Thread` live-run invariant, not a `MessageTree` invariant. The
 tree remains role-agnostic so persisted, restored, or server-created data may
 contain assistant-to-assistant edges.
+
+Reconnection does not create response topology. It reactivates the existing
+assistant node, so its parent may have any role or be `null`. Resume checks
+concurrency capacity but does not apply the new-response parent-role rule,
+matching AI SDK's `resumeStream` behavior over the current message history.
 
 ## AI SDK Integration
 
@@ -315,9 +326,10 @@ behavior for:
 - `sendAutomaticallyWhen`
 - regeneration and reconnection
 
-The internal `ThreadRunState` presents one linear branch path to
-`AbstractChat`. It writes accumulated assistant snapshots into `Thread`
-when AI SDK publishes the streaming response.
+The internal `ThreadRunState` presents one run-local linear branch path to
+`AbstractChat`. AI SDK may truncate that local path for regeneration without
+deleting nodes from the canonical tree. The state writes accumulated assistant
+snapshots into `Thread` when AI SDK publishes the streaming response.
 
 `ThreadRunChat` does not insert a synthetic response into that path. AI SDK
 creates the provisional assistant response using its normal last-message rules
@@ -368,6 +380,34 @@ As in AI SDK, expected transport and stream failures resolve after publishing
 `error` status. Unexpected application or state-layer exceptions that escape
 `AbstractChat` reject `sendMessage`, `resumeRun`, and the corresponding
 `finished` promise.
+
+## Regeneration
+
+`regenerate({ messageId })` invokes `AbstractChat.regenerate` inside an isolated
+run adapter. The transport therefore receives AI SDK's native
+`regenerate-message` trigger and target `messageId`.
+
+AI SDK truncates only the adapter's linear request path. The canonical tree
+retains the target response, then inserts the streamed replacement beside it
+using the run's reserved sibling order. A root assistant regenerates into
+another root. The cursor follows the replacement on its first write only when
+it still points to the regeneration target, so navigation during submission or
+streaming is not overwritten.
+
+### Known AI SDK Blocker
+
+Regenerating an assistant whose parent is another assistant remains rejected.
+This is blocked by an AI SDK regeneration bug: after truncating the path to the
+assistant parent, AI SDK treats that trailing assistant as the response to
+continue. Regenerating `[user, assistant A, assistant B]` therefore produces
+`[user, assistant A']` instead of creating a replacement sibling for
+`assistant B`.
+
+The intended tree result is to preserve `assistant B` and create another child
+of `assistant A`. Once AI SDK distinguishes regeneration from normal trailing
+assistant continuation, `Thread` can remove this rejection and keep using the
+native regeneration lifecycle. Until then, rejecting the operation avoids
+silently mutating a shared ancestor.
 
 ## Status and Cancellation
 
