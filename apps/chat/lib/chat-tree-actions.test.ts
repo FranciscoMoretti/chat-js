@@ -30,7 +30,7 @@ function message({
 }
 
 describe("getRetryMessageInput", () => {
-  it("builds a retry message from an assistant response and keeps the parent user visible", () => {
+  it("selects the response model for an assistant retry", () => {
     const root = message({ id: "root", role: "user" });
     const assistant = message({
       id: "assistant",
@@ -46,19 +46,6 @@ describe("getRetryMessageInput", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      messagesBeforeRetry: [root],
-      message: {
-        id: root.id,
-        role: "user",
-        metadata: {
-          activeStreamId: null,
-          isPrimaryParallel: null,
-          parallelGroupId: null,
-          parallelIndex: null,
-          parentMessageId: null,
-          selectedModel: "openai/gpt-5-nano",
-        },
-      },
       selectedModelId: "openai/gpt-5-nano",
     });
   });
@@ -73,7 +60,7 @@ describe("getRetryMessageInput", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.ok ? result.message.id : null).toBe(root.id);
+    expect(result.ok ? result.selectedModelId : null).toBe("openai/gpt-5-mini");
   });
 
   it("reports missing parent messages", () => {

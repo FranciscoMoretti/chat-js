@@ -17,7 +17,7 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const { setMessages, regenerate } = useChatActions<ChatMessage>();
+  const { regenerate } = useChatActions<ChatMessage>();
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
@@ -45,8 +45,6 @@ export function RetryButton({
       return;
     }
 
-    setMessages(retryInput.messagesBeforeRetry);
-
     regenerate({
       body: {
         selectedModelId: retryInput.selectedModelId,
@@ -55,7 +53,7 @@ export function RetryButton({
     });
 
     toast.success("Retrying message...");
-  }, [regenerate, messageId, setMessages, chatStore]);
+  }, [regenerate, messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {
     return null;

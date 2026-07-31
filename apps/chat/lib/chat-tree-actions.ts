@@ -3,8 +3,6 @@ import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
 
 export type RetryMessageResult =
   | {
-      message: ChatMessage;
-      messagesBeforeRetry: ChatMessage[];
       ok: true;
       selectedModelId: AppModelId;
     }
@@ -56,20 +54,6 @@ export function getRetryMessageInput({
 
   return {
     ok: true,
-    messagesBeforeRetry: messages.slice(0, parentMessageIndex + 1),
-    message: {
-      ...parentMessage,
-      metadata: {
-        ...parentMessage.metadata,
-        activeStreamId: null,
-        createdAt: parentMessage.metadata?.createdAt || new Date(),
-        isPrimaryParallel: null,
-        parallelGroupId: null,
-        parallelIndex: null,
-        parentMessageId: parentMessage.metadata?.parentMessageId || null,
-        selectedModel: retryModelId,
-      },
-    },
     selectedModelId: retryModelId as AppModelId,
   };
 }
