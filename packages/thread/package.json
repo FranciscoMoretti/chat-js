@@ -51,7 +51,7 @@
 		"prepublishOnly": "bun run build",
 		"test": "bun test --pass-with-no-tests",
 		"test:unit": "bun test --pass-with-no-tests",
-		"test:types": "bun run build"
+		"test:types": "tsc -p tsconfig.json --noEmit && bun run build"
 	},
 	"peerDependencies": {
 		"@ai-sdk/react": "^3.0.0",

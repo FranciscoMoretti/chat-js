@@ -7,6 +7,7 @@ import {
 	convertFileListToFileUIParts,
 	DefaultChatTransport,
 	generateId,
+	isToolUIPart,
 	type UIMessage,
 } from "ai";
 import {
@@ -141,12 +142,12 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
 	addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
 		async (response) => {
-			const run = this.#runs.getForApproval(response.id);
+			const run = this.getOrCreateRunForApproval(response.id);
 			await run.chat.addToolApprovalResponse(response);
 		};
 
 	addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (output) => {
-		const run = this.#runs.getForToolCall(output.toolCallId);
+		const run = this.getOrCreateRunForToolCall(output.toolCallId);
 		await run.chat.addToolOutput(output);
 	};
 
@@ -190,11 +191,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		this.updateTree((tree) => tree.setCursorToParentOf(messageId));
 	}
 
-	private getRunPath(runId: string) {
-		const run = this.#runs.require(runId);
-		return this.readTree((tree) =>
-			tree.getPath(run.spec.messageId ?? run.spec.parentMessageId),
-		);
+	private getMessagePath(messageId: string | null) {
+		return this.readTree((tree) => tree.getPath(messageId));
 	}
 
 	private writeRunMessage(runId: string, message: TMessage) {
@@ -227,7 +225,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			this.indexMessageOwnership(runId, message);
 			if (
 				this.#runs.isExplicitlySelected(runId) &&
-				tree.cursorId === run.spec.parentMessageId
+				tree.cursorId === run.spec.initialPathMessageId
 			) {
 				tree.setCursor(message.id);
 			}
@@ -247,9 +245,11 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 					: tree.getMessage(messageId);
 			return {
 				parentMessageId:
-					selectedTarget?.role === "assistant"
-						? tree.getParentId(selectedTarget.id)
-						: selectedTarget?.id,
+					selectedTarget == null
+						? null
+						: selectedTarget.role === "assistant"
+							? (tree.getParentId(selectedTarget.id) ?? null)
+							: selectedTarget.id,
 				target: selectedTarget,
 			};
 		});
@@ -257,15 +257,41 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			throw new Error(`message ${messageId} not found`);
 		}
 
-		if (!parentMessageId) return;
+		if (target.role === "assistant") {
+			if (parentMessageId) {
+				const parentMessage = this.getMessage(parentMessageId);
+				if (!parentMessage) {
+					throw new Error(`Unknown message ${parentMessageId}`);
+				}
+				if (parentMessage.role === "assistant") {
+					// AI SDK regeneration currently reuses a trailing assistant instead
+					// of creating a new response, which would mutate this shared parent.
+					throw new Error(
+						`Cannot regenerate assistant message ${target.id} because its parent ${parentMessage.id} is also an assistant`,
+					);
+				}
+				this.assertCanGenerateFrom(parentMessage);
+			} else {
+				this.#runs.assertHasCapacity(null);
+			}
+		} else {
+			this.assertCanGenerateFrom(target);
+		}
 
-		this.assertCanStartRun(parentMessageId);
-		const run = this.startRunFromParent({
-			follow: true,
+		const spec: ThreadRunSpec = {
 			id: this.#runs.reserveId(this.generateMessageId),
-			options,
+			initialPathMessageId: target.id,
 			parentMessageId,
-		});
+			siblingOrder: this.#runs.reserveSiblingOrder(
+				parentMessageId,
+				this.getChildren(parentMessageId).length,
+			),
+		};
+		this.#runs.select(spec.id);
+		this.updateTree((tree) => tree.setCursor(target.id));
+		const run = this.startRunRequest(spec, (chat) =>
+			chat.regenerateMessage(target.id, options),
+		);
 		await run.finished;
 	};
 
@@ -314,6 +340,22 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		options?: TreeSendOptions,
 	) => {
 		const { tree, ...request } = options ?? {};
+		if (!input) {
+			const cursorId =
+				tree && "from" in tree
+					? (tree.from ?? null)
+					: this.getSnapshot().cursorId;
+			const cursorMessage = cursorId ? this.getMessage(cursorId) : undefined;
+			if (cursorMessage?.role === "assistant") {
+				const run = this.continueAssistant({
+					follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
+					messageId: cursorMessage.id,
+					options: request,
+				});
+				await run.finished;
+				return;
+			}
+		}
 		const run = await this.startRun({
 			follow: tree?.follow,
 			from: tree && "from" in tree ? (tree.from ?? null) : undefined,
@@ -348,7 +390,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			if (!originMessage) {
 				throw new Error("Select a message before starting a run");
 			}
-			this.assertCanStartRun(originMessage.id);
+			this.assertCanGenerateFrom(originMessage);
 			return this.startRunFromParent({
 				follow,
 				id: this.#runs.reserveId(this.generateMessageId),
@@ -361,8 +403,15 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			fallbackId: getInputMessageId(input) ?? this.generateMessageId(),
 			input,
 		});
-		this.assertValidRunParent(message);
-		this.assertCanStartRun(message.id);
+		if (message.role === "assistant") {
+			return this.startAssistantMessage({
+				follow,
+				message,
+				options,
+				parentMessageId: cursorId,
+			});
+		}
+		this.assertCanGenerateFrom(message);
 		this.updateTree((tree) => {
 			const existingMessage = tree.getMessage(message.id);
 			const attachmentId = existingMessage
@@ -460,7 +509,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 				return thread.dataPartSchemas;
 			},
 			generateMessageId: () => thread.generateMessageId(),
-			getRunPath: (runId) => thread.getRunPath(runId),
+			getMessagePath: (messageId) => thread.getMessagePath(messageId),
 			get id() {
 				return thread.id;
 			},
@@ -560,11 +609,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		}
 	}
 
-	private assertCanStartRun(parentMessageId: string | null) {
-		const parentMessage =
-			parentMessageId == null ? undefined : this.getMessage(parentMessageId);
-		if (parentMessage) this.assertValidRunParent(parentMessage);
-		this.#runs.assertCanStart(parentMessageId);
+	private assertCanGenerateFrom(parentMessage: TMessage) {
+		this.assertValidRunParent(parentMessage);
+		this.#runs.assertHasCapacity(parentMessage.id);
 	}
 
 	private assertValidRunParent(message: TMessage) {
@@ -582,23 +629,97 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		});
 	}
 
+	private findAssistantOwningPart({
+		id,
+		label,
+		matches,
+	}: {
+		id: string;
+		label: string;
+		matches: (part: TMessage["parts"][number]) => boolean;
+	}) {
+		let owner: TMessage | undefined;
+		for (const { message } of this.getTreeSnapshot().nodes) {
+			if (message.role !== "assistant" || !message.parts.some(matches)) {
+				continue;
+			}
+			if (owner && owner.id !== message.id) {
+				throw new Error(
+					`${label} ${id} appears in more than one assistant message`,
+				);
+			}
+			owner = message;
+		}
+		return owner;
+	}
+
+	private getOrCreateRunForApproval(approvalId: string) {
+		const existing = this.#runs.findForApproval(approvalId);
+		if (existing) return existing;
+		const owner = this.findAssistantOwningPart({
+			id: approvalId,
+			label: "Tool approval",
+			matches: (part) => isToolUIPart(part) && part.approval?.id === approvalId,
+		});
+		if (!owner) {
+			throw new Error(`No run owns tool approval ${approvalId}`);
+		}
+		const run = this.createRunForAssistant(owner.id);
+		if (!run) {
+			throw new Error(`Assistant message ${owner.id} cannot own a run`);
+		}
+		return run;
+	}
+
+	private getOrCreateRunForToolCall(toolCallId: string) {
+		const existing = this.#runs.findForToolCall(toolCallId);
+		if (existing) return existing;
+		const owner = this.findAssistantOwningPart({
+			id: toolCallId,
+			label: "Tool call",
+			matches: (part) => isToolUIPart(part) && part.toolCallId === toolCallId,
+		});
+		if (!owner) {
+			throw new Error(`No run owns tool call ${toolCallId}`);
+		}
+		const run = this.createRunForAssistant(owner.id);
+		if (!run) {
+			throw new Error(`Assistant message ${owner.id} cannot own a run`);
+		}
+		return run;
+	}
+
 	private createRunForSelectedAssistant() {
 		const tree = this.createTree();
 		const messageId = tree.cursorId;
 		if (!messageId) return;
+		return this.createRunForAssistant(messageId, true);
+	}
+
+	private createRunForAssistant(messageId: string, select = false) {
+		const existing = this.#runs.getForResponseMessage(messageId);
+		if (existing) {
+			if (select) this.#runs.select(existing.spec.id);
+			return existing;
+		}
+		const tree = this.createTree();
 		const message = tree.getMessage(messageId);
 		if (!message || message.role !== "assistant") {
 			return;
 		}
-		const parentMessageId = tree.getParentId(messageId);
-		if (!parentMessageId) return;
+		const parentMessageId = tree.getParentId(messageId) ?? null;
+		const siblingOrder = tree
+			.getChildren(parentMessageId)
+			.findIndex((child) => child.id === messageId);
+		if (siblingOrder === -1) {
+			throw new Error(`Message ${messageId} is missing from its sibling order`);
+		}
 
-		const spec: ThreadRunSpec & { parentMessageId: string } = {
+		const spec: ThreadRunSpec = {
+			initialPathMessageId: messageId,
 			messageId,
 			parentMessageId,
-			siblingOrder: tree
-				.getChildren(parentMessageId)
-				.findIndex((child) => child.id === messageId),
+			siblingOrder,
 			id: this.#runs.reserveId(this.generateMessageId),
 		};
 		const record: RunRecord<TMessage> = {
@@ -609,7 +730,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			status: "ready",
 		};
 		this.#runs.add(record);
-		this.#runs.select(spec.id);
+		if (select) this.#runs.select(spec.id);
 		this.indexMessageOwnership(spec.id, message);
 		this.publish();
 		return record;
@@ -626,13 +747,17 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		id,
 		options,
 		parentMessageId,
-	}: Omit<ThreadRunSpec, "messageId" | "parentMessageId" | "siblingOrder"> & {
+	}: Omit<
+		ThreadRunSpec,
+		"initialPathMessageId" | "messageId" | "parentMessageId" | "siblingOrder"
+	> & {
 		follow: boolean;
 		options?: ChatRequestOptions;
 		parentMessageId: string;
 	}) {
 		const spec: ThreadRunSpec & { parentMessageId: string } = {
 			id,
+			initialPathMessageId: parentMessageId,
 			parentMessageId,
 			siblingOrder: this.#runs.reserveSiblingOrder(
 				parentMessageId,
@@ -643,15 +768,14 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 			this.#runs.select(id);
 			this.updateTree((tree) => tree.setCursor(parentMessageId));
 		}
-		return this.startRunRequest(spec, options);
+		return this.startRunRequest(spec, (chat) => chat.start(options));
 	}
 
 	private startRunRequest(
-		spec: ThreadRunSpec & { parentMessageId: string },
-		options?: ChatRequestOptions,
+		spec: ThreadRunSpec,
+		start: (chat: ThreadRunChat<TMessage>) => Promise<void>,
 	) {
-		const parentMessage = this.getMessage(spec.parentMessageId);
-		if (!parentMessage) {
+		if (spec.parentMessageId && !this.getMessage(spec.parentMessageId)) {
 			throw new Error(`Unknown message ${spec.parentMessageId}`);
 		}
 		const chat = new ThreadRunChat(this.#runHost, spec);
@@ -664,11 +788,70 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		};
 		this.#runs.add(record);
 		this.publish();
-		const finished = chat.start(options).finally(() => this.publish());
+		const finished = start(chat).finally(() => this.publish());
 		// startRun may be detached; observing the rejection keeps finished awaitable.
 		void finished.catch(() => undefined);
 		record.finished = finished;
 		return this.createRunHandle(record);
+	}
+
+	private continueAssistant({
+		follow,
+		messageId,
+		options,
+	}: {
+		follow: boolean;
+		messageId: string;
+		options?: ChatRequestOptions;
+	}) {
+		const run = this.createRunForAssistant(messageId);
+		if (!run) {
+			throw new Error(`Message ${messageId} is not an assistant message`);
+		}
+		if (run.status === "submitted" || run.status === "streaming") {
+			throw new Error(
+				`Assistant message ${messageId} already has an active run`,
+			);
+		}
+		this.#runs.assertHasCapacity(run.spec.parentMessageId);
+		if (follow) {
+			this.#runs.select(run.spec.id);
+			this.updateTree((tree) => tree.setCursor(messageId));
+		}
+		const finished = run.chat.start(options).finally(() => this.publish());
+		run.finished = finished;
+		this.publish();
+		return this.createRunHandle(run);
+	}
+
+	private startAssistantMessage({
+		follow,
+		message,
+		options,
+		parentMessageId,
+	}: {
+		follow: boolean;
+		message: TMessage;
+		options?: ChatRequestOptions;
+		parentMessageId: string | null;
+	}) {
+		this.#runs.assertHasCapacity(parentMessageId);
+		const spec: ThreadRunSpec = {
+			id: this.#runs.reserveId(this.generateMessageId),
+			initialPathMessageId: parentMessageId,
+			messageId: message.id,
+			parentMessageId,
+			siblingOrder: this.#runs.reserveSiblingOrder(
+				parentMessageId,
+				this.getChildren(parentMessageId).length,
+			),
+		};
+		if (follow) {
+			this.#runs.select(spec.id);
+		}
+		return this.startRunRequest(spec, (chat) =>
+			chat.startWithMessage(message, options),
+		);
 	}
 
 	private createRunHandle(run: RunRecord<TMessage>): ThreadRunHandle {
@@ -686,7 +869,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		run: RunRecord<TMessage>,
 		options: ChatRequestOptions,
 	) {
-		this.assertCanStartRun(run.spec.parentMessageId);
+		this.#runs.assertHasCapacity(run.spec.parentMessageId);
 		const finished = run.chat
 			.resumeStream(options)
 			.finally(() => this.publish());
