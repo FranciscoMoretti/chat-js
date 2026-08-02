@@ -66,6 +66,10 @@ export type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
 export interface ThreadState<TMessage extends UIMessage = UIMessage> {
 	getSnapshot: () => ThreadStateSnapshot<TMessage>;
 	subscribe: (listener: () => void) => () => void;
+	/**
+	 * Applies the updater exactly once and synchronously, commits its returned
+	 * snapshot before returning, and propagates updater or commit errors.
+	 */
 	update: (
 		updater: (
 			snapshot: ThreadStateSnapshot<TMessage>,

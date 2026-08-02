@@ -181,7 +181,7 @@ describe("Thread", () => {
 		new StateBackedThread(state);
 
 		expect(() => new StateBackedThread(state)).toThrow(
-			"ThreadState is already attached to another AbstractThread",
+			"ThreadState is already attached to an AbstractThread; retain and reuse that controller",
 		);
 	});
 

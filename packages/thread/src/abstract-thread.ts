@@ -119,7 +119,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		this.#runHost = this.createRunHost();
 		if (ownedThreadStates.has(options.state)) {
 			throw new Error(
-				"ThreadState is already attached to another AbstractThread",
+				"ThreadState is already attached to an AbstractThread; retain and reuse that controller",
 			);
 		}
 		ownedThreadStates.add(options.state);
@@ -665,6 +665,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		this.#runs.add(record);
 		this.publish();
 		const finished = chat.start(options).finally(() => this.publish());
+		// startRun may be detached; observing the rejection keeps finished awaitable.
+		void finished.catch(() => undefined);
 		record.finished = finished;
 		return this.createRunHandle(record);
 	}

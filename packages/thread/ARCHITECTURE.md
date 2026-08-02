@@ -166,23 +166,33 @@ interface ThreadState<TMessage extends UIMessage> {
 }
 ```
 
-`update` must invoke its updater exactly once and synchronously.
+`update` must invoke its updater exactly once and synchronously, commit the
+returned snapshot before returning, and propagate updater or commit errors.
 `AbstractThread` uses it as the atomic write boundary so interleaved streams
 cannot read an old tree and overwrite a newer branch update. The controller is
 the sole writer; external code navigates and mutates through `Thread` commands
 rather than editing a snapshot directly.
 
+A `ThreadState` instance belongs to one `AbstractThread` for its lifetime.
+Applications retain and reuse that controller across framework remounts, just
+as `useChat({ chat })` retains its supplied `Chat`. Reattaching the same state to
+another controller is rejected because request handles, run ownership, and
+abort controllers are intentionally controller-local.
+
 The default `Thread` creates its own `MemoryThreadState`. A custom controller
 can instead extend `AbstractThread` and supply another implementation:
 
 ```ts
-class ApplicationThread extends AbstractThread {
-  constructor(state) {
+class ApplicationThread extends AbstractThread<MyMessage> {
+  constructor(
+    state: ThreadState<MyMessage>,
+    transport: ChatTransport<MyMessage>,
+  ) {
     super({ state, transport });
   }
 }
 
-const thread = new ApplicationThread(applicationThreadState);
+const thread = new ApplicationThread(applicationThreadState, transport);
 const chat = useThread({ thread });
 ```
 
@@ -198,7 +208,7 @@ that store.
 - root message IDs
 - the selected cursor
 - public run status and errors
-- the selected-path and aggregate projections
+- the selected path and aggregate projections
 - the immutable snapshot consumed by React
 
 `AbstractThread` stores operational state that cannot be serialized:
