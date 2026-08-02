@@ -7,10 +7,32 @@ branch.
 `tree` namespace for navigation, sibling responses, concurrent runs, and
 run-specific cancellation.
 
+## Package Layers
+
+`@chatjs/thread` is the headless core. It exports the framework-independent
+`AbstractThread`, default memory-backed `Thread`, `ThreadState` contract, tree
+management, and stream orchestration.
+
+`@chatjs/thread/react` is the React adapter. It exports `useThread` and owns
+React subscriptions, render throttling, and hook lifecycle behavior. The core
+entry point does not import React.
+
+`AbstractThread` exposes `getSnapshot()` and `subscribe()`, so future Vue,
+Svelte, or vanilla adapters can observe the same controller without changing
+the core.
+
 ## Install
 
+For the headless core:
+
 ```bash
-bun add @chatjs/thread ai @ai-sdk/react
+bun add @chatjs/thread ai
+```
+
+For React:
+
+```bash
+bun add @chatjs/thread ai @ai-sdk/react react
 ```
 
 ## Use
@@ -51,6 +73,17 @@ chat.sendMessage();
 chat.regenerate();
 chat.stop();
 ```
+
+As in `useChat`, `sendMessage()` with no input continues a selected assistant
+message in place. Passing an explicit assistant message also streams into that
+same message ID. `regenerate({ messageId })` uses AI SDK's native regeneration
+request and stores the replacement as a sibling, preserving the original
+branch.
+
+Regeneration is currently rejected when both the target and its parent are
+assistant messages. AI SDK currently continues the assistant parent in that
+case instead of creating a replacement for the requested target; see
+`ARCHITECTURE.md` for the upstream blocker.
 
 The selected path is a projection of the complete tree:
 
@@ -96,20 +129,43 @@ function Conversation() {
 }
 ```
 
-`Thread` extends the framework-independent `AbstractThread`. It accepts an
-optional `ThreadState` implementation for integration with an application
-state container:
+`Thread` extends the framework-independent `AbstractThread` and owns its
+in-memory state. To integrate another state container, create an
+`AbstractThread` subclass that supplies a `ThreadState`:
 
 ```ts
-import { MemoryThreadState, Thread } from "@chatjs/thread";
+import {
+  AbstractThread,
+  type ThreadState,
+} from "@chatjs/thread";
+import type { UIMessage } from "ai";
 
-const state = new MemoryThreadState({ messages: initialMessages });
-const thread = new Thread({ state, transport });
+class ApplicationThread extends AbstractThread<UIMessage> {
+  constructor(state: ThreadState<UIMessage>) {
+    super({ state, transport });
+  }
+}
+
+const thread = new ApplicationThread(applicationThreadState);
+const chat = useThread({ thread });
 ```
 
 `ThreadState.update` invokes its updater exactly once, synchronously and
 atomically. The controller must remain the only writer so concurrent streams
 cannot overwrite each other.
+
+Framework adapters observe the controller through:
+
+```ts
+const snapshot = thread.getSnapshot();
+const unsubscribe = thread.subscribe(() => {
+  render(thread.getSnapshot());
+});
+```
+
+These methods are framework-neutral. React's `useThread` consumes them through
+`useSyncExternalStore`; other adapters can provide their own subscription
+integration.
 
 ## Persistence
 
