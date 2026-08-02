@@ -804,16 +804,27 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		messageId: string;
 		options?: ChatRequestOptions;
 	}) {
-		const run = this.createRunForAssistant(messageId);
-		if (!run) {
-			throw new Error(`Message ${messageId} is not an assistant message`);
-		}
-		if (run.status === "submitted" || run.status === "streaming") {
+		const existing = this.#runs.getForResponseMessage(messageId);
+		if (existing?.status === "submitted" || existing?.status === "streaming") {
 			throw new Error(
 				`Assistant message ${messageId} already has an active run`,
 			);
 		}
-		this.#runs.assertHasCapacity(run.spec.parentMessageId);
+		if (existing) {
+			this.#runs.assertHasCapacity(existing.spec.parentMessageId);
+		} else {
+			const tree = this.createTree();
+			const message = tree.getMessage(messageId);
+			if (!message || message.role !== "assistant") {
+				throw new Error(`Message ${messageId} is not an assistant message`);
+			}
+			this.#runs.assertHasCapacity(tree.getParentId(messageId) ?? null);
+		}
+
+		const run = this.createRunForAssistant(messageId);
+		if (!run) {
+			throw new Error(`Message ${messageId} is not an assistant message`);
+		}
 		if (follow) {
 			this.#runs.select(run.spec.id);
 			this.updateTree((tree) => tree.setCursor(messageId));
@@ -870,6 +881,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		options: ChatRequestOptions,
 	) {
 		this.#runs.assertHasCapacity(run.spec.parentMessageId);
+		run.chat.refreshPath();
 		const finished = run.chat
 			.resumeStream(options)
 			.finally(() => this.publish());

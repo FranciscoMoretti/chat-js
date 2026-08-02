@@ -78,6 +78,12 @@ class ThreadRunState<TMessage extends UIMessage>
 		this.#host.setRunStatus(this.#spec.id, status);
 	}
 
+	refreshPath() {
+		this.#messages = this.#host.getMessagePath(
+			this.#spec.messageId ?? this.#spec.initialPathMessageId,
+		);
+	}
+
 	popMessage = () => {
 		const lastMessage = this.#messages.pop();
 		if (lastMessage) this.#host.removeMessage(lastMessage.id);
@@ -106,8 +112,11 @@ class ThreadRunState<TMessage extends UIMessage>
 export class ThreadRunChat<
 	TMessage extends UIMessage,
 > extends AbstractChat<TMessage> {
+	readonly #state: ThreadRunState<TMessage>;
+
 	constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
 		const responseMessageId = host.generateMessageId();
+		const state = new ThreadRunState(host, spec);
 		const transport: ChatTransport<TMessage> = {
 			reconnectToStream: (options) => host.transport.reconnectToStream(options),
 			sendMessages: (options) => {
@@ -141,9 +150,14 @@ export class ThreadRunChat<
 			},
 			sendAutomaticallyWhen: (event) =>
 				host.sendAutomaticallyWhen?.(event) ?? false,
-			state: new ThreadRunState(host, spec),
+			state,
 			transport,
 		});
+		this.#state = state;
+	}
+
+	refreshPath() {
+		this.#state.refreshPath();
 	}
 
 	start(options?: ChatRequestOptions) {
