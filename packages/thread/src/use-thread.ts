@@ -1,6 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ChatRequestOptions, UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
 import type {
 	MessageTreeSnapshot,
@@ -23,7 +24,7 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
 >;
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
-	thread: Thread<TMessage>;
+	thread: AbstractThread<TMessage>;
 };
 
 export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
@@ -62,7 +63,7 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 	startRun: (
 		options?: ThreadStartRunOptions<TMessage>,
 	) => Promise<ThreadRunHandle>;
-	status: ReturnType<Thread<TMessage>["getSnapshot"]>["treeStatus"];
+	status: ReturnType<AbstractThread<TMessage>["getSnapshot"]>["treeStatus"];
 	stopAll: () => Promise<void>;
 	stopRun: (runId: string) => Promise<void>;
 	stopRunForMessage: (messageId: string) => Promise<void>;
@@ -78,7 +79,7 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
 	};
 
 function useThreadSnapshot<TMessage extends UIMessage>(
-	thread: Thread<TMessage>,
+	thread: AbstractThread<TMessage>,
 	throttleWaitMs?: number,
 ) {
 	const stateRef = useRef({
@@ -134,7 +135,7 @@ function useThreadSnapshot<TMessage extends UIMessage>(
 function useThreadField<
 	TMessage extends UIMessage,
 	TKey extends keyof ThreadStateSnapshot<TMessage>,
->(thread: Thread<TMessage>, key: TKey) {
+>(thread: AbstractThread<TMessage>, key: TKey) {
 	const subscribe = useCallback(
 		(listener: () => void) => thread.subscribe(listener),
 		[thread],
@@ -184,7 +185,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 					callbacksRef.current.sendAutomaticallyWhen?.(event) ?? false,
 			};
 
-	const threadRef = useRef<Thread<TMessage> | null>(null);
+	const threadRef = useRef<AbstractThread<TMessage> | null>(null);
 	let thread = threadRef.current;
 	if (
 		thread === null ||

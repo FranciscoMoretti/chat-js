@@ -86,9 +86,12 @@ test("the packed package loads its core and React entry points", async () => {
 		expect(reactChunk).toBe(indexChunk);
 		expect(reactSource).not.toContain("class Thread");
 		if (!reactChunk) throw new Error("Expected a shared package chunk");
-		expect(
-			await Bun.file(resolve(installedPackage, "dist", reactChunk)).exists(),
-		).toBeTrue();
+		const coreChunkPath = resolve(installedPackage, "dist", reactChunk);
+		expect(await Bun.file(coreChunkPath).exists()).toBeTrue();
+		const coreChunkSource = await readFile(coreChunkPath, "utf8");
+		expect(indexSource).not.toContain('from "react"');
+		expect(coreChunkSource).not.toContain('from "react"');
+		expect(coreChunkSource).not.toContain('from "@ai-sdk/react"');
 
 		const consumerSource = `
 import { Thread } from "@chatjs/thread";

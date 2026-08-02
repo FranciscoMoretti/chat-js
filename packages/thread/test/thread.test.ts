@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import { MemoryThreadState } from "../src/thread-state";
@@ -118,6 +119,12 @@ class RecordingThreadState implements ThreadState<UIMessage> {
 	};
 }
 
+class StateBackedThread extends AbstractThread<UIMessage> {
+	constructor(state: ThreadState<UIMessage>) {
+		super({ state });
+	}
+}
+
 function user(id: string): UIMessage {
 	return { id, parts: [{ text: id, type: "text" }], role: "user" };
 }
@@ -136,9 +143,9 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("Thread", () => {
-	test("publishes through an injected state implementation", () => {
+	test("publishes synchronous atomic updates through a custom state", () => {
 		const state = new RecordingThreadState([user("user-1")]);
-		const thread = new Thread({ state });
+		const thread = new StateBackedThread(state);
 		let notifications = 0;
 		const unsubscribe = state.subscribe(() => {
 			notifications += 1;
@@ -164,8 +171,17 @@ describe("Thread", () => {
 			update: () => undefined,
 		};
 
-		expect(() => new Thread({ state })).toThrow(
+		expect(() => new StateBackedThread(state)).toThrow(
 			"ThreadState.update must invoke its updater exactly once and synchronously",
+		);
+	});
+
+	test("rejects sharing one state between multiple controllers", () => {
+		const state = new RecordingThreadState([user("user-1")]);
+		new StateBackedThread(state);
+
+		expect(() => new StateBackedThread(state)).toThrow(
+			"ThreadState is already attached to another AbstractThread",
 		);
 	});
 

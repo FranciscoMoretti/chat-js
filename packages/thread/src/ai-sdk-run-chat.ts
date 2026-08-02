@@ -1,12 +1,12 @@
 import {
 	AbstractChat,
+	type ChatInit,
 	type ChatRequestOptions,
 	type ChatState,
 	type ChatStatus,
 	type ChatTransport,
 	type UIMessage,
 } from "ai";
-import type { AbstractThreadInit } from "./types";
 
 export type ThreadRunSpec = {
 	id: string;
@@ -16,14 +16,14 @@ export type ThreadRunSpec = {
 };
 
 export interface ThreadRunHost<TMessage extends UIMessage> {
-	readonly dataPartSchemas: AbstractThreadInit<TMessage>["dataPartSchemas"];
+	readonly dataPartSchemas: ChatInit<TMessage>["dataPartSchemas"];
 	readonly id: string;
-	readonly messageMetadataSchema: AbstractThreadInit<TMessage>["messageMetadataSchema"];
-	onData: AbstractThreadInit<TMessage>["onData"];
-	onError: AbstractThreadInit<TMessage>["onError"];
-	onFinish: AbstractThreadInit<TMessage>["onFinish"];
-	onToolCall: AbstractThreadInit<TMessage>["onToolCall"];
-	sendAutomaticallyWhen: AbstractThreadInit<TMessage>["sendAutomaticallyWhen"];
+	readonly messageMetadataSchema: ChatInit<TMessage>["messageMetadataSchema"];
+	onData: ChatInit<TMessage>["onData"];
+	onError: ChatInit<TMessage>["onError"];
+	onFinish: ChatInit<TMessage>["onFinish"];
+	onToolCall: ChatInit<TMessage>["onToolCall"];
+	sendAutomaticallyWhen: ChatInit<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 	generateMessageId: () => string;
 	getRunPath: (runId: string) => TMessage[];

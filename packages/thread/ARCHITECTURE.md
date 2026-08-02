@@ -2,32 +2,41 @@
 
 ## Purpose
 
-`useThread` is the React chat primitive exported by `@chatjs/thread/react`. It
-keeps the standard AI SDK `useChat` interface for the selected conversation
-path and adds a `tree` namespace for branching, navigation, and concurrent
-responses.
+`@chatjs/thread` is the headless, framework-independent threaded conversation
+engine. `@chatjs/thread/react` adapts that engine to React through `useThread`.
+The hook keeps the standard AI SDK `useChat` interface for the selected
+conversation path and adds a `tree` namespace for branching, navigation, and
+concurrent responses.
 
 One `useThread` call represents one threaded conversation. Branches and
 parallel responses do not require additional hooks or mounted components.
 
 ```text
-useThread
-  -> Thread
-     -> AbstractThread
-        -> ThreadState
-           -> message tree
-           -> observable snapshots
-        -> RunRecord A -> ThreadRunChat A -> ChatTransport
-        -> RunRecord B -> ThreadRunChat B -> ChatTransport
+React adapter
+  -> useThread
+     -> supplied AbstractThread or default Thread
+
+Headless core
+  -> AbstractThread
+     -> ThreadState
+        -> message tree
+        -> observable snapshots
+     -> RunRecord A -> ThreadRunChat A -> ChatTransport
+     -> RunRecord B -> ThreadRunChat B -> ChatTransport
 ```
 
 The layers have separate responsibilities:
 
-- `useThread` is the public React interface.
-- `Thread` is the concrete observable controller accepted by `useThread`.
+- `useThread` is the public React adapter.
+- `Thread` is the default memory-backed `AbstractThread`.
 - `AbstractThread` owns framework-independent thread and request orchestration.
 - `ThreadState` owns the canonical observable tree state.
 - `ThreadRunChat` is an internal AI SDK request engine for one response.
+
+The core entry point does not import React. `AbstractThread.getSnapshot()` and
+`AbstractThread.subscribe()` form the framework-neutral observable boundary.
+React consumes it with `useSyncExternalStore`; future Vue, Svelte, or vanilla
+adapters can consume the same boundary with their own lifecycle primitives.
 
 ## Compatibility Decision Rule
 
@@ -109,7 +118,7 @@ Whole-conversation state is exposed through `tree`:
 By default, `useThread` creates one `Thread` and keeps it in a React ref:
 
 ```ts
-const threadRef = useRef<Thread | null>(null);
+const threadRef = useRef<AbstractThread | null>(null);
 if (threadRef.current === null) {
 	threadRef.current = new Thread(options);
 }
@@ -121,7 +130,8 @@ the controller, including its state and active runs. Otherwise, callback
 wrappers read the latest React callbacks without replacing the retained
 controller.
 
-An existing `Thread` can also be supplied:
+An existing `AbstractThread` can also be supplied. This includes both the
+default `Thread` and custom subclasses:
 
 ```ts
 const thread = createThread({ transport });
@@ -135,8 +145,8 @@ In this mode, `useThread` subscribes to the supplied engine instead of creating
 one. This changes engine ownership, not the returned hook interface.
 
 In both modes there is one mounted `useThread`. `ThreadRunChat` instances are
-ordinary class instances created imperatively by `Thread`; they are not
-React hooks or components.
+ordinary class instances created imperatively by `AbstractThread`; they are
+not React hooks or components.
 
 ## Thread State
 
@@ -162,15 +172,17 @@ cannot read an old tree and overwrite a newer branch update. The controller is
 the sole writer; external code navigates and mutates through `Thread` commands
 rather than editing a snapshot directly.
 
-The default `Thread` creates a `MemoryThreadState`. A caller may instead supply
-another implementation:
+The default `Thread` creates its own `MemoryThreadState`. A custom controller
+can instead extend `AbstractThread` and supply another implementation:
 
 ```ts
-const thread = new Thread({
-  state: applicationThreadState,
-  transport,
-});
+class ApplicationThread extends AbstractThread {
+  constructor(state) {
+    super({ state, transport });
+  }
+}
 
+const thread = new ApplicationThread(applicationThreadState);
 const chat = useThread({ thread });
 ```
 
@@ -238,10 +250,9 @@ conversation ID and supply that ID to the new `Thread` instance.
 
 ## React Subscription
 
-`useThread` subscribes to `ThreadState` through `Thread` with
-`useSyncExternalStore`. A tree
-mutation, cursor change, stream update, or run status change publishes a new
-snapshot.
+`useThread` subscribes to an `AbstractThread` with `useSyncExternalStore`. A
+tree mutation, cursor change, stream update, or run status change publishes a
+new snapshot through the controller's framework-neutral `subscribe()` method.
 
 Subscription throttling is applied at the React boundary. It can reduce render
 frequency without delaying writes to the canonical tree. Hidden branches keep

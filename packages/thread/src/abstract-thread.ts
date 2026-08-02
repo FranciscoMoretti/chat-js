@@ -1,5 +1,6 @@
 import {
 	type AbstractChat,
+	type ChatInit,
 	type ChatRequestOptions,
 	type ChatStatus,
 	type ChatTransport,
@@ -16,14 +17,24 @@ import {
 import { MessageTree } from "./message-tree";
 import { type RunRecord, RunRegistry } from "./run-registry";
 import type {
-	AbstractThreadInit,
 	MessageTreeSnapshot,
+	ThreadConcurrency,
 	ThreadRunHandle,
 	ThreadStartRunOptions,
 	ThreadState,
 	ThreadStateSnapshot,
 	TreeSendOptions,
 } from "./types";
+
+type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
+	ChatInit<TMessage>,
+	"messages"
+> & {
+	concurrency?: ThreadConcurrency;
+	state: ThreadState<TMessage>;
+};
+
+const ownedThreadStates = new WeakSet<object>();
 
 type SendMessageInput<TMessage extends UIMessage> = Parameters<
 	AbstractChat<TMessage>["sendMessage"]
@@ -76,23 +87,23 @@ async function createMessageFromInput<TMessage extends UIMessage>({
 
 export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 	readonly id: string;
-	readonly dataPartSchemas: AbstractThreadInit<TMessage>["dataPartSchemas"];
+	readonly dataPartSchemas: AbstractThreadOptions<TMessage>["dataPartSchemas"];
 	readonly generateMessageId: NonNullable<
-		AbstractThreadInit<TMessage>["generateId"]
+		AbstractThreadOptions<TMessage>["generateId"]
 	>;
-	readonly messageMetadataSchema: AbstractThreadInit<TMessage>["messageMetadataSchema"];
-	onData: AbstractThreadInit<TMessage>["onData"];
-	onError: AbstractThreadInit<TMessage>["onError"];
-	onFinish: AbstractThreadInit<TMessage>["onFinish"];
-	onToolCall: AbstractThreadInit<TMessage>["onToolCall"];
-	sendAutomaticallyWhen: AbstractThreadInit<TMessage>["sendAutomaticallyWhen"];
+	readonly messageMetadataSchema: AbstractThreadOptions<TMessage>["messageMetadataSchema"];
+	onData: AbstractThreadOptions<TMessage>["onData"];
+	onError: AbstractThreadOptions<TMessage>["onError"];
+	onFinish: AbstractThreadOptions<TMessage>["onFinish"];
+	onToolCall: AbstractThreadOptions<TMessage>["onToolCall"];
+	sendAutomaticallyWhen: AbstractThreadOptions<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 
 	readonly #runHost: ThreadRunHost<TMessage>;
 	readonly #runs: RunRegistry<TMessage>;
 	readonly #state: ThreadState<TMessage>;
 
-	protected constructor(options: AbstractThreadInit<TMessage>) {
+	protected constructor(options: AbstractThreadOptions<TMessage>) {
 		this.id = options.id ?? generateId();
 		this.dataPartSchemas = options.dataPartSchemas;
 		this.generateMessageId = options.generateId ?? generateId;
@@ -106,7 +117,18 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		this.#runs = new RunRegistry(options.concurrency);
 		this.#state = options.state;
 		this.#runHost = this.createRunHost();
-		this.publish();
+		if (ownedThreadStates.has(options.state)) {
+			throw new Error(
+				"ThreadState is already attached to another AbstractThread",
+			);
+		}
+		ownedThreadStates.add(options.state);
+		try {
+			this.publish();
+		} catch (error) {
+			ownedThreadStates.delete(options.state);
+			throw error;
+		}
 	}
 
 	getSnapshot = () => this.#state.getSnapshot();
