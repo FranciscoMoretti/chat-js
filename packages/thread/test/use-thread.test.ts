@@ -2,8 +2,11 @@ import { describe, expect, mock, test } from "bun:test";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
+import { MemoryThreadState } from "../src/thread-state";
+import type { ThreadState } from "../src/types";
 import {
 	type UseThreadHelpers,
 	type UseThreadOptions,
@@ -58,13 +61,21 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 class ResumeTransport implements ChatTransport<UIMessage> {
 	reconnects = 0;
 
-	sendMessages() {
-		throw new Error("Unexpected send");
-	}
+	sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
+		Promise.reject(new Error("Unexpected send"));
 
 	reconnectToStream() {
 		this.reconnects += 1;
 		return Promise.resolve(null);
+	}
+}
+
+class StateBackedThread extends AbstractThread<UIMessage> {
+	constructor(
+		state: ThreadState<UIMessage>,
+		transport?: ChatTransport<UIMessage>,
+	) {
+		super({ state, transport });
 	}
 }
 
@@ -125,7 +136,56 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("useThread", () => {
-	test("uses current callbacks without replacing the thread transport", async () => {
+	test("observes messages sent through a custom state-backed AbstractThread", async () => {
+		const state = new MemoryThreadState<UIMessage>({
+			messages: [user("user-1")],
+		});
+		const transport = new ControlledTransport();
+		const thread = new StateBackedThread(state, transport);
+		const hook = renderUseThread({ thread });
+
+		expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-1"]);
+
+		act(() => {
+			thread.addMessage(user("user-2"), "user-1");
+			thread.setCursor("user-2");
+		});
+
+		expect(hook.current.messages.map(({ id }) => id)).toEqual([
+			"user-1",
+			"user-2",
+		]);
+
+		let send: Promise<void> | undefined;
+		await act(async () => {
+			send = hook.current.sendMessage({ text: "user-3" });
+			await waitFor(() => transport.requests.length === 1);
+		});
+		await act(async () => {
+			transport.emit(0, { messageId: "assistant-1", type: "start" });
+			transport.emit(0, { id: "text", type: "text-start" });
+			transport.emit(0, {
+				delta: "reply",
+				id: "text",
+				type: "text-delta",
+			});
+			transport.emit(0, { id: "text", type: "text-end" });
+			transport.finish(0);
+			await send;
+		});
+
+		expect(hook.current.messages.map(({ id }) => id)).toEqual([
+			"user-1",
+			"user-2",
+			expect.any(String),
+			"assistant-1",
+		]);
+		const response = hook.current.messages.at(-1);
+		if (!response) throw new Error("Expected a response message");
+		expect(getMessageText(response)).toBe("reply");
+		hook.unmount();
+	});
+	test("uses current callbacks without replacing the chat transport", async () => {
 		const firstTransport = new RejectingTransport();
 		const secondTransport = new RejectingTransport();
 		const firstError = mock(() => {});
@@ -181,7 +241,7 @@ describe("useThread", () => {
 			messages: [user("user-1"), assistant("assistant-1")],
 			transport,
 		});
-		const hook = renderUseThread({ thread, resume: true });
+		const hook = renderUseThread({ resume: true, thread });
 
 		await act(async () => {
 			await Bun.sleep(0);
