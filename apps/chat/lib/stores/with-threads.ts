@@ -10,8 +10,6 @@ import type { StateCreator } from "zustand";
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
 import type { MessageNode } from "@/lib/thread-utils";
 
-const ROOT_PARENT_KEY = "__root__";
-
 export interface MessageSiblingInfo<UM> {
   siblingIndex: number;
   siblings: UM[];
@@ -61,10 +59,6 @@ export type ThreadAugmentedState<UM extends UIMessage> =
     ) => UM[] | null;
     switchToMessage: (messageId: string) => UM[] | null;
   };
-
-function parentKey(parentId: string | null) {
-  return parentId ?? ROOT_PARENT_KEY;
-}
 
 function getMetadataParentId<UM extends UIMessage>(message: UM) {
   return ((message as UM & MessageNode).metadata?.parentMessageId ?? null) as
@@ -156,27 +150,24 @@ function buildTreeSnapshotFromMessages<UM extends UIMessage>(
 function getSnapshotIndexes<UM extends UIMessage>(
   snapshot: MessageTreeSnapshot<UM>
 ) {
-  const childrenByParentId: Record<string, string[]> = {};
-  const messagesById: Record<string, UM> = {};
-  const parentById: Record<string, string | null> = {};
+  const childrenByParentId = new Map<string | null, string[]>();
+  const parentById = new Map<string, string | null>();
   const rootIds: string[] = [];
 
   for (const { message, parentId } of snapshot.nodes) {
-    const key = parentKey(parentId);
-    const children = childrenByParentId[key];
+    const children = childrenByParentId.get(parentId);
     if (children) {
       children.push(message.id);
     } else {
-      childrenByParentId[key] = [message.id];
+      childrenByParentId.set(parentId, [message.id]);
     }
-    messagesById[message.id] = message;
-    parentById[message.id] = parentId;
+    parentById.set(message.id, parentId);
     if (parentId === null) {
       rootIds.push(message.id);
     }
   }
 
-  return { childrenByParentId, messagesById, parentById, rootIds };
+  return { childrenByParentId, parentById, rootIds };
 }
 
 function getSnapshotParentId<UM extends UIMessage>(
@@ -184,8 +175,8 @@ function getSnapshotParentId<UM extends UIMessage>(
   message: UM
 ) {
   const { parentById } = getSnapshotIndexes(snapshot);
-  return Object.hasOwn(parentById, message.id)
-    ? parentById[message.id]
+  return parentById.has(message.id)
+    ? (parentById.get(message.id) ?? null)
     : getMetadataParentId(message);
 }
 
@@ -217,10 +208,10 @@ function mergeTreeSnapshot<UM extends UIMessage>(
     }
 
     let parentId = getMetadataParentId(message);
-    if (Object.hasOwn(incomingParents, messageId)) {
-      parentId = incomingParents[messageId] ?? null;
-    } else if (Object.hasOwn(existingParents, messageId)) {
-      parentId = existingParents[messageId] ?? null;
+    if (incomingParents.has(messageId)) {
+      parentId = incomingParents.get(messageId) ?? null;
+    } else if (existingParents.has(messageId)) {
+      parentId = existingParents.get(messageId) ?? null;
     }
     const validParentId =
       parentId !== messageId && parentId !== null && messagesById.has(parentId)
@@ -280,8 +271,7 @@ function buildChildrenMapFromSnapshot<UM extends UIMessage>(
   const map = new Map<string | null, UM[]>();
   const { childrenByParentId } = getSnapshotIndexes(snapshot);
 
-  for (const [key, childIds] of Object.entries(childrenByParentId)) {
-    const parentId = key === ROOT_PARENT_KEY ? null : key;
+  for (const [parentId, childIds] of childrenByParentId) {
     map.set(
       parentId,
       childIds
@@ -318,7 +308,7 @@ function buildThreadFromSnapshot<UM extends UIMessage>(
     }
 
     thread.push(currentMessage);
-    currentMessageId = parentById[currentMessageId] ?? null;
+    currentMessageId = parentById.get(currentMessageId) ?? null;
   }
 
   return thread.reverse();
@@ -334,7 +324,7 @@ function findLeafDfsToRightFromSnapshot<UM extends UIMessage>(
   let leafMessageId: string | null = null;
 
   while (true) {
-    const rightmostChild = childrenByParentId[currentMessageId]?.at(-1);
+    const rightmostChild = childrenByParentId.get(currentMessageId)?.at(-1);
     if (!rightmostChild || visited.has(rightmostChild)) {
       return leafMessageId;
     }
@@ -394,14 +384,14 @@ function mergeMessageIntoMap<UM extends UIMessage>(
 
 function addFallbackMetadataToMessages<UM extends UIMessage>(
   merged: Map<string, UM>,
-  parentById: Record<string, string | null>
+  parentById: ReadonlyMap<string, string | null>
 ) {
   for (const [messageId, message] of merged) {
     if ((message as UM & MessageNode).metadata !== undefined) {
       continue;
     }
 
-    const parentId = parentById[messageId] ?? null;
+    const parentId = parentById.get(messageId) ?? null;
     const parent = parentId ? merged.get(parentId) : undefined;
     const parentMetadata = (parent as (UM & MessageNode) | undefined)
       ?.metadata as MetadataWithSelectedModel | undefined;
@@ -445,7 +435,7 @@ export const withThreads =
       serverMessages: UI_MESSAGE[],
       existingTreeMessages: UI_MESSAGE[],
       currentVisibleMessages: UI_MESSAGE[],
-      parentById: Record<string, string | null> = {}
+      parentById: ReadonlyMap<string, string | null> = new Map()
     ): UI_MESSAGE[] => {
       const merged = new Map<string, UI_MESSAGE>();
 

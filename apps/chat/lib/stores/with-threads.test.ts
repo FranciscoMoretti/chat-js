@@ -57,6 +57,51 @@ function createThreadStore(initialMessages: ChatMessage[]) {
 }
 
 describe("withThreads", () => {
+  it("keeps a message named __root__ distinct from the root bucket", () => {
+    const root = {
+      id: "__root__",
+      parts: [{ type: "text", text: "Root" }],
+      role: "user",
+    } as ChatMessage;
+    const child = {
+      id: "child",
+      parts: [{ type: "text", text: "Child" }],
+      role: "assistant",
+    } as ChatMessage;
+    const store = createThreadStore([]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: child.id,
+      nodes: [
+        { message: root, parentId: null },
+        { message: child, parentId: root.id },
+      ],
+      version: 1,
+    });
+
+    assert.deepEqual(
+      store
+        .getState()
+        .childrenMap.get(null)
+        ?.map((message) => message.id),
+      [root.id]
+    );
+    assert.deepEqual(
+      store
+        .getState()
+        .childrenMap.get(root.id)
+        ?.map((message) => message.id),
+      [child.id]
+    );
+    assert.deepEqual(
+      store
+        .getState()
+        .switchToMessage(child.id)
+        ?.map((message) => message.id),
+      [root.id, child.id]
+    );
+  });
+
   it("preserves explicit topology for messages without app metadata", () => {
     const root = {
       id: "root",
