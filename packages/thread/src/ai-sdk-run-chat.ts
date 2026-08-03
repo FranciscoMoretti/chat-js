@@ -10,6 +10,7 @@ import {
 
 export type ThreadRunSpec = {
 	id: string;
+	initialPathMessageId: string | null;
 	messageId?: string;
 	parentMessageId: string | null;
 	siblingOrder: number;
@@ -26,7 +27,7 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
 	sendAutomaticallyWhen: ChatInit<TMessage>["sendAutomaticallyWhen"];
 	transport: ChatTransport<TMessage>;
 	generateMessageId: () => string;
-	getRunPath: (runId: string) => TMessage[];
+	getMessagePath: (messageId: string | null) => TMessage[];
 	updateRunPath: (messages: TMessage[]) => void;
 	registerToolCall: (runId: string, toolCallId: string) => void;
 	removeMessage: (messageId: string) => void;
@@ -40,11 +41,13 @@ class ThreadRunState<TMessage extends UIMessage>
 {
 	#error: Error | undefined;
 	readonly #host: ThreadRunHost<TMessage>;
+	#messages: TMessage[];
 	readonly #spec: ThreadRunSpec;
 	#status: ChatStatus = "ready";
 
 	constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
 		this.#host = host;
+		this.#messages = host.getMessagePath(spec.initialPathMessageId);
 		this.#spec = spec;
 	}
 
@@ -58,10 +61,11 @@ class ThreadRunState<TMessage extends UIMessage>
 	}
 
 	get messages() {
-		return this.#host.getRunPath(this.#spec.id);
+		return this.#messages;
 	}
 
 	set messages(messages: TMessage[]) {
+		this.#messages = messages;
 		this.#host.updateRunPath(messages);
 	}
 
@@ -74,19 +78,27 @@ class ThreadRunState<TMessage extends UIMessage>
 		this.#host.setRunStatus(this.#spec.id, status);
 	}
 
+	refreshPath() {
+		this.#messages = this.#host.getMessagePath(
+			this.#spec.messageId ?? this.#spec.initialPathMessageId,
+		);
+	}
+
 	popMessage = () => {
-		const lastMessage = this.messages.at(-1);
+		const lastMessage = this.#messages.pop();
 		if (lastMessage) this.#host.removeMessage(lastMessage.id);
 	};
 
 	pushMessage = (message: TMessage) => {
+		this.#messages.push(message);
 		this.writeMessage(message);
 	};
 
 	replaceMessage = (index: number, message: TMessage) => {
-		if (index !== this.messages.length - 1) {
+		if (index !== this.#messages.length - 1) {
 			throw new Error("A thread run can only replace its current response");
 		}
+		this.#messages[index] = message;
 		this.writeMessage(message);
 	};
 
@@ -100,15 +112,20 @@ class ThreadRunState<TMessage extends UIMessage>
 export class ThreadRunChat<
 	TMessage extends UIMessage,
 > extends AbstractChat<TMessage> {
+	readonly #state: ThreadRunState<TMessage>;
+
 	constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
 		const responseMessageId = host.generateMessageId();
+		const state = new ThreadRunState(host, spec);
 		const transport: ChatTransport<TMessage> = {
 			reconnectToStream: (options) => host.transport.reconnectToStream(options),
 			sendMessages: (options) => {
 				return host.transport.sendMessages({
 					...options,
 					messageId:
-						spec.messageId === undefined ? undefined : options.messageId,
+						spec.messageId === undefined && options.trigger === "submit-message"
+							? undefined
+							: options.messageId,
 				});
 			},
 		};
@@ -124,7 +141,7 @@ export class ThreadRunChat<
 			onFinish: (event) => {
 				host.onFinish?.({
 					...event,
-					messages: host.getRunPath(spec.id),
+					messages: host.getMessagePath(spec.messageId ?? spec.parentMessageId),
 				});
 			},
 			onToolCall: async (event) => {
@@ -133,12 +150,28 @@ export class ThreadRunChat<
 			},
 			sendAutomaticallyWhen: (event) =>
 				host.sendAutomaticallyWhen?.(event) ?? false,
-			state: new ThreadRunState(host, spec),
+			state,
 			transport,
 		});
+		this.#state = state;
+	}
+
+	refreshPath() {
+		this.#state.refreshPath();
 	}
 
 	start(options?: ChatRequestOptions) {
 		return this.sendMessage(undefined, options);
+	}
+
+	startWithMessage(
+		message: NonNullable<Parameters<AbstractChat<TMessage>["sendMessage"]>[0]>,
+		options?: ChatRequestOptions,
+	) {
+		return this.sendMessage(message, options);
+	}
+
+	regenerateMessage(messageId: string, options?: ChatRequestOptions) {
+		return this.regenerate({ ...options, messageId });
 	}
 }

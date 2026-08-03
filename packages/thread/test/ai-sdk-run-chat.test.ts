@@ -73,8 +73,7 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 		this.tree = new MessageTree({ messages: [userMessage] });
 	}
 
-	getRunPath = () =>
-		this.tree.getPath(this.spec.messageId ?? this.spec.parentMessageId);
+	getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
 	updateRunPath = (messages: UIMessage[]) => {
 		this.tree.updatePath(messages);
 	};
@@ -109,6 +108,7 @@ function userMessage(): UIMessage {
 function createSpec(): ThreadRunSpec {
 	return {
 		id: "run-1",
+		initialPathMessageId: "user-1",
 		parentMessageId: "user-1",
 		siblingOrder: 0,
 	};
