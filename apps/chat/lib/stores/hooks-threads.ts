@@ -43,9 +43,6 @@ export const useSetMessagesWithEpoch = () => {
   );
 };
 
-export const useAllMessages = () =>
-  useThreadStore((state) => state.allMessages);
-
 export const useSetAllMessages = () => {
   const store = useCustomChatStoreApi<ChatMessage>();
   return useCallback(

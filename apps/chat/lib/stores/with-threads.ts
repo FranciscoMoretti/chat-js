@@ -2,7 +2,7 @@
 
 // Middleware that extends @/lib/stores/base with thread epoch tracking
 // and complete message tree management for branching/sibling navigation.
-// The store owns allMessages (the full tree); React Query feeds data into it.
+// The ordered package snapshot is the canonical full-tree representation.
 
 import type { MessageTreeSnapshot } from "@chatjs/thread";
 import type { UIMessage } from "ai";
@@ -30,13 +30,8 @@ export type ThreadAugmentedState<UM extends UIMessage> =
      * only updated when switching threads (setMessagesWithEpoch) and on store init.
      */
     threadInitialMessages: UM[];
-    /** Complete message tree (all branches). Source of truth for sibling navigation. */
-    allMessages: UM[];
-    /** Headless package snapshot for the same message tree. */
+    /** Canonical message tree, including all branches and the selected cursor. */
     treeSnapshot: MessageTreeSnapshot<UM>;
-    treeSnapshotSignature: string;
-    /** Parent→children mapping, rebuilt when allMessages changes. */
-    childrenMap: Map<string | null, UM[]>;
     bumpThreadEpoch: () => void;
     resetThreadEpoch: () => void;
     setMessagesWithEpoch: (messages: UM[]) => void;
@@ -147,6 +142,19 @@ function buildTreeSnapshotFromMessages<UM extends UIMessage>(
   };
 }
 
+function buildPathSnapshot<UM extends UIMessage>(
+  messages: UM[]
+): MessageTreeSnapshot<UM> {
+  return {
+    cursorId: messages.at(-1)?.id ?? null,
+    nodes: messages.map((message, index) => ({
+      message,
+      parentId: index === 0 ? null : (messages[index - 1]?.id ?? null),
+    })),
+    version: 1,
+  };
+}
+
 function getSnapshotIndexes<UM extends UIMessage>(
   snapshot: MessageTreeSnapshot<UM>
 ) {
@@ -168,6 +176,12 @@ function getSnapshotIndexes<UM extends UIMessage>(
   }
 
   return { childrenByParentId, parentById, rootIds };
+}
+
+function getSnapshotMessages<UM extends UIMessage>(
+  snapshot: MessageTreeSnapshot<UM>
+) {
+  return snapshot.nodes.map(({ message }) => message);
 }
 
 function getSnapshotParentId<UM extends UIMessage>(
@@ -426,11 +440,6 @@ export const withThreads =
     // Wrap the original setMessages to auto-bump epoch
     const originalSetMessages = base.setMessages;
 
-    const rebuildMap = (
-      msgs: UI_MESSAGE[],
-      snapshot = buildTreeSnapshotFromMessages(msgs)
-    ) => buildChildrenMapFromSnapshot(msgs, snapshot);
-
     const mergeTreeMessages = (
       serverMessages: UI_MESSAGE[],
       existingTreeMessages: UI_MESSAGE[],
@@ -461,10 +470,7 @@ export const withThreads =
       ...base,
       threadEpoch: 0,
       threadInitialMessages: base.messages,
-      allMessages: base.messages,
       treeSnapshot: initialSnapshot,
-      treeSnapshotSignature: getSnapshotSignature(initialSnapshot),
-      childrenMap: rebuildMap(base.messages, initialSnapshot),
 
       bumpThreadEpoch: () => {
         set((state) => ({
@@ -482,12 +488,17 @@ export const withThreads =
       },
 
       setMessagesWithEpoch: (messages: UI_MESSAGE[]) => {
-        const cursorId = messages.at(-1)?.id ?? null;
         get()._messageIndex.update(messages);
         set((state) => {
-          const snapshot = buildTreeSnapshotFromMessages(
-            state.allMessages,
-            cursorId
+          const mergedMessages = mergeTreeMessages(
+            messages,
+            getSnapshotMessages(state.treeSnapshot),
+            []
+          );
+          const snapshot = mergeTreeSnapshot(
+            buildPathSnapshot(messages),
+            state.treeSnapshot,
+            mergedMessages
           );
           return {
             ...state,
@@ -497,8 +508,6 @@ export const withThreads =
             threadEpoch: state.threadEpoch + 1,
             threadInitialMessages: messages,
             treeSnapshot: snapshot,
-            treeSnapshotSignature: getSnapshotSignature(snapshot),
-            childrenMap: rebuildMap(state.allMessages, snapshot),
           };
         });
       },
@@ -506,10 +515,10 @@ export const withThreads =
       setTreeSnapshot: (snapshot: MessageTreeSnapshot<UI_MESSAGE>) => {
         const state = get();
         const snapshotIndexes = getSnapshotIndexes(snapshot);
-        const snapshotMessages = snapshot.nodes.map(({ message }) => message);
+        const snapshotMessages = getSnapshotMessages(snapshot);
         const mergedMessages = mergeTreeMessages(
           snapshotMessages,
-          state.allMessages,
+          getSnapshotMessages(state.treeSnapshot),
           [],
           snapshotIndexes.parentById
         );
@@ -519,7 +528,7 @@ export const withThreads =
           mergedMessages
         );
         const signature = getSnapshotSignature(mergedSnapshot);
-        if (state.treeSnapshotSignature === signature) {
+        if (getSnapshotSignature(state.treeSnapshot) === signature) {
           return;
         }
 
@@ -537,17 +546,14 @@ export const withThreads =
           messages: nextVisibleThread,
           _memoizedSelectors: new Map(),
           _throttledMessages: nextVisibleThread,
-          allMessages: mergedMessages,
           treeSnapshot: mergedSnapshot,
-          treeSnapshotSignature: signature,
-          childrenMap: rebuildMap(mergedMessages, mergedSnapshot),
         }));
       },
 
       setAllMessages: (messages: UI_MESSAGE[]) => {
         const state = get();
         const currentVisibleMessages = state.messages;
-        const existingTreeMessages = state.allMessages;
+        const existingTreeMessages = getSnapshotMessages(state.treeSnapshot);
         const mergedMessages = mergeTreeMessages(
           messages,
           existingTreeMessages,
@@ -566,10 +572,7 @@ export const withThreads =
         if (state.status === "streaming" || state.status === "submitted") {
           set((prev) => ({
             ...prev,
-            allMessages: mergedMessages,
             treeSnapshot: snapshot,
-            treeSnapshotSignature: getSnapshotSignature(snapshot),
-            childrenMap: rebuildMap(mergedMessages, snapshot),
           }));
           return;
         }
@@ -593,21 +596,19 @@ export const withThreads =
           messages: nextVisibleThread,
           _memoizedSelectors: new Map(),
           _throttledMessages: nextVisibleThread,
-          allMessages: mergedMessages,
           treeSnapshot: snapshot,
-          treeSnapshotSignature: getSnapshotSignature(snapshot),
-          childrenMap: rebuildMap(mergedMessages, snapshot),
         }));
       },
 
       addMessageToTree: (message: UI_MESSAGE) => {
         set((state) => {
-          const idx = state.allMessages.findIndex((m) => m.id === message.id);
+          const allMessages = getSnapshotMessages(state.treeSnapshot);
+          const idx = allMessages.findIndex((m) => m.id === message.id);
           let next: UI_MESSAGE[];
           if (idx === -1) {
-            next = [...state.allMessages, message];
+            next = [...allMessages, message];
           } else {
-            next = [...state.allMessages];
+            next = [...allMessages];
             const existing = next[idx];
             const existingMetadata = (
               existing as (UI_MESSAGE & MessageNode) | undefined
@@ -630,10 +631,7 @@ export const withThreads =
           );
           return {
             ...state,
-            allMessages: next,
             treeSnapshot: snapshot,
-            treeSnapshotSignature: getSnapshotSignature(snapshot),
-            childrenMap: rebuildMap(next, snapshot),
           };
         });
       },
@@ -642,13 +640,17 @@ export const withThreads =
         messageId: string
       ): MessageSiblingInfo<UI_MESSAGE> | null => {
         const state = get();
-        const { allMessages, childrenMap } = state;
+        const allMessages = getSnapshotMessages(state.treeSnapshot);
         const message = allMessages.find((m) => m.id === messageId);
         if (!message) {
           return null;
         }
 
         const parentId = getSnapshotParentId(state.treeSnapshot, message);
+        const childrenMap = buildChildrenMapFromSnapshot(
+          allMessages,
+          state.treeSnapshot
+        );
         const siblings = (childrenMap.get(parentId) ?? []) as UI_MESSAGE[];
         const siblingIndex = siblings.findIndex((s) => s.id === messageId);
 
@@ -659,7 +661,8 @@ export const withThreads =
         messageId: string
       ): ParallelGroupInfo<UI_MESSAGE> | null => {
         const state = get();
-        const message = state.allMessages.find((item) => item.id === messageId);
+        const allMessages = getSnapshotMessages(state.treeSnapshot);
+        const message = allMessages.find((item) => item.id === messageId);
         if (!message) {
           return null;
         }
@@ -675,8 +678,12 @@ export const withThreads =
           return null;
         }
 
+        const childrenMap = buildChildrenMapFromSnapshot(
+          allMessages,
+          state.treeSnapshot
+        );
         const groupMessages = (
-          (state.childrenMap.get(parentId) ?? []) as UI_MESSAGE[]
+          (childrenMap.get(parentId) ?? []) as UI_MESSAGE[]
         )
           .filter(
             (candidate) =>
@@ -715,7 +722,7 @@ export const withThreads =
         direction: "prev" | "next"
       ): UI_MESSAGE[] | null => {
         const state = get();
-        const { allMessages } = state;
+        const allMessages = getSnapshotMessages(state.treeSnapshot);
         if (!allMessages.length) {
           return null;
         }
@@ -748,7 +755,7 @@ export const withThreads =
 
       switchToMessage: (messageId: string): UI_MESSAGE[] | null => {
         const state = get();
-        const { allMessages } = state;
+        const allMessages = getSnapshotMessages(state.treeSnapshot);
         const message = allMessages.find(
           (candidate) => candidate.id === messageId
         );
@@ -780,16 +787,21 @@ export const withThreads =
 
         // Only bump epoch if the thread structure actually changed
         if (currentIds !== newIds) {
-          const snapshot = buildTreeSnapshotFromMessages(
-            get().allMessages,
-            messages.at(-1)?.id ?? null
+          const state = get();
+          const mergedMessages = mergeTreeMessages(
+            messages,
+            getSnapshotMessages(state.treeSnapshot),
+            []
           );
-          set((state) => ({
-            ...state,
-            threadEpoch: state.threadEpoch + 1,
+          const snapshot = mergeTreeSnapshot(
+            buildPathSnapshot(messages),
+            state.treeSnapshot,
+            mergedMessages
+          );
+          set((currentState) => ({
+            ...currentState,
+            threadEpoch: currentState.threadEpoch + 1,
             treeSnapshot: snapshot,
-            treeSnapshotSignature: getSnapshotSignature(snapshot),
-            childrenMap: rebuildMap(state.allMessages, snapshot),
           }));
         }
       },

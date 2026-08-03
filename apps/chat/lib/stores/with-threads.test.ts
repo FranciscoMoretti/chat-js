@@ -82,15 +82,15 @@ describe("withThreads", () => {
     assert.deepEqual(
       store
         .getState()
-        .childrenMap.get(null)
-        ?.map((message) => message.id),
+        .getMessageSiblingInfo(root.id)
+        ?.siblings.map((message) => message.id),
       [root.id]
     );
     assert.deepEqual(
       store
         .getState()
-        .childrenMap.get(root.id)
-        ?.map((message) => message.id),
+        .getMessageSiblingInfo(child.id)
+        ?.siblings.map((message) => message.id),
       [child.id]
     );
     assert.deepEqual(
@@ -99,6 +99,18 @@ describe("withThreads", () => {
         .switchToMessage(child.id)
         ?.map((message) => message.id),
       [root.id, child.id]
+    );
+    assert.deepEqual(
+      store
+        .getState()
+        .treeSnapshot.nodes.map(({ message, parentId }) => [
+          message.id,
+          parentId,
+        ]),
+      [
+        [root.id, null],
+        [child.id, root.id],
+      ]
     );
   });
 
@@ -158,7 +170,7 @@ describe("withThreads", () => {
 
     assert.deepEqual(store.getState().messages, []);
     assert.deepEqual(
-      store.getState().allMessages.map((message) => message.id),
+      store.getState().treeSnapshot.nodes.map(({ message }) => message.id),
       [root.id]
     );
   });
@@ -435,14 +447,14 @@ describe("withThreads", () => {
 
     const allMessageIds = store
       .getState()
-      .allMessages.map((message: ChatMessage) => message.id);
+      .treeSnapshot.nodes.map(({ message }) => message.id);
     assert.deepEqual(allMessageIds, [
       "user-root",
       "assistant-a",
       "user-nested",
       "assistant-nested-a",
-      "assistant-b",
       "assistant-nested-b",
+      "assistant-b",
     ]);
 
     const restoredThread = store.getState().switchToMessage(branchA.id);
@@ -478,7 +490,9 @@ describe("withThreads", () => {
     const store = createThreadStore([rootUser, assistant]);
     store.getState().addMessageToTree(assistantWithoutMetadata);
 
-    const updatedAssistant = store.getState().allMessages.at(-1);
+    const updatedAssistant = store
+      .getState()
+      .treeSnapshot.nodes.at(-1)?.message;
     assert.equal(
       updatedAssistant?.metadata.activeStreamId,
       "pending:assistant-a"
