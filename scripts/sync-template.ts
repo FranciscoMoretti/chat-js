@@ -11,6 +11,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
+import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
@@ -141,6 +142,11 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     '@source "../node_modules/streamdown/dist/*.js";'
   );
   await writeFile(globalsCssPath, globalsCss);
+
+  await vendorThreadPackage({
+    destination,
+    threadSourceDir: join(rootDir, "packages", "thread", "src"),
+  });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
   const rootPackageJson = JSON.parse(
