@@ -175,6 +175,36 @@ describe("withThreads", () => {
     );
   });
 
+  it("keeps the current thread when a non-null cursor cannot be resolved", () => {
+    const root = createMessage({
+      id: "root",
+      role: "user",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    });
+    const assistant = createMessage({
+      id: "assistant",
+      role: "assistant",
+      createdAt: "2024-01-01T00:00:01.000Z",
+      parentMessageId: root.id,
+    });
+    const store = createThreadStore([root, assistant]);
+
+    store.getState().setTreeSnapshot({
+      cursorId: "missing",
+      nodes: [
+        { message: root, parentId: null },
+        { message: assistant, parentId: root.id },
+      ],
+      version: 1,
+    });
+
+    assert.deepEqual(
+      store.getState().messages.map((message) => message.id),
+      [root.id, assistant.id]
+    );
+    assert.equal(store.getState().treeSnapshot.cursorId, assistant.id);
+  });
+
   it("preserves paths deeper than 100 messages", () => {
     const messages = Array.from({ length: 125 }, (_, index) =>
       createMessage({

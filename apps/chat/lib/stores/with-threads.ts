@@ -21,6 +21,14 @@ export interface ParallelGroupInfo<UM> {
   selectedMessageId: string | null;
 }
 
+type SnapshotIndexes = {
+  childrenByParentId: Map<string | null, string[]>;
+  parentById: Map<string, string | null>;
+  rootIds: string[];
+};
+
+const snapshotIndexCache = new WeakMap<object, SnapshotIndexes>();
+
 export type ThreadAugmentedState<UM extends UIMessage> =
   BaseChatStoreState<UM> & {
     threadEpoch: number;
@@ -157,7 +165,12 @@ function buildPathSnapshot<UM extends UIMessage>(
 
 function getSnapshotIndexes<UM extends UIMessage>(
   snapshot: MessageTreeSnapshot<UM>
-) {
+): SnapshotIndexes {
+  const cached = snapshotIndexCache.get(snapshot);
+  if (cached) {
+    return cached;
+  }
+
   const childrenByParentId = new Map<string | null, string[]>();
   const parentById = new Map<string, string | null>();
   const rootIds: string[] = [];
@@ -175,7 +188,9 @@ function getSnapshotIndexes<UM extends UIMessage>(
     }
   }
 
-  return { childrenByParentId, parentById, rootIds };
+  const indexes = { childrenByParentId, parentById, rootIds };
+  snapshotIndexCache.set(snapshot, indexes);
+  return indexes;
 }
 
 function getSnapshotMessages<UM extends UIMessage>(
@@ -204,6 +219,8 @@ function mergeTreeSnapshot<UM extends UIMessage>(
   );
   const incomingParents = getSnapshotIndexes(incomingSnapshot).parentById;
   const existingParents = getSnapshotIndexes(existingSnapshot).parentById;
+  // Existing snapshots own established sibling order. Incoming snapshots add
+  // new nodes in their order; metadata sorting is only for flat message lists.
   const orderedMessageIds = [
     ...existingSnapshot.nodes.map(({ message }) => message.id),
     ...incomingSnapshot.nodes.map(({ message }) => message.id),
@@ -326,6 +343,13 @@ function buildThreadFromSnapshot<UM extends UIMessage>(
   }
 
   return thread.reverse();
+}
+
+function isResolvedThread(
+  messageId: string | null,
+  messages: UIMessage[]
+): boolean {
+  return messageId === null || messages.length > 0;
 }
 
 function findLeafDfsToRightFromSnapshot<UM extends UIMessage>(
@@ -539,6 +563,9 @@ export const withThreads =
               mergedSnapshot.cursorId
             )
           : [];
+        if (!isResolvedThread(mergedSnapshot.cursorId, nextVisibleThread)) {
+          return;
+        }
 
         state._messageIndex.update(nextVisibleThread);
         set((prev) => ({
@@ -589,6 +616,9 @@ export const withThreads =
         const nextVisibleThread = selectedLeafId
           ? buildThreadFromSnapshot(mergedMessages, snapshot, selectedLeafId)
           : currentVisibleMessages;
+        if (!isResolvedThread(selectedLeafId, nextVisibleThread)) {
+          return;
+        }
 
         originalSetMessages(nextVisibleThread);
         set((prev) => ({
@@ -603,28 +633,11 @@ export const withThreads =
       addMessageToTree: (message: UI_MESSAGE) => {
         set((state) => {
           const allMessages = getSnapshotMessages(state.treeSnapshot);
-          const idx = allMessages.findIndex((m) => m.id === message.id);
-          let next: UI_MESSAGE[];
-          if (idx === -1) {
-            next = [...allMessages, message];
-          } else {
-            next = [...allMessages];
-            const existing = next[idx];
-            const existingMetadata = (
-              existing as (UI_MESSAGE & MessageNode) | undefined
-            )?.metadata;
-            next[idx] =
-              existing &&
-              (message as UI_MESSAGE & MessageNode).metadata === undefined &&
-              existingMetadata !== undefined
-                ? ({
-                    ...message,
-                    metadata: {
-                      ...existingMetadata,
-                    },
-                  } as UI_MESSAGE)
-                : message;
-          }
+          const merged = new Map(
+            allMessages.map((item) => [item.id, item] as const)
+          );
+          mergeMessageIntoMap(merged, message);
+          const next = Array.from(merged.values());
           const snapshot = buildTreeSnapshotFromMessages(
             next,
             state.messages.at(-1)?.id ?? null
