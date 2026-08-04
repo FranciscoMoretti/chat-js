@@ -32,10 +32,17 @@ export default defineConfig({
     repo: "chat-js",
     dir: "apps/docs",
   },
+  lastModified: true,
+  dateFormat: { dateStyle: "medium" },
   seo: {
     x: {
       creator: "@franmoretti_",
       handle: "@franmoretti_",
+    },
+    og: {
+      site: "chatjs.dev/docs",
+      description:
+        "Production-ready AI chat documentation for auth, streaming, tools, and deployment.",
     },
   },
   logo: {
@@ -45,6 +52,22 @@ export default defineConfig({
       dark: "/logo/dark.svg",
     },
     text: "",
+  },
+  ai: {
+    // Publish monorepo agent skills at /.well-known/agent-skills/
+    skills: "../../.agents/skills",
+    // WebMCP in-page tools (search_docs / get_page / list_pages) — on by default
+    webmcp: true,
+  },
+  search: {
+    popular: [
+      { href: "/quickstart", label: "Quickstart", icon: "rocket" },
+      { href: "/core/configuration", label: "Configuration", icon: "settings" },
+      { href: "/features/overview", label: "Features", icon: "sparkles" },
+      { href: "/deployment/vercel", label: "Deploy to Vercel", icon: "cloud" },
+      { href: "/cookbook", label: "Cookbook", icon: "book-open" },
+      { href: "/cli", label: "CLI", icon: "terminal" },
+    ],
   },
   navigation: {
     featured: [
@@ -173,8 +196,10 @@ export default defineConfig({
       ],
     },
     tabs: [
-      { label: "Docs", path: "/" },
-      { label: "Cookbook", path: "/cookbook" },
+      // href keeps the tab on the declared route (1.2) instead of falling back
+      // to the section's first content page when path isn't a standalone page.
+      { label: "Docs", path: "/", href: "/" },
+      { label: "Cookbook", path: "/cookbook", href: "/cookbook" },
     ],
   },
   theme: {
