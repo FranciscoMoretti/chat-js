@@ -1,0 +1,32 @@
+# Docs eval suite (blume eval — Blume 1.2+).
+# Run: bun --filter @chatjs/docs run docs:eval
+questions:
+  - id: node-version
+    question: What Node.js version does ChatJS require?
+    expected:
+      - Node 22 or newer
+    routes:
+      - /quickstart
+  - id: create-app
+    question: How do I create a new ChatJS app with the CLI?
+    expected:
+      - use the chat-js create command
+      - or bunx @chat-js/cli create
+    routes:
+      - /quickstart
+      - /cli/create
+  - id: deploy-vercel
+    question: How do I deploy ChatJS to Vercel?
+    expected:
+      - connect the repository to Vercel
+      - set the required environment variables
+    routes:
+      - /deployment/vercel
+  - id: tool-calling
+    question: How does tool calling work in ChatJS?
+    expected:
+      - tools are registered in a tool registry
+      - the model can call tools during a chat turn
+    routes:
+      - /core/tool-registry
+      - /features/overview

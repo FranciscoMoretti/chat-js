@@ -48,6 +48,7 @@ apps/*/test-results/
 apps/*/playwright-report/
 apps/*/blob-report/
 apps/*/playwright/*
+apps/*/uiverify-archive/
 
 tsconfig.tsbuildinfo
 
@@ -76,3 +77,4 @@ apps/electron/branding.json
 .devtools
 .cursor/hooks/state
 .codex/environments/
+apps/docs/.uiverify-shots/
