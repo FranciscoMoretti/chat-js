@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { DeviceLoginPage } from "@/components/device-login-page";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   description: "Sign in for the desktop app",
 };
 
-export default async function DeviceLoginRoute({
+export default function DeviceLoginRoute({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +21,18 @@ export default async function DeviceLoginRoute({
     redirect("/login");
   }
 
+  return (
+    <Suspense fallback={null}>
+      <DeviceLoginContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function DeviceLoginContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -33,5 +46,9 @@ export default async function DeviceLoginRoute({
     redirect(`/login?returnTo=${encodeURIComponent(currentHref)}`);
   }
 
-  return <DeviceLoginPage />;
+  return (
+    <Suspense fallback={null}>
+      <DeviceLoginPage />
+    </Suspense>
+  );
 }

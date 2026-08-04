@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { Suspense } from "react";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
@@ -16,15 +17,36 @@ import { auth } from "../../lib/auth";
 import { ChatProviders } from "./chat-providers";
 import { ChatRouteHost } from "./chat-route-host";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+function ChatLayoutShell({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider defaultOpen>
+      <div className="hidden w-(--sidebar-width) shrink-0 border-r bg-sidebar md:block" />
+      <SidebarInset
+        style={
+          {
+            "--header-height": "calc(var(--spacing) * 13)",
+          } as React.CSSProperties
+        }
+      >
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
 
-export default async function ChatLayout({
+export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <Suspense fallback={<ChatLayoutShell>{children}</ChatLayoutShell>}>
+      <ChatLayoutContent>{children}</ChatLayoutContent>
+    </Suspense>
+  );
+}
+
+async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -85,7 +107,9 @@ export default async function ChatLayout({
         <SessionProvider initialSession={session}>
           <ChatProviders>
             <SidebarProvider defaultOpen={!isCollapsed}>
-              <AppSidebar />
+              <Suspense fallback={null}>
+                <AppSidebar />
+              </Suspense>
               <SidebarInset
                 style={
                   {
@@ -96,7 +120,11 @@ export default async function ChatLayout({
                 <ChatModelsProvider models={chatModels}>
                   <DefaultModelProvider defaultModel={defaultModel}>
                     <KeyboardShortcuts />
-                    <ChatRouteHost>{children}</ChatRouteHost>
+                    <Suspense
+                      fallback={<div className="h-dvh w-full bg-background" />}
+                    >
+                      <ChatRouteHost>{children}</ChatRouteHost>
+                    </Suspense>
                   </DefaultModelProvider>
                 </ChatModelsProvider>
               </SidebarInset>

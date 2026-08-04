@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import { DevLoginTool } from "@/components/dev-login-tool";
 import { ElectronTransferUser } from "@/components/electron-auth-ui";
 import { InternalLink } from "@/components/internal-link";
@@ -19,19 +20,11 @@ export const metadata: Metadata = {
   description: "Login to your account",
 };
 
-export default async function LoginPage({
+export default function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedSearchParams = await searchParams;
-  const query = toSearchParamRecord(resolvedSearchParams);
-  const isElectronTransfer =
-    config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
-  const session = isElectronTransfer
-    ? await auth.api.getSession({ headers: await headers() })
-    : null;
-
   return (
     <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
       <InternalLink
@@ -46,12 +39,34 @@ export default async function LoginPage({
       </InternalLink>
       <DevLoginTool />
       <div className="mx-auto flex w-full flex-col items-center justify-center sm:w-[420px]">
-        {session?.user && isElectronTransfer ? (
-          <ElectronTransferUser query={query} session={session} />
-        ) : (
-          <LoginForm className="w-full" />
-        )}
+        <Suspense fallback={null}>
+          <LoginPageContent searchParams={searchParams} />
+        </Suspense>
       </div>
     </div>
+  );
+}
+
+async function LoginPageContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const query = toSearchParamRecord(resolvedSearchParams);
+  const isElectronTransfer =
+    config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
+  const session = isElectronTransfer
+    ? await auth.api.getSession({ headers: await headers() })
+    : null;
+
+  if (session?.user && isElectronTransfer) {
+    return <ElectronTransferUser query={query} session={session} />;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <LoginForm className="w-full" />
+    </Suspense>
   );
 }
