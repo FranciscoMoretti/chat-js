@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DeviceLoginPage } from "@/components/device-login-page";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
@@ -11,7 +13,20 @@ export const metadata: Metadata = {
   description: "Sign in for the desktop app",
 };
 
-export default async function DeviceLoginRoute({
+function DeviceLoginFallback() {
+  return (
+    <div className="container mx-auto flex h-dvh w-screen items-center justify-center px-4">
+      <AuthCardSkeleton
+        cardClassName="w-full max-w-md"
+        description="Connecting your desktop app"
+        title="Device login"
+        variant="device"
+      />
+    </div>
+  );
+}
+
+export default function DeviceLoginRoute({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +35,18 @@ export default async function DeviceLoginRoute({
     redirect("/login");
   }
 
+  return (
+    <Suspense fallback={<DeviceLoginFallback />}>
+      <DeviceLoginContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function DeviceLoginContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -33,5 +60,9 @@ export default async function DeviceLoginRoute({
     redirect(`/login?returnTo=${encodeURIComponent(currentHref)}`);
   }
 
-  return <DeviceLoginPage />;
+  return (
+    <Suspense fallback={<DeviceLoginFallback />}>
+      <DeviceLoginPage />
+    </Suspense>
+  );
 }

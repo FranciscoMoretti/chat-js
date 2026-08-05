@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
-  cacheComponents: false,
+  cacheComponents: true,
+  partialPrefetching: true,
   experimental: {
     optimizePackageImports: [
       "react-tweet",
