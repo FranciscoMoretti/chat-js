@@ -44,7 +44,7 @@ function ChatLayoutShell() {
     <SidebarProvider defaultOpen={false}>
       <AppSidebarFallback />
       <SidebarInset className={sidebarInsetClassName}>
-        <div className="h-dvh w-full bg-background" />
+        <ChatLoadingShell />
       </SidebarInset>
     </SidebarProvider>
   );

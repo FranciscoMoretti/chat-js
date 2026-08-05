@@ -1,26 +1,33 @@
 "use client";
 
-import { Cpu, Plug, Settings } from "lucide-react";
+import { Cpu, type LucideIcon, Plug, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { InternalLink } from "@/components/internal-link";
 import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
-function getNavItems() {
-  return [
-    { href: "/settings" as const, label: "General", icon: Settings },
-    { href: "/settings/models" as const, label: "Models", icon: Cpu },
-    ...(config.ai.tools.mcp.enabled
-      ? [
-          {
-            href: "/settings/connectors" as const,
-            label: "Connectors",
-            icon: Plug,
-          },
-        ]
-      : []),
-  ] as const;
+type SettingsNavItem = {
+  href: "/settings" | "/settings/models" | "/settings/connectors";
+  label: string;
+  icon: LucideIcon;
+};
+
+function getNavItems(): SettingsNavItem[] {
+  const items: SettingsNavItem[] = [
+    { href: "/settings", label: "General", icon: Settings },
+    { href: "/settings/models", label: "Models", icon: Cpu },
+  ];
+
+  if (config.ai.tools.mcp.enabled) {
+    items.push({
+      href: "/settings/connectors",
+      label: "Connectors",
+      icon: Plug,
+    });
+  }
+
+  return items;
 }
 
 export function SettingsNav({

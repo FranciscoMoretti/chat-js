@@ -2,19 +2,12 @@ import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DevLoginTool } from "@/components/dev-login-tool";
 import { ElectronTransferUser } from "@/components/electron-auth-ui";
 import { InternalLink } from "@/components/internal-link";
 import { LoginForm } from "@/components/login-form";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import {
@@ -27,32 +20,6 @@ export const metadata: Metadata = {
   title: "Login",
   description: "Login to your account",
 };
-
-function AuthFormFallback({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex w-full flex-col gap-6">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="mx-auto h-4 w-40" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 export default function LoginPage({
   searchParams,
@@ -75,7 +42,7 @@ export default function LoginPage({
       <div className="mx-auto flex w-full flex-col items-center justify-center sm:w-[420px]">
         <Suspense
           fallback={
-            <AuthFormFallback
+            <AuthCardSkeleton
               description="Sign in to your account"
               title="Welcome back"
             />
@@ -108,7 +75,7 @@ async function LoginPageContent({
   return (
     <Suspense
       fallback={
-        <AuthFormFallback
+        <AuthCardSkeleton
           description="Sign in to your account"
           title="Welcome back"
         />
