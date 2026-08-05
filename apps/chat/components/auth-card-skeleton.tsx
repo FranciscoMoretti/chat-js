@@ -11,7 +11,7 @@ type AuthCardSkeletonProps = {
   title: string;
   description: string;
   className?: string;
-  contentClassName?: string;
+  cardClassName?: string;
   variant?: "form" | "device";
 };
 
@@ -19,12 +19,12 @@ export function AuthCardSkeleton({
   title,
   description,
   className,
-  contentClassName,
+  cardClassName,
   variant = "form",
 }: AuthCardSkeletonProps) {
   return (
     <div className={cn("flex w-full flex-col gap-6", className)}>
-      <Card className={contentClassName}>
+      <Card className={cardClassName}>
         <CardHeader className="text-center">
           <h1 className="font-semibold text-xl leading-none">{title}</h1>
           <CardDescription>{description}</CardDescription>

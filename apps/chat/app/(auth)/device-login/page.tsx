@@ -17,7 +17,7 @@ function DeviceLoginFallback() {
   return (
     <div className="container mx-auto flex h-dvh w-screen items-center justify-center px-4">
       <AuthCardSkeleton
-        contentClassName="w-full max-w-md"
+        cardClassName="w-full max-w-md"
         description="Connecting your desktop app"
         title="Device login"
         variant="device"
