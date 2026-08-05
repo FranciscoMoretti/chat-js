@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { SharedChatPage } from "./shared-chat-page";
 
@@ -8,7 +9,7 @@ export default function SharedChatPageRoute({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="h-dvh w-full bg-background" />}>
+    <Suspense fallback={<ChatLoadingShell />}>
       <SharedChatPageContent params={params} />
     </Suspense>
   );

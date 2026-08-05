@@ -8,6 +8,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { type ReactNode, useEffect, useMemo } from "react";
+import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { ChatSystem } from "@/components/chat-system";
 import {
   useGetChatByIdQueryOptions,
@@ -38,10 +39,6 @@ import { useTRPC } from "@/trpc/react";
 
 interface ChatRouteHostProps {
   children: ReactNode;
-}
-
-function ChatLoadingShell() {
-  return <div className="h-dvh w-full bg-background" />;
 }
 
 type HostedParsedChatRoute = Extract<

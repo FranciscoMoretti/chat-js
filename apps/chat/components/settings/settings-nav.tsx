@@ -7,6 +7,22 @@ import { InternalLink } from "@/components/internal-link";
 import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
+function getNavItems() {
+  return [
+    { href: "/settings" as const, label: "General", icon: Settings },
+    { href: "/settings/models" as const, label: "Models", icon: Cpu },
+    ...(config.ai.tools.mcp.enabled
+      ? [
+          {
+            href: "/settings/connectors" as const,
+            label: "Connectors",
+            icon: Plug,
+          },
+        ]
+      : []),
+  ] as const;
+}
+
 export function SettingsNav({
   orientation = "vertical",
 }: {
@@ -14,23 +30,7 @@ export function SettingsNav({
 }) {
   const pathname = usePathname();
 
-  const navItems = useMemo(
-    () =>
-      [
-        { href: "/settings" as const, label: "General", icon: Settings },
-        { href: "/settings/models" as const, label: "Models", icon: Cpu },
-        ...(config.ai.tools.mcp.enabled
-          ? [
-              {
-                href: "/settings/connectors" as const,
-                label: "Connectors",
-                icon: Plug,
-              },
-            ]
-          : []),
-      ] as const,
-    []
-  );
+  const navItems = useMemo(() => getNavItems(), []);
 
   return (
     <nav

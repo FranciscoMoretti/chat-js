@@ -4,27 +4,37 @@ import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
-export default function ConnectorsSettingsPage() {
+function ConnectorsSettingsHeader() {
   return (
-    <Suspense fallback={<ConnectorsSettingsFallback />}>
-      <ConnectorsSettingsContent />
-    </Suspense>
+    <SettingsPageHeader>
+      <h2 className="font-semibold text-lg">Connectors & MCP</h2>
+      <p className="text-muted-foreground text-sm">
+        Connect to Model Context Protocol servers to extend AI capabilities with
+        external tools.
+      </p>
+    </SettingsPageHeader>
   );
 }
 
-function ConnectorsSettingsFallback() {
+export default function ConnectorsSettingsPage() {
   return (
-    <SettingsPage>
-      <SettingsPageHeader>
-        <h2 className="font-semibold text-lg">Connectors & MCP</h2>
-        <p className="text-muted-foreground text-sm">
-          Connect to Model Context Protocol servers to extend AI capabilities
-          with external tools.
-        </p>
-      </SettingsPageHeader>
-    </SettingsPage>
+    <Suspense
+      fallback={
+        <SettingsPage>
+          <ConnectorsSettingsHeader />
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-5/6" />
+          </div>
+        </SettingsPage>
+      }
+    >
+      <ConnectorsSettingsContent />
+    </Suspense>
   );
 }
 
@@ -35,13 +45,7 @@ async function ConnectorsSettingsContent() {
   return (
     <HydrateClient>
       <SettingsPage>
-        <SettingsPageHeader>
-          <h2 className="font-semibold text-lg">Connectors & MCP</h2>
-          <p className="text-muted-foreground text-sm">
-            Connect to Model Context Protocol servers to extend AI capabilities
-            with external tools.
-          </p>
-        </SettingsPageHeader>
+        <ConnectorsSettingsHeader />
         <ConnectorsSettings />
       </SettingsPage>
     </HydrateClient>
