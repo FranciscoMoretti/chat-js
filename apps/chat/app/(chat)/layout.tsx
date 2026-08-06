@@ -5,14 +5,13 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
-import { SessionProvider } from "@/providers/session-provider";
+import { SessionProvider, SessionSeed } from "@/providers/session-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
@@ -21,48 +20,31 @@ import { ChatRouteHost } from "./chat-route-host";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
-function AppSidebarFallback() {
-  return (
-    <div className="hidden h-dvh w-(--sidebar-width) shrink-0 flex-col gap-3 border-r bg-sidebar p-3 md:flex">
-      <Skeleton className="h-8 w-28" />
-      <Skeleton className="h-9 w-full" />
-      <Skeleton className="h-9 w-full" />
-      <Skeleton className="h-9 w-full" />
-      <div className="mt-2 flex flex-1 flex-col gap-2">
-        <Skeleton className="h-7 w-full" />
-        <Skeleton className="h-7 w-5/6" />
-        <Skeleton className="h-7 w-4/5" />
-        <Skeleton className="h-7 w-full" />
-      </div>
-      <Skeleton className="h-10 w-full" />
-    </div>
-  );
-}
-
-function ChatLayoutShell() {
-  return (
-    <SidebarProvider defaultOpen={false}>
-      <AppSidebarFallback />
-      <SidebarInset className={sidebarInsetClassName}>
-        <ChatLoadingShell />
-      </SidebarInset>
-    </SidebarProvider>
-  );
-}
-
-export default function ChatLayout({
+export default async function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
-    <Suspense fallback={<ChatLayoutShell />}>
-      <ChatLayoutContent>{children}</ChatLayoutContent>
-    </Suspense>
+    <TRPCReactProvider>
+      <SessionProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
+          <AppSidebar />
+          <SidebarInset className={sidebarInsetClassName}>
+            <Suspense fallback={<ChatLoadingShell />}>
+              <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
+            </Suspense>
+          </SidebarInset>
+        </SidebarProvider>
+      </SessionProvider>
+    </TRPCReactProvider>
   );
 }
 
-async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
+async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -71,23 +53,19 @@ async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
   const session = isPlaywrightTestEnvironment
     ? null
     : await auth.api.getSession({ headers: headersRes });
-  const isCollapsed = cookieStore.get("sidebar:state")?.value !== "true";
 
   const cookieModel = cookieStore.get("chat-model")?.value;
   const isAnonymous = !session?.user;
 
   const default_chat_model = config.ai.workflows.chat;
-  // Check if the model from cookie exists in available models
   let defaultModel: AppModelId =
     (cookieModel as AppModelId) ?? default_chat_model;
 
   if (cookieModel) {
     const modelExists = chatModels.some((m) => m.id === cookieModel);
     if (!modelExists) {
-      // Model doesn't exist in available models, fall back to default
       defaultModel = default_chat_model;
     } else if (isAnonymous) {
-      // For anonymous users, also check if the model is in their allowed list
       const isModelAvailable = (
         ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
       ).includes(cookieModel as AppModelId);
@@ -97,7 +75,6 @@ async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Ensure anonymous users always get a model from their allowed list
   if (isAnonymous) {
     const anonymousModels =
       ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[];
@@ -106,7 +83,6 @@ async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Prefetch model preferences for authenticated users
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
@@ -118,28 +94,16 @@ async function ChatLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <TRPCReactProvider>
-      <HydrateClient>
-        <SessionProvider initialSession={session}>
-          <ChatProviders>
-            <SidebarProvider defaultOpen={!isCollapsed}>
-              <Suspense fallback={<AppSidebarFallback />}>
-                <AppSidebar />
-              </Suspense>
-              <SidebarInset className={sidebarInsetClassName}>
-                <ChatModelsProvider models={chatModels}>
-                  <DefaultModelProvider defaultModel={defaultModel}>
-                    <KeyboardShortcuts />
-                    <Suspense fallback={<ChatLoadingShell />}>
-                      <ChatRouteHost>{children}</ChatRouteHost>
-                    </Suspense>
-                  </DefaultModelProvider>
-                </ChatModelsProvider>
-              </SidebarInset>
-            </SidebarProvider>
-          </ChatProviders>
-        </SessionProvider>
-      </HydrateClient>
-    </TRPCReactProvider>
+    <HydrateClient>
+      <SessionSeed session={session} />
+      <ChatProviders>
+        <ChatModelsProvider models={chatModels}>
+          <DefaultModelProvider defaultModel={defaultModel}>
+            <KeyboardShortcuts />
+            <ChatRouteHost>{children}</ChatRouteHost>
+          </DefaultModelProvider>
+        </ChatModelsProvider>
+      </ChatProviders>
+    </HydrateClient>
   );
 }

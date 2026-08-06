@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 export function SidebarUserNav() {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
@@ -43,6 +43,25 @@ export function SidebarUserNav() {
   const isDesktopCollapsed = !isMobile && state === "collapsed";
 
   const user = session?.user;
+
+  if (isPending) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div
+            aria-hidden="true"
+            className="flex h-12 items-center gap-2 rounded-md p-2"
+          >
+            <div className="size-8 animate-pulse rounded-lg bg-sidebar-accent" />
+            <div className="grid flex-1 gap-1 group-data-[collapsible=icon]:hidden">
+              <div className="h-3 w-20 animate-pulse rounded bg-sidebar-accent" />
+              <div className="h-3 w-28 animate-pulse rounded bg-sidebar-accent" />
+            </div>
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   if (!user) {
     return (
