@@ -476,5 +476,15 @@ export function ChatRouteHost({ children }: ChatRouteHostProps) {
     route.type === "chat" ||
     route.type === "projectChat";
 
-  return hosted ? <HostedChatRoute route={route} /> : children;
+  if (!hosted) {
+    return children;
+  }
+
+  return (
+    <>
+      <HostedChatRoute route={route} />
+      {/* Keep the page segment mounted so Instant Navigation can validate it. */}
+      <div hidden>{children}</div>
+    </>
+  );
 }
