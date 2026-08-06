@@ -52,6 +52,21 @@ function useSidebar() {
 	return context;
 }
 
+function readSidebarOpenCookie(fallback: boolean) {
+	if (typeof document === "undefined") {
+		return fallback;
+	}
+
+	const match = document.cookie.match(
+		new RegExp(`(?:^|; )${SIDEBAR_COOKIE_NAME}=([^;]*)`),
+	);
+	if (!match?.[1]) {
+		return fallback;
+	}
+
+	return match[1] === "true";
+}
+
 function SidebarProvider({
 	defaultOpen = true,
 	open: openProp,
@@ -72,6 +87,16 @@ function SidebarProvider({
 	// We use openProp and setOpenProp for control from outside the component.
 	const [_open, _setOpen] = React.useState(defaultOpen);
 	const open = openProp ?? _open;
+
+	// Restore persisted open state on the client without a server cookies() read,
+	// so the Instant Navigation App Shell can stay static.
+	React.useLayoutEffect(() => {
+		if (openProp !== undefined) {
+			return;
+		}
+		_setOpen(readSidebarOpenCookie(defaultOpen));
+	}, [defaultOpen, openProp]);
+
 	const setOpen = React.useCallback(
 		(value: boolean | ((value: boolean) => boolean)) => {
 			const openState = typeof value === "function" ? value(open) : value;

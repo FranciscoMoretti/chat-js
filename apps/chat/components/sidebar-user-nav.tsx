@@ -48,13 +48,16 @@ export function SidebarUserNav() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton className="pointer-events-none" size="lg">
+          <div
+            aria-hidden="true"
+            className="flex h-12 items-center gap-2 rounded-md p-2"
+          >
             <div className="size-8 animate-pulse rounded-lg bg-sidebar-accent" />
             <div className="grid flex-1 gap-1 group-data-[collapsible=icon]:hidden">
               <div className="h-3 w-20 animate-pulse rounded bg-sidebar-accent" />
               <div className="h-3 w-28 animate-pulse rounded bg-sidebar-accent" />
             </div>
-          </SidebarMenuButton>
+          </div>
         </SidebarMenuItem>
       </SidebarMenu>
     );

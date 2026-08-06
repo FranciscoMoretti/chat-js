@@ -11,7 +11,7 @@ import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
-import { SessionProvider } from "@/providers/session-provider";
+import { SessionProvider, SessionSeed } from "@/providers/session-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
@@ -92,16 +92,15 @@ async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
 
   return (
     <HydrateClient>
-      <SessionProvider initialSession={session}>
-        <ChatProviders>
-          <ChatModelsProvider models={chatModels}>
-            <DefaultModelProvider defaultModel={defaultModel}>
-              <KeyboardShortcuts />
-              <ChatRouteHost>{children}</ChatRouteHost>
-            </DefaultModelProvider>
-          </ChatModelsProvider>
-        </ChatProviders>
-      </SessionProvider>
+      <SessionSeed session={session} />
+      <ChatProviders>
+        <ChatModelsProvider models={chatModels}>
+          <DefaultModelProvider defaultModel={defaultModel}>
+            <KeyboardShortcuts />
+            <ChatRouteHost>{children}</ChatRouteHost>
+          </DefaultModelProvider>
+        </ChatModelsProvider>
+      </ChatProviders>
     </HydrateClient>
   );
 }
