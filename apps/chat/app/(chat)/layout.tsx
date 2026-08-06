@@ -20,15 +20,18 @@ import { ChatRouteHost } from "./chat-route-host";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
-export default function ChatLayout({
+export default async function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
     <TRPCReactProvider>
       <SessionProvider>
-        <SidebarProvider defaultOpen={false}>
+        <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
           <SidebarInset className={sidebarInsetClassName}>
             <Suspense fallback={<ChatLoadingShell />}>

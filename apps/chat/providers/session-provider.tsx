@@ -28,8 +28,11 @@ const SessionSeedContext = createContext<
 >(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const { data: clientSession, isPending: isClientPending } =
-    authClient.useSession();
+  const {
+    data: clientSession,
+    isPending: isClientPending,
+    error: clientError,
+  } = authClient.useSession();
   // undefined = not seeded from the server tree yet
   const [serverSession, setServerSession] = useState<
     Session | null | undefined
@@ -47,19 +50,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // Prefer server session as a fallback even after the client hook settles.
-    // This avoids "split brain" when client session fetch is blocked/misconfigured
-    // (e.g. trustedOrigins mismatch) but the server can still read the cookies.
-    const effective = isClientPending
-      ? (seededSession ?? clientSession)
-      : (clientSession ?? seededSession);
+    // Settled client null is authoritative (sign-out). Only keep the server
+    // seed while the client fetch is still pending or failed (e.g. blocked
+    // get-session / trustedOrigins mismatch).
+    const effective =
+      isClientPending || clientError != null
+        ? (clientSession ?? seededSession)
+        : clientSession;
 
     return {
       data: effective ?? null,
       // Once seeded, never treat a hung client fetch as anonymous/pending.
       isPending: false,
     };
-  }, [clientSession, isClientPending, isSeeded, serverSession]);
+  }, [clientError, clientSession, isClientPending, isSeeded, serverSession]);
 
   return (
     <SessionSeedContext.Provider value={setServerSession}>
