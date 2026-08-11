@@ -3,7 +3,10 @@ import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
-import { MemoryThreadState } from "../src/thread-state";
+import {
+	createThreadStateSnapshot,
+	MemoryThreadState,
+} from "../src/thread-state";
 import type { ThreadState } from "../src/types";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
@@ -162,6 +165,21 @@ async function waitFor(predicate: () => boolean) {
 }
 
 describe("Thread", () => {
+	test("creates a complete initial snapshot for custom state adapters", () => {
+		const snapshot = createThreadStateSnapshot({
+			messages: [user("user-1")],
+		});
+
+		expect(snapshot.cursorId).toBe("user-1");
+		expect(snapshot.messages.map(({ id }) => id)).toEqual(["user-1"]);
+		expect(snapshot.messagesById["user-1"]?.id).toBe("user-1");
+		expect(snapshot.parentById["user-1"]).toBeNull();
+		expect(snapshot.rootIds).toEqual(["user-1"]);
+		expect(snapshot.runs).toEqual([]);
+		expect(snapshot.status).toBe("ready");
+		expect(snapshot.treeStatus).toBe("ready");
+	});
+
 	test("publishes synchronous atomic updates through a custom state", () => {
 		const state = new RecordingThreadState([user("user-1")]);
 		const thread = new StateBackedThread(state);

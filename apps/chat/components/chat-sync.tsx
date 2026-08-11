@@ -1,19 +1,16 @@
 "use client";
 
 import { DefaultChatTransport } from "ai";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
+import type { ApplicationThread } from "@/lib/application-thread";
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
-import {
-  useAddMessageToTree,
-  useThreadInitialMessages,
-} from "@/lib/stores/hooks-threads";
 import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
@@ -21,15 +18,20 @@ function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
   return !!(activeStreamId && !activeStreamId.startsWith("pending:"));
 }
 
-export function ChatSync({ id }: { id: string }) {
+export function ChatSync({
+  id,
+  thread,
+}: {
+  id: string;
+  thread: ApplicationThread;
+}) {
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setChatPersisted } = useChatPersistenceActions();
   const { setDataStream } = useDataStream();
 
   const isAuthenticated = !!session?.user;
-  const threadInitialMessages = useThreadInitialMessages();
-  const addMessageToTree = useAddMessageToTree();
+  const threadInitialMessages = thread.getSnapshot().messages;
   const hasReportedConfirmationRef = useRef(false);
 
   const lastMessage = threadInitialMessages.at(-1);
@@ -39,7 +41,7 @@ export function ChatSync({ id }: { id: string }) {
     lastMessage?.metadata?.activeStreamId
   );
 
-  useChat<ChatMessage>({
+  const chat = useChat<ChatMessage>({
     experimental_throttle: 100,
     id,
     // TODO: this is a special "snapshot" value in the store that is only updated
@@ -48,7 +50,6 @@ export function ChatSync({ id }: { id: string }) {
     messages: threadInitialMessages,
     generateId: generateUUID,
     onFinish: ({ message }) => {
-      addMessageToTree(message);
       saveChatMessage({ message, chatId: id });
     },
     resume: isLastMessagePartial,
@@ -95,6 +96,12 @@ export function ChatSync({ id }: { id: string }) {
       toast.error(message, description ? { description } : undefined);
     },
   });
+
+  // PR #241 replaces this compatibility bridge by mounting useThread on the
+  // same ApplicationThread controller.
+  useEffect(() => {
+    thread.setMessages(chat.messages);
+  }, [chat.messages, thread]);
 
   useCompleteDataPart();
 

@@ -1,3 +1,6 @@
+import type { MessageTreeSnapshot } from "@chatjs/thread";
+import type { UIMessage } from "ai";
+
 // Generic message type that works for both DB and anonymous messages
 export interface MessageNode {
   id: string;
@@ -89,6 +92,40 @@ export function getDefaultThread<T extends MessageNode>(allMessages: T[]): T[] {
   }
 
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
+}
+
+export function buildTreeSnapshotFromMessages<
+  TMessage extends UIMessage & MessageNode,
+>(
+  allMessages: TMessage[],
+  cursorId: string | null = getDefaultLeafMessage(allMessages)?.id ?? null
+): MessageTreeSnapshot<TMessage> {
+  const childrenByParentId = buildChildrenMap(allMessages);
+  const nodes: MessageTreeSnapshot<TMessage>["nodes"] = [];
+  const visited = new Set<string>();
+
+  const visit = (message: TMessage, parentId: string | null) => {
+    if (visited.has(message.id)) {
+      return;
+    }
+
+    visited.add(message.id);
+    nodes.push({ message, parentId });
+    for (const child of childrenByParentId.get(message.id) ?? []) {
+      visit(child, message.id);
+    }
+  };
+
+  for (const root of childrenByParentId.get(null) ?? []) {
+    visit(root, null);
+  }
+
+  // Missing or cyclic parent metadata should not make messages disappear.
+  for (const message of allMessages) {
+    visit(message, null);
+  }
+
+  return { cursorId, nodes, version: 1 };
 }
 
 // Build parent->children mapping sorted by createdAt

@@ -6,7 +6,7 @@ import type {
 	ThreadStateSnapshot,
 } from "./types";
 
-function createInitialSnapshot<TMessage extends UIMessage>({
+export function createThreadStateSnapshot<TMessage extends UIMessage>({
 	initialTree,
 	messages,
 }: {
@@ -39,7 +39,7 @@ export class MemoryThreadState<TMessage extends UIMessage = UIMessage>
 			messages?: TMessage[];
 		} = {},
 	) {
-		this.#snapshot = createInitialSnapshot(options);
+		this.#snapshot = createThreadStateSnapshot(options);
 	}
 
 	getSnapshot = () => this.#snapshot;

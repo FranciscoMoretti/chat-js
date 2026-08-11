@@ -1,11 +1,13 @@
 "use client";
 
+import type { MessageTreeSnapshot } from "@chatjs/thread";
 import { memo } from "react";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
+import type { ApplicationThread } from "@/lib/application-thread";
 import type { ChatRouteSource } from "@/lib/chat-route";
 import {
   type CustomChatStoreApi,
@@ -18,6 +20,7 @@ export const ChatSystem = memo(function PureChatSystem({
   chat,
   id,
   initialMessages,
+  initialTree,
   isReadonly,
   initialTool = null,
   overrideModelId,
@@ -25,10 +28,12 @@ export const ChatSystem = memo(function PureChatSystem({
   routeSource = projectId ? "project" : "chat",
   runtimeKey,
   store,
+  thread,
 }: {
   chat?: UIChat | null;
   id: string;
   initialMessages: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
   isReadonly: boolean;
   initialTool?: UiToolName | null;
   overrideModelId?: AppModelId;
@@ -36,13 +41,17 @@ export const ChatSystem = memo(function PureChatSystem({
   routeSource?: ChatRouteSource;
   runtimeKey: string;
   store?: CustomChatStoreApi<ChatMessage>;
+  thread?: ApplicationThread;
 }) {
   return (
     <ArtifactProvider key={runtimeKey}>
-      <CustomStoreProvider<ChatMessage>
+      <CustomStoreProvider
         initialMessages={initialMessages}
+        initialTree={initialTree}
         key={runtimeKey}
         store={store}
+        thread={thread}
+        threadId={id}
       >
         {isReadonly ? (
           <Chat

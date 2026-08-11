@@ -1,0 +1,66 @@
+import { createThreadStateSnapshot } from "@chatjs/thread";
+import { describe, expect, it } from "vitest";
+import type { ChatMessage } from "@/lib/ai/types";
+import { buildTreeSnapshotFromMessages } from "./thread-utils";
+
+function message({
+  id,
+  parentMessageId,
+  parallelIndex = null,
+  role,
+}: {
+  id: string;
+  parentMessageId: string | null;
+  parallelIndex?: number | null;
+  role: "assistant" | "user";
+}): ChatMessage {
+  return {
+    id,
+    metadata: {
+      activeStreamId: null,
+      createdAt: new Date(parallelIndex ?? 0),
+      parentMessageId,
+      parallelGroupId: parallelIndex === null ? null : "group-1",
+      parallelIndex,
+      selectedModel: "openai/gpt-5-nano",
+    },
+    parts: [{ text: id, type: "text" }],
+    role,
+  };
+}
+
+describe("buildTreeSnapshotFromMessages", () => {
+  it("initializes the selected path without dropping sibling branches", () => {
+    const root = message({
+      id: "root",
+      parentMessageId: null,
+      role: "user",
+    });
+    const first = message({
+      id: "first",
+      parentMessageId: root.id,
+      parallelIndex: 0,
+      role: "assistant",
+    });
+    const second = message({
+      id: "second",
+      parentMessageId: root.id,
+      parallelIndex: 1,
+      role: "assistant",
+    });
+
+    const tree = buildTreeSnapshotFromMessages(
+      [second, root, first],
+      second.id
+    );
+    const snapshot = createThreadStateSnapshot({ initialTree: tree });
+
+    expect(tree.nodes.map(({ message: node }) => node.id)).toEqual([
+      root.id,
+      first.id,
+      second.id,
+    ]);
+    expect(snapshot.messages.map(({ id }) => id)).toEqual([root.id, second.id]);
+    expect(snapshot.childrenByParentId[root.id]).toEqual([first.id, second.id]);
+  });
+});

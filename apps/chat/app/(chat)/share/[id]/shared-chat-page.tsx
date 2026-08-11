@@ -1,10 +1,9 @@
 "use client";
 import { notFound } from "next/navigation";
-import { useMemo } from "react";
 import { ChatSystem } from "@/components/chat-system";
 import { WithSkeleton } from "@/components/with-skeleton";
+import { useChatSystemInitialState } from "@/hooks/use-chat-system-initial-state";
 import { usePublicChat, usePublicChatMessages } from "@/hooks/use-shared-chat";
-import { getDefaultThread } from "@/lib/thread-utils";
 
 export function SharedChatPage({ id }: { id: string }) {
   const {
@@ -18,14 +17,7 @@ export function SharedChatPage({ id }: { id: string }) {
     error: messagesError,
   } = usePublicChatMessages(id);
 
-  const initialThreadMessages = useMemo(() => {
-    if (!messages) {
-      return [];
-    }
-    return getDefaultThread(
-      messages.map((msg) => ({ ...msg, id: msg.id.toString() }))
-    );
-  }, [messages]);
+  const initialState = useChatSystemInitialState(messages);
 
   if (!id) {
     return notFound();
@@ -68,7 +60,8 @@ export function SharedChatPage({ id }: { id: string }) {
     >
       <ChatSystem
         id={chat.id}
-        initialMessages={initialThreadMessages}
+        initialMessages={initialState.initialMessages}
+        initialTree={initialState.initialTree}
         isReadonly={true}
         routeSource="share"
         runtimeKey={`share:${chat.id}`}
