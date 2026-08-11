@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatActions } from "@/lib/stores/base";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useSwitchToSibling } from "@/lib/stores/hooks-threads";
 
@@ -10,7 +9,6 @@ import { useSwitchToSibling } from "@/lib/stores/hooks-threads";
  * Uses the store's switchToSibling for the pure state transition.
  */
 export function useNavigateToSibling() {
-  const { setMessages } = useChatActions<ChatMessage>();
   const { setDataStream } = useDataStream();
   const { artifact, closeArtifact } = useArtifact();
   const switchToSibling = useSwitchToSibling();
@@ -22,10 +20,6 @@ export function useNavigateToSibling() {
       setDataStream([]);
 
       const newThread = switchToSibling(messageId, direction);
-      if (newThread) {
-        setMessages(newThread);
-      }
-
       // Close artifact if its message is not in the new thread
       if (
         newThread &&
@@ -43,7 +37,6 @@ export function useNavigateToSibling() {
       artifact.messageId,
       closeArtifact,
       setDataStream,
-      setMessages,
       switchToSibling,
     ]
   );

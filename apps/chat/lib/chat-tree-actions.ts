@@ -57,8 +57,3 @@ export function getRetryMessageInput({
     selectedModelId: retryModelId as AppModelId,
   };
 }
-
-export function removeTrailingAssistantMessage(messages: ChatMessage[]) {
-  const lastMessage = messages.at(-1);
-  return lastMessage?.role === "assistant" ? messages.slice(0, -1) : messages;
-}

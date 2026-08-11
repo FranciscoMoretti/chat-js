@@ -45,7 +45,8 @@ import {
   runParallelRequestSpecs,
 } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
-import { useChatActions, useChatStoreApi } from "@/lib/stores/base";
+import { useChatActions } from "@/lib/stores/base";
+import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
@@ -107,7 +108,7 @@ function PureMultimodalInput({
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
-  const storeApi = useChatStoreApi<ChatMessage>();
+  const thread = useApplicationThread();
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const trpc = useTRPC();
@@ -116,11 +117,7 @@ function PureMultimodalInput({
   const addMessageToTree = useAddMessageToTree();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const {
-    setMessages,
-    sendMessage,
-    stop: stopHelper,
-  } = useChatActions<ChatMessage>();
+  const { sendMessage, stop: stopHelper } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -296,45 +293,17 @@ function PureMultimodalInput({
   // Trim messages in edit mode
   const trimMessagesInEditMode = useCallback(
     (parentId: string | null) => {
-      if (parentId === null) {
-        setMessages([]);
-        // Close artifact if it was visible since all messages are removed
-        if (artifact.isVisible) {
-          closeArtifact();
-        }
-        return;
-      }
-
-      const parentIndex = storeApi
-        .getState()
-        .getThrottledMessages()
-        .findIndex((msg: ChatMessage) => msg.id === parentId);
-
-      if (parentIndex !== -1) {
-        const messagesUpToParent = storeApi
-          .getState()
-          .getThrottledMessages()
-          .slice(0, parentIndex + 1);
-
-        // Close artifact if its message will not be in the trimmed messages
-        if (
-          artifact.isVisible &&
-          artifact.messageId &&
-          !messagesUpToParent.some((m) => m.id === artifact.messageId)
-        ) {
-          closeArtifact();
-        }
-
-        setMessages(messagesUpToParent);
+      thread.setCursor(parentId);
+      const selectedMessages = thread.getSnapshot().messages;
+      if (
+        artifact.isVisible &&
+        artifact.messageId &&
+        !selectedMessages.some((message) => message.id === artifact.messageId)
+      ) {
+        closeArtifact();
       }
     },
-    [
-      artifact.isVisible,
-      artifact.messageId,
-      closeArtifact,
-      setMessages,
-      storeApi,
-    ]
+    [artifact.isVisible, artifact.messageId, closeArtifact, thread]
   );
 
   const invalidatePersistedMessages = useCallback(async () => {

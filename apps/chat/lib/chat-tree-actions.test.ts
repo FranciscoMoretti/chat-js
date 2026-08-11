@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
-import {
-  getRetryMessageInput,
-  removeTrailingAssistantMessage,
-} from "./chat-tree-actions";
+import { getRetryMessageInput } from "./chat-tree-actions";
 
 function message({
   id,
@@ -73,20 +70,5 @@ describe("getRetryMessageInput", () => {
     expect(
       getRetryMessageInput({ messageId: assistant.id, messages: [assistant] })
     ).toEqual({ ok: false, reason: "parent_not_found" });
-  });
-});
-
-describe("removeTrailingAssistantMessage", () => {
-  it("removes a trailing assistant message", () => {
-    const root = message({ id: "root", role: "user" });
-    const assistant = message({ id: "assistant", role: "assistant" });
-
-    expect(removeTrailingAssistantMessage([root, assistant])).toEqual([root]);
-  });
-
-  it("preserves messages when the last message is not an assistant", () => {
-    const messages = [message({ id: "root", role: "user" })];
-
-    expect(removeTrailingAssistantMessage(messages)).toBe(messages);
   });
 });
