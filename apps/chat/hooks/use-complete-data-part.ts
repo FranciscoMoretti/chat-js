@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "@/lib/ai/types";
-import { useChatActions } from "@/lib/stores/base";
-import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
+import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 
 export function mergeCompletedMessageIntoVisiblePath(
@@ -33,8 +32,7 @@ export function mergeCompletedMessageIntoVisiblePath(
 // Completes the first received data part into a concrete message (e.g. data-appendMessage).
 export function useCompleteDataPart() {
   const { dataStream } = useDataStream();
-  const { setMessages } = useChatActions<ChatMessage>();
-  const storeApi = useCustomChatStoreApi<ChatMessage>();
+  const thread = useApplicationThread();
   const processedPartsRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -54,17 +52,17 @@ export function useCompleteDataPart() {
       processedPartsRef.current.add(partKey);
 
       const message = JSON.parse(dataPart.data) as ChatMessage;
-      storeApi.getState().addMessageToTree(message);
-
-      const currentMessages = storeApi.getState().messages as ChatMessage[];
+      const currentMessages = thread.getSnapshot().messages;
       const nextMessages = mergeCompletedMessageIntoVisiblePath(
         currentMessages,
         message
       );
 
       if (nextMessages) {
-        setMessages(nextMessages);
+        thread.setMessages(nextMessages);
+      } else {
+        thread.upsertMessage(message, message.metadata.parentMessageId);
       }
     }
-  }, [dataStream, setMessages, storeApi]);
+  }, [dataStream, thread]);
 }
