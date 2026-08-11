@@ -1,7 +1,7 @@
 "use client";
 
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
@@ -11,7 +11,7 @@ import type { ApplicationThread } from "@/lib/application-thread";
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
-import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { fetchWithErrorHandlers } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
@@ -31,24 +31,17 @@ export function ChatSync({
   const { setDataStream } = useDataStream();
 
   const isAuthenticated = !!session?.user;
-  const threadInitialMessages = thread.getSnapshot().messages;
   const hasReportedConfirmationRef = useRef(false);
-
-  const lastMessage = threadInitialMessages.at(-1);
+  const lastMessage = thread.getSnapshot().messages.at(-1);
   const lastMessageRef = useRef(lastMessage);
   lastMessageRef.current = lastMessage;
   const isLastMessagePartial = isResumableActiveStreamId(
     lastMessage?.metadata?.activeStreamId
   );
 
-  const chat = useChat<ChatMessage>({
+  useChat<ChatMessage>({
     experimental_throttle: 100,
-    id,
-    // TODO: this is a special "snapshot" value in the store that is only updated
-    // on store init + sibling switch. Once the store can guarantee up-to-date
-    // messages at ChatSync remount time, we can likely remove this override.
-    messages: threadInitialMessages,
-    generateId: generateUUID,
+    thread,
     onFinish: ({ message }) => {
       saveChatMessage({ message, chatId: id });
     },
@@ -96,12 +89,6 @@ export function ChatSync({
       toast.error(message, description ? { description } : undefined);
     },
   });
-
-  // PR #241 replaces this compatibility bridge by mounting useThread on the
-  // same ApplicationThread controller.
-  useEffect(() => {
-    thread.setMessages(chat.messages);
-  }, [chat.messages, thread]);
 
   useCompleteDataPart();
 

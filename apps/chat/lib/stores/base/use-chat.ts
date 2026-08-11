@@ -5,7 +5,11 @@ import {
   type UseChatHelpers,
   type UseChatOptions,
 } from "@ai-sdk/react";
-import { type MessageTreeSnapshot, type ThreadInit } from "@chatjs/thread";
+import {
+  type AbstractThread,
+  type MessageTreeSnapshot,
+  type ThreadInit,
+} from "@chatjs/thread";
 import {
   type UseThreadHelpers,
   type UseThreadOptions,
@@ -25,8 +29,7 @@ export type {
 // Type for a compatible chat store
 type CompatibleChatStoreState<TMessage extends UIMessage> =
   StoreState<TMessage> & {
-    setTreeSnapshot?: (snapshot: MessageTreeSnapshot<TMessage>) => void;
-    treeSnapshot?: MessageTreeSnapshot<TMessage>;
+    threadSnapshot?: MessageTreeSnapshot<TMessage>;
   };
 
 export interface CompatibleChatStore<TMessage extends UIMessage = UIMessage> {
@@ -40,6 +43,7 @@ export type UseChatOptionsWithPerformance<
   resume?: boolean;
 } & Pick<ThreadInit<TMessage>, "concurrency" | "initialTree"> & {
     store?: CompatibleChatStore<TMessage>;
+    thread?: AbstractThread<TMessage>;
     // Additional performance options
     enableBatching?: boolean;
   };
@@ -57,7 +61,7 @@ function getInitialTree<TMessage extends UIMessage>(
   const messages = fallbackMessages ?? [];
 
   return (
-    state.treeSnapshot ??
+    state.threadSnapshot ??
     ({
       cursorId: messages.at(-1)?.id ?? null,
       nodes: messages.map((message, index, allMessages) => ({
@@ -69,12 +73,6 @@ function getInitialTree<TMessage extends UIMessage>(
   );
 }
 
-function treeSignature<TMessage extends UIMessage>(
-  snapshot: MessageTreeSnapshot<TMessage>
-) {
-  return JSON.stringify(snapshot);
-}
-
 export function useChat<TMessage extends UIMessage = UIMessage>(
   options: UseChatOptionsWithPerformance<TMessage> = {}
 ): UseThreadHelpers<TMessage> {
@@ -83,6 +81,9 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     enableBatching = true,
     initialTree,
     messages: externalMessages,
+    thread: suppliedThread,
+    experimental_throttle,
+    resume,
     ...originalOptions
   } = options;
 
@@ -125,21 +126,37 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     [store, originalOnData]
   );
 
-  const chatHelpers = useOriginalChat<TMessage>({
-    ...originalOptions,
-    initialTree: initialTreeRef.current,
-    onData: wrappedOnData,
-  });
-  const currentTreeSnapshot = chatHelpers.tree.getSnapshot();
-  const currentTreeSignature = treeSignature(currentTreeSnapshot);
-  const currentTreeSnapshotRef = useRef(currentTreeSnapshot);
-  currentTreeSnapshotRef.current = currentTreeSnapshot;
+  if (suppliedThread) {
+    suppliedThread.onData = wrappedOnData;
+    suppliedThread.onError = originalOptions.onError;
+    suppliedThread.onFinish = originalOptions.onFinish;
+    suppliedThread.onToolCall = originalOptions.onToolCall;
+    suppliedThread.sendAutomaticallyWhen =
+      originalOptions.sendAutomaticallyWhen;
+    if (originalOptions.transport) {
+      suppliedThread.transport = originalOptions.transport;
+    }
+  }
+
+  const chatHelpers = useOriginalChat<TMessage>(
+    suppliedThread
+      ? {
+          experimental_throttle,
+          resume,
+          thread: suppliedThread,
+        }
+      : {
+          ...originalOptions,
+          experimental_throttle,
+          initialTree: initialTreeRef.current,
+          onData: wrappedOnData,
+          resume,
+        }
+  );
 
   const storeRef = useRef<CompatibleChatStore<TMessage>>(store);
 
   const lastSyncedStateRef = useRef<string | null>(null);
-  const lastSyncedTreeRef = useRef<string | null>(null);
-
   // Memoize the sync function to avoid recreating it on every render
   const syncState = useCallback((chatState: Partial<StoreState<TMessage>>) => {
     if (!storeRef.current) {
@@ -149,28 +166,11 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     storeRef.current.getState()._syncState(chatState);
   }, []);
 
-  const setMessages = useCallback<UseThreadHelpers<TMessage>["setMessages"]>(
-    (messagesOrUpdater) => {
-      const currentMessages = store.getState().messages ?? chatHelpers.messages;
-      const nextMessages =
-        typeof messagesOrUpdater === "function"
-          ? messagesOrUpdater(currentMessages)
-          : messagesOrUpdater;
-
-      chatHelpers.setMessages(nextMessages);
-    },
-    [chatHelpers.messages, chatHelpers.setMessages, store]
-  );
-
-  // Simple sync - but don't overwrite store messages if chat has no messages
-  // This preserves server-side messages during hydration
+  // Keep imperative helpers available to legacy store consumers. Observable
+  // chat state is projected atomically by the Zustand ThreadState adapter.
   useEffect(() => {
     // Only sync state data
-    const stateData: Partial<StoreState<TMessage>> = {
-      id: chatHelpers.id,
-      error: chatHelpers.error,
-      status: chatHelpers.status,
-    };
+    const stateData: Partial<StoreState<TMessage>> = { id: chatHelpers.id };
 
     // Sync functions separately and only once
     const functionsData = {
@@ -180,15 +180,13 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
       stop: chatHelpers.stop,
       resumeStream: chatHelpers.resumeStream,
       addToolResult: chatHelpers.addToolResult,
-      setMessages,
+      setMessages: chatHelpers.setMessages,
       clearError: chatHelpers.clearError,
     };
 
     const chatState = { ...stateData, ...functionsData };
     const syncSignature = JSON.stringify({
-      error: chatHelpers.error?.message,
       id: chatHelpers.id,
-      status: chatHelpers.status,
     });
 
     if (lastSyncedStateRef.current !== syncSignature) {
@@ -210,20 +208,9 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
         syncState(chatState);
       }
     }
-
-    const setTreeSnapshot = store.getState().setTreeSnapshot;
-    if (typeof setTreeSnapshot === "function") {
-      if (lastSyncedTreeRef.current !== currentTreeSignature) {
-        lastSyncedTreeRef.current = currentTreeSignature;
-        setTreeSnapshot(currentTreeSnapshotRef.current);
-      }
-    }
   }, [
     // Only depend on data that actually changes, not function references
     chatHelpers.id,
-    chatHelpers.messages,
-    chatHelpers.error,
-    chatHelpers.status,
     syncState,
     enableBatching,
     chatHelpers.resumeStream,
@@ -231,16 +218,11 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     chatHelpers.sendMessage,
     chatHelpers.tree.startRun,
     store,
-    setMessages,
+    chatHelpers.setMessages,
     chatHelpers.stop,
     chatHelpers.regenerate,
     chatHelpers.addToolResult,
-    currentTreeSignature,
   ]);
 
-  return {
-    ...chatHelpers,
-    setMessages,
-    messages: chatHelpers.messages,
-  };
+  return chatHelpers;
 }
