@@ -136,9 +136,32 @@ in-memory state. To integrate another state container, create an
 ```ts
 import {
   AbstractThread,
+  createThreadStateSnapshot,
   type ThreadState,
 } from "@chatjs/thread";
 import type { UIMessage } from "ai";
+import { subscribeWithSelector } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
+
+const applicationStore = createStore(
+  subscribeWithSelector(() => ({
+    threadSnapshot: createThreadStateSnapshot<UIMessage>({ messages }),
+  })),
+);
+
+const applicationThreadState: ThreadState<UIMessage> = {
+  getSnapshot: () => applicationStore.getState().threadSnapshot,
+  subscribe: (listener) =>
+    applicationStore.subscribe(
+      (state) => state.threadSnapshot,
+      () => listener(),
+    ),
+  update: (updater) => {
+    applicationStore.setState((state) => ({
+      threadSnapshot: updater(state.threadSnapshot),
+    }));
+  },
+};
 
 class ApplicationThread extends AbstractThread<UIMessage> {
   constructor(state: ThreadState<UIMessage>) {
@@ -152,7 +175,10 @@ const chat = useThread({ thread });
 
 `ThreadState.update` invokes its updater exactly once, synchronously and
 atomically. The controller must remain the only writer so concurrent streams
-cannot overwrite each other.
+cannot overwrite each other. `createThreadStateSnapshot` initializes the full
+tree, index, selected-path, status, and run projection required by a custom
+adapter; the application store then keeps that snapshot as its canonical
+conversation state.
 
 Framework adapters observe the controller through:
 
