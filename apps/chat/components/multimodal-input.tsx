@@ -110,11 +110,7 @@ function PureMultimodalInput({
   const isMobile = useIsMobile();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const {
-    setStatus,
-    startRun,
-    stop: stopHelper,
-  } = useChatActions<ChatMessage>();
+  const { startRun, stop: stopHelper } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -350,7 +346,6 @@ function PureMultimodalInput({
     }
 
     if (primaryRequest) {
-      setStatus("submitted");
       handleModelChange(primaryRequest.modelId);
 
       runParallelThreadRequestSpecs({
@@ -396,7 +391,6 @@ function PureMultimodalInput({
     parallelResponsesEnabled,
     selectedTool,
     session?.user,
-    setStatus,
     startProvisionalChat,
     startRun,
     trimMessagesInEditMode,
