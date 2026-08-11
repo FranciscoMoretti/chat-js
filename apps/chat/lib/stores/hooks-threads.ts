@@ -20,15 +20,6 @@ export interface ParallelGroupInfo {
   selectedMessageId: string | null;
 }
 
-export const useAddMessageToTree = () => {
-  const thread = useApplicationThread();
-  return useCallback(
-    (message: ChatMessage) =>
-      thread.upsertMessage(message, message.metadata.parentMessageId),
-    [thread]
-  );
-};
-
 function useThreadStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
