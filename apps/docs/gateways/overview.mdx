@@ -7,13 +7,14 @@ ChatJS uses a **gateway** to route all AI requests (model listing, chat completi
 
 ## Available Gateways
 
-| Gateway | Models | Auth | Image Generation | Best For |
-|---------|--------|------|------------------|----------|
-| [Vercel AI Gateway](/gateways/vercel) (default) | 120+ | `AI_GATEWAY_API_KEY` or auto OIDC | Dedicated image models | Vercel deployments |
-| [OpenRouter](/gateways/openrouter) | Hundreds | `OPENROUTER_API_KEY` | Via multimodal models | Broadest model access |
-| [OpenAI](/gateways/openai) | OpenAI only | `OPENAI_API_KEY` | `gpt-image-1` and others | Direct OpenAI access |
-| [LiteLLM](/gateways/litellm) | 100+ providers | `LITELLM_BASE_URL` + optional key | Provider-dependent | Unified proxy for all major providers |
-| [OpenAI Compatible](/gateways/openai-compatible) | Varies | `OPENAI_COMPATIBLE_API_KEY` (optional) | Provider-dependent | Ollama, LM Studio, vLLM, Azure |
+| Gateway                                          | Models         | Auth                                   | Image Generation         | Best For                              |
+| ------------------------------------------------ | -------------- | -------------------------------------- | ------------------------ | ------------------------------------- |
+| [Vercel AI Gateway](/gateways/vercel) (default)  | 120+           | `AI_GATEWAY_API_KEY` or auto OIDC      | Dedicated image models   | Vercel deployments                    |
+| [OpenRouter](/gateways/openrouter)               | Hundreds       | `OPENROUTER_API_KEY`                   | Via multimodal models    | Broadest model access                 |
+| [OrcaRouter](/gateways/orcarouter)               | 200+           | `ORCAROUTER_API_KEY`                   | Via multimodal models    | Anthropic-compatible unified gateway  |
+| [OpenAI](/gateways/openai)                       | OpenAI only    | `OPENAI_API_KEY`                       | `gpt-image-1` and others | Direct OpenAI access                  |
+| [LiteLLM](/gateways/litellm)                     | 100+ providers | `LITELLM_BASE_URL` + optional key      | Provider-dependent       | Unified proxy for all major providers |
+| [OpenAI Compatible](/gateways/openai-compatible) | Varies         | `OPENAI_COMPATIBLE_API_KEY` (optional) | Provider-dependent       | Ollama, LM Studio, vLLM, Azure        |
 
 Need a provider not listed here? See [Custom Gateway](/gateways/custom).
 
@@ -21,6 +22,7 @@ Need a provider not listed here? See [Custom Gateway](/gateways/custom).
 
 - **Vercel AI Gateway** is the default. It aggregates 120+ models from multiple providers behind a single key. Zero-config on Vercel deployments.
 - **OpenRouter** gives access to hundreds of models with per-token pricing. Good when you want the widest selection or models not on Vercel's gateway.
+- **OrcaRouter** routes to frontier models from Anthropic, OpenAI, Google, DeepSeek, and more through one Anthropic-compatible endpoint, with gateway-level, zero-trust security built in.
 - **OpenAI** connects directly to the OpenAI API. Use this when you only need OpenAI models and want type-safe model IDs.
 - **LiteLLM** proxies requests to 100+ LLM providers (OpenAI, Anthropic, Google, Azure, Bedrock, and more) through a single unified endpoint. Ideal when you want provider-agnostic access with centralized key management and spend tracking.
 - **OpenAI Compatible** works with any endpoint that follows the OpenAI API format (local servers, self-hosted inference, or cloud services).
@@ -32,14 +34,15 @@ Set the gateway in `chat.config.ts`:
 ```typescript title="chat.config.ts"
 const config: ConfigInput = {
   ai: {
-    gateway: "openrouter", // "vercel" | "openrouter" | "openai" | "openai-compatible" | "litellm"
+    gateway: "openrouter", // "vercel" | "openrouter" | "orcarouter" | "openai" | "openai-compatible" | "litellm"
     // ...
   },
 };
 ```
 
 <Callout type="note">
-The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when omitted.
+  The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when
+  omitted.
 </Callout>
 
 ## How Model Fetching Works
@@ -82,7 +85,8 @@ This is caught at two levels:
 - **Runtime**: each gateway checks `generatedForGateway` before using the fallback. If it doesn't match, the fallback is skipped and an empty model list is returned instead of stale model IDs.
 
 <Callout type="tip">
-After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to keep the fallback snapshot in sync.
+  After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to
+  keep the fallback snapshot in sync.
 </Callout>
 
 See [Auto-Updating Models](/cookbook/auto-updating-models) for the full implementation pattern.

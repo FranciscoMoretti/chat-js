@@ -1,0 +1,66 @@
+---
+title: "OrcaRouter Gateway"
+description: "Route requests through OrcaRouter, a zero-trust AI gateway"
+---
+
+The OrcaRouter gateway connects ChatJS to [OrcaRouter](https://www.orcarouter.ai), an Anthropic-compatible AI gateway that routes to frontier models from Anthropic, OpenAI, Google, DeepSeek, and more through a single endpoint.
+
+Use this gateway when you want the widest model selection with gateway-level, zero-trust security — screening every prompt/response and governing every tool call on a default-deny basis, with no application code changes.
+
+## Setup
+
+1. Create an account at [OrcaRouter](https://www.orcarouter.ai)
+2. Generate an API key in the OrcaRouter dashboard
+3. Add to `.env.local`:
+
+```bash
+ORCAROUTER_API_KEY=or-...
+```
+
+4. Set the gateway in your config:
+
+```typescript title="chat.config.ts"
+const config: ConfigInput = {
+  ai: {
+    gateway: "orcarouter",
+    // ...
+  },
+};
+```
+
+## Authentication
+
+| Variable             | Description                       |
+| -------------------- | --------------------------------- |
+| `ORCAROUTER_API_KEY` | Required. Your OrcaRouter API key |
+
+## Available Models
+
+Frontier models from Anthropic, OpenAI, Google, DeepSeek, and others, plus OrcaRouter's own `orcarouter/*` routing models. The full list is fetched at runtime from `https://api.orcarouter.ai/v1/models` and cached for 1 hour. The response format is automatically normalized to match the internal model schema.
+
+## Model IDs
+
+Model IDs use the same `provider/model` format as other gateways. For example:
+
+- `anthropic/claude-sonnet-5`
+- `anthropic/claude-haiku-4.5`
+- `deepseek/deepseek-v4-flash`
+- `google/gemini-2.5-flash-lite`
+- `orcarouter/fusion`
+
+Your existing model configuration in `chat.config.ts` works across gateways as long as the model IDs match.
+
+## API Compatibility
+
+OrcaRouter serves the Anthropic Messages API on its endpoint, so the gateway uses the `@ai-sdk/anthropic` provider pointed at `https://api.orcarouter.ai`. This keeps model IDs namespaced (e.g. `anthropic/claude-sonnet-5`) while requests flow through the same secure gateway.
+
+## Image Generation
+
+OrcaRouter routes image generation through multimodal language models rather than dedicated image APIs. `createImageModel()` returns `null` for this gateway.
+
+Models with the `image-generation` tag (those with `image` in their output modalities) can still generate images inline through `createLanguageModel()`. The existing [Image Generation](/features/image-generation) feature handles this automatically.
+
+## Related
+
+- [Gateways Overview](/gateways/overview) for the full gateway comparison
+- [Vercel Gateway](/gateways/vercel) for the default gateway

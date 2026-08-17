@@ -2,7 +2,7 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
-  process.env
+  process.env,
 );
 
 /**
@@ -23,7 +23,7 @@ export const serverEnvSchema = {
         isPlaywrightTestEnvironmentEnabled && (value == null || value === "")
           ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
           : value,
-      z.string().min(1)
+      z.string().min(1),
     )
     .describe("Postgres connection string"),
   AUTH_SECRET: z
@@ -32,7 +32,7 @@ export const serverEnvSchema = {
         isPlaywrightTestEnvironmentEnabled && (value == null || value === "")
           ? "playwright-test-auth-secret"
           : value,
-      z.string().min(1)
+      z.string().min(1),
     )
     .describe("NextAuth.js secret for signing session tokens"),
 
@@ -66,6 +66,7 @@ export const serverEnvSchema = {
     .optional()
     .describe("Vercel OIDC token (auto-set on Vercel deployments)"),
   OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
+  ORCAROUTER_API_KEY: z.string().optional().describe("OrcaRouter API key"),
   OPENAI_COMPATIBLE_BASE_URL: z
     .string()
     .url()
@@ -142,7 +143,7 @@ export const serverEnvSchema = {
     .url()
     .optional()
     .describe(
-      "App URL for non-Vercel deployments (full URL including https://)"
+      "App URL for non-Vercel deployments (full URL including https://)",
     ),
 
   // Vercel platform (auto-set by Vercel)

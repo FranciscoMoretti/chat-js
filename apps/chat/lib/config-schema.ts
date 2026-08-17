@@ -161,6 +161,7 @@ const gatewaySchemaMap: {
 } = {
   vercel: createAiSchema("vercel"),
   openrouter: createAiSchema("openrouter"),
+  orcarouter: createAiSchema("orcarouter"),
   openai: createAiSchema("openai"),
   "openai-compatible": createAiSchema("openai-compatible"),
   litellm: createAiSchema("litellm"),
@@ -170,6 +171,7 @@ export const aiConfigSchema = z
   .discriminatedUnion("gateway", [
     gatewaySchemaMap.vercel,
     gatewaySchemaMap.openrouter,
+    gatewaySchemaMap.orcarouter,
     gatewaySchemaMap.openai,
     gatewaySchemaMap["openai-compatible"],
     gatewaySchemaMap.litellm,
@@ -274,7 +276,7 @@ export const authenticationConfigObjectSchema = z.object({
   vercel: z
     .boolean()
     .describe(
-      "Vercel OAuth (requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET)"
+      "Vercel OAuth (requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET)",
     ),
 });
 
@@ -291,7 +293,7 @@ export const pathsConfigObjectSchema = z.object({
     .string()
     .default("@/tools/chatjs")
     .describe(
-      "Import alias for the installable tools registry index and tool files"
+      "Import alias for the installable tools registry index and tool files",
     ),
 });
 
@@ -473,16 +475,14 @@ type ImageToolInputFor<G extends GatewayType> = [
   GatewayImageModelIdMap[G],
 ] extends [never]
   ? { enabled?: false }
-  :
-      | { enabled: true; default: GatewayImageModelIdMap[G] }
-      | { enabled?: false; default?: GatewayImageModelIdMap[G] };
+  : | { enabled: true; default: GatewayImageModelIdMap[G] }
+    | { enabled?: false; default?: GatewayImageModelIdMap[G] };
 type VideoToolInputFor<G extends GatewayType> = [
   GatewayVideoModelIdMap[G],
 ] extends [never]
   ? { enabled?: false }
-  :
-      | { enabled: true; default: GatewayVideoModelIdMap[G] }
-      | { enabled?: false; default?: GatewayVideoModelIdMap[G] };
+  : | { enabled: true; default: GatewayVideoModelIdMap[G] }
+    | { enabled?: false; default?: GatewayVideoModelIdMap[G] };
 type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
   enabled: boolean;
   default: GatewayModelIdMap[G];
@@ -540,7 +540,7 @@ export function defineConfig<const T extends ConfigInput>(config: T): T {
 
 function mergeToolsConfig<T extends Record<string, unknown>>(
   defaults: T,
-  user: Record<string, unknown> | undefined
+  user: Record<string, unknown> | undefined,
 ): T {
   if (!user) {
     return defaults;
@@ -580,7 +580,7 @@ export function applyDefaults(input: ConfigInput): Config {
     },
     tools: mergeToolsConfig(
       gatewayDefaults.tools,
-      aiInput?.tools as Record<string, unknown> | undefined
+      aiInput?.tools as Record<string, unknown> | undefined,
     ),
   };
 

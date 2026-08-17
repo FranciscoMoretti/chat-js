@@ -140,6 +140,7 @@ export default defineConfig({
                 "/gateways/overview",
                 "/gateways/vercel",
                 "/gateways/openrouter",
+                "/gateways/orcarouter",
                 "/gateways/openai",
                 "/gateways/openai-compatible",
                 "/gateways/litellm",

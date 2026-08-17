@@ -4,11 +4,13 @@ import { LiteLLMGateway } from "./litellm-gateway";
 import { OpenAICompatibleGateway } from "./openai-compatible-gateway";
 import { OpenAIGateway } from "./openai-gateway";
 import { OpenRouterGateway } from "./openrouter-gateway";
+import { OrcaRouterGateway } from "./orcarouter-gateway";
 import { VercelGateway } from "./vercel-gateway";
 
 export const gatewayRegistry = {
   vercel: () => new VercelGateway(),
   openrouter: () => new OpenRouterGateway(),
+  orcarouter: () => new OrcaRouterGateway(),
   openai: () => new OpenAIGateway(),
   "openai-compatible": () => new OpenAICompatibleGateway(),
   litellm: () => new LiteLLMGateway(),

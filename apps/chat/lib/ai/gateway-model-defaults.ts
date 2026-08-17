@@ -9,17 +9,15 @@ type VideoDefault<G extends GatewayType> = [GatewayVideoModelIdMap[G]] extends [
   never,
 ]
   ? { enabled: false }
-  :
-      | { enabled: true; default: GatewayVideoModelIdMap[G] }
-      | { enabled: false; default?: GatewayVideoModelIdMap[G] };
+  : | { enabled: true; default: GatewayVideoModelIdMap[G] }
+    | { enabled: false; default?: GatewayVideoModelIdMap[G] };
 
 type ImageDefault<G extends GatewayType> = [GatewayImageModelIdMap[G]] extends [
   never,
 ]
   ? { enabled: false }
-  :
-      | { enabled: true; default: GatewayImageModelIdMap[G] }
-      | { enabled: false; default?: GatewayImageModelIdMap[G] };
+  : | { enabled: true; default: GatewayImageModelIdMap[G] }
+    | { enabled: false; default?: GatewayImageModelIdMap[G] };
 
 export interface ModelDefaultsFor<G extends GatewayType> {
   anonymousModels: GatewayModelIdMap[G][];
@@ -166,6 +164,59 @@ const openrouterDefaults = {
   },
 } satisfies ModelDefaultsFor<"openrouter">;
 
+const orcarouterDefaults = {
+  providerOrder: ["anthropic", "openai", "google", "deepseek"],
+  disabledModels: [],
+  curatedDefaults: [
+    "anthropic/claude-sonnet-5",
+    "anthropic/claude-haiku-4.5",
+    "anthropic/claude-opus-4.6",
+    "deepseek/deepseek-v4-flash",
+    "google/gemini-2.5-flash-lite",
+    "google/gemini-3-flash-preview",
+    "orcarouter/fusion",
+    "orcarouter/fusion-flash",
+  ],
+  anonymousModels: ["anthropic/claude-haiku-4.5", "orcarouter/fusion-flash"],
+  workflows: {
+    chat: "anthropic/claude-sonnet-5",
+    title: "anthropic/claude-haiku-4.5",
+    pdf: "anthropic/claude-sonnet-5",
+    chatImageCompatible: "anthropic/claude-sonnet-5",
+  },
+  tools: {
+    webSearch: { enabled: false },
+    urlRetrieval: { enabled: false },
+    codeExecution: { enabled: false },
+    mcp: { enabled: false },
+    documents: {
+      enabled: true,
+      types: { text: true, code: true, sheet: true },
+    },
+    followupSuggestions: {
+      enabled: false,
+      default: "anthropic/claude-haiku-4.5",
+    },
+    text: { polish: "anthropic/claude-sonnet-5" },
+    sheet: {
+      format: "anthropic/claude-sonnet-5",
+      analyze: "anthropic/claude-sonnet-5",
+    },
+    code: { edits: "anthropic/claude-sonnet-5" },
+    image: { enabled: false },
+    video: { enabled: false },
+    deepResearch: {
+      enabled: false,
+      defaultModel: "anthropic/claude-sonnet-5",
+      finalReportModel: "anthropic/claude-opus-4.6",
+      allowClarification: true,
+      maxResearcherIterations: 1,
+      maxConcurrentResearchUnits: 2,
+      maxSearchQueries: 2,
+    },
+  },
+} satisfies ModelDefaultsFor<"orcarouter">;
+
 const openaiDefaults = {
   providerOrder: ["openai"],
   disabledModels: [],
@@ -301,6 +352,7 @@ export const GATEWAY_MODEL_DEFAULTS: {
 } = {
   vercel: vercelDefaults,
   openrouter: openrouterDefaults,
+  orcarouter: orcarouterDefaults,
   openai: openaiDefaults,
   "openai-compatible": openaiCompatibleDefaults,
   litellm: litellmDefaults,

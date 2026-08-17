@@ -9,7 +9,7 @@ export interface EnvRequirement {
 }
 
 export function formatRequirementDescription(
-  requirement: EnvRequirement
+  requirement: EnvRequirement,
 ): string {
   return (
     requirement.description ??
@@ -21,6 +21,10 @@ export const gatewayEnvRequirements: Record<GatewayType, EnvRequirement> = {
   openrouter: {
     options: [["OPENROUTER_API_KEY"]],
     description: "OPENROUTER_API_KEY",
+  },
+  orcarouter: {
+    options: [["ORCAROUTER_API_KEY"]],
+    description: "ORCAROUTER_API_KEY",
   },
   openai: {
     options: [["OPENAI_API_KEY"]],
@@ -85,16 +89,16 @@ export const authEnvRequirements: Record<
 
 export function isRequirementSatisfied(
   requirement: EnvRequirement,
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv,
 ): boolean {
   return requirement.options.some((option) =>
-    option.every((name) => !!env[name])
+    option.every((name) => !!env[name]),
   );
 }
 
 export function getMissingRequirement(
   requirement: EnvRequirement,
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv,
 ): string | null {
   return isRequirementSatisfied(requirement, env)
     ? null
