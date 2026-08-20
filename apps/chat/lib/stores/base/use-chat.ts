@@ -5,18 +5,14 @@ import {
   type UseChatHelpers,
   type UseChatOptions,
 } from "@ai-sdk/react";
-import {
-  type AbstractThread,
-  type MessageTreeSnapshot,
-  type ThreadInit,
-} from "@chatjs/thread";
+import { type AbstractThread, type MessageTreeSnapshot } from "@chatjs/thread";
 import {
   type UseThreadHelpers,
   type UseThreadOptions,
   useThread as useOriginalChat,
 } from "@chatjs/thread/react";
 import type { ChatInit } from "ai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { type StoreState, useChatStoreApi } from "./hooks";
 
 export type {
@@ -38,70 +34,43 @@ export interface CompatibleChatStore<TMessage extends UIMessage = UIMessage> {
 
 export type UseChatOptionsWithPerformance<
   TMessage extends UIMessage = UIMessage,
-> = ChatInit<TMessage> & {
+> = Pick<
+  ChatInit<TMessage>,
+  | "onData"
+  | "onError"
+  | "onFinish"
+  | "onToolCall"
+  | "sendAutomaticallyWhen"
+  | "transport"
+> & {
   experimental_throttle?: number;
   resume?: boolean;
-} & Pick<ThreadInit<TMessage>, "concurrency" | "initialTree"> & {
-    store?: CompatibleChatStore<TMessage>;
-    thread?: AbstractThread<TMessage>;
-    // Additional performance options
-    enableBatching?: boolean;
-  };
-
-function getInitialTree<TMessage extends UIMessage>(
-  store: CompatibleChatStore<TMessage>,
-  fallbackMessages: TMessage[] | undefined,
-  explicitInitialTree: MessageTreeSnapshot<TMessage> | undefined
-) {
-  if (explicitInitialTree) {
-    return explicitInitialTree;
-  }
-
-  const state = store.getState();
-  const messages = fallbackMessages ?? [];
-
-  return (
-    state.threadSnapshot ??
-    ({
-      cursorId: messages.at(-1)?.id ?? null,
-      nodes: messages.map((message, index, allMessages) => ({
-        message,
-        parentId: index === 0 ? null : (allMessages[index - 1]?.id ?? null),
-      })),
-      version: 1,
-    } satisfies MessageTreeSnapshot<TMessage>)
-  );
-}
+  store?: CompatibleChatStore<TMessage>;
+  thread: AbstractThread<TMessage>;
+  // Additional performance options
+  enableBatching?: boolean;
+};
 
 export function useChat<TMessage extends UIMessage = UIMessage>(
-  options: UseChatOptionsWithPerformance<TMessage> = {}
+  options: UseChatOptionsWithPerformance<TMessage>
 ): UseThreadHelpers<TMessage> {
   const {
     store: customStore,
     enableBatching = true,
-    initialTree,
-    messages: externalMessages,
-    thread: suppliedThread,
     experimental_throttle,
+    onData,
+    onError,
+    onFinish,
+    onToolCall,
     resume,
-    ...originalOptions
+    sendAutomaticallyWhen,
+    thread,
+    transport,
   } = options;
-
-  const originalOnData = options.onData;
 
   // Use custom store if provided, otherwise use the context store
   const contextStore = useChatStoreApi<TMessage>();
   const store: CompatibleChatStore<TMessage> = customStore ?? contextStore;
-  const initialTreeRef = useRef<MessageTreeSnapshot<TMessage> | undefined>(
-    undefined
-  );
-  if (!initialTreeRef.current) {
-    initialTreeRef.current = getInitialTree(
-      store,
-      externalMessages,
-      initialTree
-    );
-  }
 
   // Wrap onData to capture transient data parts
   const wrappedOnData = useCallback<NonNullable<ChatInit<TMessage>["onData"]>>(
@@ -119,40 +88,59 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
       }
 
       // Call original onData handler if provided
-      if (originalOnData) {
-        originalOnData(dataPart);
-      }
+      onData?.(dataPart);
     },
-    [store, originalOnData]
+    [store, onData]
   );
 
-  if (suppliedThread) {
-    suppliedThread.onData = wrappedOnData;
-    suppliedThread.onError = originalOptions.onError;
-    suppliedThread.onFinish = originalOptions.onFinish;
-    suppliedThread.onToolCall = originalOptions.onToolCall;
-    suppliedThread.sendAutomaticallyWhen =
-      originalOptions.sendAutomaticallyWhen;
-    if (originalOptions.transport) {
-      suppliedThread.transport = originalOptions.transport;
+  useLayoutEffect(() => {
+    const previous = {
+      onData: thread.onData,
+      onError: thread.onError,
+      onFinish: thread.onFinish,
+      onToolCall: thread.onToolCall,
+      sendAutomaticallyWhen: thread.sendAutomaticallyWhen,
+      transport: thread.transport,
+    };
+
+    thread.onData = wrappedOnData;
+    thread.onError = onError;
+    thread.onFinish = onFinish;
+    thread.onToolCall = onToolCall;
+    thread.sendAutomaticallyWhen = sendAutomaticallyWhen;
+    if (transport) {
+      thread.transport = transport;
     }
-  }
 
-  const chatHelpers = useOriginalChat<TMessage>(
-    suppliedThread
-      ? {
-          experimental_throttle,
-          resume,
-          thread: suppliedThread,
-        }
-      : {
-          ...originalOptions,
-          experimental_throttle,
-          initialTree: initialTreeRef.current,
-          onData: wrappedOnData,
-          resume,
-        }
-  );
+    return () => {
+      if (thread.onData === wrappedOnData) thread.onData = previous.onData;
+      if (thread.onError === onError) thread.onError = previous.onError;
+      if (thread.onFinish === onFinish) thread.onFinish = previous.onFinish;
+      if (thread.onToolCall === onToolCall) {
+        thread.onToolCall = previous.onToolCall;
+      }
+      if (thread.sendAutomaticallyWhen === sendAutomaticallyWhen) {
+        thread.sendAutomaticallyWhen = previous.sendAutomaticallyWhen;
+      }
+      if (transport && thread.transport === transport) {
+        thread.transport = previous.transport;
+      }
+    };
+  }, [
+    onError,
+    onFinish,
+    onToolCall,
+    sendAutomaticallyWhen,
+    thread,
+    transport,
+    wrappedOnData,
+  ]);
+
+  const chatHelpers = useOriginalChat<TMessage>({
+    experimental_throttle,
+    resume,
+    thread,
+  });
 
   const storeRef = useRef<CompatibleChatStore<TMessage>>(store);
   storeRef.current = store;
