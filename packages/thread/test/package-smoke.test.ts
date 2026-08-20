@@ -82,6 +82,7 @@ test("the packed package loads its core and React entry points", async () => {
 			react: { optional: true },
 		});
 		expect(reactSource.startsWith('"use client";')).toBeTrue();
+		expect(reactSource.match(/"use client";/g)).toHaveLength(1);
 		expect(indexChunk).toBeDefined();
 		expect(reactChunk).toBe(indexChunk);
 		expect(reactSource).not.toContain("class Thread");

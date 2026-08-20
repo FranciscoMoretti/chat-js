@@ -17,4 +17,8 @@ if (!result.success) {
 
 const reactPath = `${import.meta.dir}/dist/react.js`;
 const reactSource = await Bun.file(reactPath).text();
-await Bun.write(reactPath, `"use client";\n${reactSource}`);
+const clientDirective = `"use client";`;
+await Bun.write(
+	reactPath,
+	`${clientDirective}\n${reactSource.replaceAll(clientDirective, "")}`,
+);
