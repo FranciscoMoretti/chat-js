@@ -1,7 +1,10 @@
 "use client";
 
 import type { UIMessage } from "@ai-sdk/react";
-import type { MessageTreeSnapshot } from "@chatjs/thread";
+import {
+  createThreadStateSnapshot,
+  type MessageTreeSnapshot,
+} from "@chatjs/thread";
 import {
   createContext,
   type PropsWithChildren,
@@ -49,6 +52,10 @@ export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
     initialTree?: MessageTreeSnapshot<TMessage>;
   } = {}
 ) {
+  const initialSnapshot = options.initialTree
+    ? createThreadStateSnapshot({ initialTree: options.initialTree })
+    : createThreadStateSnapshot({ messages: initialMessages });
+
   return createStore<CustomChatStoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(
@@ -57,9 +64,9 @@ export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
             withDataStream(
               withThreadState(
                 withMessageParts(
-                  createChatStoreCreator<TMessage>(initialMessages)
+                  createChatStoreCreator<TMessage>(initialSnapshot.messages)
                 ),
-                { initialTree: options.initialTree }
+                { initialSnapshot }
               )
             ),
             {

@@ -101,6 +101,9 @@ export function buildTreeSnapshotFromMessages<
   cursorId: string | null = getDefaultLeafMessage(allMessages)?.id ?? null
 ): MessageTreeSnapshot<TMessage> {
   const childrenByParentId = buildChildrenMap(allMessages);
+  const messagesById = new Map(
+    allMessages.map((message) => [message.id, message])
+  );
   const nodes: MessageTreeSnapshot<TMessage>["nodes"] = [];
   const visited = new Set<string>();
 
@@ -120,9 +123,35 @@ export function buildTreeSnapshotFromMessages<
     visit(root, null);
   }
 
-  // Missing or cyclic parent metadata should not make messages disappear.
+  const recovering = new Set<string>();
+  const recover = (message: TMessage) => {
+    if (visited.has(message.id) || recovering.has(message.id)) {
+      return;
+    }
+
+    recovering.add(message.id);
+    const declaredParentId = message.metadata?.parentMessageId ?? null;
+    const parent =
+      declaredParentId && declaredParentId !== message.id
+        ? messagesById.get(declaredParentId)
+        : undefined;
+    if (parent) {
+      recover(parent);
+    }
+    recovering.delete(message.id);
+
+    if (visited.has(message.id)) {
+      return;
+    }
+
+    const parentId = parent && visited.has(parent.id) ? parent.id : null;
+    visit(message, parentId);
+  };
+
+  // Missing or cyclic parent metadata should not make messages disappear or
+  // discard valid edges between messages that are present.
   for (const message of allMessages) {
-    visit(message, null);
+    recover(message);
   }
 
   return { cursorId, nodes, version: 1 };

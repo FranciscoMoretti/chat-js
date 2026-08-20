@@ -69,7 +69,10 @@ export function useMessageSiblingInfo(
       (a !== null &&
         b !== null &&
         a.siblingIndex === b.siblingIndex &&
-        a.siblings.length === b.siblings.length)
+        a.siblings.length === b.siblings.length &&
+        a.siblings.every(
+          (sibling, index) => sibling.id === b.siblings[index]?.id
+        ))
   );
 }
 
@@ -88,8 +91,11 @@ export const useSwitchToSibling = () => {
         return null;
       }
       const offset = direction === "next" ? 1 : -1;
-      const target =
-        siblings[(currentIndex + offset + siblings.length) % siblings.length];
+      const nextIndex = currentIndex + offset;
+      if (nextIndex < 0 || nextIndex >= siblings.length) {
+        return null;
+      }
+      const target = siblings[nextIndex];
       const leaf = thread.getLeaves(target.id).at(-1) ?? target;
       thread.setCursor(leaf.id);
       return thread.getSnapshot().messages;

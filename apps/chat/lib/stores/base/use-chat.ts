@@ -4,60 +4,117 @@ import {
   type UIMessage,
   type UseChatHelpers,
   type UseChatOptions,
-  useChat as useOriginalChat,
 } from "@ai-sdk/react";
+import {
+  type AbstractThread,
+  type MessageTreeSnapshot,
+  type ThreadInit,
+} from "@chatjs/thread";
+import {
+  type UseThreadHelpers,
+  type UseThreadOptions,
+  useThread as useOriginalChat,
+} from "@chatjs/thread/react";
+import type { ChatInit } from "ai";
 import { useCallback, useEffect, useRef } from "react";
-import { useStore } from "zustand";
 import { type StoreState, useChatStoreApi } from "./hooks";
 
-export type { UseChatHelpers, UseChatOptions };
+export type {
+  UseChatHelpers,
+  UseChatOptions,
+  UseThreadHelpers,
+  UseThreadOptions,
+};
 
 // Type for a compatible chat store
+type CompatibleChatStoreState<TMessage extends UIMessage> =
+  StoreState<TMessage> & {
+    threadSnapshot?: MessageTreeSnapshot<TMessage>;
+  };
+
 export interface CompatibleChatStore<TMessage extends UIMessage = UIMessage> {
-  _syncState?: (partial: Partial<StoreState<TMessage>>) => void;
-  setState?: (partial: Partial<StoreState<TMessage>>) => void;
-  <T>(selector: (state: StoreState<TMessage>) => T): T;
+  getState: () => CompatibleChatStoreState<TMessage>;
 }
 
 export type UseChatOptionsWithPerformance<
   TMessage extends UIMessage = UIMessage,
-> = UseChatOptions<TMessage> & {
-  store?: CompatibleChatStore<TMessage>;
-  // Additional performance options
-  enableBatching?: boolean;
-};
+> = ChatInit<TMessage> & {
+  experimental_throttle?: number;
+  resume?: boolean;
+} & Pick<ThreadInit<TMessage>, "concurrency" | "initialTree"> & {
+    store?: CompatibleChatStore<TMessage>;
+    thread?: AbstractThread<TMessage>;
+    // Additional performance options
+    enableBatching?: boolean;
+  };
+
+function getInitialTree<TMessage extends UIMessage>(
+  store: CompatibleChatStore<TMessage>,
+  fallbackMessages: TMessage[] | undefined,
+  explicitInitialTree: MessageTreeSnapshot<TMessage> | undefined
+) {
+  if (explicitInitialTree) {
+    return explicitInitialTree;
+  }
+
+  const state = store.getState();
+  const messages = fallbackMessages ?? [];
+
+  return (
+    state.threadSnapshot ??
+    ({
+      cursorId: messages.at(-1)?.id ?? null,
+      nodes: messages.map((message, index, allMessages) => ({
+        message,
+        parentId: index === 0 ? null : (allMessages[index - 1]?.id ?? null),
+      })),
+      version: 1,
+    } satisfies MessageTreeSnapshot<TMessage>)
+  );
+}
 
 export function useChat<TMessage extends UIMessage = UIMessage>(
-  options: UseChatOptionsWithPerformance<TMessage> = {} as UseChatOptionsWithPerformance<TMessage>
-): UseChatHelpers<TMessage> {
+  options: UseChatOptionsWithPerformance<TMessage> = {}
+): UseThreadHelpers<TMessage> {
   const {
     store: customStore,
     enableBatching = true,
+    initialTree,
+    messages: externalMessages,
+    thread: suppliedThread,
+    experimental_throttle,
+    resume,
     ...originalOptions
   } = options;
 
-  const originalOnData = (options as any).onData;
+  const originalOnData = options.onData;
 
   // Use custom store if provided, otherwise use the context store
   const contextStore = useChatStoreApi<TMessage>();
-  const store = customStore || contextStore;
+  const store: CompatibleChatStore<TMessage> = customStore ?? contextStore;
+  const initialTreeRef = useRef<MessageTreeSnapshot<TMessage> | undefined>(
+    undefined
+  );
+  if (!initialTreeRef.current) {
+    initialTreeRef.current = getInitialTree(
+      store,
+      externalMessages,
+      initialTree
+    );
+  }
 
   // Wrap onData to capture transient data parts
-  const wrappedOnData = useCallback(
-    (dataPart: any) => {
+  const wrappedOnData = useCallback<NonNullable<ChatInit<TMessage>["onData"]>>(
+    (dataPart) => {
       // Check if it's a data part (starts with 'data-')
       if (dataPart.type?.startsWith("data-")) {
         // Store transient data parts in the store
-        if (typeof (store as any).getState === "function") {
-          const storeState = (store as any).getState();
-          // If data is null or undefined, remove the transient data part
-          if (dataPart.data === null || dataPart.data === undefined) {
-            if (storeState.removeTransientDataPart) {
-              storeState.removeTransientDataPart(dataPart.type);
-            }
-          } else if (storeState.setTransientDataPart) {
-            storeState.setTransientDataPart(dataPart.type, dataPart.data);
-          }
+        const storeState = store.getState();
+        // If data is null or undefined, remove the transient data part
+        if (dataPart.data === null || dataPart.data === undefined) {
+          storeState.removeTransientDataPart(dataPart.type);
+        } else {
+          storeState.setTransientDataPart(dataPart.type, dataPart.data);
         }
       }
 
@@ -69,61 +126,56 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     [store, originalOnData]
   );
 
-  const chatHelpers = useOriginalChat<TMessage>({
-    ...originalOptions,
-    onData: wrappedOnData,
-  });
+  if (suppliedThread) {
+    suppliedThread.onData = wrappedOnData;
+    suppliedThread.onError = originalOptions.onError;
+    suppliedThread.onFinish = originalOptions.onFinish;
+    suppliedThread.onToolCall = originalOptions.onToolCall;
+    suppliedThread.sendAutomaticallyWhen =
+      originalOptions.sendAutomaticallyWhen;
+    if (originalOptions.transport) {
+      suppliedThread.transport = originalOptions.transport;
+    }
+  }
 
-  const storeRef = useRef<CompatibleChatStore<TMessage> | typeof contextStore>(
-    store
+  const chatHelpers = useOriginalChat<TMessage>(
+    suppliedThread
+      ? {
+          experimental_throttle,
+          resume,
+          thread: suppliedThread,
+        }
+      : {
+          ...originalOptions,
+          experimental_throttle,
+          initialTree: initialTreeRef.current,
+          onData: wrappedOnData,
+          resume,
+        }
   );
 
+  const storeRef = useRef<CompatibleChatStore<TMessage>>(store);
+
+  const lastSyncedStateRef = useRef<string | null>(null);
   // Memoize the sync function to avoid recreating it on every render
   const syncState = useCallback((chatState: Partial<StoreState<TMessage>>) => {
     if (!storeRef.current) {
       return;
     }
 
-    // Check if store has _syncState method (our internal stores)
-    if (typeof (storeRef.current as any).getState === "function") {
-      // For vanilla Zustand stores
-      const vanillaStore = storeRef.current as any;
-      vanillaStore.getState()._syncState(chatState);
-    } else if (typeof (storeRef.current as any)._syncState === "function") {
-      (storeRef.current as any)._syncState(chatState);
-    } else if (typeof (storeRef.current as any).setState === "function") {
-      // For standard Zustand stores
-      (storeRef.current as any).setState(chatState);
-    }
+    storeRef.current.getState()._syncState(chatState);
   }, []);
 
-  // Simple sync - but don't overwrite store messages if chat has no messages
-  // This preserves server-side messages during hydration
+  // Keep imperative helpers available to legacy store consumers. Observable
+  // chat state is projected atomically by the Zustand ThreadState adapter.
   useEffect(() => {
-    const currentStoreState = (store as any).getState?.() || { messages: [] };
-
-    // Skip syncing messages if store has messages but chat doesn't
-    // This prevents clearing server-side messages on hydration
-    const shouldSyncMessages = !(
-      currentStoreState.messages?.length > 0 &&
-      chatHelpers.messages.length === 0
-    );
-
     // Only sync state data
-    const stateData: any = {
-      id: chatHelpers.id,
-      error: chatHelpers.error,
-      status: chatHelpers.status,
-    };
-
-    // Only add messages to sync object if we should sync them
-    if (shouldSyncMessages) {
-      stateData.messages = chatHelpers.messages;
-    }
+    const stateData: Partial<StoreState<TMessage>> = { id: chatHelpers.id };
 
     // Sync functions separately and only once
     const functionsData = {
       sendMessage: chatHelpers.sendMessage,
+      startRun: chatHelpers.tree.startRun,
       regenerate: chatHelpers.regenerate,
       stop: chatHelpers.stop,
       resumeStream: chatHelpers.resumeStream,
@@ -133,31 +185,38 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     };
 
     const chatState = { ...stateData, ...functionsData };
+    const syncSignature = JSON.stringify({
+      id: chatHelpers.id,
+    });
 
-    if (enableBatching) {
-      // Use requestAnimationFrame for batching if available
-      if (
-        typeof window !== "undefined" &&
-        typeof window.requestAnimationFrame === "function"
-      ) {
-        window.requestAnimationFrame(() => syncState(chatState));
+    if (lastSyncedStateRef.current !== syncSignature) {
+      lastSyncedStateRef.current = syncSignature;
+
+      if (enableBatching) {
+        // Use requestAnimationFrame for batching if available
+        if (
+          typeof window !== "undefined" &&
+          typeof window.requestAnimationFrame === "function"
+        ) {
+          window.requestAnimationFrame(() => {
+            syncState(chatState);
+          });
+        } else {
+          syncState(chatState);
+        }
       } else {
         syncState(chatState);
       }
-    } else {
-      syncState(chatState);
     }
   }, [
     // Only depend on data that actually changes, not function references
     chatHelpers.id,
-    chatHelpers.messages,
-    chatHelpers.error,
-    chatHelpers.status,
     syncState,
     enableBatching,
     chatHelpers.resumeStream,
     chatHelpers.clearError,
     chatHelpers.sendMessage,
+    chatHelpers.tree.startRun,
     store,
     chatHelpers.setMessages,
     chatHelpers.stop,
@@ -165,15 +224,5 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     chatHelpers.addToolResult,
   ]);
 
-  // Return the store's messages as the source of truth, not chatHelpers.messages
-  // Subscribe to store messages so this is reactive
-  const storeMessages = useStore(
-    store as any,
-    (state: any) => state.messages as TMessage[]
-  );
-
-  return {
-    ...chatHelpers,
-    messages: storeMessages || chatHelpers.messages,
-  };
+  return chatHelpers;
 }

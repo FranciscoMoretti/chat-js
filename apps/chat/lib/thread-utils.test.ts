@@ -63,4 +63,31 @@ describe("buildTreeSnapshotFromMessages", () => {
     expect(snapshot.messages.map(({ id }) => id)).toEqual([root.id, second.id]);
     expect(snapshot.childrenByParentId[root.id]).toEqual([first.id, second.id]);
   });
+
+  it("preserves present parent edges when an ancestor is missing", () => {
+    const parent = message({
+      id: "parent",
+      parentMessageId: "missing",
+      role: "user",
+    });
+    const child = message({
+      id: "child",
+      parentMessageId: parent.id,
+      role: "assistant",
+    });
+
+    const tree = buildTreeSnapshotFromMessages([child, parent], child.id);
+    const snapshot = createThreadStateSnapshot({ initialTree: tree });
+
+    expect(
+      tree.nodes.map(({ message: node, parentId }) => [node.id, parentId])
+    ).toEqual([
+      [parent.id, null],
+      [child.id, parent.id],
+    ]);
+    expect(snapshot.messages.map(({ id }) => id)).toEqual([
+      parent.id,
+      child.id,
+    ]);
+  });
 });

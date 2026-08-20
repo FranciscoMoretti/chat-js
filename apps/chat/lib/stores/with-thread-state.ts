@@ -1,6 +1,5 @@
 import {
   createThreadStateSnapshot,
-  type MessageTreeSnapshot,
   type ThreadStateSnapshot,
 } from "@chatjs/thread";
 import type { UIMessage } from "ai";
@@ -20,16 +19,23 @@ export type ThreadStateStore<TMessage extends UIMessage> =
 export const withThreadState =
   <TMessage extends UIMessage, TState extends BaseChatStoreState<TMessage>>(
     creator: StateCreator<TState, [], []>,
-    options: { initialTree?: MessageTreeSnapshot<TMessage> } = {}
+    options: { initialSnapshot?: ThreadStateSnapshot<TMessage> } = {}
   ): StateCreator<TState & ThreadStateStore<TMessage>, [], []> =>
   (set, get, api) => {
     const base = creator(set, get, api);
+    const threadSnapshot =
+      options.initialSnapshot ??
+      createThreadStateSnapshot({ messages: base.messages });
+
+    base._messageIndex.update(threadSnapshot.messages);
 
     return {
       ...base,
-      threadSnapshot: options.initialTree
-        ? createThreadStateSnapshot({ initialTree: options.initialTree })
-        : createThreadStateSnapshot({ messages: base.messages }),
+      _throttledMessages: threadSnapshot.messages,
+      error: threadSnapshot.error,
+      messages: threadSnapshot.messages,
+      status: threadSnapshot.status,
+      threadSnapshot,
       updateThreadSnapshot: (updater) => {
         set((state) => {
           const threadSnapshot = updater(state.threadSnapshot);
@@ -38,13 +44,13 @@ export const withThreadState =
           return {
             ...state,
             _memoizedSelectors: new Map(),
-            _throttledMessages: threadSnapshot.messages,
             error: threadSnapshot.error,
             messages: threadSnapshot.messages,
             status: threadSnapshot.status,
             threadSnapshot,
           };
         });
+        get()._scheduleThrottledMessagesUpdate();
       },
     };
   };

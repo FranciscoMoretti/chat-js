@@ -111,4 +111,26 @@ describe("ZustandThreadState", () => {
     expect(store.getState().messages).toBe(selectedSnapshot.messages);
     expect(thread.getSnapshot()).toBe(selectedSnapshot);
   });
+
+  it("initializes the store from the tree's selected path", () => {
+    const staleMessage = chatMessage("stale", "Stale");
+    const root = chatMessage("root", "Root");
+    const branch = chatMessage("branch", "Branch", "assistant");
+    const store = createCustomChatStore<ChatMessage>([staleMessage], {
+      initialTree: {
+        cursorId: branch.id,
+        nodes: [
+          { message: root, parentId: null },
+          { message: branch, parentId: root.id },
+        ],
+        version: 1,
+      },
+    });
+
+    expect(store.getState().messages).toEqual([root, branch]);
+    expect(store.getState()._throttledMessages).toEqual([root, branch]);
+    expect(store.getState().threadSnapshot.messages).toBe(
+      store.getState().messages
+    );
+  });
 });
