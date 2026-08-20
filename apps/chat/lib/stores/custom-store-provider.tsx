@@ -133,12 +133,20 @@ export function CustomStoreProvider({
 
   const threadRef = useRef<ApplicationThread | null>(null);
   if (threadRef.current === null) {
-    threadRef.current =
+    const applicationThread =
       thread ??
       new ApplicationThread({
         id: threadId ?? generateUUID(),
         state: new ZustandThreadState(storeRef.current),
       });
+    threadRef.current = applicationThread;
+
+    // setMessages is used by legacy app actions, including reset. Bind it
+    // before children mount so every message write goes through the canonical
+    // thread snapshot rather than the base store projection.
+    storeRef.current.setState({
+      setMessages: applicationThread.setMessages.bind(applicationThread),
+    });
   }
 
   return (

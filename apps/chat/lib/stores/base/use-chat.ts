@@ -158,19 +158,24 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
 
   const lastSyncedStateRef = useRef<string | null>(null);
   // Memoize the sync function to avoid recreating it on every render
-  const syncState = useCallback((chatState: Partial<StoreState<TMessage>>) => {
-    if (!storeRef.current) {
-      return;
-    }
+  const syncState = useCallback(
+    (chatState: Parameters<StoreState<TMessage>["_syncState"]>[0]) => {
+      if (!storeRef.current) {
+        return;
+      }
 
-    storeRef.current.getState()._syncState(chatState);
-  }, []);
+      storeRef.current.getState()._syncState(chatState);
+    },
+    []
+  );
 
   // Keep imperative helpers available to legacy store consumers. Observable
   // chat state is projected atomically by the Zustand ThreadState adapter.
   useEffect(() => {
     // Only sync state data
-    const stateData: Partial<StoreState<TMessage>> = { id: chatHelpers.id };
+    const stateData: Parameters<StoreState<TMessage>["_syncState"]>[0] = {
+      id: chatHelpers.id,
+    };
 
     // Sync functions separately and only once
     const functionsData = {

@@ -198,6 +198,21 @@ class MessageIndex<TMessage extends UIMessage> {
   }
 }
 
+type SyncedChatState<TMessage extends UIMessage> = Partial<
+  Pick<
+    StoreState<TMessage>,
+    | "addToolResult"
+    | "clearError"
+    | "id"
+    | "regenerate"
+    | "resumeStream"
+    | "sendMessage"
+    | "setMessages"
+    | "startRun"
+    | "stop"
+  >
+>;
+
 export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _memoizedSelectors: Map<string, { result: any; deps: any[] }>;
   _messageIndex: MessageIndex<TMessage>;
@@ -206,7 +221,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _scheduleThrottledMessagesUpdate: () => void;
 
   // Internal sync method
-  _syncState: (newState: Partial<StoreState<TMessage>>) => void;
+  _syncState: (newState: SyncedChatState<TMessage>) => void;
   _throttledMessages: TMessage[] | null;
 
   // Transient data parts (not persisted in messages)
@@ -494,9 +509,6 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       _syncState: (newState) => {
         markLastAction("chat:_syncState");
         batchUpdates(() => {
-          if (newState.messages) {
-            get()._messageIndex.update(newState.messages);
-          }
           set(
             {
               ...newState,
@@ -505,9 +517,6 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             false
             // 'syncFromUseChat',
           );
-          if (newState.messages) {
-            throttledMessagesUpdater?.();
-          }
         });
       },
 
