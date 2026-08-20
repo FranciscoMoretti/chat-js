@@ -155,8 +155,8 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
   );
 
   const storeRef = useRef<CompatibleChatStore<TMessage>>(store);
+  storeRef.current = store;
 
-  const lastSyncedStateRef = useRef<string | null>(null);
   // Memoize the sync function to avoid recreating it on every render
   const syncState = useCallback(
     (chatState: Parameters<StoreState<TMessage>["_syncState"]>[0]) => {
@@ -190,28 +190,21 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     };
 
     const chatState = { ...stateData, ...functionsData };
-    const syncSignature = JSON.stringify({
-      id: chatHelpers.id,
-    });
 
-    if (lastSyncedStateRef.current !== syncSignature) {
-      lastSyncedStateRef.current = syncSignature;
-
-      if (enableBatching) {
-        // Use requestAnimationFrame for batching if available
-        if (
-          typeof window !== "undefined" &&
-          typeof window.requestAnimationFrame === "function"
-        ) {
-          window.requestAnimationFrame(() => {
-            syncState(chatState);
-          });
-        } else {
+    if (enableBatching) {
+      // Use requestAnimationFrame for batching if available
+      if (
+        typeof window !== "undefined" &&
+        typeof window.requestAnimationFrame === "function"
+      ) {
+        window.requestAnimationFrame(() => {
           syncState(chatState);
-        }
+        });
       } else {
         syncState(chatState);
       }
+    } else {
+      syncState(chatState);
     }
   }, [
     // Only depend on data that actually changes, not function references
