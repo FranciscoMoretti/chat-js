@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai/types";
 import { useMessageById } from "@/lib/stores/base";
 import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";
+import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
@@ -70,9 +71,13 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
     );
 
     return requestedModelIds.map((modelId, parallelIndex) => {
-      const actualMessage = parallelGroupInfo?.messages.find(
-        (candidate) => candidate.metadata.parallelIndex === parallelIndex
-      );
+      const actualMessage = parallelGroupInfo
+        ? getParallelResponseForSlot(
+            parallelGroupInfo.messages,
+            parallelIndex,
+            parallelGroupInfo.selectedMessageId
+          )
+        : null;
 
       return {
         modelId,

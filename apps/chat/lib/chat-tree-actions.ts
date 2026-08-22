@@ -3,7 +3,10 @@ import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
 
 export type RetryMessageResult =
   | {
+      isPrimaryParallel: boolean | null;
       ok: true;
+      parallelGroupId: string | null;
+      parallelIndex: number | null;
       selectedModelId: AppModelId;
     }
   | {
@@ -53,7 +56,10 @@ export function getRetryMessageInput({
   }
 
   return {
+    isPrimaryParallel: currentMessage.metadata.isPrimaryParallel ?? null,
     ok: true,
+    parallelGroupId: currentMessage.metadata.parallelGroupId ?? null,
+    parallelIndex: currentMessage.metadata.parallelIndex ?? null,
     selectedModelId: retryModelId as AppModelId,
   };
 }

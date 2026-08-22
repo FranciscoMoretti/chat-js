@@ -1,7 +1,10 @@
 import { createThreadStateSnapshot } from "@chatjs/thread";
 import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
-import { buildTreeSnapshotFromMessages } from "./thread-utils";
+import {
+  buildTreeSnapshotFromMessages,
+  getParallelResponseForSlot,
+} from "./thread-utils";
 
 function message({
   id,
@@ -89,5 +92,45 @@ describe("buildTreeSnapshotFromMessages", () => {
       parent.id,
       child.id,
     ]);
+  });
+});
+
+describe("getParallelResponseForSlot", () => {
+  it("keeps the selected version of a parallel response slot", () => {
+    const root = message({ id: "root", parentMessageId: null, role: "user" });
+    const original = message({
+      id: "original",
+      parallelIndex: 1,
+      parentMessageId: root.id,
+      role: "assistant",
+    });
+    const retry = message({
+      id: "retry",
+      parallelIndex: 1,
+      parentMessageId: root.id,
+      role: "assistant",
+    });
+
+    expect(getParallelResponseForSlot([original, retry], 1, original.id)).toBe(
+      original
+    );
+  });
+
+  it("uses the latest version when another parallel slot is selected", () => {
+    const root = message({ id: "root", parentMessageId: null, role: "user" });
+    const original = message({
+      id: "original",
+      parallelIndex: 1,
+      parentMessageId: root.id,
+      role: "assistant",
+    });
+    const retry = message({
+      id: "retry",
+      parallelIndex: 1,
+      parentMessageId: root.id,
+      role: "assistant",
+    });
+
+    expect(getParallelResponseForSlot([original, retry], 1, null)).toBe(retry);
   });
 });

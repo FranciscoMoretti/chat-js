@@ -4,11 +4,7 @@ import { toast } from "sonner";
 import { Action } from "@/components/ai-elements/actions";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
-import {
-  useChatActions,
-  useChatStatus,
-  useChatStoreApi,
-} from "@/lib/stores/base";
+import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
 
 export function RetryButton({
   messageId,
@@ -17,11 +13,11 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const { regenerate } = useChatActions<ChatMessage>();
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
   const handleRetry = useCallback(() => {
+    const { messages, regenerate } = chatStore.getState();
     if (!regenerate) {
       toast.error("Cannot retry this message");
       return;
@@ -29,7 +25,7 @@ export function RetryButton({
 
     const retryInput = getRetryMessageInput({
       messageId,
-      messages: chatStore.getState().messages,
+      messages,
     });
 
     if (!retryInput.ok) {
@@ -47,13 +43,18 @@ export function RetryButton({
 
     regenerate({
       body: {
+        isPrimaryParallel: retryInput.isPrimaryParallel,
+        parallelGroupId: retryInput.parallelGroupId,
+        parallelIndex: retryInput.parallelIndex,
         selectedModelId: retryInput.selectedModelId,
       },
       messageId,
+    }).catch(() => {
+      toast.error("Could not retry this message");
     });
 
     toast.success("Retrying message...");
-  }, [regenerate, messageId, chatStore]);
+  }, [messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {
     return null;
