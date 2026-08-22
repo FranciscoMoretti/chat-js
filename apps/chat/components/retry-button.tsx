@@ -52,8 +52,6 @@ export function RetryButton({
     }).catch(() => {
       toast.error("Could not retry this message");
     });
-
-    toast.success("Retrying message...");
   }, [messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {

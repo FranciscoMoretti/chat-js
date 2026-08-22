@@ -63,4 +63,28 @@ describe("isDataPartOnMessagePath", () => {
     expect(isDataPartOnMessagePath(selectedPart, messages)).toBe(true);
     expect(isDataPartOnMessagePath(otherPart, messages)).toBe(false);
   });
+
+  it("falls back to the payload when only the streamed part has an id", () => {
+    const data = {
+      timestamp: 1,
+      title: "Research complete",
+      toolCallId: "tool-1",
+      type: "completed",
+    } satisfies CustomUIDataTypes["researchUpdate"];
+    const persistedPart: DataUIPart<CustomUIDataTypes> = {
+      type: "data-researchUpdate",
+      data,
+    };
+    const streamedPart: DataUIPart<CustomUIDataTypes> = {
+      id: "stream-update",
+      type: "data-researchUpdate",
+      data,
+    };
+
+    expect(
+      isDataPartOnMessagePath(streamedPart, [
+        messageWithDataPart(persistedPart),
+      ])
+    ).toBe(true);
+  });
 });

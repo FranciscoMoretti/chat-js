@@ -12,7 +12,7 @@ export function isDataPartOnMessagePath(
         return false;
       }
 
-      if (part.id !== undefined || dataPart.id !== undefined) {
+      if (part.id !== undefined && dataPart.id !== undefined) {
         return part.id === dataPart.id;
       }
 
