@@ -3,7 +3,11 @@ import type { DataUIPart } from "ai";
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import type { ArtifactMetadata } from "@/components/create-artifact";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { CustomUIDataTypes, UiToolName } from "@/lib/ai/types";
+import type {
+  ChatMessage,
+  CustomUIDataTypes,
+  UiToolName,
+} from "@/lib/ai/types";
 import {
   codeArtifact,
   getCodeArtifactMetadata,
@@ -13,6 +17,8 @@ import {
   sheetArtifact,
 } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
+import { isDataPartOnMessagePath } from "@/lib/data-stream";
+import { useChatStoreApi } from "@/lib/stores/base";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useChatInput } from "@/providers/chat-input-provider";
 
@@ -95,19 +101,38 @@ function processArtifactStreamPart({
 
 export function DataStreamHandler() {
   const { dataStream } = useDataStream();
+  const chatStore = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);
+  const lastProcessedPart = useRef<DataUIPart<CustomUIDataTypes> | undefined>(
+    undefined
+  );
   const { setSelectedTool } = useChatInput();
 
   useEffect(() => {
     if (!dataStream?.length) {
+      lastProcessedIndex.current = -1;
+      lastProcessedPart.current = undefined;
       return;
+    }
+
+    if (
+      lastProcessedIndex.current >= 0 &&
+      dataStream[lastProcessedIndex.current] !== lastProcessedPart.current
+    ) {
+      lastProcessedIndex.current = -1;
     }
 
     const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
     lastProcessedIndex.current = dataStream.length - 1;
+    lastProcessedPart.current = dataStream.at(-1);
+    const messages = chatStore.getState().messages;
 
     for (const delta of newDeltas) {
+      if (!isDataPartOnMessagePath(delta, messages)) {
+        continue;
+      }
+
       handleResearchUpdate({ delta, setSelectedTool });
 
       processArtifactStreamPart({
@@ -117,7 +142,14 @@ export function DataStreamHandler() {
         setMetadata,
       });
     }
-  }, [dataStream, setArtifact, setMetadata, artifact, setSelectedTool]);
+  }, [
+    artifact,
+    chatStore,
+    dataStream,
+    setArtifact,
+    setMetadata,
+    setSelectedTool,
+  ]);
 
   return null;
 }

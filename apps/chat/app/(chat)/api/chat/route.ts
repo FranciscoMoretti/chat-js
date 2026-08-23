@@ -1078,6 +1078,10 @@ export async function POST(request: NextRequest) {
       requestSelectedModelId,
       selectedModel: userMessage.metadata.selectedModel,
     });
+    const responseParallelGroupId =
+      parallelGroupId === undefined
+        ? (userMessage.metadata.parallelGroupId ?? null)
+        : parallelGroupId;
 
     if (!selectedModelId) {
       log.warn("No selectedModel in user message metadata");
@@ -1135,8 +1139,7 @@ export async function POST(request: NextRequest) {
       previousMessages: executionInputs.previousMessages,
       selectedModelId,
       assistantMessageId,
-      parallelGroupId:
-        parallelGroupId ?? userMessage.metadata.parallelGroupId ?? null,
+      parallelGroupId: responseParallelGroupId,
       parallelIndex: parallelIndex ?? null,
       isPrimaryParallel: isPrimaryParallel ?? null,
       explicitlyRequestedTools,

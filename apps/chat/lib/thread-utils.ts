@@ -13,6 +13,30 @@ export interface MessageNode {
   };
 }
 
+export function getParallelResponseForSlot<T extends MessageNode>(
+  messages: T[],
+  parallelIndex: number,
+  selectedMessageId: string | null
+): T | null {
+  const selected = messages.find(
+    (message) =>
+      message.id === selectedMessageId &&
+      message.metadata?.parallelIndex === parallelIndex
+  );
+  if (selected) {
+    return selected;
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.metadata?.parallelIndex === parallelIndex) {
+      return message;
+    }
+  }
+
+  return null;
+}
+
 /** Safely extract a numeric timestamp from a Date object or ISO string. */
 function toTimestamp(value: Date | string | undefined | null): number {
   if (!value) {

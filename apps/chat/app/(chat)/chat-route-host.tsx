@@ -393,6 +393,7 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
   const liveStore = existingStore;
   const hasLiveRuntime = !!(liveRuntime && liveStore);
   const liveRuntimeMessages = liveStore?.getState().messages;
+
   const initialMessages =
     liveRuntimeMessages ?? persistedInitialState.initialMessages;
   const initialTool =

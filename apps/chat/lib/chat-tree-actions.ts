@@ -1,10 +1,13 @@
+import type { AppModelId } from "@/lib/ai/app-models";
 import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
 
 export type RetryMessageResult =
   | {
-      message: ChatMessage;
-      messagesBeforeRetry: ChatMessage[];
+      isPrimaryParallel: boolean | null;
       ok: true;
+      parallelGroupId: string | null;
+      parallelIndex: number | null;
+      selectedModelId: AppModelId;
     }
   | {
       ok: false;
@@ -53,25 +56,10 @@ export function getRetryMessageInput({
   }
 
   return {
+    isPrimaryParallel: currentMessage.metadata.isPrimaryParallel ?? null,
     ok: true,
-    messagesBeforeRetry: messages.slice(0, parentMessageIndex),
-    message: {
-      ...parentMessage,
-      metadata: {
-        ...parentMessage.metadata,
-        activeStreamId: null,
-        createdAt: parentMessage.metadata?.createdAt || new Date(),
-        isPrimaryParallel: null,
-        parallelGroupId: null,
-        parallelIndex: null,
-        parentMessageId: parentMessage.metadata?.parentMessageId || null,
-        selectedModel: retryModelId,
-      },
-    },
+    parallelGroupId: currentMessage.metadata.parallelGroupId ?? null,
+    parallelIndex: currentMessage.metadata.parallelIndex ?? null,
+    selectedModelId: retryModelId as AppModelId,
   };
-}
-
-export function removeTrailingAssistantMessage(messages: ChatMessage[]) {
-  const lastMessage = messages.at(-1);
-  return lastMessage?.role === "assistant" ? messages.slice(0, -1) : messages;
 }

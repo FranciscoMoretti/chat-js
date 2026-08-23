@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
-import {
-  getRetryMessageInput,
-  removeTrailingAssistantMessage,
-} from "./chat-tree-actions";
+import { getRetryMessageInput } from "./chat-tree-actions";
 
 function message({
   id,
+  isPrimaryParallel = null,
+  parallelGroupId = null,
+  parallelIndex = null,
   parentMessageId = null,
   role,
   selectedModel = "openai/gpt-5-mini",
 }: {
   id: string;
+  isPrimaryParallel?: boolean | null;
+  parallelGroupId?: string | null;
+  parallelIndex?: number | null;
   parentMessageId?: string | null;
   role: "assistant" | "user";
   selectedModel?: ChatMessage["metadata"]["selectedModel"];
@@ -23,6 +26,9 @@ function message({
     metadata: {
       activeStreamId: null,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      isPrimaryParallel,
+      parallelGroupId,
+      parallelIndex,
       parentMessageId,
       selectedModel,
     },
@@ -30,7 +36,7 @@ function message({
 }
 
 describe("getRetryMessageInput", () => {
-  it("builds a retry message from an assistant response and trims before the parent user message", () => {
+  it("selects the response model for an assistant retry", () => {
     const root = message({ id: "root", role: "user" });
     const assistant = message({
       id: "assistant",
@@ -46,19 +52,31 @@ describe("getRetryMessageInput", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      messagesBeforeRetry: [],
-      message: {
-        id: root.id,
-        role: "user",
-        metadata: {
-          activeStreamId: null,
-          isPrimaryParallel: null,
-          parallelGroupId: null,
-          parallelIndex: null,
-          parentMessageId: null,
-          selectedModel: "openai/gpt-5-nano",
-        },
-      },
+      selectedModelId: "openai/gpt-5-nano",
+    });
+  });
+
+  it("preserves the parallel response slot for an assistant retry", () => {
+    const root = message({ id: "root", role: "user" });
+    const assistant = message({
+      id: "assistant",
+      isPrimaryParallel: false,
+      parallelGroupId: "group-1",
+      parallelIndex: 1,
+      parentMessageId: root.id,
+      role: "assistant",
+    });
+
+    const result = getRetryMessageInput({
+      messageId: assistant.id,
+      messages: [root, assistant],
+    });
+
+    expect(result).toMatchObject({
+      isPrimaryParallel: false,
+      ok: true,
+      parallelGroupId: "group-1",
+      parallelIndex: 1,
     });
   });
 
@@ -72,7 +90,7 @@ describe("getRetryMessageInput", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.ok ? result.message.id : null).toBe(root.id);
+    expect(result.ok ? result.selectedModelId : null).toBe("openai/gpt-5-mini");
   });
 
   it("reports missing parent messages", () => {
@@ -85,20 +103,5 @@ describe("getRetryMessageInput", () => {
     expect(
       getRetryMessageInput({ messageId: assistant.id, messages: [assistant] })
     ).toEqual({ ok: false, reason: "parent_not_found" });
-  });
-});
-
-describe("removeTrailingAssistantMessage", () => {
-  it("removes a trailing assistant message", () => {
-    const root = message({ id: "root", role: "user" });
-    const assistant = message({ id: "assistant", role: "assistant" });
-
-    expect(removeTrailingAssistantMessage([root, assistant])).toEqual([root]);
-  });
-
-  it("preserves messages when the last message is not an assistant", () => {
-    const messages = [message({ id: "root", role: "user" })];
-
-    expect(removeTrailingAssistantMessage(messages)).toBe(messages);
   });
 });
