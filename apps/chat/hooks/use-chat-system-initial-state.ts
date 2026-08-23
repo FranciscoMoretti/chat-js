@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { getDefaultThread } from "@/lib/thread-utils";
+import {
+  buildTreeSnapshotFromMessages,
+  getDefaultThread,
+} from "@/lib/thread-utils";
 
 type MessageWithNonStringId = Omit<ChatMessage, "id"> & {
   id: string | number;
@@ -12,20 +15,31 @@ export function useChatSystemInitialState(
   messages: MessageWithNonStringId[] | null | undefined
 ): {
   initialMessages: ChatMessage[];
+  initialTree: ReturnType<typeof buildTreeSnapshotFromMessages<ChatMessage>>;
   initialTool: UiToolName | null;
 } {
-  const initialMessages = useMemo<ChatMessage[]>(() => {
+  const normalizedMessages = useMemo<ChatMessage[]>(() => {
     if (!messages) {
       return [];
     }
 
-    return getDefaultThread(
-      messages.map((msg) => ({
-        ...msg,
-        id: msg.id.toString(),
-      }))
-    );
+    return messages.map((msg) => ({
+      ...msg,
+      id: msg.id.toString(),
+    }));
   }, [messages]);
+  const initialMessages = useMemo(
+    () => getDefaultThread(normalizedMessages),
+    [normalizedMessages]
+  );
+  const initialTree = useMemo(
+    () =>
+      buildTreeSnapshotFromMessages(
+        normalizedMessages,
+        initialMessages.at(-1)?.id ?? null
+      ),
+    [initialMessages, normalizedMessages]
+  );
 
   const initialTool = useMemo<UiToolName | null>(() => {
     const lastAssistantMessage = messages?.findLast(
@@ -51,6 +65,7 @@ export function useChatSystemInitialState(
 
   return {
     initialMessages,
+    initialTree,
     initialTool,
   };
 }

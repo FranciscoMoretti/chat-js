@@ -1,3 +1,4 @@
+import type { MessageTreeSnapshot } from "@chatjs/thread";
 import {
   createContext,
   createElement,
@@ -13,10 +14,12 @@ import {
 import type { CreateRuntimeInput, Runtime } from "@/lib/runtime-registry";
 import { generateUUID } from "@/lib/utils";
 import type { ChatMessage, UiToolName } from "./ai/types";
+import { ApplicationThread } from "./application-thread";
 import {
   type CustomChatStoreApi,
   createCustomChatStore,
 } from "./stores/custom-store-provider";
+import { ZustandThreadState } from "./stores/zustand-thread-state";
 
 export interface AppRuntimeData {
   bootstrap: boolean;
@@ -24,6 +27,7 @@ export interface AppRuntimeData {
   initialMessages?: ChatMessage[];
   initialTool?: UiToolName | null;
   store: CustomChatStoreApi<ChatMessage>;
+  thread: ApplicationThread;
   threadId: string;
 }
 
@@ -87,11 +91,13 @@ export function useProvisionalAppRuntimeIdentity(
 export function createAppRuntimeInput({
   bootstrap,
   initialMessages,
+  initialTree,
   initialTool,
   runtimeId,
 }: {
   bootstrap: boolean;
   initialMessages?: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
   initialTool?: UiToolName | null;
   runtimeId: ChatRuntimeId;
 }): CreateAppRuntimeInput {
@@ -100,13 +106,24 @@ export function createAppRuntimeInput({
     throw new Error(`Invalid chat runtime id: ${runtimeId}`);
   }
 
+  const store = createAppRuntimeStore({
+    bootstrap,
+    initialMessages,
+    initialTree,
+  });
+  const thread = new ApplicationThread({
+    id: parsed.chatId,
+    state: new ZustandThreadState(store),
+  });
+
   return {
     data: {
       bootstrap,
       chatId: parsed.chatId,
       initialMessages,
       initialTool,
-      store: createAppRuntimeStore({ bootstrap, initialMessages }),
+      store,
+      thread,
       threadId: parsed.threadId,
     },
     runtimeId,
@@ -116,15 +133,22 @@ export function createAppRuntimeInput({
 function createAppRuntimeStore({
   bootstrap,
   initialMessages,
+  initialTree,
 }: {
   bootstrap: boolean;
   initialMessages?: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
 }) {
   return createCustomChatStore<ChatMessage>(initialMessages ?? [], {
     initialIsChatPersisted: bootstrap,
+    initialTree,
   });
 }
 
 export function getAppRuntimeStore(runtime: AppRuntime) {
   return runtime.data.store;
+}
+
+export function getAppRuntimeThread(runtime: AppRuntime) {
+  return runtime.data.thread;
 }

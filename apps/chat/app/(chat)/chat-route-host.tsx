@@ -228,6 +228,7 @@ interface RouteRuntimeCreationRequest {
 function getRouteRuntimeCreationRequest({
   existingRuntime,
   initialMessages,
+  initialTree,
   initialTool,
   persistedChat,
   persistedMessages,
@@ -240,6 +241,7 @@ function getRouteRuntimeCreationRequest({
   initialMessages: ReturnType<
     typeof useChatSystemInitialState
   >["initialMessages"];
+  initialTree: ReturnType<typeof useChatSystemInitialState>["initialTree"];
   initialTool: ReturnType<typeof useChatSystemInitialState>["initialTool"];
   persistedChat: { projectId: string | null } | null | undefined;
   persistedMessages: unknown;
@@ -261,6 +263,7 @@ function getRouteRuntimeCreationRequest({
       runtimeInput: createAppRuntimeInput({
         bootstrap: true,
         initialMessages,
+        initialTree,
         initialTool,
         runtimeId,
       }),
@@ -363,6 +366,7 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
       getRouteRuntimeCreationRequest({
         existingRuntime,
         initialMessages: persistedInitialState.initialMessages,
+        initialTree: persistedInitialState.initialTree,
         initialTool: persistedInitialState.initialTool,
         persistedChat,
         persistedMessages,
@@ -375,6 +379,7 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
       existingRuntime,
       persistedChat,
       persistedInitialState.initialMessages,
+      persistedInitialState.initialTree,
       persistedInitialState.initialTool,
       persistedMessages,
       persistedRoute,
@@ -462,6 +467,7 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
       routeSource={route.source}
       runtimeKey={liveRuntime.runtimeId}
       store={liveStore}
+      thread={liveRuntime.data.thread}
     />
   );
 }

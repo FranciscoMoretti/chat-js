@@ -1,6 +1,7 @@
 export { AbstractThread } from "./abstract-thread";
 export { getMessageText } from "./message-utils";
 export { createThread, Thread } from "./thread";
+export { createThreadStateSnapshot } from "./thread-state";
 
 export type {
 	MessageTreeNode,

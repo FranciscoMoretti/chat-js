@@ -1,14 +1,26 @@
 "use client";
 
 import type { UIMessage } from "@ai-sdk/react";
-import { type PropsWithChildren, useContext, useRef } from "react";
+import {
+  createThreadStateSnapshot,
+  type MessageTreeSnapshot,
+} from "@chatjs/thread";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useRef,
+} from "react";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
+import type { ChatMessage } from "@/lib/ai/types";
+import { ApplicationThread } from "@/lib/application-thread";
 import {
   Provider as ChatProvider,
   ChatStoreContext,
   createChatStoreCreator,
 } from "@/lib/stores/base";
+import { generateUUID } from "@/lib/utils";
 
 import {
   type ChatPersistenceAugmentedState,
@@ -22,30 +34,39 @@ import {
   type PartsAugmentedState,
   withMessageParts,
 } from "./with-message-parts";
-import { type ThreadAugmentedState, withThreads } from "./with-threads";
+import { type ThreadStateStore, withThreadState } from "./with-thread-state";
 import { withTracing } from "./with-tracing";
+import { ZustandThreadState } from "./zustand-thread-state";
 
 export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
   ChatPersistenceAugmentedState<UI_MESSAGE> &
     DataStreamAugmentedState<UI_MESSAGE> &
     PartsAugmentedState<UI_MESSAGE> &
-    ThreadAugmentedState<UI_MESSAGE>;
+    ThreadStateStore<UI_MESSAGE>;
 
 const ENABLE_TRACING_ON_DEV = false;
 export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = [],
-  options: { initialIsChatPersisted?: boolean } = {}
+  options: {
+    initialIsChatPersisted?: boolean;
+    initialTree?: MessageTreeSnapshot<TMessage>;
+  } = {}
 ) {
+  const initialSnapshot = options.initialTree
+    ? createThreadStateSnapshot({ initialTree: options.initialTree })
+    : createThreadStateSnapshot({ messages: initialMessages });
+
   return createStore<CustomChatStoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(
         withTracing(
           withChatPersistence(
             withDataStream(
-              withThreads(
+              withThreadState(
                 withMessageParts(
-                  createChatStoreCreator<TMessage>(initialMessages)
-                )
+                  createChatStoreCreator<TMessage>(initialSnapshot.messages)
+                ),
+                { initialSnapshot }
               )
             ),
             {
@@ -63,6 +84,8 @@ export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
 export type CustomChatStoreApi<TMessage extends UIMessage = UIMessage> =
   ReturnType<typeof createCustomChatStore<TMessage>>;
 
+const ApplicationThreadContext = createContext<ApplicationThread | null>(null);
+
 export function useCustomChatStoreApi<
   TMessage extends UIMessage = UIMessage,
 >() {
@@ -73,30 +96,67 @@ export function useCustomChatStoreApi<
   return store as CustomChatStoreApi<TMessage>;
 }
 
+export function useApplicationThread() {
+  const thread = useContext(ApplicationThreadContext);
+  if (!thread) {
+    throw new Error(
+      "useApplicationThread must be used within CustomStoreProvider"
+    );
+  }
+  return thread;
+}
+
 type ChatProviderProps = Parameters<typeof ChatProvider>[0];
 
-export function CustomStoreProvider<TMessage extends UIMessage = UIMessage>({
+export function CustomStoreProvider({
   initialMessages = [],
+  initialTree,
   children,
   store,
+  thread,
+  threadId,
 }: PropsWithChildren<{
-  initialMessages?: TMessage[];
-  store?: CustomChatStoreApi<TMessage>;
+  initialMessages?: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
+  store?: CustomChatStoreApi<ChatMessage>;
+  thread?: ApplicationThread;
+  threadId?: string;
 }> &
   Omit<ChatProviderProps, "initialMessages" | "store">) {
-  const storeRef = useRef<CustomChatStoreApi<TMessage> | null>(null);
+  const storeRef = useRef<CustomChatStoreApi<ChatMessage> | null>(null);
 
   if (storeRef.current === null) {
     storeRef.current =
-      store ?? createCustomChatStore<TMessage>(initialMessages);
+      store ??
+      createCustomChatStore<ChatMessage>(initialMessages, { initialTree });
+  }
+
+  const threadRef = useRef<ApplicationThread | null>(null);
+  if (threadRef.current === null) {
+    const applicationThread =
+      thread ??
+      new ApplicationThread({
+        id: threadId ?? generateUUID(),
+        state: new ZustandThreadState(storeRef.current),
+      });
+    threadRef.current = applicationThread;
+
+    // setMessages is used by legacy app actions, including reset. Bind it
+    // before children mount so every message write goes through the canonical
+    // thread snapshot rather than the base store projection.
+    storeRef.current.setState({
+      setMessages: applicationThread.setMessages.bind(applicationThread),
+    });
   }
 
   return (
-    <ChatProvider<TMessage>
-      initialMessages={initialMessages}
-      store={storeRef.current || undefined}
-    >
-      {children}
-    </ChatProvider>
+    <ApplicationThreadContext.Provider value={threadRef.current}>
+      <ChatProvider<ChatMessage>
+        initialMessages={initialMessages}
+        store={storeRef.current || undefined}
+      >
+        {children}
+      </ChatProvider>
+    </ApplicationThreadContext.Provider>
   );
 }

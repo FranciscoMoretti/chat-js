@@ -4,7 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { ChatSync } from "@/components/chat-sync";
-import { type AppRuntime, getAppRuntimeStore } from "@/lib/app-chat-runtime";
+import {
+  type AppRuntime,
+  getAppRuntimeStore,
+  getAppRuntimeThread,
+} from "@/lib/app-chat-runtime";
 import {
   markParallelRequestSpecsFailed,
   runParallelRequestSpecs,
@@ -114,11 +118,12 @@ function ChatConfirmationEffects({ chatId }: { chatId: string }) {
 
 export function AppRuntimeSlot({ runtime }: { runtime: AppRuntime }) {
   const store = getAppRuntimeStore(runtime);
+  const thread = getAppRuntimeThread(runtime);
 
   return (
-    <CustomStoreProvider store={store}>
+    <CustomStoreProvider store={store} thread={thread}>
       <ChatConfirmationEffects chatId={runtime.data.chatId} />
-      <ChatSync id={runtime.data.chatId} />
+      <ChatSync id={runtime.data.chatId} thread={thread} />
     </CustomStoreProvider>
   );
 }

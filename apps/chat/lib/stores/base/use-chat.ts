@@ -4,126 +4,171 @@ import {
   type UIMessage,
   type UseChatHelpers,
   type UseChatOptions,
-  useChat as useOriginalChat,
 } from "@ai-sdk/react";
-import { useCallback, useEffect, useRef } from "react";
-import { useStore } from "zustand";
+import { type AbstractThread, type MessageTreeSnapshot } from "@chatjs/thread";
+import {
+  type UseThreadHelpers,
+  type UseThreadOptions,
+  useThread as useOriginalChat,
+} from "@chatjs/thread/react";
+import type { ChatInit } from "ai";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { type StoreState, useChatStoreApi } from "./hooks";
 
-export type { UseChatHelpers, UseChatOptions };
+export type {
+  UseChatHelpers,
+  UseChatOptions,
+  UseThreadHelpers,
+  UseThreadOptions,
+};
 
 // Type for a compatible chat store
+type CompatibleChatStoreState<TMessage extends UIMessage> =
+  StoreState<TMessage> & {
+    threadSnapshot?: MessageTreeSnapshot<TMessage>;
+  };
+
 export interface CompatibleChatStore<TMessage extends UIMessage = UIMessage> {
-  _syncState?: (partial: Partial<StoreState<TMessage>>) => void;
-  setState?: (partial: Partial<StoreState<TMessage>>) => void;
-  <T>(selector: (state: StoreState<TMessage>) => T): T;
+  getState: () => CompatibleChatStoreState<TMessage>;
 }
 
 export type UseChatOptionsWithPerformance<
   TMessage extends UIMessage = UIMessage,
-> = UseChatOptions<TMessage> & {
+> = Pick<
+  ChatInit<TMessage>,
+  | "onData"
+  | "onError"
+  | "onFinish"
+  | "onToolCall"
+  | "sendAutomaticallyWhen"
+  | "transport"
+> & {
+  experimental_throttle?: number;
+  resume?: boolean;
   store?: CompatibleChatStore<TMessage>;
+  thread: AbstractThread<TMessage>;
   // Additional performance options
   enableBatching?: boolean;
 };
 
 export function useChat<TMessage extends UIMessage = UIMessage>(
-  options: UseChatOptionsWithPerformance<TMessage> = {} as UseChatOptionsWithPerformance<TMessage>
-): UseChatHelpers<TMessage> {
+  options: UseChatOptionsWithPerformance<TMessage>
+): UseThreadHelpers<TMessage> {
   const {
     store: customStore,
     enableBatching = true,
-    ...originalOptions
+    experimental_throttle,
+    onData,
+    onError,
+    onFinish,
+    onToolCall,
+    resume,
+    sendAutomaticallyWhen,
+    thread,
+    transport,
   } = options;
-
-  const originalOnData = (options as any).onData;
 
   // Use custom store if provided, otherwise use the context store
   const contextStore = useChatStoreApi<TMessage>();
-  const store = customStore || contextStore;
+  const store: CompatibleChatStore<TMessage> = customStore ?? contextStore;
 
   // Wrap onData to capture transient data parts
-  const wrappedOnData = useCallback(
-    (dataPart: any) => {
+  const wrappedOnData = useCallback<NonNullable<ChatInit<TMessage>["onData"]>>(
+    (dataPart) => {
       // Check if it's a data part (starts with 'data-')
       if (dataPart.type?.startsWith("data-")) {
         // Store transient data parts in the store
-        if (typeof (store as any).getState === "function") {
-          const storeState = (store as any).getState();
-          // If data is null or undefined, remove the transient data part
-          if (dataPart.data === null || dataPart.data === undefined) {
-            if (storeState.removeTransientDataPart) {
-              storeState.removeTransientDataPart(dataPart.type);
-            }
-          } else if (storeState.setTransientDataPart) {
-            storeState.setTransientDataPart(dataPart.type, dataPart.data);
-          }
+        const storeState = store.getState();
+        // If data is null or undefined, remove the transient data part
+        if (dataPart.data === null || dataPart.data === undefined) {
+          storeState.removeTransientDataPart(dataPart.type);
+        } else {
+          storeState.setTransientDataPart(dataPart.type, dataPart.data);
         }
       }
 
       // Call original onData handler if provided
-      if (originalOnData) {
-        originalOnData(dataPart);
-      }
+      onData?.(dataPart);
     },
-    [store, originalOnData]
+    [store, onData]
   );
 
-  const chatHelpers = useOriginalChat<TMessage>({
-    ...originalOptions,
-    onData: wrappedOnData,
-  });
-
-  const storeRef = useRef<CompatibleChatStore<TMessage> | typeof contextStore>(
-    store
-  );
-
-  // Memoize the sync function to avoid recreating it on every render
-  const syncState = useCallback((chatState: Partial<StoreState<TMessage>>) => {
-    if (!storeRef.current) {
-      return;
-    }
-
-    // Check if store has _syncState method (our internal stores)
-    if (typeof (storeRef.current as any).getState === "function") {
-      // For vanilla Zustand stores
-      const vanillaStore = storeRef.current as any;
-      vanillaStore.getState()._syncState(chatState);
-    } else if (typeof (storeRef.current as any)._syncState === "function") {
-      (storeRef.current as any)._syncState(chatState);
-    } else if (typeof (storeRef.current as any).setState === "function") {
-      // For standard Zustand stores
-      (storeRef.current as any).setState(chatState);
-    }
-  }, []);
-
-  // Simple sync - but don't overwrite store messages if chat has no messages
-  // This preserves server-side messages during hydration
-  useEffect(() => {
-    const currentStoreState = (store as any).getState?.() || { messages: [] };
-
-    // Skip syncing messages if store has messages but chat doesn't
-    // This prevents clearing server-side messages on hydration
-    const shouldSyncMessages = !(
-      currentStoreState.messages?.length > 0 &&
-      chatHelpers.messages.length === 0
-    );
-
-    // Only sync state data
-    const stateData: any = {
-      id: chatHelpers.id,
-      error: chatHelpers.error,
-      status: chatHelpers.status,
+  useLayoutEffect(() => {
+    const previous = {
+      onData: thread.onData,
+      onError: thread.onError,
+      onFinish: thread.onFinish,
+      onToolCall: thread.onToolCall,
+      sendAutomaticallyWhen: thread.sendAutomaticallyWhen,
+      transport: thread.transport,
     };
 
-    // Only add messages to sync object if we should sync them
-    if (shouldSyncMessages) {
-      stateData.messages = chatHelpers.messages;
+    thread.onData = wrappedOnData;
+    thread.onError = onError;
+    thread.onFinish = onFinish;
+    thread.onToolCall = onToolCall;
+    thread.sendAutomaticallyWhen = sendAutomaticallyWhen;
+    if (transport) {
+      thread.transport = transport;
     }
+
+    return () => {
+      if (thread.onData === wrappedOnData) thread.onData = previous.onData;
+      if (thread.onError === onError) thread.onError = previous.onError;
+      if (thread.onFinish === onFinish) thread.onFinish = previous.onFinish;
+      if (thread.onToolCall === onToolCall) {
+        thread.onToolCall = previous.onToolCall;
+      }
+      if (thread.sendAutomaticallyWhen === sendAutomaticallyWhen) {
+        thread.sendAutomaticallyWhen = previous.sendAutomaticallyWhen;
+      }
+      if (transport && thread.transport === transport) {
+        thread.transport = previous.transport;
+      }
+    };
+  }, [
+    onError,
+    onFinish,
+    onToolCall,
+    sendAutomaticallyWhen,
+    thread,
+    transport,
+    wrappedOnData,
+  ]);
+
+  const chatHelpers = useOriginalChat<TMessage>({
+    experimental_throttle,
+    resume,
+    thread,
+  });
+
+  const storeRef = useRef<CompatibleChatStore<TMessage>>(store);
+  storeRef.current = store;
+
+  // Memoize the sync function to avoid recreating it on every render
+  const syncState = useCallback(
+    (chatState: Parameters<StoreState<TMessage>["_syncState"]>[0]) => {
+      if (!storeRef.current) {
+        return;
+      }
+
+      storeRef.current.getState()._syncState(chatState);
+    },
+    []
+  );
+
+  // Keep imperative helpers available to legacy store consumers. Observable
+  // chat state is projected atomically by the Zustand ThreadState adapter.
+  useEffect(() => {
+    // Only sync state data
+    const stateData: Parameters<StoreState<TMessage>["_syncState"]>[0] = {
+      id: chatHelpers.id,
+    };
 
     // Sync functions separately and only once
     const functionsData = {
       sendMessage: chatHelpers.sendMessage,
+      startRun: chatHelpers.tree.startRun,
       regenerate: chatHelpers.regenerate,
       stop: chatHelpers.stop,
       resumeStream: chatHelpers.resumeStream,
@@ -140,7 +185,9 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
         typeof window !== "undefined" &&
         typeof window.requestAnimationFrame === "function"
       ) {
-        window.requestAnimationFrame(() => syncState(chatState));
+        window.requestAnimationFrame(() => {
+          syncState(chatState);
+        });
       } else {
         syncState(chatState);
       }
@@ -150,14 +197,12 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
   }, [
     // Only depend on data that actually changes, not function references
     chatHelpers.id,
-    chatHelpers.messages,
-    chatHelpers.error,
-    chatHelpers.status,
     syncState,
     enableBatching,
     chatHelpers.resumeStream,
     chatHelpers.clearError,
     chatHelpers.sendMessage,
+    chatHelpers.tree.startRun,
     store,
     chatHelpers.setMessages,
     chatHelpers.stop,
@@ -165,15 +210,5 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     chatHelpers.addToolResult,
   ]);
 
-  // Return the store's messages as the source of truth, not chatHelpers.messages
-  // Subscribe to store messages so this is reactive
-  const storeMessages = useStore(
-    store as any,
-    (state: any) => state.messages as TMessage[]
-  );
-
-  return {
-    ...chatHelpers,
-    messages: storeMessages || chatHelpers.messages,
-  };
+  return chatHelpers;
 }

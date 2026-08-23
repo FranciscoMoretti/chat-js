@@ -198,13 +198,25 @@ describe("scaffoldFromTemplate", () => {
 			packageManager?: string;
 			dependencies: Record<string, string>;
 			overrides?: Record<string, string>;
+			scripts?: Record<string, string>;
 		};
 
 		expect(packageJson.packageManager).toBe("bun@1.3.1");
 		expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
 		expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.5.6");
 		expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
+		expect(packageJson.dependencies["@chatjs/thread"]).toBeUndefined();
 		expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
+		expect(packageJson.scripts?.prebuild).not.toContain("@chatjs/thread");
+		expect(existsSync(join(destination, "lib", "thread", "react.ts"))).toBe(
+			true,
+		);
+		const chatStoreSource = await readFile(
+			join(destination, "lib", "stores", "base", "use-chat.ts"),
+			"utf8",
+		);
+		expect(chatStoreSource).toContain('from "@/lib/thread"');
+		expect(chatStoreSource).toContain('from "@/lib/thread/react"');
 	});
 
 	it("rewrites the generated web app to be npm-friendly", async () => {

@@ -1,134 +1,178 @@
-// Hooks enabled by the with-threads middleware
-
 import { useCallback } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
 import {
   type CustomChatStoreState,
+  useApplicationThread,
   useCustomChatStoreApi,
 } from "./custom-store-provider";
-import type { MessageSiblingInfo, ParallelGroupInfo } from "./with-threads";
+
+export interface MessageSiblingInfo {
+  siblingIndex: number;
+  siblings: ChatMessage[];
+}
+
+export interface ParallelGroupInfo {
+  messages: ChatMessage[];
+  parallelGroupId: string;
+  selectedMessageId: string | null;
+}
+
+export const useAddMessageToTree = () => {
+  const thread = useApplicationThread();
+  return useCallback(
+    (message: ChatMessage) =>
+      thread.upsertMessage(message, message.metadata.parentMessageId),
+    [thread]
+  );
+};
 
 function useThreadStore<T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
   const store = useCustomChatStoreApi<ChatMessage>();
-  if (!store) {
-    throw new Error("useThreadStore must be used within ChatStoreProvider");
-  }
   return useStoreWithEqualityFn(store, selector, equalityFn);
 }
 
-export const useThreadEpoch = () =>
-  useThreadStore((state) => state.threadEpoch);
+function getSiblingInfo(
+  state: CustomChatStoreState<ChatMessage>,
+  messageId: string
+): MessageSiblingInfo | null {
+  const { childrenByParentId, messagesById, parentById, rootIds } =
+    state.threadSnapshot;
+  if (!messagesById[messageId]) {
+    return null;
+  }
 
-export const useThreadInitialMessages = () =>
-  useThreadStore((state) => state.threadInitialMessages);
+  const parentId = parentById[messageId] ?? null;
+  const siblingIds =
+    parentId === null ? rootIds : (childrenByParentId[parentId] ?? []);
+  const siblings = siblingIds.flatMap((id) => {
+    const message = messagesById[id];
+    return message ? [message] : [];
+  });
 
-export const useResetThreadEpoch = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
-  return useCallback(() => {
-    store.getState().resetThreadEpoch();
-  }, [store]);
-};
+  return {
+    siblingIndex: siblingIds.indexOf(messageId),
+    siblings,
+  };
+}
 
-export const useSetMessagesWithEpoch = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
-  return useCallback(
-    (messages: ChatMessage[]) => {
-      store.getState().setMessagesWithEpoch(messages);
-    },
-    [store]
-  );
-};
-
-export const useAllMessages = () =>
-  useThreadStore((state) => state.allMessages);
-
-export const useSetAllMessages = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
-  return useCallback(
-    (messages: ChatMessage[]) => {
-      store.getState().setAllMessages(messages);
-    },
-    [store]
-  );
-};
-
-export const useAddMessageToTree = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
-  return useCallback(
-    (message: ChatMessage) => {
-      store.getState().addMessageToTree(message);
-    },
-    [store]
-  );
-};
-
-/** Reactive hook — re-renders when sibling info for `messageId` changes. */
 export function useMessageSiblingInfo(
   messageId: string
-): MessageSiblingInfo<ChatMessage> | null {
+): MessageSiblingInfo | null {
   return useThreadStore(
-    (state) => state.getMessageSiblingInfo(messageId),
-    (a, b) => {
-      if (a === null && b === null) {
-        return true;
-      }
-      if (a === null || b === null) {
-        return false;
-      }
-      return (
+    (state) => getSiblingInfo(state, messageId),
+    (a, b) =>
+      a === b ||
+      (a !== null &&
+        b !== null &&
         a.siblingIndex === b.siblingIndex &&
-        a.siblings.length === b.siblings.length
-      );
-    }
+        a.siblings.length === b.siblings.length &&
+        a.siblings.every(
+          (sibling, index) => sibling.id === b.siblings[index]?.id
+        ))
   );
 }
 
 export const useSwitchToSibling = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
+  const thread = useApplicationThread();
+
   return useCallback(
-    (messageId: string, direction: "prev" | "next") =>
-      store.getState().switchToSibling(messageId, direction),
-    [store]
+    (messageId: string, direction: "prev" | "next") => {
+      const siblings = thread.getSiblings(messageId);
+      if (siblings.length <= 1) {
+        return null;
+      }
+
+      const currentIndex = siblings.findIndex(({ id }) => id === messageId);
+      if (currentIndex === -1) {
+        return null;
+      }
+      const offset = direction === "next" ? 1 : -1;
+      const nextIndex = currentIndex + offset;
+      if (nextIndex < 0 || nextIndex >= siblings.length) {
+        return null;
+      }
+      const target = siblings[nextIndex];
+      const leaf = thread.getLeaves(target.id).at(-1) ?? target;
+      thread.setCursor(leaf.id);
+      return thread.getSnapshot().messages;
+    },
+    [thread]
   );
 };
 
 export function useParallelGroupInfo(
   messageId: string
-): ParallelGroupInfo<ChatMessage> | null {
+): ParallelGroupInfo | null {
   return useThreadStore(
-    (state) => state.getParallelGroupInfo(messageId),
-    (a, b) => {
-      if (a === null && b === null) {
-        return true;
+    (state) => {
+      const snapshot = state.threadSnapshot;
+      const message = snapshot.messagesById[messageId];
+      const parallelGroupId = message?.metadata.parallelGroupId ?? null;
+      let parentId: string | null = null;
+      if (message?.role === "user") {
+        parentId = message.id;
+      } else if (message) {
+        parentId = snapshot.parentById[message.id] ?? null;
+      }
+      if (!(parentId && parallelGroupId)) {
+        return null;
       }
 
-      if (a === null || b === null) {
-        return false;
-      }
+      const messages = (snapshot.childrenByParentId[parentId] ?? [])
+        .flatMap((id) => {
+          const candidate = snapshot.messagesById[id];
+          return candidate ? [candidate] : [];
+        })
+        .filter(
+          (candidate) => candidate.metadata.parallelGroupId === parallelGroupId
+        )
+        .sort(
+          (a, b) =>
+            (a.metadata.parallelIndex ?? Number.MAX_SAFE_INTEGER) -
+            (b.metadata.parallelIndex ?? Number.MAX_SAFE_INTEGER)
+        );
+      const visibleIds = new Set(snapshot.messages.map(({ id }) => id));
 
-      return (
+      return {
+        messages,
+        parallelGroupId,
+        selectedMessageId:
+          messages.find(({ id }) => visibleIds.has(id))?.id ?? null,
+      };
+    },
+    (a, b) =>
+      a === b ||
+      (a !== null &&
+        b !== null &&
         a.parallelGroupId === b.parallelGroupId &&
         a.selectedMessageId === b.selectedMessageId &&
         a.messages.length === b.messages.length &&
         a.messages.every(
-          (msg, i) =>
-            msg.id === b.messages[i]?.id &&
-            msg.metadata?.activeStreamId ===
-              b.messages[i]?.metadata?.activeStreamId
-        )
-      );
-    }
+          (message, index) =>
+            message.id === b.messages[index]?.id &&
+            message.metadata.activeStreamId ===
+              b.messages[index]?.metadata.activeStreamId
+        ))
   );
 }
 
 export const useSwitchToMessage = () => {
-  const store = useCustomChatStoreApi<ChatMessage>();
+  const thread = useApplicationThread();
+
   return useCallback(
-    (messageId: string) => store.getState().switchToMessage(messageId),
-    [store]
+    (messageId: string) => {
+      const message = thread.getMessage(messageId);
+      if (!message) {
+        return null;
+      }
+      const leaf = thread.getLeaves(messageId).at(-1) ?? message;
+      thread.setCursor(leaf.id);
+      return thread.getSnapshot().messages;
+    },
+    [thread]
   );
 };

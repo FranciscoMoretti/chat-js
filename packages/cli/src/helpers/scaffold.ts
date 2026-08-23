@@ -13,6 +13,7 @@ import {
   createEmptyUiTemplate,
 } from "../utils/inject-tool";
 import { runCommand } from "../utils/run-command";
+import { vendorThreadPackage } from "./vendor-thread-package";
 
 const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
   "node_modules",
@@ -207,6 +208,11 @@ async function applyChatTemplateSourceTransforms(
   };
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+
+  await vendorThreadPackage({
+    destination,
+    threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
+  });
 }
 
 async function applyElectronTemplateSourceTransforms(

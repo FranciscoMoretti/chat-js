@@ -3,6 +3,7 @@
 "use client";
 
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
+import type { UseThreadHelpers } from "@chatjs/thread/react";
 import type { ChatStatus } from "ai";
 import * as React from "react";
 import { createContext, useCallback, useContext, useRef } from "react";
@@ -197,14 +198,30 @@ class MessageIndex<TMessage extends UIMessage> {
   }
 }
 
+type SyncedChatState<TMessage extends UIMessage> = Partial<
+  Pick<
+    StoreState<TMessage>,
+    | "addToolResult"
+    | "clearError"
+    | "id"
+    | "regenerate"
+    | "resumeStream"
+    | "sendMessage"
+    | "setMessages"
+    | "startRun"
+    | "stop"
+  >
+>;
+
 export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _memoizedSelectors: Map<string, { result: any; deps: any[] }>;
   _messageIndex: MessageIndex<TMessage>;
 
-  // Internal sync method
-  _syncState: (newState: Partial<StoreState<TMessage>>) => void;
-
   // Performance optimizations
+  _scheduleThrottledMessagesUpdate: () => void;
+
+  // Internal sync method
+  _syncState: (newState: SyncedChatState<TMessage>) => void;
   _throttledMessages: TMessage[] | null;
 
   // Transient data parts (not persisted in messages)
@@ -255,6 +272,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
 
   // Transient data methods
   setTransientDataPart: (type: string, data: any) => void;
+  startRun?: UseThreadHelpers<TMessage>["tree"]["startRun"];
   status: ChatStatus;
   stop?: UseChatHelpers<TMessage>["stop"];
 }
@@ -301,9 +319,13 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       _messageIndex: messageIndex,
       _memoizedSelectors: new Map(),
       _transientDataParts: new Map(),
+      _scheduleThrottledMessagesUpdate: () => {
+        throttledMessagesUpdater?.();
+      },
 
       // Chat helpers
       sendMessage: undefined,
+      startRun: undefined,
       regenerate: undefined,
       stop: undefined,
       resumeStream: undefined,
@@ -487,9 +509,6 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       _syncState: (newState) => {
         markLastAction("chat:_syncState");
         batchUpdates(() => {
-          if (newState.messages) {
-            get()._messageIndex.update(newState.messages);
-          }
           set(
             {
               ...newState,
@@ -498,9 +517,6 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             false
             // 'syncFromUseChat',
           );
-          if (newState.messages) {
-            throttledMessagesUpdater?.();
-          }
         });
       },
 
@@ -796,6 +812,11 @@ const fallbackSendMessage = async () => {
     "sendMessage not configured - make sure useChat is called with transport"
   );
 };
+const fallbackStartRun = async () => {
+  throw new Error(
+    "startRun not configured - make sure useChat is called with transport"
+  );
+};
 const fallbackRegenerate = async () => {
   debug.warn(
     "regenerate not configured - make sure useChat is called with transport"
@@ -834,6 +855,7 @@ export type ChatActions<TMessage extends UIMessage = UIMessage> = {
   setNewChat: (id: string, messages: TMessage[]) => void;
   reset: () => void;
   sendMessage: UseChatHelpers<TMessage>["sendMessage"];
+  startRun: UseThreadHelpers<TMessage>["tree"]["startRun"];
   regenerate: UseChatHelpers<TMessage>["regenerate"];
   stop: UseChatHelpers<TMessage>["stop"];
   resumeStream: UseChatHelpers<TMessage>["resumeStream"];
@@ -857,6 +879,7 @@ export const useChatActions = <
       setNewChat: state.setNewChat,
       reset: state.reset,
       sendMessage: state.sendMessage || fallbackSendMessage,
+      startRun: state.startRun || fallbackStartRun,
       regenerate: state.regenerate || fallbackRegenerate,
       stop: state.stop || fallbackStop,
       resumeStream: state.resumeStream || fallbackResumeStream,
