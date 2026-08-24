@@ -4,7 +4,7 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
-import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
+import { completeDataPart } from "@/lib/ai/complete-data-part";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
@@ -84,6 +84,7 @@ export function ChatSync({
     },
     transport,
     onData: (dataPart) => {
+      completeDataPart({ dataPart, thread });
       if (
         !hasReportedConfirmationRef.current &&
         dataPart.type === "data-chatConfirmed" &&
@@ -121,8 +122,6 @@ export function ChatSync({
       body: { assistantMessageId: partialMessageId },
     });
   }, [partialMessageId, resumeStream, thread]);
-
-  useCompleteDataPart();
 
   return null;
 }
