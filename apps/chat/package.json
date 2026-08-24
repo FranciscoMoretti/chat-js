@@ -157,11 +157,7 @@
     "zustand": "^5.0.6"
   },
   "overrides": {
-    "commander": "^14.0.0",
-    "evalite": {
-      "ai": "$ai",
-      "better-sqlite3": "$better-sqlite3"
-    }
+    "commander": "^14.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
@@ -174,7 +170,7 @@
     "@types/react-dom": "19.2.3",
     "better-sqlite3": "^12.4.1",
     "drizzle-kit": "^0.31.9",
-    "evalite": "1.0.0-beta.8",
+    "evalite": "1.0.0-beta.16",
     "pino-pretty": "^13.1.1",
     "postcss": "^8",
     "tailwindcss": "^4.1.12",
