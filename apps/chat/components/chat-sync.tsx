@@ -1,7 +1,7 @@
 "use client";
 
 import { DefaultChatTransport } from "ai";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
@@ -36,7 +36,10 @@ export function ChatSync({
   const isLastMessagePartial = isResumableActiveStreamId(
     lastMessage?.metadata?.activeStreamId
   );
-  const resumeOnMountRef = useRef(isLastMessagePartial);
+  const partialMessageId = isLastMessagePartial
+    ? (lastMessage?.id ?? null)
+    : null;
+  const resumeAttemptRef = useRef<string | null>(null);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -73,13 +76,12 @@ export function ChatSync({
     [isAuthenticated, thread]
   );
 
-  useChat<ChatMessage>({
+  const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
     thread,
     onFinish: ({ message }) => {
       saveChatMessage({ message, chatId: id });
     },
-    resume: resumeOnMountRef.current,
     transport,
     onData: (dataPart) => {
       if (
@@ -99,6 +101,26 @@ export function ChatSync({
       toast.error(message, description ? { description } : undefined);
     },
   });
+
+  useEffect(() => {
+    if (!partialMessageId) {
+      resumeAttemptRef.current = null;
+      return;
+    }
+    if (resumeAttemptRef.current === partialMessageId) {
+      return;
+    }
+
+    resumeAttemptRef.current = partialMessageId;
+    const run = thread.getRunForMessage(partialMessageId);
+    if (run?.status === "submitted" || run?.status === "streaming") {
+      return;
+    }
+
+    resumeStream({
+      body: { assistantMessageId: partialMessageId },
+    });
+  }, [partialMessageId, resumeStream, thread]);
 
   useCompleteDataPart();
 

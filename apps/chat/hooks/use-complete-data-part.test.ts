@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
-import { mergeCompletedMessageIntoVisiblePath } from "./use-complete-data-part";
+import {
+  mergeCompletedMessageIntoVisiblePath,
+  parseAppendedMessage,
+} from "./use-complete-data-part";
 
 function message({
   id,
   parentMessageId,
+  role = "assistant",
 }: {
   id: string;
   parentMessageId: string | null;
+  role?: ChatMessage["role"];
 }): ChatMessage {
   return {
     id,
-    role: "assistant",
+    role,
     parts: [{ type: "text", text: id }],
     metadata: {
       activeStreamId: null,
@@ -56,5 +61,39 @@ describe("mergeCompletedMessageIntoVisiblePath", () => {
     expect(
       mergeCompletedMessageIntoVisiblePath([user, partial], completed)
     ).toEqual([user, completed]);
+  });
+
+  it("appends a completion whose parent is the visible leaf", () => {
+    const user = message({
+      id: "user",
+      parentMessageId: null,
+      role: "user",
+    });
+    const assistant = message({
+      id: "assistant",
+      parentMessageId: user.id,
+    });
+
+    expect(mergeCompletedMessageIntoVisiblePath([user], assistant)).toEqual([
+      user,
+      assistant,
+    ]);
+  });
+});
+
+describe("parseAppendedMessage", () => {
+  it("parses and validates a serialized chat message", async () => {
+    const input = message({ id: "assistant", parentMessageId: "user" });
+
+    await expect(parseAppendedMessage(JSON.stringify(input))).resolves.toEqual(
+      input
+    );
+  });
+
+  it("rejects malformed or structurally invalid messages", async () => {
+    await expect(parseAppendedMessage("{")).resolves.toBeNull();
+    await expect(
+      parseAppendedMessage(JSON.stringify({ id: "assistant" }))
+    ).resolves.toBeNull();
   });
 });
