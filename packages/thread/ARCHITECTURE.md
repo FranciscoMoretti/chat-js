@@ -404,20 +404,11 @@ another root. The cursor follows the replacement on its first write only when
 it still points to the regeneration target, so navigation during submission or
 streaming is not overwritten.
 
-### Known AI SDK Blocker
-
-Regenerating an assistant whose parent is another assistant remains rejected.
-This is blocked by an AI SDK regeneration bug: after truncating the path to the
-assistant parent, AI SDK treats that trailing assistant as the response to
-continue. Regenerating `[user, assistant A, assistant B]` therefore produces
-`[user, assistant A']` instead of creating a replacement sibling for
-`assistant B`.
-
-The intended tree result is to preserve `assistant B` and create another child
-of `assistant A`. Once AI SDK distinguishes regeneration from normal trailing
-assistant continuation, `Thread` can remove this rejection and keep using the
-native regeneration lifecycle. Until then, rejecting the operation avoids
-silently mutating a shared ancestor.
+AI SDK 6.0.244 and later initialize fresh response state for regeneration.
+This allows a response whose parent is also an assistant to regenerate without
+mutating that shared parent. For `[user, assistant A, assistant B]`, regenerating
+`assistant B` preserves both existing messages and creates a replacement sibling
+under `assistant A`.
 
 ## Status and Cancellation
 

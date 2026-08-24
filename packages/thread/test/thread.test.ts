@@ -731,23 +731,39 @@ describe("Thread", () => {
 		expect(chat.getSnapshot().cursorId).toBe("assistant-1");
 	});
 
-	test("rejects regeneration when the response parent is an assistant", async () => {
+	test("regenerates an assistant whose parent is an assistant", async () => {
 		const transport = new ControlledTransport();
+		const assistantParent = {
+			...user("assistant-parent"),
+			role: "assistant" as const,
+		};
+		const assistantChild = {
+			...user("assistant-child"),
+			role: "assistant" as const,
+		};
 		const chat = new Thread({
-			messages: [
-				{ ...user("assistant-parent"), role: "assistant" },
-				{ ...user("assistant-child"), role: "assistant" },
-			],
+			messages: [assistantParent, assistantChild],
 			transport,
 		});
 
-		await expect(
-			chat.regenerate({ messageId: "assistant-child" }),
-		).rejects.toThrow(
-			"Cannot regenerate assistant message assistant-child because its parent assistant-parent is also an assistant",
+		const regeneration = chat.regenerate({ messageId: assistantChild.id });
+		await waitFor(() => transport.requests.length === 1);
+		expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
+		expect(transport.requests[0]?.options.messageId).toBe(assistantChild.id);
+		expect(transport.requests[0]?.options.messages.map(({ id }) => id)).toEqual(
+			[assistantParent.id],
 		);
-		expect(transport.requests).toHaveLength(0);
-		expect(chat.getSnapshot().runs).toHaveLength(0);
+
+		transport.emitText(0, "assistant-replacement", "replacement");
+		await regeneration;
+
+		expect(chat.getChildren(assistantParent.id).map(({ id }) => id)).toEqual([
+			assistantChild.id,
+			"assistant-replacement",
+		]);
+		expect(chat.getMessage(assistantParent.id)).toEqual(assistantParent);
+		expect(chat.getMessage(assistantChild.id)).toEqual(assistantChild);
+		expect(chat.getSnapshot().cursorId).toBe("assistant-replacement");
 	});
 
 	test("restores assistant-to-assistant edges as tree data", () => {

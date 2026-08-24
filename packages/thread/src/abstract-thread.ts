@@ -259,18 +259,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
 		if (target.role === "assistant") {
 			if (parentMessageId) {
-				const parentMessage = this.getMessage(parentMessageId);
-				if (!parentMessage) {
-					throw new Error(`Unknown message ${parentMessageId}`);
-				}
-				if (parentMessage.role === "assistant") {
-					// AI SDK regeneration currently reuses a trailing assistant instead
-					// of creating a new response, which would mutate this shared parent.
-					throw new Error(
-						`Cannot regenerate assistant message ${target.id} because its parent ${parentMessage.id} is also an assistant`,
-					);
-				}
-				this.assertCanGenerateFrom(parentMessage);
+				this.#runs.assertHasCapacity(parentMessageId);
 			} else {
 				this.#runs.assertHasCapacity(null);
 			}
