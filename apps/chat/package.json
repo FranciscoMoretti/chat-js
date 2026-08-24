@@ -157,7 +157,10 @@
     "zustand": "^5.0.6"
   },
   "overrides": {
-    "commander": "^14.0.0"
+    "commander": "^14.0.0",
+    "evalite": {
+      "better-sqlite3": "$better-sqlite3"
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
