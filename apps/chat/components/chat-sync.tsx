@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
 import { completeDataPart } from "@/lib/ai/complete-data-part";
+import { createCompletionQueue } from "@/lib/ai/completion-queue";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
@@ -32,6 +33,14 @@ export function ChatSync({
 
   const isAuthenticated = !!session?.user;
   const hasReportedConfirmationRef = useRef(false);
+  const completionQueueRef = useRef(
+    createCompletionQueue((error) => {
+      console.error("Failed to reconcile completed message", error);
+      toast.error(
+        "Failed to synchronize a completed response. Refresh to retry."
+      );
+    })
+  );
   const lastMessage = thread.getSnapshot().messages.at(-1);
   const isLastMessagePartial = isResumableActiveStreamId(
     lastMessage?.metadata?.activeStreamId
@@ -80,11 +89,15 @@ export function ChatSync({
     experimental_throttle: 100,
     thread,
     onFinish: ({ message }) => {
-      saveChatMessage({ message, chatId: id });
+      return completionQueueRef.current.waitForIdle().then(() => {
+        saveChatMessage({ message, chatId: id });
+      });
     },
     transport,
     onData: (dataPart) => {
-      completeDataPart({ dataPart, thread });
+      completionQueueRef.current.enqueue(() =>
+        completeDataPart({ dataPart, thread })
+      );
       if (
         !hasReportedConfirmationRef.current &&
         dataPart.type === "data-chatConfirmed" &&
