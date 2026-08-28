@@ -1,10 +1,11 @@
 "use client";
 
 import { DefaultChatTransport } from "ai";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useSaveMessageMutation } from "@/hooks/chat-sync-hooks";
-import { useCompleteDataPart } from "@/hooks/use-complete-data-part";
+import { completeDataPart } from "@/lib/ai/complete-data-part";
+import { createCompletionQueue } from "@/lib/ai/completion-queue";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
@@ -32,10 +33,22 @@ export function ChatSync({
 
   const isAuthenticated = !!session?.user;
   const hasReportedConfirmationRef = useRef(false);
+  const completionQueueRef = useRef(
+    createCompletionQueue((error) => {
+      console.error("Failed to reconcile completed message", error);
+      toast.error(
+        "Failed to synchronize a completed response. Refresh to retry."
+      );
+    })
+  );
   const lastMessage = thread.getSnapshot().messages.at(-1);
   const isLastMessagePartial = isResumableActiveStreamId(
     lastMessage?.metadata?.activeStreamId
   );
+  const partialMessageId = isLastMessagePartial
+    ? (lastMessage?.id ?? null)
+    : null;
+  const resumeAttemptRef = useRef<string | null>(null);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -51,30 +64,40 @@ export function ChatSync({
             },
           };
         },
-        prepareReconnectToStreamRequest({ id: chatId }) {
+        prepareReconnectToStreamRequest({ body, id: chatId }) {
           const current = thread.getSnapshot().messages.at(-1);
           const activeStreamId = current?.metadata?.activeStreamId ?? null;
-          const partialMessageId = isResumableActiveStreamId(activeStreamId)
-            ? (current?.id ?? null)
-            : null;
+          const runMessageId =
+            typeof body?.assistantMessageId === "string"
+              ? body.assistantMessageId
+              : null;
+          const partialMessageId =
+            runMessageId ??
+            (isResumableActiveStreamId(activeStreamId)
+              ? (current?.id ?? null)
+              : null);
 
           return {
-            api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${partialMessageId}` : ""}`,
+            api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
           };
         },
       }),
     [isAuthenticated, thread]
   );
 
-  useChat<ChatMessage>({
+  const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
     thread,
     onFinish: ({ message }) => {
-      saveChatMessage({ message, chatId: id });
+      return completionQueueRef.current.waitForIdle().then(() => {
+        saveChatMessage({ message, chatId: id });
+      });
     },
-    resume: isLastMessagePartial,
     transport,
     onData: (dataPart) => {
+      completionQueueRef.current.enqueue(() =>
+        completeDataPart({ dataPart, thread })
+      );
       if (
         !hasReportedConfirmationRef.current &&
         dataPart.type === "data-chatConfirmed" &&
@@ -93,7 +116,25 @@ export function ChatSync({
     },
   });
 
-  useCompleteDataPart();
+  useEffect(() => {
+    if (!partialMessageId) {
+      resumeAttemptRef.current = null;
+      return;
+    }
+    if (resumeAttemptRef.current === partialMessageId) {
+      return;
+    }
+
+    resumeAttemptRef.current = partialMessageId;
+    const run = thread.getRunForMessage(partialMessageId);
+    if (run?.status === "submitted" || run?.status === "streaming") {
+      return;
+    }
+
+    resumeStream({
+      body: { assistantMessageId: partialMessageId },
+    });
+  }, [partialMessageId, resumeStream, thread]);
 
   return null;
 }

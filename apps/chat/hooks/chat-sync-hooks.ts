@@ -337,9 +337,8 @@ export function useSaveMessageMutation() {
         // response siblings get their updated activeStreamId from the server.
         // Placed in onSettled (not onSuccess) so this runs after the real
         // backend write when the mutationFn is eventually made server-side.
-        qc.invalidateQueries({
-          queryKey: trpc.chat.getChatMessages.queryKey({ chatId }),
-        });
+        const key = trpc.chat.getChatMessages.queryKey({ chatId });
+        qc.invalidateQueries({ queryKey: key });
       }
     },
   });

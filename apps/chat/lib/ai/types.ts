@@ -126,7 +126,7 @@ export function expandSelectedModelValue(
   return expanded;
 }
 
-const messageMetadataSchema = z.object({
+export const messageMetadataSchema = z.object({
   createdAt: z.date(),
   parentMessageId: z.string().nullable(),
   parallelGroupId: z.string().nullable().optional(),
