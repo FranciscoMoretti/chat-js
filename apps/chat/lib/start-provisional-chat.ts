@@ -7,7 +7,10 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import type { ParallelRequestSpec } from "@/lib/draft-chat-submission";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
-import { registerProvisionalChatConfirmation } from "@/lib/provisional-chat-confirmations";
+import {
+  discardUnacknowledgedProvisionalChatConfirmation,
+  registerProvisionalChatConfirmation,
+} from "@/lib/provisional-chat-confirmations";
 import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
@@ -92,6 +95,9 @@ export function useStartProvisionalChat(chatId: string) {
         requestSpecs,
         startRun,
       })
+        .finally(() => {
+          discardUnacknowledgedProvisionalChatConfirmation(chatId, message.id);
+        })
         .then((failedRequestSpecs) => {
           if (failedRequestSpecs.length > 0) {
             toast.error("Failed to complete all parallel responses");

@@ -192,24 +192,29 @@ export async function runParallelThreadRequestSpecs({
       }))
     );
 
-    if (persistenceGate) {
-      primaryRun.finished.then(() => {
-        if (!persistenceGate.settled) {
-          rejectPersistenceGate({
-            chatId,
-            error: new Error("Primary response ended before user persistence"),
-            gate: persistenceGate,
-            userMessageId: message.id,
-          });
-        }
-      });
-    }
+    const rejectUnconfirmedPersistence = persistenceGate
+      ? primaryRun.finished.then(() => {
+          if (!persistenceGate.settled) {
+            rejectPersistenceGate({
+              chatId,
+              error: new Error(
+                "Primary response ended before user persistence"
+              ),
+              gate: persistenceGate,
+              userMessageId: message.id,
+            });
+          }
+        })
+      : Promise.resolve();
 
     const runs = [
       { requestSpec: primaryRequest, run: primaryRun },
       ...secondaryRuns,
     ];
-    await Promise.all(runs.map(({ run }) => run.finished));
+    await Promise.all([
+      ...runs.map(({ run }) => run.finished),
+      rejectUnconfirmedPersistence,
+    ]);
 
     return runs
       .filter(({ run }) => run.getSnapshot()?.status === "error")

@@ -101,12 +101,8 @@ export function ChatSync({
         dataPart.data.chatId === id
       ) {
         acknowledgeParallelUserMessagePersistence(dataPart.data);
-        const matchesPendingChat = acknowledgeProvisionalUserMessagePersistence(
-          dataPart.data
-        );
-        if (matchesPendingChat) {
-          setChatPersisted(true);
-        }
+        acknowledgeProvisionalUserMessagePersistence(dataPart.data);
+        setChatPersisted(true);
       }
       setDataStream((ds) =>
         ds ? [...ds, dataPart as (typeof ds)[number]] : []
