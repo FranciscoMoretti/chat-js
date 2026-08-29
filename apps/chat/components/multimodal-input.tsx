@@ -39,10 +39,8 @@ import { config } from "@/lib/config";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import {
-  addPendingAssistantMessages,
   createParallelRequestBody,
-  markParallelRequestSpecsFailed,
-  runParallelRequestSpecs,
+  runParallelThreadRequestSpecs,
 } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
@@ -117,7 +115,11 @@ function PureMultimodalInput({
   const addMessageToTree = useAddMessageToTree();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const { sendMessage, stop: stopHelper } = useChatActions<ChatMessage>();
+  const {
+    sendMessage,
+    startRun,
+    stop: stopHelper,
+  } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
   const {
     editorRef,
@@ -362,25 +364,16 @@ function PureMultimodalInput({
 
       addMessageToTree(message);
       handleModelChange(primaryRequest.modelId);
-      addPendingAssistantMessages({
-        addMessageToTree,
-        message,
-        requestSpecs,
-      });
 
-      runParallelRequestSpecs({
+      runParallelThreadRequestSpecs({
         chatId,
         message,
         projectId: currentRoute.projectId,
         requestSpecs: requestSpecs.slice(1),
+        startRun,
       })
         .then(async (failedRequestSpecs) => {
           if (failedRequestSpecs.length > 0) {
-            markParallelRequestSpecsFailed({
-              addMessageToTree,
-              message,
-              requestSpecs: failedRequestSpecs,
-            });
             toast.error("Failed to complete all parallel responses");
           }
 
@@ -422,6 +415,7 @@ function PureMultimodalInput({
     selectedTool,
     sendMessage,
     startProvisionalChat,
+    startRun,
     trimMessagesInEditMode,
   ]);
 
