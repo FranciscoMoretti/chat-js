@@ -137,7 +137,9 @@ async function prepareParallelRequests({
 }
 
 async function drainResponse(response: Response) {
-  if (!response.body) return;
+  if (!response.body) {
+    return;
+  }
 
   const reader = response.body.getReader();
   while (!(await reader.read()).done) {
@@ -181,10 +183,18 @@ export async function runParallelRequestSpecs({
   projectId: string | null;
   requestSpecs: ParallelRequestSpec[];
 }) {
-  if (requestSpecs.length === 0) return [];
+  if (requestSpecs.length === 0) {
+    return [];
+  }
 
-  const prepared = await prepareParallelRequests({ chatId, message, projectId });
-  if (!prepared) return requestSpecs;
+  const prepared = await prepareParallelRequests({
+    chatId,
+    message,
+    projectId,
+  });
+  if (!prepared) {
+    return requestSpecs;
+  }
 
   const results = await Promise.allSettled(
     requestSpecs.map((requestSpec) =>
@@ -203,26 +213,22 @@ export async function runParallelThreadRequestSpecs({
   projectId,
   requestSpecs,
   startRun,
-  userMessagePersisted = false,
 }: {
   chatId: string;
   message: ChatMessage;
   projectId: string | null;
   requestSpecs: ParallelRequestSpec[];
   startRun: TreeHelpers<ChatMessage>["startRun"];
-  userMessagePersisted?: boolean;
 }) {
   if (requestSpecs.length === 0) {
     return [];
   }
 
-  const prepared =
-    userMessagePersisted ||
-    (await prepareParallelRequests({
-      chatId,
-      message,
-      projectId,
-    }));
+  const prepared = await prepareParallelRequests({
+    chatId,
+    message,
+    projectId,
+  });
   if (!prepared) {
     return requestSpecs;
   }

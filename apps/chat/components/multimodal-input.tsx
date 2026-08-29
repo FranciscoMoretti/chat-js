@@ -39,9 +39,7 @@ import { config } from "@/lib/config";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import {
-  addPendingAssistantMessages,
   createParallelRequestBody,
-  markParallelRequestSpecsFailed,
   runParallelThreadRequestSpecs,
 } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
@@ -366,11 +364,6 @@ function PureMultimodalInput({
 
       addMessageToTree(message);
       handleModelChange(primaryRequest.modelId);
-      addPendingAssistantMessages({
-        addMessageToTree,
-        message,
-        requestSpecs,
-      });
 
       runParallelThreadRequestSpecs({
         chatId,
@@ -381,11 +374,6 @@ function PureMultimodalInput({
       })
         .then(async (failedRequestSpecs) => {
           if (failedRequestSpecs.length > 0) {
-            markParallelRequestSpecsFailed({
-              addMessageToTree,
-              message,
-              requestSpecs: failedRequestSpecs,
-            });
             toast.error("Failed to complete all parallel responses");
           }
 
