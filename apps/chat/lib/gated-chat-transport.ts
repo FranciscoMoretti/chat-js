@@ -7,20 +7,33 @@ type GateEntry = {
 
 const gateEntries = new WeakMap<object, GateEntry>();
 
+function createAbortError() {
+  return new DOMException("Aborted", "AbortError");
+}
+
 function waitForGate(ready: Promise<void>, signal?: AbortSignal) {
   if (!signal) {
     return ready;
   }
   if (signal.aborted) {
-    return Promise.reject(new DOMException("Aborted", "AbortError"));
+    ready.catch(() => undefined);
+    return Promise.reject(createAbortError());
   }
 
   return new Promise<void>((resolve, reject) => {
-    const abort = () => reject(new DOMException("Aborted", "AbortError"));
+    const abort = () => reject(createAbortError());
+    const cleanup = () => signal.removeEventListener("abort", abort);
     signal.addEventListener("abort", abort, { once: true });
-    ready.then(resolve, reject).finally(() => {
-      signal.removeEventListener("abort", abort);
-    });
+    ready.then(
+      () => {
+        cleanup();
+        resolve();
+      },
+      (error: unknown) => {
+        cleanup();
+        reject(error);
+      }
+    );
   });
 }
 
@@ -48,6 +61,9 @@ export function createGatedChatTransport<TMessage extends UIMessage>(
       }
 
       await waitForGate(gate.ready, options.abortSignal);
+      if (options.abortSignal?.aborted) {
+        throw createAbortError();
+      }
       return transport.sendMessages({
         ...options,
         metadata: gate.metadata,

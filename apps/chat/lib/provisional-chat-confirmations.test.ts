@@ -26,6 +26,15 @@ describe("provisional chat confirmations", () => {
       false
     );
     assert.equal(claimConfirmedProvisionalChat("chat-1"), false);
+    assert.equal(
+      acknowledgeProvisionalUserMessagePersistence({
+        chatId: "chat-1",
+        parallelGroupId: "group-1",
+        userMessageId: "wrong-user",
+      }),
+      false
+    );
+    assert.equal(claimConfirmedProvisionalChat("chat-1"), false);
 
     assert.equal(
       acknowledgeProvisionalUserMessagePersistence({

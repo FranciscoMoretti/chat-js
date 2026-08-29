@@ -72,4 +72,44 @@ describe("createGatedChatTransport", () => {
     await assert.rejects(request, { name: "AbortError" });
     assert.equal(sendMessages.mock.calls.length, 0);
   });
+
+  it("does not forward a request when its gate rejects", async () => {
+    const gateError = new Error("User message was not persisted");
+    const sendMessages = vi.fn(() =>
+      Promise.resolve(new ReadableStream<UIMessageChunk>())
+    );
+    const transport = createGatedChatTransport<UIMessage>({
+      reconnectToStream: async () => null,
+      sendMessages,
+    });
+
+    const request = transport.sendMessages(
+      requestOptions(gateChatRequest(Promise.reject(gateError)).metadata)
+    );
+
+    await assert.rejects(request, gateError);
+    assert.equal(sendMessages.mock.calls.length, 0);
+  });
+
+  it("does not forward a request that was already stopped", async () => {
+    const abortController = new AbortController();
+    abortController.abort();
+    const sendMessages = vi.fn(() =>
+      Promise.resolve(new ReadableStream<UIMessageChunk>())
+    );
+    const transport = createGatedChatTransport<UIMessage>({
+      reconnectToStream: async () => null,
+      sendMessages,
+    });
+
+    const request = transport.sendMessages(
+      requestOptions(
+        gateChatRequest(Promise.resolve()).metadata,
+        abortController.signal
+      )
+    );
+
+    await assert.rejects(request, { name: "AbortError" });
+    assert.equal(sendMessages.mock.calls.length, 0);
+  });
 });
