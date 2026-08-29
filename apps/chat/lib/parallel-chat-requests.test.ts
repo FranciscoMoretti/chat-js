@@ -7,9 +7,21 @@ import { runParallelThreadRequestSpecs } from "./parallel-chat-requests";
 
 const message = {
   id: "user-follow-up",
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    isPrimaryParallel: null,
+    parallelGroupId: "response-group-1",
+    parallelIndex: null,
+    parentMessageId: null,
+    selectedModel: "openai/gpt-5-mini",
+  },
   parts: [{ type: "text", text: "Compare both approaches" }],
   role: "user",
-} as ChatMessage;
+} satisfies ChatMessage;
+
+type RunHandle = Awaited<ReturnType<TreeHelpers<ChatMessage>["startRun"]>>;
+type RunSnapshot = NonNullable<ReturnType<RunHandle["getSnapshot"]>>;
 
 const requestSpecs = [
   {
@@ -114,12 +126,16 @@ describe("runParallelThreadRequestSpecs", () => {
       vi.fn(async () => new Response(null, { status: 200 }))
     );
     const failure = new Error("secondary response failed");
+    const snapshots = [
+      { error: failure, id: "failed-run", status: "error" },
+      { error: undefined, id: "ready-run", status: "ready" },
+    ] satisfies RunSnapshot[];
     let runIndex = 0;
     const startRun = vi.fn<TreeHelpers<ChatMessage>["startRun"]>(() => {
-      const snapshot =
-        runIndex++ === 0
-          ? { error: failure, id: "failed-run", status: "error" as const }
-          : { error: undefined, id: "ready-run", status: "ready" as const };
+      const snapshot = snapshots[runIndex++];
+      if (!snapshot) {
+        throw new Error("Unexpected parallel run");
+      }
 
       return Promise.resolve({
         finished: Promise.resolve(),
