@@ -15,14 +15,11 @@ import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
-import {
-  addPendingAssistantMessages,
-  createParallelRequestBody,
-} from "@/lib/parallel-chat-requests";
+import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
-import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/session-provider";
 
 interface SuggestedActionsProps {
   chatId: string;
@@ -35,9 +32,9 @@ function PureSuggestedActions({
   selectedModelId,
   className,
 }: SuggestedActionsProps) {
-  const { sendMessage } = useChatActions<ChatMessage>();
+  const { startRun } = useChatActions<ChatMessage>();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const addMessageToTree = useAddMessageToTree();
+  const { data: session } = useSession();
   const currentRoute = useCurrentChatRoute();
   const containerRef = useRef<HTMLDivElement>(null);
   const categories = useMemo(
@@ -123,10 +120,6 @@ function PureSuggestedActions({
   }, [selectedCategoryId]);
 
   const sendPrompt = (text: string) => {
-    if (!sendMessage) {
-      return;
-    }
-
     setSelectedCategoryId(null);
     const submission = buildDraftChatSubmission({
       attachments: [],
@@ -148,17 +141,15 @@ function PureSuggestedActions({
 
     const primaryRequest = submission.requestSpecs[0];
     if (primaryRequest) {
-      sendMessage(submission.message, {
-        body: {
-          ...createParallelRequestBody(primaryRequest, true),
-          projectId: currentRoute.projectId ?? undefined,
-        },
-      });
-      addMessageToTree(submission.message);
-      addPendingAssistantMessages({
-        addMessageToTree,
+      runParallelThreadRequestSpecs({
+        chatId,
+        isAuthenticated: !!session?.user,
         message: submission.message,
+        projectId: currentRoute.projectId,
         requestSpecs: submission.requestSpecs,
+        startRun,
+      }).catch(() => {
+        // The chat-level error callback owns user-facing request errors.
       });
     }
   };

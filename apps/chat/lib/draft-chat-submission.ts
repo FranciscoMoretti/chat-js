@@ -9,12 +9,12 @@ import { expandSelectedModelValue } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
 
 export interface ParallelRequestSpec {
-  assistantMessageId: string;
   createdAt: Date;
   isPrimary: boolean;
   modelId: AppModelId;
   parallelGroupId: string | null;
   parallelIndex: number;
+  requestId: string;
 }
 
 export interface DraftChatSubmission {
@@ -52,22 +52,22 @@ export function buildDraftChatSubmission({
   const requestSpecs = isParallelRequest
     ? requestedModelIds.map(
         (modelId, parallelIndex): ParallelRequestSpec => ({
-          assistantMessageId: generateUUID(),
           createdAt: new Date(Date.now() + parallelIndex),
           isPrimary: parallelIndex === 0,
           modelId,
           parallelGroupId,
           parallelIndex,
+          requestId: generateUUID(),
         })
       )
     : [
         {
-          assistantMessageId: generateUUID(),
           createdAt: new Date(Date.now()),
           isPrimary: true,
           modelId: primaryModelId,
           parallelGroupId: null,
           parallelIndex: 0,
+          requestId: generateUUID(),
         },
       ];
 

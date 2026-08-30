@@ -2,16 +2,16 @@
 
 import type { Route } from "next";
 import { useCallback } from "react";
+import { toast } from "sonner";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import type { ParallelRequestSpec } from "@/lib/draft-chat-submission";
+import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import {
-  addPendingAssistantMessages,
-  createParallelRequestBody,
-} from "@/lib/parallel-chat-requests";
+  discardUnacknowledgedProvisionalChatConfirmation,
+  registerProvisionalChatConfirmation,
+} from "@/lib/provisional-chat-confirmations";
 import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
-import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
-import { useAddMessageToTree } from "@/lib/stores/hooks-threads";
 import { useModelChange } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
 
@@ -44,9 +44,7 @@ export function useStartProvisionalChat(chatId: string) {
   const currentRoute = useCurrentChatRoute();
   const changeModel = useModelChange();
   const { data: session } = useSession();
-  const addMessageToTree = useAddMessageToTree();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
-  const { setPendingChatConfirmation } = useChatPersistenceActions();
 
   return useCallback(
     ({
@@ -74,60 +72,46 @@ export function useStartProvisionalChat(chatId: string) {
 
       const primaryRequest = requestSpecs[0] ?? null;
       const storeState = storeApi.getState();
-      const sendMessage = storeState.sendMessage;
+      const startRun = storeState.startRun;
 
-      if (!sendMessage) {
+      if (!startRun) {
         return false;
       }
 
-      setPendingChatConfirmation({
-        message,
-        projectId: currentRoute.projectId,
-        requestSpecs,
+      registerProvisionalChatConfirmation(chatId, {
+        parallelGroupId: message.metadata.parallelGroupId ?? null,
+        userMessageId: message.id,
       });
 
       if (primaryRequest) {
         changeModel(primaryRequest.modelId);
       }
 
-      let requestOptions: Parameters<typeof sendMessage>[1] | undefined;
-
-      if (primaryRequest) {
-        requestOptions = {
-          body: {
-            ...createParallelRequestBody(primaryRequest, true),
-            projectId: currentRoute.projectId ?? undefined,
-          },
-        };
-      } else if (currentRoute.projectId) {
-        requestOptions = {
-          body: { projectId: currentRoute.projectId },
-        };
-      }
-
-      sendMessage(message, requestOptions);
-
-      addMessageToTree(message);
-
-      addPendingAssistantMessages({
-        addMessageToTree,
+      runParallelThreadRequestSpecs({
+        chatId,
+        isAuthenticated: true,
         message,
+        projectId: currentRoute.projectId,
         requestSpecs,
-      });
+        startRun,
+      })
+        .finally(() => {
+          discardUnacknowledgedProvisionalChatConfirmation(chatId, message.id);
+        })
+        .then((failedRequestSpecs) => {
+          if (failedRequestSpecs.length > 0) {
+            toast.error("Failed to complete all parallel responses");
+          }
+        })
+        .catch(() => {
+          toast.error("Failed to complete all parallel responses");
+        });
 
       window.history.pushState(null, "", href);
       onStarted?.();
 
       return true;
     },
-    [
-      addMessageToTree,
-      changeModel,
-      chatId,
-      currentRoute,
-      session?.user,
-      setPendingChatConfirmation,
-      storeApi,
-    ]
+    [changeModel, chatId, currentRoute, session?.user, storeApi]
   );
 }

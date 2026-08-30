@@ -47,6 +47,19 @@ export function claimConfirmedProvisionalChat(chatId: string) {
   return true;
 }
 
+export function discardUnacknowledgedProvisionalChatConfirmation(
+  chatId: string,
+  userMessageId: string
+) {
+  const entry = pendingConfirmations.get(chatId);
+  if (!entry || entry.acknowledged || entry.userMessageId !== userMessageId) {
+    return false;
+  }
+
+  pendingConfirmations.delete(chatId);
+  return true;
+}
+
 export function clearProvisionalChatConfirmations() {
   pendingConfirmations.clear();
 }

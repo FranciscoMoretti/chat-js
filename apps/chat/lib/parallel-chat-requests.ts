@@ -1,17 +1,130 @@
 import type { TreeHelpers } from "@chatjs/thread/react";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ChatMessage } from "@/lib/ai/types";
-import { fetchWithErrorHandlers } from "@/lib/utils";
 import type { ParallelRequestSpec } from "./draft-chat-submission";
-
-type AddMessageToTree = (message: ChatMessage) => void;
+import { gateChatRequest } from "./gated-chat-transport";
 
 export interface ParallelRequestBody {
-  assistantMessageId: string;
   isPrimaryParallel: boolean;
   parallelGroupId: string | null;
   parallelIndex: number;
+  requestId: string;
   selectedModelId: AppModelId;
+}
+
+interface UserMessagePersistenceAcknowledgment {
+  chatId: string;
+  parallelGroupId: string | null;
+  userMessageId: string;
+}
+
+interface PersistenceGate {
+  readonly promise: Promise<void>;
+  reject: (error: unknown) => void;
+  resolve: () => void;
+  readonly settled: boolean;
+}
+
+const persistenceGates = new Map<
+  string,
+  { gate: PersistenceGate; parallelGroupId: string | null }
+>();
+
+function persistenceGateKey(chatId: string, userMessageId: string) {
+  return `${chatId}:${userMessageId}`;
+}
+
+function createPersistenceGate(): PersistenceGate {
+  let rejectPromise: (error: unknown) => void = () => undefined;
+  let resolvePromise: () => void = () => undefined;
+  let settled = false;
+  const promise = new Promise<void>((resolve, reject) => {
+    rejectPromise = reject;
+    resolvePromise = resolve;
+  });
+  promise.catch(() => undefined);
+
+  return {
+    promise,
+    get settled() {
+      return settled;
+    },
+    reject(error) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      rejectPromise(error);
+    },
+    resolve() {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolvePromise();
+    },
+  };
+}
+
+function registerPersistenceGate({
+  chatId,
+  message,
+}: {
+  chatId: string;
+  message: ChatMessage;
+}) {
+  const key = persistenceGateKey(chatId, message.id);
+  const previous = persistenceGates.get(key);
+  previous?.gate.reject(new Error("Persistence gate replaced"));
+
+  const gate = createPersistenceGate();
+  persistenceGates.set(key, {
+    gate,
+    parallelGroupId: message.metadata.parallelGroupId ?? null,
+  });
+  return gate;
+}
+
+function rejectPersistenceGate({
+  chatId,
+  error,
+  gate,
+  userMessageId,
+}: {
+  chatId: string;
+  error: unknown;
+  gate: PersistenceGate;
+  userMessageId: string;
+}) {
+  const key = persistenceGateKey(chatId, userMessageId);
+  if (persistenceGates.get(key)?.gate === gate) {
+    persistenceGates.delete(key);
+  }
+  gate.reject(error);
+}
+
+export function acknowledgeParallelUserMessagePersistence(
+  acknowledgment: UserMessagePersistenceAcknowledgment
+) {
+  const key = persistenceGateKey(
+    acknowledgment.chatId,
+    acknowledgment.userMessageId
+  );
+  const entry = persistenceGates.get(key);
+  if (!entry || entry.parallelGroupId !== acknowledgment.parallelGroupId) {
+    return false;
+  }
+
+  persistenceGates.delete(key);
+  entry.gate.resolve();
+  return true;
+}
+
+export function clearParallelPersistenceGates() {
+  for (const { gate } of persistenceGates.values()) {
+    gate.reject(new Error("Persistence gates cleared"));
+  }
+  persistenceGates.clear();
 }
 
 export function createParallelRequestBody(
@@ -19,241 +132,108 @@ export function createParallelRequestBody(
   isPrimaryParallel = requestSpec.isPrimary
 ): ParallelRequestBody {
   return {
-    assistantMessageId: requestSpec.assistantMessageId,
     selectedModelId: requestSpec.modelId,
     parallelGroupId: requestSpec.parallelGroupId,
     parallelIndex: requestSpec.parallelIndex,
+    requestId: requestSpec.requestId,
     isPrimaryParallel,
   };
 }
 
-function createAssistantPlaceholder({
-  activeStreamId,
-  parentMessageId,
-  requestSpec,
-}: {
-  activeStreamId: string | null;
-  parentMessageId: string;
-  requestSpec: ParallelRequestSpec;
-}): ChatMessage {
-  return {
-    id: requestSpec.assistantMessageId,
-    parts: [],
-    role: "assistant",
-    metadata: {
-      createdAt: requestSpec.createdAt,
-      parentMessageId,
-      parallelGroupId: requestSpec.parallelGroupId,
-      parallelIndex: requestSpec.parallelIndex,
-      isPrimaryParallel: requestSpec.isPrimary,
-      selectedModel: requestSpec.modelId,
-      activeStreamId,
-      selectedTool: undefined,
-    },
-  };
-}
-
-export function createPendingAssistantMessage({
-  activeStreamId,
-  message,
-  requestSpec,
-}: {
-  activeStreamId: string | null;
-  message: ChatMessage;
-  requestSpec: ParallelRequestSpec;
-}) {
-  return createAssistantPlaceholder({
-    activeStreamId,
-    parentMessageId: message.id,
-    requestSpec,
-  });
-}
-
-export function addPendingAssistantMessages({
-  addMessageToTree,
-  message,
-  requestSpecs,
-}: {
-  addMessageToTree: AddMessageToTree;
-  message: ChatMessage;
-  requestSpecs: ParallelRequestSpec[];
-}) {
-  for (const requestSpec of requestSpecs) {
-    addMessageToTree(
-      createPendingAssistantMessage({
-        activeStreamId: `pending:${requestSpec.assistantMessageId}`,
-        message,
-        requestSpec,
-      })
-    );
-  }
-}
-
-export function markParallelRequestSpecsFailed({
-  addMessageToTree,
-  message,
-  requestSpecs,
-}: {
-  addMessageToTree: AddMessageToTree;
-  message: ChatMessage;
-  requestSpecs: ParallelRequestSpec[];
-}) {
-  for (const requestSpec of requestSpecs) {
-    addMessageToTree(
-      createAssistantPlaceholder({
-        activeStreamId: null,
-        parentMessageId: message.id,
-        requestSpec,
-      })
-    );
-  }
-}
-
-async function prepareParallelRequests({
-  chatId,
-  message,
-  projectId,
-}: {
-  chatId: string;
-  message: ChatMessage;
-  projectId: string | null;
-}) {
-  try {
-    await fetchWithErrorHandlers("/api/chat/prepare", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: chatId,
-        message,
-        projectId,
-      }),
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function drainResponse(response: Response) {
-  if (!response.body) {
-    return;
-  }
-
-  const reader = response.body.getReader();
-  while (!(await reader.read()).done) {
-    // The first-message path remains detached until persistence is confirmed.
-  }
-}
-
-async function drainParallelRequest({
-  chatId,
-  message,
-  projectId,
-  requestSpec,
-}: {
-  chatId: string;
-  message: ChatMessage;
-  projectId: string | null;
-  requestSpec: ParallelRequestSpec;
-}) {
-  const response = await fetchWithErrorHandlers("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: chatId,
-      message,
-      prevMessages: [],
-      projectId,
-      ...createParallelRequestBody(requestSpec, false),
-    }),
-  });
-  await drainResponse(response);
-}
-
-export async function runParallelRequestSpecs({
-  chatId,
-  message,
-  projectId,
-  requestSpecs,
-}: {
-  chatId: string;
-  message: ChatMessage;
-  projectId: string | null;
-  requestSpecs: ParallelRequestSpec[];
-}) {
-  if (requestSpecs.length === 0) {
-    return [];
-  }
-
-  const prepared = await prepareParallelRequests({
-    chatId,
-    message,
-    projectId,
-  });
-  if (!prepared) {
-    return requestSpecs;
-  }
-
-  const results = await Promise.allSettled(
-    requestSpecs.map((requestSpec) =>
-      drainParallelRequest({ chatId, message, projectId, requestSpec })
-    )
-  );
-
-  return requestSpecs.filter(
-    (_requestSpec, index) => results[index]?.status === "rejected"
-  );
-}
-
 export async function runParallelThreadRequestSpecs({
   chatId,
+  isAuthenticated,
   message,
   projectId,
   requestSpecs,
   startRun,
 }: {
   chatId: string;
+  isAuthenticated: boolean;
   message: ChatMessage;
   projectId: string | null;
   requestSpecs: ParallelRequestSpec[];
   startRun: TreeHelpers<ChatMessage>["startRun"];
 }) {
-  if (requestSpecs.length === 0) {
+  const primaryRequest = requestSpecs[0];
+  if (!primaryRequest) {
     return [];
   }
 
-  const prepared = await prepareParallelRequests({
-    chatId,
-    message,
-    projectId,
-  });
-  if (!prepared) {
-    return requestSpecs;
-  }
+  const persistenceGate =
+    isAuthenticated && requestSpecs.length > 1
+      ? registerPersistenceGate({ chatId, message })
+      : null;
 
-  const results = await Promise.allSettled(
-    requestSpecs.map(async (requestSpec) => {
-      const run = await startRun({
-        follow: false,
-        from: message.id,
-        request: {
-          body: {
-            ...createParallelRequestBody(requestSpec, false),
-            projectId: projectId ?? undefined,
-          },
+  try {
+    const primaryRun = await startRun({
+      message,
+      request: {
+        body: {
+          ...createParallelRequestBody(primaryRequest, true),
+          projectId: projectId ?? undefined,
         },
-      });
-      await run.finished;
-      const snapshot = run.getSnapshot();
-      if (snapshot?.status === "error") {
-        throw snapshot.error ?? new Error("Parallel response failed");
-      }
-    })
-  );
+      },
+    });
 
-  return requestSpecs.filter(
-    (_requestSpec, index) => results[index]?.status === "rejected"
-  );
+    const secondaryRuns = await Promise.all(
+      requestSpecs.slice(1).map(async (requestSpec) => ({
+        requestSpec,
+        run: await startRun({
+          follow: false,
+          from: message.id,
+          request: {
+            ...(persistenceGate
+              ? gateChatRequest(persistenceGate.promise)
+              : {}),
+            body: {
+              ...createParallelRequestBody(requestSpec, false),
+              projectId: projectId ?? undefined,
+            },
+          },
+        }),
+      }))
+    );
+
+    const rejectUnconfirmedPersistence = persistenceGate
+      ? primaryRun.finished.then(
+          () => {
+            if (!persistenceGate.settled) {
+              rejectPersistenceGate({
+                chatId,
+                error: new Error(
+                  "Primary response ended before user persistence"
+                ),
+                gate: persistenceGate,
+                userMessageId: message.id,
+              });
+            }
+          },
+          () => undefined
+        )
+      : Promise.resolve();
+
+    const runs = [
+      { requestSpec: primaryRequest, run: primaryRun },
+      ...secondaryRuns,
+    ];
+    await Promise.all([
+      ...runs.map(({ run }) => run.finished),
+      rejectUnconfirmedPersistence,
+    ]);
+
+    return runs
+      .filter(({ run }) => run.getSnapshot()?.status === "error")
+      .map(({ requestSpec }) => requestSpec);
+  } catch (error) {
+    if (persistenceGate) {
+      rejectPersistenceGate({
+        chatId,
+        error,
+        gate: persistenceGate,
+        userMessageId: message.id,
+      });
+    }
+    throw error;
+  }
 }

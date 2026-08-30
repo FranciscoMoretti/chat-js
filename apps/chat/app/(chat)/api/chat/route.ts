@@ -37,6 +37,7 @@ import {
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
+import { createAssistantRequestMessageId } from "@/lib/assistant-request-id";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
@@ -321,7 +322,6 @@ async function createChatStream({
   userId,
   abortController,
   isAnonymous,
-  isNewChat,
   timeoutId,
   mcpConnectors,
   streamId,
@@ -339,7 +339,6 @@ async function createChatStream({
   userId: string | null;
   abortController: AbortController;
   isAnonymous: boolean;
-  isNewChat: boolean;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
   streamId: string;
@@ -354,12 +353,17 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Confirm chat persistence on first message (chat + user message are persisted before streaming begins)
-      if (isNewChat) {
+      // Release provisional parallel responses only after this exact user
+      // message has been persisted by the primary request.
+      if (userId && isPrimaryParallel !== false) {
         dataStream.write({
           id: generateUUID(),
-          type: "data-chatConfirmed",
-          data: { chatId },
+          type: "data-userMessagePersisted",
+          data: {
+            chatId,
+            parallelGroupId,
+            userMessageId: userMessage.id,
+          },
           transient: true,
         });
       }
@@ -500,15 +504,14 @@ async function executeChatRequest({
   chatId,
   userMessage,
   previousMessages,
+  requestId,
   selectedModelId,
-  assistantMessageId,
   parallelGroupId,
   parallelIndex,
   isPrimaryParallel,
   explicitlyRequestedTools,
   userId,
   isAnonymous,
-  isNewChat,
   abortController,
   timeoutId,
   mcpConnectors,
@@ -516,25 +519,33 @@ async function executeChatRequest({
   chatId: string;
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
+  requestId: string | undefined;
   selectedModelId: AppModelId;
-  assistantMessageId?: string;
   parallelGroupId: string | null;
   parallelIndex: number | null;
   isPrimaryParallel: boolean | null;
   explicitlyRequestedTools: ToolName[] | null;
   userId: string | null;
   isAnonymous: boolean;
-  isNewChat: boolean;
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
-  const messageId = assistantMessageId ?? generateUUID();
+  const messageId = requestId
+    ? createAssistantRequestMessageId({
+        chatId,
+        parallelGroupId,
+        parallelIndex,
+        requestId,
+        selectedModelId,
+        userMessageId: userMessage.id,
+      })
+    : generateUUID();
   const streamId = generateUUID();
 
   if (!isAnonymous) {
-    // The first provisional request can replay before chatConfirmed arrives, so
+    // The first provisional request can replay before its persistence acknowledgment arrives, so
     // placeholder creation must be idempotent.
     const insertedMessage = await saveMessageIfNotExists({
       id: messageId,
@@ -592,7 +603,6 @@ async function executeChatRequest({
     userId,
     abortController,
     isAnonymous,
-    isNewChat,
     timeoutId,
     mcpConnectors,
     streamId,
@@ -822,7 +832,6 @@ async function finalizeMessageAndCredits({
 }
 
 type ChatPostBody = {
-  assistantMessageId?: string;
   id: string;
   isPrimaryParallel?: boolean | null;
   message: ChatMessage;
@@ -830,6 +839,7 @@ type ChatPostBody = {
   parallelIndex?: number | null;
   prevMessages: ChatMessage[];
   projectId?: string;
+  requestId?: string;
   selectedModelId?: AppModelId;
 };
 
@@ -961,7 +971,6 @@ async function readChatPostBody(
   return {
     success: true,
     body: {
-      assistantMessageId: optionalString(rawBody.assistantMessageId),
       id: rawBody.id,
       isPrimaryParallel: optionalNullableBoolean(rawBody.isPrimaryParallel),
       message: userMessage,
@@ -969,6 +978,7 @@ async function readChatPostBody(
       parallelIndex: optionalNullableInteger(rawBody.parallelIndex),
       prevMessages: anonymousPreviousMessages as ChatMessage[],
       projectId: optionalString(rawBody.projectId),
+      requestId: optionalString(rawBody.requestId),
       selectedModelId: optionalString(rawBody.selectedModelId) as
         | AppModelId
         | undefined,
@@ -1067,7 +1077,7 @@ export async function POST(request: NextRequest) {
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
       projectId,
-      assistantMessageId,
+      requestId,
       selectedModelId: requestSelectedModelId,
       parallelGroupId,
       parallelIndex,
@@ -1137,15 +1147,14 @@ export async function POST(request: NextRequest) {
       chatId,
       userMessage,
       previousMessages: executionInputs.previousMessages,
+      requestId,
       selectedModelId,
-      assistantMessageId,
       parallelGroupId: responseParallelGroupId,
       parallelIndex: parallelIndex ?? null,
       isPrimaryParallel: isPrimaryParallel ?? null,
       explicitlyRequestedTools,
       userId,
       isAnonymous,
-      isNewChat: persistenceResult.isNewChat,
       abortController,
       timeoutId,
       mcpConnectors: executionInputs.mcpConnectors,

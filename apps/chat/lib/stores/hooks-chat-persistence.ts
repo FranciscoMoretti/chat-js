@@ -30,16 +30,10 @@ export function useIsChatPersisted(_chatId?: string) {
 export function useChatPersistenceActions() {
   return useChatPersistenceStore(
     (state) => ({
-      clearPendingChatConfirmation: state.clearPendingChatConfirmation,
       setChatPersisted: state.setChatPersisted,
-      setPendingChatConfirmation: state.setPendingChatConfirmation,
     }),
     shallow
   );
-}
-
-export function usePendingChatConfirmation() {
-  return useChatPersistenceStore((state) => state.pendingChatConfirmation);
 }
 
 export function useRuntimeIsChatPersisted(
