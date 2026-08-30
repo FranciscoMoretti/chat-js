@@ -58,6 +58,7 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 	resumeRun: (runId: string, options?: ChatRequestOptions) => Promise<void>;
 	rootIds: string[];
 	runs: ThreadRun[];
+	setActiveRun: (runId: string) => void;
 	setCursor: (messageId: string | null) => void;
 	setCursorToParentOf: (messageId: string) => void;
 	startRun: (
@@ -243,6 +244,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
 				thread.resumeRun(runId, requestOptions),
 			rootIds: snapshot.rootIds,
 			runs: snapshot.runs,
+			setActiveRun: (runId) => thread.setActiveRun(runId),
 			setCursor: (messageId) => thread.setCursor(messageId),
 			setCursorToParentOf: (messageId) => thread.setCursorToParentOf(messageId),
 			startRun: (runOptions) => thread.startRun(runOptions),

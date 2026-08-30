@@ -71,6 +71,23 @@ describe("ZustandThreadState", () => {
     unsubscribe();
   });
 
+  it("indexes parallel runs by response group and clears them on reset", () => {
+    const store = createCustomChatStore<UIMessage>([initialMessage]);
+
+    store.getState().registerParallelRun({
+      parallelGroupId: "group-1",
+      parallelIndex: 1,
+      runId: "run-2",
+    });
+
+    expect(store.getState().parallelRunIdsByGroup).toEqual({
+      "group-1": { 1: "run-2" },
+    });
+
+    store.getState().reset();
+    expect(store.getState().parallelRunIdsByGroup).toEqual({});
+  });
+
   it("propagates updater errors without committing", () => {
     const store = createCustomChatStore<UIMessage>([initialMessage]);
     const state = new ZustandThreadState(store);

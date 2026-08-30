@@ -34,6 +34,7 @@ import {
   chat,
   type DBMessage,
   document,
+  generationCancellation,
   message,
   type Part,
   part,
@@ -490,7 +491,13 @@ export async function updateMessage({
           lastContext: dbMessage.lastContext,
           activeStreamId: dbMessage.activeStreamId,
         })
-        .where(and(eq(message.id, id), isNull(message.canceledAt)))
+        .where(
+          and(
+            eq(message.id, id),
+            eq(message.chatId, chatId),
+            isNull(message.canceledAt)
+          )
+        )
         .returning({ id: message.id });
 
       if (updatedMessages.length === 0) {
@@ -847,58 +854,6 @@ export async function getMessageById({ id }: { id: string }) {
   }
 }
 
-export async function getCancelableResponseMessage({
-  chatId,
-  parentMessageId,
-  stoppedAt,
-}: {
-  chatId: string;
-  parentMessageId: string;
-  stoppedAt: Date;
-}) {
-  try {
-    const [activeResponse] = await db
-      .select({ id: message.id })
-      .from(message)
-      .where(
-        and(
-          eq(message.chatId, chatId),
-          eq(message.parentMessageId, parentMessageId),
-          eq(message.role, "assistant"),
-          isNotNull(message.activeStreamId)
-        )
-      )
-      .orderBy(asc(message.createdAt))
-      .limit(1);
-
-    if (activeResponse) {
-      return activeResponse;
-    }
-
-    const [responseCreatedAfterStop] = await db
-      .select({ id: message.id })
-      .from(message)
-      .where(
-        and(
-          eq(message.chatId, chatId),
-          eq(message.parentMessageId, parentMessageId),
-          eq(message.role, "assistant"),
-          gte(message.createdAt, stoppedAt)
-        )
-      )
-      .orderBy(asc(message.createdAt))
-      .limit(1);
-
-    return responseCreatedAfterStop;
-  } catch (error) {
-    logger.error(
-      { chatId, error, parentMessageId },
-      "getCancelableResponseMessage failed"
-    );
-    throw error;
-  }
-}
-
 export async function getChatMessageWithPartsById({
   id,
 }: {
@@ -1124,31 +1079,92 @@ export async function getMessageCanceledAt({
   }
 }
 
-export async function updateMessageCanceledAt({
-  messageId,
+export async function requestGenerationCancellation({
   canceledAt,
+  chatId,
+  messageId,
+  userId,
 }: {
+  canceledAt: Date;
+  chatId: string;
   messageId: string;
-  canceledAt: Date | null;
+  userId: string;
 }) {
   try {
-    const updatedMessages = await db.transaction(async (tx) => {
-      const updated = await tx
-        .update(message)
-        .set({ activeStreamId: null, canceledAt })
-        .where(eq(message.id, messageId))
-        .returning({ id: message.id });
-
-      if (updated.length > 0 && canceledAt !== null) {
-        await tx.delete(part).where(eq(part.messageId, messageId));
-      }
-
-      return updated;
-    });
-
-    return updatedMessages.length > 0;
+    await db
+      .insert(generationCancellation)
+      .values({ canceledAt, chatId, messageId, userId })
+      .onConflictDoUpdate({
+        target: [
+          generationCancellation.messageId,
+          generationCancellation.userId,
+        ],
+        set: { canceledAt, chatId },
+      });
   } catch (error) {
-    logger.error({ error, messageId }, "updateMessageCanceledAt failed");
+    logger.error({ error, messageId }, "requestGenerationCancellation failed");
+    throw error;
+  }
+}
+
+export async function isGenerationCancellationRequested({
+  chatId,
+  messageId,
+  userId,
+}: {
+  chatId: string;
+  messageId: string;
+  userId: string;
+}) {
+  try {
+    const [cancellation] = await db
+      .select({ messageId: generationCancellation.messageId })
+      .from(generationCancellation)
+      .where(
+        and(
+          eq(generationCancellation.chatId, chatId),
+          eq(generationCancellation.messageId, messageId),
+          eq(generationCancellation.userId, userId)
+        )
+      )
+      .limit(1);
+
+    return !!cancellation;
+  } catch (error) {
+    logger.error(
+      { error, messageId },
+      "isGenerationCancellationRequested failed"
+    );
+    throw error;
+  }
+}
+
+export async function cancelActiveMessage({
+  canceledAt,
+  chatId,
+  messageId,
+}: {
+  canceledAt: Date;
+  chatId: string;
+  messageId: string;
+}) {
+  try {
+    const canceledMessages = await db
+      .update(message)
+      .set({ activeStreamId: null, canceledAt })
+      .where(
+        and(
+          eq(message.chatId, chatId),
+          eq(message.id, messageId),
+          isNotNull(message.activeStreamId),
+          isNull(message.canceledAt)
+        )
+      )
+      .returning({ id: message.id });
+
+    return canceledMessages.length > 0;
+  } catch (error) {
+    logger.error({ error, messageId }, "cancelActiveMessage failed");
     throw error;
   }
 }

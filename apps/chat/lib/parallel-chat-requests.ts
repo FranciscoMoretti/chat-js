@@ -146,6 +146,7 @@ export async function runParallelThreadRequestSpecs({
   message,
   projectId,
   requestSpecs,
+  onRunStarted,
   startRun,
 }: {
   chatId: string;
@@ -153,6 +154,11 @@ export async function runParallelThreadRequestSpecs({
   message: ChatMessage;
   projectId: string | null;
   requestSpecs: ParallelRequestSpec[];
+  onRunStarted: (input: {
+    parallelGroupId: string;
+    parallelIndex: number;
+    runId: string;
+  }) => void;
   startRun: TreeHelpers<ChatMessage>["startRun"];
 }) {
   const primaryRequest = requestSpecs[0];
@@ -175,11 +181,17 @@ export async function runParallelThreadRequestSpecs({
         },
       },
     });
+    if (primaryRequest.parallelGroupId) {
+      onRunStarted({
+        parallelGroupId: primaryRequest.parallelGroupId,
+        parallelIndex: primaryRequest.parallelIndex,
+        runId: primaryRun.id,
+      });
+    }
 
     const secondaryRuns = await Promise.all(
-      requestSpecs.slice(1).map(async (requestSpec) => ({
-        requestSpec,
-        run: await startRun({
+      requestSpecs.slice(1).map(async (requestSpec) => {
+        const run = await startRun({
           follow: false,
           from: message.id,
           request: {
@@ -191,8 +203,16 @@ export async function runParallelThreadRequestSpecs({
               projectId: projectId ?? undefined,
             },
           },
-        }),
-      }))
+        });
+        if (requestSpec.parallelGroupId) {
+          onRunStarted({
+            parallelGroupId: requestSpec.parallelGroupId,
+            parallelIndex: requestSpec.parallelIndex,
+            runId: run.id,
+          });
+        }
+        return { requestSpec, run };
+      })
     );
 
     const rejectUnconfirmedPersistence = persistenceGate

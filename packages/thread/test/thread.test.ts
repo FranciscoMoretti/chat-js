@@ -516,6 +516,40 @@ describe("Thread", () => {
 		await second.finished;
 	});
 
+	test("selects and follows a pending run before its response exists", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({ messages: [user("user-1")], transport });
+		const first = await chat.startRun({ from: "user-1" });
+		const second = await chat.startRun({ follow: false, from: "user-1" });
+		await waitFor(() => transport.requests.length === 2);
+
+		chat.setActiveRun(second.id);
+
+		expect(chat.getSnapshot().status).toBe("submitted");
+		expect(chat.getSnapshot().cursorId).toBe("user-1");
+		expect(chat.getSnapshot().messages.map(({ id }) => id)).toEqual(["user-1"]);
+
+		transport.emit(1, { messageId: "assistant-2", type: "start" });
+		await waitFor(() => chat.getSnapshot().cursorId === "assistant-2");
+
+		expect(chat.getSnapshot().messages.map(({ id }) => id)).toEqual([
+			"user-1",
+			"assistant-2",
+		]);
+		await chat.stop();
+		expect(transport.requests[1]?.abortSignal?.aborted).toBeTrue();
+		expect(transport.requests[0]?.abortSignal?.aborted).toBeFalse();
+
+		transport.finish(0);
+		await Promise.all([first.finished, second.finished]);
+	});
+
+	test("rejects selecting an unknown run", () => {
+		const chat = new Thread({ messages: [user("user-1")] });
+
+		expect(() => chat.setActiveRun("missing")).toThrow("Unknown run missing");
+	});
+
 	test("keeps creation order after an earlier run fails without a message", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({ transport });

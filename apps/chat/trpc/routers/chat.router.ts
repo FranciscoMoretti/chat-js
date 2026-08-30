@@ -9,21 +9,21 @@ import {
 } from "@/lib/clone-messages";
 import { config } from "@/lib/config";
 import {
+  cancelActiveMessage,
   deleteChatById,
   deleteMessagesByChatIdAfterMessageId,
   getAllMessagesByChatId,
-  getCancelableResponseMessage,
   getChatById,
   getChatsByUserId,
   getDocumentsByMessageIds,
   getMessageById,
+  requestGenerationCancellation,
   saveChat,
   saveChatMessages,
   saveDocuments,
   updateChatIsPinnedById,
   updateChatTitleById,
   updateChatVisiblityById,
-  updateMessageCanceledAt,
 } from "@/lib/db/queries";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
@@ -188,25 +188,22 @@ export const chatRouter = createTRPCRouter({
 
   stopStream: protectedProcedure
     .input(
-      z.object({
-        chatId: z.string().uuid(),
-        messageId: z.string().uuid(),
-      })
+      z.discriminatedUnion("type", [
+        z.object({
+          chatId: z.string().uuid(),
+          messageId: z.string().uuid(),
+          type: z.literal("message"),
+        }),
+        z.object({
+          chatId: z.string().uuid(),
+          messageId: z.string().uuid(),
+          type: z.literal("request"),
+        }),
+      ])
     )
     .mutation(async ({ ctx, input }) => {
-      // New-chat persistence and the assistant start chunk can both lag the stop click.
-      // Resolve the eventual response row before recording cancellation.
-      const deadline = Date.now() + 30_000;
-      let retryDelay = 25;
-      let chat = await getChatById({ id: input.chatId });
-
-      while (!chat && Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay = Math.min(retryDelay * 2, 250);
-        chat = await getChatById({ id: input.chatId });
-      }
-
-      if (!chat || chat.userId !== ctx.user.id) {
+      const chat = await getChatById({ id: input.chatId });
+      if (chat && chat.userId !== ctx.user.id) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Chat not found or access denied",
@@ -214,61 +211,34 @@ export const chatRouter = createTRPCRouter({
       }
 
       const canceledAt = new Date();
-      let [targetMessage] = await getMessageById({ id: input.messageId });
-
-      while (!targetMessage && Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay = Math.min(retryDelay * 2, 250);
-        [targetMessage] = await getMessageById({ id: input.messageId });
-      }
-
-      if (!targetMessage || targetMessage.chatId !== input.chatId) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
-        });
-      }
-
-      let responseMessageId =
-        targetMessage.role === "assistant" ? input.messageId : null;
-
-      while (!responseMessageId && Date.now() < deadline) {
-        const response = await getCancelableResponseMessage({
-          chatId: input.chatId,
-          parentMessageId: input.messageId,
-          stoppedAt: canceledAt,
-        });
-        responseMessageId = response?.id ?? null;
-
-        if (!responseMessageId) {
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          retryDelay = Math.min(retryDelay * 2, 250);
-        }
-      }
-
-      if (!responseMessageId) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Response message not found",
-        });
-      }
-
-      while (
-        !(await updateMessageCanceledAt({
-          messageId: responseMessageId,
-          canceledAt,
-        }))
-      ) {
-        if (Date.now() >= deadline) {
+      if (input.type === "message") {
+        const [targetMessage] = await getMessageById({ id: input.messageId });
+        if (!(chat && targetMessage) || targetMessage.chatId !== input.chatId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Message not found",
           });
         }
 
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay = Math.min(retryDelay * 2, 250);
+        await cancelActiveMessage({
+          canceledAt,
+          chatId: input.chatId,
+          messageId: input.messageId,
+        });
+        return { success: true };
       }
+
+      await requestGenerationCancellation({
+        canceledAt,
+        chatId: input.chatId,
+        messageId: input.messageId,
+        userId: ctx.user.id,
+      });
+      await cancelActiveMessage({
+        canceledAt,
+        chatId: input.chatId,
+        messageId: input.messageId,
+      });
 
       return { success: true };
     }),

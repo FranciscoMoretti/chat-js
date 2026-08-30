@@ -23,6 +23,7 @@ function useCompatibilityCheck() {
 	thread.tree.activeRuns;
 	thread.tree.runs;
 	thread.tree.status;
+	thread.tree.setActiveRun(messageId);
 	thread.tree.getRunForMessage(messageId);
 	thread.tree.getSnapshot();
 	thread.tree.startRun({ from: messageId, message: { text: "branch" } });

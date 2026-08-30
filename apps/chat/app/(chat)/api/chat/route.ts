@@ -45,11 +45,13 @@ import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { canSpend, deductCredits } from "@/lib/db/credits";
 import { getMcpConnectorsByUserId } from "@/lib/db/mcp-queries";
 import {
+  cancelActiveMessage,
   getChatById,
   getMessageById,
   getMessageCanceledAt,
   getProjectById,
   getUserById,
+  isGenerationCancellationRequested,
   saveChatIfNotExists,
   saveMessageIfNotExists,
   updateMessage,
@@ -353,6 +355,21 @@ async function createChatStream({
   // Build the data stream that will emit tokens
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
+      if (!isAnonymous) {
+        const canceledAt = await getMessageCanceledAt({ messageId });
+        const cancellationRequested =
+          !!userId &&
+          (await isGenerationCancellationRequested({
+            chatId,
+            messageId,
+            userId,
+          }));
+        if (canceledAt || cancellationRequested) {
+          abortController.abort();
+          return;
+        }
+      }
+
       // Release provisional parallel responses only after this exact user
       // message has been persisted by the primary request.
       if (userId && isPrimaryParallel !== false) {
@@ -544,6 +561,15 @@ async function executeChatRequest({
     : generateUUID();
   const streamId = generateUUID();
 
+  if (
+    !isAnonymous &&
+    userId &&
+    (await isGenerationCancellationRequested({ chatId, messageId, userId }))
+  ) {
+    clearTimeout(timeoutId);
+    return emptyChatStreamResponse();
+  }
+
   if (!isAnonymous) {
     // The first provisional request can replay before its persistence acknowledgment arrives, so
     // placeholder creation must be idempotent.
@@ -568,6 +594,19 @@ async function executeChatRequest({
     });
 
     if (!insertedMessage) {
+      clearTimeout(timeoutId);
+      return emptyChatStreamResponse();
+    }
+
+    if (
+      userId &&
+      (await isGenerationCancellationRequested({ chatId, messageId, userId }))
+    ) {
+      await cancelActiveMessage({
+        canceledAt: new Date(),
+        chatId,
+        messageId,
+      });
       clearTimeout(timeoutId);
       return emptyChatStreamResponse();
     }
@@ -780,6 +819,7 @@ async function finalizeMessageAndCredits({
   isPrimaryParallel: boolean | null;
 }): Promise<void> {
   const log = createModuleLogger("api:chat:finalize");
+  let messageSaved = true;
 
   try {
     const assistantMessage = messages.at(-1);
@@ -789,7 +829,7 @@ async function finalizeMessageAndCredits({
     }
 
     if (!isAnonymous) {
-      const messageSaved = await updateMessage({
+      messageSaved = await updateMessage({
         id: assistantMessage.id,
         chatId,
         message: {
@@ -827,7 +867,7 @@ async function finalizeMessageAndCredits({
     log.info({ totalCost }, "Cost accumulator total cost");
 
     // Deduct credits for authenticated users
-    if (userId && !isAnonymous) {
+    if (userId && !isAnonymous && messageSaved) {
       await deductCredits(userId, totalCost);
     }
 

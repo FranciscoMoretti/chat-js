@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
@@ -11,6 +11,7 @@ import {
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
 import { useMessageById } from "@/lib/stores/base";
+import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";
 import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { cn } from "@/lib/utils";
@@ -51,10 +52,15 @@ function getStatusLabel(isSelected: boolean, isStreaming: boolean): string {
 
 function PureParallelResponseCards({ messageId }: { messageId: string }) {
   const message = useMessageById<ChatMessage>(messageId);
+  const thread = useApplicationThread();
   const parallelGroupInfo = useParallelGroupInfo(messageId);
   const navigateToMessage = useNavigateToMessage();
   const { handleModelChange } = useChatInput();
   const { getModelById, models } = useChatModels();
+  const [pendingParallelIndex, setPendingParallelIndex] = useState<
+    number | null
+  >(null);
+  const activatedRunIdRef = useRef<string | null>(null);
 
   const cardSlots = useMemo(() => {
     if (
@@ -83,6 +89,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
         modelId,
         parallelIndex,
         message: actualMessage ?? null,
+        run: parallelGroupInfo?.runsByParallelIndex[parallelIndex],
       };
     });
   }, [message, parallelGroupInfo]);
@@ -112,6 +119,10 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
   }, [cardSlots, models]);
 
   const selectedParallelIndex = useMemo(() => {
+    if (pendingParallelIndex !== null) {
+      return pendingParallelIndex;
+    }
+
     if (parallelGroupInfo?.selectedMessageId) {
       const selectedMessage = parallelGroupInfo.messages.find(
         (candidate) => candidate.id === parallelGroupInfo.selectedMessageId
@@ -122,7 +133,33 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
     }
 
     return cardSlots.length > 0 ? 0 : null;
-  }, [cardSlots.length, parallelGroupInfo]);
+  }, [cardSlots.length, parallelGroupInfo, pendingParallelIndex]);
+
+  useEffect(() => {
+    if (pendingParallelIndex === null) {
+      return;
+    }
+
+    const slot = cardSlots.find(
+      (slot) => slot.parallelIndex === pendingParallelIndex
+    );
+    if (!slot) {
+      return;
+    }
+    if (!slot.message) {
+      if (slot.run && activatedRunIdRef.current !== slot.run.id) {
+        activatedRunIdRef.current = slot.run.id;
+        thread.setActiveRun(slot.run.id);
+      }
+      return;
+    }
+
+    setPendingParallelIndex(null);
+    if (activatedRunIdRef.current !== slot.run?.id) {
+      navigateToMessage(slot.message.id);
+    }
+    activatedRunIdRef.current = null;
+  }, [cardSlots, navigateToMessage, pendingParallelIndex, thread]);
 
   if (!message || sortedCardSlots.length <= 1) {
     return null;
@@ -147,14 +184,22 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
               "h-auto min-w-[160px] flex-col items-start gap-1 rounded-xl px-3 py-2 text-left",
               isSelected && "border-primary bg-primary/5 text-primary"
             )}
-            disabled={!slot.message}
             key={`${message.id}-${slot.parallelIndex}`}
             onClick={() => {
               if (slot.message) {
+                activatedRunIdRef.current = null;
+                setPendingParallelIndex(null);
                 navigateToMessage(slot.message.id);
-                if (modelId) {
-                  handleModelChange(modelId);
-                }
+              } else if (slot.run) {
+                activatedRunIdRef.current = slot.run.id;
+                setPendingParallelIndex(slot.parallelIndex);
+                thread.setActiveRun(slot.run.id);
+              } else {
+                setPendingParallelIndex(slot.parallelIndex);
+                navigateToMessage(message.id);
+              }
+              if (modelId) {
+                handleModelChange(modelId);
               }
             }}
             type="button"

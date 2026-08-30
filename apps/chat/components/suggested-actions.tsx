@@ -18,6 +18,7 @@ import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
+import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
@@ -33,6 +34,7 @@ function PureSuggestedActions({
   className,
 }: SuggestedActionsProps) {
   const { startRun } = useChatActions<ChatMessage>();
+  const storeApi = useCustomChatStoreApi<ChatMessage>();
   const startProvisionalChat = useStartProvisionalChat(chatId);
   const { data: session } = useSession();
   const currentRoute = useCurrentChatRoute();
@@ -145,6 +147,7 @@ function PureSuggestedActions({
         chatId,
         isAuthenticated: !!session?.user,
         message: submission.message,
+        onRunStarted: storeApi.getState().registerParallelRun,
         projectId: currentRoute.projectId,
         requestSpecs: submission.requestSpecs,
         startRun,

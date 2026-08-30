@@ -317,6 +317,21 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
+export const generationCancellation = pgTable(
+  "GenerationCancellation",
+  {
+    messageId: uuid("messageId").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    chatId: uuid("chatId").notNull(),
+    canceledAt: timestamp("canceledAt").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.userId] }),
+  })
+);
+
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
