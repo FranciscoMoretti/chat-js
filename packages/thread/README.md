@@ -103,8 +103,16 @@ const second = await chat.tree.startRun({
   from: messageId,
 });
 
+// Focus a run even before it has produced a response message.
+chat.tree.setActiveRun(second.id);
+await chat.stop();
+
 await Promise.all([first.finished, second.finished]);
 ```
+
+Selecting a pending run keeps `chat.messages` on its origin path until the
+first response message arrives. The cursor then follows that response, while
+the top-level `status`, `error`, and `stop()` helpers target the selected run.
 
 Each run has independent status, error, stream state, and cancellation:
 

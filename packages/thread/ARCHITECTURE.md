@@ -78,6 +78,7 @@ chat.tree.cursorId;
 chat.tree.getChildren(messageId);
 chat.tree.getSiblings(messageId);
 chat.tree.setCursor(messageId);
+chat.tree.setActiveRun(runId);
 chat.tree.startRun({ from: messageId });
 chat.tree.stopRun(runId);
 ```
@@ -98,6 +99,12 @@ whether the cursor selects the new user immediately and its assistant once
 streaming begins; it defaults to `true` when the resolved origin equals the
 active cursor and `false` otherwise. This includes an explicit `from` whose
 value equals the current `cursorId`.
+
+`setActiveRun(runId)` selects a request lifecycle directly. Before that run
+has emitted a message, the active path remains at its origin. Once its first
+message is written, the cursor follows it. This lets `chat.status`,
+`chat.error`, and `chat.stop()` retain their `useChat` semantics for pending
+concurrent runs without requiring optimistic message nodes.
 
 Top-level fields always describe the selected path:
 
