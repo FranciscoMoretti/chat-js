@@ -15,7 +15,7 @@ import { acknowledgeProvisionalUserMessagePersistence } from "@/lib/provisional-
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
-import { fetchWithErrorHandlers } from "@/lib/utils";
+import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
@@ -57,12 +57,13 @@ export function ChatSync({
         new DefaultChatTransport({
           api: "/api/chat",
           fetch: fetchWithErrorHandlers as typeof fetch,
-          prepareSendMessagesRequest({ messages, id: requestId, body }) {
+          prepareSendMessagesRequest({ messages, id: chatId, body }) {
             return {
               body: {
-                id: requestId,
+                id: chatId,
                 message: messages.at(-1),
                 prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                requestId: generateUUID(),
                 ...body,
               },
             };

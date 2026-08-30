@@ -14,6 +14,7 @@ export interface ParallelRequestSpec {
   modelId: AppModelId;
   parallelGroupId: string | null;
   parallelIndex: number;
+  requestId: string;
 }
 
 export interface DraftChatSubmission {
@@ -56,6 +57,7 @@ export function buildDraftChatSubmission({
           modelId,
           parallelGroupId,
           parallelIndex,
+          requestId: generateUUID(),
         })
       )
     : [
@@ -65,6 +67,7 @@ export function buildDraftChatSubmission({
           modelId: primaryModelId,
           parallelGroupId: null,
           parallelIndex: 0,
+          requestId: generateUUID(),
         },
       ];
 

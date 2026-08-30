@@ -62,6 +62,7 @@ const requestSpecs = [
     modelId: "openai/gpt-5-mini",
     parallelGroupId: "response-group-1",
     parallelIndex: 0,
+    requestId: "request-primary",
   },
   {
     createdAt: new Date("2026-01-01T00:00:00.002Z"),
@@ -69,6 +70,7 @@ const requestSpecs = [
     modelId: "openai/gpt-5-nano",
     parallelGroupId: "response-group-1",
     parallelIndex: 1,
+    requestId: "request-secondary",
   },
 ] satisfies ParallelRequestSpec[];
 
@@ -101,10 +103,14 @@ describe("runParallelThreadRequestSpecs", () => {
       chat.getSnapshot().runs.map(({ status }) => status),
       ["submitted", "submitted"]
     );
-    assert.equal(
-      "assistantMessageId" in (underlyingTransport.requests[0]?.body ?? {}),
-      false
-    );
+    assert.deepEqual(underlyingTransport.requests[0]?.body, {
+      isPrimaryParallel: true,
+      parallelGroupId: "response-group-1",
+      parallelIndex: 0,
+      projectId: "project-1",
+      requestId: "request-primary",
+      selectedModelId: "openai/gpt-5-mini",
+    });
 
     assert.equal(
       acknowledgeParallelUserMessagePersistence({
@@ -116,6 +122,14 @@ describe("runParallelThreadRequestSpecs", () => {
     );
     await vi.waitFor(() => {
       assert.equal(underlyingTransport.requests.length, 2);
+    });
+    assert.deepEqual(underlyingTransport.requests[1]?.body, {
+      isPrimaryParallel: false,
+      parallelGroupId: "response-group-1",
+      parallelIndex: 1,
+      projectId: "project-1",
+      requestId: "request-secondary",
+      selectedModelId: "openai/gpt-5-nano",
     });
 
     underlyingTransport.finish(0, "server-primary");

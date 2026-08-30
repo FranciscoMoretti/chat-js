@@ -37,6 +37,7 @@ import {
   getAnonymousSession,
   setAnonymousSession,
 } from "@/lib/anonymous-session-server";
+import { createAssistantRequestMessageId } from "@/lib/assistant-request-id";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { createAnonymousSession } from "@/lib/create-anonymous-session";
@@ -503,6 +504,7 @@ async function executeChatRequest({
   chatId,
   userMessage,
   previousMessages,
+  requestId,
   selectedModelId,
   parallelGroupId,
   parallelIndex,
@@ -517,6 +519,7 @@ async function executeChatRequest({
   chatId: string;
   userMessage: ChatMessage;
   previousMessages: ChatMessage[];
+  requestId: string | undefined;
   selectedModelId: AppModelId;
   parallelGroupId: string | null;
   parallelIndex: number | null;
@@ -529,7 +532,16 @@ async function executeChatRequest({
   mcpConnectors: McpConnector[];
 }): Promise<Response> {
   const log = createModuleLogger("api:chat:execute");
-  const messageId = generateUUID();
+  const messageId = requestId
+    ? createAssistantRequestMessageId({
+        chatId,
+        parallelGroupId,
+        parallelIndex,
+        requestId,
+        selectedModelId,
+        userMessageId: userMessage.id,
+      })
+    : generateUUID();
   const streamId = generateUUID();
 
   if (!isAnonymous) {
@@ -827,6 +839,7 @@ type ChatPostBody = {
   parallelIndex?: number | null;
   prevMessages: ChatMessage[];
   projectId?: string;
+  requestId?: string;
   selectedModelId?: AppModelId;
 };
 
@@ -965,6 +978,7 @@ async function readChatPostBody(
       parallelIndex: optionalNullableInteger(rawBody.parallelIndex),
       prevMessages: anonymousPreviousMessages as ChatMessage[],
       projectId: optionalString(rawBody.projectId),
+      requestId: optionalString(rawBody.requestId),
       selectedModelId: optionalString(rawBody.selectedModelId) as
         | AppModelId
         | undefined,
@@ -1063,6 +1077,7 @@ export async function POST(request: NextRequest) {
       message: userMessage,
       prevMessages: anonymousPreviousMessages,
       projectId,
+      requestId,
       selectedModelId: requestSelectedModelId,
       parallelGroupId,
       parallelIndex,
@@ -1132,6 +1147,7 @@ export async function POST(request: NextRequest) {
       chatId,
       userMessage,
       previousMessages: executionInputs.previousMessages,
+      requestId,
       selectedModelId,
       parallelGroupId: responseParallelGroupId,
       parallelIndex: parallelIndex ?? null,

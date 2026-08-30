@@ -8,6 +8,7 @@ export interface ParallelRequestBody {
   isPrimaryParallel: boolean;
   parallelGroupId: string | null;
   parallelIndex: number;
+  requestId: string;
   selectedModelId: AppModelId;
 }
 
@@ -41,6 +42,7 @@ function createPersistenceGate(): PersistenceGate {
     rejectPromise = reject;
     resolvePromise = resolve;
   });
+  promise.catch(() => undefined);
 
   return {
     promise,
@@ -133,6 +135,7 @@ export function createParallelRequestBody(
     selectedModelId: requestSpec.modelId,
     parallelGroupId: requestSpec.parallelGroupId,
     parallelIndex: requestSpec.parallelIndex,
+    requestId: requestSpec.requestId,
     isPrimaryParallel,
   };
 }
@@ -193,18 +196,21 @@ export async function runParallelThreadRequestSpecs({
     );
 
     const rejectUnconfirmedPersistence = persistenceGate
-      ? primaryRun.finished.then(() => {
-          if (!persistenceGate.settled) {
-            rejectPersistenceGate({
-              chatId,
-              error: new Error(
-                "Primary response ended before user persistence"
-              ),
-              gate: persistenceGate,
-              userMessageId: message.id,
-            });
-          }
-        })
+      ? primaryRun.finished.then(
+          () => {
+            if (!persistenceGate.settled) {
+              rejectPersistenceGate({
+                chatId,
+                error: new Error(
+                  "Primary response ended before user persistence"
+                ),
+                gate: persistenceGate,
+                userMessageId: message.id,
+              });
+            }
+          },
+          () => undefined
+        )
       : Promise.resolve();
 
     const runs = [
