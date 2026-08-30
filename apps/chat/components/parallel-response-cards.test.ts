@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { ChatStatus } from "ai";
 import { describe, it } from "vitest";
 import {
   getParallelResponseLifecycle,
@@ -10,6 +11,10 @@ function createAssistantMessage(activeStreamId: string | null) {
   return {
     metadata: { activeStreamId },
   };
+}
+
+function pendingLifecycle(runStatus: ChatStatus) {
+  return getParallelResponseLifecycle(null, runStatus);
 }
 
 describe("parallel response card status", () => {
@@ -27,6 +32,15 @@ describe("parallel response card status", () => {
     );
     assert.equal(getStatusLabel(true, "queued"), "Generating...");
     assert.equal(getStatusLabel(false, "generating"), "Generating...");
+  });
+
+  it("derives pre-message card state from the selected thread run", () => {
+    assert.equal(pendingLifecycle("submitted"), "queued");
+    assert.equal(pendingLifecycle("streaming"), "generating");
+    assert.equal(pendingLifecycle("ready"), "stopped");
+    assert.equal(pendingLifecycle("error"), "error");
+    assert.equal(getStatusLabel(true, "stopped"), "Stopped");
+    assert.equal(getStatusLabel(true, "error"), "Failed");
   });
 
   it("shows completion only after the stream marker is cleared", () => {

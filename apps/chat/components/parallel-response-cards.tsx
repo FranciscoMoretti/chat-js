@@ -144,6 +144,8 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
       if (slot.run && activatedRunIdRef.current !== slot.run.id) {
         activatedRunIdRef.current = slot.run.id;
         thread.setActiveRun(slot.run.id);
+      }
+      return;
     }
 
     setPendingParallelIndex(null);
@@ -165,8 +167,11 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
           ? (getModelById(modelId)?.name ?? modelId)
           : "Model";
         const isSelected = selectedParallelIndex === slot.parallelIndex;
-        const lifecycle = getParallelResponseLifecycle(slot.message);
-        const isLoading = lifecycle !== "complete";
+        const lifecycle = getParallelResponseLifecycle(
+          slot.message,
+          slot.run?.status
+        );
+        const isLoading = lifecycle === "queued" || lifecycle === "generating";
         const statusLabel = getStatusLabel(isSelected, lifecycle);
 
         return (

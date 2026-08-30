@@ -1,6 +1,11 @@
 import type { ChatStatus } from "ai";
 
-export type ParallelResponseLifecycle = "queued" | "generating" | "complete";
+export type ParallelResponseLifecycle =
+  | "queued"
+  | "generating"
+  | "complete"
+  | "stopped"
+  | "error";
 
 interface ParallelResponseStatusMessage {
   metadata: {
@@ -9,9 +14,19 @@ interface ParallelResponseStatusMessage {
 }
 
 export function getParallelResponseLifecycle(
-  message: ParallelResponseStatusMessage | null
+  message: ParallelResponseStatusMessage | null,
+  runStatus?: ChatStatus
 ): ParallelResponseLifecycle {
-  if (!message || message.metadata.activeStreamId?.startsWith("pending:")) {
+  if (!message) {
+    if (runStatus === "error") {
+      return "error";
+    }
+    if (runStatus === "ready") {
+      return "stopped";
+    }
+    return runStatus === "streaming" ? "generating" : "queued";
+  }
+  if (message.metadata.activeStreamId?.startsWith("pending:")) {
     return "queued";
   }
   if (message.metadata.activeStreamId !== null) {
@@ -25,6 +40,12 @@ export function getStatusLabel(
   lifecycle: ParallelResponseLifecycle
 ): string {
   if (lifecycle !== "complete") {
+    if (lifecycle === "stopped") {
+      return "Stopped";
+    }
+    if (lifecycle === "error") {
+      return "Failed";
+    }
     return "Generating...";
   }
   return isSelected ? "Selected" : "Task completed";
