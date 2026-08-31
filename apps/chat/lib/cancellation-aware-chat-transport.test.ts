@@ -127,4 +127,31 @@ describe("createCancellationAwareChatTransport", () => {
     assert.equal(sendMessages.mock.calls.length, 0);
     assert.equal(onCancel.mock.calls.length, 0);
   });
+
+  it("does not cancel a request after its stream completes", async () => {
+    const abortController = new AbortController();
+    const onCancel = vi.fn(() => Promise.resolve());
+    const transport = createCancellationAwareChatTransport({
+      onCancel,
+      transport: {
+        reconnectToStream: () => Promise.resolve(null),
+        sendMessages: () =>
+          Promise.resolve(
+            new ReadableStream<UIMessageChunk>({
+              start(controller) {
+                controller.close();
+              },
+            })
+          ),
+      },
+    });
+
+    const stream = await transport.sendMessages(
+      requestOptions({ abortSignal: abortController.signal })
+    );
+    await stream.pipeTo(new WritableStream());
+    abortController.abort();
+
+    assert.equal(onCancel.mock.calls.length, 0);
+  });
 });

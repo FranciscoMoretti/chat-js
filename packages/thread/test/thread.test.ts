@@ -550,6 +550,24 @@ describe("Thread", () => {
 		expect(() => chat.setActiveRun("missing")).toThrow("Unknown run missing");
 	});
 
+	test("preserves the selected run when its target path is missing", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({ messages: [user("user-1")], transport });
+		const first = await chat.startRun({ from: "user-1" });
+		const second = await chat.startRun({ follow: false, from: "user-1" });
+		await waitFor(() => transport.requests.length === 2);
+		chat.setActiveRun(first.id);
+		chat.removeMessage("user-1");
+
+		expect(() => chat.setActiveRun(second.id)).toThrow();
+		await chat.stop();
+
+		expect(transport.requests[0]?.abortSignal?.aborted).toBeTrue();
+		expect(transport.requests[1]?.abortSignal?.aborted).toBeFalse();
+		transport.finish(1);
+		await Promise.all([first.finished, second.finished]);
+	});
+
 	test("keeps creation order after an earlier run fails without a message", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({ transport });

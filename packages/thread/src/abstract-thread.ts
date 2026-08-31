@@ -184,8 +184,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 	setActiveRun(runId: string) {
 		const run = this.#runs.require(runId);
 		this.updateTree((tree) => {
-			this.#runs.select(runId);
 			tree.setCursor(run.spec.messageId ?? run.spec.initialPathMessageId);
+			this.#runs.select(runId);
 		});
 	}
 

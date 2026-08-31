@@ -610,11 +610,6 @@ async function executeChatRequest({
       clearTimeout(timeoutId);
       return emptyChatStreamResponse();
     }
-
-    await updateMessageActiveStreamId({
-      id: messageId,
-      activeStreamId: streamId,
-    });
   }
 
   // Create throttled cancel check (max once per second) for authenticated users
@@ -856,6 +851,7 @@ async function finalizeMessageAndCredits({
           { messageId: assistantMessage.id },
           "Skipped finalizing canceled message"
         );
+        return;
       }
     }
 

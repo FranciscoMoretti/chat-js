@@ -15,9 +15,14 @@ const requestBodySchema = z
   })
   .loose();
 
+interface PreparedRequest {
+  options: Parameters<ChatTransport<ChatMessage>["sendMessages"]>[0];
+  target: GenerationCancellationTarget;
+}
+
 function prepareRequest(
   options: Parameters<ChatTransport<ChatMessage>["sendMessages"]>[0]
-) {
+): PreparedRequest | null {
   const message = options.messages.at(-1);
   if (message?.role !== "user") {
     return null;
@@ -49,8 +54,36 @@ function prepareRequest(
       ...options,
       body: { ...options.body, requestId },
     },
-    target: { chatId: options.chatId, messageId, type: "request" } as const,
+    target: { chatId: options.chatId, messageId, type: "request" },
   };
+}
+
+function cleanupStream<T>(
+  stream: ReadableStream<T>,
+  cleanup: () => void
+): ReadableStream<T> {
+  const reader = stream.getReader();
+
+  return new ReadableStream({
+    async cancel(reason) {
+      cleanup();
+      await reader.cancel(reason);
+    },
+    async pull(controller) {
+      try {
+        const result = await reader.read();
+        if (result.done) {
+          cleanup();
+          controller.close();
+          return;
+        }
+        controller.enqueue(result.value);
+      } catch (error) {
+        cleanup();
+        controller.error(error);
+      }
+    },
+  });
 }
 
 function observeCancellation({
@@ -96,7 +129,8 @@ export function createCancellationAwareChatTransport({
       });
 
       try {
-        return await transport.sendMessages(request.options);
+        const stream = await transport.sendMessages(request.options);
+        return cleanupStream(stream, cleanup);
       } catch (error) {
         cleanup();
         throw error;

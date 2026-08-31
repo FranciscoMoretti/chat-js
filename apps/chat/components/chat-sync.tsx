@@ -58,10 +58,13 @@ export function ChatSync({
     () =>
       createGatedChatTransport(
         createCancellationAwareChatTransport({
-          onCancel: (target) => trpcClient.chat.stopStream.mutate(target),
+          onCancel: (target) =>
+            isAuthenticated
+              ? trpcClient.chat.stopStream.mutate(target)
+              : Promise.resolve(),
           transport: new DefaultChatTransport({
             api: "/api/chat",
-            fetch: fetchWithErrorHandlers as typeof fetch,
+            fetch: fetchWithErrorHandlers,
             prepareSendMessagesRequest({ messages, id: chatId, body }) {
               return {
                 body: {

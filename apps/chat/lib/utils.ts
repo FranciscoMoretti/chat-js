@@ -16,10 +16,7 @@ interface ApplicationError extends Error {
 	status: number;
 }
 
-export async function fetchWithErrorHandlers(
-	input: RequestInfo | URL,
-	init?: RequestInit,
-) {
+export const fetchWithErrorHandlers: typeof fetch = async (input, init) => {
 	try {
 		const response = await fetch(input, init);
 
@@ -36,7 +33,7 @@ export async function fetchWithErrorHandlers(
 
 		throw error;
 	}
-}
+};
 
 function findLastArtifact(
 	messages: Array<ChatMessage>,
