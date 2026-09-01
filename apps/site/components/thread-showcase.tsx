@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
-  Files,
   GitBranch,
   Package,
   Send,
@@ -22,20 +21,14 @@ import {
   PlaygroundTransport,
 } from "./thread-playground-model";
 
-type InstallMode = "registry" | "package";
-const INSTALL_COMMANDS: Record<InstallMode, string> = {
-  registry: "bunx shadcn@latest add FranciscoMoretti/chat-js/thread#main",
-  package: "bun add @chatjs/thread ai @ai-sdk/react",
-};
+const INSTALL_COMMAND = "bun add @chatjs/thread ai @ai-sdk/react";
 
 export function ThreadInstallCommand() {
-  const [mode, setMode] = useState<InstallMode>("registry");
   const [copied, setCopied] = useState(false);
-  const command = INSTALL_COMMANDS[mode];
 
   async function copyCommand() {
     try {
-      await navigator.clipboard.writeText(command);
+      await navigator.clipboard.writeText(INSTALL_COMMAND);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -46,33 +39,10 @@ export function ThreadInstallCommand() {
   return (
     <div className="mt-8 max-w-3xl border border-border bg-card">
       <div className="flex items-center justify-between border-border border-b px-3 py-2">
-        <fieldset className="flex items-center gap-1">
-          <legend className="sr-only">Installation method</legend>
-          <button
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
-              mode === "registry"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setMode("registry")}
-            type="button"
-          >
-            <Files className="size-3.5" />
-            Registry
-          </button>
-          <button
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm transition-colors ${
-              mode === "package"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setMode("package")}
-            type="button"
-          >
-            <Package className="size-3.5" />
-            Package
-          </button>
-        </fieldset>
+        <span className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
+          <Package className="size-3.5" />
+          npm package
+        </span>
         <button
           aria-label="Copy installation command"
           className="grid size-8 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -85,7 +55,7 @@ export function ThreadInstallCommand() {
       <div className="overflow-x-auto px-4 py-4">
         <code className="whitespace-nowrap font-mono text-sm">
           <span className="select-none text-muted-foreground">$ </span>
-          {command}
+          {INSTALL_COMMAND}
         </code>
       </div>
     </div>
@@ -490,7 +460,7 @@ export function ThreadPlayground() {
   );
 }
 
-export function ThreadRegistryShowcase() {
+export function ThreadShowcase() {
   return (
     <>
       <ThreadPlayground />
