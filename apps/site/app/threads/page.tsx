@@ -18,7 +18,7 @@ import { Navbar } from "@/components/navbar";
 import {
   ThreadInstallCommand,
   ThreadPlayground,
-} from "@/components/thread-registry-showcase";
+} from "@/components/thread-showcase";
 import { siteLinks } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -325,9 +325,9 @@ export default function ThreadsPage() {
                 Own the experience. Choose how you integrate it.
               </h2>
               <p className="mt-5 text-foreground/68 leading-7">
-                Install the versioned package or copy the source through the
-                registry. Your conversation UI, branch controls, persistence,
-                and server routes remain application-owned.
+                Install the versioned package alongside AI SDK. Your
+                conversation UI, branch controls, persistence, and server
+                routes remain application-owned.
               </p>
             </div>
             <a
