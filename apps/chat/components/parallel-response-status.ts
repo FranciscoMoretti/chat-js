@@ -56,7 +56,7 @@ export function getResponseAwareStatus(
   message: ParallelResponseStatusMessage | null
 ): ChatStatus {
   const activeStreamId = message?.metadata.activeStreamId;
-  if (!activeStreamId || status === "submitted" || status === "streaming") {
+  if (!activeStreamId || status !== "ready") {
     return status;
   }
 

@@ -69,4 +69,18 @@ describe("parallel response card status", () => {
       "ready"
     );
   });
+
+  it("preserves request errors despite stale stream markers", () => {
+    assert.equal(
+      getResponseAwareStatus(
+        "error",
+        createAssistantMessage("pending:assistant-1")
+      ),
+      "error"
+    );
+    assert.equal(
+      getResponseAwareStatus("error", createAssistantMessage("stream-1")),
+      "error"
+    );
+  });
 });
