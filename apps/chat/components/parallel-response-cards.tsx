@@ -17,6 +17,10 @@ import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
+import {
+  getParallelResponseLifecycle,
+  getStatusLabel,
+} from "./parallel-response-status";
 
 function getEffectiveModelId(
   message: {
@@ -38,16 +42,6 @@ function getModelOrderIndex(
   }
   const index = models.findIndex((m) => m.id === modelId);
   return index === -1 ? Number.POSITIVE_INFINITY : index;
-}
-
-function getStatusLabel(isSelected: boolean, isStreaming: boolean): string {
-  if (isSelected) {
-    return "Selected";
-  }
-  if (isStreaming) {
-    return "Generating...";
-  }
-  return "Task completed";
 }
 
 function PureParallelResponseCards({ messageId }: { messageId: string }) {
@@ -173,10 +167,12 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
           ? (getModelById(modelId)?.name ?? modelId)
           : "Model";
         const isSelected = selectedParallelIndex === slot.parallelIndex;
-        const isStreaming = slot.message
-          ? slot.message.metadata.activeStreamId !== null
-          : true;
-        const statusLabel = getStatusLabel(isSelected, isStreaming);
+        const lifecycle = getParallelResponseLifecycle(
+          slot.message,
+          slot.run?.status
+        );
+        const isLoading = lifecycle === "queued" || lifecycle === "generating";
+        const statusLabel = getStatusLabel(isSelected, lifecycle);
 
         return (
           <Button
@@ -207,7 +203,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
           >
             <span className="font-medium text-sm">{modelName}</span>
             <span className="flex items-center gap-1 text-muted-foreground text-xs">
-              {isStreaming ? (
+              {isLoading ? (
                 <LoaderCircle className="size-3 animate-spin" />
               ) : null}
               {statusLabel}

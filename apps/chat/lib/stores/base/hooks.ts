@@ -844,16 +844,6 @@ const fallbackClearError = () => {
 };
 
 export type ChatActions<TMessage extends UIMessage = UIMessage> = {
-  setMessages: (messages: TMessage[]) => void;
-  pushMessage: (message: TMessage) => void;
-  popMessage: () => void;
-  replaceMessage: (index: number, message: TMessage) => void;
-  replaceMessageById: (id: string, message: TMessage) => void;
-  setStatus: (status: ChatStatus) => void;
-  setError: (error: Error | undefined) => void;
-  setId: (id: string | undefined) => void;
-  setNewChat: (id: string, messages: TMessage[]) => void;
-  reset: () => void;
   sendMessage: UseChatHelpers<TMessage>["sendMessage"];
   startRun: UseThreadHelpers<TMessage>["tree"]["startRun"];
   regenerate: UseChatHelpers<TMessage>["regenerate"];
@@ -868,16 +858,6 @@ export const useChatActions = <
 >(): ChatActions<TMessage> =>
   useChatStore(
     useShallow((state: StoreState<TMessage>) => ({
-      setMessages: state.setMessages,
-      pushMessage: state.pushMessage,
-      popMessage: state.popMessage,
-      replaceMessage: state.replaceMessage,
-      replaceMessageById: state.replaceMessageById,
-      setStatus: state.setStatus,
-      setError: state.setError,
-      setId: state.setId,
-      setNewChat: state.setNewChat,
-      reset: state.reset,
       sendMessage: state.sendMessage || fallbackSendMessage,
       startRun: state.startRun || fallbackStartRun,
       regenerate: state.regenerate || fallbackRegenerate,

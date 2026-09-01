@@ -40,12 +40,19 @@ import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
+import {
+  clearResponseActiveStream,
+  isPendingResponseStream,
+} from "@/lib/stop-response";
 import { useChatActions } from "@/lib/stores/base";
 import {
   useApplicationThread,
   useCustomChatStoreApi,
 } from "@/lib/stores/custom-store-provider";
-import { useLastMessageId } from "@/lib/stores/hooks-base";
+import {
+  useLastMessageId,
+  useLastMessageMetadata,
+} from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
@@ -55,6 +62,7 @@ import { useTRPC } from "@/trpc/react";
 import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
+import { getResponseAwareStatus } from "./parallel-response-status";
 import { ResponsiveTools } from "./responsive-tools";
 import {
   DropdownMenu,
@@ -116,6 +124,11 @@ function PureMultimodalInput({
   const startProvisionalChat = useStartProvisionalChat(chatId);
   const { startRun, stop: stopHelper } = useChatActions<ChatMessage>();
   const lastMessageId = useLastMessageId();
+  const lastMessageMetadata = useLastMessageMetadata();
+  const responseAwareStatus = getResponseAwareStatus(
+    status,
+    lastMessageMetadata ? { metadata: lastMessageMetadata } : null
+  );
   const {
     editorRef,
     selectedTool,
@@ -216,7 +229,7 @@ function PureMultimodalInput({
     if (isModelDisallowedForAnonymous) {
       return { enabled: false, message: "Log in to use this model" };
     }
-    if (status !== "ready" && status !== "error") {
+    if (responseAwareStatus !== "ready" && responseAwareStatus !== "error") {
       return {
         enabled: false,
         message: "Please wait for the model to finish its response!",
@@ -241,7 +254,7 @@ function PureMultimodalInput({
     isModelDisallowedForAnonymous,
     isParallelModelRequest,
     session?.user,
-    status,
+    responseAwareStatus,
     uploadQueue.length,
   ]);
 
@@ -474,7 +487,7 @@ function PureMultimodalInput({
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent) => {
-      if (status !== "ready") {
+      if (responseAwareStatus !== "ready") {
         return;
       }
 
@@ -532,7 +545,7 @@ function PureMultimodalInput({
     [
       setAttachments,
       processFiles,
-      status,
+      responseAwareStatus,
       session,
       uploadFile,
       attachmentsEnabled,
@@ -587,14 +600,21 @@ function PureMultimodalInput({
       }
     },
     noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: status !== "ready" || !attachmentsEnabled,
+    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
     noDrag: !attachmentsEnabled,
     accept: acceptedTypes,
   });
 
   const handleStop = useCallback(() => {
+    const isPendingResponse = isPendingResponseStream(
+      lastMessageMetadata?.activeStreamId
+    );
     const lastMessage = thread.getSnapshot().messages.at(-1);
-    if (session?.user && lastMessage?.role === "assistant") {
+    if (
+      session?.user &&
+      lastMessage?.role === "assistant" &&
+      !isPendingResponse
+    ) {
       stopStreamMutation.mutate({
         chatId,
         messageId: lastMessage.id,
@@ -602,7 +622,27 @@ function PureMultimodalInput({
       });
     }
     stopHelper?.();
-  }, [chatId, session?.user, stopHelper, stopStreamMutation, thread]);
+    if (lastMessageId) {
+      if (isPendingResponse) {
+        thread.removeMessage(lastMessageId);
+      } else {
+        thread.setMessages(
+          clearResponseActiveStream(
+            thread.getSnapshot().messages,
+            lastMessageId
+          )
+        );
+      }
+    }
+  }, [
+    chatId,
+    lastMessageId,
+    lastMessageMetadata?.activeStreamId,
+    session?.user,
+    stopHelper,
+    stopStreamMutation,
+    thread,
+  ]);
 
   return (
     <div className="relative">
@@ -706,7 +746,7 @@ function PureMultimodalInput({
             selectedModelSelection={selectedModelSelection}
             selectedTool={selectedTool}
             setSelectedTool={setSelectedTool}
-            status={status}
+            status={responseAwareStatus}
             submission={submission}
             submitForm={submitForm}
           />
