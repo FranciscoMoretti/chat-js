@@ -4,9 +4,8 @@
     "description": "Get the current weather at a location"
   },
   {
-    "name": "toolkit-renderer",
-    "description": "Shared renderer helpers for installable ChatJS tools",
-    "hidden": true
+    "name": "retrieve-url",
+    "description": "Fetch structured information from a single URL"
   },
   {
     "name": "thread-demo",
@@ -14,11 +13,12 @@
     "hidden": true
   },
   {
-    "name": "word-count",
-    "description": "Count words, characters, and sentences in text"
+    "name": "toolkit-renderer",
+    "description": "Shared renderer helpers for installable ChatJS tools",
+    "hidden": true
   },
   {
-    "name": "retrieve-url",
-    "description": "Fetch structured information from a single URL"
+    "name": "word-count",
+    "description": "Count words, characters, and sentences in text"
   }
 ]

@@ -143,6 +143,7 @@ async function main(): Promise<void> {
     const stat = await fs.stat(path.join(srcDir, entry));
     if (stat.isDirectory()) dirs.push(entry);
   }
+  dirs.sort();
 
   const index: Array<{ name: string; description: string; hidden?: boolean }> = [];
 
