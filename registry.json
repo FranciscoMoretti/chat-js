@@ -9,7 +9,11 @@
       "title": "AI SDK Message Threads",
       "description": "A headless useChat-compatible message tree with branching, cursor navigation, and concurrent response streams.",
       "author": "ChatJS",
-      "dependencies": ["@ai-sdk/react@^3.0.0", "ai@^6.0.0", "react@>=18"],
+      "dependencies": [
+        "@ai-sdk/react@^3.0.246",
+        "ai@^6.0.244",
+        "react@>=18"
+      ],
       "docs": "Import useThread from '@/lib/thread/react'. chat.messages is the active cursor path and chat.tree exposes the complete message tree.",
       "categories": ["ai", "chat", "hooks"],
       "files": [
@@ -76,7 +80,7 @@
       "title": "Threaded Chat Demo",
       "description": "An editable conversation and message-tree interface for demonstrating useThread in an application.",
       "author": "ChatJS",
-      "dependencies": ["lucide-react"],
+      "dependencies": ["ai@^6.0.244", "lucide-react", "react@>=18"],
       "registryDependencies": ["FranciscoMoretti/chat-js/thread"],
       "docs": "Render <ThreadDemo transport={transport} /> with any AI SDK ChatTransport. The component is intentionally application-owned and can be restyled or extended.",
       "categories": ["ai", "chat", "demo"],

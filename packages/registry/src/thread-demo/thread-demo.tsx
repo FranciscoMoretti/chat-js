@@ -1,26 +1,35 @@
 "use client";
 
-import type { ChatTransport, UIMessage } from "ai";
+import type { ChatStatus, ChatTransport, UIMessage } from "ai";
 import { GitBranch, Send, Square } from "lucide-react";
 import { useState } from "react";
+import {
+  getMessageText,
+  type MessageTreeSnapshot,
+} from "@/lib/thread";
 import { useThread } from "@/lib/thread/react";
-import type { MessageTreeSnapshot } from "@/lib/thread";
 
 export interface ThreadDemoProps {
   initialTree?: MessageTreeSnapshot<UIMessage>;
   transport: ChatTransport<UIMessage>;
 }
 
-function getMessageText(message: UIMessage) {
-  return message.parts
-    .map((part) => (part.type === "text" ? part.text : ""))
-    .join("");
+function getMessageDisplayText(message: UIMessage, status?: ChatStatus) {
+  const text = getMessageText(message);
+  if (text) {
+    return text;
+  }
+  return status === "submitted" || status === "streaming"
+    ? "Streaming..."
+    : "Non-text message";
 }
 
 export function ThreadDemo({ initialTree, transport }: ThreadDemoProps) {
   const [draft, setDraft] = useState("");
   const chat = useThread({ initialTree, transport });
   const activeIds = new Set(chat.messages.map((message) => message.id));
+  const isTreeBusy =
+    chat.tree.status === "streaming" || chat.tree.status === "submitted";
 
   async function sendMessage() {
     const text = draft.trim();
@@ -77,7 +86,10 @@ export function ThreadDemo({ initialTree, transport }: ThreadDemoProps) {
                   <span className="font-mono normal-case">{message.id}</span>
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-6">
-                  {getMessageText(message) || "Streaming..."}
+                  {getMessageDisplayText(
+                    message,
+                    chat.tree.getRunForMessage(message.id)?.status
+                  )}
                 </p>
               </article>
             ))
@@ -99,12 +111,12 @@ export function ThreadDemo({ initialTree, transport }: ThreadDemoProps) {
             rows={1}
             value={draft}
           />
-          {chat.status === "streaming" || chat.status === "submitted" ? (
+          {isTreeBusy ? (
             <button
-              aria-label="Stop response"
+              aria-label="Stop all responses"
               className="grid size-10 place-items-center bg-primary text-primary-foreground"
               onClick={async () => {
-                await chat.stop();
+                await chat.tree.stopAll();
               }}
               type="button"
             >
@@ -153,7 +165,11 @@ export function ThreadDemo({ initialTree, transport }: ThreadDemoProps) {
                   <span className="size-1.5 shrink-0 rounded-full bg-current" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
-                      {message.role}: {getMessageText(message) || "Streaming"}
+                      {message.role}:{" "}
+                      {getMessageDisplayText(
+                        message,
+                        chat.tree.getRunForMessage(message.id)?.status
+                      )}
                     </span>
                     <span className="block truncate font-mono opacity-60">
                       {parentId ? `after ${parentId}` : "root"}
