@@ -41,7 +41,10 @@ import { processFilesForUpload } from "@/lib/files/upload-prep";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
 import { useChatActions } from "@/lib/stores/base";
-import { useApplicationThread } from "@/lib/stores/custom-store-provider";
+import {
+  useApplicationThread,
+  useCustomChatStoreApi,
+} from "@/lib/stores/custom-store-provider";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn } from "@/lib/utils";
@@ -103,6 +106,7 @@ function PureMultimodalInput({
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
   const thread = useApplicationThread();
+  const storeApi = useCustomChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const trpc = useTRPC();
@@ -352,6 +356,7 @@ function PureMultimodalInput({
         chatId,
         isAuthenticated: !!session?.user,
         message,
+        onRunStarted: storeApi.getState().registerParallelRun,
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,
@@ -393,6 +398,7 @@ function PureMultimodalInput({
     session?.user,
     startProvisionalChat,
     startRun,
+    storeApi,
     trimMessagesInEditMode,
   ]);
 
@@ -587,11 +593,16 @@ function PureMultimodalInput({
   });
 
   const handleStop = useCallback(() => {
-    if (session?.user && lastMessageId) {
-      stopStreamMutation.mutate({ messageId: lastMessageId });
+    const lastMessage = thread.getSnapshot().messages.at(-1);
+    if (session?.user && lastMessage?.role === "assistant") {
+      stopStreamMutation.mutate({
+        chatId,
+        messageId: lastMessage.id,
+        type: "message",
+      });
     }
     stopHelper?.();
-  }, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
+  }, [chatId, session?.user, stopHelper, stopStreamMutation, thread]);
 
   return (
     <div className="relative">

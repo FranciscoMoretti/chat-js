@@ -9,14 +9,16 @@ import { createCompletionQueue } from "@/lib/ai/completion-queue";
 import { getStreamErrorToastContent } from "@/lib/ai/stream-errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
+import { createCancellationAwareChatTransport } from "@/lib/cancellation-aware-chat-transport";
 import { createGatedChatTransport } from "@/lib/gated-chat-transport";
 import { acknowledgeParallelUserMessagePersistence } from "@/lib/parallel-chat-requests";
 import { acknowledgeProvisionalUserMessagePersistence } from "@/lib/provisional-chat-confirmations";
 import { useChat } from "@/lib/stores/base";
 import { useChatPersistenceActions } from "@/lib/stores/hooks-chat-persistence";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
-import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { fetchWithErrorHandlers } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+import { useTRPCClient } from "@/trpc/react";
 
 function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
   return !!(activeStreamId && !activeStreamId.startsWith("pending:"));
@@ -33,6 +35,7 @@ export function ChatSync({
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setChatPersisted } = useChatPersistenceActions();
   const { setDataStream } = useDataStream();
+  const trpcClient = useTRPCClient();
 
   const isAuthenticated = !!session?.user;
   const completionQueueRef = useRef(
@@ -54,34 +57,39 @@ export function ChatSync({
   const transport = useMemo(
     () =>
       createGatedChatTransport(
-        new DefaultChatTransport({
-          api: "/api/chat",
-          fetch: fetchWithErrorHandlers as typeof fetch,
-          prepareSendMessagesRequest({ messages, id: chatId, body }) {
-            return {
-              body: {
-                id: chatId,
-                message: messages.at(-1),
-                prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-                requestId: generateUUID(),
-                ...body,
-              },
-            };
-          },
-          prepareReconnectToStreamRequest({ id: chatId }) {
-            const current = thread.getSnapshot().messages.at(-1);
-            const activeStreamId = current?.metadata?.activeStreamId ?? null;
-            const partialMessageId = isResumableActiveStreamId(activeStreamId)
-              ? (current?.id ?? null)
-              : null;
+        createCancellationAwareChatTransport({
+          onCancel: (target) =>
+            isAuthenticated
+              ? trpcClient.chat.stopStream.mutate(target)
+              : Promise.resolve(),
+          transport: new DefaultChatTransport({
+            api: "/api/chat",
+            fetch: fetchWithErrorHandlers,
+            prepareSendMessagesRequest({ messages, id: chatId, body }) {
+              return {
+                body: {
+                  id: chatId,
+                  message: messages.at(-1),
+                  prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                  ...body,
+                },
+              };
+            },
+            prepareReconnectToStreamRequest({ id: chatId }) {
+              const current = thread.getSnapshot().messages.at(-1);
+              const activeStreamId = current?.metadata?.activeStreamId ?? null;
+              const partialMessageId = isResumableActiveStreamId(activeStreamId)
+                ? (current?.id ?? null)
+                : null;
 
-            return {
-              api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
-            };
-          },
+              return {
+                api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
+              };
+            },
+          }),
         })
       ),
-    [isAuthenticated, thread]
+    [isAuthenticated, thread, trpcClient]
   );
 
   const { resumeStream } = useChat<ChatMessage>({

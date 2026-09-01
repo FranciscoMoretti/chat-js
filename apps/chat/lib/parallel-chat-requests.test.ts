@@ -81,6 +81,11 @@ afterEach(() => {
 describe("runParallelThreadRequestSpecs", () => {
   it("creates every run immediately and gates only secondary transport", async () => {
     const underlyingTransport = new ControlledTransport();
+    const startedRuns: Array<{
+      parallelGroupId: string;
+      parallelIndex: number;
+      runId: string;
+    }> = [];
     const chat = new Thread<ChatMessage>({
       transport: createGatedChatTransport(underlyingTransport),
     });
@@ -89,6 +94,7 @@ describe("runParallelThreadRequestSpecs", () => {
       chatId: "chat-1",
       isAuthenticated: true,
       message,
+      onRunStarted: (run) => startedRuns.push(run),
       projectId: "project-1",
       requestSpecs,
       startRun: chat.startRun,
@@ -102,6 +108,20 @@ describe("runParallelThreadRequestSpecs", () => {
     assert.deepEqual(
       chat.getSnapshot().runs.map(({ status }) => status),
       ["submitted", "submitted"]
+    );
+    assert.deepEqual(
+      startedRuns.map(({ parallelGroupId, parallelIndex }) => ({
+        parallelGroupId,
+        parallelIndex,
+      })),
+      [
+        { parallelGroupId: "response-group-1", parallelIndex: 0 },
+        { parallelGroupId: "response-group-1", parallelIndex: 1 },
+      ]
+    );
+    assert.deepEqual(
+      startedRuns.map(({ runId }) => runId),
+      chat.getSnapshot().runs.map(({ id }) => id)
     );
     assert.deepEqual(underlyingTransport.requests[0]?.body, {
       isPrimaryParallel: true,

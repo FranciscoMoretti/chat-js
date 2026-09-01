@@ -7,6 +7,7 @@ import {
   gt,
   gte,
   inArray,
+  isNotNull,
   isNull,
   type SQL,
 } from "drizzle-orm";
@@ -33,6 +34,7 @@ import {
   chat,
   type DBMessage,
   document,
+  generationCancellation,
   message,
   type Part,
   part,
@@ -474,7 +476,7 @@ export async function updateMessage({
       dbMessage.id = id;
 
       // Update message (without parts - parts are stored in Part table)
-      await tx
+      const updatedMessages = await tx
         .update(message)
         .set({
           annotations: dbMessage.annotations,
@@ -489,7 +491,18 @@ export async function updateMessage({
           lastContext: dbMessage.lastContext,
           activeStreamId: dbMessage.activeStreamId,
         })
-        .where(eq(message.id, id));
+        .where(
+          and(
+            eq(message.id, id),
+            eq(message.chatId, chatId),
+            isNull(message.canceledAt)
+          )
+        )
+        .returning({ id: message.id });
+
+      if (updatedMessages.length === 0) {
+        return false;
+      }
 
       // Update parts in Part table
       // Delete existing parts
@@ -501,7 +514,7 @@ export async function updateMessage({
         await tx.insert(part).values(mappedDBParts);
       }
 
-      return;
+      return true;
     });
   } catch (error) {
     logger.error({ error, messageId: id, chatId }, "updateMessage failed");
@@ -1066,20 +1079,92 @@ export async function getMessageCanceledAt({
   }
 }
 
-export async function updateMessageCanceledAt({
-  messageId,
+export async function requestGenerationCancellation({
   canceledAt,
+  chatId,
+  messageId,
+  userId,
 }: {
+  canceledAt: Date;
+  chatId: string;
   messageId: string;
-  canceledAt: Date | null;
+  userId: string;
 }) {
   try {
-    return await db
-      .update(message)
-      .set({ canceledAt })
-      .where(eq(message.id, messageId));
+    await db
+      .insert(generationCancellation)
+      .values({ canceledAt, chatId, messageId, userId })
+      .onConflictDoUpdate({
+        target: [
+          generationCancellation.messageId,
+          generationCancellation.userId,
+        ],
+        set: { canceledAt, chatId },
+      });
   } catch (error) {
-    logger.error({ error, messageId }, "updateMessageCanceledAt failed");
+    logger.error({ error, messageId }, "requestGenerationCancellation failed");
+    throw error;
+  }
+}
+
+export async function isGenerationCancellationRequested({
+  chatId,
+  messageId,
+  userId,
+}: {
+  chatId: string;
+  messageId: string;
+  userId: string;
+}) {
+  try {
+    const [cancellation] = await db
+      .select({ messageId: generationCancellation.messageId })
+      .from(generationCancellation)
+      .where(
+        and(
+          eq(generationCancellation.chatId, chatId),
+          eq(generationCancellation.messageId, messageId),
+          eq(generationCancellation.userId, userId)
+        )
+      )
+      .limit(1);
+
+    return !!cancellation;
+  } catch (error) {
+    logger.error(
+      { error, messageId },
+      "isGenerationCancellationRequested failed"
+    );
+    throw error;
+  }
+}
+
+export async function cancelActiveMessage({
+  canceledAt,
+  chatId,
+  messageId,
+}: {
+  canceledAt: Date;
+  chatId: string;
+  messageId: string;
+}) {
+  try {
+    const canceledMessages = await db
+      .update(message)
+      .set({ activeStreamId: null, canceledAt })
+      .where(
+        and(
+          eq(message.chatId, chatId),
+          eq(message.id, messageId),
+          isNotNull(message.activeStreamId),
+          isNull(message.canceledAt)
+        )
+      )
+      .returning({ id: message.id });
+
+    return canceledMessages.length > 0;
+  } catch (error) {
+    logger.error({ error, messageId }, "cancelActiveMessage failed");
     throw error;
   }
 }

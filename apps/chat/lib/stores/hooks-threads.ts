@@ -1,3 +1,4 @@
+import type { ThreadRun } from "@chatjs/thread";
 import { useCallback } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";
@@ -15,6 +16,7 @@ export interface MessageSiblingInfo {
 export interface ParallelGroupInfo {
   messages: ChatMessage[];
   parallelGroupId: string;
+  runsByParallelIndex: Record<number, ThreadRun>;
   selectedMessageId: string | null;
 }
 
@@ -136,10 +138,23 @@ export function useParallelGroupInfo(
             (b.metadata.parallelIndex ?? Number.MAX_SAFE_INTEGER)
         );
       const visibleIds = new Set(snapshot.messages.map(({ id }) => id));
+      const runsById = new Map(snapshot.runs.map((run) => [run.id, run]));
+      const runsByParallelIndex: Record<number, ThreadRun> = {};
+      const runIdsByParallelIndex =
+        state.parallelRunIdsByGroup[parallelGroupId] ?? {};
+      for (const [parallelIndex, runId] of Object.entries(
+        runIdsByParallelIndex
+      )) {
+        const run = runsById.get(runId);
+        if (run) {
+          runsByParallelIndex[Number(parallelIndex)] = run;
+        }
+      }
 
       return {
         messages,
         parallelGroupId,
+        runsByParallelIndex,
         selectedMessageId:
           messages.find(({ id }) => visibleIds.has(id))?.id ?? null,
       };
@@ -150,6 +165,16 @@ export function useParallelGroupInfo(
         b !== null &&
         a.parallelGroupId === b.parallelGroupId &&
         a.selectedMessageId === b.selectedMessageId &&
+        Object.keys(a.runsByParallelIndex).length ===
+          Object.keys(b.runsByParallelIndex).length &&
+        Object.entries(a.runsByParallelIndex).every(([parallelIndex, run]) => {
+          const other = b.runsByParallelIndex[Number(parallelIndex)];
+          return (
+            run.id === other?.id &&
+            run.status === other.status &&
+            run.error === other.error
+          );
+        }) &&
         a.messages.length === b.messages.length &&
         a.messages.every(
           (message, index) =>

@@ -34,6 +34,10 @@ import {
   type PartsAugmentedState,
   withMessageParts,
 } from "./with-message-parts";
+import {
+  type ParallelRunsAugmentedState,
+  withParallelRuns,
+} from "./with-parallel-runs";
 import { type ThreadStateStore, withThreadState } from "./with-thread-state";
 import { withTracing } from "./with-tracing";
 import { ZustandThreadState } from "./zustand-thread-state";
@@ -41,6 +45,7 @@ import { ZustandThreadState } from "./zustand-thread-state";
 export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
   ChatPersistenceAugmentedState<UI_MESSAGE> &
     DataStreamAugmentedState<UI_MESSAGE> &
+    ParallelRunsAugmentedState<UI_MESSAGE> &
     PartsAugmentedState<UI_MESSAGE> &
     ThreadStateStore<UI_MESSAGE>;
 
@@ -62,11 +67,13 @@ export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
         withTracing(
           withChatPersistence(
             withDataStream(
-              withThreadState(
-                withMessageParts(
-                  createChatStoreCreator<TMessage>(initialSnapshot.messages)
-                ),
-                { initialSnapshot }
+              withParallelRuns(
+                withThreadState(
+                  withMessageParts(
+                    createChatStoreCreator<TMessage>(initialSnapshot.messages)
+                  ),
+                  { initialSnapshot }
+                )
               )
             ),
             {

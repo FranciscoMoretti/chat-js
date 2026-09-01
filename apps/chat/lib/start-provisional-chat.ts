@@ -91,6 +91,7 @@ export function useStartProvisionalChat(chatId: string) {
         chatId,
         isAuthenticated: true,
         message,
+        onRunStarted: storeState.registerParallelRun,
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,

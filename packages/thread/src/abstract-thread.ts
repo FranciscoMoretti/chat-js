@@ -181,6 +181,14 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 		return this.readTree((tree) => tree.getSiblings(messageId));
 	}
 
+	setActiveRun(runId: string) {
+		const run = this.#runs.require(runId);
+		this.updateTree((tree) => {
+			tree.setCursor(run.spec.messageId ?? run.spec.initialPathMessageId);
+			this.#runs.select(runId);
+		});
+	}
+
 	setCursor(messageId: string | null) {
 		this.#runs.select(null);
 		this.updateTree((tree) => tree.setCursor(messageId));
