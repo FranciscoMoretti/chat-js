@@ -326,8 +326,8 @@ export default function ThreadsPage() {
               </h2>
               <p className="mt-5 text-foreground/68 leading-7">
                 Install the versioned package alongside AI SDK. Your
-                conversation UI, branch controls, persistence, and server
-                routes remain application-owned.
+                conversation UI, branch controls, persistence, and server routes
+                remain application-owned.
               </p>
             </div>
             <a
