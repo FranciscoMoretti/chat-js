@@ -623,9 +623,16 @@ function PureMultimodalInput({
     }
     stopHelper?.();
     if (lastMessageId) {
-      thread.setMessages(
-        clearResponseActiveStream(thread.getSnapshot().messages, lastMessageId)
-      );
+      if (isPendingResponse) {
+        thread.removeMessage(lastMessageId);
+      } else {
+        thread.setMessages(
+          clearResponseActiveStream(
+            thread.getSnapshot().messages,
+            lastMessageId
+          )
+        );
+      }
     }
   }, [
     chatId,

@@ -43,4 +43,12 @@ describe("stop response", () => {
     assert.equal(isPendingResponseStream("stream-1"), false);
     assert.equal(isPendingResponseStream(null), false);
   });
+
+  it("does not mark an optimistic response as completed", () => {
+    const pending = createMessage("pending", "pending:response-1");
+
+    const messages = clearResponseActiveStream([pending], pending.id);
+
+    assert.equal(messages[0]?.metadata.activeStreamId, "pending:response-1");
+  });
 });

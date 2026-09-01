@@ -5,7 +5,9 @@ export function clearResponseActiveStream(
   messageId: string
 ) {
   return messages.map((message) =>
-    message.id === messageId && message.metadata.activeStreamId !== null
+    message.id === messageId &&
+    message.metadata.activeStreamId !== null &&
+    !isPendingResponseStream(message.metadata.activeStreamId)
       ? {
           ...message,
           metadata: {
