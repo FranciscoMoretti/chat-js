@@ -22,6 +22,14 @@ import {
 } from "./thread-playground-model";
 
 const INSTALL_COMMAND = "bun add @chatjs/thread ai @ai-sdk/react";
+const MAX_ACTIVE_RUNS = 8;
+
+const STATUS_CLASS = {
+  error: "text-red-600 dark:text-red-400",
+  ready: "text-emerald-600 dark:text-emerald-400",
+  streaming: "text-blue-600 dark:text-blue-400",
+  submitted: "text-amber-600 dark:text-amber-400",
+} as const;
 
 export function ThreadInstallCommand() {
   const [copied, setCopied] = useState(false);
@@ -69,14 +77,16 @@ function Conversation({
   onDraftChange,
   onResponseCountChange,
   onSend,
+  playgroundError,
   responseCount,
 }: {
   chat: PlaygroundChat;
   draft: string;
-  onBranch: (messageId: string) => void;
+  onBranch: (messageId: string) => Promise<void>;
   onDraftChange: (draft: string) => void;
   onResponseCountChange: (count: number) => void;
-  onSend: () => void;
+  onSend: () => Promise<void>;
+  playgroundError: string | null;
   responseCount: number;
 }) {
   return (
@@ -90,7 +100,9 @@ function Conversation({
         </div>
         <div className="flex items-center gap-4 font-mono text-[10px]">
           <span>{chat.messages.length} path nodes</span>
-          <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+          <span
+            className={`flex items-center gap-1.5 ${STATUS_CLASS[chat.status]}`}
+          >
             <span className="size-1.5 rounded-full bg-current" /> {chat.status}
           </span>
         </div>
@@ -133,7 +145,10 @@ function Conversation({
               <div className="mt-2 flex min-h-7 items-center gap-1 opacity-60 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                 <button
                   className="inline-flex h-7 items-center gap-1.5 px-1 text-[11px] hover:bg-background/10 disabled:opacity-30"
-                  onClick={() => onBranch(message.id)}
+                  disabled={chat.tree.activeRuns.length >= MAX_ACTIVE_RUNS}
+                  onClick={async () => {
+                    await onBranch(message.id);
+                  }}
                   type="button"
                 >
                   <GitBranch className="size-3" />
@@ -177,9 +192,9 @@ function Conversation({
 
       <form
         className="border-border border-t p-3"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          onSend();
+          await onSend();
         }}
       >
         <div className="border border-border focus-within:border-foreground/40">
@@ -226,7 +241,10 @@ function Conversation({
                   responseCount === 1 ? "response" : "responses"
                 }`}
                 className="grid size-8 place-items-center bg-primary text-primary-foreground disabled:opacity-40"
-                disabled={!draft.trim()}
+                disabled={
+                  !draft.trim() ||
+                  chat.tree.activeRuns.length + responseCount > MAX_ACTIVE_RUNS
+                }
                 title="Send message"
                 type="submit"
               >
@@ -235,6 +253,12 @@ function Conversation({
             </div>
           </div>
         </div>
+        <p
+          aria-live="polite"
+          className="min-h-5 pt-1.5 text-red-600 text-xs dark:text-red-400"
+        >
+          {playgroundError}
+        </p>
       </form>
     </section>
   );
@@ -331,6 +355,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
 
 export function ThreadPlayground() {
   const [draft, setDraft] = useState("");
+  const [playgroundError, setPlaygroundError] = useState<string | null>(null);
   const [responseCount, setResponseCount] = useState(1);
   const idCounter = useRef(100);
 
@@ -340,7 +365,7 @@ export function ThreadPlayground() {
   }
 
   const chat = useThread<PlaygroundMessage>({
-    concurrency: { maxActiveRuns: 8 },
+    concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
     generateId: generateMessageId,
     initialTree,
     transport: new PlaygroundTransport(),
@@ -363,59 +388,72 @@ export function ThreadPlayground() {
     if (!text) {
       return;
     }
-    const userMessageId = generateMessageId();
-    setDraft("");
-    const primaryRun = await chat.tree.startRun({
-      message: messageInput(text, "Playground message", userMessageId),
-      request: {
-        body: {
-          responseLabel:
-            responseCount === 1
-              ? "Assistant reply"
-              : `Response 1 of ${responseCount}`,
-        },
-      },
-    });
-
-    const siblingRuns: ThreadRunHandle[] = [];
-    for (let index = 1; index < responseCount; index += 1) {
-      siblingRuns.push(
-        await chat.tree.startRun({
-          follow: false,
-          from: userMessageId,
-          request: {
-            body: {
-              responseLabel: `Response ${index + 1} of ${responseCount}`,
-            },
+    setPlaygroundError(null);
+    try {
+      const userMessageId = generateMessageId();
+      const primaryRun = await chat.tree.startRun({
+        message: messageInput(text, "Playground message", userMessageId),
+        request: {
+          body: {
+            responseLabel:
+              responseCount === 1
+                ? "Assistant reply"
+                : `Response 1 of ${responseCount}`,
           },
-        })
+        },
+      });
+      setDraft("");
+
+      const siblingRuns: ThreadRunHandle[] = await Promise.all(
+        Array.from({ length: responseCount - 1 }, (_, index) =>
+          chat.tree.startRun({
+            follow: false,
+            from: userMessageId,
+            request: {
+              body: {
+                responseLabel: `Response ${index + 2} of ${responseCount}`,
+              },
+            },
+          })
+        )
+      );
+      await Promise.all([
+        primaryRun.finished,
+        ...siblingRuns.map((run) => run.finished),
+      ]);
+    } catch (error) {
+      setPlaygroundError(
+        error instanceof Error ? error.message : "Unable to start this response"
       );
     }
-    await Promise.all([
-      primaryRun.finished,
-      ...siblingRuns.map((run) => run.finished),
-    ]);
   }
 
-  function branchFrom(messageId: string) {
-    const message = chat.tree.messagesById[messageId];
-    if (!message) {
-      return;
+  async function branchFrom(messageId: string) {
+    setPlaygroundError(null);
+    try {
+      const message = chat.tree.messagesById[messageId];
+      if (!message) {
+        return;
+      }
+      chat.tree.setCursor(messageId);
+      if (message.role === "user") {
+        await chat.sendMessage(undefined, {
+          body: { responseLabel: "Alternative response" },
+        });
+        return;
+      }
+      await chat.sendMessage(
+        messageInput(
+          `Take another direction from ${messageId}.`,
+          "Branch prompt"
+        ),
+        { body: { responseLabel: "Branch response" } }
+      );
+    } catch (error) {
+      setPlaygroundError(
+        error instanceof Error ? error.message : "Unable to create this branch"
+      );
     }
-    chat.tree.setCursor(messageId);
-    if (message.role === "user") {
-      chat.sendMessage(undefined, {
-        body: { responseLabel: "Alternative response" },
-      });
-      return;
-    }
-    chat.sendMessage(
-      messageInput(
-        `Take another direction from ${messageId}.`,
-        "Branch prompt"
-      ),
-      { body: { responseLabel: "Branch response" } }
-    );
   }
 
   return (
@@ -440,6 +478,7 @@ export function ThreadPlayground() {
           onDraftChange={setDraft}
           onResponseCountChange={setResponseCount}
           onSend={sendDraft}
+          playgroundError={playgroundError}
           responseCount={responseCount}
         />
         <aside className="flex min-h-[43rem] min-w-0 flex-col border-border border-t bg-muted/15 lg:border-t-0 lg:border-l">
