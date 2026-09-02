@@ -13,9 +13,6 @@ export type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
 
 interface StreamBody {
   responseLabel?: string;
-  tree?: {
-    assistantMessageId?: string;
-  };
 }
 
 export interface LayoutNode {
@@ -127,15 +124,15 @@ function delay(ms: number, signal?: AbortSignal) {
       return;
     }
 
-    const timeout = window.setTimeout(resolve, ms);
-    signal?.addEventListener(
-      "abort",
-      () => {
-        window.clearTimeout(timeout);
-        reject(new DOMException("Aborted", "AbortError"));
-      },
-      { once: true }
-    );
+    const onAbort = () => {
+      clearTimeout(timeout);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
   });
 }
 
@@ -146,9 +143,8 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
     messages,
   }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) {
     const requestBody = body as StreamBody | undefined;
-    const assistantMessageId =
-      requestBody?.tree?.assistantMessageId ?? "assistant";
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
+    const streamId = crypto.randomUUID();
     const userMessage = messages.at(-1);
     const prompt = userMessage ? getMessageText(userMessage) : "this branch";
     const response = `${responseLabel}: I am streaming independently from "${prompt}". Select another node while I run, or start more responses from the same prompt.`;
@@ -159,9 +155,8 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
         async start(controller) {
           try {
             controller.enqueue({
-              messageId: assistantMessageId,
               messageMetadata: {
-                activeStreamId: assistantMessageId,
+                activeStreamId: streamId,
                 createdAt: new Date().toISOString(),
                 title: responseLabel,
               },
@@ -190,6 +185,19 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
             });
             controller.close();
           } catch (error) {
+            if (abortSignal?.aborted) {
+              controller.enqueue({
+                finishReason: "stop",
+                messageMetadata: {
+                  activeStreamId: null,
+                  createdAt: new Date().toISOString(),
+                  title: responseLabel,
+                },
+                type: "finish",
+              });
+              controller.close();
+              return;
+            }
             controller.error(error);
           }
         },
