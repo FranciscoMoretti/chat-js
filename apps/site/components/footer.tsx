@@ -3,6 +3,7 @@ import Link from "next/link";
 import { siteLinks } from "@/lib/site-config";
 
 const PRODUCT_LINKS = [
+  { label: "Threads", href: siteLinks.threads },
   { label: "Demo", href: siteLinks.demo },
   { label: "Desktop App", href: siteLinks.desktop },
   { label: "Documentation", href: siteLinks.docs },

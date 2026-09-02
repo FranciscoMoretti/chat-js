@@ -24,6 +24,7 @@ export const siteConfig = {
 
 export const siteLinks = {
   home: siteConfig.url,
+  threads: `${siteConfig.url}/threads`,
   docs: siteConfig.docsUrl,
   docsGettingStarted: `${siteConfig.docsUrl}/quickstart`,
   desktop: siteConfig.desktopUrl,

@@ -17,6 +17,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: siteLinks.threads,
+      lastModified: siteLastModified,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
       url: siteLinks.docsGettingStarted,
       lastModified: siteLastModified,
       changeFrequency: "weekly",
