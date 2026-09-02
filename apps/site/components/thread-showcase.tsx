@@ -487,7 +487,7 @@ export function ThreadPlayground() {
               <p className="font-medium text-sm">Message tree</p>
               <p className="font-mono text-[11px] text-muted-foreground">
                 {Object.keys(chat.tree.messagesById).length} nodes ·{" "}
-                {chat.tree.activeRuns.length} runs
+                {chat.tree.activeRuns.length} active runs
               </p>
             </div>
             <GitBranch className="size-4 text-muted-foreground" />
