@@ -4,7 +4,7 @@ import { siteLinks } from "@/lib/site-config";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS = [
-  { label: "Threads", href: "/threads" },
+  { label: "Threads", href: siteLinks.threads },
   { label: "Demo", href: siteLinks.demo },
   { label: "Docs", href: siteLinks.docs },
   {

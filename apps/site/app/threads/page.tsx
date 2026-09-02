@@ -19,20 +19,30 @@ import {
   ThreadInstallCommand,
   ThreadPlayground,
 } from "@/components/thread-showcase";
-import { siteLinks } from "@/lib/site-config";
+import { siteConfig, siteLinks } from "@/lib/site-config";
+
+const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
+const THREADS_DESCRIPTION =
+  "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.";
 
 export const metadata: Metadata = {
-  title: "useThread — Branching Chats for AI SDK",
-  description:
-    "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.",
+  title: THREADS_TITLE,
+  description: THREADS_DESCRIPTION,
   alternates: {
     canonical: siteLinks.threads,
   },
   openGraph: {
     url: siteLinks.threads,
-    title: "useThread — Branching Chats for AI SDK",
+    title: THREADS_TITLE,
     description:
       "A useChat-compatible active path backed by a complete message tree.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: siteConfig.creator,
+    title: THREADS_TITLE,
+    description: THREADS_DESCRIPTION,
+    images: [siteConfig.ogImage],
   },
 };
 
@@ -237,7 +247,7 @@ export default function ThreadsPage() {
                 <div className="grid grid-cols-2 border-border border-b sm:grid-cols-4">
                   {compatibility.map((item) => (
                     <div
-                      className="flex min-h-14 items-center gap-2 border-border border-r px-3 font-mono text-xs last:border-r-0 sm:[&:nth-child(4n)]:border-r-0"
+                      className="flex min-h-14 items-center gap-2 border-border border-r px-3 font-mono text-xs last:border-r-0 max-sm:[&:nth-child(2n)]:border-r-0 sm:[&:nth-child(4n)]:border-r-0"
                       key={item}
                     >
                       <Check className="size-3.5 shrink-0 text-muted-foreground" />
@@ -332,9 +342,9 @@ export default function ThreadsPage() {
             </div>
             <a
               className="inline-flex min-h-11 shrink-0 items-center gap-2 bg-primary px-5 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-85"
-              href={`${siteLinks.github}/blob/main/packages/thread/README.md`}
+              href={`${siteLinks.github}/blob/main/packages/thread/ARCHITECTURE.md`}
             >
-              Read the integration guide
+              Read the architecture
               <ArrowRight className="size-4" />
             </a>
           </div>
