@@ -78,6 +78,7 @@ chat.tree.cursorId;
 chat.tree.getChildren(messageId);
 chat.tree.getSiblings(messageId);
 chat.tree.setCursor(messageId);
+chat.tree.setActiveRun(runId);
 chat.tree.startRun({ from: messageId });
 chat.tree.stopRun(runId);
 ```
@@ -98,6 +99,12 @@ whether the cursor selects the new user immediately and its assistant once
 streaming begins; it defaults to `true` when the resolved origin equals the
 active cursor and `false` otherwise. This includes an explicit `from` whose
 value equals the current `cursorId`.
+
+`setActiveRun(runId)` selects a request lifecycle directly. Before that run
+has emitted a message, the active path remains at its origin. Once its first
+message is written, the cursor follows it. This lets `chat.status`,
+`chat.error`, and `chat.stop()` retain their `useChat` semantics for pending
+concurrent runs without requiring optimistic message nodes.
 
 Top-level fields always describe the selected path:
 
@@ -183,6 +190,26 @@ The default `Thread` creates its own `MemoryThreadState`. A custom controller
 can instead extend `AbstractThread` and supply another implementation:
 
 ```ts
+const applicationStore = createStore(
+  subscribeWithSelector(() => ({
+    threadSnapshot: createThreadStateSnapshot<MyMessage>({ messages: [] }),
+  })),
+);
+
+const state: ThreadState<MyMessage> = {
+  getSnapshot: () => applicationStore.getState().threadSnapshot,
+  subscribe: (listener) =>
+    applicationStore.subscribe(
+      (storeState) => storeState.threadSnapshot,
+      () => listener(),
+    ),
+  update: (updater) => {
+    applicationStore.setState((storeState) => ({
+      threadSnapshot: updater(storeState.threadSnapshot),
+    }));
+  },
+};
+
 class ApplicationThread extends AbstractThread<MyMessage> {
   constructor(
     state: ThreadState<MyMessage>,
@@ -192,13 +219,17 @@ class ApplicationThread extends AbstractThread<MyMessage> {
   }
 }
 
-const thread = new ApplicationThread(applicationThreadState, transport);
+const thread = new ApplicationThread(state, transport);
 const chat = useThread({ thread });
 ```
 
 This allows an application store to own observable state without moving
 transport objects, promises, abort controllers, or internal run adapters into
-that store.
+that store. `createThreadStateSnapshot` is the supported initializer for a
+custom adapter. The returned `ThreadStateSnapshot` should be the application's
+canonical conversation value; linear `messages`, `status`, and `error` fields,
+when retained for compatibility, are projections updated in the same atomic
+store transaction rather than separate sources of truth.
 
 `ThreadState` stores:
 
