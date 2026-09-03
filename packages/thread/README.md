@@ -78,12 +78,8 @@ As in `useChat`, `sendMessage()` with no input continues a selected assistant
 message in place. Passing an explicit assistant message also streams into that
 same message ID. `regenerate({ messageId })` uses AI SDK's native regeneration
 request and stores the replacement as a sibling, preserving the original
-branch.
-
-Regeneration is currently rejected when both the target and its parent are
-assistant messages. AI SDK currently continues the assistant parent in that
-case instead of creating a replacement for the requested target; see
-`ARCHITECTURE.md` for the upstream blocker.
+branch. Assistant-to-assistant targets regenerate the same way: the original
+node stays, and the replacement is inserted beside it.
 
 The selected path is a projection of the complete tree:
 
@@ -92,6 +88,15 @@ chat.tree.cursorId;
 chat.tree.getChildren(messageId);
 chat.tree.getSiblings(messageId);
 chat.tree.setCursor(messageId);
+```
+
+Branch from an earlier node with the same `sendMessage` helper:
+
+```ts
+await chat.sendMessage(
+  { text: "Create a branch" },
+  { tree: { follow: false, from: messageId } },
+);
 ```
 
 Start independent responses without mounting another hook:
@@ -128,7 +133,9 @@ Create the controller yourself when it must outlive a particular component:
 
 ```ts
 import { createThread } from "@chatjs/thread";
+import { DefaultChatTransport } from "ai";
 
+const transport = new DefaultChatTransport({ api: "/api/chat" });
 const thread = createThread({ transport });
 
 function Conversation() {
@@ -147,13 +154,19 @@ import {
   createThreadStateSnapshot,
   type ThreadState,
 } from "@chatjs/thread";
-import type { UIMessage } from "ai";
+import {
+  type ChatTransport,
+  DefaultChatTransport,
+  type UIMessage,
+} from "ai";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
+const transport = new DefaultChatTransport({ api: "/api/chat" });
+
 const applicationStore = createStore(
   subscribeWithSelector(() => ({
-    threadSnapshot: createThreadStateSnapshot<UIMessage>({ messages }),
+    threadSnapshot: createThreadStateSnapshot<UIMessage>({ messages: [] }),
   })),
 );
 
@@ -172,12 +185,15 @@ const applicationThreadState: ThreadState<UIMessage> = {
 };
 
 class ApplicationThread extends AbstractThread<UIMessage> {
-  constructor(state: ThreadState<UIMessage>) {
+  constructor(
+    state: ThreadState<UIMessage>,
+    transport: ChatTransport<UIMessage>,
+  ) {
     super({ state, transport });
   }
 }
 
-const thread = new ApplicationThread(applicationThreadState);
+const thread = new ApplicationThread(applicationThreadState, transport);
 const chat = useThread({ thread });
 ```
 
@@ -211,13 +227,17 @@ const snapshot = chat.tree.getSnapshot();
 const restored = useThread({
   id: conversationId,
   initialTree: snapshot,
-  transport,
+  resume: true,
+  transport: new DefaultChatTransport({ api: "/api/chat" }),
 });
 ```
 
-The snapshot contains ordered nodes, parent IDs, and the selected cursor.
-Active requests, abort controllers, errors, and run adapters are runtime state
-and are not serialized.
+The snapshot is `{ version: 1, cursorId, nodes }`. `nodes` is the ordered
+message list with parent IDs; runtime indexes such as `messagesById` are not
+serialized. Active requests, abort controllers, errors, and run adapters are
+runtime state. `resume: true` (or `resumeStream()`) reconstructs a run for the
+selected assistant. `tree.resumeRun(runId)` only works for runs still in the
+live registry.
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for lifecycle, identity, status, and
 AI SDK compatibility decisions.

@@ -192,7 +192,7 @@ can instead extend `AbstractThread` and supply another implementation:
 ```ts
 const applicationStore = createStore(
   subscribeWithSelector(() => ({
-    threadSnapshot: createThreadStateSnapshot<MyMessage>({ messages }),
+    threadSnapshot: createThreadStateSnapshot<MyMessage>({ messages: [] }),
   })),
 );
 
