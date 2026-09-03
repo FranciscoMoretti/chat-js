@@ -14,7 +14,7 @@ or move between branches while responses continue streaming.
 ## Install
 
 ```bash
-bun add @chatjs/thread ai @ai-sdk/react
+bun add @chatjs/thread ai @ai-sdk/react react
 ```
 
 Replace the `useChat` import without changing your existing message list or
@@ -102,9 +102,9 @@ await Promise.all([
 ]);
 ```
 
-`follow: false` leaves the cursor unchanged while the response streams into its
-reserved assistant node. ChatJS uses this model for multiple replies from the
-same model and for comparisons across different models.
+`follow: false` leaves the cursor unchanged. The sibling appears when the first
+stream write arrives. ChatJS uses this model for multiple replies from the same
+model and for comparisons across different models.
 
 See [Parallel Responses](../features/parallel-responses) for the product flow.
 
@@ -143,14 +143,16 @@ await saveThread(snapshot);
 Restore it with `initialTree`:
 
 ```ts
+import { DefaultChatTransport } from "ai";
+
 const chat = useThread({
   initialTree: savedSnapshot,
-  transport,
+  transport: new DefaultChatTransport({ api: "/api/chat" }),
 });
 ```
 
-Snapshots contain messages, parent links, child ordering, roots, and the
-cursor. Active request objects are not persisted.
+The snapshot is `{ version: 1, cursorId, nodes }`. Runtime indexes, active
+requests, and run adapters are not persisted.
 
 The package README documents the complete interface, transport metadata, and
 `Thread` exports.

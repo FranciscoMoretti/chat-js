@@ -9,7 +9,10 @@ You want a user to stop an in-flight response without killing resumable streams.
 
 ## Solution
 
-Store a `canceledAt` timestamp on the message (not the chat). When the user clicks stop, set it with a tRPC mutation using the current message ID. The stream loop polls `canceledAt` and aborts the provider with a server-owned `AbortController`.
+Store a `canceledAt` timestamp on the message, not the chat. For unpublished
+responses, also record cancellation against the assistant ID derived from the
+user message. The stream loop polls `canceledAt` and aborts the provider with a
+server-owned `AbortController`.
 
 Using message-level cancellation (instead of chat-level) is more precise since each message has its own stream state, aligning with the existing `activeStreamId` pattern on messages.
 
@@ -21,12 +24,12 @@ Using message-level cancellation (instead of chat-level) is more precise since e
 
 ## How it works
 
-1. Client calls `chat.stopStream` with the current `messageId`
-2. If streaming has not published an assistant yet, the server resolves the new response from the user message ID
-3. Server atomically persists `canceledAt`, clears `activeStreamId`, and removes finalized parts
+1. Client calls `trpc.chat.stopStream` with `{ chatId, messageId, type }`
+2. `type: "request"` records cancellation against the unpublished assistant ID derived from the user message. `type: "message"` cancels an already persisted assistant
+3. `cancelActiveMessage` sets `canceledAt` and clears `activeStreamId` when that row exists
 4. The `onChunk` callback (throttled to 1/sec) polls `canceledAt` on each token
 5. When `canceledAt` is set, calls `abortController.abort()`
-6. Finalization skips canceled messages, closing the race where a fast response finishes between polling checks
+6. Finalization's `updateMessage` requires `canceledAt IS NULL`, so a cancel that commits first is not overwritten
 
 ## Basic use case
 
@@ -34,27 +37,43 @@ Add a stop mutation and call it from the stop button.
 
 ```ts title="trpc/routers/chat.router.ts"
 stopStream: protectedProcedure
-  .input(z.object({ messageId: z.string().uuid() }))
+  .input(
+    z.discriminatedUnion("type", [
+      z.object({
+        chatId: z.string().uuid(),
+        messageId: z.string().uuid(),
+        type: z.literal("message"),
+      }),
+      z.object({
+        chatId: z.string().uuid(),
+        messageId: z.string().uuid(),
+        type: z.literal("request"),
+      }),
+    ])
+  )
   .mutation(async ({ ctx, input }) => {
-    const [msg] = await getMessageById({ id: input.messageId });
-    if (!msg) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Message not found",
-      });
-    }
-
-    const chat = await getChatById({ id: msg.chatId });
-    if (!chat || chat.userId !== ctx.user.id) {
+    const chat = await getChatById({ id: input.chatId });
+    if (chat && chat.userId !== ctx.user.id) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Chat not found or access denied",
       });
     }
 
-    await updateMessageCanceledAt({
+    const canceledAt = new Date();
+    if (input.type === "request") {
+      await requestGenerationCancellation({
+        canceledAt,
+        chatId: input.chatId,
+        messageId: input.messageId,
+        userId: ctx.user.id,
+      });
+    }
+
+    await cancelActiveMessage({
+      canceledAt,
+      chatId: input.chatId,
       messageId: input.messageId,
-      canceledAt: new Date(),
     });
 
     return { success: true };
@@ -69,10 +88,14 @@ const lastMessageId = useLastMessageId();
 
 const handleStop = useCallback(() => {
   if (session?.user && lastMessageId) {
-    stopStreamMutation.mutate({ messageId: lastMessageId });
+    stopStreamMutation.mutate({
+      chatId,
+      messageId: lastMessageId,
+      type: "message",
+    });
   }
   stopHelper?.();
-}, [lastMessageId, session?.user, stopHelper, stopStreamMutation]);
+}, [chatId, lastMessageId, session?.user, stopHelper, stopStreamMutation]);
 ```
 
 ## Server-side polling via onChunk
@@ -100,7 +123,7 @@ const stream = await createChatStream({
 
 The `onChunk` callback is passed through `createChatStream` into `createCoreChatAgent`, which forwards it to the AI SDK's `streamText` call. Each chunk emitted by the model triggers the throttled check.
 
-The final database write must also require `canceledAt IS NULL`. Chunk polling is intentionally throttled, so a fast response can finish between checks. Cancellation and finalization therefore form a database race: cancellation clears any already-finalized parts, while finalization refuses to overwrite a cancellation that committed first.
+The final database write must also require `canceledAt IS NULL`. Chunk polling is intentionally throttled, so a fast response can finish between checks. Cancellation and finalization therefore form a database race: `cancelActiveMessage` stamps `canceledAt` and clears `activeStreamId`, while `updateMessage` refuses to overwrite a cancellation that committed first.
 
 ## Flow
 
@@ -116,7 +139,7 @@ sequenceDiagram
     Provider-->>API: chunk (triggers onChunk)
     API->>DB: getMessageCanceledAt()
     DB-->>API: null (continue)
-    Client->>API: chat.stopStream({ messageId })
+    Client->>API: chat.stopStream({ chatId, messageId, type })
     API->>DB: update Message.canceledAt = now
     Provider-->>API: chunk (triggers onChunk)
     API->>DB: getMessageCanceledAt()

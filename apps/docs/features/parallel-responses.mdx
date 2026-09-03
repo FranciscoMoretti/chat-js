@@ -26,9 +26,10 @@ three models with a count of one creates one reply from each model.
 
 ## Independent runs
 
-ChatJS reserves a message ID for each response and attaches it to an
-independent branch. In an active conversation, secondary responses use
-`useThread` runs with their own streaming state and stop control.
+ChatJS assigns each response a stable message ID and starts an independent
+`useThread` run. The tree node appears when the first stream write arrives. In
+an active conversation, secondary responses keep their own streaming state and
+stop control.
 
 ```mermaid
 flowchart TD

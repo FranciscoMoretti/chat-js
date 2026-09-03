@@ -43,7 +43,7 @@ sequenceDiagram
     API->>AI: Stream response
     AI-->>API: Model stream
     API-->>Thread: UI message stream (SSE)
-    Thread-->>Client: Update reserved response node
+    Thread-->>Client: Publish the assistant message
     Note over API,Cache: Chunks stored in Redis for resumability
     API->>DB: Save final response
 ```
