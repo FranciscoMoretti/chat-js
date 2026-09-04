@@ -68,6 +68,7 @@ export default defineConfig({
           label: "Core Concepts",
           items: [
             "/core/architecture",
+            "/core/use-thread",
             "/core/configuration",
             "/core/file-storage",
             "/core/authentication",

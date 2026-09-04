@@ -83,7 +83,9 @@ See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 ## Features
 
-Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. `features` currently contains only attachments. Missing env vars are caught at build time via `bun run prebuild`.
+Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`.
+Application-level flags live under `features`. Missing env vars are caught at
+build time via `bun run prebuild`.
 
 | Feature               | Config Key                            | Env Dependency                                                                           |
 | --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -96,6 +98,7 @@ Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. `featur
 | Deep Research         | `ai.tools.deepResearch.enabled`       | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                  |
 | Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider                                              |
 | Attachments           | `features.attachments`                | Configured file storage provider                                                         |
+| Parallel Responses    | `features.parallelResponses`          | None                                                                                     |
 
 ```typescript
 ai: {
@@ -112,6 +115,7 @@ ai: {
 },
 features: {
   attachments: true, // Requires durable file storage
+  parallelResponses: true,
 },
 ```
 
