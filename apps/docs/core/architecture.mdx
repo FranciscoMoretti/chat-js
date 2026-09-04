@@ -48,10 +48,10 @@ sequenceDiagram
     API->>DB: Save final response
 ```
 
-Messages are stored with normalized **parts** (text, tool calls, files,
-reasoning) allowing efficient querying and streaming updates. Each active
-assistant response has its own run, so navigating to another branch does not
-redirect or stop that response.
+ChatJS stores messages with normalized **parts** (text, tool calls, files,
+reasoning) so you can query and stream updates efficiently. Each active
+assistant response has its own run. When you navigate to another branch, that
+response keeps streaming.
 
 If [resumable streams](/cookbook/resumable-streams) are enabled, response chunks are published to Redis so clients can reconnect mid-generation without losing progress.
 

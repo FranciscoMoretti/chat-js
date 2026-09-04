@@ -128,13 +128,13 @@ export type Config = {
 
   /**
    * Feature flags.
-   * Set to true to enable - requires corresponding env vars.
+   * Set to true to enable. Some flags require corresponding env vars.
    * Validated at build time via scripts/check-env.ts.
    */
   features: {
     /** File attachments (requires durable file storage) */
     attachments: boolean;
-    /** Generate multiple independent responses for one message */
+    /** Generate multiple independent responses for one message. Defaults to true. */
     parallelResponses: boolean;
   };
 
@@ -207,7 +207,7 @@ Feature flags live under `ai.tools`, `features`, and `authentication`. They're v
 ### Features
 
 - **`features.attachments`**: requires a configured file storage provider - file uploads (images and PDFs)
-- **`features.parallelResponses`**: no extra environment variables - generate multiple independent responses for one message
+- **`features.parallelResponses`**: defaults to `true`. No extra environment variables. Generate multiple independent responses for one message.
 
 ### Authentication
 
