@@ -54,7 +54,7 @@ jobs:
       # Trusted publishing cannot create a package's first version, and it is
       # only configured for @chat-js/cli today. Finish any unpublished packages
       # with the classic token so a partial Changesets publish cannot leave
-      # @chatjs/thread (or similar first releases) off npm.
+      # @chat-js/thread (or similar first releases) off npm.
       - name: Publish first-time packages
         if: always() && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
         env:
@@ -101,5 +101,6 @@ jobs:
         if: always() && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
         run: |
           set -euo pipefail
+          name="$(node -p "require('./packages/thread/package.json').name")"
           version="$(node -p "require('./packages/thread/package.json').version")"
-          npm view "@chatjs/thread@${version}" version
+          npm view "${name}@${version}" version

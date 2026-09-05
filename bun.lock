@@ -26,7 +26,7 @@
         "@ai-sdk/react": "3.0.246",
         "@better-auth/core": "1.5.6",
         "@better-auth/electron": "^1.5.6",
-        "@chatjs/thread": "workspace:*",
+        "@chat-js/thread": "workspace:*",
         "@codemirror/lang-javascript": "^6.2.2",
         "@codemirror/lang-python": "^6.1.6",
         "@codemirror/state": "^6.5.0",
@@ -189,7 +189,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@ai-sdk/react": "^3.0.152",
-        "@chatjs/thread": "workspace:*",
+        "@chat-js/thread": "workspace:*",
         "@vercel/analytics": "^1.5.0",
         "ai": "^6.0.150",
         "class-variance-authority": "^0.7.1",
@@ -241,7 +241,7 @@
       },
     },
     "packages/thread": {
-      "name": "@chatjs/thread",
+      "name": "@chat-js/thread",
       "version": "0.0.0",
       "devDependencies": {
         "@ai-sdk/react": "^3.0.246",
@@ -493,7 +493,7 @@
 
     "@chatjs/site": ["@chatjs/site@workspace:apps/site"],
 
-    "@chatjs/thread": ["@chatjs/thread@workspace:packages/thread"],
+    "@chat-js/thread": ["@chat-js/thread@workspace:packages/thread"],
 
     "@chevrotain/cst-dts-gen": ["@chevrotain/cst-dts-gen@12.0.0", "", { "dependencies": { "@chevrotain/gast": "12.0.0", "@chevrotain/types": "12.0.0" } }, "sha512-fSL4KXjTl7cDgf0B5Rip9Q05BOrYvkJV/RrBTE/bKDN096E4hN/ySpcBK5B24T76dlQ2i32Zc3PAE27jFnFrKg=="],
 
@@ -3691,7 +3691,7 @@
 
     "@chatjs/site/typescript": ["typescript@6.0.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ=="],
 
-    "@chatjs/thread/typescript": ["typescript@6.0.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ=="],
+    "@chat-js/thread/typescript": ["typescript@6.0.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ=="],
 
     "@chevrotain/cst-dts-gen/@chevrotain/types": ["@chevrotain/types@12.0.0", "", {}, "sha512-S+04vjFQKeuYw0/eW3U52LkAHQsB1ASxsPGsLPUyQgrZ2iNNibQrsidruDzjEX2JYfespXMG0eZmXlhA6z7nWA=="],
 

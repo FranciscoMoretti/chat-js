@@ -1,7 +1,7 @@
 "use client";
 
-import { getMessageText, type ThreadRunHandle } from "@chatjs/thread";
-import { useThread } from "@chatjs/thread/react";
+import { getMessageText, type ThreadRunHandle } from "@chat-js/thread";
+import { useThread } from "@chat-js/thread/react";
 import {
   Check,
   ChevronLeft,
@@ -21,7 +21,7 @@ import {
   PlaygroundTransport,
 } from "./thread-playground-model";
 
-const INSTALL_COMMAND = "bun add @chatjs/thread ai @ai-sdk/react";
+const INSTALL_COMMAND = "bun add @chat-js/thread ai @ai-sdk/react";
 const MAX_ACTIVE_RUNS = 8;
 
 const STATUS_CLASS = {

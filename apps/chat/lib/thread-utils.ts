@@ -1,4 +1,4 @@
-import type { MessageTreeSnapshot } from "@chatjs/thread";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
 import type { UIMessage } from "ai";
 
 // Generic message type that works for both DB and anonymous messages

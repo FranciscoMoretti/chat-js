@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { Thread } from "@chatjs/thread";
+import { Thread } from "@chat-js/thread";
 import type { ChatTransport, UIMessageChunk } from "ai";
 import { afterEach, describe, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";

@@ -1,4 +1,4 @@
-import type { MessageTreeSnapshot } from "@chatjs/thread";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
 import {
   createContext,
   createElement,

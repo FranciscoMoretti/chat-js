@@ -14,7 +14,7 @@ move between branches while responses continue streaming.
 ## Install
 
 ```bash
-bun add @chatjs/thread ai @ai-sdk/react react
+bun add @chat-js/thread ai @ai-sdk/react react
 ```
 
 Replace the `useChat` import without changing your existing message list or
@@ -22,7 +22,7 @@ composer:
 
 ```diff
 - import { useChat } from "@ai-sdk/react";
-+ import { useThread } from "@chatjs/thread/react";
++ import { useThread } from "@chat-js/thread/react";
 
 - const chat = useChat({ transport });
 + const chat = useThread({ transport });

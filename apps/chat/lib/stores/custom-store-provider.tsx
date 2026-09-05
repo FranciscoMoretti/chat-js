@@ -4,7 +4,7 @@ import type { UIMessage } from "@ai-sdk/react";
 import {
   createThreadStateSnapshot,
   type MessageTreeSnapshot,
-} from "@chatjs/thread";
+} from "@chat-js/thread";
 import {
   createContext,
   type PropsWithChildren,

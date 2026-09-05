@@ -1,4 +1,4 @@
-import type { TreeHelpers } from "@chatjs/thread/react";
+import type { TreeHelpers } from "@chat-js/thread/react";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ParallelRequestSpec } from "./draft-chat-submission";

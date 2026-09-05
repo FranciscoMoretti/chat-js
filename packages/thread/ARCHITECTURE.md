@@ -2,8 +2,8 @@
 
 ## Purpose
 
-`@chatjs/thread` is the headless, framework-independent threaded conversation
-engine. `@chatjs/thread/react` adapts that engine to React through `useThread`.
+`@chat-js/thread` is the headless, framework-independent threaded conversation
+engine. `@chat-js/thread/react` adapts that engine to React through `useThread`.
 The hook keeps the standard AI SDK `useChat` interface for the selected
 conversation path and adds a `tree` namespace for branching, navigation, and
 concurrent responses.
@@ -543,7 +543,7 @@ not leave an extra user message behind.
 
 ## Package Boundary
 
-`@chatjs/thread` owns:
+`@chat-js/thread` owns:
 
 - the `useThread` React contract
 - tree topology and cursor projection
@@ -575,5 +575,5 @@ The package integration suite must verify that:
 Run the package coverage with:
 
 ```bash
-bun --filter @chatjs/thread test
+bun --filter @chat-js/thread test
 ```
