@@ -6,6 +6,7 @@ import {
 	type ChatStatus,
 	type ChatTransport,
 	type UIMessage,
+	type UIMessageChunk,
 } from "ai";
 
 export type ThreadRunSpec = {
@@ -40,6 +41,8 @@ class ThreadRunState<TMessage extends UIMessage>
 	implements ChatState<TMessage>
 {
 	#error: Error | undefined;
+	resumePrefix: TMessage | undefined;
+	preserveReconnectError = false;
 	readonly #host: ThreadRunHost<TMessage>;
 	#messages: TMessage[];
 	readonly #spec: ThreadRunSpec;
@@ -90,6 +93,7 @@ class ThreadRunState<TMessage extends UIMessage>
 	};
 
 	pushMessage = (message: TMessage) => {
+		message = this.withResumePrefix(message);
 		this.#messages.push(message);
 		this.writeMessage(message);
 	};
@@ -98,11 +102,23 @@ class ThreadRunState<TMessage extends UIMessage>
 		if (index !== this.#messages.length - 1) {
 			throw new Error("A thread run can only replace its current response");
 		}
+		message = this.withResumePrefix(message);
 		this.#messages[index] = message;
 		this.writeMessage(message);
 	};
 
 	snapshot = <T>(thing: T): T => structuredClone(thing);
+
+	private withResumePrefix(message: TMessage): TMessage {
+		const prefix = this.resumePrefix;
+		if (prefix?.id === message.id) {
+			// Seed the SDK's response object once, so later tool/approval updates
+			// operate on the same restored parts instead of a separate projection.
+			message.parts = [...prefix.parts, ...message.parts];
+			this.resumePrefix = undefined;
+		}
+		return message;
+	}
 
 	private writeMessage(message: TMessage) {
 		this.#host.writeRunMessage(this.#spec.id, message);
@@ -118,8 +134,51 @@ export class ThreadRunChat<
 		const responseMessageId = host.generateMessageId();
 		const state = new ThreadRunState(host, spec);
 		const transport: ChatTransport<TMessage> = {
-			reconnectToStream: (options) => host.transport.reconnectToStream(options),
+			reconnectToStream: async (options) => {
+				state.resumePrefix = undefined;
+				const stream = await host.transport.reconnectToStream(options);
+				state.preserveReconnectError =
+					stream === null && state.status === "error";
+				if (!stream) return null;
+				const lastMessage = state.messages.at(-1);
+				let first = true;
+				return stream.pipeThrough(
+					new TransformStream<UIMessageChunk, UIMessageChunk>({
+						transform(chunk, controller) {
+							if (
+								first &&
+								chunk.type === "start" &&
+								lastMessage?.role === "assistant"
+							) {
+								chunk = {
+									...chunk,
+									messageId: chunk.messageId ?? lastMessage.id,
+									messageMetadata:
+										chunk.messageMetadata ?? lastMessage.metadata,
+								};
+							}
+							// Full replay starts with `start`. A continuation needs the canonical
+							// identity and prefix because SDK 7 initializes empty resume state.
+							if (
+								first &&
+								chunk.type !== "start" &&
+								lastMessage?.role === "assistant"
+							) {
+								state.resumePrefix = structuredClone(lastMessage);
+								controller.enqueue({
+									type: "start",
+									messageId: lastMessage.id,
+									messageMetadata: lastMessage.metadata,
+								});
+							}
+							first = false;
+							controller.enqueue(chunk);
+						},
+					}),
+				);
+			},
 			sendMessages: (options) => {
+				state.resumePrefix = undefined;
 				return host.transport.sendMessages({
 					...options,
 					messageId:
@@ -154,6 +213,14 @@ export class ThreadRunChat<
 			transport,
 		});
 		this.#state = state;
+	}
+
+	protected override setStatus(options: { status: ChatStatus; error?: Error }) {
+		if (this.#state.preserveReconnectError && options.status === "ready") {
+			this.#state.preserveReconnectError = false;
+			return;
+		}
+		super.setStatus(options);
 	}
 
 	refreshPath() {

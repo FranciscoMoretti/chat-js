@@ -34,6 +34,7 @@ const electronTemplateDir = join(
 // ─── chat-app filter ────────────────────────────────────────────────────────
 
 const EXCLUDED_SEGMENTS = new Set([
+  ".devtools",
   "node_modules",
   ".next",
   ".turbo",

@@ -441,6 +441,16 @@ mutating that shared parent. For `[user, assistant A, assistant B]`, regeneratin
 `assistant B` preserves both existing messages and creates a replacement sibling
 under `assistant A`.
 
+## Reconnection with AI SDK 7
+
+SDK 7 initializes fresh response state for resume as well as regeneration.
+A reconnect beginning with `start` replays the complete response and replaces its
+canonical content. For continuations without `start`, the run adapter supplies
+its canonical assistant ID/metadata and seeds its saved parts into the SDK's
+response object once. Subsequent tool and approval updates share those restored
+parts. The path is refreshed before reconnecting, and a missing stream preserves
+an existing run error until explicitly cleared.
+
 ## Status and Cancellation
 
 Runs use the AI SDK `ChatStatus` values:

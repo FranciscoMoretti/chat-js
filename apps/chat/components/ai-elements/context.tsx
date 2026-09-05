@@ -1,6 +1,6 @@
 "use client";
 
-import type { LanguageModelUsage } from "ai";
+import { getUsageTokenDetails, type StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
 import { type ComponentProps, createContext, useContext } from "react";
 import { getUsage } from "tokenlens";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ type ModelId = string;
 type ContextSchema = {
 	usedTokens: number;
 	maxTokens: number;
-	usage?: LanguageModelUsage;
+	usage?: StoredLanguageModelUsage;
 	modelId?: ModelId;
 };
 
@@ -316,7 +316,7 @@ export const ContextReasoningUsage = ({
 	...props
 }: ContextReasoningUsageProps) => {
 	const { usage, modelId } = useContextValue();
-	const reasoningTokens = usage?.reasoningTokens ?? 0;
+	const reasoningTokens = getUsageTokenDetails(usage).reasoningTokens;
 
 	if (children) {
 		return children;
@@ -356,7 +356,7 @@ export const ContextCacheUsage = ({
 	...props
 }: ContextCacheUsageProps) => {
 	const { usage, modelId } = useContextValue();
-	const cacheTokens = usage?.cachedInputTokens ?? 0;
+	const cacheTokens = getUsageTokenDetails(usage).cachedInputTokens;
 
 	if (children) {
 		return children;

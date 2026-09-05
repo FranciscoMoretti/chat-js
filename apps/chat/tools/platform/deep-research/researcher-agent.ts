@@ -45,8 +45,8 @@ export async function runResearcher(
     }),
     tools,
     maxOutputTokens: config.research_model_max_tokens,
-    experimental_telemetry: createTelemetry("researcher", options),
-    onStepFinish: ({ usage }) => {
+    ...createTelemetry("researcher", options),
+    onStepEnd: ({ usage }) => {
       if (usage) {
         options.costAccumulator?.addLLMCost(
           config.research_model as AppModelId,
@@ -57,12 +57,12 @@ export async function runResearcher(
     },
   });
 
-  const { response } = await researcherAgent.generate({
+  const { responseMessages } = await researcherAgent.generate({
     prompt: topic,
     abortSignal,
   });
 
-  const compressed = await compressResearch(response.messages, options);
+  const compressed = await compressResearch(responseMessages, options);
 
   dataStream.write({
     type: "data-researchUpdate",
@@ -106,7 +106,7 @@ async function compressResearch(
     model,
     messages: truncatedMessages,
     maxOutputTokens: config.compression_model_max_tokens,
-    experimental_telemetry: createTelemetry("compressResearch", options),
+    ...createTelemetry("compressResearch", options),
     maxRetries: 3,
     abortSignal,
   });

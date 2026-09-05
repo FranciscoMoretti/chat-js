@@ -16,6 +16,78 @@ vi.mock("@/lib/file-storage", () => ({ downloadFile }));
 import { replaceFilePartUrlByBinaryDataInMessages } from "./download-assets";
 
 describe("replaceFilePartUrlByBinaryDataInMessages", () => {
+  it("preserves SDK 7 inline data and provider references without downloading", async () => {
+    const messages: ModelMessage[] = [
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            mediaType: "application/pdf",
+            data: { openai: "file-123" },
+          },
+          {
+            type: "file",
+            mediaType: "application/pdf",
+            data: { type: "reference", reference: { openai: "file-456" } },
+          },
+          {
+            type: "file",
+            mediaType: "text/plain",
+            data: { type: "text", text: "document" },
+          },
+          {
+            type: "file",
+            mediaType: "application/pdf",
+            data: { type: "data", data: new Uint8Array([1, 2]) },
+          },
+        ],
+      },
+    ];
+    const download = vi.fn();
+    assert.deepEqual(
+      await replaceFilePartUrlByBinaryDataInMessages(messages, download),
+      messages
+    );
+    assert.equal(download.mock.calls.length, 0);
+  });
+
+  it("downloads structured HTTP FileData URLs", async () => {
+    const url = new URL("https://files.example/document.pdf");
+    const download = vi.fn().mockResolvedValue({
+      data: new Uint8Array([7]),
+      mediaType: "application/pdf",
+    });
+    const result = await replaceFilePartUrlByBinaryDataInMessages(
+      [
+        {
+          role: "user",
+          content: [
+            {
+              type: "file",
+              mediaType: "application/pdf",
+              data: { type: "url", url },
+            },
+          ],
+        },
+      ],
+      download
+    );
+    assert.deepEqual(download.mock.calls, [[{ url }]]);
+    assert.deepEqual(result, [
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            mediaType: "application/pdf",
+            data: new Uint8Array([7]),
+          },
+        ],
+      },
+    ]);
+  });
+
   afterEach(() => {
     downloadFile.mockReset();
     vi.unstubAllGlobals();

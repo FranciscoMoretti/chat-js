@@ -1,6 +1,9 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
-import type { ImageModel, LanguageModel } from "ai";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+} from "@ai-sdk/provider";
+import type { ImageModel } from "ai";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
@@ -58,7 +61,7 @@ export class OpenAIGateway
     return createOpenAI({ apiKey });
   }
 
-  createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModel {
+  createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
@@ -68,7 +71,7 @@ export class OpenAIGateway
     return provider.image(modelId);
   }
 
-  createVideoModel(_modelId: never): Experimental_VideoModelV3 | null {
+  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
 

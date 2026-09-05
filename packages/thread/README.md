@@ -26,13 +26,13 @@ the core.
 For the headless core:
 
 ```bash
-bun add @chat-js/thread ai
+bun add @chat-js/thread ai@^7.0.93
 ```
 
 For React:
 
 ```bash
-bun add @chat-js/thread ai @ai-sdk/react react
+bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react
 ```
 
 ## Use

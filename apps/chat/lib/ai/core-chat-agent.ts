@@ -1,11 +1,11 @@
-import type { SharedV3ProviderOptions } from "@ai-sdk/provider";
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
+import { convertToModelMessages, isStepCount, streamText } from "ai";
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/add-explicit-tool-request-to-messages";
 import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
 import { getRecentGeneratedImage } from "@/app/(chat)/api/chat/get-recent-generated-image";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { markdownJoinerTransform } from "@/lib/ai/markdown-joiner-transform";
 import { getLanguageModel, getModelProviderOptions } from "@/lib/ai/providers";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
@@ -130,10 +130,10 @@ export async function createCoreChatAgent({
 
   const result = streamText({
     model,
-    system,
+    instructions: system,
     messages: contextForLLM,
     stopWhen: [
-      stepCountIs(5),
+      isStepCount(5),
       ({ steps }) => {
         return steps.some((step) => {
           const toolResults = step.content;
@@ -149,7 +149,8 @@ export async function createCoreChatAgent({
     ],
     activeTools,
     experimental_transform: markdownJoinerTransform(),
-    experimental_telemetry: {
+    telemetry: {
+      integrations: chatTelemetry,
       isEnabled: true,
       functionId: "chat-response",
     },
@@ -159,9 +160,9 @@ export async function createCoreChatAgent({
     },
     onChunk,
     abortSignal,
-    providerOptions: providerOptions as SharedV3ProviderOptions,
-    onFinish: async () => {
-      // Clean up MCP clients when streaming is done (onFinish runs for both success and error)
+    providerOptions,
+    onEnd: async () => {
+      // Release MCP clients after generation completes.
       await mcpCleanup();
     },
   });
