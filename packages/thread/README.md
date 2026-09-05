@@ -26,7 +26,7 @@ the core.
 For the headless core:
 
 ```bash
-bun add @chat-js/thread ai
+bun add @chat-js/thread ai@^7.0.93
 ```
 
 For React:
