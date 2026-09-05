@@ -1,6 +1,9 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
-import type { ImageModel, LanguageModel } from "ai";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+} from "@ai-sdk/provider";
+import type { ImageModel } from "ai";
 import { z } from "zod";
 import { createModuleLogger } from "@/lib/logger";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
@@ -58,7 +61,7 @@ export class LiteLLMGateway
     });
   }
 
-  createLanguageModel(modelId: string): LanguageModel {
+  createLanguageModel(modelId: string): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
@@ -68,7 +71,7 @@ export class LiteLLMGateway
     return provider.imageModel(modelId);
   }
 
-  createVideoModel(_modelId: never): Experimental_VideoModelV3 | null {
+  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
 

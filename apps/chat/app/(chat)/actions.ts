@@ -2,6 +2,7 @@
 
 import { generateText } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 
@@ -12,7 +13,7 @@ export async function generateTitleFromUserMessage({
 }) {
   const { text: title } = await generateText({
     model: await getLanguageModel(config.ai.workflows.title),
-    system: `Generate a concise title for a chat conversation based on the user's first message.
+    instructions: `Generate a concise title for a chat conversation based on the user's first message.
 
 Rules (strictly follow all):
 - Maximum 40 characters — hard limit, never exceed this
@@ -22,7 +23,7 @@ Rules (strictly follow all):
 - Use title case
 - Return ONLY the title, nothing else`,
     prompt: JSON.stringify(message),
-    experimental_telemetry: { isEnabled: true },
+    telemetry: { integrations: chatTelemetry, isEnabled: true },
   });
 
   return title;

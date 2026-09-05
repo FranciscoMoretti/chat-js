@@ -1,6 +1,9 @@
 import { gateway } from "@ai-sdk/gateway";
-import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
-import type { ImageModel, LanguageModel } from "ai";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+} from "@ai-sdk/provider";
+import type { ImageModel } from "ai";
 import { createModuleLogger } from "@/lib/logger";
 import {
   type AiGatewayModel,
@@ -32,7 +35,7 @@ export class VercelGateway
 {
   readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: VercelLanguageModelId): LanguageModel {
+  createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
     return gateway(modelId);
   }
 
@@ -40,7 +43,7 @@ export class VercelGateway
     return gateway.imageModel(modelId);
   }
 
-  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV3 {
+  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV4 {
     return gateway.videoModel(modelId);
   }
 

@@ -1,5 +1,8 @@
-import type { Experimental_VideoModelV3 } from "@ai-sdk/provider";
-import type { ImageModel, LanguageModel } from "ai";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+} from "@ai-sdk/provider";
+import type { ImageModel } from "ai";
 import type { AiGatewayModel } from "../ai-gateway-models-schemas";
 
 export interface GatewayProvider<
@@ -12,10 +15,10 @@ export interface GatewayProvider<
   createImageModel(modelId: TImageModelId): ImageModel | null;
 
   /** Create a language model instance from a model ID like "openai/gpt-5-nano" */
-  createLanguageModel(modelId: TModelId): LanguageModel;
+  createLanguageModel(modelId: TModelId): LanguageModelV4;
 
   /** Create a video model instance, or null if unsupported */
-  createVideoModel(modelId: TVideoModelId): Experimental_VideoModelV3 | null;
+  createVideoModel(modelId: TVideoModelId): Experimental_VideoModelV4 | null;
 
   /** Fetch the list of available models from the gateway's API */
   fetchModels(): Promise<AiGatewayModel[]>;

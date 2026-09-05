@@ -662,6 +662,115 @@ describe("Thread", () => {
 		);
 	});
 
+	test("replays a v7 resume from start without duplicating canonical content", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({
+			messages: [
+				user("user-1"),
+				{
+					id: "assistant-1",
+					role: "assistant",
+					parts: [{ type: "text", text: "partial" }],
+				},
+			],
+			transport,
+		});
+		const reconnect = transport.prepareReconnect();
+		const resumed = chat.resumeStream();
+		reconnect.enqueue({ type: "start", messageId: "assistant-1" });
+		reconnect.enqueue({ type: "text-start", id: "text" });
+		reconnect.enqueue({
+			type: "text-delta",
+			id: "text",
+			delta: "complete replay",
+		});
+		reconnect.enqueue({ type: "text-end", id: "text" });
+		reconnect.enqueue({ type: "finish", finishReason: "stop" });
+		reconnect.close();
+		await resumed;
+		expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
+			"complete replay",
+		);
+		expect(chat.getChildren("user-1").map(({ id }) => id)).toEqual([
+			"assistant-1",
+		]);
+	});
+
+	test("keeps canonical identity and metadata when a replay start omits them", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({
+			messages: [
+				user("user-1"),
+				{
+					id: "assistant-1",
+					role: "assistant",
+					metadata: { model: "saved" },
+					parts: [{ type: "text", text: "partial" }],
+				},
+			],
+			transport,
+		});
+		const reconnect = transport.prepareReconnect();
+		const resumed = chat.resumeStream();
+		reconnect.enqueue({ type: "start" });
+		reconnect.enqueue({ type: "text-start", id: "text" });
+		reconnect.enqueue({ type: "text-delta", id: "text", delta: "replayed" });
+		reconnect.enqueue({ type: "text-end", id: "text" });
+		reconnect.close();
+		await resumed;
+		const message = requireMessage(chat.getMessage("assistant-1"));
+		expect(getMessageText(message)).toBe("replayed");
+		expect(message.metadata).toEqual({ model: "saved" });
+		expect(chat.getChildren("user-1")).toHaveLength(1);
+	});
+
+	test("updates restored tools after a continuation without duplicating the prefix", async () => {
+		const transport = new ControlledTransport();
+		const chat = new Thread({
+			messages: [
+				user("user-1"),
+				{
+					id: "assistant-1",
+					role: "assistant",
+					parts: [
+						{ type: "text", text: "prefix " },
+						{
+							type: "dynamic-tool",
+							toolName: "lookup",
+							toolCallId: "restored-tool",
+							state: "input-available",
+							input: {},
+						},
+					],
+				},
+			],
+			transport,
+		});
+		const reconnect = transport.prepareReconnect();
+		const resumed = chat.resumeStream();
+		reconnect.enqueue({ type: "text-start", id: "text" });
+		reconnect.enqueue({ type: "text-delta", id: "text", delta: "suffix" });
+		reconnect.enqueue({ type: "text-end", id: "text" });
+		reconnect.close();
+		await resumed;
+		await chat.addToolOutput({
+			tool: "lookup",
+			toolCallId: "restored-tool",
+			output: "found",
+		});
+		const message = requireMessage(chat.getMessage("assistant-1"));
+		expect(getMessageText(message)).toBe("prefix suffix");
+		expect(
+			message.parts.filter((part) => part.type === "dynamic-tool"),
+		).toEqual([
+			expect.objectContaining({
+				toolCallId: "restored-tool",
+				state: "output-available",
+				output: "found",
+			}),
+		]);
+	});
+
 	test("aggregate status ignores historical run errors", async () => {
 		const transport = new ControlledTransport();
 		const chat = new Thread({ transport });

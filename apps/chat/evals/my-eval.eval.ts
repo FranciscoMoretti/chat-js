@@ -1,7 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { evalite } from "evalite";
-import { wrapAISDKModel } from "evalite/ai-sdk";
 
 evalite("Test Capitals", {
   data: async () => [
@@ -16,14 +15,12 @@ evalite("Test Capitals", {
   ],
   task: async (input) => {
     const result = streamText({
-      model: wrapAISDKModel(
-        openai("gpt-4o-mini") as unknown as Parameters<typeof wrapAISDKModel>[0]
-      ),
-      system: "Answer the question concisely.",
+      model: openai("gpt-4o-mini"),
+      instructions: "Answer the question concisely.",
       prompt: input,
     });
 
-    // All calls are automatically traced
+    // Evalite's SDK 6 model wrapper cannot trace provider-v4 models yet.
     return await result.output;
   },
   scorers: [

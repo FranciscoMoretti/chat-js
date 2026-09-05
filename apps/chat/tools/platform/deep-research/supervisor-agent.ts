@@ -1,4 +1,4 @@
-import { hasToolCall, stepCountIs, ToolLoopAgent, tool } from "ai";
+import { hasToolCall, isStepCount, ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -54,9 +54,9 @@ export async function runSupervisor(
       researchComplete: researchCompleteTool,
     },
     maxOutputTokens: config.research_model_max_tokens,
-    stopWhen: [hasToolCall("researchComplete"), stepCountIs(maxSteps)],
-    experimental_telemetry: createTelemetry("supervisor", options),
-    onStepFinish: ({ usage, toolCalls }) => {
+    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
+    ...createTelemetry("supervisor", options),
+    onStepEnd: ({ usage, toolCalls }) => {
       if (usage) {
         options.costAccumulator?.addLLMCost(
           config.research_model as AppModelId,

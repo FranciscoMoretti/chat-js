@@ -95,7 +95,7 @@ function ContextUsage({
       return 0;
     }
     const input = usage.inputTokens ?? 0;
-    const cached = usage.cachedInputTokens ?? 0;
+    const cached = usage.inputTokenDetails.cacheReadTokens ?? 0;
     return input + cached;
   }, [usage]);
 
