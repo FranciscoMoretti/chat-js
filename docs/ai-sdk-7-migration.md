@@ -20,7 +20,8 @@ intentionally searches aggregate tool results. Image generation has one step,
 so aggregate usage/files retain its existing semantics.
 
 The gateway seam returns provider-v4 models without model assertions. Removed
-usage fields read the SDK's nested token details. Static and dynamic tool guards
+usage fields read the SDK's nested token details, with legacy fallbacks for
+previously persisted usage metadata. Static and dynamic tool guards
 remain distinct. MCP discovery returns only string descriptions; dynamic
 functions require execution context and are not evaluated during discovery.
 MCP HTTP/SSE redirect behavior retains SDK 7's error default.
@@ -36,7 +37,10 @@ retain prior errors. Restored tool updates use the same response state.
   its storage/file API; file-storage/content/URL/download tests exercise that
   boundary. Its unused AI adapter is **not** claimed compatible.
 - Evalite's SDK-6 model wrapper is removed from the sample eval, including its
-  double assertion. Evalite still runs the task/scorers; automatic wrapper traces
+  double assertion. Package-specific npm overrides for Evalite and Files SDK
+  resolve their SDK-6-only optional peers to the pinned app SDK for these tested
+  boundaries; no global legacy-peer-deps or force install is used.
+  Evalite still runs the task/scorers; automatic wrapper traces
   are unavailable until Evalite supports provider v4.
 - The supported deprecated result.toUIMessageStream helper remains in the
   existing streaming routes/pipeline. Moving to the stateless helper is separate
@@ -58,7 +62,7 @@ Validated on 2026-09-05 using Node 24.20.0, Bun 1.3.11, Next 16.3.0
 
 - `bun install --frozen-lockfile`, `bun lint`, and `bun test:types` passed.
 - `bun test:unit`: 13 worktree checks, 34 CLI tests, 65 Thread tests, and
-  145 chat tests passed. All original assertions are retained. Run types and
+  149 chat tests passed. All original assertions are retained. Run types and
   unit checks sequentially: the packed-package test reads the dist directory
   that Thread's type-check script rebuilds.
 - `bun test:e2e`: four Chromium page smoke tests passed on the restored default
