@@ -1,5 +1,11 @@
 # @chat-js/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- [#269](https://github.com/FranciscoMoretti/chat-js/pull/269) [`8210f85`](https://github.com/FranciscoMoretti/chat-js/commit/8210f85e79827e424772a7a02627d6a587f90461) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Ship Instant Navigations in the scaffolded chat app. New apps use Next.js 16.3 with Cache Components and Partial Prefetching enabled, so route shells stream instead of blocking on cookies/session.
+
 ## 0.7.0
 
 ### Minor Changes

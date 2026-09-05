@@ -1,6 +1,6 @@
 {
 	"name": "@chatjs/thread",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Headless threaded chat engine for AI SDK UI messages",
 	"license": "Apache-2.0",
 	"repository": {
