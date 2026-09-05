@@ -1,4 +1,4 @@
-import type { ThreadRun } from "@chatjs/thread";
+import type { ThreadRun } from "@chat-js/thread";
 import { useCallback } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import type { ChatMessage } from "../ai/types";

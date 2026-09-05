@@ -1,4 +1,4 @@
-import type { ThreadState } from "@chatjs/thread";
+import type { ThreadState } from "@chat-js/thread";
 import type { UIMessage } from "ai";
 import type { CustomChatStoreApi } from "./custom-store-provider";
 

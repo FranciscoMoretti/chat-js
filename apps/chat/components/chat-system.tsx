@@ -1,6 +1,6 @@
 "use client";
 
-import type { MessageTreeSnapshot } from "@chatjs/thread";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
 import { memo } from "react";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";

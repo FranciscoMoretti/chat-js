@@ -205,9 +205,9 @@ describe("scaffoldFromTemplate", () => {
 		expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
 		expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.5.6");
 		expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
-		expect(packageJson.dependencies["@chatjs/thread"]).toBeUndefined();
+		expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
 		expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
-		expect(packageJson.scripts?.prebuild).not.toContain("@chatjs/thread");
+		expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
 		expect(existsSync(join(destination, "lib", "thread", "react.ts"))).toBe(
 			true,
 		);

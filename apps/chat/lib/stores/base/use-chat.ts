@@ -5,12 +5,12 @@ import {
   type UseChatHelpers,
   type UseChatOptions,
 } from "@ai-sdk/react";
-import { type AbstractThread, type MessageTreeSnapshot } from "@chatjs/thread";
+import { type AbstractThread, type MessageTreeSnapshot } from "@chat-js/thread";
 import {
   type UseThreadHelpers,
   type UseThreadOptions,
   useThread as useOriginalChat,
-} from "@chatjs/thread/react";
+} from "@chat-js/thread/react";
 import type { ChatInit } from "ai";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { type StoreState, useChatStoreApi } from "./hooks";

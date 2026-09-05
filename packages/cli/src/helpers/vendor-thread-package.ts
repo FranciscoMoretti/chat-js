@@ -2,8 +2,8 @@ import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const THREAD_IMPORT_REPLACEMENTS = [
-	["@chatjs/thread/react", "@/lib/thread/react"],
-	["@chatjs/thread", "@/lib/thread"],
+	["@chat-js/thread/react", "@/lib/thread/react"],
+	["@chat-js/thread", "@/lib/thread"],
 ] as const;
 
 async function rewriteThreadImports(directory: string): Promise<void> {
@@ -47,11 +47,11 @@ export async function vendorThreadPackage(options: {
 		scripts?: Record<string, string>;
 	};
 	if (packageJson.dependencies) {
-		delete packageJson.dependencies["@chatjs/thread"];
+		delete packageJson.dependencies["@chat-js/thread"];
 	}
 	if (packageJson.scripts?.prebuild) {
 		packageJson.scripts.prebuild = packageJson.scripts.prebuild.replace(
-			"bun --filter @chatjs/thread build && ",
+			"bun --filter @chat-js/thread build && ",
 			"",
 		);
 	}

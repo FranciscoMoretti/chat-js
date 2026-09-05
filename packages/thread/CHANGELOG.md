@@ -1,4 +1,4 @@
-# @chatjs/thread
+# @chat-js/thread
 
 ## 0.1.0
 
