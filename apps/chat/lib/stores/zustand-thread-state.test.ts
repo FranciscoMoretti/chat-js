@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
 import { ApplicationThread } from "@/lib/application-thread";
 import { createCustomChatStore } from "./custom-store-provider";
@@ -149,5 +149,84 @@ describe("ZustandThreadState", () => {
     expect(store.getState().threadSnapshot.messages).toBe(
       store.getState().messages
     );
+  });
+
+  describe("selected path rendering", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("keeps rendered message ids resolvable when switching user siblings", () => {
+      vi.useFakeTimers();
+      const userA = chatMessage("user-a", "A");
+      const assistantA = chatMessage("assistant-a", "Reply A", "assistant");
+      const userB = chatMessage("user-b", "B");
+      const assistantB = chatMessage("assistant-b", "Reply B", "assistant");
+      const store = createCustomChatStore<ChatMessage>([userA]);
+      const thread = new ApplicationThread({
+        id: "chat-1",
+        state: new ZustandThreadState(store),
+      });
+
+      thread.addMessage(assistantA, userA.id);
+      thread.addMessage(userB, null);
+      thread.addMessage(assistantB, userB.id);
+      thread.setCursor(assistantA.id);
+      vi.advanceTimersByTime(50);
+      store.getState()._scheduleThrottledMessagesUpdate();
+
+      expect(store.getState().getMessageIds()).toEqual([
+        userA.id,
+        assistantA.id,
+      ]);
+
+      thread.setCursor(assistantB.id);
+
+      const renderedIds = store.getState().getMessageIds();
+      expect(renderedIds).toEqual([userB.id, assistantB.id]);
+      for (const id of renderedIds) {
+        expect(store.getState().getMessageById(id)?.id).toBe(id);
+      }
+      expect(
+        store.getState()._throttledMessages?.map((message) => message.id)
+      ).toEqual(renderedIds);
+    });
+
+    it("still throttles in-place streaming updates", () => {
+      vi.useFakeTimers();
+      const user = chatMessage("user-1", "Hello");
+      const assistant = chatMessage("assistant-1", "Hi", "assistant");
+      const store = createCustomChatStore<ChatMessage>([user]);
+      const thread = new ApplicationThread({
+        id: "chat-1",
+        state: new ZustandThreadState(store),
+      });
+
+      thread.addMessage(assistant, user.id);
+      thread.setCursor(assistant.id);
+      vi.advanceTimersByTime(50);
+      store.getState()._scheduleThrottledMessagesUpdate();
+
+      thread.upsertMessage(
+        chatMessage("assistant-1", "Hi there", "assistant"),
+        user.id
+      );
+
+      expect(store.getState().messages.at(-1)?.parts[0]).toEqual({
+        text: "Hi there",
+        type: "text",
+      });
+      expect(store.getState()._throttledMessages?.at(-1)?.parts[0]).toEqual({
+        text: "Hi",
+        type: "text",
+      });
+
+      vi.advanceTimersByTime(50);
+
+      expect(store.getState()._throttledMessages?.at(-1)?.parts[0]).toEqual({
+        text: "Hi there",
+        type: "text",
+      });
+    });
   });
 });

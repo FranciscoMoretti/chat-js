@@ -16,6 +16,19 @@ export type ThreadStateStore<TMessage extends UIMessage> =
     ) => void;
   };
 
+function haveSelectedPathIdsChanged<TMessage extends { id: string }>(
+  previous: TMessage[] | null | undefined,
+  next: TMessage[]
+): boolean {
+  const previousMessages = previous ?? [];
+  if (previousMessages.length !== next.length) {
+    return true;
+  }
+  return previousMessages.some(
+    (message, index) => message.id !== next[index]?.id
+  );
+}
+
 export const withThreadState =
   <TMessage extends UIMessage, TState extends BaseChatStoreState<TMessage>>(
     creator: StateCreator<TState, [], []>,
@@ -37,8 +50,17 @@ export const withThreadState =
       status: threadSnapshot.status,
       threadSnapshot,
       updateThreadSnapshot: (updater) => {
+        let didChangeSelectedPath = false;
         set((state) => {
           const threadSnapshot = updater(state.threadSnapshot);
+          // Sibling switches change the rendered ids. Flush throttled
+          // messages in the same update so UserMessage can still resolve
+          // the ids it is currently rendering; otherwise it returns null
+          // and the assistant jumps up for a frame.
+          didChangeSelectedPath = haveSelectedPathIdsChanged(
+            state._throttledMessages ?? state.messages,
+            threadSnapshot.messages
+          );
           state._messageIndex.update(threadSnapshot.messages);
 
           return {
@@ -48,9 +70,14 @@ export const withThreadState =
             messages: threadSnapshot.messages,
             status: threadSnapshot.status,
             threadSnapshot,
+            ...(didChangeSelectedPath
+              ? { _throttledMessages: threadSnapshot.messages }
+              : {}),
           };
         });
-        get()._scheduleThrottledMessagesUpdate();
+        if (!didChangeSelectedPath) {
+          get()._scheduleThrottledMessagesUpdate();
+        }
       },
     };
   };
