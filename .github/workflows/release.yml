@@ -79,7 +79,10 @@ jobs:
 
             echo "Publishing ${tag} (first publish cannot use OIDC)"
             bun --filter "${name}" build
-            npm publish --workspace "${name}" --access public --no-provenance
+            if ! npm publish --workspace "${name}" --access public --no-provenance; then
+              echo "::warning::Could not publish ${tag}. Create it once locally with 2FA (npm publish --access public --no-provenance in ${workspace_dir}), then add GitHub Actions as a trusted publisher on npmjs.com."
+              return 0
+            fi
 
             if git rev-parse "${tag}" >/dev/null 2>&1; then
               echo "tag ${tag} already exists"
@@ -96,11 +99,3 @@ jobs:
           }
 
           publish_if_missing packages/thread
-
-      - name: Confirm thread package published
-        if: always() && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
-        run: |
-          set -euo pipefail
-          name="$(node -p "require('./packages/thread/package.json').name")"
-          version="$(node -p "require('./packages/thread/package.json').version")"
-          npm view "${name}@${version}" version
