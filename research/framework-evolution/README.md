@@ -1,6 +1,8 @@
 # ChatJS framework evolution: discussion brief
 
-Research date: 2026-09-05. This folder records research, agreed direction and remaining proposals. The agreed direction below reflects the user's subsequent approval; implementation details are not a finalized specification or release commitment. No GitHub tickets were created.
+Research date: 2026-09-05. This folder records research, agreed direction and remaining proposals. The agreed direction below reflects the user's subsequent approval; implementation details are not a finalized specification or release commitment.
+
+The canonical decision map is now [Chart the ChatJS framework evolution](https://github.com/FranciscoMoretti/chat-js/issues/281). Continue through its native child issues and dependencies. These notes preserve the pre-map context; future resolutions belong in their decision tickets, with linked gists on the map. A shared research snapshot is available on [the foundations research branch](https://github.com/FranciscoMoretti/chat-js/tree/research/chatjs-framework-foundations/research/framework-evolution).
 
 ## Agreed direction
 
@@ -10,7 +12,7 @@ The user accepted the following recommendations before the research:
 - Prioritize the complete new-application onboarding journey while designing for adoption inside existing applications.
 - Use Eve as the default execution foundation behind an explicit boundary; defer deciding whether to ship another execution adapter until its cost and demand are understood.
 - Preserve the current Next.js application and prove reuse in one second host before promising a broad framework support matrix.
-- Continue extensive research and high-level discussion before creating decision tickets.
+- Complete extensive research and high-level discussion before creating decision tickets. This phase is complete; the user has now requested continuing the wayfinder flow.
 
 After reviewing the findings, the user explicitly selected **AI SDK 7** as the target baseline and accepted the recommendations presented in the research discussion:
 
