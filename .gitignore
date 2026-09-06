@@ -79,3 +79,6 @@ apps/electron/branding.json
 
 # Built CLI registry payloads
 packages/cli/registry
+
+# Local investigation notes and proof artifacts
+.local-research/

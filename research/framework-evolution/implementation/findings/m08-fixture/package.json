@@ -1,7 +1,0 @@
-{
-  "name": "chatjs-m08-exploration",
-  "private": true,
-  "type": "module",
-  "scripts": { "proof": "bun proof.ts" },
-  "devDependencies": { "shadcn": "4.21.0" }
-}

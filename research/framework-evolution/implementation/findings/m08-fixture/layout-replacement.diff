@@ -1,8 +1,0 @@
-diff --git a/components/chat/app-layout.ts b/components/chat/app-layout.proposed.ts
-index 07094f3..41379b2 100644
---- a/components/chat/app-layout.ts
-+++ b/components/chat/app-layout.proposed.ts
-@@ -1,2 +1 @@
--export { default } from "./layouts/minimal";
--// Developer's local customization
-+export { default } from "./layouts/wide";
