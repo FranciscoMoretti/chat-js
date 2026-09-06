@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:51710/",
+  "browser": "147.0.7727.15",
+  "viewport": {
+    "width": 1000,
+    "height": 760
+  },
+  "title": "Revision fixture",
+  "noPageErrors": true,
+  "noConsoleWarnings": true,
+  "loadedOnlyOnEdit": [
+    "/chunk-x3eb512t.js",
+    "/chunk-x3eb512t.js"
+  ],
+  "exactRevisionAfterCommit": "d818a76d-a20c-4f03-8ed2-a8cb7a1a8d16",
+  "staleDraftPreserved": "unsaved stale draft",
+  "otherOwnerDenied": true
+}

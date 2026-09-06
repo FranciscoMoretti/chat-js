@@ -1,0 +1,94 @@
+{
+  "shadcn": "4.18.0",
+  "results": [
+    {
+      "name": "minimal",
+      "installed": [],
+      "dependencies": {},
+      "resolvedVersions": {},
+      "lockfile": true,
+      "nativeInstall": false
+    },
+    {
+      "name": "files",
+      "installed": [
+        "src/files.server.ts",
+        "src/storage.server.ts"
+      ],
+      "dependencies": {
+        "files-sdk": "2.1.0"
+      },
+      "resolvedVersions": {
+        "files-sdk": "2.1.0"
+      },
+      "lockfile": true,
+      "nativeInstall": true
+    },
+    {
+      "name": "external-storage",
+      "installed": [
+        "src/files.server.ts",
+        "src/storage.server.ts"
+      ],
+      "dependencies": {
+        "files-sdk": "2.1.0"
+      },
+      "resolvedVersions": {
+        "files-sdk": "2.1.0"
+      },
+      "lockfile": true,
+      "nativeInstall": true
+    },
+    {
+      "name": "text",
+      "installed": [
+        "src/contract.ts",
+        "src/documents.server.ts"
+      ],
+      "dependencies": {
+        "zod": "4.3.6"
+      },
+      "resolvedVersions": {
+        "zod": "4.3.6"
+      },
+      "lockfile": true,
+      "nativeInstall": true
+    },
+    {
+      "name": "external-renderer",
+      "installed": [
+        "src/contract.ts",
+        "src/result-renderer.tsx"
+      ],
+      "dependencies": {
+        "react": "19.2.4",
+        "zod": "4.3.6"
+      },
+      "resolvedVersions": {
+        "react": "19.2.4",
+        "zod": "4.3.6"
+      },
+      "lockfile": true,
+      "nativeInstall": true
+    },
+    {
+      "name": "external-editor",
+      "installed": [
+        "src/contract.ts",
+        "src/text-editor.tsx"
+      ],
+      "dependencies": {
+        "fast-diff": "1.3.0",
+        "react": "19.2.4",
+        "zod": "4.3.6"
+      },
+      "resolvedVersions": {
+        "fast-diff": "1.3.0",
+        "react": "19.2.4",
+        "zod": "4.3.6"
+      },
+      "lockfile": true,
+      "nativeInstall": true
+    }
+  ]
+}
