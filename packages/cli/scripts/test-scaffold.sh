@@ -63,6 +63,8 @@ run_case() (
       yarn) yarn install ;;
       *) echo "Unsupported package manager: $package_manager" >&2; exit 1 ;;
     esac
+    # Preserve the existing packaging smoke test: all managers install, while
+    # npm packages Electron once to avoid repeating the expensive Forge build.
     if [ "$package_manager" = "npm" ]; then
       npm run make
     fi

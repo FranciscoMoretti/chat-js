@@ -122,7 +122,16 @@ test.each([
 		(task: { taskId: string }) => task.taskId,
 	);
 	expect(plannedTasks.includes("@chat-js/cli#test:scaffold")).toBe(affected);
-	if (path.startsWith("apps/chat/") || path.startsWith("apps/site/") || path.startsWith("apps/docs/")) {
+	if (
+		path.startsWith("apps/chat/") ||
+		path.startsWith("apps/site/") ||
+		path.startsWith("apps/docs/") ||
+		path.startsWith("apps/electron/") ||
+		path.startsWith("packages/thread/src/") ||
+		path.startsWith("packages/registry/items/") ||
+		path === "scripts/sync-template.ts" ||
+		path === "package.json"
+	) {
 		expect(plannedTasks.includes("@chat-js/cli#test:unit")).toBe(affected);
 	}
 });
