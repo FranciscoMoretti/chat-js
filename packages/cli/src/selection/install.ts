@@ -15,6 +15,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { addRegistryItems } from "shadcn/registry";
+import { z } from "zod";
 import pkg from "../../package.json";
 import { runCommand } from "../utils/run-command";
 import { inspectSelection, targetPath, withRegistry } from "./registry";
@@ -90,6 +91,8 @@ const projectPackage = (name: string) => ({
 		"db:init": "bun scripts/db-init.ts",
 	},
 });
+const hash = (content: string) =>
+	createHash("sha256").update(content).digest("hex");
 
 export async function installSelection(
 	selection: Selection,
@@ -116,6 +119,17 @@ export async function installSelection(
 			const snapshot = join(stage, "resolved.json");
 			const app = mode === "create" ? join(stage, "app") : cwd;
 			await mkdir(app, { recursive: true });
+			const previousFiles =
+				mode === "add"
+					? z
+							.object({ fileHashes: z.record(z.string(), z.string()) })
+							.parse(
+								JSON.parse(
+									await readFile(join(app, "chat.installation.json"), "utf8"),
+								),
+							).fileHashes
+					: {};
+			const fileHashes: Record<string, string> = {};
 			if (mode === "create")
 				await write(
 					app,
@@ -129,6 +143,12 @@ export async function installSelection(
 			for (const file of tree.files ?? []) {
 				const path = targetPath(file.target ?? "");
 				await checkNoSymlinks(app, path);
+				const content = file.content ?? "";
+				fileHashes[path] = hash(content);
+				// Re-propose changed registry source, but never revert local edits when
+				// that item's source has not changed since the adopted receipt.
+				if (mode === "add" && previousFiles[path] !== fileHashes[path])
+					desired.set(path, content);
 			}
 			for (const path of [
 				"package.json",
@@ -152,6 +172,13 @@ export async function installSelection(
 				overwrite: false,
 				silent: true,
 			});
+			if (mode === "add") {
+				await checkNoSymlinks(app, ".chatjs/proposals");
+				await rm(join(app, ".chatjs/proposals"), {
+					recursive: true,
+					force: true,
+				});
+			}
 			const proposals: string[] = [];
 			for (const [path, content] of desired) {
 				await checkNoSymlinks(app, path);
@@ -166,6 +193,7 @@ export async function installSelection(
 			const provenance = {
 				cli: pkg.version,
 				items: selection.items,
+				fileHashes,
 				observedSources: originals
 					.filter((item) => item !== null)
 					.map((item) => ({

@@ -2,10 +2,10 @@
 import type { InputRequest } from "eve/client";
 import { useEveAgent } from "eve/react";
 import { useEffect, useRef, useState } from "react";
-import { z } from "zod";
 import { components } from "../chat.client";
 import { ToolResults } from "../components/chat/tool-results";
 import { applicationClient, type Binding } from "../lib/application-client";
+import { createInput } from "../lib/create-contract";
 import { type ProjectData, projectReducer } from "../lib/projection";
 import { sendTurn } from "../lib/send-turn";
 
@@ -33,11 +33,11 @@ export function Chat() {
 		try {
 			// Preserve the same operation and payload after a lost response/reload.
 			const stored = sessionStorage.getItem("chatjs.pending-create");
-			const operation = stored
-				? z
-						.object({ operationId: z.uuid(), message: z.string() })
-						.parse(JSON.parse(stored))
-				: { operationId: crypto.randomUUID(), message: draft };
+			const operation = createInput.parse(
+				stored
+					? JSON.parse(stored)
+					: { operationId: crypto.randomUUID(), message: draft },
+			);
 			sessionStorage.setItem(
 				"chatjs.pending-create",
 				JSON.stringify(operation),

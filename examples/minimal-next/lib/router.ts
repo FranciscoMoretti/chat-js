@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { Conflict, createConversation, sql } from "./bindings";
+import { createInput } from "./create-contract";
 import { eveRequest } from "./eve-server";
 import { sameOrigin } from "./identity";
 
@@ -24,14 +25,7 @@ const bindingSchema = z.object({
 export const appRouter = t.router({
 	conversation: t.router({
 		create: protectedProcedure
-			.input(
-				z
-					.object({
-						operationId: z.uuid(),
-						message: z.string().trim().min(1).max(16000),
-					})
-					.strict(),
-			)
+			.input(createInput)
 			.output(bindingSchema)
 			.mutation(async ({ ctx, input }) => {
 				try {

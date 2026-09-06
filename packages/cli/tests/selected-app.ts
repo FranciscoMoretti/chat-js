@@ -15,6 +15,24 @@ const file = (path: string, content: string) => ({
 	content,
 });
 const items: Record<string, unknown> = {
+	identity: {
+		name: "identity",
+		type: "registry:item",
+		dependencies: ["jose@6.2.3"],
+		files: [
+			file(
+				"lib/identity.ts",
+				`${await readFile(new URL("../../../examples/minimal-next/lib/identity.ts", import.meta.url), "utf8")}\nexport const identityVariant = "external";\n`,
+			),
+		],
+		meta: { chatjs: { provides: ["identity"] } },
+	},
+	"broken-identity": {
+		name: "broken-identity",
+		type: "registry:item",
+		files: [file("lib/identity.ts", "export const broken = true;\n")],
+		meta: { chatjs: { provides: ["identity"] } },
+	},
 	weather: {
 		name: "weather",
 		type: "registry:item",
@@ -92,8 +110,8 @@ await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
 const bound = server.address();
 assert(bound && typeof bound !== "string");
 const origin = `http://127.0.0.1:${bound.port}`;
-async function command(args: string[], cwd = root) {
-	const child = Bun.spawn(args, { cwd, stdout: "pipe", stderr: "pipe" });
+async function command(args: string[], cwd = root, env = process.env) {
+	const child = Bun.spawn(args, { cwd, env, stdout: "pipe", stderr: "pipe" });
 	const [code, stdout, stderr] = await Promise.all([
 		child.exited,
 		new Response(child.stdout).text(),
@@ -101,6 +119,17 @@ async function command(args: string[], cwd = root) {
 	]);
 	assert.equal(code, 0, `${args.join(" ")}\n${stdout}\n${stderr}`);
 	return stdout;
+}
+async function compiledToolNames() {
+	// Eve evaluates channel modules during compilation. PostgreSQL's client is
+	// lazy; this unreachable placeholder provides configuration without services.
+	await command(["node", "node_modules/eve/bin/eve.js", "build"], app, {
+		...process.env,
+		APP_DATABASE_URL: "postgres://fixture:fixture@127.0.0.1:1/unused",
+	});
+	return (await Bun.file(join(app, ".eve/agent-summary.json")).json()).tools
+		.map((tool: { name: string }) => tool.name)
+		.sort();
 }
 try {
 	const selection = join(root, "selection.json");
@@ -117,6 +146,7 @@ try {
 	assert(!(await Bun.file(join(app, "agent/tools/confirm_note.ts")).exists()));
 	assert(!(await Bun.file(join(app, "lib/note-contract.ts")).exists()));
 	const minimal = JSON.parse(await readFile(join(app, "package.json"), "utf8"));
+	assert.deepEqual(await compiledToolNames(), []);
 	for (const omitted of [
 		"@ai-sdk/openai-compatible",
 		"clsx",
@@ -177,17 +207,55 @@ assert.match(renderToString(<ToolResults parts={[{type:"dynamic-tool",toolCallId
 	assert(await Bun.file(join(app, "components/external/banner.tsx")).exists());
 	const updated = JSON.parse(await readFile(join(app, "package.json"), "utf8"));
 	assert.equal(updated.dependencies.clsx, "2.1.1");
-	for (const path of ["chat.client.ts", "chat.selection.json"])
+	for (const path of [
+		"chat.client.ts",
+		"chat.selection.json",
+		"chat.installation.json",
+	])
 		await cp(join(app, ".chatjs/proposals", path), join(app, path));
 	await command(["bun", "run", "test:types"], app);
 	const selected = JSON.parse(
 		await readFile(join(app, "chat.selection.json"), "utf8"),
 	);
+	const originalSelection = structuredClone(selected);
 	selected.items = selected.items
 		.filter((item: string) => item !== "@chatjs/layout-minimal")
 		.concat(`${origin}/layout`);
 	await writeFile(selection, JSON.stringify(selected));
 	const layout = join(app, "components/chat/app-layout.tsx");
+	await command([
+		"node",
+		cli,
+		"add",
+		"--selection",
+		selection,
+		"--cwd",
+		app,
+		"--yes",
+	]);
+	assert(
+		await Bun.file(
+			join(app, ".chatjs/proposals/components/chat/app-layout.tsx"),
+		).exists(),
+	);
+	// Abandon B and request original A: old proposals must not survive.
+	await writeFile(selection, JSON.stringify(originalSelection));
+	await command([
+		"node",
+		cli,
+		"add",
+		"--selection",
+		selection,
+		"--cwd",
+		app,
+		"--yes",
+	]);
+	assert(
+		!(await Bun.file(
+			join(app, ".chatjs/proposals/components/chat/app-layout.tsx"),
+		).exists()),
+	);
+	await writeFile(selection, JSON.stringify(selected));
 	await writeFile(
 		layout,
 		`${await readFile(layout, "utf8")}// retain layout edit\n`,
@@ -220,7 +288,65 @@ assert.match(renderToString(<ToolResults parts={[{type:"dynamic-tool",toolCallId
 		join(app, ".chatjs/proposals/chat.selection.json"),
 		join(app, "chat.selection.json"),
 	);
+	await cp(
+		join(app, ".chatjs/proposals/chat.installation.json"),
+		join(app, "chat.installation.json"),
+	);
+	const identity = join(app, "lib/identity.ts");
+	await writeFile(
+		identity,
+		`${await readFile(identity, "utf8")}\n// custom host identity edit\n`,
+	);
+	const originalIdentity = await readFile(identity, "utf8");
+	const identitySelection = {
+		...selected,
+		items: selected.items
+			.filter((item: string) => item !== "@chatjs/host-identity")
+			.concat(`${origin}/broken-identity`),
+	};
+	await writeFile(selection, JSON.stringify(identitySelection));
+	await assert.rejects(
+		command([
+			"node",
+			cli,
+			"add",
+			"--selection",
+			selection,
+			"--cwd",
+			app,
+			"--yes",
+		]),
+		/has no exported member/,
+	);
+	assert.equal(await readFile(identity, "utf8"), originalIdentity);
+	identitySelection.items = identitySelection.items
+		.filter((item: string) => item !== `${origin}/broken-identity`)
+		.concat(`${origin}/identity`);
+	await writeFile(selection, JSON.stringify(identitySelection));
+	await command([
+		"node",
+		cli,
+		"add",
+		"--selection",
+		selection,
+		"--cwd",
+		app,
+		"--yes",
+	]);
+	assert.equal(await readFile(identity, "utf8"), originalIdentity);
+	assert(
+		(
+			await readFile(join(app, ".chatjs/proposals/lib/identity.ts"), "utf8")
+		).includes('identityVariant = "external"'),
+	);
+	for (const path of [
+		"lib/identity.ts",
+		"chat.selection.json",
+		"chat.installation.json",
+	])
+		await cp(join(app, ".chatjs/proposals", path), join(app, path));
 	await command(["bun", "run", "test:types"], app);
+	assert.deepEqual(await compiledToolNames(), ["confirm_note", "weather"]);
 	console.log(
 		JSON.stringify(
 			{
@@ -228,9 +354,14 @@ assert.match(renderToString(<ToolResults parts={[{type:"dynamic-tool",toolCallId
 				checks: [
 					"minimal actual CLI creation and typecheck",
 					"unselected tool/source/dependencies absent",
+					"compiled Eve toolsets match minimal and expanded selections",
 					"external paired tool and frontend-only installed",
 					"edited composition preserved and proposed composition typechecked",
 					"external layout proposal preserved edits",
+					"stale proposals removed after abandoned layout change",
+					"same-path external identity source proposed and typechecked",
+					"broken identity source rejected despite existing valid implementation",
+					"renderer type mismatch rejected and malformed/unknown output falls back",
 					"adopted app typechecks",
 				],
 				minimalDependencies: minimal.dependencies,

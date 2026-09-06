@@ -68,6 +68,11 @@ chat-js add --selection ./updated-selection.json --cwd ./my-app --yes
 New files/dependencies are installed using shadcn's public materializer. Existing
 source is preserved, and composition edits are proposed under `.chatjs/proposals`.
 The proposed composition is typechecked in an isolated copy of the actual app.
+Changed registry source at an existing path is also proposed and typechecked,
+including replacement identity or execution modules. Per-file source hashes in
+the adopted receipt distinguish changed registry source from developer edits to
+an unchanged item. Each successful materialization replaces the generated proposal
+set; copy any edits you want to keep out of `.chatjs/proposals` before another add.
 Review and adopt each intended change, for example from the app directory:
 
 ```sh
@@ -133,7 +138,7 @@ capabilities. Check package-manager warnings and test replacement integrations.
 JSON schemas are shipped as `registry/selection-schema.json` and
 `registry/metadata-schema.json` in the CLI package.
 
-`chat.installation.json` records the CLI version and observed source hashes. It is
+`chat.installation.json` records the CLI version and observed item/file hashes. It is
 an audit receipt, not a lockfile: external URLs may change between installations.
 Use immutable registry URLs when reproducibility matters. Bun's lockfile records
 the installed package graph. No new plugin runtime or version resolver is added.
