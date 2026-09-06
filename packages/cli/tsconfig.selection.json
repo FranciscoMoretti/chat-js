@@ -1,0 +1,9 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"types": ["bun"],
+		"noEmit": true,
+		"resolveJsonModule": true
+	},
+	"include": ["src/selection", "build-registry.ts"]
+}

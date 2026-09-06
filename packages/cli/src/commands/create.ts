@@ -3,6 +3,7 @@ import { basename, join, relative, resolve } from "node:path";
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
 import { z } from "zod";
+import { createSelected } from "../selection/commands";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import {
@@ -104,6 +105,8 @@ export const create = new Command()
 	.name("create")
 	.description("scaffold a new ChatJS chat application")
 	.argument("[directory]", "target directory for the project")
+	.option("--minimal", "create the selected minimal Next/Eve app")
+	.option("--selection <file-or-url>", "create from a shared JSON selection")
 	.option("-y, --yes", "skip prompts and use defaults", false)
 	.option("--no-install", "skip dependency installation")
 	.option("--electron", "include the Electron desktop app")
@@ -130,6 +133,21 @@ export const create = new Command()
 	)
 	.action(async (directory, opts) => {
 		try {
+			if (opts.minimal || opts.selection) {
+				if (
+					opts.fromGit ||
+					opts.electron ||
+					opts.registry ||
+					opts.storageProvider ||
+					opts.storageConfig ||
+					(opts.packageManager && opts.packageManager !== "bun")
+				)
+					throw new Error(
+						"Minimal selection uses Bun and its selected registry items; omit legacy template options.",
+					);
+				await createSelected(directory ?? "my-chat-app", opts);
+				return;
+			}
 			const options = createOptionsSchema.parse({
 				target: directory,
 				...opts,

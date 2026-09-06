@@ -25,6 +25,7 @@
 		"files-sdk": "2.1.0",
 		"kleur": "^4.1.5",
 		"ora": "^8.2.0",
+		"shadcn": "4.21.0",
 		"zod": "^4.3.6"
 	},
 	"bin": {
@@ -32,7 +33,8 @@
 	},
 	"files": [
 		"dist",
-		"templates"
+		"templates",
+		"registry"
 	],
 	"private": false,
 	"publishConfig": {
@@ -40,13 +42,16 @@
 	},
 	"scripts": {
 		"start": "bun src/index.ts",
-		"build": "bun run template:sync && bun build ./src/index.ts --target=node --format=esm --outfile ./dist/index.js",
-		"test:unit": "bun run template:sync && bun test src",
+		"build": "bun run template:sync && bun run registry:build && bun build ./src/index.ts --target=node --format=esm --external shadcn --outfile ./dist/index.js",
+		"test:unit": "bun run template:sync && bun run registry:build && bun test src",
 		"template:sync": "bun ../../scripts/sync-template.ts",
-		"prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null"
+		"prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null",
+		"registry:build": "bun build-registry.ts",
+		"test:types": "tsc -p tsconfig.selection.json --noEmit"
 	},
 	"type": "module",
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "1.3.11",
+		"typescript": "6.0.2"
 	}
 }

@@ -34,6 +34,20 @@
       "exports": {
         "PORT": "{port}"
       }
+    },
+    "minimal": {
+      "offset": 4,
+      "exports": {
+        "PORT": "{port}",
+        "APP_ORIGIN": "{url}",
+        "EVE_INTERNAL_ORIGIN": "{apps.minimalEve.url}"
+      }
+    },
+    "minimalEve": {
+      "offset": 5,
+      "exports": {
+        "PORT": "{port}"
+      }
     }
   }
 }
