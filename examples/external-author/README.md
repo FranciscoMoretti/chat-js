@@ -8,7 +8,8 @@ React layout/component. There is no shared runtime extension interface.
 This is a provisional proof against [PR #318](https://github.com/FranciscoMoretti/chat-js/pull/318)
 commit `1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10`. The installer and minimal starter
 are unchanged. Adoption into the accepted product/docs remains pending review of
-#318. No registry is published by this example, and no P2 service is required.
+#318, #313 and the relevant #311 contract. The associated #317 head was inspected
+at `c686b31bb0fe00e3234eaa92af7f81ed4d172ad7` (OPEN), but is not incorporated. No registry is published by this example, and no P2 service is required.
 
 ## Run the disposable installer proof
 
@@ -62,7 +63,9 @@ dependencies, and the small `meta.chatjs` composition hints used at this pin.
 - **Frontend:** [FRONTEND.md](FRONTEND.md) describes a layout accepting children
   and an independent no-props scratchpad. Neither adds npm dependencies.
 
-The author items install only their selected dependencies. The positive cases do
+The author items install only their selected dependencies. The proof checks physical source files, direct dependencies and resolved lockfile
+entries. It records retained Eve/AI SDK transitives separately, including Nitro,
+Undici and AI SDK Gateway. The positive cases do
 not install `@ai-sdk/openai-compatible`, Files SDK, sandbox, Tavily, Firecrawl, or
 CSV peers. Common application dependencies still come from the selected base.
 
@@ -79,8 +82,9 @@ AUTHOR_APP="/absolute/path/printed-by-proof/studio" \
   bun examples/external-author/live.ts
 ```
 
-Keep `OPENAI_API_KEY` in the invoking environment. The harness writes a private
-`.env.local`, starts its own database/worker/app and authenticated local search
+Keep `OPENAI_API_KEY` in the invoking environment. The harness starts an authenticated local Responses relay backed by real OpenAI,
+and writes its disposable relay key (not the upstream credential) to a private
+`.env.local`. It starts its own database/worker/app and authenticated local search
 fixture, and records the app URL in `evidence/live-context.json`. Use the generated
 `evidence/identity.cookies` host fixture to authenticate your local browser (its
 `chatjs_identity` cookie targets the printed app origin). Do not publish those
@@ -90,7 +94,9 @@ private files. Open the app and send:
 > "Author blue circle". Then use author_search with query "SVG reference". Call
 > both tools, then summarize briefly.
 
-Verify the SVG, search link, reload replay, and scratchpad behavior from
+Before approving the drawing, reload and verify that the pending request remains
+reachable inside the external layout. Approve it, then verify the SVG, search
+link, reload replay, and scratchpad behavior from
 [FRONTEND.md](FRONTEND.md). Ctrl-C stops the owned services and database. Remove
 the disposable output when finished, including the private environment/cookie.
 
@@ -103,13 +109,22 @@ renderer props. The client bundle excluded server credential/HTTP code and kept
 both result renderers out of its entry chunk. Repository lint/types and all 42 CLI
 unit tests passed.
 
-The live generated studio used real OpenAI Responses through the external factory.
-Both tools ran and rendered; reload replayed the saved results without another
-search request. The search endpoint was a deterministic local fixture. Scratchpad
-editing/count/clear/reset worked, and Next MCP reported no compilation or session
-errors. The screenshot shows the replayed results:
+The live generated studio used real OpenAI Responses through an authenticated
+local author gateway. Both tools ran. Drawing approval stayed reachable after
+reload inside the external layout; no SVG or SVG renderer chunk existed before
+approval. Approval produced the circle and loaded its renderer. Completed-result
+reload made no additional gateway/search request. A second drawing was denied
+through the native Cancel control: it showed `output-denied` and produced no SVG.
+The model first asked for textual confirmation on the rejection scenario; an
+explicit follow-up to invoke the tool triggered its native approval request.
 
-![External layout, SVG result, and search result](evidence/studio.png)
+The search endpoint was a deterministic local fixture. Scratchpad edit/count,
+close/reopen retention and clear worked. Next MCP reported no compilation or
+session errors. The screenshots show pending input and replayed approved results:
+
+![Required input inside the external layout](evidence/pending.png)
+
+![Approved SVG and search results](evidence/studio.png)
 
 The negative model item passes TypeScript but Eve rejects its unlisted provider
 identity because context-window metadata is unavailable. This pin's model
@@ -126,3 +141,27 @@ callbacks are unsupported here. Renderers handle validated completed outputs;
 partial/error/cancellation behavior remains owned by the base UI. Arbitrary
 external dependencies at every existing product choice remain the broader goal;
 these examples prove only the listed boundaries on this provisional snapshot.
+
+## Follow-up tranche / #321
+
+The [tracking issue](https://github.com/FranciscoMoretti/chat-js/issues/321) reuses
+this branch and closes the earlier required-input, gateway endpoint, stalled-body,
+and full lockfile evidence gaps. This does not clear independent #315 defects,
+prove multi-principal ACL/restart behavior again, or complete every UI choice.
+The installer remains pinned to #318. The generated `app-layout.tsx` is necessary
+composition glue and is retained; the omission check verifies which layout it
+imports. Built-in Eve tool paths remain disabled stubs, not active integrations.
+
+Validation commands (from repository root):
+
+```sh
+bun lint
+bun test:types
+(cd packages/cli && bun run test:unit)
+bun packages/cli/node_modules/typescript/bin/tsc --noEmit --target esnext --module esnext --moduleResolution bundler --strict --skipLibCheck --types bun --typeRoots packages/cli/node_modules/@types examples/external-author/proof.ts examples/external-author/live.ts examples/external-author/registry.ts
+```
+
+Root Turbo checks do not include this standalone example directory; the separate
+harness and generated-app checks cover it. Raw generated evidence stays in the
+chosen disposable output. Checked-in evidence is sanitized; it contains no
+credential, cookie, upstream request body, or provider response body.

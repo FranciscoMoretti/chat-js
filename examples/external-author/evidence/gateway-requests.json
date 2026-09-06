@@ -1,0 +1,72 @@
+[
+	{
+		"path": "/v1/responses",
+		"status": 200,
+		"contentType": "text/event-stream; charset=utf-8",
+		"requestFields": [
+			"input",
+			"model",
+			"reasoning",
+			"safety_identifier",
+			"stream",
+			"tool_choice",
+			"tools"
+		]
+	},
+	{
+		"path": "/v1/responses",
+		"status": 200,
+		"contentType": "text/event-stream; charset=utf-8",
+		"requestFields": [
+			"input",
+			"model",
+			"reasoning",
+			"safety_identifier",
+			"stream",
+			"tool_choice",
+			"tools"
+		]
+	},
+	{
+		"path": "/v1/responses",
+		"status": 200,
+		"contentType": "text/event-stream; charset=utf-8",
+		"requestFields": [
+			"input",
+			"model",
+			"reasoning",
+			"safety_identifier",
+			"stream",
+			"tool_choice",
+			"tools"
+		]
+	},
+	{
+		"path": "/v1/responses",
+		"status": 200,
+		"contentType": "text/event-stream; charset=utf-8",
+		"requestFields": [
+			"input",
+			"model",
+			"reasoning",
+			"safety_identifier",
+			"stream",
+			"tool_choice",
+			"tools"
+		]
+	},
+	{
+		"path": "/v1/responses",
+		"status": 200,
+		"contentType": "text/event-stream; charset=utf-8",
+		"requestFields": [
+			"input",
+			"model",
+			"reasoning",
+			"safety_identifier",
+			"stream",
+			"tool_choice",
+			"tools"
+		]
+	}
+]

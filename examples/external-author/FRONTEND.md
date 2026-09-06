@@ -43,8 +43,8 @@ these small examples do not claim lazy component installation or loading.
    layout. This requires the separate generated-app integration journey; shape
    compatibility alone does not establish it.
 
-These are expected assertions for the harness, not a claim they already passed.
-Type conformance should accept both exports and reject a frontend component with
+Observed positive checks are recorded in `EVIDENCE.json`; this guide also lists
+additional author assertions. Type conformance should accept both exports and reject a frontend component with
 a required `conversationId` prop or a layout requiring an additional `accountId`.
 The actual generated consumer, not a new author-side interface, owns those checks.
 

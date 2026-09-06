@@ -87,6 +87,12 @@ const server = createServer(async (request, reply) => {
 		return;
 	}
 	reply.setHeader("Content-Type", "application/json");
+	if (mode === "stalled-body") {
+		// Headers and a partial body arrive; completion never does. The production
+		// deadline must cover body consumption as well as the initial fetch.
+		reply.write('{"results":');
+		return;
+	}
 	if (mode === "error") reply.statusCode = 503;
 	reply.end(
 		mode === "malformed"
@@ -112,7 +118,14 @@ try {
 	assert.equal(seenMethod, "POST");
 	assert.deepEqual(JSON.parse(seenBody), { query: "trees" });
 	assert.equal(seenAuthorization, "Bearer local-fixture-secret");
-	for (mode of ["malformed", "oversized", "invalid-url", "error", "redirect"]) {
+	for (mode of [
+		"malformed",
+		"oversized",
+		"invalid-url",
+		"error",
+		"redirect",
+		"stalled-body",
+	]) {
 		await assert.rejects(searchAuthorEndpoint("trees"), (error: unknown) => {
 			assert.ok(error instanceof Error);
 			assert.equal(
@@ -144,5 +157,5 @@ try {
 	});
 }
 console.log(
-	"PASS author contracts, lazy invalid-output fallback, HTTP success and five HTTP negatives; no live provider claim",
+	"PASS author contracts, lazy invalid-output fallback, HTTP success and six HTTP negatives (including stalled response body); no live provider claim",
 );

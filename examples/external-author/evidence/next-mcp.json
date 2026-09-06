@@ -1,0 +1,26 @@
+{
+	"get_compilation_issues": {
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "{\"issues\":[]}"
+				}
+			]
+		},
+		"jsonrpc": "2.0",
+		"id": 1
+	},
+	"get_errors": {
+		"result": {
+			"content": [
+				{
+					"type": "text",
+					"text": "{\"configErrors\":[],\"sessionErrors\":[]}"
+				}
+			]
+		},
+		"jsonrpc": "2.0",
+		"id": 1
+	}
+}

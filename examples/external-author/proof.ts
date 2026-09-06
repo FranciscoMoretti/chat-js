@@ -122,20 +122,165 @@ try {
 			repo,
 		);
 		const pkg = await Bun.file(join(app, "package.json")).json();
-		assert(!pkg.dependencies["@ai-sdk/openai-compatible"]);
-		if (name === "studio")
-			assert(
-				!(await Bun.file(join(app, "integrations/model.ts")).exists()),
-				"Unselected official model source must be absent",
-			);
-		for (const dependency of [
+		// Check physical source omission, not just the generated import map. These
+		// checks run before `add`, which intentionally installs SVG into frontend.
+		const sourceGroups = [
+			{
+				selected: name === "studio",
+				paths: ["integrations/author/gateway.ts"],
+			},
+			{
+				selected: name !== "studio",
+				paths: ["integrations/model.ts"],
+			},
+			{
+				selected: name === "studio",
+				paths: [
+					"agent/tools/draw_svg.ts",
+					"lib/author-svg-contract.ts",
+					"components/author-svg/client.tsx",
+					"components/author-svg/renderer.tsx",
+				],
+			},
+			{
+				selected: name !== "frontend",
+				paths: [
+					"agent/tools/author_search.ts",
+					"lib/author-search-contract.ts",
+					"lib/author-search.server.ts",
+					"components/author-search/client.tsx",
+					"components/author-search/renderer.tsx",
+				],
+			},
+			{
+				selected: name !== "search",
+				paths: [
+					"components/author/scratchpad.tsx",
+					"components/author/studio-layout.tsx",
+				],
+			},
+			{
+				selected: name === "search",
+				paths: ["components/chat/layout-minimal.tsx"],
+			},
+			{
+				selected: false,
+				paths: [
+					"agent/tools/confirm_note.ts",
+					"lib/note-contract.ts",
+					"components/confirm-note/client.tsx",
+					"components/confirm-note/renderer.tsx",
+				],
+			},
+		];
+		for (const group of sourceGroups)
+			for (const path of group.paths)
+				assert.equal(
+					await Bun.file(join(app, path)).exists(),
+					group.selected,
+					`${name}: ${path} must be ${group.selected ? "present" : "absent"}`,
+				);
+		// app-layout.tsx is generated composition glue in every selection.
+		const layout = await readFile(
+			join(app, "components/chat/app-layout.tsx"),
+			"utf8",
+		);
+		assert.equal(
+			layout.includes("../../components/author/studio-layout"),
+			name !== "search",
+		);
+		assert.equal(
+			layout.includes("../../components/chat/layout-minimal"),
+			name === "search",
+		);
+		const client = await readFile(join(app, "chat.client.ts"), "utf8");
+		for (const [mount, included] of [
+			["draw_svg", name === "studio"],
+			["author_search", name !== "frontend"],
+			["Scratchpad", name !== "search"],
+		] as const)
+			assert.equal(client.includes(mount), included, `${name}: ${mount} mount`);
+		const modelSource = await readFile(join(app, "chat.server.ts"), "utf8");
+		assert.equal(
+			modelSource.includes("./integrations/author/gateway"),
+			name === "studio",
+		);
+		assert.equal(
+			modelSource.includes('"./integrations/model"'),
+			name !== "studio",
+		);
+		// Built-in tool files are required disable stubs, not omitted files.
+		assert.match(
+			await readFile(join(app, "agent/tools/web_search.ts"), "utf8"),
+			/^import \{ disableTool \} from "eve\/tools";\s+export default disableTool\(\);\s*$/,
+		);
+		const lock = Bun.JSONC.parse(
+			await readFile(join(app, "bun.lock"), "utf8"),
+		) as {
+			workspaces: Record<string, { dependencies: Record<string, string> }>;
+			packages: Record<
+				string,
+				[
+					string,
+					string,
+					{ dependencies?: Record<string, string> },
+					...unknown[],
+				]
+			>;
+		};
+		assert.deepEqual(
+			lock.workspaces[""].dependencies,
+			pkg.dependencies,
+			`${name}: installed root dependencies must match package.json`,
+		);
+		const exclusiveDependencies = [
+			"@ai-sdk/openai-compatible",
 			"files-sdk",
 			"@vercel/sandbox",
 			"@tavily/core",
 			"@mendable/firecrawl-js",
 			"papaparse",
-		])
+		];
+		// Inspect package resolutions too, including nested package keys. A
+		// direct-dependency-only check would miss an accidentally bundled add-on.
+		const resolvedPackages = Object.values(lock.packages);
+		for (const dependency of exclusiveDependencies) {
+			assert(!pkg.dependencies[dependency], `${name}: direct ${dependency}`);
+			assert(!pkg.devDependencies?.[dependency], `${name}: dev ${dependency}`);
+			assert(
+				!resolvedPackages.some(([resolution]) =>
+					resolution.startsWith(`${dependency}@`),
+				),
+				`${name}: unselected ${dependency} appears in bun.lock`,
+			);
+		}
+		// Eve and AI SDK retain their own transitives regardless of selection.
+		// Their presence is not evidence that an unselected registry was installed.
+		const retainedTransitives = ["nitro", "undici", "@ai-sdk/gateway"];
+		for (const dependency of retainedTransitives) {
 			assert(!pkg.dependencies[dependency]);
+			assert(
+				resolvedPackages.some(([resolution]) =>
+					resolution.startsWith(`${dependency}@`),
+				),
+			);
+		}
+		assert(lock.packages.eve?.[2].dependencies?.nitro);
+		assert(lock.packages.eve?.[2].dependencies?.undici);
+		assert(lock.packages.ai?.[2].dependencies?.["@ai-sdk/gateway"]);
+		const omission = {
+			presentSources: sourceGroups
+				.filter((group) => group.selected)
+				.flatMap((group) => group.paths),
+			absentSources: sourceGroups
+				.filter((group) => !group.selected)
+				.flatMap((group) => group.paths),
+			absentDirectAndResolvedDependencies: exclusiveDependencies,
+			retainedTransitives,
+			rootLockDependenciesMatchManifest: true,
+			builtinWebSearch:
+				"disableTool stub; no built-in search implementation selected",
+		};
 		await command(["node", "node_modules/eve/bin/eve.js", "build"], app, {
 			APP_DATABASE_URL: "postgres://fixture:fixture@127.0.0.1:1/unused",
 		});
@@ -158,6 +303,7 @@ try {
 		(evidence.cases as unknown[]).push({
 			name,
 			dependencies: pkg.dependencies,
+			omission,
 			tools,
 			receipt: selected,
 		});

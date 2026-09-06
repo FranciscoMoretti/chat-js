@@ -6,7 +6,7 @@
 		"date": "2026-09-06",
 		"scope": "Provisional author examples against this exact installer snapshot, not an accepted final contract."
 	},
-	"sourceBranchHead": "1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10",
+	"sourceBranchHead": "ef8522bd0784745c5c1b1e1418113744261baa3f",
 	"scope": "Real built CLI, generated source and local conformance; live run is separate",
 	"cases": [
 		{
@@ -25,6 +25,41 @@
 				"react-dom": "19.2.3",
 				"zod": "4.3.6"
 			},
+			"omission": {
+				"presentSources": [
+					"integrations/author/gateway.ts",
+					"agent/tools/draw_svg.ts",
+					"lib/author-svg-contract.ts",
+					"components/author-svg/client.tsx",
+					"components/author-svg/renderer.tsx",
+					"agent/tools/author_search.ts",
+					"lib/author-search-contract.ts",
+					"lib/author-search.server.ts",
+					"components/author-search/client.tsx",
+					"components/author-search/renderer.tsx",
+					"components/author/scratchpad.tsx",
+					"components/author/studio-layout.tsx"
+				],
+				"absentSources": [
+					"integrations/model.ts",
+					"components/chat/layout-minimal.tsx",
+					"agent/tools/confirm_note.ts",
+					"lib/note-contract.ts",
+					"components/confirm-note/client.tsx",
+					"components/confirm-note/renderer.tsx"
+				],
+				"absentDirectAndResolvedDependencies": [
+					"@ai-sdk/openai-compatible",
+					"files-sdk",
+					"@vercel/sandbox",
+					"@tavily/core",
+					"@mendable/firecrawl-js",
+					"papaparse"
+				],
+				"retainedTransitives": ["nitro", "undici", "@ai-sdk/gateway"],
+				"rootLockDependenciesMatchManifest": true,
+				"builtinWebSearch": "disableTool stub; no built-in search implementation selected"
+			},
 			"tools": ["author_search", "draw_svg"],
 			"selectedItems": [
 				"minimal-next",
@@ -35,7 +70,58 @@
 				"author-search",
 				"author-scratchpad",
 				"author-layout"
-			]
+			],
+			"sourceHashes": {
+				"tsconfig.json": "8a467d7b7857a86c793dcf5048d40d26675b2f5e6d3cd6383de8a1f47b3306fa",
+				"next.config.ts": "90ee7595f5c81b7a6ec9c12ae0539e91f4f042124553929bbe1a3baa4296d4c9",
+				"components/chat/tool-results.tsx": "a795102454da73f541c264169ab4f8dd40ca0dffd24f287b8c2eaca42ffe9d2e",
+				"lib/projection.ts": "31a22cc3c75375e978451c7c002444359896314e670bb53722cb46fccfd2ad53",
+				"lib/application-client.ts": "e8e77b8feb87768baa953459d9d09d0731ef8e1bc635f56653369fc9f9d36f17",
+				"lib/router.ts": "5352360f669b7ac79b4639a4af75629a08f566511e81549ef3ac387884cc7f5a",
+				"lib/tool-renderer.tsx": "191d5aebc6689be0747589ec22b17259c28d522cf1904b950d37646f7f651c44",
+				"lib/eve-server.ts": "1c85ce44615e7b3f179b2d315827bcd62e269d2e853d6487358a49a464dcc6b3",
+				"lib/create-contract.ts": "3bac45e0fdd0ab0a49a0bf299a1f8856790e63aae1968342cc311fb02e1929f8",
+				"lib/send-turn.ts": "04b99af5fa512438ac976f87aa372b8ecdf7c3017dc094abebc4155f14564556",
+				"lib/env.ts": "4f5f8dd4a347cd83bc888798bb6a1096dbf9afc7ad0d36f85ac841baa7ef7636",
+				"agent/instructions.md": "407938c6d303bb3251b3b7c06943532ca7dfb864ef2dc7278826254c29f9ad96",
+				"agent/tools/todo.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/write_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/read_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/agent.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/load_skill.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/ask_question.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_update.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/bash.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_fetch.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_cancel.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/connection_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/channels/eve.ts": "77a29069affdff17ad851eef71a55255db872a8b09d848b2fc17fcc2af1d977f",
+				"app/layout.tsx": "06042828644f46db5a608c1d00df59cb0b768ec571376b3487dd697d03eccb55",
+				"app/style.css": "d889011cb869e5e26b33d9590f46a6452091a68e313c26fcf4e35949d2a0bbb6",
+				"app/global.d.ts": "35d26ea66c86da9701e4f4b467913481ffeae910761cea34c775c5dacb7f8eaa",
+				"app/chat.tsx": "9c8c1b6d8919532221c6b8b9a63e7386febac921cc6e0b73b9de78af75dc052c",
+				"app/page.tsx": "774582bfc604075027cd9d185cb5e98ad08ce97d17c939edbb6ba2c123f5a274",
+				"app/api/eve/[...path]/route.ts": "65b202bcfe5088e421474bb00b3c15c96bfde2e785a9b297f1a962fb1cb121a3",
+				"app/api/trpc/[trpc]/route.ts": "fa03a34d68ede1b0d033f45275df02be4fe49310960abab0d31cc9d6a2b188e1",
+				"lib/identity.ts": "e633e4ef30bc70567632a728fdd0f68c058e4ffa206abde1df1b92f2e0b4a1e7",
+				"lib/bindings.ts": "f4438d37cf83647aece89870fed94b5060419e99af9d7113ffb6e8463b0c37f3",
+				"scripts/db-init.ts": "7ccaaafee42f97a6c9f18815fe9dec6f3b3b9df17758b1a647166cd00f3b33ad",
+				"agent/agent.ts": "69d31ab44fb62fbba2e1c913b8c558eec25a9fad7185510142e47e69742040ee",
+				"integrations/author/gateway.ts": "e5f2ec71b1e271af267e8ce7ca8e7da2b42c2fff7473c7b35bb9d76da6c8b131",
+				"lib/author-svg-contract.ts": "cae8acb5fdfacba1670382b2686d9edeeac48cf7ed518fc188b12dbe7f4358da",
+				"components/author-svg/renderer.tsx": "dbc47d7a53d965bd2b0baff5d16ce27de61bc9ac0fac24ea9689092e2d9c7276",
+				"components/author-svg/client.tsx": "1cd4914d330da68816a882d599c38e2f63590a5429207253988d0ae9beca7ef3",
+				"agent/tools/draw_svg.ts": "6a4613bcd4c66708b544ed0b133b0128ce63203eb3c8da73cc85ed5945eb2415",
+				"lib/author-search-contract.ts": "ee75db20c5a709c8eab2ab8cffa5e4a13de2ebf07d28d707e353f814b7472721",
+				"lib/author-search.server.ts": "58ec841700d0f045b5432d6e5d26b90b00671c91c44c3d7c9891652e72a355f5",
+				"agent/tools/author_search.ts": "d1614cd7f743af2a070b955dff455719d2ed9dc1c8c7dd53a9cd95982d58c672",
+				"components/author-search/renderer.tsx": "84ae303b6542297ddd1142e6a12bcdfbce89a2abed37f56a6fa0876df2320fca",
+				"components/author-search/client.tsx": "9eb92792287a7ea6b11bf7640d8723948f110f88085543e9326d865daf8ec49d",
+				"components/author/scratchpad.tsx": "6ad81e672211fcc5c4e09d851874dc7c1204ce9dc20794ea15474e5fffd97187",
+				"components/author/studio-layout.tsx": "668054425ce250d975466262a3e49d661c8debfece5080fe99e7e9875d047833"
+			},
+			"finalLockSha256": "a23345f72249b7eaf95cece94a879cebc7c747b4da70f4d6b18c33b9fef6a255"
 		},
 		{
 			"name": "frontend",
@@ -53,6 +139,41 @@
 				"react-dom": "19.2.3",
 				"zod": "4.3.6"
 			},
+			"omission": {
+				"presentSources": [
+					"integrations/model.ts",
+					"components/author/scratchpad.tsx",
+					"components/author/studio-layout.tsx"
+				],
+				"absentSources": [
+					"integrations/author/gateway.ts",
+					"agent/tools/draw_svg.ts",
+					"lib/author-svg-contract.ts",
+					"components/author-svg/client.tsx",
+					"components/author-svg/renderer.tsx",
+					"agent/tools/author_search.ts",
+					"lib/author-search-contract.ts",
+					"lib/author-search.server.ts",
+					"components/author-search/client.tsx",
+					"components/author-search/renderer.tsx",
+					"components/chat/layout-minimal.tsx",
+					"agent/tools/confirm_note.ts",
+					"lib/note-contract.ts",
+					"components/confirm-note/client.tsx",
+					"components/confirm-note/renderer.tsx"
+				],
+				"absentDirectAndResolvedDependencies": [
+					"@ai-sdk/openai-compatible",
+					"files-sdk",
+					"@vercel/sandbox",
+					"@tavily/core",
+					"@mendable/firecrawl-js",
+					"papaparse"
+				],
+				"retainedTransitives": ["nitro", "undici", "@ai-sdk/gateway"],
+				"rootLockDependenciesMatchManifest": true,
+				"builtinWebSearch": "disableTool stub; no built-in search implementation selected"
+			},
 			"tools": [],
 			"selectedItems": [
 				"minimal-next",
@@ -61,7 +182,50 @@
 				"openai",
 				"author-scratchpad",
 				"author-layout"
-			]
+			],
+			"sourceHashes": {
+				"tsconfig.json": "8a467d7b7857a86c793dcf5048d40d26675b2f5e6d3cd6383de8a1f47b3306fa",
+				"next.config.ts": "90ee7595f5c81b7a6ec9c12ae0539e91f4f042124553929bbe1a3baa4296d4c9",
+				"components/chat/tool-results.tsx": "a795102454da73f541c264169ab4f8dd40ca0dffd24f287b8c2eaca42ffe9d2e",
+				"lib/projection.ts": "31a22cc3c75375e978451c7c002444359896314e670bb53722cb46fccfd2ad53",
+				"lib/application-client.ts": "e8e77b8feb87768baa953459d9d09d0731ef8e1bc635f56653369fc9f9d36f17",
+				"lib/router.ts": "5352360f669b7ac79b4639a4af75629a08f566511e81549ef3ac387884cc7f5a",
+				"lib/tool-renderer.tsx": "191d5aebc6689be0747589ec22b17259c28d522cf1904b950d37646f7f651c44",
+				"lib/eve-server.ts": "1c85ce44615e7b3f179b2d315827bcd62e269d2e853d6487358a49a464dcc6b3",
+				"lib/create-contract.ts": "3bac45e0fdd0ab0a49a0bf299a1f8856790e63aae1968342cc311fb02e1929f8",
+				"lib/send-turn.ts": "04b99af5fa512438ac976f87aa372b8ecdf7c3017dc094abebc4155f14564556",
+				"lib/env.ts": "4f5f8dd4a347cd83bc888798bb6a1096dbf9afc7ad0d36f85ac841baa7ef7636",
+				"agent/instructions.md": "407938c6d303bb3251b3b7c06943532ca7dfb864ef2dc7278826254c29f9ad96",
+				"agent/tools/todo.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/write_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/read_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/agent.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/load_skill.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/ask_question.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_update.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/bash.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_fetch.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_cancel.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/connection_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/channels/eve.ts": "77a29069affdff17ad851eef71a55255db872a8b09d848b2fc17fcc2af1d977f",
+				"app/layout.tsx": "06042828644f46db5a608c1d00df59cb0b768ec571376b3487dd697d03eccb55",
+				"app/style.css": "d889011cb869e5e26b33d9590f46a6452091a68e313c26fcf4e35949d2a0bbb6",
+				"app/global.d.ts": "35d26ea66c86da9701e4f4b467913481ffeae910761cea34c775c5dacb7f8eaa",
+				"app/chat.tsx": "9c8c1b6d8919532221c6b8b9a63e7386febac921cc6e0b73b9de78af75dc052c",
+				"app/page.tsx": "774582bfc604075027cd9d185cb5e98ad08ce97d17c939edbb6ba2c123f5a274",
+				"app/api/eve/[...path]/route.ts": "65b202bcfe5088e421474bb00b3c15c96bfde2e785a9b297f1a962fb1cb121a3",
+				"app/api/trpc/[trpc]/route.ts": "fa03a34d68ede1b0d033f45275df02be4fe49310960abab0d31cc9d6a2b188e1",
+				"lib/identity.ts": "e633e4ef30bc70567632a728fdd0f68c058e4ffa206abde1df1b92f2e0b4a1e7",
+				"lib/bindings.ts": "f4438d37cf83647aece89870fed94b5060419e99af9d7113ffb6e8463b0c37f3",
+				"scripts/db-init.ts": "7ccaaafee42f97a6c9f18815fe9dec6f3b3b9df17758b1a647166cd00f3b33ad",
+				"agent/agent.ts": "69d31ab44fb62fbba2e1c913b8c558eec25a9fad7185510142e47e69742040ee",
+				"integrations/model.ts": "df4a79b02ee89a4150af6208577da7094756e2795677a52bd337b1eef8199f44",
+				"components/author/scratchpad.tsx": "6ad81e672211fcc5c4e09d851874dc7c1204ce9dc20794ea15474e5fffd97187",
+				"components/author/studio-layout.tsx": "668054425ce250d975466262a3e49d661c8debfece5080fe99e7e9875d047833"
+			},
+			"finalLockSha256": "be1ee67d1df86d53fffde6b3920a7e012c9ca43c0e0c21f2b5fb265d8734367b",
+			"finalLockNote": "After the documented SVG add/adoption; source omission inventory above is before add"
 		},
 		{
 			"name": "search",
@@ -79,6 +243,41 @@
 				"react-dom": "19.2.3",
 				"zod": "4.3.6"
 			},
+			"omission": {
+				"presentSources": [
+					"integrations/model.ts",
+					"agent/tools/author_search.ts",
+					"lib/author-search-contract.ts",
+					"lib/author-search.server.ts",
+					"components/author-search/client.tsx",
+					"components/author-search/renderer.tsx",
+					"components/chat/layout-minimal.tsx"
+				],
+				"absentSources": [
+					"integrations/author/gateway.ts",
+					"agent/tools/draw_svg.ts",
+					"lib/author-svg-contract.ts",
+					"components/author-svg/client.tsx",
+					"components/author-svg/renderer.tsx",
+					"components/author/scratchpad.tsx",
+					"components/author/studio-layout.tsx",
+					"agent/tools/confirm_note.ts",
+					"lib/note-contract.ts",
+					"components/confirm-note/client.tsx",
+					"components/confirm-note/renderer.tsx"
+				],
+				"absentDirectAndResolvedDependencies": [
+					"@ai-sdk/openai-compatible",
+					"files-sdk",
+					"@vercel/sandbox",
+					"@tavily/core",
+					"@mendable/firecrawl-js",
+					"papaparse"
+				],
+				"retainedTransitives": ["nitro", "undici", "@ai-sdk/gateway"],
+				"rootLockDependenciesMatchManifest": true,
+				"builtinWebSearch": "disableTool stub; no built-in search implementation selected"
+			},
 			"tools": ["author_search"],
 			"selectedItems": [
 				"minimal-next",
@@ -87,7 +286,53 @@
 				"openai",
 				"layout-minimal",
 				"author-search"
-			]
+			],
+			"sourceHashes": {
+				"tsconfig.json": "8a467d7b7857a86c793dcf5048d40d26675b2f5e6d3cd6383de8a1f47b3306fa",
+				"next.config.ts": "90ee7595f5c81b7a6ec9c12ae0539e91f4f042124553929bbe1a3baa4296d4c9",
+				"components/chat/tool-results.tsx": "a795102454da73f541c264169ab4f8dd40ca0dffd24f287b8c2eaca42ffe9d2e",
+				"lib/projection.ts": "31a22cc3c75375e978451c7c002444359896314e670bb53722cb46fccfd2ad53",
+				"lib/application-client.ts": "e8e77b8feb87768baa953459d9d09d0731ef8e1bc635f56653369fc9f9d36f17",
+				"lib/router.ts": "5352360f669b7ac79b4639a4af75629a08f566511e81549ef3ac387884cc7f5a",
+				"lib/tool-renderer.tsx": "191d5aebc6689be0747589ec22b17259c28d522cf1904b950d37646f7f651c44",
+				"lib/eve-server.ts": "1c85ce44615e7b3f179b2d315827bcd62e269d2e853d6487358a49a464dcc6b3",
+				"lib/create-contract.ts": "3bac45e0fdd0ab0a49a0bf299a1f8856790e63aae1968342cc311fb02e1929f8",
+				"lib/send-turn.ts": "04b99af5fa512438ac976f87aa372b8ecdf7c3017dc094abebc4155f14564556",
+				"lib/env.ts": "4f5f8dd4a347cd83bc888798bb6a1096dbf9afc7ad0d36f85ac841baa7ef7636",
+				"agent/instructions.md": "407938c6d303bb3251b3b7c06943532ca7dfb864ef2dc7278826254c29f9ad96",
+				"agent/tools/todo.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/write_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/read_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/agent.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/load_skill.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/ask_question.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_update.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/bash.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/web_fetch.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/task_cancel.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/tools/connection_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+				"agent/channels/eve.ts": "77a29069affdff17ad851eef71a55255db872a8b09d848b2fc17fcc2af1d977f",
+				"app/layout.tsx": "06042828644f46db5a608c1d00df59cb0b768ec571376b3487dd697d03eccb55",
+				"app/style.css": "d889011cb869e5e26b33d9590f46a6452091a68e313c26fcf4e35949d2a0bbb6",
+				"app/global.d.ts": "35d26ea66c86da9701e4f4b467913481ffeae910761cea34c775c5dacb7f8eaa",
+				"app/chat.tsx": "9c8c1b6d8919532221c6b8b9a63e7386febac921cc6e0b73b9de78af75dc052c",
+				"app/page.tsx": "774582bfc604075027cd9d185cb5e98ad08ce97d17c939edbb6ba2c123f5a274",
+				"app/api/eve/[...path]/route.ts": "65b202bcfe5088e421474bb00b3c15c96bfde2e785a9b297f1a962fb1cb121a3",
+				"app/api/trpc/[trpc]/route.ts": "fa03a34d68ede1b0d033f45275df02be4fe49310960abab0d31cc9d6a2b188e1",
+				"lib/identity.ts": "e633e4ef30bc70567632a728fdd0f68c058e4ffa206abde1df1b92f2e0b4a1e7",
+				"lib/bindings.ts": "f4438d37cf83647aece89870fed94b5060419e99af9d7113ffb6e8463b0c37f3",
+				"scripts/db-init.ts": "7ccaaafee42f97a6c9f18815fe9dec6f3b3b9df17758b1a647166cd00f3b33ad",
+				"agent/agent.ts": "69d31ab44fb62fbba2e1c913b8c558eec25a9fad7185510142e47e69742040ee",
+				"integrations/model.ts": "df4a79b02ee89a4150af6208577da7094756e2795677a52bd337b1eef8199f44",
+				"components/chat/layout-minimal.tsx": "b91f2b34fc90e2066982b69ae44d991f30051357f3639030f757a190ccd5f5fe",
+				"lib/author-search-contract.ts": "ee75db20c5a709c8eab2ab8cffa5e4a13de2ebf07d28d707e353f814b7472721",
+				"lib/author-search.server.ts": "58ec841700d0f045b5432d6e5d26b90b00671c91c44c3d7c9891652e72a355f5",
+				"agent/tools/author_search.ts": "d1614cd7f743af2a070b955dff455719d2ed9dc1c8c7dd53a9cd95982d58c672",
+				"components/author-search/renderer.tsx": "84ae303b6542297ddd1142e6a12bcdfbce89a2abed37f56a6fa0876df2320fca",
+				"components/author-search/client.tsx": "9eb92792287a7ea6b11bf7640d8723948f110f88085543e9326d865daf8ec49d"
+			},
+			"finalLockSha256": "1aea91e0407bd7d73804f1e6bf1db4bcc971cad2b6f7b7c4ecf7ecb75c983551"
 		}
 	],
 	"bundle": {
@@ -125,25 +370,53 @@
 		"typecheck": "passed",
 		"eveBuild": "rejected: missing context window metadata for unlisted provider identity"
 	},
-	"conformance": "Passed runtime schema/HTTP/invalid-output tests and generated-app typecheck including incompatible renderer props",
+	"trackingIssue": "https://github.com/FranciscoMoretti/chat-js/issues/321",
+	"relatedUiPin": {
+		"pullRequest": 317,
+		"head": "c686b31bb0fe00e3234eaa92af7f81ed4d172ad7",
+		"state": "OPEN",
+		"incorporated": false
+	},
+	"conformance": "Passed schema/serialized HTTP/invalid-output tests, six HTTP negatives including stalled partial body, and generated-app typecheck rejecting incompatible renderer props",
 	"live": {
 		"date": "2026-09-06",
-		"provider": "Real OpenAI Responses gpt-5-mini via author-owned factory",
+		"provider": "Real OpenAI Responses gpt-5-mini through authenticated author-owned loopback relay",
 		"search": "Authenticated deterministic local HTTP fixture; query SVG reference received once",
 		"tools": ["draw_svg", "author_search"],
-		"browser": "Both outputs rendered and replayed after reload; distinct renderer chunks fetched",
-		"frontend": "External layout preserves chat; scratchpad Local draft count 11, clear empties/disables, reload resets",
+		"requiredInput": {
+			"beforeApproval": "Approval UI reachable; no SVG element or SVG renderer chunk",
+			"pendingReload": "Pending request restored and approval controls become enabled after catch-up",
+			"approved": "SVG circle rendered with title Author approved blue circle; pending removed",
+			"completedReload": "One SVG and search result replay; gateway calls stayed at 2 and search calls at 1",
+			"rejected": "Second drawing cancelled through native approval UI; output-denied; no second SVG",
+			"note": "Rejection prompt initially produced a textual confirmation request; a follow-up to invoke the tool produced the native approval UI"
+		},
+		"browser": "Initial renderer requests empty; search renderer fetched when search finished; SVG renderer fetched only after approval",
+		"frontend": "External layout preserves chat/required input; scratchpad Local draft count 11, close/reopen retains, clear empties/disables",
 		"nextMcp": "No compilation issues or runtime session errors",
 		"limits": [
-			"No remote custom gateway endpoint tested",
-			"No real search vendor tested",
-			"No timeout/session cancellation browser proof",
+			"Relay uses real OpenAI upstream; no third-party remote gateway service tested",
+			"Search is a local fixture, not a real vendor",
+			"No upstream session cancellation proof",
+			"No multi-principal ACL or worker restart rerun; independent #315 gates remain",
 			"No composer replacement slot at this pin"
 		]
 	},
 	"repositoryChecks": [
-		"bun lint",
-		"bun test:types",
-		"CLI unit suite: 42 pass, 333 assertions"
-	]
+		"bun lint (Turbo cache)",
+		"bun test:types (Turbo cache)",
+		"standalone harness tsc",
+		"CLI unit suite: 42 pass, 333 assertions",
+		"Biome examples check"
+	],
+	"runtime": {
+		"bun": "1.3.11",
+		"node": "24.20.0",
+		"postgres": "Homebrew PostgreSQL 17",
+		"next": "16.3.0",
+		"eve": "0.52.1",
+		"ai": "7.0.93",
+		"openaiAdapter": "4.0.59",
+		"browser": "agent-browser 0.31.1 with headed Chrome"
+	}
 }

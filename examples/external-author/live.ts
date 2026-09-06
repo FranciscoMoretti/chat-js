@@ -41,10 +41,57 @@ const env: Record<string, string> = {
 	...info.apps.minimal.env,
 	EVE_GATEWAY_SECRET: crypto.randomUUID(),
 	APP_IDENTITY_SECRET: crypto.randomUUID(),
-	AUTHOR_GATEWAY_KEY: key,
-	AUTHOR_GATEWAY_URL: "https://api.openai.com/v1",
+	AUTHOR_GATEWAY_KEY: crypto.randomUUID(),
 	WORKFLOW_TARGET_WORLD: "@workflow/world-postgres",
 };
+// Disposable author-owned Responses relay: real upstream inference, fixed
+// upstream URL, fixture authentication, and sanitized request metadata only.
+const gatewayRequests: unknown[] = [];
+const gateway = Bun.serve({
+	hostname: "127.0.0.1",
+	port: 0,
+	async fetch(request) {
+		if (
+			request.method !== "POST" ||
+			new URL(request.url).pathname !== "/v1/responses"
+		)
+			return new Response("not found", { status: 404 });
+		if (
+			request.headers.get("authorization") !==
+			`Bearer ${env.AUTHOR_GATEWAY_KEY}`
+		)
+			return new Response("denied", { status: 403 });
+		const body = await request.text();
+		const upstream = await fetch("https://api.openai.com/v1/responses", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				authorization: `Bearer ${key}`,
+			},
+			body,
+			signal: request.signal,
+			redirect: "error",
+		});
+		gatewayRequests.push({
+			path: "/v1/responses",
+			status: upstream.status,
+			contentType: upstream.headers.get("content-type"),
+			requestFields: Object.keys(JSON.parse(body)).sort(),
+		});
+		await Bun.write(
+			join(app, "evidence/gateway-requests.json"),
+			JSON.stringify(gatewayRequests, null, 2),
+		);
+		return new Response(upstream.body, {
+			status: upstream.status,
+			headers: {
+				"content-type":
+					upstream.headers.get("content-type") ?? "application/octet-stream",
+			},
+		});
+	},
+});
+env.AUTHOR_GATEWAY_URL = `${gateway.url.origin}/v1`;
 const reserve = Bun.serve({
 	hostname: "127.0.0.1",
 	port: 0,
@@ -123,6 +170,7 @@ async function stop(code = 0) {
 	stopping = true;
 	for (const process of services) process.kill("SIGTERM");
 	search.stop(true);
+	gateway.stop(true);
 	await run([join(pg, "pg_ctl"), "-D", data, "-m", "fast", "stop"]);
 	process.exit(code);
 }
@@ -194,6 +242,7 @@ try {
 				appOrigin: env.APP_ORIGIN,
 				eveOrigin: env.EVE_INTERNAL_ORIGIN,
 				model: "gpt-5-mini",
+				gateway: "authenticated local Responses relay to real OpenAI",
 				search: "deterministic local HTTP fixture",
 				pgPort,
 			},

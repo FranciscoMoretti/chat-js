@@ -27,6 +27,14 @@ file alone is not evidence that its rendered result is wired correctly.
 
 ## Drawing contract
 
+The drawing tool uses native Eve `approval.request: always()` and permits only
+responses from the session initiator. The generated app's existing pending-input
+controls own approval; the output renderer cannot grant it. This example requires
+explicit approval to exercise the interaction boundary, even though drawing has
+no external side effects. On a fresh run, no SVG result should render before
+approval. Reload while pending must preserve the request; approving then produces
+the drawing. A later reload must replay that result without asking again.
+
 The model passes `{ title, shapes }`; the result has the same inferred Zod shape.
 The 512×512 canvas accepts 1–32 circles or rectangles. Coordinates, dimensions and
 radii are bounded. Shapes use a six-color enum. Shapes extending beyond the
@@ -94,8 +102,8 @@ Copy `conformance.tsx` into the installed studio app root and run
 `bun conformance.tsx`, then the generated app's `bun run test:types`. It imports
 installed source, uses a local Node HTTP fixture and restores the previous server
 environment afterward. It checks schema negatives, invalid-output SSR without a
-lazy load, authenticated HTTP success, five HTTP negatives, and redirect refusal.
+lazy load, authenticated HTTP success, six HTTP negatives, and redirect refusal.
 A compile-only `@ts-expect-error` checks rejection of incompatible renderer props.
-The five-second timeout remains source evidence here; this suite does not wait for
-it or prove upstream session cancellation. Successful lazy loading and rendered
+A stalled partial response exercises the five-second body-read deadline. This
+does not prove upstream session cancellation. Successful lazy loading and rendered
 SVG interactions require the parent browser journey.
