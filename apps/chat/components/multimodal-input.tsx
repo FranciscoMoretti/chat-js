@@ -5,10 +5,11 @@ import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import {
   type ChangeEvent,
-  type Dispatch,
+  createContext,
   memo,
-  type SetStateAction,
+  type ReactNode,
   useCallback,
+  useContext,
   useMemo,
   useRef,
   useState,
@@ -18,9 +19,7 @@ import { toast } from "sonner";
 import {
   PromptInput,
   PromptInputButton,
-  PromptInputFooter,
   PromptInputSubmit,
-  PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
@@ -32,7 +31,6 @@ import {
   type ChatMessage,
   expandSelectedModelValue,
   type SelectedModelValue,
-  type UiToolName,
 } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
@@ -59,7 +57,6 @@ import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-import { ConnectorsDropdown } from "./connectors-dropdown";
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { getResponseAwareStatus } from "./parallel-response-status";
@@ -97,6 +94,7 @@ function getAcceptAll(acceptedTypes: Record<string, string[]>): string {
 }
 
 function PureMultimodalInput({
+  children,
   chatId,
   status,
   className,
@@ -105,6 +103,7 @@ function PureMultimodalInput({
   parentMessageId,
   onSendMessage,
 }: {
+  children: ReactNode;
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   className?: string;
@@ -132,16 +131,12 @@ function PureMultimodalInput({
   const {
     editorRef,
     selectedTool,
-    setSelectedTool,
     attachments,
     setAttachments,
     selectedModelId,
     selectedModelSelection,
     handleModelChange,
-    handleModelSelectionChange,
     getInputValue,
-    handleInputChange,
-    getInitialInput,
     isEmpty,
     handleSubmit,
   } = useChatInput();
@@ -688,68 +683,27 @@ function PureMultimodalInput({
             </div>
           )}
 
-          {!isEditMode && (
-            <LimitDisplay
-              className="p-2"
-              forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
-            />
-          )}
-
-          <ContextBar
-            attachments={attachments}
-            className="w-full"
-            onRemoveAction={removeAttachment}
-            uploadQueue={uploadQueue}
-          />
-
-          <LexicalChatInput
-            autoFocus={autoFocus}
-            className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
-            data-testid="multimodal-input"
-            initialValue={getInitialInput()}
-            onEnterSubmit={(event) => {
-              const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
-
-              if (shouldSubmit) {
-                if (!submission.enabled) {
-                  if (submission.message) {
-                    toast.error(submission.message);
-                  }
-                  return true;
-                }
-                submitForm();
-                return true;
-              }
-
-              return false;
+          <ComposerContext.Provider
+            value={{
+              autoFocus,
+              isEditMode,
+              isModelDisallowedForAnonymous,
+              parentMessageId,
+              status: responseAwareStatus,
+              submission,
+              submitForm,
+              onStop: handleStop,
+              onPaste: handlePaste,
+              fileInputRef,
+              acceptAll,
+              acceptFiles,
+              acceptImages,
+              uploadQueue,
+              removeAttachment,
             }}
-            onInputChange={handleInputChange}
-            onPaste={handlePaste}
-            placeholder={
-              isMobile
-                ? "Send a message... (Ctrl+Enter to send)"
-                : "Send a message..."
-            }
-            ref={editorRef}
-          />
-
-          <ChatInputBottomControls
-            acceptAll={acceptAll}
-            acceptFiles={acceptFiles}
-            acceptImages={acceptImages}
-            attachmentsEnabled={attachmentsEnabled}
-            fileInputRef={fileInputRef}
-            onModelSelectionChange={handleModelSelectionChange}
-            onStop={handleStop}
-            parentMessageId={parentMessageId}
-            selectedModelId={selectedModelId}
-            selectedModelSelection={selectedModelSelection}
-            selectedTool={selectedTool}
-            setSelectedTool={setSelectedTool}
-            status={responseAwareStatus}
-            submission={submission}
-            submitForm={submitForm}
-          />
+          >
+            {children}
+          </ComposerContext.Provider>
         </PromptInput>
       </div>
     </div>
@@ -889,100 +843,176 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
-function PureChatInputBottomControls({
-  selectedModelId,
-  selectedModelSelection,
-  onModelSelectionChange,
-  selectedTool,
-  setSelectedTool,
-  fileInputRef,
-  status,
-  submitForm,
-  submission,
-  parentMessageId,
-  acceptAll,
-  acceptImages,
-  acceptFiles,
-  attachmentsEnabled,
-  onStop,
-}: {
-  selectedModelId: AppModelId;
-  selectedModelSelection: SelectedModelValue;
-  onModelSelectionChange: (selection: SelectedModelValue) => void;
-  selectedTool: UiToolName | null;
-  setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  submitForm: () => void;
-  submission: { enabled: boolean; message?: string };
+const ComposerContext = createContext<{
+  autoFocus: boolean;
+  isEditMode: boolean;
+  isModelDisallowedForAnonymous: boolean;
   parentMessageId: string | null;
-  acceptAll: string;
-  acceptImages: string;
-  acceptFiles: string;
-  attachmentsEnabled: boolean;
+  status: UseChatHelpers<ChatMessage>["status"];
+  submission: { enabled: boolean; message?: string };
+  submitForm: () => void;
   onStop: () => void;
-}) {
-  return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
-      <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
-        {attachmentsEnabled && (
-          <AttachmentsButton
-            acceptAll={acceptAll}
-            acceptFiles={acceptFiles}
-            acceptImages={acceptImages}
-            fileInputRef={fileInputRef}
-            status={status}
-          />
-        )}
-        <ModelSelector
-          className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
-          onModelSelectionChangeAction={onModelSelectionChange}
-          selectedModelId={selectedModelId}
-          selectedModelSelection={selectedModelSelection}
-        />
-        <ConnectorsDropdown />
-        <ResponsiveTools
-          selectedModelId={selectedModelId}
-          setTools={setSelectedTool}
-          tools={selectedTool}
-        />
-      </PromptInputTools>
-      <div className="flex items-center gap-1">
-        <ContextUsageFromParent
-          className="@[500px]:block hidden"
-          iconOnly
-          parentMessageId={parentMessageId}
-          selectedModelId={selectedModelId}
-        />
-        <PromptInputSubmit
-          className={"@[500px]:size-10 size-8 shrink-0"}
-          disabled={status === "ready" && !submission.enabled}
-          onClick={(e) => {
-            e.preventDefault();
-            if (status === "streaming" || status === "submitted") {
-              onStop();
-            } else if (status === "ready" || status === "error") {
-              if (!submission.enabled) {
-                if (submission.message) {
-                  toast.error(submission.message);
-                }
-                return;
-              }
-              submitForm();
-            }
-          }}
-          status={status}
-        />
-      </div>
-    </PromptInputFooter>
+  onPaste: (event: React.ClipboardEvent) => Promise<void>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  acceptAll: string;
+  acceptFiles: string;
+  acceptImages: string;
+  uploadQueue: string[];
+  removeAttachment: (attachment: Attachment) => void;
+} | null>(null);
+
+function useComposer() {
+  const context = useContext(ComposerContext);
+  if (!context) {
+    throw new Error("Place composer parts inside MultimodalInput");
+  }
+  return context;
+}
+
+export function ComposerLimits() {
+  const { isEditMode, isModelDisallowedForAnonymous } = useComposer();
+  return isEditMode ? null : (
+    <LimitDisplay
+      className="p-2"
+      forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
+    />
   );
 }
 
-const ChatInputBottomControls = memo(PureChatInputBottomControls);
+export function ComposerAttachments() {
+  const { uploadQueue, removeAttachment } = useComposer();
+  const { attachments } = useChatInput();
+  return (
+    <ContextBar
+      attachments={attachments}
+      className="w-full"
+      onRemoveAction={removeAttachment}
+      uploadQueue={uploadQueue}
+    />
+  );
+}
+
+export function ComposerInput() {
+  const { autoFocus, submission, submitForm, onPaste } = useComposer();
+  const { editorRef, getInitialInput, handleInputChange } = useChatInput();
+  const isMobile = useIsMobile();
+  return (
+    <LexicalChatInput
+      autoFocus={autoFocus}
+      className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
+      data-testid="multimodal-input"
+      initialValue={getInitialInput()}
+      onEnterSubmit={(event) => {
+        const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
+        if (!shouldSubmit) {
+          return false;
+        }
+        if (!submission.enabled) {
+          if (submission.message) {
+            toast.error(submission.message);
+          }
+          return true;
+        }
+        submitForm();
+        return true;
+      }}
+      onInputChange={handleInputChange}
+      onPaste={onPaste}
+      placeholder={
+        isMobile
+          ? "Send a message... (Ctrl+Enter to send)"
+          : "Send a message..."
+      }
+      ref={editorRef}
+    />
+  );
+}
+
+export function ComposerAttachButton() {
+  const { fileInputRef, status, acceptAll, acceptImages, acceptFiles } =
+    useComposer();
+  return config.features.attachments ? (
+    <AttachmentsButton
+      acceptAll={acceptAll}
+      acceptFiles={acceptFiles}
+      acceptImages={acceptImages}
+      fileInputRef={fileInputRef}
+      status={status}
+    />
+  ) : null;
+}
+
+export function ComposerModelPicker() {
+  const {
+    selectedModelId,
+    selectedModelSelection,
+    handleModelSelectionChange,
+  } = useChatInput();
+  return (
+    <ModelSelector
+      className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
+      onModelSelectionChangeAction={handleModelSelectionChange}
+      selectedModelId={selectedModelId}
+      selectedModelSelection={selectedModelSelection}
+    />
+  );
+}
+
+export function ComposerTools() {
+  const { selectedModelId, selectedTool, setSelectedTool } = useChatInput();
+  return (
+    <ResponsiveTools
+      selectedModelId={selectedModelId}
+      setTools={setSelectedTool}
+      tools={selectedTool}
+    />
+  );
+}
+
+export function ComposerContextUsage() {
+  const { parentMessageId } = useComposer();
+  const { selectedModelId } = useChatInput();
+  return (
+    <ContextUsageFromParent
+      className="@[500px]:block hidden"
+      iconOnly
+      parentMessageId={parentMessageId}
+      selectedModelId={selectedModelId}
+    />
+  );
+}
+
+export function ComposerSubmit() {
+  const { status, submission, submitForm, onStop } = useComposer();
+  return (
+    <PromptInputSubmit
+      className="@[500px]:size-10 size-8 shrink-0"
+      disabled={status === "ready" && !submission.enabled}
+      onClick={(event) => {
+        event.preventDefault();
+        if (status === "streaming" || status === "submitted") {
+          onStop();
+        } else if (status === "ready" || status === "error") {
+          if (!submission.enabled) {
+            if (submission.message) {
+              toast.error(submission.message);
+            }
+            return;
+          }
+          submitForm();
+        }
+      }}
+      status={status}
+    />
+  );
+}
 
 export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
+    if (prevProps.children !== nextProps.children) {
+      return false;
+    }
     if (prevProps.status !== nextProps.status) {
       return false;
     }

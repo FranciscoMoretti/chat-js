@@ -8,7 +8,7 @@ import {
   getTextContentFromMessage,
 } from "@/lib/utils";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MultimodalInput } from "./multimodal-input";
+import { ChatComposer } from "./chat-composer";
 
 export interface MessageEditorProps {
   chatId: string;
@@ -33,7 +33,7 @@ function MessageEditorContent({
 
   return (
     <div className="w-full">
-      <MultimodalInput
+      <ChatComposer
         chatId={chatId}
         isEditMode={true}
         onSendMessage={handleOnSendMessage}
