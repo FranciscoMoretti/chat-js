@@ -1,0 +1,3509 @@
+{
+  "baseline": "18db694b9b67263904707a85f93673f494ea0e6d",
+  "method": "Tracked-file coverage ledger. Family assignment is a mechanical path index, not a claim every file was semantically reviewed. See goal-state plan family table and existing 247-file integration index for concrete migration boundaries. Non-source assets/config/tests retained for coverage.",
+  "inputs": {
+    "M07": {
+      "worktree": "/Users/fran/.codex/worktrees/7f9a/chat-js",
+      "commit": "688c7e944cb66397ec2a0e2a80f1557dc7325b07"
+    },
+    "CLI": {
+      "path": "/Users/fran/.codex/worktrees/0305/chat-js/research/framework-evolution/implementation/findings/m08-registry-groundwork.md",
+      "sha256": "1cd03958cb8274f5cb86a613d5dd272113ffb64f89a1e2e3171c5c9189040ad2",
+      "kind": "working-file snapshot; clarification may be uncommitted"
+    },
+    "external": {
+      "path": "/Users/fran/.codex/worktrees/34f9/chat-js/research/framework-evolution/implementation/findings/external-cli-ui-handoff.md",
+      "sha256": "4322364495532c68bf93065e48cd55492e4326a6d9fdfdebd33677b47c7ecf75",
+      "kind": "working-file snapshot; clarification may be uncommitted"
+    },
+    "external-detail": {
+      "path": "/Users/fran/.codex/worktrees/34f9/chat-js/research/framework-evolution/implementation/findings/external-extension-contract.md",
+      "sha256": "c9b35fd2df17d8e04c2e0b93d611018cb9b9e1ce091cfacf6a046592b55c1440",
+      "kind": "working-file snapshot; clarification may be uncommitted"
+    },
+    "CLI-compatibility-plan": {
+      "path": "/Users/fran/.codex/worktrees/0305/chat-js/research/framework-evolution/implementation/findings/m08-compatibility-plan.md",
+      "sha256": "3003940a52a1e05108c3d0fe283cfacc59dc25a57e6329dfb4added7adfd7f2b",
+      "kind": "working-file evidence snapshot; source variant pin b4f11884"
+    },
+    "CLI-compatibility-evidence": {
+      "path": "/Users/fran/.codex/worktrees/0305/chat-js/research/framework-evolution/implementation/findings/m08-compatibility/evidence.json",
+      "sha256": "e05ee19056f0526ebb8226fae386090b5fb1bc931c0ab80efff9d43fecafcd0a",
+      "kind": "working-file evidence snapshot; source variant pin b4f11884"
+    }
+  },
+  "counts": {
+    "ACCEPTANCE": 5,
+    "AI": 48,
+    "API": 13,
+    "APP-SUPPORT": 30,
+    "DESKTOP": 16,
+    "DOCS": 89,
+    "DOCUMENTS": 4,
+    "HELPERS": 73,
+    "HOOKS": 17,
+    "INSTALL": 41,
+    "LEGACY-DATA": 92,
+    "PERSISTENCE": 8,
+    "PRIMITIVES": 56,
+    "REGISTRY": 22,
+    "RELEASE": 14,
+    "ROOT": 8,
+    "ROUTES": 46,
+    "SITE": 40,
+    "STATE": 26,
+    "TOOLS": 43,
+    "TREE": 25,
+    "UI": 146
+  },
+  "files": [
+    {
+      "path": ".changeset/chatjs-sdk-seven.md",
+      "family": "ROOT"
+    },
+    {
+      "path": ".changeset/config.json",
+      "family": "ROOT"
+    },
+    {
+      "path": ".github/pr-assets/threads/chat-parallel-responses.png",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/pr-assets/threads/threads-playground.png",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/pr-assets/unavailable-files/modal.png",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/pr-assets/unavailable-files/previews.png",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/cli-scaffold.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/docs.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/electron-release.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/lint.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/playwright.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/required.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/typecheck.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": ".github/workflows/unit.yml",
+      "family": "RELEASE"
+    },
+    {
+      "path": "CHAT_RUNTIME_MIGRATION_PLAN.md",
+      "family": "ROOT"
+    },
+    {
+      "path": "README.md",
+      "family": "ROOT"
+    },
+    {
+      "path": "apps/chat/.env.example",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/.gitignore",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/AGENTS.md",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/CHANGELOG.md",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/app/(auth)/device-login/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(auth)/login/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(auth)/register/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/actions.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/[id]/stream/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/add-explicit-tool-request-to-messages.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/filter-reasoning-parts.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/get-recent-generated-image.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/get-thread-up-to-message-id.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/chat/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/files/content/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/api/files/upload/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/chat-providers.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/chat-route-host.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/chat/[id]/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/layout.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/loading.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/project/[projectId]/chat/[chatId]/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/project/[projectId]/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/connectors/[connectorId]/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/connectors/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/layout.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/loading.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/models/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/settings/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/share/[id]/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/(chat)/share/[id]/shared-chat-page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/actions/get-chat-models.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/auth/[...all]/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/chat-model/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/cron/cleanup/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/dev-login/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/mcp/oauth/callback/route.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/api/trpc/[trpc]/route.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/app/apple-icon.png",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/favicon.ico",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/globals.css",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/icon.svg",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/layout.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/loading.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/manifest.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/not-found.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/opengraph-image.png",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/privacy/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/sitemap.ts",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/app/terms/page.tsx",
+      "family": "ROUTES"
+    },
+    {
+      "path": "apps/chat/biome.jsonc",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/chat.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/components.json",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/actions.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/artifact.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/code-block.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/context.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/conversation.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/extra/conversation-content-scroll-area.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/extra/mcp-tool-header.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/message.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/parseIncompleteMarkdown.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/prompt-input.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/reasoning.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/response.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/sandbox.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/shimmer.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/suggestion.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ai-elements/tool.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/anonymous-session-init.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/app-sidebar-history-conditional.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/app-sidebar.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/artifact-actions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/artifact-panel.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/assistant-message.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/attachment-card.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/attachment-list.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/auth-card-skeleton.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/auth-providers.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-features-definitions.ts",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-header.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-loading-shell.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-menu-items.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-rename-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-runtime-controller.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-sync.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat-system.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/chat-content.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/chat-layout.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/chat-welcome.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/main-chat-panel.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/secondary-chat-panel.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/chat/use-chat-votes.ts",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/clone-chat-button.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/code-editor.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/connectors-dropdown.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/console.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/context-bar.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/context-usage.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/create-artifact.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/data-stream-handler.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/deep-research-progress.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/delete-chat-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/delete-project-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/dev-login-tool.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/device-login-page.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/diffview.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/docs-link.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/document-skeleton.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/electron-auth-handler.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/electron-auth-ui.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/favicon-group.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/favicon.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/feedback-actions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/followup-suggestions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/get-google-favicon-url.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/get-url-without-params.ts",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/github-link.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/greeting.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/header-actions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/header-breadcrumb.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/icons.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/image-editor.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/image-modal.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/interactive-chart-impl.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/interactive-charts.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/internal-link.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/keyboard-shortcuts.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/lexical-chat-input.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/login-form.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/message-actions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/message-editor.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/message-parts.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/message-siblings.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/message.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/messages-pane.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/messages.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/model-selector-logo.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/model-selector.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/multimodal-input.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/new-chat-button.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/parallel-response-cards.test.ts",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/parallel-response-cards.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/parallel-response-status.ts",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/code-execution.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/deep-research.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/document-common.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/document-preview.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/document-tool.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/dynamic-tool.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/generate-image.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/generate-video.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/message-annotations.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/message-reasoning.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/read-document.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/text-message-part.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/tool-part.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/part/web-search.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/partial-message-loading.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-chat-item.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-chats.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-config.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-details-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-home.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-icon-picker.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-icon.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/project-menu-items.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/research-progress.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/research-task.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/research-tasks.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/response-error-message.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/responsive-tools.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/retry-button.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sandbox.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/search-chats-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/search-chats.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/connector-header.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/connectors-settings.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/mcp-connect-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/mcp-create-dialog.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/mcp-details-page.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/model-row.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/models-settings.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/models-table.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/settings-header.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/settings-nav.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/settings/settings-page.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/share-button.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sheet-editor.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-chat-item.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-chats-list.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-history.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-project-item.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-projects.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-toggle.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-top-row.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sidebar-user-nav.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/signup-form.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/source-badge.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/sources.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/suggested-actions.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/tag.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/text-editor.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/theme-provider.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/thinking-message.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/toolbar.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/ui/accordion.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/alert-dialog.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/alert.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/avatar.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/badge.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/breadcrumb.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/button-group.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/button.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/card.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/checkbox.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/collapsible.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/command.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/dialog.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/drawer.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/dropdown-menu.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/empty.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/extra/action-container.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/extra/scroll-area-viewport-ref.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/form.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/hover-card.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/input-group.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/input.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/label.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/popover.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/progress.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/resizable.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/scroll-area.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/select.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/separator.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/sheet.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/sidebar.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/skeleton.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/slider.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/spinner.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/switch.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/table.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/tabs.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/textarea.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/toggle.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/ui/tooltip.tsx",
+      "family": "PRIMITIVES"
+    },
+    {
+      "path": "apps/chat/components/update-title.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/upgrade-cta/limit-display.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/upgrade-cta/login-cta-banner.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/upgrade-cta/login-prompt.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/upgrade-cta/share-menu-item.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/user-message.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/version-footer.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/components/with-skeleton.tsx",
+      "family": "UI"
+    },
+    {
+      "path": "apps/chat/drizzle.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/electron.d.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/evalite.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/evals/chat-agent.eval.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/evals/my-eval.eval.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/evals/setup.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/hooks/chat-sync-hooks.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-artifact.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-auto-focus.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-chat-system-initial-state.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-image-load-error.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-media-query.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-mobile.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-mounted.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-navigate-to-message.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-navigate-to-sibling.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/hooks/use-shared-chat.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/instrumentation.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/lib/ai/active-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/ai-gateway-models-schemas.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/app-model-id.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/app-models.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/complete-data-part.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/complete-data-part.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/completion-queue.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/completion-queue.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/core-chat-agent.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/determine-explicitly-requested-tools.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/errors.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/eval-agent.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/followup-suggestions.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateway-model-defaults.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/fallback-models.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/gateway-provider.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/litellm-gateway.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/litellm-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/openai-compatible-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/openai-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/openrouter-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/provider-types.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/registry.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/vercel-gateway.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/gateways/vercel-gateway.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/installed-tools.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/markdown-joiner-transform.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/mcp-name-id.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/mcp/cache.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/mcp/mcp-client.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/mcp/mcp-oauth-provider.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/model-data.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/models.generated.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/models.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/prompts.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/providers.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/stream-errors.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/stream-errors.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/telemetry.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/text-splitter.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/text-splitter.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/to-model-data.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/token-utils.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/token-utils.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/tool-renderer-registry.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/types.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/usage-token-details.test.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/ai/usage-token-details.ts",
+      "family": "AI"
+    },
+    {
+      "path": "apps/chat/lib/anonymous-session-client.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/anonymous-session-server.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/app-chat-runtime.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/application-thread.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/artifacts/artifact-kind.ts",
+      "family": "DOCUMENTS"
+    },
+    {
+      "path": "apps/chat/lib/artifacts/code/client.tsx",
+      "family": "DOCUMENTS"
+    },
+    {
+      "path": "apps/chat/lib/artifacts/sheet/client.tsx",
+      "family": "DOCUMENTS"
+    },
+    {
+      "path": "apps/chat/lib/artifacts/text/client.tsx",
+      "family": "DOCUMENTS"
+    },
+    {
+      "path": "apps/chat/lib/assistant-request-id.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/assistant-request-id.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/auth-client.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/auth.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/cancellation-aware-chat-transport.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/cancellation-aware-chat-transport.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/chat-route.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/chat-runtime-id.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/chat-runtime-id.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/chat-tree-actions.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/chat-tree-actions.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/clone-messages.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/clone-messages.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/config-requirements.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/config-schema.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/config.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/constants.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/create-anonymous-session.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/credits/cost-accumulator.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/credits/cost-accumulator.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/data-stream.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/data-stream.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/db/backfill-parts.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/client.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/credits.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/encrypted-text.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/mcp-queries.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/migrate.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0000_keen_devos.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0001_sparkling_blue_marvel.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0002_wandering_riptide.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0003_cloudy_glorian.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0004_odd_slayback.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0005_wooden_whistler.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0006_broken_blindfold.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0007_redundant_vector.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0008_cloudy_saracen.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0009_shallow_prism.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0010_wide_invisible_woman.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0011_tearful_silverclaw.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0012_illegal_monster_badoon.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0013_steady_ben_parker.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0014_premium_juggernaut.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0015_shocking_calypso.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0016_normal_dracula.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0017_ambiguous_layla_miller.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0018_lush_risque.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0019_kind_dormammu.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0020_strange_senator_kelly.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0021_exotic_menace.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0022_modern_mole_man.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0023_lucky_omega_flight.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0024_unknown_zeigeist.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0025_keen_blackheart.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0026_slippery_aaron_stack.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0027_light_annihilus.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0028_calm_bloodscream.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0029_strange_lady_deathstrike.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0030_normal_sauron.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0031_mature_zuras.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0032_glorious_human_torch.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0033_tidy_the_executioner.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0034_add_mcp_name_id.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0036_fearless_blob.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0036_thankful_jean_grey.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0037_small_wind_dancer.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0038_talented_hulk.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0039_ordinary_black_queen.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0040_clean_tag.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0041_shocking_night_thrasher.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0042_add_chat_canceled_at.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0043_lyrical_pride.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0044_gray_red_shift.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/0045_sleepy_luckman.sql",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0000_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0001_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0002_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0003_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0004_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0005_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0006_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0007_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0008_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0009_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0010_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0011_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0012_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0013_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0014_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0015_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0016_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0017_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0018_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0019_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0020_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0021_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0022_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0023_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0024_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0025_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0026_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0027_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0028_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0029_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0030_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0031_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0032_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0033_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0035_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0036_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0037_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0038_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0039_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0040_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0041_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0042_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0043_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0044_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/0045_snapshot.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/migrations/meta/_journal.json",
+      "family": "LEGACY-DATA"
+    },
+    {
+      "path": "apps/chat/lib/db/queries.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/db/schema.ts",
+      "family": "PERSISTENCE"
+    },
+    {
+      "path": "apps/chat/lib/draft-chat-submission.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/editor/config.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/electron-auth.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/env-schema.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/env.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/features-config.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-content-response.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-content-response.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-storage.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-storage.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-url.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/file-url.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/files/upload-prep.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/gated-chat-transport.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/gated-chat-transport.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/generation-cancellation.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/limits/tokens.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/logger.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/message-conversion.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/nuqs/mcp-search-params.server.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/nuqs/mcp-search-params.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/parallel-chat-requests.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/parallel-chat-requests.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/playwright-test-environment.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/project-icons.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/provisional-chat-confirmations.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/provisional-chat-confirmations.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/runtime-registry/README.md",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/runtime-registry/index.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/runtime-registry/runtime-api.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/runtime-registry/runtime-registry-provider.tsx",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/social-auth.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/social-auth.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/start-provisional-chat.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/stop-response.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/stop-response.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/storage-provider-metadata.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/storage-provider.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/README.md",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/debug.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/hooks.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/index.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/use-chat.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/base/use-data-parts.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/custom-store-provider.tsx",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/hooks-base.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/hooks-chat-persistence.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/hooks-data-stream.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/hooks-message-parts.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/hooks-threads.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-chat-persistence.test.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-chat-persistence.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-data-stream.test.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-data-stream.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-message-parts.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-parallel-runs.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-thread-state.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/with-tracing.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/zustand-thread-state.test.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/stores/zustand-thread-state.ts",
+      "family": "STATE"
+    },
+    {
+      "path": "apps/chat/lib/thread-utils.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/thread-utils.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/types/anonymous.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/types/ui-chat.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/url-utils.tsx",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/url.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/download-assets.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/download-assets.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/message-mapping.test.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/message-mapping.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/message-part-validators.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/lib/utils/rate-limit.ts",
+      "family": "HELPERS"
+    },
+    {
+      "path": "apps/chat/logo.svg",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/next.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/package.json",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/playwright.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/postcss.config.mjs",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/providers/chat-input-provider.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/providers/chat-models-provider.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/providers/default-model-provider.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/providers/parse-chat-id-from-pathname.test.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/providers/parse-chat-id-from-pathname.ts",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/providers/session-provider.tsx",
+      "family": "HOOKS"
+    },
+    {
+      "path": "apps/chat/proxy.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/check-env.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/db-branch-create.sh",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/db-branch-delete.sh",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/db-branch-use.sh",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/fetch-models.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/with-db.sh",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/scripts/worktree-setup.sh",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/tests/artifacts.e2e.ts",
+      "family": "ACCEPTANCE"
+    },
+    {
+      "path": "apps/chat/tests/auth.setup.e2e.ts",
+      "family": "ACCEPTANCE"
+    },
+    {
+      "path": "apps/chat/tests/chat.e2e.ts",
+      "family": "ACCEPTANCE"
+    },
+    {
+      "path": "apps/chat/tests/reasoning.e2e.ts",
+      "family": "ACCEPTANCE"
+    },
+    {
+      "path": "apps/chat/tests/reasoning.setup.e2e.ts",
+      "family": "ACCEPTANCE"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/_shared/lib/tool-part.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/get-weather/renderer.tsx",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/get-weather/tool.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/retrieve-url/tool.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/tools.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/ui.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/word-count/renderer.tsx",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/chatjs/word-count/tool.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.javascript.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.python.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.shared.test.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.shared.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/code-execution.types.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/configuration.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/deep-research.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/pipeline.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/prompts.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/researcher-agent.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/supervisor-agent.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/types.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/deep-research/utils.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/code-guidelines.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/create-code-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/create-sheet-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/create-text-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/edit-code-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/edit-sheet-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/edit-text-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/sheet-guidelines.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/text-guidelines.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/documents/types.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/generate-image.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/generate-video.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/read-document.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/research-updates-schema.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/steps/multi-query-web-search.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/steps/search-utils.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/steps/web-search.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/tools.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/types.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/tools/platform/web-search.ts",
+      "family": "TOOLS"
+    },
+    {
+      "path": "apps/chat/trpc/init.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/query-client.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/react.tsx",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/_app.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/chat.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/credits.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/document.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/mcp.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/project.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/settings.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/routers/vote.router.ts",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/trpc/server.tsx",
+      "family": "API"
+    },
+    {
+      "path": "apps/chat/tsconfig.json",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/vercel.json",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/chat/vitest.config.ts",
+      "family": "APP-SUPPORT"
+    },
+    {
+      "path": "apps/docs/AGENTS.md",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/blume.config.ts",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/changelog.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cli/add.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cli/config.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cli/create.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cli/index.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/add-tools.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/auto-updating-models.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/chat-layout.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/component-registries.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/credit-tracking.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/dev-auth-bypass.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/explicit-tool-selection.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/follow-up-questions.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/git-worktrees.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/index.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/neon-branching.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/next-chat-transition.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/resumable-streams.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/stop-resumable-streams.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/tool-part.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/cookbook/tools.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/architecture.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/authentication.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/configuration.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/file-storage.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/multi-model.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/syntax-highlighting.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/tool-registry.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/core/use-thread.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/customization/branding.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/customization/fonts.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/customization/models.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/customization/prompts.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/customization/theming.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/deployment/docker.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/deployment/self-hosted.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/deployment/vercel.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/attachments.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/branching.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/canvas.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/code-execution.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/deep-research.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/follow-up-suggestions.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/image-generation.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/mcp.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/overview.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/parallel-responses.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/projects.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/reasoning.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/sharing.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/url-retrieval.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/video-generation.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/features/web-search.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/custom.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/litellm.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/openai-compatible.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/openai.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/openrouter.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/overview.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/gateways/vercel.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/index.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/package.json",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/platforms/desktop.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/platforms/web.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/project-structure.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/favicon.svg",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/ai-models.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/attachments.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/branching.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/canvas.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/code-execution.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/hero-dark.png",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/hero-light.png",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/image-generation.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/resumable-streams.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/images/web-search.gif",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/logo/dark.svg",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/public/logo/light.svg",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/quickstart.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/cli.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/config.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/database.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/env-vars.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/evaluations.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/routing.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/reference/testing.mdx",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/docs/vercel.json",
+      "family": "DOCS"
+    },
+    {
+      "path": "apps/electron/CHANGELOG.md",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/README.md",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/entitlements.mac.plist",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/forge.config.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/icon.png",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/package.json",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/scripts/generate-icons.test.js",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/scripts/generate-icons.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/scripts/run-forge.cjs",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/scripts/write-branding.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/src/config.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/src/lib/auth-client.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/src/main.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/src/preload.d.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/src/preload.ts",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/electron/tsconfig.json",
+      "family": "DESKTOP"
+    },
+    {
+      "path": "apps/site/.gitignore",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/CHANGELOG.md",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/apple-icon.png",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/favicon.ico",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/globals.css",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/icon.svg",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/layout.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/manifest.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/opengraph-image.jpg",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/page.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/robots.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/sitemap.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/app/threads/page.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/biome.jsonc",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/faq.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/features.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/footer.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/get-started.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/hero.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/logo-cloud.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/navbar.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/platforms.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/tech-stack.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/theme-toggle.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/thread-playground-model.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/thread-showcase.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/components/use-cases.tsx",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/lib/site-config.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/lib/utils.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/next.config.ts",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/package.json",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/postcss.config.mjs",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/ai-sdk.jpg",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/chatjs_preview_dark.png",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/chatjs_preview_light.png",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/logo.svg",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/nextjs-icon-light-background.png",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/public/zustand.svg",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/tsconfig.json",
+      "family": "SITE"
+    },
+    {
+      "path": "apps/site/vercel.json",
+      "family": "SITE"
+    },
+    {
+      "path": "bun.lock",
+      "family": "ROOT"
+    },
+    {
+      "path": "docs/ai-sdk-7-migration.md",
+      "family": "ROOT"
+    },
+    {
+      "path": "package.json",
+      "family": "ROOT"
+    },
+    {
+      "path": "packages/cli/CHANGELOG.md",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/commands/add.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/commands/config.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/commands/create.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/commands/create.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/config-builder.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/config-requirements.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/ensure-target.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/env-checklist.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/env-checklist.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/package-manifest.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/prompts.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/scaffold-contract.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/scaffold.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/scaffold.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/storage-provider.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/storage-provider.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/helpers/vendor-thread-package.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/index.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/registry/fetch.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/registry/fetch.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/registry/resolve.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/registry/schema.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/types.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/get-config.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/get-package-manager.test.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/get-package-manager.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/handle-error.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/highlighter.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/inject-tool.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/install-deps.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/install-registry-tools.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/is-safe-target.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/logger.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/run-command.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/spinner.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/src/utils/write-files.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/cli/tsconfig.json",
+      "family": "INSTALL"
+    },
+    {
+      "path": "packages/registry/CHANGELOG.md",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/README.md",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/build.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/index.d.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/index.js",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/index.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/items/get-weather.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/items/retrieve-url.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/items/toolkit-renderer.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/items/word-count.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/package.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/get-weather/meta.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/get-weather/renderer.tsx",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/get-weather/tool.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/retrieve-url/meta.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/static-tool-metadata.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/toolkit-renderer/cx.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/toolkit-renderer/meta.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/toolkit-renderer/tool-part.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/toolkit-renderer/use-tool-is-compact.ts",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/src/word-count/meta.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/registry/vercel.json",
+      "family": "REGISTRY"
+    },
+    {
+      "path": "packages/thread/ARCHITECTURE.md",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/CHANGELOG.md",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/README.md",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/biome.jsonc",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/build.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/package.json",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/abstract-thread.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/ai-sdk-run-chat.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/index.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/message-tree.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/message-utils.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/react.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/run-registry.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/thread-state.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/thread.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/types.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/src/use-thread.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/ai-sdk-run-chat.test.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/message-tree.test.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/package-smoke.test.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/thread.test.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/use-thread-types.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/test/use-thread.test.ts",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/tsconfig.build.json",
+      "family": "TREE"
+    },
+    {
+      "path": "packages/thread/tsconfig.json",
+      "family": "TREE"
+    },
+    {
+      "path": "scripts/ai-post-codegen.sh",
+      "family": "RELEASE"
+    },
+    {
+      "path": "scripts/sync-template.ts",
+      "family": "INSTALL"
+    },
+    {
+      "path": "turbo.json",
+      "family": "ROOT"
+    }
+  ]
+}

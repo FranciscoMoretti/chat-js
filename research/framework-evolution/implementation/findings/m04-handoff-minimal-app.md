@@ -28,3 +28,7 @@ Inspected source at commit `b4f11884`, worktree `/Users/fran/.codex/worktrees/7f
 - Sample continuation submission clears its draft before `snapshot.send` settles. Extraction should retain failed submitted content or restore it without overwriting newer typing; reuse the snapshot/version guard investigated here. This is an extraction requirement, not a production change requested in M07.
 
 This handoff supplies a candidate adapter implementation after the composition discussion. No need to invent a new Eve service layer before adapting these supported calls, and no dependency on the private historical-seeding patch.
+
+## Later M07 cancellation handoff
+
+The whole-codebase [plan](../plans/m04-composable-ui-plan.md) now uses **688c7e94**, including `lib/send-turn.ts`: after accepted cancellation, the next command performs supported public catch-up so its newly accepted response renders without manual Reconnect. The flag belongs to the shared originating runtime, not whichever composer is visible. A07 separately verifies targeted cancellation, cooperative durable state and post-cancellation response delivery. M08 compatibility variants are pinned to earlier b4f11884 and must not be quoted as validation of this later behavior.

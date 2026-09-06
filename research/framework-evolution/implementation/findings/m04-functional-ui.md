@@ -277,3 +277,7 @@ The [returned runtime handoff](m04-handoff-minimal-app.md#m07-return-handoff-rev
 ## Direct JSX follow-up supersedes the component factory example
 
 Francisco challenged why scoped functional components should come from a setup object. [The follow-up exploration](m04-direct-jsx.md) and [mounted React/browser proof](m04-jsx-spike/README.md) support direct imports and ordinary providers/hooks with local inferred types. Recommend dropping the public `createChatUI(...).App/View` factory from the normal path. Components remain functional and independently placeable in JSX; providers only supply scope/lifetime and existing integration context. No final production API is committed by the experiment.
+
+## Proposed whole-codebase plan
+
+The [goal-state and migration plan](../plans/m04-composable-ui-plan.md) consolidates direct JSX, the full source-family inventory, M07 `688c7e94`, accepted CLI/external decisions and M08 compatibility evidence. It includes target modules, P0–P9 dependency stages, A01–A22 acceptance scenarios and final completion criteria. It awaits Francisco's approval before a separate implementation task; no active execution goal was created.
