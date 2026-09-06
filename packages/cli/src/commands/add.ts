@@ -6,10 +6,17 @@ import { loadProjectConfig, resolveToolsPath } from "../utils/get-config";
 import { handleError } from "../utils/handle-error";
 import { installRegistryTools } from "../utils/install-registry-tools";
 import { spinner } from "../utils/spinner";
+import { addSelected } from "../selection/commands";
 
 export const add = new Command()
 	.name("add")
-	.description("add a tool to an existing ChatJS project")
+	.description(
+		"add registry items to a selected app, or tools to a legacy ChatJS project",
+	)
+	.option(
+		"--selection <file-or-url>",
+		"propose a complete updated shared selection",
+	)
 	.argument("[tools...]", "tool names to add (e.g. word-count)")
 	.option("-y, --yes", "skip confirmation prompt", false)
 	.option(
@@ -29,6 +36,26 @@ export const add = new Command()
 	.action(async (tools: string[], opts) => {
 		try {
 			const cwd = path.resolve(opts.cwd);
+			const selected = await fs
+				.stat(path.join(cwd, "chat.selection.json"))
+				.then(
+					() => true,
+					() => false,
+				);
+			if (selected) {
+				if (!tools.length && !opts.selection)
+					throw new Error("Specify item addresses or --selection.");
+				if (opts.overwrite || opts.registry)
+					throw new Error(
+						"Selected apps preserve edits; use registry addresses/selection and review .chatjs/proposals.",
+					);
+				await addSelected(cwd, tools, opts.selection);
+				return;
+			}
+			if (opts.selection)
+				throw new Error(
+					"Shared selection additions require an app created with --minimal or --selection.",
+				);
 
 			if (tools.length === 0) {
 				log.error(

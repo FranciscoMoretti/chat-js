@@ -10,7 +10,7 @@
     "eve:build": "eve build",
     "eve:start": "eve start --host 127.0.0.1",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
-    "lint": "biome check app lib agent scripts tests",
+    "lint": "biome check app lib agent scripts tests components integrations chat.client.ts chat.server.ts chat.config.ts",
     "test": "bun test tests",
     "db:init": "bun scripts/db-init.ts"
   },

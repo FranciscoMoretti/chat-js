@@ -1,0 +1,59 @@
+{
+  "scope": "Installation/composition fixture only; expanded is NOT the full ChatJS demo or an Eve runtime",
+  "bun": "1.3.11",
+  "shadcn": "4.21.0",
+  "results": {
+    "minimal": {
+      "files": [
+        "bun.lock",
+        "chat.config.ts",
+        "chat.selection.json",
+        "components/chat/app-layout.ts",
+        "components/chat/layouts/minimal.ts",
+        "lib/config.ts",
+        "lib/provider.ts",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "dependencies": {
+        "@ai-sdk/openai": "4.0.59"
+      }
+    },
+    "expanded": {
+      "files": [
+        "bun.lock",
+        "chat.client.ts",
+        "chat.config.ts",
+        "chat.selection.json",
+        "components/chat/app-layout.ts",
+        "components/chat/layouts/minimal.ts",
+        "components/editors/sheet.ts",
+        "lib/config.ts",
+        "lib/provider.ts",
+        "package.json",
+        "tools/weather/client.ts",
+        "tools/weather/contract.ts",
+        "tools/weather/renderer.ts",
+        "tools/weather/server.ts",
+        "tsconfig.json",
+        "type-proof.ts"
+      ],
+      "dependencies": {
+        "@ai-sdk/openai": "4.0.59",
+        "@types/papaparse": "5.3.16",
+        "papaparse": "5.5.3",
+        "zod": "4.3.6"
+      }
+    }
+  },
+  "checks": [
+    "selection JSON round-trip",
+    "shared requirement reused; missing/conflicting rejected",
+    "selected source/dependency and lock inventory",
+    "unselected provider absent in both",
+    "minimal tool/editor source absent",
+    "strict generated TypeScript including negative mounted/output cases",
+    "new layout installed while customized composition preserved",
+    "reviewable replacement diff"
+  ]
+}

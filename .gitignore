@@ -76,3 +76,6 @@ apps/electron/branding.json
 .devtools
 .cursor/hooks/state
 .codex/environments/
+
+# Built CLI registry payloads
+packages/cli/registry

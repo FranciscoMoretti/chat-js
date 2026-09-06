@@ -1,0 +1,6 @@
+{
+  "name": "m08-compatibility-proof",
+  "private": true,
+  "type": "module",
+  "scripts": { "proof": "bun proof.ts" }
+}

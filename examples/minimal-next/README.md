@@ -165,6 +165,15 @@ package manager, capability catalog or version resolver. Host identity, database
 and model integrations are ordinary replaceable project-local source seams;
 external choices must be able to supply those same requirements.
 
+The CLI's opt-in `create --minimal` generates this source without the optional
+`confirm_note` implementation. `chat.server.ts`, `chat.client.ts`,
+`chat.config.ts` and `components/chat/app-layout.tsx` are developer-owned
+composition. Tool renderers use a browser-safe schema and a lazy import through
+`lib/tool-renderer.tsx`; malformed outputs and failed renderer imports show a
+fallback. Eve's built-in tools are explicitly disabled with its published
+`disableTool()` declarations in `agent/tools/`, so they do not become implicit
+model capabilities. This does not remove Eve's vendored implementations.
+
 Functional UI consumers own `app/chat.tsx` presentation and consume
 `lib/projection.ts` (`ProjectData`, `ProjectMessage`, `projectReducer`) through
 public `useEveAgent<ProjectData>`. The explicit generic avoids selecting Eve's

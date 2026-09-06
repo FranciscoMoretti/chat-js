@@ -3,6 +3,8 @@ import type { InputRequest } from "eve/client";
 import { useEveAgent } from "eve/react";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
+import { components } from "../chat.client";
+import { ToolResults } from "../components/chat/tool-results";
 import { applicationClient, type Binding } from "../lib/application-client";
 import { type ProjectData, projectReducer } from "../lib/projection";
 import { sendTurn } from "../lib/send-turn";
@@ -59,6 +61,9 @@ export function Chat() {
 	}
 	return (
 		<main>
+			{Object.entries(components).map(([key, Component]) => (
+				<Component key={key} />
+			))}
 			<header>
 				<h1>Conversation</h1>
 				<p>A small space to think things through.</p>
@@ -71,7 +76,7 @@ export function Chat() {
 				<>
 					<section className="empty">
 						<h2>What would you like to explore?</h2>
-						<p>Ask a question, or ask me to confirm a note.</p>
+						<p>Ask a question.</p>
 					</section>
 					<form
 						onSubmit={(event) => {
@@ -134,11 +139,7 @@ function Conversation({ binding }: { binding: Binding }) {
 								.map((part) => part.text)
 								.join("\n")}
 						</p>
-						{message.confirmedNotes.map((note) => (
-							<p className="note" key={note.note}>
-								Confirmed: {note.note}
-							</p>
-						))}
+						<ToolResults parts={message.parts} />
 					</article>
 				))}
 			</section>

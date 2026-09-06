@@ -4,11 +4,8 @@ import {
 	type EveMessageData,
 	type InputRequest,
 } from "eve/client";
-import { type ConfirmedNote, noteOutput } from "./note-contract";
 
-export type ProjectMessage = EveMessageData["messages"][number] & {
-	readonly confirmedNotes: readonly ConfirmedNote[];
-};
+export type ProjectMessage = EveMessageData["messages"][number];
 export type ProjectData = {
 	readonly messages: readonly ProjectMessage[];
 	readonly pending: Readonly<Record<string, InputRequest>>;
@@ -18,19 +15,7 @@ export const projectReducer: EveAgentReducer<ProjectData> = {
 	initial: () => ({ messages: [], pending: {} }),
 	reduce(data, event) {
 		const projected = base.reduce(data, event);
-		const messages = projected.messages.map((message) => ({
-			...message,
-			confirmedNotes: message.parts.flatMap((part) => {
-				if (
-					part.type !== "dynamic-tool" ||
-					part.toolName !== "confirm_note" ||
-					part.state !== "output-available"
-				)
-					return [];
-				const result = noteOutput.safeParse(part.output);
-				return result.success ? [result.data] : [];
-			}),
-		}));
+		const messages = projected.messages;
 		const pending = { ...data.pending };
 		if (event.type === "input.requested")
 			for (const request of event.data.requests)

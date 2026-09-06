@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { Client, EveAgentStore } from "eve/client";
 import { applicationClient } from "../lib/application-client";
 import { required } from "../lib/env";
+import { noteOutput } from "../lib/note-contract";
 import { projectReducer } from "../lib/projection";
 import { sendTurn } from "../lib/send-turn";
 import { tokenFor } from "./identity";
@@ -30,7 +31,7 @@ if (process.argv[2] === "prepare") {
 		headers,
 	).conversation.create.mutate({
 		operationId,
-		message: "Please confirm a note: M07 recovery proof.",
+		message: "Call confirm_note with note exactly M07 recovery proof.",
 	});
 	const sessionId: string = result.sessionId;
 	const conversationId: string = result.conversationId;
@@ -170,9 +171,16 @@ if (process.argv[2] === "prepare") {
 	assert.equal(Object.keys(store.snapshot.data.pending).length, 0);
 	assert(
 		store.snapshot.data.messages.some((message) =>
-			message.confirmedNotes.some(
-				(note) => note.note === pending.action.input.note,
-			),
+			message.parts.some((part) => {
+				if (
+					part.type !== "dynamic-tool" ||
+					part.toolName !== "confirm_note" ||
+					part.state !== "output-available"
+				)
+					return false;
+				const result = noteOutput.safeParse(part.output);
+				return result.success && result.data.note === pending.action.input.note;
+			}),
 		),
 	);
 	await store.send({ message: "Reply exactly M07_CONTINUED." });

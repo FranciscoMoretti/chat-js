@@ -1,4 +1,1 @@
-import { Chat } from "./chat";
-export default function Page() {
-	return <Chat />;
-}
+export { default } from "../components/chat/app-layout";
