@@ -269,3 +269,7 @@ The consequential choice is **where normal customization happens**: compose func
 - `bun lint`: 4 successful tasks, all Turbo cache hits. `bun test:types`: 3 successful tasks, all Turbo cache hits. Research is outside those task inputs; fixture files also passed direct Biome check/format and standalone typecheck.
 - Normal frozen install failed in existing `macos-alias` lifecycle (`node-gyp` missing `nopt` on Node 22.22.2). Frozen installation with scripts ignored succeeded; no lockfile change and no native/Electron validation claimed.
 - No app source, production component API, migrations, deployment or publishing changes. The artifact index and proposals are research only.
+
+## M07 evidence incorporated after initial exploration
+
+The [returned runtime handoff](m04-handoff-minimal-app.md#m07-return-handoff-reviewed-2026-09-06) records source inspected at `b4f11884` and M07's reported browser/provider evidence. Public `useEveAgent<ProjectData>` and `projectReducer` now provide a concrete linear adapter candidate with validated tool output and authoritative pending-input resolution. Keep its attachment at shared runtime scope when adding two views. Cancellation acceptance is not immediate model abort; empty approval-continuation turn IDs must not be replaced with invented identities. This narrows adapter uncertainty without committing the functional component API or closing the branching/multi-view gates.
