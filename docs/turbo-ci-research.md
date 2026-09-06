@@ -69,7 +69,7 @@ Recommended task design:
    responsible for template generation, declare their template outputs too, or
    move generation to one shared prerequisite. Do not introduce an application
    production build merely to express a source-copy dependency.
-3. Add an uncached full scaffold task depending on the CLI build, and gate its
+3. Add an uncached full scaffold task depending on CLI unit tests, which depend on the CLI build, and gate its
    execution with a task query. Include the scaffold runner and workflow in its
    inputs. Because it inherits the build dependency, changes to any consumed
    template source select it conservatively.
@@ -121,3 +121,8 @@ check removed both CLI artifact directories, observed a build cache hit, and
 verified that the bundle and both template manifests were restored. CLI unit
 tests, repository lint, and type checks pass locally. The full install/package
 matrix is restored in CI; its new GitHub run remains the integration validation.
+
+The final task order is CLI build → CLI unit tests → scaffold compatibility.
+Only the build caches templates; its dependency edge restores them even when
+unit tests are cached, and the ordering prevents concurrent template writes or
+scaffolding while fallback tests temporarily move the template directory.

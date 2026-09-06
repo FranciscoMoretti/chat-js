@@ -104,6 +104,7 @@
       ]
     },
     "@chat-js/cli#test:unit": {
+      "dependsOn": ["build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -116,15 +117,10 @@
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.turbo,build,dist,release,out,playwright,playwright-report,test-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json"
-      ],
-      "outputs": [
-        "templates/**"
       ]
     },
     "@chat-js/cli#test:scaffold": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["test:unit"],
       "cache": false,
       "inputs": [
         "$TURBO_DEFAULT$",

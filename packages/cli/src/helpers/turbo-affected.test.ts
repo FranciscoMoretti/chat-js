@@ -66,6 +66,7 @@ test.each([
 	["apps/chat/node_modules/example/index.js", false],
 	["apps/chat/.env.local", false],
 	["apps/electron/dist/main.js", false],
+	["apps/electron/branding.json", false],
 	["packages/cli/src/index.ts", true],
 	["packages/cli/scripts/test-scaffold.sh", true],
 	["apps/chat/app/page.tsx", true],
