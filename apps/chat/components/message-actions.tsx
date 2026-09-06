@@ -6,8 +6,8 @@ import {
   MessageAction as Action,
   MessageActions as Actions,
 } from "@/components/ai-elements/message";
+import { useConversationView } from "@/components/chat/conversation-view";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useChatStoreApi } from "@/lib/stores/base";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 import { useChatVotes } from "./chat/use-chat-votes";
 import { FeedbackActions } from "./feedback-actions";
@@ -30,7 +30,7 @@ function PureMessageActions({
   onStartEdit?: () => void;
   onCancelEdit?: () => void;
 }) {
-  const storeApi = useChatStoreApi();
+  const view = useConversationView();
   const [_, copyToClipboard] = useCopyToClipboard();
   const role = useMessageRoleById(messageId);
 
@@ -79,9 +79,7 @@ function PureMessageActions({
       <Action
         className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         onClick={async () => {
-          const message = storeApi
-            .getState()
-            .messages.find((m) => m.id === messageId);
+          const message = view.thread.getMessage(messageId);
           if (!message) {
             return;
           }

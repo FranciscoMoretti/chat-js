@@ -4,7 +4,7 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { ConversationContent } from "@/components/ai-elements/extra/conversation-content-scroll-area";
-import { useChatId, useChatStatus } from "@/lib/stores/base";
+import { useChatId, useChatStatus } from "@/lib/chat/view-hooks";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { Greeting } from "./greeting";

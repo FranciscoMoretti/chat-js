@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
-import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import { useMessageById } from "@/lib/chat/view-hooks";
 import type { Vote } from "@/lib/db/schema";
-import { useMessageById } from "@/lib/stores/base";
 import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -102,7 +102,7 @@ export function FeedbackActions({
 }
 
 function SelectedModelId({ messageId }: { messageId: string }) {
-  const message = useMessageById<ChatMessage>(messageId);
+  const message = useMessageById(messageId);
   const selectedModelId = getPrimarySelectedModelId(
     message?.metadata?.selectedModel
   );

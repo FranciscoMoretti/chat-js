@@ -118,7 +118,7 @@ export const textArtifact = new Artifact<"text">({
     {
       icon: <Pen size={16} />,
       description: "Add final polish",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, parentMessageId }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -130,7 +130,7 @@ export const textArtifact = new Artifact<"text">({
           metadata: {
             selectedModel: config.ai.tools.text.polish,
             createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
+            parentMessageId,
             activeStreamId: null,
           },
         });

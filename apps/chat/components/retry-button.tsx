@@ -2,9 +2,9 @@ import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { Action } from "@/components/ai-elements/actions";
-import type { ChatMessage } from "@/lib/ai/types";
+import { useConversationView } from "@/components/chat/conversation-view";
+import { useChatStatus } from "@/lib/chat/view-hooks";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
-import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
 
 export function RetryButton({
   messageId,
@@ -13,11 +13,12 @@ export function RetryButton({
   messageId: string;
   className?: string;
 }) {
-  const chatStore = useChatStoreApi<ChatMessage>();
+  const view = useConversationView();
   const status = useChatStatus();
 
   const handleRetry = useCallback(() => {
-    const { messages, regenerate } = chatStore.getState();
+    const { regenerate } = view;
+    const messages = view.thread.getPath(messageId);
     if (!regenerate) {
       toast.error("Cannot retry this message");
       return;
@@ -52,7 +53,7 @@ export function RetryButton({
     }).catch(() => {
       toast.error("Could not retry this message");
     });
-  }, [messageId, chatStore]);
+  }, [messageId, view]);
 
   if (status === "streaming" || status === "submitted") {
     return null;

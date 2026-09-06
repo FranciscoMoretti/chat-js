@@ -455,6 +455,11 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
   return (
     <ChatSystem
       chat={persistedChat ?? null}
+      draftScope={
+        persistedRoute
+          ? `conversation:${persistedRoute.id}`
+          : `provisional:${projectHomeId ?? "home"}`
+      }
       id={id}
       initialMessages={initialMessages}
       initialTool={initialTool}

@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { MessagesPane } from "@/components/messages-pane";
 import { ProjectHome } from "@/components/project-home";
-import { useChatStatus } from "@/lib/stores/base";
+import { useChatStatus } from "@/lib/chat/view-hooks";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { ChatWelcome } from "./chat-welcome";

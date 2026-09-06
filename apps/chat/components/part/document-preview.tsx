@@ -4,6 +4,7 @@ import equal from "fast-deep-equal";
 import { File, Loader2, Maximize, Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
 import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
+import { useConversationView } from "@/components/chat/conversation-view";
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
@@ -52,6 +53,7 @@ interface DocumentPreviewProps {
   isReadonly: boolean;
   messageId: string;
   output?: DocumentPreviewOutput;
+  toolCallId?: string;
   type?: "create" | "update";
 }
 
@@ -60,13 +62,20 @@ export function DocumentPreview({
   output,
   input,
   messageId,
+  toolCallId,
   type = "create",
   isLastArtifact = true,
 }: DocumentPreviewProps) {
-  const { artifact, setArtifact } = useArtifact();
+  const { artifact, origin, openArtifact } = useArtifact();
+  const view = useConversationView();
+  const isStreaming =
+    artifact.status === "streaming" &&
+    origin?.view.thread === view.thread &&
+    artifact.messageId === messageId &&
+    artifact.toolCallId === toolCallId;
   const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
     output?.documentId || "",
-    output?.documentId === "init" || artifact.status === "streaming"
+    output?.documentId === "init" || isStreaming
   );
 
   const previewDocument = useMemo(() => documents?.[0], [documents]);
@@ -84,6 +93,7 @@ export function DocumentPreview({
             title: output.title || artifact.title,
             kind: output.kind,
           }}
+          toolCallId={toolCallId}
           type={type}
         />
       );
@@ -93,6 +103,16 @@ export function DocumentPreview({
       return (
         <DocumentToolCall
           args={{ title: input.title }}
+          artifact={{
+            documentId: "init",
+            messageId,
+            toolCallId,
+            title: input.title,
+            content: input.content,
+            kind: input.kind,
+            isVisible: true,
+            status: "streaming",
+          }}
           isReadonly={isReadonly}
           type={type}
         />
@@ -112,7 +132,7 @@ export function DocumentPreview({
     if (previewDocument) {
       return previewDocument;
     }
-    if (artifact.status === "streaming") {
+    if (isStreaming) {
       return {
         title: artifact.title,
         kind: artifact.kind,
@@ -135,11 +155,12 @@ export function DocumentPreview({
       <HitboxLayer
         hitboxRef={hitboxRef}
         messageId={messageId}
+        openArtifact={openArtifact}
         output={output}
-        setArtifact={setArtifact}
+        toolCallId={toolCallId}
       />
       <DocumentHeader
-        isStreaming={artifact.status === "streaming"}
+        isStreaming={isStreaming}
         kind={document.kind}
         title={document.title}
         type={type}
@@ -176,36 +197,33 @@ const LoadingSkeleton = ({
 const PureHitboxLayer = ({
   hitboxRef,
   output,
-  setArtifact,
+  openArtifact,
   messageId,
+  toolCallId,
 }: {
   hitboxRef: React.RefObject<HTMLDivElement | null>;
   output?: DocumentPreviewOutput;
-  setArtifact: (
-    updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)
-  ) => void;
+  openArtifact: (artifact: UIArtifact) => void;
   messageId: string;
+  toolCallId?: string;
 }) => {
   const handleClick = useCallback(
     (_event: MouseEvent<HTMLElement>) => {
       if (!output) {
         return;
       }
-      setArtifact((artifact) => {
-        if (artifact.status === "streaming") {
-          return { ...artifact, isVisible: true };
-        }
-        return {
-          ...artifact,
-          title: output.title,
-          documentId: output.documentId,
-          messageId,
-          kind: output.kind,
-          isVisible: true,
-        };
+      openArtifact({
+        content: "",
+        status: "idle",
+        title: output.title,
+        documentId: output.documentId,
+        messageId,
+        toolCallId,
+        kind: output.kind,
+        isVisible: true,
       });
     },
-    [setArtifact, output, messageId]
+    [openArtifact, output, messageId, toolCallId]
   );
 
   return (

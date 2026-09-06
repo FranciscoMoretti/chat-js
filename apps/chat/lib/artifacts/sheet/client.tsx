@@ -88,7 +88,7 @@ export const sheetArtifact = new Artifact<"sheet", SheetArtifactMetadata>({
     {
       description: "Format and clean data",
       icon: <Sparkles size={16} />,
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, parentMessageId }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -97,7 +97,7 @@ export const sheetArtifact = new Artifact<"sheet", SheetArtifactMetadata>({
           metadata: {
             selectedModel: config.ai.tools.sheet.format,
             createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
+            parentMessageId,
             activeStreamId: null,
           },
         });
@@ -106,7 +106,7 @@ export const sheetArtifact = new Artifact<"sheet", SheetArtifactMetadata>({
     {
       description: "Analyze and visualize data",
       icon: <LineChart size={16} />,
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, parentMessageId }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -118,7 +118,7 @@ export const sheetArtifact = new Artifact<"sheet", SheetArtifactMetadata>({
           metadata: {
             selectedModel: config.ai.tools.sheet.analyze,
             createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
+            parentMessageId,
             activeStreamId: null,
           },
         });

@@ -3,8 +3,8 @@
 import type { MessageTreeSnapshot } from "@chat-js/thread";
 import { memo } from "react";
 import { Chat } from "@/components/chat";
+import { ConversationView } from "@/components/chat/conversation-view";
 import { DataStreamHandler } from "@/components/data-stream-handler";
-import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
@@ -29,7 +29,11 @@ export const ChatSystem = memo(function PureChatSystem({
   runtimeKey,
   store,
   thread,
+  viewId = "main",
+  draftScope = id,
 }: {
+  viewId?: string;
+  draftScope?: string;
   chat?: UIChat | null;
   id: string;
   initialMessages: ChatMessage[];
@@ -44,15 +48,15 @@ export const ChatSystem = memo(function PureChatSystem({
   thread?: ApplicationThread;
 }) {
   return (
-    <ArtifactProvider key={runtimeKey}>
-      <CustomStoreProvider
-        initialMessages={initialMessages}
-        initialTree={initialTree}
-        key={runtimeKey}
-        store={store}
-        thread={thread}
-        threadId={id}
-      >
+    <CustomStoreProvider
+      initialMessages={initialMessages}
+      initialTree={initialTree}
+      key={runtimeKey}
+      store={store}
+      thread={thread}
+      threadId={id}
+    >
+      <ConversationView id={viewId}>
         {isReadonly ? (
           <Chat
             chat={chat}
@@ -68,6 +72,7 @@ export const ChatSystem = memo(function PureChatSystem({
             isProjectContext={!!projectId}
             localStorageEnabled={true}
             overrideModelId={overrideModelId}
+            storageKey={JSON.stringify([draftScope, viewId])}
           >
             <DataStreamHandler key={`stream:${runtimeKey}`} />
             <Chat
@@ -80,7 +85,7 @@ export const ChatSystem = memo(function PureChatSystem({
             />
           </ChatInputProvider>
         )}
-      </CustomStoreProvider>
-    </ArtifactProvider>
+      </ConversationView>
+    </CustomStoreProvider>
   );
 });

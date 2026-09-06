@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage } from "@/lib/ai/types";
+import { useChatActions } from "@/lib/chat/view-hooks";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
 import { runParallelThreadRequestSpecs } from "@/lib/parallel-chat-requests";
 import { useStartProvisionalChat } from "@/lib/start-provisional-chat";
-import { useChatActions } from "@/lib/stores/base";
 import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
@@ -33,7 +33,7 @@ function PureSuggestedActions({
   selectedModelId,
   className,
 }: SuggestedActionsProps) {
-  const { startRun } = useChatActions<ChatMessage>();
+  const { startRun } = useChatActions();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
   const startProvisionalChat = useStartProvisionalChat(chatId);
   const { data: session } = useSession();

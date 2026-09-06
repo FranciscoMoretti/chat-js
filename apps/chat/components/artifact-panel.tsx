@@ -1,11 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistance } from "date-fns";
 import type { Dispatch, SetStateAction } from "react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { useDocuments, useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import {
   codeArtifact,
@@ -17,11 +23,7 @@ import {
 } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
 import type { Document } from "@/lib/db/schema";
-import {
-  useChatActions,
-  useChatStatus,
-  useChatStoreApi,
-} from "@/lib/stores/base";
+
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import {
@@ -51,6 +53,7 @@ export interface UIArtifact {
   messageId: string;
   status: "streaming" | "idle";
   title: string;
+  toolCallId?: string;
 }
 
 function createTypedMetadataSetter<M extends ArtifactMetadata>(
@@ -66,7 +69,7 @@ function createTypedMetadataSetter<M extends ArtifactMetadata>(
 }
 
 function PureArtifactPanel({
-  isReadonly,
+  isReadonly: readonlyProp,
   isAuthenticated,
   className,
 }: {
@@ -74,9 +77,15 @@ function PureArtifactPanel({
   isAuthenticated: boolean;
   className?: string;
 }) {
-  const storeApi = useChatStoreApi<ChatMessage>();
-  const { artifact, setArtifact, metadata, setMetadata, closeArtifact } =
-    useArtifact();
+  const {
+    artifact,
+    origin,
+    setArtifact,
+    metadata,
+    setMetadata,
+    closeArtifact,
+  } = useArtifact();
+  const isReadonly = readonlyProp || !origin || origin.isReadonly;
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
@@ -218,8 +227,6 @@ function PureArtifactPanel({
     }
   };
 
-  const status = useChatStatus();
-  const { stop } = useChatActions<ChatMessage>();
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
 
   /*
@@ -443,14 +450,12 @@ function PureArtifactPanel({
           <div className="flex flex-col items-center bg-background/80">
             {renderArtifactContent()}
 
-            {isCurrentVersion && !isReadonly && (
-              <Toolbar
+            {isCurrentVersion && !isReadonly && origin && (
+              <OriginToolbar
                 artifactKind={artifact.kind}
                 isToolbarVisible={isToolbarVisible}
+                origin={origin}
                 setIsToolbarVisible={setIsToolbarVisible}
-                status={status}
-                stop={stop}
-                storeApi={storeApi}
               />
             )}
           </div>
@@ -481,3 +486,33 @@ export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
 
   return true;
 });
+
+function OriginToolbar({
+  origin,
+  ...props
+}: Omit<Parameters<typeof Toolbar>[0], "actions" | "stop" | "status"> & {
+  origin: NonNullable<ReturnType<typeof useArtifact>["origin"]>;
+}) {
+  useSyncExternalStore(
+    origin.view.thread.subscribe,
+    origin.view.thread.getSnapshot,
+    origin.view.thread.getSnapshot
+  );
+  useSyncExternalStore(
+    origin.store.subscribe,
+    origin.store.getState,
+    origin.store.getInitialState
+  );
+  return (
+    <Toolbar
+      {...props}
+      actions={{
+        sendMessage: origin.sendMessage,
+        parentMessageId: origin.messageId,
+        selectedModelId: origin.selectedModelId,
+      }}
+      status={origin.getRun()?.status ?? "ready"}
+      stop={origin.stop}
+    />
+  );
+}

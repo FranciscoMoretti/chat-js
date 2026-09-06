@@ -9,6 +9,7 @@ import {
   memo,
   type SetStateAction,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -22,9 +23,9 @@ import {
   PromptInputSubmit,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { useConversationView } from "@/components/chat/conversation-view";
 import { ContextBar } from "@/components/context-bar";
 import { ContextUsageFromParent } from "@/components/context-usage";
-import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import {
@@ -34,6 +35,7 @@ import {
   type SelectedModelValue,
   type UiToolName,
 } from "@/lib/ai/types";
+import { useChatActions } from "@/lib/chat/view-hooks";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
 import { buildDraftChatSubmission } from "@/lib/draft-chat-submission";
@@ -44,7 +46,6 @@ import {
   clearResponseActiveStream,
   isPendingResponseStream,
 } from "@/lib/stop-response";
-import { useChatActions } from "@/lib/stores/base";
 import {
   useApplicationThread,
   useCustomChatStoreApi,
@@ -114,15 +115,15 @@ function PureMultimodalInput({
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
 }) {
   const thread = useApplicationThread();
+  const view = useConversationView();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
-  const { artifact, closeArtifact } = useArtifact();
   const { data: session } = useSession();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const currentRoute = useCurrentChatRoute();
   const startProvisionalChat = useStartProvisionalChat(chatId);
-  const { startRun, stop: stopHelper } = useChatActions<ChatMessage>();
+  const { startRun, stop: stopHelper } = useChatActions();
   const lastMessageId = useLastMessageId();
   const lastMessageMetadata = useLastMessageMetadata();
   const responseAwareStatus = getResponseAwareStatus(
@@ -140,9 +141,11 @@ function PureMultimodalInput({
     handleModelChange,
     handleModelSelectionChange,
     getInputValue,
+    getDraftGeneration,
     handleInputChange,
     getInitialInput,
     isEmpty,
+    isDraftReady,
     handleSubmit,
   } = useChatInput();
 
@@ -208,7 +211,11 @@ function PureMultimodalInput({
   }, [handleModelChange, getModelById]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const [uploadBatches, setUploadBatches] = useState<Record<number, string[]>>(
+    {}
+  );
+  const nextUploadId = useRef(0);
+  const uploadQueue = Object.values(uploadBatches).flat();
 
   // Centralized submission gating
   const submission = useMemo(():
@@ -258,11 +265,31 @@ function PureMultimodalInput({
     uploadQueue.length,
   ]);
 
+  const uploadEpoch = useRef(0);
+  useEffect(
+    () => () => {
+      uploadEpoch.current += 1;
+    },
+    []
+  );
+  const captureUpload = useCallback(() => {
+    const epoch = uploadEpoch.current;
+    const selection = view.store.getState().selectionVersion;
+    const draft = getDraftGeneration();
+    return () =>
+      epoch === uploadEpoch.current &&
+      selection === view.store.getState().selectionVersion &&
+      draft === getDraftGeneration();
+  }, [view, getDraftGeneration]);
+
   // Helper function to process and validate files
   const processFiles = useCallback(
-    async (files: File[]): Promise<File[]> => {
+    async (files: File[], isCurrent: () => boolean): Promise<File[]> => {
       const { processedImages, pdfFiles, stillOversized, unsupportedFiles } =
         await processFilesForUpload(files, { maxBytes, maxDimension });
+      if (!isCurrent()) {
+        return [];
+      }
 
       if (stillOversized.length > 0) {
         toast.error(
@@ -303,17 +330,9 @@ function PureMultimodalInput({
   // Trim messages in edit mode
   const trimMessagesInEditMode = useCallback(
     (parentId: string | null) => {
-      thread.setCursor(parentId);
-      const selectedMessages = thread.getSnapshot().messages;
-      if (
-        artifact.isVisible &&
-        artifact.messageId &&
-        !selectedMessages.some((message) => message.id === artifact.messageId)
-      ) {
-        closeArtifact();
-      }
+      view.select(parentId);
     },
-    [artifact.isVisible, artifact.messageId, closeArtifact, thread]
+    [view]
   );
 
   const invalidatePersistedMessages = useCallback(async () => {
@@ -454,102 +473,72 @@ function PureMultimodalInput({
     []
   );
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-      const validFiles = await processFiles(files);
-
-      if (validFiles.length === 0) {
-        return;
-      }
-
-      setUploadQueue(validFiles.map((file) => file.name));
-
+  const uploadAttachments = useCallback(
+    async (files: File[]) => {
+      const isCurrent = captureUpload();
+      const uploadId = nextUploadId.current++;
       try {
-        const uploadPromises = validFiles.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
+        const validFiles = await processFiles(files, isCurrent);
+        if (validFiles.length === 0) {
+          return 0;
+        }
+        setUploadBatches((current) => ({
+          ...current,
+          [uploadId]: validFiles.map((file) => file.name),
+        }));
+        const uploaded = await Promise.all(validFiles.map(uploadFile));
+        if (!isCurrent()) {
+          return 0;
+        }
+        const attachments = uploaded.filter(
           (attachment) => attachment !== undefined
         );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-      } catch (error) {
-        console.error("Error uploading files!", error);
+        setAttachments((current) => [...current, ...attachments]);
+        return attachments.length;
+      } catch {
+        toast.error("Failed to upload files, please try again!");
+        return 0;
       } finally {
-        setUploadQueue([]);
+        setUploadBatches((current) => {
+          if (!(uploadId in current)) {
+            return current;
+          }
+          const remaining = { ...current };
+          delete remaining[uploadId];
+          return remaining;
+        });
       }
     },
-    [setAttachments, processFiles, uploadFile]
+    [captureUpload, processFiles, uploadFile, setAttachments]
+  );
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      await uploadAttachments(Array.from(event.target.files || []));
+    },
+    [uploadAttachments]
   );
 
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent) => {
-      if (responseAwareStatus !== "ready") {
+      if (responseAwareStatus !== "ready" || !attachmentsEnabled) {
         return;
       }
-
-      // Skip file paste handling if blob storage is disabled
-      if (!attachmentsEnabled) {
-        return;
-      }
-
-      const clipboardData = event.clipboardData;
-      if (!clipboardData) {
-        return;
-      }
-
-      const files = Array.from(clipboardData.files);
+      const files = Array.from(event.clipboardData?.files ?? []);
       if (files.length === 0) {
         return;
       }
-
       event.preventDefault();
-
-      // Check if user is anonymous
       if (!session?.user) {
         toast.error("Sign in to attach files from clipboard");
         return;
       }
-
-      const validFiles = await processFiles(files);
-      if (validFiles.length === 0) {
-        return;
-      }
-
-      setUploadQueue(validFiles.map((file) => file.name));
-
-      try {
-        const uploadPromises = validFiles.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-
-        toast.success(
-          `${successfullyUploadedAttachments.length} file(s) pasted from clipboard`
-        );
-      } catch (error) {
-        console.error("Error uploading pasted files!", error);
-      } finally {
-        setUploadQueue([]);
+      const count = await uploadAttachments(files);
+      if (count > 0) {
+        toast.success(`${count} file(s) pasted from clipboard`);
       }
     },
-    [
-      setAttachments,
-      processFiles,
-      responseAwareStatus,
-      session,
-      uploadFile,
-      attachmentsEnabled,
-    ]
+    [responseAwareStatus, attachmentsEnabled, session?.user, uploadAttachments]
   );
 
   const removeAttachment = useCallback(
@@ -575,29 +564,7 @@ function PureMultimodalInput({
         return;
       }
 
-      const validFiles = await processFiles(acceptedFiles);
-      if (validFiles.length === 0) {
-        return;
-      }
-
-      setUploadQueue(validFiles.map((file) => file.name));
-
-      try {
-        const uploadPromises = validFiles.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-      } catch (error) {
-        console.error("Error uploading files!", error);
-      } finally {
-        setUploadQueue([]);
-      }
+      await uploadAttachments(acceptedFiles);
     },
     noClick: true, // Prevent click to open file dialog since we have the button
     disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
@@ -609,7 +576,7 @@ function PureMultimodalInput({
     const isPendingResponse = isPendingResponseStream(
       lastMessageMetadata?.activeStreamId
     );
-    const lastMessage = thread.getSnapshot().messages.at(-1);
+    const lastMessage = view.getMessages().at(-1);
     if (
       session?.user &&
       lastMessage?.role === "assistant" &&
@@ -626,12 +593,16 @@ function PureMultimodalInput({
       if (isPendingResponse) {
         thread.removeMessage(lastMessageId);
       } else {
-        thread.setMessages(
-          clearResponseActiveStream(
-            thread.getSnapshot().messages,
-            lastMessageId
-          )
-        );
+        const updated = clearResponseActiveStream(
+          view.getMessages(),
+          lastMessageId
+        ).find((message) => message.id === lastMessageId);
+        if (updated) {
+          thread.upsertMessage(
+            updated,
+            thread.getParent(lastMessageId)?.id ?? null
+          );
+        }
       }
     }
   }, [
@@ -642,6 +613,7 @@ function PureMultimodalInput({
     stopHelper,
     stopStreamMutation,
     thread,
+    view,
   ]);
 
   return (
@@ -702,36 +674,40 @@ function PureMultimodalInput({
             uploadQueue={uploadQueue}
           />
 
-          <LexicalChatInput
-            autoFocus={autoFocus}
-            className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
-            data-testid="multimodal-input"
-            initialValue={getInitialInput()}
-            onEnterSubmit={(event) => {
-              const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
+          {isDraftReady ? (
+            <LexicalChatInput
+              autoFocus={autoFocus}
+              className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
+              data-testid="multimodal-input"
+              initialValue={getInitialInput()}
+              onEnterSubmit={(event) => {
+                const shouldSubmit = isMobile ? event.ctrlKey : !event.shiftKey;
 
-              if (shouldSubmit) {
-                if (!submission.enabled) {
-                  if (submission.message) {
-                    toast.error(submission.message);
+                if (shouldSubmit) {
+                  if (!submission.enabled) {
+                    if (submission.message) {
+                      toast.error(submission.message);
+                    }
+                    return true;
                   }
+                  submitForm();
                   return true;
                 }
-                submitForm();
-                return true;
-              }
 
-              return false;
-            }}
-            onInputChange={handleInputChange}
-            onPaste={handlePaste}
-            placeholder={
-              isMobile
-                ? "Send a message... (Ctrl+Enter to send)"
-                : "Send a message..."
-            }
-            ref={editorRef}
-          />
+                return false;
+              }}
+              onInputChange={handleInputChange}
+              onPaste={handlePaste}
+              placeholder={
+                isMobile
+                  ? "Send a message... (Ctrl+Enter to send)"
+                  : "Send a message..."
+              }
+              ref={editorRef}
+            />
+          ) : (
+            <div className="min-h-[60px] sm:min-h-[80px]" />
+          )}
 
           <ChatInputBottomControls
             acceptAll={acceptAll}

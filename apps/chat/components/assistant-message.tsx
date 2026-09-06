@@ -1,7 +1,7 @@
 "use client";
 import { memo } from "react";
+import { useChatId, useChatStatus } from "@/lib/chat/view-hooks";
 import { config } from "@/lib/config";
-import { useChatId, useChatStatus } from "@/lib/stores/base";
 import {
   useLastMessageId,
   useMessageMetadataById,

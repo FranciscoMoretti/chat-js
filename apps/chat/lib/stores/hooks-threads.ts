@@ -1,6 +1,9 @@
 import type { ThreadRun } from "@chat-js/thread";
 import { useCallback } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
+import { useConversationView } from "@/components/chat/conversation-view";
+import { useViewSelector } from "@/lib/chat/view-hooks";
+import { getViewMessages } from "@/lib/chat/view-store";
 import type { ChatMessage } from "../ai/types";
 import {
   type CustomChatStoreState,
@@ -21,15 +24,35 @@ export interface ParallelGroupInfo {
 }
 
 function useThreadStore<T>(
-  selector: (store: CustomChatStoreState<ChatMessage>) => T,
+  selector: (
+    store: Pick<
+      CustomChatStoreState<ChatMessage>,
+      "threadSnapshot" | "parallelRunIdsByGroup"
+    >
+  ) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
   const store = useCustomChatStoreApi<ChatMessage>();
-  return useStoreWithEqualityFn(store, selector, equalityFn);
+  const parallelRunIdsByGroup = useStoreWithEqualityFn(
+    store,
+    (state) => state.parallelRunIdsByGroup
+  );
+  return useViewSelector(
+    (state) =>
+      selector({
+        threadSnapshot: {
+          ...state.snapshot,
+          cursorId: state.cursorId,
+          messages: getViewMessages(state),
+        },
+        parallelRunIdsByGroup,
+      }),
+    equalityFn
+  );
 }
 
 function getSiblingInfo(
-  state: CustomChatStoreState<ChatMessage>,
+  state: Pick<CustomChatStoreState<ChatMessage>, "threadSnapshot">,
   messageId: string
 ): MessageSiblingInfo | null {
   const { childrenByParentId, messagesById, parentById, rootIds } =
@@ -71,6 +94,7 @@ export function useMessageSiblingInfo(
 
 export const useSwitchToSibling = () => {
   const thread = useApplicationThread();
+  const view = useConversationView();
 
   return useCallback(
     (messageId: string, direction: "prev" | "next") => {
@@ -90,10 +114,10 @@ export const useSwitchToSibling = () => {
       }
       const target = siblings[nextIndex];
       const leaf = thread.getLeaves(target.id).at(-1) ?? target;
-      thread.setCursor(leaf.id);
-      return thread.getSnapshot().messages;
+      view.select(leaf.id);
+      return view.getMessages();
     },
-    [thread]
+    [thread, view]
   );
 };
 
@@ -178,6 +202,7 @@ export function useParallelGroupInfo(
 
 export const useSwitchToMessage = () => {
   const thread = useApplicationThread();
+  const view = useConversationView();
 
   return useCallback(
     (messageId: string) => {
@@ -186,9 +211,9 @@ export const useSwitchToMessage = () => {
         return null;
       }
       const leaf = thread.getLeaves(messageId).at(-1) ?? message;
-      thread.setCursor(leaf.id);
-      return thread.getSnapshot().messages;
+      view.select(leaf.id);
+      return view.getMessages();
     },
-    [thread]
+    [thread, view]
   );
 };

@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { Suspense } from "react";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
+import { Workspace } from "@/components/chat/workspace";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -100,7 +101,9 @@ async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
         <ChatModelsProvider models={chatModels}>
           <DefaultModelProvider defaultModel={defaultModel}>
             <KeyboardShortcuts />
-            <ChatRouteHost>{children}</ChatRouteHost>
+            <Workspace>
+              <ChatRouteHost>{children}</ChatRouteHost>
+            </Workspace>
           </DefaultModelProvider>
         </ChatModelsProvider>
       </ChatProviders>

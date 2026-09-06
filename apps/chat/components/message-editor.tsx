@@ -2,7 +2,7 @@
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 import type { ModelId } from "@/lib/ai/app-models";
 import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
-import { useChatStatus } from "@/lib/stores/base";
+import { useChatStatus } from "@/lib/chat/view-hooks";
 import {
   getAttachmentsFromMessage,
   getTextContentFromMessage,

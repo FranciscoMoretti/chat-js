@@ -1,0 +1,12 @@
+{
+	"extends": "../../../../../apps/chat/tsconfig.json",
+	"compilerOptions": {
+		"incremental": false
+	},
+	"include": [
+		"page.tsx",
+		"../../../../../apps/chat/next-env.d.ts",
+		"../../../../../apps/chat/electron.d.ts"
+	],
+	"exclude": ["node_modules"]
+}

@@ -277,7 +277,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
     {
       icon: <MessageSquare size={16} />,
       description: "Add comments",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, parentMessageId }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -289,7 +289,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
           metadata: {
             selectedModel: config.ai.tools.code.edits,
             createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
+            parentMessageId,
             activeStreamId: null,
           },
         });
@@ -298,7 +298,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
     {
       icon: <List size={16} />,
       description: "Add logs",
-      onClick: ({ sendMessage, storeApi }) => {
+      onClick: ({ sendMessage, parentMessageId }) => {
         sendMessage({
           role: "user",
           parts: [
@@ -310,7 +310,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
           metadata: {
             selectedModel: config.ai.tools.code.edits,
             createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
+            parentMessageId,
             activeStreamId: null,
           },
         });

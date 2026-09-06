@@ -1,6 +1,6 @@
 # Whole-codebase functional UI goal state and migration plan
 
-**Approval status: proposed plan for Francisco. No implementation authorization, active execution goal, release, or deployment is created by this document.**
+**Approval status: Francisco approved implementation through P1, including necessary P0. P2–P9 remain unapproved for implementation. The approved slice includes actual code, browser/integration verification, meaningful review, a draft PR, CI and actionable feedback. No merge or deployment.**
 
 2026-09-06. Current worktree baseline: main `18db694b` (AI SDK 7). This plan supersedes the factory examples in the first M04 exploration. Direct imports and JSX composition are the accepted direction; the concrete end-state, stages and acceptance below are submitted for approval. A separate implementation task should execute the approved revision.
 

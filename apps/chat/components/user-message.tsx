@@ -1,8 +1,7 @@
 "use client";
 import { memo, useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
-import type { ChatMessage } from "@/lib/ai/types";
-import { useChatId, useMessageById } from "@/lib/stores/base";
+import { useChatId, useMessageById } from "@/lib/chat/view-hooks";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";
@@ -24,7 +23,7 @@ const PureUserMessage = ({
   parentMessageId,
 }: BaseMessageProps) => {
   const chatId = useChatId();
-  const message = useMessageById<ChatMessage>(messageId);
+  const message = useMessageById(messageId);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [imageModal, setImageModal] = useState<{
     isOpen: boolean;
