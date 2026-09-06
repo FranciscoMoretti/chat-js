@@ -4,6 +4,7 @@ import { Client, EveAgentStore } from "eve/client";
 import { applicationClient } from "../lib/application-client";
 import { required } from "../lib/env";
 import { projectReducer } from "../lib/projection";
+import { sendTurn } from "../lib/send-turn";
 import { tokenFor } from "./identity";
 
 const origin = required("APP_ORIGIN");
@@ -233,11 +234,30 @@ if (process.argv[2] === "cancel") {
 			.slice(snapshot.events.length)
 			.some((event) => event.type === "turn.cancelled"),
 	);
+	const previousMessages = store.snapshot.data.messages.length;
+	await sendTurn(
+		() => store.send({ message: "Reply exactly AFTER_CANCEL_OK." }),
+		() => store.resume(),
+		true,
+	);
+	assert(
+		store.snapshot.data.messages
+			.slice(previousMessages)
+			.some(
+				(message) =>
+					message.role === "assistant" &&
+					message.parts.some(
+						(part) =>
+							part.type === "text" && part.text.includes("AFTER_CANCEL_OK"),
+					),
+			),
+	);
 	console.log(
 		JSON.stringify({
 			cancelResult,
 			durableCancellation: true,
 			cooperativeBoundary: true,
+			followUpAfterCancellation: true,
 		}),
 	);
 }

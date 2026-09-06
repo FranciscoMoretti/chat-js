@@ -1,10 +1,11 @@
 "use client";
 import type { InputRequest } from "eve/client";
 import { useEveAgent } from "eve/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { applicationClient, type Binding } from "../lib/application-client";
 import { type ProjectData, projectReducer } from "../lib/projection";
+import { sendTurn } from "../lib/send-turn";
 
 const api = applicationClient();
 export function Chat() {
@@ -102,6 +103,13 @@ function Conversation({ binding }: { binding: Binding }) {
 		reducer: projectReducer,
 		resume: true,
 	});
+	const afterCancellation = useRef(0);
+	async function send(action: () => Promise<void>) {
+		const catchUp = afterCancellation.current;
+		await sendTurn(action, snapshot.resume, catchUp > 0);
+		if (afterCancellation.current === catchUp) afterCancellation.current = 0;
+	}
+
 	const [draft, setDraft] = useState("");
 	const [error, setError] = useState("");
 	const busy = snapshot.status !== "ready" && snapshot.status !== "error";
@@ -141,13 +149,15 @@ function Conversation({ binding }: { binding: Binding }) {
 					disabled={busy}
 					respond={(optionId, text) =>
 						run(() =>
-							snapshot.respond([
-								{
-									requestId: input.requestId,
-									...(optionId ? { optionId } : {}),
-									...(text ? { text } : {}),
-								},
-							]),
+							send(() =>
+								snapshot.respond([
+									{
+										requestId: input.requestId,
+										...(optionId ? { optionId } : {}),
+										...(text ? { text } : {}),
+									},
+								]),
+							),
 						)
 					}
 				/>
@@ -157,7 +167,7 @@ function Conversation({ binding }: { binding: Binding }) {
 					event.preventDefault();
 					const text = draft;
 					setDraft("");
-					void run(() => snapshot.send(text));
+					void run(() => send(() => snapshot.send(text)));
 				}}
 			>
 				<label htmlFor="message">Message</label>
@@ -173,7 +183,14 @@ function Conversation({ binding }: { binding: Binding }) {
 					<button
 						type="button"
 						disabled={!busy}
-						onClick={() => void run(() => snapshot.cancel())}
+						onClick={() =>
+							void run(async () => {
+								const result = await snapshot.cancel();
+								if (result.status === "accepted")
+									afterCancellation.current += 1;
+								return result;
+							})
+						}
 					>
 						Stop
 					</button>
