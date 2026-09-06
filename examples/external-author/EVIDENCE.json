@@ -1,0 +1,149 @@
+{
+	"pin": {
+		"pullRequest": "https://github.com/FranciscoMoretti/chat-js/pull/318",
+		"head": "1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10",
+		"statusAtInspection": "OPEN",
+		"date": "2026-09-06",
+		"scope": "Provisional author examples against this exact installer snapshot, not an accepted final contract."
+	},
+	"sourceBranchHead": "1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10",
+	"scope": "Real built CLI, generated source and local conformance; live run is separate",
+	"cases": [
+		{
+			"name": "studio",
+			"dependencies": {
+				"@ai-sdk/openai": "4.0.59",
+				"@trpc/client": "11.16.0",
+				"@trpc/server": "11.16.0",
+				"@workflow/world-postgres": "5.0.0-beta.40",
+				"ai": "7.0.93",
+				"eve": "0.52.1",
+				"jose": "6.2.3",
+				"next": "16.3.0",
+				"postgres": "3.4.7",
+				"react": "19.2.3",
+				"react-dom": "19.2.3",
+				"zod": "4.3.6"
+			},
+			"tools": ["author_search", "draw_svg"],
+			"selectedItems": [
+				"minimal-next",
+				"host-identity",
+				"postgres",
+				"author-gateway",
+				"author-svg",
+				"author-search",
+				"author-scratchpad",
+				"author-layout"
+			]
+		},
+		{
+			"name": "frontend",
+			"dependencies": {
+				"@ai-sdk/openai": "4.0.59",
+				"@trpc/client": "11.16.0",
+				"@trpc/server": "11.16.0",
+				"@workflow/world-postgres": "5.0.0-beta.40",
+				"ai": "7.0.93",
+				"eve": "0.52.1",
+				"jose": "6.2.3",
+				"next": "16.3.0",
+				"postgres": "3.4.7",
+				"react": "19.2.3",
+				"react-dom": "19.2.3",
+				"zod": "4.3.6"
+			},
+			"tools": [],
+			"selectedItems": [
+				"minimal-next",
+				"host-identity",
+				"postgres",
+				"openai",
+				"author-scratchpad",
+				"author-layout"
+			]
+		},
+		{
+			"name": "search",
+			"dependencies": {
+				"@ai-sdk/openai": "4.0.59",
+				"@trpc/client": "11.16.0",
+				"@trpc/server": "11.16.0",
+				"@workflow/world-postgres": "5.0.0-beta.40",
+				"ai": "7.0.93",
+				"eve": "0.52.1",
+				"jose": "6.2.3",
+				"next": "16.3.0",
+				"postgres": "3.4.7",
+				"react": "19.2.3",
+				"react-dom": "19.2.3",
+				"zod": "4.3.6"
+			},
+			"tools": ["author_search"],
+			"selectedItems": [
+				"minimal-next",
+				"host-identity",
+				"postgres",
+				"openai",
+				"layout-minimal",
+				"author-search"
+			]
+		}
+	],
+	"bundle": {
+		"clientServerIsolation": "passed",
+		"lazyRenderers": "passed",
+		"outputs": [
+			{
+				"path": "chat.client.js",
+				"kind": "entry-point",
+				"bytes": 468804
+			},
+			{
+				"path": "chunk-dddygvrx.js",
+				"kind": "chunk",
+				"bytes": 54338
+			},
+			{
+				"path": "chunk-y8cnhwws.js",
+				"kind": "chunk",
+				"bytes": 1637
+			},
+			{
+				"path": "chunk-kqrtfpxh.js",
+				"kind": "chunk",
+				"bytes": 1118
+			}
+		]
+	},
+	"existingAppAdd": {
+		"originalClientPreserved": true,
+		"proposedSvgRegistration": true,
+		"adoptedTypecheck": "passed"
+	},
+	"negativeModel": {
+		"typecheck": "passed",
+		"eveBuild": "rejected: missing context window metadata for unlisted provider identity"
+	},
+	"conformance": "Passed runtime schema/HTTP/invalid-output tests and generated-app typecheck including incompatible renderer props",
+	"live": {
+		"date": "2026-09-06",
+		"provider": "Real OpenAI Responses gpt-5-mini via author-owned factory",
+		"search": "Authenticated deterministic local HTTP fixture; query SVG reference received once",
+		"tools": ["draw_svg", "author_search"],
+		"browser": "Both outputs rendered and replayed after reload; distinct renderer chunks fetched",
+		"frontend": "External layout preserves chat; scratchpad Local draft count 11, clear empties/disables, reload resets",
+		"nextMcp": "No compilation issues or runtime session errors",
+		"limits": [
+			"No remote custom gateway endpoint tested",
+			"No real search vendor tested",
+			"No timeout/session cancellation browser proof",
+			"No composer replacement slot at this pin"
+		]
+	},
+	"repositoryChecks": [
+		"bun lint",
+		"bun test:types",
+		"CLI unit suite: 42 pass, 333 assertions"
+	]
+}
