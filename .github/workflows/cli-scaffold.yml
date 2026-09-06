@@ -5,6 +5,9 @@ on:
   # Run the full install/package compatibility check on demand.
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: cli-scaffold-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -17,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
