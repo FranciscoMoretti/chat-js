@@ -1,5 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "futureFlags": {
+    "affectedUsingTaskInputs": true
+  },
   "globalEnv": [
     "DATABASE_URL",
     "AUTH_SECRET",
@@ -81,6 +84,50 @@
     "electron:make": {
       "cache": false,
       "dependsOn": ["electron:build"]
+    },
+    "@chat-js/cli#build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/chat/**",
+        "$TURBO_ROOT$/apps/electron/**",
+        "$TURBO_ROOT$/packages/thread/src/**",
+        "$TURBO_ROOT$/packages/thread/package.json",
+        "$TURBO_ROOT$/scripts/sync-template.ts",
+        "$TURBO_ROOT$/package.json",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.turbo,build,dist,release,out,playwright,playwright-report,test-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
+        "!$TURBO_ROOT$/apps/electron/branding.json"
+      ],
+      "outputs": [
+        "dist/**",
+        "templates/**"
+      ]
+    },
+    "@chat-js/cli#test:unit": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/chat/**",
+        "$TURBO_ROOT$/apps/electron/**",
+        "$TURBO_ROOT$/packages/thread/src/**",
+        "$TURBO_ROOT$/packages/thread/package.json",
+        "$TURBO_ROOT$/scripts/sync-template.ts",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/packages/registry/items/**",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.turbo,build,dist,release,out,playwright,playwright-report,test-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
+        "!$TURBO_ROOT$/apps/electron/branding.json"
+      ]
+    },
+    "@chat-js/cli#test:scaffold": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/workflows/cli-scaffold.yml",
+        "$TURBO_ROOT$/bun.lock"
+      ]
     }
   }
 }

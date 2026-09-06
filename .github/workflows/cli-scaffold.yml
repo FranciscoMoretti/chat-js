@@ -15,112 +15,58 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check affected
+        id: affected
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+          TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "run=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TURBO_VERSION="$(node -p "require('./package.json').devDependencies.turbo")"
+          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:scaffold --packages @chat-js/cli --exit-code >/tmp/cli-scaffold-query.json 2>/tmp/cli-scaffold-query.log; then
+            echo "run=false" >>"$GITHUB_OUTPUT"
+          else
+            status=$?
+            if [ "$status" -eq 1 ]; then
+              echo "run=true" >>"$GITHUB_OUTPUT"
+            else
+              cat /tmp/cli-scaffold-query.log
+              cat /tmp/cli-scaffold-query.json
+              exit "$status"
+            fi
+          fi
       - uses: oven-sh/setup-bun@v2
+        if: steps.affected.outputs.run == 'true'
         with:
           bun-version: 1.3.1
       - name: Enable Corepack
-        if: github.event_name == 'workflow_dispatch'
+        if: steps.affected.outputs.run == 'true'
         run: corepack enable
       - name: Pin npm
-        if: github.event_name == 'workflow_dispatch'
+        if: steps.affected.outputs.run == 'true'
         run: |
           # npm 10 crashes resolving vitest@^4 after Vitest 5 (npm/cli#9787)
           npm install --global npm@11
           npm --version
       - uses: actions/cache@v4
+        if: steps.affected.outputs.run == 'true'
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
-      - run: bun install --frozen-lockfile
-      - name: Build CLI
-        run: bun --filter @chat-js/cli build
-      - name: Scaffold all variants and smoke-test installation
-        shell: bash
-        env:
-          FULL_INSTALL_MATRIX: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          set -euo pipefail
-
-          run_case() {
-            local package_manager="$1"
-            local electron_flag="$2"
-            local temp_parent
-            local app_name
-            local app_dir
-            temp_parent="$(mktemp -d "/tmp/chat-js-${package_manager}-${electron_flag}-XXXXXX")"
-            app_name="chat-js-app"
-            app_dir="$temp_parent/$app_name"
-
-            local create_args=(
-              "$GITHUB_WORKSPACE/packages/cli/dist/index.js"
-              create
-              "$app_name"
-              --yes
-              --no-install
-              --package-manager
-              "$package_manager"
-            )
-
-            if [ "$electron_flag" = "true" ]; then
-              create_args+=(--electron)
-            else
-              create_args+=(--no-electron)
-            fi
-
-            (
-              cd "$temp_parent"
-              node "${create_args[@]}"
-            )
-
-            test -f "$app_dir/package.json"
-            test -f "$app_dir/chat.config.ts"
-            if [ "$electron_flag" = "true" ]; then
-              test -f "$app_dir/electron/package.json"
-              test -f "$app_dir/electron/forge.config.ts"
-            else
-              test ! -d "$app_dir/electron"
-            fi
-
-            # PRs exercise every scaffold, but install only one web + desktop
-            # pair. Keep all package-manager installs and packaging on demand.
-            if [ "$FULL_INSTALL_MATRIX" != "true" ] && { [ "$package_manager" != "bun" ] || [ "$electron_flag" != "true" ]; }; then
-              rm -rf "$temp_parent"
-              return
-            fi
-
-            pushd "$app_dir" >/dev/null
-            case "$package_manager" in
-              bun) bun install ;;
-              npm) npm install ;;
-              pnpm) pnpm install ;;
-              yarn) yarn install ;;
-              *) echo "Unsupported package manager: $package_manager" >&2; exit 1 ;;
-            esac
-            popd >/dev/null
-
-            if [ "$electron_flag" = "true" ]; then
-              pushd "$app_dir/electron" >/dev/null
-              case "$package_manager" in
-                bun) bun install ;;
-                npm) npm install ;;
-                pnpm) pnpm install ;;
-                yarn) yarn install ;;
-                *) echo "Unsupported package manager: $package_manager" >&2; exit 1 ;;
-              esac
-              if [ "$package_manager" = "npm" ]; then
-                npm run make
-              fi
-              popd >/dev/null
-            fi
-
-            rm -rf "$temp_parent"
-          }
-
-          for package_manager in bun npm pnpm yarn; do
-            run_case "$package_manager" false
-            run_case "$package_manager" true
-          done
+      - if: steps.affected.outputs.run == 'true'
+        run: bun install --frozen-lockfile
+      - name: Test scaffold compatibility
+        if: steps.affected.outputs.run == 'true'
+        run: bunx turbo run test:scaffold --filter=@chat-js/cli
