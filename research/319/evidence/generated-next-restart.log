@@ -1,0 +1,46 @@
+$ bun .agents/skills/worktree-ports/scripts/worktree-env.ts minimal -- bun run --cwd "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-selected-SWkrNw/app" dev
+Worktree slot 319 · minimal → http://localhost:6194
+$ next dev
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:6194
+- Network:       http://192.168.1.129:6194
+- Environments: .env.local
+✓ Ready in 453ms
+✓ Running next.config.ts took 438ms
+
+ GET /?conversation=001efebc-d94e-41ad-ba06-2bdd240f34fe 200 in 500ms (next.js: 240ms, application-code: 261ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 781ms (next.js: 721ms, application-code: 60ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 786ms (next.js: 722ms, application-code: 64ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 788ms (next.js: 676ms, application-code: 112ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 36ms (next.js: 13ms, application-code: 23ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 202 in 79ms (next.js: 4ms, application-code: 75ms)
+ GET /?conversation=001efebc-d94e-41ad-ba06-2bdd240f34fe 200 in 42ms (next.js: 8ms, application-code: 34ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=17 200 in 9.3s (next.js: 5ms, application-code: 9.3s)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 16ms (next.js: 6ms, application-code: 10ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 17ms (next.js: 10ms, application-code: 7ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 17ms (next.js: 4ms, application-code: 14ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=17 200 in 1259ms (next.js: 7ms, application-code: 1252ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=28 200 in 89ms (next.js: 1.8ms, application-code: 87ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 202 in 34ms (next.js: 2ms, application-code: 32ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=32 200 in 2.0s (next.js: 2ms, application-code: 2.0s)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 26ms (next.js: 6ms, application-code: 20ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 202 in 19ms (next.js: 1.4ms, application-code: 18ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/cancel 202 in 21ms (next.js: 1.1ms, application-code: 20ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=44 200 in 10.0s (next.js: 3ms, application-code: 10.0s)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 106ms (next.js: 18ms, application-code: 88ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 33ms (next.js: 2ms, application-code: 31ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 202 in 41ms (next.js: 4ms, application-code: 38ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=599 200 in 21ms (next.js: 1.7ms, application-code: 19ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=601&includeTailIndex=1 200 in 19ms (next.js: 1.7ms, application-code: 17ms)
+ GET / 200 in 42ms (next.js: 6ms, application-code: 36ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=601 200 in 2.1s (next.js: 3ms, application-code: 2.1s)
+ POST /api/trpc/conversation.create 200 in 188ms (next.js: 28ms, application-code: 160ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0/stream?includeTailIndex=1 200 in 26ms (next.js: 10ms, application-code: 16ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0/stream 200 in 2.5s (next.js: 2ms, application-code: 2.5s)
+ POST /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0 202 in 168ms (next.js: 27ms, application-code: 141ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0/stream?startIndex=16 200 in 1598ms (next.js: 1.3ms, application-code: 1596ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0 202 in 392ms (next.js: 15ms, application-code: 377ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1WPNN15ZSM83RTX3Q0PY0/stream?startIndex=30 200 in 3.7s (next.js: 7ms, application-code: 3.7s)
+[?25h
+error: script "dev" exited with code 143
+error: script "worktree-env" exited with code 143

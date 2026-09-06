@@ -1,0 +1,9 @@
+
+ RUN  v4.1.4 /Users/fran/.codex/worktrees/db6e/chat-js
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  20:10:34
+   Duration  596ms (transform 147ms, setup 0ms, import 295ms, tests 60ms, environment 0ms)
+

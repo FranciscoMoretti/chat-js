@@ -1,0 +1,3 @@
+$ rm -rf .next/dev/types && next typegen . && tsc --noEmit
+Generating route types...
+✓ Types generated successfully

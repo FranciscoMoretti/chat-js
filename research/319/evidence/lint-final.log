@@ -1,0 +1,28 @@
+$ turbo run lint --force
+• turbo 2.9.5
+
+   • Packages in scope: @chat-js/cli, @chat-js/electron, @chat-js/registry, @chat-js/thread, @chatjs/chat, @chatjs/docs, @chatjs/site
+   • Running lint in 7 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chat-js/thread:lint: cache bypass, force executing 14a5eaa55cf5e40a
+@chatjs/docs:lint: cache bypass, force executing 1ad9ab2c438ac7d6
+@chat-js/thread:lint: $ bunx @biomejs/biome@2.4.10 check src test build.ts README.md ARCHITECTURE.md package.json tsconfig.json tsconfig.build.json biome.jsonc
+@chatjs/docs:lint: $ blume doctor
+@chat-js/thread:lint: Saved lockfile
+@chat-js/thread:lint: Checked 22 files in 33ms. No fixes applied.
+@chatjs/chat:lint: cache bypass, force executing e04dc24df5476e1d
+@chatjs/site:lint: cache bypass, force executing 3d1901eef0ab1fa8
+@chatjs/chat:lint: $ ultracite check
+@chatjs/site:lint: $ ultracite check
+@chatjs/site:lint: Checked 29 files in 140ms. No fixes applied.
+@chatjs/chat:lint: Checked 493 files in 264ms. No fixes applied.
+@chatjs/docs:lint: [blume] ℹ Pages: 72
+@chatjs/docs:lint: [blume] ℹ Output: static
+@chatjs/docs:lint: [blume] ℹ Search: orama
+@chatjs/docs:lint: [blume] ✔ No problems found.
+
+ Tasks:    4 successful, 4 total
+Cached:    0 cached, 4 total
+  Time:    5.554s 
+

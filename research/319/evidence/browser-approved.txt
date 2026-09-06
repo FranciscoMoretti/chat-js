@@ -1,0 +1,36 @@
+- heading "External layout" [level=1, ref=e1]
+- main
+  - complementary
+    - StaticText "External frontend installed"
+  - sectionheader
+    - heading "Conversation" [level=1, ref=e3]
+    - paragraph
+      - StaticText "A small space to think things through."
+  - status
+    - StaticText "ready"
+  - region "Messages" [ref=e2]
+    - article
+      - heading "You" [level=2, ref=e8]
+      - paragraph
+        - StaticText "Call confirm_note with note exactly browser integration319."
+    - article
+      - heading "Assistant" [level=2, ref=e9]
+      - region "Tool confirm_note" [ref=e10]
+        - paragraph
+          - StaticText "confirm_note: output-available"
+        - paragraph
+          - StaticText "Confirmed: browser integration319"
+    - article
+      - heading "Assistant" [level=2, ref=e11]
+      - paragraph
+        - StaticText "Confirmed: browser integration319"
+  - form
+    - LabelText
+      - StaticText "Message"
+    - textbox "Message" [ref=e4]
+    - button "Send" [disabled, ref=e5]
+    - button "Stop" [disabled, ref=e6]
+    - button "Reconnect" [ref=e7]
+- button "Open Next.js Dev Tools" [expanded=false, ref=e12]
+  - image
+- alert

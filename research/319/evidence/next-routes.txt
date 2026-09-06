@@ -1,0 +1,3 @@
+event: message
+data: {"result":{"content":[{"type":"text","text":"{\n  \"appRouter\": [\n    \"/\",\n    \"/api/eve/[...path]\",\n    \"/api/trpc/[trpc]\"\n  ]\n}"}]},"jsonrpc":"2.0","id":3}
+

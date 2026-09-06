@@ -1,0 +1,30 @@
+{
+  "app": "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-selected-SWkrNw/app",
+  "checks": [
+    "minimal actual CLI creation and typecheck",
+    "unselected tool/source/dependencies absent",
+    "compiled Eve toolsets match minimal and expanded selections",
+    "external paired tool and frontend-only installed",
+    "edited composition preserved and proposed composition typechecked",
+    "external layout proposal preserved edits",
+    "stale proposals removed after abandoned layout change",
+    "same-path external identity source proposed and typechecked",
+    "broken identity source rejected despite existing valid implementation",
+    "renderer type mismatch rejected and malformed/unknown output falls back",
+    "adopted app typechecks"
+  ],
+  "minimalDependencies": {
+    "@ai-sdk/openai": "4.0.59",
+    "@trpc/client": "11.16.0",
+    "@trpc/server": "11.16.0",
+    "@workflow/world-postgres": "5.0.0-beta.40",
+    "ai": "7.0.93",
+    "eve": "0.52.1",
+    "jose": "6.2.3",
+    "next": "16.3.0",
+    "postgres": "3.4.7",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "4.3.6"
+  }
+}

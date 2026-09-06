@@ -1,0 +1,40 @@
+$ bun .agents/skills/worktree-ports/scripts/worktree-env.ts minimal -- bun run --cwd "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-selected-SWkrNw/app" dev
+Worktree slot 319 · minimal → http://localhost:6194
+$ next dev
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:6194
+- Network:       http://192.168.1.129:6194
+- Environments: .env.local
+✓ Ready in 874ms
+✓ Running next.config.ts took 291ms
+
+ POST /api/trpc/conversation.create 200 in 2.1s (next.js: 1440ms, application-code: 652ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 2.2s (next.js: 2.1s, application-code: 103ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=4 200 in 710ms (next.js: 6ms, application-code: 704ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 404 in 18ms (next.js: 10ms, application-code: 8ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=0&follow=false 404 in 15ms (next.js: 7ms, application-code: 8ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 404 in 12ms (next.js: 4ms, application-code: 8ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR 404 in 12ms (next.js: 2.0ms, application-code: 10ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/cancel 404 in 10ms (next.js: 2ms, application-code: 8ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/clear 404 in 7ms (next.js: 1.7ms, application-code: 5ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/compact 404 in 5ms (next.js: 2ms, application-code: 3ms)
+ POST /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/reset 404 in 5ms (next.js: 1.7ms, application-code: 4ms)
+ POST /eve/v1/session 404 in 1207ms (next.js: 932ms, application-code: 275ms)
+ GET / 200 in 1573ms (next.js: 1373ms, application-code: 200ms)
+ POST /eve/v1/callback/fake 404 in 115ms (next.js: 6ms, application-code: 109ms)
+ POST /eve/v1/task-input/fake 404 in 107ms (next.js: 45ms, application-code: 62ms)
+ POST /eve/v1/activity/fake 404 in 54ms (next.js: 7ms, application-code: 46ms)
+ POST /eve/v1/connections/fake/callback/fake 404 in 38ms (next.js: 5ms, application-code: 33ms)
+ POST /.well-known/workflow/v1/webhook/fake 404 in 38ms (next.js: 8ms, application-code: 30ms)
+ POST /api/eve/eve/v1/session 404 in 9ms (next.js: 5ms, application-code: 5ms)
+ POST /api/trpc/conversation.create 401 in 9ms (next.js: 4ms, application-code: 5ms)
+ POST /api/trpc/conversation.create 403 in 8ms (next.js: 3ms, application-code: 5ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 46ms (next.js: 2.0ms, application-code: 44ms)
+ GET /?conversation=001efebc-d94e-41ad-ba06-2bdd240f34fe 200 in 334ms (next.js: 245ms, application-code: 89ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 36ms (next.js: 22ms, application-code: 14ms)
+ GET /api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%22001efebc-d94e-41ad-ba06-2bdd240f34fe%22%7D 200 in 17ms (next.js: 3ms, application-code: 14ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?includeTailIndex=1 200 in 182ms (next.js: 8ms, application-code: 174ms)
+ GET /api/eve/eve/v1/session/wrun_01M1W1SBTA3DKG69KC5F9SPRJR/stream?startIndex=17 200 in 13.5s (next.js: 4ms, application-code: 13.5s)
+[?25h
+error: script "dev" exited with code 143
+error: script "worktree-env" exited with code 143

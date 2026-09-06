@@ -1,0 +1,51 @@
+$ turbo run test:types
+• turbo 2.9.5
+
+   • Packages in scope: @chat-js/cli, @chat-js/electron, @chat-js/registry, @chat-js/thread, @chatjs/chat, @chatjs/docs, @chatjs/site
+   • Running test:types in 7 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chat-js/thread:test:types: cache hit, replaying logs 625897bbbd81aeb2
+@chat-js/thread:test:types: $ tsc -p tsconfig.json --noEmit && bun run build
+@chat-js/thread:test:types: $ bun -e "import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.build.json && bun ./build.ts
+@chat-js/cli:test:types: cache hit, replaying logs e6c18cd60bc668bf
+@chat-js/cli:test:types: $ tsc -p tsconfig.selection.json --noEmit
+@chatjs/chat:test:types: cache hit, replaying logs d201d1f358e86568
+@chatjs/chat:test:types: $ rm -rf .next/dev/types && next typegen . && tsc --noEmit
+@chatjs/chat:test:types: Generating route types...
+@chatjs/chat:test:types: ✓ Types generated successfully
+@chatjs/site:test:types: cache hit, replaying logs 5a9f8c6030853565
+@chatjs/site:test:types: $ next typegen . && tsc --noEmit
+@chatjs/site:test:types: Generating route types...
+@chatjs/site:test:types: ✓ Types generated successfully
+
+ Tasks:    4 successful, 4 total
+Cached:    4 cached, 4 total
+  Time:    166ms >>> FULL TURBO
+
+$ turbo run test:types
+• turbo 2.9.5
+
+   • Packages in scope: @chat-js/cli, @chat-js/electron, @chat-js/registry, @chat-js/thread, @chatjs/chat, @chatjs/docs, @chatjs/site
+   • Running test:types in 7 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chat-js/cli:test:types: cache hit, replaying logs e6c18cd60bc668bf
+@chat-js/cli:test:types: $ tsc -p tsconfig.selection.json --noEmit
+@chat-js/thread:test:types: cache hit, replaying logs 625897bbbd81aeb2
+@chat-js/thread:test:types: $ tsc -p tsconfig.json --noEmit && bun run build
+@chat-js/thread:test:types: $ bun -e "import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.build.json && bun ./build.ts
+@chatjs/site:test:types: cache hit, replaying logs 5a9f8c6030853565
+@chatjs/site:test:types: $ next typegen . && tsc --noEmit
+@chatjs/site:test:types: Generating route types...
+@chatjs/chat:test:types: cache hit, replaying logs d201d1f358e86568
+@chatjs/site:test:types: ✓ Types generated successfully
+@chatjs/chat:test:types: $ rm -rf .next/dev/types && next typegen . && tsc --noEmit
+@chatjs/chat:test:types: Generating route types...
+@chatjs/chat:test:types: ✓ Types generated successfully
+
+ Tasks:    4 successful, 4 total
+Cached:    4 cached, 4 total
+  Time:    159ms >>> FULL TURBO
+
+PASS: cached type check restored Thread declarations

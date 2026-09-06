@@ -1,0 +1,345 @@
+$ bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && turbo run test:unit
+bun test v1.3.11 (af24e281)
+
+.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts:
+(pass) resolveWorktreeRuntime > assigns stable app offsets within slot 6 [0.44ms]
+(pass) resolveWorktreeRuntime > uses the configured default slot
+(pass) resolveWorktreeRuntime > rejects invalid slot ""
+(pass) resolveWorktreeRuntime > rejects invalid slot "abc"
+(pass) resolveWorktreeRuntime > rejects invalid slot "-1"
+(pass) resolveWorktreeRuntime > rejects invalid slot "1.5"
+(pass) resolveWorktreeRuntime > rejects duplicate app offsets [0.32ms]
+(pass) resolveWorktreeRuntime > requires at least one app [0.13ms]
+(pass) resolveWorktreeRuntime > requires a valid slot environment variable [0.07ms]
+(pass) resolveWorktreeRuntime > rejects offsets outside the reserved range [0.06ms]
+(pass) resolveWorktreeRuntime > rejects privileged ports [0.13ms]
+(pass) resolveWorktreeRuntime > rejects unknown template variables [0.07ms]
+(pass) resolveWorktreeRuntime > rejects cross-app references in the shared URL template [0.02ms]
+
+ 13 pass
+ 0 fail
+ 13 expect() calls
+Ran 13 tests across 1 file. [10.00ms]
+• turbo 2.9.5
+
+   • Packages in scope: @chat-js/cli, @chat-js/electron, @chat-js/registry, @chat-js/thread, @chatjs/chat, @chatjs/docs, @chatjs/site
+   • Running test:unit in 7 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chat-js/thread:test:unit: cache miss, executing c1e7cd126c6e79bb
+@chat-js/cli:test:unit: cache miss, executing 7697b6c0306ac003
+@chat-js/cli:test:unit: $ bun run template:sync && bun run registry:build && bun test src
+@chat-js/thread:test:unit: $ bun test --pass-with-no-tests
+@chat-js/thread:test:unit: bun test v1.3.11 (af24e281)
+@chat-js/cli:test:unit: $ bun ../../scripts/sync-template.ts
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit: test/package-smoke.test.ts:
+@chat-js/cli:test:unit: Synced templates/chat-app from apps/chat.
+@chat-js/cli:test:unit: Synced templates/electron from apps/electron.
+@chat-js/cli:test:unit: $ bun build-registry.ts
+@chat-js/cli:test:unit: Built selected minimal Next registry items from M07 source.
+@chat-js/cli:test:unit: bun test v1.3.11 (af24e281)
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/utils/get-package-manager.test.ts:
+@chat-js/cli:test:unit: (pass) inferPackageManager > falls back to the launcher package manager when no lockfile is present [1.23ms]
+@chat-js/cli:test:unit: (pass) inferPackageManager > prefers project lockfiles over the launcher user agent [0.49ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/registry/fetch.test.ts:
+@chat-js/cli:test:unit: (pass) registry fetch > loads a local root index from an items path template [5.58ms]
+@chat-js/cli:test:unit: (pass) registry fetch > treats normalized relative registry paths as local files [1.76ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/selection/selection.test.ts:
+@chat-js/cli:test:unit: (pass) shared selection preflight > accepts the real minimal graph without optional tool implementations [23.10ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects missing before installation [9.42ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects conflict before installation [8.54ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects collision before installation [6.83ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects escape before installation [8.90ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects composition before installation [7.45ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > rejects deps before installation [7.57ms]
+@chat-js/cli:test:unit: (pass) shared selection preflight > share data excludes arbitrary runtime/secret fields and expressions [1.41ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/commands/create.test.ts:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: - Scaffolding project...
+@chat-js/cli:test:unit: ✔ Project scaffolded.
+@chat-js/cli:test:unit: - Writing configuration...
+@chat-js/cli:test:unit: ✔ Configuration written.
+@chat-js/cli:test:unit: │
+@chat-js/cli:test:unit: └  Your ChatJS app is ready!
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Next steps:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   1. cd s3-chat-app
+@chat-js/cli:test:unit:   2. Copy .env.example to .env.local and fill in the values below
+@chat-js/cli:test:unit:   3. bun install
+@chat-js/cli:test:unit:   4. bun run db:push
+@chat-js/cli:test:unit:   5. bun run dev
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Required for your configuration:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   * AUTH_SECRET - Secret used to sign auth sessions
+@chat-js/cli:test:unit:   * DATABASE_URL - Database connection string
+@chat-js/cli:test:unit:   * One of:
+@chat-js/cli:test:unit:     * AI_GATEWAY_API_KEY - Vercel AI Gateway API key
+@chat-js/cli:test:unit:     * VERCEL_OIDC_TOKEN - OIDC token available in Vercel runtime
+@chat-js/cli:test:unit:   * AUTH_GITHUB_ID + AUTH_GITHUB_SECRET - GitHub OAuth client id, GitHub OAuth client secret
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   For detailed setup instructions, visit https://www.chatjs.dev/docs/quickstart
+@chat-js/cli:test:unit: (pass) create command > ships the selected Files SDK provider without unrelated provider peers [56.98ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: - Scaffolding project...
+@chat-js/cli:test:unit: ✔ Project scaffolded.
+@chat-js/cli:test:unit: - Writing configuration...
+@chat-js/cli:test:unit: ✔ Configuration written.
+@chat-js/cli:test:unit: │
+@chat-js/cli:test:unit: └  Your ChatJS app is ready!
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Next steps:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   1. cd my-chat-app
+@chat-js/cli:test:unit:   2. Copy .env.example to .env.local and fill in the values below
+@chat-js/cli:test:unit:   3. npm install
+@chat-js/cli:test:unit:   4. npm run db:push
+@chat-js/cli:test:unit:   5. npm run dev
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Required for your configuration:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   * AUTH_SECRET - Secret used to sign auth sessions
+@chat-js/cli:test:unit:   * DATABASE_URL - Database connection string
+@chat-js/cli:test:unit:   * One of:
+@chat-js/cli:test:unit:     * AI_GATEWAY_API_KEY - Vercel AI Gateway API key
+@chat-js/cli:test:unit:     * VERCEL_OIDC_TOKEN - OIDC token available in Vercel runtime
+@chat-js/cli:test:unit:   * AUTH_GITHUB_ID + AUTH_GITHUB_SECRET - GitHub OAuth client id, GitHub OAuth client secret
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   For detailed setup instructions, visit https://www.chatjs.dev/docs/quickstart
+@chat-js/cli:test:unit: (pass) create command > uses the explicitly requested package manager for scaffold defaults [44.33ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: - Scaffolding project...
+@chat-js/cli:test:unit: ✔ Project scaffolded.
+@chat-js/cli:test:unit: - Writing configuration...
+@chat-js/cli:test:unit: ✔ Configuration written.
+@chat-js/cli:test:unit: │
+@chat-js/cli:test:unit: └  Your ChatJS app is ready!
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Next steps:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   1. cd storage-config-chat-app
+@chat-js/cli:test:unit:   2. Copy .env.example to .env.local and fill in the values below
+@chat-js/cli:test:unit:   3. bun install
+@chat-js/cli:test:unit:   4. bun run db:push
+@chat-js/cli:test:unit:   5. bun run dev
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: Required for your configuration:
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   * AUTH_SECRET - Secret used to sign auth sessions
+@chat-js/cli:test:unit:   * DATABASE_URL - Database connection string
+@chat-js/cli:test:unit:   * One of:
+@chat-js/cli:test:unit:     * AI_GATEWAY_API_KEY - Vercel AI Gateway API key
+@chat-js/cli:test:unit:     * VERCEL_OIDC_TOKEN - OIDC token available in Vercel runtime
+@chat-js/cli:test:unit:   * One of:
+@chat-js/cli:test:unit:     * BLOB_READ_WRITE_TOKEN - BLOB_READ_WRITE_TOKEN
+@chat-js/cli:test:unit:     * VERCEL_OIDC_TOKEN + BLOB_STORE_ID - OIDC token available in Vercel runtime, BLOB_STORE_ID
+@chat-js/cli:test:unit:   * AUTH_GITHUB_ID + AUTH_GITHUB_SECRET - GitHub OAuth client id, GitHub OAuth client secret
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:   For detailed setup instructions, visit https://www.chatjs.dev/docs/quickstart
+@chat-js/cli:test:unit: (pass) create command > treats storage config as an explicit storage request [42.17ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/helpers/scaffold.test.ts:
+@chat-js/cli:test:unit: (pass) buildConfigTs > writes desktopApp.enabled=false for web-only scaffolds [0.50ms]
+@chat-js/cli:test:unit: (pass) buildConfigTs > writes desktopApp.enabled=true for Electron scaffolds [0.17ms]
+@chat-js/cli:test:unit: (pass) buildConfigTs > keeps unsupported media tools disabled for openai-compatible scaffolds [1.21ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > installs only the selected Files SDK provider dependencies [44.52ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > writes a standalone-safe root package.json [62.78ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > rewrites the generated web app to be npm-friendly [44.74ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > allows known native package build scripts for pnpm scaffolds [52.88ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > starts generated apps with an empty installable tool registry [152.62ms]
+@chat-js/thread:test:unit: (pass) the packed package loads its core and React entry points [2457.85ms]
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit: test/message-tree.test.ts:
+@chat-js/thread:test:unit: (pass) MessageTree > derives the selected path without deleting sibling branches [0.70ms]
+@chat-js/thread:test:unit: (pass) MessageTree > sets the selected path without deleting hidden descendants [0.17ms]
+@chat-js/thread:test:unit: (pass) MessageTree > clears the selected path without deleting tree nodes [0.09ms]
+@chat-js/thread:test:unit: (pass) MessageTree > updates a path without changing the selected path [0.17ms]
+@chat-js/thread:test:unit: (pass) MessageTree > validates a path before changing existing nodes [0.08ms]
+@chat-js/thread:test:unit: (pass) MessageTree > rejects missing parents and cycles [0.02ms]
+@chat-js/thread:test:unit: (pass) MessageTree > allows message IDs that resemble internal root keys [0.36ms]
+@chat-js/thread:test:unit: (pass) MessageTree > only removes leaves and moves the selected cursor to the parent [0.06ms]
+@chat-js/thread:test:unit: (pass) MessageTree > inserts a message at an explicit sibling position [0.03ms]
+@chat-js/thread:test:unit: (pass) MessageTree > round-trips a serializable snapshot [0.14ms]
+@chat-js/thread:test:unit: (pass) MessageTree > rejects unordered and duplicate snapshot nodes [0.14ms]
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit: test/thread.test.ts:
+@chat-js/thread:test:unit: (pass) Thread > creates a complete initial snapshot for custom state adapters [0.20ms]
+@chat-js/thread:test:unit: (pass) Thread > publishes synchronous atomic updates through a custom state [2.57ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects a state implementation that does not update synchronously [0.07ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects sharing one state between multiple controllers [0.09ms]
+@chat-js/thread:test:unit: (pass) Thread > streams concurrent responses into separate assistant siblings [9.66ms]
+@chat-js/thread:test:unit: (pass) Thread > keeps a submitted response out of the tree until streaming starts [1.36ms]
+@chat-js/thread:test:unit: (pass) Thread > uses AI SDK's client response ID when the stream omits one [0.95ms]
+@chat-js/thread:test:unit: (pass) Thread > attaches streamed output without requiring a user parent [1.06ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects a bare run from an assistant before transport [0.47ms]
+@chat-js/thread:test:unit: (pass) Thread > continues an explicit assistant input in the same tree node [3.23ms]
+@chat-js/cli:test:unit: (pass) scaffoldFromTemplate > falls back to repo source apps when synced templates are missing [615.34ms]
+@chat-js/thread:test:unit: (pass) Thread > continues the selected assistant without creating a sibling [1.16ms]
+@chat-js/thread:test:unit: (pass) Thread > keeps hidden branches when reconciling the selected path [0.26ms]
+@chat-js/thread:test:unit: (pass) Thread > does not follow a delayed run after the active path changes [1.18ms]
+@chat-js/thread:test:unit: (pass) Thread > reports the completed run path to onFinish after navigation [1.42ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects concurrency before adding another user message [0.74ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects assistant continuation without creating a phantom run [0.50ms]
+@chat-js/thread:test:unit: (pass) Thread > stopping one run does not abort another [1.72ms]
+@chat-js/thread:test:unit: (pass) Thread > selects and follows a pending run before its response exists [2.59ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects selecting an unknown run [0.11ms]
+@chat-js/thread:test:unit: (pass) Thread > preserves the selected run when its target path is missing [0.67ms]
+@chat-js/thread:test:unit: (pass) Thread > keeps creation order after an earlier run fails without a message [2.78ms]
+@chat-js/thread:test:unit: (pass) Thread > preserves an error when resume finds no stream [0.66ms]
+@chat-js/thread:test:unit: (pass) Thread > run handles expose the current resumed request [0.60ms]
+@chat-js/thread:test:unit: (pass) Thread > refreshes the canonical message path before resuming [0.84ms]
+@chat-js/thread:test:unit: (pass) Thread > replays a v7 resume from start without duplicating canonical content [1.10ms]
+@chat-js/thread:test:unit: (pass) Thread > keeps canonical identity and metadata when a replay start omits them [0.62ms]
+@chat-js/thread:test:unit: (pass) Thread > updates restored tools after a continuation without duplicating the prefix [1.24ms]
+@chat-js/thread:test:unit: (pass) Thread > aggregate status ignores historical run errors [0.98ms]
+@chat-js/thread:test:unit: (pass) Thread > unexpected application errors reject the run promise [0.40ms]
+@chat-js/thread:test:unit: (pass) Thread > regenerates an assistant as a sibling response [3.04ms]
+@chat-js/thread:test:unit: (pass) Thread > regenerates a root assistant as a root sibling [1.03ms]
+@chat-js/thread:test:unit: (pass) Thread > does not follow regeneration after navigating to another branch [1.47ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects an unknown explicit regeneration target [0.13ms]
+@chat-js/thread:test:unit: (pass) Thread > regenerates an assistant whose parent is an assistant [1.30ms]
+@chat-js/thread:test:unit: (pass) Thread > restores assistant-to-assistant edges as tree data [0.28ms]
+@chat-js/thread:test:unit: (pass) Thread > routes tool output and approval to their owning runs [3.87ms]
+@chat-js/thread:test:unit: (pass) Thread > reconstructs tool and approval ownership after restoring a tree [3.59ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects missing restored tool and approval ownership [0.20ms]
+@chat-js/thread:test:unit: (pass) Thread > rejects duplicate restored tool and approval ownership [0.23ms]
+@chat-js/thread:test:unit: (pass) Thread > enforces the global concurrency limit before resuming [1.12ms]
+@chat-js/thread:test:unit: (pass) Thread > enforces the per-message concurrency limit before resuming [1.78ms]
+@chat-js/thread:test:unit: (pass) Thread > resumes a restored assistant through its reconstructed run [1.65ms]
+@chat-js/thread:test:unit: (pass) Thread > resumes a restored root assistant [1.24ms]
+@chat-js/thread:test:unit: (pass) Thread > resumes a restored assistant whose parent is an assistant [1.60ms]
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit: test/ai-sdk-run-chat.test.ts:
+@chat-js/thread:test:unit: (pass) ThreadRunChat > matches the AI SDK React Chat reducer for one response [1.96ms]
+@chat-js/thread:test:unit: (pass) ThreadRunChat > adopts the server response identity from the start chunk [0.33ms]
+@chat-js/thread:test:unit: (pass) ThreadRunChat > reports a failed stream exactly once without adding a response [0.34ms]
+@chat-js/thread:test:unit: (pass) ThreadRunChat > continues one response after an automatic tool follow-up [2.04ms]
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit: test/use-thread.test.ts:
+@chat-js/thread:test:unit: react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+@chat-js/thread:test:unit: (pass) useThread > observes messages sent through a custom state-backed AbstractThread [41.21ms]
+@chat-js/thread:test:unit: react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+@chat-js/thread:test:unit: (pass) useThread > uses current callbacks without replacing the chat transport [16.85ms]
+@chat-js/thread:test:unit: react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+@chat-js/thread:test:unit: (pass) useThread > resubscribes when the supplied thread changes [1.09ms]
+@chat-js/thread:test:unit: react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+@chat-js/thread:test:unit: (pass) useThread > automatically resumes the supplied thread [1.31ms]
+@chat-js/thread:test:unit: react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+@chat-js/cli:test:unit: (pass) scaffoldFromGit > leaves repositories without the ChatJS storage seam untouched [245.70ms]
+@chat-js/thread:test:unit: (pass) useThread > keeps status immediate while throttling message snapshots [114.21ms]
+@chat-js/thread:test:unit: 
+@chat-js/thread:test:unit:  65 pass
+@chat-js/thread:test:unit:  0 fail
+@chat-js/thread:test:unit:  198 expect() calls
+@chat-js/thread:test:unit: Ran 65 tests across 5 files. [2.82s]
+@chatjs/chat:test:unit: cache miss, executing 61ac6e5f1e262306
+@chatjs/chat:test:unit: $ vitest run
+@chat-js/cli:test:unit: (pass) scaffoldElectron > pins Better Auth versions in the generated electron app [60.57ms]
+@chat-js/cli:test:unit: (pass) scaffoldElectron > allows Electron install/build scripts for pnpm scaffolds [49.42ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/helpers/env-checklist.test.ts:
+@chat-js/cli:test:unit: (pass) collectEnvChecklist > uses the LiteLLM base URL as the gateway requirement [0.12ms]
+@chat-js/cli:test:unit: (pass) collectEnvChecklist > includes installable tool env requirements [0.05ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/helpers/scaffold-contract.test.ts:
+@chat-js/cli:test:unit: (pass) scaffold contracts > builds valid configs for the high-risk built-in tool matrix [6.22ms]
+@chat-js/cli:test:unit: - Fetching tools...
+@chat-js/cli:test:unit: ✔ Fetched 3 tools
+@chat-js/cli:test:unit: - Writing files...
+@chat-js/cli:test:unit: ✔ Wrote tools/chatjs/_shared/lib/cx.ts, tools/chatjs/_shared/lib/tool-part.ts, tools/chatjs/_shared/hooks/use-tool-is-compact.ts, tools/chatjs/get-weather/tool.ts, tools/chatjs/get-weather/renderer.tsx, tools/chatjs/word-count/tool.ts, tools/chatjs/word-count/renderer.tsx, tools/chatjs/retrieve-url/tool.ts, tools/chatjs/retrieve-url/renderer.tsx
+@chat-js/cli:test:unit: - Updating package.json dependencies...
+@chat-js/cli:test:unit: ✔ Recorded: ai, react, date-fns, zod, @mendable/firecrawl-js, lucide-react, react-markdown
+@chat-js/cli:test:unit: │
+@chat-js/cli:test:unit: ▲  Missing env vars for installed tools: retrieve-url: FIRECRAWL_API_KEY
+@chat-js/cli:test:unit: - Updating tool registry index...
+@chat-js/cli:test:unit: ✔ Updated tool registry index
+@chat-js/cli:test:unit: (pass) scaffold contracts > resolves and injects every visible registry tool without scaffolding an app [90.65ms]
+@chat-js/cli:test:unit: (pass) scaffold contracts > requires shared registry dependencies when renderer files import shared toolkit code [1.78ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit: src/helpers/storage-provider.test.ts:
+@chat-js/cli:test:unit: (pass) storage provider configuration > accepts every provider compatible with a generated Next.js app [0.53ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > derives an exported factory for every installable provider [25.80ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > does not require credentials resolved by a provider SDK chain [0.13ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > parses adapter options as an object [0.36ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > rejects explicitly empty storage config [0.35ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > derives Vercel Blob credential alternatives from the catalog [0.06ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > requires R2 env credentials unless a binding is configured [0.03ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > configures repositories without an env example [3.29ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > removes only dependencies owned by the previous storage provider [5.55ms]
+@chat-js/cli:test:unit: (pass) storage provider configuration > preserves provider peers not marked as generator-owned [2.43ms]
+@chat-js/cli:test:unit: 
+@chat-js/cli:test:unit:  42 pass
+@chat-js/cli:test:unit:  0 fail
+@chat-js/cli:test:unit:  333 expect() calls
+@chat-js/cli:test:unit: Ran 42 tests across 8 files. [2.54s]
+@chatjs/chat:test:unit: The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+@chatjs/chat:test:unit: 
+@chatjs/chat:test:unit:  RUN  v4.1.4 /Users/fran/.codex/worktrees/db6e/chat-js/apps/chat
+@chatjs/chat:test:unit: 
+@chatjs/chat:test:unit:  ✓ components/parallel-response-cards.test.ts (5 tests) 4ms
+@chatjs/chat:test:unit:  ✓ lib/gated-chat-transport.test.ts (4 tests) 9ms
+@chatjs/chat:test:unit:  ✓ lib/provisional-chat-confirmations.test.ts (3 tests) 3ms
+@chatjs/chat:test:unit:  ✓ providers/parse-chat-id-from-pathname.test.ts (11 tests) 6ms
+@chatjs/chat:test:unit:  ✓ lib/ai/text-splitter.test.ts (4 tests) 3ms
+@chatjs/chat:test:unit:  ✓ lib/credits/cost-accumulator.test.ts (13 tests) 5ms
+@chatjs/chat:test:unit:  ✓ lib/utils/download-assets.test.ts (12 tests) 29ms
+@chatjs/chat:test:unit:  ✓ lib/chat-tree-actions.test.ts (4 tests) 3ms
+@chatjs/chat:test:unit:  ✓ lib/data-stream.test.ts (3 tests) 2ms
+@chatjs/chat:test:unit:  ✓ lib/clone-messages.test.ts (3 tests) 4ms
+@chatjs/chat:test:unit:  ✓ lib/cancellation-aware-chat-transport.test.ts (3 tests) 11ms
+@chatjs/chat:test:unit:  ✓ lib/ai/stream-errors.test.ts (6 tests) 3ms
+@chatjs/chat:test:unit:  ✓ lib/thread-utils.test.ts (4 tests) 7ms
+@chatjs/chat:test:unit:  ✓ lib/ai/gateways/litellm-gateway.test.ts (3 tests) 32ms
+@chatjs/chat:test:unit:  ✓ lib/social-auth.test.ts (6 tests) 17ms
+@chatjs/chat:test:unit:  ✓ lib/stop-response.test.ts (3 tests) 18ms
+@chatjs/chat:test:unit:  ✓ lib/ai/complete-data-part.test.ts (4 tests) 14ms
+@chatjs/chat:test:unit:  ✓ lib/ai/completion-queue.test.ts (2 tests) 4ms
+@chatjs/chat:test:unit:  ✓ lib/chat/view-store.test.ts (6 tests) 83ms
+@chatjs/chat:test:unit:  ✓ tools/platform/code-execution.shared.test.ts (7 tests) 332ms
+@chatjs/chat:test:unit:      ✓ uses Python defaults when no override is set  329ms
+@chatjs/chat:test:unit:  ✓ lib/parallel-chat-requests.test.ts (1 test) 183ms
+@chatjs/chat:test:unit:  ✓ lib/chat-runtime-id.test.ts (3 tests) 8ms
+@chatjs/chat:test:unit:  ✓ lib/file-content-response.test.ts (2 tests) 22ms
+@chatjs/chat:test:unit:  ✓ lib/file-storage.test.ts (1 test) 9ms
+@chatjs/chat:test:unit:  ✓ lib/ai/gateways/vercel-gateway.test.ts (1 test) 44ms
+@chatjs/chat:test:unit: [2026-09-06 20:02:20.609 +0100] DEBUG: Fetching models from Vercel AI Gateway
+@chatjs/chat:test:unit:     app: "chatjs"
+@chatjs/chat:test:unit:     module: "ai/gateways/vercel"
+@chatjs/chat:test:unit:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:test:unit: [2026-09-06 20:02:20.647 +0100] WARN: Skipping models with unsupported types from Vercel AI Gateway
+@chatjs/chat:test:unit:     app: "chatjs"
+@chatjs/chat:test:unit:     module: "ai/gateways/vercel"
+@chatjs/chat:test:unit:     unsupportedTypes: [
+@chatjs/chat:test:unit:       "speech"
+@chatjs/chat:test:unit:     ]
+@chatjs/chat:test:unit:     skippedModelCount: 1
+@chatjs/chat:test:unit:     modelCount: 2
+@chatjs/chat:test:unit: [2026-09-06 20:02:20.647 +0100] INFO: Successfully fetched models from Vercel AI Gateway
+@chatjs/chat:test:unit:     app: "chatjs"
+@chatjs/chat:test:unit:     module: "ai/gateways/vercel"
+@chatjs/chat:test:unit:     modelCount: 1
+@chatjs/chat:test:unit:  ✓ lib/assistant-request-id.test.ts (2 tests) 2ms
+@chatjs/chat:test:unit:  ✓ lib/utils/message-mapping.test.ts (2 tests) 6ms
+@chatjs/chat:test:unit:  ✓ lib/file-url.test.ts (3 tests) 3ms
+@chatjs/chat:test:unit:  ✓ lib/stores/zustand-thread-state.test.ts (8 tests) 15ms
+@chatjs/chat:test:unit:  ✓ lib/ai/usage-token-details.test.ts (4 tests) 27ms
+@chatjs/chat:test:unit:  ✓ lib/ai/token-utils.test.ts (19 tests) 17ms
+@chatjs/chat:test:unit:  ✓ lib/stores/with-chat-persistence.test.ts (2 tests) 5ms
+@chatjs/chat:test:unit:  ✓ lib/stores/with-data-stream.test.ts (1 test) 6ms
+@chatjs/chat:test:unit: 
+@chatjs/chat:test:unit:  Test Files  33 passed (33)
+@chatjs/chat:test:unit:       Tests  155 passed (155)
+@chatjs/chat:test:unit:    Start at  20:02:17
+@chatjs/chat:test:unit:    Duration  3.16s (transform 5.96s, setup 0ms, import 11.36s, tests 934ms, environment 2ms)
+@chatjs/chat:test:unit: 
+
+ Tasks:    3 successful, 3 total
+Cached:    0 cached, 3 total
+  Time:    7.781s 
+

@@ -1,0 +1,6 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+🔧 Setting up database schema...
+📍 Connection: postgres://127.0.0.1:56319/m07
+📂 Running migrations from: /private/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-selected-SWkrNw/app/node_modules/@workflow/world-postgres/src/drizzle/migrations
+📂 Bootstrapping graphile-worker schema...
+✅ Database schema created successfully!

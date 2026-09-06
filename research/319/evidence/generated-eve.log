@@ -1,0 +1,22 @@
+$ bun .agents/skills/worktree-ports/scripts/worktree-env.ts minimalEve -- bun run --cwd "/var/folders/yh/gd_w4qx53yd7j9z0lypwzsk00000gn/T/chatjs-selected-SWkrNw/app" eve:start
+Worktree slot 319 · minimalEve → http://localhost:6195
+$ eve start --host 127.0.0.1
+➜ Listening on: http://127.0.0.1:6195/
+[Graphile Worker] WARNING: having maxPoolSize (10) smaller than concurrency (50) may lead to non-optimal performance. {
+  "max": 10,
+  "concurrency": 50
+}
+[START] server listening at http://127.0.0.1:6195/
+
+Stopping server gracefully (5s)... Press Ctrl+C again to force close.[Graphile Worker] Received 'SIGTERM'; attempting global graceful shutdown... (all termination signals will be ignored for the next 5 seconds)
+Built server process exited unexpectedly (code=143, signal=null).
+➜ Listening on: http://127.0.0.1:6195/
+[Graphile Worker] WARNING: having maxPoolSize (10) smaller than concurrency (50) may lead to non-optimal performance. {
+  "max": 10,
+  "concurrency": 50
+}
+
+Stopping server gracefully (5s)... Press Ctrl+C again to force close.[Graphile Worker] Received 'SIGTERM'; attempting global graceful shutdown... (all termination signals will be ignored for the next 5 seconds)
+
+error: script "eve:start" exited with code 1
+error: script "worktree-env" exited with code 1

@@ -1,0 +1,10 @@
+bun test v1.3.11 (af24e281)
+
+examples/minimal-next/tests/bindings.test.ts:
+(pass) durable reservations isolate concurrent owners and block duplicate execution [33.00ms]
+(pass) ambiguous create stays fail-closed across retries [13.57ms]
+
+ 2 pass
+ 0 fail
+ 11 expect() calls
+Ran 2 tests across 1 file. [146.00ms]

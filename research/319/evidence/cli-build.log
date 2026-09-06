@@ -1,0 +1,10 @@
+$ bun run template:sync && bun run registry:build && bun build ./src/index.ts --target=node --format=esm --external shadcn --outfile ./dist/index.js
+$ bun ../../scripts/sync-template.ts
+Synced templates/chat-app from apps/chat.
+Synced templates/electron from apps/electron.
+$ bun build-registry.ts
+Built selected minimal Next registry items from M07 source.
+Bundled 161 modules in 68ms
+
+  index.js  0.92 MB  (entry point)
+

@@ -1,0 +1,107 @@
+- region "Notifications alt+T" [ref=e1]
+- list
+  - button "Expand sidebar" [ref=e2]
+    - image "ChatJS"
+  - link "New Chat New Chat Cmd+Shift+O" [ref=e3]
+    - image "New Chat"
+    - StaticText "New Chat"
+    - StaticText "Cmd+Shift+O"
+  - listitem [level=1]
+    - button "Search chats Cmd+K" [ref=e5]
+      - StaticText "Search chats"
+      - StaticText "Cmd+K"
+  - listitem [level=1]
+    - link [ref=e6]
+- LayoutTable
+- list
+  - listitem [level=1]
+    - button "Dev User" [expanded=false, ref=e7]
+      - image "Dev User"
+- main
+  - sectionheader
+    - link "Open documentation" [ref=e8]
+    - link "Git" [ref=e9]
+      - image "Git"
+  - log
+    - button "Reply exactly REFERENCE319_OK." [ref=e12]
+      - StaticText "Reply exactly REFERENCE319_OK."
+    - button "Edit message" [ref=e13]
+      - StaticText "Edit message"
+    - button "Copy" [ref=e14]
+      - StaticText "Copy"
+    - image "Error icon"
+    - paragraph
+      - StaticText "Something went wrong"
+    - paragraph
+      - StaticText "An error occurred while processing your request. Please try again."
+    - button "Try again" [ref=e15]
+  - generic
+    - button "Choose Files" [ref=e16]: No file chosen
+    - group
+      - button "Choose Files" [ref=e20]: No file chosen
+      - generic
+        - textbox [ref=e22]
+        - StaticText "Send a message..."
+      - group [ref=e21] clickable [onclick]
+        - button [expanded=false, disabled, ref=e23]
+        - combobox [expanded=false, ref=e24]: openai logo GPT-5 mini
+          - image "openai logo"
+          - StaticText "GPT-5 mini"
+        - button "Tools" [expanded=false, ref=e25]
+          - StaticText "Tools"
+        - button "Submit" [ref=e26]
+- button "Open Tanstack query devtools" [ref=e4]
+  - image
+- button "Open Next.js Dev Tools" [expanded=false, ref=e17]
+  - image
+- alert
+- Canvas
+- generic
+  - Canvas
+  - generic
+    - generic
+      - button "icon-close" [ref=e18]
+        - image "icon-close"
+      - generic
+        - generic
+          - StaticText "History"
+          - button "Clear all events" [ref=e27]
+            - image
+          - button "FPS Drop 33 FPS" [ref=e28]
+            - image
+            - StaticText "FPS Drop"
+            - StaticText "33"
+            - StaticText " FPS"
+          - button "Button 144ms" [ref=e29]
+            - image
+            - StaticText "Button"
+            - StaticText "144"
+            - StaticText "ms"
+          - button "FPS Drops x7" [ref=e30]
+            - image
+            - StaticText "FPS Drops"
+            - StaticText "x"
+            - StaticText "7"
+        - generic
+          - button [ref=e32]
+            - image
+          - StaticText "Scanning for slowdowns"
+          - StaticText ".."
+          - paragraph
+            - StaticText "Click on an item in the History list to get started"
+          - paragraph
+            - StaticText "You don't need to keep this panel open for React Scan to record slowdowns"
+          - paragraph
+            - StaticText "Enable audio alerts to hear a delightful ding every time a large slowdown is recorded"
+          - button "Enable audio alerts" [ref=e31]
+            - StaticText "Enable audio alerts"
+    - button "icon-inspect" [ref=e10]
+      - image "icon-inspect"
+    - button "8" [ref=e11]
+      - generic
+        - image
+        - StaticText "8"
+    - generic
+      - checkbox "Outline Re-renders" [checked=true, ref=e19]
+    - StaticText "95"
+    - StaticText "FPS"

@@ -1,0 +1,2 @@
+$ biome check app lib agent scripts tests components integrations chat.client.ts chat.server.ts chat.config.ts
+Checked 47 files in 20ms. No fixes applied.

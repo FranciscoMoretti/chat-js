@@ -1,0 +1,26 @@
+
+- Scaffolding project...
+✔ Project scaffolded.
+- Writing configuration...
+✔ Configuration written.
+│
+└  Your ChatJS app is ready!
+
+Next steps:
+
+  1. cd .local-research/full319
+  2. Copy .env.example to .env.local and fill in the values below
+  3. bun install
+  4. bun run db:push
+  5. bun run dev
+
+Required for your configuration:
+
+  * AUTH_SECRET - Secret used to sign auth sessions
+  * DATABASE_URL - Database connection string
+  * One of:
+    * AI_GATEWAY_API_KEY - Vercel AI Gateway API key
+    * VERCEL_OIDC_TOKEN - OIDC token available in Vercel runtime
+  * AUTH_GITHUB_ID + AUTH_GITHUB_SECRET - GitHub OAuth client id, GitHub OAuth client secret
+
+  For detailed setup instructions, visit https://www.chatjs.dev/docs/quickstart

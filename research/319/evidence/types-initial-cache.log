@@ -1,0 +1,132 @@
+$ turbo run test:types
+• turbo 2.9.5
+
+   • Packages in scope: @chat-js/cli, @chat-js/electron, @chat-js/registry, @chat-js/thread, @chatjs/chat, @chatjs/docs, @chatjs/site
+   • Running test:types in 7 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chat-js/cli:test:types: cache hit, replaying logs e6c18cd60bc668bf
+@chat-js/cli:test:types: $ tsc -p tsconfig.selection.json --noEmit
+@chat-js/thread:test:types: cache hit, replaying logs 4a6098f61f1fe323
+@chat-js/thread:test:types: $ tsc -p tsconfig.json --noEmit && bun run build
+@chat-js/thread:test:types: $ bun -e "import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.build.json && bun ./build.ts
+@chatjs/chat:test:types: cache miss, executing f240ee8d90a2e6d1
+@chatjs/site:test:types: cache hit, replaying logs 87e113717303112b
+@chatjs/site:test:types: $ next typegen . && tsc --noEmit
+@chatjs/site:test:types: Generating route types...
+@chatjs/site:test:types: ✓ Types generated successfully
+@chatjs/chat:test:types: $ rm -rf .next/dev/types && next typegen . && tsc --noEmit
+@chatjs/chat:test:types: Generating route types...
+@chatjs/chat:test:types: ✓ Types generated successfully
+@chatjs/chat:test:types: components/artifact-panel.tsx(497,24): error TS2339: Property 'subscribe' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/artifact-panel.tsx(498,24): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/artifact-panel.tsx(499,24): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat-sync.tsx(49,30): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat-sync.tsx(79,38): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat-sync.tsx(106,38): error TS2741: Property 'upsertMessage' is missing in type 'ApplicationThread' but required in type 'Pick<AbstractThread<ChatMessage>, "upsertMessage">'.
+@chatjs/chat:test:types: components/chat-sync.tsx(136,24): error TS2339: Property 'getRunForMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat-system.tsx(3,42): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(20,34): error TS2339: Property 'id' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(31,24): error TS2339: Property 'subscribe' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(32,24): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(33,24): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(36,19): error TS18046: 'snapshot' is of type 'unknown'.
+@chatjs/chat:test:types: components/chat/artifact-stream-observer.tsx(39,12): error TS7006: Parameter 'tool' implicitly has an 'any' type.
+@chatjs/chat:test:types: components/chat/conversation-view.tsx(34,22): error TS2339: Property 'id' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/chat/secondary-chat-panel.tsx(22,35): error TS2339: Property 'id' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/message-actions.tsx(82,39): error TS2339: Property 'getMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/message-actions.tsx(88,23): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: components/message-actions.tsx(89,19): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: components/multimodal-input.tsx(594,16): error TS2339: Property 'removeMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/multimodal-input.tsx(601,18): error TS2339: Property 'upsertMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/multimodal-input.tsx(603,20): error TS2339: Property 'getParent' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/retry-button.tsx(21,34): error TS2339: Property 'getPath' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: components/user-message.tsx(41,40): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/ai/complete-data-part.ts(3,37): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/app-chat-runtime.ts(1,42): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/application-thread.ts(1,50): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/chat/artifact-origin.ts(30,21): error TS2339: Property 'getRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/artifact-origin.ts(31,21): error TS2339: Property 'getRunForMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/artifact-origin.ts(35,30): error TS2339: Property 'stopRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-hooks.ts(18,61): error TS2339: Property 'id' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.test.ts(1,24): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/chat/view-store.test.ts(70,33): error TS7006: Parameter 'm' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/chat/view-store.test.ts(71,33): error TS7006: Parameter 'm' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/chat/view-store.test.ts(77,33): error TS7006: Parameter 'm' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/chat/view-store.test.ts(82,33): error TS7006: Parameter 'm' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/chat/view-store.ts(4,8): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/chat/view-store.ts(14,28): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(29,22): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(35,29): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(41,16): error TS2339: Property 'getMessageForRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(48,28): error TS2339: Property 'subscribe' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(69,29): error TS2339: Property 'getMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(87,30): error TS2339: Property 'startRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(110,24): error TS2339: Property 'regenerateRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(114,36): error TS2339: Property 'getPath' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(118,21): error TS2339: Property 'getRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(120,36): error TS2339: Property 'getRunForMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(124,25): error TS2339: Property 'stopRun' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/chat/view-store.ts(127,44): error TS2339: Property 'sendMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/parallel-chat-requests.test.ts(2,24): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/parallel-chat-requests.test.ts(109,38): error TS7031: Binding element 'status' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/parallel-chat-requests.test.ts(124,38): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/parallel-chat-requests.test.ts(160,43): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/parallel-chat-requests.ts(1,34): error TS2307: Cannot find module '@chat-js/thread/react' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/base/hooks.ts(6,39): error TS2307: Cannot find module '@chat-js/thread/react' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/base/use-chat.ts(8,63): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/base/use-chat.ts(13,8): error TS2307: Cannot find module '@chat-js/thread/react' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/custom-store-provider.tsx(7,8): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/custom-store-provider.tsx(155,38): error TS2339: Property 'setMessages' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/hooks-base.ts(52,34): error TS7006: Parameter 'p' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-message-parts.ts(16,58): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-message-parts.ts(58,18): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-message-parts.ts(59,18): error TS7006: Parameter 'part' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(1,32): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(67,40): error TS7006: Parameter 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(101,31): error TS2339: Property 'getSiblings' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(106,50): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(116,27): error TS2339: Property 'getLeaves' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(143,19): error TS7006: Parameter 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(148,12): error TS7006: Parameter 'candidate' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(151,12): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(151,15): error TS7006: Parameter 'b' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(155,59): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(156,51): error TS7006: Parameter 'run' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(174,28): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(195,12): error TS7006: Parameter 'message' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(195,21): error TS7006: Parameter 'index' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(209,30): error TS2339: Property 'getMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/hooks-threads.ts(213,27): error TS2339: Property 'getLeaves' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/with-thread-state.ts(4,8): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(44,19): error TS7006: Parameter 'snapshot' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(114,12): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(115,12): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(116,12): error TS2339: Property 'setCursor' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(120,12): error TS2339: Property 'setCursor' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(129,19): error TS2339: Property 'getSnapshot' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(171,14): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(172,14): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(173,14): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(174,14): error TS2339: Property 'setCursor' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(183,14): error TS2339: Property 'setCursor' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(205,14): error TS2339: Property 'addMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(206,14): error TS2339: Property 'setCursor' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.test.ts(210,14): error TS2339: Property 'upsertMessage' does not exist on type 'ApplicationThread'.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.ts(1,34): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/stores/zustand-thread-state.ts(22,46): error TS7006: Parameter 'updater' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(1,43): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(61,39): error TS7031: Binding element 'node' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(66,37): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(86,34): error TS7031: Binding element 'node' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(86,40): error TS7031: Binding element 'parentId' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.test.ts(91,37): error TS7031: Binding element 'id' implicitly has an 'any' type.
+@chatjs/chat:test:types: lib/thread-utils.ts(1,42): error TS2307: Cannot find module '@chat-js/thread' or its corresponding type declarations.
+ ERROR  @chatjs/chat#test:types: command (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat) /Users/fran/.bun/bin/bun run test:types exited (2)
+
+ Tasks:    3 successful, 4 total
+Cached:    3 cached, 4 total
+  Time:    21.636s 
+Failed:    @chatjs/chat#test:types
+
+ ERROR  run failed: command  exited (2)

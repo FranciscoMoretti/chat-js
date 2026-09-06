@@ -1,0 +1,235 @@
+$ dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run dev --filter=@chatjs/chat
+$ bun .agents/skills/worktree-ports/scripts/worktree-env.ts chat -- turbo run dev "--filter=@chatjs/chat"
+Worktree slot 319 · chat → http://localhost:6190
+• turbo 2.9.5
+
+   • Packages in scope: @chatjs/chat
+   • Running dev in 1 packages
+   • Remote caching disabled, using shared worktree cache
+
+@chatjs/chat:dev: cache bypass, force executing e379ffdd2ccf3354
+@chatjs/chat:dev: $ bun run check-env && bash scripts/with-db.sh next dev
+@chatjs/chat:dev: $ bun scripts/check-env.ts
+@chatjs/chat:dev: ◇ injected env (0) from .env.local // tip: ◈ secrets for agents [www.dotenvx.com]
+@chatjs/chat:dev: ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+@chatjs/chat:dev: ✅ Environment validation passed
+@chatjs/chat:dev: ▲ Next.js 16.3.0 (Turbopack)
+@chatjs/chat:dev: - Local:         http://localhost:6190
+@chatjs/chat:dev: - Network:       http://192.168.1.129:6190
+@chatjs/chat:dev: ✓ Ready in 296ms
+@chatjs/chat:dev: ✓ Running next.config.ts took 71ms
+@chatjs/chat:dev: Langfuse secret key was not passed to constructor or not set as 'LANGFUSE_SECRET_KEY' environment variable. No observability data will be sent to Langfuse.
+@chatjs/chat:dev: - Cache Components enabled
+@chatjs/chat:dev: - Partial Prefetching enabled
+@chatjs/chat:dev: - Experiments (use with caution):
+@chatjs/chat:dev:   · optimizePackageImports
+@chatjs/chat:dev:   · staleTimes
+@chatjs/chat:dev: 
+@chatjs/chat:dev:  GET /api/dev-login 302 in 886ms (next.js: 773ms, application-code: 113ms)
+@chatjs/chat:dev: ○ Compiling / ...
+@chatjs/chat:dev: [2026-09-06 20:09:32.869 +0100] DEBUG: Fetching models from gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/models"
+@chatjs/chat:dev:     gateway: "vercel"
+@chatjs/chat:dev: [2026-09-06 20:09:32.870 +0100] DEBUG: Fetching models from Vercel AI Gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev: [2026-09-06 20:09:33.017 +0100] ERROR: Vercel AI Gateway returned non-OK response
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     status: 401
+@chatjs/chat:dev:     statusText: "Unauthorized"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev: [2026-09-06 20:09:33.017 +0100] ERROR: Error fetching models from Vercel AI Gateway, falling back to generated models
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev:     err: {
+@chatjs/chat:dev:       "type": "Error",
+@chatjs/chat:dev:       "message": "Failed to fetch models: Unauthorized",
+@chatjs/chat:dev:       "stack":
+@chatjs/chat:dev:           Error: Failed to fetch models: Unauthorized
+@chatjs/chat:dev:               at VercelGateway.fetchModels (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:2177:23)
+@chatjs/chat:dev:               at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+@chatjs/chat:dev:               at async fetchModelsRaw (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:7580:24)
+@chatjs/chat:dev:               at async module.exports.fetchModels.revalidate (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:7595:20)
+@chatjs/chat:dev:               at async cachedCb (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/1vyh_next_1ak7b38._.js:10876:32)
+@chatjs/chat:dev:               at async module.exports.fetchAllAppModels.revalidate (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:1514:20)
+@chatjs/chat:dev:               at async cachedCb (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/1vyh_next_1ak7b38._.js:10876:32)
+@chatjs/chat:dev:               at async module.exports.fetchChatModels.revalidate (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:1525:23)
+@chatjs/chat:dev:               at async cachedCb (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/1vyh_next_1ak7b38._.js:10876:32)
+@chatjs/chat:dev:               at async getChatModels (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:470:12)
+@chatjs/chat:dev:               at async Promise.all (index 2)
+@chatjs/chat:dev:               at async ChatLayoutDynamic (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/ssr/[root-of-the-server]__0k2ucp9._.js:358:51)
+@chatjs/chat:dev:     }
+@chatjs/chat:dev: [2026-09-06 20:09:33.018 +0100] INFO: Successfully fetched models from gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/models"
+@chatjs/chat:dev:     gateway: "vercel"
+@chatjs/chat:dev:     modelCount: 215
+@chatjs/chat:dev:  GET /manifest.webmanifest 200 in 936ms (next.js: 896ms, application-code: 40ms)
+@chatjs/chat:dev: [getAllChats] Starting {
+@chatjs/chat:dev:   userId: 'ac11d46c-645d-4ffb-a739-f4b31649c00c',
+@chatjs/chat:dev:   projectId: null,
+@chatjs/chat:dev:   inputType: 'object'
+@chatjs/chat:dev: }
+@chatjs/chat:dev: [getChatsByUserId] Starting {
+@chatjs/chat:dev:   userId: 'ac11d46c-645d-4ffb-a739-f4b31649c00c',
+@chatjs/chat:dev:   projectId: null,
+@chatjs/chat:dev:   projectIdType: 'object',
+@chatjs/chat:dev:   projectIdIsNull: true,
+@chatjs/chat:dev:   projectIdIsUndefined: false
+@chatjs/chat:dev: }
+@chatjs/chat:dev: [getChatsByUserId] Using null project condition
+@chatjs/chat:dev: [getChatsByUserId] Executing query
+@chatjs/chat:dev: [browser] [React Scan] react-grab v0.1.32 is outdated (latest: v0.2.0). Update react-scan to pick up the newer react-grab. (https://unpkg.com/react-scan/dist/auto.global.js:2:304115)
+@chatjs/chat:dev: [getChatsByUserId] Query completed { count: 0, sampleChat: null }
+@chatjs/chat:dev: [getAllChats] Retrieved chats from DB { count: 0, sampleChat: null }
+@chatjs/chat:dev: [getAllChats] After sorting { count: 0 }
+@chatjs/chat:dev: [getAllChats] After mapping to UI { count: 0 }
+@chatjs/chat:dev:  GET / 200 in 13.6s (next.js: 10.8s, proxy.ts: 338ms, application-code: 2.5s)
+@chatjs/chat:dev: [getAllChats] Starting {
+@chatjs/chat:dev:   userId: 'ac11d46c-645d-4ffb-a739-f4b31649c00c',
+@chatjs/chat:dev:   projectId: null,
+@chatjs/chat:dev:   inputType: 'object'
+@chatjs/chat:dev: }
+@chatjs/chat:dev: [getChatsByUserId] Starting {
+@chatjs/chat:dev:   userId: 'ac11d46c-645d-4ffb-a739-f4b31649c00c',
+@chatjs/chat:dev:   projectId: null,
+@chatjs/chat:dev:   projectIdType: 'object',
+@chatjs/chat:dev:   projectIdIsNull: true,
+@chatjs/chat:dev:   projectIdIsUndefined: false
+@chatjs/chat:dev: }
+@chatjs/chat:dev: [getChatsByUserId] Using null project condition
+@chatjs/chat:dev: [getChatsByUserId] Executing query
+@chatjs/chat:dev: [getChatsByUserId] Query completed { count: 0, sampleChat: null }
+@chatjs/chat:dev: [getAllChats] Retrieved chats from DB { count: 0, sampleChat: null }
+@chatjs/chat:dev: [getAllChats] After sorting { count: 0 }
+@chatjs/chat:dev: [getAllChats] After mapping to UI { count: 0 }
+@chatjs/chat:dev: [browser] WARNING: Invalid layout total size: 65%. Layout normalization will be applied.
+@chatjs/chat:dev: [browser] WARNING: Invalid layout total size: 65%. Layout normalization will be applied.
+@chatjs/chat:dev: [browser] WARNING: Invalid layout total size: 65%. Layout normalization will be applied.
+@chatjs/chat:dev: [browser] WARNING: Invalid layout total size: 65%. Layout normalization will be applied.
+@chatjs/chat:dev:  GET /api/auth/get-session 200 in 2.6s (next.js: 2.5s, application-code: 56ms)
+@chatjs/chat:dev:  GET /api/trpc/credits.getAvailableCredits,mcp.listConnected?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%2C%221%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 2.9s (next.js: 2.8s, application-code: 107ms)
+@chatjs/chat:dev:  POST /api/chat-model 200 in 1057ms (next.js: 1012ms, application-code: 45ms)
+@chatjs/chat:dev:  POST /api/chat 500 in 4.3s (next.js: 3.0s, application-code: 1364ms)
+@chatjs/chat:dev:  GET /api/trpc/credits.getAvailableCredits?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 24ms (next.js: 12ms, application-code: 12ms)
+@chatjs/chat:dev: [2026-09-06 20:09:53.310 +0100] DEBUG: Fetching models from gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/models"
+@chatjs/chat:dev:     gateway: "vercel"
+@chatjs/chat:dev: [2026-09-06 20:09:53.310 +0100] DEBUG: Fetching models from Vercel AI Gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev: [2026-09-06 20:09:53.428 +0100] ERROR: Vercel AI Gateway returned non-OK response
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     status: 401
+@chatjs/chat:dev:     statusText: "Unauthorized"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev: [2026-09-06 20:09:53.429 +0100] ERROR: Error fetching models from Vercel AI Gateway, falling back to generated models
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/gateways/vercel"
+@chatjs/chat:dev:     url: "https://ai-gateway.vercel.sh/v1/models"
+@chatjs/chat:dev:     err: {
+@chatjs/chat:dev:       "type": "Error",
+@chatjs/chat:dev:       "message": "Failed to fetch models: Unauthorized",
+@chatjs/chat:dev:       "stack":
+@chatjs/chat:dev:           Error: Failed to fetch models: Unauthorized
+@chatjs/chat:dev:               at VercelGateway.fetchModels (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__1v04zc9._.js:1785:23)
+@chatjs/chat:dev:               at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+@chatjs/chat:dev:               at async fetchModelsRaw (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__1v04zc9._.js:7188:24)
+@chatjs/chat:dev:               at async module.exports.fetchModels.revalidate (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__1v04zc9._.js:7203:20)
+@chatjs/chat:dev:               at async cachedCb (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_server_1m8r2um._.js:9640:32)
+@chatjs/chat:dev:               at async module.exports.fetchAllAppModels.revalidate (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__1v04zc9._.js:615:20)
+@chatjs/chat:dev:               at async cachedCb (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_server_1m8r2um._.js:9640:32)
+@chatjs/chat:dev:               at async getAppModelDefinition (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__1v04zc9._.js:637:20)
+@chatjs/chat:dev:               at async validateAndSetupSession (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:1065:27)
+@chatjs/chat:dev:               at async POST (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:1319:30)
+@chatjs/chat:dev:               at async AppRouteRouteModule.do (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:42791)
+@chatjs/chat:dev:               at async AppRouteRouteModule.handle (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:50709)
+@chatjs/chat:dev:               at async responseGenerator (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:324:30)
+@chatjs/chat:dev:               at async AppRouteRouteModule.handleResponse (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:248823)
+@chatjs/chat:dev:               at async handleResponse (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:396:32)
+@chatjs/chat:dev:               at async Module.handler (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:513:9)
+@chatjs/chat:dev:               at async DevServer.renderToResponseWithComponentsImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1537:9)
+@chatjs/chat:dev:               at async DevServer.renderPageComponent (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1589:24)
+@chatjs/chat:dev:               at async DevServer.renderToResponseImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1639:32)
+@chatjs/chat:dev:               at async DevServer.pipeImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1088:25)
+@chatjs/chat:dev:               at async NextNodeServer.handleCatchallRenderRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/next-server.js:338:17)
+@chatjs/chat:dev:               at async DevServer.handleRequestImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:979:17)
+@chatjs/chat:dev:               at async /Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/dev/next-dev-server.js:426:20
+@chatjs/chat:dev:               at async Span.traceAsyncFn (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/trace/trace.js:164:20)
+@chatjs/chat:dev:               at async DevServer.handleRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/dev/next-dev-server.js:422:24)
+@chatjs/chat:dev:               at async invokeRender (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:306:21)
+@chatjs/chat:dev:               at async handleRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:508:24)
+@chatjs/chat:dev:               at async requestHandlerImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:565:13)
+@chatjs/chat:dev:               at async Server.requestListener (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/start-server.js:225:13)
+@chatjs/chat:dev:     }
+@chatjs/chat:dev: [2026-09-06 20:09:53.429 +0100] INFO: Successfully fetched models from gateway
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "ai/models"
+@chatjs/chat:dev:     gateway: "vercel"
+@chatjs/chat:dev:     modelCount: 215
+@chatjs/chat:dev: [2026-09-06 20:09:53.522 +0100] ERROR: RESPONSE > POST /api/chat error
+@chatjs/chat:dev:     app: "chatjs"
+@chatjs/chat:dev:     module: "api:chat"
+@chatjs/chat:dev:     err: {
+@chatjs/chat:dev:       "type": "Object",
+@chatjs/chat:dev:       "message": "\u001b[1m\u001b[31mUnauthenticated request to AI Gateway.\u001b[0m\n\nTo authenticate, set the \u001b[33mAI_GATEWAY_API_KEY\u001b[0m environment variable with your API key.\n\nAlternatively, you can use a provider module instead of the AI Gateway.\n\nLearn more: \u001b[34mhttps://ai-sdk.dev/unauthenticated-ai-gateway\u001b[0m\n\n",
+@chatjs/chat:dev:       "stack":
+@chatjs/chat:dev:           GatewayAuthenticationError: Unauthenticated request to AI Gateway.
+@chatjs/chat:dev:           
+@chatjs/chat:dev:           To authenticate, set the AI_GATEWAY_API_KEY environment variable with your API key.
+@chatjs/chat:dev:           
+@chatjs/chat:dev:           Alternatively, you can use a provider module instead of the AI Gateway.
+@chatjs/chat:dev:           
+@chatjs/chat:dev:           Learn more: https://ai-sdk.dev/unauthenticated-ai-gateway
+@chatjs/chat:dev:           
+@chatjs/chat:dev:           
+@chatjs/chat:dev:               at wrapGatewayError (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/08am_ai_dist_index_0xrg9m6.js:2810:26)
+@chatjs/chat:dev:               at executeGenerateText (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/08am_ai_dist_index_0xrg9m6.js:6301:19)
+@chatjs/chat:dev:               at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+@chatjs/chat:dev:               at async runWithTracingChannelSpan (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/08am_ai_dist_index_0xrg9m6.js:4590:16)
+@chatjs/chat:dev:               at async runInTracingChannelSpan (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/08am_ai_dist_index_0xrg9m6.js:4723:68)
+@chatjs/chat:dev:               at async generateText (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/08am_ai_dist_index_0xrg9m6.js:6304:12)
+@chatjs/chat:dev:               at async generateTitleFromUserMessage (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:357:29)
+@chatjs/chat:dev:               at async handleChatValidation (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:661:23)
+@chatjs/chat:dev:               at async handleUserValidationAndCredits (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:720:30)
+@chatjs/chat:dev:               at async prepareChatPersistenceAndCredits (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:1257:16)
+@chatjs/chat:dev:               at async POST (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/[root-of-the-server]__07jo5js._.js:1327:35)
+@chatjs/chat:dev:               at async AppRouteRouteModule.do (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:42791)
+@chatjs/chat:dev:               at async AppRouteRouteModule.handle (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:50709)
+@chatjs/chat:dev:               at async responseGenerator (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:324:30)
+@chatjs/chat:dev:               at async AppRouteRouteModule.handleResponse (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:1:248823)
+@chatjs/chat:dev:               at async handleResponse (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:396:32)
+@chatjs/chat:dev:               at async Module.handler (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat/.next/dev/server/chunks/1vyh_next_dist_esm_0ehq13l._.js:513:9)
+@chatjs/chat:dev:               at async DevServer.renderToResponseWithComponentsImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1537:9)
+@chatjs/chat:dev:               at async DevServer.renderPageComponent (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1589:24)
+@chatjs/chat:dev:               at async DevServer.renderToResponseImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1639:32)
+@chatjs/chat:dev:               at async DevServer.pipeImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:1088:25)
+@chatjs/chat:dev:               at async NextNodeServer.handleCatchallRenderRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/next-server.js:338:17)
+@chatjs/chat:dev:               at async DevServer.handleRequestImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/base-server.js:979:17)
+@chatjs/chat:dev:               at async /Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/dev/next-dev-server.js:426:20
+@chatjs/chat:dev:               at async Span.traceAsyncFn (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/trace/trace.js:164:20)
+@chatjs/chat:dev:               at async DevServer.handleRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/dev/next-dev-server.js:422:24)
+@chatjs/chat:dev:               at async invokeRender (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:306:21)
+@chatjs/chat:dev:               at async handleRequest (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:508:24)
+@chatjs/chat:dev:               at async requestHandlerImpl (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/router-server.js:565:13)
+@chatjs/chat:dev:               at async Server.requestListener (/Users/fran/.codex/worktrees/db6e/chat-js/node_modules/.bun/next@16.3.0+d1ebc84f31cdea08/node_modules/next/dist/server/lib/start-server.js:225:13)
+@chatjs/chat:dev:     }
+@chatjs/chat:dev: [?25h
+@chatjs/chat:dev: error: script "dev" exited with code 143
+ ERROR  @chatjs/chat#dev: command (/Users/fran/.codex/worktrees/db6e/chat-js/apps/chat) /Users/fran/.bun/bin/bun run dev exited (143)
+
+ Tasks:    0 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    4m24.903s 
+Failed:    @chatjs/chat#dev
+
+ ERROR  run failed: command  exited (143)
+error: script "worktree-env" exited with code 143
+error: script "dev" exited with code 143

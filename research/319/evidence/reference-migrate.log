@@ -1,0 +1,36 @@
+$ dotenv -e .env.local -- bun --filter=@chatjs/chat run db:migrate
+@chatjs/chat db:migrate: ◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+@chatjs/chat db:migrate: ⏳ Running migrations...
+@chatjs/chat db:migrate: {
+@chatjs/chat db:migrate:   severity_local: 'NOTICE',
+@chatjs/chat db:migrate:   severity: 'NOTICE',
+@chatjs/chat db:migrate:   code: '42622',
+@chatjs/chat db:migrate:   message: 'identifier "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk" will be truncated to "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_f"',
+@chatjs/chat db:migrate:   where: 'compilation of PL/pgSQL function "inline_code_block" near line 1',
+@chatjs/chat db:migrate:   file: 'scansup.c',
+@chatjs/chat db:migrate:   line: '102',
+@chatjs/chat db:migrate:   routine: 'truncate_identifier'
+@chatjs/chat db:migrate: }
+@chatjs/chat db:migrate: {
+@chatjs/chat db:migrate:   severity_local: 'NOTICE',
+@chatjs/chat db:migrate:   severity: 'NOTICE',
+@chatjs/chat db:migrate:   code: '42622',
+@chatjs/chat db:migrate:   message: 'identifier "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk" will be truncated to "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_f"',
+@chatjs/chat db:migrate:   position: '15',
+@chatjs/chat db:migrate:   file: 'scansup.c',
+@chatjs/chat db:migrate:   line: '102',
+@chatjs/chat db:migrate:   routine: 'truncate_identifier'
+@chatjs/chat db:migrate: }
+@chatjs/chat db:migrate: {
+@chatjs/chat db:migrate:   severity_local: 'NOTICE',
+@chatjs/chat db:migrate:   severity: 'NOTICE',
+@chatjs/chat db:migrate:   code: '42622',
+@chatjs/chat db:migrate:   message: 'identifier "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk" will be truncated to "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_f"',
+@chatjs/chat db:migrate:   where: 'SQL statement "ALTER TABLE "Suggestion" ADD CONSTRAINT "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk" FOREIGN KEY ("documentId","documentCreatedAt") REFERENCES "public"."Document"("id","createdAt") ON DELETE no action ON UPDATE no action"\n' +
+@chatjs/chat db:migrate:     'PL/pgSQL function inline_code_block line 2 at SQL statement',
+@chatjs/chat db:migrate:   file: 'scansup.c',
+@chatjs/chat db:migrate:   line: '102',
+@chatjs/chat db:migrate:   routine: 'truncate_identifier'
+@chatjs/chat db:migrate: }
+@chatjs/chat db:migrate: ✅ Migrations completed in 290 ms
+@chatjs/chat db:migrate: Exited with code 0

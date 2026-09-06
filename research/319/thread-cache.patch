@@ -1,0 +1,27 @@
+From 9f0926f7680cdc2ee8bac0d5010ca87b7fcd4dd1 Mon Sep 17 00:00:00 2001
+From: Francisco Moretti <franciscoemoretti@gmail.com>
+Date: Sun, 6 Sep 2026 20:06:17 +0100
+Subject: [PATCH] fix(thread): restore declarations from cached type checks
+
+---
+ packages/thread/turbo.json | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 packages/thread/turbo.json
+
+diff --git a/packages/thread/turbo.json b/packages/thread/turbo.json
+new file mode 100644
+index 00000000..ec088331
+--- /dev/null
++++ b/packages/thread/turbo.json
+@@ -0,0 +1,8 @@
++{
++	"extends": ["//"],
++	"tasks": {
++		"test:types": {
++			"outputs": ["dist/**"]
++		}
++	}
++}
+-- 
+2.50.1 (Apple Git-155)
+
