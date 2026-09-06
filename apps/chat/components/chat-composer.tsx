@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import { type ComponentProps, memo } from "react";
 import {
   PromptInputFooter,
   PromptInputTools,
@@ -19,7 +19,7 @@ import {
 } from "@/components/multimodal-input";
 
 /** The reference app's composer. Add, remove or reorder controls here. */
-export function ChatComposer(
+export const ChatComposer = memo(function ChatComposer(
   props: Omit<ComponentProps<typeof MultimodalInput>, "children">
 ) {
   return (
@@ -41,4 +41,4 @@ export function ChatComposer(
       </PromptInputFooter>
     </MultimodalInput>
   );
-}
+});
