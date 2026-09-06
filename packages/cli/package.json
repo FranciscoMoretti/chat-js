@@ -43,7 +43,8 @@
 		"build": "bun run template:sync && bun build ./src/index.ts --target=node --format=esm --outfile ./dist/index.js",
 		"test:unit": "bun run template:sync && bun test src",
 		"template:sync": "bun ../../scripts/sync-template.ts",
-		"prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null"
+		"prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null",
+		"test:scaffold": "bash scripts/test-scaffold.sh"
 	},
 	"type": "module",
 	"devDependencies": {
