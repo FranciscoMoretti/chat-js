@@ -1,0 +1,1 @@
+{"$schema":"https://biomejs.dev/schemas/2.4.6/schema.json","root":true,"formatter":{"enabled":true},"linter":{"enabled":true,"rules":{"recommended":true}},"assist":{"actions":{"source":{"organizeImports":"on"}}}}

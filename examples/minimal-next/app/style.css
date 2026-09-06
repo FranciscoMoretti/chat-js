@@ -1,0 +1,112 @@
+:root {
+	font-family: system-ui, sans-serif;
+	color: #212925;
+	background: #fff;
+}
+body {
+	margin: 0;
+}
+main {
+	max-width: 760px;
+	padding: 52px 24px;
+	margin: auto;
+}
+header {
+	border-bottom: 1px solid #dde4df;
+	padding-bottom: 24px;
+}
+h1 {
+	font-size: 24px;
+	font-weight: 600;
+	margin: 0;
+}
+header p,
+.empty p {
+	color: #67756c;
+}
+h2 {
+	font-size: 14px;
+	font-weight: 600;
+}
+.empty {
+	padding: 64px 0;
+}
+.empty h2 {
+	font-size: 26px;
+	font-weight: 500;
+}
+article {
+	padding: 16px 0;
+}
+article p {
+	white-space: pre-wrap;
+	line-height: 1.7;
+	margin: 8px 0;
+}
+.user {
+	color: #52685b;
+}
+form {
+	margin-top: 24px;
+}
+label {
+	display: block;
+	font-size: 13px;
+	margin: 0 0 8px;
+}
+textarea,
+input {
+	box-sizing: border-box;
+	width: 100%;
+	border: 1px solid #b8c7bd;
+	border-radius: 8px;
+	padding: 14px;
+	font: inherit;
+}
+textarea {
+	min-height: 110px;
+	resize: vertical;
+}
+button {
+	border: 1px solid #c6d2ca;
+	border-radius: 6px;
+	padding: 9px 17px;
+	background: #fff;
+	color: #253e2f;
+	font: inherit;
+	cursor: pointer;
+}
+button[type="submit"] {
+	background: #244e36;
+	color: #fff;
+}
+button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-top: 10px;
+}
+.status {
+	font-size: 12px;
+	color: #64756b;
+	padding-top: 20px;
+}
+.pending {
+	padding: 18px;
+	background: #f0f6f2;
+	border-left: 3px solid #47795b;
+}
+.note {
+	color: #28543b;
+}
+[role="alert"] {
+	color: #962c24;
+}
+:focus-visible {
+	outline: 2px solid #47795b;
+	outline-offset: 3px;
+}
