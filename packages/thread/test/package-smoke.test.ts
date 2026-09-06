@@ -95,8 +95,8 @@ test("the packed package loads its core and React entry points", async () => {
 		expect(coreChunkSource).not.toContain('from "@ai-sdk/react"');
 
 		const consumerSource = `
-import { Thread } from "@chatjs/thread";
-import { useThread } from "@chatjs/thread/react";
+import { Thread } from "@chat-js/thread";
+import { useThread } from "@chat-js/thread/react";
 
 const chat = new Thread();
 if (typeof chat.id !== "string" || typeof useThread !== "function") {

@@ -3,7 +3,7 @@
 "use client";
 
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
-import type { UseThreadHelpers } from "@chatjs/thread/react";
+import type { UseThreadHelpers } from "@chat-js/thread/react";
 import type { ChatStatus } from "ai";
 import * as React from "react";
 import { createContext, useCallback, useContext, useRef } from "react";

@@ -444,8 +444,7 @@ async function createChatStream({
       );
       await result.consumeStream();
 
-      const response = await result.response;
-      const responseMessages = response.messages;
+      const responseMessages = await result.responseMessages;
 
       // Generate and stream follow-up suggestions
       if (config.ai.tools.followupSuggestions.enabled) {

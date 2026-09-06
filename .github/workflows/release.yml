@@ -40,6 +40,8 @@ jobs:
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Create Release Pull Request or Publish
+        id: changesets
+        continue-on-error: true
         uses: changesets/action@v1
         with:
           publish: bun run release
@@ -48,3 +50,52 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      # Trusted publishing cannot create a package's first version, and it is
+      # only configured for @chat-js/cli today. Finish any unpublished packages
+      # with the classic token so a partial Changesets publish cannot leave
+      # @chat-js/thread (or similar first releases) off npm.
+      - name: Publish first-time packages
+        if: always() && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
+        run: |
+          set -euo pipefail
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
+
+          publish_if_missing() {
+            local workspace_dir="$1"
+            local name version tag
+            name="$(node -p "require('./${workspace_dir}/package.json').name")"
+            version="$(node -p "require('./${workspace_dir}/package.json').version")"
+            tag="${name}@${version}"
+
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${tag} already on npm"
+              return 0
+            fi
+
+            echo "Publishing ${tag} (first publish cannot use OIDC)"
+            bun --filter "${name}" build
+            if ! npm publish --workspace "${name}" --access public --no-provenance; then
+              echo "::warning::Could not publish ${tag}. Create it once locally with 2FA (npm publish --access public --no-provenance in ${workspace_dir}), then add GitHub Actions as a trusted publisher on npmjs.com."
+              return 0
+            fi
+
+            if git rev-parse "${tag}" >/dev/null 2>&1; then
+              echo "tag ${tag} already exists"
+            else
+              git tag "${tag}"
+              git push origin "${tag}"
+            fi
+
+            if gh release view "${tag}" >/dev/null 2>&1; then
+              echo "GitHub release ${tag} already exists"
+            else
+              gh release create "${tag}" --title "${tag}" --notes-file "${workspace_dir}/CHANGELOG.md"
+            fi
+          }
+
+          publish_if_missing packages/thread

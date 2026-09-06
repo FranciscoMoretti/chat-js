@@ -398,7 +398,10 @@ export const mcpRouter = createTRPCRouter({
                 .then((tools) =>
                   Object.entries(tools).map(([name, tool]) => ({
                     name,
-                    description: tool.description ?? null,
+                    description:
+                      typeof tool.description === "string"
+                        ? tool.description
+                        : null,
                   }))
                 )
                 .catch((err) => {

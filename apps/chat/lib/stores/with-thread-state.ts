@@ -1,7 +1,7 @@
 import {
   createThreadStateSnapshot,
   type ThreadStateSnapshot,
-} from "@chatjs/thread";
+} from "@chat-js/thread";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";

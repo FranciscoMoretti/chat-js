@@ -1,4 +1,4 @@
-import { AbstractThread, type ThreadState } from "@chatjs/thread";
+import { AbstractThread, type ThreadState } from "@chat-js/thread";
 import type { ChatMessage } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
 

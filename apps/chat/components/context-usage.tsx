@@ -1,6 +1,5 @@
 "use client";
 
-import type { LanguageModelUsage } from "ai";
 import { useMemo } from "react";
 import type { ModelId as TokenLensModelId } from "tokenlens";
 import { getContextWindow } from "tokenlens";
@@ -18,6 +17,10 @@ import {
 } from "@/components/ai-elements/context";
 import { Button } from "@/components/ui/button";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
+import {
+  getUsageTokenDetails,
+  type StoredLanguageModelUsage,
+} from "@/lib/ai/usage-token-details";
 import { useLastUsageUntilMessageId } from "@/lib/stores/hooks-base";
 import { useChatModels } from "@/providers/chat-models-provider";
 
@@ -77,7 +80,7 @@ function ContextUsage({
   selectedModelId,
   iconOnly = false,
 }: {
-  usage: LanguageModelUsage;
+  usage: StoredLanguageModelUsage;
   selectedModelId: ModelId;
   iconOnly?: boolean;
 }) {
@@ -95,7 +98,7 @@ function ContextUsage({
       return 0;
     }
     const input = usage.inputTokens ?? 0;
-    const cached = usage.cachedInputTokens ?? 0;
+    const cached = getUsageTokenDetails(usage).cachedInputTokens;
     return input + cached;
   }, [usage]);
 
@@ -103,7 +106,7 @@ function ContextUsage({
     <Context
       maxTokens={contextMax}
       modelId={selectedModelId.split("/").join(":") as TokenLensModelId}
-      usage={usage as LanguageModelUsage | undefined}
+      usage={usage}
       usedTokens={usedTokens}
     >
       <ContextTrigger>

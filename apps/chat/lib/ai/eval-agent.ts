@@ -54,8 +54,10 @@ async function executeAgentAndGetOutput({
     ReturnType<typeof createCoreChatAgent>
   >["contextForLLM"];
   output: string;
-  response: Awaited<
-    Awaited<ReturnType<typeof createCoreChatAgent>>["result"]["response"]
+  responseMessages: Awaited<
+    Awaited<
+      ReturnType<typeof createCoreChatAgent>
+    >["result"]["responseMessages"]
   >;
 }> {
   const noOpStreamWriter = createNoOpStreamWriter();
@@ -77,10 +79,10 @@ async function executeAgentAndGetOutput({
   });
 
   await result.consumeStream();
-  const response = await result.response;
+  const responseMessages = await result.responseMessages;
   const output = await result.output;
 
-  return { result, contextForLLM, output: output || "", response };
+  return { result, contextForLLM, output: output || "", responseMessages };
 }
 
 function processToolCall(
@@ -211,8 +213,10 @@ async function generateSuggestions(
     ReturnType<typeof createCoreChatAgent>
   >["contextForLLM"],
   responseMessages: Awaited<
-    Awaited<ReturnType<typeof createCoreChatAgent>>["result"]["response"]
-  >["messages"]
+    Awaited<
+      ReturnType<typeof createCoreChatAgent>
+    >["result"]["responseMessages"]
+  >
 ): Promise<string[]> {
   const followupSuggestionsResult = generateFollowupSuggestions([
     ...contextForLLM,
@@ -256,7 +260,7 @@ export async function runCoreChatAgentEval({
       ? activeTools
       : requestedTools.filter((tool) => activeTools.includes(tool));
 
-  const { result, contextForLLM, output, response } =
+  const { result, contextForLLM, output, responseMessages } =
     await executeAgentAndGetOutput({
       userMessage,
       previousMessages,
@@ -291,7 +295,7 @@ export async function runCoreChatAgentEval({
 
   const followupSuggestions = await generateSuggestions(
     contextForLLM,
-    response.messages
+    responseMessages
   );
   const usage = await result.usage;
 

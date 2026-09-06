@@ -166,7 +166,7 @@ export default function ThreadsPage() {
                     {"\n"}
                     <span className="text-foreground">
                       + import {"{ useThread }"} from
-                      &quot;@chatjs/thread/react&quot;;
+                      &quot;@chat-js/thread/react&quot;;
                     </span>
                     {"\n\n"}
                     <span className="text-muted-foreground">- </span>

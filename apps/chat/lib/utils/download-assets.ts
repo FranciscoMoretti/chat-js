@@ -1,10 +1,4 @@
-import type {
-  DataContent,
-  FilePart,
-  ImagePart,
-  ModelMessage,
-  TextPart,
-} from "ai";
+import type { FilePart, ImagePart, ModelMessage, TextPart } from "ai";
 import { FilesError } from "files-sdk";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
@@ -60,8 +54,20 @@ async function defaultDownload({
 }
 
 function toHttpUrl(value: unknown): URL | null {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "url" &&
+    "url" in value &&
+    value.url instanceof URL
+  ) {
+    return toHttpUrl(value.url);
+  }
   if (value instanceof URL) {
-    return value.protocol.startsWith("http") ? value : null;
+    return value.protocol === "http:" || value.protocol === "https:"
+      ? value
+      : null;
   }
   if (typeof value === "string") {
     try {
@@ -94,10 +100,7 @@ async function downloadAssetsFromModelMessages(
       if (part.type !== "file" && part.type !== "image") {
         continue;
       }
-      const dataOrUrl: DataContent | URL =
-        part.type === "file"
-          ? (part as FilePart).data
-          : (part as ImagePart).image;
+      const dataOrUrl = part.type === "file" ? part.data : part.image;
       const url = toHttpUrl(dataOrUrl);
       if (url) {
         urlSet.add(url.toString());

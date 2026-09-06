@@ -1,5 +1,6 @@
 import type { ModelMessage } from "ai";
 import { z } from "zod";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { StreamWriter } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { DocumentToolResult } from "../documents/types";
@@ -28,9 +29,17 @@ export function createTelemetry(
   options: Pick<AgentOptions, "messageId" | "requestId">
 ) {
   return {
-    isEnabled: true,
-    functionId,
-    metadata: {
+    telemetry: {
+      integrations: chatTelemetry,
+      isEnabled: true,
+      functionId,
+      includeRuntimeContext: {
+        messageId: true,
+        langfuseTraceId: true,
+        langfuseUpdateParent: true,
+      },
+    },
+    runtimeContext: {
       messageId: options.messageId,
       langfuseTraceId: options.requestId,
       langfuseUpdateParent: false,

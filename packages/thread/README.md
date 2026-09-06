@@ -1,4 +1,4 @@
-# @chatjs/thread
+# @chat-js/thread
 
 Build branching AI SDK conversations without mounting one `useChat` hook per
 branch.
@@ -9,11 +9,11 @@ run-specific cancellation.
 
 ## Package Layers
 
-`@chatjs/thread` is the headless core. It exports the framework-independent
+`@chat-js/thread` is the headless core. It exports the framework-independent
 `AbstractThread`, default memory-backed `Thread`, `ThreadState` contract, tree
 management, and stream orchestration.
 
-`@chatjs/thread/react` is the React adapter. It exports `useThread` and owns
+`@chat-js/thread/react` is the React adapter. It exports `useThread` and owns
 React subscriptions, render throttling, and hook lifecycle behavior. The core
 entry point does not import React.
 
@@ -26,19 +26,19 @@ the core.
 For the headless core:
 
 ```bash
-bun add @chatjs/thread ai
+bun add @chat-js/thread ai@^7.0.93
 ```
 
 For React:
 
 ```bash
-bun add @chatjs/thread ai @ai-sdk/react react
+bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react
 ```
 
 ## Use
 
 ```tsx
-import { useThread } from "@chatjs/thread/react";
+import { useThread } from "@chat-js/thread/react";
 import { DefaultChatTransport } from "ai";
 
 function Conversation() {
@@ -132,7 +132,7 @@ By default, `useThread` creates and retains a `Thread` for the hook lifetime.
 Create the controller yourself when it must outlive a particular component:
 
 ```ts
-import { createThread } from "@chatjs/thread";
+import { createThread } from "@chat-js/thread";
 import { DefaultChatTransport } from "ai";
 
 const transport = new DefaultChatTransport({ api: "/api/chat" });
@@ -153,7 +153,7 @@ import {
   AbstractThread,
   createThreadStateSnapshot,
   type ThreadState,
-} from "@chatjs/thread";
+} from "@chat-js/thread";
 import {
   type ChatTransport,
   DefaultChatTransport,

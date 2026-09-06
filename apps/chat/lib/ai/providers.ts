@@ -1,8 +1,8 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { devToolsMiddleware } from "@ai-sdk/devtools";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import type { GoogleLanguageModelOptions } from "@ai-sdk/google";
 import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import type { LanguageModelV3 } from "@ai-sdk/provider";
+import type { SharedV4ProviderOptions } from "@ai-sdk/provider";
 import {
   extractReasoningMiddleware,
   type LanguageModelMiddleware,
@@ -18,8 +18,7 @@ export const getLanguageModel = async (modelId: AppModelId) => {
     model.apiModelId
   );
 
-  const middlewares: Parameters<typeof wrapLanguageModel>[0]["middleware"][] =
-    [];
+  const middlewares: LanguageModelMiddleware[] = [];
 
   // Add devtools middleware in development
   if (process.env.NODE_ENV === "development") {
@@ -36,8 +35,8 @@ export const getLanguageModel = async (modelId: AppModelId) => {
   }
 
   return wrapLanguageModel({
-    model: languageProvider as LanguageModelV3,
-    middleware: middlewares as LanguageModelMiddleware[],
+    model: languageProvider,
+    middleware: middlewares,
   });
 };
 
@@ -69,21 +68,7 @@ export const getMultimodalImageModel = (modelId: string) =>
 
 export const getModelProviderOptions = async (
   providerModelId: AppModelId
-): Promise<
-  | {
-      openai: OpenAIResponsesProviderOptions;
-    }
-  | {
-      anthropic: AnthropicProviderOptions;
-    }
-  | {
-      xai: Record<string, never>;
-    }
-  | {
-      google: GoogleGenerativeAIProviderOptions;
-    }
-  | Record<string, never>
-> => {
+): Promise<SharedV4ProviderOptions> => {
   const model = await getAppModelDefinition(providerModelId);
   if (model.owned_by === "openai") {
     if (model.reasoning) {
@@ -128,7 +113,7 @@ export const getModelProviderOptions = async (
           thinkingConfig: {
             thinkingBudget: 10_000,
           },
-        },
+        } satisfies GoogleLanguageModelOptions,
       };
     }
     return { google: {} };

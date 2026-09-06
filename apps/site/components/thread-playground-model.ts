@@ -1,5 +1,5 @@
-import { getMessageText, type MessageTreeSnapshot } from "@chatjs/thread";
-import type { UseThreadHelpers } from "@chatjs/thread/react";
+import { getMessageText, type MessageTreeSnapshot } from "@chat-js/thread";
+import type { UseThreadHelpers } from "@chat-js/thread/react";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
 export interface PlaygroundMetadata {

@@ -2,8 +2,8 @@
 
 ## Purpose
 
-`@chatjs/thread` is the headless, framework-independent threaded conversation
-engine. `@chatjs/thread/react` adapts that engine to React through `useThread`.
+`@chat-js/thread` is the headless, framework-independent threaded conversation
+engine. `@chat-js/thread/react` adapts that engine to React through `useThread`.
 The hook keeps the standard AI SDK `useChat` interface for the selected
 conversation path and adds a `tree` namespace for branching, navigation, and
 concurrent responses.
@@ -441,6 +441,16 @@ mutating that shared parent. For `[user, assistant A, assistant B]`, regeneratin
 `assistant B` preserves both existing messages and creates a replacement sibling
 under `assistant A`.
 
+## Reconnection with AI SDK 7
+
+SDK 7 initializes fresh response state for resume as well as regeneration.
+A reconnect beginning with `start` replays the complete response and replaces its
+canonical content. For continuations without `start`, the run adapter supplies
+its canonical assistant ID/metadata and seeds its saved parts into the SDK's
+response object once. Subsequent tool and approval updates share those restored
+parts. The path is refreshed before reconnecting, and a missing stream preserves
+an existing run error until explicitly cleared.
+
 ## Status and Cancellation
 
 Runs use the AI SDK `ChatStatus` values:
@@ -543,7 +553,7 @@ not leave an extra user message behind.
 
 ## Package Boundary
 
-`@chatjs/thread` owns:
+`@chat-js/thread` owns:
 
 - the `useThread` React contract
 - tree topology and cursor projection
@@ -575,5 +585,5 @@ The package integration suite must verify that:
 Run the package coverage with:
 
 ```bash
-bun --filter @chatjs/thread test
+bun --filter @chat-js/thread test
 ```

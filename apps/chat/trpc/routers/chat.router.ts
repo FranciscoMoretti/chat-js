@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { generateText } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   cloneAttachmentsInMessages,
@@ -323,13 +324,13 @@ export const chatRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { text: title } = await generateText({
         model: await getLanguageModel(config.ai.workflows.title),
-        system: `\n
+        instructions: `\n
         - you will generate a short title based on the first message a user begins a conversation with
         - ensure it is not more than 80 characters long
         - the title should be a summary of the user's message
         - do not use quotes or colons`,
         prompt: input.message,
-        experimental_telemetry: { isEnabled: true },
+        telemetry: { integrations: chatTelemetry, isEnabled: true },
       });
 
       return { title };

@@ -1,6 +1,6 @@
 "use client";
 
-import type { AbstractThread } from "@chatjs/thread";
+import type { AbstractThread } from "@chat-js/thread";
 import { type DataUIPart, safeValidateUIMessages } from "ai";
 import { z } from "zod";
 import {

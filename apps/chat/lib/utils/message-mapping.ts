@@ -1,5 +1,5 @@
 import type { DynamicToolUIPart } from "ai";
-import { isDataUIPart, isToolOrDynamicToolUIPart, isToolUIPart } from "ai";
+import { isDataUIPart, isStaticToolUIPart, isToolUIPart } from "ai";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Part } from "@/lib/db/schema";
 import {
@@ -121,8 +121,8 @@ function handleDefaultPartToDB(
     return null;
   }
 
-  if (isToolOrDynamicToolUIPart(part)) {
-    if (isToolUIPart(part)) {
+  if (isToolUIPart(part)) {
+    if (isStaticToolUIPart(part)) {
       return handleToolPartToDB(part, basePart);
     }
     return handleDynamicToolPartToDB(part, basePart);

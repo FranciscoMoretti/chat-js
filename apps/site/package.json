@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "prebuild": "bun --filter @chatjs/thread build",
+    "prebuild": "bun --filter @chat-js/thread build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -12,10 +12,10 @@
     "format": "ultracite fix"
   },
   "dependencies": {
-    "@ai-sdk/react": "^3.0.152",
-    "@chatjs/thread": "workspace:*",
+    "@ai-sdk/react": "4.0.96",
+    "@chat-js/thread": "workspace:*",
     "@vercel/analytics": "^1.5.0",
-    "ai": "^6.0.150",
+    "ai": "7.0.93",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "0.553.0",
@@ -37,5 +37,8 @@
     "tw-animate-css": "^1.3.7",
     "typescript": "6.0.2",
     "ultracite": "7.4.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
