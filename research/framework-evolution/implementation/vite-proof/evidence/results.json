@@ -1,0 +1,193 @@
+{
+  "sourcePin": "1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10",
+  "uiPinNotIntegrated": "c686b31bb0fe00e3234eaa92af7f81ed4d172ad7",
+  "node": "24.20.0",
+  "bun": "1.3.11",
+  "postgresVersion": "17.11",
+  "checks": {
+    "authorization": {
+      "negative": {
+        "app:user:GET:/api/trpc/conversation.resolve?input=%7B%22conversationId%22%3A%225032cd4f-e141-453d-88e4-4c70daf94867%22%7D": 404,
+        "app:user:GET:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/stream?startIndex=0&follow=false": 404,
+        "raw:user:GET:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/stream?startIndex=0&follow=false": 401,
+        "raw:service:GET:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/stream?startIndex=0&follow=false": 401,
+        "app:user:POST:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY": 404,
+        "raw:user:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY": 401,
+        "raw:service:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY": 401,
+        "app:user:POST:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/cancel": 404,
+        "raw:user:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/cancel": 401,
+        "raw:service:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/cancel": 401,
+        "app:user:POST:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/clear": 404,
+        "raw:user:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/clear": 401,
+        "raw:service:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/clear": 401,
+        "app:user:POST:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/compact": 404,
+        "raw:user:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/compact": 401,
+        "raw:service:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/compact": 401,
+        "app:user:POST:/api/eve/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/reset": 404,
+        "raw:user:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/reset": 401,
+        "raw:service:POST:/eve/v1/session/wrun_01M1W26NNEWNXWEVY84GSEC0TY/reset": 401,
+        "app:user:POST:/eve/v1/session": 404,
+        "app:user:POST:/eve/v1/callback/fake": 404,
+        "app:user:POST:/eve/v1/task-input/fake": 404,
+        "app:user:POST:/eve/v1/activity/fake": 404,
+        "app:user:POST:/eve/v1/connections/fake/callback/fake": 404,
+        "app:user:POST:/.well-known/workflow/v1/webhook/fake": 404,
+        "app:user:POST:/api/eve/eve/v1/session": 404
+      },
+      "noAuth": 401,
+      "csrf": 403
+    },
+    "prepare": {
+      "sessionId": "wrun_01M1W26NNEWNXWEVY84GSEC0TY",
+      "conversationId": "5032cd4f-e141-453d-88e4-4c70daf94867",
+      "pending": true,
+      "authorizationChecks": 28
+    },
+    "recovery": {
+      "restartReplay": true,
+      "replayEvents": 94,
+      "pendingRecovered": true,
+      "typedToolResult": true,
+      "continuation": true
+    },
+    "browserPrepare": {
+      "browser": "chromium",
+      "url": "http://localhost:5877/?conversation=e088a71a-4fc2-48c5-a53c-13bf36ac4db4",
+      "renderedPending": true,
+      "consoleErrors": []
+    },
+    "browserResume": {
+      "browser": "chromium",
+      "url": "http://localhost:5877/?conversation=e088a71a-4fc2-48c5-a53c-13bf36ac4db4",
+      "pendingAfterRestart": true,
+      "approval": true,
+      "lazyRenderer": true,
+      "continuation": true,
+      "reconnect": true,
+      "duplicateResults": false,
+      "consoleErrors": []
+    },
+    "browserSettled": {
+      "browser": "chromium",
+      "url": "http://localhost:5877/?conversation=e088a71a-4fc2-48c5-a53c-13bf36ac4db4",
+      "lazyRenderer": true,
+      "continuation": true,
+      "ready": true,
+      "reconnect": true,
+      "duplicateResults": false,
+      "consoleErrors": []
+    },
+    "stream": {
+      "incrementalMessageAppends": 102,
+      "firstEventMs": 1190,
+      "firstMessageMs": 7843,
+      "totalMs": 8998,
+      "counts": {
+        "turn.started": 1,
+        "message.received": 1,
+        "step.started": 1,
+        "reasoning.appended": 103,
+        "reasoning.completed": 1,
+        "message.appended": 102,
+        "message.completed": 1,
+        "step.completed": 1,
+        "turn.completed": 1,
+        "session.waiting": 1
+      }
+    },
+    "cancellation": {
+      "cancelResult": {
+        "sessionId": "wrun_01M1W26NNEWNXWEVY84GSEC0TY",
+        "status": "accepted"
+      },
+      "durableCancellation": true,
+      "cooperativeBoundary": true,
+      "followUpAfterCancellation": true
+    },
+    "effectReceiverCrash": {
+      "sessionId": "wrun_01M1W2QFPB7K21Y89PY5F6816X",
+      "receiverKilledAfterCommit": true,
+      "receiverRestarted": true,
+      "effectRows": 1,
+      "deliveryAttempts": 2,
+      "stableExecutionKey": true,
+      "typedToolResult": true,
+      "mismatchedPayloadStatus": 409,
+      "limit": "Receiver restart; Eve worker remained alive"
+    },
+    "postgres": {
+      "workflowRuns": 42,
+      "workflowEvents": 805,
+      "streamChunks": 3790,
+      "appBindings": 12
+    }
+  },
+  "unchangedContracts": [
+    {
+      "file": "lib/projection.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/application-client.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/create-contract.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/note-contract.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/identity.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/bindings.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/router.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/eve-server.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/send-turn.ts",
+      "byteIdentical": true
+    },
+    {
+      "file": "lib/tool-renderer.tsx",
+      "byteIdentical": true
+    }
+  ],
+  "verification": {
+    "rootLint": {
+      "command": "bun lint --force",
+      "passed": true,
+      "tasks": 4,
+      "cached": 0
+    },
+    "rootTypes": {
+      "command": "bun test:types --force",
+      "passed": true,
+      "tasks": 4,
+      "cached": 0
+    },
+    "fixtureLint": true,
+    "fixtureTypes": true,
+    "fixtureFrozenInstall": true,
+    "clientModuleAudit": true,
+    "bindingTests": {
+      "passed": 2,
+      "assertions": 11
+    },
+    "portTests": {
+      "passed": 13
+    },
+    "servicesStopped": true
+  }
+}

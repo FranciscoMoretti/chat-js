@@ -1,0 +1,81 @@
+{
+  "cli": "0.8.0",
+  "items": [
+    "@chatjs/minimal-next",
+    "@chatjs/openai",
+    "@chatjs/host-identity",
+    "@chatjs/postgres",
+    "@chatjs/layout-minimal",
+    "http://127.0.0.1:62561/confirm-note.json"
+  ],
+  "fileHashes": {
+    "tsconfig.json": "8a467d7b7857a86c793dcf5048d40d26675b2f5e6d3cd6383de8a1f47b3306fa",
+    "next.config.ts": "90ee7595f5c81b7a6ec9c12ae0539e91f4f042124553929bbe1a3baa4296d4c9",
+    "lib/projection.ts": "31a22cc3c75375e978451c7c002444359896314e670bb53722cb46fccfd2ad53",
+    "lib/application-client.ts": "e8e77b8feb87768baa953459d9d09d0731ef8e1bc635f56653369fc9f9d36f17",
+    "lib/router.ts": "5352360f669b7ac79b4639a4af75629a08f566511e81549ef3ac387884cc7f5a",
+    "lib/tool-renderer.tsx": "191d5aebc6689be0747589ec22b17259c28d522cf1904b950d37646f7f651c44",
+    "lib/eve-server.ts": "1c85ce44615e7b3f179b2d315827bcd62e269d2e853d6487358a49a464dcc6b3",
+    "lib/create-contract.ts": "3bac45e0fdd0ab0a49a0bf299a1f8856790e63aae1968342cc311fb02e1929f8",
+    "lib/send-turn.ts": "04b99af5fa512438ac976f87aa372b8ecdf7c3017dc094abebc4155f14564556",
+    "lib/env.ts": "4f5f8dd4a347cd83bc888798bb6a1096dbf9afc7ad0d36f85ac841baa7ef7636",
+    "app/layout.tsx": "06042828644f46db5a608c1d00df59cb0b768ec571376b3487dd697d03eccb55",
+    "app/style.css": "d889011cb869e5e26b33d9590f46a6452091a68e313c26fcf4e35949d2a0bbb6",
+    "app/global.d.ts": "35d26ea66c86da9701e4f4b467913481ffeae910761cea34c775c5dacb7f8eaa",
+    "app/chat.tsx": "9c8c1b6d8919532221c6b8b9a63e7386febac921cc6e0b73b9de78af75dc052c",
+    "app/page.tsx": "774582bfc604075027cd9d185cb5e98ad08ce97d17c939edbb6ba2c123f5a274",
+    "agent/instructions.md": "407938c6d303bb3251b3b7c06943532ca7dfb864ef2dc7278826254c29f9ad96",
+    "components/chat/tool-results.tsx": "a795102454da73f541c264169ab4f8dd40ca0dffd24f287b8c2eaca42ffe9d2e",
+    "agent/channels/eve.ts": "77a29069affdff17ad851eef71a55255db872a8b09d848b2fc17fcc2af1d977f",
+    "app/api/trpc/[trpc]/route.ts": "fa03a34d68ede1b0d033f45275df02be4fe49310960abab0d31cc9d6a2b188e1",
+    "app/api/eve/[...path]/route.ts": "65b202bcfe5088e421474bb00b3c15c96bfde2e785a9b297f1a962fb1cb121a3",
+    "agent/tools/todo.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/write_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/web_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/read_file.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/agent.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/load_skill.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/ask_question.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/task_update.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/bash.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/web_fetch.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/task_cancel.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "agent/tools/connection_search.ts": "eaae69827db6f3e6532fc8353e8d485c31cd09260fa48655c3096306d8c4326b",
+    "integrations/model.ts": "df4a79b02ee89a4150af6208577da7094756e2795677a52bd337b1eef8199f44",
+    "lib/identity.ts": "e633e4ef30bc70567632a728fdd0f68c058e4ffa206abde1df1b92f2e0b4a1e7",
+    "lib/bindings.ts": "f4438d37cf83647aece89870fed94b5060419e99af9d7113ffb6e8463b0c37f3",
+    "scripts/db-init.ts": "7ccaaafee42f97a6c9f18815fe9dec6f3b3b9df17758b1a647166cd00f3b33ad",
+    "agent/agent.ts": "69d31ab44fb62fbba2e1c913b8c558eec25a9fad7185510142e47e69742040ee",
+    "components/chat/layout-minimal.tsx": "b91f2b34fc90e2066982b69ae44d991f30051357f3639030f757a190ccd5f5fe",
+    "agent/tools/confirm_note.ts": "3b8655449039c21c5ee56093b93f8baeb4d54c83fee6894ba38dc213e4b6bc64",
+    "lib/note-contract.ts": "f3a2ca85bdaa84c764ea55d82121815a96ebd059c13027adbb08b2581e6fc4e6",
+    "components/confirm-note/client.tsx": "a3e122fcd8b9cbdd8b8a8860ba2220d46f9bdeb57c3f0c432ecb969032bd23e6",
+    "components/confirm-note/renderer.tsx": "f1f75021cfb9a239a4e242359e0c8ed26388f189615e562377fe1759f83f5894"
+  },
+  "observedSources": [
+    {
+      "name": "minimal-next",
+      "sha256": "ce56171b31cb0ca3a5817a94bb2179cd882c22189b5ed4c7babccbb8991e1604"
+    },
+    {
+      "name": "openai",
+      "sha256": "e8b92080ed01dd80026ec20adfbd2f771b2a2f3c5317d9f2d2d15e0707c5d185"
+    },
+    {
+      "name": "host-identity",
+      "sha256": "e6bfbeb090178c5718ac0817b206f8195dfe36d7cfe9e69b0c57d3662ebfb955"
+    },
+    {
+      "name": "postgres",
+      "sha256": "d1f27a5c6c2fd57fdf05fecd76ec09ea52d8cc2fbd443ecf399930184566ca05"
+    },
+    {
+      "name": "layout-minimal",
+      "sha256": "ec54e87d651a1e3131f029f6ae2fff523b184f4dee33af7d234e2f9aaf5c7395"
+    },
+    {
+      "name": "portable-confirm-note",
+      "sha256": "38b889d9bf2be314cbfabf9ac2696c326fe8b3ec62dad60a4e0a5a1f86ac1c21"
+    }
+  ]
+}

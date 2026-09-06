@@ -1,0 +1,10 @@
+node_modules/
+.env*.local
+.env
+.eve/
+.output/
+.postgres/
+.host/
+dist/
+evidence/
+*.tsbuildinfo

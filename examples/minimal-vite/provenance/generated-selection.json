@@ -1,0 +1,14 @@
+{
+  "items": [
+    "@chatjs/minimal-next",
+    "@chatjs/openai",
+    "@chatjs/host-identity",
+    "@chatjs/postgres",
+    "@chatjs/layout-minimal",
+    "http://127.0.0.1:62561/confirm-note.json"
+  ],
+  "registries": {},
+  "settings": {
+    "model": "gpt-5-mini"
+  }
+}

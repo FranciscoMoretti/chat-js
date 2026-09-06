@@ -36,7 +36,11 @@
 		"build:electron": "turbo run electron:build --filter=@chat-js/electron",
 		"dist:electron": "turbo run electron:make --filter=@chat-js/electron",
 		"dev:minimal": "dotenv -e .env.worktree.local -e examples/minimal-next/.env.local -- bun run worktree-env minimal -- bun run --cwd examples/minimal-next dev",
-		"dev:minimal-eve": "dotenv -e .env.worktree.local -e examples/minimal-next/.env.local -- bun run worktree-env minimalEve -- bun run --cwd examples/minimal-next eve:start"
+		"dev:minimal-eve": "dotenv -e .env.worktree.local -e examples/minimal-next/.env.local -- bun run worktree-env minimalEve -- bun run --cwd examples/minimal-next eve:start",
+		"dev:vite": "dotenv -e .env.worktree.local -e examples/minimal-vite/.env.local -- bun run worktree-env vite -- bun run --cwd examples/minimal-vite dev",
+		"dev:vite-gateway": "dotenv -e .env.worktree.local -e examples/minimal-vite/.env.local -- bun run worktree-env viteGateway -- bun run --cwd examples/minimal-vite host:start",
+		"dev:vite-eve": "dotenv -e .env.worktree.local -e examples/minimal-vite/.env.local -- bun run worktree-env minimalEve -- bun run --cwd examples/minimal-vite eve:start",
+		"dev:vite-sink": "dotenv -e .env.worktree.local -e examples/minimal-vite/.env.local -- bun run worktree-env viteSink -- bun run --cwd examples/minimal-vite sink:start"
 	},
 	"overrides": {
 		"//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",

@@ -46,6 +46,30 @@
     "minimalEve": {
       "offset": 5,
       "exports": {
+        "PORT": "{port}",
+        "SIDE_EFFECT_ORIGIN": "{apps.viteSink.url}"
+      }
+    },
+    "vite": {
+      "offset": 7,
+      "exports": {
+        "PORT": "{port}",
+        "APP_ORIGIN": "{url}",
+        "APP_GATEWAY_ORIGIN": "{apps.viteGateway.url}",
+        "EVE_INTERNAL_ORIGIN": "{apps.minimalEve.url}"
+      }
+    },
+    "viteGateway": {
+      "offset": 6,
+      "exports": {
+        "PORT": "{port}",
+        "APP_ORIGIN": "{apps.vite.url}",
+        "EVE_INTERNAL_ORIGIN": "{apps.minimalEve.url}"
+      }
+    },
+    "viteSink": {
+      "offset": 8,
+      "exports": {
         "PORT": "{port}"
       }
     }

@@ -1,0 +1,45 @@
+{
+  "name": "minimal-vite",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.11",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite --host localhost --strictPort",
+    "eve:build": "eve build",
+    "eve:start": "eve start --host 127.0.0.1",
+    "test:types": "tsc --noEmit",
+    "db:init": "bun scripts/db-init.ts",
+    "host:build": "bun build server/index.ts server/sink.ts --target=node --packages=external --outdir=.host",
+    "host:start": "node .host/index.js",
+    "client:build": "vite build",
+    "lint": "biome check app lib agent scripts server components integrations chat.client.ts chat.server.ts chat.config.ts vite.config.ts",
+    "test": "bun test tests",
+    "sink:start": "node .host/sink.js"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "4.0.59",
+    "@trpc/client": "11.16.0",
+    "@trpc/server": "11.16.0",
+    "@workflow/world-postgres": "5.0.0-beta.40",
+    "ai": "7.0.93",
+    "eve": "0.52.1",
+    "jose": "6.2.3",
+    "postgres": "3.4.7",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.6",
+    "@types/bun": "1.3.11",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "playwright": "1.59.1",
+    "typescript": "6.0.2",
+    "vite": "7.3.1"
+  }
+}
