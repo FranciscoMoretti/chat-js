@@ -1,9 +1,10 @@
 import { RefreshCcwIcon } from "lucide-react";
-import { useChatActions } from "@/lib/chat/view-hooks";
+import type { ChatMessage } from "@/lib/ai/types";
+import { useChatActions } from "@/lib/stores/base";
 import { Button } from "./ui/button";
 
 export function ResponseErrorMessage() {
-  const { regenerate } = useChatActions();
+  const { regenerate } = useChatActions<ChatMessage>();
 
   return (
     <div className="mx-auto flex w-full flex-col items-center gap-4 rounded-lg px-6 py-8 shadow-xs md:max-w-2xl">

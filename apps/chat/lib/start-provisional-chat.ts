@@ -3,7 +3,6 @@
 import type { Route } from "next";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { useConversationView } from "@/components/chat/conversation-view";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import type { ParallelRequestSpec } from "@/lib/draft-chat-submission";
@@ -42,7 +41,6 @@ function isInitialRoute(
 }
 
 export function useStartProvisionalChat(chatId: string) {
-  const view = useConversationView();
   const currentRoute = useCurrentChatRoute();
   const changeModel = useModelChange();
   const { data: session } = useSession();
@@ -74,7 +72,7 @@ export function useStartProvisionalChat(chatId: string) {
 
       const primaryRequest = requestSpecs[0] ?? null;
       const storeState = storeApi.getState();
-      const startRun = view.startRun;
+      const startRun = storeState.startRun;
 
       if (!startRun) {
         return false;
@@ -115,6 +113,6 @@ export function useStartProvisionalChat(chatId: string) {
 
       return true;
     },
-    [changeModel, chatId, currentRoute, session?.user, storeApi, view]
+    [changeModel, chatId, currentRoute, session?.user, storeApi]
   );
 }

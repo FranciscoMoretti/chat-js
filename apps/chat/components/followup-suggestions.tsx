@@ -3,8 +3,8 @@
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import { useConversationView } from "@/components/chat/conversation-view";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
+import { useChatStoreApi } from "@/lib/stores/base";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import {
   useMessagePartByPartIdx,
@@ -20,17 +20,17 @@ function FollowUpSuggestions({
   suggestions: string[];
   className?: string;
 }) {
-  const view = useConversationView();
+  const storeApi = useChatStoreApi();
   const { selectedModelId, selectedTool } = useChatInput();
 
   const handleClick = useCallback(
     (suggestion: string) => {
-      const sendMessage = view.sendMessage;
+      const sendMessage = storeApi.getState().sendMessage;
       if (!sendMessage) {
         return;
       }
 
-      const parentMessageId = view.store.getState().cursorId;
+      const parentMessageId = storeApi.getState().getLastMessageId();
 
       const message: ChatMessage = {
         id: generateUUID(),
@@ -52,7 +52,7 @@ function FollowUpSuggestions({
 
       sendMessage(message);
     },
-    [view, selectedModelId, selectedTool]
+    [storeApi, selectedModelId, selectedTool]
   );
 
   if (!suggestions || suggestions.length === 0) {

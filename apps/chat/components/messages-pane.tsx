@@ -5,8 +5,8 @@ import { CloneChatButton } from "@/components/clone-chat-button";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
+import { ChatComposer } from "./chat-composer";
 import { Messages } from "./messages";
-import { MultimodalInput } from "./multimodal-input";
 
 interface MessagesPaneProps {
   chatId: string;
@@ -34,7 +34,7 @@ function PureMessagesPane({
           <CloneChatButton chatId={chatId} className="w-full" />
         ) : (
           <div className="mx-auto w-full p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6">
-            <MultimodalInput
+            <ChatComposer
               chatId={chatId}
               parentMessageId={parentMessageId}
               status={status}

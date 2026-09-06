@@ -9,13 +9,7 @@ import {
   useState,
 } from "react";
 import type { UIArtifact } from "@/components/artifact-panel";
-import { ConversationViewContext } from "@/components/chat/conversation-view";
 import type { ArtifactMetadata } from "@/components/create-artifact";
-import {
-  type ArtifactOrigin,
-  createArtifactOrigin,
-} from "@/lib/chat/artifact-origin";
-import { useOptionalChatInput } from "@/providers/chat-input-provider";
 
 const initialArtifactData: UIArtifact = {
   documentId: "init",
@@ -37,7 +31,6 @@ type MetadataStore = Record<string, ArtifactMetadata>;
 interface ArtifactContextType {
   artifact: UIArtifact;
   metadata: MetadataStore;
-  origin: ArtifactOrigin | null;
   setArtifact: (
     updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact)
   ) => void;
@@ -45,7 +38,6 @@ interface ArtifactContextType {
     documentId: string,
     metadata: ArtifactMetadata | MetadataUpdater
   ) => void;
-  setOrigin: (origin: ArtifactOrigin) => void;
 }
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(
@@ -53,7 +45,6 @@ const ArtifactContext = createContext<ArtifactContextType | undefined>(
 );
 
 export function ArtifactProvider({ children }: { children: ReactNode }) {
-  const [origin, setOrigin] = useState<ArtifactOrigin | null>(null);
   const [artifact, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
   const [metadataStore, setMetadataStore] = useState<MetadataStore>({});
@@ -86,13 +77,11 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       artifact,
-      origin,
-      setOrigin,
       setArtifact,
       metadata: metadataStore,
       setMetadata,
     }),
-    [artifact, origin, setArtifact, metadataStore, setMetadata]
+    [artifact, setArtifact, metadataStore, setMetadata]
   );
 
   return (
@@ -119,34 +108,12 @@ export function useArtifactSelector<Selected>(selector: Selector<Selected>) {
 }
 
 export function useArtifact() {
-  const view = useContext(ConversationViewContext);
-  const input = useOptionalChatInput();
   const {
     artifact,
-    origin,
-    setOrigin,
     setArtifact,
     metadata: metadataStore,
     setMetadata: setMetadataStore,
   } = useArtifactContext();
-
-  const openArtifact = useCallback(
-    (next: UIArtifact) => {
-      if (!view) {
-        throw new Error("Open a document from a conversation view");
-      }
-      setOrigin(
-        createArtifactOrigin(
-          view,
-          next.messageId,
-          input?.selectedModelId,
-          !input
-        )
-      );
-      setArtifact(next);
-    },
-    [view, input, setArtifact, setOrigin]
-  );
 
   const metadata = useMemo(
     () =>
@@ -181,23 +148,12 @@ export function useArtifact() {
   return useMemo(
     () => ({
       artifact,
-      origin,
-      openArtifact,
       setArtifact,
       resetArtifact,
       closeArtifact,
       metadata,
       setMetadata,
     }),
-    [
-      artifact,
-      origin,
-      openArtifact,
-      setArtifact,
-      metadata,
-      setMetadata,
-      resetArtifact,
-      closeArtifact,
-    ]
+    [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
 }

@@ -1,9 +1,11 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { QueryClient } from "@tanstack/react-query";
+import type { DataUIPart } from "ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
-import type { AppModelId } from "@/lib/ai/app-models";
-import type { ChatMessage } from "@/lib/ai/types";
+import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
+import type { useChatStoreApi } from "@/lib/stores/base";
 import type { useTRPC } from "@/trpc/react";
+import type { UIArtifact } from "./artifact-panel";
 
 export type ArtifactMetadata = object | null;
 
@@ -29,9 +31,8 @@ interface ArtifactAction<M extends ArtifactMetadata = ArtifactMetadata> {
 }
 
 export interface ArtifactToolbarContext {
-  parentMessageId: string;
-  selectedModelId?: AppModelId;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }
 
 export interface ArtifactToolbarItem {
@@ -78,6 +79,11 @@ interface ArtifactConfig<
     isAuthenticated: boolean;
   }) => void;
   kind: T;
+  onStreamPart?: (args: {
+    setMetadata: Dispatch<SetStateAction<M>>;
+    setArtifact: Dispatch<SetStateAction<UIArtifact>>;
+    streamPart: DataUIPart<CustomUIDataTypes>;
+  }) => void;
   toolbar: ArtifactToolbarItem[];
 }
 
@@ -105,6 +111,11 @@ export class Artifact<
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
+  readonly onStreamPart?: (args: {
+    setMetadata: Dispatch<SetStateAction<M>>;
+    setArtifact: Dispatch<SetStateAction<UIArtifact>>;
+    streamPart: DataUIPart<CustomUIDataTypes>;
+  }) => void;
 
   constructor(config: ArtifactConfig<T, M>) {
     this.kind = config.kind;
@@ -114,5 +125,6 @@ export class Artifact<
     this.actions = config.actions || [];
     this.toolbar = config.toolbar || [];
     this.initialize = config.initialize || (async () => ({}));
+    this.onStreamPart = config.onStreamPart;
   }
 }

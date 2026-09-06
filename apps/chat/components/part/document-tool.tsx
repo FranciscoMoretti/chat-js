@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useIsLastArtifact } from "@/lib/stores/hooks-message-parts";
@@ -27,8 +27,7 @@ function PureDocumentTool({
   isReadonly,
   messageId,
 }: DocumentToolComponentProps) {
-  const { artifact, openArtifact } = useArtifact();
-  const opened = useRef(false);
+  const { setArtifact } = useArtifact();
   const kind = getToolKind(tool.type);
   const isEdit = isEditTool(tool.type);
   const isLastArtifact = useIsLastArtifact(tool.toolCallId);
@@ -36,39 +35,33 @@ function PureDocumentTool({
   const inputTitle = tool.input?.title ?? "";
   const inputContent = tool.input?.content ?? "";
 
-  // Auto-open a newly streamed document once. The workspace then owns its subscription.
+  // Sync streaming content to artifact panel
   useEffect(() => {
-    if (
-      opened.current ||
-      (tool.state !== "input-streaming" && tool.state !== "input-available")
-    ) {
-      return;
+    if (tool.state === "input-streaming" || tool.state === "input-available") {
+      setArtifact((prev) => ({
+        ...prev,
+        documentId: "init",
+        title: inputTitle,
+        content: inputContent,
+        kind,
+        messageId,
+        status: "streaming",
+        ...(prev.status !== "streaming" && { isVisible: true }),
+      }));
     }
-    opened.current = true;
-    if (artifact.isVisible || artifact.messageId === messageId) {
-      return;
+
+    if (tool.state === "output-available" && tool.output) {
+      const output = tool.output;
+      if (output.status === "success") {
+        setArtifact((prev) => ({
+          ...prev,
+          documentId: output.documentId,
+          status: "idle",
+          date: output.date,
+        }));
+      }
     }
-    openArtifact({
-      documentId: "init",
-      title: inputTitle,
-      content: inputContent,
-      kind,
-      messageId,
-      toolCallId: tool.toolCallId,
-      status: "streaming",
-      isVisible: true,
-    });
-  }, [
-    artifact.isVisible,
-    artifact.messageId,
-    tool.state,
-    tool.toolCallId,
-    messageId,
-    kind,
-    inputTitle,
-    inputContent,
-    openArtifact,
-  ]);
+  }, [tool, messageId, kind, inputTitle, inputContent, setArtifact]);
 
   if (tool.state === "output-error" || tool.output?.status === "error") {
     const output = tool.output;
@@ -99,7 +92,6 @@ function PureDocumentTool({
               }
             : undefined
         }
-        toolCallId={tool.toolCallId}
         type={isEdit ? "update" : "create"}
       />
     );

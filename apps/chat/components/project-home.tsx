@@ -4,7 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { MultimodalInput } from "@/components/multimodal-input";
+import { ChatComposer } from "@/components/chat-composer";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
 import {
@@ -132,7 +132,7 @@ export function ProjectHome({
             projectName={project?.name}
           />
 
-          <MultimodalInput
+          <ChatComposer
             autoFocus
             chatId={chatId}
             parentMessageId={parentMessageId}

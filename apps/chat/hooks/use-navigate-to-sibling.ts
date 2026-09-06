@@ -1,6 +1,43 @@
+import { useCallback } from "react";
+import { useArtifact } from "@/hooks/use-artifact";
+import type { ChatMessage } from "@/lib/ai/types";
+import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useSwitchToSibling } from "@/lib/stores/hooks-threads";
 
-/** Navigation changes only the calling view. Execution and workspace stay attached. */
+/**
+ * Navigate to a sibling thread while preserving branch-owned active runs.
+ * Uses the store's switchToSibling for the pure state transition.
+ */
 export function useNavigateToSibling() {
-  return useSwitchToSibling();
+  const { setDataStream } = useDataStream();
+  const { artifact, closeArtifact } = useArtifact();
+  const switchToSibling = useSwitchToSibling();
+
+  return useCallback(
+    (messageId: string, direction: "prev" | "next") => {
+      // Data parts belong to the previously selected path. Active runs remain
+      // owned by Thread and continue updating their tree nodes.
+      setDataStream([]);
+
+      const newThread = switchToSibling(messageId, direction);
+      // Close artifact if its message is not in the new thread
+      if (
+        newThread &&
+        artifact.isVisible &&
+        artifact.messageId &&
+        !newThread.some(
+          (message: ChatMessage) => message.id === artifact.messageId
+        )
+      ) {
+        closeArtifact();
+      }
+    },
+    [
+      artifact.isVisible,
+      artifact.messageId,
+      closeArtifact,
+      setDataStream,
+      switchToSibling,
+    ]
+  );
 }

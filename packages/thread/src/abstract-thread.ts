@@ -242,21 +242,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
 	regenerate: AbstractChat<TMessage>["regenerate"] = async ({
 		messageId,
-		...request
+		...options
 	} = {}) => {
-		const run = this.regenerateRun({ messageId, request, follow: true });
-		await run.finished;
-	};
-
-	regenerateRun({
-		messageId,
-		request = {},
-		follow = false,
-	}: {
-		messageId?: string;
-		request?: ChatRequestOptions;
-		follow?: boolean;
-	}): ThreadRunHandle {
 		const { parentMessageId, target } = this.readTree((tree) => {
 			const selectedTarget =
 				messageId == null
@@ -297,14 +284,13 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 				this.getChildren(parentMessageId).length,
 			),
 		};
-		if (follow) {
-			this.#runs.select(spec.id);
-			this.updateTree((tree) => tree.setCursor(target.id));
-		}
-		return this.startRunRequest(spec, (chat) =>
-			chat.regenerateMessage(target.id, request),
+		this.#runs.select(spec.id);
+		this.updateTree((tree) => tree.setCursor(target.id));
+		const run = this.startRunRequest(spec, (chat) =>
+			chat.regenerateMessage(target.id, options),
 		);
-	}
+		await run.finished;
+	};
 
 	upsertMessage(message: TMessage, parentId: string | null) {
 		this.updateTree((tree) => tree.upsertMessage(message, parentId));
@@ -465,13 +451,6 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 	getRun(runId: string) {
 		const run = this.#runs.get(runId);
 		return run ? this.#runs.toSnapshot(run) : undefined;
-	}
-
-	/** Current response, or the starting path message while output is pending. */
-	getMessageForRun(runId: string) {
-		const spec = this.#runs.get(runId)?.spec;
-		const messageId = spec?.messageId ?? spec?.initialPathMessageId;
-		return messageId ? this.getMessage(messageId) : undefined;
 	}
 
 	getRunForMessage(messageId: string) {

@@ -21,19 +21,16 @@ import {
 } from "@/lib/ai/types";
 import { useChatModels } from "./chat-models-provider";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
-import { useSession } from "./session-provider";
 
 interface ChatInputContextType {
   attachments: Attachment[];
   editorRef: React.RefObject<LexicalChatInputRef | null>;
-  getDraftGeneration: () => number;
   getInitialInput: () => string;
   getInputValue: () => string;
   handleInputChange: (value: string) => void;
   handleModelChange: (modelId: AppModelId) => Promise<void>;
   handleModelSelectionChange: (selection: SelectedModelValue) => Promise<void>;
   handleSubmit: (submitFn: () => void, isEditMode?: boolean) => void;
-  isDraftReady: boolean;
   isEmpty: boolean;
   isProjectContext: boolean;
   selectedModelId: AppModelId;
@@ -56,7 +53,6 @@ interface ChatInputProviderProps {
   localStorageEnabled?: boolean;
   overrideModelId?: AppModelId; // For message editing where we want to use the original model
   overrideModelSelection?: SelectedModelValue; // For message editing with multi-model selection
-  storageKey?: string;
 }
 
 export function ChatInputProvider({
@@ -66,44 +62,39 @@ export function ChatInputProvider({
   initialAttachments = [],
   overrideModelId,
   overrideModelSelection,
-  localStorageEnabled = false,
-  storageKey,
+  localStorageEnabled = true,
   isProjectContext = false,
 }: ChatInputProviderProps) {
-  const { data: session } = useSession();
-  const draftStorageKey = storageKey
-    ? JSON.stringify([
-        "chatjs-draft",
-        session?.user?.id ?? "anonymous",
-        storageKey,
-      ])
-    : null;
   const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   // Helper functions for localStorage access without state
   const getLocalStorageInput = useCallback(() => {
-    if (!(localStorageEnabled && draftStorageKey)) {
+    if (!localStorageEnabled) {
       return "";
     }
     try {
-      return localStorage.getItem(draftStorageKey) || "";
+      return localStorage.getItem("input") || "";
     } catch {
       return "";
     }
-  }, [localStorageEnabled, draftStorageKey]);
+  }, [localStorageEnabled]);
 
   const setLocalStorageInput = useCallback(
     (value: string) => {
-      if (!(localStorageEnabled && draftStorageKey)) {
+      if (!localStorageEnabled) {
         return;
       }
       try {
-        localStorage.setItem(draftStorageKey, value);
+        localStorage.setItem("input", value);
       } catch {
         // Silently fail if localStorage is not available
       }
     },
-    [localStorageEnabled, draftStorageKey]
+    [localStorageEnabled]
   );
 
   const defaultModel = useDefaultModel();
@@ -122,9 +113,6 @@ export function ChatInputProvider({
   // Next SSRs client components; localStorage is client-only and will cause hydration mismatches
   // (e.g., submit button `disabled` stuck from server HTML).
   const inputValueRef = useRef<string>(initialInput);
-  // Typing edits the same draft; consuming it invalidates pending attachment work.
-  const draftGeneration = useRef(0);
-  const getDraftGeneration = useCallback(() => draftGeneration.current, []);
 
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
     initialTool
@@ -140,20 +128,16 @@ export function ChatInputProvider({
   // Create ref for lexical editor
   const editorRef = useRef<LexicalChatInputRef | null>(null);
 
-  const initialized = useRef(false);
-  useEffect(() => {
-    if (initialized.current) {
-      return;
+  // Get the initial input value from localStorage if enabled and no initial input provided
+  const getInitialInput = useCallback(() => {
+    if (!localStorageEnabled) {
+      return initialInput;
     }
-    initialized.current = true;
-    inputValueRef.current = initialInput || getLocalStorageInput();
-    setIsEmpty(inputValueRef.current.trim().length === 0);
-    setHasHydrated(true);
-  }, [initialInput, getLocalStorageInput]);
-
-  // Editors mount only after restoration, so an initial empty onChange cannot
-  // overwrite a persisted draft before it has been read.
-  const getInitialInput = useCallback(() => inputValueRef.current, []);
+    if (!hasHydrated) {
+      return initialInput;
+    }
+    return initialInput || getLocalStorageInput();
+  }, [initialInput, getLocalStorageInput, localStorageEnabled, hasHydrated]);
 
   const { getModelById } = useChatModels();
 
@@ -210,7 +194,6 @@ export function ChatInputProvider({
   }, []);
 
   const clearAttachments = useCallback(() => {
-    draftGeneration.current += 1;
     setAttachments([]);
   }, []);
 
@@ -264,11 +247,9 @@ export function ChatInputProvider({
         handleModelChange,
         handleModelSelectionChange,
         getInputValue,
-        getDraftGeneration,
         handleInputChange,
         getInitialInput,
         isEmpty,
-        isDraftReady: hasHydrated,
         handleSubmit,
         isProjectContext,
       }}
@@ -284,8 +265,4 @@ export function useChatInput() {
     throw new Error("useChatInput must be used within a ChatInputProvider");
   }
   return context;
-}
-
-export function useOptionalChatInput() {
-  return useContext(ChatInputContext);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useChatStatus } from "@/lib/chat/view-hooks";
+import { useChatStatus } from "@/lib/stores/base";
 import { useMessageMetadataById } from "@/lib/stores/hooks-base";
 import { Skeleton } from "./ui/skeleton";
 

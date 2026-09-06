@@ -2,13 +2,13 @@
 import { type Dispatch, type SetStateAction, useCallback } from "react";
 import type { ModelId } from "@/lib/ai/app-models";
 import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
-import { useChatStatus } from "@/lib/chat/view-hooks";
+import { useChatStatus } from "@/lib/stores/base";
 import {
   getAttachmentsFromMessage,
   getTextContentFromMessage,
 } from "@/lib/utils";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
-import { MultimodalInput } from "./multimodal-input";
+import { ChatComposer } from "./chat-composer";
 
 export interface MessageEditorProps {
   chatId: string;
@@ -33,7 +33,7 @@ function MessageEditorContent({
 
   return (
     <div className="w-full">
-      <MultimodalInput
+      <ChatComposer
         chatId={chatId}
         isEditMode={true}
         onSendMessage={handleOnSendMessage}

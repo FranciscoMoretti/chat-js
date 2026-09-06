@@ -1,18 +1,35 @@
-// Selected-path lists use the view; explicit message IDs read the shared tree.
+// This file has hooks that are enabled by the @/lib/stores/base
 
 import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
-import { useViewMessages, useViewSelector } from "@/lib/chat/view-hooks";
+import { useStoreWithEqualityFn } from "zustand/traditional";
+import { type StoreState, useChatStoreApi } from "@/lib/stores/base";
 import type { ChatMessage } from "../ai/types";
 
+function useBaseChatStore<T = StoreState<ChatMessage>>(
+  selector?: (store: StoreState<ChatMessage>) => T,
+  equalityFn?: (a: T, b: T) => boolean
+) {
+  const store = useChatStoreApi<ChatMessage>();
+  if (!store) {
+    throw new Error("useBaseChatStore must be used within ChatStoreProvider");
+  }
+  const selectorOrIdentity =
+    (selector as (s: StoreState<ChatMessage>) => T) ??
+    ((s: StoreState<ChatMessage>) => s);
+  return useStoreWithEqualityFn(store, selectorOrIdentity, equalityFn);
+}
+
+// Base selector hooks using throttled messages where relevant
 export const useMessageIds = () =>
-  useViewMessages((messages) => messages.map((message) => message.id), shallow);
+  useBaseChatStore((state) => state.getMessageIds(), shallow);
 
 export const useLastUsageUntilMessageId = (messageId: string | null) =>
-  useViewMessages((messages) => {
+  useBaseChatStore((state) => {
     if (!messageId) {
       return;
     }
+    const messages = state._throttledMessages || state.messages;
     const messageIdx = messages.findIndex((m) => m.id === messageId);
     if (messageIdx === -1) {
       return;
@@ -24,8 +41,10 @@ export const useLastUsageUntilMessageId = (messageId: string | null) =>
   }, shallow);
 
 export const useMessageRoleById = (messageId: string): ChatMessage["role"] =>
-  useViewSelector((state) => {
-    const message = state.snapshot.messagesById[messageId];
+  useBaseChatStore((state) => {
+    const message = state
+      .getThrottledMessages()
+      .find((m) => m.id === messageId);
     if (!message) {
       throw new Error(`Message not found for id: ${messageId}`);
     }
@@ -33,8 +52,10 @@ export const useMessageRoleById = (messageId: string): ChatMessage["role"] =>
   });
 
 export const useMessagePartsById = (messageId: string): ChatMessage["parts"] =>
-  useViewSelector((state) => {
-    const message = state.snapshot.messagesById[messageId];
+  useBaseChatStore((state) => {
+    const message = state
+      .getThrottledMessages()
+      .find((m) => m.id === messageId);
     if (!message) {
       throw new Error(`Message not found for id: ${messageId}`);
     }
@@ -44,19 +65,28 @@ export const useMessagePartsById = (messageId: string): ChatMessage["parts"] =>
 export const useMessageResearchUpdatePartsById = (
   messageId: string
 ): Extract<ChatMessage["parts"][number], { type: "data-researchUpdate" }>[] =>
-  useViewSelector((state) => {
-    const message = state.snapshot.messagesById[messageId];
+  useBaseChatStore((state) => {
+    const message = state
+      .getThrottledMessages()
+      .find((m) => m.id === messageId);
     if (!message) {
       throw new Error(`Message not found for id: ${messageId}`);
     }
-    return message.parts.filter((p) => p.type === "data-researchUpdate");
+    return message.parts.filter(
+      (p) => p.type === "data-researchUpdate"
+    ) as Extract<
+      ChatMessage["parts"][number],
+      { type: "data-researchUpdate" }
+    >[];
   }, equal);
 
 export const useMessageMetadataById = (
   messageId: string
 ): ChatMessage["metadata"] =>
-  useViewSelector((state) => {
-    const message = state.snapshot.messagesById[messageId];
+  useBaseChatStore((state) => {
+    const message = state
+      .getThrottledMessages()
+      .find((m) => m.id === messageId);
     if (!message) {
       throw new Error(`Message not found for id: ${messageId}`);
     }
@@ -64,7 +94,10 @@ export const useMessageMetadataById = (
   }, shallow);
 
 export const useLastMessageId = () =>
-  useViewMessages((messages) => messages.at(-1)?.id ?? null);
+  useBaseChatStore((state) => state.getLastMessageId());
 
 export const useLastMessageMetadata = () =>
-  useViewMessages((messages) => messages.at(-1)?.metadata, shallow);
+  useBaseChatStore(
+    (state) => state.getThrottledMessages().at(-1)?.metadata,
+    shallow
+  );

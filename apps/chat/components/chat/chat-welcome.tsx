@@ -2,7 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { memo } from "react";
-import { MultimodalInput } from "@/components/multimodal-input";
+import { ChatComposer } from "@/components/chat-composer";
 import { SuggestedActions } from "@/components/suggested-actions";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useLastMessageId } from "@/lib/stores/hooks-base";
@@ -42,7 +42,7 @@ function PureChatWelcome({
         <div className="mb-4 md:mb-6">
           <WelcomeMessage />
         </div>
-        <MultimodalInput
+        <ChatComposer
           autoFocus
           chatId={chatId}
           parentMessageId={parentMessageId}

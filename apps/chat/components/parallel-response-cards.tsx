@@ -2,7 +2,6 @@
 
 import { LoaderCircle } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { useConversationView } from "@/components/chat/conversation-view";
 import { Button } from "@/components/ui/button";
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
@@ -11,7 +10,8 @@ import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
-import { useMessageById } from "@/lib/chat/view-hooks";
+import { useMessageById } from "@/lib/stores/base";
+import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";
 import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { cn } from "@/lib/utils";
@@ -45,8 +45,8 @@ function getModelOrderIndex(
 }
 
 function PureParallelResponseCards({ messageId }: { messageId: string }) {
-  const message = useMessageById(messageId);
-  const view = useConversationView();
+  const message = useMessageById<ChatMessage>(messageId);
+  const thread = useApplicationThread();
   const parallelGroupInfo = useParallelGroupInfo(messageId);
   const navigateToMessage = useNavigateToMessage();
   const { handleModelChange } = useChatInput();
@@ -143,7 +143,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
     if (!slot.message) {
       if (slot.run && activatedRunIdRef.current !== slot.run.id) {
         activatedRunIdRef.current = slot.run.id;
-        view.followRun(slot.run.id);
+        thread.setActiveRun(slot.run.id);
       }
       return;
     }
@@ -153,7 +153,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
       navigateToMessage(slot.message.id);
     }
     activatedRunIdRef.current = null;
-  }, [cardSlots, navigateToMessage, pendingParallelIndex, view]);
+  }, [cardSlots, navigateToMessage, pendingParallelIndex, thread]);
 
   if (!message || sortedCardSlots.length <= 1) {
     return null;
@@ -189,7 +189,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
               } else if (slot.run) {
                 activatedRunIdRef.current = slot.run.id;
                 setPendingParallelIndex(slot.parallelIndex);
-                view.followRun(slot.run.id);
+                thread.setActiveRun(slot.run.id);
               } else {
                 setPendingParallelIndex(slot.parallelIndex);
                 navigateToMessage(message.id);

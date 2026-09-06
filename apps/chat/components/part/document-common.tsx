@@ -1,6 +1,5 @@
 import { File, Loader2, Pencil } from "lucide-react";
 import { memo } from "react";
-import type { UIArtifact } from "@/components/artifact-panel";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
@@ -57,7 +56,6 @@ interface DocumentToolResultProps {
     title: string;
     kind: ArtifactKind;
   };
-  toolCallId?: string;
   type: "create" | "update";
 }
 
@@ -66,21 +64,19 @@ function PureDocumentToolResult({
   result,
   isReadonly: _isReadonly,
   messageId,
-  toolCallId,
 }: DocumentToolResultProps) {
-  const { openArtifact } = useArtifact();
+  const { setArtifact } = useArtifact();
 
   return (
     <button
       className="flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border bg-background px-3 py-2"
       onClick={() => {
-        openArtifact({
+        setArtifact({
           documentId: result.id,
           kind: result.kind,
           content: "",
           title: result.title,
           messageId,
-          toolCallId,
           isVisible: true,
           status: "idle",
         });
@@ -105,28 +101,29 @@ function PureDocumentToolResult({
   );
 }
 
-export const DocumentToolResult = memo(PureDocumentToolResult);
+export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
 
 interface DocumentToolCallProps {
   args: { title?: string };
-  artifact: UIArtifact;
   isReadonly: boolean;
   type: "create" | "update";
 }
 
 function PureDocumentToolCall({
-  artifact,
   type,
   args,
   isReadonly: _isReadonly,
 }: DocumentToolCallProps) {
-  const { openArtifact } = useArtifact();
+  const { setArtifact } = useArtifact();
 
   return (
     <button
       className="cursor pointer flex w-fit flex-row items-start justify-between gap-3 rounded-xl border px-3 py-2"
       onClick={() => {
-        openArtifact(artifact);
+        setArtifact((currentArtifact) => ({
+          ...currentArtifact,
+          isVisible: true,
+        }));
       }}
       type="button"
     >
@@ -153,4 +150,4 @@ function PureDocumentToolCall({
   );
 }
 
-export const DocumentToolCall = memo(PureDocumentToolCall);
+export const DocumentToolCall = memo(PureDocumentToolCall, () => true);
