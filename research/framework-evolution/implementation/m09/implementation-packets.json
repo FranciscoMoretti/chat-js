@@ -1,0 +1,56 @@
+[
+  {
+    "id":"M09-A", "title":"Preserve mandatory ownership and expose safe create status",
+    "dependsOn":["accepted #312/#313 ownership and generation baseline"],
+    "sourcePins":{"m07":"688c7e944cb66397ec2a0e2a80f1557dc7325b07","pr318":"1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10"},
+    "files":["lib/bindings.ts","lib/conversation-router.ts","lib/router.ts","lib/identity.ts","app/chat.tsx"],
+    "work":["Extract mandatory router without importing saved history","Add owner-scoped operation status without returning retry payload","Preserve exact create payload and owner operation reservation","Scope pending create to verified identity epoch, conversation/view and operation"],
+    "acceptance":["M07 HTTP ACL allowlist unchanged","Two API processes: same-owner duplicate suppressed; different owners independent","Creating/uncertain survives restart without automatic new execution","Account switch cannot repost previous owner's pending request"],
+    "proofAlreadyAvailable":"postgres-fixture scenarios 1,2,4,5,6; browser account switch still pending",
+    "stop":"No private Eve tables, history import, automatic ambiguous-create reconciliation or changed owner-key migration"
+  },
+  {
+    "id":"M09-B", "title":"Install optional history metadata and owner-qualified API",
+    "dependsOn":["M09-A","accepted #313 selected composition","decision: automatic versus explicit Save"],
+    "files":["features/history/schema.sql","features/history/repository.ts","features/history/router.ts","features/history/contracts.ts","selected migration entrypoint"],
+    "work":["Fresh saved metadata with no Better Auth or Message/Part foreign key","Idempotent save, owner list/detail, CAS rename/pin","Stable keyset pagination","Repair missing metadata after successful binding without invoking Eve again"],
+    "acceptance":["Foreign owner denied for every ID-addressed operation","No-history install has no optional schema/source/deps","Restart preserves metadata","CAS conflict and page boundary tests","Metadata outage does not repeat external create"],
+    "proofAlreadyAvailable":"postgres-fixture metadata CRUD, CAS, restart and foreign-owner cases; pagination and autosave repair pending",
+    "stop":"No transcript-authority duplication, historical-row import or automatic Files SDK dependency"
+  },
+  {
+    "id":"M09-C", "title":"Connect optional saved-history UI with explicit view targets",
+    "dependsOn":["M09-B","accepted relevant #311/#317 UI scope contracts"],
+    "sourcePins":{"pr317":"c686b31bb0fe00e3234eaa92af7f81ed4d172ad7"},
+    "files":["features/history/queries.tsx","features/history/list.tsx","features/history/actions.tsx","components/chat/app-layout.tsx"],
+    "work":["Direct JSX layout with history actions targeting a view","Identity-scoped QueryClient, runtime and drafts","Reopen resolves existing binding then public-Eve cursor-zero replay","Explicit loading/empty/failed/unresolved/pending-approval states"],
+    "acceptance":["Real browser create/list/open/rename/pin/reload","Two views keep independent selection/drafts","No model/tool call on reopen","Logout clears old query/view state and ignores late responses","Pending approval clears only on input.resolved"],
+    "stop":"Do not freeze P2+ names or port current private canonical tree into browser Eve history"
+  },
+  {
+    "id":"M09-D", "title":"Provide existing-app and selectable starter identity recipes",
+    "dependsOn":["M09-A","accepted #313 selection","chosen starter providers"],
+    "files":["lib/identity.ts","integrations/auth/*","selected auth route/client/login modules","selected environment checklist"],
+    "work":["Use host-native verifier by default for existing applications","Install Better Auth native construction/tables/UI only for chosen starter","Allow external registry identity replacement at same concrete seam","No automatic anonymous account claiming"],
+    "acceptance":["Host identity operates without second login system","Issuer/tenant namespace negative tests","Bad signature/expiry/audience/Origin rejected","Real chosen starter login journey","External identity selected without built-in fallback"],
+    "proofAlreadyAvailable":"postgres-fixture existing host JWT plus negative identity cases; starter OAuth and registry installation pending",
+    "stop":"No provider-wide universal adapter, account transfer or quota policy change"
+  },
+  {
+    "id":"M09-E", "title":"Implement reviewed deletion and retention semantics",
+    "dependsOn":["M09-A","M09-B","Francisco decision: delete meaning, retention and active-run policy","supported cleanup contract for each selected service"],
+    "files":["selected conversation lifecycle service","selected cleanup outbox/job","gateway and internal channel ACL predicates","history mutation/cache actions"],
+    "work":["Choose Remove from history versus Delete semantics explicitly","If chosen: tombstone plus durable cleanup outbox in one application transaction","Coordinate cooperative cancellation through a narrow trusted cleanup path","Define reference retention for optional files/documents/sharing"],
+    "acceptance":["Owner idempotency and foreign denial","All later session/conversation reads/writes deny after tombstone","Open-stream revocation matches documented promise","Restart at each cleanup boundary","No false complete-purge acknowledgement"],
+    "proofAlreadyAvailable":"postgres-fixture separately proves metadata forget and tombstone ACL; execution cleanup and stream revocation unimplemented",
+    "stop":"No invented retention period or private workflow table purge"
+  },
+  {
+    "id":"M09-F", "title":"Validate selected assembly and hand off optional dependents",
+    "dependsOn":["M09-B","M09-C","M09-D","M09-E only for selected deletion behavior","accepted #313"],
+    "files":["selected registry items","explicit application router/layout composition","generated inventory/evidence"],
+    "work":["Built-in/external choices use equal per-case requirements and explicit file targets","Preflight identity/target conflicts","Demonstrate minimal, history+host and history+starter inventories","Hand stable conversation IDs to projects, sanitized read boundary to sharing, validated event refs to feedback"],
+    "acceptance":["No unselected source/runtime dependency retained by flags","Existing user-owned router/layout is not overwritten","Full resolved defaults remain M31 parity target","No project/sharing/feedback feature implemented by this packet"],
+    "stop":"No registry publication, deployment, PR merge or broad production migration"
+  }
+]

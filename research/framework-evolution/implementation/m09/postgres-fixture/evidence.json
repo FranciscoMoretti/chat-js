@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-06T19:10:57.117Z",
+  "bun": "1.3.11",
+  "postgres": "pg_ctl (PostgreSQL) 17.11 (Homebrew)",
+  "sourcePins": {
+    "m07": "688c7e944cb66397ec2a0e2a80f1557dc7325b07",
+    "pr318": "1b47cffe692acb8e2ebaf1ebebfa7ec76df75f10",
+    "pr317": "c686b31bb0fe00e3234eaa92af7f81ed4d172ad7"
+  },
+  "checks": 59,
+  "cases": [
+    {
+      "name": "host JWT with mandatory ACL and no history/auth tables",
+      "checks": 6
+    },
+    {
+      "name": "invalid credentials fail; issuer/tenant isolate; body owner and wrong origin rejected",
+      "checks": 8
+    },
+    {
+      "name": "owner metadata CRUD and two-process CAS; foreign operations denied",
+      "checks": 13
+    },
+    {
+      "name": "two processes share reservations without duplicate external effect",
+      "checks": 7
+    },
+    {
+      "name": "API SIGKILL and PostgreSQL crash recovery preserve ownership and metadata",
+      "checks": 5
+    },
+    {
+      "name": "crash after external effect remains creating; ambiguous response remains uncertain; no duplicate on retry",
+      "checks": 10
+    },
+    {
+      "name": "forget preserves ownership; explicit access revocation denies reads/writes while retaining tombstone",
+      "checks": 10
+    }
+  ],
+  "apiPorts": [
+    50317,
+    50328,
+    50329,
+    50334,
+    50336,
+    50339
+  ],
+  "postgresPort": 50305,
+  "postgresTransport": "unique temporary Unix socket; TCP disabled",
+  "limits": [
+    "Controlled external execution; no Eve runtime/model call",
+    "No OAuth/login UI, stream revocation, purge or generated installation",
+    "List fixture is limited first page; keyset pagination remains planned",
+    "Revocation and forget are separately tested options, not product deletion policy"
+  ]
+}
