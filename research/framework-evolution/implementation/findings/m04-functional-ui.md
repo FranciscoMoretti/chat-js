@@ -273,3 +273,7 @@ The consequential choice is **where normal customization happens**: compose func
 ## M07 evidence incorporated after initial exploration
 
 The [returned runtime handoff](m04-handoff-minimal-app.md#m07-return-handoff-reviewed-2026-09-06) records source inspected at `b4f11884` and M07's reported browser/provider evidence. Public `useEveAgent<ProjectData>` and `projectReducer` now provide a concrete linear adapter candidate with validated tool output and authoritative pending-input resolution. Keep its attachment at shared runtime scope when adding two views. Cancellation acceptance is not immediate model abort; empty approval-continuation turn IDs must not be replaced with invented identities. This narrows adapter uncertainty without committing the functional component API or closing the branching/multi-view gates.
+
+## Direct JSX follow-up supersedes the component factory example
+
+Francisco challenged why scoped functional components should come from a setup object. [The follow-up exploration](m04-direct-jsx.md) and [mounted React/browser proof](m04-jsx-spike/README.md) support direct imports and ordinary providers/hooks with local inferred types. Recommend dropping the public `createChatUI(...).App/View` factory from the normal path. Components remain functional and independently placeable in JSX; providers only supply scope/lifetime and existing integration context. No final production API is committed by the experiment.
