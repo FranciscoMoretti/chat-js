@@ -5,6 +5,10 @@
   },
   "globalEnv": [
     "DATABASE_URL",
+    "EVE_ENABLED",
+    "EVE_INTERNAL_ORIGIN",
+    "EVE_GATEWAY_SECRET",
+    "WORKFLOW_POSTGRES_URL",
     "AUTH_SECRET",
     "BLOB_READ_WRITE_TOKEN",
     "AUTH_GOOGLE_ID",
@@ -132,7 +136,7 @@
         "$TURBO_ROOT$/packages/registry/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
         "$TURBO_ROOT$/package.json",
-        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.turbo,build,dist,release,out,playwright,playwright-report,test-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json"
       ],
@@ -155,7 +159,7 @@
         "$TURBO_ROOT$/scripts/sync-template.ts",
         "$TURBO_ROOT$/package.json",
         "$TURBO_ROOT$/packages/registry/items/**",
-        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.turbo,build,dist,release,out,playwright,playwright-report,test-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json"
       ]

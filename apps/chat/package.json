@@ -35,7 +35,9 @@
     "test:unit": "vitest run",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
-    "fetch:models": "bun scripts/fetch-models.ts && bun format"
+    "fetch:models": "bun scripts/fetch-models.ts && bun format",
+    "eve:build": "eve build",
+    "eve:start": "NODE_ENV=production eve start --host 127.0.0.1"
   },
   "dependencies": {
     "@ai-sdk/devtools": "1.0.15",
@@ -102,6 +104,7 @@
     "@vercel/otel": "^2.1.0",
     "@vercel/sandbox": "^1.0.2",
     "@vercel/speed-insights": "^1.3.1",
+    "@workflow/world-postgres": "5.0.0-beta.40",
     "ai": "7.0.93",
     "better-auth": "^1.5.6",
     "browser-image-compression": "^2.0.2",
@@ -114,6 +117,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "echarts-for-react": "^3.0.2",
+    "eve": "0.52.2",
     "fast-deep-equal": "^3.1.3",
     "files-sdk": "2.1.0",
     "js-tiktoken": "^1.0.19",

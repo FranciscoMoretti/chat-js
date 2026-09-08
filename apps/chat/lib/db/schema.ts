@@ -442,3 +442,27 @@ export const mcpOAuthSession = pgTable(
 export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 
 export const schema = { user, session, account, verification };
+
+// Metadata only. Eve owns the transcript and execution state.
+export const eveConversation = pgTable(
+  "EveConversation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    operationId: uuid("operationId").notNull(),
+    firstMessage: text("firstMessage").notNull(),
+    sessionId: text("sessionId").unique(),
+    state: text("state", { enum: ["creating", "bound", "uncertain"] })
+      .notNull()
+      .default("creating"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("EveConversation_owner_operation").on(
+      table.ownerId,
+      table.operationId
+    ),
+  ]
+);

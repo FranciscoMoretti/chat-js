@@ -430,7 +430,16 @@ async function checkEnv(): Promise<void> {
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
   const installedToolErrors = await validateInstalledTools(env);
+  const eveMissing =
+    env.EVE_ENABLED === "true"
+      ? [
+          "EVE_INTERNAL_ORIGIN",
+          "EVE_GATEWAY_SECRET",
+          "WORKFLOW_POSTGRES_URL",
+        ].filter((name) => !env[name])
+      : [];
   const errors = [
+    ...(eveMissing.length ? [{ feature: "Eve", missing: eveMissing }] : []),
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),

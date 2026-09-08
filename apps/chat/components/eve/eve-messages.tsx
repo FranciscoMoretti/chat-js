@@ -1,0 +1,178 @@
+"use client";
+
+import type {
+  EveMessage,
+  EveMessageInputRequest,
+  EveMessagePart,
+  InputResponse,
+} from "eve/client";
+import { useState } from "react";
+import { Message, MessageContent } from "@/components/ai-elements/message";
+import { Response } from "@/components/ai-elements/response";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { noteInput, noteOutput } from "@/lib/eve/contracts";
+
+function PendingInput({
+  request,
+  disabled,
+  respond,
+  prompt,
+}: {
+  request: EveMessageInputRequest;
+  disabled: boolean;
+  respond: (response: InputResponse) => void;
+  prompt?: string;
+}) {
+  const [text, setText] = useState("");
+  return (
+    <div className="space-y-3">
+      <p>{prompt ?? request.prompt}</p>
+      <div className="flex flex-wrap gap-2">
+        {request.options?.map((option) => (
+          <Button
+            disabled={disabled}
+            key={option.id}
+            onClick={() =>
+              respond({ requestId: request.requestId, optionId: option.id })
+            }
+            type="button"
+            variant={option.style === "danger" ? "outline" : "default"}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+      {request.allowFreeform && (
+        <form
+          className="space-y-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (text.trim()) {
+              respond({ requestId: request.requestId, text: text.trim() });
+            }
+          }}
+        >
+          <Textarea
+            aria-label="Your answer"
+            disabled={disabled}
+            maxLength={16_000}
+            onChange={(event) => setText(event.target.value)}
+            value={text}
+          />
+          <Button disabled={disabled || !text.trim()} type="submit">
+            Submit answer
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function toolStatus(
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>,
+  confirmed: boolean
+) {
+  if (confirmed) {
+    return "Note confirmed.";
+  }
+  if (part.state === "output-denied") {
+    return "Request declined.";
+  }
+  if (part.state === "output-error") {
+    return part.errorText;
+  }
+  if (part.state === "output-available") {
+    return "Tool completed.";
+  }
+  return "Working…";
+}
+
+function Part({
+  part,
+  disabled,
+  respond,
+}: {
+  part: EveMessagePart;
+  disabled: boolean;
+  respond: (response: InputResponse) => void;
+}) {
+  if (part.type === "text") {
+    return <Response>{part.text}</Response>;
+  }
+  if (part.type === "reasoning") {
+    return (
+      <details className="text-muted-foreground">
+        <summary>Reasoning</summary>
+        <Response>{part.text}</Response>
+      </details>
+    );
+  }
+  if (part.type === "step-start") {
+    return null;
+  }
+  if (part.type !== "dynamic-tool") {
+    return <p>Unsupported content in this conversation.</p>;
+  }
+  const request = part.toolMetadata?.eve?.inputRequest;
+  const input = noteInput.safeParse(part.input);
+  const output =
+    part.state === "output-available"
+      ? noteOutput.safeParse(part.output)
+      : null;
+  return (
+    <section
+      aria-label="Tool result"
+      className="space-y-3 rounded-lg border p-4"
+    >
+      <p className="font-medium">
+        {part.toolName === "confirm_note" ? "Confirm note" : "Agent request"}
+      </p>
+      {input.success && <p>{input.data.note}</p>}
+      {part.state === "approval-requested" && request ? (
+        <PendingInput
+          disabled={disabled}
+          key={request.requestId}
+          prompt={
+            part.toolName === "confirm_note" ? "Confirm this note?" : undefined
+          }
+          request={request}
+          respond={respond}
+        />
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          {toolStatus(part, output?.success === true)}
+        </p>
+      )}
+    </section>
+  );
+}
+export function EveMessages({
+  messages,
+  disabled,
+  respond,
+}: {
+  messages: readonly EveMessage[];
+  disabled: boolean;
+  respond: (response: InputResponse) => void;
+}) {
+  return messages.map((message) => (
+    <Message from={message.role} key={message.id}>
+      <MessageContent>
+        <span className="sr-only">
+          {message.role === "user" ? "You" : "Assistant"}
+        </span>
+        {message.parts.map((part, index) => (
+          <Part
+            disabled={disabled}
+            // Eve message parts are append-only; their index is their stable identity.
+            // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
+            key={`${message.id}:${index}`}
+            part={part}
+            respond={respond}
+          />
+        ))}
+      </MessageContent>
+    </Message>
+  ));
+}

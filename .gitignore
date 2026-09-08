@@ -83,3 +83,10 @@ packages/registry/items/*-gateway.json
 packages/registry/gateways.json
 
 apps/docs/.uiverify-shots/
+
+# Eve generated worker output
+apps/chat/.eve/
+apps/chat/.output/
+apps/chat/tests/eve-fixture/.eve/
+apps/chat/tests/eve-fixture/.output/
+apps/chat/tests/eve-results/

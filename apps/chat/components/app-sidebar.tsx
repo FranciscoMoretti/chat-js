@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { Bot, Cpu } from "lucide-react";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { isEveEnabled } from "@/lib/eve/availability";
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
 import { SidebarUserNav } from "./sidebar-user-nav";
 
@@ -30,6 +31,16 @@ export function AppSidebar() {
           </div>
 
           <NewChatButton />
+          {isEveEnabled() && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Agent chat">
+                <InternalLink href="/agent">
+                  <Bot className="size-4" />
+                  <span>Agent chat</span>
+                </InternalLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
 
           <SidebarMenuItem>
             <SearchChatsButton />

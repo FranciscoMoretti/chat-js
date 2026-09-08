@@ -35,6 +35,9 @@ const electronTemplateDir = join(
 
 const EXCLUDED_SEGMENTS = new Set([
   ".devtools",
+  ".eve",
+  ".output",
+  "eve-results",
   "node_modules",
   ".next",
   ".turbo",

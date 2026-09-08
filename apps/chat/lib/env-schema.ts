@@ -16,6 +16,14 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
  * without triggering `createEnv` runtime validation.
  */
 export const serverEnvSchema = {
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  // Development migration slice; production remains on the existing runtime.
+  EVE_ENABLED: z.enum(["true", "false"]).default("false"),
+  EVE_INTERNAL_ORIGIN: z.string().url().optional(),
+  EVE_GATEWAY_SECRET: z.string().min(32).optional(),
+  WORKFLOW_POSTGRES_URL: z.string().optional(),
   // Required core
   DATABASE_URL: z
     .preprocess(

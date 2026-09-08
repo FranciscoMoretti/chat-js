@@ -3,6 +3,9 @@
   "files": {
     "includes": [
       "!.next",
+      "!**/.eve",
+      "!**/.output",
+      "!tests/eve-results",
       "!.devtools",
       "!node_modules",
       "!playwright-report",

@@ -1,0 +1,40 @@
+import { timingSafeEqual } from "node:crypto";
+import { eveChannel } from "eve/channels/eve";
+import { ownsEveSession } from "../../lib/db/eve-queries";
+import { env } from "../../lib/env";
+import { parseSessionRequest } from "../../lib/eve/request-policy";
+
+export default eveChannel({
+  auth: async (request) => {
+    if (env.EVE_ENABLED !== "true" || !env.EVE_GATEWAY_SECRET) {
+      return null;
+    }
+    const expected = Buffer.from(`Bearer ${env.EVE_GATEWAY_SECRET}`);
+    const actual = Buffer.from(request.headers.get("authorization") ?? "");
+    if (
+      actual.length !== expected.length ||
+      !timingSafeEqual(actual, expected)
+    ) {
+      return null;
+    }
+    const owner = request.headers.get("x-chatjs-owner");
+    if (!owner) {
+      return null;
+    }
+    const path = new URL(request.url).pathname;
+    if (!(path === "/eve/v1/session" && request.method === "POST")) {
+      const policy = parseSessionRequest(path, request.method);
+      if (!(policy && (await ownsEveSession(owner, policy.sessionId)))) {
+        return null;
+      }
+    }
+    return {
+      attributes: {},
+      authenticator: "chatjs-gateway",
+      issuer: "chatjs",
+      principalType: "user",
+      principalId: owner,
+      subject: owner,
+    };
+  },
+});
