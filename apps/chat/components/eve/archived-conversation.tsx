@@ -9,9 +9,9 @@ import {
   ChatLayoutSecondary,
 } from "@/components/chat/chat-layout";
 import { SecondaryChatPanel } from "@/components/chat/secondary-chat-panel";
+import { ChatHeaderView } from "@/components/chat-header";
 import { ChatSystem } from "@/components/chat-system";
 import { Messages } from "@/components/messages";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useChatSystemInitialState } from "@/hooks/use-chat-system-initial-state";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -54,13 +54,16 @@ export function ArchivedConversation({
   });
   return (
     <div className="flex h-dvh min-h-0 flex-col">
-      <header className="flex items-center gap-3 border-b p-3">
-        <SidebarTrigger />
-        <h1 className="truncate font-semibold">{chat.title}</h1>
-        <Link className="ml-auto shrink-0 text-sm underline" href="/">
-          New conversation
-        </Link>
-      </header>
+      <ChatHeaderView
+        actions={
+          <Link className="shrink-0 text-sm" href="/">
+            New conversation
+          </Link>
+        }
+        breadcrumb={
+          <h1 className="ml-2 truncate font-medium text-sm">{chat.title}</h1>
+        }
+      />
       <p className="border-b p-3 text-muted-foreground text-sm">
         This conversation is available for reading. Continuing its history will
         be available after import support is ready.

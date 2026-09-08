@@ -1,7 +1,7 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { ChatComposer } from "@/components/chat-composer";
 import { SuggestedActions } from "@/components/suggested-actions";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -32,6 +32,32 @@ function PureChatWelcome({
   const { selectedModelId } = useChatInput();
 
   return (
+    <ChatWelcomeView className={className}>
+      <ChatComposer
+        autoFocus
+        chatId={chatId}
+        parentMessageId={parentMessageId}
+        status={status}
+      />
+      <SuggestedActions
+        chatId={chatId}
+        className="mt-4"
+        selectedModelId={selectedModelId}
+      />
+    </ChatWelcomeView>
+  );
+}
+
+export const ChatWelcome = memo(PureChatWelcome);
+
+export function ChatWelcomeView({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
     <div
       className={cn(
         "flex min-h-0 flex-1 flex-col justify-end md:justify-center",
@@ -42,20 +68,8 @@ function PureChatWelcome({
         <div className="mb-4 md:mb-6">
           <WelcomeMessage />
         </div>
-        <ChatComposer
-          autoFocus
-          chatId={chatId}
-          parentMessageId={parentMessageId}
-          status={status}
-        />
-        <SuggestedActions
-          chatId={chatId}
-          className="mt-4"
-          selectedModelId={selectedModelId}
-        />
+        {children}
       </div>
     </div>
   );
 }
-
-export const ChatWelcome = memo(PureChatWelcome);

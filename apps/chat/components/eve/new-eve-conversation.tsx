@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { ChatWelcomeView } from "@/components/chat/chat-welcome";
+import { ControlledChatComposer } from "@/components/chat-composer";
 import { conversationBinding } from "@/lib/eve/contracts";
 import { finishCreation, prepareCreation } from "@/lib/eve/pending-create";
 
@@ -46,34 +46,16 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
     }
   }
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-5 p-4">
-      <h2 className="text-2xl">How can I help you today?</h2>
-      <p className="text-muted-foreground">
-        Ask a question or describe what you need help with.
-      </p>
-      <form
-        className="space-y-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        <label className="sr-only" htmlFor="eve-first-message">
-          Message
-        </label>
-        <Textarea
-          disabled={busy}
-          id="eve-first-message"
-          maxLength={16_000}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Send a message…"
-          value={draft}
-        />
-        <Button disabled={busy || !draft.trim()} type="submit">
-          {busy ? "Starting…" : "Send"}
-        </Button>
-      </form>
+    <ChatWelcomeView>
+      <ControlledChatComposer
+        autoFocus
+        busy={busy}
+        disabled={busy}
+        draft={draft}
+        onDraftChange={setDraft}
+        onSubmit={submit}
+      />
       {error && <p role="alert">{error}</p>}
-    </div>
+    </ChatWelcomeView>
   );
 }

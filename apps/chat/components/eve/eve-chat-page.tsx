@@ -2,7 +2,8 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
+import { ChatHeaderView } from "@/components/chat-header";
 import { auth } from "@/lib/auth";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { getAllMessagesByChatId, getChatById } from "@/lib/db/queries";
@@ -40,29 +41,41 @@ export async function EveChatPage({
     );
   }
   return (
-    <section className="flex h-dvh min-h-0 flex-col">
-      <header className="flex items-center gap-3 border-b p-3">
-        <SidebarTrigger />
-        <h1 className="font-semibold">Chat</h1>
-        <Link className="ml-auto text-sm underline" href="/">
-          New conversation
-        </Link>
-      </header>
-      {selected?.sessionId && selected.state === "bound" && (
-        <EveConversation
-          key={selected.sessionId}
-          sessionId={selected.sessionId}
-        />
-      )}
-      {selected && !(selected.sessionId && selected.state === "bound") && (
-        <p className="p-4" role="alert">
-          Creation is unresolved. Keep conversation {selected.id} for
-          reconciliation before retrying.
-        </p>
-      )}
-      {!selected && (
-        <NewEveConversation key={session.user.id} ownerId={session.user.id} />
-      )}
-    </section>
+    <ChatLayout>
+      <ChatLayoutMain defaultSize={100}>
+        <section className="flex h-full min-h-0 flex-col">
+          <ChatHeaderView
+            actions={
+              <Link className="text-sm" href="/">
+                New conversation
+              </Link>
+            }
+            breadcrumb={
+              <h1 className="ml-2 truncate font-medium text-sm">
+                {selected?.firstMessage ?? "Chat"}
+              </h1>
+            }
+          />
+          {selected?.sessionId && selected.state === "bound" && (
+            <EveConversation
+              key={selected.sessionId}
+              sessionId={selected.sessionId}
+            />
+          )}
+          {selected && !(selected.sessionId && selected.state === "bound") && (
+            <p className="p-4" role="alert">
+              Creation is unresolved. Keep conversation {selected.id} for
+              reconciliation before retrying.
+            </p>
+          )}
+          {!selected && (
+            <NewEveConversation
+              key={session.user.id}
+              ownerId={session.user.id}
+            />
+          )}
+        </section>
+      </ChatLayoutMain>
+    </ChatLayout>
   );
 }

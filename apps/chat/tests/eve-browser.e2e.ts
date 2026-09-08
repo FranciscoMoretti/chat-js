@@ -51,6 +51,8 @@ async function create(page: Page, message: string) {
 test("native transcript survives reload; streaming preserves the next draft; cancellation permits another send", async ({
   page,
 }) => {
+  // This scenario includes four durable turns and reloads over the remote test DB.
+  test.setTimeout(120_000);
   await capture(page, "empty-desktop");
   await create(page, "hello");
   await expect(
@@ -69,7 +71,7 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await expect(
     page.getByText("Verified: slow response", { exact: true })
   ).toBeVisible();
-  await expect(composer).toHaveValue("my next draft");
+  await expect(composer).toHaveText("my next draft");
   await composer.fill("slow cancel");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(
@@ -90,7 +92,7 @@ test("native transcript survives reload; streaming preserves the next draft; can
     page.getByText("Verified: after cancellation", { exact: true })
   ).toBeVisible();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await expect(composer).toHaveValue("");
+  await expect(composer).toHaveText("");
   await capture(page, "conversation-desktop");
   await page.setViewportSize({ width: 390, height: 844 });
   await capture(page, "conversation-mobile");
@@ -159,7 +161,7 @@ test("failed turn is visible and the conversation can continue", async ({
   await expect(
     page.getByRole("alert").filter({ hasText: failureMessage })
   ).toBeVisible();
-  await expect(composer).toHaveValue("fail");
+  await expect(composer).toHaveText("fail");
   await capture(page, "failed-turn");
   await page.reload();
   await expect(
@@ -362,9 +364,17 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   await expect(page).toHaveURL(new URL("/", conversation).href);
   const search = page.getByRole("textbox", { name: "Search conversations" });
   if (!(await search.isVisible())) {
-    await page
-      .getByRole("button", { name: "Toggle Sidebar", exact: true })
-      .click();
+    const expand = page.getByRole("button", {
+      name: "Expand sidebar",
+      exact: true,
+    });
+    if (await expand.isVisible()) {
+      await expand.click();
+    } else {
+      await page
+        .getByRole("button", { name: "Toggle Sidebar", exact: true })
+        .click();
+    }
   }
   await search.fill("sidebar migration check");
   await capture(page, "sidebar-search");
@@ -445,4 +455,29 @@ test("existing conversation stays readable without an active legacy runtime", as
     await db.delete(chat).where(eq(chat.id, id));
     await db.delete(project).where(eq(project.id, projectId));
   }
+});
+
+test("ChatJS editor supports Enter, multiline drafts and composition", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  await composer.fill("keyboard");
+  await composer.press("Shift+Enter");
+  await composer.press("x");
+  await expect(composer).toHaveText("keyboard\nx", { useInnerText: true });
+  await composer.dispatchEvent("keydown", {
+    key: "Enter",
+    code: "Enter",
+    keyCode: 13,
+    isComposing: true,
+    bubbles: true,
+  });
+  await expect(page).not.toHaveURL(conversationUrl);
+  await composer.fill("keyboard send");
+  await composer.press("Enter");
+  await expect(page).toHaveURL(conversationUrl);
+  await expect(page.getByRole("log")).toContainText("Verified: keyboard send");
+  expect(errors).toEqual([]);
 });

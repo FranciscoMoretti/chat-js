@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db/client";
@@ -22,7 +23,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     );
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(page).toHaveURL(conversationUrl);
-  await expect(page.getByText("Tool completed.", { exact: true })).toBeVisible({
+  await expect(page.getByText("Words", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByRole("log")).toContainText("4 words", {
@@ -57,4 +58,13 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   );
   await page.reload();
   await expect(page.getByRole("log")).toContainText("4 words");
+  await mkdir("tests/eve-results/screenshots", { recursive: true });
+  const toolCard = page
+    .getByText("Words", { exact: true })
+    .locator("..")
+    .locator("..");
+  await toolCard.screenshot({
+    path: "tests/eve-results/screenshots/tool-word-count.png",
+    animations: "disabled",
+  });
 });

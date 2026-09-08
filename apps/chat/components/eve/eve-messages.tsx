@@ -9,9 +9,11 @@ import type {
 import { useState } from "react";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
+import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
+import { EveToolResult } from "./eve-tool-result";
 
 function PendingInput({
   request,
@@ -89,10 +91,12 @@ function toolStatus(
 }
 
 function Part({
+  messageId,
   part,
   disabled,
   respond,
 }: {
+  messageId: string;
   part: EveMessagePart;
   disabled: boolean;
   respond: (response: InputResponse) => void;
@@ -102,10 +106,10 @@ function Part({
   }
   if (part.type === "reasoning") {
     return (
-      <details className="text-muted-foreground">
-        <summary>Reasoning</summary>
-        <Response>{part.text}</Response>
-      </details>
+      <ReasoningPart
+        content={part.text}
+        isLoading={part.state === "streaming"}
+      />
     );
   }
   if (part.type === "step-start") {
@@ -113,6 +117,12 @@ function Part({
   }
   if (part.type !== "dynamic-tool") {
     return <p>Unsupported content in this conversation.</p>;
+  }
+  if (
+    part.state === "output-available" &&
+    ["wordCount", "getWeather", "retrieveUrl"].includes(part.toolName)
+  ) {
+    return <EveToolResult messageId={messageId} part={part} />;
   }
   const request = part.toolMetadata?.eve?.inputRequest;
   const input = noteInput.safeParse(part.input);
@@ -168,6 +178,7 @@ export function EveMessages({
             // Eve message parts are append-only; their index is their stable identity.
             // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
             key={`${message.id}:${index}`}
+            messageId={message.id}
             part={part}
             respond={respond}
           />

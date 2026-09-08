@@ -7,8 +7,8 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { ControlledChatComposer } from "@/components/chat-composer";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { sendCommand } from "@/lib/eve/send-command";
 import { EveMessages } from "./eve-messages";
 
@@ -134,60 +134,30 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
         {(error || agent.error || durableError) && (
           <p role="alert">{error || agent.error?.message || durableError}</p>
         )}
-        <form
-          className="space-y-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!(busy || hasApproval || cancelPending) && draft.trim()) {
-              run(async () => {
-                const submitted = draft;
-                await send(() => agent.send(submitted.trim()), true);
-                setDraft((current) => (current === submitted ? "" : current));
-              });
-            }
-          }}
+        <ControlledChatComposer
+          busy={busy}
+          disabled={busy || commandPending || cancelPending || hasApproval}
+          draft={draft}
+          onDraftChange={setDraft}
+          onStop={cancel}
+          onSubmit={() =>
+            run(async () => {
+              const submitted = draft;
+              await send(() => agent.send(submitted.trim()), true);
+              setDraft((current) => (current === submitted ? "" : current));
+            })
+          }
+          stopDisabled={cancelPending || agent.status === "resuming"}
+        />
+        <Button
+          disabled={commandPending || cancelPending}
+          onClick={() => run(agent.resume)}
+          size="sm"
+          type="button"
+          variant="ghost"
         >
-          <label className="sr-only" htmlFor="eve-message">
-            Message
-          </label>
-          <Textarea
-            id="eve-message"
-            maxLength={16_000}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Send a message…"
-            value={draft}
-          />
-          <div className="flex gap-2">
-            <Button
-              disabled={
-                busy ||
-                commandPending ||
-                cancelPending ||
-                hasApproval ||
-                !draft.trim()
-              }
-              type="submit"
-            >
-              Send
-            </Button>
-            <Button
-              disabled={!busy || cancelPending || agent.status === "resuming"}
-              onClick={cancel}
-              type="button"
-              variant="outline"
-            >
-              Stop
-            </Button>
-            <Button
-              disabled={commandPending || cancelPending}
-              onClick={() => run(agent.resume)}
-              type="button"
-              variant="ghost"
-            >
-              Reconnect
-            </Button>
-          </div>
-        </form>
+          Reconnect
+        </Button>
       </div>
     </div>
   );
