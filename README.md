@@ -90,7 +90,8 @@ ignored by Git and kept separate from Vercel-managed `.env.local`. Run
 
 The optional `/agent` route uses `useEveAgent` and a private Eve worker. Eve owns
 the durable transcript, approvals and execution. ChatJS authenticates requests
-and stores only conversation ownership, creation intent and the Eve session ID.
+and stores conversation ownership, creation intent, the Eve session ID, and a
+usage ledger keyed by durable event ID.
 The worker uses the selected ChatJS gateway/model. Existing chat routes continue
 to use the current runtime until feature parity is ready.
 
@@ -113,9 +114,22 @@ secret; browsers use only authenticated same-origin ChatJS routes.
 
 This development milestone supports linear text conversations, persistent
 human input, reconnect, cancellation, and a confirmation tool without external
-effects. It is disabled in production even when the flag is set. Production
-admission/billing, the full tool set, branch/import support, and automatic
-reconciliation remain later stages. An uncertain creation is retained and
+effects. Installed word-count and weather tools run natively; URL retrieval is
+included when enabled in ChatJS configuration. Ordinary tools use validated
+schemas and native call identity. Approval-dependent tools require explicit Eve
+policies.
+
+Model costs are recorded by the worker hook and repaired from authoritative
+session snapshots before new work. Replaying an event does not charge twice;
+charges round up to cents per turn. Completed usage with an unknown cost blocks
+new admission until provider evidence is reconciled. Failed-step costs remain
+unresolved evidence. The positive-credit check permits in-progress overspend;
+it is not a hard budget reservation. Approval responses and cancellation remain
+available at zero credits.
+
+Eve is disabled in production even when the flag is set. Production cutover
+requires review. Full platform tools, provider invoice reconciliation, branch/
+import support, and automatic uncertain-creation recovery remain later stages. An uncertain creation is retained and
 blocked from redispatch; a connection error is not proof that a send failed.
 Reconnect before deciding to resend.
 
@@ -133,8 +147,15 @@ bunx vitest run --config vitest.eve.config.ts
 
 The database contract suite requires a local `DATABASE_URL`; the browser suite
 uses development login. Sanitized screenshots go to `tests/eve-results`.
-Restart the normal worker after fixture testing. External model credentials
-are still needed to verify a real provider response.
+Restart the normal worker after fixture testing. To verify real model execution, an installed tool, usage charging and reload,
+run against the normal worker with valid model credentials:
+
+```sh
+bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts'
+```
+
+Use fresh isolated local databases for acceptance testing; earlier fixture runs
+without explicit zero-cost evidence will correctly block new admission.
 
 ## Releases
 

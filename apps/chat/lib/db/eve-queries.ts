@@ -36,6 +36,19 @@ export async function getEveConversation(ownerId: string, id: string) {
 }
 export class CreationConflict extends Error {}
 
+export async function getEveCreation(ownerId: string, operationId: string) {
+  const [row] = await db
+    .select()
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.operationId, operationId)
+      )
+    );
+  return row;
+}
+
 export async function createEveConversation(
   ownerId: string,
   operationId: string,
@@ -92,4 +105,14 @@ export async function createEveConversation(
       );
     throw cause;
   }
+}
+
+export async function listEveOwnerBindings(ownerId: string) {
+  return await db
+    .select({
+      sessionId: eveConversation.sessionId,
+      state: eveConversation.state,
+    })
+    .from(eveConversation)
+    .where(eq(eveConversation.ownerId, ownerId));
 }

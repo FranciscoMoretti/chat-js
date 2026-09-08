@@ -330,6 +330,13 @@
       "when": 1788866915307,
       "tag": "0046_bumpy_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788874501948,
+      "tag": "0047_nebulous_roulette",
+      "breakpoints": true
     }
   ]
 }

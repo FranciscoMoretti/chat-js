@@ -1,9 +1,15 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { CreationConflict, createEveConversation } from "@/lib/db/eve-queries";
+import { canSpend } from "@/lib/db/credits";
+import {
+  CreationConflict,
+  createEveConversation,
+  getEveCreation,
+} from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { createConversationInput } from "@/lib/eve/contracts";
+import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
 
@@ -32,6 +38,29 @@ export async function POST(request: Request) {
   } catch {
     return Response.json(
       { error: "The agent worker is not configured." },
+      { status: 503 }
+    );
+  }
+  try {
+    const existing = await getEveCreation(
+      session.user.id,
+      input.data.operationId
+    );
+    if (!existing) {
+      await reconcileEveOwnerUsage(session.user.id);
+      if (!(await canSpend(session.user.id))) {
+        return Response.json(
+          { error: "Insufficient credits" },
+          { status: 402 }
+        );
+      }
+    }
+  } catch {
+    return Response.json(
+      {
+        error:
+          "Usage reconciliation is unavailable. Try again before starting a new conversation.",
+      },
       { status: 503 }
     );
   }

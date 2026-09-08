@@ -7,6 +7,7 @@ import {
   index,
   integer,
   json,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -465,4 +466,21 @@ export const eveConversation = pgTable(
       table.operationId
     ),
   ]
+);
+
+export const eveUsage = pgTable(
+  "EveUsage",
+  {
+    eventId: text("eventId").primaryKey(),
+    sessionId: text("sessionId").notNull(),
+    turnId: text("turnId").notNull(),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    costUsd: numeric("costUsd", { precision: 24, scale: 12 }),
+    chargedCents: integer("chargedCents").notNull().default(0),
+    generationId: text("generationId"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("EveUsage_session_turn").on(table.sessionId, table.turnId)]
 );

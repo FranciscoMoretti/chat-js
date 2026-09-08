@@ -1,5 +1,13 @@
 import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
+import { eq } from "drizzle-orm";
+import { db } from "../lib/db/client";
+import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { env } from "../lib/env";
+
+if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
+  throw new Error("Eve browser tests require an isolated local database.");
+}
 
 const conversationUrl = /conversation=/;
 const failureMessage = /failure|failed/i;
@@ -217,5 +225,106 @@ test("lost creation reply retries the same conversation and access checks reject
     expect(denied.status()).toBe(401);
   } finally {
     await anonymous.close();
+  }
+});
+
+test("exhausted credits block new messages but permit rejecting an approval", async ({
+  page,
+}) => {
+  await create(page, "confirm release");
+  await expect(
+    page.getByText("Waiting for your input", { exact: true })
+  ).toBeVisible();
+  const [owner] = await db
+    .select()
+    .from(user)
+    .where(eq(user.email, "dev@localhost"));
+  if (!owner) {
+    throw new Error("Missing development user.");
+  }
+  const [balance] = await db
+    .select()
+    .from(userCredit)
+    .where(eq(userCredit.userId, owner.id));
+  if (!balance) {
+    throw new Error("Missing credit balance.");
+  }
+  try {
+    await db
+      .update(userCredit)
+      .set({ credits: 0 })
+      .where(eq(userCredit.userId, owner.id));
+    await page.reload();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(
+      page.getByText("Request declined.", { exact: true })
+    ).toBeVisible();
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await page
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill("cannot start");
+    const rejected = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/eve/v1/session/") &&
+        response.request().method() === "POST"
+    );
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    expect((await rejected).status()).toBe(402);
+  } finally {
+    await db
+      .update(userCredit)
+      .set({ credits: balance.credits })
+      .where(eq(userCredit.userId, owner.id));
+  }
+});
+
+test("unknown completed usage prevents new admission until its cost is reconciled", async ({
+  page,
+  baseURL,
+}) => {
+  await create(page, "known zero-cost fixture");
+  await expect(
+    page.getByText("Verified: known zero-cost fixture", { exact: true })
+  ).toBeVisible();
+  const id = new URL(page.url()).searchParams.get("conversation");
+  if (!id) {
+    throw new Error("Missing conversation identity.");
+  }
+  const [conversation] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, id));
+  if (!conversation?.sessionId) {
+    throw new Error("Missing session binding.");
+  }
+  const [usage] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, conversation.sessionId));
+  if (!usage) {
+    throw new Error("Missing fixture usage.");
+  }
+  try {
+    await db
+      .update(eveUsage)
+      .set({ costUsd: null })
+      .where(eq(eveUsage.eventId, usage.eventId));
+    const response = await page.request.post("/api/agent-conversations", {
+      headers: { origin: new URL(baseURL ?? "http://localhost").origin },
+      data: {
+        operationId: crypto.randomUUID(),
+        message: "blocked until reconciled",
+      },
+    });
+    expect(response.status()).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error:
+        "Usage reconciliation is unavailable. Try again before starting a new conversation.",
+    });
+  } finally {
+    await db
+      .update(eveUsage)
+      .set({ costUsd: usage.costUsd })
+      .where(eq(eveUsage.eventId, usage.eventId));
   }
 });

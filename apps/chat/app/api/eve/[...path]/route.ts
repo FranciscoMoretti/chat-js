@@ -1,13 +1,25 @@
 import { auth } from "@/lib/auth";
+import { canSpend } from "@/lib/db/credits";
 import { ownsEveSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
+
+async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
+  if (!isNewMessage) {
+    return;
+  }
+  await reconcileEveOwnerUsage(ownerId);
+  if (!(await canSpend(ownerId))) {
+    return Response.json({ error: "Insufficient credits" }, { status: 402 });
+  }
+}
 
 async function handle(
   request: Request,
@@ -34,6 +46,7 @@ async function handle(
     return new Response(null, { status: 400 });
   }
   let body: string | undefined;
+  let isNewMessage = false;
   if (request.method === "POST") {
     const input = policy.schema.safeParse(
       await request.json().catch(() => null)
@@ -42,8 +55,13 @@ async function handle(
       return new Response(null, { status: 400 });
     }
     body = JSON.stringify(input.data);
+    isNewMessage = "message" in input.data;
   }
   try {
+    const admission = await checkTurnAdmission(isNewMessage, session.user.id);
+    if (admission) {
+      return admission;
+    }
     const result = await eveRequest(
       session.user.id,
       upstreamPath + (query.size ? `?${query}` : ""),
