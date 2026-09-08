@@ -88,12 +88,15 @@ ignored by Git and kept separate from Vercel-managed `.env.local`. Run
 
 ### Native Eve development flow
 
-The optional `/agent` route uses `useEveAgent` and a private Eve worker. Eve owns
+With `EVE_ENABLED=true` in development, `/` and `/chat/[id]` use
+`useEveAgent` and a private Eve worker. `/agent` redirects to the normal routes. Eve owns
 the durable transcript, approvals and execution. ChatJS authenticates requests
 and stores conversation ownership, creation intent, the Eve session ID, and a
 usage ledger keyed by durable event ID.
-The worker uses the selected ChatJS gateway/model. Existing chat routes continue
-to use the current runtime until feature parity is ready.
+The worker uses the selected ChatJS gateway/model. The sidebar lists and searches Eve conversations alongside archived ChatJS
+history. Archived chats and projects remain readable; legacy model execution is
+disabled in this mode. Historical imports and project-aware new chats remain
+migration gates. The production runtime is unchanged until review and cutover.
 
 Use Node 24+ for Eve and Bun for package scripts. Set `EVE_ENABLED=true`, a random
 `EVE_GATEWAY_SECRET` of at least 32 characters, and `WORKFLOW_POSTGRES_URL` in
@@ -145,7 +148,8 @@ PORT=<assigned chat port> bunx playwright test --config playwright.eve.config.ts
 bunx vitest run --config vitest.eve.config.ts
 ```
 
-The database contract suite requires a local `DATABASE_URL`; the browser suite
+Acceptance tests require a local `DATABASE_URL` or an exact match with the
+explicitly provisioned `EVE_TEST_DATABASE_URL`; the browser suite
 uses development login. Sanitized screenshots go to `tests/eve-results`.
 Restart the normal worker after fixture testing. To verify real model execution, an installed tool, usage charging and reload,
 run against the normal worker with valid model credentials:
@@ -154,7 +158,7 @@ run against the normal worker with valid model credentials:
 bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts'
 ```
 
-Use fresh isolated local databases for acceptance testing; earlier fixture runs
+Use fresh isolated databases for acceptance testing; earlier fixture runs
 without explicit zero-cost evidence will correctly block new admission.
 
 ## Releases

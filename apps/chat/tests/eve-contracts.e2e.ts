@@ -5,10 +5,9 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import { createEveConversation, ownsEveSession } from "../lib/db/eve-queries";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { assertEveTestDatabase } from "./eve-test-database";
 
-if (!new URL(env.DATABASE_URL).hostname.match(/^(127\.0\.0\.1|localhost)$/)) {
-  throw new Error("These tests require an isolated local database.");
-}
+assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db
   .insert(user)

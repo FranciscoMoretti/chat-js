@@ -1,4 +1,6 @@
-import { Bot, Cpu } from "lucide-react";
+import { Cpu } from "lucide-react";
+import { Suspense } from "react";
+import { EveHistory } from "@/components/eve/eve-history";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
@@ -31,20 +33,11 @@ export function AppSidebar() {
           </div>
 
           <NewChatButton />
-          {isEveEnabled() && (
+          {!isEveEnabled() && (
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Agent chat">
-                <InternalLink href="/agent">
-                  <Bot className="size-4" />
-                  <span>Agent chat</span>
-                </InternalLink>
-              </SidebarMenuButton>
+              <SearchChatsButton />
             </SidebarMenuItem>
           )}
-
-          <SidebarMenuItem>
-            <SearchChatsButton />
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Models">
               <InternalLink href="/settings/models">
@@ -60,7 +53,15 @@ export function AppSidebar() {
       <SidebarSeparator />
       <ScrollArea className="relative flex-1 overflow-y-auto">
         <SidebarContent className="max-w-(--sidebar-width) pr-2">
-          <AppSidebarHistoryConditional />
+          {isEveEnabled() ? (
+            <Suspense
+              fallback={<p className="p-3 text-sm">Loading conversations…</p>}
+            >
+              <EveHistory />
+            </Suspense>
+          ) : (
+            <AppSidebarHistoryConditional />
+          )}
         </SidebarContent>
       </ScrollArea>
       <SidebarSeparator />

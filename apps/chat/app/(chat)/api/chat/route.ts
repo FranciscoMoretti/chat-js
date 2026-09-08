@@ -59,6 +59,7 @@ import {
 } from "@/lib/db/queries";
 import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { isEveEnabled } from "@/lib/eve/availability";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
 import type { AnonymousSession } from "@/lib/types/anonymous";
@@ -1104,6 +1105,12 @@ async function prepareChatExecutionInputs({
 }
 
 export async function POST(request: NextRequest) {
+  if (isEveEnabled()) {
+    return Response.json(
+      { error: "This environment uses Eve for new conversations." },
+      { status: 410 }
+    );
+  }
   const log = createModuleLogger("api:chat");
   try {
     const bodyResult = await readChatPostBody(request);

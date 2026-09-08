@@ -3,7 +3,8 @@ export async function sendCommand(
   send: () => Promise<void>,
   resume: () => Promise<void>,
   afterCancellation: boolean,
-  getError: () => Error | undefined
+  getError: () => Error | undefined,
+  hasAcceptedInput: () => boolean = () => true
 ) {
   await send();
   const sendError = getError();
@@ -12,7 +13,19 @@ export async function sendCommand(
   }
   // Eve 0.52.2 can end a send reader at the preceding cancellation boundary.
   if (afterCancellation) {
-    await resume();
+    const deadline = Date.now() + 15_000;
+    do {
+      await resume();
+      if (getError() || hasAcceptedInput()) {
+        break;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(
+          "The accepted message is still being reconciled. Reconnect before retrying."
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    } while (!hasAcceptedInput());
   }
   const replayError = getError();
   if (replayError) {

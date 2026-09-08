@@ -33,7 +33,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
       }
       const binding = conversationBinding.parse(body);
       finishCreation(sessionStorage, ownerId);
-      window.location.assign(`/agent?conversation=${binding.id}`);
+      window.location.assign(`/chat/${binding.id}`);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -49,7 +49,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-5 p-4">
       <h2 className="text-2xl">How can I help you today?</h2>
       <p className="text-muted-foreground">
-        Ask a question, or ask me to confirm a note.
+        Ask a question or describe what you need help with.
       </p>
       <form
         className="space-y-3"

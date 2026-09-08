@@ -60,7 +60,12 @@ const PureUserMessage = ({
             message.role === "user" && mode !== "edit" && "items-end"
           )}
         >
-          {mode === "view" && <ParallelResponseCards messageId={message.id} />}
+          {mode === "view" && (
+            <ParallelResponseCards
+              isReadonly={isReadonly}
+              messageId={message.id}
+            />
+          )}
 
           {mode === "view" && isReadonly && (
             <MessageContent

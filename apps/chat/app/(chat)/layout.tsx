@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
+import { isEveEnabled } from "@/lib/eve/availability";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
@@ -15,8 +16,7 @@ import { SessionProvider, SessionSeed } from "@/providers/session-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 import { auth } from "../../lib/auth";
-import { ChatProviders } from "./chat-providers";
-import { ChatRouteHost } from "./chat-route-host";
+import { ChatRuntimeBoundary } from "./chat-runtime-boundary";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
@@ -88,22 +88,25 @@ async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
     queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
     queryClient.prefetchQuery(trpc.project.list.queryOptions());
-    queryClient.prefetchQuery(
-      trpc.chat.getAllChats.queryOptions({ projectId: null })
-    );
+    if (!isEveEnabled()) {
+      queryClient.prefetchQuery(
+        trpc.chat.getAllChats.queryOptions({ projectId: null })
+      );
+    }
   }
 
   return (
     <HydrateClient>
       <SessionSeed session={session} />
-      <ChatProviders>
-        <ChatModelsProvider models={chatModels}>
-          <DefaultModelProvider defaultModel={defaultModel}>
-            <KeyboardShortcuts />
-            <ChatRouteHost>{children}</ChatRouteHost>
-          </DefaultModelProvider>
-        </ChatModelsProvider>
-      </ChatProviders>
+
+      <ChatModelsProvider models={chatModels}>
+        <DefaultModelProvider defaultModel={defaultModel}>
+          <KeyboardShortcuts />
+          <ChatRuntimeBoundary eveEnabled={isEveEnabled()}>
+            {children}
+          </ChatRuntimeBoundary>
+        </DefaultModelProvider>
+      </ChatModelsProvider>
     </HydrateClient>
   );
 }

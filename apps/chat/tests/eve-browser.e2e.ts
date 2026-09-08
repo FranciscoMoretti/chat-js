@@ -2,14 +2,22 @@ import { mkdir } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import {
+  chat,
+  eveConversation,
+  eveUsage,
+  message,
+  part,
+  project,
+  user,
+  userCredit,
+} from "../lib/db/schema";
 import { env } from "../lib/env";
+import { assertEveTestDatabase } from "./eve-test-database";
 
-if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
-  throw new Error("Eve browser tests require an isolated local database.");
-}
+assertEveTestDatabase(env.DATABASE_URL);
 
-const conversationUrl = /conversation=/;
+const conversationUrl = /\/chat\/[^/]+$/;
 const failureMessage = /failure|failed/i;
 const connectionFailure = /fetch|failed/i;
 
@@ -26,9 +34,9 @@ async function capture(page: Page, name: string) {
 test.beforeEach(async ({ page }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  await page.goto("/agent");
+  await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Agent chat", exact: true })
+    page.getByRole("heading", { name: "Chat", exact: true })
   ).toBeVisible();
 });
 
@@ -81,6 +89,8 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await expect(
     page.getByText("Verified: after cancellation", { exact: true })
   ).toBeVisible();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(composer).toHaveValue("");
   await capture(page, "conversation-desktop");
   await page.setViewportSize({ width: 390, height: 844 });
   await capture(page, "conversation-mobile");
@@ -191,7 +201,7 @@ test("lost creation reply retries the same conversation and access checks reject
   ).toBeVisible();
   await capture(page, "creation-interrupted");
   await page.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page).toHaveURL(`${baseURL}/agent?conversation=${acceptedId}`);
+  await expect(page).toHaveURL(`${baseURL}/chat/${acceptedId}`);
   await expect(
     page.getByText("Verified: retained intent", { exact: true })
   ).toBeVisible();
@@ -286,7 +296,7 @@ test("unknown completed usage prevents new admission until its cost is reconcile
   await expect(
     page.getByText("Verified: known zero-cost fixture", { exact: true })
   ).toBeVisible();
-  const id = new URL(page.url()).searchParams.get("conversation");
+  const id = new URL(page.url()).pathname.split("/").at(-1);
   if (!id) {
     throw new Error("Missing conversation identity.");
   }
@@ -326,5 +336,113 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .update(eveUsage)
       .set({ costUsd: usage.costUsd })
       .where(eq(eveUsage.eventId, usage.eventId));
+  }
+});
+
+test("normal navigation and sidebar search use Eve without sending to the old chat API", async ({
+  page,
+}) => {
+  const legacyRequests: string[] = [];
+  page.on("request", (request) => {
+    if (
+      new URL(request.url()).pathname === "/api/chat" &&
+      request.method() === "POST"
+    ) {
+      legacyRequests.push(request.url());
+    }
+  });
+  await create(page, "sidebar migration check");
+  await expect(
+    page.getByText("Verified: sidebar migration check", { exact: true })
+  ).toBeVisible();
+  const conversation = page.url();
+  await page
+    .getByRole("link", { name: "New conversation", exact: true })
+    .click();
+  await expect(page).toHaveURL(new URL("/", conversation).href);
+  const search = page.getByRole("textbox", { name: "Search conversations" });
+  if (!(await search.isVisible())) {
+    await page
+      .getByRole("button", { name: "Toggle Sidebar", exact: true })
+      .click();
+  }
+  await search.fill("sidebar migration check");
+  await capture(page, "sidebar-search");
+  await page
+    .getByRole("link", { name: "sidebar migration check", exact: true })
+    .and(page.locator(`[href="${new URL(conversation).pathname}"]`))
+    .click();
+  await expect(page).toHaveURL(conversation);
+  await expect(
+    page.getByText("Verified: sidebar migration check", { exact: true })
+  ).toBeVisible();
+  expect(legacyRequests).toEqual([]);
+});
+
+test("existing conversation stays readable without an active legacy runtime", async ({
+  page,
+}) => {
+  const [owner] = await db
+    .select()
+    .from(user)
+    .where(eq(user.email, "dev@localhost"));
+  if (!owner) {
+    throw new Error("Missing development user");
+  }
+  const id = crypto.randomUUID();
+  const messageId = crypto.randomUUID();
+  const projectId = crypto.randomUUID();
+  await db.insert(project).values({
+    id: projectId,
+    userId: owner.id,
+    name: "Archived project fixture",
+  });
+  await db.insert(chat).values({
+    id,
+    userId: owner.id,
+    title: "Archived migration fixture",
+    projectId,
+    createdAt: new Date(),
+  });
+  await db.insert(message).values({
+    id: messageId,
+    chatId: id,
+    role: "user",
+    attachments: [],
+    createdAt: new Date(),
+  });
+  await db.insert(part).values({
+    messageId,
+    type: "text",
+    text_text: "Preserved historical message",
+  });
+  try {
+    await page.goto(`/chat/${id}`);
+    await expect(
+      page.getByText("Preserved historical message", { exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Message", exact: true })
+    ).toHaveCount(0);
+    await capture(page, "archived-conversation");
+    await page.goto(`/project/${projectId}/chat/${id}`);
+    await expect(page).toHaveURL(new RegExp(`/chat/${id}$`));
+    await expect(
+      page.getByText("Preserved historical message", { exact: true })
+    ).toBeVisible();
+    expect((await page.request.post("/api/chat", { data: {} })).status()).toBe(
+      410
+    );
+    await page.goto(`/project/${projectId}`);
+    await expect(
+      page.getByRole("heading", {
+        name: "Archived project fixture",
+        exact: true,
+      })
+    ).toBeVisible();
+    await capture(page, "archived-project");
+  } finally {
+    await db.delete(chat).where(eq(chat.id, id));
+    await db.delete(project).where(eq(project.id, projectId));
   }
 });

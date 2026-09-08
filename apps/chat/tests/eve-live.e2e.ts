@@ -3,23 +3,18 @@ import { eq } from "drizzle-orm";
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage } from "../lib/db/schema";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
+import { assertEveTestDatabase } from "./eve-test-database";
 
-if (
-  !["localhost", "127.0.0.1"].includes(
-    new URL(process.env.DATABASE_URL ?? "http://invalid").hostname
-  )
-) {
-  throw new Error("Live Eve tests require an isolated local database.");
-}
+assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-const conversationUrl = /conversation=/;
+const conversationUrl = /\/chat\/[^/]+$/;
 
 test("real provider, native application tool and replay-safe usage ledger", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  await page.goto("/agent");
+  await page.goto("/");
   await page
     .getByRole("textbox", { name: "Message", exact: true })
     .fill(
@@ -33,7 +28,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   await expect(page.getByRole("log")).toContainText("4 words", {
     timeout: 90_000,
   });
-  const id = new URL(page.url()).searchParams.get("conversation");
+  const id = new URL(page.url()).pathname.split("/").at(-1);
   if (!id) {
     throw new Error("Missing conversation identity.");
   }

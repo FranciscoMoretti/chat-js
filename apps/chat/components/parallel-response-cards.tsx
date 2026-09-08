@@ -44,12 +44,41 @@ function getModelOrderIndex(
   return index === -1 ? Number.POSITIVE_INFINITY : index;
 }
 
-function PureParallelResponseCards({ messageId }: { messageId: string }) {
+function PureParallelResponseCards({
+  messageId,
+  isReadonly = false,
+}: {
+  messageId: string;
+  isReadonly?: boolean;
+}) {
+  return isReadonly ? (
+    <ParallelCardsContent messageId={messageId} />
+  ) : (
+    <EditableParallelCards messageId={messageId} />
+  );
+}
+
+function EditableParallelCards({ messageId }: { messageId: string }) {
+  const { handleModelChange } = useChatInput();
+  return (
+    <ParallelCardsContent
+      handleModelChange={handleModelChange}
+      messageId={messageId}
+    />
+  );
+}
+
+function ParallelCardsContent({
+  messageId,
+  handleModelChange,
+}: {
+  messageId: string;
+  handleModelChange?: (modelId: AppModelId) => Promise<void>;
+}) {
   const message = useMessageById<ChatMessage>(messageId);
   const thread = useApplicationThread();
   const parallelGroupInfo = useParallelGroupInfo(messageId);
   const navigateToMessage = useNavigateToMessage();
-  const { handleModelChange } = useChatInput();
   const { getModelById, models } = useChatModels();
   const [pendingParallelIndex, setPendingParallelIndex] = useState<
     number | null
@@ -195,7 +224,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
                 navigateToMessage(message.id);
               }
               if (modelId) {
-                handleModelChange(modelId);
+                handleModelChange?.(modelId);
               }
             }}
             type="button"
@@ -217,5 +246,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
 
 export const ParallelResponseCards = memo(
   PureParallelResponseCards,
-  (prevProps, nextProps) => prevProps.messageId === nextProps.messageId
+  (prevProps, nextProps) =>
+    prevProps.messageId === nextProps.messageId &&
+    prevProps.isReadonly === nextProps.isReadonly
 );

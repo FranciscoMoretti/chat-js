@@ -110,3 +110,23 @@ describe("Eve command recovery", () => {
     expect(replayed).toBe(1);
   });
 });
+
+it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
+  let submissions = 0;
+  let snapshots = 0;
+  await sendCommand(
+    () => {
+      submissions += 1;
+      return Promise.resolve();
+    },
+    () => {
+      snapshots += 1;
+      return Promise.resolve();
+    },
+    true,
+    () => undefined,
+    () => snapshots >= 2
+  );
+  expect(submissions).toBe(1);
+  expect(snapshots).toBe(2);
+});

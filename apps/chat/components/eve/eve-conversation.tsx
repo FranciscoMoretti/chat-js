@@ -15,10 +15,12 @@ import { EveMessages } from "./eve-messages";
 export function EveConversation({ sessionId }: { sessionId: string }) {
   const commandError = useRef<Error | undefined>(undefined);
   const afterCancellation = useRef(0);
+  const receivedMessages = useRef(0);
   const commandLock = useRef(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [commandPending, setCommandPending] = useState(false);
+  const [cancelPending, setCancelPending] = useState(false);
   const agent = useEveAgent({
     host: "/api",
     initialSession: { sessionId, streamIndex: 0 },
@@ -27,6 +29,9 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
       commandError.current = cause;
     },
     onEvent: (event) => {
+      if (event.type === "message.received") {
+        receivedMessages.current += 1;
+      }
       // Eve 0.52.2 does not always promote a durable turn failure to onError.
       if (event.type === "turn.failed") {
         commandError.current = new Error(event.data.message);
@@ -73,16 +78,29 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
       setCommandPending(false);
     }
   }
-  async function send(action: () => Promise<void>) {
+  async function send(action: () => Promise<void>, isMessage = false) {
+    const received = receivedMessages.current;
     const cancellation = afterCancellation.current;
     await sendCommand(
       action,
       agent.resume,
       cancellation > 0,
-      () => commandError.current
+      () => commandError.current,
+      () => !isMessage || receivedMessages.current > received
     );
     if (afterCancellation.current === cancellation) {
       afterCancellation.current = 0;
+    }
+  }
+  async function cancel() {
+    setCancelPending(true);
+    afterCancellation.current += 1;
+    try {
+      await agent.cancel();
+    } catch {
+      setError("Cancellation failed. Reconnect to check the response.");
+    } finally {
+      setCancelPending(false);
     }
   }
   let statusLabel = "Ready";
@@ -91,6 +109,9 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
   }
   if (hasApproval) {
     statusLabel = "Waiting for your input";
+  }
+  if (cancelPending) {
+    statusLabel = "Stopping…";
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -117,10 +138,10 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
           className="space-y-2"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!(busy || hasApproval) && draft.trim()) {
+            if (!(busy || hasApproval || cancelPending) && draft.trim()) {
               run(async () => {
                 const submitted = draft;
-                await send(() => agent.send(submitted.trim()));
+                await send(() => agent.send(submitted.trim()), true);
                 setDraft((current) => (current === submitted ? "" : current));
               });
             }
@@ -138,32 +159,27 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
           />
           <div className="flex gap-2">
             <Button
-              disabled={busy || commandPending || hasApproval || !draft.trim()}
+              disabled={
+                busy ||
+                commandPending ||
+                cancelPending ||
+                hasApproval ||
+                !draft.trim()
+              }
               type="submit"
             >
               Send
             </Button>
             <Button
-              disabled={!busy || agent.status === "resuming"}
-              onClick={() => {
-                agent
-                  .cancel()
-                  .then(() => {
-                    afterCancellation.current += 1;
-                  })
-                  .catch(() =>
-                    setError(
-                      "Cancellation failed. Reconnect to check the response."
-                    )
-                  );
-              }}
+              disabled={!busy || cancelPending || agent.status === "resuming"}
+              onClick={cancel}
               type="button"
               variant="outline"
             >
               Stop
             </Button>
             <Button
-              disabled={commandPending}
+              disabled={commandPending || cancelPending}
               onClick={() => run(agent.resume)}
               type="button"
               variant="ghost"
