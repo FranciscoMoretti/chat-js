@@ -4,10 +4,6 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PackageManager } from "../types";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
-import {
-  configureStorageProvider,
-  type StorageSelection,
-} from "./storage-provider";
 import { syncTools } from "../utils/sync-tools";
 import { registryUrl } from "../registry/shadcn";
 import { runCommand } from "../utils/run-command";
@@ -405,7 +401,6 @@ export async function scaffoldFromTemplate(
   destination: string,
   options?: {
     packageManager?: PackageManager;
-    storage?: StorageSelection;
   },
 ): Promise<void> {
   const packageManager = options?.packageManager ?? "bun";
@@ -434,14 +429,12 @@ export async function scaffoldFromTemplate(
     },
   );
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
-  await configureStorageProvider(
-    destination,
-    options?.storage ?? { provider: "vercel-blob", options: {} },
-  );
   // This is a new scaffold, so remove the reference app's selection before install.
   await rm(join(destination, "lib/ai/gateway.ts"));
   const manifest = JSON.parse(await readFile(packageJsonPath, "utf8"));
   delete manifest.dependencies["@ai-sdk/gateway"];
+  delete manifest.dependencies["@vercel/blob"];
+  await rm(join(destination, "lib/storage-provider.ts"));
   await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const componentsPath = join(destination, "components.json");
   const components = JSON.parse(await readFile(componentsPath, "utf8"));
@@ -495,7 +488,6 @@ export async function scaffoldElectron(
 export async function scaffoldFromGit(
   url: string,
   destination: string,
-  options?: { storage?: StorageSelection },
 ): Promise<void> {
   await runCommand(
     "git",
@@ -503,11 +495,4 @@ export async function scaffoldFromGit(
     process.cwd(),
   );
   await rm(join(destination, ".git"), { recursive: true, force: true });
-  if (!existsSync(join(destination, "lib", "storage-provider.ts"))) {
-    return;
-  }
-  await configureStorageProvider(
-    destination,
-    options?.storage ?? { provider: "vercel-blob", options: {} },
-  );
 }

@@ -82,6 +82,17 @@ const registryServer = Bun.serve({
 	hostname: "127.0.0.1",
 	async fetch(request) {
 		const path = new URL(request.url).pathname;
+    if (path === "/external-storage.json") return Response.json({
+      name: "acme-bucket",
+      type: "registry:item",
+      dependencies: ["files-sdk@2.1.0"],
+      meta: {chatjs: {kind: "storage", contractVersion: 1, id: "acme-bucket", configKeys: ["bucket"], envRequirements: [{options: [["ACME_STORAGE_TOKEN"]]}]}},
+      files: [{path: "provider.ts", type: "registry:file", target: "~/lib/storage-provider.ts", content: `import { memory } from "files-sdk/memory";
+export function createStorageAdapter(options: {bucket: string}) {
+  if (!options.bucket) throw new Error("Missing bucket");
+  return memory();
+}`}],
+    });
 		if (path === "/contracts.tgz") return new Response(Bun.file(archive));
 		if (path === "/gateway.json")
 			return Response.json({
@@ -153,6 +164,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 			gateway === "acme"
 				? `http://127.0.0.1:${registryServer.port}/gateway.json`
 				: gateway,
+      ...(gateway === "acme" ? ["--storage-provider", `http://127.0.0.1:${registryServer.port}/external-storage.json`, "--storage-config", '{"bucket":"test"}'] : gateway === "openai" ? ["--storage-provider", "s3", "--storage-config", '{"bucket":"test","region":"us-east-1"}'] : []),
 			"--yes",
 			"--no-electron",
 		]);
@@ -179,6 +191,28 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 				).exists(),
 			).toBe(false);
 		}
+
+    if (gateway === "acme") {
+      expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+      expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
+      await writeFile(join(cwd, "verify-storage.ts"), `import { Files } from "files-sdk";
+import { createStorageAdapter } from "./lib/storage-provider";
+import { storageOptions, storageId, storageEnvRequirements } from "./lib/storage-options";
+import assert from "node:assert/strict";
+assert.equal(storageId, "acme-bucket");
+assert.equal(storageEnvRequirements[0]?.options[0]?.[0], "ACME_STORAGE_TOKEN");
+const files = new Files({adapter: createStorageAdapter(storageOptions)});
+await files.upload("test.txt", new Blob(["hello"]));
+assert.equal(await (await files.download("test.txt")).text(), "hello");
+await files.delete("test.txt");
+assert.equal(await files.exists("test.txt"), false);
+`);
+      await run(cwd, ["bun", "verify-storage.ts"]);
+    }
+    if (gateway === "openai") {
+      expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeDefined();
+      expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+    }
 
 		const other = gateway === "vercel" ? "openai" : "vercel";
 		await writeFile(

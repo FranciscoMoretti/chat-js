@@ -23,7 +23,7 @@ npx @chat-js/cli@latest [directory] [options]
 | `-y, --yes`                         | `false` | Skip all prompts and use defaults (Vercel gateway, GitHub auth, no extra features). |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>`                  | Not applicable | Clone from a git repository instead of the built-in template.                |
-| `--storage-provider <provider>`     | Not applicable | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`.      |
+| `--storage-provider <provider>`     | Not applicable | Select a built-in storage provider or an external registry item address.      |
 | `--storage-config <json>`           | Not applicable | Pass non-secret JSON options to the selected adapter. Credentials use env vars. |
 
 ## Interactive prompts
@@ -100,7 +100,7 @@ npx @chat-js/cli@latest create my-chat-app --yes \
 
 Keep credentials out of `--storage-config`. The generated `.env.example` and
 final CLI checklist show the environment requirements for the selected
-provider. See [File storage](../core/file-storage) for details.
+provider. See [File storage](../storage) for details.
 
 **Full flow after scaffolding**
 
@@ -113,4 +113,7 @@ bun run db:push
 bun run dev
 ```
 
-Run `npx @chat-js/cli@latest sync` after a direct shadcn tool installation. For a recognized `--from-git` ChatJS clone, create replaces its selected gateway slot and writes a new configuration. Unsupported clones skip ChatJS installation.
+Run `npx @chat-js/cli@latest sync` after a direct shadcn tool installation. For a recognized `--from-git` ChatJS clone, create replaces its selected gateway and storage slots and writes a new configuration.
+Clones must already support `lib/storage-options.ts`. Older ChatJS clones receive
+an upgrade error. Non-ChatJS clones skip ChatJS installation. Existing dependencies
+in custom clones are retained.

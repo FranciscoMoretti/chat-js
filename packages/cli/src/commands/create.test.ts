@@ -47,13 +47,18 @@ it("leaves non-ChatJS Git templates unconfigured through the full create command
 		join(source, "gateway.json"),
 		JSON.stringify(builtInGateways[0]),
 	);
-	await create.parseAsync(
+	const { builtInStorage } = await import("../../../registry/src/storage/catalog");
+  await writeFile(join(source, "storage.json"), JSON.stringify(builtInStorage.find((item) => item.meta.chatjs.id === "memory")));
+  await create.parseAsync(
 		[
 			destination,
 			"--from-git",
 			source,
 			"--gateway",
 			join(source, "gateway.json"),
+            "--storage-provider",
+            join(source, "storage.json"),
+            "--storage-config", "{}",
 			"--yes",
 		],
 		{ from: "user" },

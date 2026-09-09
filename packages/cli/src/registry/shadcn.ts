@@ -18,9 +18,11 @@ export async function registryConfig(cwd: string) {
 		},
 	};
 }
-export function itemAddress(source: string, kind: "gateway" | "tool") {
-	if (/^[a-z][a-z0-9-]*$/.test(source))
-		return `@chatjs/${source}${kind === "gateway" && !source.endsWith("-gateway") ? "-gateway" : ""}`;
+export function itemAddress(source: string, kind: "gateway" | "tool" | "storage") {
+  if (/^[a-z][a-z0-9-]*$/.test(source)) {
+    const suffix = kind === "tool" || (kind === "gateway" && source.endsWith("-gateway")) ? "" : `-${kind}`;
+    return `@chatjs/${source}${suffix}`;
+  }
 	return source;
 }
 export async function readItem(source: string, cwd: string) {

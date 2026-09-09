@@ -8,7 +8,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnvConfig } from "dotenv";
-import { getProvider } from "files-sdk/providers";
 import { z } from "zod";
 import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
 import { generatedForGateway } from "../lib/ai/models.generated";
@@ -20,11 +19,7 @@ import {
   isRequirementSatisfied,
 } from "../lib/config-requirements";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
-import { storageProvider } from "../lib/storage-provider";
-import {
-  getStorageEnvironmentRequirements,
-  type StorageEnvironmentVariable,
-} from "../lib/storage-provider-metadata";
+import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -63,59 +58,21 @@ function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
   };
 }
 
-function hasStorageEnvVariable(
-  variable: StorageEnvironmentVariable,
-  env: NodeJS.ProcessEnv
-) {
-  return [variable.key, ...(variable.aliases ?? [])].some((key) => !!env[key]);
-}
-
 function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
-  const enabled =
-    config.features.attachments ||
-    config.ai.tools.image.enabled ||
-    config.ai.tools.video.enabled;
-  if (!enabled) {
+  if (
+    !(
+      config.features.attachments ||
+      config.ai.tools.image.enabled ||
+      config.ai.tools.video.enabled
+    )
+  ) {
     return null;
   }
-
-  const metadata = getProvider(storageProvider.slug);
-  if (!metadata) {
-    return {
-      feature: "fileStorage",
-      missing: [`Unknown Files SDK provider: ${storageProvider.slug}`],
-    };
-  }
-
-  try {
-    storageProvider.createAdapter();
-  } catch (error) {
-    return {
-      feature: `fileStorage (${metadata.name})`,
-      missing: [
-        error instanceof Error ? error.message : "Invalid adapter options",
-      ],
-    };
-  }
-
-  const missing = getStorageEnvironmentRequirements(
-    storageProvider.slug,
-    storageProvider.options
-  )
-    .filter(
-      (requirement) =>
-        !requirement.options.some((option) =>
-          option.every((variable) => hasStorageEnvVariable(variable, env))
-        )
-    )
-    .map((requirement) =>
-      requirement.options
-        .map((option) => option.map(({ key }) => key).join(" + "))
-        .join(" or ")
-    );
-
-  return missing.length > 0
-    ? { feature: `fileStorage (${metadata.name})`, missing }
+  const missing = storageEnvRequirements
+    .map((requirement) => getMissingRequirement(requirement, env))
+    .filter((value) => value !== null);
+  return missing.length
+    ? { feature: `fileStorage (${storageId})`, missing }
     : null;
 }
 

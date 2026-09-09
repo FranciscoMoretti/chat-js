@@ -161,38 +161,15 @@ describe("buildConfigTs", () => {
 });
 
 describe("scaffoldFromTemplate", () => {
-	it("installs only the selected Files SDK provider dependencies", async () => {
-		const destination = await makeTempDir("chat-app-s3");
-
-		await scaffoldFromTemplate(destination, {
-			storage: {
-				provider: "s3",
-				options: { bucket: "uploads", region: "us-east-1" },
-			},
-		});
-
-		const packageJson = JSON.parse(
-			await readFile(join(destination, "package.json"), "utf8"),
-		) as { dependencies: Record<string, string> };
-		const providerSource = await readFile(
-			join(destination, "lib", "storage-provider.ts"),
-			"utf8",
-		);
-
-		expect(packageJson.dependencies["files-sdk"]).toBe("2.1.0");
-		expect(packageJson.dependencies["@vercel/blob"]).toBeUndefined();
-		expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.700.0");
-		expect(packageJson.dependencies["@aws-sdk/s3-presigned-post"]).toBe(
-			"^3.700.0",
-		);
-		expect(packageJson.dependencies["@aws-sdk/s3-request-presigner"]).toBe(
-			"^3.700.0",
-		);
-		expect(providerSource).toContain('import { s3 } from "files-sdk/s3"');
-		expect(providerSource).toContain("createAdapter: () => s3(options)");
-		expect(providerSource).not.toContain("storageProviderModule");
-		expect(providerSource).toContain('"bucket": "uploads"');
-	});
+  it("leaves the storage slot and provider peers to registry installation", async () => {
+    const destination = await makeTempDir("chat-app-storage");
+    await scaffoldFromTemplate(destination);
+    const manifest = JSON.parse(await readFile(join(destination, "package.json"), "utf8"));
+    expect(manifest.dependencies["files-sdk"]).toBe("2.1.0");
+    expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+    expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
+    expect(await Bun.file(join(destination, "lib/storage-provider.ts")).exists()).toBe(false);
+  });
 
 	it("writes a standalone-safe root package.json", async () => {
 		const destination = await makeTempDir("chat-app");
@@ -376,9 +353,7 @@ describe("scaffoldFromGit", () => {
 			expect(result.exitCode).toBe(0);
 		}
 
-		await scaffoldFromGit(source, destination, {
-			storage: { provider: "vercel-blob", options: {} },
-		});
+		await scaffoldFromGit(source, destination);
 
 		const packageJson = JSON.parse(
 			await readFile(join(destination, "package.json"), "utf8"),
