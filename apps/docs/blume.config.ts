@@ -12,6 +12,7 @@ const contentSections = [
   "reference",
   "registry",
   "tools",
+  "storage",
 ] as const;
 
 export default defineConfig({
@@ -72,6 +73,7 @@ export default defineConfig({
     ],
   },
   redirects: [
+    { from: "/core/file-storage", to: "/storage" },
     { from: "/core/registry", to: "/registry" },
     { from: "/core/tool-registry", to: "/tools/overview" },
     { from: "/cookbook/add-tools", to: "/tools/install" },
@@ -101,7 +103,6 @@ export default defineConfig({
             "/core/architecture",
             "/core/use-thread",
             "/core/configuration",
-            "/core/file-storage",
             "/core/authentication",
             "/core/multi-model",
             "/core/syntax-highlighting",
@@ -129,6 +130,10 @@ export default defineConfig({
             "/tools/retrieve-url",
             "/tools/authoring",
           ],
+        },
+        {
+          label: "File Storage",
+          items: ["/storage", "/storage/custom"],
         },
         {
           label: "Registry",

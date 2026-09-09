@@ -19,3 +19,13 @@ export const toolDefinitionSchema = z.object({
 	envRequirements: z.array(envRequirementSchema).default([]),
 });
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
+
+export const storageDefinitionSchema = z.object({
+	contractVersion: z.literal(1),
+	kind: z.literal("storage"),
+	id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+	envRequirements: z.array(envRequirementSchema).default([]),
+	optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/)).default([]),
+	configKeys: z.array(z.string()).default([]),
+});
+export type StorageDefinition = z.infer<typeof storageDefinitionSchema>;

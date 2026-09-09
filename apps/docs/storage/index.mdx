@@ -4,7 +4,7 @@ description: "Configure provider-agnostic storage for attachments and generated 
 ---
 
 ChatJS uses [Files SDK](https://files-sdk.dev) to store files without coupling
-application code to one storage provider. You choose the adapter when you create
+application code to one storage provider. Built-in providers use Files SDK adapters. You choose the adapter when you create
 the app, and ChatJS uses the same storage layer for uploads, generated media,
 downloads, cloning, and cleanup.
 
@@ -56,14 +56,27 @@ support them.
   credential chain.
 </Callout>
 
-## Generated configuration
+You can also select a third-party registry item with a namespace, HTTPS URL,
+or local JSON path:
 
-The installer configures only the selected adapter and its required peer
-dependencies.
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --storage-provider https://example.com/r/acme-storage.json \
+  --storage-config '{"bucket":"uploads"}'
+```
+
+The external item must implement the [storage authoring contract](./custom).
+Its identifier does not need to be in Files SDK's provider catalog.
+
+## Installed configuration
+
+shadcn installs the selected item source and declared dependencies. The ChatJS
+CLI writes typed options and environment requirements without evaluating the item.
 
 | File | Responsibility |
 | --- | --- |
-| `lib/storage-provider.ts` | Selected Files SDK adapter and non-secret options |
+| `lib/storage-provider.ts` | Installed source exporting `createStorageAdapter` |
+| `lib/storage-options.ts` | Typed non-secret options and environment requirements |
 | `lib/file-storage.ts` | Shared upload, download, list, and delete operations |
 | `.env.example` | Environment hints for the selected provider |
 | `scripts/check-env.ts` | Build-time validation for provider requirements |
@@ -71,20 +84,19 @@ dependencies.
 For example, a Vercel Blob installation generates an adapter like this:
 
 ```typescript title="lib/storage-provider.ts"
-import type { ProviderSlug } from "files-sdk/providers";
 import { vercelBlob } from "files-sdk/vercel-blob";
 
-const options = {} satisfies Parameters<typeof vercelBlob>[0];
+export const createStorageAdapter = vercelBlob;
+```
 
-export const storageProvider = {
-  createAdapter: () => vercelBlob(options),
-  options,
-  slug: "vercel-blob",
-} satisfies {
-  createAdapter: () => ReturnType<typeof vercelBlob>;
-  options: typeof options;
-  slug: ProviderSlug;
-};
+```typescript title="lib/storage-options.ts"
+import type { createStorageAdapter } from "./storage-provider";
+
+export const storageOptions = {} satisfies Parameters<typeof createStorageAdapter>[0];
+export const storageId = "vercel-blob";
+export const storageEnvRequirements = [{
+  options: [["BLOB_READ_WRITE_TOKEN"], ["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"]],
+}];
 ```
 
 Run the environment check after configuring deployment secrets:
@@ -117,9 +129,9 @@ stable relative keys.
 
 ## Credentials
 
-Credential requirements depend on the selected provider. ChatJS reads Files
-SDK's provider metadata and validates the supported environment variables at
-build time. Some providers can also use an SDK credential chain such as an IAM
+Credential requirements depend on the selected provider. Built-in items derive
+requirements from Files SDK metadata. External items declare their own requirements.
+The app validates the generated requirements at build time. Some providers can also use an SDK credential chain such as an IAM
 role, shared profile, workload identity, or runtime binding.
 
 Copy `.env.example` to `.env.local` for local development, then set the values

@@ -1,3 +1,4 @@
+import { builtInStorage } from "./src/storage/catalog";
 import { registrySchema, type RegistryItem } from "shadcn/schema";
 import { builtInGateways } from "./src/gateways/catalog";
 import { toolDefinitionSchema } from "./metadata";
@@ -53,6 +54,7 @@ export const registry = registrySchema.parse({
 	homepage: "https://chatjs.dev",
 	items: [
 		...builtInGateways,
+        ...builtInStorage,
 		...toolItems,
 		{
 			name: "toolkit-renderer",

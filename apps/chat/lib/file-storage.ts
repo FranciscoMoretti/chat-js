@@ -2,7 +2,8 @@ import { type Body, Files } from "files-sdk";
 import { nanoid } from "nanoid";
 import { FILE_STORAGE_PREFIX } from "./constants";
 import { FILE_CONTENT_PATH, keyFromFileUrl } from "./file-url";
-import { storageProvider } from "./storage-provider";
+import { storageOptions } from "./storage-options";
+import { createStorageAdapter } from "./storage-provider";
 
 const SAFE_EXTENSION = /^\.[a-z0-9]{1,10}$/;
 const PATH_SEPARATOR = /[\\/]/;
@@ -11,7 +12,7 @@ let files: Files | undefined;
 
 function getFiles(): Files {
   files ??= new Files({
-    adapter: storageProvider.createAdapter(),
+    adapter: createStorageAdapter(storageOptions),
     prefix: FILE_STORAGE_PREFIX,
     retries: 2,
   });

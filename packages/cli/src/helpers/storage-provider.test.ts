@@ -1,208 +1,93 @@
 import { describe, expect, it } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import {
 	configureStorageProvider,
-	getProviderFactoryName,
-	INSTALLABLE_STORAGE_PROVIDERS,
 	parseStorageOptions,
-	resolveStorageProvider,
-	storageEnvRequirements,
 } from "./storage-provider";
-import { promptStorage } from "./prompts";
+import { storageDefinitionSchema } from "../../../registry/metadata";
+import { resolveStorage } from "../registry/storage";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 
-describe("storage provider configuration", () => {
-	it("accepts every provider compatible with a generated Next.js app", () => {
-		for (const provider of INSTALLABLE_STORAGE_PROVIDERS) {
-			expect(resolveStorageProvider(provider)).toBe(provider);
-		}
-		expect(() => resolveStorageProvider("bun-s3")).toThrow(
-			'Provider "bun-s3" is not supported',
+describe("storage registry integration", () => {
+	it("preserves Files SDK credential-chain and configured-option behavior", () => {
+		expect(
+			getStorageEnvironmentRequirements("s3", { region: "us-east-1" }),
+		).toEqual([]);
+		expect(getStorageEnvironmentRequirements("r2", { binding: {} })).toEqual(
+			[],
 		);
-		expect(() => resolveStorageProvider("convex")).toThrow(
-			'Provider "convex" is not supported',
-		);
-		expect(() => resolveStorageProvider("memory")).toThrow(
-			'Provider "memory" is not supported',
-		);
-		expect(() => resolveStorageProvider("fs")).toThrow(
-			'Provider "fs" is not supported',
-		);
-		expect(() => resolveStorageProvider("box")).toThrow(
-			'Provider "box" is not supported',
-		);
-		expect(() => resolveStorageProvider("not-a-provider")).toThrow("Unknown");
-	});
-
-	it("derives an exported factory for every installable provider", async () => {
-		const filesSdkDist = dirname(
-			fileURLToPath(import.meta.resolve("files-sdk")),
-		);
-		for (const provider of INSTALLABLE_STORAGE_PROVIDERS) {
-			const factory = getProviderFactoryName(provider);
-			const declarations = await readFile(
-				join(filesSdkDist, provider, "index.d.ts"),
-				"utf8",
-			);
-			expect(
-				declarations.includes(`const ${factory}`) ||
-					declarations.includes(`as ${factory}`),
-			).toBe(true);
-		}
-	});
-
-	it("does not require credentials resolved by a provider SDK chain", () => {
-		expect(storageEnvRequirements("s3")).toEqual([
-			{
-				description: "S3 configuration",
-				options: [["AWS_REGION"]],
-			},
+		expect(
+			getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
+				(option) => option.map((v) => v.key),
+			),
+		).toEqual([
+			["BLOB_READ_WRITE_TOKEN"],
+			["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"],
 		]);
-		expect(storageEnvRequirements("gcs")).toEqual([]);
-		expect(storageEnvRequirements("s3", { region: "us-east-1" })).toEqual([]);
 	});
-
-	it("parses adapter options as an object", () => {
-		expect(parseStorageOptions('{"bucket":"uploads"}')).toEqual({
-			bucket: "uploads",
-		});
-		expect(() => parseStorageOptions("[]")).toThrow("JSON object");
+	it("rejects non-object options", () => {
+		for (const input of ["", "[]", "null"])
+			expect(() => parseStorageOptions(input)).toThrow("JSON object");
 	});
-
-	it("rejects explicitly empty storage config", async () => {
-		await expect(promptStorage(true, "vercel-blob", "")).rejects.toThrow(
-			"valid JSON object",
-		);
-	});
-
-	it("derives Vercel Blob credential alternatives from the catalog", () => {
-		expect(storageEnvRequirements("vercel-blob")).toEqual([
-			{
-				description: "Vercel Blob credentials",
-				options: [
-					["BLOB_READ_WRITE_TOKEN"],
-					["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"],
+	it("accepts external storage and configures it without touching source or dependencies", async () => {
+		const cwd = await mkdtemp(join(tmpdir(), "chatjs-storage-"));
+		try {
+			await mkdir(join(cwd, "lib"));
+			const definition = storageDefinitionSchema.parse({
+				contractVersion: 1,
+				kind: "storage",
+				id: "acme",
+				envRequirements: [{ options: [["ACME_TOKEN"]] }],
+			});
+			const source = join(cwd, "custom.json");
+			const item = {
+				name: "custom",
+				type: "registry:item",
+				files: [
+					{
+						path: "provider.ts",
+						type: "registry:file",
+						target: "~/lib/storage-provider.ts",
+						content: "throw new Error('must not execute during configuration')",
+					},
 				],
-			},
-		]);
-	});
-
-	it("requires R2 env credentials unless a binding is configured", () => {
-		expect(storageEnvRequirements("r2")).toEqual([
-			{
-				description: "Cloudflare R2 credentials",
-				options: [["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]],
-			},
-		]);
-		expect(storageEnvRequirements("r2", { binding: {} })).toEqual([]);
-	});
-
-	it("configures repositories without an env example", async () => {
-		const destination = await mkdtemp(join(tmpdir(), "chat-js-storage-no-env-"));
-		try {
-			await mkdir(join(destination, "lib"));
+				meta: { chatjs: definition },
+			};
+			await writeFile(source, JSON.stringify(item));
+			const selection = await resolveStorage(source, cwd);
+			selection.options = { bucket: "uploads" };
 			await writeFile(
-				join(destination, "package.json"),
-				JSON.stringify({ dependencies: { "files-sdk": "2.1.0" } }),
+				join(cwd, "lib/storage-provider.ts"),
+				"// installed custom source",
 			);
-			await writeFile(
-				join(destination, "lib", "storage-provider.ts"),
-				'import { memory } from "files-sdk/memory";\n',
+			await writeFile(join(cwd, "package.json"), "{}");
+			await configureStorageProvider(cwd, selection);
+			expect(await readFile(join(cwd, "lib/storage-provider.ts"), "utf8")).toBe(
+				"// installed custom source",
 			);
-
-			await configureStorageProvider(destination, {
-				provider: "vercel-blob",
-				options: {},
-			});
-
+			expect(await readFile(join(cwd, "package.json"), "utf8")).toBe("{}");
 			expect(
-				await readFile(join(destination, "lib", "storage-provider.ts"), "utf8"),
-			).toContain('from "files-sdk/vercel-blob"');
-		} finally {
-			await rm(destination, { recursive: true, force: true });
-		}
-	});
-
-	it("removes only dependencies owned by the previous storage provider", async () => {
-		const destination = await mkdtemp(join(tmpdir(), "chat-js-storage-"));
-		try {
-			await mkdir(join(destination, "lib"));
+				await readFile(join(cwd, "lib/storage-options.ts"), "utf8"),
+			).toContain('"bucket": "uploads"');
+			expect(await readFile(join(cwd, ".env.example"), "utf8")).toContain(
+				"ACME_TOKEN=",
+			);
 			await writeFile(
-				join(destination, "package.json"),
+				source,
 				JSON.stringify({
-					dependencies: {
-						"@google-cloud/storage": "^7.19.0",
-						"@vercel/blob": "2.4.0",
-						"files-sdk": "2.1.0",
-					},
+					...item,
+					meta: { chatjs: { ...definition, contractVersion: 999 } },
 				}),
 			);
-			await writeFile(
-				join(destination, "lib", "storage-provider.ts"),
-				'// ChatJS storage peer dependencies: ["@vercel/blob"]\nimport { vercelBlob } from "files-sdk/vercel-blob";\n',
+			await expect(resolveStorage(source, cwd)).rejects.toThrow();
+			await writeFile(source, JSON.stringify({ ...item, files: [] }));
+			await expect(resolveStorage(source, cwd)).rejects.toThrow(
+				"storage-provider.ts",
 			);
-			await writeFile(
-				join(destination, ".env.example"),
-				"# <chatjs-storage-provider>\n# </chatjs-storage-provider>\n",
-			);
-
-			await configureStorageProvider(destination, {
-				provider: "s3",
-				options: { bucket: "uploads", region: "us-east-1" },
-			});
-
-			const packageJson = JSON.parse(
-				await readFile(join(destination, "package.json"), "utf8"),
-			) as { dependencies: Record<string, string> };
-			expect(packageJson.dependencies["@vercel/blob"]).toBeUndefined();
-			expect(packageJson.dependencies["@google-cloud/storage"]).toBe("^7.19.0");
-			expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.700.0");
-			const providerSource = await readFile(
-				join(destination, "lib", "storage-provider.ts"),
-				"utf8",
-			);
-			expect(providerSource).toContain("satisfies Parameters<typeof s3>[0]");
-			const envExample = await readFile(
-				join(destination, ".env.example"),
-				"utf8",
-			);
-			expect(envExample).not.toContain("AWS_REGION");
 		} finally {
-			await rm(destination, { recursive: true, force: true });
-		}
-	});
-
-	it("preserves provider peers not marked as generator-owned", async () => {
-		const destination = await mkdtemp(join(tmpdir(), "chat-js-storage-owned-"));
-		try {
-			await mkdir(join(destination, "lib"));
-			await writeFile(
-				join(destination, "package.json"),
-				JSON.stringify({
-					dependencies: {
-						"@vercel/blob": "2.4.0",
-						"files-sdk": "2.1.0",
-					},
-				}),
-			);
-			await writeFile(
-				join(destination, "lib", "storage-provider.ts"),
-				'import { vercelBlob } from "files-sdk/vercel-blob";\n',
-			);
-
-			await configureStorageProvider(destination, {
-				provider: "s3",
-				options: { bucket: "uploads", region: "us-east-1" },
-			});
-
-			const packageJson = JSON.parse(
-				await readFile(join(destination, "package.json"), "utf8"),
-			) as { dependencies: Record<string, string> };
-			expect(packageJson.dependencies["@vercel/blob"]).toBe("2.4.0");
-		} finally {
-			await rm(destination, { recursive: true, force: true });
+			await rm(cwd, { recursive: true, force: true });
 		}
 	});
 });

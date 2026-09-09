@@ -189,8 +189,8 @@ openssl rand -base64 32
 
 ### File Storage
 
-Attachments, image generation, and video generation require a durable Files
-SDK provider. Storage requirements are generated from the selected provider and
+Attachments, image generation, and video generation require a durable storage
+adapter compatible with Files SDK. Storage requirements are generated from the selected provider and
 validated by `scripts/check-env.ts`.
 
 ```typescript title="chat.config.ts"
@@ -207,7 +207,7 @@ ai: {
 
 Provider credentials belong in environment variables or the provider SDK's
 credential chain. Non-secret adapter options belong in
-`lib/storage-provider.ts`. See [File storage](../core/file-storage) and the
+`lib/storage-options.ts`. See [File storage](../storage) and the
 [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the
 requirements of your selected provider.
 
@@ -344,4 +344,4 @@ All variables in one place:
 - [Deploy to Vercel](/deployment/vercel): how Vercel auto-sets several of these variables
 - [Gateways Overview](/gateways/overview): choosing and configuring an AI gateway
 - [Authentication](/core/authentication): OAuth provider setup details
-- [File storage](/core/file-storage): provider configuration and credentials
+- [File storage](/storage): provider configuration and credentials

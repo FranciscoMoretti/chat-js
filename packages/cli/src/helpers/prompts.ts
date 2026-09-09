@@ -6,7 +6,9 @@ import {
 	select,
 	text,
 } from "@clack/prompts";
-import { getProvider } from "files-sdk/providers";
+import { PROVIDER_NAMES } from "files-sdk/providers";
+import { resolveStorage, type StorageSelection } from "../registry/storage";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import type { RegistryIndexItem } from "../registry/schema";
 import {
 	AUTHENTICATION_DEFAULTS,
@@ -36,8 +38,6 @@ import { logger } from "../utils/logger";
 import {
 	INSTALLABLE_STORAGE_PROVIDERS,
 	parseStorageOptions,
-	resolveStorageProvider,
-	type StorageSelection,
 } from "./storage-provider";
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
@@ -193,56 +193,84 @@ export async function promptStorage(
 	skipPrompt: boolean,
 	explicitProvider?: string,
 	explicitOptions?: string,
+	cwd = process.cwd(),
 ): Promise<StorageSelection> {
-	const provider = explicitProvider
-		? resolveStorageProvider(explicitProvider)
-		: skipPrompt
-			? "vercel-blob"
-			: await select({
-					message: `Which ${highlighter.info("file storage provider")} would you like to use?`,
-					options: INSTALLABLE_STORAGE_PROVIDERS.map((slug) => {
-						const metadata = getProvider(slug);
-						return {
-							value: slug,
-							label: metadata?.name ?? slug,
-							hint: metadata?.description,
-						};
-					}),
-					initialValue: "vercel-blob",
-				});
-	handleCancel(provider);
-
-	const metadata = getProvider(provider);
-	if (!metadata) {
-		throw new Error(`Unknown Files SDK provider: ${provider}`);
+	let source = explicitProvider ?? "vercel-blob";
+	if (!explicitProvider && !skipPrompt) {
+		const choice = await select({
+			message: "Which file storage provider would you like to use?",
+			options: [
+				...INSTALLABLE_STORAGE_PROVIDERS.map((item) => ({
+					value: item.meta.chatjs.id,
+					label: item.title,
+				})),
+				{
+					value: "__external__",
+					label: "External registry item",
+					hint: "Namespace, URL or local JSON path",
+				},
+			],
+			initialValue: "vercel-blob",
+		});
+		handleCancel(choice);
+		source = String(choice);
+		if (source === "__external__") {
+			const address = await text({
+				message: "Storage registry item address:",
+				validate: (v) => (v?.trim() ? undefined : "Enter an item address"),
+			});
+			handleCancel(address);
+			source = String(address).trim();
+		}
 	}
-	if (explicitOptions !== undefined) {
-		return { provider, options: parseStorageOptions(explicitOptions) };
+	const selection = await resolveStorage(source, cwd);
+	const keys = selection.definition.configKeys;
+	let options = explicitOptions;
+	if (options === undefined && keys.length) {
+		if (skipPrompt)
+			throw new Error(
+				`Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`,
+			);
+		const input = await text({
+			message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
+			validate: (v) => {
+				try {
+					parseStorageOptions(v ?? "");
+				} catch {
+					return "Enter a JSON object";
+				}
+			},
+		});
+		handleCancel(input);
+		options = String(input);
 	}
-
-	const configKeys = metadata.env.config ?? [];
-	if (configKeys.length === 0) {
-		return { provider, options: {} };
+	selection.options = options === undefined ? {} : parseStorageOptions(options);
+	// Only the actual built-in address uses SDK-derived option/credential rules.
+	// An external item may use the same id with its own contract.
+	const builtin = INSTALLABLE_STORAGE_PROVIDERS.find(
+		(item) => selection.source === `@chatjs/${item.name}`,
+	);
+	const providerId = PROVIDER_NAMES.find(
+		(id) => id === builtin?.meta.chatjs.id,
+	);
+	if (providerId) {
+		selection.definition.envRequirements = getStorageEnvironmentRequirements(
+			providerId,
+			selection.options,
+		).map((r) => ({
+			description: r.description,
+			options: r.options.flatMap((option) =>
+				option.reduce<string[][]>(
+					(alternatives, variable) =>
+						alternatives.flatMap((keys) =>
+							[variable.key, ...variable.aliases].map((key) => [...keys, key]),
+						),
+					[[]],
+				),
+			),
+		}));
 	}
-	if (skipPrompt) {
-		throw new Error(
-			`${metadata.name} requires adapter options (${configKeys.join(", ")}). Pass them as JSON with --storage-config.`,
-		);
-	}
-
-	const value = await text({
-		message: `Non-secret adapter options as JSON (credentials use env vars; hints: ${configKeys.join(", ")})`,
-		placeholder: '{ "providerOption": "value" }',
-		validate: (input) => {
-			try {
-				parseStorageOptions(input ?? "");
-			} catch (error) {
-				return error instanceof Error ? error.message : "Invalid JSON object";
-			}
-		},
-	});
-	handleCancel(value);
-	return { provider, options: parseStorageOptions(value) };
+	return selection;
 }
 
 export async function promptCoreFeatures(

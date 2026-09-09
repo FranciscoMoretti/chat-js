@@ -14,17 +14,20 @@ Choose a category based on what you want to change in your app.
 | Category | App behavior | Start here |
 | --- | --- | --- |
 | Gateways | Select the AI backend when creating an app | [Choose a gateway](../gateways/overview) |
+| File Storage | Select the storage adapter when creating an app | [Choose storage](../storage) |
 | Tools | Add server tools and their result renderers to an existing app | [Install tools](../tools/install) |
 
 For gateways, use `chat-js create --gateway` to install and configure the selected
 adapter. For tools, use `chat-js add` to install items and regenerate registrations.
-These categories have different activation contracts even though both use shadcn.
+For storage, use `chat-js create --storage-provider` to install an adapter and
+generate its typed options. Each category has its own activation contract.
 
 ## Source and ownership
 
 | Location in the repository | Responsibility |
 | --- | --- |
 | `packages/registry/src/gateways/<id>/gateway.ts` | Canonical gateway implementations |
+| `packages/registry/src/storage/<id>/storage-provider.ts` | Canonical storage adapter entry points |
 | `packages/registry/src/tools/<id>/` | Canonical tools and renderers |
 | `packages/registry/registry.ts` | Item files, dependencies, targets, and metadata |
 | `packages/registry/dist/r/` | Generated registry JSON for distribution |

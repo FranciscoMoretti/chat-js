@@ -27,7 +27,8 @@ import {
 	scaffoldFromGit,
 	scaffoldFromTemplate,
 } from "../helpers/scaffold";
-import { storageEnvRequirements } from "../helpers/storage-provider";
+import { resolveStorage } from "../registry/storage";
+import { configureStorageProvider } from "../helpers/storage-provider";
 import { resolveGateway } from "../registry/gateways";
 import {
 	installItems,
@@ -121,12 +122,12 @@ export const create = new Command()
 		"clone from a git repository instead of the built-in scaffold",
 	)
 	.option(
-		"--storage-provider <provider>",
-		"Files SDK provider (for example: vercel-blob, s3, r2, gcs)",
+		"--storage-provider <item>",
+		"storage registry item (built-in name, namespace, URL or local JSON path)",
 	)
 	.option(
 		"--storage-config <json>",
-		"non-secret JSON options for the Files SDK adapter; credentials use env vars",
+		"non-secret JSON options for the storage adapter; credentials use env vars",
 	)
 	.action(async (directory, opts) => {
 		try {
@@ -219,11 +220,9 @@ export const create = new Command()
 						options.yes,
 						options.storageProvider,
 						options.storageConfig,
+						targetDir,
 					)
-				: {
-						provider: "memory" as const,
-						options: {},
-					};
+				: await resolveStorage("memory", targetDir);
 			const auth = await promptAuth(options.yes);
 			const withElectron = await promptElectron(options.yes, options.electron);
 
@@ -231,9 +230,7 @@ export const create = new Command()
 			const scaffoldSpinner = spinner("Scaffolding project...").start();
 			try {
 				if (options.fromGit) {
-					await scaffoldFromGit(options.fromGit, targetDir, {
-						storage,
-					});
+					await scaffoldFromGit(options.fromGit, targetDir);
 					if (!existsSync(join(targetDir, "lib/ai/gateway.ts"))) {
 						scaffoldSpinner.succeed("Repository cloned.");
 						logger.warn(
@@ -241,18 +238,24 @@ export const create = new Command()
 						);
 						return;
 					}
+					if (!existsSync(join(targetDir, "lib/storage-options.ts"))) {
+						throw new Error(
+							"This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git.",
+						);
+					}
 					// create owns the new clone's selected gateway. Remove this one slot
 					// before shadcn installs so skipping a file cannot mismatch defaults.
 					await preflight(targetDir, [
 						"lib/ai/gateway.ts",
+						"lib/storage-provider.ts",
 						"chat.config.ts",
 						"package.json",
 					]);
+					await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
 					await rm(join(targetDir, "lib/ai/gateway.ts"));
 				} else {
 					await scaffoldFromTemplate(targetDir, {
 						packageManager,
-						storage,
 					});
 				}
 				if (withElectron) {
@@ -306,10 +309,11 @@ export const create = new Command()
 			let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
 			try {
 				await installItems(
-					[gatewaySelection.source, ...toolSources],
+					[gatewaySelection.source, storage.source, ...toolSources],
 					targetDir,
 				);
 				await configureGatewayProvider(targetDir, gatewaySelection);
+				await configureStorageProvider(targetDir, storage);
 				installedTools = await syncTools(targetDir, {
 					expected: expectedTools,
 				});
@@ -354,9 +358,7 @@ export const create = new Command()
 				auth,
 				installableToolEnvRequirements: [
 					...installableToolEnvRequirements,
-					...(usesStorage
-						? storageEnvRequirements(storage.provider, storage.options)
-						: []),
+					...(usesStorage ? storage.definition.envRequirements : []),
 				],
 			});
 
