@@ -64,16 +64,18 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   const defaultBranchName = "$" + "{1:-dev-local}";
 
   scripts.prebuild = "tsx scripts/check-env.ts";
-  scripts.dev = "tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
+  scripts.dev = "tsx scripts/check-env.ts && next dev";
   scripts["dev:inspect"] =
-    "tsx scripts/check-env.ts && bash scripts/with-db.sh next dev --inspect";
+    "tsx scripts/check-env.ts && next dev --inspect";
   scripts.prod =
     "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && next build && next start";
   scripts.lint = "ultracite check";
   scripts.format = "ultracite fix";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:migrate"] =
-    "export VERCEL_ENV=production && bash scripts/with-db.sh tsx lib/db/migrate.ts";
+    "tsx lib/db/migrate.ts";
+  scripts["dev:neon"] = "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
+  scripts["db:migrate:neon"] = "bash scripts/with-db.sh tsx lib/db/migrate.ts";
   scripts["db:backfill-parts"] = "tsx lib/db/backfill-parts.ts";
   scripts["db:branch:start"] =
     `bash -c 'N=${defaultBranchName}; bash scripts/db-branch-create.sh "$N" && bash scripts/db-branch-use.sh "$N"' --`;

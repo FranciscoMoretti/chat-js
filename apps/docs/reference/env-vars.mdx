@@ -187,6 +187,14 @@ openssl rand -base64 32
   The key must be exactly 44 characters (32 bytes encoded as base64). Changing this key after deployment will invalidate all stored MCP connector credentials.
 </Callout>
 
+### Postgres Hosting
+
+`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your
+host provides a separate direct endpoint for schema operations. It falls back to
+`DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler
+without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS`
+to a positive per-process limit. See [Database](./database) for deployment behavior.
+
 ### File Storage
 
 Attachments, image generation, and video generation require a durable storage

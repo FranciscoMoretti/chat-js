@@ -18,6 +18,7 @@ import {
   getMissingRequirement,
   isRequirementSatisfied,
 } from "../lib/config-requirements";
+import { databaseEnvOptions } from "../lib/db/connection";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
@@ -223,11 +224,24 @@ async function checkEnv(): Promise<void> {
     return;
   }
 
+  const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
+  const databaseErrors = databaseOptions.success
+    ? []
+    : [
+        {
+          feature: "database",
+          missing: databaseOptions.error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`
+          ),
+        },
+      ];
+
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
   const installedToolErrors = await validateInstalledTools(env);
   const errors = [
+    ...databaseErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),

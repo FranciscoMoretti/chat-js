@@ -5,16 +5,45 @@ description: PostgreSQL database management commands and schema workflow
 
 ## Overview
 
-ChatJS uses **PostgreSQL** with **Drizzle ORM** for type-safe, schema-first database access. The schema is defined in `apps/chat/lib/db/schema.ts` — edit it to change the database structure.
+ChatJS uses **PostgreSQL** with **Drizzle ORM** for type-safe, schema-first database access. The schema is defined in `apps/chat/lib/db/schema.ts`. Edit it to change the database structure.
 
 ---
+
+## Connection settings
+
+Set `DATABASE_URL` to the Postgres connection string from your host. The same
+schema and query implementation works with standard Postgres connections. No
+Neon-specific driver is required.
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Runtime queries |
+| `DATABASE_MIGRATION_URL` | Optional direct connection for migrations and Drizzle schema operations, falling back to `DATABASE_URL` |
+| `DATABASE_PREPARE` | `true` by default. Set `false` for transaction poolers that do not support prepared statements |
+| `DATABASE_MAX_CONNECTIONS` | Optional positive integer limiting runtime connections per process |
+
+```bash
+DATABASE_URL=postgres://user:password@runtime-host/app
+DATABASE_MIGRATION_URL=postgres://user:password@direct-host/app
+DATABASE_PREPARE=false
+DATABASE_MAX_CONNECTIONS=5
+```
+
+Use your host's connection strings and TLS settings. Do not disable certificate
+verification to make a connection succeed. Keep passwords in your environment.
+
+For [Supabase transaction pooling](https://supabase.com/docs/guides/database/postgres-js),
+disable prepared statements. Use a direct or suitable session connection for
+schema operations. [Neon](https://neon.com/docs/connect/connection-pooling)
+also recommends a direct connection for migration tools. A local Postgres instance
+or another host can use one URL for both purposes.
 
 ## Database Management
 
 Run these commands from the `apps/chat` directory:
 
 ```bash
-# Push schema changes directly to the database (dev only — no migration file)
+# Push schema changes directly to the database (dev only, no migration file)
 bun db:push
 
 # Open Drizzle Studio at https://local.drizzle.studio
@@ -27,9 +56,9 @@ bun db:generate
 bun db:migrate
 ```
 
-- **`db:push`** — fastest for local iteration; skips migration files. Not safe for production.
-- **`db:generate` + `db:migrate`** — the production workflow; creates a versioned SQL file and applies it.
-- **`db:studio`** — inspect, query, and edit data via a browser UI.
+- **`db:push`**: fastest for local iteration, skips migration files. Not safe for production.
+- **`db:generate` + `db:migrate`**: the production workflow, creates a versioned SQL file and applies it.
+- **`db:studio`**: inspect, query, and edit data via a browser UI.
 
 ---
 
@@ -37,8 +66,27 @@ bun db:migrate
 
 All schema changes start in `apps/chat/lib/db/schema.ts`. After editing:
 
-1. Run `bun db:generate` to produce a migration file in `drizzle/`.
+1. Run `bun db:generate` to produce a migration file in `lib/db/migrations/`.
 2. Review the generated SQL to confirm the diff is correct.
 3. Run `bun db:migrate` to apply it.
 
-For production schema changes, use Neon branching to isolate the change first. See [Neon Branching](/cookbook/neon-branching).
+Test schema changes against an isolated database before applying them to production.
+If you use Neon, [Neon Branching](../cookbook/neon-branching) is an optional workflow.
+
+## Deployment and migrations
+
+`bun db:migrate` explicitly applies pending migrations on any host. It does not
+require `VERCEL_ENV`. The migration connection uses one connection and closes it
+on success or failure.
+
+The app build runs migrations with `--deployment`, preserving the existing
+production-only Vercel behavior. Preview and local builds skip automatic
+migrations. On other hosts, run `bun db:migrate` as an explicit deployment step
+before starting the updated app.
+
+## Optional Neon development
+
+Normal `bun dev` and `bun db:migrate` use your configured URLs. They do not read
+`.neon-branch`. To use the branch selected by the Neon helper scripts, run
+`bun dev:neon` or `bun db:migrate:neon`. The wrapper overrides both runtime and
+migration URLs so a main-database migration URL cannot leak into a branch session.
