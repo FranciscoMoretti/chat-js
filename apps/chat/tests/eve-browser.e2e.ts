@@ -66,6 +66,7 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await composer.fill("slow response");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(page.getByText("Responding…", { exact: true })).toBeVisible();
+  await expect(composer).toHaveText("", { timeout: 1000 });
   await composer.fill("my next draft");
   await capture(page, "streaming-desktop");
   await expect(

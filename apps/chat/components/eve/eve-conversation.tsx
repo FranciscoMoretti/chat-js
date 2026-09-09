@@ -143,8 +143,13 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
           onSubmit={() =>
             run(async () => {
               const submitted = draft;
-              await send(() => agent.send(submitted.trim()), true);
-              setDraft((current) => (current === submitted ? "" : current));
+              setDraft("");
+              try {
+                await send(() => agent.send(submitted.trim()), true);
+              } catch (cause) {
+                setDraft((current) => current || submitted);
+                throw cause;
+              }
             })
           }
           stopDisabled={cancelPending || agent.status === "resuming"}
