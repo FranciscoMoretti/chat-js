@@ -1,10 +1,10 @@
 ---
-title: Tools
+title: Authoring Tools
 description: Author tested source files and publish them as shadcn registry items
 ---
 
 Author tools as real TypeScript files that you can import, type-check, and test.
-In this repository, canonical implementations live in `packages/registry/src`.
+In this repository, canonical implementations live in `packages/registry/src/tools/<id>/`.
 The app consumes installed copies through normal local imports.
 
 ## Server and renderer
@@ -89,6 +89,6 @@ app's TypeScript checks validate composition against its actual local contracts.
 
 ## Related
 
-- [Tool Registry](../core/tool-registry) for ownership and namespaces
-- [Adding Tools](./add-tools) for installation and sync
-- [Tool Part](./tool-part) for rendering tool results
+- [Tool Registry](./overview) for ownership and namespaces
+- [Adding Tools](./install) for installation and sync
+- [Tool Part](../cookbook/tool-part) for rendering tool results

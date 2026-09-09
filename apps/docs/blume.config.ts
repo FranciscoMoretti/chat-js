@@ -10,6 +10,8 @@ const contentSections = [
   "gateways",
   "platforms",
   "reference",
+  "registry",
+  "tools",
 ] as const;
 
 export default defineConfig({
@@ -69,6 +71,12 @@ export default defineConfig({
       { href: "/cli", label: "CLI", icon: "terminal" },
     ],
   },
+  redirects: [
+    { from: "/core/registry", to: "/registry" },
+    { from: "/core/tool-registry", to: "/tools/overview" },
+    { from: "/cookbook/add-tools", to: "/tools/install" },
+    { from: "/cookbook/tools", to: "/tools/authoring" },
+  ],
   navigation: {
     featured: [
       {
@@ -95,9 +103,40 @@ export default defineConfig({
             "/core/configuration",
             "/core/file-storage",
             "/core/authentication",
-            "/core/tool-registry",
             "/core/multi-model",
             "/core/syntax-highlighting",
+          ],
+        },
+        {
+          label: "Gateways",
+          items: [
+            "/gateways/overview",
+            "/gateways/vercel",
+            "/gateways/openrouter",
+            "/gateways/openai",
+            "/gateways/openai-compatible",
+            "/gateways/litellm",
+            "/gateways/custom",
+          ],
+        },
+        {
+          label: "Tools",
+          items: [
+            "/tools/overview",
+            "/tools/install",
+            "/tools/word-count",
+            "/tools/get-weather",
+            "/tools/retrieve-url",
+            "/tools/authoring",
+          ],
+        },
+        {
+          label: "Registry",
+          items: [
+            "/registry",
+            "/registry/namespaces",
+            "/registry/authoring",
+            "/registry/testing",
           ],
         },
         {
@@ -158,18 +197,6 @@ export default defineConfig({
             "/reference/routing",
             "/reference/testing",
             "/reference/evaluations",
-            {
-              label: "Gateways",
-              items: [
-                "/gateways/overview",
-                "/gateways/vercel",
-                "/gateways/openrouter",
-                "/gateways/openai",
-                "/gateways/openai-compatible",
-                "/gateways/litellm",
-                "/gateways/custom",
-              ],
-            },
           ],
         },
         {
@@ -180,8 +207,6 @@ export default defineConfig({
             "/cookbook/resumable-streams",
             "/cookbook/stop-resumable-streams",
             "/cookbook/tool-part",
-            "/cookbook/tools",
-            "/cookbook/add-tools",
             "/cookbook/next-chat-transition",
             "/cookbook/credit-tracking",
             "/cookbook/neon-branching",

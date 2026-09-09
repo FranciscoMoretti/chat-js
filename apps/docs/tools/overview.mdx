@@ -1,5 +1,5 @@
 ---
-title: Tool Registry
+title: Tools Overview
 description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
@@ -14,6 +14,14 @@ npx @chat-js/cli@latest add word-count
 shadcn resolves the item and its dependencies, installs packages, and writes the
 source files. ChatJS then regenerates separate server and client registrations.
 Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
+
+## Available tools
+
+| Tool | Purpose | Credentials |
+| --- | --- | --- |
+| [Word Count](./word-count) | Count words, characters, and sentences | None |
+| [Get Weather](./get-weather) | Fetch weather for coordinates | None |
+| [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
 
 ## Installed files
 
@@ -74,6 +82,8 @@ metadata. `check-env` reads those descriptors without importing server tools.
 
 ## Related
 
+- [Registry Overview](../registry) for categories, source ownership, and distribution
+
 - [CLI add](../cli/add) for command options
-- [Adding Tools](../cookbook/add-tools) for the installation steps
-- [Tools](../cookbook/tools) for source authoring
+- [Adding Tools](./install) for the installation steps
+- [Tools](./authoring) for source authoring

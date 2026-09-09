@@ -1,0 +1,48 @@
+---
+title: Registry Overview
+description: Choose gateway and tool extensions, and understand their source and installation contracts
+---
+
+Use the ChatJS registry to install editable source and the dependencies required
+by your selected extensions. shadcn distributes and installs items. The ChatJS
+CLI configures the app and generates tool registrations from installed descriptors.
+
+## Categories
+
+Choose a category based on what you want to change in your app.
+
+| Category | App behavior | Start here |
+| --- | --- | --- |
+| Gateways | Select the AI backend when creating an app | [Choose a gateway](../gateways/overview) |
+| Tools | Add server tools and their result renderers to an existing app | [Install tools](../tools/install) |
+
+For gateways, use `chat-js create --gateway` to install and configure the selected
+adapter. For tools, use `chat-js add` to install items and regenerate registrations.
+These categories have different activation contracts even though both use shadcn.
+
+## Source and ownership
+
+| Location in the repository | Responsibility |
+| --- | --- |
+| `packages/registry/src/gateways/<id>/gateway.ts` | Canonical gateway implementations |
+| `packages/registry/src/tools/<id>/` | Canonical tools and renderers |
+| `packages/registry/registry.ts` | Item files, dependencies, targets, and metadata |
+| `packages/registry/dist/r/` | Generated registry JSON for distribution |
+| `packages/gateways/` | Shared gateway contracts and runtime utilities |
+| `packages/cli/` | App creation, installation, and registration generation |
+| `apps/chat/` | Working reference app and app template source |
+
+Author and test TypeScript source. The registry build serializes metadata and
+runs shadcn to embed that source in distributable JSON. Do not edit generated JSON.
+
+Your app owns the installed source. Its selected gateway occupies
+`lib/ai/gateway.ts`. Built-in registry tools coexist under `tools/chatjs/<id>/`.
+Keep manual tool registrations in `custom-tools.ts` and `custom-ui.ts`, leaving
+`tools.ts` and `ui.ts` to the generator. Product tools under `tools/platform/`
+remain part of the app.
+
+## Registry guides
+
+- [Namespaces](./namespaces) explains item addresses and installation targets.
+- [Authoring and publishing](./authoring) explains the source-to-JSON workflow.
+- [Building and testing](./testing) explains how to verify distributed items.

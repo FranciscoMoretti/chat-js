@@ -1,0 +1,41 @@
+---
+title: Building and Testing
+description: Verify source behavior and the generated registry installation contract
+---
+
+Run these checks from the repository root with dependencies installed:
+
+```bash
+bun run --cwd packages/registry test:types
+bun run --cwd packages/registry test:unit
+bun run --cwd packages/registry build
+```
+
+## Check the distributed item
+
+Source tests verify implementation behavior. Install the generated JSON into an
+independent ChatJS app to also check file targets, dependencies, and registration.
+For a tool published at a test endpoint:
+
+```bash
+npx @chat-js/cli@latest add https://example.com/r/word-count.json
+```
+
+Replace the example URL with the built item's endpoint. Run the receiving app's
+type checks and environment validation, then exercise the installed item.
+For gateways, create an app with the selected gateway and send a real message.
+
+## What each check proves
+
+| Check | Detects |
+| --- | --- |
+| Source type checks and unit tests | Invalid contracts and incorrect implementation behavior |
+| Registry build | Invalid registry definitions and missing source files |
+| Installation into an independent app | Missing dependencies, incorrect targets, and registration problems |
+| Receiving app type checks | Incompatible imports and types in the actual composition |
+| Runtime request | Credential, provider, and runtime integration failures |
+
+Type checks cannot verify remote credentials or guarantee every combination of
+third-party source works. Test the composition you distribute and exercise its
+external integrations. See [Authoring and Publishing](./authoring) for the build's
+source ownership boundaries.

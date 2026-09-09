@@ -1,0 +1,38 @@
+---
+title: Retrieve URL
+description: Extract structured content from a single web page through Firecrawl
+---
+
+## Installation
+
+Start in a ChatJS app with `chat.config.ts` and `components.json`.
+Set `FIRECRAWL_API_KEY` in your app environment before starting the server.
+The installed descriptor declares this credential requirement.
+
+```bash
+npx @chat-js/cli@latest add retrieve-url
+```
+
+The command installs the server tool, renderer, and registration descriptor under
+`tools/chatjs/retrieve-url/`, along with required dependencies and shared renderer
+helpers. It then regenerates the app's tool registrations.
+
+## Usage
+
+Ask your chat model to retrieve a specific public page and provide its complete URL. Use a model that supports tool calling.
+
+The tool accepts a `url` string using HTTP or HTTPS. It scrapes the page and
+uses extraction when title, description, or content is missing. Successful
+results include title, content, URL, description, and optional language.
+
+## Behavior and limitations
+
+This item retrieves a supplied page, rather than searching the web. Missing
+credentials, invalid URLs, and provider failures produce error results.
+Returned URLs omit query strings and fragments.
+
+## Customize
+
+Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation.
+See [Installation](./install) for updates and sync, and
+[Authoring Tools](./authoring) to publish your own item.
