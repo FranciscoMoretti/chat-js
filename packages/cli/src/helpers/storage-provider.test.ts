@@ -1,3 +1,5 @@
+import { builtInStorage } from "../../../registry/src/storage/catalog";
+import { itemAddress } from "../registry/shadcn";
 import { describe, expect, it } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -11,6 +13,12 @@ import { resolveStorage } from "../registry/storage";
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 
 describe("storage registry integration", () => {
+  it("resolves every built-in provider ID to its published item name", () => {
+    for (const item of builtInStorage) {
+      expect(itemAddress(item.meta.chatjs.id, "storage")).toBe(`@chatjs/${item.name}`);
+    }
+    expect(itemAddress("@acme/bucket", "storage")).toBe("@acme/bucket");
+  });
 	it("preserves Files SDK credential-chain and configured-option behavior", () => {
 		expect(
 			getStorageEnvironmentRequirements("s3", { region: "us-east-1" }),
