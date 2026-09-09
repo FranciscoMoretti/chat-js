@@ -10,6 +10,7 @@ const contentSections = [
   "gateways",
   "platforms",
   "reference",
+  "registry",
   "tools",
 ] as const;
 
@@ -71,6 +72,7 @@ export default defineConfig({
     ],
   },
   redirects: [
+    { from: "/core/registry", to: "/registry" },
     { from: "/core/tool-registry", to: "/tools/overview" },
     { from: "/cookbook/add-tools", to: "/tools/install" },
     { from: "/cookbook/tools", to: "/tools/authoring" },
@@ -106,29 +108,35 @@ export default defineConfig({
           ],
         },
         {
+          label: "Gateways",
+          items: [
+            "/gateways/overview",
+            "/gateways/vercel",
+            "/gateways/openrouter",
+            "/gateways/openai",
+            "/gateways/openai-compatible",
+            "/gateways/litellm",
+            "/gateways/custom",
+          ],
+        },
+        {
+          label: "Tools",
+          items: [
+            "/tools/overview",
+            "/tools/install",
+            "/tools/word-count",
+            "/tools/get-weather",
+            "/tools/retrieve-url",
+            "/tools/authoring",
+          ],
+        },
+        {
           label: "Registry",
           items: [
-            "/core/registry",
-            {
-              label: "Gateways",
-              items: [
-                "/gateways/overview",
-                "/gateways/vercel",
-                "/gateways/openrouter",
-                "/gateways/openai",
-                "/gateways/openai-compatible",
-                "/gateways/litellm",
-                "/gateways/custom",
-              ],
-            },
-            {
-              label: "Tools",
-              items: [
-                "/tools/overview",
-                "/tools/install",
-                "/tools/authoring",
-              ],
-            },
+            "/registry",
+            "/registry/namespaces",
+            "/registry/authoring",
+            "/registry/testing",
           ],
         },
         {

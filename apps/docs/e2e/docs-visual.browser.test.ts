@@ -3,8 +3,14 @@ import { expect, test } from "vitest";
 
 const pages = [
 	{ name: "home", path: "/docs" },
-	{ name: "registry", path: "/docs/core/registry" },
+	{ name: "registry", path: "/docs/registry" },
 	{ name: "tools", path: "/docs/tools/authoring" },
+	{ name: "namespaces", path: "/docs/registry/namespaces" },
+	{ name: "publishing", path: "/docs/registry/authoring" },
+	{ name: "registry-testing", path: "/docs/registry/testing" },
+	{ name: "word-count", path: "/docs/tools/word-count" },
+	{ name: "get-weather", path: "/docs/tools/get-weather" },
+	{ name: "retrieve-url", path: "/docs/tools/retrieve-url" },
 	{ name: "quickstart", path: "/docs/quickstart" },
 	{ name: "changelog", path: "/docs/changelog" },
 	{ name: "cookbook", path: "/docs/cookbook" },

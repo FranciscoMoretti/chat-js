@@ -20,20 +20,6 @@ For gateways, use `chat-js create --gateway` to install and configure the select
 adapter. For tools, use `chat-js add` to install items and regenerate registrations.
 These categories have different activation contracts even though both use shadcn.
 
-Layouts and caches are not registry categories yet. Existing layout recipes and
-cache configuration do not imply a registry installation contract.
-
-## Namespaces and item names
-
-Configure registry source aliases such as `@chatjs` or `@acme` in `components.json`.
-An address such as `@chatjs/word-count` identifies an item from that source.
-The item's `meta.chatjs.kind` identifies its category independently of its name.
-
-Source folders, public item names, and installed paths are separate. The built-in
-Vercel item is named `vercel-gateway`, is authored under `src/gateways/vercel/`,
-and installs into `lib/ai/gateway.ts`. Changing a registry alias does not change an
-item's explicit file targets.
-
 ## Source and ownership
 
 | Location in the repository | Responsibility |
@@ -55,17 +41,8 @@ Keep manual tool registrations in `custom-tools.ts` and `custom-ui.ts`, leaving
 `tools.ts` and `ui.ts` to the generator. Product tools under `tools/platform/`
 remain part of the app.
 
-## Author and verify an extension
+## Registry guides
 
-Follow the category's contract:
-
-- [Custom gateways](../gateways/custom) describes adapter exports, capabilities,
-  credentials, and model defaults.
-- [Authoring tools](../tools/authoring) describes server and renderer exports,
-  descriptors, and environment requirements.
-- [Tool registration](../tools/overview) explains generated files, customizations,
-  and direct shadcn installation.
-
-Test source behavior, then install the built item into an independent app and
-run its type checks. This verifies file targets, dependencies, and local contracts.
-A real provider request is still needed to verify credentials and remote behavior.
+- [Namespaces](./namespaces) explains item addresses and installation targets.
+- [Authoring and publishing](./authoring) explains the source-to-JSON workflow.
+- [Building and testing](./testing) explains how to verify distributed items.
