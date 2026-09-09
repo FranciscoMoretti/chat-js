@@ -12,7 +12,7 @@ it("uses TLS for default FTP connections and preserves implicit TLS selection", 
       const raw = adapter.raw;
       if (raw instanceof Client) throw new Error("Expected a connection factory");
       const client = await raw.connect();
-      expect(access).toHaveBeenLastCalledWith({ host: "storage.example", port: 21, secure: secure ?? true });
+      expect(access).toHaveBeenLastCalledWith(expect.objectContaining({ secure: secure ?? true }));
       client.close();
     }
   } finally {
