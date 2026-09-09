@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveUsage, userCredit } from "./schema";
 
@@ -23,6 +23,28 @@ export async function recordEveUsage(input: {
       (!Number.isFinite(input.costUsd) || input.costUsd < 0))
   ) {
     throw new Error("Invalid Eve usage evidence.");
+  }
+  // A known cost and its debit commit together. Replaying that same evidence
+  // needs no credit-row lock or another turn-total calculation.
+  const [settled] = await db
+    .select()
+    .from(eveUsage)
+    .where(
+      and(
+        eq(eveUsage.eventId, input.eventId),
+        eq(eveUsage.ownerId, input.ownerId),
+        eq(eveUsage.sessionId, input.sessionId),
+        eq(eveUsage.turnId, input.turnId),
+        isNotNull(eveUsage.costUsd)
+      )
+    );
+  if (settled) {
+    const incoming =
+      input.costUsd === undefined ? null : input.costUsd.toFixed(12);
+    if (hasConflictingCost(settled.costUsd, incoming)) {
+      throw new Error("Eve usage amount changed; reconcile provider evidence.");
+    }
+    return true;
   }
   return await db.transaction(async (tx) => {
     await tx

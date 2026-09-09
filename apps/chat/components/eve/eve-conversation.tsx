@@ -1,7 +1,8 @@
 "use client";
 
 import { useEveAgent } from "eve/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import {
   Conversation,
   ConversationContent,
@@ -12,7 +13,17 @@ import { Button } from "@/components/ui/button";
 import { sendCommand } from "@/lib/eve/send-command";
 import { EveMessages } from "./eve-messages";
 
+const pendingMessageSchema = z.object({
+  message: z.string(),
+  afterSequence: z.number(),
+  checkUntil: z.number(),
+});
+
 export function EveConversation({ sessionId }: { sessionId: string }) {
+  const storageKey = `chatjs.eve.pending-message:${sessionId}`;
+  const [pendingMessage, setPendingMessage] = useState<z.infer<
+    typeof pendingMessageSchema
+  > | null>(null);
   const commandError = useRef<Error | undefined>(undefined);
   const afterCancellation = useRef(0);
   const receivedMessages = useRef(0);
@@ -51,6 +62,52 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
     agent.status === "streaming" ||
     agent.status === "submitted" ||
     agent.status === "resuming";
+  useEffect(() => {
+    const stored = sessionStorage.getItem(storageKey);
+    if (!stored) {
+      return;
+    }
+    try {
+      const pending = pendingMessageSchema.safeParse(JSON.parse(stored));
+      if (pending.success) {
+        setPendingMessage(pending.data);
+      }
+    } catch {
+      sessionStorage.removeItem(storageKey);
+    }
+  }, [storageKey]);
+  useEffect(() => {
+    if (!pendingMessage) {
+      return;
+    }
+    const accepted = agent.events.some(
+      (event) =>
+        event.type === "message.received" &&
+        event.data.sequence > pendingMessage.afterSequence &&
+        event.data.message === pendingMessage.message
+    );
+    if (accepted) {
+      sessionStorage.removeItem(storageKey);
+      setPendingMessage(null);
+      return;
+    }
+    // A replay can reach the previous turn's boundary before a pending POST
+    // is accepted. Check the native log again; never resend the input.
+    if (busy || commandPending || Date.now() >= pendingMessage.checkUntil) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      agent.resume().catch(() => undefined);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [
+    agent.events,
+    agent.resume,
+    busy,
+    commandPending,
+    pendingMessage,
+    storageKey,
+  ]);
   const hasApproval = agent.data.messages.some((message) =>
     message.parts.some(
       (part) =>
@@ -107,6 +164,9 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
   if (busy) {
     statusLabel = "Responding…";
   }
+  if (agent.status === "resuming") {
+    statusLabel = "Restoring conversation…";
+  }
   if (hasApproval) {
     statusLabel = "Waiting for your input";
   }
@@ -134,15 +194,63 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
         {(error || agent.error || durableError) && (
           <p role="alert">{error || agent.error?.message || durableError}</p>
         )}
+        {pendingMessage && !commandPending && (
+          <div className="space-y-2 text-sm" role="status">
+            <p>
+              Message delivery is unconfirmed. Your text is saved in this tab.
+            </p>
+            <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
+            <Button
+              onClick={() => {
+                setDraft((current) =>
+                  current
+                    ? `${current}\n\n${pendingMessage.message}`
+                    : pendingMessage.message
+                );
+                sessionStorage.removeItem(storageKey);
+                setPendingMessage(null);
+                setError(
+                  "Delivery is unconfirmed. Check the conversation before sending this message again."
+                );
+              }}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              Restore draft
+            </Button>
+          </div>
+        )}
         <ControlledChatComposer
           busy={busy}
-          disabled={busy || commandPending || cancelPending || hasApproval}
+          disabled={
+            busy ||
+            commandPending ||
+            cancelPending ||
+            hasApproval ||
+            !!pendingMessage
+          }
           draft={draft}
           onDraftChange={setDraft}
           onStop={cancel}
           onSubmit={() =>
             run(async () => {
               const submitted = draft;
+              const pending = {
+                message: submitted.trim(),
+                checkUntil: Date.now() + 60_000,
+                afterSequence: Math.max(
+                  -1,
+                  ...agent.events.flatMap((event) =>
+                    event.type === "message.received"
+                      ? [event.data.sequence]
+                      : []
+                  )
+                ),
+              };
+              // Save before clearing: a reload may happen before Eve accepts it.
+              sessionStorage.setItem(storageKey, JSON.stringify(pending));
+              setPendingMessage(pending);
               setDraft("");
               try {
                 await send(() => agent.send(submitted.trim()), true);
@@ -154,15 +262,17 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
           }
           stopDisabled={cancelPending || agent.status === "resuming"}
         />
-        <Button
-          disabled={commandPending || cancelPending}
-          onClick={() => run(agent.resume)}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          Reconnect
-        </Button>
+        {(error || agent.error || durableError) && (
+          <Button
+            disabled={busy || commandPending || cancelPending}
+            onClick={() => run(agent.resume)}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            Reconnect
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -530,3 +530,102 @@ test("stalled creation releases the composer and retries the retained operation"
     release?.();
   }
 });
+
+test("reload during an accepted turn restores the user message and follows the response", async ({
+  page,
+}) => {
+  await create(page, "hello");
+  await expect(
+    page.getByText("Verified: hello", { exact: true })
+  ).toBeVisible();
+  const accepted = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes("/api/eve/v1/session/")
+  );
+  await page
+    .getByRole("textbox", { name: "Message", exact: true })
+    .fill("slow reload recovery");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  expect((await accepted).ok()).toBe(true);
+  await page.reload();
+  await expect(page.getByRole("log")).toContainText("slow reload recovery");
+  await expect(
+    page.getByText("Verified: slow reload recovery", { exact: true })
+  ).toBeVisible();
+});
+
+test("reload before acceptance recovers a late message without resending", async ({
+  page,
+}) => {
+  await create(page, "hello");
+  await expect(
+    page.getByText("Verified: hello", { exact: true })
+  ).toBeVisible();
+  const dispatched = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      request.url().includes("/api/eve/v1/session/")
+  );
+  await page
+    .getByRole("textbox", { name: "Message", exact: true })
+    .fill("slow early reload");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await dispatched;
+  // Let the request body reach the server while admission is still pending.
+  await page.waitForTimeout(500);
+  await page.reload();
+  await expect(
+    page.getByText("Verified: slow early reload", { exact: true })
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(
+    page.getByRole("log").getByText("slow early reload", { exact: true })
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("textbox", { name: "Message", exact: true })
+  ).toHaveText("");
+  await capture(page, "reload-recovered");
+});
+
+test("reload retains text when the send never reaches the server", async ({
+  page,
+}) => {
+  await create(page, "hello");
+  await expect(
+    page.getByText("Verified: hello", { exact: true })
+  ).toBeVisible();
+  await page.route("**/api/eve/v1/session/**", async (route) => {
+    if (route.request().method() === "POST") {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await route.abort().catch(() => undefined);
+    } else {
+      await route.continue();
+    }
+  });
+  await page
+    .getByRole("textbox", { name: "Message", exact: true })
+    .fill("retained before delivery");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.reload();
+  await expect(
+    page.getByText(
+      "Message delivery is unconfirmed. Your text is saved in this tab."
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByText("retained before delivery", { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("Verified: hello", { exact: true })
+  ).toBeVisible();
+  await capture(page, "reload-unconfirmed");
+  await page
+    .getByRole("button", { name: "Restore draft", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Message", exact: true })
+  ).toHaveText("retained before delivery");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
+  ).toBeVisible();
+});

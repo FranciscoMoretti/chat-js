@@ -65,7 +65,16 @@ async function handle(
     const result = await eveRequest(
       session.user.id,
       upstreamPath + (query.size ? `?${query}` : ""),
-      { method: request.method, body, signal: request.signal }
+      {
+        method: request.method,
+        body,
+        // Closing the reader must not cancel a validated command before Eve
+        // can durably accept it. Streaming reads still follow browser lifetime.
+        signal:
+          request.method === "GET"
+            ? request.signal
+            : AbortSignal.timeout(30_000),
+      }
     );
     const headers = new Headers({ "cache-control": "no-store" });
     for (const key of [
