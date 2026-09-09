@@ -481,3 +481,51 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   await expect(page.getByRole("log")).toContainText("Verified: keyboard send");
   expect(errors).toEqual([]);
 });
+
+test("stalled creation releases the composer and retries the retained operation", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const attempts: unknown[] = [];
+  let release: (() => void) | undefined;
+  const stalled = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/api/agent-conversations", async (route) => {
+    attempts.push(route.request().postDataJSON());
+    if (attempts.length === 1) {
+      await stalled;
+      await route.abort().catch(() => {
+        // The browser may have already closed this request after its timeout.
+      });
+    } else {
+      await route.fulfill({
+        status: 503,
+        json: { error: "Worker is unavailable. Please retry." },
+      });
+    }
+  });
+  try {
+    const composer = page.getByRole("textbox", {
+      name: "Message",
+      exact: true,
+    });
+    await composer.fill("retained timeout message");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "The request timed out" })
+    ).toContainText("The request timed out", { timeout: 35_000 });
+    await expect(composer).toBeEditable();
+    await expect(composer).toHaveText("retained timeout message");
+    await capture(page, "creation-timeout");
+    release?.();
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Worker is unavailable" })
+    ).toContainText("Worker is unavailable");
+    expect(attempts).toHaveLength(2);
+    expect(attempts[1]).toEqual(attempts[0]);
+  } finally {
+    release?.();
+  }
+});
