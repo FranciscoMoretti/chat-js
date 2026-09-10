@@ -37,7 +37,8 @@
 		"release": "changeset publish",
 		"dev:electron": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env electron -- turbo run electron:dev --filter=@chat-js/electron",
 		"build:electron": "turbo run electron:build --filter=@chat-js/electron",
-		"dist:electron": "turbo run electron:make --filter=@chat-js/electron"
+		"dist:electron": "turbo run electron:make --filter=@chat-js/electron",
+		"test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts"
 	},
 	"overrides": {
 		"//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",

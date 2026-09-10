@@ -1,2 +1,5 @@
 .next
 node_modules
+
+# Deterministic browser captures, uploaded to UI Verify
+/uiverify-screenshots/

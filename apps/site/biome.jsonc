@@ -5,7 +5,7 @@
   },
   "css": {
     "parser": {
-      "cssModules": false
+      "cssModules": true
     },
     "linter": {
       "enabled": false
