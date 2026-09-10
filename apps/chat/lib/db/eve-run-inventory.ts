@@ -31,16 +31,18 @@ export async function readEvePostgresRunInventory(
 /** Caller controls isolation and holds any write fences needed by this read. */
 export async function readEvePostgresRunInventoryInTransaction(
   query: TransactionSql,
-  sessionId: string
+  sessionId: string,
+  additionalRunIds: string[] = []
 ) {
+  const seeds = [...new Set([sessionId, ...additionalRunIds])];
   const runs = z.array(runRow).parse(
     await query`
     with recursive family(id, collector_id) as (
       select id, attributes->>'$eve.activity_collector'
       from workflow.workflow_runs
-      where id = ${sessionId}
-        or attributes->>'$rootRunId' = ${sessionId}
-        or attributes->>'$eve.root' = ${sessionId}
+          where id in ${query(seeds)}
+            or attributes->>'$rootRunId' in ${query(seeds)}
+            or attributes->>'$eve.root' in ${query(seeds)}
       union
       select child.id, child.attributes->>'$eve.activity_collector'
       from workflow.workflow_runs child

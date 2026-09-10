@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
+import postgres from "postgres";
 import { z } from "zod";
 import { db } from "../lib/db/client";
+import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
 import { beginEveConversationDeletion } from "../lib/db/eve-queries";
+import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
+import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -71,6 +75,30 @@ test("internal retirement settles usage after access revocation and is retryable
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
   expect(after.credits).toBe(before.credits);
+  const native = postgres(env.DATABASE_URL, { max: 1 });
+  try {
+    const resources = await fenceEvePostgresSession(native, binding.sessionId);
+    const scope = {
+      sessionId: binding.sessionId,
+      taskIdentifier: "workflow_flows",
+    };
+    await purgeEvePostgresQueue(native, { ...scope, runIds: resources.runIds });
+    const receipt = await purgeEvePostgresSessionPayloads(native, scope);
+    expect(receipt.runIds).toContain(binding.sessionId);
+    expect(
+      await native`select id from workflow.workflow_runs where id in ${native(receipt.runIds)}`
+    ).toEqual([]);
+    expect(await purgeEvePostgresSessionPayloads(native, scope)).toEqual(
+      receipt
+    );
+    const [settled] = await db
+      .select()
+      .from(userCredit)
+      .where(eq(userCredit.userId, owner));
+    expect(settled.credits).toBe(after.credits);
+  } finally {
+    await native.end();
+  }
   // Remove only this retired test binding; this is not a production purge assertion.
   await db.transaction(async (tx) => {
     await tx

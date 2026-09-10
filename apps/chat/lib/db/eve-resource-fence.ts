@@ -8,6 +8,12 @@ create table if not exists workflow.eve_resource_fences (
   resource text primary key,
   fenced boolean not null default false
 );
+create table if not exists workflow.eve_payload_purges (
+  session_id text not null, task_identifier text not null,
+  run_ids text[] not null, stream_ids text[] not null,
+  completed_at timestamptz not null default now(),
+  primary key (session_id, task_identifier)
+);
 create or replace function workflow.eve_assert_writable(resources text[])
 returns void language plpgsql set search_path = pg_catalog as $$
 declare resource_id text; is_fenced boolean;

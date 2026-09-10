@@ -11,6 +11,7 @@ export default defineConfig({
       "tests/eve-resource-fence.e2e.ts",
       "tests/eve-queue-inventory.e2e.ts",
       "tests/eve-queue-fence.e2e.ts",
+      "tests/eve-payload-purge.e2e.ts",
     ],
   },
 });
