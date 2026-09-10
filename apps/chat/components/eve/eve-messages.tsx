@@ -136,7 +136,7 @@ function Part({
   if (part.type !== "dynamic-tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
-  if (part.toolName === "codeExecution") {
+  if (part.toolName === "codeExecution" || part.toolName === "webSearch") {
     return (
       <EvePlatformToolResult
         isReadonly={isReadonly}

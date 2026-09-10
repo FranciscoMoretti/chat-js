@@ -1,4 +1,5 @@
 import { ArrowRight, FileText } from "lucide-react";
+import { useId } from "react";
 import {
   Dialog,
   DialogContent,
@@ -134,11 +135,10 @@ function ShowSourcesButton({
 }
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
+  const sourcesDialogId = useId();
   if (sources.length === 0) {
     return null;
   }
-
-  const sourcesDialogId = "show-all-sources-dialog";
 
   return (
     <div className="space-y-3">

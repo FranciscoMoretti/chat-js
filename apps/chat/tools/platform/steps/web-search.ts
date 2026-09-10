@@ -1,5 +1,6 @@
 import FirecrawlApp, { type SearchParams } from "@mendable/firecrawl-js";
-import { type TavilySearchOptions, tavily } from "@tavily/core";
+import type { TavilySearchOptions } from "@tavily/core";
+import { z } from "zod";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -24,7 +25,6 @@ export interface WebSearchResponse {
 }
 
 // Initialize search providers lazily to avoid runtime errors when keys are missing
-const tvly = env.TAVILY_API_KEY ? tavily({ apiKey: env.TAVILY_API_KEY }) : null;
 const firecrawl = env.FIRECRAWL_API_KEY
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
@@ -71,30 +71,67 @@ export async function webSearchStep({
   query,
   maxResults,
   providerOptions,
+  abortSignal,
 }: {
   query: string;
   maxResults: number;
   providerOptions: SearchProviderOptions;
+  abortSignal?: AbortSignal;
 }): Promise<WebSearchResponse> {
   try {
+    abortSignal?.throwIfAborted();
     let results: WebSearchResult[] = [];
 
     if (providerOptions.provider === "tavily") {
-      if (!tvly) {
+      if (!env.TAVILY_API_KEY) {
         return {
           results: [],
           error:
             "Tavily is not configured. Set TAVILY_API_KEY or choose a different provider.",
         };
       }
-      const response = await tvly.search(query, {
-        searchDepth: providerOptions.searchDepth || "basic",
-        maxResults,
-        includeAnswer: true,
-        ...providerOptions,
+      const response = await fetch("https://api.tavily.com/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.TAVILY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.any([
+          ...(abortSignal ? [abortSignal] : []),
+          AbortSignal.timeout((providerOptions.timeout ?? 60) * 1000),
+        ]),
+        body: JSON.stringify({
+          query,
+          search_depth: providerOptions.searchDepth ?? "basic",
+          max_results: providerOptions.maxResults ?? maxResults,
+          topic: providerOptions.topic ?? "general",
+          days: providerOptions.days,
+          include_answer: providerOptions.includeAnswer ?? true,
+          include_images: providerOptions.includeImages,
+          include_image_descriptions: providerOptions.includeImageDescriptions,
+          include_raw_content: providerOptions.includeRawContent,
+          include_domains: providerOptions.includeDomains,
+          exclude_domains: providerOptions.excludeDomains,
+          time_range: providerOptions.timeRange,
+          chunks_per_source: providerOptions.chunksPerSource,
+        }),
       });
+      if (!response.ok) {
+        throw new Error(`Search provider returned HTTP ${response.status}.`);
+      }
+      const result = z
+        .object({
+          results: z.array(
+            z.object({
+              url: z.string(),
+              title: z.string(),
+              content: z.string(),
+            })
+          ),
+        })
+        .parse(await response.json());
 
-      results = response.results.map((r) => ({
+      results = result.results.map((r) => ({
         source: "web",
         title: r.title,
         url: r.url,
@@ -129,6 +166,7 @@ export async function webSearchStep({
     );
     return { results };
   } catch (error: unknown) {
+    abortSignal?.throwIfAborted();
     const { message, stack, status, data } = extractErrorInfo(error);
 
     log.error(

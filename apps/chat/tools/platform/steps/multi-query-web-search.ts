@@ -34,11 +34,13 @@ export async function multiQueryWebSearchStep({
   options,
   dataStream,
   toolCallId,
+  abortSignal,
 }: {
   queries: SearchQuery[];
   options: MultiQuerySearchOptions;
-  dataStream: StreamWriter;
+  dataStream: Pick<StreamWriter, "write">;
   toolCallId: string;
+  abortSignal?: AbortSignal;
 }): Promise<MultiQuerySearchResponse> {
   const updateId = generateUUID();
   try {
@@ -78,6 +80,7 @@ export async function multiQueryWebSearchStep({
       }
 
       const data = await webSearchStep({
+        abortSignal,
         query: query.query,
         maxResults: query.maxResults,
         providerOptions: queryProviderOptions,
@@ -85,6 +88,7 @@ export async function multiQueryWebSearchStep({
 
       return {
         query,
+        ...(data.error ? { error: data.error } : {}),
         results: deduplicateByDomainAndUrl(data.results).map((obj) => ({
           url: obj.url,
           title: obj.title,
@@ -117,8 +121,12 @@ export async function multiQueryWebSearchStep({
 
     return {
       searches: searchResults,
+      ...(searchResults.some((search) => search.error)
+        ? { error: "Some searches failed. Try again or use another source." }
+        : {}),
     };
   } catch (error: unknown) {
+    abortSignal?.throwIfAborted();
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
 

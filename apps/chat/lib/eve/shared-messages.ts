@@ -3,7 +3,7 @@ import {
   type EveMessagePart,
   type MessageStreamEvent,
 } from "eve/client";
-import { evePlatformOutput } from "./platform-result";
+import { evePlatformOutput, isEvePlatformTool } from "./platform-result";
 
 export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
   if (part.type === "text" || part.type === "reasoning") {
@@ -26,7 +26,7 @@ export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
     let publicPart: EveMessagePart = content;
     if (
       content.state === "output-available" &&
-      content.toolName === "codeExecution"
+      isEvePlatformTool(content.toolName)
     ) {
       const result = evePlatformOutput.safeParse(content.output);
       if (result.success) {

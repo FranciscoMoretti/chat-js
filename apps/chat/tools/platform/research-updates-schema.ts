@@ -49,7 +49,7 @@ const WritingSchema = TaskUpdateSchema.extend({
   message: z.string().optional(),
 });
 
-const ResearchUpdateSchema = z.discriminatedUnion("type", [
+export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WebSearchSchema,
   StartedSchema,
   CompletedSchema,

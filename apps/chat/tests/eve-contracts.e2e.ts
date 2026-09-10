@@ -290,7 +290,10 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
   }
 });
 
-test("tool receipts debit once per native call and keep missing cost evidence unresolved", async () => {
+test.each([
+  "codeExecution",
+  "webSearch",
+])("%s receipts debit once per native call and keep missing cost evidence unresolved", async (toolName) => {
   const sessionId = crypto.randomUUID();
   const callId = crypto.randomUUID();
   const event: MessageStreamEvent = {
@@ -303,7 +306,7 @@ test("tool receipts debit once per native call and keep missing cost evidence un
       status: "completed",
       result: {
         kind: "tool-result",
-        toolName: "codeExecution",
+        toolName,
         callId,
         output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
       },

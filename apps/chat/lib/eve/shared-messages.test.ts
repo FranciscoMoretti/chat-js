@@ -64,10 +64,13 @@ it("retains clarification prompts and answers without their response identifiers
   expect(json).not.toContain("option-private");
 });
 
-it("shared platform results retain the output without billing metadata", () => {
+it.each([
+  "codeExecution",
+  "webSearch",
+])("shared %s results retain the output without billing metadata", (toolName) => {
   const [part] = sharedEvePart({
     type: "dynamic-tool",
-    toolName: "codeExecution",
+    toolName,
     toolCallId: "call",
     state: "output-available",
     input: { title: "Test", language: "javascript", code: "console.log(42)" },

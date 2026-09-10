@@ -46,7 +46,7 @@ export async function describeEveTool<TInput, TOutput>(
 export async function* executeEveTool<TInput, TOutput>(
   definition: Tool<TInput, TOutput>,
   input: unknown,
-  context: ToolContext,
+  context: Pick<ToolContext, "callId" | "abortSignal">,
   messages: readonly ModelMessage[]
 ) {
   const schema = asSchema(definition.inputSchema);

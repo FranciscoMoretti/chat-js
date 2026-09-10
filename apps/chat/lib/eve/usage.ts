@@ -1,6 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 import { recordEveUsage } from "../db/eve-billing";
-import { evePlatformResult } from "./platform-result";
+import { evePlatformResult, isEvePlatformTool } from "./platform-result";
 
 export async function ingestEveUsage(
   ownerId: string,
@@ -10,7 +10,7 @@ export async function ingestEveUsage(
   if (
     event.type === "action.result" &&
     event.data.result.kind === "tool-result" &&
-    event.data.result.toolName === "codeExecution"
+    isEvePlatformTool(event.data.result.toolName)
   ) {
     const result = evePlatformResult.safeParse(event.data.result.output);
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;

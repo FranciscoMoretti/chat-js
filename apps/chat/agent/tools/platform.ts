@@ -1,50 +1,39 @@
 import { defineDynamic, defineTool, toolOutput } from "eve/tools";
 import superjson from "superjson";
-import { config } from "../../lib/config";
-import { describeEveTool, executeEveTool } from "../../lib/eve/adapt-tool";
+import { describeEveTool } from "../../lib/eve/adapt-tool";
+import { evePlatformResult } from "../../lib/eve/platform-result";
 import {
-  createEvePlatformResult,
-  evePlatformResult,
-} from "../../lib/eve/platform-result";
-import { codeExecution } from "../../tools/platform/code-execution";
+  executeEvePlatformTool,
+  getEvePlatformTools,
+} from "../../lib/eve/platform-tools";
 
 export default defineDynamic({
   events: {
     "step.started": async (_event, context) => {
-      if (!config.ai.tools.codeExecution.enabled) {
-        return null;
-      }
       const messages = superjson.stringify(context.messages);
-      return {
-        codeExecution: defineTool({
-          ...(await describeEveTool(codeExecution({}))),
-          async *execute(input, toolContext) {
-            if (!config.ai.tools.codeExecution.enabled) {
-              throw new Error("Code execution is disabled.");
-            }
-            let costCents = 0;
-            const costs = {
-              addAPICost: (_name: string, cost: number) => {
-                if (!Number.isFinite(cost) || cost < 0) {
-                  throw new Error("Invalid platform tool cost.");
-                }
-                costCents += cost;
-              },
-            };
-            for await (const output of executeEveTool(
-              codeExecution({ costAccumulator: costs }),
+      const definitions: Record<string, ReturnType<typeof defineTool>> = {};
+      const tools = getEvePlatformTools({
+        dataStream: {
+          write() {
+            throw new Error("Tool description cannot emit progress.");
+          },
+        },
+      });
+      for (const [name, tool] of Object.entries(tools)) {
+        definitions[name] = defineTool<unknown, unknown>({
+          ...(await describeEveTool(tool)),
+          execute: (input, toolContext) =>
+            executeEvePlatformTool(
+              name,
               input,
               toolContext,
               superjson.parse(messages)
-            )) {
-              // This tool records only a fixed API charge, in cents.
-              yield createEvePlatformResult(output, costCents / 100);
-            }
-          },
-          toModelOutput: (output) =>
+            ),
+          toModelOutput: (output: unknown) =>
             toolOutput.json(evePlatformResult.parse(output).output),
-        }),
-      };
+        });
+      }
+      return definitions;
     },
   },
 });

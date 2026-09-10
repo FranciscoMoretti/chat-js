@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { StreamWriter } from "@/lib/ai/types";
-import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {
   type MultiQuerySearchOptions,
@@ -41,14 +40,16 @@ async function executeMultiQuerySearch({
   writeTopLevelUpdates,
   title,
   completeTitle,
+  abortSignal,
 }: {
   search_queries: Array<{ query: string; maxResults: number }>;
   options: MultiQuerySearchOptions;
-  dataStream: StreamWriter;
+  dataStream: Pick<StreamWriter, "write">;
   toolCallId: string;
   writeTopLevelUpdates: boolean;
   title: string;
   completeTitle: string;
+  abortSignal?: AbortSignal;
 }) {
   const log = createModuleLogger("tools/web-search");
   log.debug(
@@ -71,6 +72,7 @@ async function executeMultiQuerySearch({
   const totalSteps = 1;
 
   const { searches: searchResults, error } = await multiQueryWebSearchStep({
+    abortSignal,
     queries: search_queries,
     options,
     toolCallId,
@@ -99,7 +101,7 @@ async function executeMultiQuerySearch({
     { completedSteps, totalSteps, resultGroups: searchResults.length },
     "executeMultiQuerySearch complete"
   );
-  return { searches: searchResults };
+  return { searches: searchResults, ...(error ? { error } : {}) };
 }
 
 export const tavilyWebSearch = ({
@@ -108,9 +110,9 @@ export const tavilyWebSearch = ({
   costAccumulator,
   toolCallIdOverride,
 }: {
-  dataStream: StreamWriter;
+  dataStream: Pick<StreamWriter, "write">;
   writeTopLevelUpdates: boolean;
-  costAccumulator?: CostAccumulator;
+  costAccumulator?: { addAPICost(name: string, cost: number): void };
   toolCallIdOverride?: string;
 }) =>
   tool({
@@ -148,7 +150,10 @@ Avoid:
         searchDepth: "basic" | "advanced" | null;
         exclude_domains: string[] | null;
       },
-      { toolCallId: sdkToolCallId }: { toolCallId: string }
+      {
+        toolCallId: sdkToolCallId,
+        abortSignal,
+      }: { toolCallId: string; abortSignal?: AbortSignal }
     ) => {
       const toolCallId = toolCallIdOverride ?? sdkToolCallId;
       const log = createModuleLogger("tools/web-search");
@@ -163,10 +168,11 @@ Avoid:
       );
       // Handle nullable arrays with defaults
       const safeTopics = topics ?? ["general"];
-      const _safeSearchDepth = searchDepth ?? "basic";
+      const safeSearchDepth = searchDepth ?? "basic";
       const safeExcludeDomains = exclude_domains ?? [];
 
       const result = await executeMultiQuerySearch({
+        abortSignal,
         search_queries: search_queries.map((query) => ({
           query: query.query,
           maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
@@ -174,6 +180,7 @@ Avoid:
         options: {
           baseProviderOptions: {
             provider: "tavily",
+            searchDepth: safeSearchDepth,
           },
           topics: safeTopics,
           excludeDomains: safeExcludeDomains,
@@ -198,9 +205,9 @@ export const firecrawlWebSearch = ({
   costAccumulator,
   toolCallIdOverride,
 }: {
-  dataStream: StreamWriter;
+  dataStream: Pick<StreamWriter, "write">;
   writeTopLevelUpdates: boolean;
-  costAccumulator?: CostAccumulator;
+  costAccumulator?: { addAPICost(name: string, cost: number): void };
   toolCallIdOverride?: string;
 }) =>
   tool({
@@ -221,7 +228,10 @@ Avoid:
       }: {
         search_queries: { query: string; maxResults: number | null }[];
       },
-      { toolCallId: sdkToolCallId }: { toolCallId: string }
+      {
+        toolCallId: sdkToolCallId,
+        abortSignal,
+      }: { toolCallId: string; abortSignal?: AbortSignal }
     ) => {
       const toolCallId = toolCallIdOverride ?? sdkToolCallId;
       const log = createModuleLogger("tools/web-search");
@@ -230,6 +240,7 @@ Avoid:
         "firecrawlWebSearch.execute"
       );
       const result = await executeMultiQuerySearch({
+        abortSignal,
         search_queries: search_queries.map((query) => ({
           query: query.query,
           maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
