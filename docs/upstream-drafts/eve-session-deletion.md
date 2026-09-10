@@ -78,4 +78,6 @@ Local Postgres tests now exercise a provider extension in `apps/chat/lib/db/eve-
 
 This extension is an explicit provider migration primitive, not automatically installed by an application request or application database migration. It adds a small registry row per observed run/stream identity and row-lock work to writes. It currently fences only the caller's known resource set: it does not establish a complete family inventory barrier, fence Graphile queue payloads, delete sandbox/blob data, or report completed erasure. Those remain integration requirements before enabling full conversation deletion.
 
+The local session coordinator now closes the inventory-to-fence race for the reachable native graph in one READ COMMITTED transaction. It fences the root, reads and fences descendants/streams, and re-reads after waiting for their admitted writers until no new resources appear. Active runs, missing references, ambiguous streams, or failure to stabilize roll back the transaction. A local concurrency test verifies that a collector child and its stream committed while the collector fence waits are included on the next pass. This still does not prove coverage of unlinked resources, queues, sandboxes, or blobs.
+
 All reproduction and implementation tests use local Postgres. No production data or legacy conversation migration is involved.

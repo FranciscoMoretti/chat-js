@@ -4,6 +4,7 @@ import {
   fenceEvePostgresResources,
   installEvePostgresResourceFence,
 } from "../lib/db/eve-resource-fence";
+import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
 import { env } from "../lib/env";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -173,4 +174,65 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
   expect(
     await query`select id from workflow.workflow_stream_chunks where stream_id = ${streamId}`
   ).toEqual([]);
+});
+
+test("session fencing rolls back for an active child and succeeds after retirement", async () => {
+  const root = await run();
+  const child = await run("running");
+  await query`update workflow.workflow_runs set attributes = ${query.json({ $parentRunId: root })} where id = ${child}`;
+  await expect(fenceEvePostgresSession(query, root)).rejects.toThrow(
+    "Retire all reachable runs"
+  );
+  const rootStream = await stream(root);
+  await query`update workflow.workflow_runs set status = 'completed' where id = ${child}`;
+  const result = await fenceEvePostgresSession(query, root);
+  expect(result.runIds.sort()).toEqual([root, child].sort());
+  expect(result.streamIds).toEqual([rootStream]);
+  expect(await fenceEvePostgresSession(query, root)).toEqual(result);
+  await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
+});
+
+test("session fencing re-inventories a collector child committed while its fence waits", async () => {
+  const collector = await run();
+  const root = await run();
+  await query`update workflow.workflow_runs set attributes = ${query.json({ "$eve.activity_collector": collector })} where id = ${root}`;
+  const child = crypto.randomUUID();
+  const childStream = crypto.randomUUID();
+  runIds.push(child);
+  streamIds.push(childStream);
+  const entered = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const writer = query.begin(async (tx) => {
+    await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
+      values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
+    await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
+      values (${crypto.randomUUID()}, ${childStream}, ${child}, ${Buffer.from("admitted")}, false)`;
+    entered.resolve();
+    await release.promise;
+  });
+  await entered.promise;
+  const fencer = postgres(env.DATABASE_URL, { max: 1 });
+  const [backend] = await fencer`select pg_backend_pid() as pid`;
+  const fencing = fenceEvePostgresSession(fencer, root);
+  try {
+    try {
+      await expect
+        .poll(async () => {
+          const [row] =
+            await query`select cardinality(pg_blocking_pids(${backend.pid})) > 0 as blocked`;
+          return row.blocked;
+        })
+        .toBe(true);
+    } finally {
+      release.resolve();
+      await writer;
+    }
+    const result = await fencing;
+    expect(result.runIds.sort()).toEqual([root, collector, child].sort());
+    expect(result.streamIds).toEqual([childStream]);
+    await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
+  } finally {
+    await Promise.allSettled([writer, fencing]);
+    await fencer.end();
+  }
 });

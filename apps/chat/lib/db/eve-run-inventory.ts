@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 const runRow = z.object({
@@ -23,81 +23,89 @@ export async function readEvePostgresRunInventory(
   return await connection.begin(
     "isolation level repeatable read read only",
     async (query) => {
-      const runs = z.array(runRow).parse(
-        await query`
-        with recursive family(id, collector_id) as (
-          select id, attributes->>'$eve.activity_collector'
-          from workflow.workflow_runs
-          where id = ${sessionId}
-            or attributes->>'$rootRunId' = ${sessionId}
-            or attributes->>'$eve.root' = ${sessionId}
-          union
-          select child.id, child.attributes->>'$eve.activity_collector'
-          from workflow.workflow_runs child
-          join family parent on
-            child.attributes->>'$parentRunId' = parent.id
-            or child.attributes->>'$eve.parent' = parent.id
-            or child.id = parent.collector_id
-        )
-        select run.id, run.status,
-          run.attributes->>'$parentRunId' as "parentId",
-          run.attributes->>'$eve.parent' as "eveParentId",
-          run.attributes->>'$eve.activity_collector' as "collectorId"
-        from workflow.workflow_runs run join family on family.id = run.id
-        order by run.id limit ${inventoryLimit + 1}
-      `
-      );
-      if (!runs.some((run) => run.id === sessionId)) {
-        throw new Error("The session run is missing; inventory is incomplete.");
-      }
-      if (runs.length > inventoryLimit) {
-        throw new Error("Run inventory exceeds the supported limit.");
-      }
-      const runIds = runs.map((run) => run.id);
-      const known = new Set(runIds);
-      const missingRunIds = [
-        ...new Set(
-          runs.flatMap((run) =>
-            [run.parentId, run.eveParentId, run.collectorId].filter(
-              (id): id is string => id !== null && !known.has(id)
-            )
-          )
-        ),
-      ].sort();
-      const streams = z.array(z.object({ id: z.string() })).parse(
-        await query`
-        select distinct stream_id as id from workflow.workflow_stream_chunks
-        where run_id in ${query(runIds)}
-        order by stream_id limit ${inventoryLimit + 1}
-      `
-      );
-      if (streams.length > inventoryLimit) {
-        throw new Error("Stream inventory exceeds the supported limit.");
-      }
-      // A stream can contain chunks associated with another run (or no run).
-      // Surface that ambiguity instead of treating its name as exclusive ownership.
-      const ambiguous = z.array(z.object({ id: z.string() })).parse(
-        await query`
-        select distinct candidate.stream_id as id
-        from workflow.workflow_stream_chunks candidate
-        where (candidate.run_id is null or candidate.run_id not in ${query(runIds)})
-          and exists (
-            select 1 from workflow.workflow_stream_chunks owned
-            where owned.stream_id = candidate.stream_id
-              and owned.run_id in ${query(runIds)}
-          )
-        order by candidate.stream_id limit ${inventoryLimit + 1}
-      `
-      );
-      return {
-        runs,
-        streamIds: streams.map((stream) => stream.id),
-        activeRunIds: runs
-          .filter((run) => run.status === "running" || run.status === "pending")
-          .map((run) => run.id),
-        missingRunIds,
-        ambiguousStreamIds: ambiguous.map((stream) => stream.id),
-      };
+      return await readEvePostgresRunInventoryInTransaction(query, sessionId);
     }
   );
+}
+
+/** Caller controls isolation and holds any write fences needed by this read. */
+export async function readEvePostgresRunInventoryInTransaction(
+  query: TransactionSql,
+  sessionId: string
+) {
+  const runs = z.array(runRow).parse(
+    await query`
+    with recursive family(id, collector_id) as (
+      select id, attributes->>'$eve.activity_collector'
+      from workflow.workflow_runs
+      where id = ${sessionId}
+        or attributes->>'$rootRunId' = ${sessionId}
+        or attributes->>'$eve.root' = ${sessionId}
+      union
+      select child.id, child.attributes->>'$eve.activity_collector'
+      from workflow.workflow_runs child
+      join family parent on
+        child.attributes->>'$parentRunId' = parent.id
+        or child.attributes->>'$eve.parent' = parent.id
+        or child.id = parent.collector_id
+    )
+    select run.id, run.status,
+      run.attributes->>'$parentRunId' as "parentId",
+      run.attributes->>'$eve.parent' as "eveParentId",
+      run.attributes->>'$eve.activity_collector' as "collectorId"
+    from workflow.workflow_runs run join family on family.id = run.id
+    order by run.id limit ${inventoryLimit + 1}
+  `
+  );
+  if (!runs.some((run) => run.id === sessionId)) {
+    throw new Error("The session run is missing; inventory is incomplete.");
+  }
+  if (runs.length > inventoryLimit) {
+    throw new Error("Run inventory exceeds the supported limit.");
+  }
+  const runIds = runs.map((run) => run.id);
+  const known = new Set(runIds);
+  const missingRunIds = [
+    ...new Set(
+      runs.flatMap((run) =>
+        [run.parentId, run.eveParentId, run.collectorId].filter(
+          (id): id is string => id !== null && !known.has(id)
+        )
+      )
+    ),
+  ].sort();
+  const streams = z.array(z.object({ id: z.string() })).parse(
+    await query`
+    select distinct stream_id as id from workflow.workflow_stream_chunks
+    where run_id in ${query(runIds)}
+    order by stream_id limit ${inventoryLimit + 1}
+  `
+  );
+  if (streams.length > inventoryLimit) {
+    throw new Error("Stream inventory exceeds the supported limit.");
+  }
+  // A stream can contain chunks associated with another run (or no run).
+  // Surface that ambiguity instead of treating its name as exclusive ownership.
+  const ambiguous = z.array(z.object({ id: z.string() })).parse(
+    await query`
+    select distinct candidate.stream_id as id
+    from workflow.workflow_stream_chunks candidate
+    where (candidate.run_id is null or candidate.run_id not in ${query(runIds)})
+      and exists (
+        select 1 from workflow.workflow_stream_chunks owned
+        where owned.stream_id = candidate.stream_id
+          and owned.run_id in ${query(runIds)}
+      )
+    order by candidate.stream_id limit ${inventoryLimit + 1}
+  `
+  );
+  return {
+    runs,
+    streamIds: streams.map((stream) => stream.id),
+    activeRunIds: runs
+      .filter((run) => run.status === "running" || run.status === "pending")
+      .map((run) => run.id),
+    missingRunIds,
+    ambiguousStreamIds: ambiguous.map((stream) => stream.id),
+  };
 }

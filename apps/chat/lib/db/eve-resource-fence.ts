@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 // Provider extension for the pinned Workflow Postgres schema. Install through
@@ -91,6 +91,16 @@ export async function fenceEvePostgresResources(
   connection: Sql,
   input: { runIds: string[]; streamIds: string[] }
 ) {
+  await connection.begin("isolation level read committed", async (query) => {
+    await fenceEvePostgresResourcesInTransaction(query, input);
+  });
+}
+
+/** Shares the caller's READ COMMITTED transaction with inventory coordination. */
+export async function fenceEvePostgresResourcesInTransaction(
+  query: TransactionSql,
+  input: { runIds: string[]; streamIds: string[] }
+) {
   const { runIds, streamIds } = z
     .object({
       runIds: z.array(z.string().min(1)).min(1).max(10_000),
@@ -103,33 +113,31 @@ export async function fenceEvePostgresResources(
       ...streamIds.map((id) => `stream:${id}`),
     ]),
   ].sort();
-  await connection.begin("isolation level read committed", async (query) => {
-    // Writers retain shared row locks through commit. This update waits for
-    // admitted writes and prevents later writes from crossing the fence.
-    for (const resource of resources) {
-      await query`
-        insert into workflow.eve_resource_fences(resource, fenced)
-        values (${resource}, true)
-        on conflict (resource) do update set fenced = true
-      `;
-    }
-    const active = await query`
-      select id from workflow.workflow_runs
-      where id in ${query(runIds)} and status not in ('completed', 'failed', 'cancelled')
-      limit 1
+  // Writers retain shared row locks through commit. This update waits for
+  // admitted writes and prevents later writes from crossing the fence.
+  for (const resource of resources) {
+    await query`
+      insert into workflow.eve_resource_fences(resource, fenced)
+      values (${resource}, true)
+      on conflict (resource) do update set fenced = true
     `;
-    if (active.length) {
-      throw new Error("Retire active runs before fencing their payloads.");
+  }
+  const active = await query`
+    select id from workflow.workflow_runs
+    where id in ${query(runIds)} and status not in ('completed', 'failed', 'cancelled')
+    limit 1
+  `;
+  if (active.length) {
+    throw new Error("Retire active runs before fencing their payloads.");
+  }
+  if (streamIds.length) {
+    const ambiguous = await query`
+      select stream_id from workflow.workflow_stream_chunks
+      where stream_id in ${query(streamIds)}
+        and (run_id is null or run_id not in ${query(runIds)}) limit 1
+    `;
+    if (ambiguous.length) {
+      throw new Error("Stream ownership must be resolved before fencing.");
     }
-    if (streamIds.length) {
-      const ambiguous = await query`
-        select stream_id from workflow.workflow_stream_chunks
-        where stream_id in ${query(streamIds)}
-          and (run_id is null or run_id not in ${query(runIds)}) limit 1
-      `;
-      if (ambiguous.length) {
-        throw new Error("Stream ownership must be resolved before fencing.");
-      }
-    }
-  });
+  }
 }
