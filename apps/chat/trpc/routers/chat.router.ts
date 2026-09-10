@@ -26,6 +26,7 @@ import {
   updateChatTitleById,
   updateChatVisiblityById,
 } from "@/lib/db/queries";
+import { isEveEnabled } from "@/lib/eve/availability";
 import { MAX_MESSAGE_CHARS } from "@/lib/limits/tokens";
 import { dbChatToUIChat } from "@/lib/message-conversion";
 import { generateUUID } from "@/lib/utils";
@@ -35,8 +36,22 @@ import {
   publicProcedure,
 } from "@/trpc/init";
 
+function assertLegacyChatAvailable() {
+  if (isEveEnabled()) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Chat not found" });
+  }
+}
+const legacyProtectedProcedure = protectedProcedure.use(({ next }) => {
+  assertLegacyChatAvailable();
+  return next();
+});
+const legacyPublicProcedure = publicProcedure.use(({ next }) => {
+  assertLegacyChatAvailable();
+  return next();
+});
+
 export const chatRouter = createTRPCRouter({
-  getAllChats: protectedProcedure
+  getAllChats: legacyProtectedProcedure
     .input(
       z
         .object({
@@ -95,7 +110,7 @@ export const chatRouter = createTRPCRouter({
       }
     }),
 
-  getChatById: protectedProcedure
+  getChatById: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -114,7 +129,7 @@ export const chatRouter = createTRPCRouter({
       return dbChatToUIChat(chat);
     }),
 
-  getChatMessages: protectedProcedure
+  getChatMessages: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -134,7 +149,7 @@ export const chatRouter = createTRPCRouter({
       return dbMessages;
     }),
 
-  renameChat: protectedProcedure
+  renameChat: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -155,7 +170,7 @@ export const chatRouter = createTRPCRouter({
       return;
     }),
 
-  deleteTrailingMessages: protectedProcedure
+  deleteTrailingMessages: legacyProtectedProcedure
     .input(
       z.object({
         messageId: z.string().uuid(),
@@ -187,7 +202,7 @@ export const chatRouter = createTRPCRouter({
       return;
     }),
 
-  stopStream: protectedProcedure
+  stopStream: legacyProtectedProcedure
     .input(
       z.discriminatedUnion("type", [
         z.object({
@@ -244,7 +259,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  setVisibility: protectedProcedure
+  setVisibility: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -270,7 +285,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  setIsPinned: protectedProcedure
+  setIsPinned: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -296,7 +311,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  deleteChat: protectedProcedure
+  deleteChat: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -315,7 +330,7 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  generateTitle: publicProcedure
+  generateTitle: legacyPublicProcedure
     .input(
       z.object({
         message: z.string().min(1).max(MAX_MESSAGE_CHARS),
@@ -336,7 +351,7 @@ export const chatRouter = createTRPCRouter({
       return { title };
     }),
 
-  getPublicChat: publicProcedure
+  getPublicChat: legacyPublicProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -355,7 +370,7 @@ export const chatRouter = createTRPCRouter({
       return dbChatToUIChat(chat);
     }),
 
-  getPublicChatMessages: publicProcedure
+  getPublicChatMessages: legacyPublicProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),
@@ -376,7 +391,7 @@ export const chatRouter = createTRPCRouter({
       return dbMessages;
     }),
 
-  cloneSharedChat: protectedProcedure
+  cloneSharedChat: legacyProtectedProcedure
     .input(
       z.object({
         chatId: z.string().uuid(),

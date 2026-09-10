@@ -390,7 +390,7 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   expect(legacyRequests).toEqual([]);
 });
 
-test("existing conversation stays readable without an active legacy runtime", async ({
+test("legacy conversations are hidden without deleting their data", async ({
   page,
 }) => {
   const [owner] = await db
@@ -428,30 +428,44 @@ test("existing conversation stays readable without an active legacy runtime", as
     text_text: "Preserved historical message",
   });
   try {
+    await page.goto("/");
+    await expect(
+      page.getByRole("link", { name: "Archived migration fixture" })
+    ).toHaveCount(0);
     await page.goto(`/chat/${id}`);
     await expect(
       page.getByText("Preserved historical message", { exact: true })
-    ).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
     ).toHaveCount(0);
-    await capture(page, "archived-conversation");
+    await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+    await capture(page, "legacy-conversation-hidden");
     await page.goto(`/project/${projectId}/chat/${id}`);
-    await expect(page).toHaveURL(new RegExp(`/chat/${id}$`));
-    await expect(
-      page.getByText("Preserved historical message", { exact: true })
-    ).toBeVisible();
-    expect((await page.request.post("/api/chat", { data: {} })).status()).toBe(
-      410
-    );
+    await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+    await page.goto(`/share/${id}`);
+    await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+    for (const procedure of [
+      "getChatById",
+      "getChatMessages",
+      "getPublicChat",
+      "getPublicChatMessages",
+    ]) {
+      const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
+        params: { input: JSON.stringify({ json: { chatId: id } }) },
+      });
+      expect(response.status()).toBe(404);
+      expect(await response.text()).not.toContain(
+        "Preserved historical message"
+      );
+    }
     await page.goto(`/project/${projectId}`);
     await expect(
-      page.getByRole("heading", {
-        name: "Archived project fixture",
-        exact: true,
-      })
-    ).toBeVisible();
-    await capture(page, "archived-project");
+      page.getByRole("link", { name: "Archived migration fixture" })
+    ).toHaveCount(0);
+    await capture(page, "legacy-project-hidden");
+    const retained = await db
+      .select()
+      .from(message)
+      .where(eq(message.id, messageId));
+    expect(retained).toHaveLength(1);
   } finally {
     await db.delete(chat).where(eq(chat.id, id));
     await db.delete(project).where(eq(project.id, projectId));

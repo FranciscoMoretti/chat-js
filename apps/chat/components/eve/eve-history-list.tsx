@@ -16,7 +16,7 @@ import {
 export function EveHistoryList({
   items,
 }: {
-  items: { id: string; title: string; archived: boolean }[];
+  items: { id: string; title: string }[];
 }) {
   const [query, setQuery] = useState("");
   const pathname = usePathname();
@@ -45,10 +45,7 @@ export function EveHistoryList({
                 href={`/chat/${item.id}`}
                 onNavigate={() => setOpenMobile(false)}
               >
-                <span className="truncate">
-                  {item.title}
-                  {item.archived ? " (archive)" : ""}
-                </span>
+                <span className="truncate">{item.title}</span>
               </InternalLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
