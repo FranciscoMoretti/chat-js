@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-mcp.e2e.ts",
     "eve-image.e2e.ts",
     "eve-research.e2e.ts",
     "eve-create-recovery.e2e.ts",
