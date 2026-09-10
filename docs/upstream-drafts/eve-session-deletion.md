@@ -74,4 +74,8 @@ The exact API shape is open. A possible shape is an idempotent session deletion 
 
 ChatJS still needs its own deletion record and access fence to remove history visibility and revoke shares immediately, coordinate application-owned file/document cleanup, and preserve accounting. Those responsibilities do not require EVE to own ChatJS metadata. EVE should own retirement and purge of the transcript/execution data it persists.
 
-We will use local Postgres for reproduction and implementation tests. No production data or legacy conversation migration is involved.
+Local Postgres tests now exercise a provider extension in `apps/chat/lib/db/eve-resource-fence.ts`. It installs insert/update guards for the inspected run, event, step, hook, wait, event-slot, and stream tables. Writers hold shared locks on resource-ID records through commit; fencing updates those records and waits for admitted writers. Tests verify rejection of later writes and replay after fixture payload deletion, transaction rollback for active runs or ambiguous streams, and rejection from an older repeatable-read snapshot. The normal browser chat/retirement test also passes with these guards installed locally.
+
+This extension is an explicit provider migration primitive, not automatically installed by an application request or application database migration. It adds a small registry row per observed run/stream identity and row-lock work to writes. It currently fences only the caller's known resource set: it does not establish a complete family inventory barrier, fence Graphile queue payloads, delete sandbox/blob data, or report completed erasure. Those remain integration requirements before enabling full conversation deletion.
+
+All reproduction and implementation tests use local Postgres. No production data or legacy conversation migration is involved.
