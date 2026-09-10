@@ -1,3 +1,4 @@
+import { withEve } from "eve/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -41,4 +42,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Keep production routing behind the existing migration review gate.
+export default process.env.EVE_ENABLED === "true"
+  ? (phase: string) =>
+      phase === "phase-development-server"
+        ? withEve(nextConfig)(phase, { defaultConfig: nextConfig })
+        : nextConfig
+  : nextConfig;

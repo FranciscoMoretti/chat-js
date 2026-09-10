@@ -6,6 +6,8 @@ import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 function isPublicApiRoute(pathname: string): boolean {
   return (
+    // Eve routes enforce their own gateway authentication in the worker.
+    pathname.startsWith("/eve/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/trpc") ||
     pathname === "/api/chat" ||

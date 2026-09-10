@@ -13,6 +13,7 @@ if (!model) {
 }
 
 export default defineAgent({
+  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   modelContextWindowTokens: model.context_window,
   model: getActiveGateway().createLanguageModel(config.ai.workflows.chat),
   experimental: { workflow: { world: "@workflow/world-postgres" } },

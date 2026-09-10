@@ -39,7 +39,10 @@
 		"build:electron": "turbo run electron:build --filter=@chat-js/electron",
 		"dist:electron": "turbo run electron:make --filter=@chat-js/electron",
 		"dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
-		"build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build"
+		"build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",
+		"dev:supervise": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-supervisor.ts",
+		"dev:service": "bun scripts/dev-service.ts",
+		"dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts"
 	},
 	"overrides": {
 		"//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",

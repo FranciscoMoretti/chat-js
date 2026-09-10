@@ -179,3 +179,29 @@ Apache-2.0
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
 </a>
 <br />
+
+### Local Eve runtime
+
+With `EVE_ENABLED=true` in `.env.worktree.local`, `bun dev` starts ChatJS and
+Eve together using `withEve`. Keep the isolated development database configured;
+this does not enable the production migration. There is no separate Eve process
+to start for normal development.
+
+For unattended local development on macOS:
+
+```sh
+bun dev:service start   # launchd supervision for this checkout; also starts at login
+bun dev:health         # bounded ChatJS + Eve + database readiness check
+bun dev:service status # process state and log location
+bun dev:service stop   # stop this checkout and remove its login startup entry
+```
+
+Stop a manually running `bun dev` before starting the service. Each checkout has
+its own service identity and worktree port. The supervisor allows three minutes
+for startup, checks every ten seconds, and restarts the process group after three
+failed checks. Restarts back off to sixty seconds. Node heaps are capped at 4 GiB
+per process; this is not a total system memory cap. Logs are retained under
+`~/Library/Logs/ChatJS/` (the status command prints the checkout's directory).
+The Mac must be awake and the database/network available; supervision cannot
+make a sleeping laptop serve traffic. `bun dev:service stop` leaves other
+checkouts alone.

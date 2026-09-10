@@ -15,7 +15,7 @@
       "exports": {
         "APP_URL": "{url}",
         "PORT": "{port}",
-        "EVE_INTERNAL_ORIGIN": "{apps.eve.url}"
+        "EVE_INTERNAL_ORIGIN": "{url}"
       }
     },
     "electron": {
