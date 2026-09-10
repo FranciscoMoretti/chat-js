@@ -130,7 +130,6 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
 			const reactChunk = reactSource.match(/from "(\.\/chunk-[^"]+\.js)"/)?.[1];
 
 			expect(packageMetadata.peerDependenciesMeta).toEqual({
-				"@ai-sdk/react": { optional: true },
 				react: { optional: true },
 			});
 			expect(reactSource.startsWith('"use client";')).toBeTrue();

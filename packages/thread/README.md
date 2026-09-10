@@ -23,17 +23,13 @@ the core.
 
 ## Install
 
-For the headless core:
-
 ```bash
-bun add @chat-js/thread ai@^7.0.93
+bun add @chat-js/thread
 ```
 
-For React:
-
-```bash
-bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react
-```
+The package installs its AI SDK dependencies. In a React app, `useThread`
+uses your existing React instance (React 18 or newer). React is an optional
+peer for the headless entry point.
 
 ## Use
 

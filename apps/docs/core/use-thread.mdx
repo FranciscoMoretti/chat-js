@@ -14,8 +14,11 @@ move between branches while responses continue streaming.
 ## Install
 
 ```bash
-bun add @chat-js/thread ai @ai-sdk/react react
+bun add @chat-js/thread
 ```
+
+The package manages its AI SDK dependencies and uses your app's existing React
+instance (React 18 or newer).
 
 Replace the `useChat` import without changing your existing message list or
 composer:
