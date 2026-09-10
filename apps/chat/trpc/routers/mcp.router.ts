@@ -7,7 +7,10 @@ import {
   type DiscoveryResult,
   invalidateAllMcpCaches,
 } from "@/lib/ai/mcp/cache";
-import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
+import {
+  getOrCreateMcpClient,
+  removeMcpClient,
+} from "@/lib/ai/mcp/mcp-client-manager";
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import { config } from "@/lib/config";
 import {

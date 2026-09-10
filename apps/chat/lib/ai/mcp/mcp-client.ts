@@ -10,7 +10,6 @@ import type { Tool, ToolSet } from "ai";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
-import { invalidateAllMcpCaches } from "./cache";
 import {
   McpOAuthClientProvider,
   OAuthAuthorizationRequiredError,
@@ -33,6 +32,7 @@ type McpClientStatus =
  */
 export class MCPClient {
   private client?: McpClientInstance;
+  private readonly invalidateCache?: () => void;
   private readonly oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
   private _status: McpClientStatus = "disconnected";
@@ -52,8 +52,10 @@ export class MCPClient {
       url: string;
       type: "http" | "sse";
       headers?: Record<string, string>;
-    }
+    },
+    invalidateCache?: () => void
   ) {
+    this.invalidateCache = invalidateCache;
     this.id = id;
     this.name = name;
     this.serverConfig = serverConfig;
@@ -275,7 +277,7 @@ export class MCPClient {
     this.client = undefined;
     this._status = "disconnected";
     // Invalidate caches since connection state changed
-    invalidateAllMcpCaches(this.id);
+    this.invalidateCache?.();
   }
 
   /**
@@ -295,74 +297,7 @@ export class MCPClient {
         { connectorId: this.id, errorMessage },
         "Auth error detected, invalidating caches"
       );
-      invalidateAllMcpCaches(this.id);
+      this.invalidateCache?.();
     }
   }
-}
-
-// Map to store active MCP clients by connector ID
-const clientsMap = new Map<string, MCPClient>();
-
-/**
- * Get or create an MCP client for a connector.
- */
-export function getOrCreateMcpClient({
-  id,
-  name,
-  url,
-  type,
-  headers,
-}: {
-  id: string;
-  name: string;
-  url: string;
-  type: "http" | "sse";
-  headers?: Record<string, string>;
-}): MCPClient {
-  let client = clientsMap.get(id);
-
-  if (!client) {
-    client = new MCPClient(id, name, { url, type, headers });
-    clientsMap.set(id, client);
-  }
-
-  return client;
-}
-
-/**
- * Remove an MCP client from the cache and close it.
- */
-export async function removeMcpClient(id: string): Promise<void> {
-  const client = clientsMap.get(id);
-  if (client) {
-    await client.close();
-    clientsMap.delete(id);
-  }
-}
-
-/**
- * Get an existing MCP client by ID.
- */
-function _getMcpClient(id: string): MCPClient | undefined {
-  return clientsMap.get(id);
-}
-
-/**
- * Create a fresh MCP client for OAuth callback handling.
- * Does NOT use the cache - creates a new instance to avoid state conflicts.
- */
-export function createMcpClientForCallback({
-  id,
-  name,
-  url,
-  type,
-  headers,
-}: {
-  id: string;
-  name: string;
-  url: string;
-  type: "http" | "sse";
-  headers?: Record<string, string>;
-}): MCPClient {
-  return new MCPClient(id, name, { url, type, headers });
 }

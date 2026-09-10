@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   createMcpClientForCallback,
   removeMcpClient,
-} from "@/lib/ai/mcp/mcp-client";
+} from "@/lib/ai/mcp/mcp-client-manager";
 import { getMcpConnectorById, getSessionByState } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";

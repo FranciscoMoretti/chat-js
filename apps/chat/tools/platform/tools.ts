@@ -1,7 +1,8 @@
 import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
-import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
+import type { MCPClient } from "@/lib/ai/mcp/mcp-client";
+import { getOrCreateMcpClient } from "@/lib/ai/mcp/mcp-client-manager";
 import { createToolId } from "@/lib/ai/mcp-name-id";
 import type { StreamWriter } from "@/lib/ai/types";
 import { config } from "@/lib/config";
