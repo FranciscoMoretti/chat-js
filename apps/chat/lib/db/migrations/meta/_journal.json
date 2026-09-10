@@ -379,6 +379,13 @@
       "when": 1789054844870,
       "tag": "0053_eve_document_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1789058068456,
+      "tag": "0054_eve_document_checkpoints",
+      "breakpoints": true
     }
   ]
 }

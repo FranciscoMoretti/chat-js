@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import {
+  captureEveDocumentCheckpoint,
   getAccessibleEveDocument,
   getEveDocumentHistory,
   getEveDocumentRevision,
@@ -11,6 +12,8 @@ import {
 import { createEveConversation } from "../lib/db/eve-queries";
 import {
   eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
   user,
@@ -30,6 +33,12 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  await db
+    .delete(eveDocumentCheckpointEntry)
+    .where(eq(eveDocumentCheckpointEntry.ownerId, owner));
+  await db
+    .delete(eveDocumentCheckpoint)
+    .where(eq(eveDocumentCheckpoint.ownerId, owner));
   await db.delete(eveDocumentHead).where(eq(eveDocumentHead.ownerId, owner));
   await db
     .delete(eveDocumentRevision)
@@ -61,6 +70,51 @@ function draft(conversationId: string) {
     kind: "text" as const,
   };
 }
+
+test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
+  const chat = await conversation();
+  await captureEveDocumentCheckpoint(owner, chat.id, 0);
+  const input = draft(chat.id);
+  const first = await saveEveDocumentRevision(input);
+  await Promise.all(
+    Array.from({ length: 5 }, () =>
+      captureEveDocumentCheckpoint(owner, chat.id, 1)
+    )
+  );
+  await saveEveDocumentRevision({
+    ...input,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: first.id,
+    content: "Later content",
+    turnIndex: 0,
+  });
+  await captureEveDocumentCheckpoint(owner, chat.id, 1);
+  for (const beforeTurnId of ["turn_0", "turn_1"]) {
+    const child = await createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "Checkpoint fork",
+      async () => crypto.randomUUID(),
+      undefined,
+      undefined,
+      { conversationId: chat.id, beforeTurnId }
+    );
+    const document = await getEveDocumentRevision(
+      owner,
+      child.id,
+      input.documentId
+    );
+    if (beforeTurnId === "turn_0") {
+      expect(document).toBeUndefined();
+    } else {
+      expect(document?.id).toBe(first.id);
+      expect(document?.content).toBe("Original");
+    }
+  }
+  await expect(
+    captureEveDocumentCheckpoint(stranger, chat.id, 2)
+  ).rejects.toThrow("not found");
+});
 
 test("a document save cancelled while waiting for its lock never writes", async () => {
   const chat = await conversation();

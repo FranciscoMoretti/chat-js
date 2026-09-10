@@ -588,3 +588,63 @@ export const eveDocumentHead = pgTable(
 );
 
 export type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;
+
+export const eveDocumentCheckpoint = pgTable(
+  "EveDocumentCheckpoint",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    turnIndex: integer("turnIndex").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.turnIndex] }),
+    uniqueIndex("EveDocumentCheckpoint_owner_identity").on(
+      table.conversationId,
+      table.turnIndex,
+      table.ownerId
+    ),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveDocumentCheckpoint_conversation_owner_fk",
+    }),
+    check(
+      "EveDocumentCheckpoint_turn_nonnegative",
+      sql`${table.turnIndex} >= 0`
+    ),
+  ]
+);
+
+export const eveDocumentCheckpointEntry = pgTable(
+  "EveDocumentCheckpointEntry",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    turnIndex: integer("turnIndex").notNull(),
+    documentId: uuid("documentId").notNull(),
+    revisionId: uuid("revisionId").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.conversationId, table.turnIndex, table.documentId],
+    }),
+    foreignKey({
+      columns: [table.conversationId, table.turnIndex, table.ownerId],
+      foreignColumns: [
+        eveDocumentCheckpoint.conversationId,
+        eveDocumentCheckpoint.turnIndex,
+        eveDocumentCheckpoint.ownerId,
+      ],
+      name: "EveDocumentCheckpointEntry_checkpoint_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.revisionId, table.documentId, table.ownerId],
+      foreignColumns: [
+        eveDocumentRevision.id,
+        eveDocumentRevision.documentId,
+        eveDocumentRevision.ownerId,
+      ],
+      name: "EveDocumentCheckpointEntry_revision_owner_fk",
+    }),
+  ]
+);

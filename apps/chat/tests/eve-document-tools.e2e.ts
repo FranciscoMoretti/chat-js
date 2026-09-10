@@ -3,7 +3,12 @@ import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import {
+  eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
+  userCredit,
+} from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -118,6 +123,18 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     page.getByRole("button", { name: 'Updated "Artifact notes"', exact: true })
   ).toBeVisible({ timeout: 90_000 });
   await expect(page.getByTestId("artifact")).toContainText("Version 1 of 2");
+  const checkpoints = await db
+    .select()
+    .from(eveDocumentCheckpoint)
+    .where(eq(eveDocumentCheckpoint.conversationId, binding.id))
+    .orderBy(eveDocumentCheckpoint.turnIndex);
+  expect(checkpoints.map((checkpoint) => checkpoint.turnIndex)).toEqual([0, 1]);
+  const checkpointEntries = await db
+    .select()
+    .from(eveDocumentCheckpointEntry)
+    .where(eq(eveDocumentCheckpointEntry.conversationId, binding.id));
+  expect(checkpointEntries).toHaveLength(3);
+  expect(checkpointEntries.every((entry) => entry.turnIndex === 1)).toBe(true);
   await page.reload();
   await page
     .getByRole("button", { name: 'Updated "Artifact notes"', exact: true })

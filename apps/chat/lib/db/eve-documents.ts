@@ -4,6 +4,8 @@ import { artifactKinds } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
   eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
 } from "./schema";
@@ -195,6 +197,49 @@ export async function initializeEveForkDocuments(
     if (!Number.isSafeInteger(beforeTurn) || beforeTurn < 0) {
       throw new Error("Invalid fork boundary.");
     }
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
+    );
+    const [checkpoint] = await tx
+      .select()
+      .from(eveDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveDocumentCheckpoint.conversationId, target.parentConversationId),
+          eq(eveDocumentCheckpoint.ownerId, ownerId),
+          eq(eveDocumentCheckpoint.turnIndex, beforeTurn)
+        )
+      );
+    if (checkpoint) {
+      const entries = await tx
+        .select()
+        .from(eveDocumentCheckpointEntry)
+        .where(
+          and(
+            eq(
+              eveDocumentCheckpointEntry.conversationId,
+              target.parentConversationId
+            ),
+            eq(eveDocumentCheckpointEntry.turnIndex, beforeTurn),
+            eq(eveDocumentCheckpointEntry.ownerId, ownerId)
+          )
+        );
+      if (entries.length) {
+        await tx
+          .insert(eveDocumentHead)
+          .values(
+            entries.map((entry) => ({
+              conversationId,
+              ownerId,
+              documentId: entry.documentId,
+              revisionId: entry.revisionId,
+            }))
+          )
+          .onConflictDoNothing();
+      }
+      return;
+    }
+    // Conversations created before checkpoint capture contain only native turn-indexed writes.
     const heads = await tx
       .select()
       .from(eveDocumentHead)
@@ -233,6 +278,55 @@ export async function initializeEveForkDocuments(
           })
           .onConflictDoNothing();
       }
+    }
+  });
+}
+
+/** Capture once before model execution; even an empty manifest is a durable checkpoint. */
+export async function captureEveDocumentCheckpoint(
+  ownerId: string,
+  conversationId: string,
+  turnIndex: number
+) {
+  z.number().int().nonnegative().parse(turnIndex);
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
+    );
+    const [conversation] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, conversationId),
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.state, "bound")
+        )
+      );
+    if (!conversation) {
+      throw new Error("Conversation not found.");
+    }
+    const inserted = await tx
+      .insert(eveDocumentCheckpoint)
+      .values({ ownerId, conversationId, turnIndex })
+      .onConflictDoNothing()
+      .returning();
+    if (!inserted.length) {
+      return;
+    }
+    const heads = await tx
+      .select()
+      .from(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, conversationId),
+          eq(eveDocumentHead.ownerId, ownerId)
+        )
+      );
+    if (heads.length) {
+      await tx
+        .insert(eveDocumentCheckpointEntry)
+        .values(heads.map((head) => ({ ...head, turnIndex })));
     }
   });
 }

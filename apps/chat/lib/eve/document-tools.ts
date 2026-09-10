@@ -1,47 +1,19 @@
 import { createHash } from "node:crypto";
-import { setTimeout } from "node:timers/promises";
 import type { ToolContext } from "eve/tools";
 import { config } from "../config";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../db/eve-documents";
-import { getBoundEveConversationForSession } from "../db/eve-queries";
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
+import { resolveEveDocumentConversation } from "./document-session";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
-
-/** Only trusted native context determines the owner, conversation and fork boundary. */
-async function conversationForTool(context: DocumentContext) {
-  context.abortSignal.throwIfAborted();
-  const ownerId = context.session.auth.initiator?.principalId;
-  if (!ownerId) {
-    throw new Error("Document tools require an authenticated owner.");
-  }
-  // A first-turn tool can start between native acceptance and app binding.
-  // Never guess a reservation or authorize by a model-supplied conversation ID.
-  for (let attempt = 0; attempt < 21; attempt++) {
-    context.abortSignal.throwIfAborted();
-    const conversation = await getBoundEveConversationForSession(
-      ownerId,
-      context.session.id
-    );
-    if (conversation) {
-      return { ownerId, conversationId: conversation.id };
-    }
-    if (attempt < 20) {
-      await setTimeout(250, undefined, { signal: context.abortSignal });
-    }
-  }
-  throw new Error(
-    "Conversation binding is not ready. Retry this document operation."
-  );
-}
 
 /** Deterministic UUIDv8: retrying a create must address exactly the same document. */
 function documentIdForCall(sessionId: string, callId: string) {
@@ -65,7 +37,11 @@ export async function executeEveDocumentTool(
   }
   if (name === "readDocument") {
     const input = eveDocumentReadInput.parse(value);
-    const scope = await conversationForTool(context);
+    const scope = await resolveEveDocumentConversation(
+      context.session.auth.initiator?.principalId,
+      context.session.id,
+      context.abortSignal
+    );
     const revision = await getEveDocumentRevision(
       scope.ownerId,
       scope.conversationId,
@@ -92,7 +68,11 @@ export async function executeEveDocumentTool(
   }
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
-  const scope = await conversationForTool(context);
+  const scope = await resolveEveDocumentConversation(
+    context.session.auth.initiator?.principalId,
+    context.session.id,
+    context.abortSignal
+  );
   context.abortSignal.throwIfAborted();
   const revision = await saveEveDocumentRevision(
     {
