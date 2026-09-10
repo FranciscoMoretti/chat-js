@@ -16,8 +16,10 @@ import { sendCommand } from "@/lib/eve/send-command";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 import { EveComposer } from "./eve-composer";
+import { EveForkControls } from "./eve-fork-controls";
 import { EveMessages } from "./eve-messages";
 import { useEveAttachments } from "./use-eve-attachments";
+import { useEveFork } from "./use-eve-fork";
 
 const pendingMessageSchema = z.object({
   message: z.string(),
@@ -27,7 +29,16 @@ const pendingMessageSchema = z.object({
   checkUntil: z.number(),
 });
 
-export function EveConversation({ sessionId }: { sessionId: string }) {
+export function EveConversation({
+  sessionId,
+  conversationId,
+  ownerId,
+}: {
+  sessionId: string;
+  conversationId: string;
+  ownerId: string;
+}) {
+  const fork = useEveFork(ownerId, conversationId);
   const selectedModel = useDefaultModel();
   const files = useEveAttachments();
   const queryClient = useQueryClient();
@@ -208,11 +219,26 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <EveForkControls
+        conversationId={conversationId}
+        disabled={busy || commandPending || hasApproval || !!pendingMessage}
+        fork={fork}
+      />
       <Conversation>
         <ConversationContent className="mx-auto w-full max-w-3xl">
           <EveMessages
+            actionsDisabled={
+              busy ||
+              commandPending ||
+              fork.locked ||
+              !fork.family.data ||
+              hasApproval ||
+              !!pendingMessage
+            }
             disabled={busy || commandPending}
             messages={agent.data.messages}
+            onEdit={(message) => fork.begin(message)}
+            onRegenerate={(message) => fork.begin(message, true)}
             respond={(response) =>
               run(() => send(() => agent.respond([response])))
             }
@@ -269,7 +295,8 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
             commandPending ||
             cancelPending ||
             hasApproval ||
-            !!pendingMessage
+            !!pendingMessage ||
+            fork.locked
           }
           draft={draft}
           files={files}

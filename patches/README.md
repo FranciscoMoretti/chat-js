@@ -91,8 +91,11 @@ this worktree; a successful install alone did not prove that the new code ran.
 
 ChatJS now reserves same-owner branch ancestry and immutable fork operations in
 its metadata database; EVE owns the restored transcript and fresh execution.
-Editing controls, branch navigation, composer fork recovery, and sandbox/attachment
-resource cloning remain to be implemented. Existing sessions started before checkpoint support
+The ChatJS message actions now expose edits and regeneration, with retained fork
+requests across reload and navigation between conversation versions. Inherited
+turn edits resolve the ancestor that owns the checkpoint. Sandbox/attachment
+resource cloning, per-message sibling navigation, and parallel-response parity
+remain to be implemented. Existing sessions started before checkpoint support
 have no checkpoints. Full snapshots can produce quadratic retained storage;
 bound retention or reuse native durable step snapshots before production.
 

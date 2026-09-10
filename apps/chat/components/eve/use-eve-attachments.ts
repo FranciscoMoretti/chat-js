@@ -49,7 +49,7 @@ export function useEveAttachments() {
   return { attachments, setAttachments, uploadQueue, upload };
 }
 
-async function uploadAttachment(file: File) {
+export async function uploadAttachment(file: File) {
   const body = new FormData();
   body.append("file", file);
   const response = await fetch("/api/files/upload", {

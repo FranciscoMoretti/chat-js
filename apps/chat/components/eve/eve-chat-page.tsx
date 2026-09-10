@@ -51,7 +51,9 @@ export async function EveChatPage({
           />
           {selected?.sessionId && selected.state === "bound" && (
             <EveConversation
+              conversationId={selected.id}
               key={selected.sessionId}
+              ownerId={session.user.id}
               sessionId={selected.sessionId}
             />
           )}

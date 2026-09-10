@@ -203,6 +203,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
   await expect(
     page.getByText("Waiting for your input", { exact: true })
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit message", exact: true }).last()
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Approve", exact: true })
+  ).toBeEnabled();
   await page.getByRole("button", { name: "Approve", exact: true }).click();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,

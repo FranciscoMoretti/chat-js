@@ -6,8 +6,15 @@ import type {
   EveMessagePart,
   InputResponse,
 } from "eve/client";
+import { Copy, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import { toast } from "sonner";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+} from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
@@ -168,13 +175,19 @@ export function EveMessages({
   messages,
   disabled,
   respond,
+  onEdit,
+  onRegenerate,
+  actionsDisabled = disabled,
 }: {
   messages: readonly EveMessage[];
+  actionsDisabled?: boolean;
+  onEdit?: (message: EveMessage) => void;
+  onRegenerate?: (message: EveMessage) => void;
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) {
   return messages.map((message) => (
-    <Message from={message.role} key={message.id}>
+    <Message className="flex-col" from={message.role} key={message.id}>
       <MessageContent>
         <span className="sr-only">
           {message.role === "user" ? "You" : "Assistant"}
@@ -191,6 +204,54 @@ export function EveMessages({
           />
         ))}
       </MessageContent>
+      <MessageActions className={message.role === "user" ? "justify-end" : ""}>
+        {message.role === "user" && onEdit && (
+          <MessageAction
+            disabled={
+              actionsDisabled ||
+              !message.metadata?.turnId ||
+              !!message.metadata.optimistic
+            }
+            onClick={() => onEdit(message)}
+            tooltip="Edit message"
+          >
+            <Pencil size={14} />
+          </MessageAction>
+        )}
+        {message.role === "assistant" && onRegenerate && (
+          <MessageAction
+            disabled={actionsDisabled || !message.metadata?.turnId}
+            onClick={() => {
+              const userMessage = messages
+                .slice(0, messages.indexOf(message))
+                .findLast((item) => item.role === "user");
+              if (userMessage) {
+                onRegenerate(userMessage);
+              }
+            }}
+            tooltip="Regenerate response"
+          >
+            <RotateCcw size={14} />
+          </MessageAction>
+        )}
+        <MessageAction
+          onClick={async () => {
+            const text = message.parts
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("\n");
+            try {
+              await navigator.clipboard.writeText(text);
+              toast.success("Copied to clipboard!");
+            } catch {
+              toast.error("Unable to copy this message.");
+            }
+          }}
+          tooltip="Copy"
+        >
+          <Copy size={14} />
+        </MessageAction>
+      </MessageActions>
     </Message>
   ));
 }
