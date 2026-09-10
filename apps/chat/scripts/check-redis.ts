@@ -49,7 +49,7 @@ async function checkRedis() {
         if (
           !(
             (await publisher.expire(key, PROBE_TTL_SECONDS)) &&
-            (await publisher.keys(key)).includes(key)
+            (await publisher.exists(key)) === 1
           )
         ) {
           throw new Error("Expiry or key lookup check failed");

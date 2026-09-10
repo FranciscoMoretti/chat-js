@@ -17,9 +17,14 @@ REDIS_URL=rediss://default:password@your-redis-host:6379/0
 ```
 
 Use `rediss://` for verified TLS and your host's certificate trust settings.
+A `redis://` URL sends credentials and data without encryption. Use it only on
+local or trusted private networks. The app honors the configured transport and
+does not automatically upgrade plaintext connections.
 `redis://localhost:6379` works for a local server without TLS. Connection attempts
 use a 10-second socket timeout. The running app retains Node Redis's automatic
-reconnection behavior.
+reconnection behavior after startup. If initial connection fails or takes more
+than 10 seconds, both clients are closed and the app starts without Redis.
+Restart the app after correcting the connection to enable Redis again.
 
 | Host | What to provide |
 | --- | --- |
@@ -41,7 +46,7 @@ bun redis:connect
 ```
 
 The generated command also runs with npm, pnpm, or Yarn. It verifies two
-connections, key/value reads and writes, counters, expiry, key lookup, and pub/sub.
+connections, key/value reads and writes, counters, expiry, exact-key lookup, and pub/sub.
 It uses the same connection options as the app, with reconnect retries disabled
 and a 15-second overall deadline for the check. Diagnostics do not print the URL
 or provider error text.
@@ -62,7 +67,7 @@ key prefix.
 Redis currently serves resumable-stream coordination and anonymous rate limits.
 It is not a general query-result cache. The existing implementation uses `SET`
 (with expiry), `GET`, `INCR`, `EXPIRE`, `KEYS`, `PUBLISH`, `SUBSCRIBE`, and
-`UNSUBSCRIBE`. The check also uses `DEL` to clean up its temporary key.
+`UNSUBSCRIBE`. The check uses `EXISTS` instead of scanning keys. It also uses `DEL` to clean up its temporary key.
 
 Resumable streams require a separate subscriber connection. Provider credentials
 must allow the relevant commands, application key prefixes, and pub/sub channels.
