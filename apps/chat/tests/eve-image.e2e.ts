@@ -9,10 +9,11 @@ import { evePlatformResult } from "../lib/eve/platform-result";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-test("native image generation renders the stored image and survives reload", async ({
+test("native image generation, editing and sharing preserve stored results", async ({
   page,
+  browser,
 }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
@@ -84,4 +85,105 @@ test("native image generation renders the stored image and survives reload", asy
     path: "tests/eve-results/screenshots/eve-native-image.png",
     animations: "disabled",
   });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await page
+    .locator('[aria-label="Message"]')
+    .fill(
+      "Use generateImage exactly once to edit the image you just generated: change the blue square to green and keep the white background."
+    );
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const images = page.locator('img[src*="/api/files/content?"]');
+  await expect(images).toHaveCount(2, { timeout: 150_000 });
+  const edited = images.nth(1);
+  await expect
+    .poll(() =>
+      edited.evaluate(
+        (element) =>
+          element instanceof HTMLImageElement && element.naturalWidth > 0
+      )
+    )
+    .toBe(true);
+  const editedSrc = await edited.getAttribute("src");
+  expect(editedSrc).not.toBe(src);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.reload();
+  await expect(images).toHaveCount(2);
+  await expect(images.nth(0)).toHaveAttribute("src", src ?? "");
+  await expect(images.nth(1)).toHaveAttribute("src", editedSrc ?? "");
+  await expect
+    .poll(() =>
+      edited.evaluate(
+        (element) =>
+          element instanceof HTMLImageElement && element.naturalWidth > 0
+      )
+    )
+    .toBe(true);
+  await edited.screenshot({
+    path: "tests/eve-results/screenshots/eve-native-image-edited.png",
+    animations: "disabled",
+  });
+  const afterEdit = await client.sessions
+    .attach(binding.sessionId)
+    .snapshot({ signal: AbortSignal.timeout(15_000) });
+  const imageResults = afterEdit.events.filter(
+    (event) =>
+      event.type === "action.result" &&
+      event.data.result.kind === "tool-result" &&
+      event.data.result.toolName === "generateImage"
+  );
+  expect(imageResults).toHaveLength(2);
+  for (const event of imageResults) {
+    if (
+      event.type !== "action.result" ||
+      event.data.result.kind !== "tool-result"
+    ) {
+      throw new Error("Missing image result");
+    }
+    expect(
+      evePlatformResult.parse(event.data.result.output).usage.costUsd
+    ).toBeGreaterThan(0);
+  }
+  await page.getByRole("button", { name: "Share chat", exact: true }).click();
+  await page.getByRole("button", { name: "Share Chat", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Make Private", exact: true })
+  ).toBeEnabled();
+  const anonymous = await browser.newContext();
+  try {
+    const shared = await anonymous.newPage();
+    await shared.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
+    );
+    await shared.goto(new URL(`/share/${binding.id}`, page.url()).href);
+    const sharedImages = shared.locator('img[src*="/api/files/content?"]');
+    await expect(sharedImages).toHaveCount(2);
+    await expect
+      .poll(() =>
+        sharedImages.evaluateAll((elements) =>
+          elements.every(
+            (element) =>
+              element instanceof HTMLImageElement && element.naturalWidth > 0
+          )
+        )
+      )
+      .toBe(true);
+    await expect(shared.getByTestId("multimodal-input")).toHaveCount(0);
+    await expect(sharedImages.nth(1)).toHaveAttribute("src", editedSrc ?? "");
+    await page
+      .getByRole("button", { name: "Make Private", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await shared.reload();
+    await expect(
+      shared.getByRole("heading", { name: "404", exact: true })
+    ).toBeVisible();
+  } finally {
+    await db
+      .update(eveConversation)
+      .set({ visibility: "private" })
+      .where(eq(eveConversation.id, binding.id));
+    await anonymous.close();
+  }
 });
