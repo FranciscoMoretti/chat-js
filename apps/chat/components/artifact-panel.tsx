@@ -49,6 +49,7 @@ export interface UIArtifact {
   isVisible: boolean;
   kind: ArtifactKind;
   messageId: string;
+  revisionId?: string;
   status: "streaming" | "idle";
   title: string;
 }

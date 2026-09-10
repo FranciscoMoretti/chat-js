@@ -11,6 +11,7 @@ import {
 } from "@/components/ai-elements/conversation";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { draftAttachment, draftMessage, matchesDraft } from "@/lib/eve/draft";
 import { sendCommand } from "@/lib/eve/send-command";
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -63,6 +64,15 @@ export function EveConversation({
       commandError.current = cause;
     },
     onEvent: (event) => {
+      if (
+        event.type === "action.result" &&
+        event.data.result.kind === "tool-result" &&
+        Object.hasOwn(eveDocumentOperations, event.data.result.toolName)
+      ) {
+        queryClient
+          .invalidateQueries({ queryKey: trpc.eve.document.pathKey() })
+          .catch(() => undefined);
+      }
       if (event.type === "turn.completed") {
         queryClient
           .invalidateQueries({ queryKey: trpc.eve.list.pathKey() })

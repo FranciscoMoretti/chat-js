@@ -35,10 +35,12 @@ export const isArtifactToolResult = (
   typeof o.kind === "string";
 
 const getActionText = (
-  type: "create" | "update",
+  type: "create" | "update" | "read",
   tense: "present" | "past"
 ) => {
   switch (type) {
+    case "read":
+      return tense === "present" ? "Reading" : "Read";
     case "create":
       return tense === "present" ? "Creating" : "Created";
     case "update":
@@ -49,17 +51,20 @@ const getActionText = (
 };
 
 interface DocumentToolResultProps {
+  disabled?: boolean;
   isReadonly: boolean;
   messageId: string;
   result: {
     id: string;
     title: string;
     kind: ArtifactKind;
+    revisionId?: string;
   };
-  type: "create" | "update";
+  type: "create" | "update" | "read";
 }
 
 function PureDocumentToolResult({
+  disabled = false,
   type,
   result,
   isReadonly: _isReadonly,
@@ -70,6 +75,7 @@ function PureDocumentToolResult({
   return (
     <button
       className="flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border bg-background px-3 py-2"
+      disabled={disabled}
       onClick={() => {
         setArtifact({
           documentId: result.id,
@@ -77,6 +83,7 @@ function PureDocumentToolResult({
           content: "",
           title: result.title,
           messageId,
+          revisionId: result.revisionId,
           isVisible: true,
           status: "idle",
         });
@@ -85,7 +92,7 @@ function PureDocumentToolResult({
     >
       <div className="text-muted-foreground">
         {(() => {
-          if (type === "create") {
+          if (type === "create" || type === "read") {
             return <File size={16} />;
           }
           if (type === "update") {
@@ -101,12 +108,12 @@ function PureDocumentToolResult({
   );
 }
 
-export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
+export const DocumentToolResult = memo(PureDocumentToolResult);
 
 interface DocumentToolCallProps {
   args: { title?: string };
   isReadonly: boolean;
-  type: "create" | "update";
+  type: "create" | "update" | "read";
 }
 
 function PureDocumentToolCall({
@@ -130,7 +137,7 @@ function PureDocumentToolCall({
       <div className="flex flex-row items-start gap-3">
         <div className="mt-1 text-muted-foreground">
           {(() => {
-            if (type === "create") {
+            if (type === "create" || type === "read") {
               return <File size={16} />;
             }
             if (type === "update") {

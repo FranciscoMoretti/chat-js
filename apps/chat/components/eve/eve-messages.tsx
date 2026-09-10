@@ -21,7 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
+import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { EveAttachment } from "./eve-attachment";
+import { EveDocumentTool } from "./eve-document-tool";
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 import { EveToolResult } from "./eve-tool-result";
 
@@ -139,6 +141,18 @@ function Part({
   if (part.toolName === "codeExecution" || part.toolName === "webSearch") {
     return (
       <EvePlatformToolResult
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
+  }
+  if (
+    Object.hasOwn(eveDocumentOperations, part.toolName) ||
+    part.toolName === "readDocument"
+  ) {
+    return (
+      <EveDocumentTool
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}

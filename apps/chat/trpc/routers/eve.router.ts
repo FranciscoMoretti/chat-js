@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
 import {
   getEveConversation,
   listEveConversationBranches,
@@ -8,7 +9,11 @@ import {
 } from "@/lib/db/eve-queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { eveHistoryInput } from "@/lib/eve/history-input";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/trpc/init";
 
 const eveProcedure = protectedProcedure.use(({ next }) => {
   if (!isEveEnabled()) {
@@ -18,6 +23,29 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  document: publicProcedure
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        documentId: z.uuid(),
+        revisionId: z.uuid().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!isEveEnabled()) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const document = await getAccessibleEveDocument(
+        ctx.user?.id,
+        input.conversationId,
+        input.documentId,
+        input.revisionId
+      );
+      if (!document) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return document;
+    }),
   branches: eveProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {

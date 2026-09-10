@@ -1,38 +1,20 @@
 import { createHash } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import type { ToolContext } from "eve/tools";
-import { z } from "zod";
 import { config } from "../config";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../db/eve-documents";
 import { getBoundEveConversationForSession } from "../db/eve-queries";
-
-const documentContent = z.object({
-  title: z.string().min(1).max(1000),
-  content: z.string().max(2_000_000),
-});
-export const eveDocumentCreateInput = documentContent;
-export const eveDocumentEditInput = documentContent.extend({
-  documentId: z.uuid(),
-  expectedRevisionId: z
-    .uuid()
-    .describe(
-      "The revision ID returned by readDocument. Read again after a conflict."
-    ),
-});
-export const eveDocumentReadInput = z.object({ documentId: z.uuid() });
+import {
+  eveDocumentCreateInput,
+  eveDocumentEditInput,
+  eveDocumentOperations,
+  eveDocumentReadInput,
+} from "./document-contracts";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
-const operations = {
-  createTextDocument: { kind: "text", edit: false },
-  editTextDocument: { kind: "text", edit: true },
-  createCodeDocument: { kind: "code", edit: false },
-  editCodeDocument: { kind: "code", edit: true },
-  createSheetDocument: { kind: "sheet", edit: false },
-  editSheetDocument: { kind: "sheet", edit: true },
-} as const;
 
 /** Only trusted native context determines the owner, conversation and fork boundary. */
 async function conversationForTool(context: DocumentContext) {
@@ -102,7 +84,7 @@ export async function executeEveDocumentTool(
       date: revision.createdAt.toISOString(),
     };
   }
-  const operation = Object.entries(operations).find(
+  const operation = Object.entries(eveDocumentOperations).find(
     ([key]) => key === name
   )?.[1];
   if (!(operation && config.ai.tools.documents.types[operation.kind])) {

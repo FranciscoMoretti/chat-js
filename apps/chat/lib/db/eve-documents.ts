@@ -255,12 +255,21 @@ export async function getEveDocumentRevision(
   if (!selected) {
     return undefined;
   }
+  return await readDocumentRevision(ownerId, documentId, selected.id);
+}
+
+/** Internal only: the caller must first prove this revision belongs to the accessible ancestry. */
+async function readDocumentRevision(
+  ownerId: string,
+  documentId: string,
+  revisionId: string
+) {
   const [revision] = await db
     .select()
     .from(eveDocumentRevision)
     .where(
       and(
-        eq(eveDocumentRevision.id, selected.id),
+        eq(eveDocumentRevision.id, revisionId),
         eq(eveDocumentRevision.ownerId, ownerId),
         eq(eveDocumentRevision.documentId, documentId)
       )
@@ -274,6 +283,71 @@ function ancestorIds(ownerId: string, documentId: string, headId: string) {
     union
     select revision."id", revision."parentRevisionId" from "EveDocumentRevision" revision join ancestry on revision."id" = ancestry."parentRevisionId"
   ) select "id" from ancestry)`;
+}
+
+/** Public readers receive document content, never storage ownership or operation metadata. */
+export async function getAccessibleEveDocument(
+  viewerId: string | undefined,
+  conversationId: string,
+  documentId: string,
+  revisionId?: string
+) {
+  const [conversation] = await db
+    .select()
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  if (
+    !conversation ||
+    (conversation.ownerId !== viewerId && conversation.visibility !== "public")
+  ) {
+    return undefined;
+  }
+  const history = await getEveDocumentHistory(
+    conversation.ownerId,
+    conversationId,
+    documentId
+  );
+  const selected = revisionId
+    ? history.find((item) => item.id === revisionId)
+    : history.at(-1);
+  const revision = selected
+    ? await readDocumentRevision(conversation.ownerId, documentId, selected.id)
+    : undefined;
+  if (!revision) {
+    return undefined;
+  }
+  // Recheck visibility after the potentially slow ancestry/content read.
+  const [current] = await db
+    .select()
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  if (
+    !current ||
+    (current.ownerId !== viewerId && current.visibility !== "public")
+  ) {
+    return undefined;
+  }
+  return {
+    history,
+    revision: {
+      id: revision.id,
+      documentId: revision.documentId,
+      title: revision.title,
+      kind: revision.kind,
+      content: revision.content,
+      createdAt: revision.createdAt,
+    },
+  };
 }
 
 function orderRevisionHistory<

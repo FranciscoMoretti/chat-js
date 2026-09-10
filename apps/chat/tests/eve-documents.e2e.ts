@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import {
+  getAccessibleEveDocument,
   getEveDocumentHistory,
   getEveDocumentRevision,
   initializeEveForkDocuments,
@@ -76,26 +77,90 @@ test("a document save cancelled while waiting for its lock never writes", async 
     await release.promise;
   });
   await held.promise;
-  const saving = saveEveDocumentRevision(input, controller.signal);
-  const rejected = expect(saving).rejects.toThrow();
+  const saving = Promise.allSettled([
+    saveEveDocumentRevision(input, controller.signal),
+  ]);
   try {
     await expect
       .poll(async () => {
         const rows = await db.execute(
-          sql`select 1 from pg_locks where locktype = 'advisory' and not granted and objid = ((hashtextextended(${lockKey}, 0) & 4294967295)::oid) and classid = ((hashtextextended(${lockKey}, 0) >> 32)::oid)`
+          sql`select 1 from pg_locks where locktype = 'advisory' and not granted and objid = ((hashtextextended(${lockKey}, 0) & 4294967295)::oid) and classid = (((hashtextextended(${lockKey}, 0) >> 32) & 4294967295)::oid)`
         );
         return rows.length;
       })
       .toBe(1);
     controller.abort();
   } finally {
+    controller.abort();
     release.resolve();
     await locker;
+    await saving;
   }
-  await rejected;
+  expect((await saving)[0].status).toBe("rejected");
   expect(await getEveDocumentHistory(owner, chat.id, input.documentId)).toEqual(
     []
   );
+});
+
+test("document viewing respects visibility, revocation and fork ancestry without exposing storage metadata", async () => {
+  const chat = await conversation();
+  const input = draft(chat.id);
+  const first = await saveEveDocumentRevision(input);
+  const later = await saveEveDocumentRevision({
+    ...input,
+    expectedRevisionId: first.id,
+    operationId: crypto.randomUUID(),
+    turnIndex: 1,
+    content: "Private later version",
+  });
+  expect(
+    await getAccessibleEveDocument(undefined, chat.id, input.documentId)
+  ).toBeUndefined();
+  expect(
+    await getAccessibleEveDocument(stranger, chat.id, input.documentId)
+  ).toBeUndefined();
+  expect(
+    await getAccessibleEveDocument(owner, chat.id, input.documentId)
+  ).toMatchObject({ revision: { content: "Private later version" } });
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Public branch",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: chat.id, beforeTurnId: "turn_1" }
+  );
+  await db
+    .update(eveConversation)
+    .set({ visibility: "public" })
+    .where(eq(eveConversation.id, child.id));
+  const visible = await getAccessibleEveDocument(
+    undefined,
+    child.id,
+    input.documentId
+  );
+  expect(visible).toMatchObject({
+    revision: { id: first.id, content: "Original" },
+  });
+  expect(visible?.revision).not.toHaveProperty("ownerId");
+  expect(visible?.revision).not.toHaveProperty("operationId");
+  expect(visible?.history).toHaveLength(1);
+  expect(
+    await getAccessibleEveDocument(
+      undefined,
+      child.id,
+      input.documentId,
+      later.id
+    )
+  ).toBeUndefined();
+  await db
+    .update(eveConversation)
+    .set({ visibility: "private" })
+    .where(eq(eveConversation.id, child.id));
+  expect(
+    await getAccessibleEveDocument(undefined, child.id, input.documentId)
+  ).toBeUndefined();
 });
 
 test("native document calls replay safely and reject stale edits and cross-conversation reads", async () => {

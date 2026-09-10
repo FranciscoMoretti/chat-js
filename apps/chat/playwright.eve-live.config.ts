@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-document-tools.e2e.ts",
     "eve-live.e2e.ts",
     "eve-code-execution.e2e.ts",
     "eve-search.e2e.ts",
