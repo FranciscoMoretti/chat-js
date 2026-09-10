@@ -41,11 +41,20 @@ const xml = (value: string) =>
 		.replaceAll("<", "&lt;")
 		.replaceAll(">", "&gt;");
 if (action === "start") {
+	// Check before writing the plist or stopping an existing healthy service.
+	const [node, version] = execFileSync(
+		"node",
+		["-p", "process.execPath + '\\n' + process.versions.node"],
+		{ encoding: "utf8" },
+	).trim().split("\n");
+	const major = Number(version?.split(".")[0]);
+	if (!node || !Number.isInteger(major) || major < 24) {
+		throw new Error(
+			`ChatJS with Eve requires Node.js >=24; the current shell resolves ${version ?? "an unknown version"}. Select Node 24 or newer on PATH and retry. The existing service has not been changed.`,
+		);
+	}
 	mkdirSync(dirname(plist), { recursive: true });
 	mkdirSync(logs, { recursive: true });
-	const node = execFileSync("node", ["-p", "process.execPath"], {
-		encoding: "utf8",
-	}).trim();
 	writeFileSync(
 		plist,
 		`<?xml version="1.0" encoding="UTF-8"?>

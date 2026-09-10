@@ -62,7 +62,7 @@
 		"vitest": "^4.1.11"
 	},
 	"engines": {
-		"node": ">=22"
+		"node": ">=24"
 	},
 	"patchedDependencies": {
 		"eve@0.52.2": "patches/eve@0.52.2.patch"
