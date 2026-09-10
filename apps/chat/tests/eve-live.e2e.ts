@@ -217,8 +217,44 @@ test("the composer selects models for initial and subsequent durable turns", asy
   for (const step of approvalSteps) {
     if (step.type === "step.started") {
       expect(step.data.modelId).toBe(`gateway/${selected}`);
+      expect(step.data.turnId).not.toBe("");
+      expect(
+        approved.events.some(
+          (event) =>
+            event.type === "turn.started" &&
+            event.data.turnId === step.data.turnId
+        )
+      ).toBe(true);
     }
   }
+  await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
+  const chargedUsage = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, conversation.sessionId));
+  expect(chargedUsage.length).toBeGreaterThanOrEqual(4);
+  for (const entry of chargedUsage) {
+    expect(entry.turnId).not.toBe("");
+    expect(entry.costUsd).not.toBeNull();
+    expect(
+      approved.events.some(
+        (event) =>
+          event.type === "turn.started" && event.data.turnId === entry.turnId
+      )
+    ).toBe(true);
+  }
+  const chargedCents = chargedUsage.reduce(
+    (total, row) => total + row.chargedCents,
+    0
+  );
+  await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
+  const replayedUsage = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, conversation.sessionId));
+  expect(
+    replayedUsage.reduce((total, row) => total + row.chargedCents, 0)
+  ).toBe(chargedCents);
 });
 
 test("a definitive model rejection unlocks the composer and releases the operation", async ({
