@@ -411,101 +411,112 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
     return () => observer.disconnect();
   }, []);
   const scale = viewportSize.width
-    ? Math.min(
-        1,
-        (viewportSize.width - 24) / layout.width,
-        (viewportSize.height - 24) / layout.height
+    ? Math.max(
+        0.75,
+        Math.min(
+          1,
+          (viewportSize.width - 24) / layout.width,
+          (viewportSize.height - 24) / layout.height
+        )
       )
     : 1;
 
   return (
     <div className={styles.treeScroll} ref={canvas}>
       <div
-        className="relative"
         style={{
-          height: layout.height,
-          width: layout.width,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          left: Math.max(12, (viewportSize.width - layout.width * scale) / 2),
-          top: 12,
+          position: "relative",
+          width: Math.max(viewportSize.width, layout.width * scale + 24),
+          height: layout.height * scale + 24,
         }}
       >
-        <svg
-          aria-hidden="true"
-          className="absolute inset-0 text-border"
-          height={layout.height}
-          width={layout.width}
+        <div
+          className="absolute"
+          style={{
+            height: layout.height,
+            width: layout.width,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            left: Math.max(12, (viewportSize.width - layout.width * scale) / 2),
+            top: 12,
+          }}
         >
-          {layout.nodes.flatMap((node) => {
-            const children = chat.tree.childrenByParentId[node.id] ?? [];
-            return children.map((childId) => {
-              const child = layout.positions.get(childId);
-              if (!child) {
-                return null;
-              }
-              return (
-                <path
-                  className={
-                    activeIds.has(childId) ? styles.selectedEdge : styles.edge
-                  }
-                  d={`M${node.x} ${node.y + 43} C${node.x} ${node.y + 65}, ${child.x} ${child.y - 65}, ${child.x} ${child.y - 43}`}
-                  fill="none"
-                  key={`${node.id}-${childId}`}
-                  stroke="currentColor"
-                />
-              );
-            });
-          })}
-        </svg>
+          <svg
+            aria-hidden="true"
+            className="absolute inset-0 text-border"
+            height={layout.height}
+            width={layout.width}
+          >
+            {layout.nodes.flatMap((node) => {
+              const children = chat.tree.childrenByParentId[node.id] ?? [];
+              return children.map((childId) => {
+                const child = layout.positions.get(childId);
+                if (!child) {
+                  return null;
+                }
+                return (
+                  <path
+                    className={
+                      activeIds.has(childId) ? styles.selectedEdge : styles.edge
+                    }
+                    d={`M${node.x} ${node.y + 43} C${node.x} ${node.y + 65}, ${child.x} ${child.y - 65}, ${child.x} ${child.y - 43}`}
+                    fill="none"
+                    key={`${node.id}-${childId}`}
+                    stroke="currentColor"
+                  />
+                );
+              });
+            })}
+          </svg>
 
-        {layout.nodes.map((node) => {
-          const message = chat.tree.messagesById[node.id];
-          if (!message) {
-            return null;
-          }
-          const isActive = activeIds.has(node.id);
-          const isCursor = chat.tree.cursorId === node.id;
-          const state = responseState(chat, message);
+          {layout.nodes.map((node) => {
+            const message = chat.tree.messagesById[node.id];
+            if (!message) {
+              return null;
+            }
+            const isActive = activeIds.has(node.id);
+            const isCursor = chat.tree.cursorId === node.id;
+            const state = responseState(chat, message);
 
-          return (
-            <button
-              aria-pressed={isCursor}
-              className={styles.treeNode}
-              data-node-id={node.id}
-              data-path={isActive}
-              data-state={state}
-              key={node.id}
-              onClick={() => chat.tree.setCursor(node.id)}
-              style={{ left: node.x, top: node.y }}
-              type="button"
-            >
-              {isCursor && (
-                <span className={styles.selectedFlag}>
-                  <Check size={10} /> Selected
-                </span>
-              )}
-              <span className={styles.nodeTitle}>
-                {message.role === "user" ? (
-                  <GitBranch size={12} />
-                ) : (
-                  <span className={styles.assistantGlyph}>✦</span>
+            return (
+              <button
+                aria-pressed={isCursor}
+                className={styles.treeNode}
+                data-node-id={node.id}
+                data-path={isActive}
+                data-state={state}
+                key={node.id}
+                onClick={() => chat.tree.setCursor(node.id)}
+                style={{ left: node.x, top: node.y }}
+                type="button"
+              >
+                {isCursor && (
+                  <span className={styles.selectedFlag}>
+                    <Check size={10} /> Selected
+                  </span>
                 )}
-                {message.metadata?.title ?? message.role}
-              </span>
-              <span className={styles.nodePreview}>
-                {getMessageText(message) || "Waiting for first token…"}
-              </span>
-              {message.role === "assistant" ? (
-                <ResponseStatus chat={chat} message={message} />
-              ) : (
-                <span className={styles.promptLabel}>
-                  Prompt{isActive ? " · on selected path" : ""}
+                <span className={styles.nodeTitle}>
+                  {message.role === "user" ? (
+                    <GitBranch size={12} />
+                  ) : (
+                    <span className={styles.assistantGlyph}>✦</span>
+                  )}
+                  {message.metadata?.title ?? message.role}
                 </span>
-              )}
-            </button>
-          );
-        })}
+                <span className={styles.nodePreview}>
+                  {getMessageText(message) || "Waiting for first token…"}
+                </span>
+                {message.role === "assistant" ? (
+                  <ResponseStatus chat={chat} message={message} />
+                ) : (
+                  <span className={styles.promptLabel}>
+                    Prompt{isActive ? " · on selected path" : ""}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -677,7 +688,7 @@ function PlaygroundSession() {
           <TreeCanvas chat={chat} />
           <p className={styles.mapHint}>
             Explore freely. Hidden branches keep streaming.{" "}
-            <span>Entire tree in view</span>
+            <span>Scroll to explore the tree</span>
           </p>
         </aside>
       </div>

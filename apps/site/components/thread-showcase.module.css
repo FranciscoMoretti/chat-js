@@ -254,7 +254,7 @@
 .treeScroll {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   overscroll-behavior: contain;
   background-color: color-mix(in srgb, var(--secondary) 35%, var(--card));
   background-image: radial-gradient(

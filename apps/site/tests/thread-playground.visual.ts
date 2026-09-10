@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
 const browser = await chromium.launch();
-const output = new URL("../uiverify-screenshots/", import.meta.url).pathname;
+const output = fileURLToPath(
+  new URL("../uiverify-screenshots/", import.meta.url)
+);
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
@@ -14,7 +17,7 @@ async function capture(page: Page, name: string) {
     animations: "disabled",
     style:
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
-    path: `${output}/${name}.png`,
+    path: `${output}${name}.png`,
   });
 }
 
@@ -189,6 +192,22 @@ try {
     ),
     true,
     "No page-level horizontal overflow on mobile"
+  );
+  const mobileBranch = monitor
+    .getByRole("button")
+    .filter({ hasText: "Response 3 of 3" });
+  await mobileBranch.scrollIntoViewIfNeeded();
+  assert.ok(
+    await mobileBranch.evaluate(
+      (element) => element.getBoundingClientRect().width >= 100
+    ),
+    "Mobile branch targets remain readable"
+  );
+  await mobileBranch.click();
+  assert.equal(
+    await mobileBranch.getAttribute("aria-pressed"),
+    "true",
+    "Offscreen mobile branches remain reachable"
   );
   await capture(page, "threads-mobile-live");
   assert.deepEqual(errors, [], "No browser runtime errors");
