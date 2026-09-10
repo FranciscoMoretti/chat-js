@@ -126,8 +126,9 @@ const PureSpreadsheetEditor = ({
         sortable: true,
       }}
       enableVirtualization
-      onCellClick={(args) => {
+      onCellClick={(args, event) => {
         if (args.column.key !== "rowNumber" && !isReadonly) {
+          event.preventGridDefault();
           args.selectCell(true);
         }
       }}

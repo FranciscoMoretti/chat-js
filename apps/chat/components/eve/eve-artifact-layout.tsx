@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Artifact,
   ArtifactClose,
@@ -23,6 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
 import { getLanguageFromFileName } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+import { useDocumentDraft } from "./use-document-draft";
 
 const Editor = dynamic(
   () => import("@/components/text-editor").then((m) => m.Editor),
@@ -37,12 +38,62 @@ const SpreadsheetEditor = dynamic(
   { ssr: false }
 );
 
-function EveArtifactPanel({ conversationId }: { conversationId: string }) {
+function DocumentSaveStatus({
+  editing,
+  editable,
+}: {
+  editing: ReturnType<typeof useDocumentDraft>;
+  editable: boolean;
+}) {
+  let status = "Previous version · read only";
+  if (editable) {
+    status = "All changes saved";
+  }
+  if (editing.draft) {
+    status = "Unsaved changes";
+  }
+  if (editing.saving) {
+    status = "Saving…";
+  }
+  return (
+    <div className="shrink-0 space-y-2 border-b px-4 py-2 text-sm">
+      <p role="status">{status}</p>
+      {editing.storageError && (
+        <p role="alert">
+          Draft recovery is unavailable in this browser. Keep this panel open
+          until saved.
+        </p>
+      )}
+      {editing.error && (
+        <div className="space-y-2" role="alert">
+          <p>{editing.error} Your draft has been kept.</p>
+          <div className="flex gap-2">
+            <Button onClick={editing.retry} size="sm" variant="outline">
+              Retry save
+            </Button>
+            <Button onClick={editing.discard} size="sm" variant="outline">
+              Discard draft
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EveArtifactPanel({
+  conversationId,
+  readOnly,
+}: {
+  conversationId: string;
+  readOnly: boolean;
+}) {
   const { artifact, closeArtifact } = useArtifact();
   const [selectedRevisionId, setSelectedRevisionId] = useState(
     artifact.revisionId
   );
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const document = useQuery(
     trpc.eve.document.queryOptions({
       conversationId,
@@ -53,13 +104,42 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
   const history = document.data?.history ?? [];
   const revision = document.data?.revision;
   const index = history.findIndex((item) => item.id === revision?.id);
+  const onSaved = useCallback(
+    async (revisionId: string) => {
+      await queryClient.fetchQuery(
+        trpc.eve.document.queryOptions({
+          conversationId,
+          documentId: artifact.documentId,
+          revisionId,
+        })
+      );
+      setSelectedRevisionId(revisionId);
+      await queryClient.invalidateQueries({
+        queryKey: trpc.eve.document.pathKey(),
+      });
+    },
+    [queryClient, trpc, conversationId, artifact.documentId]
+  );
+  const editing = useDocumentDraft({
+    conversationId,
+    documentId: artifact.documentId,
+    enabled: Boolean(!readOnly && document.data?.canEdit && !document.isError),
+    revision,
+    onSaved,
+    onRestore: setSelectedRevisionId,
+  });
+  const editable =
+    !readOnly &&
+    document.data?.canEdit &&
+    editing.ready &&
+    (Boolean(editing.draft) || index === history.length - 1);
   const contentProps = {
-    content: revision?.content ?? "",
+    content: editing.draft?.content ?? revision?.content ?? "",
     currentVersionIndex: index,
     isCurrentVersion: index === history.length - 1,
-    isReadonly: true,
+    isReadonly: !editable,
     status: "idle" as const,
-    onSaveContent: () => undefined,
+    onSaveContent: editing.edit,
   };
   return (
     <Artifact
@@ -76,6 +156,9 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
           </ArtifactTitle>
         </div>
       </ArtifactHeader>
+      {!readOnly && document.data?.canEdit && (
+        <DocumentSaveStatus editable={Boolean(editable)} editing={editing} />
+      )}
       <ArtifactContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
         {document.isPending && (
           <DocumentSkeleton artifactKind={artifact.kind} />
@@ -92,10 +175,7 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
         )}
         {revision?.kind === "sheet" && !document.isError && (
           <div className="min-h-0 flex-1 overflow-hidden">
-            <SpreadsheetEditor
-              {...contentProps}
-              saveContent={() => undefined}
-            />
+            <SpreadsheetEditor {...contentProps} saveContent={editing.edit} />
           </div>
         )}
         {revision && revision.kind !== "sheet" && !document.isError && (
@@ -117,7 +197,7 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
       {revision && !document.isError && (
         <div className="flex shrink-0 items-center justify-between gap-2 border-t p-2">
           <Button
-            disabled={index <= 0}
+            disabled={Boolean(editing.draft) || index <= 0}
             onClick={() => setSelectedRevisionId(history[index - 1]?.id)}
             variant="outline"
           >
@@ -127,7 +207,7 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
             Version {index + 1} of {history.length}
           </span>
           <Button
-            disabled={index >= history.length - 1}
+            disabled={Boolean(editing.draft) || index >= history.length - 1}
             onClick={() => setSelectedRevisionId(history[index + 1]?.id)}
             variant="outline"
           >
@@ -142,9 +222,11 @@ function EveArtifactPanel({ conversationId }: { conversationId: string }) {
 function Layout({
   children,
   conversationId,
+  readOnly = false,
 }: {
   children: ReactNode;
   conversationId?: string;
+  readOnly?: boolean;
 }) {
   const { artifact } = useArtifact();
   const visible = Boolean(
@@ -161,6 +243,7 @@ function Layout({
           <EveArtifactPanel
             conversationId={conversationId}
             key={`${artifact.documentId}:${artifact.revisionId ?? "latest"}`}
+            readOnly={readOnly}
           />
         )}
       </ChatLayoutSecondary>
@@ -171,6 +254,7 @@ function Layout({
 export function EveArtifactLayout(props: {
   children: ReactNode;
   conversationId?: string;
+  readOnly?: boolean;
 }) {
   return (
     <ArtifactProvider key={props.conversationId ?? "new"}>

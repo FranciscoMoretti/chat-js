@@ -52,12 +52,13 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   browser,
 }, testInfo) => {
   test.setTimeout(240_000);
+  page.setDefaultTimeout(20_000);
   // Keep the development-only floating query inspector out of product controls and captures.
   await page.addInitScript(() => {
     document.addEventListener("DOMContentLoaded", () => {
       const style = document.createElement("style");
       style.textContent =
-        '[aria-label="Open Tanstack query devtools"] { display: none !important; }';
+        '[aria-label="Open Tanstack query devtools"], nextjs-portal { display: none !important; }';
       document.head.append(style);
     });
   });
@@ -197,6 +198,96 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await panel.getByRole("button", { name: "Next", exact: true }).click();
   await expect(panel).toContainText("Manual grapes.");
   await expect(panel).toContainText("Version 3 of 3");
+  const editor = panel.locator(".lexical-editor");
+  await expect(editor).toHaveAttribute("contenteditable", "true");
+  await page.route("**/api/trpc/eve.saveDocument*", (route) => route.abort());
+  await editor.fill("Retained manual draft");
+  await expect(panel.getByRole("button", { name: "Retry save" })).toBeVisible();
+  await panel.screenshot({
+    path: testInfo.outputPath("manual-save-failed.png"),
+    animations: "disabled",
+  });
+  await page.reload();
+  await page
+    .getByRole("button", { name: 'Updated "Artifact notes"', exact: true })
+    .click();
+  await expect(editor).toHaveText("Retained manual draft");
+  await expect(panel.getByRole("button", { name: "Retry save" })).toBeVisible();
+  await page.unroute("**/api/trpc/eve.saveDocument*");
+  await panel.getByRole("button", { name: "Retry save" }).click();
+  await expect(panel).toContainText("All changes saved");
+  await expect(panel).toContainText("Version 4 of 4");
+  await editor.fill("");
+  await expect(panel).toContainText("Version 5 of 5");
+  await expect(editor).toHaveText("");
+  await panel.getByRole("button", { name: "Previous", exact: true }).click();
+  await expect(editor).toHaveText("Retained manual draft");
+  await expect(editor).toHaveAttribute("contenteditable", "false");
+  await panel.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(editor).toHaveText("");
+  await expect(editor).toHaveAttribute("contenteditable", "true");
+  await editor.fill("Final manual text");
+  await expect(panel).toContainText("Version 6 of 6");
+  const accepted = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  await page.route(
+    "**/api/trpc/eve.saveDocument*",
+    async (route) => {
+      const response = await route.fetch();
+      accepted.resolve();
+      await release.promise;
+      await route.fulfill({ response });
+    },
+    { times: 1 }
+  );
+  try {
+    await editor.fill("First queued save");
+    await accepted.promise;
+    await editor.fill("Newer queued content");
+  } finally {
+    release.resolve();
+  }
+  await expect(panel).toContainText("Version 8 of 8");
+  await expect(editor).toHaveText("Newer queued content");
+  await expect(panel).toContainText("All changes saved");
+  await panel.screenshot({
+    path: testInfo.outputPath("manual-saved.png"),
+    animations: "disabled",
+  });
+  await panel.getByRole("button", { name: "Close", exact: true }).click();
+  await page
+    .getByRole("button", { name: 'Created "orchard.py"', exact: true })
+    .click();
+  const code = panel.locator(".cm-content");
+  await code.fill("print(73)");
+  await expect(panel).toContainText("Version 2 of 2");
+  await expect(code).toHaveText("print(73)");
+  await expect(code).toBeFocused();
+  await expect(panel).toContainText("All changes saved");
+  await panel.screenshot({
+    path: testInfo.outputPath("manual-code.png"),
+    animations: "disabled",
+  });
+  await code.fill("");
+  await expect(panel).toContainText("Version 3 of 3");
+  await expect(code).toHaveText("");
+  await panel.getByRole("button", { name: "Close", exact: true }).click();
+  await page
+    .getByRole("button", { name: 'Created "Harvest"', exact: true })
+    .click();
+  await expect(panel).toContainText("All changes saved");
+  await panel.getByRole("gridcell", { name: "Apple", exact: true }).click();
+  await panel.getByRole("textbox").fill("Peach");
+  await panel.getByRole("textbox").press("Enter");
+  await expect(panel).toContainText("Version 2 of 2");
+  await expect(
+    panel.getByRole("gridcell", { name: "Peach", exact: true })
+  ).toBeVisible();
+  await expect(panel).toContainText("All changes saved");
+  await panel.screenshot({
+    path: testInfo.outputPath("manual-sheet.png"),
+    animations: "disabled",
+  });
   await page.goto("/");
   await expect(page.getByTestId("artifact")).toHaveCount(0);
   await db
@@ -218,6 +309,10 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await expect(
       reader.getByRole("region", { name: "Document", exact: true })
     ).toContainText("Cobalt pears.");
+    await expect(reader.locator(".lexical-editor")).toHaveAttribute(
+      "contenteditable",
+      "false"
+    );
     await db
       .update(eveConversation)
       .set({ visibility: "private" })

@@ -531,6 +531,7 @@ export async function getAccessibleEveDocument(
     return undefined;
   }
   return {
+    canEdit: current.ownerId === viewerId,
     history,
     revision: {
       id: revision.id,

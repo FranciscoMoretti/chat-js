@@ -338,7 +338,10 @@ test("document viewing respects visibility, revocation and fork ancestry without
   ).toBeUndefined();
   expect(
     await getAccessibleEveDocument(owner, chat.id, input.documentId)
-  ).toMatchObject({ revision: { content: "Private later version" } });
+  ).toMatchObject({
+    canEdit: true,
+    revision: { content: "Private later version" },
+  });
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -358,6 +361,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     input.documentId
   );
   expect(visible).toMatchObject({
+    canEdit: false,
     revision: { id: first.id, content: "Original" },
   });
   expect(visible?.revision).not.toHaveProperty("ownerId");

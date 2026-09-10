@@ -15,7 +15,7 @@ export async function EveSharedPage({ id }: { id: string }) {
     notFound();
   }
   return (
-    <EveArtifactLayout conversationId={id}>
+    <EveArtifactLayout conversationId={id} readOnly>
       <section className="flex h-full min-h-0 flex-col">
         <ChatHeaderView
           actions={
