@@ -9,28 +9,78 @@ import {
   Copy,
   GitBranch,
   Package,
+  Play,
+  RotateCcw,
   Send,
+  Sparkles,
   Square,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTreeLayout,
   initialTree,
-  type PlaygroundChat,
   type PlaygroundMessage,
   PlaygroundTransport,
+  type PlaygroundChat as ThreadChat,
 } from "./thread-playground-model";
+
+import styles from "./thread-showcase.module.css";
 
 const INSTALL_COMMAND =
   "bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react";
 const MAX_ACTIVE_RUNS = 8;
 
-const STATUS_CLASS = {
-  error: "text-red-600 dark:text-red-400",
-  ready: "text-emerald-600 dark:text-emerald-400",
-  streaming: "text-blue-600 dark:text-blue-400",
-  submitted: "text-amber-600 dark:text-amber-400",
-} as const;
+type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
+
+function responseState(chat: PlaygroundChat, message: PlaygroundMessage) {
+  if (message.role !== "assistant") {
+    return "complete";
+  }
+  const status = chat.tree.getRunForMessage(message.id)?.status;
+  if (status === "streaming" || status === "submitted") {
+    return status;
+  }
+  if (status === "error") {
+    return "error";
+  }
+  if (chat.stoppedIds.has(message.id)) {
+    return "stopped";
+  }
+  return "complete";
+}
+
+function ResponseStatus({
+  chat,
+  message,
+}: {
+  chat: PlaygroundChat;
+  message: PlaygroundMessage;
+}) {
+  const state = responseState(chat, message);
+  const live = state === "streaming" || state === "submitted";
+  const tokens = Math.ceil(getMessageText(message).length / 4);
+  return (
+    <span className={styles.responseStatus} data-state={state}>
+      <span
+        aria-hidden="true"
+        className={live ? styles.streamingRing : styles.statusDot}
+      />
+      <span>
+        {state === "submitted"
+          ? "Starting"
+          : state.charAt(0).toUpperCase() + state.slice(1)}
+      </span>
+      {message.role === "assistant" && (
+        <span
+          className={styles.tokens}
+          title="Estimated tokens: text length divided by four"
+        >
+          ≈{tokens} tok
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function ThreadInstallCommand() {
   const [copied, setCopied] = useState(false);
@@ -90,26 +140,69 @@ function Conversation({
   playgroundError: string | null;
   responseCount: number;
 }) {
+  const transcript = useRef<HTMLDivElement>(null);
+  const followTranscript = useRef(true);
+  useEffect(() => {
+    const element = transcript.current;
+    if (!element) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (followTranscript.current) {
+        element.scrollTop = element.scrollHeight;
+      }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const cursorId = chat.tree.cursorId;
+  const textLength = chat.messages.reduce(
+    (length, message) => length + getMessageText(message).length,
+    0
+  );
+  useEffect(() => {
+    if (textLength && followTranscript.current) {
+      transcript.current?.scrollTo({
+        top: transcript.current.scrollHeight,
+        behavior: "instant",
+      });
+    }
+  }, [textLength]);
+  useEffect(() => {
+    followTranscript.current = true;
+    if (cursorId) {
+      transcript.current?.scrollTo({
+        top: transcript.current.scrollHeight,
+        behavior: "instant",
+      });
+    }
+  }, [cursorId]);
+
   return (
-    <section className="flex h-[43rem] min-w-0 flex-col">
+    <section className={styles.conversation}>
       <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-5 py-3">
         <div>
-          <p className="font-medium text-sm">Active conversation</p>
+          <p className="font-medium text-sm">Chat</p>
           <p className="font-mono text-[11px] text-muted-foreground">
-            messages = tree.getPath(cursorId)
+            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+              ?.title ?? "Start a conversation"}
           </p>
         </div>
-        <div className="flex items-center gap-4 font-mono text-[10px]">
-          <span>{chat.messages.length} path nodes</span>
-          <span
-            className={`flex items-center gap-1.5 ${STATUS_CLASS[chat.status]}`}
-          >
-            <span className="size-1.5 rounded-full bg-current" /> {chat.status}
-          </span>
-        </div>
+        <span className={styles.viewingBadge}>
+          <span /> Viewing this path
+        </span>
       </header>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
+      <div
+        className={styles.transcript}
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          followTranscript.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight <
+            80;
+        }}
+        ref={transcript}
+      >
         {chat.messages.map((message) => {
           const isUser = message.role === "user";
           const siblings = chat.tree.getSiblings(message.id);
@@ -129,23 +222,30 @@ function Conversation({
 
           return (
             <article
-              className={
-                isUser
-                  ? "group ml-auto max-w-[82%] bg-foreground px-4 py-3 text-background"
-                  : "group max-w-[90%] border-foreground/20 border-l-2 px-4 py-1"
-              }
+              className={`${styles.message} ${isUser ? styles.userMessage : styles.assistantMessage}`}
+              data-selected={chat.tree.cursorId === message.id}
               key={message.id}
             >
-              <div className="mb-1 flex items-center gap-2 text-[10px] uppercase opacity-60">
-                <span>{message.role}</span>
-                <span className="font-mono normal-case">{message.id}</span>
+              <div className={styles.messageAuthor}>
+                {!isUser && (
+                  <span aria-hidden="true" className={styles.assistantAvatar}>
+                    <Sparkles size={14} />
+                  </span>
+                )}
+                <span>{isUser ? "You" : "Assistant"}</span>
+                {chat.tree.cursorId === message.id && (
+                  <span className={styles.currentTurn}>Selected</span>
+                )}
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-6">
-                {getMessageText(message) || "Streaming..."}
-              </p>
-              <div className="mt-2 flex min-h-7 items-center gap-1 opacity-60 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+              <div className={styles.messageBody}>
+                <p className="whitespace-pre-wrap text-sm leading-6">
+                  {getMessageText(message) || "Streaming..."}
+                </p>
+              </div>
+              {!isUser && <ResponseStatus chat={chat} message={message} />}
+              <div className={styles.messageActions}>
                 <button
-                  className="inline-flex h-7 items-center gap-1.5 px-1 text-[11px] hover:bg-background/10 disabled:opacity-30"
+                  className={styles.branchButton}
                   disabled={chat.tree.activeRuns.length >= MAX_ACTIVE_RUNS}
                   onClick={async () => {
                     await onBranch(message.id);
@@ -153,7 +253,7 @@ function Conversation({
                   type="button"
                 >
                   <GitBranch className="size-3" />
-                  Branch here
+                  Branch from here
                 </button>
                 {hasSiblings ? (
                   <fieldset className="ml-auto flex items-center gap-0.5">
@@ -171,7 +271,7 @@ function Conversation({
                       <ChevronLeft className="size-3.5" />
                     </button>
                     <span className="min-w-8 text-center font-mono text-[10px]">
-                      {siblingIndex + 1}/{siblings.length}
+                      Branch {siblingIndex + 1} / {siblings.length}
                     </span>
                     <button
                       aria-label={`Next branch for ${message.id}`}
@@ -198,12 +298,19 @@ function Conversation({
           await onSend();
         }}
       >
-        <div className="border border-border focus-within:border-foreground/40">
+        <p className={styles.composerContext}>
+          <GitBranch size={12} /> Continuing from{" "}
+          <strong>
+            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+              ?.title ?? "the beginning"}
+          </strong>
+        </p>
+        <div className="rounded-lg border border-border focus-within:border-foreground/40">
           <textarea
             aria-label="Message this branch"
             className="block min-h-16 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none"
             onChange={(event) => onDraftChange(event.target.value)}
-            placeholder={`Continue from ${chat.tree.cursorId ?? "root"}`}
+            placeholder="Message this branch…"
             rows={2}
             value={draft}
           />
@@ -229,7 +336,7 @@ function Conversation({
             <div className="flex items-center gap-1.5">
               <button
                 aria-label="Stop selected response"
-                className="h-8 px-2 text-muted-foreground text-xs hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                className="h-8 rounded-md px-2 text-muted-foreground text-xs hover:bg-secondary hover:text-foreground disabled:opacity-30"
                 disabled={
                   chat.status !== "submitted" && chat.status !== "streaming"
                 }
@@ -253,7 +360,7 @@ function Conversation({
                 aria-label={`Send message with ${responseCount} ${
                   responseCount === 1 ? "response" : "responses"
                 }`}
-                className="grid size-8 place-items-center bg-primary text-primary-foreground disabled:opacity-40"
+                className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground disabled:opacity-40"
                 disabled={
                   !draft.trim() ||
                   chat.tree.activeRuns.length + responseCount > MAX_ACTIVE_RUNS
@@ -287,12 +394,42 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
     [chat.tree.childrenByParentId, chat.tree.rootIds]
   );
   const activeIds = new Set(chat.messages.map((message) => message.id));
+  const canvas = useRef<HTMLDivElement>(null);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const viewport = canvas.current;
+    if (!viewport) {
+      return;
+    }
+    const observer = new ResizeObserver(() =>
+      setViewportSize({
+        width: viewport.clientWidth,
+        height: viewport.clientHeight,
+      })
+    );
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+  const scale = viewportSize.width
+    ? Math.min(
+        1,
+        (viewportSize.width - 24) / layout.width,
+        (viewportSize.height - 24) / layout.height
+      )
+    : 1;
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto">
+    <div className={styles.treeScroll} ref={canvas}>
       <div
         className="relative"
-        style={{ height: layout.height, width: layout.width }}
+        style={{
+          height: layout.height,
+          width: layout.width,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          left: Math.max(12, (viewportSize.width - layout.width * scale) / 2),
+          top: 12,
+        }}
       >
         <svg
           aria-hidden="true"
@@ -309,7 +446,10 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
               }
               return (
                 <path
-                  d={`M${node.x} ${node.y + 25} V${node.y + 52} H${child.x} V${child.y - 25}`}
+                  className={
+                    activeIds.has(childId) ? styles.selectedEdge : styles.edge
+                  }
+                  d={`M${node.x} ${node.y + 43} C${node.x} ${node.y + 65}, ${child.x} ${child.y - 65}, ${child.x} ${child.y - 43}`}
                   fill="none"
                   key={`${node.id}-${childId}`}
                   stroke="currentColor"
@@ -324,40 +464,45 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
           if (!message) {
             return null;
           }
-          const run = chat.tree.getRunForMessage(node.id);
           const isActive = activeIds.has(node.id);
           const isCursor = chat.tree.cursorId === node.id;
-          let nodeClass =
-            "border-border bg-card/90 text-muted-foreground hover:border-foreground/40 hover:text-foreground";
-          if (isActive) {
-            nodeClass = "border-foreground/30 bg-card text-foreground";
-          }
-          if (isCursor) {
-            nodeClass = "border-foreground bg-foreground text-background";
-          }
+          const state = responseState(chat, message);
 
           return (
             <button
-              className={`absolute w-36 -translate-x-1/2 -translate-y-1/2 border px-2.5 py-2 text-left shadow-sm transition-colors ${nodeClass}`}
+              aria-pressed={isCursor}
+              className={styles.treeNode}
+              data-node-id={node.id}
+              data-path={isActive}
+              data-state={state}
               key={node.id}
               onClick={() => chat.tree.setCursor(node.id)}
               style={{ left: node.x, top: node.y }}
               type="button"
             >
-              <span className="flex items-center justify-between gap-2">
-                <span className="truncate font-medium text-[10px] uppercase">
-                  {message.role}
+              {isCursor && (
+                <span className={styles.selectedFlag}>
+                  <Check size={10} /> Selected
                 </span>
-                <span className="shrink-0 font-mono text-[9px] opacity-60">
-                  {run?.status ?? "ready"}
+              )}
+              <span className={styles.nodeTitle}>
+                {message.role === "user" ? (
+                  <GitBranch size={12} />
+                ) : (
+                  <span className={styles.assistantGlyph}>✦</span>
+                )}
+                {message.metadata?.title ?? message.role}
+              </span>
+              <span className={styles.nodePreview}>
+                {getMessageText(message) || "Waiting for first token…"}
+              </span>
+              {message.role === "assistant" ? (
+                <ResponseStatus chat={chat} message={message} />
+              ) : (
+                <span className={styles.promptLabel}>
+                  Prompt{isActive ? " · on selected path" : ""}
                 </span>
-              </span>
-              <span className="mt-1 block truncate text-[11px]">
-                {getMessageText(message) || "Streaming..."}
-              </span>
-              <span className="mt-1 block font-mono text-[9px] opacity-55">
-                {node.id} · {getMessageText(message).length} chars
-              </span>
+              )}
             </button>
           );
         })}
@@ -366,7 +511,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
   );
 }
 
-export function ThreadPlayground() {
+function PlaygroundSession() {
   const [draft, setDraft] = useState("");
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
   const [responseCount, setResponseCount] = useState(1);
@@ -377,12 +522,19 @@ export function ThreadPlayground() {
     return `msg_${idCounter.current}`;
   }
 
-  const chat = useThread<PlaygroundMessage>({
+  const [stoppedIds, setStoppedIds] = useState<ReadonlySet<string>>(new Set());
+  const thread = useThread<PlaygroundMessage>({
+    onFinish: ({ message, isAbort }) => {
+      if (isAbort) {
+        setStoppedIds((previous) => new Set([...previous, message.id]));
+      }
+    },
     concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
     generateId: generateMessageId,
     initialTree,
     transport: new PlaygroundTransport(),
   });
+  const chat: PlaygroundChat = { ...thread, stoppedIds };
 
   function messageInput(text: string, title: string, messageId?: string) {
     return {
@@ -396,8 +548,7 @@ export function ThreadPlayground() {
     };
   }
 
-  async function sendDraft() {
-    const text = draft.trim();
+  async function sendDraft(text = draft.trim(), count = responseCount) {
     if (!text) {
       return;
     }
@@ -409,22 +560,20 @@ export function ThreadPlayground() {
         request: {
           body: {
             responseLabel:
-              responseCount === 1
-                ? "Assistant reply"
-                : `Response 1 of ${responseCount}`,
+              count === 1 ? "Assistant reply" : `Response 1 of ${count}`,
           },
         },
       });
       setDraft("");
 
       const siblingRuns: ThreadRunHandle[] = await Promise.all(
-        Array.from({ length: responseCount - 1 }, (_, index) =>
+        Array.from({ length: count - 1 }, (_, index) =>
           chat.tree.startRun({
             follow: false,
             from: userMessageId,
             request: {
               body: {
-                responseLabel: `Response ${index + 2} of ${responseCount}`,
+                responseLabel: `Response ${index + 2} of ${count}`,
               },
             },
           })
@@ -470,43 +619,84 @@ export function ThreadPlayground() {
   }
 
   return (
-    <div className="mt-12 overflow-hidden border border-border bg-card shadow-2xl shadow-foreground/5">
+    <div className={styles.playground} data-testid="thread-playground">
       <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
         <div>
-          <p className="font-medium text-sm">useThread playground</p>
+          <p className={styles.playgroundTitle}>
+            <span className={styles.brandGlyph}>✦</span> One conversation. Every
+            possibility.
+          </p>
           <p className="text-muted-foreground text-xs">
             Real tree state with simulated local streams
           </p>
         </div>
-        <p className="font-mono text-[10px] text-muted-foreground">
-          {chat.tree.activeRuns.length} active runs
-        </p>
+        <button
+          className={styles.demoButton}
+          disabled={chat.tree.activeRuns.length + 3 > MAX_ACTIVE_RUNS}
+          onClick={() => sendDraft("How should we launch this?", 3)}
+          type="button"
+        >
+          <Play fill="currentColor" size={13} /> Run 3 replies
+        </button>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,0.95fr)_minmax(28rem,1.05fr)]">
+      <div className="grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <Conversation
           chat={chat}
           draft={draft}
           onBranch={branchFrom}
           onDraftChange={setDraft}
           onResponseCountChange={setResponseCount}
-          onSend={sendDraft}
+          onSend={() => sendDraft()}
           playgroundError={playgroundError}
           responseCount={responseCount}
         />
-        <aside className="flex h-[43rem] min-w-0 flex-col border-border border-t bg-muted/15 lg:border-t-0 lg:border-l">
+        <aside className={styles.treePanel}>
           <header className="flex min-h-16 items-center justify-between border-border border-b px-5 py-3">
             <div>
-              <p className="font-medium text-sm">Message tree</p>
+              <p className="font-medium text-sm">Conversation map</p>
               <p className="font-mono text-[11px] text-muted-foreground">
-                {Object.keys(chat.tree.messagesById).length} nodes ·{" "}
-                {chat.tree.activeRuns.length} active runs
+                Click a card to follow its path
               </p>
             </div>
-            <GitBranch className="size-4 text-muted-foreground" />
+            <span className={styles.viewingBadge}>
+              {chat.tree.activeRuns.length} streaming
+            </span>
           </header>
+          <div className={styles.legend}>
+            <span>
+              <i className={styles.legendSelected} /> Selected path
+            </span>
+            <span>
+              <i className={styles.streamingRing} /> Streaming
+            </span>
+            <span>
+              <i className={styles.statusDot} /> Complete
+            </span>
+          </div>
           <TreeCanvas chat={chat} />
+          <p className={styles.mapHint}>
+            Explore freely. Hidden branches keep streaming.{" "}
+            <span>Entire tree in view</span>
+          </p>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+export function ThreadPlayground() {
+  const [session, setSession] = useState(0);
+  return (
+    <div>
+      <PlaygroundSession key={session} />
+      <div className={styles.demoFooter}>
+        <span>
+          Local simulation · ≈ token counts are estimates, not provider usage
+        </span>
+        <button onClick={() => setSession((value) => value + 1)} type="button">
+          <RotateCcw size={12} /> Reset demo
+        </button>
       </div>
     </div>
   );

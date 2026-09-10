@@ -1,0 +1,436 @@
+.playground {
+  --thread-blue: #2867dc;
+  --thread-teal: #087f70;
+  --thread-amber: #a15b0b;
+  margin-top: 3rem;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px -30px #163c5133;
+}
+:global(.dark) .playground {
+  --thread-blue: #83b2ff;
+  --thread-teal: #59d9bb;
+  --thread-amber: #f3ba6a;
+}
+.playground button {
+  cursor: pointer;
+}
+.playground button:disabled {
+  cursor: not-allowed;
+}
+.playground button:focus-visible {
+  outline: 3px solid var(--thread-blue);
+  outline-offset: 4px;
+}
+.playgroundTitle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.brandGlyph {
+  font-size: 26px;
+  color: var(--thread-teal);
+}
+.demoButton {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--card);
+  background: var(--thread-blue);
+  border: 1px solid var(--thread-blue);
+  border-radius: 7px;
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+.demoButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.demoButton:disabled {
+  opacity: 0.4;
+}
+.responseStatus {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 16px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.responseStatus[data-state="streaming"],
+.responseStatus[data-state="submitted"] {
+  color: var(--thread-teal);
+}
+.responseStatus[data-state="stopped"] {
+  color: var(--thread-amber);
+}
+.responseStatus[data-state="error"] {
+  color: #dd4848;
+}
+.tokens {
+  margin-left: auto;
+  font-family: var(--font-geist-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+.streamingRing {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border: 2px solid color-mix(in srgb, var(--thread-teal) 22%, transparent);
+  border-top-color: var(--thread-teal);
+  border-right-color: var(--thread-teal);
+  border-radius: 50%;
+  animation: orbit 1.2s linear infinite;
+}
+.statusDot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin: 0 3px;
+  background: currentColor;
+  border-radius: 50%;
+}
+.conversation {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 43rem;
+}
+.viewingBadge {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--thread-blue);
+}
+.viewingBadge > span {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
+.transcript {
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  scroll-padding: 24px;
+}
+.message {
+  position: relative;
+  min-width: 0;
+}
+.message + .message {
+  margin-top: 32px;
+}
+.messageAuthor {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.assistantAvatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--thread-teal);
+  background: color-mix(in srgb, var(--thread-teal) 10%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--thread-teal) 24%, transparent);
+  border-radius: 9px;
+}
+.currentTurn {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--thread-blue);
+}
+.userMessage {
+  width: fit-content;
+  max-width: 82%;
+  margin-left: auto;
+}
+.userMessage .messageAuthor {
+  justify-content: flex-end;
+}
+.userMessage .messageBody {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--thread-blue) 8%, var(--secondary));
+  border: 1px solid color-mix(in srgb, var(--thread-blue) 12%, transparent);
+  border-radius: 18px 18px 4px 18px;
+}
+.userMessage[data-selected="true"] .messageBody {
+  border-color: var(--thread-blue);
+}
+.assistantMessage {
+  margin-right: 24px;
+}
+.assistantMessage .messageBody,
+.assistantMessage .messageActions,
+.assistantMessage > .responseStatus {
+  margin-left: 36px;
+}
+.assistantMessage > .responseStatus {
+  margin-top: 12px;
+}
+.messageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 28px;
+  margin-top: 8px;
+}
+.userMessage .messageActions {
+  justify-content: flex-end;
+}
+@media (max-width: 640px) {
+  .transcript {
+    padding: 20px 16px;
+  }
+  .assistantMessage {
+    margin-right: 0;
+  }
+  .assistantMessage .messageBody,
+  .assistantMessage .messageActions,
+  .assistantMessage > .responseStatus {
+    margin-left: 0;
+  }
+}
+.branchButton {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  height: 28px;
+  padding: 0 7px;
+  font-size: 10px;
+  color: var(--thread-blue);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.branchButton:hover {
+  background: color-mix(in srgb, var(--thread-blue) 8%, transparent);
+}
+.branchButton:disabled {
+  opacity: 0.4;
+}
+.composerContext {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.composerContext strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--thread-blue);
+  white-space: nowrap;
+}
+.treePanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 43rem;
+  border-left: 1px solid var(--border);
+}
+.treeScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: color-mix(in srgb, var(--secondary) 35%, var(--card));
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--muted-foreground) 20%, transparent) 0.75px,
+    transparent 0.75px
+  );
+  background-size: 16px 16px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 10px 20px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+}
+.legend > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.legendSelected {
+  width: 14px;
+  height: 3px;
+  background: var(--thread-blue);
+  border-radius: 2px;
+}
+.edge {
+  stroke: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  stroke-width: 1.5;
+  transition: stroke 0.25s;
+}
+.selectedEdge {
+  stroke: var(--thread-blue);
+  stroke-width: 3;
+  transition: stroke 0.25s;
+}
+.treeNode {
+  position: absolute;
+  width: 146px;
+  height: 88px;
+  padding: 10px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 3px 7px #00000006;
+  transform: translate(-50%, -50%);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+.treeNode:hover {
+  border-color: var(--thread-blue);
+  box-shadow: 0 4px 12px #00000012;
+}
+.treeNode[data-path="true"] {
+  background: color-mix(in srgb, var(--thread-blue) 5%, var(--card));
+  border-color: color-mix(in srgb, var(--thread-blue) 50%, var(--border));
+}
+.treeNode[aria-pressed="true"] {
+  padding: 9px;
+  border: 2px solid var(--thread-blue);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--thread-blue) 12%, transparent),
+    0 6px 18px #0000000d;
+}
+.treeNode[data-state="streaming"],
+.treeNode[data-state="submitted"] {
+  outline: 2px solid color-mix(in srgb, var(--thread-teal) 60%, transparent);
+  outline-offset: 4px;
+  animation: breathe 1.8s ease-in-out infinite;
+}
+.nodeTitle {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.assistantGlyph {
+  font-size: 15px;
+  line-height: 14px;
+  color: var(--thread-teal);
+}
+.nodePreview {
+  display: block;
+  margin: 7px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.promptLabel {
+  font-size: 9px;
+  color: var(--muted-foreground);
+}
+.selectedFlag {
+  position: absolute;
+  top: -18px;
+  left: 7px;
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 9px;
+  line-height: 13px;
+  color: var(--card);
+  background: var(--thread-blue);
+  border-radius: 4px 4px 0 0;
+}
+.mapHint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  border-top: 1px solid var(--border);
+}
+.demoFooter {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.demoFooter button {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+  align-items: center;
+  cursor: pointer;
+}
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  50% {
+    outline-color: var(--thread-teal);
+    outline-offset: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground *,
+  .playground *::before {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+@media (max-width: 1023px) {
+  .treePanel {
+    height: 36rem;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+@media (max-width: 600px) {
+  .playgroundTitle {
+    font-size: 13px;
+  }
+  .legend {
+    gap: 10px;
+  }
+  .conversation {
+    height: 40rem;
+  }
+}

@@ -136,6 +136,8 @@ function delay(ms: number, signal?: AbortSignal) {
   });
 }
 
+const RESPONSE_NUMBER_PATTERN = /\d+/;
+
 export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
   sendMessages({
     abortSignal,
@@ -147,8 +149,13 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
     const streamId = crypto.randomUUID();
     const userMessage = messages.at(-1);
     const prompt = userMessage ? getMessageText(userMessage) : "this branch";
-    const response = `${responseLabel}: I am streaming independently from "${prompt}". Select another node while I run, or start more responses from the same prompt.`;
+    const response = `${responseLabel}: Let’s explore "${prompt}". Start with a small release that people can try immediately. Show one clear workflow, collect feedback from real integrations, and use it to decide what to improve next. This response has its own stream: you can explore another branch, stop a sibling, or return here without losing any of this progress.`;
     const words = response.split(" ");
+    // Different cadences make independent streams easy to follow in the demo.
+    const responseNumber = Number(
+      responseLabel.match(RESPONSE_NUMBER_PATTERN)?.[0] ?? 1
+    );
+    const tokenDelay = 140 + (responseNumber % 3) * 35;
 
     return Promise.resolve(
       new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
@@ -165,7 +172,7 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
             controller.enqueue({ id: "text", type: "text-start" });
 
             for (const [index, word] of words.entries()) {
-              await delay(55, abortSignal);
+              await delay(tokenDelay, abortSignal);
               controller.enqueue({
                 delta: index === 0 ? word : ` ${word}`,
                 id: "text",
@@ -236,7 +243,7 @@ export function buildTreeLayout({
         childColumns.length;
     }
 
-    positions.set(id, { depth, id, x: column * 172 + 92, y: depth * 104 + 54 });
+    positions.set(id, { depth, id, x: column * 164 + 92, y: depth * 122 + 64 });
     return column;
   }
 
@@ -246,9 +253,9 @@ export function buildTreeLayout({
   }
 
   return {
-    height: Math.max(420, (maxDepth + 1) * 104 + 48),
+    height: Math.max(420, (maxDepth + 1) * 122 + 48),
     nodes: [...positions.values()],
     positions,
-    width: Math.max(430, Math.max(1, nextLeaf - 1) * 172 + 184),
+    width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
 }
