@@ -1,0 +1,210 @@
+import { asSchema, jsonSchema, type ModelMessage, type Tool } from "ai";
+import Ajv from "ajv";
+import Ajv2020 from "ajv/dist/2020.js";
+import type { ToolContext } from "eve/tools";
+import { z } from "zod";
+import { MCPClient } from "../ai/mcp/mcp-client";
+import { createToolId } from "../ai/mcp-name-id";
+import { config } from "../config";
+import {
+  getMcpConnectorById,
+  getMcpConnectorsByUserId,
+} from "../db/mcp-queries";
+import type { McpConnector } from "../db/schema";
+import { createModuleLogger } from "../logger";
+import { describeEveTool, executeEveTool } from "./adapt-tool";
+
+const log = createModuleLogger("eve.mcp");
+const modelOutput = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("json"), value: z.json() }),
+  z.object({ type: z.literal("text"), value: z.string() }),
+  z.object({
+    type: z.literal("content"),
+    value: z.array(
+      z.discriminatedUnion("type", [
+        z.object({ type: z.literal("text"), text: z.string() }),
+        z.object({
+          type: z.literal("file"),
+          mediaType: z.string(),
+          filename: z.string().optional(),
+          data: z.object({ type: z.literal("data"), data: z.string() }),
+        }),
+      ])
+    ),
+  }),
+]);
+export const eveMcpResult = z.object({
+  kind: z.literal("chatjs.mcp-result"),
+  output: z.json(),
+  modelOutput,
+});
+
+function assertConnector(connector: McpConnector | undefined, ownerId: string) {
+  if (
+    !(
+      config.ai.tools.mcp.enabled &&
+      connector?.enabled &&
+      (connector.userId === ownerId || connector.userId === null)
+    )
+  ) {
+    throw new Error("MCP connector is unavailable.");
+  }
+  return connector;
+}
+
+async function withConnector<T>(
+  connector: McpConnector,
+  signal: AbortSignal,
+  run: (tools: Record<string, Tool>) => Promise<T>
+) {
+  signal.throwIfAborted();
+  const client = new MCPClient(connector.id, connector.name, {
+    url: connector.url,
+    type: connector.type,
+    headers:
+      connector.oauthClientId && connector.oauthClientSecret
+        ? {
+            Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
+          }
+        : undefined,
+  });
+  let closing: Promise<void> | undefined;
+  const close = () => {
+    closing ??= client.close();
+    return closing;
+  };
+  const cancel = close;
+  try {
+    await client.connect(undefined, signal);
+    signal.throwIfAborted();
+    signal.addEventListener("abort", cancel, { once: true });
+    if (client.status !== "connected") {
+      throw new Error(
+        "Connect this MCP server in settings before using its tools."
+      );
+    }
+    const tools = await client.tools();
+    signal.throwIfAborted();
+    return await run(tools);
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    await close();
+  }
+}
+
+/** Only serializable descriptions leave discovery; no credentials or open clients enter a workflow closure. */
+export async function discoverEveMcpTools(
+  ownerId: string | undefined,
+  signal: AbortSignal
+) {
+  if (!(ownerId && config.ai.tools.mcp.enabled)) {
+    return [];
+  }
+  const connectors = await getMcpConnectorsByUserId({ userId: ownerId });
+  const descriptions: Array<
+    Awaited<ReturnType<typeof describeEveTool>> & {
+      name: string;
+      connectorId: string;
+      remoteName: string;
+    }
+  > = [];
+  for (const connector of connectors) {
+    signal.throwIfAborted();
+    if (!connector.enabled) {
+      continue;
+    }
+    try {
+      await withConnector(
+        assertConnector(connector, ownerId),
+        signal,
+        async (tools) => {
+          for (const [remoteName, tool] of Object.entries(tools)) {
+            // MCP has an explicit output adapter below; keep ordinary approval checks.
+            const { toModelOutput: _outputAdapter, ...definition } = tool;
+            descriptions.push({
+              ...(await describeEveTool(definition)),
+              connectorId: connector.id,
+              remoteName,
+              name: createToolId(
+                connector.nameId,
+                remoteName,
+                connector.userId === null
+              ),
+            });
+          }
+        }
+      );
+    } catch {
+      signal.throwIfAborted();
+      log.warn({ connectorId: connector.id }, "MCP discovery unavailable");
+    }
+  }
+  return descriptions;
+}
+
+export async function executeEveMcpTool(
+  connectorId: string,
+  remoteName: string,
+  input: unknown,
+  context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
+  messages: readonly ModelMessage[]
+) {
+  const ownerId = context.session.auth.initiator?.principalId;
+  if (!ownerId) {
+    throw new Error("MCP tools require an authenticated owner.");
+  }
+  context.abortSignal.throwIfAborted();
+  const connector = assertConnector(
+    await getMcpConnectorById({ id: connectorId }),
+    ownerId
+  );
+  return await withConnector(connector, context.abortSignal, async (tools) => {
+    if (!Object.hasOwn(tools, remoteName)) {
+      throw new Error("MCP tool is no longer available.");
+    }
+    const tool = tools[remoteName];
+    if (tool.needsApproval) {
+      throw new Error("MCP approval requires an explicit native policy.");
+    }
+    const schema = await asSchema(tool.inputSchema).jsonSchema;
+    // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
+    const Validator =
+      schema.$schema === "http://json-schema.org/draft-07/schema#"
+        ? Ajv
+        : Ajv2020;
+    const validate = new Validator({
+      strict: false,
+      validateFormats: false,
+    }).compile(schema);
+    const validatedTool = {
+      ...tool,
+      inputSchema: jsonSchema(schema, {
+        validate: (value) =>
+          validate(value)
+            ? { success: true, value }
+            : { success: false, error: new Error("Invalid tool input.") },
+      }),
+    };
+    let result: unknown;
+    for await (const output of executeEveTool(
+      validatedTool,
+      input,
+      context,
+      messages
+    )) {
+      result = output;
+    }
+    const converted = tool.toModelOutput
+      ? await tool.toModelOutput({
+          toolCallId: context.callId,
+          input,
+          output: result,
+        })
+      : { type: "json", value: result };
+    return eveMcpResult.parse({
+      kind: "chatjs.mcp-result",
+      output: result,
+      modelOutput: converted,
+    });
+  });
+}

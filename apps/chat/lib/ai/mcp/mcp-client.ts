@@ -99,7 +99,11 @@ export class MCPClient {
     return this.client?.serverInfo;
   }
 
-  async connect(oauthState?: string): Promise<McpClientInstance | undefined> {
+  async connect(
+    oauthState?: string,
+    abortSignal?: AbortSignal
+  ): Promise<McpClientInstance | undefined> {
+    abortSignal?.throwIfAborted();
     if (this.status === "connected" && this.client) {
       return this.client;
     }
@@ -114,6 +118,7 @@ export class MCPClient {
     try {
       // AI SDK handles 401 internally and calls auth() with the provider
       this.client = await createMCPClient({
+        initializationOptions: { signal: abortSignal },
         transport: {
           type: this.serverConfig.type,
           url: this.serverConfig.url,
