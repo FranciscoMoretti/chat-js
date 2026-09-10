@@ -8,7 +8,7 @@ import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
 export const DEFAULT_MAX_RESULTS = 5;
 
 const MAX_SEARCH_QUERIES = 2; // Bound the number of parallel searches per tool call
-// Common search query schema
+// Strict tool schemas require every property; null requests the default.
 export const searchQueriesSchema = z
   .array(
     z.object({
@@ -19,7 +19,7 @@ export const searchQueriesSchema = z
         .max(10)
         .nullable()
         .describe(
-          `Maximum number of results for this query. Defaults to ${DEFAULT_MAX_RESULTS}.`
+          `Maximum number of results for this query. Pass null to use ${DEFAULT_MAX_RESULTS}.`
         ),
     })
   )

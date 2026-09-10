@@ -279,6 +279,9 @@ export const create = new Command()
 					const toolDirectory = join(targetDir, "tools/chatjs");
 					for (const entry of await readdir(toolDirectory, {
 						withFileTypes: true,
+					}).catch((error) => {
+						if (error.code === "ENOENT") return [];
+						throw error;
 					})) {
 						if (!entry.isDirectory()) continue;
 						const descriptor = join(toolDirectory, entry.name, "chatjs.json");

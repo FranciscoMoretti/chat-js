@@ -156,7 +156,7 @@ export async function syncTools(
 		await writeFile(
 			join(dir, "search.ts"),
 			generatedSource(
-				`import { tool } from "ai";\nimport { z } from "zod";\nexport const createWebSearch = (_options: unknown) => tool({ description: "Search is not installed", inputSchema: z.object({}), execute: async () => { throw new Error("Install a webSearch tool using chat-js add."); } });\n`,
+				`import type { SearchToolFactory } from "@/tools/platform/search-presentation";\nexport const createWebSearch: SearchToolFactory = () => { throw new Error("Install a webSearch tool using chat-js add."); };\n`,
 			),
 		);
 	}

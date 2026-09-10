@@ -1,4 +1,4 @@
-import { createUIMessageStream, type UIMessageChunk } from "ai";
+import { asSchema, createUIMessageStream, type UIMessageChunk } from "ai";
 import { expect, test, vi } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
 import { createWebSearch } from "./tool";
@@ -69,4 +69,55 @@ test("Tavily forwards native options and preserves source events", async () => {
     })
   );
   expect(events.some((event) => event.type === "error")).toBe(false);
+});
+
+test("strict tool fields remain required and explicit nulls apply defaults", async () => {
+  search.mockResolvedValue({ results: [] });
+  const stream = createUIMessageStream<ChatMessage>({
+    execute: async ({ writer }) => {
+      const tool = createWebSearch({
+        dataStream: writer,
+        writeTopLevelUpdates: false,
+      });
+      const schema = asSchema(tool.inputSchema);
+      const json = await schema.jsonSchema;
+      expect(json.required).toEqual(
+        expect.arrayContaining([
+          "search_queries",
+          "topics",
+          "searchDepth",
+          "exclude_domains",
+        ])
+      );
+      const input = {
+        search_queries: [{ query: "defaults", maxResults: null }],
+        topics: null,
+        searchDepth: null,
+        exclude_domains: null,
+      };
+      expect(await schema.validate?.(input)).toMatchObject({ success: true });
+      expect(
+        await schema.validate?.({ search_queries: [{ query: "defaults" }] })
+      ).toMatchObject({ success: false });
+      await tool.execute?.(input, {
+        toolCallId: "defaults",
+        messages: [],
+        context: {},
+      });
+    },
+  });
+  const events: UIMessageChunk[] = [];
+  for await (const event of stream) {
+    events.push(event);
+  }
+  expect(events.some((event) => event.type === "error")).toBe(false);
+  expect(search).toHaveBeenCalledWith(
+    "defaults",
+    expect.objectContaining({
+      maxResults: 5,
+      searchDepth: "basic",
+      topic: "general",
+      excludeDomains: [],
+    })
+  );
 });
