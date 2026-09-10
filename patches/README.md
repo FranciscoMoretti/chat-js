@@ -101,6 +101,15 @@ the model answer alone cannot prove a reread when its content is also in history
 
 ## Packaging
 
+The additional `eve-collector-inventory.source.patch` records an activity
+collector's run ID as `$eve.activity_collector` on the session run when the
+session is created. Its source regression test checks the workflow-start
+attributes. The compiled change is included in `eve@0.52.2.patch`.
+This lets a deletion inventory discover that resource from metadata without
+deserializing session input. It does not purge the collector, cover older
+sessions, or recover collectors orphaned before session creation succeeds.
+Apply this source patch after the existing source changes when rebuilding.
+
 New helper modules are installed at the package root, with exact `#execution/…`
 imports in the patched package manifest. The source layout remains unchanged.
 This avoids [Bun's nested patch-file creation bug](https://github.com/oven-sh/bun/issues/13330),

@@ -40,6 +40,8 @@ The installed Postgres provider's `dist/drizzle/schema.js` stores run payloads i
 
 The next implementation boundary is a durable run/resource inventory owned by EVE and its provider. It must include collector relationships, survive retries, and prevent new descendants or writes after retirement. Only then can a provider report completed purge rather than merely successful row deletion.
 
+Our local fork now adds `$eve.activity_collector` to the session's creation attributes when it starts a collector. The source patch and regression test are retained in `patches/eve-collector-inventory.source.patch`. This is an inventory aid for newly created sessions, not the requested purge implementation. It does not address earlier sessions or collectors orphaned before session creation succeeds. Normal writes in the inspected Postgres streamer persist the supplied run ID; the nullable column alone is not evidence that current EVE writes omit it.
+
 ## Requested contract
 
 A native, retryable deletion operation should provide:
