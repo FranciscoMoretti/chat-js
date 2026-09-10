@@ -1,0 +1,350 @@
+diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
+index e757d05..2e98bca 100644
+--- a/packages/eve/src/context/keys.ts
++++ b/packages/eve/src/context/keys.ts
+@@ -4,6 +4,10 @@
+  * `#runtime/sessions/runtime-context-keys.ts`.
+  */
+ 
++import {
++  SESSION_CHECKPOINT_WRITER_KEY,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
+ import type { LanguageModel, ModelMessage, SystemModelMessage } from "ai";
+ 
+ import type {
+@@ -71,6 +75,11 @@ export interface Session {
+ // Seed keys — serializable values carried across workflow step boundaries.
+ // ---------------------------------------------------------------------------
+ 
++export const SessionCheckpointWriterKey = new ContextKey<{
++  readonly sessionId: string;
++  readonly writable: WritableStream<SessionCheckpoint>;
++}>(SESSION_CHECKPOINT_WRITER_KEY);
++
+ export const AuthKey = new ContextKey<SessionAuthContext | null>("eve.auth");
+ export const InitiatorAuthKey = new ContextKey<SessionAuthContext | null>("eve.initiatorAuth");
+ export const SessionIdKey = new ContextKey<string>("eve.sessionId");
+diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
+index d3cfb0b..39c0a45 100644
+--- a/packages/eve/src/execution/workflow-entry.ts
++++ b/packages/eve/src/execution/workflow-entry.ts
+@@ -1,3 +1,8 @@
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  SESSION_CHECKPOINT_WRITER_KEY,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
+ import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
+ 
+ import type {
+@@ -171,6 +176,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+   };
+ 
+   const driverWritable = getWritable<Uint8Array>();
++  input.serializedContext[SESSION_CHECKPOINT_WRITER_KEY] = {
++    sessionId,
++    writable: getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE }),
++  };
+   const crashCleanupState: CrashCleanupState = {
+     caller: undefined,
+     callerResolved: false,
+diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
+index da9ac49..bf504b1 100644
+--- a/packages/eve/src/execution/workflow-steps.ts
++++ b/packages/eve/src/execution/workflow-steps.ts
+@@ -1,3 +1,5 @@
++import { SessionCheckpointWriterKey } from "#context/keys.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
+ import { buildAdapterContext } from "#channel/adapter-context.js";
+ import { callAdapterEventHandler, defaultDeliverResult } from "#channel/adapter.js";
+ import type { DeliverHookPayload } from "#channel/types.js";
+@@ -539,6 +541,11 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
+         return step(modelSession, stepInput);
+       };
+ 
++      await writeSessionCheckpoint({
++        session: schemaSession,
++        delivery: resolved,
++        target: ctx.get(SessionCheckpointWriterKey),
++      });
+       return runHarnessStep(schemaSession, resolved);
+     });
+   } catch (error) {
+diff --git a/packages/eve/src/internal/testing/durable-session-workflow.ts b/packages/eve/src/internal/testing/durable-session-workflow.ts
+index 6db0c47..ea55b33 100644
+--- a/packages/eve/src/internal/testing/durable-session-workflow.ts
++++ b/packages/eve/src/internal/testing/durable-session-workflow.ts
+@@ -1,3 +1,12 @@
++import { getWritable } from "#compiled/@workflow/core/index.js";
++import { SessionCheckpointWriterKey } from "#context/keys.js";
++import { deserializeContext, serializeContext } from "#context/serialize.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  SESSION_CHECKPOINT_WRITER_KEY,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
+ /**
+  * Test fixture exercising the `createDurableSessionState` /
+  * `readDurableSession` round-trip from inside a real workflow runtime.
+@@ -206,3 +215,35 @@ export async function durableSessionRetryFixtureWorkflow(): Promise<DurableSessi
+     writeAttempt,
+   };
+ }
++
++export async function sessionCheckpointFixtureStep(input: {
++  readonly sessionId: string;
++  readonly serializedContext: Record<string, unknown>;
++}): Promise<Record<string, unknown>> {
++  "use step";
++  const ctx = await deserializeContext(input.serializedContext);
++  const session = buildSyntheticSession({
++    sessionId: input.sessionId,
++    marker: "checkpoint",
++    historyDepth: 1,
++  });
++  session.history.push({
++    role: "user",
++    content: [{ type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) }],
++  });
++  await writeSessionCheckpoint({
++    session,
++    delivery: { message: "next" },
++    target: ctx.get(SessionCheckpointWriterKey),
++  });
++  return serializeContext(ctx);
++}
++
++export async function sessionCheckpointFixtureWorkflow(): Promise<void> {
++  "use workflow";
++  const { workflowRunId: sessionId } = getWorkflowMetadata();
++  const writable = getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE });
++  const serializedContext = { [SESSION_CHECKPOINT_WRITER_KEY]: { sessionId, writable } };
++  const restored = await sessionCheckpointFixtureStep({ sessionId, serializedContext });
++  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
++}
+diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
+new file mode 100644
+index 0000000..625c034
+--- /dev/null
++++ b/packages/eve/src/execution/session-checkpoint.ts
+@@ -0,0 +1,36 @@
++import type { HarnessSession, StepInput } from "#harness/types.js";
++import { getHarnessEmissionState } from "#harness/emission-state.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++/** Captures native history before a new user turn; internal continuations do not create checkpoints. */
++export async function writeSessionCheckpoint(input: {
++  readonly session: HarnessSession;
++  readonly delivery: StepInput | undefined;
++  readonly target:
++    | { readonly sessionId: string; readonly writable: WritableStream<SessionCheckpoint> }
++    | undefined;
++}): Promise<void> {
++  const emission = getHarnessEmissionState(input.session.state);
++  if (
++    input.delivery?.message === undefined ||
++    emission.turnId !== "" ||
++    input.target?.sessionId !== input.session.sessionId
++  )
++    return;
++  const snapshot = createDurableSessionState({ session: input.session }).snapshot;
++  if (snapshot === undefined)
++    throw new Error("A session checkpoint requires an embedded snapshot.");
++  const writer = input.target.writable.getWriter();
++  try {
++    await writer.write({
++      version: 1,
++      sessionId: input.session.sessionId,
++      beforeTurnId: `turn_${emission.sequence}`,
++      snapshot,
++    });
++  } finally {
++    writer.releaseLock();
++  }
++}
+diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
+new file mode 100644
+index 0000000..fcc625c
+--- /dev/null
++++ b/packages/eve/src/execution/session-checkpoint-contract.ts
+@@ -0,0 +1,11 @@
++import type { DurableSessionSnapshot } from "#execution/durable-session-store.js";
++
++export const SESSION_CHECKPOINT_WRITER_KEY = "eve.sessionCheckpointWriter";
++export const SESSION_CHECKPOINT_NAMESPACE = "eve.checkpoints";
++
++export interface SessionCheckpoint {
++  readonly version: 1;
++  readonly sessionId: string;
++  readonly beforeTurnId: string;
++  readonly snapshot: DurableSessionSnapshot;
++}
+diff --git a/packages/eve/src/execution/session-checkpoint.test.ts b/packages/eve/src/execution/session-checkpoint.test.ts
+new file mode 100644
+index 0000000..1316fe9
+--- /dev/null
++++ b/packages/eve/src/execution/session-checkpoint.test.ts
+@@ -0,0 +1,113 @@
++import { describe, expect, it } from "vitest";
++import { createSession } from "#execution/session.js";
++import { setHarnessEmissionState } from "#harness/emission-state.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++function session() {
++  return createSession({
++    sessionId: "source",
++    continuationToken: "source-inbox",
++    turnAgent: {
++      id: "test",
++      instructions: ["Instruction"],
++      model: { id: "test" },
++      tools: [],
++      workspaceSpec: { rootEntries: [] },
++    },
++  });
++}
++
++function sink() {
++  const checkpoints: SessionCheckpoint[] = [];
++  const writable = new WritableStream<SessionCheckpoint>({
++    write(value) {
++      checkpoints.push(value);
++    },
++  });
++  return { checkpoints, target: { sessionId: "source", writable } };
++}
++
++describe("session checkpoints", () => {
++  it("keeps native tool and file history before the replacement message", async () => {
++    const initial = session();
++    initial.history.push(
++      {
++        role: "user",
++        content: [{ type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) }],
++      },
++      {
++        role: "assistant",
++        content: [
++          {
++            type: "tool-call",
++            toolCallId: "call",
++            toolName: "wordCount",
++            input: { text: "hello" },
++          },
++        ],
++      },
++      {
++        role: "tool",
++        content: [
++          {
++            type: "tool-result",
++            toolCallId: "call",
++            toolName: "wordCount",
++            output: { type: "json", value: { count: 1 } },
++          },
++        ],
++      },
++      { role: "assistant", content: "One word." },
++    );
++    const source = setHarnessEmissionState(initial, {
++      sessionStarted: true,
++      sequence: 7,
++      stepIndex: 0,
++      turnId: "",
++    });
++    const { checkpoints, target } = sink();
++    await writeSessionCheckpoint({ session: source, delivery: { message: "replacement" }, target });
++    expect(checkpoints).toHaveLength(1);
++    expect(checkpoints[0]?.beforeTurnId).toBe("turn_7");
++    expect(checkpoints[0]?.snapshot.session.history).toEqual(initial.history);
++    expect(target.writable.locked).toBe(false);
++  });
++
++  it("does not checkpoint tool continuation, another session's stream, or an active turn", async () => {
++    const source = session();
++    const { checkpoints, target } = sink();
++    await writeSessionCheckpoint({ session: source, delivery: undefined, target });
++    await writeSessionCheckpoint({
++      session: source,
++      delivery: { message: "new" },
++      target: { ...target, sessionId: "other" },
++    });
++    await writeSessionCheckpoint({
++      session: setHarnessEmissionState(source, {
++        sessionStarted: true,
++        sequence: 1,
++        stepIndex: 1,
++        turnId: "turn_1",
++      }),
++      delivery: { message: "new" },
++      target,
++    });
++    expect(checkpoints).toHaveLength(0);
++  });
++
++  it("propagates storage failure before model work and releases the writer", async () => {
++    const target = {
++      sessionId: "source",
++      writable: new WritableStream<SessionCheckpoint>({
++        write() {
++          throw new Error("storage unavailable");
++        },
++      }),
++    };
++    await expect(
++      writeSessionCheckpoint({ session: session(), delivery: { message: "new" }, target }),
++    ).rejects.toThrow("storage unavailable");
++    expect(target.writable.locked).toBe(false);
++  });
++});
+diff --git a/packages/eve/src/execution/session-checkpoint.integration.test.ts b/packages/eve/src/execution/session-checkpoint.integration.test.ts
+new file mode 100644
+index 0000000..8c9c8a3
+--- /dev/null
++++ b/packages/eve/src/execution/session-checkpoint.integration.test.ts
+@@ -0,0 +1,40 @@
++import { describe, expect, it } from "vitest";
++import { start } from "#internal/workflow/runtime.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { sessionCheckpointFixtureWorkflow } from "#internal/testing/durable-session-workflow.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
++
++describe("session checkpoint durability", () => {
++  it("ferries the writer through context and restores native binary history from its own stream", async () => {
++    const runtime = await createTestRuntime({ agent: { name: "checkpoint-fixture" } });
++    await runtime.run(async () => {
++      const run = await start(sessionCheckpointFixtureWorkflow, []);
++      await run.returnValue;
++      const reader = run
++        .getReadable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE })
++        .getReader();
++      try {
++        const first = await reader.read();
++        const second = await reader.read();
++        expect(first.value?.sessionId).toBe(run.runId);
++        expect(first.value?.beforeTurnId).toBe("turn_0");
++        expect(first.value?.snapshot.session.history).toEqual([
++          { role: "user", content: "checkpoint message 0" },
++          {
++            role: "user",
++            content: [
++              { type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) },
++            ],
++          },
++        ]);
++        expect(second.value).toEqual(first.value);
++      } finally {
++        await reader.cancel();
++        reader.releaseLock();
++      }
++    });
++  });
++});

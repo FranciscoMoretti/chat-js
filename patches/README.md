@@ -28,3 +28,31 @@ Do not retain absolute cache paths or bundled dependency changes when refreshing
 this patch. Remove it after an upstream release passes the regression.
 
 Upstream report/publication remains subject to user review.
+
+## Native session checkpoints prototype (not activated)
+
+`eve-session-checkpoints.source.patch` applies to the source checkout at the same
+`eve@0.52.2` commit above. It is **not** a Bun `patchedDependencies` entry and does
+not alter the running ChatJS worker. It is the first part of the native fork work
+for editing and regeneration.
+
+It writes a versioned durable snapshot before a new user turn to the owning
+session's `eve.checkpoints` Workflow stream. The writer travels through native
+context serialization and rejects a different session identity. Non-message
+continuations and active turns do not create checkpoints. Storage failures
+propagate before model execution; the writer lock is always released.
+
+Validated in the isolated source checkout with 101 focused unit/regression tests,
+a real Workflow serialization integration (including binary PDF history), source
+type-checking, and source linting. Both source review passes found no actionable
+regression. This does not establish app-level editing or regeneration support.
+
+Before activating: implement an authorized fork operation and stream-prefix
+restoration; reset/remap source-owned execution, approval and sandbox state;
+handle checkpoint retry duplicates; and bound snapshot storage/retention. A raw
+checkpoint must never be adopted as another session unchanged. The prototype
+stores full snapshots, so retained history can produce quadratic storage growth.
+
+No upstream issue or change has been published. Keep the source patch separate
+from the active minified package patch until the complete runtime slice passes
+app-level validation.
