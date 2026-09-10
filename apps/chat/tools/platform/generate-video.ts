@@ -1,6 +1,6 @@
 import { experimental_generateVideo as generateVideo, tool } from "ai";
-import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
-import { getVideoModel } from "@/lib/ai/providers";
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import { toModelData } from "@/lib/ai/to-model-data";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { uploadFile } from "@/lib/file-storage";
@@ -41,8 +41,11 @@ function resolveVideoExtension(mediaType?: string): string {
 async function resolveVideoModel(selectedModel?: string): Promise<string> {
   if (selectedModel) {
     try {
-      const model = await getAppModelDefinition(selectedModel as AppModelId);
-      if (model.output.video) {
+      const models = await getActiveGateway().fetchModels();
+      const model = models
+        .map(toModelData)
+        .find((item) => item.id === selectedModel);
+      if (model?.output.video) {
         return selectedModel;
       }
     } catch {
@@ -89,8 +92,12 @@ export const generateVideoTool = ({
 
         log.debug({ modelId }, "generateVideo: resolved model");
 
+        const videoModel = getActiveGateway().createVideoModel(modelId);
+        if (!videoModel) {
+          throw new Error("The active gateway does not support video models.");
+        }
         const result = await generateVideo({
-          model: getVideoModel(modelId),
+          model: videoModel,
           abortSignal,
           prompt,
           aspectRatio: finalAspectRatio,

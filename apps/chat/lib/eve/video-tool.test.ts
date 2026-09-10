@@ -28,9 +28,16 @@ vi.mock("ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("ai")>()),
   experimental_generateVideo: provider.generate,
 }));
-vi.mock("../ai/providers", () => ({ getVideoModel: (id: string) => id }));
-vi.mock("../ai/app-models", () => ({
-  getAppModelDefinition: async () => ({ output: { video: true } }),
+vi.mock("../ai/active-gateway", () => ({
+  getActiveGateway: () => ({
+    createVideoModel: (id: string) => id,
+    fetchModels: async () => [
+      { id: "selected/video", output: { video: true } },
+    ],
+  }),
+}));
+vi.mock("../ai/to-model-data", () => ({
+  toModelData: (model: unknown) => model,
 }));
 vi.mock("../file-storage", () => ({ uploadFile: provider.upload }));
 
