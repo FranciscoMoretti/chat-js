@@ -29,23 +29,36 @@ test("a lost native creation reply recovers the same session from the retained c
       operation.operationId,
       operation.message,
       async (id) => {
-        const result = await eveRequest(
-          session.user.id,
-          "/eve/v1/session",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              operationId: id,
-              message: operation.message,
-            }),
-            signal: AbortSignal.timeout(30_000),
-          },
-          operation.modelId
+        const results = await Promise.all(
+          [0, 1].map(() =>
+            eveRequest(
+              session.user.id,
+              "/eve/v1/session",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  operationId: id,
+                  message: operation.message,
+                }),
+                signal: AbortSignal.timeout(30_000),
+              },
+              operation.modelId
+            )
+          )
         );
-        expect(result.ok).toBe(true);
-        nativeSessionId = z
-          .object({ sessionId: z.string() })
-          .parse(await result.json()).sessionId;
+        const sessionIds: string[] = [];
+        for (const result of results) {
+          expect(result.ok).toBe(true);
+          const response = z
+            .object({ sessionId: z.string() })
+            .parse(await result.json());
+          sessionIds.push(response.sessionId);
+          expect(result.headers.get("x-eve-session-id")).toBe(
+            response.sessionId
+          );
+        }
+        expect(new Set(sessionIds).size).toBe(1);
+        nativeSessionId = sessionIds[0];
         throw new Error("Simulated lost native reply before app binding");
       },
       operation.modelId
