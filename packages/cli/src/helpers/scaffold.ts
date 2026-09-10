@@ -7,9 +7,13 @@ import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { syncTools } from "../utils/sync-tools";
 import { registryUrl } from "../registry/shadcn";
 import { runCommand } from "../utils/run-command";
+import { vendorEvePackage } from "./vendor-eve-package";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
 const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
+  ".eve",
+  ".output",
+  "eve-results",
   "node_modules",
   ".next",
   ".turbo",
@@ -208,6 +212,11 @@ async function applyChatTemplateSourceTransforms(
   await vendorThreadPackage({
     destination,
     threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
+  });
+  await vendorEvePackage({
+    destination,
+    packageDir: join(getRepoRoot(), "node_modules", "eve"),
+    patchPath: join(getRepoRoot(), "patches", "eve@0.52.2.patch"),
   });
 }
 

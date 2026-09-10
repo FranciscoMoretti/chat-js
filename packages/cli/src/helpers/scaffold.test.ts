@@ -161,6 +161,28 @@ describe("buildConfigTs", () => {
 });
 
 describe("scaffoldFromTemplate", () => {
+  it("ships the maintained eve runtime and every relocated helper", async () => {
+    const destination = await makeTempDir("chat-app-eve");
+    await scaffoldFromTemplate(destination);
+    const manifest = JSON.parse(await readFile(join(destination, "package.json"), "utf8"));
+    expect(manifest.dependencies.eve).toBe("file:vendor/eve-0.52.2.tgz");
+    const archive = join(destination, manifest.dependencies.eve.slice(5));
+    const listing = Bun.spawnSync(["tar", "-tzf", archive]);
+    expect(listing.exitCode).toBe(0);
+    const names = new Set(listing.stdout.toString().trim().split("\n"));
+    const metadata = Bun.spawnSync(["tar", "-xOf", archive, "package/package.json"]);
+    expect(metadata.exitCode).toBe(0);
+    const runtime = JSON.parse(metadata.stdout.toString());
+    expect(runtime.name).toBe("eve");
+    for (const [key, target] of Object.entries(runtime.imports)) {
+      if (key.startsWith("#execution/") && typeof target === "string") {
+        expect(names.has(`package/${target.slice(2)}`)).toBe(true);
+      }
+    }
+    expect(names.has("package/session-checkpoint.js")).toBe(true);
+    expect(names.has("package/local-fork-checkpoint.js")).toBe(true);
+  });
+
   it("leaves the storage slot and provider peers to registry installation", async () => {
     const destination = await makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
@@ -316,7 +338,12 @@ describe("scaffoldFromTemplate", () => {
 			};
 
 			expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
-			expect(electronPackageJson.devDependencies["@better-auth/electron"]).toBe(
+			expect(packageJson.dependencies.eve).toBe("file:vendor/eve-0.52.2.tgz");
+      expect(existsSync(join(projectDir, "vendor/eve-0.52.2.tgz"))).toBe(true);
+      expect(existsSync(join(projectDir, ".eve"))).toBe(false);
+      expect(existsSync(join(projectDir, ".output"))).toBe(false);
+      expect(existsSync(join(projectDir, "tests/eve-results"))).toBe(false);
+      expect(electronPackageJson.devDependencies["@better-auth/electron"]).toBe(
 				"1.5.6",
 			);
 		} finally {

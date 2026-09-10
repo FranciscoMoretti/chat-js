@@ -122,6 +122,19 @@ fresh cache and compare the installed changed modules with the build output.
 Bun 1.3.11 reused an older patched cache entry even after a forced reinstall in
 this worktree; a successful install alone did not prove that the new code ran.
 
+## Generated apps
+
+Template generation verifies the installed eve package against this patch and
+packs it into `vendor/eve-0.52.2.tgz`. The generated app uses a local tarball
+dependency so npm, Bun, pnpm, and Yarn receive the maintained runtime without
+relying on Bun-specific patch installation. Relocated root helpers are explicitly
+included in the archive. This is a local distribution mechanism until the fork
+or upstream release is approved for publication.
+
+Fresh npm and Bun installs have been compared byte-for-byte against the patched
+runtime modules. Scaffold coverage checks helper inclusion, packaging rejects a
+stale unpatched dependency, and template generation is reproducible.
+
 ## Remaining integration
 
 ChatJS now reserves same-owner branch ancestry and immutable fork operations in
