@@ -3,6 +3,7 @@ import { canSpend } from "@/lib/db/credits";
 import { ownsEveSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { getEveModelDefinition } from "@/lib/eve/model-selection";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
@@ -19,6 +20,39 @@ async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
   if (!(await canSpend(ownerId))) {
     return Response.json({ error: "Insufficient credits" }, { status: 402 });
   }
+}
+
+async function readCommand(
+  request: Request,
+  policy: NonNullable<ReturnType<typeof parseSessionRequest>>
+) {
+  let body: string | undefined;
+  let isNewMessage = false;
+  let modelId: string | undefined;
+  if (request.method === "POST") {
+    const input = policy.schema.safeParse(
+      await request.json().catch(() => null)
+    );
+    if (!input.success) {
+      return new Response(null, { status: 400 });
+    }
+    if ("message" in input.data) {
+      modelId = input.data.modelId;
+      try {
+        getEveModelDefinition(modelId);
+      } catch {
+        return Response.json(
+          { error: "This model is not available for chat." },
+          { status: 400 }
+        );
+      }
+      body = JSON.stringify({ message: input.data.message });
+    } else {
+      body = JSON.stringify(input.data);
+    }
+    isNewMessage = "message" in input.data;
+  }
+  return { body, isNewMessage, modelId };
 }
 
 async function handle(
@@ -45,18 +79,11 @@ async function handle(
   if (!query || (request.method !== "GET" && query.size)) {
     return new Response(null, { status: 400 });
   }
-  let body: string | undefined;
-  let isNewMessage = false;
-  if (request.method === "POST") {
-    const input = policy.schema.safeParse(
-      await request.json().catch(() => null)
-    );
-    if (!input.success) {
-      return new Response(null, { status: 400 });
-    }
-    body = JSON.stringify(input.data);
-    isNewMessage = "message" in input.data;
+  const command = await readCommand(request, policy);
+  if (command instanceof Response) {
+    return command;
   }
+  const { body, isNewMessage, modelId } = command;
   try {
     const admission = await checkTurnAdmission(isNewMessage, session.user.id);
     if (admission) {
@@ -74,7 +101,8 @@ async function handle(
           request.method === "GET"
             ? request.signal
             : AbortSignal.timeout(30_000),
-      }
+      },
+      modelId
     );
     const headers = new Headers({ "cache-control": "no-store" });
     for (const key of [

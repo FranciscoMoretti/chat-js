@@ -17,13 +17,17 @@ export function assertEveConfigured() {
 export async function eveRequest(
   owner: string,
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  modelId?: string
 ) {
   assertEveConfigured();
   const headers = new Headers({
     authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
     "x-chatjs-owner": owner,
   });
+  if (modelId) {
+    headers.set("x-chatjs-model", modelId);
+  }
   if (init.body) {
     headers.set("content-type", "application/json");
   }

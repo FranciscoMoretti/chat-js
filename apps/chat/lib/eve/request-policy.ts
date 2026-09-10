@@ -5,7 +5,10 @@ const streamIndex = /^\d{1,12}$/;
 const sessionPath =
   /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)(?:\/(stream|cancel))?$/;
 const message = z
-  .object({ message: z.string().trim().min(1).max(16_000) })
+  .object({
+    message: z.string().trim().min(1).max(16_000),
+    modelId: z.string().min(1).max(200).optional(),
+  })
   .strict();
 const respond = z
   .object({

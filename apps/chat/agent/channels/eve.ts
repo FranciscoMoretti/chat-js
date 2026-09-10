@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { eveChannel } from "eve/channels/eve";
 import { ownsEveSession } from "../../lib/db/eve-queries";
 import { env } from "../../lib/env";
+import { getEveModelDefinition } from "../../lib/eve/model-selection";
 import { parseSessionRequest } from "../../lib/eve/request-policy";
 
 export default eveChannel({
@@ -28,8 +29,16 @@ export default eveChannel({
         return null;
       }
     }
+    const modelId = request.headers.get("x-chatjs-model") ?? undefined;
+    if (modelId) {
+      getEveModelDefinition(modelId);
+    }
+    const attributes: Record<string, string> = {};
+    if (modelId) {
+      attributes.modelId = modelId;
+    }
     return {
-      attributes: {},
+      attributes,
       authenticator: "chatjs-gateway",
       issuer: "chatjs",
       principalType: "user",

@@ -1,20 +1,17 @@
-import { defineAgent } from "eve";
-import { getActiveGateway } from "../lib/ai/active-gateway";
-import { getFallbackModels } from "../lib/ai/gateways/fallback-models";
-import { config } from "../lib/config";
-
-const model = getFallbackModels(config.ai.gateway).find(
-  (item) => item.id === config.ai.workflows.chat
-);
-if (!model) {
-  throw new Error(
-    "Refresh the selected gateway model snapshot before building Eve."
-  );
-}
+import { defineAgent, defineDynamic } from "eve";
+import { resolveEveModel } from "../lib/eve/model-selection";
 
 export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
-  modelContextWindowTokens: model.context_window,
-  model: getActiveGateway().createLanguageModel(config.ai.workflows.chat),
+  model: defineDynamic({
+    events: {
+      "step.started": (_event, context) => {
+        const modelId = context.session.auth.current?.attributes.modelId;
+        return resolveEveModel(
+          typeof modelId === "string" ? modelId : undefined
+        );
+      },
+    },
+  }),
   experimental: { workflow: { world: "@workflow/world-postgres" } },
 });
