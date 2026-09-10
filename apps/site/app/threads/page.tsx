@@ -171,11 +171,11 @@ export default function ThreadsPage() {
                     {"\n\n"}
                     <span className="text-muted-foreground">- </span>
                     <span className="text-foreground/55">
-                      const chat = useChat({"{ transport }"});
+                      const chat = useChat();
                     </span>
                     {"\n"}
                     <span className="text-foreground">
-                      + const chat = useThread({"{ transport }"});
+                      + const chat = useThread();
                     </span>
                     {"\n\n"}
                     <span className="text-foreground">chat.messages;</span>

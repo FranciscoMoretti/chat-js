@@ -32,6 +32,15 @@ try {
   await page.getByTestId("thread-playground").waitFor();
   await page.evaluate(() => document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
+  const intro = page.locator("main > section").first();
+  assert.match(
+    (await intro.locator("pre").textContent()) ?? "",
+    /useThread\(\)/
+  );
+  await intro.screenshot({
+    animations: "disabled",
+    path: `${output}threads-intro.png`,
+  });
   const docsLinks = page.getByRole("link", { name: "Read the docs" });
   assert.equal(await docsLinks.count(), 2);
   for (const link of await docsLinks.all()) {
