@@ -520,3 +520,71 @@ export const eveUsage = pgTable(
   },
   (table) => [index("EveUsage_session_turn").on(table.sessionId, table.turnId)]
 );
+
+export const eveDocumentRevision = pgTable(
+  "EveDocumentRevision",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("documentId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    operationId: text("operationId").notNull(),
+    parentRevisionId: uuid("parentRevisionId"),
+    turnIndex: integer("turnIndex").notNull(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("EveDocumentRevision_operation").on(
+      table.conversationId,
+      table.operationId
+    ),
+    uniqueIndex("EveDocumentRevision_identity").on(
+      table.id,
+      table.documentId,
+      table.ownerId
+    ),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveDocumentRevision_conversation_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.parentRevisionId, table.documentId, table.ownerId],
+      foreignColumns: [table.id, table.documentId, table.ownerId],
+      name: "EveDocumentRevision_parent_document_owner_fk",
+    }),
+    check("EveDocumentRevision_turn_nonnegative", sql`${table.turnIndex} >= 0`),
+  ]
+);
+
+export const eveDocumentHead = pgTable(
+  "EveDocumentHead",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    documentId: uuid("documentId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    revisionId: uuid("revisionId").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.documentId] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveDocumentHead_conversation_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.revisionId, table.documentId, table.ownerId],
+      foreignColumns: [
+        eveDocumentRevision.id,
+        eveDocumentRevision.documentId,
+        eveDocumentRevision.ownerId,
+      ],
+      name: "EveDocumentHead_revision_document_owner_fk",
+    }),
+  ]
+);
+
+export type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;

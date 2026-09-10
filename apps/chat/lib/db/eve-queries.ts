@@ -3,6 +3,7 @@ import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
+import { initializeEveForkDocuments } from "./eve-documents";
 
 export async function ownsEveSession(ownerId: string, sessionId: string) {
   const rows = await db
@@ -167,6 +168,9 @@ export async function createEveConversation(
     return { id: existing.id, sessionId: existing.sessionId };
   }
   try {
+    if (fork) {
+      await initializeEveForkDocuments(ownerId, reservation.id);
+    }
     const sessionId = await create(reservation.id);
     const [bound] = await db
       .update(eveConversation)

@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user } from "../lib/db/schema";
+import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -12,6 +13,18 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const session = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  // The guarded test database uses virtual application credits for paid-tool tests.
+  await db
+    .insert(userCredit)
+    .values({ userId: session.user.id, credits: 1000 })
+    .onConflictDoUpdate({
+      target: userCredit.userId,
+      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+    });
+
   const headers = { origin: new URL(page.url()).origin };
   const created = await page.request.post("/api/agent-conversations", {
     headers,
