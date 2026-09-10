@@ -13,7 +13,7 @@ export function ContextBar({
 }: {
   attachments: Attachment[];
   uploadQueue: string[];
-  onRemoveAction: (attachment: Attachment) => void;
+  onRemoveAction?: (attachment: Attachment) => void;
   className?: string;
 }) {
   const hasBarContent = attachments.length > 0 || uploadQueue.length > 0;

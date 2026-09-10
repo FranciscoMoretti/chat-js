@@ -7,6 +7,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const redAnswer = /red/i;
 const blobUrl = /^blob:/;
+const chatUrl = /\/chat\/[a-f0-9-]+$/;
 const redPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAb0lEQVR4nO3PAQkAAAyEwO9feoshgnABdLep8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3IPanc8OLDQitxAAAAAElFTkSuQmCC",
   "base64"
@@ -27,7 +28,7 @@ test("ChatJS upload becomes a durable Eve image and creation retries retain atta
   try {
     const input = {
       operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini",
+      modelId: "openai/gpt-5-mini",
       message: [
         {
           type: "text",
@@ -121,4 +122,194 @@ test("ChatJS upload becomes a durable Eve image and creation retries retain atta
       file.url,
     ]);
   }
+});
+
+test("composer uploads and clears attachments, then reload confirms an in-flight multipart send", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.request.post("/api/chat-model", {
+    data: { model: "openai/gpt-5-mini" },
+  });
+  await page.goto("/");
+  const urls: string[] = [];
+  async function attach() {
+    const uploaded = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/files/upload") &&
+        response.request().method() === "POST"
+    );
+    await page.getByLabel("Attach files", { exact: true }).setInputFiles({
+      name: "eve-square.png",
+      mimeType: "image/png",
+      buffer: redPng,
+    });
+    const response = await uploaded;
+    expect(response.ok()).toBe(true);
+    urls.push(z.object({ url: z.string() }).parse(await response.json()).url);
+    await expect(
+      page
+        .getByTestId("attachments-preview")
+        .getByRole("img", { name: "eve-square.png", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Send", exact: true })
+    ).toBeEnabled();
+  }
+  try {
+    await attach();
+    await page
+      .getByTestId("attachments-preview")
+      .getByLabel("Remove attachment")
+      .click();
+    await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Send", exact: true })
+    ).toBeDisabled();
+    await attach();
+    await page
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill("What color is the attached image? Answer with just the color.");
+    await expect
+      .poll(() =>
+        page
+          .getByTestId("attachments-preview")
+          .getByRole("img", { name: "eve-square.png", exact: true })
+          .evaluate(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0
+          )
+      )
+      .toBe(true);
+    await page.mouse.move(0, 0);
+    await page
+      .getByRole("group", { name: "Message composer", exact: true })
+      .screenshot({
+        path: "tests/eve-results/screenshots/eve-composer-attachment.png",
+        animations: "disabled",
+      });
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page).toHaveURL(chatUrl);
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.locator(".is-assistant")).toContainText(redAnswer);
+    await attach();
+    await page
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill("Describe the attached image in two sentences.");
+    const accepted = page.waitForRequest(
+      (request) =>
+        request.method() === "POST" &&
+        request.url().includes("/api/eve/v1/session/")
+    );
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await accepted;
+    await expect(
+      page.getByRole("textbox", { name: "Message", exact: true })
+    ).toHaveText("");
+    await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
+    // Reload after durable acceptance, while the response is still in progress.
+    await expect(
+      page
+        .getByRole("log")
+        .getByRole("button", { name: "eve-square.png", exact: true })
+    ).toHaveCount(2, { timeout: 90_000 });
+    await page.reload();
+    await expect(
+      page
+        .getByRole("log")
+        .getByRole("button", { name: "eve-square.png", exact: true })
+    ).toHaveCount(2, { timeout: 90_000 });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(
+      page.getByRole("button", { name: "Restore draft", exact: true })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("textbox", { name: "Message", exact: true })
+    ).toHaveText("");
+  } finally {
+    execFileSync("bun", [
+      "-e",
+      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
+      JSON.stringify(urls),
+    ]);
+  }
+});
+
+test("an uncertain creation retains the same visible attachment and immutable request after reload", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.request.post("/api/chat-model", {
+    data: { model: "openai/gpt-5-mini" },
+  });
+  await page.goto("/");
+  await page.route("**/api/files/upload", (route) =>
+    route.fulfill({
+      json: { url: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png" },
+    })
+  );
+  await page.route(
+    "**/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+    (route) => route.fulfill({ contentType: "image/png", body: redPng })
+  );
+  const requests: string[] = [];
+  await page.route("**/api/agent-conversations", (route) => {
+    requests.push(route.request().postData() ?? "");
+    return route.abort("failed");
+  });
+  await page.getByLabel("Attach files", { exact: true }).setInputFiles({
+    name: "eve-square.png",
+    mimeType: "image/png",
+    buffer: redPng,
+  });
+  await expect(
+    page.getByRole("button", { name: "Send", exact: true })
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to fetch" })
+  ).toBeVisible();
+  await expect(page.getByTestId("multimodal-input")).toHaveAttribute(
+    "contenteditable",
+    "false"
+  );
+  await expect(page.getByLabel("Attach files", { exact: true })).toBeDisabled();
+  await expect(
+    page.getByTestId("attachments-preview").getByLabel("Remove attachment")
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByTestId("attachments-preview")
+      .getByRole("img", { name: "eve-square.png", exact: true })
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page
+      .getByTestId("attachments-preview")
+      .getByRole("img", { name: "eve-square.png", exact: true })
+  ).toBeVisible();
+  await expect(page.getByTestId("multimodal-input")).toHaveAttribute(
+    "contenteditable",
+    "false"
+  );
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Failed to fetch" })
+  ).toBeVisible();
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toBe(requests[0]);
+  await page
+    .getByRole("group", { name: "Message composer", exact: true })
+    .screenshot({
+      path: "tests/eve-results/screenshots/eve-composer-retained.png",
+      animations: "disabled",
+    });
 });

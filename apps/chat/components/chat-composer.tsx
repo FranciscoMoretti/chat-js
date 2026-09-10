@@ -80,7 +80,15 @@ export function ControlledChatComposer({
   stopDisabled = false,
   autoFocus = false,
   tools,
+  attachments,
+  hasAttachments = false,
+  readOnly = false,
+  onPaste,
 }: {
+  attachments?: ReactNode;
+  hasAttachments?: boolean;
+  readOnly?: boolean;
+  onPaste?: ComponentProps<typeof LexicalChatInput>["onPaste"];
   draft: string;
   onDraftChange: (draft: string) => void;
   onSubmit: () => void;
@@ -93,7 +101,10 @@ export function ControlledChatComposer({
 }) {
   const isMobile = useIsMobile();
   const activeStatus = onStop ? "streaming" : "submitted";
-  const canSend = !disabled && Boolean(draft.trim()) && draft.length <= 16_000;
+  const canSend =
+    !disabled &&
+    (Boolean(draft.trim()) || hasAttachments) &&
+    draft.length <= 16_000;
   function submit() {
     if (canSend) {
       onSubmit();
@@ -108,6 +119,7 @@ export function ControlledChatComposer({
         submit();
       }}
     >
+      {attachments}
       <LexicalChatInput
         aria-label="Message"
         autoFocus={autoFocus}
@@ -125,12 +137,13 @@ export function ControlledChatComposer({
           return true;
         }}
         onInputChange={onDraftChange}
+        onPaste={onPaste}
         placeholder={
           isMobile
             ? "Send a message... (Ctrl+Enter to send)"
             : "Send a message..."
         }
-        readOnly={busy && !onStop}
+        readOnly={readOnly || (busy && !onStop)}
       />
       <ChatComposerFooter
         actions={

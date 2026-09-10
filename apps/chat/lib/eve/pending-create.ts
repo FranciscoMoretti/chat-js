@@ -1,4 +1,5 @@
 import { createConversationInput } from "./contracts";
+import type { EveMessageInput } from "./message-input";
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const keyFor = (ownerId: string) => `chatjs.eve.pending:${ownerId}`;
@@ -6,14 +7,13 @@ const keyFor = (ownerId: string) => `chatjs.eve.pending:${ownerId}`;
 export function prepareCreation(
   storage: StorageAccess,
   ownerId: string,
-  draft: string,
+  draft: EveMessageInput,
   modelId?: string
 ) {
   const key = keyFor(ownerId);
-  const stored = storage.getItem(key);
+  const stored = readCreation(storage, ownerId);
   if (stored) {
-    const pending = createConversationInput.parse(JSON.parse(stored));
-    return pending;
+    return stored;
   }
   const pending = createConversationInput.safeParse({
     operationId: crypto.randomUUID(),
@@ -28,4 +28,9 @@ export function prepareCreation(
 }
 export function finishCreation(storage: StorageAccess, ownerId: string) {
   storage.removeItem(keyFor(ownerId));
+}
+
+export function readCreation(storage: StorageAccess, ownerId: string) {
+  const stored = storage.getItem(keyFor(ownerId));
+  return stored ? createConversationInput.parse(JSON.parse(stored)) : undefined;
 }

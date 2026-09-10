@@ -1,25 +1,59 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome";
-import { ControlledChatComposer } from "@/components/chat-composer";
 import {
   CreationRejected,
   requestConversation,
 } from "@/lib/eve/create-conversation";
-import { eveMessageTitle } from "@/lib/eve/message-input";
-import { finishCreation, prepareCreation } from "@/lib/eve/pending-create";
-
+import { draftMessage } from "@/lib/eve/draft";
+import {
+  finishCreation,
+  prepareCreation,
+  readCreation,
+} from "@/lib/eve/pending-create";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { EveModelPicker } from "./eve-model-picker";
+import { EveComposer } from "./eve-composer";
+import { useEveAttachments } from "./use-eve-attachments";
 
 export function NewEveConversation({ ownerId }: { ownerId: string }) {
   const selectedModel = useDefaultModel();
+  const files = useEveAttachments();
+  const { setAttachments } = files;
   const [draft, setDraft] = useState("");
+  const [retained, setRetained] = useState(false);
   const [retainedModelId, setRetainedModelId] = useState<string>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
+  useEffect(() => {
+    try {
+      const pending = readCreation(sessionStorage, ownerId);
+      if (pending) {
+        setRetained(true);
+        setDraft(
+          typeof pending.message === "string"
+            ? pending.message
+            : (pending.message.find((part) => part.type === "text")?.text ?? "")
+        );
+        setAttachments(
+          typeof pending.message === "string"
+            ? []
+            : pending.message
+                .filter((part) => part.type === "file")
+                .map((part) => ({
+                  url: part.data,
+                  name: part.filename,
+                  contentType: part.mediaType,
+                  digest: "",
+                }))
+        );
+        setRetainedModelId(pending.modelId);
+      }
+    } catch {
+      setError("The saved draft could not be restored.");
+    }
+  }, [ownerId, setAttachments]);
   async function submit() {
     if (lock.current) {
       return;
@@ -31,11 +65,16 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
       const operation = prepareCreation(
         sessionStorage,
         ownerId,
-        draft,
+        draftMessage(draft, files.attachments),
         selectedModel
       );
-      setDraft(eveMessageTitle(operation.message));
+      setDraft(
+        typeof operation.message === "string"
+          ? operation.message
+          : (operation.message.find((part) => part.type === "text")?.text ?? "")
+      );
       setRetainedModelId(operation.modelId);
+      setRetained(true);
       const binding = await requestConversation(operation);
       finishCreation(sessionStorage, ownerId);
       window.location.assign(`/chat/${binding.id}`);
@@ -43,6 +82,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
       if (cause instanceof CreationRejected) {
         finishCreation(sessionStorage, ownerId);
         setRetainedModelId(undefined);
+        setRetained(false);
       }
       setError(
         cause instanceof Error
@@ -56,19 +96,16 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
   }
   return (
     <ChatWelcomeView>
-      <ControlledChatComposer
+      <EveComposer
         autoFocus
         busy={busy}
         disabled={busy}
         draft={draft}
+        files={files}
         onDraftChange={setDraft}
         onSubmit={submit}
-        tools={
-          <EveModelPicker
-            disabled={busy || !!retainedModelId}
-            retainedModelId={retainedModelId}
-          />
-        }
+        readOnly={retained}
+        retainedModelId={retainedModelId}
       />
       {error && <p role="alert">{error}</p>}
     </ChatWelcomeView>

@@ -841,7 +841,7 @@ function PureAttachmentsButton({
   );
 }
 
-const AttachmentsButton = memo(PureAttachmentsButton);
+export const AttachmentsButton = memo(PureAttachmentsButton);
 
 const ComposerContext = createContext<{
   autoFocus: boolean;
