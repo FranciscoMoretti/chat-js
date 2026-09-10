@@ -38,7 +38,8 @@
     "fetch:models": "bun scripts/fetch-models.ts && bun format",
     "dev:neon": "bash scripts/with-db.sh bun dev",
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
-    "db:connect": "bun scripts/check-db.ts"
+    "db:connect": "bun scripts/check-db.ts",
+    "redis:connect": "bun scripts/check-redis.ts"
   },
   "dependencies": {
     "@ai-sdk/devtools": "1.0.15",

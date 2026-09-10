@@ -389,6 +389,7 @@ export const create = new Command()
 
 			printEnvChecklist(envEntries);
 			logger.log("  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database");
+			logger.log("  Optional Redis: set REDIS_URL, then run " + packageManager + " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis");
 
 			logger.break();
 			logger.log(

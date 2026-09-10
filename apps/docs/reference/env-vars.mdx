@@ -264,9 +264,9 @@ Allows users to reconnect to an ongoing AI generation after a page refresh or ne
 
 | Variable | Description | Get it |
 |----------|-------------|--------|
-| `REDIS_URL` | Redis connection URL for stream state storage | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) or any Redis provider |
+| `REDIS_URL` | Redis TCP/TLS URL for stream coordination and anonymous rate limits | [Redis setup](./redis) |
 
-Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection.
+Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. Run `bun redis:connect` to check a configured provider.
 
 ### Cron Job Secret
 

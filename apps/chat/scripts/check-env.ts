@@ -20,6 +20,7 @@ import {
 } from "../lib/config-requirements";
 import { databaseEnvOptions } from "../lib/db/connection";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
+import { redisEnvOptions } from "../lib/redis/connection";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
 loadEnvConfig({ path: ".env.local" });
@@ -236,12 +237,22 @@ async function checkEnv(): Promise<void> {
         },
       ];
 
+  const redisOptions = z.object(redisEnvOptions).safeParse(env);
+  const redisErrors = redisOptions.success
+    ? []
+    : [
+        {
+          feature: "Redis",
+          missing: ["REDIS_URL must be a redis:// or rediss:// connection URL"],
+        },
+      ];
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
   const installedToolErrors = await validateInstalledTools(env);
   const errors = [
     ...databaseErrors,
+    ...redisErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),

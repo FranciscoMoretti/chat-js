@@ -73,6 +73,7 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   scripts.format = "ultracite fix";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
+  scripts["redis:connect"] = "tsx scripts/check-redis.ts";
   scripts["db:migrate"] =
     "tsx lib/db/migrate.ts";
   scripts["dev:neon"] = "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
