@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import {
@@ -15,6 +15,7 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -59,6 +60,120 @@ function draft(conversationId: string) {
     kind: "text" as const,
   };
 }
+
+test("a document save cancelled while waiting for its lock never writes", async () => {
+  const chat = await conversation();
+  const input = draft(chat.id);
+  const controller = new AbortController();
+  const held = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const lockKey = `eve-document:${chat.id}`;
+  const locker = db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`
+    );
+    held.resolve();
+    await release.promise;
+  });
+  await held.promise;
+  const saving = saveEveDocumentRevision(input, controller.signal);
+  const rejected = expect(saving).rejects.toThrow();
+  try {
+    await expect
+      .poll(async () => {
+        const rows = await db.execute(
+          sql`select 1 from pg_locks where locktype = 'advisory' and not granted and objid = ((hashtextextended(${lockKey}, 0) & 4294967295)::oid) and classid = ((hashtextextended(${lockKey}, 0) >> 32)::oid)`
+        );
+        return rows.length;
+      })
+      .toBe(1);
+    controller.abort();
+  } finally {
+    release.resolve();
+    await locker;
+  }
+  await rejected;
+  expect(await getEveDocumentHistory(owner, chat.id, input.documentId)).toEqual(
+    []
+  );
+});
+
+test("native document calls replay safely and reject stale edits and cross-conversation reads", async () => {
+  const chat = await conversation();
+  const principal = {
+    principalId: owner,
+    principalType: "user",
+    authenticator: "test",
+    attributes: {},
+  };
+  const context = {
+    session: {
+      id: chat.sessionId,
+      auth: { initiator: principal, current: principal },
+      turn: { id: "turn_0", sequence: 0 },
+    },
+    callId: crypto.randomUUID(),
+    abortSignal: new AbortController().signal,
+  };
+  const input = { title: "Native notes", content: "Original" };
+  const [created, replay] = await Promise.all([
+    executeEveDocumentTool("createTextDocument", input, context),
+    executeEveDocumentTool("createTextDocument", input, context),
+  ]);
+  expect(replay).toEqual(created);
+  const edited = await executeEveDocumentTool(
+    "editTextDocument",
+    {
+      ...input,
+      content: "Updated",
+      documentId: created.documentId,
+      expectedRevisionId: created.revisionId,
+    },
+    { ...context, callId: crypto.randomUUID() }
+  );
+  expect(
+    await executeEveDocumentTool("createTextDocument", input, context)
+  ).toEqual(created);
+  expect(
+    await executeEveDocumentTool(
+      "readDocument",
+      { documentId: created.documentId },
+      context
+    )
+  ).toMatchObject({ content: "Updated", revisionId: edited.revisionId });
+  await expect(
+    executeEveDocumentTool(
+      "editTextDocument",
+      {
+        ...input,
+        documentId: created.documentId,
+        expectedRevisionId: created.revisionId,
+      },
+      { ...context, callId: crypto.randomUUID() }
+    )
+  ).rejects.toThrow("changed");
+  const other = await conversation();
+  await expect(
+    executeEveDocumentTool(
+      "readDocument",
+      { documentId: created.documentId },
+      {
+        ...context,
+        session: { ...context.session, id: other.sessionId },
+      }
+    )
+  ).rejects.toThrow("not found");
+  const cancelled = AbortSignal.abort();
+  await expect(
+    executeEveDocumentTool("createTextDocument", input, {
+      ...context,
+      abortSignal: cancelled,
+    })
+  ).rejects.toThrow();
+  expect(
+    await getEveDocumentHistory(owner, chat.id, created.documentId)
+  ).toHaveLength(2);
+});
 
 test("concurrent replays create one revision and old replays never rewind the head", async () => {
   const chat = await conversation();

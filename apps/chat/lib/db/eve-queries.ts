@@ -6,6 +6,13 @@ import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { initializeEveForkDocuments } from "./eve-documents";
 
 export async function ownsEveSession(ownerId: string, sessionId: string) {
+  return Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
+}
+
+export async function getBoundEveConversationForSession(
+  ownerId: string,
+  sessionId: string
+) {
   const rows = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -17,7 +24,7 @@ export async function ownsEveSession(ownerId: string, sessionId: string) {
       )
     )
     .limit(1);
-  return rows.length === 1;
+  return rows[0];
 }
 export async function listEveConversations(
   ownerId: string,

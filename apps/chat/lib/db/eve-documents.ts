@@ -22,13 +22,16 @@ const revisionInput = z.object({
 
 /** Save a revision and move only this conversation's head, atomically and replay-safely. */
 export async function saveEveDocumentRevision(
-  value: z.input<typeof revisionInput>
+  value: z.input<typeof revisionInput>,
+  signal?: AbortSignal
 ) {
+  signal?.throwIfAborted();
   const input = revisionInput.parse(value);
   return await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${input.conversationId}`}, 0))`
     );
+    signal?.throwIfAborted();
     const [conversation] = await tx
       .select()
       .from(eveConversation)
@@ -90,6 +93,7 @@ export async function saveEveDocumentRevision(
         throw new Error("Invalid document revision.");
       }
     }
+    signal?.throwIfAborted();
     const [revision] = await tx
       .insert(eveDocumentRevision)
       .values({
@@ -116,6 +120,7 @@ export async function saveEveDocumentRevision(
         target: [eveDocumentHead.conversationId, eveDocumentHead.documentId],
         set: { revisionId: revision.id },
       });
+    signal?.throwIfAborted();
     return revision;
   });
 }
