@@ -455,6 +455,7 @@ export const eveConversation = pgTable(
     operationId: uuid("operationId").notNull(),
     firstMessage: text("firstMessage").notNull(),
     initialModelId: text("initialModelId"),
+    initialContentHash: text("initialContentHash"),
     title: text("title"),
     isPinned: boolean("isPinned").notNull().default(false),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),

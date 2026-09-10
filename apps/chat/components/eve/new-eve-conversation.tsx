@@ -7,6 +7,7 @@ import {
   CreationRejected,
   requestConversation,
 } from "@/lib/eve/create-conversation";
+import { eveMessageTitle } from "@/lib/eve/message-input";
 import { finishCreation, prepareCreation } from "@/lib/eve/pending-create";
 
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -33,7 +34,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
         draft,
         selectedModel
       );
-      setDraft(operation.message);
+      setDraft(eveMessageTitle(operation.message));
       setRetainedModelId(operation.modelId);
       const binding = await requestConversation(operation);
       finishCreation(sessionStorage, ownerId);

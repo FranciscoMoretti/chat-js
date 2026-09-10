@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
@@ -9,7 +10,9 @@ import {
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { createConversationInput } from "@/lib/eve/contracts";
+import { eveMessageTitle } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
+import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
@@ -42,6 +45,9 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
+  let preparedMessage:
+    | Awaited<ReturnType<typeof prepareEveMessage>>
+    | undefined;
   try {
     const existing = await getEveCreation(
       session.user.id,
@@ -50,10 +56,14 @@ export async function POST(request: Request) {
     if (!existing) {
       try {
         await loadEveModelDefinition(input.data.modelId);
+        preparedMessage = await prepareEveMessage(
+          input.data.message,
+          input.data.modelId
+        );
       } catch {
         return Response.json(
           {
-            error: "This model is not available for chat.",
+            error: "This model or attachment is not available for chat.",
             creationRejected: true,
           },
           { status: 400 }
@@ -80,14 +90,14 @@ export async function POST(request: Request) {
     const binding = await createEveConversation(
       session.user.id,
       input.data.operationId,
-      input.data.message,
+      eveMessageTitle(input.data.message),
       async (operationId) => {
         const result = await eveRequest(
           session.user.id,
           "/eve/v1/session",
           {
             method: "POST",
-            body: JSON.stringify({ message: input.data.message, operationId }),
+            body: JSON.stringify({ message: preparedMessage, operationId }),
           },
           input.data.modelId
         );
@@ -98,7 +108,12 @@ export async function POST(request: Request) {
           .object({ sessionId: z.string().min(1) })
           .parse(await result.json()).sessionId;
       },
-      input.data.modelId
+      input.data.modelId,
+      typeof input.data.message === "string"
+        ? undefined
+        : createHash("sha256")
+            .update(JSON.stringify(input.data.message))
+            .digest("hex")
     );
     return Response.json(binding);
   } catch (cause) {

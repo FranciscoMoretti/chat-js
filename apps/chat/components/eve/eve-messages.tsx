@@ -13,6 +13,7 @@ import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
+import { EveAttachment } from "./eve-attachment";
 import { EveToolResult } from "./eve-tool-result";
 
 function PendingInput({
@@ -103,6 +104,9 @@ function Part({
 }) {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
+  }
+  if (part.type === "file") {
+    return <EveAttachment part={part} />;
   }
   if (part.type === "reasoning") {
     return (

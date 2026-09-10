@@ -4,6 +4,7 @@ import { ownsEveSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
+import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
@@ -48,13 +49,20 @@ async function readCommand(
       modelId = selectedModel ?? input.data.modelId;
       try {
         await loadEveModelDefinition(modelId);
-      } catch {
+        body = JSON.stringify({
+          message: await prepareEveMessage(input.data.message, modelId),
+        });
+      } catch (cause) {
         return Response.json(
-          { error: "This model is not available for chat." },
+          {
+            error:
+              cause instanceof Error
+                ? cause.message
+                : "Unable to read attachment.",
+          },
           { status: 400 }
         );
       }
-      body = JSON.stringify({ message: input.data.message });
     } else {
       body = JSON.stringify(input.data);
     }

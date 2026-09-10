@@ -1,12 +1,13 @@
 import { inputResponseSchema } from "eve/client";
 import { z } from "zod";
+import { eveMessageInput } from "./message-input";
 
 const streamIndex = /^\d{1,12}$/;
 const sessionPath =
   /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)(?:\/(stream|cancel))?$/;
 const message = z
   .object({
-    message: z.string().trim().min(1).max(16_000),
+    message: eveMessageInput,
     modelId: z.string().min(1).max(200).optional(),
   })
   .strict();

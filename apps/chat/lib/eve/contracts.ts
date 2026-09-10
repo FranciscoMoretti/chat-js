@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { eveMessageInput } from "./message-input";
 
 export const createConversationInput = z
   .object({
     operationId: z.uuid(),
     modelId: z.string().min(1).max(200).optional(),
-    message: z.string().trim().min(1).max(16_000),
+    message: eveMessageInput,
   })
   .strict();
 export const conversationBinding = z.object({
