@@ -70,6 +70,7 @@ it.each([
   "runCodeDocument",
   "generateVideo",
   "generateImage",
+  "deepResearch",
 ])("shared %s results retain the output without billing metadata", (toolName) => {
   const [part] = sharedEvePart({
     type: "dynamic-tool",

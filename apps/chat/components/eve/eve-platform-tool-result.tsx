@@ -21,6 +21,7 @@ import { GenerateImage } from "../part/generate-image";
 import { GenerateVideo } from "../part/generate-video";
 import { ResearchUpdates } from "../part/message-annotations";
 import { Sources } from "../sources";
+import { EveResearchResult } from "./eve-research-result";
 
 const CodeExecutionRenderer = defineToolRenderer({
   inputSchema: codeExecutionInput,
@@ -105,6 +106,15 @@ export function EvePlatformToolResult({
   messageId: string;
   isReadonly: boolean;
 }) {
+  if (part.toolName === "deepResearch") {
+    return (
+      <EveResearchResult
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
+  }
   if (part.toolName === "generateVideo" || part.toolName === "generateImage") {
     return (
       <MediaResult isReadonly={isReadonly} messageId={messageId} part={part} />

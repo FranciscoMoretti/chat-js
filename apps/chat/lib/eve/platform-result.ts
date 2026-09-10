@@ -32,6 +32,7 @@ export function createEvePlatformResult(
 
 export function isEvePlatformTool(name: string) {
   return (
+    name === "deepResearch" ||
     name === "generateImage" ||
     name === "generateVideo" ||
     name === "codeExecution" ||

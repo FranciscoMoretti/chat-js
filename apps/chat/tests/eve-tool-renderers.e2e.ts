@@ -125,3 +125,41 @@ test("native image renderer covers progress, completion and failure states", asy
     });
   }
 });
+
+test("native research renderer covers progress, clarification, report and failures", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.goto("/");
+  const styles = await page
+    .locator('link[rel="stylesheet"]')
+    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+  const content = execFileSync(
+    "bun",
+    ["tests/eve-research-renderer-fixture.tsx"],
+    { encoding: "utf8" }
+  );
+  await page.setContent(
+    `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
+  );
+  await expect(
+    page.getByText("Which time period should the research cover?")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: 'Created "Research report"' })
+  ).toBeVisible();
+  await expect(page.getByText("Research declined.")).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(3);
+  for (const width of [1100, 390]) {
+    await page.setViewportSize({ width, height: 850 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth)
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: `tests/eve-results/screenshots/eve-research-states-${width}.png`,
+      animations: "disabled",
+      fullPage: true,
+    });
+  }
+});
