@@ -73,6 +73,7 @@ export default defineConfig({
     ],
   },
   redirects: [
+    { from: "/core/use-thread", to: "/threads" },
     { from: "/core/file-storage", to: "/storage" },
     { from: "/core/registry", to: "/registry" },
     { from: "/core/tool-registry", to: "/tools/overview" },
@@ -97,11 +98,11 @@ export default defineConfig({
         "/",
         "/quickstart",
         "/changelog",
+        "/threads",
         {
           label: "Core Concepts",
           items: [
             "/core/architecture",
-            "/core/use-thread",
             "/core/configuration",
             "/core/authentication",
             "/core/multi-model",
