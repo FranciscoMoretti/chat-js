@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-image.e2e.ts",
     "eve-create-recovery.e2e.ts",
     "eve-rejected-send.e2e.ts",
     "eve-document-run.e2e.ts",

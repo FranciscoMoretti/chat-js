@@ -13,12 +13,12 @@ export const evePlatformOutput = z.object({
 });
 
 export const evePlatformResult = evePlatformOutput.extend({
-  usage: z.object({ costUsd: z.number().finite().nonnegative() }),
+  usage: z.object({ costUsd: z.number().finite().nonnegative().optional() }),
 });
 
 export function createEvePlatformResult(
   output: unknown,
-  costUsd: number,
+  costUsd: number | undefined,
   updates?: ResearchUpdate[]
 ) {
   return evePlatformResult.parse({
@@ -32,6 +32,7 @@ export function createEvePlatformResult(
 
 export function isEvePlatformTool(name: string) {
   return (
+    name === "generateImage" ||
     name === "generateVideo" ||
     name === "codeExecution" ||
     name === "webSearch" ||

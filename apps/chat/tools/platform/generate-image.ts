@@ -1,5 +1,4 @@
 import { type FileUIPart, generateImage, generateText, tool } from "ai";
-import { z } from "zod";
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import type { AppModelId } from "@/lib/ai/app-models";
 import { toModelData } from "@/lib/ai/to-model-data";
@@ -8,6 +7,7 @@ import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { downloadFile, uploadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 import { createModuleLogger } from "@/lib/logger";
+import { generateImageInput } from "./generate-image.schemas";
 
 interface GenerateImageProps {
   attachments?: FileUIPart[];
@@ -198,16 +198,14 @@ async function runGenerateImageTraditional({
     "generateImage: provider response received"
   );
 
-  if (res.usage) {
-    costAccumulator?.addLLMCost(
-      imageDefault as AppModelId,
-      {
-        inputTokens: res.usage.inputTokens,
-        outputTokens: res.usage.outputTokens,
-      },
-      "generateImage-traditional"
-    );
-  }
+  costAccumulator?.addLLMCost(
+    imageDefault as AppModelId,
+    {
+      inputTokens: res.usage?.inputTokens,
+      outputTokens: res.usage?.outputTokens,
+    },
+    "generateImage-traditional"
+  );
 
   const buffer = Buffer.from(res.images[0].base64, "base64");
   const timestamp = Date.now();
@@ -310,13 +308,11 @@ async function runGenerateImageMultimodal({
 
   // Track LLM cost for multimodal image generation
 
-  if (res.usage) {
-    costAccumulator?.addLLMCost(
-      modelId as AppModelId,
-      res.usage,
-      "generateImage-multimodal"
-    );
-  }
+  costAccumulator?.addLLMCost(
+    modelId as AppModelId,
+    res.usage ?? {},
+    "generateImage-multimodal"
+  );
 
   // Find the first image in the response files
   const imageFile = res.files?.find((f) => f.mediaType.startsWith("image/"));
@@ -366,13 +362,7 @@ The assistant may make small, neutral adjustments to improve clarity, compositio
 
 The assistant must not add new subjects, claims, branding, or alter the tone or intent of the prompt.
 `,
-    inputSchema: z.object({
-      prompt: z
-        .string()
-        .describe(
-          "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
-        ),
-    }),
+    inputSchema: generateImageInput,
     execute: async ({ prompt }, { abortSignal }) => {
       abortSignal?.throwIfAborted();
       const startMs = Date.now();

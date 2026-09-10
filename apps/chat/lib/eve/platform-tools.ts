@@ -1,24 +1,41 @@
 import type { ModelMessage, ToolSet } from "ai";
 import type { ToolContext } from "eve/tools";
 import { codeExecution } from "../../tools/platform/code-execution";
+import { generateImageTool } from "../../tools/platform/generate-image";
 import { generateVideoTool } from "../../tools/platform/generate-video";
 import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
 import { tavilyWebSearch } from "../../tools/platform/web-search";
 import type { StreamWriter } from "../ai/types";
 import { config } from "../config";
 import { executeEveTool } from "./adapt-tool";
+import { eveImageContext } from "./image-context";
 import { createEvePlatformResult } from "./platform-result";
+import { createEveToolCost } from "./tool-cost";
 
 export function getEvePlatformTools({
   dataStream,
   costAccumulator,
   selectedModel,
+  messages = [],
 }: {
   dataStream: Pick<StreamWriter, "write">;
-  costAccumulator?: { addAPICost(name: string, cost: number): void };
+  costAccumulator?: Pick<
+    ReturnType<typeof createEveToolCost>,
+    "addAPICost" | "addLLMCost"
+  >;
   selectedModel?: string;
+  messages?: readonly ModelMessage[];
 }): ToolSet {
   return {
+    ...(config.ai.tools.image.enabled
+      ? {
+          generateImage: generateImageTool({
+            ...eveImageContext(messages),
+            selectedModel,
+            costAccumulator,
+          }),
+        }
+      : {}),
     ...(config.ai.tools.video.enabled
       ? { generateVideo: generateVideoTool({ costAccumulator, selectedModel }) }
       : {}),
@@ -54,14 +71,13 @@ export async function* executeEvePlatformTool(
   const stream = new ReadableStream<ReturnType<typeof createEvePlatformResult>>(
     {
       async start(controller) {
-        let costCents = 0;
+        const costs = createEveToolCost();
+        let costUsd: number | undefined = 0;
         const updates = new Map<string, ResearchUpdate>();
         const enqueue = (output: unknown) => {
           if (!cancelled) {
             controller.enqueue(
-              createEvePlatformResult(output, costCents / 100, [
-                ...updates.values(),
-              ])
+              createEvePlatformResult(output, costUsd, [...updates.values()])
             );
           }
         };
@@ -69,14 +85,8 @@ export async function* executeEvePlatformTool(
           abortSignal.throwIfAborted();
           const tools = getEvePlatformTools({
             selectedModel,
-            costAccumulator: {
-              addAPICost(_name, cost) {
-                if (!Number.isFinite(cost) || cost < 0) {
-                  throw new Error("Invalid platform tool cost.");
-                }
-                costCents += cost;
-              },
-            },
+            messages,
+            costAccumulator: costs,
             dataStream: {
               write(part) {
                 if (part.type !== "data-researchUpdate") {
@@ -96,6 +106,7 @@ export async function* executeEvePlatformTool(
             { ...context, abortSignal },
             messages
           )) {
+            costUsd = await costs.totalUsd().catch(() => undefined);
             enqueue(output);
           }
           if (!cancelled) {
@@ -103,7 +114,8 @@ export async function* executeEvePlatformTool(
           }
         } catch (error) {
           if (!cancelled) {
-            if (costCents > 0) {
+            costUsd = await costs.totalUsd().catch(() => undefined);
+            if (costUsd === undefined || costUsd > 0) {
               // Provider work may already be charged when result processing fails.
               enqueue({
                 error:

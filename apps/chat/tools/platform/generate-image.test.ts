@@ -1,5 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { executeEveTool } from "../../lib/eve/adapt-tool";
+import { executeEvePlatformTool } from "../../lib/eve/platform-tools";
 import { generateImageTool } from "./generate-image";
 
 const mocks = vi.hoisted(() => ({
@@ -14,10 +15,14 @@ vi.mock("ai", async (original) => ({
   generateImage: mocks.generateImage,
   generateText: mocks.generateText,
 }));
+vi.mock("../../lib/env", () => ({ env: {} }));
 vi.mock("../../lib/config", () => ({
   config: {
     ai: {
       tools: {
+        codeExecution: { enabled: false },
+        video: { enabled: false },
+        webSearch: { enabled: false },
         image: {
           get enabled() {
             return mocks.enabled;
@@ -31,7 +36,12 @@ vi.mock("../../lib/config", () => ({
 vi.mock("../../lib/ai/active-gateway", () => ({
   getActiveGateway: () => ({
     fetchModels: async () => [
-      { id: "test/multimodal", type: "language", output: { image: true } },
+      {
+        id: "test/multimodal",
+        type: "language",
+        output: { image: true },
+        pricing: { input: "0.0001", output: "0.0002" },
+      },
     ],
     createLanguageModel: (id: string) => id,
     createImageModel: (id: string) => id,
@@ -198,4 +208,25 @@ test("cancelling image generation aborts the provider request", async () => {
   await rejected;
   expect(signal.aborted).toBe(true);
   expect(mocks.upload).not.toHaveBeenCalled();
+});
+
+test("native image results include nested provider cost and keep output when pricing is unknown", async () => {
+  const known = await Array.fromAsync(
+    executeEvePlatformTool(
+      "generateImage",
+      input,
+      context,
+      [],
+      "test/multimodal"
+    )
+  );
+  expect(known.at(-1)).toMatchObject({
+    output: { imageUrl, prompt: input.prompt },
+    usage: { costUsd: 0.002 },
+  });
+  const unknown = await Array.fromAsync(
+    executeEvePlatformTool("generateImage", input, context, [])
+  );
+  expect(unknown.at(-1)?.output).toEqual({ imageUrl, prompt: input.prompt });
+  expect(unknown.at(-1)?.usage.costUsd).toBeUndefined();
 });

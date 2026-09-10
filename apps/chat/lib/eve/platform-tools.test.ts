@@ -12,6 +12,7 @@ vi.mock("../config", () => ({
         webSearch: settings,
         codeExecution: { enabled: false },
         video: { enabled: false },
+        image: { enabled: false },
       },
     },
   },

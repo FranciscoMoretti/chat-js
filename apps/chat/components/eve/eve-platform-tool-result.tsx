@@ -9,10 +9,15 @@ import {
   codeExecutionResult,
 } from "@/tools/platform/code-execution.schemas";
 import {
+  generateImageInput,
+  generateImageOutput,
+} from "@/tools/platform/generate-image.schemas";
+import {
   generateVideoInput,
   generateVideoOutput,
 } from "@/tools/platform/generate-video.schemas";
 import { CodeExecution } from "../part/code-execution";
+import { GenerateImage } from "../part/generate-image";
 import { GenerateVideo } from "../part/generate-video";
 import { ResearchUpdates } from "../part/message-annotations";
 import { Sources } from "../sources";
@@ -36,7 +41,18 @@ const VideoRenderer = defineToolRenderer({
     ),
 });
 
-function VideoResult({
+const ImageRenderer = defineToolRenderer({
+  inputSchema: generateImageInput,
+  outputSchema: generateImageOutput,
+  render: ({ tool }) =>
+    tool.state === "input-streaming" ? (
+      <p role="status">Preparing image…</p>
+    ) : (
+      <GenerateImage tool={{ ...tool, type: "tool-generateImage" }} />
+    ),
+});
+
+function MediaResult({
   part,
   messageId,
   isReadonly,
@@ -55,8 +71,10 @@ function VideoResult({
   if (failure?.success) {
     return <p role="alert">{failure.data.error}</p>;
   }
+  const Renderer =
+    part.toolName === "generateImage" ? ImageRenderer : VideoRenderer;
   return (
-    <VideoRenderer
+    <Renderer
       isReadonly={isReadonly}
       messageId={messageId}
       tool={result?.success ? { ...part, output: result.data.output } : part}
@@ -87,9 +105,9 @@ export function EvePlatformToolResult({
   messageId: string;
   isReadonly: boolean;
 }) {
-  if (part.toolName === "generateVideo") {
+  if (part.toolName === "generateVideo" || part.toolName === "generateImage") {
     return (
-      <VideoResult isReadonly={isReadonly} messageId={messageId} part={part} />
+      <MediaResult isReadonly={isReadonly} messageId={messageId} part={part} />
     );
   }
   if (part.toolName === "webSearch") {
