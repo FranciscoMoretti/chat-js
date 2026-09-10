@@ -373,7 +373,7 @@ export const create = new Command()
 				`  ${highlighter.dim("2.")} Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`,
 			);
 			logger.log(
-				`  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run db:push`)}`,
+				`  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run db:connect`)} then ${highlighter.info(`${packageManager} run db:push`)}`,
 			);
 			logger.log(
 				`  ${highlighter.dim("4.")} ${highlighter.info(`${packageManager} run dev`)}`,
@@ -388,6 +388,7 @@ export const create = new Command()
 			logger.break();
 
 			printEnvChecklist(envEntries);
+			logger.log("  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database");
 			logger.log("  Optional Redis: set REDIS_URL, then run " + packageManager + " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis");
 
 			logger.break();

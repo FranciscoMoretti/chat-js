@@ -5,9 +5,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "prebuild": "bun --filter @chat-js/thread build && bun --filter @chat-js/gateways build && bun run check-env",
-    "dev": "bun run check-env && bash scripts/with-db.sh next dev",
-    "dev:inspect": "bash scripts/with-db.sh next dev --inspect",
-    "build": "tsx lib/db/migrate && next build",
+    "dev": "bun run check-env && next dev",
+    "dev:inspect": "bun run check-env && next dev --inspect",
+    "build": "tsx lib/db/migrate.ts --deployment && next build",
     "analyze": "next experimental-analyze",
     "start": "next start",
     "prod": "bun run build && bun run start",
@@ -15,7 +15,7 @@
     "format": "ultracite fix",
     "check-env": "bun scripts/check-env.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "export VERCEL_ENV=production && bash scripts/with-db.sh bunx tsx lib/db/migrate.ts",
+    "db:migrate": "bunx tsx lib/db/migrate.ts",
     "db:backfill-parts": "npx tsx lib/db/backfill-parts.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
@@ -36,6 +36,9 @@
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
     "fetch:models": "bun scripts/fetch-models.ts && bun format",
+    "dev:neon": "bash scripts/with-db.sh bun dev",
+    "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
+    "db:connect": "bun scripts/check-db.ts",
     "redis:connect": "bun scripts/check-redis.ts"
   },
   "dependencies": {

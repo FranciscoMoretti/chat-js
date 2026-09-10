@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+import { databaseEnvOptions } from "./db/connection";
 import { redisEnvOptions } from "./redis/connection";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
@@ -17,6 +18,7 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
  * without triggering `createEnv` runtime validation.
  */
 export const serverEnvSchema = {
+  ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
     .preprocess(
