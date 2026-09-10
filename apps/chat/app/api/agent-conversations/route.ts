@@ -62,6 +62,15 @@ export async function POST(request: Request) {
       session.user.id,
       input.data.operationId
     );
+    if (existing?.state === "deleting" || existing?.state === "deleted") {
+      return Response.json(
+        {
+          error: "This conversation has been deleted.",
+          creationRejected: true,
+        },
+        { status: 404 }
+      );
+    }
     if (!existing) {
       try {
         await loadEveModelDefinition(input.data.modelId);

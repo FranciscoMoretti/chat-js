@@ -6,7 +6,11 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   createEveConversation,
   getEveConversation,
+  getEveCreation,
+  getPublicEveConversation,
   listEveConversationBranches,
+  listEveConversations,
+  listEveOwnerBindings,
   ownsEveSession,
   recordEveConversationActivity,
   updateEveConversationMetadata,
@@ -382,4 +386,68 @@ test.each([
     );
   expect(unpriced.costUsd).toBeNull();
   expect(unpriced.chargedCents).toBe(0);
+});
+
+test.each([
+  "deleting",
+  "deleted",
+] as const)("%s conversations are fenced from access, mutation and creation replay", async (state) => {
+  const operation = crypto.randomUUID();
+  let starts = 0;
+  const start = () => {
+    starts += 1;
+    return Promise.resolve(crypto.randomUUID());
+  };
+  const bound = await createEveConversation(
+    owner,
+    operation,
+    "deleted marker",
+    start
+  );
+  await db
+    .update(eveConversation)
+    .set({ state, visibility: "public" })
+    .where(eq(eveConversation.id, bound.id));
+  const before = await getEveCreation(owner, operation);
+  expect(await getEveConversation(owner, bound.id)).toBeUndefined();
+  expect(await getPublicEveConversation(bound.id)).toBeUndefined();
+  expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
+  expect(
+    (await listEveConversations(owner)).items.some((row) => row.id === bound.id)
+  ).toBe(false);
+  expect(await listEveConversationBranches(owner, bound.id)).toBeUndefined();
+  expect(
+    await updateEveConversationMetadata(owner, bound.id, {
+      visibility: "public",
+      title: "resurrected",
+    })
+  ).toBeUndefined();
+  await recordEveConversationActivity(
+    owner,
+    bound.sessionId,
+    new Date(Date.now() + 60_000)
+  );
+  expect((await getEveCreation(owner, operation))?.updatedAt).toEqual(
+    before?.updatedAt
+  );
+  await expect(
+    createEveConversation(owner, operation, "deleted marker", start)
+  ).rejects.toThrow("can no longer be created");
+  await expect(
+    createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "fork",
+      start,
+      undefined,
+      undefined,
+      { conversationId: bound.id, beforeTurnId: "turn_0" }
+    )
+  ).rejects.toThrow("not available");
+  expect(starts).toBe(1);
+  expect(
+    (await listEveOwnerBindings(owner)).some(
+      (row) => row.sessionId === bound.sessionId
+    )
+  ).toBe(state === "deleting");
 });

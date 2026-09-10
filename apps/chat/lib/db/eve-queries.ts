@@ -1,9 +1,16 @@
-import { and, desc, eq, ilike, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { initializeEveForkDocuments } from "./eve-documents";
+
+// Creation reservations remain visible for recovery; deletion records never do.
+const visibleConversation = inArray(eveConversation.state, [
+  "creating",
+  "bound",
+  "uncertain",
+]);
 
 export async function ownsEveSession(ownerId: string, sessionId: string) {
   return Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
@@ -61,6 +68,7 @@ export async function listEveConversations(
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
+        visibleConversation,
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
@@ -91,12 +99,24 @@ export async function getEveConversation(ownerId: string, id: string) {
     .select()
     .from(eveConversation)
     .where(
-      and(eq(eveConversation.ownerId, ownerId), eq(eveConversation.id, id))
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.id, id),
+        visibleConversation
+      )
     )
     .limit(1);
   return row;
 }
 export class CreationConflict extends Error {}
+
+function assertCreationAvailable(
+  state: typeof eveConversation.$inferSelect.state
+) {
+  if (state === "deleting" || state === "deleted") {
+    throw new CreationConflict("This conversation can no longer be created.");
+  }
+}
 
 function boundConversation(
   row: typeof eveConversation.$inferSelect | undefined
@@ -176,6 +196,7 @@ export async function createEveConversation(
         "This operation already has a different message, attachments, model, or source turn."
       );
     }
+    assertCreationAvailable(existing.state);
     const binding = boundConversation(existing);
     if (binding) {
       return binding;
@@ -260,7 +281,12 @@ export async function listEveOwnerBindings(ownerId: string) {
       state: eveConversation.state,
     })
     .from(eveConversation)
-    .where(eq(eveConversation.ownerId, ownerId));
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        ne(eveConversation.state, "deleted")
+      )
+    );
 }
 
 export async function updateEveConversationMetadata(
@@ -276,7 +302,11 @@ export async function updateEveConversationMetadata(
     .update(eveConversation)
     .set(updates)
     .where(
-      and(eq(eveConversation.id, id), eq(eveConversation.ownerId, ownerId))
+      and(
+        eq(eveConversation.id, id),
+        eq(eveConversation.ownerId, ownerId),
+        visibleConversation
+      )
     )
     .returning({ id: eveConversation.id });
   return row;
@@ -294,6 +324,7 @@ export async function recordEveConversationActivity(
       and(
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.sessionId, sessionId),
+        visibleConversation,
         lt(eveConversation.updatedAt, at)
       )
     );

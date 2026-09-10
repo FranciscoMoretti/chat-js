@@ -466,7 +466,9 @@ export const eveConversation = pgTable(
     isPinned: boolean("isPinned").notNull().default(false),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     sessionId: text("sessionId").unique(),
-    state: text("state", { enum: ["creating", "bound", "uncertain"] })
+    state: text("state", {
+      enum: ["creating", "bound", "uncertain", "deleting", "deleted"],
+    })
       .notNull()
       .default("creating"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
