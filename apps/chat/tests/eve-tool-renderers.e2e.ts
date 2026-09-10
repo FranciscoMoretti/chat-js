@@ -33,3 +33,45 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
     });
   }
 });
+
+test("native video renderer covers progress, completion and failure states", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route(
+    "**/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4",
+    (route) => route.abort()
+  );
+  await page.goto("/api/dev-login");
+  await page.goto("/");
+  const styles = await page
+    .locator('link[rel="stylesheet"]')
+    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+  const content = execFileSync("bun", ["tests/eve-video-renderer-fixture.ts"], {
+    encoding: "utf8",
+  });
+  await page.setContent(
+    `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
+  );
+  await expect(page.getByText("Preparing video…")).toBeVisible();
+  await expect(
+    page.getByText('Generating video: "A tree in the wind"')
+  ).toBeVisible();
+  await expect(page.locator("video")).toHaveAttribute(
+    "src",
+    "/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4"
+  );
+  await expect(page.getByRole("alert")).toHaveCount(3);
+  await expect(page.getByText("Request declined.")).toBeVisible();
+  for (const width of [1100, 390]) {
+    await page.setViewportSize({ width, height: 850 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth)
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: `tests/eve-results/screenshots/eve-video-states-${width}.png`,
+      animations: "disabled",
+      fullPage: true,
+    });
+  }
+});

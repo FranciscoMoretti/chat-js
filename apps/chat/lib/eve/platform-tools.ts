@@ -1,6 +1,7 @@
 import type { ModelMessage, ToolSet } from "ai";
 import type { ToolContext } from "eve/tools";
 import { codeExecution } from "../../tools/platform/code-execution";
+import { generateVideoTool } from "../../tools/platform/generate-video";
 import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
 import { tavilyWebSearch } from "../../tools/platform/web-search";
 import type { StreamWriter } from "../ai/types";
@@ -11,11 +12,16 @@ import { createEvePlatformResult } from "./platform-result";
 export function getEvePlatformTools({
   dataStream,
   costAccumulator,
+  selectedModel,
 }: {
   dataStream: Pick<StreamWriter, "write">;
   costAccumulator?: { addAPICost(name: string, cost: number): void };
+  selectedModel?: string;
 }): ToolSet {
   return {
+    ...(config.ai.tools.video.enabled
+      ? { generateVideo: generateVideoTool({ costAccumulator, selectedModel }) }
+      : {}),
     ...(config.ai.tools.codeExecution.enabled
       ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
@@ -36,7 +42,8 @@ export async function* executeEvePlatformTool(
   name: string,
   input: unknown,
   context: Pick<ToolContext, "callId" | "abortSignal">,
-  messages: readonly ModelMessage[]
+  messages: readonly ModelMessage[],
+  selectedModel?: string
 ) {
   let cancelled = false;
   const cancellation = new AbortController();
@@ -61,6 +68,7 @@ export async function* executeEvePlatformTool(
         try {
           abortSignal.throwIfAborted();
           const tools = getEvePlatformTools({
+            selectedModel,
             costAccumulator: {
               addAPICost(_name, cost) {
                 if (!Number.isFinite(cost) || cost < 0) {
@@ -95,7 +103,16 @@ export async function* executeEvePlatformTool(
           }
         } catch (error) {
           if (!cancelled) {
-            controller.error(error);
+            if (costCents > 0) {
+              // Provider work may already be charged when result processing fails.
+              enqueue({
+                error:
+                  "The tool failed after provider work completed. Please try again.",
+              });
+              controller.close();
+            } else {
+              controller.error(error);
+            }
           }
         }
       },

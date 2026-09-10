@@ -7,7 +7,13 @@ vi.mock("../env", () => ({ env: {} }));
 const settings = vi.hoisted(() => ({ enabled: true }));
 vi.mock("../config", () => ({
   config: {
-    ai: { tools: { webSearch: settings, codeExecution: { enabled: false } } },
+    ai: {
+      tools: {
+        webSearch: settings,
+        codeExecution: { enabled: false },
+        video: { enabled: false },
+      },
+    },
   },
 }));
 vi.mock("../../tools/platform/steps/web-search", () => ({

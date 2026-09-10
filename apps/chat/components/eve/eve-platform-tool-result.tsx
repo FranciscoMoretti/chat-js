@@ -8,7 +8,12 @@ import {
   codeExecutionInput,
   codeExecutionResult,
 } from "@/tools/platform/code-execution.schemas";
+import {
+  generateVideoInput,
+  generateVideoOutput,
+} from "@/tools/platform/generate-video.schemas";
 import { CodeExecution } from "../part/code-execution";
+import { GenerateVideo } from "../part/generate-video";
 import { ResearchUpdates } from "../part/message-annotations";
 import { Sources } from "../sources";
 
@@ -19,6 +24,45 @@ const CodeExecutionRenderer = defineToolRenderer({
     <CodeExecution tool={{ ...tool, type: "tool-codeExecution" }} />
   ),
 });
+
+const VideoRenderer = defineToolRenderer({
+  inputSchema: generateVideoInput,
+  outputSchema: generateVideoOutput,
+  render: ({ tool }) =>
+    tool.state === "input-streaming" ? (
+      <p role="status">Preparing video…</p>
+    ) : (
+      <GenerateVideo tool={{ ...tool, type: "tool-generateVideo" }} />
+    ),
+});
+
+function VideoResult({
+  part,
+  messageId,
+  isReadonly,
+}: {
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
+  messageId: string;
+  isReadonly: boolean;
+}) {
+  const result =
+    part.state === "output-available"
+      ? evePlatformOutput.safeParse(part.output)
+      : undefined;
+  const failure = result?.success
+    ? z.object({ error: z.string() }).safeParse(result.data.output)
+    : undefined;
+  if (failure?.success) {
+    return <p role="alert">{failure.data.error}</p>;
+  }
+  return (
+    <VideoRenderer
+      isReadonly={isReadonly}
+      messageId={messageId}
+      tool={result?.success ? { ...part, output: result.data.output } : part}
+    />
+  );
+}
 
 function PendingDocumentRun({
   part,
@@ -43,6 +87,11 @@ export function EvePlatformToolResult({
   messageId: string;
   isReadonly: boolean;
 }) {
+  if (part.toolName === "generateVideo") {
+    return (
+      <VideoResult isReadonly={isReadonly} messageId={messageId} part={part} />
+    );
+  }
   if (part.toolName === "webSearch") {
     if (part.state === "output-error") {
       return <p role="alert">{part.errorText}</p>;

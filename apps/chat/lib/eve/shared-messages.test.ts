@@ -68,6 +68,7 @@ it.each([
   "codeExecution",
   "webSearch",
   "runCodeDocument",
+  "generateVideo",
 ])("shared %s results retain the output without billing metadata", (toolName) => {
   const [part] = sharedEvePart({
     type: "dynamic-tool",

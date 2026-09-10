@@ -32,6 +32,7 @@ export function createEvePlatformResult(
 
 export function isEvePlatformTool(name: string) {
   return (
+    name === "generateVideo" ||
     name === "codeExecution" ||
     name === "webSearch" ||
     name === "runCodeDocument"
