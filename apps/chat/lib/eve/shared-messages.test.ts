@@ -67,6 +67,7 @@ it("retains clarification prompts and answers without their response identifiers
 it.each([
   "codeExecution",
   "webSearch",
+  "runCodeDocument",
 ])("shared %s results retain the output without billing metadata", (toolName) => {
   const [part] = sharedEvePart({
     type: "dynamic-tool",

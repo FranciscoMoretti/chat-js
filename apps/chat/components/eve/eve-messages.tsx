@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { isEvePlatformTool } from "@/lib/eve/platform-result";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
@@ -138,7 +139,7 @@ function Part({
   if (part.type !== "dynamic-tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
-  if (part.toolName === "codeExecution" || part.toolName === "webSearch") {
+  if (isEvePlatformTool(part.toolName)) {
     return (
       <EvePlatformToolResult
         isReadonly={isReadonly}

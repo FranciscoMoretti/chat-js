@@ -274,6 +274,7 @@ export function EveConversation({
         Boolean(pendingMessage) ||
         fork.locked
       }
+      messages={agent.data.messages}
       onDocumentAction={({ message, modelId }) =>
         run(() => submitMessage(message, [], modelId, false))
       }

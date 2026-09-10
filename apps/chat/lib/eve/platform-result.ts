@@ -31,5 +31,9 @@ export function createEvePlatformResult(
 }
 
 export function isEvePlatformTool(name: string) {
-  return name === "codeExecution" || name === "webSearch";
+  return (
+    name === "codeExecution" ||
+    name === "webSearch" ||
+    name === "runCodeDocument"
+  );
 }

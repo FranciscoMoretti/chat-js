@@ -1,4 +1,4 @@
-import { defineDynamic, defineTool } from "eve/tools";
+import { defineDynamic, defineTool, toolOutput } from "eve/tools";
 import { config } from "../../lib/config";
 import {
   eveDocumentCreateInput,
@@ -6,7 +6,11 @@ import {
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "../../lib/eve/document-contracts";
+import { executeEveCodeDocument } from "../../lib/eve/document-execution";
+import { documentExecutionInput } from "../../lib/eve/document-execution-contracts";
 import { executeEveDocumentTool } from "../../lib/eve/document-tools";
+import { evePlatformResult } from "../../lib/eve/platform-result";
+import { codeExecutionResult } from "../../tools/platform/code-execution.schemas";
 import { codeGuidelines } from "../../tools/platform/documents/code-guidelines";
 import { sheetGuidelines } from "../../tools/platform/documents/sheet-guidelines";
 import { textGuidelines } from "../../tools/platform/documents/text-guidelines";
@@ -44,6 +48,21 @@ export default defineDynamic({
           inputSchema: eveDocumentReadInput,
           execute: (input, context) =>
             executeEveDocumentTool("readDocument", input, context),
+        });
+      }
+      if (
+        config.ai.tools.documents.types.code &&
+        config.ai.tools.codeExecution.enabled
+      ) {
+        tools.runCodeDocument = defineTool<unknown, unknown>({
+          description:
+            "Run the exact saved Python or JavaScript code document revision in this conversation. Supply its document and revision IDs. Do not copy, rewrite, or substitute its source code.",
+          inputSchema: documentExecutionInput,
+          execute: (input, context) => executeEveCodeDocument(input, context),
+          toModelOutput: (output) =>
+            toolOutput.json(
+              codeExecutionResult.parse(evePlatformResult.parse(output).output)
+            ),
         });
       }
       return tools;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { EveMessage } from "eve/client";
 import dynamic from "next/dynamic";
 import type { ComponentProps, ReactNode } from "react";
 import { useCallback, useState } from "react";
@@ -27,6 +28,7 @@ import { useTRPC } from "@/trpc/react";
 import { EveDocumentActions } from "./eve-document-actions";
 import { EveDocumentAssistantActions } from "./eve-document-assistant-actions";
 import { EveDocumentComparison } from "./eve-document-comparison";
+import { EveDocumentRun } from "./eve-document-run";
 import { useDocumentDraft } from "./use-document-draft";
 
 const Editor = dynamic(
@@ -43,6 +45,7 @@ const SpreadsheetEditor = dynamic(
 );
 
 type DocumentActionProps = {
+  messages?: readonly EveMessage[];
   onDocumentAction?: (request: DocumentAssistantRequest) => Promise<void>;
   documentActionsDisabled?: boolean;
 };
@@ -131,11 +134,46 @@ function DocumentSaveStatus({
   );
 }
 
+function DocumentHistoryNavigation({
+  disabled,
+  history,
+  index,
+  onSelect,
+}: {
+  disabled: boolean;
+  history: readonly { id: string }[];
+  index: number;
+  onSelect: (revisionId: string | undefined) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-2 border-t p-2">
+      <Button
+        disabled={disabled || index <= 0}
+        onClick={() => onSelect(history[index - 1]?.id)}
+        variant="outline"
+      >
+        Previous
+      </Button>
+      <span className="text-muted-foreground text-sm">
+        Version {index + 1} of {history.length}
+      </span>
+      <Button
+        disabled={disabled || index >= history.length - 1}
+        onClick={() => onSelect(history[index + 1]?.id)}
+        variant="outline"
+      >
+        Next
+      </Button>
+    </div>
+  );
+}
+
 function EveArtifactPanel({
   conversationId,
   readOnly,
   onDocumentAction,
   documentActionsDisabled = false,
+  messages = [],
 }: {
   conversationId: string;
   readOnly: boolean;
@@ -157,6 +195,7 @@ function EveArtifactPanel({
   const history = document.data?.history ?? [];
   const revision = document.data?.revision;
   const index = history.findIndex((item) => item.id === revision?.id);
+  const owned = !readOnly && document.data?.canEdit;
   const onSaved = useCallback(
     async (revisionId: string) => {
       await queryClient.fetchQuery(
@@ -176,14 +215,13 @@ function EveArtifactPanel({
   const editing = useDocumentDraft({
     conversationId,
     documentId: artifact.documentId,
-    enabled: Boolean(!readOnly && document.data?.canEdit && !document.isError),
+    enabled: Boolean(owned && !document.isError),
     revision,
     onSaved,
     onRestore: setSelectedRevisionId,
   });
   const editable =
-    !readOnly &&
-    document.data?.canEdit &&
+    owned &&
     editing.ready &&
     (Boolean(editing.draft) || index === history.length - 1);
   const contentProps = {
@@ -197,6 +235,11 @@ function EveArtifactPanel({
   const previousRevisionId = history[index - 1]?.id;
   const canCompare = Boolean(previousRevisionId && !editing.draft);
   const comparing = showChanges && canCompare;
+  const actionsDisabled =
+    document.isError ||
+    documentActionsDisabled ||
+    !editable ||
+    Boolean(editing.draft);
   return (
     <Artifact
       aria-label="Document"
@@ -221,17 +264,12 @@ function EveArtifactPanel({
           />
         )}
       </ArtifactHeader>
-      {!readOnly && document.data?.canEdit && (
+      {owned && (
         <>
           <DocumentSaveStatus editable={Boolean(editable)} editing={editing} />
           {onDocumentAction && revision && (
             <EveDocumentAssistantActions
-              disabled={
-                document.isError ||
-                documentActionsDisabled ||
-                !editable ||
-                Boolean(editing.draft)
-              }
+              disabled={actionsDisabled}
               documentId={artifact.documentId}
               kind={revision.kind}
               onAction={(request) => {
@@ -277,25 +315,23 @@ function EveArtifactPanel({
         )}
       </ArtifactContent>
       {revision && !document.isError && (
-        <div className="flex shrink-0 items-center justify-between gap-2 border-t p-2">
-          <Button
-            disabled={Boolean(editing.draft) || index <= 0}
-            onClick={() => setSelectedRevisionId(history[index - 1]?.id)}
-            variant="outline"
-          >
-            Previous
-          </Button>
-          <span className="text-muted-foreground text-sm">
-            Version {index + 1} of {history.length}
-          </span>
-          <Button
-            disabled={Boolean(editing.draft) || index >= history.length - 1}
-            onClick={() => setSelectedRevisionId(history[index + 1]?.id)}
-            variant="outline"
-          >
-            Next
-          </Button>
-        </div>
+        <>
+          <EveDocumentRun
+            disabled={actionsDisabled}
+            documentId={artifact.documentId}
+            kind={revision.kind}
+            messages={messages}
+            onAction={owned ? onDocumentAction : undefined}
+            revisionId={revision.id}
+            title={revision.title}
+          />
+          <DocumentHistoryNavigation
+            disabled={Boolean(editing.draft)}
+            history={history}
+            index={index}
+            onSelect={setSelectedRevisionId}
+          />
+        </>
       )}
     </Artifact>
   );
@@ -307,6 +343,7 @@ function Layout({
   readOnly = false,
   onDocumentAction,
   documentActionsDisabled,
+  messages,
 }: {
   children: ReactNode;
   conversationId?: string;
@@ -328,6 +365,7 @@ function Layout({
             conversationId={conversationId}
             documentActionsDisabled={documentActionsDisabled}
             key={`${artifact.documentId}:${artifact.revisionId ?? "latest"}`}
+            messages={messages}
             onDocumentAction={onDocumentAction}
             readOnly={readOnly}
           />

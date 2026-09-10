@@ -20,6 +20,20 @@ const CodeExecutionRenderer = defineToolRenderer({
   ),
 });
 
+function PendingDocumentRun({
+  part,
+}: {
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
+}) {
+  if (part.state === "output-error") {
+    return <p role="alert">{part.errorText}</p>;
+  }
+  if (part.state === "output-denied") {
+    return <p>Document execution declined.</p>;
+  }
+  return <p role="status">Running saved code…</p>;
+}
+
 export function EvePlatformToolResult({
   part,
   messageId,
@@ -64,6 +78,9 @@ export function EvePlatformToolResult({
     );
   }
   if (part.state !== "output-available") {
+    if (part.toolName === "runCodeDocument") {
+      return <PendingDocumentRun part={part} />;
+    }
     return (
       <CodeExecutionRenderer
         isReadonly={isReadonly}
@@ -80,7 +97,12 @@ export function EvePlatformToolResult({
     <CodeExecutionRenderer
       isReadonly={isReadonly}
       messageId={messageId}
-      tool={{ ...part, output: result.data.output }}
+      tool={{
+        ...part,
+        input:
+          part.toolName === "runCodeDocument" ? result.data.output : part.input,
+        output: result.data.output,
+      }}
     />
   );
 }
