@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
   Conversation,
@@ -16,6 +16,7 @@ import { draftAttachment, draftMessage, matchesDraft } from "@/lib/eve/draft";
 import { sendCommand } from "@/lib/eve/send-command";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
+import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkControls } from "./eve-fork-controls";
 import { EveMessages } from "./eve-messages";
@@ -34,10 +35,12 @@ export function EveConversation({
   sessionId,
   conversationId,
   ownerId,
+  header,
 }: {
   sessionId: string;
   conversationId: string;
   ownerId: string;
+  header: ReactNode;
 }) {
   const fork = useEveFork(ownerId, conversationId);
   const selectedModel = useDefaultModel();
@@ -203,6 +206,39 @@ export function EveConversation({
       afterCancellation.current = 0;
     }
   }
+  async function submitMessage(
+    message: string,
+    attachments: z.infer<typeof draftAttachment>[],
+    modelId: string,
+    clearComposer: boolean
+  ) {
+    const pending = {
+      message: message.trim(),
+      attachments,
+      modelId,
+      checkUntil: Date.now() + 60_000,
+      afterSequence: Math.max(
+        -1,
+        ...agent.events.flatMap((event) =>
+          event.type === "message.received" ? [event.data.sequence] : []
+        )
+      ),
+    };
+    // Save before sending: a reload may happen before Eve accepts it.
+    sessionStorage.setItem(storageKey, JSON.stringify(pending));
+    setPendingMessage(pending);
+    if (clearComposer) {
+      setDraft("");
+      files.setAttachments([]);
+    }
+    await send(
+      () =>
+        agent.send(draftMessage(message, attachments), {
+          headers: { "x-chatjs-selected-model": modelId },
+        }),
+      true
+    );
+  }
   async function cancel() {
     setCancelPending(true);
     afterCancellation.current += 1;
@@ -228,139 +264,134 @@ export function EveConversation({
     statusLabel = "Stopping…";
   }
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <EveForkControls
-        conversationId={conversationId}
-        disabled={busy || commandPending || hasApproval || !!pendingMessage}
-        fork={fork}
-      />
-      <Conversation>
-        <ConversationContent className="mx-auto w-full max-w-3xl">
-          <EveMessages
-            actionsDisabled={
-              busy ||
-              commandPending ||
-              fork.locked ||
-              !fork.family.data ||
-              hasApproval ||
-              !!pendingMessage
-            }
-            disabled={busy || commandPending}
-            isReadonly={false}
-            messages={agent.data.messages}
-            onEdit={(message) => fork.begin(message)}
-            onRegenerate={(message, response) =>
-              fork.begin(message, { response, events: agent.events })
-            }
-            respond={(response) =>
-              run(() => send(() => agent.respond([response])))
-            }
+    <EveArtifactLayout
+      conversationId={conversationId}
+      documentActionsDisabled={
+        busy ||
+        commandPending ||
+        cancelPending ||
+        hasApproval ||
+        Boolean(pendingMessage) ||
+        fork.locked
+      }
+      onDocumentAction={({ message, modelId }) =>
+        run(() => submitMessage(message, [], modelId, false))
+      }
+    >
+      <section className="flex h-full min-h-0 flex-col">
+        {header}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <EveForkControls
+            conversationId={conversationId}
+            disabled={busy || commandPending || hasApproval || !!pendingMessage}
+            fork={fork}
           />
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-      <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
-        <p aria-live="polite" className="text-muted-foreground text-sm">
-          {statusLabel}
-        </p>
-        {(error || agent.error || durableError) && (
-          <p role="alert">{error || agent.error?.message || durableError}</p>
-        )}
-        {pendingMessage && !commandPending && (
-          <div className="space-y-2 text-sm" role="status">
-            <p>
-              Message delivery is unconfirmed. Your draft is saved in this tab.
+          <Conversation>
+            <ConversationContent className="mx-auto w-full max-w-3xl">
+              <EveMessages
+                actionsDisabled={
+                  busy ||
+                  commandPending ||
+                  fork.locked ||
+                  !fork.family.data ||
+                  hasApproval ||
+                  !!pendingMessage
+                }
+                disabled={busy || commandPending}
+                isReadonly={false}
+                messages={agent.data.messages}
+                onEdit={(message) => fork.begin(message)}
+                onRegenerate={(message, response) =>
+                  fork.begin(message, { response, events: agent.events })
+                }
+                respond={(response) =>
+                  run(() => send(() => agent.respond([response])))
+                }
+              />
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+          <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
+            <p aria-live="polite" className="text-muted-foreground text-sm">
+              {statusLabel}
             </p>
-            <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
-            <AttachmentList attachments={pendingMessage.attachments} />
-            <Button
-              onClick={() => {
-                setDraft((current) =>
-                  current
-                    ? `${current}\n\n${pendingMessage.message}`
-                    : pendingMessage.message
-                );
-                files.setAttachments((current) => [
-                  ...current,
-                  ...pendingMessage.attachments.filter(
-                    (file) =>
-                      !current.some((existing) => existing.url === file.url)
-                  ),
-                ]);
-                sessionStorage.removeItem(storageKey);
-                setPendingMessage(null);
-                setError(
-                  "Delivery is unconfirmed. Check the conversation before sending this message again."
-                );
-              }}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              Restore draft
-            </Button>
+            {(error || agent.error || durableError) && (
+              <p role="alert">
+                {error || agent.error?.message || durableError}
+              </p>
+            )}
+            {pendingMessage && !commandPending && (
+              <div className="space-y-2 text-sm" role="status">
+                <p>
+                  Message delivery is unconfirmed. Your draft is saved in this
+                  tab.
+                </p>
+                <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
+                <AttachmentList attachments={pendingMessage.attachments} />
+                <Button
+                  onClick={() => {
+                    setDraft((current) =>
+                      current
+                        ? `${current}\n\n${pendingMessage.message}`
+                        : pendingMessage.message
+                    );
+                    files.setAttachments((current) => [
+                      ...current,
+                      ...pendingMessage.attachments.filter(
+                        (file) =>
+                          !current.some((existing) => existing.url === file.url)
+                      ),
+                    ]);
+                    sessionStorage.removeItem(storageKey);
+                    setPendingMessage(null);
+                    setError(
+                      "Delivery is unconfirmed. Check the conversation before sending this message again."
+                    );
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Restore draft
+                </Button>
+              </div>
+            )}
+            <EveComposer
+              busy={busy}
+              disabled={
+                busy ||
+                commandPending ||
+                cancelPending ||
+                hasApproval ||
+                !!pendingMessage ||
+                fork.locked
+              }
+              draft={draft}
+              files={files}
+              onDraftChange={setDraft}
+              onStop={cancel}
+              onSubmit={() =>
+                run(() =>
+                  submitMessage(draft, files.attachments, selectedModel, true)
+                )
+              }
+              retainedModelId={pendingMessage?.modelId}
+              stopDisabled={cancelPending || agent.status === "resuming"}
+            />
+            {(error || agent.error || durableError) && (
+              <Button
+                disabled={busy || commandPending || cancelPending}
+                onClick={() => run(agent.resume)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Reconnect
+              </Button>
+            )}
           </div>
-        )}
-        <EveComposer
-          busy={busy}
-          disabled={
-            busy ||
-            commandPending ||
-            cancelPending ||
-            hasApproval ||
-            !!pendingMessage ||
-            fork.locked
-          }
-          draft={draft}
-          files={files}
-          onDraftChange={setDraft}
-          onStop={cancel}
-          onSubmit={() =>
-            run(async () => {
-              const submitted = draft;
-              const pending = {
-                message: submitted.trim(),
-                attachments: files.attachments,
-                modelId: selectedModel,
-                checkUntil: Date.now() + 60_000,
-                afterSequence: Math.max(
-                  -1,
-                  ...agent.events.flatMap((event) =>
-                    event.type === "message.received"
-                      ? [event.data.sequence]
-                      : []
-                  )
-                ),
-              };
-              // Save before clearing: a reload may happen before Eve accepts it.
-              sessionStorage.setItem(storageKey, JSON.stringify(pending));
-              setPendingMessage(pending);
-              setDraft("");
-              files.setAttachments([]);
-              await send(
-                () =>
-                  agent.send(draftMessage(submitted, pending.attachments), {
-                    headers: { "x-chatjs-selected-model": selectedModel },
-                  }),
-                true
-              );
-            })
-          }
-          retainedModelId={pendingMessage?.modelId}
-          stopDisabled={cancelPending || agent.status === "resuming"}
-        />
-        {(error || agent.error || durableError) && (
-          <Button
-            disabled={busy || commandPending || cancelPending}
-            onClick={() => run(agent.resume)}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            Reconnect
-          </Button>
-        )}
-      </div>
-    </div>
+        </div>
+      </section>
+    </EveArtifactLayout>
   );
 }

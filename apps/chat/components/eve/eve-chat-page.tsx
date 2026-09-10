@@ -28,41 +28,44 @@ export async function EveChatPage({
   if (conversationId && !selected) {
     notFound();
   }
+  const header = (
+    <ChatHeaderView
+      actions={
+        <>
+          {selected?.sessionId && <EveShareButton chatId={selected.id} />}
+          <Link className="text-sm" href="/">
+            New conversation
+          </Link>
+        </>
+      }
+      breadcrumb={
+        <h1 className="ml-2 truncate font-medium text-sm">
+          {selected?.title ?? selected?.firstMessage.slice(0, 100) ?? "Chat"}
+        </h1>
+      }
+    />
+  );
+  if (selected?.sessionId && selected.state === "bound") {
+    return (
+      <EveConversation
+        conversationId={selected.id}
+        header={header}
+        key={selected.sessionId}
+        ownerId={session.user.id}
+        sessionId={selected.sessionId}
+      />
+    );
+  }
   return (
     <EveArtifactLayout conversationId={conversationId}>
       <section className="flex h-full min-h-0 flex-col">
-        <ChatHeaderView
-          actions={
-            <>
-              {selected?.sessionId && <EveShareButton chatId={selected.id} />}
-              <Link className="text-sm" href="/">
-                New conversation
-              </Link>
-            </>
-          }
-          breadcrumb={
-            <h1 className="ml-2 truncate font-medium text-sm">
-              {selected?.title ??
-                selected?.firstMessage.slice(0, 100) ??
-                "Chat"}
-            </h1>
-          }
-        />
-        {selected?.sessionId && selected.state === "bound" && (
-          <EveConversation
-            conversationId={selected.id}
-            key={selected.sessionId}
-            ownerId={session.user.id}
-            sessionId={selected.sessionId}
-          />
-        )}
-        {selected && !(selected.sessionId && selected.state === "bound") && (
+        {header}
+        {selected ? (
           <p className="p-4" role="alert">
             Creation is unresolved. Keep conversation {selected.id} for
             reconciliation before retrying.
           </p>
-        )}
-        {!selected && (
+        ) : (
           <NewEveConversation key={session.user.id} ownerId={session.user.id} />
         )}
       </section>

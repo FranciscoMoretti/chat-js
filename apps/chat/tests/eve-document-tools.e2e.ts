@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { config } from "../lib/config";
 import { db } from "../lib/db/client";
 import {
   eveConversation,
@@ -126,6 +127,16 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       path: testInfo.outputPath(`${title.replaceAll(".", "-")}.png`),
       animations: "disabled",
     });
+    await panel
+      .getByRole("button", { name: "Improve document", exact: true })
+      .click();
+    await page.getByRole("menu").screenshot({
+      path: testInfo.outputPath(
+        `assistant-actions-${title.replaceAll(".", "-")}.png`
+      ),
+      animations: "disabled",
+    });
+    await page.keyboard.press("Escape");
     await panel.getByRole("button", { name: "Close", exact: true }).click();
   }
   await page
@@ -350,8 +361,45 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     animations: "disabled",
   });
   await code.fill("");
+  await expect(
+    panel.getByRole("button", { name: "Improve document", exact: true })
+  ).toBeDisabled();
   await expect(panel).toContainText("Version 3 of 3");
   await expect(code).toHaveText("");
+  await code.fill("def add(a, b):\n    return a + b");
+  await expect(panel).toContainText("Version 4 of 4");
+  await expect(panel).toContainText("All changes saved");
+  await page.setViewportSize({ width: 1100, height: 850 });
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  await composer.fill("Keep this composer draft.");
+  const actionRequest = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      request.url().includes("/api/eve/v1/session/")
+  );
+  await panel
+    .getByRole("button", { name: "Improve document", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Add comments", exact: true })
+    .click();
+  expect((await actionRequest).headers()["x-chatjs-selected-model"]).toBe(
+    config.ai.tools.code.edits
+  );
+  await expect(
+    panel.getByRole("button", { name: "Improve document", exact: true })
+  ).toBeDisabled();
+  await expect(panel).toContainText("Version 5 of 5", { timeout: 90_000 });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(code).toContainText("def add");
+  await expect(composer).toHaveText("Keep this composer draft.");
+  await panel.screenshot({
+    path: testInfo.outputPath("assistant-comments.png"),
+    animations: "disabled",
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
   await panel.getByRole("button", { name: "Close", exact: true }).click();
   await page
     .getByRole("button", { name: 'Created "Harvest"', exact: true })
@@ -390,6 +438,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await expect(
       reader.getByRole("region", { name: "Document", exact: true })
     ).toContainText("Cobalt pears.");
+    await expect(
+      reader.getByRole("button", { name: "Improve document", exact: true })
+    ).toHaveCount(0);
     await reader
       .getByRole("button", { name: "View changes", exact: true })
       .click();

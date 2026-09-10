@@ -21,9 +21,11 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
+import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
 import { getLanguageFromFileName } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 import { EveDocumentActions } from "./eve-document-actions";
+import { EveDocumentAssistantActions } from "./eve-document-assistant-actions";
 import { EveDocumentComparison } from "./eve-document-comparison";
 import { useDocumentDraft } from "./use-document-draft";
 
@@ -39,6 +41,11 @@ const SpreadsheetEditor = dynamic(
   () => import("@/components/sheet-editor").then((m) => m.SpreadsheetEditor),
   { ssr: false }
 );
+
+type DocumentActionProps = {
+  onDocumentAction?: (request: DocumentAssistantRequest) => Promise<void>;
+  documentActionsDisabled?: boolean;
+};
 
 function DocumentBody({
   kind,
@@ -127,10 +134,12 @@ function DocumentSaveStatus({
 function EveArtifactPanel({
   conversationId,
   readOnly,
+  onDocumentAction,
+  documentActionsDisabled = false,
 }: {
   conversationId: string;
   readOnly: boolean;
-}) {
+} & DocumentActionProps) {
   const { artifact, closeArtifact } = useArtifact();
   const [selectedRevisionId, setSelectedRevisionId] = useState(
     artifact.revisionId
@@ -213,7 +222,26 @@ function EveArtifactPanel({
         )}
       </ArtifactHeader>
       {!readOnly && document.data?.canEdit && (
-        <DocumentSaveStatus editable={Boolean(editable)} editing={editing} />
+        <>
+          <DocumentSaveStatus editable={Boolean(editable)} editing={editing} />
+          {onDocumentAction && revision && (
+            <EveDocumentAssistantActions
+              disabled={
+                document.isError ||
+                documentActionsDisabled ||
+                !editable ||
+                Boolean(editing.draft)
+              }
+              documentId={artifact.documentId}
+              kind={revision.kind}
+              onAction={(request) => {
+                setSelectedRevisionId(undefined);
+                return onDocumentAction(request);
+              }}
+              revisionId={revision.id}
+            />
+          )}
+        </>
       )}
       <ArtifactContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
         {document.isPending && (
@@ -277,11 +305,13 @@ function Layout({
   children,
   conversationId,
   readOnly = false,
+  onDocumentAction,
+  documentActionsDisabled,
 }: {
   children: ReactNode;
   conversationId?: string;
   readOnly?: boolean;
-}) {
+} & DocumentActionProps) {
   const { artifact } = useArtifact();
   const visible = Boolean(
     conversationId && artifact.isVisible && artifact.documentId !== "init"
@@ -296,7 +326,9 @@ function Layout({
         {visible && conversationId && (
           <EveArtifactPanel
             conversationId={conversationId}
+            documentActionsDisabled={documentActionsDisabled}
             key={`${artifact.documentId}:${artifact.revisionId ?? "latest"}`}
+            onDocumentAction={onDocumentAction}
             readOnly={readOnly}
           />
         )}
@@ -305,11 +337,13 @@ function Layout({
   );
 }
 
-export function EveArtifactLayout(props: {
-  children: ReactNode;
-  conversationId?: string;
-  readOnly?: boolean;
-}) {
+export function EveArtifactLayout(
+  props: {
+    children: ReactNode;
+    conversationId?: string;
+    readOnly?: boolean;
+  } & DocumentActionProps
+) {
   return (
     <ArtifactProvider key={props.conversationId ?? "new"}>
       <Layout {...props} />
