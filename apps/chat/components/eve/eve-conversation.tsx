@@ -11,6 +11,7 @@ import {
 } from "@/components/ai-elements/conversation";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { draftAttachment, draftMessage, matchesDraft } from "@/lib/eve/draft";
 import { sendCommand } from "@/lib/eve/send-command";
@@ -29,6 +30,7 @@ const pendingMessageSchema = z.object({
   modelId: z.string().optional(),
   afterSequence: z.number(),
   checkUntil: z.number(),
+  rejection: z.string().optional(),
 });
 
 export function EveConversation({
@@ -56,7 +58,7 @@ export function EveConversation({
   const receivedMessages = useRef(0);
   const commandLock = useRef(false);
   const [draft, setDraft] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<Error>();
   const [commandPending, setCommandPending] = useState(false);
   const [cancelPending, setCancelPending] = useState(false);
   const agent = useEveAgent({
@@ -99,6 +101,13 @@ export function EveConversation({
   );
   const durableError =
     latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined;
+  const displayedError = error?.message ?? agent.error?.message ?? durableError;
+  // Failed provisional messages are retained in the recovery panel below.
+  // They must not look like accepted transcript entries or survive a retry twice.
+  const messages = agent.data.messages.filter(
+    (message) =>
+      !(message.metadata?.optimistic && message.metadata.status === "failed")
+  );
   const busy =
     agent.status === "streaming" ||
     agent.status === "submitted" ||
@@ -118,7 +127,7 @@ export function EveConversation({
     }
   }, [storageKey]);
   useEffect(() => {
-    if (!pendingMessage) {
+    if (!pendingMessage || pendingMessage.rejection) {
       return;
     }
     const pending = pendingMessage;
@@ -177,15 +186,15 @@ export function EveConversation({
     }
     commandLock.current = true;
     setCommandPending(true);
-    setError("");
+    setError(undefined);
     commandError.current = undefined;
     try {
       await action();
     } catch (cause) {
       setError(
         cause instanceof Error
-          ? cause.message
-          : "Request failed. Reconnect before retrying."
+          ? cause
+          : new Error("Request failed. Reconnect before retrying.")
       );
     } finally {
       commandLock.current = false;
@@ -231,13 +240,22 @@ export function EveConversation({
       setDraft("");
       files.setAttachments([]);
     }
-    await send(
-      () =>
-        agent.send(draftMessage(message, attachments), {
-          headers: { "x-chatjs-selected-model": modelId },
-        }),
-      true
-    );
+    try {
+      await send(
+        () =>
+          agent.send(draftMessage(message, attachments), {
+            headers: { "x-chatjs-selected-model": modelId },
+          }),
+        true
+      );
+    } catch (cause) {
+      if (isEveCommandRejection(cause)) {
+        const rejected = { ...pending, rejection: cause.message };
+        sessionStorage.setItem(storageKey, JSON.stringify(rejected));
+        setPendingMessage(rejected);
+      }
+      throw cause;
+    }
   }
   async function cancel() {
     setCancelPending(true);
@@ -245,7 +263,9 @@ export function EveConversation({
     try {
       await agent.cancel();
     } catch {
-      setError("Cancellation failed. Reconnect to check the response.");
+      setError(
+        new Error("Cancellation failed. Reconnect to check the response.")
+      );
     } finally {
       setCancelPending(false);
     }
@@ -300,7 +320,7 @@ export function EveConversation({
                 }
                 disabled={busy || commandPending}
                 isReadonly={false}
-                messages={agent.data.messages}
+                messages={messages}
                 onEdit={(message) => fork.begin(message)}
                 onRegenerate={(message, response) =>
                   fork.begin(message, { response, events: agent.events })
@@ -316,16 +336,13 @@ export function EveConversation({
             <p aria-live="polite" className="text-muted-foreground text-sm">
               {statusLabel}
             </p>
-            {(error || agent.error || durableError) && (
-              <p role="alert">
-                {error || agent.error?.message || durableError}
-              </p>
-            )}
+            {displayedError && <p role="alert">{displayedError}</p>}
             {pendingMessage && !commandPending && (
               <div className="space-y-2 text-sm" role="status">
                 <p>
-                  Message delivery is unconfirmed. Your draft is saved in this
-                  tab.
+                  {pendingMessage.rejection
+                    ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
+                    : "Message delivery is unconfirmed. Your draft is saved in this tab."}
                 </p>
                 <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
                 <AttachmentList attachments={pendingMessage.attachments} />
@@ -346,7 +363,11 @@ export function EveConversation({
                     sessionStorage.removeItem(storageKey);
                     setPendingMessage(null);
                     setError(
-                      "Delivery is unconfirmed. Check the conversation before sending this message again."
+                      pendingMessage.rejection
+                        ? undefined
+                        : new Error(
+                            "Delivery is unconfirmed. Check the conversation before sending this message again."
+                          )
                     );
                   }}
                   size="sm"
@@ -379,17 +400,19 @@ export function EveConversation({
               retainedModelId={pendingMessage?.modelId}
               stopDisabled={cancelPending || agent.status === "resuming"}
             />
-            {(error || agent.error || durableError) && (
-              <Button
-                disabled={busy || commandPending || cancelPending}
-                onClick={() => run(agent.resume)}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                Reconnect
-              </Button>
-            )}
+            {displayedError &&
+              !pendingMessage?.rejection &&
+              !isEveCommandRejection(error ?? agent.error) && (
+                <Button
+                  disabled={busy || commandPending || cancelPending}
+                  onClick={() => run(agent.resume)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Reconnect
+                </Button>
+              )}
           </div>
         </div>
       </section>

@@ -3,6 +3,7 @@ import { canSpend } from "@/lib/db/credits";
 import { ownsEveSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
@@ -13,13 +14,20 @@ import {
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
 
+function rejectRequest(request: Request, message: string, status: number) {
+  // A failed stream read cannot prove that an earlier POST was rejected.
+  return request.method === "POST"
+    ? rejectEveCommand(message, status)
+    : Response.json({ error: message }, { status });
+}
+
 async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
   if (!isNewMessage) {
     return;
   }
   await reconcileEveOwnerUsage(ownerId);
   if (!(await canSpend(ownerId))) {
-    return Response.json({ error: "Insufficient credits" }, { status: 402 });
+    return rejectEveCommand("Insufficient credits", 402);
   }
 }
 
@@ -35,7 +43,7 @@ async function readCommand(
       await request.json().catch(() => null)
     );
     if (!input.success) {
-      return new Response(null, { status: 400 });
+      return rejectEveCommand("Invalid command.", 400);
     }
     if ("message" in input.data) {
       const selectedModel = request.headers.get("x-chatjs-selected-model");
@@ -44,7 +52,7 @@ async function readCommand(
         input.data.modelId &&
         selectedModel !== input.data.modelId
       ) {
-        return new Response(null, { status: 400 });
+        return rejectEveCommand("Conflicting model selection.", 400);
       }
       modelId = selectedModel ?? input.data.modelId;
       try {
@@ -53,14 +61,9 @@ async function readCommand(
           message: await prepareEveMessage(input.data.message, modelId),
         });
       } catch (cause) {
-        return Response.json(
-          {
-            error:
-              cause instanceof Error
-                ? cause.message
-                : "Unable to read attachment.",
-          },
-          { status: 400 }
+        return rejectEveCommand(
+          cause instanceof Error ? cause.message : "Unable to read attachment.",
+          400
         );
       }
     } else {
@@ -76,24 +79,24 @@ async function handle(
   context: { params: Promise<{ path: string[] }> }
 ) {
   if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
+    return rejectRequest(request, "Agent conversations are unavailable.", 404);
   }
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
-    return new Response(null, { status: 401 });
+    return rejectRequest(request, "Sign in to continue.", 401);
   }
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
-    return new Response(null, { status: 403 });
+    return rejectRequest(request, "Request origin is not allowed.", 403);
   }
   const { path } = await context.params;
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
   if (!(policy && (await ownsEveSession(session.user.id, policy.sessionId)))) {
-    return new Response(null, { status: 404 });
+    return rejectRequest(request, "Conversation not found.", 404);
   }
   const query = safeStreamQuery(new URL(request.url).searchParams);
   if (!query || (request.method !== "GET" && query.size)) {
-    return new Response(null, { status: 400 });
+    return rejectRequest(request, "Invalid command query.", 400);
   }
   const command = await readCommand(request, policy);
   if (command instanceof Response) {

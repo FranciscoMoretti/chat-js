@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-rejected-send.e2e.ts",
     "eve-document-run.e2e.ts",
     "eve-document-tools.e2e.ts",
     "eve-live.e2e.ts",
