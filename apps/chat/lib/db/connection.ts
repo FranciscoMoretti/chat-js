@@ -8,8 +8,10 @@ export const databaseEnvOptions = {
     )
     .describe("Optional direct Postgres connection for schema operations"),
   DATABASE_PREPARE: z
-    .enum(["true", "false"])
-    .default("true")
+    .preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.enum(["true", "false"]).default("true")
+    )
     .transform((value) => value === "true")
     .describe("Enable prepared statements for runtime queries"),
   DATABASE_MAX_CONNECTIONS: z

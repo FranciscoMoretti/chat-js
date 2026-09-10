@@ -38,6 +38,7 @@ describe("Postgres connection selection", () => {
       })
     ).toEqual({ DATABASE_PREPARE: false, DATABASE_MAX_CONNECTIONS: 2 });
     const blank = databaseOptionsSchema.parse({
+      DATABASE_PREPARE: "",
       DATABASE_MIGRATION_URL: "",
       DATABASE_MAX_CONNECTIONS: "",
     });

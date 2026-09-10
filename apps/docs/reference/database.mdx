@@ -9,6 +9,37 @@ ChatJS uses **PostgreSQL** with **Drizzle ORM** for type-safe, schema-first data
 
 ---
 
+## Set up your database
+
+The CLI installs the same Drizzle and Postgres.js code for every Postgres host.
+You do not select a database host during installation. Create your database with
+your host, then put its connection strings in `.env.local` at your generated app's
+root (or `apps/chat` when working in this repository).
+
+| Host | Where to get the connection | Settings |
+| --- | --- | --- |
+| Neon | Project dashboard → **Connect**, then select your branch, role, and database | Use the pooled URL for runtime if needed and the direct URL for migrations |
+| Supabase | Project **Connect** panel | Use the connection mode appropriate to your deployment. Transaction pooling requires `DATABASE_PREPARE=false`. Use a direct or suitable session connection for migrations |
+| Local or another Postgres host | Your database administrator or host's Postgres connection details | Set `DATABASE_URL`. Leave the migration URL and pooling overrides unset unless needed |
+
+Use Postgres credentials, not a host's HTTP API URL or API key. Both connection
+URLs must target the same database and branch. The URLs can use different
+endpoints and roles, such as a limited runtime role and a migration role.
+
+After filling in `.env.local`, run:
+
+```bash
+bun db:connect
+```
+
+This checks both configured connections with `SELECT 1`, using the runtime
+prepared-statement setting for the runtime check. Each endpoint has a 15-second
+deadline. The command closes connections, reports the failing configuration name
+without printing credentials, and exits unsuccessfully if either check fails.
+It does not apply migrations or change your schema. A successful check confirms
+connectivity, not migration permissions, schema readiness, or that both URLs
+point to the same database. Verify those details before applying migrations.
+
 ## Connection settings
 
 Set `DATABASE_URL` to the Postgres connection string from your host. The same
