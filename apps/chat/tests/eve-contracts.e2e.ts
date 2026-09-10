@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
@@ -12,6 +13,8 @@ import {
 } from "../lib/db/eve-queries";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { createEvePlatformResult } from "../lib/eve/platform-result";
+import { ingestEveUsage } from "../lib/eve/usage";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -285,4 +288,62 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
       .where(eq(eveConversation.ownerId, foreignOwner));
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
+});
+
+test("tool receipts debit once per native call and keep missing cost evidence unresolved", async () => {
+  const sessionId = crypto.randomUUID();
+  const callId = crypto.randomUUID();
+  const event: MessageStreamEvent = {
+    type: "action.result",
+    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
+    data: {
+      turnId: "tool-receipt",
+      stepIndex: 0,
+      sequence: 0,
+      status: "completed",
+      result: {
+        kind: "tool-result",
+        toolName: "codeExecution",
+        callId,
+        output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
+      },
+    },
+  };
+  await Promise.all(
+    Array.from({ length: 8 }, () =>
+      ingestEveUsage(owner, sessionId, {
+        ...event,
+        meta: { ...event.meta, id: crypto.randomUUID() },
+      })
+    )
+  );
+  const [row] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
+  expect(Number(row.costUsd)).toBe(0.05);
+  expect(row.chargedCents).toBe(5);
+  const unknown = {
+    ...event,
+    data: {
+      ...event.data,
+      result: {
+        ...event.data.result,
+        callId: crypto.randomUUID(),
+        output: "result lost its receipt",
+      },
+    },
+  };
+  expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
+  const [unpriced] = await db
+    .select()
+    .from(eveUsage)
+    .where(
+      eq(
+        eveUsage.eventId,
+        `eve-tool:${sessionId}:${unknown.data.result.callId}`
+      )
+    );
+  expect(unpriced.costUsd).toBeNull();
+  expect(unpriced.chargedCents).toBe(0);
 });

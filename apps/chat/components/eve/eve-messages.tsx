@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { EveAttachment } from "./eve-attachment";
+import { EvePlatformToolResult } from "./eve-platform-tool-result";
 import { EveToolResult } from "./eve-tool-result";
 
 function PendingInput({
@@ -135,6 +136,15 @@ function Part({
   if (part.type !== "dynamic-tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
+  if (part.toolName === "codeExecution") {
+    return (
+      <EvePlatformToolResult
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
+  }
   if (
     getInstalledToolRenderer(`tool-${part.toolName}`) &&
     part.state !== "approval-requested" &&
@@ -200,7 +210,7 @@ export function EveMessages({
 }) {
   return messages.map((message) => (
     <Message className="flex-col" from={message.role} key={message.id}>
-      <MessageContent>
+      <MessageContent className="min-w-0 max-w-full">
         <span className="sr-only">
           {message.role === "user" ? "You" : "Assistant"}
         </span>

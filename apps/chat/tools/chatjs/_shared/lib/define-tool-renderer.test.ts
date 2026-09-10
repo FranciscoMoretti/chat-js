@@ -6,7 +6,7 @@ import { EveToolResult } from "@/components/eve/eve-tool-result";
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z } = await import("zod");
   const { createElement } = await import("react");
-  const { defineToolRenderer } = await import("./define-tool-renderer");
+  const { defineToolRenderer } = await import("@/lib/ai/define-tool-renderer");
   const original = await importOriginal<typeof import("@/tools/chatjs/ui")>();
   return {
     ui: {

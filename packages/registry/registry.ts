@@ -61,13 +61,17 @@ export const registry = registrySchema.parse({
 			type: "registry:item",
 			dependencies: ["ai", "zod"],
 			files: [
-				["tool-part.ts", "lib/tool-part.ts"],
-				["define-tool-renderer.tsx", "lib/define-tool-renderer.tsx"],
-			].map(([source, target]) => ({
-				path: `src/tools/toolkit-renderer/${source}`,
-				type: "registry:file",
-				target: `~/tools/chatjs/_shared/${target}`,
-			})),
+				{
+					path: "src/tools/toolkit-renderer/tool-part.ts",
+					type: "registry:file",
+					target: "~/tools/chatjs/_shared/lib/tool-part.ts",
+				},
+				{
+					path: "src/tools/toolkit-renderer/define-tool-renderer.tsx",
+					type: "registry:file",
+					target: "~/lib/ai/define-tool-renderer.tsx",
+				},
+			],
 		},
 	],
 });

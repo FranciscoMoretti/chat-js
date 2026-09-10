@@ -1,6 +1,6 @@
 "use client";
 
-import { defineToolRenderer } from "@/tools/chatjs/_shared/lib/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 import { wordCountInput, wordCountResult } from "./schemas";
 import type { wordCount } from "./tool";

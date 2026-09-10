@@ -1,11 +1,27 @@
 import type { MessageStreamEvent } from "eve/client";
 import { recordEveUsage } from "../db/eve-billing";
+import { evePlatformResult } from "./platform-result";
 
 export async function ingestEveUsage(
   ownerId: string,
   sessionId: string,
   event: MessageStreamEvent
 ) {
+  if (
+    event.type === "action.result" &&
+    event.data.result.kind === "tool-result" &&
+    event.data.result.toolName === "codeExecution"
+  ) {
+    const result = evePlatformResult.safeParse(event.data.result.output);
+    const recordedCost = result.success ? result.data.usage.costUsd : undefined;
+    return await recordEveUsage({
+      ownerId,
+      sessionId,
+      eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
+      turnId: event.data.turnId,
+      costUsd: event.data.status === "rejected" ? 0 : recordedCost,
+    });
+  }
   if (event.type !== "step.completed" && event.type !== "step.failed") {
     return;
   }

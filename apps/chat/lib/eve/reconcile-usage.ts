@@ -29,13 +29,16 @@ export async function reconcileEveUsage(ownerId: string, sessionId: string) {
   }
   for (const event of snapshot.events) {
     const priced = await ingestEveUsage(ownerId, sessionId, event);
-    if (event.type === "step.completed" && !priced) {
+    if (
+      (event.type === "step.completed" || event.type === "action.result") &&
+      priced === false
+    ) {
       unresolved = true;
     }
   }
   if (unresolved) {
     throw new Error(
-      "Completed model usage needs provider cost reconciliation before starting more work."
+      "Completed usage needs provider cost reconciliation before starting more work."
     );
   }
 }

@@ -2,7 +2,7 @@
 
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { defineToolRenderer } from "@/tools/chatjs/_shared/lib/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 import { retrievedInput, retrievedResult } from "./schemas";
 import type { retrieveUrl } from "./tool";

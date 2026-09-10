@@ -56,9 +56,10 @@ export type BaseChart = LineChart | ScatterChart | BarChart;
 
 function InteractiveChart({ chart }: { chart: BaseChart }) {
   const { resolvedTheme } = useTheme();
-  const textColor = "#e5e5e5";
-  const gridColor = "rgba(255, 255, 255, 0.1)";
-  const tooltipBg = "#171717";
+  const isDark = resolvedTheme === "dark";
+  const textColor = isDark ? "#e5e5e5" : "#262626";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.15)";
+  const tooltipBg = isDark ? "#171717" : "#ffffff";
 
   const sharedOptions: EChartsOption = {
     backgroundColor: "transparent",

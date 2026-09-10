@@ -63,3 +63,22 @@ it("retains clarification prompts and answers without their response identifiers
   expect(json).not.toContain("secret-request");
   expect(json).not.toContain("option-private");
 });
+
+it("shared platform results retain the output without billing metadata", () => {
+  const [part] = sharedEvePart({
+    type: "dynamic-tool",
+    toolName: "codeExecution",
+    toolCallId: "call",
+    state: "output-available",
+    input: { title: "Test", language: "javascript", code: "console.log(42)" },
+    output: {
+      kind: "chatjs.platform-result",
+      version: 1,
+      output: { message: "42", chart: "" },
+      usage: { costUsd: 0.05 },
+    },
+  });
+  expect(JSON.stringify(part)).toContain('"message":"42"');
+  expect(JSON.stringify(part)).not.toContain("costUsd");
+  expect(JSON.stringify(part)).not.toContain("usage");
+});

@@ -3,6 +3,7 @@ import {
   type EveMessagePart,
   type MessageStreamEvent,
 } from "eve/client";
+import { evePlatformOutput } from "./platform-result";
 
 export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
   if (part.type === "text" || part.type === "reasoning") {
@@ -22,7 +23,17 @@ export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
   if (part.type === "dynamic-tool") {
     // Tool inputs/results are conversation content; runtime metadata is not.
     const { toolMetadata, ...content } = part;
-    const parts: EveMessagePart[] = [content];
+    let publicPart: EveMessagePart = content;
+    if (
+      content.state === "output-available" &&
+      content.toolName === "codeExecution"
+    ) {
+      const result = evePlatformOutput.safeParse(content.output);
+      if (result.success) {
+        publicPart = { ...content, output: result.data };
+      }
+    }
+    const parts: EveMessagePart[] = [publicPart];
     const request = toolMetadata?.eve?.inputRequest;
     const response = toolMetadata?.eve?.inputResponse;
     if (request) {

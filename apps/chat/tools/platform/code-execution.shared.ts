@@ -29,9 +29,13 @@ export function getSandboxRuntime(
   );
 }
 
-export function createSandbox(runtime: string): Promise<Sandbox> {
+export function createSandbox(
+  runtime: string,
+  signal?: AbortSignal
+): Promise<Sandbox> {
   return Sandbox.create({
     runtime,
+    signal,
     timeout: 5 * 60 * 1000,
     resources: { vcpus: 2 },
     ...getTokenAuth(),
