@@ -6,6 +6,8 @@ import { loadEveModelDefinition } from "../../lib/eve/model-selection";
 import { parseSessionRequest } from "../../lib/eve/request-policy";
 
 export default eveChannel({
+  authorizeFork: ({ auth, sourceSessionId }) =>
+    ownsEveSession(auth.principalId, sourceSessionId),
   auth: async (request) => {
     if (env.EVE_ENABLED !== "true" || !env.EVE_GATEWAY_SECRET) {
       return null;
