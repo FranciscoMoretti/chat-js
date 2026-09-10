@@ -434,6 +434,12 @@ export async function scaffoldFromTemplate(
   const manifest = JSON.parse(await readFile(packageJsonPath, "utf8"));
   delete manifest.dependencies["@ai-sdk/gateway"];
   delete manifest.dependencies["@vercel/blob"];
+  delete manifest.dependencies["@tavily/core"];
+  await rm(join(destination, "tools/chatjs/tavily-search"), {
+    recursive: true,
+    force: true,
+  });
+  await rm(join(destination, "tools/chatjs/search.ts"), { force: true });
   await rm(join(destination, "lib/storage-provider.ts"));
   await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const componentsPath = join(destination, "components.json");

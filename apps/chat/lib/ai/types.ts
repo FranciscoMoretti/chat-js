@@ -5,6 +5,7 @@ import type {
   UIMessageStreamWriter,
 } from "ai";
 import { z } from "zod";
+import type { createWebSearch } from "@/tools/chatjs/search";
 import type { codeExecution } from "@/tools/platform/code-execution";
 import type { deepResearch } from "@/tools/platform/deep-research/deep-research";
 import type { createCodeDocumentTool } from "@/tools/platform/documents/create-code-document";
@@ -17,7 +18,6 @@ import type { generateImageTool as generateImageToolFactory } from "@/tools/plat
 import type { generateVideoTool as generateVideoToolFactory } from "@/tools/platform/generate-video";
 import type { readDocument } from "@/tools/platform/read-document";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-import type { tavilyWebSearch } from "@/tools/platform/web-search";
 import type { AppModelId } from "./app-models";
 import type { InstalledTools } from "./installed-tools";
 
@@ -166,7 +166,7 @@ type generateImageTool = InferUITool<
 type generateVideoTool = InferUITool<
   ReturnType<typeof generateVideoToolFactory>
 >;
-type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
+type webSearchTool = InferUITool<ReturnType<typeof createWebSearch>>;
 type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 
 export type ChatTools = {

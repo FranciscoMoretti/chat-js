@@ -8,6 +8,7 @@ import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
+import { createWebSearch } from "@/tools/chatjs/search";
 import { codeExecution } from "./code-execution";
 import { deepResearch } from "./deep-research/deep-research";
 import { createCodeDocumentTool } from "./documents/create-code-document";
@@ -20,7 +21,6 @@ import { generateImageTool } from "./generate-image";
 import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
-import { tavilyWebSearch } from "./web-search";
 
 const log = createModuleLogger("tools:mcp");
 
@@ -92,7 +92,7 @@ export function getTools({
       : {}),
     ...(config.ai.tools.webSearch.enabled
       ? {
-          webSearch: tavilyWebSearch({
+          webSearch: createWebSearch({
             dataStream,
             writeTopLevelUpdates: true,
             costAccumulator,

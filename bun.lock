@@ -294,6 +294,7 @@
         "@chat-js/gateways": "workspace:*",
         "@mendable/firecrawl-js": "1.29.1",
         "@openrouter/ai-sdk-provider": "3.0.0",
+        "@tavily/core": "^0.3.3",
         "@types/bun": "latest",
         "@types/node": "22.13.10",
         "@types/react": "19.2.7",

@@ -167,9 +167,17 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ...(gateway === "acme" ? ["--storage-provider", `http://127.0.0.1:${registryServer.port}/external-storage.json`, "--storage-config", '{"bucket":"test"}'] : gateway === "openai" ? ["--storage-provider", "s3", "--storage-config", '{"bucket":"test","region":"us-east-1"}'] : []),
 			"--yes",
 			"--no-electron",
+ ...(gateway === "vercel" ? ["--search-tool", "firecrawl-search"] : []),
 		]);
 		const manifestPath = join(cwd, "package.json");
 		const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+ if (gateway === "vercel") {
+ expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
+ expect(await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()).toBe(false);
+ expect(await readFile(join(cwd, "tools/chatjs/search.ts"), "utf8")).toContain("firecrawl-search/tool");
+ expect(await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf8")).toContain("FIRECRAWL_API_KEY");
+ }
+
 		const selectedSdk =
 			gateway === "acme"
 				? "@ai-sdk/openai-compatible"

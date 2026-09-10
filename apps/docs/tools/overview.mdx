@@ -4,8 +4,8 @@ description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
 The ChatJS registry distributes editable source code using shadcn. A tool includes
-server logic, a client renderer, dependencies, and a declarative registration
-descriptor. Installed tools become part of your app's typed tool system.
+server logic, dependencies, and a declarative registration
+descriptor. Ordinary tools include a client renderer; search tools reuse the existing search presentation. Installed tools become part of your app's typed tool system.
 
 ```bash
 npx @chat-js/cli@latest add word-count
@@ -21,6 +21,8 @@ Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replac
 | --- | --- | --- |
 | [Word Count](./word-count) | Count words, characters, and sentences | None |
 | [Get Weather](./get-weather) | Fetch weather for coordinates | None |
+| [Tavily Search](../features/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
+| [Firecrawl Search](../features/web-search) | Search with page content extraction | `FIRECRAWL_API_KEY` |
 | [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
 
 ## Installed files

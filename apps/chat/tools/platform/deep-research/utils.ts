@@ -3,8 +3,8 @@ import type { ToolSet } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
-import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
-import type { DeepResearchRuntimeConfig, SearchAPI } from "./configuration";
+import { createWebSearch } from "@/tools/chatjs/search";
+import type { DeepResearchRuntimeConfig } from "./configuration";
 
 // MCP Utils
 
@@ -75,44 +75,23 @@ async function loadMcpTools(
 
 // Tool Utils
 
-function getSearchTool(
-  searchApi: SearchAPI,
-  _config: DeepResearchRuntimeConfig,
-  dataStream: StreamWriter,
-  parentToolCallId?: string
-): ToolSet {
-  if (searchApi === "tavily") {
-    return {
-      webSearch: tavilyWebSearch({
-        dataStream,
-        writeTopLevelUpdates: false,
-        toolCallIdOverride: parentToolCallId,
-      }),
-    };
-  }
-  if (searchApi === "firecrawl") {
-    return {
-      webSearch: firecrawlWebSearch({
-        dataStream,
-        writeTopLevelUpdates: false,
-        toolCallIdOverride: parentToolCallId,
-      }),
-    };
-  }
-  throw new Error(`Unsupported search API: ${searchApi}`);
-}
-
 export async function getAllTools(
   config: DeepResearchRuntimeConfig,
   dataStream: StreamWriter,
   id?: string
 ): Promise<ToolSet> {
-  if (config.search_api === "none") {
+  if (!config.search_enabled) {
     const mcpTools = await loadMcpTools(config, new Set<string>());
     return mcpTools;
   }
 
-  const searchTools = getSearchTool(config.search_api, config, dataStream, id);
+  const searchTools = {
+    webSearch: createWebSearch({
+      dataStream,
+      writeTopLevelUpdates: false,
+      toolCallIdOverride: id,
+    }),
+  };
   const existingToolNames = new Set<string>(Object.keys(searchTools));
 
   const mcpTools = await loadMcpTools(config, existingToolNames);
