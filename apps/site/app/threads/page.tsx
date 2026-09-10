@@ -140,9 +140,9 @@ export default function ThreadsPage() {
                   </a>
                   <a
                     className="inline-flex min-h-11 items-center gap-2 border-border border-b text-foreground/75 text-sm transition-colors hover:text-foreground"
-                    href={`${siteLinks.github}/tree/main/packages/thread`}
+                    href={`${siteLinks.docs}/threads`}
                   >
-                    Read the package
+                    Read the docs
                     <ArrowRight className="size-3.5" />
                   </a>
                 </div>
@@ -342,9 +342,9 @@ export default function ThreadsPage() {
             </div>
             <a
               className="inline-flex min-h-11 shrink-0 items-center gap-2 bg-primary px-5 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-85"
-              href={`${siteLinks.github}/blob/main/packages/thread/ARCHITECTURE.md`}
+              href={`${siteLinks.docs}/threads`}
             >
-              Read the architecture
+              Read the docs
               <ArrowRight className="size-4" />
             </a>
           </div>

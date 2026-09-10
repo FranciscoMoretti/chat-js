@@ -2,6 +2,7 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { expect, test } from "vitest";
 
 const pages = [
+	{ name: "threads", path: "/docs/threads" },
   { name: "database", path: "/docs/reference/database" },
   { name: "redis", path: "/docs/reference/redis" },
   { name: "storage", path: "/docs/storage" },

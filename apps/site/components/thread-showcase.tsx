@@ -26,8 +26,7 @@ import {
 
 import styles from "./thread-showcase.module.css";
 
-const INSTALL_COMMAND =
-  "bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react";
+const INSTALL_COMMAND = "bun add @chat-js/thread";
 const MAX_ACTIVE_RUNS = 8;
 
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };

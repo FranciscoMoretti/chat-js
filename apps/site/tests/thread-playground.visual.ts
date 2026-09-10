@@ -32,6 +32,32 @@ try {
   await page.getByTestId("thread-playground").waitFor();
   await page.evaluate(() => document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
+  const docsLinks = page.getByRole("link", { name: "Read the docs" });
+  assert.equal(await docsLinks.count(), 2);
+  for (const link of await docsLinks.all()) {
+    assert.equal(
+      await link.getAttribute("href"),
+      "https://chatjs.dev/docs/threads"
+    );
+  }
+  await docsLinks
+    .last()
+    .locator("..")
+    .screenshot({
+      animations: "disabled",
+      path: `${output}threads-docs-link.png`,
+    });
+  const installCommand = page
+    .getByRole("button", { name: "Copy installation command" })
+    .locator("../..");
+  assert.equal(
+    await installCommand.locator("code").textContent(),
+    "$ bun add @chat-js/thread"
+  );
+  await installCommand.screenshot({
+    animations: "disabled",
+    path: `${output}threads-install.png`,
+  });
   const initialHeight = await page
     .getByTestId("thread-playground")
     .evaluate((element) => element.clientHeight);
@@ -212,7 +238,7 @@ try {
   await capture(page, "threads-mobile-live");
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
-    `Threads interaction checks passed; six deterministic captures in ${output}`
+    `Threads interaction checks passed; deterministic captures in ${output}`
   );
 } finally {
   await browser.close();

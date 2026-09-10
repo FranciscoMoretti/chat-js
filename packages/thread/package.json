@@ -54,29 +54,26 @@
 		"test:types": "tsc -p tsconfig.json --noEmit && bun run build"
 	},
 	"peerDependencies": {
-		"@ai-sdk/react": "^4.0.96",
-		"ai": "^7.0.93",
 		"react": ">=18"
 	},
 	"peerDependenciesMeta": {
-		"@ai-sdk/react": {
-			"optional": true
-		},
 		"react": {
 			"optional": true
 		}
 	},
 	"devDependencies": {
-		"@ai-sdk/react": "4.0.96",
 		"@types/bun": "^1.3.12",
 		"@types/react": "19.2.7",
 		"@types/react-test-renderer": "19.1.0",
-		"ai": "7.0.93",
 		"react": "19.2.3",
 		"react-test-renderer": "19.2.3",
 		"typescript": "6.0.2"
 	},
 	"engines": {
 		"node": ">=22"
+	},
+	"dependencies": {
+		"ai": "^7.0.93",
+		"@ai-sdk/react": "^4.0.96"
 	}
 }
