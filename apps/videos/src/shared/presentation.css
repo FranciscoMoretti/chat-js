@@ -1,0 +1,29 @@
+.cursor {
+	position: absolute;
+	width: 34px;
+	height: 42px;
+	z-index: 4;
+	filter: drop-shadow(0 3px 4px #0008);
+}
+.clickPulse {
+	position: absolute;
+	width: 32px;
+	height: 32px;
+	border: 2px solid #83b2ff;
+	border-radius: 50%;
+	z-index: 5;
+}
+.captionPause {
+	position: absolute;
+	inset: 0;
+	z-index: 6;
+	background: rgba(10, 10, 10, 0.87);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.captionPause span {
+	font-size: 72px;
+	font-weight: 600;
+	letter-spacing: -2px;
+}
