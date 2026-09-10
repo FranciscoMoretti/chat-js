@@ -42,6 +42,8 @@ The next implementation boundary is a durable run/resource inventory owned by EV
 
 Our local fork now adds `$eve.activity_collector` to the session's creation attributes when it starts a collector. The source patch and regression test are retained in `patches/eve-collector-inventory.source.patch`. This is an inventory aid for newly created sessions, not the requested purge implementation. It does not address earlier sessions or collectors orphaned before session creation succeeds. Normal writes in the inspected Postgres streamer persist the supplied run ID; the nullable column alone is not evidence that current EVE writes omit it.
 
+Workflow's `runtime/start.js`, `resolveLineageAttributes`, also records `$parentRunId` and `$rootRunId` from the ambient step context. These relationships matter beyond EVE's own tags: our local retired chat fixture has a terminal session, a cancelled timeout run, and a completed turn linked by native Workflow metadata. The local read-only Postgres inventory adapter follows both native and EVE parent edges plus the collector reference, without returning payload columns. It reports active runs, missing referenced runs, and stream names containing chunks from outside the inventory or without run attribution. A repeatable-read snapshot makes those reads consistent, but does not prevent future writes or prove coverage of unlinked resources. It is not a purge receipt.
+
 ## Requested contract
 
 A native, retryable deletion operation should provide:
