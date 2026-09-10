@@ -1,3 +1,4 @@
+import { MockLanguageModelV3 } from "ai/test";
 import { expect, test, vi } from "vitest";
 
 vi.mock("../ai/active-gateway", () => ({
@@ -11,7 +12,12 @@ vi.mock("../ai/active-gateway", () => ({
         { id: "live-only", type: "language", tags: [], pricing: {} },
       ];
     },
-    createLanguageModel: (id: string) => ({ modelId: id }),
+    createLanguageModel: (id: string) =>
+      new MockLanguageModelV3({
+        modelId: id,
+        provider: "test",
+        doGenerate: () => Promise.reject(new Error(`provider model: ${id}`)),
+      }),
   }),
 }));
 vi.mock("../config", () => ({
@@ -63,12 +69,20 @@ test("keeps the provider model and reasoning variant distinct", async () => {
     reasoning: true,
   });
   expect(await resolveEveModel("thinking-reasoning")).toMatchObject({
+    model: { modelId: "thinking-reasoning" },
     modelContextWindowTokens: 2000,
     modelOptions: {
       providerOptions: { anthropic: { thinking: { type: "enabled" } } },
     },
   });
 });
+test("the logical reasoning identity still dispatches to the original provider model", async () => {
+  const resolved = await resolveEveModel("thinking-reasoning");
+  await expect(resolved.model.doGenerate({ prompt: [] })).rejects.toThrow(
+    "provider model: thinking"
+  );
+});
+
 test.each([
   "unknown",
   "disabled",

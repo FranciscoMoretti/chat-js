@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { EveMessage } from "eve/client";
+import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type {
@@ -19,6 +19,7 @@ import {
   prepareCreation,
   readCreation,
 } from "@/lib/eve/pending-create";
+import { responseModel } from "@/lib/eve/response-model";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
@@ -108,11 +109,23 @@ export function useEveFork(ownerId: string, conversationId: string) {
     }
   }
 
-  function begin(message: EveMessage, regenerate = false) {
+  function begin(
+    message: EveMessage,
+    regeneration?: {
+      response: EveMessage;
+      events: readonly MessageStreamEvent[];
+    }
+  ) {
     return run(async () => {
       if (pending || !family.data || !message.metadata?.turnId) {
         return;
       }
+      const modelId = regeneration
+        ? responseModel(
+            regeneration.events,
+            regeneration.response.metadata?.turnId ?? ""
+          )
+        : selectedModel;
       const fork = resolveForkSource(
         conversationId,
         message.metadata.turnId,
@@ -143,12 +156,12 @@ export function useEveFork(ownerId: string, conversationId: string) {
       setDraft(text);
       files.setAttachments(attachments);
       setSource(fork);
-      if (regenerate) {
+      if (regeneration) {
         const operation = prepareCreation(
           sessionStorage,
           ownerId,
           draftMessage(text, attachments),
-          selectedModel,
+          modelId,
           { conversationId, fork }
         );
         setPending(operation);

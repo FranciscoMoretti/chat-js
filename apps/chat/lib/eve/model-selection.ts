@@ -1,4 +1,5 @@
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
+import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 import { getActiveGateway } from "../ai/active-gateway";
 import { getFallbackModels } from "../ai/gateways/fallback-models";
@@ -55,7 +56,11 @@ export async function loadEveModelDefinition(requestedId?: string) {
 export async function resolveEveModel(requestedId?: string) {
   const model = await loadEveModelDefinition(requestedId);
   return {
-    model: getActiveGateway().createLanguageModel(model.id),
+    model: wrapLanguageModel({
+      model: getActiveGateway().createLanguageModel(model.id),
+      modelId: requestedId ?? config.ai.workflows.chat,
+      middleware: { specificationVersion: "v4" },
+    }),
     modelContextWindowTokens: model.context_window,
     modelOptions: {
       providerOptions: serializedOptions.parse(

@@ -10,6 +10,9 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
   test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  await page.request.post("/api/chat-model", {
+    data: { model: "openai/gpt-4.1-mini-fast" },
+  });
   const created = await page.request.post("/api/agent-conversations", {
     headers: { origin: new URL(page.url()).origin },
     data: {
@@ -84,9 +87,30 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     path: testInfo.outputPath("edited-messages.png"),
     animations: "disabled",
   });
+  await page.getByTestId("model-selector").filter({ visible: true }).click();
+  await page.getByPlaceholder("Search models...").fill("GPT-4.1");
+  await page
+    .getByRole("option")
+    .filter({ has: page.getByText("GPT-4.1 (Fast)", { exact: true }) })
+    .click();
+  // Reload proves regeneration comes from durable response evidence, not a local selection cache.
+  await page.reload();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 60_000,
+  });
+  const regenerated = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/agent-conversations") &&
+      response.request().method() === "POST"
+  );
   await page
     .getByRole("button", { name: "Regenerate response", exact: true })
     .click();
+  const regeneration = await regenerated;
+  expect(regeneration.ok()).toBe(true);
+  expect(regeneration.request().postDataJSON().modelId).toBe(
+    "openai/gpt-4.1-mini-fast"
+  );
   await expect(page).not.toHaveURL(new RegExp(`/chat/${accepted?.id}$`), {
     timeout: 60_000,
   });

@@ -238,7 +238,9 @@ export function EveConversation({
             disabled={busy || commandPending}
             messages={agent.data.messages}
             onEdit={(message) => fork.begin(message)}
-            onRegenerate={(message) => fork.begin(message, true)}
+            onRegenerate={(message, response) =>
+              fork.begin(message, { response, events: agent.events })
+            }
             respond={(response) =>
               run(() => send(() => agent.respond([response])))
             }

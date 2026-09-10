@@ -182,7 +182,7 @@ export function EveMessages({
   messages: readonly EveMessage[];
   actionsDisabled?: boolean;
   onEdit?: (message: EveMessage) => void;
-  onRegenerate?: (message: EveMessage) => void;
+  onRegenerate?: (message: EveMessage, response: EveMessage) => void;
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) {
@@ -226,7 +226,7 @@ export function EveMessages({
                 .slice(0, messages.indexOf(message))
                 .findLast((item) => item.role === "user");
               if (userMessage) {
-                onRegenerate(userMessage);
+                onRegenerate(userMessage, message);
               }
             }}
             tooltip="Regenerate response"

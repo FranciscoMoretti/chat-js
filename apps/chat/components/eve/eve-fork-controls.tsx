@@ -118,6 +118,7 @@ export function EveForkControls({
             files={fork.files}
             onDraftChange={fork.setDraft}
             onSubmit={fork.submit}
+            retainedModelId={fork.pending?.modelId}
           />
           {fork.error && <p role="alert">{fork.error}</p>}
           <Button
