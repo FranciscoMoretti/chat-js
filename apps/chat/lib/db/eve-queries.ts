@@ -139,6 +139,111 @@ export async function getEveCreation(ownerId: string, operationId: string) {
   return row;
 }
 
+async function reserveEveConversation(
+  value: typeof eveConversation.$inferInsert,
+  fork?: EveForkInput
+) {
+  return await db.transaction(async (tx) => {
+    // Shared with deletion: a new fork cannot appear behind its family fence.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
+    );
+    const [source] = fork
+      ? await tx
+          .select()
+          .from(eveConversation)
+          .where(
+            and(
+              eq(eveConversation.id, fork.conversationId),
+              eq(eveConversation.ownerId, value.ownerId),
+              eq(eveConversation.state, "bound")
+            )
+          )
+      : [];
+    if (fork && !source?.sessionId) {
+      throw new CreationConflict(
+        "The source conversation is not available for editing."
+      );
+    }
+    return await tx
+      .insert(eveConversation)
+      .values({
+        ...value,
+        parentConversationId: fork?.conversationId,
+        rootConversationId: source
+          ? (source.rootConversationId ?? source.id)
+          : undefined,
+        forkTurnId: fork?.beforeTurnId,
+      })
+      .onConflictDoNothing()
+      .returning();
+  });
+}
+
+/** Fence one conversation family; retirement and physical purge must finish separately. */
+export async function beginEveConversationDeletion(
+  ownerId: string,
+  id: string
+) {
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [source] = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(eq(eveConversation.id, id), eq(eveConversation.ownerId, ownerId))
+      );
+    if (!source) {
+      return undefined;
+    }
+    const rootId = source.rootConversationId ?? source.id;
+    const familyCondition = and(
+      eq(eveConversation.ownerId, ownerId),
+      or(
+        eq(eveConversation.id, rootId),
+        eq(eveConversation.rootConversationId, rootId)
+      )
+    );
+    const family = await tx
+      .select()
+      .from(eveConversation)
+      .where(familyCondition)
+      .orderBy(eveConversation.id);
+    if (
+      family.some(
+        (row) => row.state === "creating" || row.state === "uncertain"
+      )
+    ) {
+      throw new CreationConflict(
+        "Finish recovering conversation creation before deleting this conversation."
+      );
+    }
+    // Document writers hold this same lock through their commit. Once the fence
+    // commits, later writers fail their bound-conversation check.
+    for (const row of family) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
+      );
+    }
+    const conversations = await tx
+      .update(eveConversation)
+      .set({ state: "deleting", visibility: "private" })
+      .where(
+        and(
+          familyCondition,
+          inArray(eveConversation.state, ["bound", "deleting"])
+        )
+      )
+      .returning({
+        id: eveConversation.id,
+        sessionId: eveConversation.sessionId,
+      });
+    return { rootId, conversations };
+  });
+}
+
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 export async function createEveConversation(
   ownerId: string,
@@ -149,31 +254,16 @@ export async function createEveConversation(
   initialContentHash?: string,
   fork?: EveForkInput
 ) {
-  const source = fork
-    ? await getEveConversation(ownerId, fork.conversationId)
-    : undefined;
-  if (fork && (!source?.sessionId || source.state !== "bound")) {
-    throw new CreationConflict(
-      "The source conversation is not available for editing."
-    );
-  }
-  const rootConversationId = source
-    ? (source.rootConversationId ?? source.id)
-    : undefined;
-  let [reservation] = await db
-    .insert(eveConversation)
-    .values({
+  let [reservation] = await reserveEveConversation(
+    {
       ownerId,
       operationId,
       firstMessage: message,
       initialModelId,
       initialContentHash,
-      parentConversationId: fork?.conversationId,
-      rootConversationId,
-      forkTurnId: fork?.beforeTurnId,
-    })
-    .onConflictDoNothing()
-    .returning();
+    },
+    fork
+  );
   if (!reservation) {
     const [existing] = await db
       .select()

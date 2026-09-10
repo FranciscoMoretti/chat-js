@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
 import {
+  beginEveConversationDeletion,
   createEveConversation,
   getEveConversation,
   getEveCreation,
@@ -450,4 +451,110 @@ test.each([
       (row) => row.sessionId === bound.sessionId
     )
   ).toBe(state === "deleting");
+});
+
+test("deletion fences the entire owned family and is retryable", async () => {
+  const start = () => Promise.resolve(crypto.randomUUID());
+  const root = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "delete family",
+    start
+  );
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "child",
+    start,
+    undefined,
+    undefined,
+    { conversationId: root.id, beforeTurnId: "turn_0" }
+  );
+  await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
+  expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
+  expect(await getPublicEveConversation(root.id)).toBeDefined();
+  const deletion = await beginEveConversationDeletion(owner, child.id);
+  expect(deletion?.rootId).toBe(root.id);
+  expect(deletion?.conversations.map((row) => row.id).sort()).toEqual(
+    [root.id, child.id].sort()
+  );
+  expect(await getPublicEveConversation(root.id)).toBeUndefined();
+  expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
+  expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
+});
+
+test("deletion waits for document commits and fences a concurrent fork", async () => {
+  const root = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "concurrent deletion",
+    () => Promise.resolve(crypto.randomUUID())
+  );
+  const locked = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const documentWrite = db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
+    );
+    locked.resolve();
+    await release.promise;
+  });
+  await locked.promise;
+  const deletion = beginEveConversationDeletion(owner, root.id);
+  try {
+    await vi.waitFor(async () => {
+      const available = await db.transaction(async (tx) => {
+        const [row] = await tx.execute<{ locked: boolean }>(
+          sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-family:${owner}`}, 0)) as locked`
+        );
+        return row.locked;
+      });
+      expect(available).toBe(false);
+    });
+    expect(await getEveConversation(owner, root.id)).toBeDefined();
+    const start = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const fork = createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "late fork",
+      start,
+      undefined,
+      undefined,
+      { conversationId: root.id, beforeTurnId: "turn_0" }
+    );
+    const rejected = expect(fork).rejects.toThrow("not available");
+    release.resolve();
+    await documentWrite;
+    await deletion;
+    await rejected;
+    expect(start).not.toHaveBeenCalled();
+  } finally {
+    release.resolve();
+    await documentWrite;
+    await deletion;
+  }
+});
+
+test("unresolved creation prevents a partial family deletion", async () => {
+  const root = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "recover first",
+    () => Promise.resolve(crypto.randomUUID())
+  );
+  await expect(
+    createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "uncertain child",
+      () => Promise.reject(new Error("offline")),
+      undefined,
+      undefined,
+      { conversationId: root.id, beforeTurnId: "turn_0" }
+    )
+  ).rejects.toThrow("offline");
+  await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
+    "Finish recovering"
+  );
+  expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
