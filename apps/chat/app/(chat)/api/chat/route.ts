@@ -6,7 +6,6 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
-import { createClient } from "redis";
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -61,6 +60,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { MAX_INPUT_TOKENS } from "@/lib/limits/tokens";
 import { createModuleLogger } from "@/lib/logger";
+import { connectRedisClients } from "@/lib/redis/client";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
@@ -68,15 +68,13 @@ import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
 import { generateTitleFromUserMessage } from "../../actions";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 
-// Shared Redis clients for resumable stream
-let redisPublisher: ReturnType<typeof createClient> | null = null;
-let redisSubscriber: ReturnType<typeof createClient> | null = null;
-
-if (env.REDIS_URL) {
-  redisPublisher = createClient({ url: env.REDIS_URL });
-  redisSubscriber = createClient({ url: env.REDIS_URL });
-  await Promise.all([redisPublisher.connect(), redisSubscriber.connect()]);
-}
+// Optional Redis must not prevent the chat route from loading.
+const redisLog = createModuleLogger("redis");
+const redisClients = await connectRedisClients(env, () =>
+  redisLog.error("Redis connection error")
+);
+const redisPublisher = redisClients?.publisher ?? null;
+const redisSubscriber = redisClients?.subscriber ?? null;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
