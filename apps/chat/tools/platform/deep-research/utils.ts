@@ -4,120 +4,55 @@ import type { ModelId } from "@/lib/ai/app-models";
 import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
-import type { DeepResearchRuntimeConfig, SearchAPI } from "./configuration";
+import type { DeepResearchRuntimeConfig } from "./configuration";
 
-// MCP Utils
-
-type McpClient = Awaited<ReturnType<typeof experimental_createMCPClient>>;
-
-async function loadMcpTools(
+// Keep the MCP transport alive for the entire research tool loop, including errors
+// and cancellation. The callback cannot accidentally outlive its connection.
+export async function withResearchTools<T>(
   config: DeepResearchRuntimeConfig,
-  existingToolNames: Set<string>
-): Promise<ToolSet> {
+  dataStream: Pick<StreamWriter, "write">,
+  run: (tools: ToolSet) => Promise<T>,
+  parentToolCallId?: string,
+  costAccumulator?: { addAPICost(name: string, cost: number): void }
+): Promise<T> {
+  const tools: ToolSet = {};
+  const searchOptions = {
+    dataStream,
+    writeTopLevelUpdates: false,
+    toolCallIdOverride: parentToolCallId,
+    costAccumulator,
+  };
+  if (config.search_api === "tavily") {
+    tools.webSearch = tavilyWebSearch(searchOptions);
+  } else if (config.search_api === "firecrawl") {
+    tools.webSearch = firecrawlWebSearch(searchOptions);
+  }
+
   if (!config.mcp_config?.url) {
-    return {};
+    return run(tools);
   }
 
-  let client: McpClient | null = null;
+  const client = await experimental_createMCPClient({
+    transport: {
+      type: "sse",
+      url: config.mcp_config.url,
+      headers: config.mcp_config.headers,
+    },
+  });
   try {
-    // Create MCP client based on configuration
-    // Currently supports SSE transport only
-    client = await experimental_createMCPClient({
-      transport: {
-        type: "sse",
-        url: config.mcp_config.url,
-      },
-    });
-
-    // Get all available tools from the MCP server
-    const tools = (await client.tools()) as ToolSet;
-
-    // Filter tools based on configuration and existing tools
-    const filteredTools: ToolSet = {};
-
-    for (const [toolName, tool] of Object.entries(tools)) {
-      // Skip if tool already exists
-      if (existingToolNames.has(toolName)) {
-        console.log(
-          `Skipping tool ${toolName} because a tool with that name already exists`
-        );
-        continue;
+    const remoteTools = await client.tools();
+    for (const [name, remoteTool] of Object.entries(remoteTools)) {
+      const allowed =
+        !config.mcp_config.tools?.length ||
+        config.mcp_config.tools.includes(name);
+      if (allowed && !Object.hasOwn(tools, name)) {
+        tools[name] = remoteTool;
       }
-
-      // If specific tools are configured, only include those
-      if (
-        config.mcp_config.tools &&
-        config.mcp_config.tools.length > 0 &&
-        !config.mcp_config.tools.includes(toolName)
-      ) {
-        console.log(`Skipping tool ${toolName} because it's not in the config`);
-        continue;
-      }
-
-      filteredTools[toolName] = tool;
     }
-
-    return filteredTools;
-  } catch (error) {
-    console.error("Failed to load MCP tools:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
-    return {};
+    return await run(tools);
   } finally {
-    // Clean up the client connection
-    if (client) {
-      await client.close();
-    }
+    await client.close();
   }
-}
-
-// Tool Utils
-
-function getSearchTool(
-  searchApi: SearchAPI,
-  _config: DeepResearchRuntimeConfig,
-  dataStream: StreamWriter,
-  parentToolCallId?: string
-): ToolSet {
-  if (searchApi === "tavily") {
-    return {
-      webSearch: tavilyWebSearch({
-        dataStream,
-        writeTopLevelUpdates: false,
-        toolCallIdOverride: parentToolCallId,
-      }),
-    };
-  }
-  if (searchApi === "firecrawl") {
-    return {
-      webSearch: firecrawlWebSearch({
-        dataStream,
-        writeTopLevelUpdates: false,
-        toolCallIdOverride: parentToolCallId,
-      }),
-    };
-  }
-  throw new Error(`Unsupported search API: ${searchApi}`);
-}
-
-export async function getAllTools(
-  config: DeepResearchRuntimeConfig,
-  dataStream: StreamWriter,
-  id?: string
-): Promise<ToolSet> {
-  if (config.search_api === "none") {
-    const mcpTools = await loadMcpTools(config, new Set<string>());
-    return mcpTools;
-  }
-
-  const searchTools = getSearchTool(config.search_api, config, dataStream, id);
-  const existingToolNames = new Set<string>(Object.keys(searchTools));
-
-  const mcpTools = await loadMcpTools(config, existingToolNames);
-
-  return { ...mcpTools, ...searchTools };
 }
 
 export async function getModelContextWindow(modelId: ModelId): Promise<number> {

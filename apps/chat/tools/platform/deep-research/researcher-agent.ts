@@ -8,7 +8,7 @@ import {
   researchSystemPrompt,
 } from "./prompts";
 import { type AgentOptions, createTelemetry } from "./types";
-import { getAllTools, getModelContextWindow, getTodayStr } from "./utils";
+import { getModelContextWindow, getTodayStr, withResearchTools } from "./utils";
 
 export async function runResearcher(
   topic: string,
@@ -17,65 +17,71 @@ export async function runResearcher(
   const { config, dataStream, toolCallId, abortSignal } = options;
 
   const model = await getLanguageModel(config.research_model as ModelId);
-  const tools = await getAllTools(config, dataStream, toolCallId);
-
-  if (Object.keys(tools).length === 0) {
-    throw new Error(
-      "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
-    );
-  }
-
-  dataStream.write({
-    type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Starting research on topic",
-      message: topic,
-      type: "thoughts",
-      status: "running",
-    },
-  });
-
-  const researcherAgent = new ToolLoopAgent({
-    model,
-    instructions: researchSystemPrompt({
-      mcp_prompt: config.mcp_prompt || "",
-      date: getTodayStr(),
-      max_search_queries: config.search_api_max_queries,
-    }),
-    tools,
-    maxOutputTokens: config.research_model_max_tokens,
-    ...createTelemetry("researcher", options),
-    onStepEnd: ({ usage }) => {
-      if (usage) {
-        options.costAccumulator?.addLLMCost(
-          config.research_model as AppModelId,
-          usage,
-          "deep-research-researcher"
+  return withResearchTools(
+    config,
+    dataStream,
+    async (tools) => {
+      if (Object.keys(tools).length === 0) {
+        throw new Error(
+          "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
         );
       }
+
+      dataStream.write({
+        type: "data-researchUpdate",
+        data: {
+          toolCallId,
+          title: "Starting research on topic",
+          message: topic,
+          type: "thoughts",
+          status: "running",
+        },
+      });
+
+      const researcherAgent = new ToolLoopAgent({
+        model,
+        instructions: researchSystemPrompt({
+          mcp_prompt: config.mcp_prompt || "",
+          date: getTodayStr(),
+          max_search_queries: config.search_api_max_queries,
+        }),
+        tools,
+        maxOutputTokens: config.research_model_max_tokens,
+        ...createTelemetry("researcher", options),
+        onStepEnd: ({ usage }) => {
+          if (usage) {
+            options.costAccumulator?.addLLMCost(
+              config.research_model as AppModelId,
+              usage,
+              "deep-research-researcher"
+            );
+          }
+        },
+      });
+
+      const { responseMessages } = await researcherAgent.generate({
+        prompt: topic,
+        abortSignal,
+      });
+
+      const compressed = await compressResearch(responseMessages, options);
+
+      dataStream.write({
+        type: "data-researchUpdate",
+        data: {
+          toolCallId,
+          title: "Research topic completed",
+          message: topic,
+          type: "thoughts",
+          status: "completed",
+        },
+      });
+
+      return compressed;
     },
-  });
-
-  const { responseMessages } = await researcherAgent.generate({
-    prompt: topic,
-    abortSignal,
-  });
-
-  const compressed = await compressResearch(responseMessages, options);
-
-  dataStream.write({
-    type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Research topic completed",
-      message: topic,
-      type: "thoughts",
-      status: "completed",
-    },
-  });
-
-  return compressed;
+    toolCallId,
+    options.costAccumulator
+  );
 }
 
 async function compressResearch(
