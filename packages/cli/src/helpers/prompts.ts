@@ -364,7 +364,9 @@ export async function promptAssistantTools(
 		videoGeneration: defaultTools.video.enabled,
 	};
 
-	const installableItems = registryItems.filter((item) => !item.hidden);
+	const installableItems = registryItems.filter(
+		(item) => !item.hidden && item.meta?.chatjs?.slot !== "webSearch",
+	);
 	const supportedBuiltInTools = BUILT_IN_TOOL_KEYS.filter((key) =>
 		isSupportedBuiltInTool(gateway, key),
 	);
@@ -467,4 +469,32 @@ export async function promptElectron(
 	handleCancel(wantsElectron);
 
 	return wantsElectron;
+}
+
+export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
+	if (skipPrompt) return "tavily-search";
+	const choice = await select({
+		message: "Which web search tool should chat and deep research use?",
+		options: [
+			{
+				value: "tavily-search",
+				label: "Tavily",
+				hint: "Requires TAVILY_API_KEY",
+			},
+			{
+				value: "firecrawl-search",
+				label: "Firecrawl",
+				hint: "Requires FIRECRAWL_API_KEY",
+			},
+			{ value: "external", label: "External registry item" },
+		],
+	});
+	handleCancel(choice);
+	if (choice !== "external") return choice;
+	const address = await text({
+		message: "Search tool registry address:",
+		validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+	});
+	handleCancel(address);
+	return String(address).trim();
 }

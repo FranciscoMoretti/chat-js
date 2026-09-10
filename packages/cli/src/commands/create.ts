@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve } from "node:path";
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
@@ -21,6 +21,7 @@ import {
 	promptGateway,
 	promptProjectName,
 	promptStorage,
+	promptSearchTool,
 } from "../helpers/prompts";
 import {
 	scaffoldElectron,
@@ -104,10 +105,12 @@ const createOptionsSchema = z.object({
 	storageProvider: z.string().optional(),
 	storageConfig: z.string().optional(),
 	gateway: z.string().optional(),
+	searchTool: z.string().optional(),
 });
 
 export const create = new Command()
 	.name("create")
+	.option("--search-tool <item>", "search tool name or registry address")
 	.description("scaffold a new ChatJS chat application")
 	.argument("[directory]", "target directory for the project")
 	.option(
@@ -202,6 +205,25 @@ export const create = new Command()
 			const toolSources = assistantTools.installableTools.map((tool) =>
 				itemAddress(tool, "tool"),
 			);
+			if (options.searchTool) assistantTools.builtInTools.webSearch = true;
+			const needsSearch =
+				assistantTools.builtInTools.webSearch ||
+				assistantTools.builtInTools.deepResearch ||
+				options.searchTool;
+			const searchSource = needsSearch
+				? itemAddress(
+						options.searchTool ?? (await promptSearchTool(options.yes)),
+						"tool",
+					)
+				: undefined;
+			if (searchSource) {
+				const metadata = toolDefinitionSchema.parse(
+					(await readItem(searchSource, targetDir)).meta?.chatjs,
+				);
+				if (metadata.slot !== "webSearch")
+					throw new Error("Selected tool must declare the webSearch slot.");
+				toolSources.push(searchSource);
+			}
 			const expectedTools = [];
 			for (const source of toolSources)
 				expectedTools.push(
@@ -253,6 +275,26 @@ export const create = new Command()
 					]);
 					await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
 					await rm(join(targetDir, "lib/ai/gateway.ts"));
+					// A fresh clone receives the requested search selection as well.
+					const toolDirectory = join(targetDir, "tools/chatjs");
+					for (const entry of await readdir(toolDirectory, {
+						withFileTypes: true,
+					}).catch((error) => {
+						if (error.code === "ENOENT") return [];
+						throw error;
+					})) {
+						if (!entry.isDirectory()) continue;
+						const descriptor = join(toolDirectory, entry.name, "chatjs.json");
+						if (!existsSync(descriptor)) continue;
+						await preflight(targetDir, [
+							`tools/chatjs/${entry.name}/chatjs.json`,
+						]);
+						const metadata = toolDefinitionSchema.parse(
+							JSON.parse(await readFile(descriptor, "utf8")),
+						);
+						if (metadata.slot === "webSearch")
+							await rm(join(toolDirectory, entry.name), { recursive: true });
+					}
 				} else {
 					await scaffoldFromTemplate(targetDir, {
 						packageManager,
@@ -388,8 +430,14 @@ export const create = new Command()
 			logger.break();
 
 			printEnvChecklist(envEntries);
-			logger.log("  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database");
-			logger.log("  Optional Redis: set REDIS_URL, then run " + packageManager + " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis");
+			logger.log(
+				"  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database",
+			);
+			logger.log(
+				"  Optional Redis: set REDIS_URL, then run " +
+					packageManager +
+					" run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis",
+			);
 
 			logger.break();
 			logger.log(

@@ -1,18 +1,10 @@
 import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
 import { deduplicateByDomainAndUrl } from "./search-utils";
-import type { SearchProviderOptions } from "./web-search";
-import { webSearchStep } from "./web-search";
 
 export interface SearchQuery {
   maxResults: number;
   query: string;
-}
-
-export interface MultiQuerySearchOptions {
-  baseProviderOptions: SearchProviderOptions;
-  excludeDomains?: string[];
-  topics?: string[];
 }
 
 interface MultiQuerySearchResult {
@@ -31,19 +23,20 @@ export interface MultiQuerySearchResponse {
 
 export async function multiQueryWebSearchStep({
   queries,
-  options,
+  search,
   dataStream,
   toolCallId,
 }: {
   queries: SearchQuery[];
-  options: MultiQuerySearchOptions;
+  search: (
+    query: SearchQuery,
+    index: number
+  ) => Promise<Array<{ title: string; url: string; content: string }>>;
   dataStream: StreamWriter;
   toolCallId: string;
 }): Promise<MultiQuerySearchResponse> {
   const updateId = generateUUID();
   try {
-    const { baseProviderOptions, topics = [], excludeDomains = [] } = options;
-
     // Send initial annotation showing all queries being executed
     dataStream.write({
       type: "data-researchUpdate",
@@ -59,33 +52,11 @@ export async function multiQueryWebSearchStep({
 
     // Execute searches in parallel
     const searchPromises = queries.map(async (query, index) => {
-      // Build provider options for this specific query
-      let queryProviderOptions: SearchProviderOptions;
-
-      if (baseProviderOptions.provider === "tavily") {
-        queryProviderOptions = {
-          ...baseProviderOptions,
-          topic: topics[index] || topics[0] || "general",
-          days: topics[index] === "news" ? 7 : undefined,
-          excludeDomains,
-        };
-      } else if (baseProviderOptions.provider === "firecrawl") {
-        queryProviderOptions = {
-          ...baseProviderOptions,
-        };
-      } else {
-        queryProviderOptions = baseProviderOptions;
-      }
-
-      const data = await webSearchStep({
-        query: query.query,
-        maxResults: query.maxResults,
-        providerOptions: queryProviderOptions,
-      });
+      const results = await search(query, index);
 
       return {
         query,
-        results: deduplicateByDomainAndUrl(data.results).map((obj) => ({
+        results: deduplicateByDomainAndUrl(results).map((obj) => ({
           url: obj.url,
           title: obj.title,
           content: obj.content,

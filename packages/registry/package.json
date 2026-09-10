@@ -59,6 +59,7 @@
     "react-markdown": "^10.1.0",
     "shadcn": "4.21.0",
     "typescript": "6.0.2",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@tavily/core": "^0.3.3"
   }
 }

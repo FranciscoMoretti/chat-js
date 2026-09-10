@@ -1,6 +1,7 @@
 import { builtInStorage } from "./src/storage/catalog";
 import { registrySchema, type RegistryItem } from "shadcn/schema";
 import { builtInGateways } from "./src/gateways/catalog";
+import registryPackage from "./package.json";
 import { toolDefinitionSchema } from "./metadata";
 
 export const toolItems = [
@@ -49,13 +50,49 @@ export const toolItems = [
 		}) satisfies RegistryItem,
 );
 
+export const searchToolItems = [
+	{ id: "tavily-search", dependency: "@tavily/core", key: "TAVILY_API_KEY" },
+	{
+		id: "firecrawl-search",
+		dependency: "@mendable/firecrawl-js",
+		key: "FIRECRAWL_API_KEY",
+	},
+].map(({ id, dependency, key }) => ({
+	name: id,
+	type: "registry:item" as const,
+	description: `Use ${id} for chat and deep research`,
+	dependencies: [
+		"ai",
+		"zod",
+		`${dependency}@${registryPackage.devDependencies[dependency as "@tavily/core" | "@mendable/firecrawl-js"]}`,
+	],
+	files: [
+		{
+			path: `src/tools/${id}/tool.ts`,
+			type: "registry:file" as const,
+			target: `~/tools/chatjs/${id}/tool.ts`,
+		},
+	],
+	meta: {
+		chatjs: toolDefinitionSchema.parse({
+			contractVersion: 1,
+			kind: "tool",
+			id,
+			slot: "webSearch",
+			toolExport: "createWebSearch",
+			envRequirements: [{ options: [[key]] }],
+		}),
+	},
+}));
+
 export const registry = registrySchema.parse({
 	name: "chatjs",
 	homepage: "https://chatjs.dev",
 	items: [
 		...builtInGateways,
-        ...builtInStorage,
+		...builtInStorage,
 		...toolItems,
+		...searchToolItems,
 		{
 			name: "toolkit-renderer",
 			type: "registry:item",

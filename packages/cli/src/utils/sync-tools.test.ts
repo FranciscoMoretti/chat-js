@@ -151,3 +151,52 @@ test("legacy CLI empty and reverse-order indexes migrate", async () => {
 		"word-count",
 	]);
 });
+
+async function installSearch(root: string, id: string, key: string) {
+	const dir = join(root, "tools/chatjs", id);
+	await mkdir(dir, { recursive: true });
+	await writeFile(
+		join(dir, "tool.ts"),
+		"export const createWebSearch = () => ({});",
+	);
+	await writeFile(
+		join(dir, "chatjs.json"),
+		JSON.stringify({
+			contractVersion: 1,
+			kind: "tool",
+			id,
+			slot: "webSearch",
+			toolExport: "createWebSearch",
+			envRequirements: [{ options: [[key]] }],
+		}),
+	);
+}
+test("search factories share a slot without registering a renderer or ordinary tool", async () => {
+	const root = await project();
+	await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
+	await syncTools(root);
+	expect(
+		await readFile(join(root, "tools/chatjs/search.ts"), "utf8"),
+	).toContain("./external-search/tool");
+	expect(
+		await readFile(join(root, "tools/chatjs/search-config.ts"), "utf8"),
+	).toContain("EXTERNAL_SEARCH_KEY");
+	expect(
+		await readFile(join(root, "tools/chatjs/tools.ts"), "utf8"),
+	).not.toContain("external-search");
+	expect(
+		await readFile(join(root, "tools/chatjs/ui.ts"), "utf8"),
+	).not.toContain("external-search");
+	await installSearch(root, "another-search", "ANOTHER_KEY");
+	await expect(syncTools(root)).rejects.toThrow("Only one webSearch");
+	await rm(join(root, "tools/chatjs/external-search"), { recursive: true });
+	await syncTools(root);
+	expect(
+		await readFile(join(root, "tools/chatjs/search-config.ts"), "utf8"),
+	).not.toContain("EXTERNAL_SEARCH_KEY");
+});
+test("sync protects an edited search selection", async () => {
+	const root = await project();
+	await writeFile(join(root, "tools/chatjs/search.ts"), "// user code");
+	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
+});

@@ -42,9 +42,14 @@ export async function syncTools(
 	options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {},
 ) {
 	const directory = "tools/chatjs";
-	const targets = ["tools.ts", "ui.ts", "custom-tools.ts", "custom-ui.ts"].map(
-		(file) => `${directory}/${file}`,
-	);
+	const targets = [
+		"tools.ts",
+		"ui.ts",
+		"custom-tools.ts",
+		"custom-ui.ts",
+		"search.ts",
+		"search-config.ts",
+	].map((file) => `${directory}/${file}`);
 	await preflight(cwd, targets);
 	const dir = join(cwd, directory);
 	const entries = await readdir(dir, { withFileTypes: true }).catch((error) => {
@@ -59,6 +64,8 @@ export async function syncTools(
 		previousTools && previousUi && !previousTools.startsWith(generated)
 			? await legacyTools(cwd, previousTools, previousUi)
 			: null;
+	for (const filename of ["search.ts", "search-config.ts"])
+		checkGenerated(await readOptional(join(dir, filename)), filename);
 	if (!legacy) {
 		checkGenerated(previousTools, toolsPath);
 		checkGenerated(previousUi, uiPath);
@@ -79,10 +86,13 @@ export async function syncTools(
 			);
 		await preflight(cwd, [
 			`${directory}/${entry.name}/tool.ts`,
-			`${directory}/${entry.name}/renderer.tsx`,
+			...(definition.rendererExport
+				? [`${directory}/${entry.name}/renderer.tsx`]
+				: []),
 		]);
 		await readFile(join(dir, entry.name, "tool.ts"));
-		await readFile(join(dir, entry.name, "renderer.tsx"));
+		if (definition.rendererExport)
+			await readFile(join(dir, entry.name, "renderer.tsx"));
 		const existing = definitions.findIndex((item) => item.id === definition.id);
 		if (existing !== -1) definitions.splice(existing, 1);
 		definitions.push(definition);
@@ -105,12 +115,19 @@ export async function syncTools(
 		}
 	}
 	definitions.sort((a, b) => a.id.localeCompare(b.id));
-	const keys = definitions.map((item) => item.toolExport);
+	const searchTools = definitions.filter((item) => item.slot === "webSearch");
+	if (searchTools.length > 1)
+		throw new Error(
+			"Only one webSearch tool can be selected. Remove the previous search tool directory before syncing.",
+		);
+	const registrations = definitions.filter((item) => !item.slot);
+	const renderers = registrations.filter((item) => item.rendererExport);
+	const keys = registrations.map((item) => item.toolExport);
 	if (new Set(keys).size !== keys.length)
 		throw new Error("Duplicate installed tool registration key.");
 	if (options.checkOnly) return definitions;
-	const toolBody = `import { customTools } from "./custom-tools";\n${definitions.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${definitions.map((item, i) => `  ${item.toolExport}: tool${i},`).join("\n")}\n};\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
-	const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${definitions.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${definitions.map((item, i) => `  ${JSON.stringify(`tool-${item.toolExport}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
+	const toolBody = `import { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${item.toolExport}: tool${i},`).join("\n")}\n};\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
+	const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${item.toolExport}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
 	await mkdir(dir, { recursive: true });
 	if ((await readOptional(join(dir, "custom-tools.ts"))) === null)
 		await writeFile(
@@ -127,6 +144,38 @@ export async function syncTools(
 		if ((await readOptional(descriptor)) === null)
 			await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
 	}
+	if (searchTools[0]) {
+		const search = searchTools[0];
+		await writeFile(
+			join(dir, "search.ts"),
+			generatedSource(
+				`import type { SearchToolFactory } from "@/tools/platform/search-presentation";\nimport { ${search.toolExport} } from "./${search.id}/tool";\nconst selectedSearch = ${search.toolExport} satisfies SearchToolFactory;\nexport { selectedSearch as createWebSearch };\n`,
+			),
+		);
+	} else {
+		await writeFile(
+			join(dir, "search.ts"),
+			generatedSource(
+				`import type { SearchToolFactory } from "@/tools/platform/search-presentation";\nexport const createWebSearch: SearchToolFactory = () => { throw new Error("Install a webSearch tool using chat-js add."); };\n`,
+			),
+		);
+	}
+	const requirements = searchTools[0]?.envRequirements ?? [];
+	const envOptions = searchTools[0]
+		? requirements.reduce<string[][]>(
+				(all, requirement) =>
+					all.flatMap((keys) =>
+						requirement.options.map((option) => [...keys, ...option]),
+					),
+				[[]],
+			)
+		: [];
+	await writeFile(
+		join(dir, "search-config.ts"),
+		generatedSource(
+			`export const searchEnvRequirement = ${JSON.stringify({ options: envOptions, description: searchTools[0] ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : "Install a webSearch tool" })};\n`,
+		),
+	);
 	await writeFile(toolsPath, generatedSource(toolBody));
 	await writeFile(uiPath, generatedSource(uiBody));
 	return definitions;
