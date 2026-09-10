@@ -23,6 +23,23 @@ Source inspection against the installed EVE 0.52.2 package and its matching loca
 
 These findings establish an API gap. We have not yet executed a storage-level erasure reproduction, and do not claim to have enumerated every retained storage object.
 
+### Run inventory needs more than a root-attribute query
+
+Further source inspection identifies an important boundary for a provider implementation:
+
+| Record | Available relationship | Purge implication |
+| --- | --- | --- |
+| Top-level session | Its own run ID; `buildSessionAttributes` deliberately omits `$eve.root` | Include the session explicitly. |
+| Turn | `buildTurnAttributes` supplies `$eve.parent` and `$eve.root`; `dispatch-turn-step.ts` passes them when starting the workflow | These attributes can help inventory descendants without reading every turn payload. |
+| Delegated subagent | `buildSubagentRootAttributes` supplies immediate parent and root | Include nested descendants, subject to the retirement barrier. |
+| Activity collector | `workflow-runtime.ts` starts it before the session, without explicit lineage attributes, and then places its ID in `WorkflowEntryInput.activityCollectorRunId` | A query using only EVE root attributes is insufficient; retain an explicit collector relationship before erasing the session input. |
+
+Collector creation is conditional on a top-level session needing channel activity renderers. This is source evidence about that path, not a claim that every ChatJS session creates a collector. A failure between collector creation and durable session creation also needs a recovery policy; cancellation alone is not payload erasure.
+
+The installed Postgres provider's `dist/drizzle/schema.js` stores run payloads in `workflow_runs`, plus separate `workflow_events`, `workflow_event_slots`, `workflow_steps`, `workflow_hooks`, `workflow_waits`, and `workflow_stream_chunks`. Stream chunks have a nullable `run_id`, so coverage must account for stream identity as well. This is a list of inspected tables, **not an exhaustive deletion recipe**: queue messages, late writes, sandbox storage, and external references still require investigation. Application code should not infer complete erasure from deleting these rows.
+
+The next implementation boundary is a durable run/resource inventory owned by EVE and its provider. It must include collector relationships, survive retries, and prevent new descendants or writes after retirement. Only then can a provider report completed purge rather than merely successful row deletion.
+
 ## Requested contract
 
 A native, retryable deletion operation should provide:
@@ -46,6 +63,8 @@ The exact API shape is open. A possible shape is an idempotent session deletion 
 - Inspect the supported World's storage for a unique marker from message, tool input, and tool output; those payloads are absent after purge completion.
 - Verify the published policy for independent forks and shared sandbox/blob references; deleting one conversation must not corrupt surviving conversations.
 - Preserve separately owned accounting totals without preserving transcript or tool payloads.
+- Exercise an activity-rendering session and verify the collector's payloads are included, including recovery when session startup fails after collector creation.
+- Verify stream coverage when a chunk has no run ID, and ensure delayed queue delivery cannot restore erased data.
 
 ## Application integration boundary
 
