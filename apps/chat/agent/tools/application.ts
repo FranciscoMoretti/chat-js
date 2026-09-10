@@ -1,50 +1,44 @@
+import type { ToolSet } from "ai";
 import { defineDynamic, defineTool } from "eve/tools";
 import superjson from "superjson";
 import { config } from "../../lib/config";
 import { describeEveTool, executeEveTool } from "../../lib/eve/adapt-tool";
 import { tools } from "../../tools/chatjs/tools";
 
+const registeredTools: ToolSet = tools;
+
+function getRegisteredTool(name: string) {
+  if (
+    !Object.hasOwn(registeredTools, name) ||
+    (name === "retrieveUrl" && !config.ai.tools.urlRetrieval.enabled)
+  ) {
+    throw new Error(`Application tool is unavailable: ${name}`);
+  }
+  return registeredTools[name];
+}
+
 export default defineDynamic({
   events: {
     "step.started": async (_event, context) => {
-      // Durable callbacks only capture JSON; multipart history can contain URL and byte objects.
+      // Durable callbacks capture only names and JSON, never executable tool definitions.
       const messages = superjson.stringify(context.messages);
-      return {
-        wordCount: defineTool({
-          ...(await describeEveTool(tools.wordCount)),
+      const definitions: Record<string, ReturnType<typeof defineTool>> = {};
+      for (const name of Object.keys(registeredTools)) {
+        if (name === "retrieveUrl" && !config.ai.tools.urlRetrieval.enabled) {
+          continue;
+        }
+        definitions[name] = defineTool({
+          ...(await describeEveTool(getRegisteredTool(name))),
           execute: (input, toolContext) =>
             executeEveTool(
-              tools.wordCount,
+              getRegisteredTool(name),
               input,
               toolContext,
               superjson.parse(messages)
             ),
-        }),
-        getWeather: defineTool({
-          ...(await describeEveTool(tools.getWeather)),
-          execute: (input, toolContext) =>
-            executeEveTool(
-              tools.getWeather,
-              input,
-              toolContext,
-              superjson.parse(messages)
-            ),
-        }),
-        ...(config.ai.tools.urlRetrieval.enabled
-          ? {
-              retrieveUrl: defineTool({
-                ...(await describeEveTool(tools.retrieveUrl)),
-                execute: (input, toolContext) =>
-                  executeEveTool(
-                    tools.retrieveUrl,
-                    input,
-                    toolContext,
-                    superjson.parse(messages)
-                  ),
-              }),
-            }
-          : {}),
-      };
+        });
+      }
+      return definitions;
     },
   },
 });
