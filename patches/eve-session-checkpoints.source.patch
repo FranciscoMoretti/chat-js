@@ -16,6 +16,67 @@ index cca4a3e..16b20c1 100644
    readonly adapter: ChannelAdapter<any>;
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
+diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
+index 43979d6..c265249 100644
+--- a/packages/eve/src/client/message-reducer.ts
++++ b/packages/eve/src/client/message-reducer.ts
+@@ -67,6 +67,21 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
+ 
+ function reduceMessageData(data: EveMessageData, event: EveAgentReducerEvent): EveMessageData {
+   switch (event.type) {
++    case "history.restored": {
++      // Rebuild independently so a repeated durable write cannot append deltas twice.
++      let inherited: EveMessageData = { messages: [] };
++      for (const historical of event.data.events) {
++        inherited = reduceMessageData(inherited, historical);
++      }
++      const inheritedIds = new Set(inherited.messages.map((message) => message.id));
++      return {
++        messages: [
++          ...inherited.messages,
++          ...data.messages.filter((message) => !inheritedIds.has(message.id)),
++        ],
++      };
++    }
++
+     case "client.message.submitted":
+       return upsertMessage(data, {
+         id: optimisticUserMessageId(event.data.submissionId),
+diff --git a/packages/eve/src/client/stream-version.test.ts b/packages/eve/src/client/stream-version.test.ts
+index 201e48a..de0664b 100644
+--- a/packages/eve/src/client/stream-version.test.ts
++++ b/packages/eve/src/client/stream-version.test.ts
+@@ -4,7 +4,7 @@ import { readMessageStreamVersion } from "#client/stream-version.js";
+ import { EVE_STREAM_VERSION_HEADER } from "#protocol/message.js";
+ 
+ describe("readMessageStreamVersion", () => {
+-  it.each(["21", "22", "23", "24", "25"] as const)("accepts stream version %s", (version) => {
++  it.each(["21", "22", "23", "24", "25", "26"] as const)("accepts stream version %s", (version) => {
+     expect(readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: version }))).toBe(
+       version,
+     );
+@@ -18,7 +18,7 @@ describe("readMessageStreamVersion", () => {
+ 
+   it("rejects an unsupported version", () => {
+     expect(() =>
+-      readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: "26" })),
+-    ).toThrow("Unsupported message stream version: 26.");
++      readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: "27" })),
++    ).toThrow("Unsupported message stream version: 27.");
+   });
+ });
+diff --git a/packages/eve/src/client/stream-version.ts b/packages/eve/src/client/stream-version.ts
+index 0cb4fcc..d3127e1 100644
+--- a/packages/eve/src/client/stream-version.ts
++++ b/packages/eve/src/client/stream-version.ts
+@@ -7,6 +7,7 @@ const supportedMessageStreamVersions = {
+   "23": true,
+   "24": true,
+   "25": true,
++  "26": true,
+ } as const satisfies Record<MessageStreamVersion, true>;
+ 
+ /** Reads and validates the schema version declared by a message stream response. */
 diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
 index e757d05..2e98bca 100644
 --- a/packages/eve/src/context/keys.ts
@@ -76,10 +137,11 @@ index 2aae307..d88bd6a 100644
 +  return { state: createDurableSessionState({ session: initialSession }) };
  }
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0b..60a5faa 100644
+index d3cfb0b..558e2df 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
-@@ -1,3 +1,8 @@
+@@ -1,3 +1,9 @@
++import { restoreSessionHistoryStep } from "#execution/restore-session-history-step.js";
 +import {
 +  SESSION_CHECKPOINT_NAMESPACE,
 +  SESSION_CHECKPOINT_WRITER_KEY,
@@ -88,7 +150,7 @@ index d3cfb0b..60a5faa 100644
  import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
  
  import type {
-@@ -63,6 +68,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
+@@ -63,6 +69,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
   * and deserialized at each `"use step"` boundary.
   */
  export interface WorkflowEntryInput {
@@ -96,7 +158,7 @@ index d3cfb0b..60a5faa 100644
    readonly activityCollectorRunId?: string;
    readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
    readonly input: RunInput["input"];
-@@ -171,6 +177,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -171,6 +178,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
    };
  
    const driverWritable = getWritable<Uint8Array>();
@@ -107,7 +169,7 @@ index d3cfb0b..60a5faa 100644
    const crashCleanupState: CrashCleanupState = {
      caller: undefined,
      callerResolved: false,
-@@ -200,6 +210,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -200,6 +211,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
              continuationToken,
              dynamicSubagentAgentConfig,
              inheritedLimits: input.limits,
@@ -115,6 +177,17 @@ index d3cfb0b..60a5faa 100644
              nodeId: serializedBundle.nodeId,
              outputSchema: input.input.outputSchema,
              rootSessionId: rootSessionIdFromParent,
+@@ -246,6 +258,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+         : undefined;
+       crashCleanupState.callerResolved = true;
+ 
++      if (input.fork) {
++        await restoreSessionHistoryStep({ fork: input.fork, writable: driverWritable });
++      }
++
+       outcome = await runDriverLoop({
+         capabilities,
+         commandInbox,
 diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
 index 493017d..3e92099 100644
 --- a/packages/eve/src/execution/workflow-runtime.ts
@@ -202,6 +275,116 @@ index 6db0c47..ea55b33 100644
 +  const restored = await sessionCheckpointFixtureStep({ sessionId, serializedContext });
 +  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
 +}
+diff --git a/packages/eve/src/protocol/message-version.ts b/packages/eve/src/protocol/message-version.ts
+index 5ff6cba..81da8b2 100644
+--- a/packages/eve/src/protocol/message-version.ts
++++ b/packages/eve/src/protocol/message-version.ts
+@@ -52,10 +52,11 @@ interface MessageStreamAppendEventsByVersion {
+     | MessageAppendedStreamEventV24
+     | ReasoningAppendedStreamEventV24;
+   "25": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
++  "26": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
+ }
+ 
+ export type MessageStreamVersion = keyof MessageStreamAppendEventsByVersion;
+-type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25">;
++type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25" | "26">;
+ 
+ type VersionIndependentMessageStreamEvent = Exclude<
+   UnstampedMessageStreamEvent,
+@@ -93,6 +94,7 @@ export function normalizeMessageStreamEvent(
+         version,
+         event as MessageStreamEventForVersion<LegacyMessageStreamVersion>,
+       );
++    case "26":
+     case "25":
+       return validateCurrentMessageStreamEvent(event as MessageStreamEventForVersion<"25">);
+     default:
+diff --git a/packages/eve/src/protocol/message.test.ts b/packages/eve/src/protocol/message.test.ts
+index 99ab68d..ecb82b0 100644
+--- a/packages/eve/src/protocol/message.test.ts
++++ b/packages/eve/src/protocol/message.test.ts
+@@ -32,7 +32,7 @@ import { createEveConnectionCallbackRoutePath } from "#protocol/routes.js";
+ 
+ describe("message stream protocol", () => {
+   it("pins the stream version for timed session events", () => {
+-    expect(EVE_MESSAGE_STREAM_VERSION).toBe("25");
++    expect(EVE_MESSAGE_STREAM_VERSION).toBe("26");
+   });
+ 
+   it.each(["21", "22", "23", "24"] as const)(
+diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
+index fc45f34..a7d101a 100644
+--- a/packages/eve/src/protocol/message.ts
++++ b/packages/eve/src/protocol/message.ts
+@@ -27,7 +27,7 @@ export const EVE_STREAM_TAIL_INDEX_HEADER = "x-eve-stream-tail-index";
+ export const EVE_STREAM_VERSION_HEADER = "x-eve-stream-version";
+ export const EVE_MESSAGE_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
+ export const EVE_MESSAGE_STREAM_FORMAT = "ndjson";
+-export const EVE_MESSAGE_STREAM_VERSION = "25";
++export const EVE_MESSAGE_STREAM_VERSION = "26";
+ 
+ /**
+  * eve-owned finish reason for one completed assistant step.
+@@ -724,6 +724,38 @@ export interface SessionCompletedStreamEvent {
+   type: "session.completed";
+ }
+ 
++/** Historical display events, excluding session controls, usage, and authorization capabilities. */
++export type HistoryProjectionEvent = (
++  | MessageReceivedStreamEvent
++  | StepStartedStreamEvent
++  | MessageAppendedStreamEvent
++  | MessageCompletedStreamEvent
++  | ReasoningAppendedStreamEvent
++  | ReasoningCompletedStreamEvent
++  | ActionInputAppendedStreamEvent
++  | ActionsRequestedStreamEvent
++  | ActionPartialStreamEvent
++  | ActionResultStreamEvent
++  | InputRequestedStreamEvent
++  | InputResolvedStreamEvent
++  | ApprovalCandidateStreamEvent
++  | ApprovalSettledStreamEvent
++  | ResultCompletedStreamEvent
++  | TurnCompletedStreamEvent
++  | TurnCancelledStreamEvent
++  | TurnFailedStreamEvent
++) & { readonly meta: MessageStreamEventMeta };
++
++/** A fork's inherited display prefix. It is not new execution or billable usage. */
++export interface HistoryRestoredStreamEvent {
++  readonly type: "history.restored";
++  readonly data: {
++    readonly sourceSessionId: string;
++    readonly beforeTurnId: string;
++    readonly events: readonly HistoryProjectionEvent[];
++  };
++}
++
+ /**
+  * Serializable event before eve stamps the durable stream envelope.
+  *
+@@ -731,6 +763,7 @@ export interface SessionCompletedStreamEvent {
+  * consumers receive {@link MessageStreamEvent}.
+  */
+ export type UnstampedMessageStreamEvent =
++  | HistoryRestoredStreamEvent
+   | ActionInputAppendedStreamEvent
+   | ApprovalCandidateStreamEvent
+   | ApprovalSettledStreamEvent
+diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
+index 48e2bc3..27e414e 100644
+--- a/packages/eve/src/public/definitions/hook.ts
++++ b/packages/eve/src/public/definitions/hook.ts
+@@ -30,6 +30,7 @@ export interface HookEventMap {
+   readonly "input.resolved": ProtocolEvent<"input.resolved">;
+   readonly "message.appended": ProtocolEvent<"message.appended">;
+   readonly "message.completed": ProtocolEvent<"message.completed">;
++  readonly "history.restored": ProtocolEvent<"history.restored">;
+   readonly "message.received": ProtocolEvent<"message.received">;
+   readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
+   readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
 diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
 new file mode 100644
 index 0000000..c54972b
@@ -537,6 +720,236 @@ index 0000000..bcc16e3
 +    },
 +  );
 +}
+diff --git a/packages/eve/src/execution/restore-session-history-step.test.ts b/packages/eve/src/execution/restore-session-history-step.test.ts
+new file mode 100644
+index 0000000..be6d6a0
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-history-step.test.ts
+@@ -0,0 +1,102 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { restoreSessionHistoryStep } from "#execution/restore-session-history-step.js";
++import {
++  createMessageReceivedEvent,
++  createSessionWaitingEvent,
++  createStepCompletedEvent,
++  createTurnStartedEvent,
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++  type UnstampedMessageStreamEvent,
++} from "#protocol/message.js";
++
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++
++const fork = { sessionId: "source", beforeTurnId: "turn_1" };
++function setup(events: UnstampedMessageStreamEvent[], close = true) {
++  const cancel = vi.fn();
++  mocks.getRun.mockReturnValue({
++    getReadable: () =>
++      new ReadableStream<Uint8Array>({
++        start(controller) {
++          for (const event of events)
++            controller.enqueue(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
++          if (close) controller.close();
++        },
++        cancel,
++      }),
++  });
++  const output: Uint8Array[] = [];
++  const writable = new WritableStream<Uint8Array>({
++    write(chunk) {
++      output.push(chunk);
++    },
++  });
++  return { cancel, writable, output };
++}
++
++it("copies only the display prefix without billing events or continuation capabilities", async () => {
++  const { writable, output } = setup([
++    createMessageReceivedEvent({ message: "inherited", sequence: 0, turnId: "turn_0" }),
++    createStepCompletedEvent({
++      finishReason: "stop",
++      sequence: 0,
++      stepIndex: 0,
++      turnId: "turn_0",
++      usage: { costUsd: 5 },
++    }),
++    createSessionWaitingEvent("private-continuation"),
++    createTurnStartedEvent({ sequence: 1, turnId: "turn_1" }),
++    createMessageReceivedEvent({ message: "excluded", sequence: 1, turnId: "turn_1" }),
++  ]);
++  await restoreSessionHistoryStep({ fork, writable });
++  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
++  expect(text).toContain('"history.restored"');
++  expect(text).toContain("inherited");
++  expect(text).not.toContain("private-continuation");
++  expect(text).not.toContain("step.completed");
++  expect(text).not.toContain("costUsd");
++  expect(text).not.toContain("excluded");
++  expect(writable.locked).toBe(false);
++});
++
++it("writes nothing if the requested turn is missing", async () => {
++  const { writable, output } = setup([]);
++  await expect(restoreSessionHistoryStep({ fork, writable })).rejects.toThrow(
++    "boundary was not found",
++  );
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
++
++it("cancels a stalled source at the deadline without leaving a pending writer", async () => {
++  vi.useFakeTimers();
++  const { writable, output, cancel } = setup([], false);
++  const result = expect(restoreSessionHistoryStep({ fork, writable })).rejects.toThrow("timed out");
++  await vi.advanceTimersByTimeAsync(10_000);
++  await result;
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
++
++it("bounds raw bytes before buffering an unfinished NDJSON event", async () => {
++  const { writable, output } = setup([]);
++  const chunk = new TextEncoder().encode("x".repeat(1024 * 1024));
++  mocks.getRun.mockReturnValue({
++    getReadable: () =>
++      new ReadableStream<Uint8Array>({
++        pull(controller) {
++          controller.enqueue(chunk);
++        },
++      }),
++  });
++  await expect(restoreSessionHistoryStep({ fork, writable })).rejects.toThrow("byte limit");
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
+diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
+new file mode 100644
+index 0000000..9a34a4d
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-history-step.ts
+@@ -0,0 +1,116 @@
++import { getRun } from "#internal/workflow/runtime.js";
++import { readNdjsonStream } from "#client/ndjson.js";
++import {
++  EVE_MESSAGE_STREAM_VERSION,
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++  type HistoryProjectionEvent,
++  type MessageStreamEvent,
++} from "#protocol/message.js";
++import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
++
++const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
++const MAX_HISTORY_EVENTS = 50_000;
++const READ_TIMEOUT_MS = 10_000;
++
++/** Writes a display-only prefix after native checkpoint restoration has succeeded. */
++export async function restoreSessionHistoryStep(input: {
++  readonly fork: SessionForkReference;
++  readonly writable: WritableStream<Uint8Array>;
++}): Promise<void> {
++  "use step";
++
++  const events = await readSessionHistory(input.fork);
++  const writer = input.writable.getWriter();
++  try {
++    await writer.write(
++      encodeMessageStreamEvent(
++        stampMessageStreamEvent({
++          type: "history.restored",
++          data: {
++            beforeTurnId: input.fork.beforeTurnId,
++            sourceSessionId: input.fork.sessionId,
++            events,
++          },
++        }),
++      ),
++    );
++  } finally {
++    writer.releaseLock();
++  }
++}
++
++async function readSessionHistory(fork: SessionForkReference): Promise<HistoryProjectionEvent[]> {
++  const abort = new AbortController();
++  const source = getRun(fork.sessionId).getReadable<Uint8Array>();
++  let bytes = 0;
++  const stream = source.pipeThrough(
++    new TransformStream<Uint8Array, Uint8Array>({
++      transform(chunk, controller) {
++        bytes += chunk.byteLength;
++        if (bytes > MAX_HISTORY_BYTES) throw new Error("Session history byte limit exceeded.");
++        controller.enqueue(chunk);
++      },
++    }),
++    { signal: abort.signal },
++  );
++  const events: HistoryProjectionEvent[] = [];
++  const seen = new Set<string>();
++  let scanned = 0;
++  const append = (event: HistoryProjectionEvent) => {
++    if (seen.has(event.meta.id)) return;
++    seen.add(event.meta.id);
++    events.push(event);
++    if (events.length > MAX_HISTORY_EVENTS)
++      throw new Error("Session history event limit exceeded.");
++  };
++  const timeout = setTimeout(
++    () => abort.abort(new Error("Session history read timed out.")),
++    READ_TIMEOUT_MS,
++  );
++  try {
++    for await (const event of readNdjsonStream(stream, {
++      streamVersion: EVE_MESSAGE_STREAM_VERSION,
++    })) {
++      if (++scanned > MAX_HISTORY_EVENTS) {
++        throw new Error("Session history scan limit exceeded.");
++      }
++      if (event.type === "turn.started" && event.data.turnId === fork.beforeTurnId) return events;
++      if (event.type === "history.restored") {
++        for (const historical of event.data.events) append(historical);
++      } else if (isHistoryProjectionEvent(event)) {
++        append(event);
++      }
++    }
++    throw new Error("Session history turn boundary was not found.");
++  } finally {
++    clearTimeout(timeout);
++    abort.abort();
++  }
++}
++
++function isHistoryProjectionEvent(event: MessageStreamEvent): event is HistoryProjectionEvent {
++  switch (event.type) {
++    case "message.received":
++    case "step.started":
++    case "message.appended":
++    case "message.completed":
++    case "reasoning.appended":
++    case "reasoning.completed":
++    case "action.input.appended":
++    case "actions.requested":
++    case "action.partial":
++    case "action.result":
++    case "input.requested":
++    case "input.resolved":
++    case "approval.candidate":
++    case "approval.settled":
++    case "result.completed":
++    case "turn.completed":
++    case "turn.cancelled":
++    case "turn.failed":
++      return true;
++    default:
++      return false;
++  }
++}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
 index 0000000..9e3dc25
@@ -775,10 +1188,11 @@ index 0000000..625c034
 +}
 diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
 new file mode 100644
-index 0000000..0cd32fc
+index 0000000..f6ed74e
 --- /dev/null
 +++ b/packages/eve/src/execution/session-fork.integration.test.ts
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,123 @@
++import { defaultMessageReducer } from "#client/message-reducer.js";
 +import { expect, it } from "vitest";
 +import { start } from "#internal/workflow/runtime.js";
 +import { createTestRuntime } from "#internal/testing/app-harness.js";
@@ -842,6 +1256,23 @@ index 0000000..0cd32fc
 +              event.data.message === "replacement second message",
 +          ),
 +        ).toBe(true);
++        const reducer = defaultMessageReducer();
++        const messages = events.reduce(reducer.reduce, reducer.initial());
++        expect(
++          messages.messages
++            .filter((message) => message.role === "user")
++            .map((message) => message.parts),
++        ).toEqual([
++          [{ type: "text", text: "first message", state: "done" }],
++          [{ type: "text", text: "replacement second message", state: "done" }],
++        ]);
++        const history = events.find((event) => event.type === "history.restored");
++        if (!history || history.type !== "history.restored")
++          throw new Error("Missing inherited history");
++        expect(history.data.events.some((event) => event.type === "message.completed")).toBe(true);
++        expect(reducer.reduce(messages, history)).toEqual(messages);
++        expect(events.filter((event) => event.type === "session.started")).toHaveLength(1);
++        expect(events.filter((event) => event.type === "turn.started")).toHaveLength(1);
 +        const restored = await readSessionCheckpoint({
 +          sessionId: branch.runId,
 +          beforeTurnId: ref.beforeTurnId,
@@ -850,6 +1281,30 @@ index 0000000..0cd32fc
 +        expect(restored.snapshot.session.sessionId).toBe(branch.runId);
 +        expect(restored.snapshot.session.continuationToken).toBe("");
 +        expect((await readSessionCheckpoint(ref)).snapshot).toEqual(checkpoint.snapshot);
++        const grandchild = await start(workflowEntry, [
++          {
++            input: { message: "replacement from branch" },
++            fork: { sessionId: branch.runId, beforeTurnId: ref.beforeTurnId },
++            serializedContext: context(),
++          },
++        ]);
++        const grandchildStream = captureTurnEvents(grandchild);
++        try {
++          const replay = await grandchildStream.nextTurn();
++          expect(replay.at(-1)?.type).toBe("session.waiting");
++          const projection = replay.reduce(reducer.reduce, reducer.initial());
++          expect(
++            projection.messages
++              .filter((message) => message.role === "user")
++              .flatMap((message) =>
++                message.parts.filter((part) => part.type === "text").map((part) => part.text),
++              ),
++          ).toEqual(["first message", "replacement from branch"]);
++          expect(replay.filter((event) => event.type === "turn.started")).toHaveLength(1);
++        } finally {
++          grandchildStream.dispose();
++          await grandchild.cancel();
++        }
 +      } finally {
 +        branchStream.dispose();
 +        await branch.cancel();

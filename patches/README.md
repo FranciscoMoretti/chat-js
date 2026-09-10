@@ -54,15 +54,30 @@ and source sandbox resources until resource cloning is implemented. The fork
 continues the source turn sequence without importing approvals or consumed
 execution budgets. Caller authorization is required; this is not a public API.
 
+Fork creation now writes a `history.restored` display envelope to the native
+session stream before executing the replacement turn. It includes earlier
+message, reasoning, and completed tool display events, excluding session
+controls, authorization events, and model usage. The native message reducer
+rebuilds that prefix independently, making repeated restoration idempotent.
+Nested forks flatten inherited envelopes. Reads are bounded before parsing to
+8 MiB, 50,000 events, and ten seconds; oversized histories fail explicitly.
+
+This source extension advances the stream protocol to version 26. Activating it
+requires matching server and client code; the currently installed published
+client does not support version 26. No running app dependency has changed.
+
 Validated in the isolated source checkout with 158 focused unit/regression tests,
 a real Workflow serialization integration (including binary PDF history), and a
 native two-session fork integration that verifies replacement history and an
-unchanged source. Source type-checking and linting pass. Both source review
+unchanged source. The history extension adds 152 distinct focused protocol,
+client/reducer, and bounded-reader checks, plus an expanded real Workflow
+integration covering inherited display, repeat replay, and a fork of a fork.
+Source type-checking and linting pass. Both source review
 passes found no actionable regression. This does not establish app-level editing
 or regeneration support.
 
-Before activating: implement source authorization at the app boundary, inherited
-transcript streaming, fork idempotency, sandbox/attachment resource cloning, and
+Before activating: implement source authorization at the app boundary,
+fork idempotency, sandbox/attachment resource cloning, and
 app-level recovery and UI validation. Bound snapshot storage/retention or reuse
 existing durable step snapshots: the prototype stores full snapshots, so
 retained history can produce quadratic storage growth. A raw checkpoint must
