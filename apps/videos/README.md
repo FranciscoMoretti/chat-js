@@ -12,7 +12,7 @@ bun run --cwd apps/videos studio
 bun run --cwd apps/videos render
 ```
 
-The starter renders a 1920×1080, 30 fps brand card to `apps/videos/out/brand-example.mp4`. The first render downloads Remotion's headless browser. Generated videos and frame captures are ignored by Git. Local logo and font assets avoid runtime asset requests.
+The default render writes the 1920×1080, 30 fps Threads film to `apps/videos/out/threads-launch.mp4`. Run `bun run --cwd apps/videos render:brand` for the minimal brand card at `apps/videos/out/brand-example.mp4`. The first render downloads Remotion's headless browser. Generated videos and frame captures are ignored by Git. Local logo and font assets avoid runtime asset requests.
 
 ## Make the next video
 

@@ -21,6 +21,9 @@ export const script = {
 		reply: "Try the aquarium, a park picnic, and an ice cream stop.",
 	},
 	porto: {
+		title: "Porto weekend",
+		label: "Porto",
+		preservedNote: "Both Lisbon conversations kept",
 		prompt: "Plan a weekend in Porto.",
 		reply:
 			"Saturday — Explore Ribeira and walk across the Dom Luís I Bridge.\n\nSunday — Visit the gardens, then catch the sunset by the river.",
@@ -53,6 +56,15 @@ function textAt(text: string, fraction: number) {
 	return text.slice(0, Math.floor(clamp(fraction) * text.length));
 }
 export function stateAt(t: number, content: LaunchScript = script) {
+	let prefixLength = 0;
+	while (
+		prefixLength < content.prompt.length &&
+		prefixLength < content.porto.prompt.length &&
+		content.prompt[prefixLength] === content.porto.prompt[prefixLength]
+	)
+		prefixLength++;
+	const editPrefix = content.porto.prompt.slice(0, prefixLength);
+	const editSuffix = content.porto.prompt.slice(prefixLength);
 	const selected: PathId =
 		t >= 33 ? "food" : t >= 19 ? "city" : t >= 12.2 ? "food" : "city";
 	const editing = t >= 42.2 && t < 44.8;
@@ -77,7 +89,7 @@ export function stateAt(t: number, content: LaunchScript = script) {
 		editText:
 			t < 42.6
 				? content.prompt
-				: `Plan a weekend in ${textAt("Porto.", (t - 42.6) / 1.1)}`,
+				: `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`,
 		portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
 		portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
 		following: following && (family || budget),

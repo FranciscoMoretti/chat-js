@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { presentationAt, stateAt } from "./story";
+import { presentationAt, script, stateAt } from "./story";
 
 describe("Two-path story", () => {
 	it("keeps the original while its alternative streams in the background", () => {
@@ -22,6 +22,16 @@ describe("Two-path story", () => {
 		expect(branched.texts).toEqual(stateAt(38).texts);
 		expect(branched.budget).toBe(true);
 		expect(branched.following).toBe(false);
+	});
+	it("uses overridden prompt copy throughout the edit", () => {
+		const content = {
+			...script,
+			prompt: "Explore Paris.",
+			porto: { ...script.porto, prompt: "Explore Rome." },
+		};
+		expect(stateAt(42.3, content).editText).toBe("Explore Paris.");
+		expect(stateAt(43, content).editText.startsWith("Explore ")).toBe(true);
+		expect(stateAt(44, content).editText).toBe("Explore Rome.");
 	});
 	it("is seekable without stale follow-ups", () => {
 		const a = stateAt(8);

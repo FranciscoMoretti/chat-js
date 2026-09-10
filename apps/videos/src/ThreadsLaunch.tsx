@@ -164,9 +164,9 @@ function Chat({
 			style={{ left: 320 - 236 * s.reveal, width: 1120 - 160 * s.reveal }}
 		>
 			<div className="chatheader">
-				{s.edited ? "Porto weekend" : content.title}
+				{s.edited ? content.porto.title : content.title}
 				<span className="pathlabel">
-					{s.edited ? "Porto" : content[s.selected].label}
+					{s.edited ? content.porto.label : content[s.selected].label}
 				</span>
 			</div>
 			<div className="messages">
@@ -407,13 +407,13 @@ function ConversationTree({
 					<div
 						className={`node selected portoReply ${s.portoState === "streaming" ? "live" : ""}`}
 					>
-						<div className="nodetitle">Porto weekend</div>
+						<div className="nodetitle">{content.porto.title}</div>
 						<div className="nodestatus">
 							<Status state={s.portoState} t={t} />
 						</div>
 						<div className="count">New conversation</div>
 					</div>
-					<div className="preservedLabel">Both Lisbon conversations kept</div>
+					<div className="preservedLabel">{content.porto.preservedNote}</div>
 				</div>
 			)}
 			{t < 24 && !s.following && !s.edited && (
