@@ -5,9 +5,14 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildConfigTs } from "./config-builder";
-import { scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate } from "./scaffold";
+import {
+	scaffoldElectron,
+	scaffoldFromGit,
+	scaffoldFromTemplate,
+} from "./scaffold";
 
 const tempDirs: string[] = [];
+const originalUserAgent = process.env.npm_config_user_agent;
 
 async function makeTempDir(name: string): Promise<string> {
 	const dir = join(tmpdir(), `chat-js-cli-${name}-${crypto.randomUUID()}`);
@@ -20,6 +25,8 @@ function getCliPackageRoot(): string {
 }
 
 afterEach(async () => {
+	if (originalUserAgent === undefined) delete process.env.npm_config_user_agent;
+	else process.env.npm_config_user_agent = originalUserAgent;
 	await Promise.all(
 		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
 	);
@@ -154,38 +161,15 @@ describe("buildConfigTs", () => {
 });
 
 describe("scaffoldFromTemplate", () => {
-	it("installs only the selected Files SDK provider dependencies", async () => {
-		const destination = await makeTempDir("chat-app-s3");
-
-		await scaffoldFromTemplate(destination, {
-			storage: {
-				provider: "s3",
-				options: { bucket: "uploads", region: "us-east-1" },
-			},
-		});
-
-		const packageJson = JSON.parse(
-			await readFile(join(destination, "package.json"), "utf8"),
-		) as { dependencies: Record<string, string> };
-		const providerSource = await readFile(
-			join(destination, "lib", "storage-provider.ts"),
-			"utf8",
-		);
-
-		expect(packageJson.dependencies["files-sdk"]).toBe("2.1.0");
-		expect(packageJson.dependencies["@vercel/blob"]).toBeUndefined();
-		expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.700.0");
-		expect(packageJson.dependencies["@aws-sdk/s3-presigned-post"]).toBe(
-			"^3.700.0",
-		);
-		expect(packageJson.dependencies["@aws-sdk/s3-request-presigner"]).toBe(
-			"^3.700.0",
-		);
-		expect(providerSource).toContain('import { s3 } from "files-sdk/s3"');
-		expect(providerSource).toContain("createAdapter: () => s3(options)");
-		expect(providerSource).not.toContain("storageProviderModule");
-		expect(providerSource).toContain('"bucket": "uploads"');
-	});
+  it("leaves the storage slot and provider peers to registry installation", async () => {
+    const destination = await makeTempDir("chat-app-storage");
+    await scaffoldFromTemplate(destination);
+    const manifest = JSON.parse(await readFile(join(destination, "package.json"), "utf8"));
+    expect(manifest.dependencies["files-sdk"]).toBe("2.1.0");
+    expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+    expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
+    expect(await Bun.file(join(destination, "lib/storage-provider.ts")).exists()).toBe(false);
+  });
 
 	it("writes a standalone-safe root package.json", async () => {
 		const destination = await makeTempDir("chat-app");
@@ -201,7 +185,7 @@ describe("scaffoldFromTemplate", () => {
 			scripts?: Record<string, string>;
 		};
 
-		expect(packageJson.packageManager).toBe("bun@1.3.1");
+		expect(packageJson.packageManager).toBe(`bun@${Bun.version}`);
 		expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
 		expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.5.6");
 		expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
@@ -231,7 +215,7 @@ describe("scaffoldFromTemplate", () => {
 			scripts: Record<string, string>;
 		};
 
-		expect(packageJson.packageManager).toBeUndefined();
+		expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/);
 		for (const script of Object.values(packageJson.scripts)) {
 			expect(script).not.toContain("bun ");
 			expect(script).not.toContain("bunx");
@@ -258,6 +242,7 @@ describe("scaffoldFromTemplate", () => {
 	});
 
 	it("allows known native package build scripts for pnpm scaffolds", async () => {
+		process.env.npm_config_user_agent = "pnpm/10.33.1";
 		const destination = await makeTempDir("chat-app-pnpm");
 
 		await scaffoldFromTemplate(destination, { packageManager: "pnpm" });
@@ -272,7 +257,7 @@ describe("scaffoldFromTemplate", () => {
 			"utf8",
 		);
 
-		expect(packageJson.packageManager).toBeUndefined();
+		expect(packageJson.packageManager).toBe("pnpm@10.33.1");
 		expect(workspaceConfig).toContain("onlyBuiltDependencies:");
 		expect(workspaceConfig).toContain("allowBuilds:");
 		expect(workspaceConfig).toContain("better-sqlite3: true");
@@ -368,10 +353,7 @@ describe("scaffoldFromGit", () => {
 			expect(result.exitCode).toBe(0);
 		}
 
-		await scaffoldFromGit(source, destination, {
-			gateway: "vercel",
-			storage: { provider: "vercel-blob", options: {} },
-		});
+		await scaffoldFromGit(source, destination);
 
 		const packageJson = JSON.parse(
 			await readFile(join(destination, "package.json"), "utf8"),
@@ -400,7 +382,7 @@ describe("scaffoldElectron", () => {
 			pnpm?: unknown;
 		};
 
-		expect(packageJson.packageManager).toBeUndefined();
+		expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/);
 		expect(packageJson.pnpm).toBeUndefined();
 		expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.5.6");
 		expect(packageJson.devDependencies["better-auth"]).toBe("1.5.6");
@@ -430,6 +412,7 @@ describe("scaffoldElectron", () => {
 	});
 
 	it("allows Electron install/build scripts for pnpm scaffolds", async () => {
+		process.env.npm_config_user_agent = "pnpm/10.33.1";
 		const projectDir = await makeTempDir("electron-pnpm");
 
 		await scaffoldFromTemplate(projectDir, { packageManager: "pnpm" });

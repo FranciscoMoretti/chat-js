@@ -44,15 +44,13 @@ npx @chat-js/cli@latest [directory] [options]
 | Flag                                      | Default  | Description                                                                  |
 | ----------------------------------------- | -------- | ---------------------------------------------------------------------------- |
 | `-y, --yes`                               | `false`  | Skip prompts and use the scaffold defaults.                                  |
-| `--no-install`                            | —        | Skip automatic dependency installation.                                      |
 | `--electron` / `--no-electron`            | Prompted | Include or exclude the Electron desktop app.                                 |
-| `-r, --registry <url>`                    | Default registry | Use a registry URL or local path template.                            |
-| `--package-manager <bun\|npm\|pnpm\|yarn>` | Inferred | Override the package manager used for installation and next steps.       |
+| `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>`                        | Built-in scaffold | Clone from a Git repository instead of the built-in scaffold.         |
 | `--storage-provider <provider>`           | Prompted when needed | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`. |
 | `--storage-config <json>`                 | —        | Supply non-secret Files SDK adapter options as JSON.                         |
 
-The CLI first checks for a package-manager lockfile, then checks the invoking tool. Running through `npx` or npm selects npm. If neither signal exists, npm is the default. Pass `--package-manager` to override the result.
+New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 
 After scaffolding, the CLI prints the exact environment variables required for your chosen configuration.
 
@@ -63,17 +61,16 @@ Use `npx @chat-js/cli@latest --version` or `chat-js --version` after a global in
 ### `add`
 
 ```bash
-npx @chat-js/cli@latest add [tools...]
+npx @chat-js/cli@latest add <tools...> [options]
 ```
 
-Install one or more registry tools into an existing ChatJS project. The command reads the tool destination from `chat.config.ts`.
+Install one or more registry tools into an existing ChatJS project. Items specify explicit targets under `tools/chatjs`. Namespace configuration lives in `components.json`.
 
 | Flag                   | Default           | Description                                      |
 | ---------------------- | ----------------- | ------------------------------------------------ |
 | `-y, --yes`            | `false`           | Skip the installation confirmation.              |
 | `-o, --overwrite`      | `false`           | Overwrite existing tool files without prompting. |
 | `-c, --cwd <cwd>`      | Current directory | Run against another ChatJS project.               |
-| `-r, --registry <url>` | Default registry  | Use a registry URL or local path template.        |
 
 ```bash
 npx @chat-js/cli@latest add word-count
@@ -134,16 +131,10 @@ npx @chat-js/cli@latest create my-chat-app --yes
 
 Defaults include Vercel AI Gateway, GitHub OAuth, parallel responses, document tools, no Electron app, and npm when invoked through `npx`.
 
-**Create without installing dependencies**
+**Select a gateway**
 
 ```bash
-npx @chat-js/cli@latest create my-chat-app --no-install
-```
-
-**Use npm for install + printed next steps**
-
-```bash
-npx @chat-js/cli@latest create my-chat-app --package-manager npm
+npx @chat-js/cli@latest create my-chat-app --gateway openrouter
 ```
 
 **Clone from a custom git repository**
@@ -155,10 +146,12 @@ npx @chat-js/cli@latest create my-chat-app --from-git https://github.com/your-or
 **Full flow after scaffolding**
 
 ```bash
-npx @chat-js/cli@latest create my-chat-app --package-manager npm
+npx @chat-js/cli@latest create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
 npm run db:push
 npm run dev
 ```
+
+Run `npx @chat-js/cli@latest sync` after a direct shadcn tool installation. For a recognized `--from-git` ChatJS clone, create replaces its selected gateway slot and writes a new configuration. Unsupported clones skip ChatJS installation.

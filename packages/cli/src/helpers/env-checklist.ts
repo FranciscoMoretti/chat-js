@@ -53,7 +53,10 @@ function requirementToEntries(requirement: EnvRequirementLike): EnvVarEntry[] {
 
 		return {
 			vars: group.map(String).join(" + "),
-			description: description || requirement.description,
+			description:
+				description ||
+				requirement.description ||
+				"Required environment variable",
 			oneOfGroup,
 		};
 	});

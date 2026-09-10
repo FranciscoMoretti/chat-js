@@ -6,10 +6,23 @@ cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Verify local contracts before publication, including external registry installs.
 bun run --cwd "$cli_root" test:gateways
 gateway_archive_dir="$(mktemp -d /tmp/chat-js-gateway-package-XXXXXX)"
-trap 'rm -rf "$gateway_archive_dir"' EXIT
+trap 'kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$gateway_archive_dir"' EXIT
 gateway_archive="$gateway_archive_dir/gateways.tgz"
 bun run --cwd "$cli_root/../gateways" build
 bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
+bun "$cli_root/test/serve-registry.ts" "$gateway_archive" "$gateway_archive_dir/address" &
+registry_pid=$!
+for attempt in {1..100}; do
+  test -f "$gateway_archive_dir/address" && break
+  sleep 0.1
+done
+if [ ! -s "$gateway_archive_dir/address" ]; then
+  echo "Registry server did not publish its address within 10 seconds." >&2
+  exit 1
+fi
+CHATJS_REGISTRY_URL="$(cat "$gateway_archive_dir/address")"
+export CHATJS_REGISTRY_URL
+
 
 run_case() (
   local package_manager="$1"
@@ -27,9 +40,6 @@ run_case() (
     create
     "$app_name"
     --yes
-    --no-install
-    --package-manager
-    "$package_manager"
   )
 
   if [ "$electron_flag" = "true" ]; then
@@ -40,7 +50,7 @@ run_case() (
 
   (
     cd "$temp_parent"
-    node "${create_args[@]}"
+    npm_config_user_agent="$package_manager/$($package_manager --version)" node "${create_args[@]}"
   )
 
   test -f "$app_dir/package.json"
@@ -51,14 +61,6 @@ run_case() (
   else
     test ! -d "$app_dir/electron"
   fi
-
-  node - "$app_dir/package.json" "$gateway_archive" <<'NODE'
-const fs = require("node:fs");
-const [manifestPath, archivePath] = process.argv.slice(2);
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-manifest.dependencies["@chat-js/gateways"] = `file:${archivePath}`;
-fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-NODE
 
   pushd "$app_dir" >/dev/null
   case "$package_manager" in

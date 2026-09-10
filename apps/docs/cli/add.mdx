@@ -1,60 +1,39 @@
 ---
 title: add
-description: Add a tool to an existing ChatJS project
+description: Install registry tools and generate their ChatJS registrations
 ---
 
 ```bash
-npx @chat-js/cli@latest add [tools...] [options]
+npx @chat-js/cli@latest add <tools...> [options]
 ```
 
-## Arguments
+Accepts built-in names, standard `@namespace/item` addresses, complete item URLs,
+and local registry JSON paths. Run inside a ChatJS app with `chat.config.ts`.
 
-| Argument   | Description                         |
-| ---------- | ----------------------------------- |
-| `tools…`   | One or more tool names to install.  |
-
-## Options
-
-| Flag                    | Default | Description                                                    |
-| ----------------------- | ------- | -------------------------------------------------------------- |
-| `-y, --yes`             | `false` | Skip confirmation prompt.                                      |
-| `-o, --overwrite`       | `false` | Overwrite existing installed files without prompting.          |
-| `-c, --cwd <cwd>`       | `cwd`   | Working directory (where `chat.config.ts` lives).              |
-| `-r, --registry <url>`  | —       | Registry URL or local path template. Overrides `CHATJS_REGISTRY_URL`. |
-
-## Examples
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-y, --yes` | `false` | Skip ChatJS confirmation |
+| `-o, --overwrite` | `false` | Replace existing source files |
+| `-c, --cwd <cwd>` | Current directory | Destination app |
 
 ```bash
-# Install a single tool
-npx @chat-js/cli@latest add word-count
-
-# Install multiple tools, skip confirmation
-npx @chat-js/cli@latest add word-count pdf-summary --yes
-
-# Use a local registry (monorepo development)
-npx @chat-js/cli@latest add word-count \
-  --registry ./packages/registry/items/{name}.json \
-  --cwd apps/chat
+npx @chat-js/cli@latest add word-count get-weather --yes
+npx @chat-js/cli@latest add @acme/my-tool
+npx @chat-js/cli@latest add ./my-tool.json --cwd apps/chat
 ```
 
-## What it does
+Configure namespaces in `components.json`. The former `--registry` flag is
+removed. shadcn installs source and packages using the project's detected package
+manager, then ChatJS syncs local tool descriptors into typed registrations.
 
-For each tool name, the command:
+After direct shadcn installation, regenerate registrations explicitly:
 
-1. Fetches `{name}.json` from the registry
-2. Recursively resolves any `registryDependencies`
-3. Writes the tool's files into your project (under the path configured in `chat.config.ts`)
-4. Installs any npm dependencies the resolved items declare
-5. Warns if the installed items declare missing environment variables
-6. Injects imports and registrations into the CLI-managed registry files at `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts` by default
+```bash
+npx @chat-js/cli@latest sync --cwd apps/chat
+```
 
-## Environment variables
+If wiring fails after source installation, the command exits unsuccessfully with
+recovery instructions. Repair the reported descriptor or index and rerun `sync`.
 
-| Variable               | Description                                        |
-| ---------------------- | -------------------------------------------------- |
-| `CHATJS_REGISTRY_URL`  | Default registry URL template. The `{name}` placeholder is replaced with the tool name. Useful for pointing to a local registry without passing `--registry` every time. |
-
-## Related
-
-- [Adding Tools](/cookbook/add-tools) — step-by-step walkthrough
-- [Tools](/cookbook/tools) — how to build and publish a tool
+- [Tool Registry](../tools/overview) explains customizations and migration.
+- [Tools](../tools/authoring) explains authoring.

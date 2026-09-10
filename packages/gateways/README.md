@@ -4,7 +4,7 @@ Shared contracts and runtime utilities for ChatJS gateway registry extensions.
 This package contains no gateway implementations or gateway SDK peers.
 
 The CLI installs the selected registry item's source files and npm dependencies.
-Built-in adapters are authored in `packages/registry/gateways`; third-party
+Built-in adapters are authored in `packages/registry/src/gateways`; third-party
 registries can ship source or a file importing their own npm package.
 
 The installed `lib/ai/gateway.ts` must export a `Gateway` constructor accepting
@@ -22,7 +22,7 @@ including capabilities, environment requirements and defaults. Model IDs from
 compatible servers can be open strings; types cannot verify a remote catalog or
 credentials.
 
-See [gateway registry authoring](../registry/gateways/README.md).
+See [gateway registry authoring](../registry/src/gateways/README.md).
 
 Verification:
 

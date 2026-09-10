@@ -1,11 +1,26 @@
 {
+  "extends": "../../apps/chat/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "types": ["bun-types"]
+    "types": [
+      "bun",
+      "node",
+      "next"
+    ],
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": [
+        "../../apps/chat/*"
+      ]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src/**/*.ts",
+    "../../apps/chat/types/**/*.d.ts",
+    "../../apps/chat/electron.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "templates",
+    "dist"
+  ]
 }

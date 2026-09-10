@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { VercelGateway } from "../../registry/gateways/vercel";
+import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 
 afterEach(() => {
   vi.unstubAllEnvs();

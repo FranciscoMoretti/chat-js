@@ -35,7 +35,7 @@ This creates a `.neon` file in the current directory (gitignored).
 
 ### How It Works
 
-Instead of updating `.env.local`, the branch name is stored in a `.neon-branch` file (gitignored). The `scripts/with-db.sh` wrapper reads this file at runtime and injects the correct `DATABASE_URL` when running database commands.
+Instead of updating `.env.local`, the branch name is stored in a `.neon-branch` file (gitignored). The `scripts/with-db.sh` wrapper reads this file at runtime and injects both `DATABASE_URL` and `DATABASE_MIGRATION_URL` for explicitly wrapped commands.
 
 This means your `.env.local` stays pointing to main, and branch switching is instant.
 
@@ -65,11 +65,11 @@ The `package.json` scripts use three bash scripts under `scripts/`:
 bun db:branch:start
 
 # Your app now uses the dev branch (DATABASE_URL injected via with-db.sh)
-bun dev
+bun dev:neon
 
 # Make schema changes
 bun db:generate   # Generate migration
-bun db:migrate    # Apply migration
+bun db:migrate:neon # Apply migration to the selected branch
 
 # When done, clean up and switch back to main
 bun db:branch:stop
@@ -87,7 +87,8 @@ bun db:branch:stop
 | `bun db:branch:delete [name]`    | Delete branch only                                 |
 | `bun db:branch:list`             | List all branches                                  |
 
-Default branch name is `dev-local` if not specified.
+Default branch name is `dev-local` if not specified. Normal `bun dev` and
+`bun db:migrate` use the configured URLs, without reading `.neon-branch`.
 
 ## Considerations
 

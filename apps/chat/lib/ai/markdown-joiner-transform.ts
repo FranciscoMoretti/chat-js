@@ -83,30 +83,32 @@ class MarkdownJoiner {
 export const markdownJoinerTransform =
   <TOOLS extends ToolSet>() =>
   () => {
-    const joiner = new MarkdownJoiner();
+    const parts = new Map<string, MarkdownJoiner>();
 
     return new TransformStream<TextStreamPart<TOOLS>, TextStreamPart<TOOLS>>({
       transform(chunk, controller) {
         if (chunk.type === "text-delta") {
+          const joiner = parts.get(chunk.id) ?? new MarkdownJoiner();
+          parts.set(chunk.id, joiner);
           const processedText = joiner.processText(chunk.text);
           if (processedText) {
+            controller.enqueue({ ...chunk, text: processedText });
+          }
+          return;
+        }
+
+        if (chunk.type === "text-end") {
+          const remaining = parts.get(chunk.id)?.flush();
+          if (remaining) {
             controller.enqueue({
-              ...chunk,
-              text: processedText,
+              type: "text-delta",
+              id: chunk.id,
+              text: remaining,
             });
           }
-        } else {
-          controller.enqueue(chunk);
+          parts.delete(chunk.id);
         }
-      },
-      flush(controller) {
-        const remaining = joiner.flush();
-        if (remaining) {
-          controller.enqueue({
-            type: "text-delta",
-            text: remaining,
-          } as TextStreamPart<TOOLS>);
-        }
+        controller.enqueue(chunk);
       },
     });
   };

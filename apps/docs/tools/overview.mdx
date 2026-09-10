@@ -1,0 +1,89 @@
+---
+title: Tools Overview
+description: Install and distribute typed ChatJS tools with shadcn registries
+---
+
+The ChatJS registry distributes editable source code using shadcn. A tool includes
+server logic, a client renderer, dependencies, and a declarative registration
+descriptor. Installed tools become part of your app's typed tool system.
+
+```bash
+npx @chat-js/cli@latest add word-count
+```
+
+shadcn resolves the item and its dependencies, installs packages, and writes the
+source files. ChatJS then regenerates separate server and client registrations.
+Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
+
+## Available tools
+
+| Tool | Purpose | Credentials |
+| --- | --- | --- |
+| [Word Count](./word-count) | Count words, characters, and sentences | None |
+| [Get Weather](./get-weather) | Fetch weather for coordinates | None |
+| [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
+
+## Installed files
+
+| File | Ownership |
+| --- | --- |
+| `tools/chatjs/<id>/tool.ts` | Editable server implementation |
+| `tools/chatjs/<id>/renderer.tsx` | Editable client renderer |
+| `tools/chatjs/<id>/chatjs.json` | Installed registration and environment descriptor |
+| `tools/chatjs/tools.ts`, `ui.ts` | Generated registrations |
+| `tools/chatjs/custom-tools.ts`, `custom-ui.ts` | Your custom registrations |
+
+Keep manual registrations in the custom modules. Sync rejects duplicate installed
+descriptor keys and edited generated indexes. Generated indexes detect collisions
+with custom registrations when loaded. Sync also refuses to remove a previously registered tool
+just because its descriptor disappeared. Restore the descriptor before syncing.
+Known legacy built-in indexes migrate automatically. Customized legacy indexes
+need an explicit move into the custom modules before removing the old indexes.
+
+Registry items specify explicit file targets. This integration uses `tools/chatjs`.
+The former `paths.tools` configuration and marker-based injection are removed.
+Built-in product tools remain in `tools/platform`.
+
+## External registries
+
+Configure standard namespaces in `components.json`:
+
+```json
+{
+  "registries": {
+    "@chatjs": "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json",
+    "@acme": "https://example.com/r/{name}.json"
+  }
+}
+```
+
+```bash
+npx @chat-js/cli@latest add @acme/my-tool
+```
+
+You can also pass a complete registry item URL or local JSON path. Registry
+requests require HTTPS, with HTTP allowed for local loopback development.
+`--registry` has been replaced by standard namespace configuration.
+
+## Direct shadcn installation
+
+```bash
+npx shadcn@4.21.0 add @chatjs/word-count
+npx @chat-js/cli@latest sync
+```
+
+shadcn installs source. `sync` reads installed descriptors and generates ChatJS
+registrations without evaluating third-party source. `chat-js add` performs both
+steps. If registration fails after installation, fix the reported issue and run
+`sync` again. Package installation is not transactional.
+
+Tool environment requirements live in `chatjs.json`, generated from typed item
+metadata. `check-env` reads those descriptors without importing server tools.
+
+## Related
+
+- [Registry Overview](../registry) for categories, source ownership, and distribution
+
+- [CLI add](../cli/add) for command options
+- [Adding Tools](./install) for the installation steps
+- [Tools](./authoring) for source authoring

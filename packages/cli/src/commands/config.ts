@@ -36,7 +36,7 @@ export const config = new Command()
     try {
       const cwd = path.resolve(opts.cwd);
 
-      const pm = inferPackageManager();
+      const pm = inferPackageManager(cwd);
       const [cmd, args] = getTsEvalCommand(pm);
 
       await new Promise<void>((resolve, reject) => {

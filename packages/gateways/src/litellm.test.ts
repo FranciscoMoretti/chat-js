@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LiteLLMGateway } from "../../registry/gateways/litellm";
+import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 
 const originalBaseURL = process.env.LITELLM_BASE_URL;
 const originalApiKey = process.env.LITELLM_API_KEY;

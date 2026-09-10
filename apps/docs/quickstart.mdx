@@ -19,7 +19,7 @@ npx @chat-js/cli@latest create my-app
 cd my-app
 ```
 
-The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It also asks whether to include a [Desktop app](/platforms/desktop). It preserves `bun`, `pnpm`, and `yarn` when launched from those tools, and defaults `npx`/npm launches to npm unless you pass `--package-manager`.
+The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It also asks whether to include a [Desktop app](/platforms/desktop). It preserves `bun`, `pnpm`, and `yarn` when launched from those tools, and defaults `npx`/npm launches to npm.
 
 ## Understanding `chat.config.ts`
 
@@ -31,7 +31,7 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
 
 | Setting             | Default           | Notes                                                         |
 | ------------------- | ----------------- | ------------------------------------------------------------- |
-| **Gateway**         | Vercel AI Gateway | Set `gateway: "openrouter"` for OpenRouter                    |
+| **Gateway**         | Vercel AI Gateway | Use `create --gateway openrouter` for OpenRouter                    |
 | **Authentication**  | GitHub only       | Google and Vercel OAuth disabled                              |
 | **Features**        | All disabled      | No sandbox, web search, MCP, image generation, or attachments |
 | **Anonymous users** | 10 credits        | Limited access, no tools                                      |
@@ -128,7 +128,7 @@ Expand the sections below for setup instructions:
     provider. For Vercel Blob, connect a Blob store and copy its token to
     `BLOB_READ_WRITE_TOKEN` for local development.
 
-    See [File storage](./core/file-storage) for provider configuration,
+    See [File storage](./storage) for provider configuration,
     credentials, and migration behavior.
   </AccordionItem>
 </Accordion>

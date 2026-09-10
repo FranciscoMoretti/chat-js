@@ -1,0 +1,70 @@
+import { builtInStorage } from "./src/storage/catalog";
+import { registrySchema, type RegistryItem } from "shadcn/schema";
+import { builtInGateways } from "./src/gateways/catalog";
+import { toolDefinitionSchema } from "./metadata";
+
+export const toolItems = [
+	{
+		id: "word-count",
+		toolExport: "wordCount",
+		rendererExport: "WordCountRenderer",
+		description: "Count words, characters, and sentences in text",
+		dependencies: ["ai", "zod"],
+	},
+	{
+		id: "get-weather",
+		toolExport: "getWeather",
+		rendererExport: "GetWeatherRenderer",
+		description: "Get the current weather at a location",
+		dependencies: ["ai", "zod", "date-fns"],
+	},
+	{
+		id: "retrieve-url",
+		toolExport: "retrieveUrl",
+		rendererExport: "RetrieveUrlRenderer",
+		description: "Fetch structured information from a single URL",
+		dependencies: ["ai", "zod", "@mendable/firecrawl-js"],
+		envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
+	},
+].map(
+	({ description, dependencies, ...definition }) =>
+		({
+			name: definition.id,
+			type: "registry:item",
+			description,
+			dependencies,
+			registryDependencies: ["@chatjs/toolkit-renderer"],
+			meta: {
+				chatjs: toolDefinitionSchema.parse({
+					...definition,
+					contractVersion: 1,
+					kind: "tool",
+				}),
+			},
+			files: ["tool.ts", "renderer.tsx"].map((file) => ({
+				path: `src/tools/${definition.id}/${file}`,
+				type: "registry:file",
+				target: `~/tools/chatjs/${definition.id}/${file}`,
+			})),
+		}) satisfies RegistryItem,
+);
+
+export const registry = registrySchema.parse({
+	name: "chatjs",
+	homepage: "https://chatjs.dev",
+	items: [
+		...builtInGateways,
+        ...builtInStorage,
+		...toolItems,
+		{
+			name: "toolkit-renderer",
+			type: "registry:item",
+			dependencies: ["ai"],
+			files: [["tool-part.ts", "lib/tool-part.ts"]].map(([source, target]) => ({
+				path: `src/tools/toolkit-renderer/${source}`,
+				type: "registry:file",
+				target: `~/tools/chatjs/_shared/${target}`,
+			})),
+		},
+	],
+});

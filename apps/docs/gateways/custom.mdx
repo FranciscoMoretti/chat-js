@@ -14,7 +14,7 @@ Remote registry items and their dependencies require HTTPS. HTTP is supported fo
 
 ## Author a registry item
 
-Start from a built-in item in the [gateway registry](https://github.com/FranciscoMoretti/chat-js/tree/main/packages/registry/gateways). The [authoring contract](https://github.com/FranciscoMoretti/chat-js/blob/main/packages/registry/gateways/README.md) describes the complete metadata and adapter interface.
+Start from a built-in item in the [gateway registry](https://github.com/FranciscoMoretti/chat-js/tree/cbfc757b353bc29bb46b58d14b994f798859ce8e/packages/registry/src/gateways). The [authoring contract](https://github.com/FranciscoMoretti/chat-js/blob/cbfc757b353bc29bb46b58d14b994f798859ce8e/packages/registry/src/gateways/README.md) describes the complete metadata and adapter interface.
 
 Your root item must use `type: "registry:item"`. Declare its SDK in `dependencies`, and include an adapter exporting `Gateway` at `~/lib/ai/gateway.ts`. Supporting files belong under `~/lib/ai/gateway/` and can come from `registryDependencies`.
 

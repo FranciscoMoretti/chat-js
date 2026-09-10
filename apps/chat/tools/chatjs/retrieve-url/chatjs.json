@@ -1,0 +1,12 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "retrieve-url",
+  "toolExport": "retrieveUrl",
+  "rendererExport": "RetrieveUrlRenderer",
+  "envRequirements": [
+    {
+      "options": [["FIRECRAWL_API_KEY"]]
+    }
+  ]
+}

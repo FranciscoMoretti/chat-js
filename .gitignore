@@ -78,10 +78,6 @@ apps/electron/branding.json
 .cursor/hooks/state
 .codex/environments/
 
-# Generated gateway registry payloads
-packages/registry/items/*-gateway.json
-packages/registry/gateways.json
-
 apps/docs/.uiverify-shots/
 
 # Eve generated worker output
@@ -90,3 +86,5 @@ apps/chat/.output/
 apps/chat/tests/eve-fixture/.eve/
 apps/chat/tests/eve-fixture/.output/
 apps/chat/tests/eve-results/
+# Generated shadcn source manifest
+packages/registry/registry.json

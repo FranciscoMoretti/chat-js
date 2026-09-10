@@ -16,7 +16,7 @@ interface ApplicationError extends Error {
 	status: number;
 }
 
-export const fetchWithErrorHandlers: typeof fetch = async (input, init) => {
+export const fetchWithErrorHandlers = async (...[input, init]: Parameters<typeof fetch>): Promise<Response> => {
 	try {
 		const response = await fetch(input, init);
 

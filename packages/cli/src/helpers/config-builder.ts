@@ -46,7 +46,8 @@ function extractDescriptions(
 
 	if (schema instanceof z.ZodDiscriminatedUnion) {
 		for (const option of schema.options.values()) {
-			extractDescriptions(option, prefix, result);
+			if (option instanceof z.ZodType)
+				extractDescriptions(option, prefix, result);
 		}
 	}
 
@@ -66,6 +67,13 @@ function formatValue(value: unknown, indent: number): string {
 
 	if (value === null || value === undefined) return "undefined";
 	if (typeof value === "string") return JSON.stringify(value);
+	if (
+		typeof value === "number" &&
+		Number.isSafeInteger(value) &&
+		Math.abs(value) >= 10_000
+	) {
+		return String(value).replace(/(\d)(?=(\d{3})+$)/g, "$1_");
+	}
 	if (typeof value === "number" || typeof value === "boolean") {
 		return String(value);
 	}

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+import { databaseEnvOptions } from "./db/connection";
+import { redisEnvOptions } from "./redis/connection";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
@@ -24,6 +26,7 @@ export const serverEnvSchema = {
   EVE_INTERNAL_ORIGIN: z.string().url().optional(),
   EVE_GATEWAY_SECRET: z.string().min(32).optional(),
   WORKFLOW_POSTGRES_URL: z.string().optional(),
+  ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
     .preprocess(
@@ -101,7 +104,7 @@ export const serverEnvSchema = {
     .describe("Secret for cleanup cron job endpoint"),
 
   // Optional features (enable in chat.config.ts)
-  REDIS_URL: z.string().optional().describe("Redis URL for resumable streams"),
+  ...redisEnvOptions,
   TAVILY_API_KEY: z
     .string()
     .optional()

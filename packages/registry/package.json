@@ -21,42 +21,44 @@
   "private": false,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
-    },
-    "./index.json": "./index.json",
-    "./items/*": "./items/*.json",
-    "./gateways.json": "./gateways.json"
+    "./r/*": "./dist/r/*.json"
   },
-  "types": "./index.d.ts",
   "files": [
-    "index.d.ts",
-    "index.js",
-    "index.json",
-    "items",
-    "gateways.json"
+    "dist/r"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "bun build.ts && bun build-gateways.ts",
-    "prepublishOnly": "bun run build"
+    "build": "bun build.ts",
+    "prepublishOnly": "bun run build",
+    "test:types": "tsc --noEmit",
+    "test:unit": "bun test src"
   },
-  "dependencies": {
-    "ts-morph": "^27.0.2"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@chat-js/gateways": "workspace:*",
-    "@ai-sdk/provider": "4.0.10",
-    "ai": "7.0.93",
+    "@ai-sdk/anthropic": "4.0.49",
     "@ai-sdk/gateway": "4.0.75",
+    "@ai-sdk/google": "4.0.64",
     "@ai-sdk/openai": "4.0.59",
     "@ai-sdk/openai-compatible": "3.0.44",
+    "@ai-sdk/provider": "4.0.10",
+    "@chat-js/gateways": "workspace:*",
+    "@mendable/firecrawl-js": "1.29.1",
     "@openrouter/ai-sdk-provider": "3.0.0",
-    "@ai-sdk/anthropic": "4.0.49",
-    "@ai-sdk/google": "4.0.64",
+    "@types/bun": "latest",
+    "@types/node": "22.13.10",
+    "@types/react": "19.2.7",
+    "ai": "7.0.93",
+    "basic-ftp": "^5.0.5",
+    "date-fns": "^4.1.0",
+    "files-sdk": "2.1.0",
+    "lucide-react": "0.553.0",
+    "next": "16.3.0",
+    "react": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "shadcn": "4.21.0",
+    "typescript": "6.0.2",
     "zod": "^4.3.6"
   }
 }

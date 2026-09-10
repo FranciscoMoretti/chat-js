@@ -25,7 +25,7 @@ if [ -f "$BRANCH_FILE" ]; then
   MASKED_URL=$(echo "$BRANCH_URL" | sed 's/:[^:@]*@/:****@/')
   echo "🔀 Using branch '$BRANCH_NAME': $MASKED_URL"
   
-  DATABASE_URL="$BRANCH_URL" exec "$@"
+  DATABASE_URL="$BRANCH_URL" DATABASE_MIGRATION_URL="$BRANCH_URL" exec "$@"
 else
   exec "$@"
 fi

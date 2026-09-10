@@ -1,4 +1,0 @@
-{
-  "description": "Count words, characters, and sentences in text",
-  "registryDependencies": ["toolkit-renderer"]
-}

@@ -187,10 +187,18 @@ openssl rand -base64 32
   The key must be exactly 44 characters (32 bytes encoded as base64). Changing this key after deployment will invalidate all stored MCP connector credentials.
 </Callout>
 
+### Postgres Hosting
+
+`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your
+host provides a separate direct endpoint for schema operations. It falls back to
+`DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler
+without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS`
+to a positive per-process limit. See [Database](./database) for deployment behavior.
+
 ### File Storage
 
-Attachments, image generation, and video generation require a durable Files
-SDK provider. Storage requirements are generated from the selected provider and
+Attachments, image generation, and video generation require a durable storage
+adapter compatible with Files SDK. Storage requirements are generated from the selected provider and
 validated by `scripts/check-env.ts`.
 
 ```typescript title="chat.config.ts"
@@ -207,7 +215,7 @@ ai: {
 
 Provider credentials belong in environment variables or the provider SDK's
 credential chain. Non-secret adapter options belong in
-`lib/storage-provider.ts`. See [File storage](../core/file-storage) and the
+`lib/storage-options.ts`. See [File storage](../storage) and the
 [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the
 requirements of your selected provider.
 
@@ -256,9 +264,9 @@ Allows users to reconnect to an ongoing AI generation after a page refresh or ne
 
 | Variable | Description | Get it |
 |----------|-------------|--------|
-| `REDIS_URL` | Redis connection URL for stream state storage | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) or any Redis provider |
+| `REDIS_URL` | Redis TCP/TLS URL for stream coordination and anonymous rate limits | [Redis setup](./redis) |
 
-Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection.
+Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. To check a configured provider, use your package manager: `npm run redis:connect`, `pnpm redis:connect`, `yarn redis:connect`, or `bun redis:connect`.
 
 ### Cron Job Secret
 
@@ -344,4 +352,4 @@ All variables in one place:
 - [Deploy to Vercel](/deployment/vercel): how Vercel auto-sets several of these variables
 - [Gateways Overview](/gateways/overview): choosing and configuring an AI gateway
 - [Authentication](/core/authentication): OAuth provider setup details
-- [File storage](/core/file-storage): provider configuration and credentials
+- [File storage](../storage): provider configuration and credentials

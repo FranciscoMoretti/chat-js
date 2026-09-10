@@ -17,5 +17,8 @@
     "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
+  },
+  "registries": {
+    "@chatjs": "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json"
   }
 }

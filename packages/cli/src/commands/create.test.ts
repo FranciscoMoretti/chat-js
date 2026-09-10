@@ -7,111 +7,15 @@ import { create } from "./create";
 const tempDirs: string[] = [];
 
 function makeTempDir(name: string): string {
-  const dir = join(tmpdir(), `chat-js-create-${name}-${crypto.randomUUID()}`);
-  tempDirs.push(dir);
-  return dir;
+	const dir = join(tmpdir(), `chat-js-create-${name}-${crypto.randomUUID()}`);
+	tempDirs.push(dir);
+	return dir;
 }
 
 afterEach(async () => {
-  await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
-  );
-});
-
-describe("create command", () => {
-  it("ships the selected Files SDK provider without unrelated provider peers", async () => {
-    const tempParent = makeTempDir("s3-app");
-    const appName = "s3-chat-app";
-    const originalCwd = process.cwd();
-
-    await mkdir(tempParent, { recursive: true });
-    process.chdir(tempParent);
-    try {
-      await create.parseAsync(
-        [
-          appName,
-          "--yes",
-          "--no-install",
-          "--storage-provider",
-          "s3",
-          "--storage-config",
-          '{"bucket":"uploads","region":"us-east-1"}',
-        ],
-        { from: "user" }
-      );
-    } finally {
-      process.chdir(originalCwd);
-    }
-
-    const packageJson = JSON.parse(
-      await readFile(join(tempParent, appName, "package.json"), "utf8")
-    ) as { dependencies: Record<string, string> };
-    const provider = await readFile(
-      join(tempParent, appName, "lib", "storage-provider.ts"),
-      "utf8"
-    );
-
-    expect(packageJson.dependencies["@aws-sdk/client-s3"]).toBe("^3.700.0");
-    expect(packageJson.dependencies["@vercel/blob"]).toBeUndefined();
-    expect(provider).toContain('from "files-sdk/s3"');
-  });
-
-  it("uses the explicitly requested package manager for scaffold defaults", async () => {
-    const tempParent = makeTempDir("npm-app");
-    const appName = "my-chat-app";
-    const originalCwd = process.cwd();
-
-    await mkdir(tempParent, { recursive: true });
-    process.chdir(tempParent);
-    try {
-      await create.parseAsync(
-        [appName, "--yes", "--no-install", "--package-manager", "npm"],
-        {
-          from: "user",
-        }
-      );
-    } finally {
-      process.chdir(originalCwd);
-    }
-
-    const packageJson = JSON.parse(
-      await readFile(join(tempParent, appName, "package.json"), "utf8")
-    ) as {
-      packageManager?: string;
-      overrides?: Record<string, string>;
-    };
-
-    expect(packageJson.packageManager).toBeUndefined();
-    expect(
-      (packageJson as { dependencies?: Record<string, string> }).dependencies?.[
-        "@vercel/blob"
-      ]
-    ).toBeUndefined();
-    expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
-  });
-
-  it("treats storage config as an explicit storage request", async () => {
-    const tempParent = makeTempDir("storage-config-app");
-    const appName = "storage-config-chat-app";
-    const originalCwd = process.cwd();
-
-    await mkdir(tempParent, { recursive: true });
-    process.chdir(tempParent);
-    try {
-      await create.parseAsync(
-        [appName, "--yes", "--no-install", "--storage-config", "{}"],
-        { from: "user" }
-      );
-    } finally {
-      process.chdir(originalCwd);
-    }
-
-    const provider = await readFile(
-      join(tempParent, appName, "lib", "storage-provider.ts"),
-      "utf8"
-    );
-    expect(provider).toContain('from "files-sdk/vercel-blob"');
-  });
+	await Promise.all(
+		tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
+	);
 });
 
 it("leaves non-ChatJS Git templates unconfigured through the full create command", async () => {
@@ -136,15 +40,26 @@ it("leaves non-ChatJS Git templates unconfigured through the full create command
 	]) {
 		expect(Bun.spawnSync(["git", ...args], { cwd: source }).exitCode).toBe(0);
 	}
-	await create.parseAsync(
+	const { builtInGateways } = await import(
+		"../../../registry/src/gateways/catalog"
+	);
+	await writeFile(
+		join(source, "gateway.json"),
+		JSON.stringify(builtInGateways[0]),
+	);
+	const { builtInStorage } = await import("../../../registry/src/storage/catalog");
+  await writeFile(join(source, "storage.json"), JSON.stringify(builtInStorage.find((item) => item.meta.chatjs.id === "memory")));
+  await create.parseAsync(
 		[
 			destination,
 			"--from-git",
 			source,
 			"--gateway",
-			"vercel",
+			join(source, "gateway.json"),
+            "--storage-provider",
+            join(source, "storage.json"),
+            "--storage-config", "{}",
 			"--yes",
-			"--no-install",
 		],
 		{ from: "user" },
 	);
@@ -154,4 +69,13 @@ it("leaves non-ChatJS Git templates unconfigured through the full create command
 	expect(await readFile(join(destination, "package.json"), "utf8")).toBe(
 		manifest,
 	);
+});
+
+it("rejects retired installer flags explicitly", async () => {
+	create.exitOverride();
+	for (const flag of ["--no-install", "--package-manager", "--registry"]) {
+		await expect(create.parseAsync([flag], { from: "user" })).rejects.toThrow(
+			"unknown option",
+		);
+	}
 });

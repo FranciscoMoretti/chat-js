@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { LiteLLMGateway } from "../../registry/gateways/litellm";
+import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 import {
   type GatewayType,
   gatewayMetadata,
-} from "../../registry/gateways/metadata";
-import { OpenAIGateway } from "../../registry/gateways/openai";
-import { OpenAICompatibleGateway } from "../../registry/gateways/openai-compatible";
-import { OpenRouterGateway } from "../../registry/gateways/openrouter";
-import { VercelGateway } from "../../registry/gateways/vercel";
+} from "../../registry/src/gateways/metadata";
+import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
+import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
+import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
+import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 import gatewayPackage from "../package.json";
 import type { GatewayProvider } from "./gateway-provider";
 import type { GatewayOptions } from "./runtime";

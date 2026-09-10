@@ -1,6 +1,5 @@
 import type chatConfig from "@/chat.config";
 import type {
-  DefaultGateway,
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
@@ -11,7 +10,7 @@ export type ActiveGatewayType = typeof chatConfig extends {
   ai: { gateway: infer G extends GatewayType };
 }
   ? G
-  : DefaultGateway;
+  : GatewayType;
 
 /** Runtime model ID — narrowed to the active gateway */
 export type ModelId = GatewayModelIdMap[ActiveGatewayType];

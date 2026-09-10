@@ -6,7 +6,7 @@
     "test:types": {
       "inputs": [
         "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/packages/registry/gateways/**",
+        "$TURBO_ROOT$/packages/registry/src/gateways/**",
         "$TURBO_ROOT$/packages/registry/package.json"
       ],
       "outputs": [
@@ -16,7 +16,7 @@
     "test:unit": {
       "inputs": [
         "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/packages/registry/gateways/**",
+        "$TURBO_ROOT$/packages/registry/src/gateways/**",
         "$TURBO_ROOT$/packages/registry/package.json"
       ]
     }

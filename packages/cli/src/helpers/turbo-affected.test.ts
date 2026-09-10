@@ -42,6 +42,7 @@ beforeAll(async () => {
 			"packages/cli",
 			"packages/thread",
 			"packages/registry",
+			"packages/gateways",
 		].map((workspace) => `${workspace}/package.json`),
 	]) {
 		await mkdir(dirname(join(fixture, path)), { recursive: true });
@@ -68,6 +69,10 @@ test.each([
 	["apps/electron/dist/main.js", false],
 	["apps/electron/branding.json", false],
 	["packages/cli/src/index.ts", true],
+	["packages/registry/registry.ts", true],
+	["packages/registry/metadata.ts", true],
+	["packages/registry/src/tools/word-count/tool.ts", true],
+	["packages/registry/src/gateways/vercel/gateway.ts", true],
 	["packages/cli/scripts/test-scaffold.sh", true],
 	["apps/chat/app/page.tsx", true],
 	["apps/chat/package.json", true],
@@ -129,7 +134,7 @@ test.each([
 		path.startsWith("apps/docs/") ||
 		path.startsWith("apps/electron/") ||
 		path.startsWith("packages/thread/src/") ||
-		path.startsWith("packages/registry/items/") ||
+		path.startsWith("packages/registry/src/") ||
 		path === "scripts/sync-template.ts" ||
 		path === "package.json"
 	) {

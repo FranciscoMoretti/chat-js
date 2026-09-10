@@ -1,0 +1,8 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "word-count",
+  "toolExport": "wordCount",
+  "rendererExport": "WordCountRenderer",
+  "envRequirements": []
+}

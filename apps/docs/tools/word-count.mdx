@@ -1,0 +1,36 @@
+---
+title: Word Count
+description: Count words, characters, and sentences in supplied text
+---
+
+## Installation
+
+Start in a ChatJS app with `chat.config.ts` and `components.json`.
+No additional credentials are required.
+
+```bash
+npx @chat-js/cli@latest add word-count
+```
+
+The command installs the server tool, renderer, and registration descriptor under
+`tools/chatjs/word-count/`, along with required dependencies and shared renderer
+helpers. It then regenerates the app's tool registrations.
+
+## Usage
+
+Ask your chat model: “Count the words and characters in: Hello world.” Use a model that supports tool calling.
+
+The tool accepts a `text` string and returns `words`, `characters`,
+`charactersNoSpaces`, and `sentences`. The example text produces two words,
+12 characters, 11 characters without whitespace, and one sentence.
+
+## Behavior and limitations
+
+Words are split on whitespace and sentences on `.`, `!`, or `?`.
+These are simple counts rather than language-aware tokenization.
+
+## Customize
+
+Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation.
+See [Installation](./install) for updates and sync, and
+[Authoring Tools](./authoring) to publish your own item.

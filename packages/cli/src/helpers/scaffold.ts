@@ -1,19 +1,11 @@
-import type { GatewaySelection } from "../registry/gateways";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Gateway, PackageManager } from "../types";
-import { configureGatewayProvider } from "./gateway-provider";
+import type { PackageManager } from "../types";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
-import {
-  configureStorageProvider,
-  type StorageSelection,
-} from "./storage-provider";
-import {
-  createEmptyToolsTemplate,
-  createEmptyUiTemplate,
-} from "../utils/inject-tool";
+import { syncTools } from "../utils/sync-tools";
+import { registryUrl } from "../registry/shadcn";
 import { runCommand } from "../utils/run-command";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
@@ -84,7 +76,10 @@ function findTemplateDir(name: string): string | null {
   return existsSync(candidate) ? candidate : null;
 }
 
-function shouldCopyChatAppFilePath(sourceDir: string, filePath: string): boolean {
+function shouldCopyChatAppFilePath(
+  sourceDir: string,
+  filePath: string,
+): boolean {
   const relativePath = relative(sourceDir, filePath);
   const segments = relativePath.split(sep);
   if (segments.some((segment) => CHAT_APP_EXCLUDED_SEGMENTS.has(segment))) {
@@ -96,7 +91,7 @@ function shouldCopyChatAppFilePath(sourceDir: string, filePath: string): boolean
 
 function shouldCopyElectronFilePath(
   sourceDir: string,
-  filePath: string
+  filePath: string,
 ): boolean {
   const relativePath = relative(sourceDir, filePath);
   const segments = relativePath.split(sep);
@@ -126,7 +121,7 @@ function execCommand(packageManager: PackageManager): string {
 
 async function replaceInFile(
   filePath: string,
-  replacements: Array<[string, string]>
+  replacements: Array<[string, string]>,
 ): Promise<void> {
   if (!existsSync(filePath)) {
     return;
@@ -142,13 +137,12 @@ async function resetInstallableTools(destination: string): Promise<void> {
   const toolsDir = join(destination, "tools", "chatjs");
   await rm(toolsDir, { recursive: true, force: true });
   await mkdir(toolsDir, { recursive: true });
-  await writeFile(join(toolsDir, "tools.ts"), createEmptyToolsTemplate());
-  await writeFile(join(toolsDir, "ui.ts"), createEmptyUiTemplate());
+  await syncTools(destination);
 }
 
 async function writePnpmWorkspaceConfig(
   destination: string,
-  options?: { blockExoticSubdeps?: boolean }
+  options?: { blockExoticSubdeps?: boolean },
 ): Promise<void> {
   const packageLines = ["packages:", "  - ."];
   const pnpm10Lines = [
@@ -176,12 +170,12 @@ async function writePnpmWorkspaceConfig(
 }
 
 async function applyChatTemplateSourceTransforms(
-  destination: string
+  destination: string,
 ): Promise<void> {
   await Promise.all(
     ["components/github-link.tsx", "components/docs-link.tsx"].map((file) =>
-      rm(join(destination, file), { force: true })
-    )
+      rm(join(destination, file), { force: true }),
+    ),
   );
 
   const headerPath = join(destination, "components", "header-actions.tsx");
@@ -202,7 +196,7 @@ async function applyChatTemplateSourceTransforms(
 
   const repoPackageJsonPath = join(getRepoRoot(), "package.json");
   const rootPackageJson = JSON.parse(
-    await readFile(repoPackageJsonPath, "utf8")
+    await readFile(repoPackageJsonPath, "utf8"),
   ) as { packageManager?: string };
   const packageJsonPath = join(destination, "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
@@ -218,7 +212,7 @@ async function applyChatTemplateSourceTransforms(
 }
 
 async function applyElectronTemplateSourceTransforms(
-  destination: string
+  destination: string,
 ): Promise<void> {
   const tsconfigPath = join(destination, "tsconfig.json");
   await replaceInFile(tsconfigPath, [['"../chat/*"', '"../*"']]);
@@ -233,7 +227,9 @@ async function applyElectronTemplateSourceTransforms(
   ]);
 }
 
-async function copyChatTemplateFromRepoSource(destination: string): Promise<void> {
+async function copyChatTemplateFromRepoSource(
+  destination: string,
+): Promise<void> {
   const sourceDir = join(getRepoRoot(), "apps", "chat");
   await cp(sourceDir, destination, {
     recursive: true,
@@ -243,7 +239,7 @@ async function copyChatTemplateFromRepoSource(destination: string): Promise<void
 }
 
 async function copyElectronTemplateFromRepoSource(
-  destination: string
+  destination: string,
 ): Promise<void> {
   const sourceDir = join(getRepoRoot(), "apps", "electron");
   await cp(sourceDir, destination, {
@@ -255,7 +251,7 @@ async function copyElectronTemplateFromRepoSource(
 
 async function normalizeChatAppFiles(
   destination: string,
-  packageManager: PackageManager
+  packageManager: PackageManager,
 ): Promise<void> {
   await replaceInFile(join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],
@@ -266,25 +262,20 @@ async function normalizeChatAppFiles(
       " * Run via `bun run check-env` or automatically in prebuild.",
       ` * Run via \`${runScript(packageManager, "check-env")}\` or automatically in prebuild.`,
     ],
-    [
-      "bun fetch:models",
-      runScript(packageManager, "fetch:models"),
-    ],
+    ["bun fetch:models", runScript(packageManager, "fetch:models")],
   ]);
 
   await replaceInFile(
     join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
-    [
-      [
-        "bun fetch:models",
-        runScript(packageManager, "fetch:models"),
-      ],
-    ]
+    [["bun fetch:models", runScript(packageManager, "fetch:models")]],
   );
 
   await replaceInFile(join(destination, "scripts", "with-db.sh"), [
     ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-    ["filter out bun's package resolution output", `filter out ${execCommand(packageManager)} resolution output`],
+    [
+      "filter out bun's package resolution output",
+      `filter out ${execCommand(packageManager)} resolution output`,
+    ],
     [
       "Run: bun db:branch:use main  (to switch back to main)",
       "Run: bash scripts/db-branch-use.sh main  (to switch back to main)",
@@ -301,13 +292,22 @@ async function normalizeChatAppFiles(
 
   await replaceInFile(join(destination, "scripts", "db-branch-use.sh"), [
     ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-    ['echo "Usage: bun db:branch:use <branch-name>"', 'echo "Usage: bash scripts/db-branch-use.sh <branch-name>"'],
+    [
+      'echo "Usage: bun db:branch:use <branch-name>"',
+      'echo "Usage: bash scripts/db-branch-use.sh <branch-name>"',
+    ],
     [
       'echo "       bun db:branch:use main  (switch to production)"',
       'echo "       bash scripts/db-branch-use.sh main  (switch to production)"',
     ],
-    ['echo "Available branches: bun db:branch:list"', `echo "Available branches: ${execCommand(packageManager)} neonctl branches list"`],
-    ['echo "Create branch: bun db:branch:create"', 'echo "Create branch: bash scripts/db-branch-create.sh"'],
+    [
+      'echo "Available branches: bun db:branch:list"',
+      `echo "Available branches: ${execCommand(packageManager)} neonctl branches list"`,
+    ],
+    [
+      'echo "Create branch: bun db:branch:create"',
+      'echo "Create branch: bash scripts/db-branch-create.sh"',
+    ],
   ]);
 
   await replaceInFile(join(destination, "scripts", "db-branch-delete.sh"), [
@@ -331,21 +331,34 @@ async function normalizeChatAppFiles(
     await writePnpmWorkspaceConfig(destination);
   }
 
+  // Vendored package source keeps its own upstream lint rules.
+  await replaceInFile(join(destination, "biome.jsonc"), [
+    ['"!lib/utils.ts",', '"!lib/utils.ts",\n      "!lib/thread",\n      "!electron",'],
+  ]);
   await resetInstallableTools(destination);
 }
 
 async function normalizeElectronFiles(
   destination: string,
-  packageManager: PackageManager
+  packageManager: PackageManager,
 ): Promise<void> {
   const scriptPlaceholder = "$" + "{script}";
 
   await replaceInFile(join(destination, "forge.config.ts"), [
-    ["Run \\`bun run prebuild\\`", "Run \\`" + runScript(packageManager, "prebuild") + "\\`"],
+    [
+      "Run \\`bun run prebuild\\`",
+      "Run \\`" + runScript(packageManager, "prebuild") + "\\`",
+    ],
     ["function runBunScript", "function runPackageManagerScript"],
-    ['spawnSync("bun", ["run", script], {', `spawnSync("${packageManager}", ["run", script], {`],
-    [`bun run ${scriptPlaceholder} failed`, `${packageManager} run ${scriptPlaceholder} failed`],
-    ["  runBunScript(\"prebuild\");", "  runPackageManagerScript(\"prebuild\");"],
+    [
+      'spawnSync("bun", ["run", script], {',
+      `spawnSync("${packageManager}", ["run", script], {`,
+    ],
+    [
+      `bun run ${scriptPlaceholder} failed`,
+      `${packageManager} run ${scriptPlaceholder} failed`,
+    ],
+    ['  runBunScript("prebuild");', '  runPackageManagerScript("prebuild");'],
     [
       '        runBunScript("build", { NODE_ENV: "development" });',
       '        runPackageManagerScript("build", { NODE_ENV: "development" });',
@@ -370,14 +383,16 @@ async function normalizeElectronFiles(
   }
 }
 
-async function excludeElectronFromRootTypecheck(projectDir: string): Promise<void> {
+async function excludeElectronFromRootTypecheck(
+  projectDir: string,
+): Promise<void> {
   const tsconfigPath = join(projectDir, "tsconfig.json");
   const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf8")) as {
     exclude?: string[];
   };
 
   tsconfig.exclude = Array.from(
-    new Set([...(tsconfig.exclude ?? []), "electron"])
+    new Set([...(tsconfig.exclude ?? []), "electron"]),
   );
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 }
@@ -386,9 +401,7 @@ export async function scaffoldFromTemplate(
   destination: string,
   options?: {
     packageManager?: PackageManager;
-    storage?: StorageSelection;
-    gateway?: Gateway | GatewaySelection;
-  }
+  },
 ): Promise<void> {
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
@@ -399,31 +412,48 @@ export async function scaffoldFromTemplate(
     await copyChatTemplateFromRepoSource(destination);
   }
 
+  // npm packing omits nested .gitignore files, so materialize the app's rules.
+  await writeFile(
+    join(destination, ".gitignore"),
+    "node_modules/\n.next/\n.env*\n!.env.example\n.vercel/\n.devtools/\n*.tsbuildinfo\nelectron/out/\nelectron/dist/\n",
+  );
   const packageJsonPath = join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
-    JSON.parse(await readFile(packageJsonPath, "utf8")) as Record<string, unknown>,
+    JSON.parse(await readFile(packageJsonPath, "utf8")) as Record<
+      string,
+      unknown
+    >,
     {
       packageManager,
       template: "chat-app",
-    }
+    },
   );
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
-  await configureStorageProvider(
-    destination,
-    options?.storage ?? { provider: "vercel-blob", options: {} }
-  );
-  await configureGatewayProvider(destination, options?.gateway ?? "vercel");
+  // This is a new scaffold, so remove the reference app's selection before install.
+  await rm(join(destination, "lib/ai/gateway.ts"));
+  const manifest = JSON.parse(await readFile(packageJsonPath, "utf8"));
+  delete manifest.dependencies["@ai-sdk/gateway"];
+  delete manifest.dependencies["@vercel/blob"];
+  await rm(join(destination, "lib/storage-provider.ts"));
+  await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const componentsPath = join(destination, "components.json");
+  const components = JSON.parse(await readFile(componentsPath, "utf8"));
+  components.registries = {
+    ...components.registries,
+    "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
+  };
+  await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
   await normalizeChatAppFiles(destination, packageManager);
 }
 
 export async function scaffoldElectron(
   projectDir: string,
-  opts: { projectName: string; packageManager?: PackageManager }
+  opts: { projectName: string; packageManager?: PackageManager },
 ): Promise<void> {
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = join(projectDir, "package.json");
   const rootPackageJson = JSON.parse(
-    await readFile(rootPackageJsonPath, "utf8")
+    await readFile(rootPackageJsonPath, "utf8"),
   ) as {
     devDependencies?: Record<string, string>;
   };
@@ -442,13 +472,13 @@ export async function scaffoldElectron(
       (await readFile(packageJsonPath, "utf8"))
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
         .replace("__GITHUB_OWNER__", "your-github-username")
-        .replace("__GITHUB_REPO__", opts.projectName)
+        .replace("__GITHUB_REPO__", opts.projectName),
     ) as Record<string, unknown>,
     {
       packageManager,
       template: "electron",
       tsxVersion: rootPackageJson.devDependencies?.tsx,
-    }
+    },
   );
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   await normalizeElectronFiles(destination, packageManager);
@@ -458,22 +488,11 @@ export async function scaffoldElectron(
 export async function scaffoldFromGit(
   url: string,
   destination: string,
-  options?: { storage?: StorageSelection; gateway?: Gateway | GatewaySelection }
 ): Promise<void> {
   await runCommand(
     "git",
     ["clone", "--depth", "1", url, destination],
-    process.cwd()
+    process.cwd(),
   );
   await rm(join(destination, ".git"), { recursive: true, force: true });
-  if (options?.gateway && existsSync(join(destination, "lib/ai/gateway.ts"))) {
-    await configureGatewayProvider(destination, options.gateway);
-  }
-  if (!existsSync(join(destination, "lib", "storage-provider.ts"))) {
-    return;
-  }
-  await configureStorageProvider(
-    destination,
-    options?.storage ?? { provider: "vercel-blob", options: {} }
-  );
 }

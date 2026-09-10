@@ -1,4 +1,0 @@
-{
-  "description": "Get the current weather at a location",
-  "registryDependencies": ["toolkit-renderer"]
-}

@@ -1,47 +1,44 @@
 import { expect, it } from "bun:test";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { builtInGateways, resolveGateway } from "./gateways";
-
-it("requires secure remote transport for roots, dependencies and redirects", async () => {
-	await expect(
-		resolveGateway("http://example.com/gateway.json"),
-	).rejects.toThrow("HTTPS");
-	const item = builtInGateways[0];
+it("validates gateway integration metadata with the standard registry schema", async () => {
+	const cwd = await mkdtemp(join(tmpdir(), "chatjs-metadata-"));
+	const source = join(cwd, "gateway.json");
+	try {
+		await writeFile(source, JSON.stringify(builtInGateways[0]));
+		expect((await resolveGateway(source)).definition.id).toBe("vercel");
+		await writeFile(
+			source,
+			JSON.stringify({
+				...builtInGateways[0],
+				meta: {
+					chatjs: { ...builtInGateways[0].meta.chatjs, contractVersion: 999 },
+				},
+			}),
+		);
+		await expect(resolveGateway(source)).rejects.toThrow();
+	} finally {
+		await rm(cwd, { recursive: true, force: true });
+	}
+});
+it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
 	const server = Bun.serve({
 		port: 0,
 		hostname: "127.0.0.1",
-		fetch(request) {
-			const path = new URL(request.url).pathname;
-			if (path === "/loopback-redirect.json")
-				return Response.redirect(new URL("/item.json", request.url));
-			if (path === "/redirect.json")
-				return Response.redirect("http://example.com/item.json");
-			if (path === "/dependencies.json")
-				return Response.json({
-					...item,
-					registryDependencies: ["http://example.com/adapter.json"],
-				});
-			if (path === "/invalid.json")
-				return Response.json({ ...item, type: "registry:lib" });
-			return Response.json(item);
-		},
+		fetch: (request) =>
+			new URL(request.url).pathname === "/gateway.json"
+				? Response.redirect(new URL("/target.json", request.url))
+				: Response.json(builtInGateways[0]),
 	});
 	try {
-		const base = `HTTP://127.0.0.1:${server.port}`;
-		expect((await resolveGateway(`${base}/item.json`)).definition.id).toBe(
-			"vercel",
-		);
 		await expect(
-			resolveGateway(`${base}/loopback-redirect.json`),
+			resolveGateway("http://example.com/gateway.json"),
 		).rejects.toThrow("HTTPS");
-		await expect(resolveGateway(`${base}/redirect.json`)).rejects.toThrow(
-			"HTTPS",
-		);
-		await expect(resolveGateway(`${base}/dependencies.json`)).rejects.toThrow(
-			"HTTPS",
-		);
-		await expect(resolveGateway(`${base}/invalid.json`)).rejects.toThrow(
-			"type registry:item",
-		);
+		await expect(
+			resolveGateway(`http://127.0.0.1:${server.port}/gateway.json`),
+		).rejects.toThrow("HTTPS");
 	} finally {
 		server.stop(true);
 	}

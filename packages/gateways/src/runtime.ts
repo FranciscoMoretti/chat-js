@@ -9,7 +9,9 @@ interface GatewayLogger {
 
 export interface GatewayOptions {
   env?: Record<string, string | undefined>;
-  fetch?: typeof globalThis.fetch;
+  fetch?: (
+    ...args: Parameters<typeof globalThis.fetch>
+  ) => ReturnType<typeof globalThis.fetch>;
   getFallbackModels?: (gateway: string) => readonly AiGatewayModel[];
   logger?: GatewayLogger;
 }
