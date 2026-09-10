@@ -228,6 +228,13 @@ test("the composer selects models for initial and subsequent durable turns", asy
     }
   }
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
+  const [activeConversation] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, conversation.id));
+  expect(activeConversation?.updatedAt.getTime()).toBeGreaterThan(
+    conversation.updatedAt.getTime()
+  );
   const chargedUsage = await db
     .select()
     .from(eveUsage)

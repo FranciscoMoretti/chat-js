@@ -39,7 +39,9 @@ export async function EveChatPage({
             }
             breadcrumb={
               <h1 className="ml-2 truncate font-medium text-sm">
-                {selected?.firstMessage ?? "Chat"}
+                {selected?.title ??
+                  selected?.firstMessage.slice(0, 100) ??
+                  "Chat"}
               </h1>
             }
           />

@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 import { chatRouter } from "./chat.router";
 import { creditsRouter } from "./credits.router";
 import { documentRouter } from "./document.router";
+import { eveRouter } from "./eve.router";
 import { mcpRouter } from "./mcp.router";
 import { projectRouter } from "./project.router";
 import { settingsRouter } from "./settings.router";
@@ -15,6 +16,7 @@ import { voteRouter } from "./vote.router";
 
 export const appRouter = createTRPCRouter({
   chat: chatRouter,
+  eve: eveRouter,
   credits: creditsRouter,
   vote: voteRouter,
   document: documentRouter,

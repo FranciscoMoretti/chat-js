@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -12,6 +13,7 @@ import { ControlledChatComposer } from "@/components/chat-composer";
 import { Button } from "@/components/ui/button";
 import { sendCommand } from "@/lib/eve/send-command";
 import { useDefaultModel } from "@/providers/default-model-provider";
+import { useTRPC } from "@/trpc/react";
 import { EveMessages } from "./eve-messages";
 import { EveModelPicker } from "./eve-model-picker";
 
@@ -23,6 +25,8 @@ const pendingMessageSchema = z.object({
 
 export function EveConversation({ sessionId }: { sessionId: string }) {
   const selectedModel = useDefaultModel();
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
   const storageKey = `chatjs.eve.pending-message:${sessionId}`;
   const [pendingMessage, setPendingMessage] = useState<z.infer<
     typeof pendingMessageSchema
@@ -43,6 +47,11 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
       commandError.current = cause;
     },
     onEvent: (event) => {
+      if (event.type === "turn.completed") {
+        queryClient
+          .invalidateQueries({ queryKey: trpc.eve.list.queryKey() })
+          .catch(() => undefined);
+      }
       if (event.type === "message.received") {
         receivedMessages.current += 1;
       }

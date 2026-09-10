@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
 
@@ -21,7 +21,11 @@ export async function listEveConversations(ownerId: string) {
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.ownerId, ownerId))
-    .orderBy(desc(eveConversation.createdAt))
+    .orderBy(
+      desc(eveConversation.isPinned),
+      desc(eveConversation.updatedAt),
+      desc(eveConversation.id)
+    )
     .limit(50);
 }
 export async function getEveConversation(ownerId: string, id: string) {
@@ -120,4 +124,36 @@ export async function listEveOwnerBindings(ownerId: string) {
     })
     .from(eveConversation)
     .where(eq(eveConversation.ownerId, ownerId));
+}
+
+export async function updateEveConversationMetadata(
+  ownerId: string,
+  id: string,
+  updates: { title?: string; isPinned?: boolean }
+) {
+  const [row] = await db
+    .update(eveConversation)
+    .set(updates)
+    .where(
+      and(eq(eveConversation.id, id), eq(eveConversation.ownerId, ownerId))
+    )
+    .returning({ id: eveConversation.id });
+  return row;
+}
+
+export async function recordEveConversationActivity(
+  ownerId: string,
+  sessionId: string,
+  at: Date
+) {
+  await db
+    .update(eveConversation)
+    .set({ updatedAt: at })
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.sessionId, sessionId),
+        lt(eveConversation.updatedAt, at)
+      )
+    );
 }

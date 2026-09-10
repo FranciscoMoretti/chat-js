@@ -6,7 +6,7 @@ import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 interface ChatMenuItemsProps {
   isPinned: boolean;
-  onDelete: () => void;
+  onDelete?: () => void;
   onRename: () => void;
   onShare?: () => void;
   onTogglePin: () => void;
@@ -35,13 +35,15 @@ export function ChatMenuItems({
 
       {showShare && onShare && <ShareMenuItem onShare={onShare} />}
 
-      <DropdownMenuItem
-        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive"
-        onSelect={onDelete}
-      >
-        <Trash2 size={16} />
-        <span>Delete</span>
-      </DropdownMenuItem>
+      {onDelete && (
+        <DropdownMenuItem
+          className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive"
+          onSelect={onDelete}
+        >
+          <Trash2 size={16} />
+          <span>Delete</span>
+        </DropdownMenuItem>
+      )}
     </>
   );
 }

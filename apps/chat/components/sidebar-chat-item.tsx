@@ -26,14 +26,16 @@ const PureSidebarChatItem = ({
   onPin,
   setOpenMobile,
   prefetch = false,
+  showShare = true,
 }: {
-  chat: UIChat;
+  chat: Pick<UIChat, "id" | "title" | "isPinned" | "projectId">;
   isActive: boolean;
-  onDelete: (chatId: string) => void;
+  onDelete?: (chatId: string) => void;
   onRename: (chatId: string, title: string) => void;
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
   prefetch?: boolean;
+  showShare?: boolean;
 }) => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     chat.projectId
@@ -111,13 +113,14 @@ const PureSidebarChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
             isPinned={chat.isPinned}
-            onDelete={() => onDelete(chat.id)}
+            onDelete={onDelete ? () => onDelete(chat.id) : undefined}
             onRename={() => {
               setIsEditing(true);
               setEditTitle(chat.title);
             }}
             onShare={() => setShareDialogOpen(true)}
             onTogglePin={() => onPin(chat.id, !chat.isPinned)}
+            showShare={showShare}
           />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -136,6 +139,15 @@ const PureSidebarChatItem = ({
 export const SidebarChatItem = memo(
   PureSidebarChatItem,
   (prevProps, nextProps) => {
+    if (
+      prevProps.showShare !== nextProps.showShare ||
+      prevProps.onDelete !== nextProps.onDelete ||
+      prevProps.onRename !== nextProps.onRename ||
+      prevProps.onPin !== nextProps.onPin ||
+      prevProps.chat.projectId !== nextProps.chat.projectId
+    ) {
+      return false;
+    }
     if (prevProps.isActive !== nextProps.isActive) {
       return false;
     }

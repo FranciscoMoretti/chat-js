@@ -2,7 +2,13 @@ import { eq } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
-import { createEveConversation, ownsEveSession } from "../lib/db/eve-queries";
+import {
+  createEveConversation,
+  getEveConversation,
+  ownsEveSession,
+  recordEveConversationActivity,
+  updateEveConversationMetadata,
+} from "../lib/db/eve-queries";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -113,4 +119,40 @@ test("unknown create remains unresolved and is not dispatched again", async () =
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("unresolved");
   expect(starts).toBe(1);
+});
+
+test("activity projection is owner-scoped, monotonic, and independent of metadata edits", async () => {
+  const bound = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "activity",
+    async () => crypto.randomUUID()
+  );
+  const before = await getEveConversation(owner, bound.id);
+  const activityAt = new Date(Date.now() + 60_000);
+  await recordEveConversationActivity("other", bound.sessionId, activityAt);
+  expect((await getEveConversation(owner, bound.id))?.updatedAt).toEqual(
+    before?.updatedAt
+  );
+  await recordEveConversationActivity(owner, bound.sessionId, activityAt);
+  await recordEveConversationActivity(
+    owner,
+    bound.sessionId,
+    new Date(activityAt.getTime() - 30_000)
+  );
+  await updateEveConversationMetadata(owner, bound.id, {
+    title: "renamed",
+    isPinned: true,
+  });
+  expect((await getEveConversation(owner, bound.id))?.updatedAt).toEqual(
+    activityAt
+  );
+  expect(
+    await updateEveConversationMetadata("other", bound.id, {
+      title: "intrusion",
+    })
+  ).toBeUndefined();
+  expect((await getEveConversation(owner, bound.id))?.firstMessage).toBe(
+    "activity"
+  );
 });

@@ -11,7 +11,9 @@ export async function EveHistory() {
   const current = await listEveConversations(session.user.id);
   const items = current.map((row) => ({
     id: row.id,
-    title: row.firstMessage.slice(0, 100),
+    title: row.title ?? row.firstMessage.slice(0, 100),
+    isPinned: row.isPinned,
+    projectId: null,
   }));
   return <EveHistoryList items={items} />;
 }
