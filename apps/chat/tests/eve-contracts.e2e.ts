@@ -6,6 +6,7 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   beginEveConversationDeletion,
   createEveConversation,
+  getDeletingEveConversationForSession,
   getEveConversation,
   getEveCreation,
   getPublicEveConversation,
@@ -413,6 +414,13 @@ test.each([
   expect(await getEveConversation(owner, bound.id)).toBeUndefined();
   expect(await getPublicEveConversation(bound.id)).toBeUndefined();
   expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
+  expect(
+    Boolean(await getDeletingEveConversationForSession(owner, bound.sessionId))
+  ).toBe(state === "deleting");
+  expect(
+    await getDeletingEveConversationForSession("other", bound.sessionId)
+  ).toBeUndefined();
+
   expect(
     (await listEveConversations(owner)).items.some((row) => row.id === bound.id)
   ).toBe(false);

@@ -466,3 +466,22 @@ export async function listEveConversationBranches(
     .orderBy(eveConversation.createdAt, eveConversation.id);
   return { rootId, branches };
 }
+
+/** Internal cleanup only; does not grant browser or conversation access. */
+export async function getDeletingEveConversationForSession(
+  ownerId: string,
+  sessionId: string
+) {
+  const [row] = await db
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "deleting")
+      )
+    )
+    .limit(1);
+  return row;
+}

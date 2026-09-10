@@ -51,7 +51,8 @@ for (const state of ["deleting", "deleted"] as const) {
         page.getByRole("heading", { name: "404", exact: true })
       ).toBeVisible();
       const stream = await page.request.get(
-        `/api/eve/v1/session/${sessionId}/stream`
+        `/api/eve/v1/session/${sessionId}/stream`,
+        { headers: { "x-chatjs-deletion": "1" } }
       );
       expect(stream.status()).toBe(404);
       const publicPage = await anonymous.newPage();

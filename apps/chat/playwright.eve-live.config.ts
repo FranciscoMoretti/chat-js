@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-deletion-retire.e2e.ts",
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
     "eve-image.e2e.ts",
