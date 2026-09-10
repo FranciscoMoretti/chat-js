@@ -72,6 +72,7 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   scripts.lint = "ultracite check";
   scripts.format = "ultracite fix";
   scripts["check-env"] = "tsx scripts/check-env.ts";
+  scripts["redis:connect"] = "tsx scripts/check-redis.ts";
   scripts["db:migrate"] =
     "export VERCEL_ENV=production && bash scripts/with-db.sh tsx lib/db/migrate.ts";
   scripts["db:backfill-parts"] = "tsx lib/db/backfill-parts.ts";

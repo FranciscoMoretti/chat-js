@@ -388,6 +388,7 @@ export const create = new Command()
 			logger.break();
 
 			printEnvChecklist(envEntries);
+			logger.log("  Optional Redis: set REDIS_URL, then run " + packageManager + " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis");
 
 			logger.break();
 			logger.log(

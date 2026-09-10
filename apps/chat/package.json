@@ -35,7 +35,8 @@
     "test:unit": "vitest run",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
-    "fetch:models": "bun scripts/fetch-models.ts && bun format"
+    "fetch:models": "bun scripts/fetch-models.ts && bun format",
+    "redis:connect": "bun scripts/check-redis.ts"
   },
   "dependencies": {
     "@ai-sdk/devtools": "1.0.15",

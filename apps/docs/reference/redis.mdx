@@ -1,0 +1,78 @@
+---
+title: Redis
+description: Configure a Redis host for resumable streams and shared rate limits
+---
+
+ChatJS uses one Node Redis client with a standard Redis TCP/TLS connection. You
+do not select a Redis host in the CLI or install a host-specific package. Your
+Postgres host and Redis host are independent.
+
+## Set up a connection
+
+Create a Redis database, then put its connection URL in `.env.local` at your
+generated app's root, or `apps/chat` in this repository:
+
+```bash
+REDIS_URL=rediss://default:password@your-redis-host:6379/0
+```
+
+Use `rediss://` for verified TLS and your host's certificate trust settings.
+`redis://localhost:6379` works for a local server without TLS. Connection attempts
+use a 10-second socket timeout. The running app retains Node Redis's automatic
+reconnection behavior.
+
+| Host | What to provide |
+| --- | --- |
+| Upstash | Copy the Redis TCP/TLS connection credentials from your database, not `UPSTASH_REDIS_REST_URL` or a REST token |
+| Redis Cloud | Use your database endpoint, port, username, password, and TLS settings |
+| Another managed host or local Redis | Use a standard Redis URL reachable from your app's runtime |
+
+See [Node Redis connections](https://redis.io/docs/latest/develop/clients/nodejs/connect/)
+and [Upstash security](https://upstash.com/docs/redis/features/security) for client
+and transport details. HTTP-only endpoints and cluster-mode endpoints requiring
+Redis Cluster routing are outside this client configuration.
+
+## Verify your provider
+
+After configuring the URL, run:
+
+```bash
+bun redis:connect
+```
+
+The generated command also runs with npm, pnpm, or Yarn. It verifies two
+connections, key/value reads and writes, counters, expiry, key lookup, and pub/sub.
+It uses the same connection options as the app, with reconnect retries disabled
+and a 15-second overall deadline for the check. Diagnostics do not print the URL
+or provider error text.
+
+The check writes one uniquely named key under
+`<appPrefix>:connection-check:*` with a 60-second expiry, publishes a probe on the
+same named channel, and deletes the key on success. On failure the key expires.
+Allow this prefix in your test credentials. The check does not read application
+values or modify existing keys. It exits unsuccessfully on a failed check and
+reports an unconfigured optional Redis connection without connecting.
+
+A successful probe confirms the tested capabilities. It does not establish
+provider capacity, availability guarantees, or permission to every application
+key prefix.
+
+## Required capabilities
+
+Redis currently serves resumable-stream coordination and anonymous rate limits.
+It is not a general query-result cache. The existing implementation uses `SET`
+(with expiry), `GET`, `INCR`, `EXPIRE`, `KEYS`, `PUBLISH`, `SUBSCRIBE`, and
+`UNSUBSCRIBE`. The check also uses `DEL` to clean up its temporary key.
+
+Resumable streams require a separate subscriber connection. Provider credentials
+must allow the relevant commands, application key prefixes, and pub/sub channels.
+A REST endpoint or a service supporting only basic key/value commands is not a
+drop-in replacement for this connection.
+
+## Without Redis
+
+You may leave `REDIS_URL` blank. Normal chat streaming remains available, but
+streams cannot resume after disconnection and Redis-backed anonymous rate-limit
+counters are not enforced. Other database-backed limits retain their behavior.
+
+See [Environment variables](./env-vars) for the rest of the app's configuration.
