@@ -54,7 +54,7 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
     onEvent: (event) => {
       if (event.type === "turn.completed") {
         queryClient
-          .invalidateQueries({ queryKey: trpc.eve.list.queryKey() })
+          .invalidateQueries({ queryKey: trpc.eve.list.pathKey() })
           .catch(() => undefined);
       }
       if (event.type === "message.received") {

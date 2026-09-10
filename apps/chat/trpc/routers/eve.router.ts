@@ -6,6 +6,7 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { eveHistoryInput } from "@/lib/eve/history-input";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 const eveProcedure = protectedProcedure.use(({ next }) => {
@@ -38,14 +39,8 @@ export const eveRouter = createTRPCRouter({
       }
       return row;
     }),
-  list: eveProcedure.query(async ({ ctx }) => {
-    const rows = await listEveConversations(ctx.user.id);
-    return rows.map((row) => ({
-      id: row.id,
-      title: row.title ?? row.firstMessage.slice(0, 100),
-      isPinned: row.isPinned,
-      projectId: null,
-    }));
+  list: eveProcedure.input(eveHistoryInput).query(async ({ ctx, input }) => {
+    return await listEveConversations(ctx.user.id, input);
   }),
   rename: eveProcedure
     .input(z.object({ id: z.uuid(), title: z.string().trim().min(1).max(255) }))

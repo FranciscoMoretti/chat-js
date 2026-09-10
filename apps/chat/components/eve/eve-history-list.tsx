@@ -1,10 +1,15 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   SidebarGroup,
@@ -12,23 +17,43 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import type { listEveConversations } from "@/lib/db/eve-queries";
 import { useTRPC } from "@/trpc/react";
 import { EveShareDialogContent } from "./eve-share-dialog";
 
 export function EveHistoryList({
-  items,
+  initialPage,
 }: {
-  items: { id: string; title: string; isPinned: boolean; projectId: null }[];
+  initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: conversations } = useQuery({
-    ...trpc.eve.list.queryOptions(),
-    initialData: items,
+  const [query, setQuery] = useState("");
+  const search = query.trim();
+  const history = useInfiniteQuery(
+    trpc.eve.list.infiniteQueryOptions(
+      { search },
+      {
+        getNextPageParam: (page) => page.nextCursor,
+        initialData: search
+          ? undefined
+          : { pages: [initialPage], pageParams: [null] },
+      }
+    )
+  );
+  const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
+  // Activity can move a row across a loaded page boundary between requests.
+  const seen = new Set<string>();
+  const filtered = conversations.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
   });
   async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: trpc.eve.list.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
     router.refresh();
   }
   const rename = useMutation(
@@ -43,18 +68,15 @@ export function EveHistoryList({
       onError: (error) => toast.error(error.message),
     })
   );
-  const [query, setQuery] = useState("");
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const filtered = conversations.filter((item) =>
-    item.title.toLowerCase().includes(query.toLowerCase())
-  );
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Conversations</SidebarGroupLabel>
       <Input
         aria-label="Search conversations"
         className="mb-2"
+        maxLength={255}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search conversations…"
         value={query}
@@ -76,7 +98,39 @@ export function EveHistoryList({
           />
         ))}
       </SidebarMenu>
-      {!filtered.length && (
+      {history.isPending && (
+        <p className="p-2 text-muted-foreground text-sm" role="status">
+          Loading conversations…
+        </p>
+      )}
+      {history.isError && (
+        <div className="p-2 text-sm" role="alert">
+          <p>Could not load conversations.</p>
+          <Button
+            onClick={() =>
+              history.isFetchNextPageError
+                ? history.fetchNextPage()
+                : history.refetch()
+            }
+            size="sm"
+            variant="ghost"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+      {history.hasNextPage && !history.isError && (
+        <Button
+          className="mt-2"
+          disabled={history.isFetching}
+          onClick={() => history.fetchNextPage()}
+          size="sm"
+          variant="ghost"
+        >
+          {history.isFetchingNextPage ? "Loading…" : "Load more conversations"}
+        </Button>
+      )}
+      {!(filtered.length || history.isPending || history.isError) && (
         <p className="p-2 text-muted-foreground text-sm">
           {query
             ? "No matching conversations."

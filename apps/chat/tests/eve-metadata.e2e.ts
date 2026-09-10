@@ -54,11 +54,19 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       page.getByRole("link", { name: firstTitle, exact: true }).locator("..");
     await row().getByRole("button", { name: "More", exact: true }).click();
     await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
-    await page.locator('input[maxlength="255"]:visible').fill(renamed);
+    await page
+      .locator(
+        'input[maxlength="255"]:not([aria-label="Search conversations"]):visible'
+      )
+      .fill(renamed);
     const renameResponse = page.waitForResponse(
       "**/api/trpc/eve.rename?batch=1"
     );
-    await page.locator('input[maxlength="255"]:visible').press("Enter");
+    await page
+      .locator(
+        'input[maxlength="255"]:not([aria-label="Search conversations"]):visible'
+      )
+      .press("Enter");
     const renamedResponse = await renameResponse;
     expect(renamedResponse.ok(), await renamedResponse.text()).toBe(true);
     await expect(

@@ -1,6 +1,7 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, ilike, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
+import type { EveHistoryInput } from "@/lib/eve/history-input";
 
 export async function ownsEveSession(ownerId: string, sessionId: string) {
   const rows = await db
@@ -16,17 +17,65 @@ export async function ownsEveSession(ownerId: string, sessionId: string) {
     .limit(1);
   return rows.length === 1;
 }
-export async function listEveConversations(ownerId: string) {
-  return await db
-    .select()
+export async function listEveConversations(
+  ownerId: string,
+  { search = "", cursor }: EveHistoryInput = { search: "" }
+) {
+  const title = sql<string>`coalesce(${eveConversation.title}, left(${eveConversation.firstMessage}, 100))`;
+  // Preserve PostgreSQL's microseconds: converting the cursor to Date can skip
+  // conversations sharing the same millisecond at a page boundary.
+  const updatedAt = sql<string>`to_char(${eveConversation.updatedAt}, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+  const beforeCursor = cursor
+    ? or(
+        cursor.isPinned ? eq(eveConversation.isPinned, false) : undefined,
+        and(
+          eq(eveConversation.isPinned, cursor.isPinned),
+          or(
+            sql`${eveConversation.updatedAt} < ${cursor.updatedAt}::timestamp`,
+            and(
+              sql`${eveConversation.updatedAt} = ${cursor.updatedAt}::timestamp`,
+              lt(eveConversation.id, cursor.id)
+            )
+          )
+        )
+      )
+    : undefined;
+  const escapedSearch = search.replace(/[\\%_]/g, "\\$&");
+  const rows = await db
+    .select({
+      id: eveConversation.id,
+      title,
+      isPinned: eveConversation.isPinned,
+      updatedAt,
+    })
     .from(eveConversation)
-    .where(eq(eveConversation.ownerId, ownerId))
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        search ? ilike(title, `%${escapedSearch}%`) : undefined,
+        beforeCursor
+      )
+    )
     .orderBy(
       desc(eveConversation.isPinned),
       desc(eveConversation.updatedAt),
       desc(eveConversation.id)
     )
-    .limit(50);
+    .limit(51);
+  const page = rows.slice(0, 50);
+  const last = page.at(-1);
+  return {
+    items: page.map(({ id, title: itemTitle, isPinned }) => ({
+      id,
+      title: itemTitle,
+      isPinned,
+      projectId: null,
+    })),
+    nextCursor:
+      rows.length > 50 && last
+        ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
+        : null,
+  };
 }
 export async function getEveConversation(ownerId: string, id: string) {
   const [row] = await db

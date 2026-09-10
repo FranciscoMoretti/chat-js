@@ -6,6 +6,7 @@ export default defineConfig({
   testMatch: [
     "eve-live.e2e.ts",
     "eve-metadata.e2e.ts",
+    "eve-history.e2e.ts",
     "eve-attachments.e2e.ts",
     "eve-sharing.e2e.ts",
     "eve-pdf.e2e.ts",
