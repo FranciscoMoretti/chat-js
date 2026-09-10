@@ -62,6 +62,15 @@ rebuilds that prefix independently, making repeated restoration idempotent.
 Nested forks flatten inherited envelopes. Reads are bounded before parsing to
 8 MiB, 50,000 events, and ten seconds; oversized histories fail explicitly.
 
+The native create-session HTTP route accepts a validated `fork` reference only
+when the channel explicitly supplies `authorizeFork`. The policy receives the
+verified principal and source session ID; omission denies access. It runs before
+operation replay lookup and is repeated if `onMessage` replaces authentication.
+Anonymous and null principals cannot fork. The application still owns immutable
+operation payload checks and its conversation-to-session ownership lookup.
+The HTTP route's 124 focused tests pass, including the new access-control cases;
+both source reviews found no actionable regression.
+
 This source extension advances the stream protocol to version 26. Activating it
 requires matching server and client code; the currently installed published
 client does not support version 26. No running app dependency has changed.

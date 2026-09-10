@@ -104,6 +104,136 @@ index e757d05..2e98bca 100644
  export const AuthKey = new ContextKey<SessionAuthContext | null>("eve.auth");
  export const InitiatorAuthKey = new ContextKey<SessionAuthContext | null>("eve.initiatorAuth");
  export const SessionIdKey = new ContextKey<string>("eve.sessionId");
+diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
+index e5b41ab..c537af5 100644
+--- a/packages/eve/src/eve-channel/index.ts
++++ b/packages/eve/src/eve-channel/index.ts
+@@ -150,6 +150,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+ 
+         const body = parseCreateBody(payload);
+         if (body instanceof Response) return body;
++        if (body.fork) {
++          if (
++            forwarded.auth.principalType === "anonymous" ||
++            !input.authorizeFork ||
++            !(await input.authorizeFork({
++              auth: forwarded.auth,
++              sourceSessionId: body.fork.sessionId,
++            }))
++          ) {
++            return Response.json(
++              { error: "Session fork access denied.", ok: false },
++              { status: 403 },
++            );
++          }
++        }
++
+         // Top-level sessions own their trace. Callback sessions are delegated
+         // remote agents and intentionally continue the dispatching agent trace.
+         const parsedParentTraceContext =
+@@ -236,6 +252,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+           request: req,
+         });
+         if (messageResult instanceof Response) return messageResult;
++        if (
++          body.fork &&
++          messageResult.auth !== forwarded.auth &&
++          (messageResult.auth === null ||
++            messageResult.auth.principalType === "anonymous" ||
++            !input.authorizeFork ||
++            !(await input.authorizeFork({
++              auth: messageResult.auth,
++              sourceSessionId: body.fork.sessionId,
++            })))
++        ) {
++          return Response.json(
++            { error: "Session fork access denied.", ok: false },
++            { status: 403 },
++          );
++        }
+         const createSession = readRouteSessionCreator(args);
+         if (createSession === undefined) {
+           return Response.json(
+@@ -247,6 +279,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+         let handle: Awaited<ReturnType<typeof createSession>>;
+         try {
+           handle = await createSession({
++            fork: body.fork,
+             activityObserver: body.activityObserver,
+             auth: messageResult.auth,
+             capabilities:
+diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
+index 6a52594..644afc3 100644
+--- a/packages/eve/src/eve-channel/request.ts
++++ b/packages/eve/src/eve-channel/request.ts
+@@ -1,3 +1,4 @@
++import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
+ import type { FilePart, TextPart, UserContent } from "ai";
+ 
+ import type {
+@@ -33,6 +34,7 @@ import { parseJsonObject, type JsonObject } from "#shared/json.js";
+ import type { RunMode } from "#shared/run-mode.js";
+ 
+ interface ParsedCreateBody {
++  fork?: SessionForkReference;
+   activityObserver?: ActivityObserverConfig;
+   callback?: SessionCallback;
+   capabilities?: SessionCapabilities;
+@@ -110,7 +112,33 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
+     );
+   }
+ 
++  let fork: SessionForkReference | undefined;
++  if (payload.fork !== undefined) {
++    const value = payload.fork;
++    if (
++      typeof value !== "object" ||
++      value === null ||
++      Array.isArray(value) ||
++      !("sessionId" in value) ||
++      typeof value.sessionId !== "string" ||
++      !value.sessionId.length ||
++      value.sessionId.length > 256 ||
++      !("beforeTurnId" in value) ||
++      typeof value.beforeTurnId !== "string" ||
++      value.beforeTurnId.length > 64 ||
++      !/^turn_(0|[1-9][0-9]*)$/.test(value.beforeTurnId) ||
++      Object.keys(value).some((key) => key !== "sessionId" && key !== "beforeTurnId")
++    ) {
++      return Response.json(
++        { error: "Invalid session fork reference.", ok: false },
++        { status: 400 },
++      );
++    }
++    fork = { sessionId: value.sessionId, beforeTurnId: value.beforeTurnId };
++  }
++
+   const result: ParsedCreateBody = {
++    fork,
+     activityObserver,
+     callback,
+     capabilities,
+diff --git a/packages/eve/src/eve-channel/types.ts b/packages/eve/src/eve-channel/types.ts
+index 7d6e8f7..8913d33 100644
+--- a/packages/eve/src/eve-channel/types.ts
++++ b/packages/eve/src/eve-channel/types.ts
+@@ -88,6 +88,16 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
+  * `uploadPolicy`, `onMessage`, and `events` refine the default HTTP behavior.
+  */
+ export interface EveChannelInput {
++  /**
++   * Explicit source-session access policy for native forks. Omit to deny forks.
++   * Runs before operation lookup and again if onMessage replaces the principal.
++   * Authentication alone never grants access to another session's history.
++   */
++  readonly authorizeFork?: (input: {
++    readonly auth: SessionAuthContext;
++    readonly sourceSessionId: string;
++  }) => boolean | Promise<boolean>;
++
+   /**
+    * Route auth policy: a single {@link AuthFn} or an ordered array walked by {@link routeAuth}.
+    * The first entry returning a {@link SessionAuthContext} wins; `null` / `undefined` skips to
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
 index 2aae307..d88bd6a 100644
 --- a/packages/eve/src/execution/create-session-step.ts
@@ -373,6 +503,104 @@ index fc45f34..a7d101a 100644
    | ActionInputAppendedStreamEvent
    | ApprovalCandidateStreamEvent
    | ApprovalSettledStreamEvent
+diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
+index 35cfa0f..d6f522e 100644
+--- a/packages/eve/src/public/channels/eve.test.ts
++++ b/packages/eve/src/public/channels/eve.test.ts
+@@ -2277,3 +2277,93 @@ describe("eveChannel — forwarded principal", () => {
+     expect(handler.send).not.toHaveBeenCalled();
+   });
+ });
++
++describe("eveChannel — native fork authorization", () => {
++  const fork = { sessionId: "source-session", beforeTurnId: "turn_1" };
++
++  it("denies forks by default before resolving a replayed operation", async () => {
++    const handler = createEveCreateHandler(
++      { auth: () => ACCEPTED_AUTH },
++      { activeSessionId: "existing" },
++    );
++    const response = await handler.fetch(
++      createJsonMessageRequest({ message: "edit", operationId: "retry", fork }),
++    );
++    expect(response.status).toBe(403);
++    expect(handler.resolveSession).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("passes only an explicitly authorized source reference to native creation", async () => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(202);
++    expect(authorizeFork).toHaveBeenCalledWith({
++      auth: ACCEPTED_AUTH,
++      sourceSessionId: fork.sessionId,
++    });
++    expect(handler.createSession.mock.calls[0]?.[0].fork).toEqual(fork);
++  });
++
++  it("rejects a source that the verified principal does not own", async () => {
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork: () => false,
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("denies anonymous forks even when the source policy allows them", async () => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: none(), authorizeFork });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(authorizeFork).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("denies an onMessage downgrade to unauthenticated execution", async () => {
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork: () => true,
++      onMessage: () => ({ auth: null }),
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("reauthorizes a principal changed by onMessage", async () => {
++    const authorizeFork = vi.fn(
++      ({ auth }: { auth: SessionAuthContext }) => auth.principalId === ACCEPTED_AUTH.principalId,
++    );
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork,
++      onMessage: () => ({ auth: OVERRIDE_AUTH }),
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(authorizeFork).toHaveBeenCalledTimes(2);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it.each([
++    null,
++    {},
++    { sessionId: "source", beforeTurnId: "turn_-1" },
++    { ...fork, extra: "value" },
++  ])("rejects malformed fork references before authorization: %j", async (invalid) => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
++    const response = await handler.fetch(
++      createJsonMessageRequest({ message: "edit", fork: invalid }),
++    );
++    expect(response.status).toBe(400);
++    expect(authorizeFork).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++});
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
 index 48e2bc3..27e414e 100644
 --- a/packages/eve/src/public/definitions/hook.ts
