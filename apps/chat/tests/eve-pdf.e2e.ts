@@ -13,6 +13,7 @@ const chatUrl = /\/chat\/[a-f0-9-]+$/;
 test("a PDF uploaded through the composer reaches the model and opens after reload", async ({
   page,
 }) => {
+  test.setTimeout(240_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
@@ -55,6 +56,43 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await expect(page.locator(".is-assistant")).toContainText("CEDAR-4827", {
       timeout: 90_000,
     });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    const sourceUrl = page.url();
+    const composer = page.getByRole("group", {
+      name: "Message composer",
+      exact: true,
+    });
+    await composer
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill("Repeat the document code.");
+    await composer.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page.locator(".is-assistant")).toHaveCount(2, {
+      timeout: 90_000,
+    });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+      timeout: 90_000,
+    });
+    await page
+      .getByRole("button", { name: "Edit message", exact: true })
+      .nth(1)
+      .click();
+    const editor = page.getByRole("dialog");
+    await editor
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill(
+        "Read the earlier attached PDF and return its verification code only."
+      );
+    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page).not.toHaveURL(sourceUrl, { timeout: 60_000 });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.locator(".is-assistant").last()).toContainText(
+      "CEDAR-4827"
+    );
+    await expect(page.locator(".is-user").last()).toContainText(
+      "Read the earlier attached PDF"
+    );
     await page.reload();
     await page
       .getByRole("log")
@@ -65,6 +103,11 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     const preview = await opened;
     await expect(preview).toHaveURL(blobUrl);
     await preview.close();
+    await page.goto(sourceUrl);
+    await expect(page.locator(".is-user").last()).toContainText(
+      "Repeat the document code."
+    );
+    await expect(page.locator(".is-user")).toHaveCount(2);
   } finally {
     execFileSync("bun", [
       "-e",

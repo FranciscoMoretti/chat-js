@@ -277,6 +277,411 @@ index 2aae307..3d86895 100644
 +
 +  await restoreSessionHistory(input);
  }
+diff --git a/packages/eve/src/execution/sandbox/bindings/just-bash.ts b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
+index a3aa9df..5104e8b 100644
+--- a/packages/eve/src/execution/sandbox/bindings/just-bash.ts
++++ b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
+@@ -1,3 +1,7 @@
++import {
++  captureLocalForkCheckpoint,
++  restoreLocalForkCheckpoint,
++} from "#execution/sandbox/bindings/local-fork-checkpoint.js";
+ import { randomUUID } from "node:crypto";
+ import { type Dirent } from "node:fs";
+ import { mkdir, readdir, rename, rm, stat } from "node:fs/promises";
+@@ -139,6 +143,22 @@ export function createJustBashSandboxBackend(
+         getLocalRootPath(createInput.existingMetadata) ??
+         resolveSessionRootPath(cacheDirectory, createInput.sessionKey);
+ 
++      const checkpointsRoot = join(
++        cacheDirectory,
++        JUST_BASH_CACHE_DIRECTORY_NAME,
++        "fork-checkpoints",
++      );
++      if (createInput.forkCheckpoint) {
++        if (filesystem !== undefined)
++          throw new Error(
++            "Custom sandbox filesystems require their own fork checkpoint implementation.",
++          );
++        await restoreLocalForkCheckpoint({
++          checkpointsRoot,
++          targetRoot: sessionRootPath,
++          checkpoint: createInput.forkCheckpoint,
++        });
++      }
+       if (!(await pathExists(sessionRootPath))) {
+         if (createInput.templateKey === null) {
+           await mkdir(sessionRootPath, { recursive: true });
+@@ -165,7 +185,21 @@ export function createJustBashSandboxBackend(
+         sessionKey: createInput.sessionKey,
+       });
+ 
+-      return createJustBashHandle(sandbox, JUST_BASH_BACKEND_NAME);
++      const handle = createJustBashHandle(sandbox, JUST_BASH_BACKEND_NAME);
++      return {
++        ...handle,
++        ...(filesystem === undefined
++          ? {
++              captureForkCheckpoint: (checkpointKey: string) =>
++                captureLocalForkCheckpoint({
++                  checkpointsRoot,
++                  filesystemRoot: join(sessionRootPath, "fs"),
++                  sessionKey: createInput.sessionKey,
++                  checkpointKey,
++                }),
++            }
++          : {}),
++      };
+     },
+   };
+ }
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
+index c7bd18e..b6533c9 100644
+--- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
+@@ -23,6 +23,10 @@ const runtimeMocks = vi.hoisted(() => ({
+ }));
+ 
+ const fsMocks = vi.hoisted(() => ({
++  readFile: vi.fn(async (): Promise<string> => {
++    throw Object.assign(new Error("missing"), { code: "ENOENT" });
++  }),
++  writeFile: vi.fn(async () => {}),
+   mkdir: vi.fn(async (_path: string, _options?: unknown) => {}),
+   rename: vi.fn(async (_oldPath: string, _newPath: string) => {}),
+   rm: vi.fn(async (_path: string, _options?: unknown) => {}),
+@@ -71,6 +75,69 @@ describe("createMicrosandboxHandle", () => {
+     });
+   });
+ 
++  it("creates a fresh VM from the fork snapshot using target configuration", async () => {
++    const vm = createFakeMicrosandboxVm("branch-key");
++    runtimeMocks.createPreparedMicrosandbox.mockResolvedValue(vm);
++    const snapshotName = `eve-sbx-fork-${"a".repeat(32)}`;
++    const getSnapshot = vi.fn(async () => ({}));
++    runtimeMocks.loadMicrosandboxModule.mockResolvedValue({
++      Snapshot: { get: getSnapshot },
++    } as never);
++    const options = resolveMicrosandboxOptions({ image: MICROSANDBOX_DEFAULT_IMAGE });
++    await createMicrosandboxHandle({
++      backendName: "microsandbox",
++      options,
++      optionsHash: "options-hash",
++      createInput: {
++        runtimeContext: { appRoot: "/tmp/eve-app" },
++        sessionKey: "branch-key",
++        templateKey: "template-key",
++        forkCheckpoint: { version: 1, optionsHash: "options-hash", snapshotName },
++      },
++    });
++    expect(fsMocks.writeFile).toHaveBeenCalledWith(
++      expect.stringContaining("fork-checkpoint.json"),
++      JSON.stringify([snapshotName, "options-hash"]),
++      { flag: "wx" },
++    );
++    expect(runtimeMocks.createPreparedMicrosandbox).toHaveBeenCalledWith(
++      expect.objectContaining({
++        fromSnapshot: snapshotName,
++        sessionKey: "branch-key",
++        options,
++        setupBaseRuntime: false,
++      }),
++    );
++    expect(metadataMocks.readTemplateMetadata).not.toHaveBeenCalled();
++    const retry = {
++      backendName: "microsandbox",
++      options,
++      optionsHash: "options-hash",
++      createInput: {
++        runtimeContext: { appRoot: "/tmp/eve-app" },
++        sessionKey: "branch-key",
++        templateKey: "template-key",
++        forkCheckpoint: { version: 1, optionsHash: "options-hash", snapshotName },
++      },
++    };
++    fsMocks.readFile.mockResolvedValueOnce(JSON.stringify([snapshotName, "options-hash"]));
++    await createMicrosandboxHandle(retry);
++    expect(runtimeMocks.createPreparedMicrosandbox).toHaveBeenCalledTimes(1);
++    fsMocks.readFile.mockResolvedValueOnce(JSON.stringify([snapshotName, "options-hash"]));
++    await expect(
++      createMicrosandboxHandle({
++        ...retry,
++        createInput: {
++          ...retry.createInput,
++          forkCheckpoint: {
++            ...retry.createInput.forkCheckpoint,
++            snapshotName: `eve-sbx-fork-${"b".repeat(32)}`,
++          },
++        },
++      }),
++    ).rejects.toThrow("different fork checkpoint");
++  });
++
+   it("reuses the active same-process session instead of reopening from the template", async () => {
+     const vm = createFakeMicrosandboxVm("session-key");
+     runtimeMocks.createPreparedMicrosandbox.mockResolvedValue(vm);
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
+index 1a4c05b..b63cd0b 100644
+--- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
+@@ -1,6 +1,6 @@
+ import { randomUUID } from "node:crypto";
+-import { mkdir, rename, rm } from "node:fs/promises";
+-import { dirname } from "node:path";
++import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
++import { dirname, join } from "node:path";
+ 
+ import {
+   createFileBackedInternalSandboxSession,
+@@ -181,14 +181,48 @@ export async function createMicrosandboxHandle(input: {
+   );
+   const activeSessionKey = createActiveMicrosandboxSessionKey(sessionRootPath, input.optionsHash);
+   const activeHandle = activeMicrosandboxSessionHandles.get(activeSessionKey);
+-  if (activeHandle !== undefined) {
+-    return activeHandle;
+-  }
+ 
+   const metadataPath = resolveMicrosandboxMetadataPath(sessionRootPath);
+   const existingMetadata =
+     readSessionMetadataRecord(input.createInput.existingMetadata) ??
+     (await readSessionMetadata(metadataPath));
++  const forkCheckpoint = input.createInput.forkCheckpoint;
++  let forkSnapshotName: string | undefined;
++  if (forkCheckpoint !== undefined) {
++    if (
++      forkCheckpoint.version !== 1 ||
++      forkCheckpoint.optionsHash !== input.optionsHash ||
++      typeof forkCheckpoint.snapshotName !== "string" ||
++      !/^eve-sbx-fork-[a-f0-9]{32}$/.test(forkCheckpoint.snapshotName)
++    ) {
++      throw new Error("Invalid microsandbox fork checkpoint or changed sandbox configuration.");
++    }
++    forkSnapshotName = forkCheckpoint.snapshotName;
++    const marker = join(sessionRootPath, "fork-checkpoint.json");
++    let previous: string | undefined;
++    try {
++      previous = await readFile(marker, "utf8");
++    } catch (error) {
++      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
++    }
++    const identity = JSON.stringify([forkSnapshotName, input.optionsHash]);
++    if (previous !== undefined) {
++      if (previous !== identity)
++        throw new Error("Sandbox session already has a different fork checkpoint.");
++    } else {
++      if (activeHandle !== undefined || existingMetadata !== null)
++        throw new Error("Existing sandbox has no matching fork checkpoint.");
++      await mkdir(sessionRootPath, { recursive: true });
++      try {
++        await writeFile(marker, identity, { flag: "wx" });
++      } catch (error) {
++        if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
++        if ((await readFile(marker, "utf8")) !== identity)
++          throw new Error("Sandbox session already has a different fork checkpoint.");
++      }
++    }
++  }
++  if (activeHandle !== undefined) return activeHandle;
+   const sessionTags = withDevelopmentSandboxMetadataPathTag(input.createInput.tags, metadataPath);
+ 
+   if (
+@@ -216,7 +250,9 @@ export async function createMicrosandboxHandle(input: {
+   }
+ 
+   let snapshotName: string | null = null;
+-  if (input.createInput.templateKey !== null) {
++  if (forkCheckpoint !== undefined) {
++    snapshotName = forkSnapshotName!;
++  } else if (input.createInput.templateKey !== null) {
+     const templateRootPath = resolveMicrosandboxTemplateRootPath(
+       cacheDirectory,
+       input.createInput.templateKey,
+@@ -300,6 +336,9 @@ function createHandle(
+         await sandbox.setNetworkPolicy(policy);
+       });
+     },
++    async captureForkCheckpoint(checkpointKey) {
++      return await sandbox.captureForkCheckpoint(checkpointKey, optionsHash);
++    },
+     async captureState() {
+       const metadata = await sandbox.captureState(optionsHash);
+       return {
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
+index cb72e88..ce3a037 100644
+--- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
+@@ -193,6 +193,50 @@ describe.skipIf(process.platform === "win32")("connectMicrosandbox", () => {
+ });
+ 
+ describe.skipIf(process.platform === "win32")("MicrosandboxVm", () => {
++  it("captures one immutable fork snapshot and restarts the source even after capture failure", async () => {
++    const snapshots = new Set<string>();
++    const restart = vi.fn(async () => createMockMicrosandbox());
++    const snapshot = vi.fn(async (name: string) => {
++      snapshots.add(name);
++    });
++    const module = {
++      Snapshot: {
++        get: async (name: string) => {
++          if (!snapshots.has(name)) throw new Error("snapshot not found");
++          return {};
++        },
++      },
++      Sandbox: {
++        get: async () => ({
++          status: "stopped",
++          startDetached: restart,
++          stopWithTimeout: async () => {},
++          snapshot,
++        }),
++      },
++    };
++    const vm = new MicrosandboxVm(
++      {
++        module: module as never,
++        options: resolveMicrosandboxOptions(undefined),
++        sessionKey: "source",
++      },
++      createMockMicrosandbox() as never,
++      "source-vm",
++      "deny-all",
++    );
++    const first = await vm.captureForkCheckpoint("turn_1", "options");
++    expect(await vm.captureForkCheckpoint("turn_1", "options")).toEqual(first);
++    expect(snapshot).toHaveBeenCalledTimes(1);
++    expect(restart).toHaveBeenCalledTimes(1);
++    snapshot.mockRejectedValueOnce(new Error("temporary provider failure"));
++    await expect(vm.captureForkCheckpoint("turn_2", "options")).rejects.toThrow(
++      "temporary provider failure",
++    );
++    expect(restart).toHaveBeenCalledTimes(2);
++    expect(snapshots.size).toBe(1);
++  });
++
+   it("propagates an authored stop failure", async () => {
+     const sandbox = {
+       detach: vi.fn(async () => {}),
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
+index f697452..54641e6 100644
+--- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
+@@ -100,6 +100,37 @@ export class MicrosandboxVm {
+     return this.#input.sessionKey;
+   }
+ 
++  async captureForkCheckpoint(
++    checkpointKey: string,
++    optionsHash: string,
++  ): Promise<Record<string, unknown>> {
++    const snapshotName = createProviderName(
++      "eve-sbx-fork",
++      JSON.stringify([this.id, checkpointKey]),
++      optionsHash,
++    );
++    let captured = false;
++    try {
++      await this.#input.module.Snapshot.get(snapshotName);
++      captured = true;
++    } catch (error) {
++      if (!isMicrosandboxNotFoundError(error)) throw error;
++    }
++    if (!captured) {
++      try {
++        await this.stopAndSnapshot(snapshotName);
++      } finally {
++        // Capturing must not leave the source stopped before its next user turn.
++        const handle = await this.#input.module.Sandbox.get(this.#sandboxName);
++        this.#sandbox =
++          handle.status === "running" || handle.status === "draining"
++            ? await handle.connectWithTimeout(MICROSANDBOX_CONNECT_TIMEOUT_MS)
++            : await handle.startDetached();
++      }
++    }
++    return { version: 1, snapshotName, optionsHash };
++  }
++
+   async captureState(optionsHash: string): Promise<MicrosandboxSessionMetadata> {
+     this.#optionsHash = optionsHash;
+     if (isEveDevEnvironment()) {
+diff --git a/packages/eve/src/execution/sandbox/ensure.test.ts b/packages/eve/src/execution/sandbox/ensure.test.ts
+index 1bf6637..c28a6bc 100644
+--- a/packages/eve/src/execution/sandbox/ensure.test.ts
++++ b/packages/eve/src/execution/sandbox/ensure.test.ts
+@@ -275,6 +275,25 @@ describe("ensureSandboxAccess", () => {
+     });
+   });
+ 
++  it("restores an initialized fork without rerunning filesystem initialization", async () => {
++    const onSession = vi.fn();
++    const backend = createBackend();
++    const seed = { backendName: "test", metadata: { id: "immutable" } };
++    const access = await ensure({
++      registry: createTestRegistry({ onSession }, backend),
++      state: { initialized: false, session: null, forkCheckpoint: seed },
++    });
++    await access.get();
++    expect(onSession).not.toHaveBeenCalled();
++    expect(backend.create).toHaveBeenCalledWith(
++      expect.objectContaining({
++        forkCheckpoint: seed.metadata,
++        existingMetadata: undefined,
++      }),
++    );
++    expect(await access.captureState()).toMatchObject({ initialized: true });
++  });
++
+   it("reattaches with persisted metadata and skips onSession when the session key matches", async () => {
+     const ctx = new ContextContainer();
+     ctx.set(SessionKey, createSession());
+diff --git a/packages/eve/src/execution/sandbox/ensure.ts b/packages/eve/src/execution/sandbox/ensure.ts
+index cc925f6..3e13810 100644
+--- a/packages/eve/src/execution/sandbox/ensure.ts
++++ b/packages/eve/src/execution/sandbox/ensure.ts
+@@ -118,12 +118,18 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+       persistedSession.sessionKey === keys.sessionKey
+         ? persistedSession
+         : null;
++    const forkCheckpoint = reattachSession === null ? input.state?.forkCheckpoint : undefined;
+     if (reattachSession === null) {
+-      initialized = false;
++      // A fork inherits the already-initialized filesystem, not source process
++      // state. Running the initializer again would overwrite checkpoint files.
++      initialized = forkCheckpoint !== undefined;
++    }
++    if (forkCheckpoint && forkCheckpoint.backendName !== backend.name) {
++      throw new Error("Sandbox fork checkpoint belongs to a different backend.");
+     }
+-
+     const createInput: SandboxBackendCreateInput = {
+       existingMetadata: reattachSession?.metadata,
++      forkCheckpoint: forkCheckpoint?.metadata,
+       runtimeContext: { appRoot },
+       sessionKey: keys.sessionKey,
+       tags: input.tags,
+@@ -169,6 +175,13 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+   }
+ 
+   return {
++    async captureForkCheckpoint(checkpointKey) {
++      if (input.ownsSandbox === false) return undefined;
++      const handle = await getHandle();
++      if (!handle?.captureForkCheckpoint || !registered) return undefined;
++      const metadata = await handle.captureForkCheckpoint(checkpointKey);
++      return metadata === undefined ? undefined : { backendName: registered.definition.backend.name, metadata };
++    },
+     async captureState() {
+       if (handlePromise !== undefined) {
+         const handle = await handlePromise;
+@@ -180,6 +193,9 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+       return {
+         initialized,
+         session: persistedSession,
++        ...(persistedSession === null && input.state?.forkCheckpoint
++          ? { forkCheckpoint: input.state.forkCheckpoint }
++          : {}),
+       };
+     },
+     async delete(options) {
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
 index d3cfb0b..f3f636a 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
@@ -350,16 +755,16 @@ index 493017d..3e92099 100644
          serializedContext,
        };
 diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
-index da9ac49..bf504b1 100644
+index da9ac49..3633611 100644
 --- a/packages/eve/src/execution/workflow-steps.ts
 +++ b/packages/eve/src/execution/workflow-steps.ts
 @@ -1,3 +1,5 @@
-+import { SessionCheckpointWriterKey } from "#context/keys.js";
++import { SandboxKey, SessionCheckpointWriterKey } from "#context/keys.js";
 +import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
  import { buildAdapterContext } from "#channel/adapter-context.js";
  import { callAdapterEventHandler, defaultDeliverResult } from "#channel/adapter.js";
  import type { DeliverHookPayload } from "#channel/types.js";
-@@ -539,6 +541,11 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
+@@ -539,6 +541,12 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
          return step(modelSession, stepInput);
        };
  
@@ -367,10 +772,32 @@ index da9ac49..bf504b1 100644
 +        session: schemaSession,
 +        delivery: resolved,
 +        target: ctx.get(SessionCheckpointWriterKey),
++        sandbox: ctx.get(SandboxKey),
 +      });
        return runHarnessStep(schemaSession, resolved);
      });
    } catch (error) {
+diff --git a/packages/eve/src/internal/testing/app-harness.ts b/packages/eve/src/internal/testing/app-harness.ts
+index 1e0b049..48b1dcb 100644
+--- a/packages/eve/src/internal/testing/app-harness.ts
++++ b/packages/eve/src/internal/testing/app-harness.ts
+@@ -38,6 +38,7 @@ import { mockSandbox, type MockSandbox } from "#internal/testing/mocks/mock-sand
+  * backend so runtime tests never depend on a host container or VM service.
+  */
+ export interface TestAppDescriptor {
++  readonly sandboxBackend?: SandboxBackend;
+   readonly agent?: {
+     readonly limits?: {
+       readonly maxInputTokensPerSession?: number | false;
+@@ -172,7 +173,7 @@ export async function createTestRuntime(descriptor: TestAppDescriptor = {}): Pro
+     modules: [
+       {
+         loadNamespace: async () => ({
+-          default: defineSandbox({ backend: TEST_SANDBOX_BACKEND }),
++          default: defineSandbox({ backend: descriptor.sandboxBackend ?? TEST_SANDBOX_BACKEND }),
+         }),
+         logicalPath: "sandbox.ts",
+       },
 diff --git a/packages/eve/src/internal/testing/durable-session-workflow.ts b/packages/eve/src/internal/testing/durable-session-workflow.ts
 index 6db0c47..ea55b33 100644
 --- a/packages/eve/src/internal/testing/durable-session-workflow.ts
@@ -632,6 +1059,57 @@ index 48e2bc3..27e414e 100644
    readonly "message.received": ProtocolEvent<"message.received">;
    readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
    readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
+diff --git a/packages/eve/src/sandbox/state.ts b/packages/eve/src/sandbox/state.ts
+index 5d3cb7e..a267238 100644
+--- a/packages/eve/src/sandbox/state.ts
++++ b/packages/eve/src/sandbox/state.ts
+@@ -19,9 +19,16 @@ export type SandboxSessionState = SandboxBackendSessionState;
+  * Every agent owns exactly one sandbox, so the state is just a single
+  * `initialized` flag and an optional persisted session record.
+  */
++export interface SandboxForkCheckpoint {
++  readonly backendName: string;
++  readonly metadata: Record<string, unknown>;
++}
++
+ export interface SandboxState {
+   readonly initialized: boolean;
+   readonly session: SandboxSessionState | null;
++  /** Immutable filesystem seed, never a reconnect identity from the source session. */
++  readonly forkCheckpoint?: SandboxForkCheckpoint;
+ }
+ 
+ /**
+@@ -32,6 +39,7 @@ export interface SandboxState {
+  */
+ export interface SandboxAccess {
+   captureState(): Promise<SandboxState>;
++  captureForkCheckpoint?(checkpointKey: string): Promise<SandboxForkCheckpoint | undefined>;
+   delete?(options?: SandboxDeleteOptions): Promise<void>;
+   get(): Promise<SandboxSession | null>;
+   stop(): Promise<void>;
+diff --git a/packages/eve/src/shared/sandbox-backend.ts b/packages/eve/src/shared/sandbox-backend.ts
+index 4c9110e..7aec9d0 100644
+--- a/packages/eve/src/shared/sandbox-backend.ts
++++ b/packages/eve/src/shared/sandbox-backend.ts
+@@ -12,6 +12,8 @@ export interface SandboxBackendHandle<SO = Record<string, never>> {
+   readonly session: SandboxSession;
+   readonly useSessionFn: SandboxSessionUseFn<SO>;
+   captureState(): Promise<SandboxBackendSessionState>;
++  /** Captures immutable filesystem state for a turn boundary. Repeating a key returns the same snapshot. */
++  captureForkCheckpoint?(checkpointKey: string): Promise<Record<string, unknown> | undefined>;
+   /**
+    * Permanently deletes this sandbox and its disposable backend state.
+    * Reusable or shared template state must not be deleted.
+@@ -96,6 +98,8 @@ export interface SandboxBackendCreateInput {
+   readonly templateKey: string | null;
+   readonly sessionKey: string;
+   readonly existingMetadata?: Record<string, unknown>;
++  /** Seeds a new session from immutable filesystem state; never a source reconnect record. */
++  readonly forkCheckpoint?: Record<string, unknown>;
+   /**
+    * Runtime tags the backend should attach to sandbox resources when
+    * the underlying provider supports tags.
 diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
 new file mode 100644
 index 0000000..c54972b
@@ -908,10 +1386,10 @@ index 0000000..5588bb8
 +});
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
 new file mode 100644
-index 0000000..bcc16e3
+index 0000000..dd42dbd
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-checkpoint.ts
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,66 @@
 +import type { HarnessSession } from "#harness/types.js";
 +import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
 +import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
@@ -937,7 +1415,11 @@ index 0000000..bcc16e3
 +  if (target.history.length || getHarnessEmissionState(target.state).sessionStarted) {
 +    throw new Error("Session checkpoint restoration requires a fresh target.");
 +  }
-+  if (source.sandboxState?.initialized || source.sandboxState?.session != null) {
++  const forkCheckpoint = source.sandboxState?.forkCheckpoint;
++  if (
++    (source.sandboxState?.initialized || source.sandboxState?.session != null) &&
++    !forkCheckpoint
++  ) {
 +    throw new Error("Forking sandbox state requires resource copying.");
 +  }
 +  const pendingTools = new Set<string>();
@@ -945,6 +1427,7 @@ index 0000000..bcc16e3
 +    if (!Array.isArray(message.content)) continue;
 +    for (const part of message.content) {
 +      if (
++        !forkCheckpoint &&
 +        part.type === "file" &&
 +        (part.data instanceof URL
 +          ? part.data.protocol === "eve-sandbox:"
@@ -958,7 +1441,13 @@ index 0000000..bcc16e3
 +  }
 +  if (pendingTools.size) throw new Error("Cannot fork a checkpoint with unresolved tool calls.");
 +  return setHarnessEmissionState(
-+    { ...target, history: [...source.history] },
++    {
++      ...target,
++      history: [...source.history],
++      ...(forkCheckpoint
++        ? { sandboxState: { initialized: false, session: null, forkCheckpoint } }
++        : {}),
++    },
 +    {
 +      sessionStarted: false,
 +      sequence: emission.sequence,
@@ -1193,6 +1682,278 @@ index 0000000..ee1a62f
 +      return false;
 +  }
 +}
+diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
+new file mode 100644
+index 0000000..f0c2d50
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
+@@ -0,0 +1,129 @@
++import { createJustBashSandboxBackend } from "./just-bash.js";
++import { mkdtemp, mkdir, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, expect, it } from "vitest";
++import { captureLocalForkCheckpoint, restoreLocalForkCheckpoint } from "./local-fork-checkpoint.js";
++
++const roots: string[] = [];
++afterEach(async () => {
++  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
++});
++
++async function setup() {
++  const root = await mkdtemp(join(tmpdir(), "eve-fork-files-"));
++  roots.push(root);
++  const filesystemRoot = join(root, "source", "fs");
++  await mkdir(join(filesystemRoot, "workspace", "attachments"), { recursive: true });
++  return {
++    root,
++    filesystemRoot,
++    checkpointsRoot: join(root, "checkpoints"),
++    sessionKey: "source",
++    checkpointKey: "turn_2",
++  };
++}
++
++it("captures immutable binary files and restores independent sessions without source environment", async () => {
++  const input = await setup();
++  const file = join(input.filesystemRoot, "workspace", "attachments", "sample.pdf");
++  await writeFile(file, new Uint8Array([0, 255, 10, 128]));
++  await writeFile(join(input.root, "source", "metadata.json"), '{"env":{"SECRET":"source-only"}}');
++  const checkpoint = await captureLocalForkCheckpoint(input);
++  if (!checkpoint) throw new Error("Missing checkpoint");
++  await writeFile(file, "changed later");
++  expect(await captureLocalForkCheckpoint(input)).toEqual(checkpoint);
++  const targetRoot = join(input.root, "branch");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
++  const restored = join(targetRoot, "fs", "workspace", "attachments", "sample.pdf");
++  expect(await readFile(restored)).toEqual(Buffer.from([0, 255, 10, 128]));
++  await expect(readFile(join(targetRoot, "metadata.json"))).rejects.toMatchObject({
++    code: "ENOENT",
++  });
++  await writeFile(restored, "branch change");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
++  expect(await readFile(restored, "utf8")).toBe("branch change");
++  expect(await readFile(file, "utf8")).toBe("changed later");
++  const sibling = join(input.root, "sibling");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot: sibling, checkpoint });
++  expect(await readFile(join(sibling, "fs", "workspace", "attachments", "sample.pdf"))).toEqual(
++    Buffer.from([0, 255, 10, 128]),
++  );
++  const different = await captureLocalForkCheckpoint({ ...input, checkpointKey: "turn_3" });
++  if (!different) throw new Error("Missing checkpoint");
++  await expect(
++    restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint: different }),
++  ).rejects.toThrow("different fork checkpoint");
++});
++
++it("rejects escaping identifiers, filesystem links, and oversized snapshots", async () => {
++  const input = await setup();
++  await expect(
++    restoreLocalForkCheckpoint({
++      ...input,
++      targetRoot: join(input.root, "target"),
++      checkpoint: { version: 1, id: "../source" },
++    }),
++  ).rejects.toThrow("Invalid local");
++  const link = join(input.filesystemRoot, "workspace", "link");
++  await symlink(input.root, link);
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++  await rm(link);
++  const large = join(input.filesystemRoot, "workspace", "large");
++  await writeFile(large, "");
++  await truncate(large, 128 * 1024 * 1024 + 1);
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++});
++
++it("clones the real just-bash backend while keeping file mutations isolated", async () => {
++  const input = await setup();
++  const backend = createJustBashSandboxBackend();
++  const runtimeContext = { appRoot: input.root };
++  const source = await backend.create({
++    runtimeContext,
++    sessionKey: "source-live",
++    templateKey: null,
++  });
++  const branchHandles = [];
++  try {
++    await source.session.writeTextFile({ path: "original.txt", content: "before edit" });
++    const checkpoint = await source.captureForkCheckpoint?.("turn_1");
++    if (!checkpoint) throw new Error("Missing fork checkpoint capability");
++    await source.session.writeTextFile({ path: "original.txt", content: "after edit" });
++    const branch = await backend.create({
++      runtimeContext,
++      sessionKey: "branch-live",
++      templateKey: null,
++      forkCheckpoint: checkpoint,
++    });
++    branchHandles.push(branch);
++    expect(await branch.session.readTextFile({ path: "original.txt" })).toBe("before edit");
++    await branch.session.writeTextFile({ path: "original.txt", content: "branch edit" });
++    expect(await source.session.readTextFile({ path: "original.txt" })).toBe("after edit");
++    const saved = await branch.captureState();
++    await branch.stop();
++    const resumed = await backend.create({
++      runtimeContext,
++      sessionKey: "branch-live",
++      templateKey: null,
++      existingMetadata: saved.metadata,
++    });
++    branchHandles.push(resumed);
++    expect(await resumed.session.readTextFile({ path: "original.txt" })).toBe("branch edit");
++  } finally {
++    await source.shutdown();
++    await Promise.all(branchHandles.map((handle) => handle.shutdown()));
++  }
++});
++
++it("bounds a single wide directory before copying it", async () => {
++  const input = await setup();
++  for (let start = 0; start < 20_000; start += 100) {
++    await Promise.all(
++      Array.from({ length: 100 }, (_, offset) =>
++        writeFile(join(input.filesystemRoot, `file-${start + offset}`), ""),
++      ),
++    );
++  }
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++}, 30_000);
+diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
+new file mode 100644
+index 0000000..a89306d
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
+@@ -0,0 +1,131 @@
++import { createHash, randomUUID } from "node:crypto";
++import {
++  cp,
++  lstat,
++  mkdir,
++  opendir,
++  readFile,
++  realpath,
++  rename,
++  rm,
++  writeFile,
++} from "node:fs/promises";
++import { dirname, join } from "node:path";
++
++const MAX_FILES = 20_000;
++const MAX_BYTES = 128 * 1024 * 1024;
++const DIGEST = /^[a-f0-9]{64}$/;
++
++export class LocalForkUnsupportedError extends Error {}
++
++/** Filesystem-only snapshots: reconnect metadata and process environment are excluded. */
++export async function captureLocalForkCheckpoint(input: {
++  readonly checkpointsRoot: string;
++  readonly filesystemRoot: string;
++  readonly sessionKey: string;
++  readonly checkpointKey: string;
++}): Promise<Record<string, unknown> | undefined> {
++  const id = createHash("sha256")
++    .update(JSON.stringify([input.sessionKey, input.checkpointKey]))
++    .digest("hex");
++  const target = join(input.checkpointsRoot, id);
++  if (!(await exists(target))) {
++    try {
++      await validateFilesystem(input.filesystemRoot);
++    } catch (error) {
++      if (error instanceof LocalForkUnsupportedError) return undefined;
++      throw error;
++    }
++    await copyOnce(input.filesystemRoot, target);
++  }
++  return { version: 1, id };
++}
++
++export async function restoreLocalForkCheckpoint(input: {
++  readonly checkpointsRoot: string;
++  readonly targetRoot: string;
++  readonly checkpoint: Record<string, unknown>;
++}): Promise<void> {
++  if (
++    input.checkpoint.version !== 1 ||
++    typeof input.checkpoint.id !== "string" ||
++    !DIGEST.test(input.checkpoint.id)
++  ) {
++    throw new Error("Invalid local sandbox fork checkpoint.");
++  }
++  const source = join(input.checkpointsRoot, input.checkpoint.id);
++  const canonicalRoot = await realpath(input.checkpointsRoot);
++  if (dirname(await realpath(source)) !== canonicalRoot)
++    throw new Error("Invalid local sandbox checkpoint path.");
++  await validateFilesystem(source);
++  await publishOnce(input.targetRoot, async (temporary) => {
++    await mkdir(temporary, { recursive: true });
++    await cp(source, join(temporary, "fs"), { recursive: true, verbatimSymlinks: true });
++    await writeFile(join(temporary, "fork-checkpoint.json"), JSON.stringify(input.checkpoint));
++  });
++  const recorded = JSON.parse(
++    await readFile(join(input.targetRoot, "fork-checkpoint.json"), "utf8"),
++  );
++  if (recorded.version !== 1 || recorded.id !== input.checkpoint.id)
++    throw new Error("Sandbox session already has a different fork checkpoint.");
++}
++
++async function exists(path: string) {
++  try {
++    await lstat(path);
++    return true;
++  } catch (error) {
++    if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
++    throw error;
++  }
++}
++
++async function validateFilesystem(root: string) {
++  const pending = [root];
++  let entries = 1;
++  let bytes = 0;
++  while (pending.length) {
++    const path = pending.pop();
++    if (path === undefined) break;
++    const info = await lstat(path);
++    if (info.isSymbolicLink()) {
++      throw new LocalForkUnsupportedError(
++        "Sandbox fork symlinks require backend-specific restoration.",
++      );
++    }
++    if (info.isDirectory()) {
++      const directory = await opendir(path);
++      for await (const entry of directory) {
++        if (++entries > MAX_FILES)
++          throw new LocalForkUnsupportedError("Sandbox fork file limit exceeded.");
++        pending.push(join(path, entry.name));
++      }
++    } else if (info.isFile()) {
++      bytes += info.size;
++      if (bytes > MAX_BYTES)
++        throw new LocalForkUnsupportedError("Sandbox fork byte limit exceeded.");
++    } else {
++      throw new LocalForkUnsupportedError("Sandbox fork contains a non-file resource.");
++    }
++  }
++}
++
++async function copyOnce(source: string, target: string) {
++  await publishOnce(target, async (temporary) => {
++    await cp(source, temporary, { recursive: true, verbatimSymlinks: true });
++  });
++}
++
++async function publishOnce(target: string, populate: (temporary: string) => Promise<void>) {
++  if (await exists(target)) return;
++  await mkdir(dirname(target), { recursive: true });
++  const temporary = `${target}.${randomUUID()}.tmp`;
++  try {
++    await populate(temporary);
++    await rename(temporary, target);
++  } catch (error) {
++    if (!(await exists(target))) throw error;
++  } finally {
++    await rm(temporary, { recursive: true, force: true });
++  }
++}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
 index 0000000..9e3dc25
@@ -1270,10 +2031,10 @@ index 0000000..ece3ab0
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.test.ts b/packages/eve/src/execution/session-checkpoint.test.ts
 new file mode 100644
-index 0000000..1316fe9
+index 0000000..291d3e1
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.test.ts
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,136 @@
 +import { describe, expect, it } from "vitest";
 +import { createSession } from "#execution/session.js";
 +import { setHarnessEmissionState } from "#harness/emission-state.js";
@@ -1305,6 +2066,29 @@ index 0000000..1316fe9
 +}
 +
 +describe("session checkpoints", () => {
++  it("writes nothing on transient resource capture failure and retries with the seed", async () => {
++    const source = { ...session(), sandboxState: { initialized: true, session: null } };
++    const { checkpoints, target } = sink();
++    const seed = { backendName: "test", metadata: { id: "immutable" } };
++    let attempts = 0;
++    const sandbox = {
++      captureState: async () => ({ initialized: true, session: null }),
++      get: async () => null,
++      stop: async () => {},
++      captureForkCheckpoint: async () => {
++        if (++attempts === 1) throw new Error("temporary I/O failure");
++        return seed;
++      },
++    };
++    const input = { session: source, delivery: { message: "next" }, target, sandbox };
++    await expect(writeSessionCheckpoint(input)).rejects.toThrow("temporary I/O failure");
++    expect(checkpoints).toHaveLength(0);
++    expect(target.writable.locked).toBe(false);
++    await writeSessionCheckpoint(input);
++    expect(checkpoints).toHaveLength(1);
++    expect(checkpoints[0]?.snapshot.session.sandboxState?.forkCheckpoint).toEqual(seed);
++  });
++
 +  it("keeps native tool and file history before the replacement message", async () => {
 +    const initial = session();
 +    initial.history.push(
@@ -1389,10 +2173,11 @@ index 0000000..1316fe9
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
 new file mode 100644
-index 0000000..625c034
+index 0000000..8f2c349
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.ts
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,49 @@
++import type { SandboxAccess } from "#sandbox/state.js";
 +import type { HarnessSession, StepInput } from "#harness/types.js";
 +import { getHarnessEmissionState } from "#harness/emission-state.js";
 +import { createDurableSessionState } from "#execution/durable-session-store.js";
@@ -1403,6 +2188,7 @@ index 0000000..625c034
 +export async function writeSessionCheckpoint(input: {
 +  readonly session: HarnessSession;
 +  readonly delivery: StepInput | undefined;
++  readonly sandbox?: SandboxAccess;
 +  readonly target:
 +    | { readonly sessionId: string; readonly writable: WritableStream<SessionCheckpoint> }
 +    | undefined;
@@ -1414,7 +2200,18 @@ index 0000000..625c034
 +    input.target?.sessionId !== input.session.sessionId
 +  )
 +    return;
-+  const snapshot = createDurableSessionState({ session: input.session }).snapshot;
++  let sandboxState = input.session.sandboxState;
++  if (sandboxState?.initialized || sandboxState?.session) {
++    // Unsupported resources return no seed. Transient I/O failures propagate before
++    // writing, so a retry cannot conflict with a previously written missing seed.
++    const forkCheckpoint = await input.sandbox?.captureForkCheckpoint?.(
++      `turn_${emission.sequence}`,
++    );
++    sandboxState = { ...sandboxState, forkCheckpoint };
++  }
++  const snapshot = createDurableSessionState({
++    session: { ...input.session, sandboxState },
++  }).snapshot;
 +  if (snapshot === undefined)
 +    throw new Error("A session checkpoint requires an embedded snapshot.");
 +  const writer = input.target.writable.getWriter();
@@ -1554,6 +2351,134 @@ index 0000000..f6ed74e
 +      }
 +    } finally {
 +      sourceStream.dispose();
++      await source.cancel();
++    }
++  });
++});
+diff --git a/packages/eve/src/execution/session-resource-fork.integration.test.ts b/packages/eve/src/execution/session-resource-fork.integration.test.ts
+new file mode 100644
+index 0000000..a8b0f94
+--- /dev/null
++++ b/packages/eve/src/execution/session-resource-fork.integration.test.ts
+@@ -0,0 +1,122 @@
++import { expect, it } from "vitest";
++import { start } from "#internal/workflow/runtime.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { captureTurnEvents } from "#internal/testing/events.js";
++import { useTemporaryDirectories } from "#internal/testing/use-temporary-app-roots.js";
++import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import { createWorkflowRuntime } from "#execution/workflow-runtime.js";
++import { workflowEntry } from "#execution/workflow-entry.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import { createJustBashSandboxBackend } from "#execution/sandbox/bindings/just-bash.js";
++import { decodeSandboxRef } from "#internal/attachments/sandbox-refs.js";
++
++const scratch = useTemporaryDirectories();
++
++it("forks a native attachment checkpoint using its earlier bytes and an independent sandbox", async () => {
++  const appRoot = await scratch("eve-resource-fork-");
++  const local = createJustBashSandboxBackend();
++  const fixture = await createTestRuntime({
++    agent: { name: "resource-fork" },
++    sandboxBackend: {
++      ...local,
++      create: (input) => local.create({ ...input, runtimeContext: { appRoot } }),
++      prewarm: (input) => local.prewarm({ ...input, runtimeContext: { appRoot } }),
++    },
++  });
++  await fixture.run(async () => {
++    const serializedContext = {
++      "eve.auth": null,
++      "eve.bundle": { source: createBundledRuntimeCompiledArtifactsSource() },
++      "eve.channel": { kind: "http", state: {} },
++      "eve.mode": "conversation",
++    };
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const source = await start(workflowEntry, [
++      {
++        input: {
++          message: [
++            {
++              type: "file",
++              filename: "sample.pdf",
++              mediaType: "application/pdf",
++              data: new Uint8Array([0, 255, 10, 128]),
++            },
++          ],
++        },
++        serializedContext,
++      },
++    ]);
++    const sourceEvents = captureTurnEvents(source);
++    try {
++      expect((await sourceEvents.nextTurn()).at(-1)?.type).toBe("session.waiting");
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "original second turn" } },
++      });
++      expect((await sourceEvents.nextTurn()).at(-1)?.type).toBe("session.waiting");
++      const fork = { sessionId: source.runId, beforeTurnId: "turn_1" };
++      const checkpoint = await readSessionCheckpoint(fork);
++      const state = checkpoint.snapshot.session.sandboxState;
++      expect(state?.forkCheckpoint?.backendName).toBe("just-bash");
++      if (!state?.session) throw new Error("Missing source sandbox");
++      const content = checkpoint.snapshot.session.history.find(
++        (message) => message.role === "user",
++      )?.content;
++      if (!Array.isArray(content)) throw new Error("Missing file message");
++      const part = content.find((entry) => entry.type === "file");
++      if (!part || part.type !== "file" || !(part.data instanceof URL))
++        throw new Error("Missing native sandbox file reference");
++      const path = decodeSandboxRef(part.data).path;
++      const sourceHandle = await local.create({
++        runtimeContext: { appRoot },
++        sessionKey: state.session.sessionKey,
++        existingMetadata: state.session.metadata,
++        templateKey: null,
++      });
++      await sourceHandle.session.writeTextFile({ path, content: "source changed later" });
++      const branch = await start(workflowEntry, [
++        { input: { message: "replacement second turn" }, fork, serializedContext },
++      ]);
++      const branchEvents = captureTurnEvents(branch);
++      try {
++        expect((await branchEvents.nextTurn()).at(-1)?.type).toBe("session.waiting");
++        await runtime.dispatchSession({
++          sessionId: branch.runId,
++          command: { kind: "send", payload: { message: "check branch state" } },
++        });
++        expect((await branchEvents.nextTurn()).at(-1)?.type).toBe("session.waiting");
++        const restored = await readSessionCheckpoint({
++          sessionId: branch.runId,
++          beforeTurnId: "turn_2",
++        });
++        const branchState = restored.snapshot.session.sandboxState?.session;
++        if (!branchState) throw new Error("Missing branch sandbox");
++        expect(branchState.sessionKey).not.toBe(state.session.sessionKey);
++        const branchHandle = await local.create({
++          runtimeContext: { appRoot },
++          sessionKey: branchState.sessionKey,
++          existingMetadata: branchState.metadata,
++          templateKey: null,
++        });
++        try {
++          expect(await branchHandle.session.readBinaryFile({ path })).toEqual(
++            Buffer.from([0, 255, 10, 128]),
++          );
++          await branchHandle.session.writeTextFile({ path, content: "branch change" });
++          expect(await sourceHandle.session.readTextFile({ path })).toBe("source changed later");
++        } finally {
++          await branchHandle.shutdown();
++        }
++      } finally {
++        await branchEvents.dispose();
++        await branch.cancel();
++        await sourceHandle.shutdown();
++      }
++    } finally {
++      await sourceEvents.dispose();
 +      await source.cancel();
 +    }
 +  });

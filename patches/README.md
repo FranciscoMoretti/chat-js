@@ -35,8 +35,8 @@ failures propagate before model execution.
 
 A fork reads the checkpoint before its selected user turn and seeds a fresh
 session's model history. It preserves the target's identity, configuration, and
-execution state. It rejects unresolved tool calls and source sandbox resources
-until resource cloning is implemented. It does not import approvals or consumed
+execution state. It rejects unresolved tool calls and sandbox resources without
+a supported immutable snapshot. It does not import approvals or consumed
 execution budgets. Identical checkpoint retries are accepted; conflicting ones
 fail. Lookup is limited to 1,000 records and ten seconds. Once a source exceeds
 the record cap, even its earlier checkpoints cannot currently be forked.
@@ -63,6 +63,41 @@ model switching, and approval continuation. The app fork browser test also passe
 against the installed worker: prefix restoration, a fresh model response, reload,
 unchanged source, operation replay/conflicts, ownership denial, and billing only
 the new turn. App lint, types, and unit tests pass.
+
+## Sandbox resources
+
+The local just-bash backend captures an immutable filesystem snapshot before each
+new user turn. Forks restore into a fresh sandbox identity, preserving attachment
+bytes and isolating subsequent mutations in the source, branch, and siblings.
+Snapshots exclude reconnect metadata and environment variables. The inherited
+filesystem is already initialized, so restoration skips `onSession` to prevent
+initializers from overwriting it. Applications that depend on that hook for fresh
+per-session environment setup need a separate restoration policy before adoption.
+
+Capture keys are stable per source session and turn. Transient capture failures
+propagate before checkpoint publication; retries reuse the immutable snapshot.
+Symlinks, special files, custom filesystems, and snapshots exceeding 20,000 entries
+or 128 MiB return no seed. Chat can continue, but resource-dependent forks fail
+explicitly. Directory enumeration enforces the entry budget incrementally.
+
+Real-filesystem tests cover binary preservation, environment exclusion, branch
+isolation, idempotent restoration, conflicting seeds, and resource limits. A
+native workflow integration test forks after a PDF turn and verifies that the
+branch retains the earlier bytes even after the source file changes. This local
+backend implementation does not establish cloud-backend support, snapshot
+retention/garbage collection, or atomic capture of concurrent background writes.
+
+Microsandbox uses its native immutable VM snapshots, resumes the source after
+capture, and restores a fresh target VM with the target configuration. A persisted
+fork identity prevents retries from silently reusing a different snapshot. Capture
+stops and restarts the source VM: background processes and outstanding process
+handles are not guaranteed to survive. Snapshot retention remains outstanding.
+
+The real-provider ChatJS browser test passes on microsandbox: upload a PDF, send
+a follow-up, edit that follow-up into a new version, receive a response, reload
+and open the inherited PDF, then verify the original conversation is unchanged.
+The native filesystem integration provides the stronger byte-isolation check;
+the model answer alone cannot prove a reread when its content is also in history.
 
 ## Packaging
 
@@ -93,9 +128,9 @@ ChatJS now reserves same-owner branch ancestry and immutable fork operations in
 its metadata database; EVE owns the restored transcript and fresh execution.
 The ChatJS message actions now expose edits and regeneration, with retained fork
 requests across reload and navigation between conversation versions. Inherited
-turn edits resolve the ancestor that owns the checkpoint. Sandbox/attachment
-resource cloning, per-message sibling navigation, and parallel-response parity
-remain to be implemented. Existing sessions started before checkpoint support
+turn edits resolve the ancestor that owns the checkpoint. Local just-bash and microsandbox
+resource cloning are implemented; other backends, per-message sibling navigation,
+and parallel-response parity remain to be implemented. Existing sessions started before checkpoint support
 have no checkpoints. Full snapshots can produce quadratic retained storage;
 bound retention or reuse native durable step snapshots before production.
 
