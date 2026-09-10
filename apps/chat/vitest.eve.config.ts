@@ -10,6 +10,7 @@ export default defineConfig({
       "tests/eve-run-inventory.e2e.ts",
       "tests/eve-resource-fence.e2e.ts",
       "tests/eve-queue-inventory.e2e.ts",
+      "tests/eve-queue-fence.e2e.ts",
     ],
   },
 });

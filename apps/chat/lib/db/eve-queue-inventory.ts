@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 /**
@@ -8,7 +8,7 @@ import { z } from "zod";
  * This read neither locks nor removes jobs; later cleanup must recheck ownership.
  */
 export async function readEvePostgresQueueInventory(
-  connection: Sql,
+  connection: Sql | TransactionSql,
   input: { runIds: string[]; taskIdentifier: string }
 ) {
   const { runIds, taskIdentifier } = z
