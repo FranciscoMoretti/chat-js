@@ -64,6 +64,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: new URL(page.url()).origin,
+  });
   const session = z
     .object({ user: z.object({ id: z.string() }) })
     .parse(await (await page.request.get("/api/auth/get-session")).json());
@@ -102,6 +105,20 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       .click();
     const panel = page.getByTestId("artifact");
     await expect(panel).toContainText(content);
+    await panel
+      .getByRole("button", {
+        name: title === "Harvest" ? "Copy as CSV" : "Copy to clipboard",
+        exact: true,
+      })
+      .click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
+      content
+    );
+    if (title === "Artifact notes") {
+      await expect(
+        panel.getByRole("button", { name: "View changes", exact: true })
+      ).toBeDisabled();
+    }
     await expect(
       panel.getByText("Version 1 of 1", { exact: true })
     ).toBeInViewport();
@@ -115,6 +132,23 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .getByRole("button", { name: 'Created "Artifact notes"', exact: true })
     .click();
   await expect(page.getByTestId("artifact")).toContainText("Version 1 of 1");
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = () =>
+      Promise.reject(new Error("Clipboard denied for test"));
+  });
+  await page
+    .getByTestId("artifact")
+    .getByRole("button", { name: "Copy to clipboard", exact: true })
+    .click();
+  const copyError = page.getByText(
+    "Could not copy. Check your browser's clipboard permissions.",
+    { exact: true }
+  );
+  await expect(copyError).toBeVisible();
+  await copyError.screenshot({
+    path: testInfo.outputPath("copy-error.png"),
+    animations: "disabled",
+  });
   await page
     .getByRole("textbox", { name: "Message", exact: true })
     .fill(
@@ -143,6 +177,40 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .click();
   const panel = page.getByTestId("artifact");
   await expect(panel).toContainText("Cobalt pears.");
+  await page.route("**/api/trpc/eve.document*", (route) => route.abort());
+  await panel
+    .getByRole("button", { name: "View changes", exact: true })
+    .click();
+  await panel.screenshot({
+    path: testInfo.outputPath("comparison-loading.png"),
+    animations: "disabled",
+  });
+  await expect(
+    panel.getByRole("button", { name: "Retry comparison", exact: true })
+  ).toBeVisible();
+  await panel.screenshot({
+    path: testInfo.outputPath("comparison-error.png"),
+    animations: "disabled",
+  });
+  await page.unroute("**/api/trpc/eve.document*");
+  await panel
+    .getByRole("button", { name: "Retry comparison", exact: true })
+    .click();
+  const comparison = panel.getByRole("region", {
+    name: "Document changes",
+    exact: true,
+  });
+  await expect(comparison).toContainText("Cobalt pears.");
+  await expect(comparison.locator(".line-through")).toContainText(
+    "Amber apples"
+  );
+  await panel.screenshot({
+    path: testInfo.outputPath("comparison.png"),
+    animations: "disabled",
+  });
+  await panel
+    .getByRole("button", { name: "Show document", exact: true })
+    .click();
   await panel.getByRole("button", { name: "Previous", exact: true }).click();
   await expect(panel).toContainText("Amber apples.");
   await panel.getByRole("button", { name: "Next", exact: true }).click();
@@ -220,6 +288,19 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await editor.fill("");
   await expect(panel).toContainText("Version 5 of 5");
   await expect(editor).toHaveText("");
+  await panel
+    .getByRole("button", { name: "View changes", exact: true })
+    .click();
+  await expect(comparison.locator(".line-through")).toContainText(
+    "Retained manual draft"
+  );
+  await panel.screenshot({
+    path: testInfo.outputPath("comparison-empty.png"),
+    animations: "disabled",
+  });
+  await panel
+    .getByRole("button", { name: "Show document", exact: true })
+    .click();
   await panel.getByRole("button", { name: "Previous", exact: true }).click();
   await expect(editor).toHaveText("Retained manual draft");
   await expect(editor).toHaveAttribute("contenteditable", "false");
@@ -309,6 +390,12 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await expect(
       reader.getByRole("region", { name: "Document", exact: true })
     ).toContainText("Cobalt pears.");
+    await reader
+      .getByRole("button", { name: "View changes", exact: true })
+      .click();
+    await expect(
+      reader.getByRole("region", { name: "Document changes", exact: true })
+    ).toContainText("Amber apples");
     await expect(reader.locator(".lexical-editor")).toHaveAttribute(
       "contenteditable",
       "false"

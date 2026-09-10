@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useCallback, useState } from "react";
 import {
   Artifact,
@@ -23,6 +23,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
 import { getLanguageFromFileName } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+import { EveDocumentActions } from "./eve-document-actions";
+import { EveDocumentComparison } from "./eve-document-comparison";
 import { useDocumentDraft } from "./use-document-draft";
 
 const Editor = dynamic(
@@ -37,6 +39,47 @@ const SpreadsheetEditor = dynamic(
   () => import("@/components/sheet-editor").then((m) => m.SpreadsheetEditor),
   { ssr: false }
 );
+
+function DocumentBody({
+  kind,
+  title,
+  editorProps,
+  comparison,
+}: {
+  kind: "text" | "code" | "sheet";
+  title: string;
+  editorProps: ComponentProps<typeof Editor>;
+  comparison?: ComponentProps<typeof EveDocumentComparison>;
+}) {
+  if (kind === "sheet") {
+    return (
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <SpreadsheetEditor
+          {...editorProps}
+          saveContent={editorProps.onSaveContent}
+        />
+      </div>
+    );
+  }
+  return (
+    <ScrollArea className="min-h-0 flex-1">
+      {kind === "code" && (
+        <CodeEditor
+          {...editorProps}
+          language={getLanguageFromFileName(title) || "python"}
+        />
+      )}
+      {kind === "text" &&
+        (comparison ? (
+          <EveDocumentComparison {...comparison} />
+        ) : (
+          <div className="mx-auto max-w-3xl px-4 py-8">
+            <Editor {...editorProps} />
+          </div>
+        ))}
+    </ScrollArea>
+  );
+}
 
 function DocumentSaveStatus({
   editing,
@@ -92,6 +135,7 @@ function EveArtifactPanel({
   const [selectedRevisionId, setSelectedRevisionId] = useState(
     artifact.revisionId
   );
+  const [showChanges, setShowChanges] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const document = useQuery(
@@ -141,6 +185,9 @@ function EveArtifactPanel({
     status: "idle" as const,
     onSaveContent: editing.edit,
   };
+  const previousRevisionId = history[index - 1]?.id;
+  const canCompare = Boolean(previousRevisionId && !editing.draft);
+  const comparing = showChanges && canCompare;
   return (
     <Artifact
       aria-label="Document"
@@ -155,6 +202,15 @@ function EveArtifactPanel({
             {revision?.title ?? artifact.title}
           </ArtifactTitle>
         </div>
+        {revision && !document.isError && (
+          <EveDocumentActions
+            canCompare={canCompare}
+            comparing={comparing}
+            content={contentProps.content}
+            kind={revision.kind}
+            onCompare={() => setShowChanges((current) => !current)}
+          />
+        )}
       </ArtifactHeader>
       {!readOnly && document.data?.canEdit && (
         <DocumentSaveStatus editable={Boolean(editable)} editing={editing} />
@@ -173,25 +229,23 @@ function EveArtifactPanel({
             </Button>
           </div>
         )}
-        {revision?.kind === "sheet" && !document.isError && (
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <SpreadsheetEditor {...contentProps} saveContent={editing.edit} />
-          </div>
-        )}
-        {revision && revision.kind !== "sheet" && !document.isError && (
-          <ScrollArea className="min-h-0 flex-1">
-            {revision.kind === "text" && (
-              <div className="mx-auto max-w-3xl px-4 py-8">
-                <Editor {...contentProps} />
-              </div>
-            )}
-            {revision.kind === "code" && (
-              <CodeEditor
-                {...contentProps}
-                language={getLanguageFromFileName(revision.title) || "python"}
-              />
-            )}
-          </ScrollArea>
+        {revision && !document.isError && (
+          <DocumentBody
+            comparison={
+              comparing && previousRevisionId
+                ? {
+                    content: revision.content,
+                    conversationId,
+                    documentId: artifact.documentId,
+                    previousRevisionId,
+                    version: index + 1,
+                  }
+                : undefined
+            }
+            editorProps={contentProps}
+            kind={revision.kind}
+            title={revision.title}
+          />
         )}
       </ArtifactContent>
       {revision && !document.isError && (
