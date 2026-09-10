@@ -137,7 +137,11 @@ export async function listEveOwnerBindings(ownerId: string) {
 export async function updateEveConversationMetadata(
   ownerId: string,
   id: string,
-  updates: { title?: string; isPinned?: boolean }
+  updates: {
+    title?: string;
+    isPinned?: boolean;
+    visibility?: "private" | "public";
+  }
 ) {
   const [row] = await db
     .update(eveConversation)
@@ -164,4 +168,19 @@ export async function recordEveConversationActivity(
         lt(eveConversation.updatedAt, at)
       )
     );
+}
+
+export async function getPublicEveConversation(id: string) {
+  const [row] = await db
+    .select()
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, id),
+        eq(eveConversation.visibility, "public"),
+        eq(eveConversation.state, "bound")
+      )
+    )
+    .limit(1);
+  return row;
 }

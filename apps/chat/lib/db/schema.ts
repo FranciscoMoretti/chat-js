@@ -457,6 +457,9 @@ export const eveConversation = pgTable(
     initialModelId: text("initialModelId"),
     initialContentHash: text("initialContentHash"),
     title: text("title"),
+    visibility: varchar("visibility", { enum: ["private", "public"] })
+      .notNull()
+      .default("private"),
     isPinned: boolean("isPinned").notNull().default(false),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     sessionId: text("sessionId").unique(),

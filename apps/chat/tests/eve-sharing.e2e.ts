@@ -1,0 +1,112 @@
+import { expect, test } from "@playwright/test";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { db } from "../lib/db/client";
+import { eveConversation, user } from "../lib/db/schema";
+import { assertEveTestDatabase } from "./eve-test-database";
+
+assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+
+test("sharing exposes only a read-only transcript, enforces ownership and revokes the link", async ({
+  page,
+  browser,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const created = await page.request.post("/api/agent-conversations", {
+    headers: { origin: new URL(page.url()).origin },
+    data: {
+      operationId: crypto.randomUUID(),
+      modelId: "openai/gpt-5-mini",
+      message: "Reply exactly share-fixture-ok",
+    },
+  });
+  expect(created.ok(), await created.text()).toBe(true);
+  const binding = z
+    .object({ id: z.uuid(), sessionId: z.string() })
+    .parse(await created.json());
+  const anonymous = await browser.newContext();
+  const publicPage = await anonymous.newPage();
+  await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
+    route.abort()
+  );
+  const foreignId = crypto.randomUUID();
+  const foreignChat = crypto.randomUUID();
+  await db.insert(user).values({
+    id: foreignId,
+    email: `${foreignId}@test.invalid`,
+    name: "Share ownership fixture",
+  });
+  await db.insert(eveConversation).values({
+    id: foreignChat,
+    ownerId: foreignId,
+    operationId: crypto.randomUUID(),
+    firstMessage: "Private foreign conversation",
+  });
+  try {
+    const base = new URL(page.url()).origin;
+    await publicPage.goto(`${base}/share/${binding.id}`);
+    await expect(
+      publicPage.getByRole("heading", { name: "404", exact: true })
+    ).toBeVisible();
+    await page.goto(`/chat/${binding.id}`);
+    await expect(page.locator(".is-assistant")).toContainText(
+      "share-fixture-ok",
+      { timeout: 90_000 }
+    );
+    await page.getByRole("button", { name: "Share chat", exact: true }).click();
+    await expect(page.getByRole("dialog")).toContainText("Private");
+    await expect(
+      page.getByRole("button", { name: "Share Chat", exact: true })
+    ).toBeEnabled();
+    await page.getByRole("dialog").screenshot({
+      path: "tests/eve-results/screenshots/eve-share-private.png",
+      animations: "disabled",
+    });
+    await page.getByRole("button", { name: "Share Chat", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Make Private", exact: true })
+    ).toBeEnabled();
+    await page.getByRole("dialog").screenshot({
+      path: "tests/eve-results/screenshots/eve-share-public.png",
+      animations: "disabled",
+    });
+    await publicPage.reload();
+    await expect(publicPage.getByRole("log")).toContainText("share-fixture-ok");
+    await expect(publicPage.getByTestId("multimodal-input")).toHaveCount(0);
+    await publicPage.locator("main").screenshot({
+      path: "tests/eve-results/screenshots/eve-shared-transcript.png",
+      animations: "disabled",
+    });
+    const forbidden = await publicPage.request.post(
+      `${base}/api/trpc/eve.setVisibility`,
+      { data: { json: { id: binding.id, visibility: "private" } } }
+    );
+    expect(forbidden.status()).toBe(401);
+    const foreign = await page.request.post("/api/trpc/eve.setVisibility", {
+      data: { json: { id: foreignChat, visibility: "public" } },
+    });
+    expect(foreign.status()).toBe(404);
+    const stream = await publicPage.request.get(
+      `${base}/api/eve/v1/session/${binding.sessionId}/stream`
+    );
+    expect(stream.status()).toBe(401);
+    await page
+      .getByRole("button", { name: "Make Private", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await publicPage.reload();
+    await expect(
+      publicPage.getByRole("heading", { name: "404", exact: true })
+    ).toBeVisible();
+    await expect(publicPage.getByRole("log")).toHaveCount(0);
+  } finally {
+    await db
+      .update(eveConversation)
+      .set({ visibility: "private" })
+      .where(eq(eveConversation.id, binding.id));
+    await anonymous.close();
+    await db.delete(eveConversation).where(eq(eveConversation.id, foreignChat));
+    await db.delete(user).where(eq(user.id, foreignId));
+  }
+});

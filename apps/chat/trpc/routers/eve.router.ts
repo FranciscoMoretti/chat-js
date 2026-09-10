@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  getEveConversation,
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
@@ -15,6 +16,28 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  get: eveProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const row = await getEveConversation(ctx.user.id, input.id);
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return { id: row.id, visibility: row.visibility };
+    }),
+  setVisibility: eveProcedure
+    .input(
+      z.object({ id: z.uuid(), visibility: z.enum(["private", "public"]) })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const row = await updateEveConversationMetadata(ctx.user.id, input.id, {
+        visibility: input.visibility,
+      });
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return row;
+    }),
   list: eveProcedure.query(async ({ ctx }) => {
     const rows = await listEveConversations(ctx.user.id);
     return rows.map((row) => ({

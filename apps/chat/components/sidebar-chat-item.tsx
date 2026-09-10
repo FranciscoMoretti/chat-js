@@ -1,6 +1,6 @@
 "use client";
 import { MoreHorizontal } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { InternalLink } from "@/components/internal-link";
@@ -27,6 +27,7 @@ const PureSidebarChatItem = ({
   setOpenMobile,
   prefetch = false,
   showShare = true,
+  renderShareContent,
 }: {
   chat: Pick<UIChat, "id" | "title" | "isPinned" | "projectId">;
   isActive: boolean;
@@ -36,6 +37,7 @@ const PureSidebarChatItem = ({
   setOpenMobile: (open: boolean) => void;
   prefetch?: boolean;
   showShare?: boolean;
+  renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
 }) => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     chat.projectId
@@ -130,6 +132,11 @@ const PureSidebarChatItem = ({
           chatId={chat.id}
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
+          renderContent={
+            renderShareContent
+              ? (onClose) => renderShareContent(chat.id, onClose)
+              : undefined
+          }
         />
       )}
     </SidebarMenuItem>
@@ -141,6 +148,7 @@ export const SidebarChatItem = memo(
   (prevProps, nextProps) => {
     if (
       prevProps.showShare !== nextProps.showShare ||
+      prevProps.renderShareContent !== nextProps.renderShareContent ||
       prevProps.onDelete !== nextProps.onDelete ||
       prevProps.onRename !== nextProps.onRename ||
       prevProps.onPin !== nextProps.onPin ||

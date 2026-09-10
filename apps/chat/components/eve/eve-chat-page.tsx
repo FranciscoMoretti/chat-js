@@ -7,6 +7,7 @@ import { ChatHeaderView } from "@/components/chat-header";
 import { auth } from "@/lib/auth";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { EveConversation } from "./eve-conversation";
+import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
 export async function EveChatPage({
@@ -33,9 +34,12 @@ export async function EveChatPage({
         <section className="flex h-full min-h-0 flex-col">
           <ChatHeaderView
             actions={
-              <Link className="text-sm" href="/">
-                New conversation
-              </Link>
+              <>
+                {selected?.sessionId && <EveShareButton chatId={selected.id} />}
+                <Link className="text-sm" href="/">
+                  New conversation
+                </Link>
+              </>
             }
             breadcrumb={
               <h1 className="ml-2 truncate font-medium text-sm">

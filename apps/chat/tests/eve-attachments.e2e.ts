@@ -140,11 +140,14 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
         response.url().endsWith("/api/files/upload") &&
         response.request().method() === "POST"
     );
-    await page.getByLabel("Attach files", { exact: true }).setInputFiles({
-      name: "eve-square.png",
-      mimeType: "image/png",
-      buffer: redPng,
-    });
+    await page
+      .getByRole("group", { name: "Message composer", exact: true })
+      .getByLabel("Attach files", { exact: true })
+      .setInputFiles({
+        name: "eve-square.png",
+        mimeType: "image/png",
+        buffer: redPng,
+      });
     const response = await uploaded;
     expect(response.ok()).toBe(true);
     urls.push(z.object({ url: z.string() }).parse(await response.json()).url);
@@ -265,11 +268,14 @@ test("an uncertain creation retains the same visible attachment and immutable re
     requests.push(route.request().postData() ?? "");
     return route.abort("failed");
   });
-  await page.getByLabel("Attach files", { exact: true }).setInputFiles({
-    name: "eve-square.png",
-    mimeType: "image/png",
-    buffer: redPng,
-  });
+  await page
+    .getByRole("group", { name: "Message composer", exact: true })
+    .getByLabel("Attach files", { exact: true })
+    .setInputFiles({
+      name: "eve-square.png",
+      mimeType: "image/png",
+      buffer: redPng,
+    });
   await expect(
     page.getByRole("button", { name: "Send", exact: true })
   ).toBeEnabled();
@@ -281,7 +287,11 @@ test("an uncertain creation retains the same visible attachment and immutable re
     "contenteditable",
     "false"
   );
-  await expect(page.getByLabel("Attach files", { exact: true })).toBeDisabled();
+  await expect(
+    page
+      .getByRole("group", { name: "Message composer", exact: true })
+      .getByLabel("Attach files", { exact: true })
+  ).toBeDisabled();
   await expect(
     page.getByTestId("attachments-preview").getByLabel("Remove attachment")
   ).toHaveCount(0);

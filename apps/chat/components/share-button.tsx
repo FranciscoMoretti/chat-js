@@ -33,40 +33,57 @@ function ShareDialogContent({
   chatId: string;
   onClose: () => void;
 }) {
-  const [step, setStep] = useState<ShareStep>("info");
   const { data: chat } = useGetChatById(chatId);
-  const setVisibilityMutation = useSetVisibility();
+  const mutation = useSetVisibility();
+  return (
+    <ShareDialogView
+      chatId={chatId}
+      isPending={mutation.isPending}
+      isPublic={chat?.visibility === "public"}
+      onClose={onClose}
+      setVisibility={async (visibility) => {
+        await mutation.mutateAsync({ chatId, visibility });
+      }}
+    />
+  );
+}
 
-  const isPublic = chat?.visibility === "public";
-  const isPending = setVisibilityMutation.isPending;
-
+export function ShareDialogView({
+  chatId,
+  isPublic,
+  isPending,
+  onClose,
+  setVisibility,
+}: {
+  chatId: string;
+  isPublic: boolean;
+  isPending: boolean;
+  onClose: () => void;
+  setVisibility: (visibility: "private" | "public") => Promise<void>;
+}) {
+  const [step, setStep] = useState<ShareStep>("info");
   const handleShare = () => {
-    setVisibilityMutation.mutate(
-      {
-        chatId,
-        visibility: "public",
-      },
-      {
-        onSuccess: () => {
-          setStep("shared");
-        },
-      }
-    );
+    setVisibility("public")
+      .then(() => setStep("shared"))
+      .catch((error) =>
+        toast.error(
+          error instanceof Error ? error.message : "Unable to share chat."
+        )
+      );
   };
-
   const handleUnshare = () => {
-    setVisibilityMutation.mutate(
-      {
-        chatId,
-        visibility: "private",
-      },
-      {
-        onSuccess: () => {
-          onClose();
-          setStep("info");
-        },
-      }
-    );
+    setVisibility("private")
+      .then(() => {
+        onClose();
+        setStep("info");
+      })
+      .catch((error) =>
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to make chat private."
+        )
+      );
   };
 
   const handleCopyLink = () => {
@@ -234,11 +251,13 @@ export function ShareDialog({
   open,
   onOpenChange,
   children,
+  renderContent,
 }: {
   chatId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
+  renderContent?: (onClose: () => void) => React.ReactNode;
 }) {
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -248,12 +267,15 @@ export function ShareDialog({
     <Dialog onOpenChange={handleDialogOpenChange} open={open}>
       {children}
       <DialogContent className="sm:max-w-md">
-        {open && (
-          <ShareDialogContent
-            chatId={chatId}
-            onClose={() => onOpenChange(false)}
-          />
-        )}
+        {open &&
+          (renderContent ? (
+            renderContent(() => onOpenChange(false))
+          ) : (
+            <ShareDialogContent
+              chatId={chatId}
+              onClose={() => onOpenChange(false)}
+            />
+          ))}
       </DialogContent>
     </Dialog>
   );
@@ -262,8 +284,10 @@ export function ShareDialog({
 export function ShareButton({
   chatId,
   className,
+  renderContent,
 }: {
   chatId: string;
+  renderContent?: (onClose: () => void) => React.ReactNode;
 } & React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
@@ -291,7 +315,12 @@ export function ShareButton({
   }
 
   return (
-    <ShareDialog chatId={chatId} onOpenChange={setOpen} open={open}>
+    <ShareDialog
+      chatId={chatId}
+      onOpenChange={setOpen}
+      open={open}
+      renderContent={renderContent}
+    >
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
     </ShareDialog>
   );

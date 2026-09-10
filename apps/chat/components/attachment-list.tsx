@@ -171,6 +171,7 @@ function AttachmentItem({
     <PromptInputHoverCard>
       <HoverCardTrigger asChild>
         <button
+          aria-label={attachmentLabel}
           className="inline-block cursor-default text-left"
           onClick={(e) => {
             e.stopPropagation();

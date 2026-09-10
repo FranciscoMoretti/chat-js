@@ -79,6 +79,9 @@ function toolStatus(
   if (confirmed) {
     return "Note confirmed.";
   }
+  if (part.state === "approval-requested") {
+    return "Waiting for input.";
+  }
   if (part.state === "output-denied") {
     return "Request declined.";
   }

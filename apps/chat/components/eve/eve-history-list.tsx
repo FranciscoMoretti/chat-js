@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTRPC } from "@/trpc/react";
+import { EveShareDialogContent } from "./eve-share-dialog";
 
 export function EveHistoryList({
   items,
@@ -68,8 +69,10 @@ export function EveHistoryList({
             onRename={async (id, title) => {
               await rename.mutateAsync({ id, title });
             }}
+            renderShareContent={(chatId, onClose) => (
+              <EveShareDialogContent chatId={chatId} onClose={onClose} />
+            )}
             setOpenMobile={setOpenMobile}
-            showShare={false}
           />
         ))}
       </SidebarMenu>
