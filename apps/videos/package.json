@@ -4,10 +4,13 @@
 	"version": "0.0.0",
 	"scripts": {
 		"studio": "remotion studio src/index.tsx",
-		"render": "remotion render src/index.tsx BrandExample out/brand-example.mp4 --codec=h264 --crf=18 --image-format=png --concurrency=4",
+		"render": "remotion render src/index.tsx ThreadsLaunch out/threads-launch.mp4 --codec=h264 --crf=18 --image-format=png --concurrency=4",
 		"lint": "biome check .",
 		"format": "biome check --write .",
-		"test:types": "tsc --noEmit"
+		"test:types": "tsc --noEmit",
+		"render:brand": "remotion render src/index.tsx BrandExample out/brand-example.mp4 --codec=h264 --crf=18 --image-format=png --concurrency=4",
+		"stills": "bun scripts/stills.ts",
+		"test:unit": "bun test src/story.test.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.10",
