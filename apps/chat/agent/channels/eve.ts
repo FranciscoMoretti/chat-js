@@ -5,6 +5,8 @@ import { env } from "../../lib/env";
 import { loadEveModelDefinition } from "../../lib/eve/model-selection";
 import { parseSessionRequest } from "../../lib/eve/request-policy";
 
+const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/;
+
 export default eveChannel({
   authorizeFork: ({ auth, sourceSessionId }) =>
     ownsEveSession(auth.principalId, sourceSessionId),
@@ -25,7 +27,12 @@ export default eveChannel({
       return null;
     }
     const path = new URL(request.url).pathname;
-    if (!(path === "/eve/v1/session" && request.method === "POST")) {
+    if (
+      !(
+        (path === "/eve/v1/session" && request.method === "POST") ||
+        (operationLookupPath.test(path) && request.method === "GET")
+      )
+    ) {
       const policy = parseSessionRequest(path, request.method);
       if (!(policy && (await ownsEveSession(owner, policy.sessionId)))) {
         return null;

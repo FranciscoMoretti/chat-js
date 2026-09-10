@@ -109,20 +109,53 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
-test("unknown create remains unresolved and is not dispatched again", async () => {
+test("a lost create reply is recovered through the same native operation", async () => {
   const operation = crypto.randomUUID();
-  let starts = 0;
-  const start = () => {
-    starts++;
-    return Promise.reject(new Error("lost reply"));
+  const dispatched: string[] = [];
+  const nativeSession = `test-${crypto.randomUUID()}`;
+  const start = (id: string) => {
+    dispatched.push(id);
+    return dispatched.length === 1
+      ? Promise.reject(new Error("lost reply"))
+      : Promise.resolve(nativeSession);
   };
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
-  await expect(
-    createEveConversation(owner, operation, "uncertain", start)
-  ).rejects.toThrow("unresolved");
-  expect(starts).toBe(1);
+  const recovered = await createEveConversation(
+    owner,
+    operation,
+    "uncertain",
+    start
+  );
+  expect(recovered.sessionId).toBe(nativeSession);
+  expect(dispatched).toEqual([recovered.id, recovered.id]);
+  expect(
+    await createEveConversation(owner, operation, "uncertain", start)
+  ).toEqual(recovered);
+  expect(dispatched).toHaveLength(2);
+});
+
+test("a stopped creator's reservation can be resumed without changing its identity", async () => {
+  const operation = crypto.randomUUID();
+  const [reservation] = await db
+    .insert(eveConversation)
+    .values({
+      ownerId: owner,
+      operationId: operation,
+      firstMessage: "process stopped",
+    })
+    .returning();
+  const bound = await createEveConversation(
+    owner,
+    operation,
+    "process stopped",
+    (id) => Promise.resolve(`test-${id}`)
+  );
+  expect(bound).toEqual({
+    id: reservation.id,
+    sessionId: `test-${reservation.id}`,
+  });
 });
 
 test("activity projection is owner-scoped, monotonic, and independent of metadata edits", async () => {

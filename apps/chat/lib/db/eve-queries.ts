@@ -98,6 +98,14 @@ export async function getEveConversation(ownerId: string, id: string) {
 }
 export class CreationConflict extends Error {}
 
+function boundConversation(
+  row: typeof eveConversation.$inferSelect | undefined
+) {
+  return row?.state === "bound" && row.sessionId
+    ? { id: row.id, sessionId: row.sessionId }
+    : undefined;
+}
+
 export async function getEveCreation(ownerId: string, operationId: string) {
   const [row] = await db
     .select()
@@ -111,6 +119,7 @@ export async function getEveCreation(ownerId: string, operationId: string) {
   return row;
 }
 
+/** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 export async function createEveConversation(
   ownerId: string,
   operationId: string,
@@ -131,7 +140,7 @@ export async function createEveConversation(
   const rootConversationId = source
     ? (source.rootConversationId ?? source.id)
     : undefined;
-  const [reservation] = await db
+  let [reservation] = await db
     .insert(eveConversation)
     .values({
       ownerId,
@@ -167,28 +176,70 @@ export async function createEveConversation(
         "This operation already has a different message, attachments, model, or source turn."
       );
     }
-    if (existing.state !== "bound" || !existing.sessionId) {
-      throw new CreationConflict(
-        "Creation is unresolved. Keep this operation for reconciliation; do not send it as a new conversation."
-      );
+    const binding = boundConversation(existing);
+    if (binding) {
+      return binding;
     }
-    return { id: existing.id, sessionId: existing.sessionId };
+    reservation = existing;
   }
   try {
+    // This idempotent initialization commits before dispatch and acquires its own
+    // document lock. Do not nest its connection inside the creation transaction.
     if (fork) {
       await initializeEveForkDocuments(ownerId, reservation.id);
     }
-    const sessionId = await create(reservation.id);
-    const [bound] = await db
-      .update(eveConversation)
-      .set({ sessionId, state: "bound" })
-      .where(eq(eveConversation.id, reservation.id))
-      .returning();
-    if (!bound?.sessionId) {
-      throw new Error("Session binding was not saved.");
-    }
-    return { id: bound.id, sessionId: bound.sessionId };
+    return await db.transaction(async (tx) => {
+      // The reservation is already committed so native hooks can find it.
+      // Transaction locks release on worker death; creating rows need no manual repair.
+      const [lock] = await tx.execute<{ locked: boolean }>(
+        sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
+      );
+      if (!lock?.locked) {
+        throw new CreationConflict(
+          "Creation is still in progress. Retry the same operation shortly."
+        );
+      }
+      const [current] = await tx
+        .select()
+        .from(eveConversation)
+        .where(eq(eveConversation.id, reservation.id));
+      const binding = boundConversation(current);
+      if (binding) {
+        return binding;
+      }
+      if (
+        !(
+          current &&
+          (current.state === "creating" || current.state === "uncertain")
+        )
+      ) {
+        throw new CreationConflict(
+          "This conversation can no longer be created."
+        );
+      }
+      const sessionId = await create(reservation.id);
+      const [bound] = await tx
+        .update(eveConversation)
+        .set({ sessionId, state: "bound" })
+        .where(
+          and(
+            eq(eveConversation.id, reservation.id),
+            or(
+              eq(eveConversation.state, "creating"),
+              eq(eveConversation.state, "uncertain")
+            )
+          )
+        )
+        .returning();
+      if (!bound?.sessionId) {
+        throw new Error("Session binding was not saved.");
+      }
+      return { id: bound.id, sessionId: bound.sessionId };
+    });
   } catch (cause) {
+    if (cause instanceof CreationConflict) {
+      throw cause;
+    }
     await db
       .update(eveConversation)
       .set({ state: "uncertain" })

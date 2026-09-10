@@ -101,11 +101,39 @@ export async function POST(request: Request) {
       input.data.operationId,
       eveMessageTitle(input.data.message),
       async (operationId) => {
+        const existing = await eveRequest(
+          session.user.id,
+          `/eve/v1/operation/${operationId}`,
+          {
+            signal: AbortSignal.timeout(15_000),
+          }
+        );
+        if (existing.ok) {
+          return z
+            .object({ sessionId: z.string().min(1) })
+            .parse(await existing.json()).sessionId;
+        }
+        const lookupFailure = z
+          .object({ code: z.literal("eve_operation_not_found") })
+          .safeParse(await existing.json().catch(() => null));
+        if (existing.status !== 404 || !lookupFailure.success) {
+          throw new Error("Native operation lookup is unavailable.");
+        }
+        // Uncertain reservations may have reached Eve before their reply was lost.
+        // Reuse the same operation with the original input; never dispatch an empty turn.
+        if (preparedMessage === undefined) {
+          await loadEveModelDefinition(input.data.modelId);
+          preparedMessage = await prepareEveMessage(
+            input.data.message,
+            input.data.modelId
+          );
+        }
         const result = await eveRequest(
           session.user.id,
           "/eve/v1/session",
           {
             method: "POST",
+            signal: AbortSignal.timeout(30_000),
             body: JSON.stringify({
               message: preparedMessage,
               operationId,
