@@ -1,14 +1,12 @@
 import { tool } from "ai";
-import { z } from "zod";
+import { wordCountInput } from "./schemas";
 
 const WORD_SPLIT_REGEX = /\s+/;
 const SENTENCE_SPLIT_REGEX = /[.!?]+/;
 
 export const wordCount = tool({
   description: "Count the words, characters, and sentences in a given text",
-  inputSchema: z.object({
-    text: z.string().describe("The text to analyze"),
-  }),
+  inputSchema: wordCountInput,
   execute: ({ text }: { text: string }) => {
     const words =
       text.trim() === "" ? 0 : text.trim().split(WORD_SPLIT_REGEX).length;

@@ -1,11 +1,7 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
-import type { ComponentType } from "react";
-import {
-  isInstalledToolType,
-  toolRendererRegistry,
-} from "@/lib/ai/tool-renderer-registry";
+import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import type { ChatTools } from "@/lib/ai/types";
 import { CodeExecution } from "./code-execution";
 import { DeepResearch } from "./deep-research";
@@ -19,32 +15,6 @@ interface ToolPartProps {
   isReadonly: boolean;
   messageId: string;
   part: ToolUIPart<ChatTools>;
-}
-
-type InstalledToolRenderer = ComponentType<{
-  tool: ToolUIPart<ChatTools>;
-  messageId: string;
-  isReadonly: boolean;
-}>;
-
-function renderInstalledTool({
-  part,
-  messageId,
-  isReadonly,
-}: {
-  part: ToolUIPart<ChatTools>;
-  messageId: string;
-  isReadonly: boolean;
-}) {
-  const Renderer = (
-    toolRendererRegistry as Record<string, InstalledToolRenderer | undefined>
-  )[part.type];
-
-  if (!Renderer) {
-    return null;
-  }
-
-  return <Renderer isReadonly={isReadonly} messageId={messageId} tool={part} />;
 }
 
 export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
@@ -87,12 +57,11 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
     return <WebSearch messageId={messageId} part={part} />;
   }
 
-  if (isInstalledToolType(type)) {
-    return renderInstalledTool({
-      part,
-      messageId,
-      isReadonly,
-    });
+  const Renderer = getInstalledToolRenderer(type);
+  if (Renderer) {
+    return (
+      <Renderer isReadonly={isReadonly} messageId={messageId} tool={part} />
+    );
   }
 
   return null;

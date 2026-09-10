@@ -1,12 +1,10 @@
 import { z } from "zod";
 
-// Validate persisted native tool data before passing it to typed ChatJS views.
-export const wordCountResult = z.object({
-  words: z.number(),
-  characters: z.number(),
-  charactersNoSpaces: z.number(),
-  sentences: z.number(),
+export const weatherInput = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
 });
+
 export const weatherResult = z.object({
   current: z.object({
     time: z.iso.datetime({ local: true }),
@@ -41,26 +39,3 @@ export const weatherResult = z.object({
   timezone_abbreviation: z.string(),
   elevation: z.number(),
 });
-export const retrievedResult = z.union([
-  z.object({ error: z.string() }),
-  z.object({
-    results: z.array(
-      z
-        .object({
-          title: z.string(),
-          content: z.string(),
-          url: z.string(),
-          description: z.string(),
-          language: z.string().optional(),
-        })
-        .transform((item) => ({ ...item, language: item.language }))
-    ),
-  }),
-  z.object({
-    results: z.array(
-      z
-        .object({ error: z.string().optional() })
-        .transform((item) => ({ error: item.error }))
-    ),
-  }),
-]);

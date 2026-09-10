@@ -41,7 +41,7 @@ export const toolItems = [
 					kind: "tool",
 				}),
 			},
-			files: ["tool.ts", "renderer.tsx"].map((file) => ({
+			files: ["tool.ts", "renderer.tsx", "schemas.ts"].map((file) => ({
 				path: `src/tools/${definition.id}/${file}`,
 				type: "registry:file",
 				target: `~/tools/chatjs/${definition.id}/${file}`,
@@ -59,8 +59,11 @@ export const registry = registrySchema.parse({
 		{
 			name: "toolkit-renderer",
 			type: "registry:item",
-			dependencies: ["ai"],
-			files: [["tool-part.ts", "lib/tool-part.ts"]].map(([source, target]) => ({
+			dependencies: ["ai", "zod"],
+			files: [
+				["tool-part.ts", "lib/tool-part.ts"],
+				["define-tool-renderer.tsx", "lib/define-tool-renderer.tsx"],
+			].map(([source, target]) => ({
 				path: `src/tools/toolkit-renderer/${source}`,
 				type: "registry:file",
 				target: `~/tools/chatjs/_shared/${target}`,

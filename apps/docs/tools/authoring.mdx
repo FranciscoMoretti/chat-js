@@ -9,25 +9,59 @@ The app consumes installed copies through normal local imports.
 
 ## Server and renderer
 
+Keep input and output schemas in a client-safe `schemas.ts` module:
+
+```ts
+import { z } from "zod";
+
+export const inputSchema = z.object({ text: z.string() });
+export const outputSchema = z.object({ words: z.number() });
+```
+
 Use the AI SDK's `tool()` helper for the server implementation:
 
 ```ts
 import { tool } from "ai";
-import { z } from "zod";
+import { inputSchema } from "./schemas";
 
 export const wordCount = tool({
   description: "Count words in text",
-  inputSchema: z.object({ text: z.string() }),
+  inputSchema,
   execute: ({ text }) => ({
     words: text.trim() ? text.trim().split(/\s+/).length : 0,
   }),
 });
 ```
 
-The renderer exports a named React component. Use the source tool's inferred
-input/output types and the shared `ToolPartFromTool` helper, keeping runtime imports of
-server code out of the client bundle. See the existing word-count source for
-loading, result, and error states.
+Export your renderer through `defineToolRenderer`. The wrapper validates persisted
+inputs and outputs before calling your component. It also displays failed,
+declined, and malformed results. Your component receives typed loading and
+successful result states:
+
+```tsx
+"use client";
+
+import { defineToolRenderer } from "@/tools/chatjs/_shared/lib/define-tool-renderer";
+import { inputSchema, outputSchema } from "./schemas";
+
+export const WordCountRenderer = defineToolRenderer({
+  inputSchema,
+  outputSchema,
+  render: ({ tool }) =>
+    tool.state === "output-available" ? (
+      <p>{tool.output.words} words</p>
+    ) : (
+      <p>Counting words...</p>
+    ),
+});
+```
+
+Both ChatJS chat paths use this registry contract. Custom entries in `custom-ui.ts`
+use the same wrapper. Keep runtime imports of server tools out of renderers and
+schema modules. You can use type-only imports and `ToolPartFromTool` when extracting
+a separate view component. EVE approval requests remain handled by the chat's input
+controls; tools with AI SDK approval or model-output policies need an explicit EVE
+adapter before they can execute.
 
 ## Item metadata
 
@@ -47,7 +81,7 @@ ChatJS metadata describes only registration and environment requirements:
 
 The same metadata is emitted as `meta.chatjs` in the registry item and as an
 installed `tools/chatjs/word-count/chatjs.json` descriptor. Each item targets
-`tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`.
+`tool.ts`, `renderer.tsx`, `schemas.ts`, and `chatjs.json` under `~/tools/chatjs/<id>/`.
 Shared helpers use standard `registryDependencies`. npm packages use
 `dependencies` or `devDependencies`.
 

@@ -236,6 +236,7 @@ export function EveConversation({
               !!pendingMessage
             }
             disabled={busy || commandPending}
+            isReadonly={false}
             messages={agent.data.messages}
             onEdit={(message) => fork.begin(message)}
             onRegenerate={(message, response) =>

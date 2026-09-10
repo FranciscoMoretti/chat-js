@@ -3,6 +3,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
+import { retrievedInput } from "./schemas";
 
 type ToolEnvVars = {
   description?: string;
@@ -46,9 +47,7 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  inputSchema: z.object({
-    url: z.string().describe("The URL to retrieve the information from."),
-  }),
+  inputSchema: retrievedInput,
   execute: async ({ url }: { url: string }) => {
     try {
       if (!app) {

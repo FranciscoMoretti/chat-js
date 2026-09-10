@@ -1,18 +1,20 @@
 "use client";
 
+import { defineToolRenderer } from "@/tools/chatjs/_shared/lib/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import { wordCountInput, wordCountResult } from "./schemas";
 import type { wordCount } from "./tool";
 
 type WordCountRendererTool = ToolPartFromTool<typeof wordCount>;
 
-export function WordCountRenderer({
+function WordCountRendererView({
   tool,
 }: {
   tool: WordCountRendererTool;
   messageId: string;
   isReadonly: boolean;
 }) {
-  if (tool.state === "input-available") {
+  if (tool.state === "input-available" || tool.state === "input-streaming") {
     return (
       <div className="rounded-lg border p-3 text-muted-foreground text-sm">
         Counting words...
@@ -48,3 +50,9 @@ function Stat({ label, value }: { label: string; value: number }) {
     </div>
   );
 }
+
+export const WordCountRenderer = defineToolRenderer({
+  inputSchema: wordCountInput,
+  outputSchema: wordCountResult,
+  render: WordCountRendererView,
+});

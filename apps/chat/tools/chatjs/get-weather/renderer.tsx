@@ -3,7 +3,9 @@
 import { format, isWithinInterval } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { defineToolRenderer } from "@/tools/chatjs/_shared/lib/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import { weatherInput, weatherResult } from "./schemas";
 import type { getWeather, WeatherAtLocation } from "./tool";
 
 type GetWeatherRendererTool = ToolPartFromTool<typeof getWeather>;
@@ -252,7 +254,7 @@ function WeatherCard({
   );
 }
 
-export function GetWeatherRenderer({
+function GetWeatherRendererView({
   tool,
 }: {
   tool: GetWeatherRendererTool;
@@ -273,3 +275,9 @@ export function GetWeatherRenderer({
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 }
+
+export const GetWeatherRenderer = defineToolRenderer({
+  inputSchema: weatherInput,
+  outputSchema: weatherResult,
+  render: GetWeatherRendererView,
+});

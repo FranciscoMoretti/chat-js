@@ -19,6 +19,7 @@ import { Response } from "@/components/ai-elements/response";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { EveAttachment } from "./eve-attachment";
 import { EveToolResult } from "./eve-tool-result";
@@ -103,11 +104,13 @@ function toolStatus(
 
 function Part({
   messageId,
+  isReadonly,
   part,
   disabled,
   respond,
 }: {
   messageId: string;
+  isReadonly: boolean;
   part: EveMessagePart;
   disabled: boolean;
   respond: (response: InputResponse) => void;
@@ -133,10 +136,17 @@ function Part({
     return <p>Unsupported content in this conversation.</p>;
   }
   if (
-    part.state === "output-available" &&
-    ["wordCount", "getWeather", "retrieveUrl"].includes(part.toolName)
+    getInstalledToolRenderer(`tool-${part.toolName}`) &&
+    part.state !== "approval-requested" &&
+    part.state !== "approval-responded"
   ) {
-    return <EveToolResult messageId={messageId} part={part} />;
+    return (
+      <EveToolResult
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
   }
   const request = part.toolMetadata?.eve?.inputRequest;
   const input = noteInput.safeParse(part.input);
@@ -173,6 +183,7 @@ function Part({
 }
 export function EveMessages({
   messages,
+  isReadonly,
   disabled,
   respond,
   onEdit,
@@ -180,6 +191,7 @@ export function EveMessages({
   actionsDisabled = disabled,
 }: {
   messages: readonly EveMessage[];
+  isReadonly: boolean;
   actionsDisabled?: boolean;
   onEdit?: (message: EveMessage) => void;
   onRegenerate?: (message: EveMessage, response: EveMessage) => void;
@@ -195,6 +207,7 @@ export function EveMessages({
         {message.parts.map((part, index) => (
           <Part
             disabled={disabled}
+            isReadonly={isReadonly}
             // Eve message parts are append-only; their index is their stable identity.
             // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
             key={`${message.id}:${index}`}

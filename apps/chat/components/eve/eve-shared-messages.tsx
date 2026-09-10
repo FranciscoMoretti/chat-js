@@ -15,7 +15,12 @@ export function EveSharedMessages({
   return (
     <Conversation>
       <ConversationContent className="mx-auto w-full max-w-3xl">
-        <EveMessages disabled messages={messages} respond={() => undefined} />
+        <EveMessages
+          disabled
+          isReadonly
+          messages={messages}
+          respond={() => undefined}
+        />
       </ConversationContent>
     </Conversation>
   );

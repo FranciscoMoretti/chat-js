@@ -1,31 +1,22 @@
-import type { ToolUIPart } from "ai";
 import type { ComponentType } from "react";
 import { ui } from "@/tools/chatjs/ui";
-import type { InstalledTools, installedTools } from "./installed-tools";
+import type { installedTools } from "./installed-tools";
 
-export type InstalledToolName = keyof typeof installedTools;
-export type InstalledToolType = `tool-${InstalledToolName & string}`;
-export type InstalledToolUIPart = ToolUIPart<InstalledTools>;
-
-export type InstalledToolPart<T extends InstalledToolType> = Extract<
-  InstalledToolUIPart,
-  { type: T }
->;
-
-export type ToolRendererProps<T extends InstalledToolType> = {
-  tool: InstalledToolPart<T>;
+type InstalledToolRenderer = ComponentType<{
+  tool: unknown;
   messageId: string;
   isReadonly: boolean;
-};
+}>;
 
+type InstalledToolType = `tool-${keyof typeof installedTools & string}`;
 export type ToolRendererRegistry = {
-  [K in InstalledToolType]: ComponentType<ToolRendererProps<K>>;
+  [K in InstalledToolType]: InstalledToolRenderer;
 };
 
-export const toolRendererRegistry = ui satisfies ToolRendererRegistry;
+// The core also supports fresh apps with no optional tools installed.
+const renderers: Readonly<Partial<Record<string, InstalledToolRenderer>>> =
+  ui satisfies ToolRendererRegistry;
 
-export function isInstalledToolType(
-  type: string
-): type is keyof typeof toolRendererRegistry {
-  return Object.hasOwn(toolRendererRegistry, type);
+export function getInstalledToolRenderer(type: string) {
+  return Object.hasOwn(renderers, type) ? renderers[type] : undefined;
 }

@@ -1,0 +1,35 @@
+import { execFileSync } from "node:child_process";
+import { expect, test } from "@playwright/test";
+
+test("installed renderer states stay readable at desktop and mobile sizes", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.goto("/");
+  const styles = await page
+    .locator('link[rel="stylesheet"]')
+    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+  expect(styles.length).toBeGreaterThan(0);
+  const content = execFileSync("bun", ["tests/eve-renderer-fixture.ts"], {
+    encoding: "utf8",
+  });
+  await page.setContent(
+    `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
+  );
+  await expect(page.getByText("Counting words...").first()).toBeVisible();
+  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(2);
+  await expect(page.getByText("Request declined.")).toBeVisible();
+  for (const width of [1100, 390]) {
+    await page.setViewportSize({ width, height: 850 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth)
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: `tests/eve-results/screenshots/eve-renderer-states-${width}.png`,
+      animations: "disabled",
+      fullPage: true,
+    });
+  }
+});

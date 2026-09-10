@@ -1,12 +1,9 @@
 import { tool } from "ai";
-import { z } from "zod";
+import { weatherInput } from "./schemas";
 
 export const getWeather = tool({
   description: "Get the current weather at a location",
-  inputSchema: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
+  inputSchema: weatherInput,
   execute: async ({
     latitude,
     longitude,
