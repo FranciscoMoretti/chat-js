@@ -266,7 +266,7 @@ Allows users to reconnect to an ongoing AI generation after a page refresh or ne
 |----------|-------------|--------|
 | `REDIS_URL` | Redis TCP/TLS URL for stream coordination and anonymous rate limits | [Redis setup](./redis) |
 
-Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. Run `bun redis:connect` to check a configured provider.
+Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. To check a configured provider, use your package manager: `npm run redis:connect`, `pnpm redis:connect`, `yarn redis:connect`, or `bun redis:connect`.
 
 ### Cron Job Secret
 
