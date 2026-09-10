@@ -1,6 +1,5 @@
 import { generateText, type ModelMessage, ToolLoopAgent } from "ai";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
 import {
   compressResearchSimpleHumanMessage,
@@ -8,7 +7,7 @@ import {
   researchSystemPrompt,
 } from "./prompts";
 import { type AgentOptions, createTelemetry } from "./types";
-import { getModelContextWindow, getTodayStr, withResearchTools } from "./utils";
+import { getTodayStr, withResearchTools } from "./utils";
 
 export async function runResearcher(
   topic: string,
@@ -16,7 +15,9 @@ export async function runResearcher(
 ): Promise<string> {
   const { config, dataStream, toolCallId, abortSignal } = options;
 
-  const model = await getLanguageModel(config.research_model as ModelId);
+  const model = await options.getLanguageModel(
+    config.research_model as ModelId
+  );
   return withResearchTools(
     config,
     dataStream,
@@ -89,7 +90,9 @@ async function compressResearch(
   options: AgentOptions
 ): Promise<string> {
   const { config, abortSignal } = options;
-  const model = await getLanguageModel(config.compression_model as ModelId);
+  const model = await options.getLanguageModel(
+    config.compression_model as ModelId
+  );
 
   const messages: ModelMessage[] = [
     {
@@ -103,7 +106,7 @@ async function compressResearch(
     },
   ];
 
-  const contextWindow = await getModelContextWindow(
+  const contextWindow = await options.getModelContextWindow(
     config.compression_model as ModelId
   );
   const truncatedMessages = truncateMessages(messages, contextWindow);

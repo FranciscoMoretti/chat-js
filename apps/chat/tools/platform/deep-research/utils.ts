@@ -1,7 +1,5 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
-import type { ModelId } from "@/lib/ai/app-models";
-import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { StreamWriter } from "@/lib/ai/types";
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
 import type { DeepResearchRuntimeConfig } from "./configuration";
@@ -53,11 +51,6 @@ export async function withResearchTools<T>(
   } finally {
     await client.close();
   }
-}
-
-export async function getModelContextWindow(modelId: ModelId): Promise<number> {
-  const model = await getAppModelDefinition(modelId);
-  return model.context_window;
 }
 
 // Misc Utils

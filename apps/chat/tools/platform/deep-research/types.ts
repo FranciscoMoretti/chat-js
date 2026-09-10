@@ -1,5 +1,6 @@
-import type { ModelMessage } from "ai";
+import type { LanguageModel, ModelMessage } from "ai";
 import { z } from "zod";
+import type { AppModelId } from "@/lib/ai/app-model-id";
 import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { StreamWriter } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -13,8 +14,10 @@ import type { DeepResearchRuntimeConfig } from "./configuration";
 export interface AgentOptions {
   abortSignal?: AbortSignal;
   config: DeepResearchRuntimeConfig;
-  costAccumulator?: CostAccumulator;
-  dataStream: StreamWriter;
+  costAccumulator?: Pick<CostAccumulator, "addLLMCost" | "addAPICost">;
+  dataStream: Pick<StreamWriter, "write">;
+  getLanguageModel: (modelId: AppModelId) => Promise<LanguageModel>;
+  getModelContextWindow: (modelId: AppModelId) => Promise<number>;
   messageId: string;
   requestId: string;
   toolCallId: string;

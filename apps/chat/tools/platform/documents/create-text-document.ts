@@ -26,25 +26,28 @@ The title should be descriptive of the content.`,
 
     // TODO: Optimize what's rendered to the model by excluding content from messages !== curMessage
     // toModelOutput: ({input}) => (),
-    async execute({ title, content }): Promise<DocumentToolResult> {
-      const id = generateUUID();
-
-      if (session.user?.id) {
-        await saveDocument({
-          id,
-          title,
-          content,
-          kind: "text",
-          userId: session.user.id,
-          messageId,
-        });
-      }
-
-      return {
-        status: "success",
-        documentId: id,
-        result: "A document was created and is now visible to the user.",
-        date: new Date().toISOString(),
-      };
-    },
+    execute: (input) => saveTextDocument(input, { session, messageId }),
   });
+
+export async function saveTextDocument(
+  { title, content }: { title: string; content: string },
+  { session, messageId }: Pick<DocumentToolContext, "session" | "messageId">
+): Promise<DocumentToolResult> {
+  const id = generateUUID();
+  if (session.user?.id) {
+    await saveDocument({
+      id,
+      title,
+      content,
+      kind: "text",
+      userId: session.user.id,
+      messageId,
+    });
+  }
+  return {
+    status: "success",
+    documentId: id,
+    result: "A document was created and is now visible to the user.",
+    date: new Date().toISOString(),
+  };
+}

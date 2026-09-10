@@ -1,7 +1,6 @@
 import { hasToolCall, isStepCount, ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { leadResearcherPrompt } from "./prompts";
 import { runResearcher } from "./researcher-agent";
 import { type AgentOptions, createTelemetry } from "./types";
@@ -12,7 +11,9 @@ export async function runSupervisor(
   options: AgentOptions
 ): Promise<string[]> {
   const { config, dataStream, toolCallId, abortSignal } = options;
-  const model = await getLanguageModel(config.research_model as ModelId);
+  const model = await options.getLanguageModel(
+    config.research_model as ModelId
+  );
 
   // Sequential execution queue to avoid streaming race conditions and rate limits
   let researchQueue = Promise.resolve<unknown>(undefined);

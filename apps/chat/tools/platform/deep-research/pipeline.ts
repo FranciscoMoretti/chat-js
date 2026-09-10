@@ -1,12 +1,10 @@
-import { generateText, type ModelMessage, Output, streamText } from "ai";
-import type { z } from "zod";
+import { generateText, type ModelMessage, Output, streamText, tool } from "ai";
+import { z } from "zod";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import { getLanguageModel } from "@/lib/ai/providers";
 import { truncateMessages } from "@/lib/ai/token-utils";
+import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
-import { createTextDocumentTool } from "../documents/create-text-document";
 import type { DocumentToolResult } from "../documents/types";
-import type { ToolSession } from "../types";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 import {
   clarifyWithUserInstructions,
@@ -22,7 +20,7 @@ import {
   type DeepResearchResult,
   ResearchQuestionSchema,
 } from "./types";
-import { getModelContextWindow, getTodayStr } from "./utils";
+import { getTodayStr } from "./utils";
 
 // Main deep research pipeline
 export async function runDeepResearchPipeline(
@@ -30,20 +28,23 @@ export async function runDeepResearchPipeline(
   config: DeepResearchRuntimeConfig,
   dataStream: AgentOptions["dataStream"],
   options: {
-    session: ToolSession;
+    saveReport: (input: {
+      title: string;
+      content: string;
+    }) => Promise<DocumentToolResult>;
+    getLanguageModel: AgentOptions["getLanguageModel"];
+    getModelContextWindow: AgentOptions["getModelContextWindow"];
+    publishReportStream?: StreamWriter["merge"];
     costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
     abortSignal?: AbortSignal;
   }
 ): Promise<DeepResearchResult> {
-  const { session, costAccumulator, abortSignal } = options;
-  console.log("runDeepResearchPipeline invoked", {
-    requestId: input.requestId,
-    messageId: input.messageId,
-  });
-
+  const { costAccumulator, abortSignal } = options;
   const ctx: AgentOptions = {
     config,
     dataStream,
+    getLanguageModel: options.getLanguageModel,
+    getModelContextWindow: options.getModelContextWindow,
     requestId: input.requestId,
     messageId: input.messageId,
     toolCallId: input.toolCallId,
@@ -83,7 +84,8 @@ export async function runDeepResearchPipeline(
     notes,
     researchBrief: brief.research_brief,
     reportTitle: brief.title,
-    session,
+    saveReport: options.saveReport,
+    publishReportStream: options.publishReportStream,
   });
 
   dataStream.write({
@@ -118,8 +120,8 @@ async function clarifyWithUser(
     return { needsClarification: false };
   }
 
-  const model = await getLanguageModel(config.research_model as ModelId);
-  const contextWindow = await getModelContextWindow(
+  const model = await ctx.getLanguageModel(config.research_model as ModelId);
+  const contextWindow = await ctx.getModelContextWindow(
     config.research_model as ModelId
   );
 
@@ -173,7 +175,7 @@ async function writeResearchBrief(
   ctx: AgentOptions
 ): Promise<ResearchBrief> {
   const { config, dataStream, toolCallId, costAccumulator, abortSignal } = ctx;
-  const model = await getLanguageModel(config.research_model as ModelId);
+  const model = await ctx.getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
 
   dataStream.write({
@@ -187,7 +189,7 @@ async function writeResearchBrief(
     },
   });
 
-  const contextWindow = await getModelContextWindow(
+  const contextWindow = await ctx.getModelContextWindow(
     config.research_model as ModelId
   );
 
@@ -245,7 +247,11 @@ type FinalReportInput = AgentOptions & {
   notes: string[];
   researchBrief: string;
   reportTitle: string;
-  session: ToolSession;
+  saveReport: (input: {
+    title: string;
+    content: string;
+  }) => Promise<DocumentToolResult>;
+  publishReportStream?: StreamWriter["merge"];
 };
 
 async function generateFinalReport(
@@ -257,8 +263,8 @@ async function generateFinalReport(
     reportTitle,
     config,
     dataStream,
-    session,
-    messageId,
+    saveReport,
+    publishReportStream,
     toolCallId,
     costAccumulator,
     abortSignal,
@@ -284,7 +290,7 @@ async function generateFinalReport(
     },
   });
 
-  const contextWindow = await getModelContextWindow(
+  const contextWindow = await input.getModelContextWindow(
     config.final_report_model as ModelId
   );
 
@@ -303,11 +309,14 @@ async function generateFinalReport(
           .join("\n\n")
       : finalReportPromptText;
 
-  const reportTool = createTextDocumentTool({
-    session,
-    messageId,
-    selectedModel: config.final_report_model as ModelId,
-    costAccumulator,
+  let savedReport: DocumentToolResult | undefined;
+  const reportTool = tool({
+    description: "Save the completed research report as a Markdown document.",
+    inputSchema: z.object({ title: z.string(), content: z.string() }),
+    execute: async (content) => {
+      savedReport = await saveReport(content);
+      return savedReport;
+    },
   });
 
   const systemPrompt = `You are a research report writer. Your task is to write the final research report and save it using the createTextDocument tool.
@@ -315,7 +324,7 @@ async function generateFinalReport(
 IMPORTANT: You MUST call the createTextDocument tool with the complete report content. Do not output the report as text - save it using the tool.`;
 
   const result = streamText({
-    model: await getLanguageModel(config.final_report_model as ModelId),
+    model: await input.getLanguageModel(config.final_report_model as ModelId),
     instructions: systemPrompt,
     prompt: `Write a comprehensive research report with the title "${reportTitle}" based on the following instructions and findings.
 
@@ -330,7 +339,11 @@ To write the report, call the createTextDocument tool with:
     abortSignal,
   });
 
-  dataStream.merge(result.toUIMessageStream());
+  if (publishReportStream) {
+    publishReportStream(result.toUIMessageStream());
+  } else {
+    await result.consumeStream();
+  }
 
   const usage = await result.usage;
   if (usage) {
@@ -341,9 +354,7 @@ To write the report, call the createTextDocument tool with:
     );
   }
 
-  const createdDocumentToolResult = (await result.toolResults).find(
-    (tr) => tr?.toolName === "createTextDocument"
-  );
+  await result.toolResults;
 
   dataStream.write({
     id: finalReportUpdateId,
@@ -356,15 +367,14 @@ To write the report, call the createTextDocument tool with:
     },
   });
 
-  if (!createdDocumentToolResult) {
+  if (!savedReport) {
     return {
       status: "error",
       error: "createTextDocument tool was not called",
     };
   }
 
-  const output =
-    createdDocumentToolResult.output as unknown as DocumentToolResult;
+  const output = savedReport;
   if (output.status === "error") {
     return {
       status: "error",
@@ -373,8 +383,7 @@ To write the report, call the createTextDocument tool with:
   }
 
   return {
-    status: "success",
-    documentId: output.documentId,
+    ...output,
     result: "A document was created and is now visible to the user.",
     date: output.date,
   };
