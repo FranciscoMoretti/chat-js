@@ -26,8 +26,9 @@ instance (React 18 or newer).
 
 ## Use with React
 
-You need a React app and an AI SDK chat endpoint. Keep your existing transport
-and server route. The package manages conversation state, not model hosting.
+You need a React app and an AI SDK chat endpoint at `/api/chat`.
+`useThread()` uses that endpoint by default, just like `useChat()`.
+Pass a `transport` option when you need a custom endpoint or request configuration.
 
 Replace the `useChat` import without changing your existing message list or
 composer:
@@ -36,8 +37,8 @@ composer:
 - import { useChat } from "@ai-sdk/react";
 + import { useThread } from "@chat-js/thread/react";
 
-- const chat = useChat({ transport });
-+ const chat = useThread({ transport });
+- const chat = useChat();
++ const chat = useThread();
 ```
 
 The top-level helpers remain compatible with `UseChatHelpers`, including

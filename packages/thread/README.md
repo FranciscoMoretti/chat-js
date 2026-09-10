@@ -35,12 +35,9 @@ peer for the headless entry point.
 
 ```tsx
 import { useThread } from "@chat-js/thread/react";
-import { DefaultChatTransport } from "ai";
 
 function Conversation() {
-  const chat = useThread({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-  });
+  const chat = useThread();
 
   return (
     <>
@@ -58,6 +55,9 @@ function Conversation() {
   );
 }
 ```
+
+`useThread()` uses AI SDK's default transport to call `/api/chat`. Pass a
+`transport` option for a custom endpoint or request configuration.
 
 Existing rendering and composer code can continue using:
 
