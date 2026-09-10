@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { artifactKinds } from "../artifacts/artifact-kind";
 import { db } from "./client";
@@ -16,16 +16,109 @@ const revisionInput = z.object({
   documentId: z.uuid(),
   operationId: z.string().min(1).max(512),
   expectedRevisionId: z.uuid().nullable(),
-  turnIndex: z.number().int().nonnegative(),
+  turnIndex: z.number().int().nonnegative().nullable(),
   title: z.string().min(1).max(1000),
   content: z.string().max(2_000_000),
   kind: z.enum(artifactKinds),
 });
 
+type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Upgrade pre-checkpoint native history before the first manual write changes its inference. */
+async function backfillDocumentCheckpoints(
+  tx: DocumentTransaction,
+  ownerId: string,
+  conversationId: string,
+  turns: readonly number[]
+) {
+  const turnIndexes = [
+    ...new Set(z.array(z.number().int().nonnegative()).min(1).parse(turns)),
+  ];
+  const existing = await tx
+    .select({ turnIndex: eveDocumentCheckpoint.turnIndex })
+    .from(eveDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveDocumentCheckpoint.conversationId, conversationId),
+        eq(eveDocumentCheckpoint.ownerId, ownerId),
+        inArray(eveDocumentCheckpoint.turnIndex, turnIndexes)
+      )
+    );
+  const known = new Set(existing.map((checkpoint) => checkpoint.turnIndex));
+  const missing = turnIndexes.filter((turnIndex) => !known.has(turnIndex));
+  if (!missing.length) {
+    return;
+  }
+  const heads = await tx
+    .select()
+    .from(eveDocumentHead)
+    .where(
+      and(
+        eq(eveDocumentHead.conversationId, conversationId),
+        eq(eveDocumentHead.ownerId, ownerId)
+      )
+    );
+  const histories: {
+    documentId: string;
+    history: {
+      id: string;
+      parentRevisionId: string | null;
+      turnIndex: number | null;
+    }[];
+  }[] = [];
+  for (const head of heads) {
+    const revisions = await tx
+      .select({
+        id: eveDocumentRevision.id,
+        parentRevisionId: eveDocumentRevision.parentRevisionId,
+        turnIndex: eveDocumentRevision.turnIndex,
+      })
+      .from(eveDocumentRevision)
+      .where(
+        inArray(
+          eveDocumentRevision.id,
+          ancestorIds(ownerId, head.documentId, head.revisionId)
+        )
+      );
+    const history = orderRevisionHistory(revisions, head.revisionId);
+    if (history.some((revision) => revision.turnIndex === null)) {
+      throw new Error(
+        "Document checkpoint is not ready. Retry saving shortly."
+      );
+    }
+    histories.push({ documentId: head.documentId, history });
+  }
+  for (const turnIndex of missing) {
+    await tx
+      .insert(eveDocumentCheckpoint)
+      .values({ conversationId, ownerId, turnIndex });
+    const entries = histories.flatMap(({ documentId, history }) => {
+      const revision = history.findLast(
+        (item) => item.turnIndex !== null && item.turnIndex < turnIndex
+      );
+      return revision
+        ? [
+            {
+              conversationId,
+              ownerId,
+              turnIndex,
+              documentId,
+              revisionId: revision.id,
+            },
+          ]
+        : [];
+    });
+    if (entries.length) {
+      await tx.insert(eveDocumentCheckpointEntry).values(entries);
+    }
+  }
+}
+
 /** Save a revision and move only this conversation's head, atomically and replay-safely. */
 export async function saveEveDocumentRevision(
   value: z.input<typeof revisionInput>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  historicalTurns?: readonly number[]
 ) {
   signal?.throwIfAborted();
   const input = revisionInput.parse(value);
@@ -90,11 +183,13 @@ export async function saveEveDocumentRevision(
       if (
         !previous ||
         previous.kind !== input.kind ||
-        previous.turnIndex > input.turnIndex
+        (previous.turnIndex ?? -1) >
+          (input.turnIndex ?? Number.POSITIVE_INFINITY)
       ) {
         throw new Error("Invalid document revision.");
       }
     }
+    await prepareManualRevision(tx, input, historicalTurns);
     signal?.throwIfAborted();
     const [revision] = await tx
       .insert(eveDocumentRevision)
@@ -200,16 +295,16 @@ export async function initializeEveForkDocuments(
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
     );
-    const [checkpoint] = await tx
-      .select()
-      .from(eveDocumentCheckpoint)
-      .where(
-        and(
-          eq(eveDocumentCheckpoint.conversationId, target.parentConversationId),
-          eq(eveDocumentCheckpoint.ownerId, ownerId),
-          eq(eveDocumentCheckpoint.turnIndex, beforeTurn)
-        )
-      );
+    const inheritedCheckpoints = await inheritDocumentCheckpoints(
+      tx,
+      ownerId,
+      target.parentConversationId,
+      conversationId,
+      beforeTurn
+    );
+    const checkpoint = inheritedCheckpoints.find(
+      (item) => item.turnIndex === beforeTurn
+    );
     if (checkpoint) {
       const entries = await tx
         .select()
@@ -263,18 +358,22 @@ export async function initializeEveForkDocuments(
             ancestorIds(ownerId, head.documentId, head.revisionId)
           )
         );
-      const revision = orderRevisionHistory(
-        ancestors,
-        head.revisionId
-      ).findLast((version) => version.turnIndex < beforeTurn);
-      if (revision) {
+      const revision = orderRevisionHistory(ancestors, head.revisionId);
+      if (revision.some((version) => version.turnIndex === null)) {
+        throw new Error("Document checkpoint is not ready. Retry this fork.");
+      }
+      const selectedRevision = revision.findLast(
+        (version) =>
+          version.turnIndex !== null && version.turnIndex < beforeTurn
+      );
+      if (selectedRevision) {
         await tx
           .insert(eveDocumentHead)
           .values({
             conversationId,
             documentId: head.documentId,
             ownerId,
-            revisionId: revision.id,
+            revisionId: selectedRevision.id,
           })
           .onConflictDoNothing();
       }
@@ -460,4 +559,79 @@ function orderRevisionHistory<
     revisionId = revision.parentRevisionId;
   }
   return history.reverse();
+}
+
+async function inheritDocumentCheckpoints(
+  tx: DocumentTransaction,
+  ownerId: string,
+  sourceId: string,
+  conversationId: string,
+  beforeTurn: number
+) {
+  const inheritedCheckpoints = await tx
+    .select()
+    .from(eveDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveDocumentCheckpoint.conversationId, sourceId),
+        eq(eveDocumentCheckpoint.ownerId, ownerId),
+        lte(eveDocumentCheckpoint.turnIndex, beforeTurn)
+      )
+    );
+  // The child inherits the native transcript prefix, so it must inherit its
+  // document boundaries too. A later fork may target any earlier turn.
+  if (inheritedCheckpoints.length) {
+    const copied = await tx
+      .insert(eveDocumentCheckpoint)
+      .values(
+        inheritedCheckpoints.map((checkpoint) => ({
+          ...checkpoint,
+          conversationId,
+        }))
+      )
+      .onConflictDoNothing()
+      .returning({ turnIndex: eveDocumentCheckpoint.turnIndex });
+    if (copied.length) {
+      const entries = await tx
+        .select()
+        .from(eveDocumentCheckpointEntry)
+        .where(
+          and(
+            eq(eveDocumentCheckpointEntry.conversationId, sourceId),
+            eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+            inArray(
+              eveDocumentCheckpointEntry.turnIndex,
+              copied.map((checkpoint) => checkpoint.turnIndex)
+            )
+          )
+        );
+      if (entries.length) {
+        await tx
+          .insert(eveDocumentCheckpointEntry)
+          .values(entries.map((entry) => ({ ...entry, conversationId })));
+      }
+    }
+  }
+
+  return inheritedCheckpoints;
+}
+
+async function prepareManualRevision(
+  tx: DocumentTransaction,
+  input: z.infer<typeof revisionInput>,
+  historicalTurns?: readonly number[]
+) {
+  if (input.turnIndex === null) {
+    if (!(input.expectedRevisionId && historicalTurns)) {
+      throw new Error(
+        "Manual edits require an existing document and native history."
+      );
+    }
+    await backfillDocumentCheckpoints(
+      tx,
+      input.ownerId,
+      input.conversationId,
+      historicalTurns
+    );
+  }
 }

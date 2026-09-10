@@ -14,6 +14,10 @@ export const eveDocumentEditInput = documentContent.extend({
     ),
 });
 export const eveDocumentReadInput = z.object({ documentId: z.uuid() });
+export const eveManualDocumentInput = eveDocumentEditInput.extend({
+  conversationId: z.uuid(),
+  operationId: z.uuid(),
+});
 
 export const eveDocumentOperations = {
   createTextDocument: { kind: "text", edit: false },

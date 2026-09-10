@@ -19,6 +19,7 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { documentHistoryTurns } from "../lib/eve/document-history";
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -71,6 +72,139 @@ function draft(conversationId: string) {
   };
 }
 
+test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
+  const source = await conversation();
+  const input = draft(source.id);
+  const original = await saveEveDocumentRevision(input);
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Old fork",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: source.id, beforeTurnId: "turn_2" }
+  );
+  const turns = documentHistoryTurns([
+    {
+      type: "history.restored",
+      meta: { id: "restored", at: new Date().toISOString() },
+      data: {
+        sourceSessionId: source.sessionId ?? "source",
+        beforeTurnId: "turn_2",
+        events: [0, 1].map((turn) => ({
+          type: "step.started" as const,
+          meta: { id: `step-${turn}`, at: new Date().toISOString() },
+          data: {
+            modelId: "gateway/test",
+            sequence: turn,
+            stepIndex: 0,
+            turnId: `turn_${turn}`,
+          },
+        })),
+      },
+    },
+  ]);
+  await saveEveDocumentRevision(
+    {
+      ...input,
+      conversationId: child.id,
+      operationId: crypto.randomUUID(),
+      expectedRevisionId: original.id,
+      turnIndex: null,
+      content: "Manual on old fork",
+    },
+    undefined,
+    turns
+  );
+  const earlier = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Inherited boundary",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: child.id, beforeTurnId: "turn_1" }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
+  ).toBe(original.id);
+});
+
+test("manual edits backfill old native boundaries and stay isolated across nested forks", async () => {
+  const chat = await conversation();
+  const input = draft(chat.id);
+  const original = await saveEveDocumentRevision(input);
+  const manualInput = {
+    ...input,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: original.id,
+    turnIndex: null,
+    content: "Manual content",
+  };
+  const manual = await saveEveDocumentRevision(manualInput, undefined, [0, 1]);
+  expect(manual.turnIndex).toBeNull();
+  await captureEveDocumentCheckpoint(owner, chat.id, 2);
+  const generated = await saveEveDocumentRevision({
+    ...input,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: manual.id,
+    turnIndex: 2,
+    content: "Generated later",
+  });
+  expect(
+    (await saveEveDocumentRevision(manualInput, undefined, [0, 1, 2])).id
+  ).toBe(manual.id);
+  expect(
+    (await getEveDocumentRevision(owner, chat.id, input.documentId))?.id
+  ).toBe(generated.id);
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Manual branch",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: chat.id, beforeTurnId: "turn_2" }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, child.id, input.documentId))?.content
+  ).toBe("Manual content");
+  const earlier = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Before manual",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: child.id, beforeTurnId: "turn_1" }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
+  ).toBe(original.id);
+  await expect(
+    saveEveDocumentRevision(
+      {
+        ...manualInput,
+        operationId: crypto.randomUUID(),
+        expectedRevisionId: generated.id,
+      },
+      undefined,
+      [0, 1, 2, 3]
+    )
+  ).rejects.toThrow("checkpoint is not ready");
+  expect(
+    (await getEveDocumentRevision(owner, chat.id, input.documentId))?.id
+  ).toBe(generated.id);
+  await expect(
+    saveEveDocumentRevision({
+      ...manualInput,
+      operationId: crypto.randomUUID(),
+      expectedRevisionId: generated.id,
+    })
+  ).rejects.toThrow("native history");
+});
+
 test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
   const chat = await conversation();
   await captureEveDocumentCheckpoint(owner, chat.id, 0);
@@ -89,6 +223,35 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     turnIndex: 0,
   });
   await captureEveDocumentCheckpoint(owner, chat.id, 1);
+  await captureEveDocumentCheckpoint(owner, chat.id, 2);
+  const laterBranch = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Later branch",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: chat.id, beforeTurnId: "turn_2" }
+  );
+  // Replaying fork initialization must leave inherited boundaries unchanged.
+  await initializeEveForkDocuments(owner, laterBranch.id);
+  const earlierBranch = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Earlier nested branch",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: laterBranch.id, beforeTurnId: "turn_1" }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, laterBranch.id, input.documentId))
+      ?.content
+  ).toBe("Later content");
+  expect(
+    (await getEveDocumentRevision(owner, earlierBranch.id, input.documentId))
+      ?.id
+  ).toBe(first.id);
   for (const beforeTurnId of ["turn_0", "turn_1"]) {
     const child = await createEveConversation(
       owner,

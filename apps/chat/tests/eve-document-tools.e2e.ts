@@ -1,12 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../lib/db/client";
 import {
   eveConversation,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
+  eveDocumentRevision,
   userCredit,
 } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
@@ -154,6 +155,48 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     path: testInfo.outputPath("artifact-mobile.png"),
     animations: "disabled",
   });
+  const [latest] = await db
+    .select()
+    .from(eveDocumentRevision)
+    .where(
+      and(
+        eq(eveDocumentRevision.conversationId, binding.id),
+        eq(eveDocumentRevision.title, "Artifact notes")
+      )
+    )
+    .orderBy(desc(eveDocumentRevision.createdAt))
+    .limit(1);
+  const manualInput = {
+    conversationId: binding.id,
+    documentId: latest.documentId,
+    expectedRevisionId: latest.id,
+    operationId: crypto.randomUUID(),
+    title: latest.title,
+    content: "# Orchard\n\nManual grapes.",
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const saved = await page.request.post("/api/trpc/eve.saveDocument", {
+      data: { json: manualInput },
+    });
+    expect(saved.ok(), await saved.text()).toBe(true);
+  }
+  const conflict = await page.request.post("/api/trpc/eve.saveDocument", {
+    data: {
+      json: {
+        ...manualInput,
+        operationId: crypto.randomUUID(),
+        content: "Stale replacement",
+      },
+    },
+  });
+  expect(conflict.status()).toBe(409);
+  await page.reload();
+  await page
+    .getByRole("button", { name: 'Updated "Artifact notes"', exact: true })
+    .click();
+  await panel.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(panel).toContainText("Manual grapes.");
+  await expect(panel).toContainText("Version 3 of 3");
   await page.goto("/");
   await expect(page.getByTestId("artifact")).toHaveCount(0);
   await db
@@ -163,6 +206,11 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   const publicContext = await browser.newContext();
   try {
     const reader = await publicContext.newPage();
+    const denied = await publicContext.request.post(
+      new URL("/api/trpc/eve.saveDocument", page.url()).href,
+      { data: { json: manualInput } }
+    );
+    expect(denied.status()).toBe(401);
     await reader.goto(new URL(`/share/${binding.id}`, page.url()).href);
     await reader
       .getByRole("button", { name: 'Updated "Artifact notes"', exact: true })

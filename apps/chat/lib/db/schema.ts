@@ -530,7 +530,7 @@ export const eveDocumentRevision = pgTable(
     ownerId: text("ownerId").notNull(),
     operationId: text("operationId").notNull(),
     parentRevisionId: uuid("parentRevisionId"),
-    turnIndex: integer("turnIndex").notNull(),
+    turnIndex: integer("turnIndex"),
     title: text("title").notNull(),
     content: text("content").notNull(),
     kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),

@@ -8,7 +8,9 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
+import { saveManualEveDocument } from "@/lib/eve/save-document";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -23,6 +25,22 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  saveDocument: eveProcedure
+    .input(eveManualDocumentInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await saveManualEveDocument(ctx.user.id, input);
+      } catch (cause) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            cause instanceof Error
+              ? cause.message
+              : "Document could not be saved.",
+          cause,
+        });
+      }
+    }),
   document: publicProcedure
     .input(
       z.object({
