@@ -1,3 +1,21 @@
+diff --git a/packages/eve/src/channel/types.ts b/packages/eve/src/channel/types.ts
+index cca4a3e..16b20c1 100644
+--- a/packages/eve/src/channel/types.ts
++++ b/packages/eve/src/channel/types.ts
+@@ -1,3 +1,4 @@
++import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
+ import type { UserContent } from "ai";
+ 
+ import type { SessionInboxAddress } from "#execution/wire/session-inbox-contract.js";
+@@ -453,6 +454,8 @@ export interface SessionCapabilities {
+  * subagent tool wrapper).
+  */
+ export interface RunInput {
++  /** Server-authorized native checkpoint used to seed a new independent session. */
++  readonly fork?: SessionForkReference;
+   readonly adapter: ChannelAdapter<any>;
+   /** Framework task that owns this run, when the run is a task executor. */
+   readonly taskId?: string;
 diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
 index e757d05..2e98bca 100644
 --- a/packages/eve/src/context/keys.ts
@@ -25,8 +43,40 @@ index e757d05..2e98bca 100644
  export const AuthKey = new ContextKey<SessionAuthContext | null>("eve.auth");
  export const InitiatorAuthKey = new ContextKey<SessionAuthContext | null>("eve.initiatorAuth");
  export const SessionIdKey = new ContextKey<string>("eve.sessionId");
+diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
+index 2aae307..d88bd6a 100644
+--- a/packages/eve/src/execution/create-session-step.ts
++++ b/packages/eve/src/execution/create-session-step.ts
+@@ -1,3 +1,6 @@
++import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import { restoreSessionCheckpoint } from "#execution/restore-session-checkpoint.js";
+ import { getCompiledRuntimeAgentBundle } from "#runtime/sessions/compiled-agent-cache.js";
+ import {
+   type DurableCompiledArtifactsSource,
+@@ -33,6 +36,7 @@ export interface CreateSessionStepResult {
+  */
+ export async function createSessionStep(input: {
+   readonly compiledArtifactsSource: DurableCompiledArtifactsSource;
++  readonly fork?: SessionForkReference;
+   readonly continuationToken: string;
+   readonly dynamicSubagentAgentConfig?: DynamicSubagentAgentConfig;
+   readonly inheritedLimits?: RunSessionLimits;
+@@ -95,5 +99,11 @@ export async function createSessionStep(input: {
+     workflowMaxSubagents: bundle.resolvedAgent.workflowTool?.maxSubagents,
+   });
+ 
+-  return { state: createDurableSessionState({ session }) };
++  const initialSession = input.fork
++    ? restoreSessionCheckpoint({
++        target: { ...session, history: [] },
++        checkpoint: await readSessionCheckpoint(input.fork),
++      })
++    : session;
++  return { state: createDurableSessionState({ session: initialSession }) };
+ }
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0b..39c0a45 100644
+index d3cfb0b..60a5faa 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
 @@ -1,3 +1,8 @@
@@ -38,7 +88,15 @@ index d3cfb0b..39c0a45 100644
  import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
  
  import type {
-@@ -171,6 +176,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -63,6 +68,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
+  * and deserialized at each `"use step"` boundary.
+  */
+ export interface WorkflowEntryInput {
++  readonly fork?: RunInput["fork"];
+   readonly activityCollectorRunId?: string;
+   readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
+   readonly input: RunInput["input"];
+@@ -171,6 +177,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
    };
  
    const driverWritable = getWritable<Uint8Array>();
@@ -49,6 +107,26 @@ index d3cfb0b..39c0a45 100644
    const crashCleanupState: CrashCleanupState = {
      caller: undefined,
      callerResolved: false,
+@@ -200,6 +210,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+             continuationToken,
+             dynamicSubagentAgentConfig,
+             inheritedLimits: input.limits,
++            fork: input.fork,
+             nodeId: serializedBundle.nodeId,
+             outputSchema: input.input.outputSchema,
+             rootSessionId: rootSessionIdFromParent,
+diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
+index 493017d..3e92099 100644
+--- a/packages/eve/src/execution/workflow-runtime.ts
++++ b/packages/eve/src/execution/workflow-runtime.ts
+@@ -203,6 +203,7 @@ export function createWorkflowRuntime(config: {
+         -readonly [K in keyof WorkflowEntryInput]: WorkflowEntryInput[K];
+       } = {
+         input: input.input,
++        fork: input.fork,
+         limits: input.limits,
+         serializedContext,
+       };
 diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
 index da9ac49..bf504b1 100644
 --- a/packages/eve/src/execution/workflow-steps.ts
@@ -124,65 +202,416 @@ index 6db0c47..ea55b33 100644
 +  const restored = await sessionCheckpointFixtureStep({ sessionId, serializedContext });
 +  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
 +}
-diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
+diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
 new file mode 100644
-index 0000000..625c034
+index 0000000..c54972b
 --- /dev/null
-+++ b/packages/eve/src/execution/session-checkpoint.ts
-@@ -0,0 +1,36 @@
-+import type { HarnessSession, StepInput } from "#harness/types.js";
-+import { getHarnessEmissionState } from "#harness/emission-state.js";
-+import { createDurableSessionState } from "#execution/durable-session-store.js";
-+
++++ b/packages/eve/src/execution/read-session-checkpoint.test.ts
+@@ -0,0 +1,101 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
 +import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
 +
-+/** Captures native history before a new user turn; internal continuations do not create checkpoints. */
-+export async function writeSessionCheckpoint(input: {
-+  readonly session: HarnessSession;
-+  readonly delivery: StepInput | undefined;
-+  readonly target:
-+    | { readonly sessionId: string; readonly writable: WritableStream<SessionCheckpoint> }
-+    | undefined;
-+}): Promise<void> {
-+  const emission = getHarnessEmissionState(input.session.state);
-+  if (
-+    input.delivery?.message === undefined ||
-+    emission.turnId !== "" ||
-+    input.target?.sessionId !== input.session.sessionId
-+  )
-+    return;
-+  const snapshot = createDurableSessionState({ session: input.session }).snapshot;
-+  if (snapshot === undefined)
-+    throw new Error("A session checkpoint requires an embedded snapshot.");
-+  const writer = input.target.writable.getWriter();
-+  try {
-+    await writer.write({
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++
++function checkpoint(): SessionCheckpoint {
++  return {
++    version: 1,
++    sessionId: "source",
++    beforeTurnId: "turn_0",
++    snapshot: {
 +      version: 1,
-+      sessionId: input.session.sessionId,
-+      beforeTurnId: `turn_${emission.sequence}`,
-+      snapshot,
-+    });
++      session: {
++        sessionId: "source",
++        continuationToken: "",
++        history: [],
++        agent: { system: "current" },
++      },
++    },
++  };
++}
++function install(values: SessionCheckpoint[], tail = values.length - 1) {
++  const cancel = vi.fn();
++  let index = 0;
++  const stream = Object.assign(
++    new ReadableStream<SessionCheckpoint>({
++      pull(controller) {
++        const value = values[index++];
++        if (value) controller.enqueue(value);
++      },
++      cancel,
++    }),
++    { getTailIndex: async () => tail },
++  );
++  mocks.getRun.mockReturnValue({ getReadable: () => stream });
++  return { stream, cancel };
++}
++
++it("accepts identical retry records without waiting for the live stream to finish", async () => {
++  const value = checkpoint();
++  const { stream, cancel } = install([value, value]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).resolves.toEqual(value);
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(stream.locked).toBe(false);
++});
++
++it("rejects conflicting retries and foreign session records", async () => {
++  const value = checkpoint();
++  install([
++    value,
++    {
++      ...value,
++      snapshot: {
++        ...value.snapshot,
++        session: { ...value.snapshot.session, history: [{ role: "user", content: "different" }] },
++      },
++    },
++  ]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("Conflicting");
++  install([{ ...value, sessionId: "other" }]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("identity");
++});
++
++it("bounds oversized and missing checkpoint scans", async () => {
++  install([], 1_000);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("scan limit");
++  install([]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("not found");
++});
++
++it("times out stalled reads even when stream cancellation never settles", async () => {
++  vi.useFakeTimers();
++  const cancel = vi.fn(() => new Promise<void>(() => {}));
++  const stream = Object.assign(new ReadableStream<SessionCheckpoint>({ cancel }), {
++    getTailIndex: async () => 0,
++  });
++  mocks.getRun.mockReturnValue({ getReadable: () => stream });
++  const result = expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("timed out");
++  await vi.advanceTimersByTimeAsync(10_000);
++  await result;
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(stream.locked).toBe(false);
++});
+diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
+new file mode 100644
+index 0000000..5124bd8
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-checkpoint.ts
+@@ -0,0 +1,60 @@
++import { isDeepStrictEqual } from "node:util";
++import { getRun } from "#internal/workflow/runtime.js";
++import { migrateDurableSessionSnapshot } from "#execution/durable-session-migrations/snapshot.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  type SessionCheckpoint,
++  type SessionForkReference,
++} from "#execution/session-checkpoint-contract.js";
++
++const MAX_CHECKPOINTS = 1_000;
++const READ_TIMEOUT_MS = 10_000;
++
++/** Reads a finite checkpoint prefix. Callers must authorize the source session before invoking this. */
++export async function readSessionCheckpoint(
++  input: SessionForkReference,
++): Promise<SessionCheckpoint> {
++  const stream = getRun(input.sessionId).getReadable<SessionCheckpoint>({
++    namespace: SESSION_CHECKPOINT_NAMESPACE,
++  });
++  const reader = stream.getReader();
++  let timeout: ReturnType<typeof setTimeout> | undefined;
++  const read = async (): Promise<SessionCheckpoint> => {
++    const tail = await stream.getTailIndex();
++    if (tail >= MAX_CHECKPOINTS) throw new Error("Session checkpoint scan limit exceeded.");
++    let found: SessionCheckpoint | undefined;
++    for (let index = 0; index <= tail; index++) {
++      const { value, done } = await reader.read();
++      if (done || value === undefined)
++        throw new Error("Session checkpoint stream ended unexpectedly.");
++      if (value.version !== 1 || value.sessionId !== input.sessionId)
++        throw new Error("Invalid session checkpoint identity or version.");
++      if (value.beforeTurnId !== input.beforeTurnId) continue;
++      const snapshot = migrateDurableSessionSnapshot(value.snapshot);
++      if (snapshot.session.sessionId !== input.sessionId)
++        throw new Error("Invalid checkpoint snapshot identity.");
++      if (found && !isDeepStrictEqual(found.snapshot, snapshot))
++        throw new Error("Conflicting session checkpoint retries.");
++      found = { ...value, snapshot };
++    }
++    if (!found) throw new Error("Session checkpoint was not found.");
++    return found;
++  };
++  try {
++    return await Promise.race([
++      read(),
++      new Promise<never>((_resolve, reject) => {
++        timeout = setTimeout(
++          () => reject(new Error("Session checkpoint read timed out.")),
++          READ_TIMEOUT_MS,
++        );
++      }),
++    ]);
 +  } finally {
-+    writer.releaseLock();
++    if (timeout !== undefined) clearTimeout(timeout);
++    void reader.cancel().catch(() => {
++      /* Cleanup must not delay the result if the stream stalls or cancellation fails. */
++    });
++    reader.releaseLock();
 +  }
++}
+diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
+new file mode 100644
+index 0000000..5588bb8
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-checkpoint.test.ts
+@@ -0,0 +1,95 @@
++import { expect, it } from "vitest";
++import { createSession } from "#execution/session.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++import { setHarnessEmissionState } from "#harness/emission-state.js";
++import { restoreSessionCheckpoint } from "#execution/restore-session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++function fresh(sessionId: string) {
++  return createSession({
++    sessionId,
++    continuationToken: `${sessionId}-inbox`,
++    turnAgent: {
++      id: "test",
++      instructions: ["Current instructions"],
++      model: { id: "current-model" },
++      tools: [],
++      workspaceSpec: { rootEntries: [] },
++    },
++  });
++}
++function checkpoint(): SessionCheckpoint {
++  const source = setHarnessEmissionState(
++    {
++      ...fresh("source"),
++      state: { "source-secret-state": { approval: "source-request", consumedTokens: 123 } },
++      history: [
++        { role: "user", content: "remember this" },
++        { role: "assistant", content: "Remembered." },
++      ],
++    },
++    { sessionStarted: true, sequence: 4, stepIndex: 0, turnId: "" },
++  );
++  const snapshot = createDurableSessionState({ session: source }).snapshot;
++  if (!snapshot) throw new Error("Missing test snapshot");
++  return { version: 1, sessionId: "source", beforeTurnId: "turn_4", snapshot };
++}
++
++it("restores history and sequence while retaining fresh target identity, model and state", () => {
++  const source = checkpoint();
++  const target = fresh("branch");
++  const restored = restoreSessionCheckpoint({ target, checkpoint: source });
++  expect(restored.sessionId).toBe("branch");
++  expect(restored.continuationToken).toBe("branch-inbox");
++  expect(restored.agent).toBe(target.agent);
++  expect(restored.state?.["source-secret-state"]).toBeUndefined();
++  expect(restored.state?.["eve.harness.emission"]).toEqual({
++    sessionStarted: false,
++    sequence: 4,
++    stepIndex: 0,
++    turnId: "",
++  });
++  expect(restored.history).toEqual(source.snapshot.session.history);
++  restored.history.push({ role: "user", content: "branch only" });
++  expect(source.snapshot.session.history).toHaveLength(2);
++});
++
++it("rejects wrong identities and an already-used target", () => {
++  const source = checkpoint();
++  expect(() => restoreSessionCheckpoint({ target: fresh("source"), checkpoint: source })).toThrow(
++    "Invalid",
++  );
++  expect(() =>
++    restoreSessionCheckpoint({
++      target: fresh("branch"),
++      checkpoint: { ...source, sessionId: "other" },
++    }),
++  ).toThrow("Invalid");
++  expect(() =>
++    restoreSessionCheckpoint({
++      target: { ...fresh("branch"), history: [{ role: "user", content: "existing" }] },
++      checkpoint: source,
++    }),
++  ).toThrow("fresh target");
++});
++
++it("does not revive unfinished tools or silently discard sandbox attachments", () => {
++  const source = checkpoint();
++  source.snapshot.session.history.push({
++    role: "assistant",
++    content: [{ type: "tool-call", toolCallId: "pending", toolName: "dangerous", input: {} }],
++  });
++  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
++    "unresolved tool",
++  );
++  source.snapshot.session.history.pop();
++  source.snapshot.session.history.push({
++    role: "user",
++    content: [
++      { type: "file", mediaType: "image/png", data: new URL("eve-sandbox:?path=/old/file") },
++    ],
++  });
++  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
++    "resource copying",
++  );
++});
+diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
+new file mode 100644
+index 0000000..bcc16e3
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-checkpoint.ts
+@@ -0,0 +1,55 @@
++import type { HarnessSession } from "#harness/types.js";
++import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++/** Seeds a fresh session; source execution identities and capabilities are never restored. */
++export function restoreSessionCheckpoint(input: {
++  readonly target: HarnessSession;
++  readonly checkpoint: SessionCheckpoint;
++}): HarnessSession {
++  const { target, checkpoint } = input;
++  const source = checkpoint.snapshot.session;
++  const emission = getHarnessEmissionState(source.state);
++  if (
++    checkpoint.version !== 1 ||
++    checkpoint.snapshot.version !== 1 ||
++    source.sessionId !== checkpoint.sessionId ||
++    target.sessionId === source.sessionId ||
++    checkpoint.beforeTurnId !== `turn_${emission.sequence}` ||
++    emission.turnId !== ""
++  ) {
++    throw new Error("Invalid session fork checkpoint.");
++  }
++  if (target.history.length || getHarnessEmissionState(target.state).sessionStarted) {
++    throw new Error("Session checkpoint restoration requires a fresh target.");
++  }
++  if (source.sandboxState?.initialized || source.sandboxState?.session != null) {
++    throw new Error("Forking sandbox state requires resource copying.");
++  }
++  const pendingTools = new Set<string>();
++  for (const message of source.history) {
++    if (!Array.isArray(message.content)) continue;
++    for (const part of message.content) {
++      if (
++        part.type === "file" &&
++        (part.data instanceof URL
++          ? part.data.protocol === "eve-sandbox:"
++          : typeof part.data === "string" && part.data.startsWith("eve-sandbox:"))
++      ) {
++        throw new Error("Forking sandbox attachments requires resource copying.");
++      }
++      if (part.type === "tool-call" && !part.providerExecuted) pendingTools.add(part.toolCallId);
++      if (part.type === "tool-result") pendingTools.delete(part.toolCallId);
++    }
++  }
++  if (pendingTools.size) throw new Error("Cannot fork a checkpoint with unresolved tool calls.");
++  return setHarnessEmissionState(
++    { ...target, history: [...source.history] },
++    {
++      sessionStarted: false,
++      sequence: emission.sequence,
++      stepIndex: 0,
++      turnId: "",
++    },
++  );
 +}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
-index 0000000..fcc625c
+index 0000000..9e3dc25
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint-contract.ts
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,14 @@
 +import type { DurableSessionSnapshot } from "#execution/durable-session-store.js";
 +
 +export const SESSION_CHECKPOINT_WRITER_KEY = "eve.sessionCheckpointWriter";
 +export const SESSION_CHECKPOINT_NAMESPACE = "eve.checkpoints";
 +
-+export interface SessionCheckpoint {
-+  readonly version: 1;
++export interface SessionForkReference {
 +  readonly sessionId: string;
 +  readonly beforeTurnId: string;
++}
++
++export interface SessionCheckpoint extends SessionForkReference {
++  readonly version: 1;
 +  readonly snapshot: DurableSessionSnapshot;
 +}
+diff --git a/packages/eve/src/execution/session-checkpoint.integration.test.ts b/packages/eve/src/execution/session-checkpoint.integration.test.ts
+new file mode 100644
+index 0000000..ece3ab0
+--- /dev/null
++++ b/packages/eve/src/execution/session-checkpoint.integration.test.ts
+@@ -0,0 +1,49 @@
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import { describe, expect, it } from "vitest";
++import { start } from "#internal/workflow/runtime.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { sessionCheckpointFixtureWorkflow } from "#internal/testing/durable-session-workflow.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
++
++describe("session checkpoint durability", () => {
++  it("ferries the writer through context and restores native binary history from its own stream", async () => {
++    const runtime = await createTestRuntime({ agent: { name: "checkpoint-fixture" } });
++    await runtime.run(async () => {
++      const run = await start(sessionCheckpointFixtureWorkflow, []);
++      await run.returnValue;
++      const restored = await readSessionCheckpoint({
++        sessionId: run.runId,
++        beforeTurnId: "turn_0",
++      });
++      expect(restored.snapshot.session.history).toHaveLength(2);
++      await expect(
++        readSessionCheckpoint({ sessionId: run.runId, beforeTurnId: "turn_99" }),
++      ).rejects.toThrow("was not found");
++      const reader = run
++        .getReadable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE })
++        .getReader();
++      try {
++        const first = await reader.read();
++        const second = await reader.read();
++        expect(first.value?.sessionId).toBe(run.runId);
++        expect(first.value?.beforeTurnId).toBe("turn_0");
++        expect(first.value?.snapshot.session.history).toEqual([
++          { role: "user", content: "checkpoint message 0" },
++          {
++            role: "user",
++            content: [
++              { type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) },
++            ],
++          },
++        ]);
++        expect(second.value).toEqual(first.value);
++      } finally {
++        await reader.cancel();
++        reader.releaseLock();
++      }
++    });
++  });
++});
 diff --git a/packages/eve/src/execution/session-checkpoint.test.ts b/packages/eve/src/execution/session-checkpoint.test.ts
 new file mode 100644
 index 0000000..1316fe9
@@ -302,49 +731,132 @@ index 0000000..1316fe9
 +    expect(target.writable.locked).toBe(false);
 +  });
 +});
-diff --git a/packages/eve/src/execution/session-checkpoint.integration.test.ts b/packages/eve/src/execution/session-checkpoint.integration.test.ts
+diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
 new file mode 100644
-index 0000000..8c9c8a3
+index 0000000..625c034
 --- /dev/null
-+++ b/packages/eve/src/execution/session-checkpoint.integration.test.ts
-@@ -0,0 +1,40 @@
-+import { describe, expect, it } from "vitest";
++++ b/packages/eve/src/execution/session-checkpoint.ts
+@@ -0,0 +1,36 @@
++import type { HarnessSession, StepInput } from "#harness/types.js";
++import { getHarnessEmissionState } from "#harness/emission-state.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++/** Captures native history before a new user turn; internal continuations do not create checkpoints. */
++export async function writeSessionCheckpoint(input: {
++  readonly session: HarnessSession;
++  readonly delivery: StepInput | undefined;
++  readonly target:
++    | { readonly sessionId: string; readonly writable: WritableStream<SessionCheckpoint> }
++    | undefined;
++}): Promise<void> {
++  const emission = getHarnessEmissionState(input.session.state);
++  if (
++    input.delivery?.message === undefined ||
++    emission.turnId !== "" ||
++    input.target?.sessionId !== input.session.sessionId
++  )
++    return;
++  const snapshot = createDurableSessionState({ session: input.session }).snapshot;
++  if (snapshot === undefined)
++    throw new Error("A session checkpoint requires an embedded snapshot.");
++  const writer = input.target.writable.getWriter();
++  try {
++    await writer.write({
++      version: 1,
++      sessionId: input.session.sessionId,
++      beforeTurnId: `turn_${emission.sequence}`,
++      snapshot,
++    });
++  } finally {
++    writer.releaseLock();
++  }
++}
+diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
+new file mode 100644
+index 0000000..0cd32fc
+--- /dev/null
++++ b/packages/eve/src/execution/session-fork.integration.test.ts
+@@ -0,0 +1,81 @@
++import { expect, it } from "vitest";
 +import { start } from "#internal/workflow/runtime.js";
 +import { createTestRuntime } from "#internal/testing/app-harness.js";
-+import { sessionCheckpointFixtureWorkflow } from "#internal/testing/durable-session-workflow.js";
-+import {
-+  SESSION_CHECKPOINT_NAMESPACE,
-+  type SessionCheckpoint,
-+} from "#execution/session-checkpoint-contract.js";
++import { captureTurnEvents } from "#internal/testing/events.js";
++import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import { workflowEntry } from "#execution/workflow-entry.js";
++import { createWorkflowRuntime } from "#execution/workflow-runtime.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
 +
-+describe("session checkpoint durability", () => {
-+  it("ferries the writer through context and restores native binary history from its own stream", async () => {
-+    const runtime = await createTestRuntime({ agent: { name: "checkpoint-fixture" } });
-+    await runtime.run(async () => {
-+      const run = await start(sessionCheckpointFixtureWorkflow, []);
-+      await run.returnValue;
-+      const reader = run
-+        .getReadable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE })
-+        .getReader();
-+      try {
-+        const first = await reader.read();
-+        const second = await reader.read();
-+        expect(first.value?.sessionId).toBe(run.runId);
-+        expect(first.value?.beforeTurnId).toBe("turn_0");
-+        expect(first.value?.snapshot.session.history).toEqual([
-+          { role: "user", content: "checkpoint message 0" },
-+          {
-+            role: "user",
-+            content: [
-+              { type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) },
-+            ],
-+          },
-+        ]);
-+        expect(second.value).toEqual(first.value);
-+      } finally {
-+        await reader.cancel();
-+        reader.releaseLock();
-+      }
++function context() {
++  return {
++    "eve.auth": null,
++    "eve.bundle": { source: createBundledRuntimeCompiledArtifactsSource() },
++    "eve.channel": { kind: "http", state: {} },
++    "eve.mode": "conversation",
++  };
++}
++
++it("forks the native history before a user turn without modifying its source", async () => {
++  const fixture = await createTestRuntime({ agent: { name: "fork-fixture" } });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
 +    });
++    const source = await start(workflowEntry, [
++      { input: { message: "first message" }, serializedContext: context() },
++    ]);
++    const sourceStream = captureTurnEvents(source);
++    try {
++      const first = await sourceStream.nextTurn();
++      expect(first.at(-1)?.type).toBe("session.waiting");
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "old second message" } },
++      });
++      const second = await sourceStream.nextTurn();
++      const boundary = second.find((event) => event.type === "message.received");
++      if (!boundary || boundary.type !== "message.received") throw new Error("Missing second turn");
++      const ref = { sessionId: source.runId, beforeTurnId: boundary.data.turnId };
++      const checkpoint = await readSessionCheckpoint(ref);
++      expect(
++        checkpoint.snapshot.session.history.some(
++          (message) => message.role === "user" && message.content === "first message",
++        ),
++      ).toBe(true);
++      const branch = await start(workflowEntry, [
++        {
++          input: { message: "replacement second message" },
++          fork: ref,
++          serializedContext: context(),
++        },
++      ]);
++      const branchStream = captureTurnEvents(branch);
++      try {
++        const events = await branchStream.nextTurn();
++        expect(events.at(-1)?.type).toBe("session.waiting");
++        expect(
++          events.some(
++            (event) =>
++              event.type === "message.received" &&
++              event.data.message === "replacement second message",
++          ),
++        ).toBe(true);
++        const restored = await readSessionCheckpoint({
++          sessionId: branch.runId,
++          beforeTurnId: ref.beforeTurnId,
++        });
++        expect(restored.snapshot.session.history).toEqual(checkpoint.snapshot.session.history);
++        expect(restored.snapshot.session.sessionId).toBe(branch.runId);
++        expect(restored.snapshot.session.continuationToken).toBe("");
++        expect((await readSessionCheckpoint(ref)).snapshot).toEqual(checkpoint.snapshot);
++      } finally {
++        branchStream.dispose();
++        await branch.cancel();
++      }
++    } finally {
++      sourceStream.dispose();
++      await source.cancel();
++    }
 +  });
 +});

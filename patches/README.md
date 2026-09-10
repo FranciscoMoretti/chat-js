@@ -42,16 +42,31 @@ context serialization and rejects a different session identity. Non-message
 continuations and active turns do not create checkpoints. Storage failures
 propagate before model execution; the writer lock is always released.
 
-Validated in the isolated source checkout with 101 focused unit/regression tests,
-a real Workflow serialization integration (including binary PDF history), source
-type-checking, and source linting. Both source review passes found no actionable
-regression. This does not establish app-level editing or regeneration support.
+The internal run input now accepts a source session and user-turn reference. A
+bounded reader validates identity and schema, accepts identical retry records,
+and rejects conflicting retries. It scans at most 1,000 records with a ten-second
+timeout; sessions beyond that cap cannot currently be forked, even at earlier
+turns. Stream cleanup cannot extend that timeout.
 
-Before activating: implement an authorized fork operation and stream-prefix
-restoration; reset/remap source-owned execution, approval and sandbox state;
-handle checkpoint retry duplicates; and bound snapshot storage/retention. A raw
-checkpoint must never be adopted as another session unchanged. The prototype
-stores full snapshots, so retained history can produce quadratic storage growth.
+Restoration copies model history into a fresh session, preserving the target's
+identity, configuration, and execution state. It rejects unresolved tool calls
+and source sandbox resources until resource cloning is implemented. The fork
+continues the source turn sequence without importing approvals or consumed
+execution budgets. Caller authorization is required; this is not a public API.
+
+Validated in the isolated source checkout with 158 focused unit/regression tests,
+a real Workflow serialization integration (including binary PDF history), and a
+native two-session fork integration that verifies replacement history and an
+unchanged source. Source type-checking and linting pass. Both source review
+passes found no actionable regression. This does not establish app-level editing
+or regeneration support.
+
+Before activating: implement source authorization at the app boundary, inherited
+transcript streaming, fork idempotency, sandbox/attachment resource cloning, and
+app-level recovery and UI validation. Bound snapshot storage/retention or reuse
+existing durable step snapshots: the prototype stores full snapshots, so
+retained history can produce quadratic storage growth. A raw checkpoint must
+never be adopted as another session unchanged.
 
 No upstream issue or change has been published. Keep the source patch separate
 from the active minified package patch until the complete runtime slice passes
