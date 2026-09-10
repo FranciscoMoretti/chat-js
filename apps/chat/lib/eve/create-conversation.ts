@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { conversationBinding, type createConversationInput } from "./contracts";
 
+export class CreationRejected extends Error {}
+
 /** A timeout is ambiguous: callers must retain the operation until it is bound. */
 export async function requestConversation(
   operation: z.infer<typeof createConversationInput>
@@ -16,7 +18,13 @@ export async function requestConversation(
     });
     const body: unknown = await response.json();
     if (!response.ok) {
-      throw new Error(z.object({ error: z.string() }).parse(body).error);
+      const failure = z
+        .object({ error: z.string(), creationRejected: z.boolean().optional() })
+        .parse(body);
+      if (response.status === 400 && failure.creationRejected === true) {
+        throw new CreationRejected(failure.error);
+      }
+      throw new Error(failure.error);
     }
     return conversationBinding.parse(body);
   } catch (cause) {

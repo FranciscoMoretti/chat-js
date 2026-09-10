@@ -2,6 +2,15 @@ import { expect, test, vi } from "vitest";
 
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
+    fetchModels: async () => {
+      const { getFallbackModels } = await import(
+        "../ai/gateways/fallback-models"
+      );
+      return [
+        ...getFallbackModels("test"),
+        { id: "live-only", type: "language", tags: [], pricing: {} },
+      ];
+    },
     createLanguageModel: (id: string) => ({ modelId: id }),
   }),
 }));
@@ -37,9 +46,13 @@ vi.mock("../ai/gateways/fallback-models", () => ({
   ],
 }));
 
-import { getEveModelDefinition, resolveEveModel } from "./model-selection";
+import {
+  getEveModelDefinition,
+  loadEveModelDefinition,
+  resolveEveModel,
+} from "./model-selection";
 
-test("keeps the provider model and reasoning variant distinct", () => {
+test("keeps the provider model and reasoning variant distinct", async () => {
   expect(getEveModelDefinition()).toMatchObject({
     id: "plain",
     reasoning: false,
@@ -49,7 +62,7 @@ test("keeps the provider model and reasoning variant distinct", () => {
     apiModelId: "thinking",
     reasoning: true,
   });
-  expect(resolveEveModel("thinking-reasoning")).toMatchObject({
+  expect(await resolveEveModel("thinking-reasoning")).toMatchObject({
     modelContextWindowTokens: 2000,
     modelOptions: {
       providerOptions: { anthropic: { thinking: { type: "enabled" } } },
@@ -63,4 +76,11 @@ test.each([
   "plain-reasoning",
 ])("rejects unavailable selection %s", (id) => {
   expect(() => getEveModelDefinition(id)).toThrow("not available");
+});
+
+test("accepts live catalog models absent from the snapshot", async () => {
+  expect(() => getEveModelDefinition("live-only")).toThrow();
+  expect(await loadEveModelDefinition("live-only")).toMatchObject({
+    id: "live-only",
+  });
 });

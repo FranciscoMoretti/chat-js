@@ -454,6 +454,7 @@ export const eveConversation = pgTable(
       .references(() => user.id),
     operationId: uuid("operationId").notNull(),
     firstMessage: text("firstMessage").notNull(),
+    initialModelId: text("initialModelId"),
     sessionId: text("sessionId").unique(),
     state: text("state", { enum: ["creating", "bound", "uncertain"] })
       .notNull()

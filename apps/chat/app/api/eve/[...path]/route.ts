@@ -3,7 +3,7 @@ import { canSpend } from "@/lib/db/credits";
 import { ownsEveSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
-import { getEveModelDefinition } from "@/lib/eve/model-selection";
+import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
@@ -37,9 +37,17 @@ async function readCommand(
       return new Response(null, { status: 400 });
     }
     if ("message" in input.data) {
-      modelId = input.data.modelId;
+      const selectedModel = request.headers.get("x-chatjs-selected-model");
+      if (
+        selectedModel &&
+        input.data.modelId &&
+        selectedModel !== input.data.modelId
+      ) {
+        return new Response(null, { status: 400 });
+      }
+      modelId = selectedModel ?? input.data.modelId;
       try {
-        getEveModelDefinition(modelId);
+        await loadEveModelDefinition(modelId);
       } catch {
         return Response.json(
           { error: "This model is not available for chat." },

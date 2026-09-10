@@ -3,11 +3,19 @@
 import { useRef, useState } from "react";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome";
 import { ControlledChatComposer } from "@/components/chat-composer";
-import { requestConversation } from "@/lib/eve/create-conversation";
+import {
+  CreationRejected,
+  requestConversation,
+} from "@/lib/eve/create-conversation";
 import { finishCreation, prepareCreation } from "@/lib/eve/pending-create";
 
+import { useDefaultModel } from "@/providers/default-model-provider";
+import { EveModelPicker } from "./eve-model-picker";
+
 export function NewEveConversation({ ownerId }: { ownerId: string }) {
+  const selectedModel = useDefaultModel();
   const [draft, setDraft] = useState("");
+  const [retainedModelId, setRetainedModelId] = useState<string>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -19,12 +27,22 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
     setBusy(true);
     setError("");
     try {
-      const operation = prepareCreation(sessionStorage, ownerId, draft);
+      const operation = prepareCreation(
+        sessionStorage,
+        ownerId,
+        draft,
+        selectedModel
+      );
       setDraft(operation.message);
+      setRetainedModelId(operation.modelId);
       const binding = await requestConversation(operation);
       finishCreation(sessionStorage, ownerId);
       window.location.assign(`/chat/${binding.id}`);
     } catch (cause) {
+      if (cause instanceof CreationRejected) {
+        finishCreation(sessionStorage, ownerId);
+        setRetainedModelId(undefined);
+      }
       setError(
         cause instanceof Error
           ? cause.message
@@ -44,6 +62,12 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
         draft={draft}
         onDraftChange={setDraft}
         onSubmit={submit}
+        tools={
+          <EveModelPicker
+            disabled={busy || !!retainedModelId}
+            retainedModelId={retainedModelId}
+          />
+        }
       />
       {error && <p role="alert">{error}</p>}
     </ChatWelcomeView>

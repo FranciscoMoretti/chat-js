@@ -239,11 +239,13 @@ const CommandItem = memo(
 );
 
 function PureModelSelector({
+  allowMultiple = true,
   selectedModelId,
   selectedModelSelection,
   className,
   onModelSelectionChangeAction,
 }: {
+  allowMultiple?: boolean;
   selectedModelId: AppModelId;
   selectedModelSelection: SelectedModelValue;
   onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
@@ -625,21 +627,23 @@ function PureModelSelector({
                 </PopoverContent>
               </Popover>
             </div>
-            {!isAnonymous && config.features.parallelResponses && (
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <Label
-                  className="cursor-pointer text-sm"
-                  htmlFor="use-multiple-models"
-                >
-                  Use Multiple Models
-                </Label>
-                <Switch
-                  checked={useMultipleModels}
-                  id="use-multiple-models"
-                  onCheckedChange={handleMultipleModelsToggle}
-                />
-              </div>
-            )}
+            {allowMultiple &&
+              !isAnonymous &&
+              config.features.parallelResponses && (
+                <div className="flex items-center justify-between border-b px-3 py-2">
+                  <Label
+                    className="cursor-pointer text-sm"
+                    htmlFor="use-multiple-models"
+                  >
+                    Use Multiple Models
+                  </Label>
+                  <Switch
+                    checked={useMultipleModels}
+                    id="use-multiple-models"
+                    onCheckedChange={handleMultipleModelsToggle}
+                  />
+                </div>
+              )}
             {hasDisabledModels && (
               <div className="p-3">
                 <LoginCtaBanner
@@ -720,6 +724,7 @@ function PureModelSelector({
 export const ModelSelector = memo(
   PureModelSelector,
   (prev, next) =>
+    prev.allowMultiple === next.allowMultiple &&
     prev.selectedModelId === next.selectedModelId &&
     prev.selectedModelSelection === next.selectedModelSelection &&
     prev.className === next.className &&

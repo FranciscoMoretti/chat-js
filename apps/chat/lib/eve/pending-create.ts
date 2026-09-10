@@ -6,7 +6,8 @@ const keyFor = (ownerId: string) => `chatjs.eve.pending:${ownerId}`;
 export function prepareCreation(
   storage: StorageAccess,
   ownerId: string,
-  draft: string
+  draft: string,
+  modelId?: string
 ) {
   const key = keyFor(ownerId);
   const stored = storage.getItem(key);
@@ -17,6 +18,7 @@ export function prepareCreation(
   const pending = createConversationInput.safeParse({
     operationId: crypto.randomUUID(),
     message: draft,
+    modelId,
   });
   if (!pending.success) {
     throw new Error("Enter a message between 1 and 16,000 characters.");

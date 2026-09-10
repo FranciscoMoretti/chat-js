@@ -1,0 +1,1 @@
+ALTER TABLE "EveConversation" ADD COLUMN "initialModelId" text;

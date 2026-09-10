@@ -11,7 +11,9 @@ import {
 import { ControlledChatComposer } from "@/components/chat-composer";
 import { Button } from "@/components/ui/button";
 import { sendCommand } from "@/lib/eve/send-command";
+import { useDefaultModel } from "@/providers/default-model-provider";
 import { EveMessages } from "./eve-messages";
+import { EveModelPicker } from "./eve-model-picker";
 
 const pendingMessageSchema = z.object({
   message: z.string(),
@@ -20,6 +22,7 @@ const pendingMessageSchema = z.object({
 });
 
 export function EveConversation({ sessionId }: { sessionId: string }) {
+  const selectedModel = useDefaultModel();
   const storageKey = `chatjs.eve.pending-message:${sessionId}`;
   const [pendingMessage, setPendingMessage] = useState<z.infer<
     typeof pendingMessageSchema
@@ -253,7 +256,13 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
               setPendingMessage(pending);
               setDraft("");
               try {
-                await send(() => agent.send(submitted.trim()), true);
+                await send(
+                  () =>
+                    agent.send(submitted.trim(), {
+                      headers: { "x-chatjs-selected-model": selectedModel },
+                    }),
+                  true
+                );
               } catch (cause) {
                 setDraft((current) => current || submitted);
                 throw cause;
@@ -261,6 +270,13 @@ export function EveConversation({ sessionId }: { sessionId: string }) {
             })
           }
           stopDisabled={cancelPending || agent.status === "resuming"}
+          tools={
+            <EveModelPicker
+              disabled={
+                busy || commandPending || hasApproval || !!pendingMessage
+              }
+            />
+          }
         />
         {(error || agent.error || durableError) && (
           <Button

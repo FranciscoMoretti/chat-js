@@ -80,8 +80,15 @@ describe("Eve command recovery", () => {
     };
     expect(() => prepareCreation(storage, "alice", " ")).toThrow();
     expect(data.size).toBe(0);
-    const first = prepareCreation(storage, "alice", "hello");
-    expect(prepareCreation(storage, "alice", "edited")).toEqual(first);
+    const first = prepareCreation(
+      storage,
+      "alice",
+      "hello",
+      "openai/gpt-4.1-mini"
+    );
+    expect(prepareCreation(storage, "alice", "edited", "other-model")).toEqual(
+      first
+    );
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
   it("surfaces callback-only failures and catches up after cancellation", async () => {

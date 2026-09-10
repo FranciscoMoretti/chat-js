@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createConversationInput = z
   .object({
     operationId: z.uuid(),
+    modelId: z.string().min(1).max(200).optional(),
     message: z.string().trim().min(1).max(16_000),
   })
   .strict();

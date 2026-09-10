@@ -89,6 +89,9 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     results.filter((result) => result.status === "fulfilled").length
   ).toBeGreaterThan(0);
   const bound = await createEveConversation(owner, operation, "hello", start);
+  await expect(
+    createEveConversation(owner, operation, "hello", start, "changed-model")
+  ).rejects.toThrow("different");
   expect(starts).toBe(1);
   expect(await ownsEveSession(owner, bound.sessionId)).toBe(true);
   expect(await ownsEveSession("other", bound.sessionId)).toBe(false);

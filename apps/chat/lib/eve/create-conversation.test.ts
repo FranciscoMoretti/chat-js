@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { requestConversation } from "./create-conversation";
+import { CreationRejected, requestConversation } from "./create-conversation";
 
 const operation = {
   operationId: "00000000-0000-4000-8000-000000000001",
@@ -39,4 +39,32 @@ it("returns the existing binding on retry and clears its deadline", async () => 
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(binding)));
   await expect(requestConversation(operation)).resolves.toEqual(binding);
   expect(vi.getTimerCount()).toBe(0);
+});
+
+it("distinguishes definitive rejection from uncertain creation", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          { error: "Unavailable", creationRejected: true },
+          { status: 400 }
+        )
+      )
+  );
+  await expect(requestConversation(operation)).rejects.toBeInstanceOf(
+    CreationRejected
+  );
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ error: "Unresolved" }, { status: 409 })
+      )
+  );
+  await expect(requestConversation(operation)).rejects.not.toBeInstanceOf(
+    CreationRejected
+  );
 });

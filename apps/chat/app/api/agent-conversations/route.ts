@@ -9,6 +9,7 @@ import {
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { createConversationInput } from "@/lib/eve/contracts";
+import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
@@ -47,6 +48,17 @@ export async function POST(request: Request) {
       input.data.operationId
     );
     if (!existing) {
+      try {
+        await loadEveModelDefinition(input.data.modelId);
+      } catch {
+        return Response.json(
+          {
+            error: "This model is not available for chat.",
+            creationRejected: true,
+          },
+          { status: 400 }
+        );
+      }
       await reconcileEveOwnerUsage(session.user.id);
       if (!(await canSpend(session.user.id))) {
         return Response.json(
@@ -70,17 +82,23 @@ export async function POST(request: Request) {
       input.data.operationId,
       input.data.message,
       async (operationId) => {
-        const result = await eveRequest(session.user.id, "/eve/v1/session", {
-          method: "POST",
-          body: JSON.stringify({ message: input.data.message, operationId }),
-        });
+        const result = await eveRequest(
+          session.user.id,
+          "/eve/v1/session",
+          {
+            method: "POST",
+            body: JSON.stringify({ message: input.data.message, operationId }),
+          },
+          input.data.modelId
+        );
         if (!result.ok) {
           throw new Error("Session creation failed.");
         }
         return z
           .object({ sessionId: z.string().min(1) })
           .parse(await result.json()).sessionId;
-      }
+      },
+      input.data.modelId
     );
     return Response.json(binding);
   } catch (cause) {

@@ -53,11 +53,12 @@ export async function createEveConversation(
   ownerId: string,
   operationId: string,
   message: string,
-  create: (id: string) => Promise<string>
+  create: (id: string) => Promise<string>,
+  initialModelId?: string
 ) {
   const [reservation] = await db
     .insert(eveConversation)
-    .values({ ownerId, operationId, firstMessage: message })
+    .values({ ownerId, operationId, firstMessage: message, initialModelId })
     .onConflictDoNothing()
     .returning();
   if (!reservation) {
@@ -70,9 +71,13 @@ export async function createEveConversation(
           eq(eveConversation.operationId, operationId)
         )
       );
-    if (!existing || existing.firstMessage !== message) {
+    if (
+      !existing ||
+      existing.firstMessage !== message ||
+      existing.initialModelId !== (initialModelId ?? null)
+    ) {
       throw new CreationConflict(
-        "This operation already has a different message."
+        "This operation already has a different message or model."
       );
     }
     if (existing.state !== "bound" || !existing.sessionId) {

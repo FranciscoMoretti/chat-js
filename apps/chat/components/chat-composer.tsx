@@ -79,6 +79,7 @@ export function ControlledChatComposer({
   onStop,
   stopDisabled = false,
   autoFocus = false,
+  tools,
 }: {
   draft: string;
   onDraftChange: (draft: string) => void;
@@ -88,6 +89,7 @@ export function ControlledChatComposer({
   onStop?: () => void;
   stopDisabled?: boolean;
   autoFocus?: boolean;
+  tools?: ReactNode;
 }) {
   const isMobile = useIsMobile();
   const activeStatus = onStop ? "streaming" : "submitted";
@@ -147,6 +149,7 @@ export function ControlledChatComposer({
             status={busy ? activeStatus : "ready"}
           />
         }
+        tools={tools}
       />
       {draft.length > 16_000 && (
         <p className="px-3 text-destructive text-sm" role="alert">
