@@ -1,8 +1,8 @@
 import { defineDynamic, defineTool } from "eve/tools";
 import superjson from "superjson";
+import { eveMcpResult } from "../../lib/eve/mcp-result";
 import {
   discoverEveMcpTools,
-  eveMcpResult,
   executeEveMcpTool,
 } from "../../lib/eve/mcp-tools";
 import { createModuleLogger } from "../../lib/logger";

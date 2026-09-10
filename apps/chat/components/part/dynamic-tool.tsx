@@ -4,17 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import type { DynamicToolUIPart } from "ai";
 import { WrenchIcon } from "lucide-react";
 import { useMemo } from "react";
-import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
-import {
-  Tool,
-  ToolContent,
-  ToolInput,
-  ToolOutput,
-} from "@/components/ai-elements/tool";
 import { Favicon } from "@/components/favicon";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { useTRPC } from "@/trpc/react";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
+import { McpToolResult } from "./mcp-tool-result";
 
 interface DynamicToolPartProps {
   isReadonly: boolean;
@@ -47,21 +41,5 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
     <WrenchIcon className="size-4 text-muted-foreground" />
   );
 
-  return (
-    <Tool defaultOpen={false}>
-      <McpToolHeader
-        icon={icon}
-        state={part.state}
-        title={part.title ?? parsed?.toolName ?? part.toolName}
-        type={`tool-${part.toolName}`}
-      />
-      <ToolContent>
-        <ToolInput input={part.input} />
-        <ToolOutput
-          errorText={part.state === "output-error" ? part.errorText : undefined}
-          output={part.state === "output-available" ? part.output : undefined}
-        />
-      </ToolContent>
-    </Tool>
-  );
+  return <McpToolResult icon={icon} part={part} />;
 }

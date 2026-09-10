@@ -2,7 +2,6 @@ import { asSchema, jsonSchema, type ModelMessage, type Tool } from "ai";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
 import type { ToolContext } from "eve/tools";
-import { z } from "zod";
 import { MCPClient } from "../ai/mcp/mcp-client";
 import { createToolId } from "../ai/mcp-name-id";
 import { config } from "../config";
@@ -14,30 +13,9 @@ import type { McpConnector } from "../db/schema";
 import { createModuleLogger } from "../logger";
 import { describeEveTool, executeEveTool } from "./adapt-tool";
 
+import { eveMcpResult } from "./mcp-result";
+
 const log = createModuleLogger("eve.mcp");
-const modelOutput = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("json"), value: z.json() }),
-  z.object({ type: z.literal("text"), value: z.string() }),
-  z.object({
-    type: z.literal("content"),
-    value: z.array(
-      z.discriminatedUnion("type", [
-        z.object({ type: z.literal("text"), text: z.string() }),
-        z.object({
-          type: z.literal("file"),
-          mediaType: z.string(),
-          filename: z.string().optional(),
-          data: z.object({ type: z.literal("data"), data: z.string() }),
-        }),
-      ])
-    ),
-  }),
-]);
-export const eveMcpResult = z.object({
-  kind: z.literal("chatjs.mcp-result"),
-  output: z.json(),
-  modelOutput,
-});
 
 function assertConnector(connector: McpConnector | undefined, ownerId: string) {
   if (

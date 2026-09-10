@@ -19,12 +19,14 @@ import { Response } from "@/components/ai-elements/response";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { isEvePlatformTool } from "@/lib/eve/platform-result";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
+import { EveMcpResult } from "./eve-mcp-result";
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 import { EveToolResult } from "./eve-tool-result";
 
@@ -172,6 +174,13 @@ function Part({
         part={part}
       />
     );
+  }
+  if (
+    parseToolId(part.toolName) &&
+    part.state !== "approval-requested" &&
+    part.state !== "approval-responded"
+  ) {
+    return <EveMcpResult part={part} />;
   }
   const request = part.toolMetadata?.eve?.inputRequest;
   const input = noteInput.safeParse(part.input);
