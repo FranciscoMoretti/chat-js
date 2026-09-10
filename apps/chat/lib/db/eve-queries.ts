@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
+import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 
 export async function ownsEveSession(ownerId: string, sessionId: string) {
@@ -108,8 +109,20 @@ export async function createEveConversation(
   message: string,
   create: (id: string) => Promise<string>,
   initialModelId?: string,
-  initialContentHash?: string
+  initialContentHash?: string,
+  fork?: EveForkInput
 ) {
+  const source = fork
+    ? await getEveConversation(ownerId, fork.conversationId)
+    : undefined;
+  if (fork && (!source?.sessionId || source.state !== "bound")) {
+    throw new CreationConflict(
+      "The source conversation is not available for editing."
+    );
+  }
+  const rootConversationId = source
+    ? (source.rootConversationId ?? source.id)
+    : undefined;
   const [reservation] = await db
     .insert(eveConversation)
     .values({
@@ -118,6 +131,9 @@ export async function createEveConversation(
       firstMessage: message,
       initialModelId,
       initialContentHash,
+      parentConversationId: fork?.conversationId,
+      rootConversationId,
+      forkTurnId: fork?.beforeTurnId,
     })
     .onConflictDoNothing()
     .returning();
@@ -135,10 +151,12 @@ export async function createEveConversation(
       !existing ||
       existing.firstMessage !== message ||
       existing.initialModelId !== (initialModelId ?? null) ||
-      existing.initialContentHash !== (initialContentHash ?? null)
+      existing.initialContentHash !== (initialContentHash ?? null) ||
+      existing.parentConversationId !== (fork?.conversationId ?? null) ||
+      existing.forkTurnId !== (fork?.beforeTurnId ?? null)
     ) {
       throw new CreationConflict(
-        "This operation already has a different message, attachments, or model."
+        "This operation already has a different message, attachments, model, or source turn."
       );
     }
     if (existing.state !== "bound" || !existing.sessionId) {
@@ -232,4 +250,36 @@ export async function getPublicEveConversation(id: string) {
     )
     .limit(1);
   return row;
+}
+
+export async function listEveConversationBranches(
+  ownerId: string,
+  conversationId: string
+) {
+  const conversation = await getEveConversation(ownerId, conversationId);
+  if (!conversation) {
+    return undefined;
+  }
+  const rootId = conversation.rootConversationId ?? conversation.id;
+  const branches = await db
+    .select({
+      id: eveConversation.id,
+      parentConversationId: eveConversation.parentConversationId,
+      forkTurnId: eveConversation.forkTurnId,
+      firstMessage: eveConversation.firstMessage,
+      createdAt: eveConversation.createdAt,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound"),
+        or(
+          eq(eveConversation.id, rootId),
+          eq(eveConversation.rootConversationId, rootId)
+        )
+      )
+    )
+    .orderBy(eveConversation.createdAt, eveConversation.id);
+  return { rootId, branches };
 }

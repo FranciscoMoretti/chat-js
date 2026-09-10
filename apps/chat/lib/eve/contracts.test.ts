@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
 import {
   parseSessionRequest,
@@ -136,4 +137,26 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   );
   expect(submissions).toBe(1);
   expect(snapshots).toBe(2);
+});
+
+it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
+  const input = { operationId: crypto.randomUUID(), message: "replacement" };
+  expect(
+    createConversationInput.safeParse({
+      ...input,
+      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_1" },
+    }).success
+  ).toBe(true);
+  expect(
+    createConversationInput.safeParse({
+      ...input,
+      fork: { sessionId: "native-session", beforeTurnId: "turn_1" },
+    }).success
+  ).toBe(false);
+  expect(
+    createConversationInput.safeParse({
+      ...input,
+      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_-1" },
+    }).success
+  ).toBe(false);
 });

@@ -41,7 +41,9 @@ it("returns the existing binding on retry and clears its deadline", async () => 
   expect(vi.getTimerCount()).toBe(0);
 });
 
-it("distinguishes definitive rejection from uncertain creation", async () => {
+it.each([
+  400, 404,
+])("distinguishes definitive rejection (%i) from uncertain creation", async (status) => {
   vi.stubGlobal(
     "fetch",
     vi
@@ -49,7 +51,7 @@ it("distinguishes definitive rejection from uncertain creation", async () => {
       .mockResolvedValue(
         Response.json(
           { error: "Unavailable", creationRejected: true },
-          { status: 400 }
+          { status }
         )
       )
   );

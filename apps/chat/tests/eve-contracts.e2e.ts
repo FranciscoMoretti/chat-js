@@ -5,6 +5,7 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   createEveConversation,
   getEveConversation,
+  listEveConversationBranches,
   ownsEveSession,
   recordEveConversationActivity,
   updateEveConversationMetadata,
@@ -155,4 +156,133 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
   expect((await getEveConversation(owner, bound.id))?.firstMessage).toBe(
     "activity"
   );
+});
+
+test("fork reservations retain ancestry and reject changed sources on retry", async () => {
+  let starts = 0;
+  const start = () => {
+    starts += 1;
+    return Promise.resolve(crypto.randomUUID());
+  };
+  const root = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "branch root",
+    start
+  );
+  const operation = crypto.randomUUID();
+  const fork = { conversationId: root.id, beforeTurnId: "turn_1" };
+  const branch = await createEveConversation(
+    owner,
+    operation,
+    "replacement",
+    start,
+    undefined,
+    undefined,
+    fork
+  );
+  expect(
+    await createEveConversation(
+      owner,
+      operation,
+      "replacement",
+      start,
+      undefined,
+      undefined,
+      fork
+    )
+  ).toEqual(branch);
+  expect(starts).toBe(2);
+  await expect(
+    createEveConversation(
+      owner,
+      operation,
+      "replacement",
+      start,
+      undefined,
+      undefined,
+      { ...fork, beforeTurnId: "turn_2" }
+    )
+  ).rejects.toThrow("source turn");
+  await expect(
+    createEveConversation(owner, operation, "replacement", start)
+  ).rejects.toThrow("source turn");
+  expect(starts).toBe(2);
+
+  const nested = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "nested replacement",
+    start,
+    undefined,
+    undefined,
+    { conversationId: branch.id, beforeTurnId: "turn_2" }
+  );
+  const row = await getEveConversation(owner, nested.id);
+  expect(row?.rootConversationId).toBe(root.id);
+  expect(row?.parentConversationId).toBe(branch.id);
+  expect(row?.forkTurnId).toBe("turn_2");
+  expect(row?.visibility).toBe("private");
+  const family = await listEveConversationBranches(owner, nested.id);
+  expect(family?.rootId).toBe(root.id);
+  expect(family?.branches.map((item) => item.id)).toEqual([
+    root.id,
+    branch.id,
+    nested.id,
+  ]);
+  expect(
+    await listEveConversationBranches("not-owner", nested.id)
+  ).toBeUndefined();
+  await expect(
+    createEveConversation(
+      "not-owner",
+      crypto.randomUUID(),
+      "foreign",
+      start,
+      undefined,
+      undefined,
+      fork
+    )
+  ).rejects.toThrow("source conversation");
+  expect(starts).toBe(3);
+});
+
+test("database constraints reject partial and cross-owner branch ancestry", async () => {
+  const root = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "constraint root",
+    () => Promise.resolve(crypto.randomUUID())
+  );
+  await expect(
+    db.insert(eveConversation).values({
+      ownerId: owner,
+      operationId: crypto.randomUUID(),
+      firstMessage: "partial branch",
+      parentConversationId: root.id,
+    })
+  ).rejects.toThrow();
+  const foreignOwner = crypto.randomUUID();
+  await db.insert(user).values({
+    id: foreignOwner,
+    email: `${foreignOwner}@test.invalid`,
+    name: "Ancestry constraint fixture",
+  });
+  try {
+    await expect(
+      db.insert(eveConversation).values({
+        ownerId: foreignOwner,
+        operationId: crypto.randomUUID(),
+        firstMessage: "foreign branch",
+        parentConversationId: root.id,
+        rootConversationId: root.id,
+        forkTurnId: "turn_0",
+      })
+    ).rejects.toThrow();
+  } finally {
+    await db
+      .delete(eveConversation)
+      .where(eq(eveConversation.ownerId, foreignOwner));
+    await db.delete(user).where(eq(user.id, foreignOwner));
+  }
 });

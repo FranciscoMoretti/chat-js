@@ -21,7 +21,10 @@ export async function requestConversation(
       const failure = z
         .object({ error: z.string(), creationRejected: z.boolean().optional() })
         .parse(body);
-      if (response.status === 400 && failure.creationRejected === true) {
+      if (
+        (response.status === 400 || response.status === 404) &&
+        failure.creationRejected === true
+      ) {
         throw new CreationRejected(failure.error);
       }
       throw new Error(failure.error);

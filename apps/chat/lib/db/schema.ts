@@ -456,6 +456,9 @@ export const eveConversation = pgTable(
     firstMessage: text("firstMessage").notNull(),
     initialModelId: text("initialModelId"),
     initialContentHash: text("initialContentHash"),
+    parentConversationId: uuid("parentConversationId"),
+    rootConversationId: uuid("rootConversationId"),
+    forkTurnId: text("forkTurnId"),
     title: text("title"),
     visibility: varchar("visibility", { enum: ["private", "public"] })
       .notNull()
@@ -469,6 +472,31 @@ export const eveConversation = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
   (table) => [
+    uniqueIndex("EveConversation_id_owner").on(table.id, table.ownerId),
+    index("EveConversation_owner_root").on(
+      table.ownerId,
+      table.rootConversationId
+    ),
+    foreignKey({
+      columns: [table.parentConversationId, table.ownerId],
+      foreignColumns: [table.id, table.ownerId],
+      name: "EveConversation_parent_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.rootConversationId, table.ownerId],
+      foreignColumns: [table.id, table.ownerId],
+      name: "EveConversation_root_owner_fk",
+    }),
+    check(
+      "EveConversation_fork_shape",
+      sql`(
+      ${table.parentConversationId} is null and ${table.rootConversationId} is null and ${table.forkTurnId} is null
+    ) or (
+      ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
+      ${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and
+      ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
+    )`
+    ),
     uniqueIndex("EveConversation_owner_operation").on(
       table.ownerId,
       table.operationId

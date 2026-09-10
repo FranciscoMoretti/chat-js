@@ -5,6 +5,7 @@ export default defineConfig({
   ...config,
   testMatch: [
     "eve-live.e2e.ts",
+    "eve-forks.e2e.ts",
     "eve-metadata.e2e.ts",
     "eve-history.e2e.ts",
     "eve-attachments.e2e.ts",

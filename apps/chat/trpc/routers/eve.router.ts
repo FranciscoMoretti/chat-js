@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   getEveConversation,
+  listEveConversationBranches,
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
@@ -17,6 +18,15 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  branches: eveProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const family = await listEveConversationBranches(ctx.user.id, input.id);
+      if (!family) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return family;
+    }),
   get: eveProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {

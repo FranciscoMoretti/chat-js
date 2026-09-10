@@ -5,11 +5,15 @@ import { canSpend } from "@/lib/db/credits";
 import {
   CreationConflict,
   createEveConversation,
+  getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
-import { createConversationInput } from "@/lib/eve/contracts";
+import {
+  createConversationInput,
+  type EveForkInput,
+} from "@/lib/eve/contracts";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
@@ -45,6 +49,11 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
+  const fork = await resolveFork(session.user.id, input.data.fork);
+  if (fork instanceof Response) {
+    return fork;
+  }
+
   let preparedMessage:
     | Awaited<ReturnType<typeof prepareEveMessage>>
     | undefined;
@@ -97,7 +106,11 @@ export async function POST(request: Request) {
           "/eve/v1/session",
           {
             method: "POST",
-            body: JSON.stringify({ message: preparedMessage, operationId }),
+            body: JSON.stringify({
+              message: preparedMessage,
+              operationId,
+              fork,
+            }),
           },
           input.data.modelId
         );
@@ -113,7 +126,8 @@ export async function POST(request: Request) {
         ? undefined
         : createHash("sha256")
             .update(JSON.stringify(input.data.message))
-            .digest("hex")
+            .digest("hex"),
+      input.data.fork
     );
     return Response.json(binding);
   } catch (cause) {
@@ -127,4 +141,18 @@ export async function POST(request: Request) {
       { status: 409 }
     );
   }
+}
+
+async function resolveFork(ownerId: string, input: EveForkInput | undefined) {
+  if (!input) {
+    return undefined;
+  }
+  const source = await getEveConversation(ownerId, input.conversationId);
+  if (!source?.sessionId || source.state !== "bound") {
+    return Response.json(
+      { error: "Source conversation not found.", creationRejected: true },
+      { status: 404 }
+    );
+  }
+  return { sessionId: source.sessionId, beforeTurnId: input.beforeTurnId };
 }

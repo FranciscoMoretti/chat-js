@@ -59,7 +59,10 @@ nested forks, read bounds, and HTTP source authorization. Source type-checking,
 linting, and both review passes have passed. These checks do not establish full
 ChatJS editing or regeneration parity. With the patch installed, real-provider
 browser tests also pass for tool rendering, conversation reload, usage replay,
-model switching, and approval continuation. App lint, types, and unit tests pass.
+model switching, and approval continuation. The app fork browser test also passes
+against the installed worker: prefix restoration, a fresh model response, reload,
+unchanged source, operation replay/conflicts, ownership denial, and billing only
+the new turn. App lint, types, and unit tests pass.
 
 ## Packaging
 
@@ -68,6 +71,10 @@ imports in the patched package manifest. The source layout remains unchanged.
 This avoids [Bun's nested patch-file creation bug](https://github.com/oven-sh/bun/issues/13330),
 reproduced with Bun 1.3.11. Ordinary mode-644 new files under `dist/src/execution`
 fail with `EACCES (mkdir)`; the same files at the package root install normally.
+The history-restoration step entry lives in the existing `create-session-step`
+module, which EVE scans for registration. Its relocated helper is a plain async
+function: putting a `use step` directive in that root helper produces a workflow
+manifest entry without registering the executable step in the worker.
 Remove this relocation once the supported Bun versions contain the upstream fix.
 
 To refresh, apply the source patch to the pinned source tag, build eve's compiled
@@ -75,13 +82,17 @@ assets and runtime with Node 24, and diff only changed production `.js` and `.d.
 files against published 0.52.2. Relocate new helpers as above and retain the
 approval guard. Exclude tests, generated cache tags, bundled dependency deletions,
 and absolute cache paths. Bun's automatic patch generator has included those
-unrelated entries; do not commit them. Verify with a real `bun install`.
+unrelated entries; do not commit them. Verify with a real `bun install` against a
+fresh cache and compare the installed changed modules with the build output.
+Bun 1.3.11 reused an older patched cache entry even after a forced reinstall in
+this worktree; a successful install alone did not prove that the new code ran.
 
 ## Remaining integration
 
-ChatJS editing controls, branch metadata/navigation, immutable fork operation
-recovery, sandbox/attachment resource cloning, and app-level fork browser tests
-remain to be implemented. Existing sessions started before checkpoint support
+ChatJS now reserves same-owner branch ancestry and immutable fork operations in
+its metadata database; EVE owns the restored transcript and fresh execution.
+Editing controls, branch navigation, composer fork recovery, and sandbox/attachment
+resource cloning remain to be implemented. Existing sessions started before checkpoint support
 have no checkpoints. Full snapshots can produce quadratic retained storage;
 bound retention or reuse native durable step snapshots before production.
 
