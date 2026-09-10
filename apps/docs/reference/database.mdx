@@ -54,14 +54,19 @@ Neon-specific driver is required.
 | `DATABASE_MAX_CONNECTIONS` | Optional positive integer limiting runtime connections per process |
 
 ```bash
-DATABASE_URL=postgres://user:password@runtime-host/app
-DATABASE_MIGRATION_URL=postgres://user:password@direct-host/app
+DATABASE_URL=postgres://user:password@runtime-host/app?sslmode=verify-full
+DATABASE_MIGRATION_URL=postgres://user:password@direct-host/app?sslmode=verify-full
 DATABASE_PREPARE=false
 DATABASE_MAX_CONNECTIONS=5
 ```
 
 Use your host's connection strings and TLS settings. Do not disable certificate
-verification to make a connection succeed. Keep passwords in your environment.
+verification to make a connection succeed. For remote connections, require verified
+TLS (for example, `sslmode=verify-full`) and configure your host's CA trust when
+needed. Postgres.js does not enable TLS for a URL without TLS settings.
+`db:connect` uses those same settings and does not enforce a separate TLS policy.
+Local or private-network connections retain the settings you explicitly supply.
+Keep passwords in your environment.
 
 For [Supabase transaction pooling](https://supabase.com/docs/guides/database/postgres-js),
 disable prepared statements. Use a direct or suitable session connection for

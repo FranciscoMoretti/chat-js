@@ -6,6 +6,10 @@ import { databaseConnection, databaseEnvOptions } from "../lib/db/connection";
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
 
+const CONNECT_TIMEOUT_SECONDS = 10;
+const CHECK_DEADLINE_MS = 15_000;
+const CLOSE_TIMEOUT_SECONDS = 1;
+
 async function checkDatabase() {
   const parsed = z
     .object({
@@ -26,14 +30,14 @@ async function checkDatabase() {
     const sql = postgres(settings.url, {
       ...settings.options,
       max: 1,
-      connect_timeout: 10,
+      connect_timeout: CONNECT_TIMEOUT_SECONDS,
     });
     const deadline = setTimeout(() => {
       sql.end({ timeout: 0 }).catch(() => undefined);
-    }, 15_000);
+    }, CHECK_DEADLINE_MS);
     try {
       await sql`select 1`;
-      console.log(`${purpose}: connection OK`);
+      process.stdout.write(`${purpose}: connection OK\n`);
     } catch {
       const variable =
         purpose === "migration" && parsed.data.DATABASE_MIGRATION_URL
@@ -45,7 +49,7 @@ async function checkDatabase() {
       process.exitCode = 1;
     } finally {
       clearTimeout(deadline);
-      await sql.end({ timeout: 1 });
+      await sql.end({ timeout: CLOSE_TIMEOUT_SECONDS });
     }
   }
 }
