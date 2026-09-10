@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import {
@@ -7,9 +7,13 @@ import {
   getEveDocumentHistory,
   getEveDocumentRevision,
   initializeEveForkDocuments,
+  purgeEveFamilyDocuments,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
-import { createEveConversation } from "../lib/db/eve-queries";
+import {
+  beginEveConversationDeletion,
+  createEveConversation,
+} from "../lib/db/eve-queries";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -71,6 +75,107 @@ function draft(conversationId: string) {
     kind: "text" as const,
   };
 }
+
+test("document purge requires the owned family fence, erases inherited revisions, and is retryable", async () => {
+  const root = await conversation();
+  const input = draft(root.id);
+  const original = await saveEveDocumentRevision(input);
+  await captureEveDocumentCheckpoint(owner, root.id, 1);
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Purge fork",
+    async () => crypto.randomUUID(),
+    undefined,
+    undefined,
+    { conversationId: root.id, beforeTurnId: "turn_1" }
+  );
+  await saveEveDocumentRevision({
+    ...input,
+    conversationId: child.id,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: original.id,
+    content: "Child revision",
+  });
+  await captureEveDocumentCheckpoint(owner, child.id, 2);
+  const unrelated = await conversation();
+  const surviving = await saveEveDocumentRevision(draft(unrelated.id));
+
+  await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow(
+    "entire conversation family"
+  );
+  await beginEveConversationDeletion(owner, child.id);
+  await expect(purgeEveFamilyDocuments(stranger, root.id)).rejects.toThrow();
+  await expect(purgeEveFamilyDocuments(owner, child.id)).rejects.toThrow();
+  await purgeEveFamilyDocuments(owner, root.id);
+  await purgeEveFamilyDocuments(owner, root.id);
+  for (const table of [
+    eveDocumentCheckpointEntry,
+    eveDocumentCheckpoint,
+    eveDocumentHead,
+    eveDocumentRevision,
+  ]) {
+    expect(
+      await db
+        .select({ conversationId: table.conversationId })
+        .from(table)
+        .where(inArray(table.conversationId, [root.id, child.id]))
+    ).toEqual([]);
+  }
+  expect(
+    await getEveDocumentRevision(owner, unrelated.id, surviving.documentId)
+  ).toEqual(surviving);
+  expect(
+    (
+      await db
+        .select({ state: eveConversation.state })
+        .from(eveConversation)
+        .where(inArray(eveConversation.id, [root.id, child.id]))
+    ).map((row) => row.state)
+  ).toEqual(["deleting", "deleting"]);
+  await expect(
+    saveEveDocumentRevision({
+      ...input,
+      operationId: crypto.randomUUID(),
+    })
+  ).rejects.toThrow();
+});
+
+test("an external document reference rolls back every purge step", async () => {
+  const root = await conversation();
+  const input = draft(root.id);
+  const revision = await saveEveDocumentRevision(input);
+  await captureEveDocumentCheckpoint(owner, root.id, 1);
+  const external = await conversation();
+  // Model a reference outside the deletion family. Do not cascade it away.
+  await db.insert(eveDocumentHead).values({
+    conversationId: external.id,
+    ownerId: owner,
+    documentId: input.documentId,
+    revisionId: revision.id,
+  });
+  await beginEveConversationDeletion(owner, root.id);
+  await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow();
+  for (const table of [
+    eveDocumentCheckpointEntry,
+    eveDocumentCheckpoint,
+    eveDocumentHead,
+    eveDocumentRevision,
+  ]) {
+    expect(
+      await db
+        .select({ conversationId: table.conversationId })
+        .from(table)
+        .where(eq(table.conversationId, root.id))
+    ).toHaveLength(1);
+  }
+  expect(
+    await db
+      .select()
+      .from(eveDocumentHead)
+      .where(eq(eveDocumentHead.conversationId, external.id))
+  ).toHaveLength(1);
+});
 
 test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
   const source = await conversation();

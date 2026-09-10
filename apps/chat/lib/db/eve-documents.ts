@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, inArray, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { artifactKinds } from "../artifacts/artifact-kind";
 import { db } from "./client";
@@ -23,6 +23,85 @@ const revisionInput = z.object({
 });
 
 type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Erase document rows after retirement and resource inventory have completed.
+ * The deletion coordinator must retain file references before calling this.
+ * This does not erase native history, blobs, metadata, or accounting, and never
+ * marks the conversation deleted.
+ */
+export async function purgeEveFamilyDocuments(ownerId: string, rootId: string) {
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const family = await tx
+      .select({
+        id: eveConversation.id,
+        state: eveConversation.state,
+        rootConversationId: eveConversation.rootConversationId,
+      })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          or(
+            eq(eveConversation.id, rootId),
+            eq(eveConversation.rootConversationId, rootId)
+          )
+        )
+      )
+      .orderBy(eveConversation.id);
+    if (
+      !family.some((row) => row.id === rootId && !row.rootConversationId) ||
+      family.some((row) => row.state !== "deleting")
+    ) {
+      throw new Error(
+        "The entire conversation family must be pending deletion."
+      );
+    }
+    const ids = family.map((row) => row.id);
+    for (const id of ids) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
+      );
+    }
+    // Keep the FK constraints intact: unexpected references from a surviving
+    // conversation fail the transaction instead of destroying its ancestry.
+    await tx
+      .delete(eveDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveDocumentCheckpoint.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.ownerId, ownerId),
+          inArray(eveDocumentHead.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveDocumentRevision)
+      .where(
+        and(
+          eq(eveDocumentRevision.ownerId, ownerId),
+          inArray(eveDocumentRevision.conversationId, ids)
+        )
+      );
+  });
+}
 
 /** Upgrade pre-checkpoint native history before the first manual write changes its inference. */
 async function backfillDocumentCheckpoints(
