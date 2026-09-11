@@ -557,3 +557,29 @@ export async function getDeletingEveConversationForSession(
     .limit(1);
   return row;
 }
+
+export async function getEveConversationProject(
+  ownerId: string,
+  conversationId: string
+) {
+  const [assigned] = await db
+    .select({
+      id: project.id,
+      name: project.name,
+      instructions: project.instructions,
+    })
+    .from(eveConversationProject)
+    .innerJoin(
+      eveConversation,
+      eq(eveConversation.id, eveConversationProject.conversationId)
+    )
+    .innerJoin(project, eq(project.id, eveConversationProject.projectId))
+    .where(
+      and(
+        eq(eveConversationProject.conversationId, conversationId),
+        eq(eveConversationProject.ownerId, ownerId),
+        inArray(eveConversation.state, ["creating", "bound", "uncertain"])
+      )
+    );
+  return assigned ?? null;
+}

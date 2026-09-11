@@ -6,13 +6,11 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
   getEveConversation,
+  getEveConversationProject,
   getEveCreation,
   listEveConversations,
 } from "../lib/db/eve-queries";
-import {
-  assignEveConversationProject,
-  getEveConversationProject,
-} from "../lib/db/queries";
+import { assignEveConversationProject } from "../lib/db/queries";
 import {
   chat,
   eveConversation,

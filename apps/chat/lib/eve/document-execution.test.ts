@@ -16,8 +16,8 @@ vi.mock("../config", () => ({
   },
 }));
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
-vi.mock("./document-session", () => ({
-  resolveEveDocumentConversation: mocks.resolve,
+vi.mock("./conversation-scope", () => ({
+  resolveEveConversationScope: mocks.resolve,
 }));
 vi.mock("./platform-tools", () => ({ executeEvePlatformTool: mocks.execute }));
 

@@ -2,11 +2,11 @@ import type { ToolContext } from "eve/tools";
 import { codeExecutionResult } from "../../tools/platform/code-execution.schemas";
 import { config } from "../config";
 import { getEveDocumentRevision } from "../db/eve-documents";
+import { resolveEveConversationScope } from "./conversation-scope";
 import {
   documentExecutionInput,
   documentExecutionLanguage,
 } from "./document-execution-contracts";
-import { resolveEveDocumentConversation } from "./document-session";
 import { executeEvePlatformTool } from "./platform-tools";
 
 /** Execute saved source, never model-supplied replacement code. */
@@ -24,7 +24,7 @@ export async function* executeEveCodeDocument(
     throw new Error("Document execution is disabled.");
   }
   const input = documentExecutionInput.parse(value);
-  const scope = await resolveEveDocumentConversation(
+  const scope = await resolveEveConversationScope(
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal

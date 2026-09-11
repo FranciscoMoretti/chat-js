@@ -14,8 +14,8 @@ vi.mock("../file-storage", () => ({
   createFileStorageKey: () => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
-vi.mock("./document-session", () => ({
-  resolveEveDocumentConversation: mocks.resolve,
+vi.mock("./conversation-scope", () => ({
+  resolveEveConversationScope: mocks.resolve,
 }));
 
 import { eveGeneratedFileUploader } from "./generated-files";

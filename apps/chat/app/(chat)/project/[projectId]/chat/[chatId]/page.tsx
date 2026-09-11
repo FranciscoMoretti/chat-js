@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { getEveConversationProject } from "@/lib/db/queries";
+import { getEveConversationProject } from "@/lib/db/eve-queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 
 export default async function ProjectChatPageRoute({

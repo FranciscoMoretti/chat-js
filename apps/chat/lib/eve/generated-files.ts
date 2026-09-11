@@ -8,7 +8,7 @@ import {
   type uploadFile,
   uploadFileAtKey,
 } from "../file-storage";
-import { resolveEveDocumentConversation } from "./document-session";
+import { resolveEveConversationScope } from "./conversation-scope";
 
 export function eveGeneratedFileUploader(
   context: Pick<ToolContext, "abortSignal"> & {
@@ -22,7 +22,7 @@ export function eveGeneratedFileUploader(
     if (!context.session) {
       throw new Error("Generated files require a native session.");
     }
-    const scope = await resolveEveDocumentConversation(
+    const scope = await resolveEveConversationScope(
       context.session.auth.initiator?.principalId,
       context.session.id,
       context.abortSignal

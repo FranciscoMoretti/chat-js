@@ -2,14 +2,14 @@ import { setTimeout } from "node:timers/promises";
 import { getBoundEveConversationForSession } from "../db/eve-queries";
 
 /** Only trusted native context determines the owner, conversation and fork boundary. */
-export async function resolveEveDocumentConversation(
+export async function resolveEveConversationScope(
   ownerId: string | undefined,
   sessionId: string,
   abortSignal: AbortSignal
 ) {
   abortSignal.throwIfAborted();
   if (!ownerId) {
-    throw new Error("Document tools require an authenticated owner.");
+    throw new Error("Conversation context requires an authenticated owner.");
   }
   // A first-turn tool can start between native acceptance and app binding.
   // Never guess a reservation or authorize by a model-supplied conversation ID.
@@ -27,6 +27,6 @@ export async function resolveEveDocumentConversation(
     }
   }
   throw new Error(
-    "Conversation binding is not ready. Retry this document operation."
+    "Conversation binding is not ready. Retry this conversation operation."
   );
 }

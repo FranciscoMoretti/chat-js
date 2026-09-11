@@ -1414,32 +1414,6 @@ export async function saveEveMessageVote(
   });
 }
 
-export async function getEveConversationProject(
-  ownerId: string,
-  conversationId: string
-) {
-  const [assigned] = await db
-    .select({
-      id: project.id,
-      name: project.name,
-      instructions: project.instructions,
-    })
-    .from(eveConversationProject)
-    .innerJoin(
-      eveConversation,
-      eq(eveConversation.id, eveConversationProject.conversationId)
-    )
-    .innerJoin(project, eq(project.id, eveConversationProject.projectId))
-    .where(
-      and(
-        eq(eveConversationProject.conversationId, conversationId),
-        eq(eveConversationProject.ownerId, ownerId),
-        inArray(eveConversation.state, ["creating", "bound", "uncertain"])
-      )
-    );
-  return assigned ?? null;
-}
-
 export async function assignEveConversationProject(
   ownerId: string,
   conversationId: string,

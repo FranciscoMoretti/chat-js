@@ -5,13 +5,13 @@ import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../db/eve-documents";
+import { resolveEveConversationScope } from "./conversation-scope";
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
-import { resolveEveDocumentConversation } from "./document-session";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
@@ -37,7 +37,7 @@ export async function executeEveDocumentTool(
   }
   if (name === "readDocument") {
     const input = eveDocumentReadInput.parse(value);
-    const scope = await resolveEveDocumentConversation(
+    const scope = await resolveEveConversationScope(
       context.session.auth.initiator?.principalId,
       context.session.id,
       context.abortSignal
@@ -68,7 +68,7 @@ export async function executeEveDocumentTool(
   }
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
-  const scope = await resolveEveDocumentConversation(
+  const scope = await resolveEveConversationScope(
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal
