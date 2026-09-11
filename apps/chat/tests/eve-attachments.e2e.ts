@@ -22,9 +22,10 @@ const redPng = Buffer.from(
   "base64"
 );
 
-test("ChatJS upload becomes a durable Eve image and creation retries retain attachment identity", async ({
+test("ChatJS upload remains durable through creation retries and message editing", async ({
   page,
 }) => {
+  test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const upload = await page.request.post("/api/files/upload", {
@@ -34,6 +35,7 @@ test("ChatJS upload becomes a durable Eve image and creation retries retain atta
   });
   expect(upload.ok(), await upload.text()).toBe(true);
   const file = z.object({ url: z.string() }).parse(await upload.json());
+  const cleanupUrls = [file.url];
   try {
     const input = {
       operationId: crypto.randomUUID(),
@@ -129,12 +131,85 @@ test("ChatJS upload becomes a durable Eve image and creation retries retain atta
       },
     });
     expect(external.status()).toBe(400);
+    await page
+      .getByRole("button", { name: "Edit message", exact: true })
+      .click();
+    const editor = page.getByRole("dialog");
+    await expect(
+      editor.getByRole("button", { name: "eve-square.png", exact: true })
+    ).toBeVisible();
+    await editor
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill(
+        "Look at the attached square again. Reply with only its dominant color."
+      );
+    // Capture before the app's hard navigation discards browser response bodies.
+    const forkReply = Promise.withResolvers<{
+      status: number;
+      body: unknown;
+      input: unknown;
+    }>();
+    await page.route(
+      "**/api/agent-conversations",
+      async (route) => {
+        const response = await route.fetch();
+        forkReply.resolve({
+          status: response.status(),
+          body: await response.json(),
+          input: route.request().postDataJSON(),
+        });
+        await route.fulfill({ response });
+      },
+      { times: 1 }
+    );
+    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    const forkResponse = await forkReply.promise;
+    expect(forkResponse.status).toBe(200);
+    const forkInput = z
+      .object({
+        message: z.array(
+          z.object({
+            type: z.string(),
+            data: z.string().optional(),
+            mediaType: z.string().optional(),
+            filename: z.string().optional(),
+          })
+        ),
+      })
+      .parse(forkResponse.input);
+    const retained = forkInput.message.find((part) => part.type === "file");
+    expect(retained).toMatchObject({
+      mediaType: "image/png",
+      filename: "eve-square.png",
+    });
+    if (!retained?.data) {
+      throw new Error("Edited message lost its image");
+    }
+    cleanupUrls.push(retained.data);
+    const retainedFile = await page.request.get(retained.data);
+    expect(retainedFile.ok()).toBe(true);
+    expect(await retainedFile.body()).toEqual(redPng);
+    const edited = z.object({ id: z.uuid() }).parse(forkResponse.body);
+    await expect(page).toHaveURL(new RegExp(`/chat/${edited.id}$`));
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.locator(".is-assistant")).toContainText(redAnswer);
+    await page.reload();
+    await expect(
+      page
+        .getByRole("log")
+        .getByRole("button", { name: "eve-square.png", exact: true })
+    ).toBeVisible();
+    await expect(page.locator(".is-user")).toContainText(
+      "Look at the attached square again"
+    );
   } finally {
     // files-sdk is ESM-only; run application cleanup with the project's Bun runtime.
     execFileSync("bun", [
       "-e",
-      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls([process.argv[1]]);',
-      file.url,
+      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
+      JSON.stringify([...new Set(cleanupUrls)]),
     ]);
   }
 });
