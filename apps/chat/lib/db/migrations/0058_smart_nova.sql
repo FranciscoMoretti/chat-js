@@ -1,0 +1,1 @@
+ALTER TABLE "EveStoredFile" ADD COLUMN "state" text DEFAULT 'active' NOT NULL;

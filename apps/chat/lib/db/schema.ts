@@ -511,6 +511,9 @@ export const eveStoredFile = pgTable(
   "EveStoredFile",
   {
     key: text("key").primaryKey(),
+    state: text("state", { enum: ["active", "deleting", "deleted"] })
+      .notNull()
+      .default("active"),
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),

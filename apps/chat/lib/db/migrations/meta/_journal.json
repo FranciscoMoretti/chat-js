@@ -407,6 +407,13 @@
       "when": 1789104886974,
       "tag": "0057_faithful_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789106075503,
+      "tag": "0058_smart_nova",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,10 @@ import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import {
+  completeEveFilePurge,
+  prepareEveFamilyFilePurge,
+} from "../lib/db/eve-file-purge";
+import {
   referenceEveFiles,
   registerEveStoredFile,
   reserveEveGeneratedFile,
@@ -253,4 +257,49 @@ test("deletion waits for an admitted generated-file write before fencing the fam
     .from(eveConversation)
     .where(eq(eveConversation.id, conversation.id));
   expect(saved.state).toBe("deleting");
+});
+
+test("file purge preserves outside references and keeps durable progress across retries", async () => {
+  const target = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "purge",
+    async () => crypto.randomUUID()
+  );
+  const survivor = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "survivor",
+    async () => crypto.randomUUID()
+  );
+  const exclusive = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  const shared = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await registerEveStoredFile(owner, exclusive);
+  await registerEveStoredFile(owner, shared);
+  await referenceEveFiles(owner, target.id, [exclusive, shared]);
+  await referenceEveFiles(owner, survivor.id, [shared]);
+  await expect(prepareEveFamilyFilePurge(owner, target.id)).rejects.toThrow(
+    "pending deletion"
+  );
+  await beginEveConversationDeletion(owner, target.id);
+  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([
+    exclusive,
+  ]);
+  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([
+    exclusive,
+  ]);
+  await expect(
+    referenceEveFiles(owner, survivor.id, [exclusive])
+  ).rejects.toThrow("not owned");
+  await completeEveFilePurge(owner, [exclusive]);
+  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([]);
+  await expect(registerEveStoredFile(owner, exclusive)).rejects.toThrow(
+    "cannot be reassigned"
+  );
+  await referenceEveFiles(owner, survivor.id, [shared]);
+  const [preserved] = await db
+    .select({ state: eveStoredFile.state })
+    .from(eveStoredFile)
+    .where(eq(eveStoredFile.key, shared));
+  expect(preserved.state).toBe("active");
 });

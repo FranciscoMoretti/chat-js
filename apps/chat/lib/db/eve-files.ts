@@ -10,10 +10,10 @@ export async function registerEveStoredFile(ownerId: string, key: string) {
   }
   await db.insert(eveStoredFile).values({ ownerId, key }).onConflictDoNothing();
   const [saved] = await db
-    .select({ ownerId: eveStoredFile.ownerId })
+    .select({ ownerId: eveStoredFile.ownerId, state: eveStoredFile.state })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
-  if (saved?.ownerId !== ownerId) {
+  if (saved?.ownerId !== ownerId || saved.state !== "active") {
     throw new Error("File ownership cannot be reassigned.");
   }
 }
@@ -62,6 +62,7 @@ export async function referenceEveFiles(
       .where(
         and(
           eq(eveStoredFile.ownerId, ownerId),
+          eq(eveStoredFile.state, "active"),
           inArray(eveStoredFile.key, uniqueKeys)
         )
       )
@@ -94,6 +95,7 @@ export async function assertEveFilesOwned(ownerId: string, keys: string[]) {
     .where(
       and(
         eq(eveStoredFile.ownerId, ownerId),
+        eq(eveStoredFile.state, "active"),
         inArray(eveStoredFile.key, uniqueKeys)
       )
     );
@@ -147,6 +149,7 @@ export async function writeEveGeneratedFile<T>(
     const [reference] = await tx
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
+      .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
       .innerJoin(
         eveConversation,
         eq(eveConversation.id, eveFileReference.conversationId)
@@ -154,6 +157,7 @@ export async function writeEveGeneratedFile<T>(
       .where(
         and(
           eq(eveFileReference.key, key),
+          eq(eveStoredFile.state, "active"),
           eq(eveFileReference.conversationId, conversationId),
           eq(eveFileReference.ownerId, ownerId),
           eq(eveConversation.state, "bound")

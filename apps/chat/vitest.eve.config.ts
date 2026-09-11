@@ -8,6 +8,7 @@ export default defineConfig({
       "tests/eve-contracts.e2e.ts",
       "tests/eve-documents.e2e.ts",
       "tests/eve-files.e2e.ts",
+      "tests/eve-file-storage.e2e.ts",
       "tests/eve-run-inventory.e2e.ts",
       "tests/eve-resource-fence.e2e.ts",
       "tests/eve-queue-inventory.e2e.ts",
