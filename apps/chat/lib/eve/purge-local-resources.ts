@@ -1,0 +1,33 @@
+import { purgeEveFamilyDocuments } from "../db/eve-documents";
+import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
+import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
+import { prepareEveFamilyDeletion } from "./prepare-deletion";
+import { purgeEveFamilyFiles } from "./purge-files";
+import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
+
+/**
+ * Internal local-provider coordinator. Native history and deleting bindings remain
+ * until external tool resources are accounted for and final erasure can proceed.
+ * appRoot must be the worker's actual app root, never a request-controlled path.
+ */
+export async function purgeLocalEveFamilyResources(
+  ownerId: string,
+  conversationId: string,
+  appRoot: string
+) {
+  const family = await prepareEveFamilyDeletion(ownerId, conversationId);
+  if (!family?.conversations.length) {
+    return family;
+  }
+  await fenceLocalEveSandboxMutations(appRoot, family.runIds);
+  const inventory = await readLocalEveSandboxInventory(appRoot, family.runIds);
+  if (inventory.unattributedDirectories.length) {
+    throw new Error(
+      "Resolve unattributed local sandbox resources before cleanup."
+    );
+  }
+  await purgeLocalEveSandboxes(inventory.owned);
+  await purgeEveFamilyDocuments(ownerId, family.rootId);
+  await purgeEveFamilyFiles(ownerId, family.rootId);
+  return family;
+}

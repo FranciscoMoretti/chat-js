@@ -1,6 +1,12 @@
-import { readdir, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readdir, readFile, realpath } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
+
+// Pinned EVE 0.52.2 keys retain the complete native ULID before the node suffix.
+// Use this only to exclude unrelated old directories, never to authorize erasure.
+const legacyKeyPattern =
+  /^eve-sbx-ses-microsandbox-([a-f0-9]{16})-[a-f0-9]{12}-(wrun_[0-7][0-9A-HJKMNP-TV-Z]{25})-[a-zA-Z0-9._-]+$/;
 
 const ownerSchema = z.strictObject({
   version: z.literal(1),
@@ -12,7 +18,7 @@ const ownerSchema = z.strictObject({
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
- * coverage; never infer their ownership or delete them by name matching.
+ * coverage. Canonical keys may exclude unrelated older sessions, but never authorize erasure.
  */
 export async function readLocalEveSandboxInventory(
   appRoot: string,
@@ -37,6 +43,10 @@ export async function readLocalEveSandboxInventory(
       throw error;
     }
   );
+  const appScope = createHash("sha256")
+    .update(await realpath(appRoot))
+    .digest("hex")
+    .slice(0, 16);
   const family = new Set(sessionIds);
   const owned: Array<{ sessionDirectory: string; sessionKey: string }> = [];
   const unattributedDirectories: string[] = [];
@@ -60,6 +70,12 @@ export async function readLocalEveSandboxInventory(
       }
       throw error;
     });
+    if (
+      raw === undefined &&
+      isUnrelatedLegacyKey(entry.name, appScope, family)
+    ) {
+      continue;
+    }
     let parsed: unknown;
     try {
       parsed = raw === undefined ? undefined : JSON.parse(raw);
@@ -76,4 +92,16 @@ export async function readLocalEveSandboxInventory(
     }
   }
   return { owned, unattributedDirectories };
+}
+
+function isUnrelatedLegacyKey(
+  key: string,
+  appScope: string,
+  family: Set<string>
+) {
+  if (key.length > 120) {
+    return false;
+  }
+  const match = legacyKeyPattern.exec(key);
+  return Boolean(match && match[1] === appScope && !family.has(match[2]));
 }

@@ -1,13 +1,17 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { z } from "zod";
 import { db } from "../lib/db/client";
+import { saveEveDocumentRevision } from "../lib/db/eve-documents";
 import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
 import {
   eveConversation,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
+  eveDocumentRevision,
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
@@ -55,6 +59,17 @@ test("internal retirement settles usage after access revocation and is retryable
     { timeout: 90_000 }
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await saveEveDocumentRevision({
+    ownerId: owner,
+    conversationId: binding.id,
+    documentId: crypto.randomUUID(),
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: null,
+    turnIndex: 0,
+    title: "Removal fixture",
+    content: "Artifact content to remove",
+    kind: "text",
+  });
   const family = await retireEveFamilyForDeletion(owner, binding.id);
   expect(family?.conversations).toEqual([
     { id: binding.id, sessionId: binding.sessionId },
@@ -82,6 +97,34 @@ test("internal retirement settles usage after access revocation and is retryable
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
+  const purgeResources = async () => {
+    // Playwright loads this suite as CommonJS; run the ESM-only storage adapter
+    // under the app's Bun runtime with the same local environment and app root.
+    const { stdout } = await promisify(execFile)(
+      "bun",
+      [
+        "-e",
+        'import { purgeLocalEveFamilyResources } from "./lib/eve/purge-local-resources"; const result = await purgeLocalEveFamilyResources(process.argv[1], process.argv[2], process.cwd()); console.log(JSON.stringify(result)); process.exit(0);',
+        owner,
+        binding.id,
+      ],
+      { cwd: process.cwd(), timeout: 30_000 }
+    );
+    return JSON.parse(stdout);
+  };
+  expect(await purgeResources()).toEqual(prepared);
+  expect(await purgeResources()).toEqual(prepared);
+  expect(
+    await db
+      .select()
+      .from(eveDocumentRevision)
+      .where(eq(eveDocumentRevision.conversationId, binding.id))
+  ).toEqual([]);
+  const [pending] = await db
+    .select({ state: eveConversation.state })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, binding.id));
+  expect(pending.state).toBe("deleting");
   const native = postgres(env.DATABASE_URL, { max: 1 });
   try {
     expect(

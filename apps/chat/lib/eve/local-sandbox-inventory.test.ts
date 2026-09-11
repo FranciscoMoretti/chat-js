@@ -1,7 +1,9 @@
+import { createHash } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -72,6 +74,48 @@ test("local inventory selects exact native owners across versions and reports un
     ).toEqual([
       { sessionKey: "foreign", sessionDirectory: join(directory, "foreign") },
     ]);
+  } finally {
+    await rm(appRoot, { recursive: true, force: true });
+  }
+});
+
+test("only canonical unrelated legacy keys are excluded; possible family resources stay unresolved", async () => {
+  const appRoot = await mkdtemp(join(tmpdir(), "eve-legacy-inventory-"));
+  const directory = join(
+    appRoot,
+    ".eve",
+    "sandbox-cache",
+    "microsandbox",
+    "sessions"
+  );
+  const scope = createHash("sha256")
+    .update(await realpath(appRoot))
+    .digest("hex")
+    .slice(0, 16);
+  const target = `wrun_0${"A".repeat(25)}`;
+  const unrelated = `wrun_0${"B".repeat(25)}`;
+  const prefix = `eve-sbx-ses-microsandbox-${scope}-0123456789ab-`;
+  const ownedCandidate = `${prefix}${target}-__root__`;
+  const foreign = `${prefix}${unrelated}-__root__`;
+  const truncated = `${prefix}${target.slice(0, -1)}-__root__`;
+  const wrongScope = foreign.replace(scope, "f".repeat(16));
+  try {
+    for (const key of [ownedCandidate, foreign, truncated, wrongScope]) {
+      await mkdir(join(directory, key), { recursive: true });
+    }
+    const result = await readLocalEveSandboxInventory(appRoot, [target]);
+    expect(result.owned).toEqual([]);
+    expect(result.unattributedDirectories.sort()).toEqual(
+      [ownedCandidate, truncated, wrongScope]
+        .map((key) => join(directory, key))
+        .sort()
+    );
+    // Corrupt explicit ownership cannot be overridden with directory-name inference.
+    await writeFile(join(directory, foreign, "owner.json"), "{}");
+    expect(
+      (await readLocalEveSandboxInventory(appRoot, [target]))
+        .unattributedDirectories
+    ).toContain(join(directory, foreign));
   } finally {
     await rm(appRoot, { recursive: true, force: true });
   }
