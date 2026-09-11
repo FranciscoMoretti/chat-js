@@ -189,24 +189,31 @@ test("native MCP renderer covers pending, result, denial and errors", async ({
     content: readFileSync(bundlePath, "utf8"),
     type: "module",
   });
+  const native = page.locator("#native-mcp");
   await expect(
-    page.locator("pre:visible").filter({ hasText: "Hello MCP" }).first()
+    native.locator("pre:visible").filter({ hasText: "Hello MCP" }).first()
   ).toBeVisible();
   await expect(
-    page.getByText(
+    native.getByText(
       "MCP tool failed. Check the connector in settings and try again."
     )
   ).toHaveCount(2);
-  await expect(page.getByText("private connector URL")).toHaveCount(0);
-  await expect(page.getByText("Result", { exact: true })).toBeVisible();
-  await page
+  await expect(native.getByText("private connector URL")).toHaveCount(0);
+  await expect(native.getByText("Result", { exact: true })).toHaveCount(6);
+  await native
     .getByRole("button", { name: "echo Completed", exact: true })
     .click();
-  await expect(page.getByText("Result", { exact: true })).not.toBeVisible();
-  await page
+  await expect(native.getByText("Result", { exact: true })).toHaveCount(5);
+  await native
     .getByRole("button", { name: "echo Completed", exact: true })
     .click();
-  await expect(page.getByText("Result", { exact: true })).toBeVisible();
+  await expect(native.getByText("Result", { exact: true })).toHaveCount(6);
+
+  for (const value of ["false", "0", "true", "null", '""']) {
+    await expect(
+      page.locator("pre:visible").filter({ hasText: new RegExp(`^${value}$`) })
+    ).toHaveCount(2);
+  }
 
   for (const width of [1100, 390]) {
     await page.setViewportSize({ width, height: 850 });
