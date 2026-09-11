@@ -70,6 +70,10 @@ use `slot: "webSearch"` or `slot: "codeExecution"` to select the model-facing na
 and feature toggle. This does not impose an input schema, output schema, or renderer.
 Only one item per selection can be installed at a time.
 
+The following example is the complete installed `tools/chatjs/my-sandbox/chatjs.json`
+descriptor. In the published shadcn registry item, put this same object under
+`meta.chatjs`, including `slot`. Do not put these fields at the registry item root.
+
 ```json
 {
   "contractVersion": 1,

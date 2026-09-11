@@ -76,14 +76,20 @@ async function processExtraPackages(
     return { codeToRun: codeWithoutPipLines, installResult: { success: true } };
   }
 
-  log.info({ requestId, extraPackages }, "installing extra packages");
+  log.info(
+    { requestId, packageCount: extraPackages.length },
+    "installing extra packages"
+  );
   const dynamicInstall = await sandbox.runCommand({
     cmd: "pip",
     args: ["install", ...extraPackages],
   });
   if (dynamicInstall.exitCode !== 0) {
     const stderr = await dynamicInstall.stderr();
-    log.error({ requestId, stderr }, "dynamic package installation failed");
+    log.error(
+      { requestId, exitCode: dynamicInstall.exitCode },
+      "dynamic package installation failed"
+    );
     return {
       codeToRun: code,
       installResult: {

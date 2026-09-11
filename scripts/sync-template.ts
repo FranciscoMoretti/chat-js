@@ -106,6 +106,8 @@ function shouldCopyElectronFilePath(filePath: string): boolean {
 const TEMPLATE_REMOVED_FILES = [
   "components/github-link.tsx",
   "components/docs-link.tsx",
+  // This reference-app test requires both built-in tools, which scaffolds may omit.
+  "components/part/tool-part.test.tsx",
 ];
 
 /** Import lines stripped from template files after copying. */
