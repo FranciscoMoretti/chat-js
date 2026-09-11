@@ -81,7 +81,12 @@ Output rules:
       let sandbox: Sandbox | undefined;
       let cleanup: Promise<void> | undefined;
       const stop = () => {
-        cleanup ??= cleanupSandbox(sandbox, log, requestId);
+        if (!cleanup) {
+          cleanup = cleanupSandbox(sandbox, log, requestId);
+          // An abort listener starts cleanup before execution unwinds. Observe
+          // early rejection now; the finally block still awaits and propagates it.
+          cleanup.catch(() => undefined);
+        }
       };
 
       try {

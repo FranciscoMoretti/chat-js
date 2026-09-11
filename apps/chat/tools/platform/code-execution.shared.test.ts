@@ -1,3 +1,4 @@
+import type { Sandbox } from "@vercel/sandbox";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const envMock: {
@@ -68,4 +69,27 @@ describe("getSandboxRuntime", () => {
 
     expect(getSandboxRuntime("javascript")).toBe("node22");
   });
+});
+
+it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
+  const { cleanupSandbox } = await import("./code-execution.shared");
+  const gate = Promise.withResolvers<never>();
+  const stop = vi.fn<Sandbox["stop"]>(() => gate.promise);
+  const log = { info: vi.fn(), warn: vi.fn() };
+  const pending = cleanupSandbox({ stop }, log, "fixture");
+  let settled = false;
+  const observed = pending.finally(() => {
+    settled = true;
+  });
+  const rejection = expect(observed).rejects.toThrow("stop unavailable");
+  await Promise.resolve();
+  expect(settled).toBe(false);
+  expect(stop).toHaveBeenCalledWith({
+    blocking: true,
+    signal: expect.any(AbortSignal),
+  });
+  gate.reject(new Error("stop unavailable"));
+  await rejection;
+  expect(log.info).not.toHaveBeenCalled();
+  expect(log.warn).toHaveBeenCalledOnce();
 });

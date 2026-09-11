@@ -43,18 +43,19 @@ export function createSandbox(
 }
 
 export async function cleanupSandbox(
-  sandbox: Sandbox | undefined,
-  log: ReturnType<typeof createModuleLogger>,
+  sandbox: Pick<Sandbox, "stop"> | undefined,
+  log: Pick<ReturnType<typeof createModuleLogger>, "info" | "warn">,
   requestId: string
 ): Promise<void> {
   if (!sandbox) {
     return;
   }
   try {
-    await sandbox.stop();
+    await sandbox.stop({ blocking: true, signal: AbortSignal.timeout(30_000) });
     log.info({ requestId }, "sandbox closed");
   } catch (closeErr) {
     log.warn({ requestId, closeErr }, "failed to close sandbox");
+    throw closeErr;
   }
 }
 
