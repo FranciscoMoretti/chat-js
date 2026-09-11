@@ -7,6 +7,7 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveVote,
 } from "./schema";
 
 /**
@@ -57,6 +58,7 @@ export async function completeEveConversationDeletion(
         throw new Error("Application content cleanup is incomplete.");
       }
     }
+    await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)
       .set({

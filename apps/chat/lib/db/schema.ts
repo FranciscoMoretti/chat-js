@@ -506,6 +506,19 @@ export const eveConversation = pgTable(
   ]
 );
 
+/** Feedback references native message IDs without copying the Eve transcript. */
+export const eveVote = pgTable(
+  "EveVote",
+  {
+    conversationId: uuid("conversationId")
+      .notNull()
+      .references(() => eveConversation.id, { onDelete: "cascade" }),
+    messageId: text("messageId").notNull(),
+    isUpvoted: boolean("isUpvoted").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.conversationId, table.messageId] })]
+);
+
 /** Application-owned storage identity; transcript contents remain in EVE. */
 export const eveStoredFile = pgTable(
   "EveStoredFile",

@@ -10,6 +10,7 @@ import {
   isNotNull,
   isNull,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import type {
   Attachment,
@@ -34,6 +35,8 @@ import {
   chat,
   type DBMessage,
   document,
+  eveConversation,
+  eveVote,
   generationCancellation,
   message,
   type Part,
@@ -1350,4 +1353,62 @@ export async function upsertUserModelPreference({
     console.error("Failed to upsert user model preference in database", error);
     throw error;
   }
+}
+
+/** Feedback is owner-only, including when a conversation is publicly shared. */
+export async function getEveMessageVotes(
+  ownerId: string,
+  conversationId: string
+) {
+  return await db
+    .select({ messageId: eveVote.messageId, isUpvoted: eveVote.isUpvoted })
+    .from(eveVote)
+    .innerJoin(eveConversation, eq(eveConversation.id, eveVote.conversationId))
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+}
+
+/** Call only after validating the message against the native Eve snapshot. */
+export async function saveEveMessageVote(
+  ownerId: string,
+  conversationId: string,
+  messageId: string,
+  isUpvoted: boolean
+) {
+  return await db.transaction(async (tx) => {
+    // Serialize with the family deletion fence; a slow snapshot cannot resurrect feedback.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [conversation] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, conversationId),
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.state, "bound")
+        )
+      );
+    if (!conversation) {
+      return null;
+    }
+    const [saved] = await tx
+      .insert(eveVote)
+      .values({ conversationId, messageId, isUpvoted })
+      .onConflictDoUpdate({
+        target: [eveVote.conversationId, eveVote.messageId],
+        set: { isUpvoted },
+      })
+      .returning({
+        messageId: eveVote.messageId,
+        isUpvoted: eveVote.isUpvoted,
+      });
+    return saved;
+  });
 }

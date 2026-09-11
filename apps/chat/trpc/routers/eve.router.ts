@@ -7,10 +7,12 @@ import {
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
+import { getEveMessageVotes } from "@/lib/db/queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
+import { voteEveMessage } from "@/lib/eve/vote-message";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -25,6 +27,29 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  votes: eveProcedure
+    .input(z.object({ conversationId: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      return await getEveMessageVotes(ctx.user.id, input.conversationId);
+    }),
+  vote: eveProcedure
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        messageId: z.string().min(1).max(512),
+        type: z.enum(["up", "down"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const saved = await voteEveMessage(ctx.user.id, input);
+      if (!saved) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Assistant message not found.",
+        });
+      }
+      return saved;
+    }),
   saveDocument: eveProcedure
     .input(eveManualDocumentInput)
     .mutation(async ({ ctx, input }) => {
