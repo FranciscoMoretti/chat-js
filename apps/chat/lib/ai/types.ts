@@ -6,7 +6,7 @@ import type {
 } from "ai";
 import { z } from "zod";
 import type { createWebSearch } from "@/tools/chatjs/search";
-import type { codeExecution } from "@/tools/platform/code-execution";
+import type { CodeExecutionToolFactory } from "@/tools/platform/code-execution-contract";
 import type { deepResearch } from "@/tools/platform/deep-research/deep-research";
 import type { createCodeDocumentTool } from "@/tools/platform/documents/create-code-document";
 import type { createSheetDocumentTool } from "@/tools/platform/documents/create-sheet-document";
@@ -167,7 +167,7 @@ type generateVideoTool = InferUITool<
   ReturnType<typeof generateVideoToolFactory>
 >;
 type webSearchTool = InferUITool<ReturnType<typeof createWebSearch>>;
-type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
+type codeExecutionTool = InferUITool<ReturnType<CodeExecutionToolFactory>>;
 
 export type ChatTools = {
   codeExecution: codeExecutionTool;

@@ -46,14 +46,7 @@ export const builtInToolEnvRequirements: Record<
 		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
 		description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
 	},
-	codeExecution: {
-		options: [
-			["VERCEL_OIDC_TOKEN"],
-			["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
-		],
-		description:
-			"VERCEL_OIDC_TOKEN or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
-	},
+	codeExecution: undefined,
 	imageGeneration: undefined,
 	videoGeneration: undefined,
 };

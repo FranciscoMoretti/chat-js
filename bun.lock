@@ -298,6 +298,7 @@
         "@types/bun": "latest",
         "@types/node": "22.13.10",
         "@types/react": "19.2.7",
+        "@vercel/sandbox": "^1.0.2",
         "ai": "7.0.93",
         "basic-ftp": "^5.0.5",
         "date-fns": "^4.1.0",

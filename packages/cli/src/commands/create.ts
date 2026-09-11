@@ -22,6 +22,7 @@ import {
 	promptProjectName,
 	promptStorage,
 	promptSearchTool,
+	promptCodeExecutionTool,
 } from "../helpers/prompts";
 import {
 	scaffoldElectron,
@@ -106,10 +107,15 @@ const createOptionsSchema = z.object({
 	storageConfig: z.string().optional(),
 	gateway: z.string().optional(),
 	searchTool: z.string().optional(),
+	codeExecutionTool: z.string().optional(),
 });
 
 export const create = new Command()
 	.name("create")
+	.option(
+		"--code-execution-tool <item>",
+		"code-execution tool name or registry address",
+	)
 	.option("--search-tool <item>", "search tool name or registry address")
 	.description("scaffold a new ChatJS chat application")
 	.argument("[directory]", "target directory for the project")
@@ -224,6 +230,21 @@ export const create = new Command()
 					throw new Error("Selected tool must declare the webSearch slot.");
 				toolSources.push(searchSource);
 			}
+			if (options.codeExecutionTool)
+				assistantTools.builtInTools.codeExecution = true;
+			if (assistantTools.builtInTools.codeExecution) {
+				const source = itemAddress(
+					options.codeExecutionTool ??
+						(await promptCodeExecutionTool(options.yes)),
+					"tool",
+				);
+				const metadata = toolDefinitionSchema.parse(
+					(await readItem(source, targetDir)).meta?.chatjs,
+				);
+				if (metadata.slot !== "codeExecution")
+					throw new Error("Selected tool must declare the codeExecution slot.");
+				toolSources.push(source);
+			}
 			const expectedTools = [];
 			for (const source of toolSources)
 				expectedTools.push(
@@ -275,7 +296,7 @@ export const create = new Command()
 					]);
 					await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
 					await rm(join(targetDir, "lib/ai/gateway.ts"));
-					// A fresh clone receives the requested search selection as well.
+					// A fresh clone receives the requested search and execution selections as well.
 					const toolDirectory = join(targetDir, "tools/chatjs");
 					for (const entry of await readdir(toolDirectory, {
 						withFileTypes: true,
@@ -292,7 +313,10 @@ export const create = new Command()
 						const metadata = toolDefinitionSchema.parse(
 							JSON.parse(await readFile(descriptor, "utf8")),
 						);
-						if (metadata.slot === "webSearch")
+						if (
+							metadata.slot === "webSearch" ||
+							metadata.slot === "codeExecution"
+						)
 							await rm(join(toolDirectory, entry.name), { recursive: true });
 					}
 				} else {

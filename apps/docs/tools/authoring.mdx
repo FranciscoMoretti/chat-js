@@ -63,6 +63,55 @@ The build serializes this data into the descriptor. The installed app's
 `check-env` command reads it without evaluating remote source. The old
 `toolEnvVars` source parser and registry authoring-type npm exports are removed.
 
+## Factory slots
+
+Search and code-execution items fill an existing application slot. They export a
+factory and reuse the app's presentation, so they do not need `renderer.tsx`.
+Declare `slot: "webSearch"` or `slot: "codeExecution"` in `meta.chatjs` and the
+installed descriptor. Only one item per slot can be installed at a time.
+
+A code-execution item uses this metadata:
+
+```json
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "my-sandbox",
+  "slot": "codeExecution",
+  "toolExport": "createCodeExecution",
+  "envRequirements": [{ "options": [["MY_SANDBOX_API_KEY"]] }]
+}
+```
+
+Its server factory must satisfy the app's contract:
+
+```ts
+import type { Tool } from "ai";
+import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
+
+type CodeExecutionToolFactory = (context: {
+  costAccumulator?: CostAccumulator;
+}) => Tool<
+  { title: string; language: "python" | "javascript"; code: string },
+  {
+    message: string;
+    chart: string | { base64: string; format: string } | Record<string, unknown>;
+  }
+>;
+```
+
+Use the actual types from `@/tools/platform/code-execution-contract`. Annotate your
+factory as `CodeExecutionToolFactory` and its async `execute` result as
+`Promise<CodeExecutionResult>`. This keeps AI SDK inference aligned with the shared
+contract even when your provider only returns text.
+
+The factory owns SDK setup, remote execution, output normalization, costs, and
+cleanup. Run user code in an isolated sandbox, never the application's host process.
+`sync` generates a factory import annotated as `CodeExecutionToolFactory`
+and derives the feature's environment requirements from the descriptor.
+Type-check the installed app to validate the factory's input and output; this does
+not prove remote credentials or service availability, which require an execution test.
+
 ## Build and verify
 
 ```bash

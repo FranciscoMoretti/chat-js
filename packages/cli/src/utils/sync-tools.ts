@@ -37,6 +37,27 @@ function checkGenerated(content: string | null, path: string) {
 		);
 }
 
+const factorySlots = {
+	webSearch: {
+		file: "search",
+		factory: "createWebSearch",
+		type: "SearchToolFactory",
+		contract: "search-presentation",
+		requirement: "searchEnvRequirement",
+	},
+	codeExecution: {
+		file: "code-execution",
+		factory: "createCodeExecution",
+		type: "CodeExecutionToolFactory",
+		contract: "code-execution-contract",
+		requirement: "codeExecutionEnvRequirement",
+	},
+} as const;
+const factoryFiles = Object.values(factorySlots).flatMap(({ file }) => [
+	`${file}.ts`,
+	`${file}-config.ts`,
+]);
+
 export async function syncTools(
 	cwd: string,
 	options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {},
@@ -47,8 +68,7 @@ export async function syncTools(
 		"ui.ts",
 		"custom-tools.ts",
 		"custom-ui.ts",
-		"search.ts",
-		"search-config.ts",
+		...factoryFiles,
 	].map((file) => `${directory}/${file}`);
 	await preflight(cwd, targets);
 	const dir = join(cwd, directory);
@@ -64,7 +84,7 @@ export async function syncTools(
 		previousTools && previousUi && !previousTools.startsWith(generated)
 			? await legacyTools(cwd, previousTools, previousUi)
 			: null;
-	for (const filename of ["search.ts", "search-config.ts"])
+	for (const filename of factoryFiles)
 		checkGenerated(await readOptional(join(dir, filename)), filename);
 	if (!legacy) {
 		checkGenerated(previousTools, toolsPath);
@@ -115,11 +135,12 @@ export async function syncTools(
 		}
 	}
 	definitions.sort((a, b) => a.id.localeCompare(b.id));
-	const searchTools = definitions.filter((item) => item.slot === "webSearch");
-	if (searchTools.length > 1)
-		throw new Error(
-			"Only one webSearch tool can be selected. Remove the previous search tool directory before syncing.",
-		);
+	for (const slot of Object.keys(factorySlots)) {
+		if (definitions.filter((item) => item.slot === slot).length > 1)
+			throw new Error(
+				`Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`,
+			);
+	}
 	const registrations = definitions.filter((item) => !item.slot);
 	const renderers = registrations.filter((item) => item.rendererExport);
 	const keys = registrations.map((item) => item.toolExport);
@@ -144,38 +165,29 @@ export async function syncTools(
 		if ((await readOptional(descriptor)) === null)
 			await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
 	}
-	if (searchTools[0]) {
-		const search = searchTools[0];
+	for (const [slot, spec] of Object.entries(factorySlots)) {
+		const selected = definitions.find((item) => item.slot === slot);
+		const importType = `import type { ${spec.type} } from "@/tools/platform/${spec.contract}";\n`;
+		const body = selected
+			? `${importType}import { ${selected.toolExport} as selectedFactory } from "./${selected.id}/tool";\nconst selected: ${spec.type} = selectedFactory;\nexport { selected as ${spec.factory} };\n`
+			: `${importType}export const ${spec.factory}: ${spec.type} = () => { throw new Error("Install a ${slot} tool using chat-js add."); };\n`;
+		await writeFile(join(dir, `${spec.file}.ts`), generatedSource(body));
+		const envOptions = selected
+			? selected.envRequirements.reduce<string[][]>(
+					(all, requirement) =>
+						all.flatMap((keys) =>
+							requirement.options.map((option) => [...keys, ...option]),
+						),
+					[[]],
+				)
+			: [];
 		await writeFile(
-			join(dir, "search.ts"),
+			join(dir, `${spec.file}-config.ts`),
 			generatedSource(
-				`import type { SearchToolFactory } from "@/tools/platform/search-presentation";\nimport { ${search.toolExport} } from "./${search.id}/tool";\nconst selectedSearch = ${search.toolExport} satisfies SearchToolFactory;\nexport { selectedSearch as createWebSearch };\n`,
-			),
-		);
-	} else {
-		await writeFile(
-			join(dir, "search.ts"),
-			generatedSource(
-				`import type { SearchToolFactory } from "@/tools/platform/search-presentation";\nexport const createWebSearch: SearchToolFactory = () => { throw new Error("Install a webSearch tool using chat-js add."); };\n`,
+				`export const ${spec.requirement} = ${JSON.stringify({ options: envOptions, description: selected ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : `Install a ${slot} tool` })};\n`,
 			),
 		);
 	}
-	const requirements = searchTools[0]?.envRequirements ?? [];
-	const envOptions = searchTools[0]
-		? requirements.reduce<string[][]>(
-				(all, requirement) =>
-					all.flatMap((keys) =>
-						requirement.options.map((option) => [...keys, ...option]),
-					),
-				[[]],
-			)
-		: [];
-	await writeFile(
-		join(dir, "search-config.ts"),
-		generatedSource(
-			`export const searchEnvRequirement = ${JSON.stringify({ options: envOptions, description: searchTools[0] ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : "Install a webSearch tool" })};\n`,
-		),
-	);
 	await writeFile(toolsPath, generatedSource(toolBody));
 	await writeFile(uiPath, generatedSource(uiBody));
 	return definitions;

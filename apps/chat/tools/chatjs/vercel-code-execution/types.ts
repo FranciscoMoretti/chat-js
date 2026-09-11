@@ -6,15 +6,7 @@ export const supportedExecutionLanguages = ["python", "javascript"] as const;
 export type SupportedExecutionLanguage =
   (typeof supportedExecutionLanguages)[number];
 
-export type CodeExecutionChart =
-  | string
-  | { base64: string; format: string }
-  | Record<string, unknown>;
-
-export interface CodeExecutionResult {
-  chart: CodeExecutionChart;
-  message: string;
-}
+export type { CodeExecutionResult } from "@/tools/platform/code-execution-contract";
 
 export interface CodeExecutionContext {
   code: string;

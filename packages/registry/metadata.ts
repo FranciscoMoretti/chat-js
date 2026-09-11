@@ -17,11 +17,11 @@ export const toolDefinitionSchema = z
 		id: z.string().regex(/^[a-z][a-z0-9-]*$/),
 		toolExport: identifier,
 		rendererExport: identifier.optional(),
-		slot: z.literal("webSearch").optional(),
+		slot: z.enum(["webSearch", "codeExecution"]).optional(),
 		envRequirements: z.array(envRequirementSchema).default([]),
 	})
 	.refine(
-		(item) => item.slot === "webSearch" || !!item.rendererExport,
+		(item) => !!item.slot || !!item.rendererExport,
 		"Ordinary tools require a rendererExport",
 	);
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;

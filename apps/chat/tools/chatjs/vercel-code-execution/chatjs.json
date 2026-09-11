@@ -1,0 +1,16 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "vercel-code-execution",
+  "toolExport": "createCodeExecution",
+  "slot": "codeExecution",
+  "envRequirements": [
+    {
+      "description": "Vercel OIDC or team/project/token credentials",
+      "options": [
+        ["VERCEL_OIDC_TOKEN"],
+        ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"]
+      ]
+    }
+  ]
+}

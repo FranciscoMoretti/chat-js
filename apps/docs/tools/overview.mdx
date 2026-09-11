@@ -5,7 +5,7 @@ description: Install and distribute typed ChatJS tools with shadcn registries
 
 The ChatJS registry distributes editable source code using shadcn. A tool includes
 server logic, dependencies, and a declarative registration
-descriptor. Ordinary tools include a client renderer; search tools reuse the existing search presentation. Installed tools become part of your app's typed tool system.
+descriptor. Ordinary tools include a client renderer; search and code-execution factories reuse their existing presentations. Installed tools become part of your app's typed tool system.
 
 ```bash
 npx @chat-js/cli@latest add word-count
@@ -23,6 +23,7 @@ Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replac
 | [Get Weather](./get-weather) | Fetch weather for coordinates | None |
 | [Tavily Search](../features/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
 | [Firecrawl Search](../features/web-search) | Search with page content extraction | `FIRECRAWL_API_KEY` |
+| [Vercel Code Execution](../features/code-execution) | Run Python and JavaScript in Vercel Sandbox | Vercel OIDC or team/project/token |
 | [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
 
 ## Installed files

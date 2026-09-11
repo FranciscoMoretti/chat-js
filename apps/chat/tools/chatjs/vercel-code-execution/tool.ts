@@ -3,18 +3,18 @@ import { tool } from "ai";
 import z from "zod";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
-import { executeJavaScriptInSandbox } from "./code-execution.javascript";
-import { executePythonInSandbox } from "./code-execution.python";
+import { executeJavaScriptInSandbox } from "./javascript";
+import { executePythonInSandbox } from "./python";
 import {
   cleanupSandbox,
   createSandbox,
   getErrorMessage,
   getSandboxRuntime,
-} from "./code-execution.shared";
+} from "./sandbox";
 import {
   type SupportedExecutionLanguage,
   supportedExecutionLanguages,
-} from "./code-execution.types";
+} from "./types";
 
 const COST_CENTS = 5; // Vercel Sandbox execution
 
@@ -22,7 +22,7 @@ const languageSchema = z.enum(supportedExecutionLanguages);
 
 const defaultExecutionLanguage: SupportedExecutionLanguage = "python";
 
-export const codeExecution = ({
+export const createCodeExecution = ({
   costAccumulator,
 }: {
   costAccumulator?: CostAccumulator;

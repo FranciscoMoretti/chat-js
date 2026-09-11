@@ -1,8 +1,5 @@
 import type { Sandbox } from "@vercel/sandbox";
-import type {
-  CodeExecutionContext,
-  CodeExecutionResult,
-} from "./code-execution.types";
+import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
 const WHITESPACE_REGEX = /\s+/;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;

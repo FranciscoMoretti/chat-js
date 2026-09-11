@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The sandbox runs on Vercel infrastructure with a 5-minute timeout and 2 vCPUs.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that implements the same tool contract.
 
 <Frame>
   <img src="/docs/images/code-execution.gif" alt="Running Python and JavaScript code in the sandbox from chat" />
@@ -13,13 +13,41 @@ Execute Python and JavaScript code in a secure sandboxed environment directly fr
 
 ## Quick Start
 
-Enable code execution in `chat.config.ts`:
+Select the tool when creating an app:
+
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --code-execution-tool vercel-code-execution
+```
+
+This enables code execution, installs `@vercel/sandbox`, and copies the provider's
+source to `tools/chatjs/vercel-code-execution/`. An external item URL is also accepted:
+
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --code-execution-tool https://example.com/r/my-sandbox.json
+```
+
+The fresh template includes only the selected implementation and dependencies.
+The CLI prints the selected item's credential requirements. Vercel Sandbox needs
+`VERCEL_OIDC_TOKEN` or the team/project/token credentials described below.
+
+For an existing app, install the item with `chat-js add vercel-code-execution`,
+then enable it in `chat.config.ts`. When switching implementations, remove the
+previous provider directory first; only one `codeExecution` item can occupy the slot.
+Keep the generated selection files intact and let `add` or `sync` regenerate them.
+
+```bash
+npx @chat-js/cli@latest add vercel-code-execution
+```
+
+Enable code execution:
 
 ```ts
 ai: {
   tools: {
     codeExecution: {
-      enabled: true, // Vercel-native, no key needed
+      enabled: true,
     },
   },
 }
@@ -27,7 +55,7 @@ ai: {
 
 ## Pre-installed Packages
 
-The following packages are available out of the box:
+The Vercel item makes these Python packages available out of the box:
 
 - `matplotlib` - Plotting and visualization
 - `pandas` - Data analysis
@@ -98,7 +126,7 @@ Supported chart types:
 - Bar charts
 
 <Callout type="note">
-  Charts are rendered as PNG images. Complex chart types beyond line, scatter, and bar may not render correctly.
+  Matplotlib charts are returned as PNG images. Assign a `chart` dictionary for interactive line, scatter, and bar charts.
 </Callout>
 
 ## Customization
@@ -130,4 +158,28 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 ### Tool Definition
 
-The tool is defined in `lib/ai/tools/code-execution.ts`. You can modify the description to adjust how the AI uses it, or change the base packages installed in the sandbox.
+The installed Vercel implementation lives in `tools/chatjs/vercel-code-execution/`:
+
+```text
+tools/
+├── chatjs/
+│   ├── code-execution.ts          # Generated factory selection
+│   ├── code-execution-config.ts   # Generated credential requirements
+│   └── vercel-code-execution/
+│       ├── chatjs.json            # Registration descriptor
+│       ├── tool.ts               # Tool schema and execution lifecycle
+│       ├── sandbox.ts            # Authentication, runtime, cleanup
+│       ├── python.ts
+│       ├── javascript.ts
+│       └── types.ts
+└── platform/
+    └── code-execution-contract.ts # Shared input/output contract
+```
+
+Edit the installed provider source to change its description, runtime, or packages.
+The app imports the generated factory; the chat UI continues to render the shared
+`title`, `language`, `code`, `message`, and `chart` fields.
+
+Third-party providers use the [tool factory contract](../tools/authoring#factory-slots).
+Their credentials and lifecycle belong in their own source. ChatJS does not expose
+a general-purpose sandbox API or load provider code dynamically.

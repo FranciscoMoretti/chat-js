@@ -85,6 +85,46 @@ export const searchToolItems = [
 	},
 }));
 
+export const codeExecutionItem = {
+	name: "vercel-code-execution",
+	type: "registry:item",
+	description: "Execute Python and JavaScript with Vercel Sandbox",
+	dependencies: [
+		"ai",
+		"zod",
+		`@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
+	],
+	files: [
+		"tool.ts",
+		"sandbox.ts",
+		"python.ts",
+		"javascript.ts",
+		"types.ts",
+	].map((file) => ({
+		path: `src/tools/vercel-code-execution/${file}`,
+		type: "registry:file" as const,
+		target: `~/tools/chatjs/vercel-code-execution/${file}`,
+	})),
+	meta: {
+		chatjs: toolDefinitionSchema.parse({
+			contractVersion: 1,
+			kind: "tool",
+			id: "vercel-code-execution",
+			slot: "codeExecution",
+			toolExport: "createCodeExecution",
+			envRequirements: [
+				{
+					options: [
+						["VERCEL_OIDC_TOKEN"],
+						["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
+					],
+					description: "Vercel OIDC or team/project/token credentials",
+				},
+			],
+		}),
+	},
+} satisfies RegistryItem;
+
 export const registry = registrySchema.parse({
 	name: "chatjs",
 	homepage: "https://chatjs.dev",
@@ -93,6 +133,7 @@ export const registry = registrySchema.parse({
 		...builtInStorage,
 		...toolItems,
 		...searchToolItems,
+		codeExecutionItem,
 		{
 			name: "toolkit-renderer",
 			type: "registry:item",

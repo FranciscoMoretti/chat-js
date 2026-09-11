@@ -200,3 +200,60 @@ test("sync protects an edited search selection", async () => {
 	await writeFile(join(root, "tools/chatjs/search.ts"), "// user code");
 	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
+
+async function installExecution(root: string, id: string) {
+	const dir = join(root, "tools/chatjs", id);
+	await mkdir(dir, { recursive: true });
+	await writeFile(
+		join(dir, "tool.ts"),
+		"export const createRunner = () => ({});",
+	);
+	await writeFile(
+		join(dir, "chatjs.json"),
+		JSON.stringify({
+			contractVersion: 1,
+			kind: "tool",
+			id,
+			slot: "codeExecution",
+			toolExport: "createRunner",
+			envRequirements: [
+				{ options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]] },
+				{ options: [["RUNNER_REGION"]] },
+			],
+		}),
+	);
+}
+test("external execution factories compose with search and preserve credential alternatives", async () => {
+	const root = await project();
+	await installSearch(root, "external-search", "SEARCH_KEY");
+	await installExecution(root, "external-runner");
+	await syncTools(root);
+	const selection = join(root, "tools/chatjs/code-execution.ts");
+	const config = join(root, "tools/chatjs/code-execution-config.ts");
+	const before = await readFile(selection, "utf8");
+	expect(before).toContain("createRunner as selectedFactory");
+	expect(before).toContain(": CodeExecutionToolFactory");
+	const requirements = await import(config);
+	expect(requirements.codeExecutionEnvRequirement.options).toEqual([
+		["RUNNER_TOKEN", "RUNNER_REGION"],
+		["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
+	]);
+	expect(
+		await readFile(join(root, "tools/chatjs/tools.ts"), "utf8"),
+	).not.toContain("external-runner");
+	expect(
+		await readFile(join(root, "tools/chatjs/ui.ts"), "utf8"),
+	).not.toContain("external-runner");
+	await installExecution(root, "second-runner");
+	await expect(syncTools(root)).rejects.toThrow("Only one codeExecution");
+	expect(await readFile(selection, "utf8")).toBe(before);
+	await rm(join(root, "tools/chatjs/external-runner"), { recursive: true });
+	await rm(join(root, "tools/chatjs/second-runner"), { recursive: true });
+	await syncTools(root);
+	expect(await readFile(selection, "utf8")).toContain(
+		"Install a codeExecution tool",
+	);
+	expect(await readFile(config, "utf8")).not.toContain("RUNNER_TOKEN");
+	await writeFile(selection, "// user code");
+	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
+});
