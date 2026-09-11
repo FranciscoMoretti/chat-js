@@ -318,6 +318,7 @@ export function EveConversation({
                   hasApproval ||
                   !!pendingMessage
                 }
+                conversationId={conversationId}
                 disabled={busy || commandPending}
                 isReadonly={false}
                 messages={messages}

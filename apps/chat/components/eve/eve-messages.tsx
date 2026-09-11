@@ -26,6 +26,7 @@ import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { isEvePlatformTool } from "@/lib/eve/platform-result";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
+import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 import { EveToolResult } from "./eve-tool-result";
@@ -216,6 +217,7 @@ function Part({
   );
 }
 export function EveMessages({
+  conversationId,
   messages,
   isReadonly,
   disabled,
@@ -224,6 +226,7 @@ export function EveMessages({
   onRegenerate,
   actionsDisabled = disabled,
 }: {
+  conversationId?: string;
   messages: readonly EveMessage[];
   isReadonly: boolean;
   actionsDisabled?: boolean;
@@ -280,6 +283,13 @@ export function EveMessages({
           >
             <RotateCcw size={14} />
           </MessageAction>
+        )}
+        {conversationId && !isReadonly && message.role === "assistant" && (
+          <EveFeedbackActions
+            conversationId={conversationId}
+            disabled={disabled}
+            messageId={message.id}
+          />
         )}
         <MessageAction
           onClick={async () => {
