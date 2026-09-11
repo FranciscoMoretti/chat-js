@@ -5,8 +5,10 @@ import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header";
 import { auth } from "@/lib/auth";
 import { getEveConversation } from "@/lib/db/eve-queries";
+import type { CreationScope } from "@/lib/eve/pending-create";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveConversation } from "./eve-conversation";
+import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
@@ -27,6 +29,12 @@ export async function EveChatPage({
     : undefined;
   if (conversationId && !selected) {
     notFound();
+  }
+  let recoveryScope: CreationScope | undefined;
+  if (selected?.parentConversationId) {
+    recoveryScope = { conversationId: selected.parentConversationId };
+  } else if (selected?.initialProjectId) {
+    recoveryScope = { projectId: selected.initialProjectId };
   }
   const header = (
     <ChatHeaderView
@@ -61,10 +69,13 @@ export async function EveChatPage({
       <section className="flex h-full min-h-0 flex-col">
         {header}
         {selected ? (
-          <p className="p-4" role="alert">
-            Creation is unresolved. Keep conversation {selected.id} for
-            reconciliation before retrying.
-          </p>
+          <EveCreationRecovery
+            firstMessage={selected.firstMessage}
+            key={selected.id}
+            operationId={selected.operationId}
+            ownerId={session.user.id}
+            scope={recoveryScope}
+          />
         ) : (
           <NewEveConversation key={session.user.id} ownerId={session.user.id} />
         )}

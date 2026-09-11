@@ -125,3 +125,130 @@ test("a lost native creation reply recovers the same session from the retained c
     )
   ).toBeNull();
 });
+
+test("an unresolved project conversation recovers after its project is deleted", async ({
+  page,
+}, testInfo) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const session = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  const response = await page.request.post("/api/trpc/project.create", {
+    data: { json: { name: "Recovery project fixture" } },
+  });
+  expect(response.ok()).toBe(true);
+  const projectId = z
+    .object({
+      result: z.object({
+        data: z.object({ json: z.object({ id: z.uuid() }) }),
+      }),
+    })
+    .parse(await response.json()).result.data.json.id;
+  const operation = {
+    operationId: crypto.randomUUID(),
+    projectId,
+    modelId: "openai/gpt-4.1-mini-fast",
+    message: "Reply exactly project-recovery-ok.",
+  };
+  await expect(
+    createEveConversation(
+      session.user.id,
+      operation.operationId,
+      operation.message,
+      () => Promise.reject(new Error("Simulated dispatch interruption")),
+      { initialProjectId: projectId, initialModelId: operation.modelId }
+    )
+  ).rejects.toThrow("Simulated dispatch interruption");
+  const reservation = await getEveCreation(
+    session.user.id,
+    operation.operationId
+  );
+  expect(reservation?.state).toBe("uncertain");
+  const removed = await page.request.post("/api/trpc/project.remove", {
+    data: { json: { id: projectId } },
+  });
+  expect(removed.ok()).toBe(true);
+  const storageKey = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
+  await page.evaluate(
+    ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
+    {
+      key: storageKey,
+      pending: { ...operation, operationId: crypto.randomUUID() },
+    }
+  );
+  await page.goto(`/chat/${reservation?.id}`);
+  const recovery = page.getByRole("region", { name: "Conversation recovery" });
+  await expect(recovery).toContainText("does not have the original request");
+  await expect(
+    recovery.getByRole("button", { name: "Retry creation" })
+  ).toHaveCount(0);
+  await recovery.screenshot({
+    path: testInfo.outputPath("recovery-missing.png"),
+  });
+  await page.evaluate(
+    ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
+    { key: storageKey, pending: operation }
+  );
+  await page.reload();
+  await expect(recovery).toContainText(operation.message);
+  await page.route(
+    "**/api/agent-conversations",
+    (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Temporary recovery failure" }),
+      }),
+    { times: 1 }
+  );
+  await recovery.getByRole("button", { name: "Retry creation" }).click();
+  await expect(recovery.getByRole("alert")).toHaveText(
+    "Temporary recovery failure"
+  );
+  expect(
+    await page.evaluate(
+      (key) => JSON.parse(sessionStorage.getItem(key) ?? "null"),
+      storageKey
+    )
+  ).toEqual(operation);
+  await page.setViewportSize({ width: 390, height: 850 });
+  await recovery.screenshot({
+    path: testInfo.outputPath("recovery-error-mobile.png"),
+  });
+  let releaseRetry: () => void = () => undefined;
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+  await page.route(
+    "**/api/agent-conversations",
+    async (route) => {
+      await retryGate;
+      await route.continue();
+    },
+    { times: 1 }
+  );
+  await recovery.getByRole("button", { name: "Retry creation" }).click();
+  await expect(
+    recovery.getByRole("button", { name: "Recovering…" })
+  ).toBeDisabled();
+  await recovery.screenshot({
+    path: testInfo.outputPath("recovery-pending-mobile.png"),
+  });
+  releaseRetry();
+  await expect(page.locator(".is-assistant")).toContainText(
+    "project-recovery-ok",
+    { timeout: 90_000 }
+  );
+  const bound = await getEveCreation(session.user.id, operation.operationId);
+  expect(bound?.state).toBe("bound");
+  expect(bound?.id).toBe(reservation?.id);
+  expect(
+    await page.evaluate((key) => sessionStorage.getItem(key), storageKey)
+  ).toBeNull();
+  await page.reload();
+  await expect(page.locator(".is-user")).toHaveCount(1);
+  await expect(page.locator(".is-assistant")).toContainText(
+    "project-recovery-ok"
+  );
+});
