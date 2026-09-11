@@ -10,6 +10,8 @@ import {
   purgeEveFamilyDocuments,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
+import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
+import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -20,6 +22,8 @@ import {
   eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
+  eveFileReference,
+  eveStoredFile,
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
@@ -48,6 +52,10 @@ afterAll(async () => {
   await db
     .delete(eveDocumentRevision)
     .where(eq(eveDocumentRevision.ownerId, owner));
+  await db.delete(eveFileReference).where(eq(eveFileReference.ownerId, owner));
+  await db
+    .delete(eveStoredFile)
+    .where(inArray(eveStoredFile.ownerId, [owner, stranger]));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
   await db.delete(user).where(eq(user.id, stranger));
@@ -783,4 +791,43 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
+});
+
+test("document references protect owned files across conversation families and retain revision history", async () => {
+  const source = await conversation();
+  const destination = await conversation();
+  const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
+  const foreignKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
+  await registerEveStoredFile(owner, key);
+  await registerEveStoredFile(stranger, foreignKey);
+  await referenceEveFiles(owner, source.id, [key]);
+  const input = {
+    ...draft(destination.id),
+    content: `![image](/api/files/content?key=${key})\nForeign URL: /api/files/content?key=${foreignKey}`,
+  };
+  const revision = await saveEveDocumentRevision(input);
+  await saveEveDocumentRevision({
+    ...input,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: revision.id,
+    content: "Image removed from latest revision",
+  });
+  expect(
+    await db
+      .select({ key: eveFileReference.key })
+      .from(eveFileReference)
+      .where(eq(eveFileReference.conversationId, destination.id))
+  ).toEqual([{ key }]);
+  await beginEveConversationDeletion(owner, source.id);
+  expect(await prepareEveFamilyFilePurge(owner, source.id)).toEqual([]);
+  expect(
+    (
+      await getEveDocumentRevision(
+        owner,
+        destination.id,
+        input.documentId,
+        revision.id
+      )
+    )?.content
+  ).toBe(input.content);
 });

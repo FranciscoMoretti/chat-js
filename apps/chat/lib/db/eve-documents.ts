@@ -2,6 +2,7 @@ import { and, eq, inArray, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { artifactKinds } from "../artifacts/artifact-kind";
 import { db } from "./client";
+import { retainEveDocumentFiles } from "./eve-files";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -203,6 +204,9 @@ export async function saveEveDocumentRevision(
   const input = revisionInput.parse(value);
   return await db.transaction(async (tx) => {
     await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
+    );
+    await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${input.conversationId}`}, 0))`
     );
     signal?.throwIfAborted();
@@ -268,6 +272,12 @@ export async function saveEveDocumentRevision(
         throw new Error("Invalid document revision.");
       }
     }
+    await retainEveDocumentFiles(
+      tx,
+      input.ownerId,
+      input.conversationId,
+      input.content
+    );
     await prepareManualRevision(tx, input, historicalTurns);
     signal?.throwIfAborted();
     const [revision] = await tx

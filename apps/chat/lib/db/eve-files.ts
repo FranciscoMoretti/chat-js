@@ -1,7 +1,12 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { isFileStorageKey } from "../file-url";
+import { FILE_CONTENT_PATH, isFileStorageKey } from "../file-url";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
+
+const DOCUMENT_FILE_URL = new RegExp(
+  `${FILE_CONTENT_PATH}\\?key=([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
+  "g"
+);
 
 /** Register server-created keys only; a caller-supplied URL is not ownership proof. */
 export async function registerEveStoredFile(ownerId: string, key: string) {
@@ -168,4 +173,39 @@ export async function writeEveGeneratedFile<T>(
     }
     return await write();
   });
+}
+
+/** Caller holds the owner family lock and has authorized the document revision. */
+export async function retainEveDocumentFiles(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  conversationId: string,
+  content: string
+) {
+  // Stored URLs are canonical paths with one ASCII key. Match conservatively:
+  // retaining a file mentioned as text is preferable to deleting a referenced image.
+  const candidates = [
+    ...new Set(
+      [...content.matchAll(DOCUMENT_FILE_URL)].map((match) => match[1])
+    ),
+  ];
+  if (!candidates.length) {
+    return;
+  }
+  const files = await tx
+    .select({ key: eveStoredFile.key })
+    .from(eveStoredFile)
+    .where(
+      and(
+        eq(eveStoredFile.ownerId, ownerId),
+        eq(eveStoredFile.state, "active"),
+        inArray(eveStoredFile.key, candidates)
+      )
+    );
+  if (files.length) {
+    await tx
+      .insert(eveFileReference)
+      .values(files.map(({ key }) => ({ key, ownerId, conversationId })))
+      .onConflictDoNothing();
+  }
 }
