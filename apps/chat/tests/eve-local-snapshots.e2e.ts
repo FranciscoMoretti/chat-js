@@ -159,3 +159,109 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     await rm(root, { recursive: true, force: true });
   }
 }, 120_000);
+
+test("EVE checkpoint capture records real provider resources for retryable cleanup", async () => {
+  const { microsandbox } = await import("eve/sandbox/microsandbox");
+  const backend = microsandbox({
+    image: "ghcr.io/vercel/eve:0.52.2",
+    setup: { autoInstall: false },
+  });
+  const appRoot = await mkdtemp(join(tmpdir(), "eve-backend-capture-"));
+  const sessionKey = `eve-acceptance-${randomBytes(16).toString("hex")}`;
+  const sessionDirectory = join(
+    appRoot,
+    ".eve",
+    "sandbox-cache",
+    "microsandbox",
+    "sessions",
+    sessionKey
+  );
+  const handle = await backend.create({
+    runtimeContext: { appRoot },
+    sessionKey,
+    templateKey: null,
+  });
+  let child: Awaited<ReturnType<typeof backend.create>> | undefined;
+  const inputs = [{ sessionDirectory, sessionKey }];
+  try {
+    await handle.session.writeTextFile({
+      path: "checkpoint.txt",
+      content: "at turn zero",
+    });
+    const checkpoint = await handle.captureForkCheckpoint?.("turn_0");
+    expect(checkpoint).toBeDefined();
+    if (typeof checkpoint?.snapshotName !== "string") {
+      throw new Error("EVE did not return a fork snapshot identity.");
+    }
+    const manifest = JSON.parse(
+      await readFile(
+        join(
+          sessionDirectory,
+          "fork-checkpoints",
+          `${checkpoint.snapshotName}.json`
+        ),
+        "utf8"
+      )
+    );
+    expect(manifest).toMatchObject({
+      version: 1,
+      sessionKey,
+      snapshotName: checkpoint.snapshotName,
+      optionsHash: checkpoint.optionsHash,
+    });
+    await Snapshot.get(checkpoint.snapshotName);
+    expect(await handle.captureForkCheckpoint?.("turn_0")).toEqual(checkpoint);
+    await handle.session.writeTextFile({
+      path: "checkpoint.txt",
+      content: "later parent edit",
+    });
+    const childKey = `${sessionKey}-child`;
+    child = await backend.create({
+      runtimeContext: { appRoot },
+      sessionKey: childKey,
+      templateKey: null,
+      forkCheckpoint: checkpoint,
+    });
+    inputs.push({
+      sessionKey: childKey,
+      sessionDirectory: join(
+        appRoot,
+        ".eve",
+        "sandbox-cache",
+        "microsandbox",
+        "sessions",
+        childKey
+      ),
+    });
+    expect(await child.session.readTextFile({ path: "checkpoint.txt" })).toBe(
+      "at turn zero"
+    );
+    expect(await handle.session.readTextFile({ path: "checkpoint.txt" })).toBe(
+      "later parent edit"
+    );
+    await child.shutdown();
+    await handle.shutdown();
+    const resources = await purgeLocalEveSandboxes(inputs);
+    expect(resources[0].snapshotNames).toContain(checkpoint.snapshotName);
+    await expect(Snapshot.get(checkpoint.snapshotName)).rejects.toThrow(
+      "snapshot not found"
+    );
+    expect(resources).toHaveLength(2);
+    for (const resource of resources) {
+      await expect(Sandbox.get(resource.sandboxName)).rejects.toMatchObject({
+        code: "sandboxNotFound",
+      });
+      for (const snapshot of resource.snapshotNames) {
+        await expect(Snapshot.get(snapshot)).rejects.toThrow(
+          "snapshot not found"
+        );
+      }
+    }
+    expect(await purgeLocalEveSandboxes(inputs)).toEqual(resources);
+  } finally {
+    await child?.shutdown();
+    await handle.shutdown();
+    await purgeLocalEveSandboxes(inputs);
+    await rm(appRoot, { recursive: true, force: true });
+  }
+}, 60_000);
