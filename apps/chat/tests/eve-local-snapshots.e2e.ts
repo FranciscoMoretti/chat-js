@@ -87,10 +87,10 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       ])
     ).toEqual([
       {
-        sandboxName: name,
+        sandboxNames: [name],
         snapshotNames: [stateSnapshotName, snapshotName],
       },
-      { sandboxName: childName, snapshotNames: [childStateSnapshotName] },
+      { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
     sandbox = undefined;
     childSandbox = undefined;
@@ -117,10 +117,10 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       ])
     ).toEqual([
       {
-        sandboxName: name,
+        sandboxNames: [name],
         snapshotNames: [stateSnapshotName, snapshotName],
       },
-      { sandboxName: childName, snapshotNames: [childStateSnapshotName] },
+      { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
     expect(JSON.parse(await readFile(manifest, "utf8")).snapshotName).toBe(
       snapshotName
@@ -239,6 +239,11 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     expect(await handle.session.readTextFile({ path: "checkpoint.txt" })).toBe(
       "later parent edit"
     );
+    await handle.captureState();
+    await child.captureState();
+    // Simulate losing the final metadata write: pre-creation records still own
+    // the child VM and state snapshot, so cleanup must not need reattachment.
+    await rm(join(inputs[1].sessionDirectory, "metadata.json"));
     await child.shutdown();
     await handle.shutdown();
     const resources = await purgeLocalEveSandboxes(inputs);
@@ -248,9 +253,11 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     );
     expect(resources).toHaveLength(2);
     for (const resource of resources) {
-      await expect(Sandbox.get(resource.sandboxName)).rejects.toMatchObject({
-        code: "sandboxNotFound",
-      });
+      for (const name of resource.sandboxNames) {
+        await expect(Sandbox.get(name)).rejects.toMatchObject({
+          code: "sandboxNotFound",
+        });
+      }
       for (const snapshot of resource.snapshotNames) {
         await expect(Snapshot.get(snapshot)).rejects.toThrow(
           "snapshot not found"

@@ -2,19 +2,24 @@ import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { z } from "zod";
 
+const sandboxNamePattern = /^eve-sbx-ses-[a-f0-9]{32}$/;
+const stateSnapshotPattern = /^eve-sbx-state-[a-f0-9]{32}$/;
 const manifestSchema = z.strictObject({
   version: z.literal(1),
   sessionKey: z.string().min(1),
   snapshotName: z.string().regex(/^eve-sbx-fork-[a-f0-9]{32}$/),
   optionsHash: z.string().min(1),
 });
+const resourceSchema = z.strictObject({
+  version: z.literal(1),
+  sessionKey: z.string().min(1),
+  kind: z.enum(["sandbox", "snapshot"]),
+  name: z.string(),
+});
 const metadataSchema = z.object({
   version: z.literal(2),
-  sandboxName: z.string().regex(/^eve-sbx-ses-[a-f0-9]{32}$/),
-  stateSnapshotName: z
-    .string()
-    .regex(/^eve-sbx-state-[a-f0-9]{32}$/)
-    .optional(),
+  sandboxName: z.string().regex(sandboxNamePattern),
+  stateSnapshotName: z.string().regex(stateSnapshotPattern).optional(),
   optionsHash: z.string().min(1),
 });
 
@@ -32,7 +37,7 @@ export async function purgeLocalEveSandboxes(
   }
   const { Sandbox } = await import("microsandbox");
   for (const name of new Set(
-    resources.map((resource) => resource.sandboxName)
+    resources.flatMap((resource) => resource.sandboxNames)
   )) {
     try {
       const sandbox = await Sandbox.get(name);
@@ -96,11 +101,30 @@ async function readLocalSandboxResources(input: {
   if (basename(input.sessionDirectory) !== input.sessionKey) {
     throw new Error("Sandbox directory does not match its session key.");
   }
-  const metadata = metadataSchema.parse(
-    JSON.parse(
-      await readFile(join(input.sessionDirectory, "metadata.json"), "utf8")
-    )
-  );
+  const metadataText = await readFile(
+    join(input.sessionDirectory, "metadata.json"),
+    "utf8"
+  ).catch((error: unknown) => {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  });
+  const metadata =
+    metadataText === undefined
+      ? undefined
+      : metadataSchema.parse(JSON.parse(metadataText));
+  const sandboxNames = new Set<string>(metadata ? [metadata.sandboxName] : []);
+  const recordedSnapshots = new Set<string>();
+  const recorded = await readResourceRecords(input);
+  for (const record of recorded) {
+    (record.kind === "sandbox" ? sandboxNames : recordedSnapshots).add(
+      record.name
+    );
+  }
+  if (!sandboxNames.size) {
+    throw new Error("Sandbox resource inventory is missing.");
+  }
   const directory = join(input.sessionDirectory, "fork-checkpoints");
   const entries = await readdir(directory).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -108,9 +132,9 @@ async function readLocalSandboxResources(input: {
     }
     throw error;
   });
-  const snapshots: string[] = metadata.stateSnapshotName
-    ? [metadata.stateSnapshotName]
-    : [];
+  const snapshots: string[] = metadata?.stateSnapshotName
+    ? [metadata.stateSnapshotName, ...recordedSnapshots]
+    : [...recordedSnapshots];
   for (const entry of entries.sort()) {
     // Atomic-write leftovers precede provider creation and are not published records.
     if (entry.endsWith(".tmp")) {
@@ -121,12 +145,53 @@ async function readLocalSandboxResources(input: {
     );
     if (
       entry !== `${record.snapshotName}.json` ||
-      record.sessionKey !== input.sessionKey ||
-      record.optionsHash !== metadata.optionsHash
+      record.sessionKey !== input.sessionKey
     ) {
       throw new Error("Fork snapshot ownership is inconsistent.");
     }
     snapshots.push(record.snapshotName);
   }
-  return { sandboxName: metadata.sandboxName, snapshotNames: snapshots };
+  return {
+    sandboxNames: [...sandboxNames],
+    snapshotNames: [...new Set(snapshots)],
+  };
+}
+
+async function readResourceRecords(input: {
+  sessionDirectory: string;
+  sessionKey: string;
+}) {
+  const resourceDirectory = join(input.sessionDirectory, "resources");
+  const resourceEntries = await readdir(resourceDirectory).catch(
+    (error: unknown) => {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        return [];
+      }
+      throw error;
+    }
+  );
+  const records: z.infer<typeof resourceSchema>[] = [];
+  for (const entry of resourceEntries.sort()) {
+    if (entry.endsWith(".tmp")) {
+      continue;
+    }
+    const record = resourceSchema.parse(
+      JSON.parse(await readFile(join(resourceDirectory, entry), "utf8"))
+    );
+    const pattern =
+      record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
+    if (
+      record.sessionKey !== input.sessionKey ||
+      entry !== `${record.name}.json` ||
+      !pattern.test(record.name)
+    ) {
+      throw new Error("Sandbox resource ownership is inconsistent.");
+    }
+    records.push(record);
+  }
+  return records;
 }

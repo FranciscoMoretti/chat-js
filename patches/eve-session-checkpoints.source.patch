@@ -336,10 +336,16 @@ index a3aa9df..5104e8b 100644
    };
  }
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
-index c7bd18e..b6533c9 100644
+index c7bd18e..a7a6114 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
-@@ -23,6 +23,10 @@ const runtimeMocks = vi.hoisted(() => ({
+@@ -18,11 +18,16 @@ const runtimeMocks = vi.hoisted(() => ({
+   doesPathExist: vi.fn(async () => false),
+   loadMicrosandboxModule: vi.fn(async () => ({}) as never),
+   removeSnapshotIfExists: vi.fn(async () => {}),
++  recordMicrosandboxResource: vi.fn(async () => {}),
+   sandboxExists: vi.fn(async () => false),
+   snapshotExists: vi.fn(async () => true),
  }));
 
  const fsMocks = vi.hoisted(() => ({
@@ -350,7 +356,7 @@ index c7bd18e..b6533c9 100644
    mkdir: vi.fn(async (_path: string, _options?: unknown) => {}),
    rename: vi.fn(async (_oldPath: string, _newPath: string) => {}),
    rm: vi.fn(async (_path: string, _options?: unknown) => {}),
-@@ -71,6 +75,69 @@ describe("createMicrosandboxHandle", () => {
+@@ -71,6 +76,78 @@ describe("createMicrosandboxHandle", () => {
      });
    });
 
@@ -417,11 +423,20 @@ index c7bd18e..b6533c9 100644
 +    ).rejects.toThrow("different fork checkpoint");
 +  });
 +
++  it("refuses provider creation when its resource record cannot be persisted", async () => {
++    runtimeMocks.recordMicrosandboxResource.mockRejectedValueOnce(new Error("disk full"));
++    await expect(createMicrosandboxHandle({
++      backendName: "microsandbox", options: resolveMicrosandboxOptions({}), optionsHash: "options",
++      createInput: { runtimeContext: { appRoot: "/tmp/eve-app" }, sessionKey: "record-failure", templateKey: null },
++    })).rejects.toThrow("disk full");
++    expect(runtimeMocks.createPreparedMicrosandbox).not.toHaveBeenCalled();
++  });
++
    it("reuses the active same-process session instead of reopening from the template", async () => {
      const vm = createFakeMicrosandboxVm("session-key");
      runtimeMocks.createPreparedMicrosandbox.mockResolvedValue(vm);
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
-index 1a4c05b..b63cd0b 100644
+index 1a4c05b..77be906 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 @@ -1,6 +1,6 @@
@@ -433,7 +448,15 @@ index 1a4c05b..b63cd0b 100644
 
  import {
    createFileBackedInternalSandboxSession,
-@@ -181,14 +181,48 @@ export async function createMicrosandboxHandle(input: {
+@@ -25,6 +25,7 @@ import {
+   loadMicrosandboxModule,
+   type MicrosandboxVm,
+   removeSnapshotIfExists,
++  recordMicrosandboxResource,
+   sandboxExists,
+   snapshotExists,
+ } from "#execution/sandbox/bindings/microsandbox-runtime.js";
+@@ -181,14 +182,48 @@ export async function createMicrosandboxHandle(input: {
    );
    const activeSessionKey = createActiveMicrosandboxSessionKey(sessionRootPath, input.optionsHash);
    const activeHandle = activeMicrosandboxSessionHandles.get(activeSessionKey);
@@ -485,7 +508,7 @@ index 1a4c05b..b63cd0b 100644
    const sessionTags = withDevelopmentSandboxMetadataPathTag(input.createInput.tags, metadataPath);
 
    if (
-@@ -216,7 +250,9 @@ export async function createMicrosandboxHandle(input: {
+@@ -216,7 +251,9 @@ export async function createMicrosandboxHandle(input: {
    }
 
    let snapshotName: string | null = null;
@@ -496,7 +519,15 @@ index 1a4c05b..b63cd0b 100644
      const templateRootPath = resolveMicrosandboxTemplateRootPath(
        cacheDirectory,
        input.createInput.templateKey,
-@@ -300,6 +336,9 @@ function createHandle(
+@@ -243,6 +280,7 @@ export async function createMicrosandboxHandle(input: {
+     "eve-sbx-ses",
+     `${input.createInput.sessionKey}:${randomUUID()}`,
+   );
++  await recordMicrosandboxResource(metadataPath, "sandbox", sandboxName);
+   let sandbox: MicrosandboxVm;
+   try {
+     sandbox = await createPreparedMicrosandbox({
+@@ -300,6 +338,9 @@ function createHandle(
          await sandbox.setNetworkPolicy(policy);
        });
      },
@@ -507,10 +538,10 @@ index 1a4c05b..b63cd0b 100644
        const metadata = await sandbox.captureState(optionsHash);
        return {
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
-index cb72e88..890af54 100644
+index cb72e88..91952da 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
-@@ -1,4 +1,14 @@
+@@ -1,10 +1,21 @@
 -import { describe, expect, it, vi } from "vitest";
 +import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 +import { tmpdir } from "node:os";
@@ -526,7 +557,14 @@ index cb72e88..890af54 100644
 
  import type { MicrosandboxSessionMetadata } from "#execution/sandbox/bindings/microsandbox-metadata.js";
  import {
-@@ -193,6 +203,59 @@ describe.skipIf(process.platform === "win32")("connectMicrosandbox", () => {
+   connectMicrosandbox,
+   createPreparedMicrosandbox,
+   MicrosandboxVm,
++  recordMicrosandboxResource,
+ } from "#execution/sandbox/bindings/microsandbox-runtime.js";
+ import {
+   MICROSANDBOX_DEFAULT_IMAGE,
+@@ -193,6 +204,59 @@ describe.skipIf(process.platform === "win32")("connectMicrosandbox", () => {
  });
 
  describe.skipIf(process.platform === "win32")("MicrosandboxVm", () => {
@@ -586,8 +624,66 @@ index cb72e88..890af54 100644
    it("propagates an authored stop failure", async () => {
      const sandbox = {
        detach: vi.fn(async () => {}),
+@@ -532,7 +596,7 @@ function expectConnected(vm: MicrosandboxVm | null): MicrosandboxVm {
+
+ function createMockMicrosandboxModule(
+   sandbox: ReturnType<typeof createMockMicrosandbox>,
+-  options: { readonly snapshots?: readonly string[]; readonly status?: string } = {},
++  options: { readonly snapshots?: readonly string[]; readonly status?: string; readonly beforeSnapshot?: (name: string) => Promise<void> } = {},
+ ) {
+   let createdFromSnapshot = "";
+   const removedSnapshots: string[] = [];
+@@ -544,6 +608,7 @@ function createMockMicrosandboxModule(
+     async kill() {},
+     async remove() {},
+     async snapshot(snapshotName: string) {
++      await options.beforeSnapshot?.(snapshotName);
+       createdFromSnapshot = snapshotName;
+     },
+     async stopWithTimeout() {},
+@@ -698,3 +763,40 @@ function createMockSecretBuilder() {
+   };
+   return builder;
+ }
++
++
++it("persists immutable resource identities without requiring session metadata", async () => {
++  const directory = await mkdtemp(join(tmpdir(), "eve-resources-"));
++  temporaryDirectories.push(directory);
++  const metadataPath = join(directory, "session", "metadata.json");
++  const name = `eve-sbx-ses-${"a".repeat(32)}`;
++  await recordMicrosandboxResource(metadataPath, "sandbox", name);
++  await recordMicrosandboxResource(metadataPath, "sandbox", name);
++  const resources = join(directory, "session", "resources");
++  expect(await readdir(resources)).toEqual([`${name}.json`]);
++  expect(JSON.parse(await readFile(join(resources, `${name}.json`), "utf8"))).toEqual({
++    version: 1, sessionKey: "session", kind: "sandbox", name,
++  });
++});
++
++
++it("keeps the state snapshot identity when provider capture fails", async () => {
++  const directory = await mkdtemp(join(tmpdir(), "eve-state-record-"));
++  temporaryDirectories.push(directory);
++  const resources = join(directory, "session", "resources");
++  const runtime = createMockMicrosandboxModule(createMockMicrosandbox(), {
++    beforeSnapshot: async (name) => {
++      expect(JSON.parse(await readFile(join(resources, `${name}.json`), "utf8"))).toEqual({
++        version: 1, sessionKey: "session", kind: "snapshot", name,
++      });
++      throw new Error("provider unavailable");
++    },
++  });
++  const vm = expectConnected(await connectMicrosandbox({
++    metadata: { version: 2, optionsHash: "options", sandboxName: "eve-sbx-ses-existing" },
++    metadataPath: join(directory, "session", "metadata.json"), module: runtime.module,
++    options: resolveMicrosandboxOptions({}), sessionKey: "session",
++  }));
++  await expect(vm.captureState("options")).rejects.toThrow("provider unavailable");
++  expect(await readdir(resources)).toHaveLength(1);
++});
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
-index f697452..90e046e 100644
+index f697452..6eb503e 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 @@ -1,6 +1,6 @@
@@ -595,7 +691,7 @@ index f697452..90e046e 100644
 -import { access } from "node:fs/promises";
 -import { posix } from "node:path";
 +import { access, mkdir, rename, rm, writeFile } from "node:fs/promises";
-+import { dirname, join, posix } from "node:path";
++import { basename, dirname, join, posix } from "node:path";
 
  import { shellQuote } from "#execution/sandbox/shell-quote.js";
  import { createMicrosandboxWithProgress } from "#execution/sandbox/bindings/microsandbox-create.js";
@@ -658,6 +754,64 @@ index f697452..90e046e 100644
    async captureState(optionsHash: string): Promise<MicrosandboxSessionMetadata> {
      this.#optionsHash = optionsHash;
      if (isEveDevEnvironment()) {
+@@ -121,6 +173,7 @@ export class MicrosandboxVm {
+       `${this.#input.sessionKey}:${randomUUID()}`,
+     );
+
++    await recordMicrosandboxResource(this.#metadataPath, "snapshot", stateSnapshotName);
+     await this.stopAndSnapshot(stateSnapshotName);
+     this.#stateSnapshotName = stateSnapshotName;
+     if (this.#metadataPath !== undefined) {
+@@ -197,6 +250,7 @@ export class MicrosandboxVm {
+     );
+     const previousSandboxName = this.#sandboxName;
+
++    await recordMicrosandboxResource(this.#metadataPath, "snapshot", stateSnapshotName);
+     await this.stopAndSnapshot(stateSnapshotName);
+     await removeSandboxIfExists(this.#input.module, previousSandboxName);
+
+@@ -204,6 +258,7 @@ export class MicrosandboxVm {
+       "eve-sbx-ses",
+       `${this.#input.sessionKey}:${randomUUID()}`,
+     );
++    await recordMicrosandboxResource(this.#metadataPath, "sandbox", nextSandboxName);
+     this.#sandbox = await createMicrosandbox({
+       fromSnapshot: stateSnapshotName,
+       module: this.#input.module,
+@@ -427,6 +482,7 @@ async function restoreMicrosandboxSessionSnapshot(input: {
+   }
+
+   const sandboxName = createProviderName("eve-sbx-ses", `${input.sessionKey}:${randomUUID()}`);
++  await recordMicrosandboxResource(input.metadataPath, "sandbox", sandboxName);
+   const sandbox = await createMicrosandbox({
+     fromSnapshot: input.metadata.stateSnapshotName,
+     module: input.module,
+@@ -666,3 +722,25 @@ function resolveMicrosandboxLabels(tags: SandboxBackendTags | undefined): Record
+     ...withDevelopmentSandboxTags(tags),
+   };
+ }
++
++/** Retain identities before provider I/O; undefined paths are temporary bootstrap VMs. */
++export async function recordMicrosandboxResource(
++  metadataPath: string | undefined,
++  kind: "sandbox" | "snapshot",
++  name: string,
++): Promise<void> {
++  if (metadataPath === undefined) return;
++  const sessionDirectory = dirname(metadataPath);
++  const directory = join(sessionDirectory, "resources");
++  await mkdir(directory, { recursive: true });
++  const path = join(directory, `${name}.json`);
++  const temporary = `${path}.${randomUUID()}.tmp`;
++  try {
++    await writeFile(temporary, `${JSON.stringify({
++      version: 1, sessionKey: basename(sessionDirectory), kind, name,
++    })}\n`, { mode: 0o600 });
++    await rename(temporary, path);
++  } finally {
++    await rm(temporary, { force: true });
++  }
++}
 diff --git a/packages/eve/src/execution/sandbox/ensure.test.ts b/packages/eve/src/execution/sandbox/ensure.test.ts
 index 1bf6637..c28a6bc 100644
 --- a/packages/eve/src/execution/sandbox/ensure.test.ts

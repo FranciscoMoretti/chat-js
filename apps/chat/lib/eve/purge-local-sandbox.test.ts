@@ -72,7 +72,7 @@ test("retains identities through provider failure and treats only explicit missi
   );
   expect(await purgeLocalEveSandboxes([input])).toEqual([
     {
-      sandboxName: input.sandboxName,
+      sandboxNames: [input.sandboxName],
       snapshotNames: [input.snapshotName],
     },
   ]);
@@ -87,7 +87,7 @@ test("validates all records before deletion and rejects another session or share
   const input = await fixture();
   for (const record of [
     { ...input.record, sessionKey: "other-session" },
-    { ...input.record, optionsHash: "other-options" },
+    { ...input.record, optionsHash: 42 },
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
     await writeFile(input.path, JSON.stringify(record));
@@ -135,4 +135,47 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     child.snapshotName,
     parent.snapshotName,
   ]);
+});
+
+test("retains resources created before metadata and across replacements", async () => {
+  const input = await fixture();
+  await rm(join(input.sessionDirectory, "metadata.json"));
+  const directory = join(input.sessionDirectory, "resources");
+  await mkdir(directory);
+  const names = [
+    `eve-sbx-ses-${"b".repeat(32)}`,
+    `eve-sbx-ses-${"c".repeat(32)}`,
+  ];
+  const snapshot = `eve-sbx-state-${"d".repeat(32)}`;
+  for (const name of [...names, snapshot]) {
+    await writeFile(
+      join(directory, `${name}.json`),
+      JSON.stringify({
+        version: 1,
+        sessionKey: input.sessionKey,
+        kind: name === snapshot ? "snapshot" : "sandbox",
+        name,
+      })
+    );
+  }
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    {
+      sandboxNames: names,
+      snapshotNames: [snapshot, input.snapshotName],
+    },
+  ]);
+  expect(mocks.removeSandbox).toHaveBeenCalledTimes(2);
+  await writeFile(
+    join(directory, `${snapshot}.json`),
+    JSON.stringify({
+      version: 1,
+      sessionKey: "another-session",
+      kind: "snapshot",
+      name: snapshot,
+    })
+  );
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow(
+    "ownership is inconsistent"
+  );
+  expect(mocks.removeSandbox).toHaveBeenCalledTimes(2);
 });
