@@ -18,8 +18,78 @@ const metadataSchema = z.object({
   optionsHash: z.string().min(1),
 });
 
-/** Internal local-provider stage. Caller must retire the entire owning family first. */
-export async function purgeLocalEveSandbox(input: {
+/** Internal local-provider stage. Caller must retire every supplied family member first. */
+export async function purgeLocalEveSandboxes(
+  inputs: Array<{
+    sessionDirectory: string;
+    sessionKey: string;
+  }>
+) {
+  // Validate every member before any provider side effect.
+  const resources = await Promise.all(inputs.map(readLocalSandboxResources));
+  if (!resources.length) {
+    return resources;
+  }
+  const { Sandbox } = await import("microsandbox");
+  for (const name of new Set(
+    resources.map((resource) => resource.sandboxName)
+  )) {
+    try {
+      const sandbox = await Sandbox.get(name);
+      await sandbox.remove();
+    } catch (error) {
+      if (
+        !(
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "sandboxNotFound"
+        )
+      ) {
+        throw error;
+      }
+    }
+  }
+  await removeRecordedSnapshots(
+    resources.flatMap((resource) => resource.snapshotNames)
+  );
+  // Keep all identity records so process loss and partial failures remain retryable.
+  return resources;
+}
+
+async function removeRecordedSnapshots(snapshotNames: string[]) {
+  const { Snapshot } = await import("microsandbox");
+  // Snapshot dependencies may not follow family input order. Complete one pass,
+  // then retry blocked parents only if another recorded snapshot was removed.
+  // Never force deletion or enumerate resources outside this inventory.
+  const pending = new Set(snapshotNames);
+  while (pending.size) {
+    const before = pending.size;
+    const errors: unknown[] = [];
+    for (const snapshot of pending) {
+      try {
+        await Snapshot.remove(snapshot, { force: false });
+        pending.delete(snapshot);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.startsWith("[SnapshotNotFound] snapshot not found:")
+        ) {
+          pending.delete(snapshot);
+        } else {
+          errors.push(error);
+        }
+      }
+    }
+    if (pending.size === before) {
+      throw new AggregateError(
+        errors,
+        "Recorded sandbox snapshots could not be removed."
+      );
+    }
+  }
+}
+
+async function readLocalSandboxResources(input: {
   sessionDirectory: string;
   sessionKey: string;
 }) {
@@ -58,37 +128,5 @@ export async function purgeLocalEveSandbox(input: {
     }
     snapshots.push(record.snapshotName);
   }
-  // Validate the full set before any provider side effect. Never restore a VM,
-  // list/prune global snapshots, or force removal of a referenced snapshot.
-  const { Sandbox, Snapshot } = await import("microsandbox");
-  try {
-    const sandbox = await Sandbox.get(metadata.sandboxName);
-    await sandbox.remove();
-  } catch (error) {
-    if (
-      !(
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "sandboxNotFound"
-      )
-    ) {
-      throw error;
-    }
-  }
-  for (const snapshot of snapshots) {
-    try {
-      await Snapshot.remove(snapshot, { force: false });
-    } catch (error) {
-      if (
-        !(
-          error instanceof Error &&
-          error.message.startsWith("[SnapshotNotFound] snapshot not found:")
-        )
-      ) {
-        throw error;
-      }
-    }
-  }
-  // Keep identity records: an interrupted caller can repeat removal safely.
   return { sandboxName: metadata.sandboxName, snapshotNames: snapshots };
 }

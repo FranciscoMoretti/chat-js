@@ -10,7 +10,7 @@ vi.mock("microsandbox", () => ({
   Sandbox: { get: async () => ({ remove: mocks.removeSandbox }) },
 }));
 
-import { purgeLocalEveSandbox } from "./purge-local-sandbox";
+import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 
 const directories: string[] = [];
 beforeEach(() => {
@@ -22,10 +22,11 @@ afterEach(async () => {
     await rm(directory, { recursive: true, force: true });
   }
 });
-async function fixture() {
+async function fixture(letter = "a") {
   const root = await mkdtemp(join(tmpdir(), "eve-snapshot-purge-"));
   directories.push(root);
-  const sessionKey = "fixture-session";
+  const sessionKey = `fixture-session-${letter}`;
+  const sandboxName = `eve-sbx-ses-${letter.repeat(32)}`;
   const sessionDirectory = join(root, sessionKey);
   const directory = join(sessionDirectory, "fork-checkpoints");
   await mkdir(directory, { recursive: true });
@@ -34,10 +35,10 @@ async function fixture() {
     JSON.stringify({
       version: 2,
       optionsHash: "options",
-      sandboxName: `eve-sbx-ses-${"b".repeat(32)}`,
+      sandboxName,
     })
   );
-  const snapshotName = `eve-sbx-fork-${"a".repeat(32)}`;
+  const snapshotName = `eve-sbx-fork-${letter.repeat(32)}`;
   const record = {
     version: 1,
     sessionKey,
@@ -46,15 +47,22 @@ async function fixture() {
   };
   const path = join(directory, `${snapshotName}.json`);
   await writeFile(path, JSON.stringify(record));
-  return { sessionKey, sessionDirectory, snapshotName, path, record };
+  return {
+    sessionKey,
+    sessionDirectory,
+    sandboxName,
+    snapshotName,
+    path,
+    record,
+  };
 }
 
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
   const input = await fixture();
   remove.mockRejectedValueOnce(new Error("provider unavailable"));
-  await expect(purgeLocalEveSandbox(input)).rejects.toThrow(
-    "provider unavailable"
-  );
+  await expect(purgeLocalEveSandboxes([input])).rejects.toMatchObject({
+    errors: [expect.objectContaining({ message: "provider unavailable" })],
+  });
   expect(JSON.parse(await readFile(input.path, "utf8"))).toEqual(input.record);
   mocks.removeSandbox.mockRejectedValueOnce(
     Object.assign(new Error("sandbox not found"), { code: "sandboxNotFound" })
@@ -62,15 +70,17 @@ test("retains identities through provider failure and treats only explicit missi
   remove.mockRejectedValueOnce(
     new Error("[SnapshotNotFound] snapshot not found: fixture")
   );
-  expect(await purgeLocalEveSandbox(input)).toEqual({
-    sandboxName: `eve-sbx-ses-${"b".repeat(32)}`,
-    snapshotNames: [input.snapshotName],
-  });
+  expect(await purgeLocalEveSandboxes([input])).toEqual([
+    {
+      sandboxName: input.sandboxName,
+      snapshotNames: [input.snapshotName],
+    },
+  ]);
   expect(remove).toHaveBeenLastCalledWith(input.snapshotName, { force: false });
   remove.mockRejectedValueOnce(new Error("runtime library not found"));
-  await expect(purgeLocalEveSandbox(input)).rejects.toThrow(
-    "runtime library not found"
-  );
+  await expect(purgeLocalEveSandboxes([input])).rejects.toMatchObject({
+    errors: [expect.objectContaining({ message: "runtime library not found" })],
+  });
 });
 
 test("validates all records before deletion and rejects another session or shared template", async () => {
@@ -81,7 +91,7 @@ test("validates all records before deletion and rejects another session or share
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
     await writeFile(input.path, JSON.stringify(record));
-    await expect(purgeLocalEveSandbox(input)).rejects.toThrow();
+    await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
     expect(remove).not.toHaveBeenCalled();
     expect(mocks.removeSandbox).not.toHaveBeenCalled();
   }
@@ -90,7 +100,39 @@ test("validates all records before deletion and rejects another session or share
     join(input.sessionDirectory, "fork-checkpoints", "z-invalid.json"),
     "{}"
   );
-  await expect(purgeLocalEveSandbox(input)).rejects.toThrow();
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
   expect(remove).not.toHaveBeenCalled();
   expect(mocks.removeSandbox).not.toHaveBeenCalled();
+});
+
+test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
+  const parent = await fixture("a");
+  const child = await fixture("b");
+  await writeFile(
+    child.path,
+    JSON.stringify({ ...child.record, sessionKey: "foreign" })
+  );
+  await expect(purgeLocalEveSandboxes([parent, child])).rejects.toThrow(
+    "ownership"
+  );
+  expect(mocks.removeSandbox).not.toHaveBeenCalled();
+  expect(remove).not.toHaveBeenCalled();
+  await writeFile(child.path, JSON.stringify(child.record));
+  let childRemoved = false;
+  remove.mockImplementation((name: string) => {
+    if (mocks.removeSandbox.mock.calls.length !== 2) {
+      throw new Error("All family VMs must be removed first");
+    }
+    if (name === parent.snapshotName && !childRemoved) {
+      throw new Error("snapshot has a dependent child");
+    }
+    childRemoved = true;
+    return Promise.resolve();
+  });
+  await purgeLocalEveSandboxes([parent, child]);
+  expect(remove.mock.calls.map(([name]) => name)).toEqual([
+    parent.snapshotName,
+    child.snapshotName,
+    parent.snapshotName,
+  ]);
 });
