@@ -51,9 +51,13 @@ export function ProjectConfig({
         variant="outline"
       >
         {hasInstructions ? (
-          <span className="text-sm leading-none">✓</span>
+          <span aria-hidden="true" className="text-sm leading-none">
+            ✓
+          </span>
         ) : (
-          <span className="text-base leading-none">+</span>
+          <span aria-hidden="true" className="text-base leading-none">
+            +
+          </span>
         )}
         Instructions
       </Button>

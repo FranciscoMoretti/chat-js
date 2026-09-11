@@ -44,7 +44,9 @@ export function useEveFork(ownerId: string, conversationId: string) {
 
   useEffect(() => {
     try {
-      const operation = readCreation(sessionStorage, ownerId, conversationId);
+      const operation = readCreation(sessionStorage, ownerId, {
+        conversationId,
+      });
       if (operation) {
         if (!operation.fork) {
           throw new Error("Missing saved fork source.");
@@ -81,7 +83,7 @@ export function useEveFork(ownerId: string, conversationId: string) {
 
   async function execute(operation: Operation) {
     const binding = await requestConversation(operation);
-    finishCreation(sessionStorage, ownerId, conversationId);
+    finishCreation(sessionStorage, ownerId, { conversationId });
     window.location.assign(`/chat/${binding.id}`);
   }
 
@@ -96,7 +98,7 @@ export function useEveFork(ownerId: string, conversationId: string) {
       await action();
     } catch (cause) {
       if (cause instanceof CreationRejected) {
-        finishCreation(sessionStorage, ownerId, conversationId);
+        finishCreation(sessionStorage, ownerId, { conversationId });
         setPending(undefined);
         setOpen(true);
       }

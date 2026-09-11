@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
+import { listEveConversations } from "@/lib/db/eve-queries";
 import { getProjectById } from "@/lib/db/queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 
@@ -27,19 +27,15 @@ export default async function ProjectPageRoute({
   if (!project || project.userId !== session.user.id) {
     notFound();
   }
+  const initialPage = await listEveConversations(session.user.id, {
+    search: "",
+    projectId,
+  });
   return (
-    <section className="space-y-4 p-4">
-      <header className="flex items-center gap-3">
-        <SidebarTrigger />
-        <h1 className="text-xl">{project.name}</h1>
-      </header>
-      <p>
-        Project conversations will be available when Eve project support is
-        ready.
-      </p>
-      <Link className="underline" href="/">
-        Start a conversation outside this project
-      </Link>
-    </section>
+    <EveProjectHome
+      initialPage={initialPage}
+      initialProject={project}
+      ownerId={session.user.id}
+    />
   );
 }

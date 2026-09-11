@@ -109,11 +109,18 @@ export async function listEveConversations(
   const last = page.at(-1);
   return {
     items: page.map(
-      ({ id, title: itemTitle, isPinned, projectId: assignedProjectId }) => ({
+      ({
         id,
         title: itemTitle,
         isPinned,
         projectId: assignedProjectId,
+        updatedAt: lastActivity,
+      }) => ({
+        id,
+        title: itemTitle,
+        isPinned,
+        projectId: assignedProjectId,
+        updatedAt: lastActivity,
       })
     ),
     nextCursor:

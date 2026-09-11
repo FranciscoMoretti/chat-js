@@ -43,6 +43,7 @@ export function ProjectDetailsDialog({
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
 }) {
+  const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
   const [color, setColor] = useState<ProjectColorName | null>(
@@ -51,6 +52,7 @@ export function ProjectDetailsDialog({
 
   useEffect(() => {
     if (open) {
+      setSubmitError("");
       setName(initialName ?? "");
       setIcon(initialIcon ?? null);
       setColor(initialColor ?? null);
@@ -61,12 +63,16 @@ export function ProjectDetailsDialog({
   const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
   const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
-  const handleSubmit = async () => {
+  const submitChanges = async () => {
     const trimmedName = name.trim();
 
     if (mode === "create") {
       if (trimmedName) {
-        onSubmit({ name: trimmedName, icon: finalIcon, color: finalColor });
+        await onSubmit({
+          name: trimmedName,
+          icon: finalIcon,
+          color: finalColor,
+        });
         setName("");
         setIcon(null);
         setColor(null);
@@ -86,6 +92,15 @@ export function ProjectDetailsDialog({
       onOpenChange(false);
     } else {
       onOpenChange(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitError("");
+    try {
+      await submitChanges();
+    } catch {
+      setSubmitError("Could not save project. Try again.");
     }
   };
 
@@ -143,6 +158,7 @@ export function ProjectDetailsDialog({
             value={name}
           />
         </div>
+        {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
           <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel

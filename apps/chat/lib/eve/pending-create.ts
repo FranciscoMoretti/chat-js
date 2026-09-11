@@ -2,18 +2,28 @@ import { createConversationInput, type EveForkInput } from "./contracts";
 import type { EveMessageInput } from "./message-input";
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const keyFor = (ownerId: string, conversationId?: string) =>
-  `chatjs.eve.pending:${ownerId}${conversationId ? `:fork:${conversationId}` : ""}`;
+export type CreationScope =
+  | { conversationId: string; projectId?: never }
+  | { projectId: string; conversationId?: never };
+const keyFor = (ownerId: string, scope?: CreationScope) => {
+  let suffix = "";
+  if (scope?.conversationId) {
+    suffix = `:fork:${scope.conversationId}`;
+  } else if (scope?.projectId) {
+    suffix = `:project:${scope.projectId}`;
+  }
+  return `chatjs.eve.pending:${ownerId}${suffix}`;
+};
 
 export function prepareCreation(
   storage: StorageAccess,
   ownerId: string,
   draft: EveMessageInput,
   modelId?: string,
-  context?: { conversationId: string; fork: EveForkInput }
+  context?: CreationScope & { fork?: EveForkInput }
 ) {
-  const key = keyFor(ownerId, context?.conversationId);
-  const stored = readCreation(storage, ownerId, context?.conversationId);
+  const key = keyFor(ownerId, context);
+  const stored = readCreation(storage, ownerId, context);
   if (stored) {
     return stored;
   }
@@ -22,6 +32,7 @@ export function prepareCreation(
     message: draft,
     modelId,
     fork: context?.fork,
+    projectId: context?.projectId,
   });
   if (!pending.success) {
     throw new Error("Enter a message between 1 and 16,000 characters.");
@@ -32,16 +43,16 @@ export function prepareCreation(
 export function finishCreation(
   storage: StorageAccess,
   ownerId: string,
-  conversationId?: string
+  scope?: CreationScope
 ) {
-  storage.removeItem(keyFor(ownerId, conversationId));
+  storage.removeItem(keyFor(ownerId, scope));
 }
 
 export function readCreation(
   storage: StorageAccess,
   ownerId: string,
-  conversationId?: string
+  scope?: CreationScope
 ) {
-  const stored = storage.getItem(keyFor(ownerId, conversationId));
+  const stored = storage.getItem(keyFor(ownerId, scope));
   return stored ? createConversationInput.parse(JSON.parse(stored)) : undefined;
 }

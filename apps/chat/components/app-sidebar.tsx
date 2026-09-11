@@ -4,6 +4,7 @@ import { EveHistory } from "@/components/eve/eve-history";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
+import { SidebarProjects } from "@/components/sidebar-projects";
 import { SidebarTopRow } from "@/components/sidebar-top-row";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -57,6 +58,9 @@ export function AppSidebar() {
             <Suspense
               fallback={<p className="p-3 text-sm">Loading conversations…</p>}
             >
+              <SidebarMenu className="px-2">
+                <SidebarProjects />
+              </SidebarMenu>
               <EveHistory />
             </Suspense>
           ) : (

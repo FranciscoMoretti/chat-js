@@ -11,16 +11,7 @@ import {
   type ProjectDetailsData,
   ProjectDetailsDialog,
 } from "@/components/project-details-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { ProjectInstructionsDialog } from "@/components/project-instructions-dialog";
 import {
   useDeleteChat,
   useGetAllChats,
@@ -154,48 +145,20 @@ export function ProjectHome({
           </div>
         )}
 
-        <Dialog
+        <ProjectInstructionsDialog
+          error={
+            setInstructionsMutation.error
+              ? "Could not save instructions. Try again."
+              : undefined
+          }
+          isPending={setInstructionsMutation.isPending}
           onOpenChange={handleCloseInstructionsDialog}
+          onSave={handleSaveInstructions}
+          onValueChange={setInstructionsValue}
           open={instructionsDialogOpen}
-        >
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Set project instructions</DialogTitle>
-              <DialogDescription>
-                Provide relevant instructions and information for chats within{" "}
-                {project?.name ?? "this project"}. This will work alongside user
-                preferences and the selected style in a chat.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Textarea
-                autoFocus
-                className="min-h-[200px] resize-none"
-                onChange={(e) => setInstructionsValue(e.target.value)}
-                placeholder="Enter project instructions..."
-                value={instructionsValue}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleCloseInstructionsDialog}
-                type="button"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                disabled={setInstructionsMutation.isPending}
-                onClick={handleSaveInstructions}
-                type="button"
-              >
-                {setInstructionsMutation.isPending
-                  ? "Saving..."
-                  : "Save instructions"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          projectName={project?.name}
+          value={instructionsValue}
+        />
 
         <ProjectDetailsDialog
           initialColor={project?.iconColor as ProjectColorName | undefined}

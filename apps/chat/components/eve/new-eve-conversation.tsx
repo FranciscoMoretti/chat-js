@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome";
 import {
   CreationRejected,
@@ -16,7 +16,17 @@ import { useDefaultModel } from "@/providers/default-model-provider";
 import { EveComposer } from "./eve-composer";
 import { useEveAttachments } from "./use-eve-attachments";
 
-export function NewEveConversation({ ownerId }: { ownerId: string }) {
+export function NewEveConversation({
+  ownerId,
+  projectId,
+}: {
+  ownerId: string;
+  projectId?: string;
+}) {
+  const scope = useMemo(
+    () => (projectId ? { projectId } : undefined),
+    [projectId]
+  );
   const selectedModel = useDefaultModel();
   const files = useEveAttachments();
   const { setAttachments } = files;
@@ -28,7 +38,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
   const lock = useRef(false);
   useEffect(() => {
     try {
-      const pending = readCreation(sessionStorage, ownerId);
+      const pending = readCreation(sessionStorage, ownerId, scope);
       if (pending) {
         setRetained(true);
         setDraft(
@@ -53,7 +63,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
     } catch {
       setError("The saved draft could not be restored.");
     }
-  }, [ownerId, setAttachments]);
+  }, [ownerId, scope, setAttachments]);
   async function submit() {
     if (lock.current) {
       return;
@@ -66,7 +76,8 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
         sessionStorage,
         ownerId,
         draftMessage(draft, files.attachments),
-        selectedModel
+        selectedModel,
+        scope
       );
       setDraft(
         typeof operation.message === "string"
@@ -76,11 +87,11 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
       setRetainedModelId(operation.modelId);
       setRetained(true);
       const binding = await requestConversation(operation);
-      finishCreation(sessionStorage, ownerId);
+      finishCreation(sessionStorage, ownerId, scope);
       window.location.assign(`/chat/${binding.id}`);
     } catch (cause) {
       if (cause instanceof CreationRejected) {
-        finishCreation(sessionStorage, ownerId);
+        finishCreation(sessionStorage, ownerId, scope);
         setRetainedModelId(undefined);
         setRetained(false);
       }
@@ -94,8 +105,8 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
       setBusy(false);
     }
   }
-  return (
-    <ChatWelcomeView>
+  const composer = (
+    <>
       <EveComposer
         autoFocus
         busy={busy}
@@ -108,6 +119,7 @@ export function NewEveConversation({ ownerId }: { ownerId: string }) {
         retainedModelId={retainedModelId}
       />
       {error && <p role="alert">{error}</p>}
-    </ChatWelcomeView>
+    </>
   );
+  return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
 }

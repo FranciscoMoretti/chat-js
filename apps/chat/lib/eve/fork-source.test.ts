@@ -50,7 +50,7 @@ describe("fork ancestry and recovery", () => {
       "model",
       context
     );
-    expect(readCreation(storage, "owner", conversationId)).toEqual(edit);
+    expect(readCreation(storage, "owner", { conversationId })).toEqual(edit);
     expect(
       prepareCreation(storage, "owner", "changed", "other", {
         ...context,
@@ -58,9 +58,42 @@ describe("fork ancestry and recovery", () => {
       })
     ).toEqual(edit);
     expect(readCreation(storage, "owner")).toEqual(fresh);
-    expect(readCreation(storage, "other", conversationId)).toBeUndefined();
-    finishCreation(storage, "owner", conversationId);
-    expect(readCreation(storage, "owner", conversationId)).toBeUndefined();
+    expect(readCreation(storage, "other", { conversationId })).toBeUndefined();
+    finishCreation(storage, "owner", { conversationId });
+    expect(readCreation(storage, "owner", { conversationId })).toBeUndefined();
     expect(readCreation(storage, "owner")).toEqual(fresh);
   });
+});
+
+it("isolates project creation recovery from ordinary chats, other projects, and other owners", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
+  };
+  const scope = { projectId: crypto.randomUUID() };
+  const other = { projectId: crypto.randomUUID() };
+  const ordinary = prepareCreation(storage, "owner", "Ordinary");
+  const project = prepareCreation(
+    storage,
+    "owner",
+    "Project draft",
+    "model",
+    scope
+  );
+  expect(project.projectId).toBe(scope.projectId);
+  expect(readCreation(storage, "owner", scope)).toEqual(project);
+  expect(
+    prepareCreation(storage, "owner", "Edited", "other-model", scope)
+  ).toEqual(project);
+  expect(readCreation(storage, "owner", other)).toBeUndefined();
+  expect(readCreation(storage, "other", scope)).toBeUndefined();
+  finishCreation(storage, "owner", scope);
+  expect(readCreation(storage, "owner", scope)).toBeUndefined();
+  expect(readCreation(storage, "owner")).toEqual(ordinary);
 });

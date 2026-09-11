@@ -47,8 +47,8 @@ export function SidebarProjects() {
     })
   );
 
-  const handleCreateProject = (data: ProjectDetailsData) => {
-    createProjectMutation.mutate({
+  const handleCreateProject = async (data: ProjectDetailsData) => {
+    await createProjectMutation.mutateAsync({
       name: data.name,
       icon: data.icon,
       iconColor: data.color,

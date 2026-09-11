@@ -8,6 +8,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,9 @@ import { EveShareDialogContent } from "./eve-share-dialog";
 
 export function EveHistoryList({
   initialPage,
+  projectId,
 }: {
+  projectId?: string;
   initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }) {
   const trpc = useTRPC();
@@ -33,7 +36,7 @@ export function EveHistoryList({
   const search = query.trim();
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { search },
+      { search, projectId },
       {
         getNextPageParam: (page) => page.nextCursor,
         initialData: search
@@ -71,7 +74,9 @@ export function EveHistoryList({
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+    <SidebarGroup
+      className={projectId ? "px-0" : "group-data-[collapsible=icon]:hidden"}
+    >
       <SidebarGroupLabel>Conversations</SidebarGroupLabel>
       <Input
         aria-label="Search conversations"
@@ -82,21 +87,35 @@ export function EveHistoryList({
         value={query}
       />
       <SidebarMenu>
-        {filtered.map((item) => (
-          <SidebarChatItem
-            chat={item}
-            isActive={pathname === `/chat/${item.id}`}
-            key={item.id}
-            onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
-            onRename={async (id, title) => {
-              await rename.mutateAsync({ id, title });
-            }}
-            renderShareContent={(chatId, onClose) => (
-              <EveShareDialogContent chatId={chatId} onClose={onClose} />
-            )}
-            setOpenMobile={setOpenMobile}
-          />
-        ))}
+        {filtered.map((item) =>
+          projectId ? (
+            <li key={item.id}>
+              <ProjectChatItem
+                chat={item}
+                onRename={async (id, title) => {
+                  await rename.mutateAsync({ id, title });
+                }}
+                renderShareContent={(chatId, onClose) => (
+                  <EveShareDialogContent chatId={chatId} onClose={onClose} />
+                )}
+              />
+            </li>
+          ) : (
+            <SidebarChatItem
+              chat={item}
+              isActive={pathname === `/chat/${item.id}`}
+              key={item.id}
+              onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
+              onRename={async (id, title) => {
+                await rename.mutateAsync({ id, title });
+              }}
+              renderShareContent={(chatId, onClose) => (
+                <EveShareDialogContent chatId={chatId} onClose={onClose} />
+              )}
+              setOpenMobile={setOpenMobile}
+            />
+          )
+        )}
       </SidebarMenu>
       {history.isPending && (
         <p className="p-2 text-muted-foreground text-sm" role="status">

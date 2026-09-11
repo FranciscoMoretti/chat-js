@@ -229,8 +229,7 @@ export function useRenameProject() {
       toast.error("Failed to rename project");
     },
     onSuccess: () => toast.success("Project renamed"),
-    onSettled: () =>
-      qc.invalidateQueries({ queryKey: trpc.project.list.queryKey() }),
+    onSettled: () => qc.invalidateQueries({ queryKey: trpc.project.pathKey() }),
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { formatDistance } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
 import { ShareDialog } from "@/components/share-button";
@@ -19,9 +19,13 @@ export function ProjectChatItem({
   chat,
   onDelete,
   onRename,
+  renderShareContent,
 }: {
-  chat: UIChat;
-  onDelete: (chatId: string) => void;
+  chat: Pick<UIChat, "id" | "title" | "projectId"> & {
+    updatedAt?: Date | string;
+  };
+  onDelete?: (chatId: string) => void;
+  renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
   onRename: (chatId: string, title: string) => Promise<void>;
 }) {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -32,17 +36,21 @@ export function ProjectChatItem({
     await onRename(chat.id, title);
   };
 
-  const lastMessageText = `${formatDistance(
-    new Date(chat.updatedAt),
-    new Date(),
-    { addSuffix: true }
-  )}`;
+  const lastMessageText = chat.updatedAt
+    ? `${formatDistance(new Date(chat.updatedAt), new Date(), {
+        addSuffix: true,
+      })}`
+    : "";
 
   return (
     <>
       <div className="group relative">
         <div className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
-          <InternalLink className="absolute inset-0 z-10" href={chatHref} />
+          <InternalLink
+            aria-label={chat.title}
+            className="absolute inset-0 z-10"
+            href={chatHref}
+          />
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium text-sm">{chat.title}</div>
             <div className="text-muted-foreground text-xs">
@@ -74,13 +82,15 @@ export function ProjectChatItem({
 
                 <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
 
-                <DropdownMenuItem
-                  className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive"
-                  onSelect={() => onDelete(chat.id)}
-                >
-                  <Trash2 size={16} />
-                  <span>Delete</span>
-                </DropdownMenuItem>
+                {onDelete && (
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive"
+                    onSelect={() => onDelete(chat.id)}
+                  >
+                    <Trash2 size={16} />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -91,6 +101,11 @@ export function ProjectChatItem({
           chatId={chat.id}
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
+          renderContent={
+            renderShareContent
+              ? (onClose) => renderShareContent(chat.id, onClose)
+              : undefined
+          }
         />
       )}
 
