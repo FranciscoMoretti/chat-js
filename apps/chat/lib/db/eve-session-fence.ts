@@ -9,7 +9,8 @@ import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
  */
 export async function fenceEvePostgresSession(
   connection: Sql,
-  sessionId: string
+  sessionId: string,
+  additionalRunIds: string[] = []
 ) {
   return await connection.begin(
     "isolation level read committed",
@@ -25,7 +26,8 @@ export async function fenceEvePostgresSession(
       for (let pass = 0; pass < 100; pass++) {
         const inventory = await readEvePostgresRunInventoryInTransaction(
           query,
-          sessionId
+          sessionId,
+          additionalRunIds
         );
         if (inventory.activeRunIds.length) {
           throw new Error(

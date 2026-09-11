@@ -3,10 +3,8 @@ import { eq, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { z } from "zod";
 import { db } from "../lib/db/client";
-import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
+import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
 import { beginEveConversationDeletion } from "../lib/db/eve-queries";
-import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
-import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -77,20 +75,26 @@ test("internal retirement settles usage after access revocation and is retryable
   expect(after.credits).toBe(before.credits);
   const native = postgres(env.DATABASE_URL, { max: 1 });
   try {
-    const resources = await fenceEvePostgresSession(native, binding.sessionId);
     const scope = {
       sessionId: binding.sessionId,
       taskIdentifier: "workflow_flows",
     };
-    await purgeEvePostgresQueue(native, { ...scope, runIds: resources.runIds });
-    const receipt = await purgeEvePostgresSessionPayloads(native, scope);
+    const receipt = await purgeEveNativeSession(
+      env.DATABASE_URL,
+      scope,
+      async () => {
+        await retireEveSessionForDeletion(owner, binding.sessionId);
+      }
+    );
     expect(receipt.runIds).toContain(binding.sessionId);
     expect(
       await native`select id from workflow.workflow_runs where id in ${native(receipt.runIds)}`
     ).toEqual([]);
-    expect(await purgeEvePostgresSessionPayloads(native, scope)).toEqual(
-      receipt
-    );
+    expect(
+      await purgeEveNativeSession(env.DATABASE_URL, scope, () =>
+        Promise.reject(new Error("Retired session must not reset again"))
+      )
+    ).toEqual(receipt);
     const [settled] = await db
       .select()
       .from(userCredit)

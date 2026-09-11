@@ -8,6 +8,10 @@ create table if not exists workflow.eve_resource_fences (
   resource text primary key,
   fenced boolean not null default false
 );
+create table if not exists workflow.eve_session_retirements (
+  session_id text primary key,
+  completed_at timestamptz not null default now()
+);
 create table if not exists workflow.eve_payload_purges (
   session_id text not null, task_identifier text not null,
   run_ids text[] not null, stream_ids text[] not null,

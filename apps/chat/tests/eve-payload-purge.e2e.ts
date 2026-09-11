@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
+import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
 import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
 import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
 import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
@@ -10,7 +11,7 @@ import { env } from "../lib/env";
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Payload purge acceptance requires local Postgres.");
 }
-const query = postgres(env.DATABASE_URL, { max: 1 });
+const query = postgres(env.DATABASE_URL, { max: 2 });
 const task = `eve-payload-purge-${crypto.randomUUID()}`;
 const runIds: string[] = [];
 const tables = [
@@ -28,6 +29,7 @@ afterAll(async () => {
     await query`delete from ${query(`workflow.${table}`)} where run_id in ${query(runIds)}`;
   }
   await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
+  await query`delete from workflow.eve_session_retirements where session_id in ${query(runIds)}`;
   await query`delete from workflow.eve_payload_purges where task_identifier = ${task}`;
   await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
   await query`delete from workflow.eve_queue_tasks where identifier = ${task}`;
@@ -124,11 +126,69 @@ test("queue-discovered native runs remain in the payload inventory after queue r
   await expect(purgeEvePostgresSessionPayloads(query, input)).rejects.toThrow(
     "Fence every run"
   );
-  await fenceEvePostgresSession(query, detached);
-  const receipt = await purgeEvePostgresSessionPayloads(query, input);
+  const receipt = await purgeEveNativeSession(env.DATABASE_URL, input, () =>
+    Promise.resolve()
+  );
   expect(receipt.runIds).toEqual([root, detached].sort());
   expect(receipt.streamIds).toEqual([root, detached].sort());
   expect(
     await query`select id from workflow.workflow_runs where id = ${detached}`
   ).toEqual([]);
+});
+
+test("native coordinator retains retirement across failure and retries after payload erasure", async () => {
+  const root = await fixture();
+  const scope = { sessionId: root, taskIdentifier: task };
+  let retirements = 0;
+  await expect(
+    purgeEveNativeSession(env.DATABASE_URL, scope, () => {
+      retirements++;
+      return Promise.reject(new Error("unsettled usage"));
+    })
+  ).rejects.toThrow("unsettled usage");
+  expect(
+    await query`select session_id from workflow.eve_session_retirements where session_id = ${root}`
+  ).toEqual([]);
+  // Retirement succeeded, but a reachable child has not finished yet.
+  const child = await fixture(root);
+  await query`update workflow.workflow_runs set status = 'running' where id = ${child}`;
+  await expect(
+    purgeEveNativeSession(env.DATABASE_URL, scope, () => {
+      retirements++;
+      return Promise.resolve();
+    })
+  ).rejects.toThrow();
+  expect(
+    await query`select session_id from workflow.eve_session_retirements where session_id = ${root}`
+  ).toEqual([{ session_id: root }]);
+  await query`update workflow.workflow_runs set status = 'completed' where id = ${child}`;
+  const shouldNotRetire = () =>
+    Promise.reject(new Error("must not retire twice"));
+  const receipt = await purgeEveNativeSession(
+    env.DATABASE_URL,
+    scope,
+    shouldNotRetire
+  );
+  expect(receipt.runIds).toEqual([root, child].sort());
+  expect(
+    await purgeEveNativeSession(env.DATABASE_URL, scope, shouldNotRetire)
+  ).toEqual(receipt);
+  expect(retirements).toBe(2);
+});
+
+test("concurrent native cleanup attempts retire once and share the completed receipt", async () => {
+  const root = await fixture();
+  const scope = { sessionId: root, taskIdentifier: task };
+  let retirements = 0;
+  const retire = () => {
+    retirements++;
+    return Promise.resolve();
+  };
+  const receipts = await Promise.all([
+    purgeEveNativeSession(env.DATABASE_URL, scope, retire),
+    purgeEveNativeSession(env.DATABASE_URL, scope, retire),
+  ]);
+  expect(retirements).toBe(1);
+  expect(receipts[0]).toEqual(receipts[1]);
+  expect(receipts[0].runIds).toEqual([root]);
 });
