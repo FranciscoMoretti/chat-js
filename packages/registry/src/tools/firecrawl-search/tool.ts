@@ -1,9 +1,8 @@
+import type { ChatToolContext } from "@/lib/ai/tool-context";
 import FirecrawlApp from "@mendable/firecrawl-js";
-import { tool } from "ai";
+import { tool, type ToolExecutionOptions } from "ai";
 import { z } from "zod";
 import { env } from "@/lib/env";
-import type { StreamWriter } from "@/lib/ai/types";
-import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import {
 	DEFAULT_MAX_RESULTS,
@@ -11,18 +10,7 @@ import {
 	executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
 const FIRECRAWL_COST_CENTS = 5;
-export const createWebSearch = ({
-	dataStream,
-	writeTopLevelUpdates,
-	costAccumulator,
-	toolCallIdOverride,
-}: {
-	dataStream: StreamWriter;
-	writeTopLevelUpdates: boolean;
-	costAccumulator?: CostAccumulator;
-	toolCallIdOverride?: string;
-}) =>
-	tool({
+export const webSearch = tool({
 		description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
 
 Use for:
@@ -40,13 +28,14 @@ Avoid:
 			}: {
 				search_queries: { query: string; maxResults: number | null }[];
 			},
-			{ toolCallId: sdkToolCallId }: { toolCallId: string },
+			{ toolCallId: sdkToolCallId, context }: ToolExecutionOptions<ChatToolContext>,
 		) => {
-			const toolCallId = toolCallIdOverride ?? sdkToolCallId;
+			const { dataStream, costAccumulator, toolCallIdOverride, writeTopLevelUpdates = true } = context ?? {};
+      const toolCallId = toolCallIdOverride ?? sdkToolCallId;
 			const log = createModuleLogger("tools/web-search");
 			log.debug(
 				{ queriesCount: search_queries.length },
-				"createWebSearch.execute",
+				"webSearch.execute",
 			);
 			const result = await executeMultiQuerySearch({
 				search_queries: search_queries.map((query) => ({

@@ -20,7 +20,7 @@ vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ info: vi.fn(), debug: vi.fn(), error: vi.fn() }),
 }));
 
-import { createCodeExecution } from "./tool";
+import { codeExecution } from "./tool";
 
 const sandbox = { id: "isolated-sandbox" };
 beforeEach(() => {
@@ -33,7 +33,7 @@ it.each([
   "python",
   "javascript",
 ] as const)("dispatches %s to the sandbox and cleans up", async (language) => {
-  const result = await createCodeExecution({}).execute?.(
+  const result = await codeExecution.execute?.(
     { title: "Calculate", language, code: "source" },
     { toolCallId: "test", messages: [], context: {} }
   );
@@ -53,7 +53,7 @@ it.each([
 });
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
-  const result = await createCodeExecution({}).execute?.(
+  const result = await codeExecution.execute?.(
     { title: "Calculate", language: "python", code: "source" },
     { toolCallId: "test", messages: [], context: {} }
   );

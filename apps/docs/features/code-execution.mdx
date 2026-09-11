@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that implements the same tool contract.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that exports a standard AI SDK tool.
 
 <Frame>
   <img src="/docs/images/code-execution.gif" alt="Running Python and JavaScript code in the sandbox from chat" />
@@ -35,7 +35,7 @@ The CLI prints the selected item's credential requirements. Vercel Sandbox needs
 For an existing app, install the item with `chat-js add vercel-code-execution`,
 then enable it in `chat.config.ts`. When switching implementations, remove the
 previous provider directory first; only one `codeExecution` item can occupy the slot.
-Keep the generated selection files intact and let `add` or `sync` regenerate them.
+Keep generated registration files intact and let `add` or `sync` regenerate them.
 
 ```bash
 npx @chat-js/cli@latest add vercel-code-execution
@@ -160,26 +160,16 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 The installed Vercel implementation lives in `tools/chatjs/vercel-code-execution/`:
 
-```text
-tools/
-├── chatjs/
-│   ├── code-execution.ts          # Generated factory selection
-│   ├── code-execution-config.ts   # Generated credential requirements
-│   └── vercel-code-execution/
-│       ├── chatjs.json            # Registration descriptor
-│       ├── tool.ts               # Tool schema and execution lifecycle
-│       ├── sandbox.ts            # Authentication, runtime, cleanup
-│       ├── python.ts
-│       ├── javascript.ts
-│       └── types.ts
-└── platform/
-    └── code-execution-contract.ts # Shared input/output contract
-```
+The item includes `tool.ts`, `renderer.tsx`, `sandbox.ts`, `python.ts`,
+`javascript.ts`, `types.ts`, and its `chatjs.json` descriptor. `tools/chatjs/tools.ts`
+and `tools/chatjs/ui.ts` register the tool and its renderer automatically.
+`code-execution-config.ts` contains generated credential requirements.
 
 Edit the installed provider source to change its description, runtime, or packages.
-The app imports the generated factory; the chat UI continues to render the shared
-`title`, `language`, `code`, `message`, and `chart` fields.
+The app imports the registered tool. Its renderer understands the Vercel item’s
+`title`, `language`, `code`, `message`, and `chart` fields. External items own their
+input/output shapes and may provide a different renderer.
 
-Third-party providers use the [tool factory contract](../tools/authoring#factory-slots).
+Third-party providers use the [standard tool registration](../tools/authoring#selecting-tools-for-app-features).
 Their credentials and lifecycle belong in their own source. ChatJS does not expose
 a general-purpose sandbox API or load provider code dynamically.

@@ -2,8 +2,7 @@ import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { getAppModelDefinition } from "@/lib/ai/app-models";
-import type { StreamWriter } from "@/lib/ai/types";
-import { createWebSearch } from "@/tools/chatjs/search";
+import { installedTools } from "@/lib/ai/installed-tools";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 
 // MCP Utils
@@ -76,22 +75,17 @@ async function loadMcpTools(
 // Tool Utils
 
 export async function getAllTools(
-  config: DeepResearchRuntimeConfig,
-  dataStream: StreamWriter,
-  id?: string
+  config: DeepResearchRuntimeConfig
 ): Promise<ToolSet> {
   if (!config.search_enabled) {
     const mcpTools = await loadMcpTools(config, new Set<string>());
     return mcpTools;
   }
 
-  const searchTools = {
-    webSearch: createWebSearch({
-      dataStream,
-      writeTopLevelUpdates: false,
-      toolCallIdOverride: id,
-    }),
-  };
+  const available: ToolSet = installedTools;
+  const searchTools: ToolSet = available.webSearch
+    ? { webSearch: available.webSearch }
+    : {};
   const existingToolNames = new Set<string>(Object.keys(searchTools));
 
   const mcpTools = await loadMcpTools(config, existingToolNames);

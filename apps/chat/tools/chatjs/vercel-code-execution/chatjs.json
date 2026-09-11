@@ -2,7 +2,8 @@
   "contractVersion": 1,
   "kind": "tool",
   "id": "vercel-code-execution",
-  "toolExport": "createCodeExecution",
+  "toolExport": "codeExecution",
+  "rendererExport": "CodeExecution",
   "slot": "codeExecution",
   "envRequirements": [
     {

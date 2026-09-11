@@ -1,6 +1,5 @@
 "use client";
 
-import type { ChatMessage } from "@/lib/ai/types";
 import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-message-parts";
 import { ResearchUpdates } from "./message-annotations";
 
@@ -9,7 +8,7 @@ export function WebSearch({
   part,
 }: {
   messageId: string;
-  part: Extract<ChatMessage["parts"][number], { type: "tool-webSearch" }>;
+  part: { toolCallId: string; state: string };
 }) {
   const { toolCallId, state } = part;
   const researchUpdates = useMessageResearchUpdatePartByToolCallId(

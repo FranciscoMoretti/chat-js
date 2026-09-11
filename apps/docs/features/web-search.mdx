@@ -126,20 +126,10 @@ bunx @chat-js/cli add firecrawl-search
 ```
 
 Sync requires exactly one installed search selection when search is used. It generates
-`tools/chatjs/search.ts` and `search-config.ts`; do not edit these indexes.
+the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, plus
+`search-config.ts` for credentials. Do not edit generated files.
 An unused native package can be removed after checking that no other tool uses it.
 Firecrawl may also be needed by URL retrieval.
-
-### Third-party search tools
-
-A search item uses `kind: "tool"`, `slot: "webSearch"`, and a `toolExport`
-naming its factory in `chatjs.json`. It does not need a separate renderer.
-The factory implements `SearchToolFactory` from `tools/platform/search-presentation.ts`.
-Its input schema remains provider-specific. To reuse the current source cards,
-emit ChatJS research updates through the supplied stream writer.
-
-Pass its namespace, URL, or local JSON address to `--search-tool` or `add`.
-Registry metadata declares dependencies and environment requirements, as for other tools.
 
 ## URL Retrieval
 
@@ -164,3 +154,14 @@ The tool extracts:
 - Source URL and language metadata
 
 Use web search for discovery and URL retrieval for extracting content from known URLs.
+
+## External search tools
+
+Pass an external registry item URL to `--search-tool`. The item exports a standard
+AI SDK tool and declares `slot: "webSearch"`. It owns its schema, output, credentials,
+and optional renderer. The multi-query schema and progress cards above describe
+the built-in items, not requirements for external search tools.
+
+Chat and deep research both expose the selected tool to their models. See
+[Authoring tools](../tools/authoring#selecting-tools-for-app-features) for metadata
+and renderer registration.

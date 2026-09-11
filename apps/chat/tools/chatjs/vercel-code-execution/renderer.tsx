@@ -1,11 +1,13 @@
-import type { ChatMessage } from "@/lib/ai/types";
-import InteractiveChart, { type BaseChart } from "../interactive-charts";
-import { SandboxComposed } from "../sandbox";
+"use client";
 
-export type CodeExecutionTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-codeExecution" }
->;
+import type { UIToolInvocation } from "ai";
+import InteractiveChart, {
+  type BaseChart,
+} from "@/components/interactive-charts";
+import { SandboxComposed } from "@/components/sandbox";
+import type { codeExecution } from "./tool";
+
+export type CodeExecutionTool = UIToolInvocation<typeof codeExecution>;
 
 function isBaseChart(input: unknown): input is BaseChart {
   if (typeof input !== "object" || input === null) {

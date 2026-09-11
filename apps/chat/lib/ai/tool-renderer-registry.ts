@@ -19,7 +19,7 @@ export type ToolRendererProps<T extends InstalledToolType> = {
 };
 
 export type ToolRendererRegistry = {
-  [K in InstalledToolType]: ComponentType<ToolRendererProps<K>>;
+  [K in InstalledToolType]?: ComponentType<ToolRendererProps<K>>;
 };
 
 export const toolRendererRegistry = ui satisfies ToolRendererRegistry;

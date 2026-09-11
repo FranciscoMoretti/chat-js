@@ -7,13 +7,11 @@ import {
   toolRendererRegistry,
 } from "@/lib/ai/tool-renderer-registry";
 import type { ChatTools } from "@/lib/ai/types";
-import { CodeExecution } from "./code-execution";
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
 import { GenerateImage } from "./generate-image";
 import { GenerateVideo } from "./generate-video";
 import { ReadDocument } from "./read-document";
-import { WebSearch } from "./web-search";
 
 interface ToolPartProps {
   isReadonly: boolean;
@@ -67,10 +65,6 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
     return <ReadDocument tool={part} />;
   }
 
-  if (type === "tool-codeExecution") {
-    return <CodeExecution tool={part} />;
-  }
-
   if (type === "tool-generateImage") {
     return <GenerateImage tool={part} />;
   }
@@ -81,10 +75,6 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
 
   if (type === "tool-deepResearch") {
     return <DeepResearch messageId={messageId} part={part} />;
-  }
-
-  if (type === "tool-webSearch") {
-    return <WebSearch messageId={messageId} part={part} />;
   }
 
   if (isInstalledToolType(type)) {

@@ -2,7 +2,8 @@
   "contractVersion": 1,
   "kind": "tool",
   "id": "tavily-search",
-  "toolExport": "createWebSearch",
+  "toolExport": "webSearch",
+  "rendererExport": "WebSearchRenderer",
   "slot": "webSearch",
   "envRequirements": [
     {

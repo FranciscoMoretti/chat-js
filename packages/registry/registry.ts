@@ -72,6 +72,11 @@ export const searchToolItems = [
 			type: "registry:file" as const,
 			target: `~/tools/chatjs/${id}/tool.ts`,
 		},
+		{
+			path: `src/tools/${id}/renderer.tsx`,
+			type: "registry:file" as const,
+			target: `~/tools/chatjs/${id}/renderer.tsx`,
+		},
 	],
 	meta: {
 		chatjs: toolDefinitionSchema.parse({
@@ -79,7 +84,8 @@ export const searchToolItems = [
 			kind: "tool",
 			id,
 			slot: "webSearch",
-			toolExport: "createWebSearch",
+			toolExport: "webSearch",
+			rendererExport: "WebSearchRenderer",
 			envRequirements: [{ options: [[key]] }],
 		}),
 	},
@@ -100,6 +106,7 @@ export const codeExecutionItem = {
 		"python.ts",
 		"javascript.ts",
 		"types.ts",
+		"renderer.tsx",
 	].map((file) => ({
 		path: `src/tools/vercel-code-execution/${file}`,
 		type: "registry:file" as const,
@@ -111,7 +118,8 @@ export const codeExecutionItem = {
 			kind: "tool",
 			id: "vercel-code-execution",
 			slot: "codeExecution",
-			toolExport: "createCodeExecution",
+			toolExport: "codeExecution",
+			rendererExport: "CodeExecution",
 			envRequirements: [
 				{
 					options: [

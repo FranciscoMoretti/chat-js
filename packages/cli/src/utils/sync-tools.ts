@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
 	toolDefinitionSchema,
@@ -37,26 +37,18 @@ function checkGenerated(content: string | null, path: string) {
 		);
 }
 
-const factorySlots = {
-	webSearch: {
-		file: "search",
-		factory: "createWebSearch",
-		type: "SearchToolFactory",
-		contract: "search-presentation",
-		requirement: "searchEnvRequirement",
-	},
+const selections = {
+	webSearch: { file: "search", requirement: "searchEnvRequirement" },
 	codeExecution: {
 		file: "code-execution",
-		factory: "createCodeExecution",
-		type: "CodeExecutionToolFactory",
-		contract: "code-execution-contract",
 		requirement: "codeExecutionEnvRequirement",
 	},
 } as const;
-const factoryFiles = Object.values(factorySlots).flatMap(({ file }) => [
+const selectionFiles = Object.values(selections).flatMap(({ file }) => [
 	`${file}.ts`,
 	`${file}-config.ts`,
 ]);
+const registrationKey = (item: ToolDefinition) => item.slot ?? item.toolExport;
 
 export async function syncTools(
 	cwd: string,
@@ -68,7 +60,7 @@ export async function syncTools(
 		"ui.ts",
 		"custom-tools.ts",
 		"custom-ui.ts",
-		...factoryFiles,
+		...selectionFiles,
 	].map((file) => `${directory}/${file}`);
 	await preflight(cwd, targets);
 	const dir = join(cwd, directory);
@@ -84,7 +76,7 @@ export async function syncTools(
 		previousTools && previousUi && !previousTools.startsWith(generated)
 			? await legacyTools(cwd, previousTools, previousUi)
 			: null;
-	for (const filename of factoryFiles)
+	for (const filename of selectionFiles)
 		checkGenerated(await readOptional(join(dir, filename)), filename);
 	if (!legacy) {
 		checkGenerated(previousTools, toolsPath);
@@ -121,7 +113,19 @@ export async function syncTools(
 	for (const match of previousTools?.matchAll(
 		/from "\.\/([a-z][a-z0-9-]*)\/tool"/g,
 	) ?? []) {
-		if (!ids.has(match[1]))
+		const importLine = previousTools
+			?.split("\n")
+			.find((line) => line.includes(`from "./${match[1]}/tool"`));
+		const alias = importLine?.match(/ as (tool[0-9]+) }/)?.[1];
+		const wasSelection =
+			alias &&
+			Object.keys(selections).some((slot) =>
+				previousTools?.includes(`  ${slot}: ${alias},`),
+			);
+		if (
+			!ids.has(match[1]) &&
+			(!wasSelection || entries.some((entry) => entry.name === match[1]))
+		)
 			throw new Error(
 				`Missing descriptor for previously registered tool: ${match[1]}. Restore chatjs.json before syncing.`,
 			);
@@ -135,20 +139,20 @@ export async function syncTools(
 		}
 	}
 	definitions.sort((a, b) => a.id.localeCompare(b.id));
-	for (const slot of Object.keys(factorySlots)) {
+	for (const slot of Object.keys(selections)) {
 		if (definitions.filter((item) => item.slot === slot).length > 1)
 			throw new Error(
 				`Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`,
 			);
 	}
-	const registrations = definitions.filter((item) => !item.slot);
+	const registrations = definitions;
 	const renderers = registrations.filter((item) => item.rendererExport);
-	const keys = registrations.map((item) => item.toolExport);
+	const keys = registrations.map(registrationKey);
 	if (new Set(keys).size !== keys.length)
 		throw new Error("Duplicate installed tool registration key.");
 	if (options.checkOnly) return definitions;
-	const toolBody = `import { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${item.toolExport}: tool${i},`).join("\n")}\n};\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
-	const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${item.toolExport}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
+	const toolBody = `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${registrationKey(item)}: tool${i},`).join("\n")}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
+	const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${registrationKey(item)}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
 	await mkdir(dir, { recursive: true });
 	if ((await readOptional(join(dir, "custom-tools.ts"))) === null)
 		await writeFile(
@@ -165,13 +169,9 @@ export async function syncTools(
 		if ((await readOptional(descriptor)) === null)
 			await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
 	}
-	for (const [slot, spec] of Object.entries(factorySlots)) {
+	for (const [slot, spec] of Object.entries(selections)) {
 		const selected = definitions.find((item) => item.slot === slot);
-		const importType = `import type { ${spec.type} } from "@/tools/platform/${spec.contract}";\n`;
-		const body = selected
-			? `${importType}import { ${selected.toolExport} as selectedFactory } from "./${selected.id}/tool";\nconst selected: ${spec.type} = selectedFactory;\nexport { selected as ${spec.factory} };\n`
-			: `${importType}export const ${spec.factory}: ${spec.type} = () => { throw new Error("Install a ${slot} tool using chat-js add."); };\n`;
-		await writeFile(join(dir, `${spec.file}.ts`), generatedSource(body));
+		await rm(join(dir, `${spec.file}.ts`), { force: true });
 		const envOptions = selected
 			? selected.envRequirements.reduce<string[][]>(
 					(all, requirement) =>
