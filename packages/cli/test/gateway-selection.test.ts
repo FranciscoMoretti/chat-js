@@ -261,7 +261,7 @@ assert.ok(tools.webSearch.execute);
 const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
 assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
 assert.ok(tools.retrieveUrl.execute);
-const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: undefined});
+const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: {}});
 assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `);
       await run(cwd, ["bun", "verify-execution.ts"]);
