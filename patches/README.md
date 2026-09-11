@@ -158,3 +158,7 @@ bound retention or reuse native durable step snapshots before production.
 
 No upstream issue or change has been published. Production cutover and upstream
 publication remain subject to user review.
+
+## PostgreSQL workflow cancellation
+
+`workflow-world-postgres@5.0.0-beta.40.patch` removes per-run serialization of distinct queue deliveries. A cancellation delivery must reach the workflow while an earlier invocation eagerly awaits a pending step. Exact delivery idempotency keys retain their existing in-flight and completed-message deduplication. The local queue concurrency regression and live MCP cancellation/next-message test cover this change; see `docs/upstream-drafts/eve-pending-tool-cancellation.md` for the unpublished report.

@@ -28,7 +28,10 @@ const respond = z
       .max(16),
   })
   .strict();
-const cancel = z.object({ turnId: z.string().min(1).max(200) }).strict();
+// Attached/resumed EVE clients cancel the active turn without a turn ID.
+const cancel = z
+  .object({ turnId: z.string().min(1).max(200).optional() })
+  .strict();
 
 export function parseSessionRequest(path: string, method: string) {
   const match = sessionPath.exec(path);

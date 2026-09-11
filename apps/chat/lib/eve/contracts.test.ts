@@ -40,6 +40,21 @@ describe("Eve request policy", () => {
       )
     ).toBe(false);
   });
+  it("accepts native active-turn cancellation but rejects malformed or expanded controls", () => {
+    const policy = parseSessionRequest("/eve/v1/session/a/cancel", "POST");
+    for (const input of [{}, { turnId: "turn-1" }]) {
+      expect(policy?.schema.safeParse(input).success).toBe(true);
+    }
+    for (const input of [
+      { turnId: "" },
+      { turnId: null },
+      { turnId: 1 },
+      { tasks: true },
+      { owner: "other" },
+    ]) {
+      expect(policy?.schema.safeParse(input).success).toBe(false);
+    }
+  });
   it("rejects malformed native messages and stream cursors", () => {
     const policy = parseSessionRequest("/eve/v1/session/a", "POST");
     expect(

@@ -322,6 +322,7 @@
     },
   },
   "patchedDependencies": {
+    "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch",
     "eve@0.52.2": "patches/eve@0.52.2.patch",
   },
   "overrides": {
