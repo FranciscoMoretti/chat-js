@@ -1,7 +1,11 @@
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { db } from "../lib/db/client";
+import { eveStoredFile } from "../lib/db/schema";
+import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -322,4 +326,47 @@ test("an uncertain creation retains the same visible attachment and immutable re
       path: "tests/eve-results/screenshots/eve-composer-retained.png",
       animations: "disabled",
     });
+});
+
+test("uploaded attachment has durable authenticated ownership", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const session = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  const uploaded = await page.request.post("/api/files/upload", {
+    multipart: {
+      file: {
+        name: "ownership-fixture.png",
+        mimeType: "image/png",
+        buffer: redPng,
+      },
+    },
+  });
+  expect(uploaded.ok(), await uploaded.text()).toBe(true);
+  const file = z.object({ url: z.string() }).parse(await uploaded.json());
+  const key = keyFromFileUrl(file.url);
+  if (!key) {
+    throw new Error("Upload returned an invalid key.");
+  }
+  try {
+    expect(
+      await db
+        .select({ ownerId: eveStoredFile.ownerId })
+        .from(eveStoredFile)
+        .where(eq(eveStoredFile.key, key))
+    ).toEqual([{ ownerId: session.user.id }]);
+    const downloaded = await page.request.get(file.url);
+    expect(downloaded.ok()).toBe(true);
+    expect(await downloaded.body()).toEqual(redPng);
+  } finally {
+    execFileSync("bun", [
+      "-e",
+      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls([process.argv[1]]);',
+      file.url,
+    ]);
+    await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
+  }
 });

@@ -506,6 +506,19 @@ export const eveConversation = pgTable(
   ]
 );
 
+/** Application-owned storage identity; transcript contents remain in EVE. */
+export const eveStoredFile = pgTable(
+  "EveStoredFile",
+  {
+    key: text("key").primaryKey(),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("EveStoredFile_owner").on(table.ownerId)]
+);
+
 export const eveUsage = pgTable(
   "EveUsage",
   {

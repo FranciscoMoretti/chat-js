@@ -3,7 +3,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
+import { registerEveStoredFile } from "@/lib/db/eve-files";
+import { env } from "@/lib/env";
 import { uploadFile } from "@/lib/file-storage";
+import { keyFromFileUrl } from "@/lib/file-url";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -63,6 +66,13 @@ export async function POST(request: Request) {
 
     try {
       const data = await uploadFile(filename, fileBuffer, file.type);
+      if (env.WORKFLOW_POSTGRES_URL) {
+        const key = keyFromFileUrl(data.url);
+        if (!key) {
+          throw new Error("Storage returned an invalid file key.");
+        }
+        await registerEveStoredFile(session.user.id, key);
+      }
       return NextResponse.json(data);
     } catch (_error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
