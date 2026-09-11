@@ -4,14 +4,12 @@ import { ImageOffIcon } from "lucide-react";
 import { useState } from "react";
 import { ImageActions, ImageModal } from "@/components/image-modal";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { ChatMessage } from "@/lib/ai/types";
+import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { generateImageTool } from "./tool";
 
-export type GenerateImageTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-generateImage" }
->;
+type GenerateImageTool = ToolPartFromTool<typeof generateImageTool>;
 
-export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
+export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);

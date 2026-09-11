@@ -13,7 +13,7 @@ Generate images directly in chat using AI models. Supports both generation from 
 
 ## Quick Start
 
-Toggle in `chat.config.ts`:
+Install the [image tool](../tools/generate-image), then enable it in `chat.config.ts`:
 
 ```ts
 ai: {
@@ -63,52 +63,13 @@ Users can iterate on generated images without re-uploading. The system automatic
 
 ### How It Works
 
-1. **Extraction**: Before each request, the chat agent scans recent messages for the last generated image:
+1. The chat agent scans the latest assistant message for a successful image result.
+2. It supplies `lastGeneratedImage`, attachments, the selected model, and the cost accumulator through the AI SDK tool execution context.
+3. The installed tool uses those images as input when editing.
 
-```ts title="app/(chat)/api/chat/get-recent-generated-image.ts"
-export function getRecentGeneratedImage(
-  messages: ChatMessage[],
-): { imageUrl: string; name: string } | null {
-  const lastAssistantMessage = messages.findLast(
-    (message) => message.role === "assistant",
-  );
-
-  if (lastAssistantMessage?.parts && lastAssistantMessage.parts.length > 0) {
-    for (const part of lastAssistantMessage.parts) {
-      if (
-        part.type === "tool-generateImage" &&
-        part.state === "output-available" &&
-        part.output?.imageUrl
-      ) {
-        return {
-          imageUrl: part.output.imageUrl,
-          name: `generated-image-${part.toolCallId}.png`,
-        };
-      }
-    }
-  }
-
-  return null;
-}
-```
-
-2. **Injection**: The extracted image is passed to the tool factory:
-
-```ts title="lib/ai/core-chat-agent.ts"
-const lastGeneratedImage = getRecentGeneratedImage(messages);
-
-const tools = getTools({
-  // ...other params
-  lastGeneratedImage,
-});
-```
-
-3. **Edit mode**: When `lastGeneratedImage` exists, the tool fetches it and includes it as input:
-
-```ts title="lib/ai/tools/generate-image.ts"
-const inputImages = await collectEditImages({ imageParts, lastGeneratedImage });
-promptInput = { text: prompt, images: inputImages };
-```
+The previous-image helper recognizes the built-in `{ imageUrl, prompt }` result.
+External tools may use different schemas. Unrecognized results are ignored rather
+than treated as an image.
 
 ### User Experience
 
@@ -144,7 +105,7 @@ async function collectEditImages({ imageParts, lastGeneratedImage }) {
 Follows the [Tool Part](/cookbook/tool-part) pattern:
 
 ```
-lib/ai/tools/generate-image.ts → components/part/generate-image.tsx
+tools/chatjs/generate-image/tool.ts → tools/chatjs/generate-image/renderer.tsx
 ```
 
 ### Tool Output
@@ -186,7 +147,7 @@ The tool supports two types of models:
 | Image model | Standalone image generation models               | `google/gemini-3-pro-image`   |
 | Multimodal  | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
 
-Model selection is done in `resolveImageModel(selectedModel)` in `lib/ai/tools/generate-image.ts`:
+Model selection is done in `resolveImageModel(selectedModel)` in `tools/chatjs/generate-image/tool.ts`:
 
 1. If the user's selected chat model supports image output (per app model registry, `model.output.image`), use it
 2. Otherwise, fall back to `config.ai.tools.image.default`

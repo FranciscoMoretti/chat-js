@@ -1,4 +1,4 @@
-import type { FileUIPart, ModelMessage, Tool } from "ai";
+import type { ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
 import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
@@ -15,7 +15,6 @@ import { createTextDocumentTool } from "./documents/create-text-document";
 import { editCodeDocumentTool } from "./documents/edit-code-document";
 import { editSheetDocumentTool } from "./documents/edit-sheet-document";
 import { editTextDocumentTool } from "./documents/edit-text-document";
-import { generateImageTool } from "./generate-image";
 import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
@@ -27,8 +26,6 @@ export function getTools({
   session,
   messageId,
   selectedModel,
-  attachments = [],
-  lastGeneratedImage = null,
   contextForLLM,
   costAccumulator,
 }: {
@@ -36,8 +33,6 @@ export function getTools({
   session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
-  attachments: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
 }) {
@@ -50,6 +45,7 @@ export function getTools({
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
       ([name]) =>
+        (name !== "generateImage" || config.ai.tools.image.enabled) &&
         (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
         (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
         (name !== "codeExecution" || config.ai.tools.codeExecution.enabled)
@@ -89,16 +85,6 @@ export function getTools({
                 }),
               }
             : {}),
-        }
-      : {}),
-    ...(config.ai.tools.image.enabled
-      ? {
-          generateImage: generateImageTool({
-            attachments,
-            lastGeneratedImage,
-            selectedModel,
-            costAccumulator,
-          }),
         }
       : {}),
     ...(config.ai.tools.deepResearch.enabled

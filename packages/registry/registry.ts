@@ -6,6 +6,15 @@ import { toolDefinitionSchema } from "./metadata";
 
 export const toolItems = [
 	{
+		id: "generate-image",
+		slot: "generateImage",
+		toolExport: "generateImageTool",
+		rendererExport: "GenerateImageRenderer",
+		description:
+			"Generate and edit images using the selected gateway and storage",
+		dependencies: ["ai", "zod", "lucide-react"],
+	},
+	{
 		id: "word-count",
 		toolExport: "wordCount",
 		rendererExport: "WordCountRenderer",

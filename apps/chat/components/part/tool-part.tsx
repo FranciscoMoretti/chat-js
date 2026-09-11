@@ -9,7 +9,6 @@ import {
 import type { ChatTools } from "@/lib/ai/types";
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
-import { GenerateImage } from "./generate-image";
 import { GenerateVideo } from "./generate-video";
 import { ReadDocument } from "./read-document";
 
@@ -63,10 +62,6 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
 
   if (type === "tool-readDocument") {
     return <ReadDocument tool={part} />;
-  }
-
-  if (type === "tool-generateImage") {
-    return <GenerateImage tool={part} />;
   }
 
   if (type === "tool-generateVideo") {

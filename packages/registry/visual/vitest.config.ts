@@ -12,6 +12,8 @@ const appRequire = createRequire(
 export default defineConfig({
 	optimizeDeps: {
 		include: [
+			"@radix-ui/react-dialog",
+			"sonner",
 			"echarts",
 			"next/dist/client/image-component",
 			"react",
@@ -20,10 +22,12 @@ export default defineConfig({
 	},
 	define: { "process.env": "{}", IS_REACT_ACT_ENVIRONMENT: "true" },
 	resolve: {
+		dedupe: ["react", "react-dom"],
 		alias: {
 			echarts: createRequire(import.meta.url).resolve("echarts"),
 			"next/image": fileURLToPath(new URL("./next-image.ts", import.meta.url)),
 			react: dirname(appRequire.resolve("react/package.json")),
+			"react-dom": dirname(appRequire.resolve("react-dom/package.json")),
 			"@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
 		},
 	},

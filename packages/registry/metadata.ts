@@ -16,7 +16,9 @@ export const toolDefinitionSchema = z.object({
 	id: z.string().regex(/^[a-z][a-z0-9-]*$/),
 	toolExport: identifier,
 	rendererExport: identifier.optional(),
-	slot: z.enum(["webSearch", "codeExecution", "retrieveUrl"]).optional(),
+	slot: z
+		.enum(["webSearch", "codeExecution", "retrieveUrl", "generateImage"])
+		.optional(),
 	envRequirements: z.array(envRequirementSchema).default([]),
 });
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;

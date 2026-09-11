@@ -1,19 +1,19 @@
-import { type FileUIPart, generateImage, generateText, tool } from "ai";
+import {
+  type FileUIPart,
+  generateImage,
+  generateText,
+  type ToolExecutionOptions,
+  tool,
+} from "ai";
 import { z } from "zod";
 import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
+import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
-
-interface GenerateImageProps {
-  attachments?: FileUIPart[];
-  costAccumulator?: CostAccumulator;
-  lastGeneratedImage?: { imageUrl: string; name: string } | null;
-  selectedModel?: string;
-}
 
 const log = createModuleLogger("ai.tools.generate-image");
 
@@ -46,6 +46,11 @@ async function resolveImageModel(selectedModel?: string): Promise<{
     throw new Error("Image generation is not enabled");
   }
   const defaultId = config.ai.tools.image.default;
+  if (!defaultId) {
+    throw new Error(
+      "Set ai.tools.image.default to an image model supported by your gateway."
+    );
+  }
   try {
     const model = await getAppModelDefinition(defaultId as AppModelId);
     // Default could be a multimodal language model (e.g. gemini-3-pro-image)
@@ -142,6 +147,11 @@ async function runGenerateImageTraditional({
     throw new Error("Image generation is not enabled");
   }
   const imageDefault = config.ai.tools.image.default;
+  if (!imageDefault) {
+    throw new Error(
+      "Set ai.tools.image.default to an image model supported by your gateway."
+    );
+  }
   let promptInput:
     | string
     | {
@@ -342,67 +352,59 @@ async function runGenerateImageMultimodal({
   return { imageUrl: result.url, prompt };
 }
 
-export const generateImageTool = ({
-  attachments = [],
-  lastGeneratedImage = null,
-  selectedModel,
-  costAccumulator,
-}: GenerateImageProps = {}) =>
-  tool({
-    description: `Generate an image from a user-provided prompt.
+export const generateImageTool = tool({
+  description: `Generate an image from a user-provided prompt.
 
 The assistant may make small, neutral adjustments to improve clarity, composition, or technical quality, while strictly preserving the user’s original intent, meaning, and message.
 
 The assistant must not add new subjects, claims, branding, or alter the tone or intent of the prompt.
 `,
-    inputSchema: z.object({
-      prompt: z
-        .string()
-        .describe(
-          "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
-        ),
-    }),
-    execute: async ({ prompt }) => {
-      const startMs = Date.now();
-      const imageParts = attachments.filter(
-        (part) => part.type === "file" && part.mediaType?.startsWith("image/")
-      );
+  inputSchema: z.object({
+    prompt: z
+      .string()
+      .describe(
+        "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
+      ),
+  }),
+  execute: async (
+    { prompt },
+    { context }: ToolExecutionOptions<ChatToolContext>
+  ) => {
+    const {
+      attachments = [],
+      lastGeneratedImage = null,
+      selectedModel,
+      costAccumulator,
+    } = context ?? {};
+    const startMs = Date.now();
+    const imageParts = attachments.filter(
+      (part) => part.type === "file" && part.mediaType?.startsWith("image/")
+    );
 
-      const mode: ImageMode =
-        imageParts.length > 0 || lastGeneratedImage !== null
-          ? "edit"
-          : "generate";
+    const mode: ImageMode =
+      imageParts.length > 0 || lastGeneratedImage !== null
+        ? "edit"
+        : "generate";
 
-      log.info(
-        {
-          mode,
-          selectedModel,
-          attachmentCount: imageParts.length,
-          hasLastGeneratedImage: lastGeneratedImage !== null,
-          promptLength: prompt.length,
-        },
-        "generateImage: start"
-      );
+    log.info(
+      {
+        mode,
+        selectedModel,
+        attachmentCount: imageParts.length,
+        hasLastGeneratedImage: lastGeneratedImage !== null,
+        promptLength: prompt.length,
+      },
+      "generateImage: start"
+    );
 
-      try {
-        const { modelId: effectiveModelId, multimodal } =
-          await resolveImageModel(selectedModel);
+    try {
+      const { modelId: effectiveModelId, multimodal } =
+        await resolveImageModel(selectedModel);
 
-        // Use multimodal path for language models with image generation
-        if (multimodal) {
-          return await runGenerateImageMultimodal({
-            modelId: effectiveModelId,
-            mode,
-            prompt,
-            imageParts,
-            lastGeneratedImage,
-            startMs,
-            costAccumulator,
-          });
-        }
-
-        // Traditional image generation for dedicated image models
-        return await runGenerateImageTraditional({
+      // Use multimodal path for language models with image generation
+      if (multimodal) {
+        return await runGenerateImageMultimodal({
+          modelId: effectiveModelId,
           mode,
           prompt,
           imageParts,
@@ -410,19 +412,30 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
           startMs,
           costAccumulator,
         });
-      } catch (error) {
-        const resolvedError = await resolveError(error);
-        log.error(
-          {
-            mode,
-            selectedModel,
-            ms: Date.now() - startMs,
-            error: serializeError(resolvedError),
-            ...getErrorDebugInfo(resolvedError),
-          },
-          "generateImage: failure"
-        );
-        throw resolvedError;
       }
-    },
-  });
+
+      // Traditional image generation for dedicated image models
+      return await runGenerateImageTraditional({
+        mode,
+        prompt,
+        imageParts,
+        lastGeneratedImage,
+        startMs,
+        costAccumulator,
+      });
+    } catch (error) {
+      const resolvedError = await resolveError(error);
+      log.error(
+        {
+          mode,
+          selectedModel,
+          ms: Date.now() - startMs,
+          error: serializeError(resolvedError),
+          ...getErrorDebugInfo(resolvedError),
+        },
+        "generateImage: failure"
+      );
+      throw resolvedError;
+    }
+  },
+});

@@ -146,9 +146,6 @@ function toConfigInput(input: {
 	auth: Record<AuthProvider, boolean>;
 }) {
 	const gatewayToolDefaults = defaultsFor(input).tools;
-	const hasImageDefault =
-		typeof (gatewayToolDefaults.image as { default?: unknown }).default ===
-		"string";
 	const hasVideoDefault =
 		typeof (gatewayToolDefaults.video as { default?: unknown }).default ===
 		"string";
@@ -181,7 +178,7 @@ function toConfigInput(input: {
 				deepResearch: { enabled: input.builtInTools.deepResearch },
 				codeExecution: { enabled: input.builtInTools.codeExecution },
 				image: {
-					enabled: input.builtInTools.imageGeneration && hasImageDefault,
+					enabled: input.builtInTools.imageGeneration,
 				},
 				video: {
 					enabled: input.builtInTools.videoGeneration && hasVideoDefault,
