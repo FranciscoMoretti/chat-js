@@ -1,8 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { retireEveSessionForDeletion } from "./retire-session";
+import {
+  retireEveFamilyForDeletion,
+  retireEveSessionForDeletion,
+} from "./retire-session";
 
 const mocks = vi.hoisted(() => ({
   deleting: vi.fn(),
+  begin: vi.fn(),
+  retireMany: vi.fn(),
   reset: vi.fn(),
   snapshot: vi.fn(),
   usage: vi.fn(),
@@ -12,11 +17,16 @@ vi.mock("../env", () => ({
   env: {
     EVE_INTERNAL_ORIGIN: "http://localhost",
     EVE_GATEWAY_SECRET: "fixture",
+    WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
   },
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("../db/eve-queries", () => ({
   getDeletingEveConversationForSession: mocks.deleting,
+  beginEveConversationDeletion: mocks.begin,
+}));
+vi.mock("../db/eve-native-purge", () => ({
+  retireEveNativeSessions: mocks.retireMany,
 }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));
 vi.mock("eve/client", () => ({
@@ -76,4 +86,20 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "Usage must be reconciled"
   );
+});
+
+it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {
+  mocks.begin.mockResolvedValueOnce(undefined);
+  expect(
+    await retireEveFamilyForDeletion("stranger", "conversation")
+  ).toBeUndefined();
+  expect(mocks.retireMany).not.toHaveBeenCalled();
+  mocks.begin.mockResolvedValueOnce({
+    rootId: "root",
+    conversations: [{ id: "root", sessionId: null }],
+  });
+  await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
+    "missing session binding"
+  );
+  expect(mocks.retireMany).not.toHaveBeenCalled();
 });

@@ -1,5 +1,9 @@
 import { Client } from "eve/client";
-import { getDeletingEveConversationForSession } from "../db/eve-queries";
+import { retireEveNativeSessions } from "../db/eve-native-purge";
+import {
+  beginEveConversationDeletion,
+  getDeletingEveConversationForSession,
+} from "../db/eve-queries";
 import { env } from "../env";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
@@ -46,4 +50,30 @@ export async function retireEveSessionForDeletion(
     );
   }
   return snapshot;
+}
+
+/** Revoke family access and settle every bound member before resource erasure starts. */
+export async function retireEveFamilyForDeletion(
+  ownerId: string,
+  conversationId: string
+) {
+  assertEveConfigured();
+  const databaseUrl = env.WORKFLOW_POSTGRES_URL;
+  if (!databaseUrl) {
+    throw new Error("EVE Postgres is not configured.");
+  }
+  const family = await beginEveConversationDeletion(ownerId, conversationId);
+  if (!family) {
+    return undefined;
+  }
+  const sessionIds = family.conversations.map((conversation) => {
+    if (!conversation.sessionId) {
+      throw new Error("Resolve the missing session binding before cleanup.");
+    }
+    return conversation.sessionId;
+  });
+  await retireEveNativeSessions(databaseUrl, sessionIds, async (sessionId) => {
+    await retireEveSessionForDeletion(ownerId, sessionId);
+  });
+  return family;
 }

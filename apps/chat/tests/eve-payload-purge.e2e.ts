@@ -1,6 +1,9 @@
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
-import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
+import {
+  purgeEveNativeSession,
+  retireEveNativeSessions,
+} from "../lib/db/eve-native-purge";
 import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
 import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
 import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
@@ -191,4 +194,37 @@ test("concurrent native cleanup attempts retire once and share the completed rec
   expect(retirements).toBe(1);
   expect(receipts[0]).toEqual(receipts[1]);
   expect(receipts[0].runIds).toEqual([root]);
+});
+
+test("family retirement persists partial progress without erasing another member's payloads", async () => {
+  const first = await fixture();
+  const second = await fixture();
+  const retired: string[] = [];
+  await expect(
+    retireEveNativeSessions(env.DATABASE_URL, [first, second], (id) => {
+      retired.push(id);
+      if (id === second) {
+        return Promise.reject(new Error("usage not settled"));
+      }
+      return Promise.resolve();
+    })
+  ).rejects.toThrow("usage not settled");
+  expect(
+    await query`select session_id from workflow.eve_session_retirements where session_id in ${query([first, second])}`
+  ).toEqual([{ session_id: first }]);
+  expect(
+    await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
+  ).toHaveLength(2);
+  await retireEveNativeSessions(
+    env.DATABASE_URL,
+    [first, second, first],
+    (id) => {
+      retired.push(id);
+      return Promise.resolve();
+    }
+  );
+  expect(retired).toEqual([first, second, second]);
+  expect(
+    await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
+  ).toHaveLength(2);
 });

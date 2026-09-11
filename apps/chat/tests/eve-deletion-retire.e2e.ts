@@ -4,7 +4,6 @@ import postgres from "postgres";
 import { z } from "zod";
 import { db } from "../lib/db/client";
 import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
-import { beginEveConversationDeletion } from "../lib/db/eve-queries";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -12,7 +11,10 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { retireEveSessionForDeletion } from "../lib/eve/retire-session";
+import {
+  retireEveFamilyForDeletion,
+  retireEveSessionForDeletion,
+} from "../lib/eve/retire-session";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
@@ -52,7 +54,10 @@ test("internal retirement settles usage after access revocation and is retryable
     { timeout: 90_000 }
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await beginEveConversationDeletion(owner, binding.id);
+  const family = await retireEveFamilyForDeletion(owner, binding.id);
+  expect(family?.conversations).toEqual([
+    { id: binding.id, sessionId: binding.sessionId },
+  ]);
   const denied = await page.request.get(
     `/api/eve/v1/session/${binding.sessionId}/stream`,
     { headers: { "x-chatjs-deletion": "1" } }
