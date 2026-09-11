@@ -336,7 +336,7 @@ index a3aa9df..5104e8b 100644
    };
  }
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
-index c7bd18e..a7a6114 100644
+index c7bd18e..807f1e9 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 @@ -18,11 +18,16 @@ const runtimeMocks = vi.hoisted(() => ({
@@ -435,11 +435,20 @@ index c7bd18e..a7a6114 100644
    it("reuses the active same-process session instead of reopening from the template", async () => {
      const vm = createFakeMicrosandboxVm("session-key");
      runtimeMocks.createPreparedMicrosandbox.mockResolvedValue(vm);
+@@ -377,3 +454,7 @@ function createFakeMicrosandboxVm(sessionKey: string) {
+     async writeMetadata() {},
+   };
+ }
++
++vi.mock("#execution/sandbox/bindings/microsandbox-mutations.js", () => ({
++  withMicrosandboxMutation: async (_path: unknown, callback: () => Promise<unknown>) => await callback(),
++}));
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
-index 1a4c05b..77be906 100644
+index 1a4c05b..58c147d 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
-@@ -1,6 +1,6 @@
+@@ -1,6 +1,7 @@
++import { withMicrosandboxMutation } from "#execution/sandbox/bindings/microsandbox-mutations.js";
  import { randomUUID } from "node:crypto";
 -import { mkdir, rename, rm } from "node:fs/promises";
 -import { dirname } from "node:path";
@@ -448,7 +457,7 @@ index 1a4c05b..77be906 100644
 
  import {
    createFileBackedInternalSandboxSession,
-@@ -25,6 +25,7 @@ import {
+@@ -25,6 +26,7 @@ import {
    loadMicrosandboxModule,
    type MicrosandboxVm,
    removeSnapshotIfExists,
@@ -456,7 +465,18 @@ index 1a4c05b..77be906 100644
    sandboxExists,
    snapshotExists,
  } from "#execution/sandbox/bindings/microsandbox-runtime.js";
-@@ -181,14 +182,48 @@ export async function createMicrosandboxHandle(input: {
+@@ -170,6 +172,10 @@ export async function createMicrosandboxHandle(input: {
+   readonly options: ResolvedMicrosandboxOptions;
+   readonly optionsHash: string;
+ }): Promise<SandboxBackendHandle<MicrosandboxSessionUseOptions>> {
++  const mutationMetadataPath = resolveMicrosandboxMetadataPath(resolveMicrosandboxSessionRootPath(
++    resolveSandboxCacheDirectory(input.createInput.runtimeContext.appRoot), input.createInput.sessionKey,
++  ));
++  return await withMicrosandboxMutation(mutationMetadataPath, async () => {
+   const module = await loadMicrosandboxModule({
+     appRoot: input.createInput.runtimeContext.appRoot,
+     options: input.options,
+@@ -181,14 +187,48 @@ export async function createMicrosandboxHandle(input: {
    );
    const activeSessionKey = createActiveMicrosandboxSessionKey(sessionRootPath, input.optionsHash);
    const activeHandle = activeMicrosandboxSessionHandles.get(activeSessionKey);
@@ -508,7 +528,7 @@ index 1a4c05b..77be906 100644
    const sessionTags = withDevelopmentSandboxMetadataPathTag(input.createInput.tags, metadataPath);
 
    if (
-@@ -216,7 +251,9 @@ export async function createMicrosandboxHandle(input: {
+@@ -216,7 +256,9 @@ export async function createMicrosandboxHandle(input: {
    }
 
    let snapshotName: string | null = null;
@@ -519,7 +539,7 @@ index 1a4c05b..77be906 100644
      const templateRootPath = resolveMicrosandboxTemplateRootPath(
        cacheDirectory,
        input.createInput.templateKey,
-@@ -243,6 +280,7 @@ export async function createMicrosandboxHandle(input: {
+@@ -243,6 +285,7 @@ export async function createMicrosandboxHandle(input: {
      "eve-sbx-ses",
      `${input.createInput.sessionKey}:${randomUUID()}`,
    );
@@ -527,7 +547,15 @@ index 1a4c05b..77be906 100644
    let sandbox: MicrosandboxVm;
    try {
      sandbox = await createPreparedMicrosandbox({
-@@ -300,6 +338,9 @@ function createHandle(
+@@ -276,6 +319,7 @@ export async function createMicrosandboxHandle(input: {
+       activeMicrosandboxSessionHandles.delete(activeSessionKey);
+     }),
+   );
++  });
+ }
+
+ function createHandle(
+@@ -300,6 +344,9 @@ function createHandle(
          await sandbox.setNetworkPolicy(policy);
        });
      },
@@ -683,10 +711,11 @@ index cb72e88..91952da 100644
 +  expect(await readdir(resources)).toHaveLength(1);
 +});
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
-index f697452..6eb503e 100644
+index f697452..9c0e892 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
-@@ -1,6 +1,6 @@
+@@ -1,6 +1,7 @@
++import { withMicrosandboxMutation } from "#execution/sandbox/bindings/microsandbox-mutations.js";
  import { createHash, randomUUID } from "node:crypto";
 -import { access } from "node:fs/promises";
 -import { posix } from "node:path";
@@ -695,7 +724,7 @@ index f697452..6eb503e 100644
 
  import { shellQuote } from "#execution/sandbox/shell-quote.js";
  import { createMicrosandboxWithProgress } from "#execution/sandbox/bindings/microsandbox-create.js";
-@@ -100,6 +100,58 @@ export class MicrosandboxVm {
+@@ -100,7 +101,62 @@ export class MicrosandboxVm {
      return this.#input.sessionKey;
    }
 
@@ -703,6 +732,7 @@ index f697452..6eb503e 100644
 +    checkpointKey: string,
 +    optionsHash: string,
 +  ): Promise<Record<string, unknown>> {
++    return await withMicrosandboxMutation(this.#metadataPath, async () => {
 +    const snapshotName = createProviderName(
 +      "eve-sbx-fork",
 +      JSON.stringify([this.id, checkpointKey]),
@@ -749,12 +779,15 @@ index f697452..6eb503e 100644
 +      }
 +    }
 +    return { version: 1, snapshotName, optionsHash };
++    });
 +  }
 +
    async captureState(optionsHash: string): Promise<MicrosandboxSessionMetadata> {
++    return await withMicrosandboxMutation(this.#metadataPath, async () => {
      this.#optionsHash = optionsHash;
      if (isEveDevEnvironment()) {
-@@ -121,6 +173,7 @@ export class MicrosandboxVm {
+       if (this.#metadataPath !== undefined) {
+@@ -121,6 +177,7 @@ export class MicrosandboxVm {
        `${this.#input.sessionKey}:${randomUUID()}`,
      );
 
@@ -762,7 +795,23 @@ index f697452..6eb503e 100644
      await this.stopAndSnapshot(stateSnapshotName);
      this.#stateSnapshotName = stateSnapshotName;
      if (this.#metadataPath !== undefined) {
-@@ -197,6 +250,7 @@ export class MicrosandboxVm {
+@@ -136,6 +193,7 @@ export class MicrosandboxVm {
+       stateSnapshotName,
+       version: MICROSANDBOX_METADATA_VERSION,
+     };
++    });
+   }
+
+   async detach(): Promise<void> {
+@@ -190,6 +248,7 @@ export class MicrosandboxVm {
+   }
+
+   async setNetworkPolicy(policy: SandboxNetworkPolicy): Promise<void> {
++    return await withMicrosandboxMutation(this.#metadataPath, async () => {
+     const previousStateSnapshotName = this.#stateSnapshotName;
+     const stateSnapshotName = createProviderName(
+       "eve-sbx-state",
+@@ -197,6 +256,7 @@ export class MicrosandboxVm {
      );
      const previousSandboxName = this.#sandboxName;
 
@@ -770,7 +819,7 @@ index f697452..6eb503e 100644
      await this.stopAndSnapshot(stateSnapshotName);
      await removeSandboxIfExists(this.#input.module, previousSandboxName);
 
-@@ -204,6 +258,7 @@ export class MicrosandboxVm {
+@@ -204,6 +264,7 @@ export class MicrosandboxVm {
        "eve-sbx-ses",
        `${this.#input.sessionKey}:${randomUUID()}`,
      );
@@ -778,7 +827,15 @@ index f697452..6eb503e 100644
      this.#sandbox = await createMicrosandbox({
        fromSnapshot: stateSnapshotName,
        module: this.#input.module,
-@@ -427,6 +482,7 @@ async function restoreMicrosandboxSessionSnapshot(input: {
+@@ -224,6 +285,7 @@ export class MicrosandboxVm {
+     if (previousStateSnapshotName !== undefined) {
+       await removeSnapshotIfExists(this.#input.module, previousStateSnapshotName);
+     }
++    });
+   }
+
+   async spawn(options: SandboxSpawnOptions): Promise<SandboxProcess> {
+@@ -427,6 +489,7 @@ async function restoreMicrosandboxSessionSnapshot(input: {
    }
 
    const sandboxName = createProviderName("eve-sbx-ses", `${input.sessionKey}:${randomUUID()}`);
@@ -786,7 +843,7 @@ index f697452..6eb503e 100644
    const sandbox = await createMicrosandbox({
      fromSnapshot: input.metadata.stateSnapshotName,
      module: input.module,
-@@ -666,3 +722,25 @@ function resolveMicrosandboxLabels(tags: SandboxBackendTags | undefined): Record
+@@ -666,3 +729,25 @@ function resolveMicrosandboxLabels(tags: SandboxBackendTags | undefined): Record
      ...withDevelopmentSandboxTags(tags),
    };
  }
@@ -2841,6 +2898,88 @@ new file mode 100644
 +    await expect((await ensure(input)).get()).rejects.toThrow("different owner");
 +    expect(backend.create).toHaveBeenCalledTimes(2);
 +  } finally {
++    await rm(appRoot, { recursive: true, force: true });
++  }
++});
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
+@@ -0,0 +1,36 @@
++import { createHash, randomUUID } from "node:crypto";
++import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
++import { basename, dirname, join } from "node:path";
++
++/** Admission precedes the fence check. A fence waits for every admitted provider operation. */
++export async function withMicrosandboxMutation<T>(metadataPath: string | undefined, callback: () => Promise<T>): Promise<T> {
++  if (metadataPath === undefined) return await callback();
++  const directory = dirname(metadataPath);
++  let scope = join(directory, "mutations");
++  const raw = await readFile(join(directory, "owner.json"), "utf8").catch((error: unknown) => {
++    if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
++    throw error;
++  });
++  if (raw !== undefined) {
++    const owner = JSON.parse(raw);
++    if (owner.version !== 1 || owner.backendName !== "microsandbox" || owner.sessionKey !== basename(directory) || typeof owner.sessionId !== "string") {
++      throw new Error("Sandbox ownership is invalid.");
++    }
++    const eveDirectory = dirname(dirname(dirname(dirname(directory))));
++    scope = join(eveDirectory, "sandbox-mutations", createHash("sha256").update(owner.sessionId).digest("hex"));
++  }
++  const operations = join(scope, "operations");
++  await mkdir(operations, { recursive: true });
++  const lease = join(operations, `${randomUUID()}.json`);
++  await writeFile(lease, JSON.stringify({ version: 1, pid: process.pid }), { flag: "wx", mode: 0o600 });
++  try {
++    const fenced = await access(join(scope, "deleted")).then(() => true).catch((error: unknown) => {
++      if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
++      throw error;
++    });
++    if (fenced) throw new Error("Sandbox session is pending deletion.");
++    return await callback();
++  } finally {
++    await rm(lease, { force: true });
++  }
++}
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
+@@ -0,0 +1,36 @@
++import { createHash } from "node:crypto";
++import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { expect, it, vi } from "vitest";
++import { withMicrosandboxMutation } from "#execution/sandbox/bindings/microsandbox-mutations.js";
++
++it("holds admission through provider work and rejects a new operation after fencing", async () => {
++  const appRoot = await mkdtemp(join(tmpdir(), "eve-mutation-fence-"));
++  const directory = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", "key");
++  const scope = join(appRoot, ".eve", "sandbox-mutations", createHash("sha256").update("owner").digest("hex"));
++  await mkdir(directory, { recursive: true });
++  await writeFile(join(directory, "owner.json"), JSON.stringify({ version: 1, backendName: "microsandbox", sessionId: "owner", sessionKey: "key" }));
++  const entered = Promise.withResolvers<void>();
++  const release = Promise.withResolvers<void>();
++  const pending = withMicrosandboxMutation(join(directory, "metadata.json"), async () => {
++    entered.resolve();
++    await release.promise;
++  });
++  try {
++    await entered.promise;
++    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
++    await writeFile(join(scope, "deleted"), "1\n", { flag: "wx" });
++    const later = vi.fn(async () => {});
++    await expect(withMicrosandboxMutation(join(directory, "metadata.json"), later)).rejects.toThrow("pending deletion");
++    expect(later).not.toHaveBeenCalled();
++    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
++    release.resolve();
++    await pending;
++    expect(await readdir(join(scope, "operations"))).toEqual([]);
++  } finally {
++    release.resolve();
++    await pending;
 +    await rm(appRoot, { recursive: true, force: true });
 +  }
 +});

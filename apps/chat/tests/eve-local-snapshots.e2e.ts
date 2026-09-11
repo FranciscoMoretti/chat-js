@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Sandbox, Snapshot } from "microsandbox";
 import { expect, test } from "vitest";
+import { fenceLocalEveSandboxMutations } from "../lib/eve/local-sandbox-fence";
 import { purgeLocalEveSandboxes } from "../lib/eve/purge-local-sandbox";
 
 // This provider acceptance test touches only newly named local fixture resources.
@@ -176,6 +177,16 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     "sessions",
     sessionKey
   );
+  await mkdir(sessionDirectory, { recursive: true });
+  await writeFile(
+    join(sessionDirectory, "owner.json"),
+    JSON.stringify({
+      version: 1,
+      backendName: "microsandbox",
+      sessionKey,
+      sessionId: sessionKey,
+    })
+  );
   const handle = await backend.create({
     runtimeContext: { appRoot },
     sessionKey,
@@ -216,6 +227,24 @@ test("EVE checkpoint capture records real provider resources for retryable clean
       content: "later parent edit",
     });
     const childKey = `${sessionKey}-child`;
+    const childDirectory = join(
+      appRoot,
+      ".eve",
+      "sandbox-cache",
+      "microsandbox",
+      "sessions",
+      childKey
+    );
+    await mkdir(childDirectory, { recursive: true });
+    await writeFile(
+      join(childDirectory, "owner.json"),
+      JSON.stringify({
+        version: 1,
+        backendName: "microsandbox",
+        sessionKey: childKey,
+        sessionId: childKey,
+      })
+    );
     child = await backend.create({
       runtimeContext: { appRoot },
       sessionKey: childKey,
@@ -246,6 +275,17 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await rm(join(inputs[1].sessionDirectory, "metadata.json"));
     await child.shutdown();
     await handle.shutdown();
+    await fenceLocalEveSandboxMutations(appRoot, [sessionKey, childKey]);
+    await expect(handle.captureForkCheckpoint?.("turn_1")).rejects.toThrow(
+      "pending deletion"
+    );
+    await expect(
+      backend.create({
+        runtimeContext: { appRoot },
+        sessionKey,
+        templateKey: null,
+      })
+    ).rejects.toThrow("pending deletion");
     const resources = await purgeLocalEveSandboxes(inputs);
     expect(resources[0].snapshotNames).toContain(checkpoint.snapshotName);
     await expect(Snapshot.get(checkpoint.snapshotName)).rejects.toThrow(
