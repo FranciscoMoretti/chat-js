@@ -365,7 +365,7 @@ export async function promptAssistantTools(
 	};
 
 	const installableItems = registryItems.filter(
-		(item) => !item.hidden && item.meta?.chatjs?.slot !== "webSearch",
+		(item) => !item.hidden && !item.meta?.chatjs?.slot,
 	);
 	const supportedBuiltInTools = BUILT_IN_TOOL_KEYS.filter((key) =>
 		isSupportedBuiltInTool(gateway, key),
@@ -493,6 +493,31 @@ export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
 	if (choice !== "external") return choice;
 	const address = await text({
 		message: "Search tool registry address:",
+		validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+	});
+	handleCancel(address);
+	return String(address).trim();
+}
+
+export async function promptCodeExecutionTool(
+	skipPrompt: boolean,
+): Promise<string> {
+	if (skipPrompt) return "vercel-code-execution";
+	const choice = await select({
+		message: "Which code-execution tool should chat use?",
+		options: [
+			{
+				value: "vercel-code-execution",
+				label: "Vercel Sandbox",
+				hint: "Python and JavaScript; Vercel credentials required",
+			},
+			{ value: "external", label: "External registry item" },
+		],
+	});
+	handleCancel(choice);
+	if (choice !== "external") return choice;
+	const address = await text({
+		message: "Code-execution tool registry address:",
 		validate: (v) => (v?.trim() ? undefined : "Enter an address"),
 	});
 	handleCancel(address);

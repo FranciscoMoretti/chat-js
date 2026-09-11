@@ -1,7 +1,7 @@
 import { asSchema, createUIMessageStream, type UIMessageChunk } from "ai";
 import { expect, test, vi } from "vitest";
 import type { ChatMessage } from "@/lib/ai/types";
-import { createWebSearch } from "./tool";
+import { webSearch } from "./tool";
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
@@ -15,10 +15,8 @@ test("Tavily forwards native options and preserves source events", async () => {
   });
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer }) => {
-      const tool = createWebSearch({
-        dataStream: writer,
-        writeTopLevelUpdates: true,
-      });
+      const tool = webSearch;
+      const context = { dataStream: writer, writeTopLevelUpdates: true };
       const result = await tool.execute?.(
         {
           search_queries: [{ query: "news", maxResults: 3 }],
@@ -26,7 +24,7 @@ test("Tavily forwards native options and preserves source events", async () => {
           searchDepth: "advanced",
           exclude_domains: ["excluded.com"],
         },
-        { toolCallId: "call", messages: [], context: {} }
+        { toolCallId: "call", messages: [], context }
       );
       expect(result).toMatchObject({
         searches: [
@@ -75,10 +73,8 @@ test("strict tool fields remain required and explicit nulls apply defaults", asy
   search.mockResolvedValue({ results: [] });
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer }) => {
-      const tool = createWebSearch({
-        dataStream: writer,
-        writeTopLevelUpdates: false,
-      });
+      const tool = webSearch;
+      const context = { dataStream: writer, writeTopLevelUpdates: false };
       const schema = asSchema(tool.inputSchema);
       const json = await schema.jsonSchema;
       expect(json.required).toEqual(
@@ -102,7 +98,7 @@ test("strict tool fields remain required and explicit nulls apply defaults", asy
       await tool.execute?.(input, {
         toolCallId: "defaults",
         messages: [],
-        context: {},
+        context,
       });
     },
   });
@@ -120,4 +116,24 @@ test("strict tool fields remain required and explicit nulls apply defaults", asy
       excludeDomains: [],
     })
   );
+});
+
+test("search executes without ChatJS progress services", async () => {
+  search.mockResolvedValue({
+    results: [
+      { title: "Source", url: "https://example.com", content: "Evidence" },
+    ],
+  });
+  const result = await webSearch.execute?.(
+    {
+      search_queries: [{ query: "test", maxResults: null }],
+      topics: null,
+      searchDepth: null,
+      exclude_domains: null,
+    },
+    { toolCallId: "standalone", messages: [], context: {} }
+  );
+  expect(result).toMatchObject({
+    searches: [{ results: [{ content: "Evidence" }] }],
+  });
 });

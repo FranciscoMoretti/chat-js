@@ -76,6 +76,10 @@ afterAll(async () => {
 	}
 });
 
+const executionDefinition = {
+  contractVersion: 1, kind: "tool", id: "acme-execution", slot: "codeExecution",
+  toolExport: "runCommand", rendererExport: "CommandRenderer", envRequirements: [{options: [["ACME_EXECUTION_TOKEN"]]}],
+};
 const external = externalGatewayFixture();
 const registryServer = Bun.serve({
 	port: 0,
@@ -93,7 +97,33 @@ export function createStorageAdapter(options: {bucket: string}) {
   return memory();
 }`}],
     });
-		if (path === "/contracts.tgz") return new Response(Bun.file(archive));
+		if (path === "/external-execution.json") return Response.json({
+      name: "acme-execution", type: "registry:item", dependencies: ["ai", "zod"],
+      meta: {chatjs: executionDefinition},
+      files: [
+        {path: "chatjs.json", type: "registry:file", target: "~/tools/chatjs/acme-execution/chatjs.json", content: JSON.stringify(executionDefinition)},
+        {path: "tool.ts", type: "registry:file", target: "~/tools/chatjs/acme-execution/tool.ts", content: `import { tool } from "ai";
+import { z } from "zod";
+export const runCommand = tool({inputSchema: z.object({command: z.string()}),
+    execute: async ({command}) => ({stdout: command, exitCode: 0})});`},
+        {path: "renderer.tsx", type: "registry:file", target: "~/tools/chatjs/acme-execution/renderer.tsx", content: `"use client";
+import type { UIToolInvocation } from "ai";
+import type { runCommand } from "./tool";
+export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runCommand>}) {
+ return <pre>{tool.state === "output-available" ? tool.output.stdout : tool.input?.command}</pre>;
+}`},
+      ],
+    });
+    if (path === "/external-search.json") {
+      const definition = {contractVersion: 1, kind: "tool", id: "acme-search", slot: "webSearch", toolExport: "lookup", envRequirements: []};
+      return Response.json({name: "acme-search", type: "registry:item", dependencies: ["ai", "zod"], meta: {chatjs: definition}, files: [
+        {path: "chatjs.json", type: "registry:file", target: "~/tools/chatjs/acme-search/chatjs.json", content: JSON.stringify(definition)},
+        {path: "tool.ts", type: "registry:file", target: "~/tools/chatjs/acme-search/tool.ts", content: `import {tool} from "ai";
+import {z} from "zod";
+export const lookup = tool({inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`},
+      ]});
+    }
+    if (path === "/contracts.tgz") return new Response(Bun.file(archive));
 		if (path === "/gateway.json")
 			return Response.json({
 				...external.root,
@@ -167,14 +197,16 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ...(gateway === "acme" ? ["--storage-provider", `http://127.0.0.1:${registryServer.port}/external-storage.json`, "--storage-config", '{"bucket":"test"}'] : gateway === "openai" ? ["--storage-provider", "s3", "--storage-config", '{"bucket":"test","region":"us-east-1"}'] : []),
 			"--yes",
 			"--no-electron",
- ...(gateway === "vercel" ? ["--search-tool", "firecrawl-search"] : []),
+ ...(gateway === "vercel" ? ["--search-tool", "firecrawl-search", "--code-execution-tool", "vercel-code-execution"] : gateway === "acme" ? ["--code-execution-tool", `http://127.0.0.1:${registryServer.port}/external-execution.json`, "--search-tool", `http://127.0.0.1:${registryServer.port}/external-search.json`] : []),
 		]);
 		const manifestPath = join(cwd, "package.json");
 		const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
  if (gateway === "vercel") {
+ expect(manifest.dependencies["@vercel/sandbox"]).toBeDefined();
+ expect(await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")).toContain("vercel-code-execution/tool");
  expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
  expect(await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()).toBe(false);
- expect(await readFile(join(cwd, "tools/chatjs/search.ts"), "utf8")).toContain("firecrawl-search/tool");
+ expect(await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")).toContain("firecrawl-search/tool");
  expect(await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf8")).toContain("FIRECRAWL_API_KEY");
  }
 
@@ -201,6 +233,24 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 		}
 
     if (gateway === "acme") {
+      expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
+      expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
+      expect(await Bun.file(join(cwd, "tools/platform/code-execution-contract.ts")).exists()).toBe(false);
+      expect(await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")).toContain("acme-execution/renderer");
+      expect(await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")).not.toContain("tool-webSearch");
+      expect(await Bun.file(join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")).exists()).toBe(false);
+      expect(await readFile(join(cwd, "tools/chatjs/code-execution-config.ts"), "utf8")).toContain("ACME_EXECUTION_TOKEN");
+      await writeFile(join(cwd, "verify-execution.ts"), `import assert from "node:assert/strict";
+import {tools} from "./tools/chatjs/tools";
+const tool = tools.codeExecution;
+assert.ok(tool.execute);
+const result = await tool.execute({command: "echo hello"}, {toolCallId: "fixture", messages: [], context: {}});
+assert.deepEqual(result, {stdout: "echo hello", exitCode: 0});
+assert.ok(tools.webSearch.execute);
+const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
+assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
+`);
+      await run(cwd, ["bun", "verify-execution.ts"]);
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
       expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
       await writeFile(join(cwd, "verify-storage.ts"), `import { Files } from "files-sdk";
@@ -260,7 +310,7 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { enabled: true, def
 			await run(cwd, ["node", cliEntry, "sync"]);
 			expect(
 				await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8"),
-			).toContain("getWeather as tool0");
+			).toContain("getWeather as tool");
 		}
 		await run(cwd, ["bun", "run", "test:types"]);
 		await writeFile(

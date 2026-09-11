@@ -1,7 +1,4 @@
-import type {
-  CodeExecutionContext,
-  CodeExecutionResult,
-} from "./code-execution.types";
+import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
 const EXECUTION_STATUS_PREFIX = "__EXECUTION_STATUS__:";
 

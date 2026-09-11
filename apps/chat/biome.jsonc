@@ -14,8 +14,8 @@
       "!lib/utils.ts",
       "!tools/chatjs/tools.ts",
       "!tools/chatjs/ui.ts",
-      "!tools/chatjs/search.ts",
       "!tools/chatjs/search-config.ts",
+      "!tools/chatjs/code-execution-config.ts",
       "!hooks/use-mobile.ts"
     ]
   },

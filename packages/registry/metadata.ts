@@ -10,20 +10,15 @@ export const envRequirementSchema = z.object({
 		.array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/)).min(1))
 		.min(1),
 });
-export const toolDefinitionSchema = z
-	.object({
-		contractVersion: z.literal(1),
-		kind: z.literal("tool"),
-		id: z.string().regex(/^[a-z][a-z0-9-]*$/),
-		toolExport: identifier,
-		rendererExport: identifier.optional(),
-		slot: z.literal("webSearch").optional(),
-		envRequirements: z.array(envRequirementSchema).default([]),
-	})
-	.refine(
-		(item) => item.slot === "webSearch" || !!item.rendererExport,
-		"Ordinary tools require a rendererExport",
-	);
+export const toolDefinitionSchema = z.object({
+	contractVersion: z.literal(1),
+	kind: z.literal("tool"),
+	id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+	toolExport: identifier,
+	rendererExport: identifier.optional(),
+	slot: z.enum(["webSearch", "codeExecution"]).optional(),
+	envRequirements: z.array(envRequirementSchema).default([]),
+});
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
 
 export const storageDefinitionSchema = z.object({

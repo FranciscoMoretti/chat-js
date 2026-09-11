@@ -155,10 +155,7 @@ test("legacy CLI empty and reverse-order indexes migrate", async () => {
 async function installSearch(root: string, id: string, key: string) {
 	const dir = join(root, "tools/chatjs", id);
 	await mkdir(dir, { recursive: true });
-	await writeFile(
-		join(dir, "tool.ts"),
-		"export const createWebSearch = () => ({});",
-	);
+	await writeFile(join(dir, "tool.ts"), "export const webSearch = {};");
 	await writeFile(
 		join(dir, "chatjs.json"),
 		JSON.stringify({
@@ -166,24 +163,24 @@ async function installSearch(root: string, id: string, key: string) {
 			kind: "tool",
 			id,
 			slot: "webSearch",
-			toolExport: "createWebSearch",
+			toolExport: "webSearch",
 			envRequirements: [{ options: [[key]] }],
 		}),
 	);
 }
-test("search factories share a slot without registering a renderer or ordinary tool", async () => {
+test("search selections register standard tools without requiring a renderer", async () => {
 	const root = await project();
 	await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
 	await syncTools(root);
-	expect(
-		await readFile(join(root, "tools/chatjs/search.ts"), "utf8"),
-	).toContain("./external-search/tool");
+	expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf8")).toContain(
+		"./external-search/tool",
+	);
 	expect(
 		await readFile(join(root, "tools/chatjs/search-config.ts"), "utf8"),
 	).toContain("EXTERNAL_SEARCH_KEY");
-	expect(
-		await readFile(join(root, "tools/chatjs/tools.ts"), "utf8"),
-	).not.toContain("external-search");
+	expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf8")).toContain(
+		"external-search",
+	);
 	expect(
 		await readFile(join(root, "tools/chatjs/ui.ts"), "utf8"),
 	).not.toContain("external-search");
@@ -198,5 +195,57 @@ test("search factories share a slot without registering a renderer or ordinary t
 test("sync protects an edited search selection", async () => {
 	const root = await project();
 	await writeFile(join(root, "tools/chatjs/search.ts"), "// user code");
+	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
+});
+
+async function installExecution(root: string, id: string) {
+	const dir = join(root, "tools/chatjs", id);
+	await mkdir(dir, { recursive: true });
+	await writeFile(join(dir, "tool.ts"), "export const runCode = {};");
+	await writeFile(
+		join(dir, "chatjs.json"),
+		JSON.stringify({
+			contractVersion: 1,
+			kind: "tool",
+			id,
+			slot: "codeExecution",
+			toolExport: "runCode",
+			envRequirements: [
+				{ options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]] },
+				{ options: [["RUNNER_REGION"]] },
+			],
+		}),
+	);
+}
+test("external execution tools compose with search and preserve credential alternatives", async () => {
+	const root = await project();
+	await installSearch(root, "external-search", "SEARCH_KEY");
+	await installExecution(root, "external-runner");
+	await syncTools(root);
+	const selection = join(root, "tools/chatjs/tools.ts");
+	const config = join(root, "tools/chatjs/code-execution-config.ts");
+	const before = await readFile(selection, "utf8");
+	expect(before).toContain("runCode as tool");
+	expect(before).toContain("codeExecution: tool");
+	const requirements = await import(config);
+	expect(requirements.codeExecutionEnvRequirement.options).toEqual([
+		["RUNNER_TOKEN", "RUNNER_REGION"],
+		["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
+	]);
+	expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf8")).toContain(
+		"external-runner",
+	);
+	expect(
+		await readFile(join(root, "tools/chatjs/ui.ts"), "utf8"),
+	).not.toContain("external-runner");
+	await installExecution(root, "second-runner");
+	await expect(syncTools(root)).rejects.toThrow("Only one codeExecution");
+	expect(await readFile(selection, "utf8")).toBe(before);
+	await rm(join(root, "tools/chatjs/external-runner"), { recursive: true });
+	await rm(join(root, "tools/chatjs/second-runner"), { recursive: true });
+	await syncTools(root);
+	expect(await readFile(selection, "utf8")).not.toContain("codeExecution:");
+	expect(await readFile(config, "utf8")).not.toContain("RUNNER_TOKEN");
+	await writeFile(selection, "// user code");
 	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });

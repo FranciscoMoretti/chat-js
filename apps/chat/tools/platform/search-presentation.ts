@@ -1,7 +1,5 @@
-import type { ToolSet } from "ai";
 import { z } from "zod";
 import type { StreamWriter } from "@/lib/ai/types";
-import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { createModuleLogger } from "@/lib/logger";
 import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
 
@@ -41,7 +39,7 @@ export async function executeMultiQuerySearch({
     query: { query: string; maxResults: number },
     index: number
   ) => Promise<Array<{ title: string; url: string; content: string }>>;
-  dataStream: StreamWriter;
+  dataStream?: StreamWriter;
   toolCallId: string;
   writeTopLevelUpdates: boolean;
   title: string;
@@ -53,7 +51,7 @@ export async function executeMultiQuerySearch({
     "executeMultiQuerySearch start"
   );
   if (writeTopLevelUpdates) {
-    dataStream.write({
+    dataStream?.write({
       type: "data-researchUpdate",
       data: {
         toolCallId,
@@ -82,7 +80,7 @@ export async function executeMultiQuerySearch({
 
   completedSteps += 1;
   if (writeTopLevelUpdates) {
-    dataStream.write({
+    dataStream?.write({
       type: "data-researchUpdate",
       data: {
         toolCallId,
@@ -98,10 +96,3 @@ export async function executeMultiQuerySearch({
   );
   return { searches: searchResults, ...(error ? { error } : {}) };
 }
-
-export type SearchToolFactory = (options: {
-  dataStream: StreamWriter;
-  writeTopLevelUpdates: boolean;
-  costAccumulator?: CostAccumulator;
-  toolCallIdOverride?: string;
-}) => ToolSet[string];

@@ -72,6 +72,11 @@ export const searchToolItems = [
 			type: "registry:file" as const,
 			target: `~/tools/chatjs/${id}/tool.ts`,
 		},
+		{
+			path: `src/tools/${id}/renderer.tsx`,
+			type: "registry:file" as const,
+			target: `~/tools/chatjs/${id}/renderer.tsx`,
+		},
 	],
 	meta: {
 		chatjs: toolDefinitionSchema.parse({
@@ -79,11 +84,54 @@ export const searchToolItems = [
 			kind: "tool",
 			id,
 			slot: "webSearch",
-			toolExport: "createWebSearch",
+			toolExport: "webSearch",
+			rendererExport: "WebSearchRenderer",
 			envRequirements: [{ options: [[key]] }],
 		}),
 	},
 }));
+
+export const codeExecutionItem = {
+	name: "vercel-code-execution",
+	type: "registry:item",
+	description: "Execute Python and JavaScript with Vercel Sandbox",
+	dependencies: [
+		"ai",
+		"zod",
+		`@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
+	],
+	files: [
+		"tool.ts",
+		"sandbox.ts",
+		"python.ts",
+		"javascript.ts",
+		"types.ts",
+		"renderer.tsx",
+	].map((file) => ({
+		path: `src/tools/vercel-code-execution/${file}`,
+		type: "registry:file" as const,
+		target: `~/tools/chatjs/vercel-code-execution/${file}`,
+	})),
+	meta: {
+		chatjs: toolDefinitionSchema.parse({
+			contractVersion: 1,
+			kind: "tool",
+			id: "vercel-code-execution",
+			slot: "codeExecution",
+			toolExport: "codeExecution",
+			rendererExport: "CodeExecution",
+			envRequirements: [
+				{
+					options: [
+						["VERCEL_OIDC_TOKEN"],
+						["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
+					],
+					description: "Vercel OIDC or team/project/token credentials",
+				},
+			],
+		}),
+	},
+} satisfies RegistryItem;
 
 export const registry = registrySchema.parse({
 	name: "chatjs",
@@ -93,6 +141,7 @@ export const registry = registrySchema.parse({
 		...builtInStorage,
 		...toolItems,
 		...searchToolItems,
+		codeExecutionItem,
 		{
 			name: "toolkit-renderer",
 			type: "registry:item",

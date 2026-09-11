@@ -1,3 +1,4 @@
+import { codeExecutionEnvRequirement } from "@/tools/chatjs/code-execution-config";
 import { searchEnvRequirement } from "@/tools/chatjs/search-config";
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
@@ -26,14 +27,7 @@ export const aiToolEnvRequirements: Partial<
     options: [["MCP_ENCRYPTION_KEY"]],
     description: "MCP_ENCRYPTION_KEY",
   },
-  codeExecution: {
-    options: [
-      ["VERCEL_OIDC_TOKEN"],
-      ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
-    ],
-    description:
-      "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
-  },
+  codeExecution: codeExecutionEnvRequirement,
 };
 
 export const authEnvRequirements: Record<

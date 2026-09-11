@@ -17,7 +17,7 @@ export async function runResearcher(
   const { config, dataStream, toolCallId, abortSignal } = options;
 
   const model = await getLanguageModel(config.research_model as ModelId);
-  const tools = await getAllTools(config, dataStream, toolCallId);
+  const tools = await getAllTools(config);
 
   if (Object.keys(tools).length === 0) {
     throw new Error(
@@ -44,6 +44,19 @@ export async function runResearcher(
       max_search_queries: config.search_api_max_queries,
     }),
     tools,
+    prepareStep: () => ({
+      toolsContext: Object.fromEntries(
+        Object.keys(tools).map((name) => [
+          name,
+          {
+            dataStream,
+            costAccumulator: options.costAccumulator,
+            writeTopLevelUpdates: false,
+            toolCallIdOverride: toolCallId,
+          },
+        ])
+      ),
+    }),
     maxOutputTokens: config.research_model_max_tokens,
     ...createTelemetry("researcher", options),
     onStepEnd: ({ usage }) => {

@@ -435,6 +435,7 @@ export async function scaffoldFromTemplate(
   delete manifest.dependencies["@ai-sdk/gateway"];
   delete manifest.dependencies["@vercel/blob"];
   delete manifest.dependencies["@tavily/core"];
+  delete manifest.dependencies["@vercel/sandbox"];
   await rm(join(destination, "tools/chatjs/tavily-search"), {
     recursive: true,
     force: true,

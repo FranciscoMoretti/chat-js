@@ -5,8 +5,6 @@ import type {
   UIMessageStreamWriter,
 } from "ai";
 import { z } from "zod";
-import type { createWebSearch } from "@/tools/chatjs/search";
-import type { codeExecution } from "@/tools/platform/code-execution";
 import type { deepResearch } from "@/tools/platform/deep-research/deep-research";
 import type { createCodeDocumentTool } from "@/tools/platform/documents/create-code-document";
 import type { createSheetDocumentTool } from "@/tools/platform/documents/create-sheet-document";
@@ -166,11 +164,8 @@ type generateImageTool = InferUITool<
 type generateVideoTool = InferUITool<
   ReturnType<typeof generateVideoToolFactory>
 >;
-type webSearchTool = InferUITool<ReturnType<typeof createWebSearch>>;
-type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 
 export type ChatTools = {
-  codeExecution: codeExecutionTool;
   createCodeDocument: createCodeDocumentToolType;
   createSheetDocument: createSheetDocumentToolType;
   createTextDocument: createTextDocumentToolType;
@@ -181,7 +176,6 @@ export type ChatTools = {
   generateImage: generateImageTool;
   generateVideo: generateVideoTool;
   readDocument: readDocumentTool;
-  webSearch: webSearchTool;
 } & InstalledTools;
 
 interface FollowupSuggestions {

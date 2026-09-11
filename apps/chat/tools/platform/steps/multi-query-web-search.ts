@@ -32,13 +32,13 @@ export async function multiQueryWebSearchStep({
     query: SearchQuery,
     index: number
   ) => Promise<Array<{ title: string; url: string; content: string }>>;
-  dataStream: StreamWriter;
+  dataStream?: StreamWriter;
   toolCallId: string;
 }): Promise<MultiQuerySearchResponse> {
   const updateId = generateUUID();
   try {
     // Send initial annotation showing all queries being executed
-    dataStream.write({
+    dataStream?.write({
       type: "data-researchUpdate",
       id: updateId,
       data: {
@@ -70,7 +70,7 @@ export async function multiQueryWebSearchStep({
     const allResults = deduplicateByDomainAndUrl(
       searchResults.flatMap((search) => search.results)
     );
-    dataStream.write({
+    dataStream?.write({
       type: "data-researchUpdate",
       id: updateId,
       data: {
@@ -94,7 +94,7 @@ export async function multiQueryWebSearchStep({
       error instanceof Error ? error.message : "Unknown error occurred";
 
     // Send error annotation
-    dataStream.write({
+    dataStream?.write({
       type: "data-researchUpdate",
       id: updateId,
       data: {

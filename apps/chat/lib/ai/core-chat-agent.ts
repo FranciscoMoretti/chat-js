@@ -155,6 +155,14 @@ export async function createCoreChatAgent({
       functionId: "chat-response",
     },
     tools: allTools,
+    prepareStep: () => ({
+      toolsContext: Object.fromEntries(
+        Object.keys(allTools).map((name) => [
+          name,
+          { dataStream, costAccumulator, writeTopLevelUpdates: true },
+        ])
+      ),
+    }),
     onError: (error) => {
       onError?.(error);
     },

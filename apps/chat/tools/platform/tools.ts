@@ -8,8 +8,6 @@ import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
-import { createWebSearch } from "@/tools/chatjs/search";
-import { codeExecution } from "./code-execution";
 import { deepResearch } from "./deep-research/deep-research";
 import { createCodeDocumentTool } from "./documents/create-code-document";
 import { createSheetDocumentTool } from "./documents/create-sheet-document";
@@ -51,7 +49,10 @@ export function getTools({
   };
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
-      ([name]) => name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled
+      ([name]) =>
+        (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
+        (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
+        (name !== "codeExecution" || config.ai.tools.codeExecution.enabled)
     )
   );
   const documentTypes = config.ai.tools.documents.types;
@@ -89,19 +90,6 @@ export function getTools({
               }
             : {}),
         }
-      : {}),
-    ...(config.ai.tools.webSearch.enabled
-      ? {
-          webSearch: createWebSearch({
-            dataStream,
-            writeTopLevelUpdates: true,
-            costAccumulator,
-          }),
-        }
-      : {}),
-
-    ...(config.ai.tools.codeExecution.enabled
-      ? { codeExecution: codeExecution({ costAccumulator }) }
       : {}),
     ...(config.ai.tools.image.enabled
       ? {
