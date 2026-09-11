@@ -38,6 +38,7 @@ function checkGenerated(content: string | null, path: string) {
 }
 
 const selections = {
+	retrieveUrl: { file: "url-retrieval", requirement: "urlRetrievalEnvRequirement" },
 	webSearch: { file: "search", requirement: "searchEnvRequirement" },
 	codeExecution: {
 		file: "code-execution",

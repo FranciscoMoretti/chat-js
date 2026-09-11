@@ -16,6 +16,7 @@
       "!tools/chatjs/ui.ts",
       "!tools/chatjs/search-config.ts",
       "!tools/chatjs/code-execution-config.ts",
+      "!tools/chatjs/url-retrieval-config.ts",
       "!hooks/use-mobile.ts"
     ]
   },

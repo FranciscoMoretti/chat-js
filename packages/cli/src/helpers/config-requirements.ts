@@ -38,10 +38,7 @@ export const builtInToolEnvRequirements: Record<
 		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
 		description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
 	},
-	urlRetrieval: {
-		options: [["FIRECRAWL_API_KEY"]],
-		description: "FIRECRAWL_API_KEY",
-	},
+	urlRetrieval: undefined,
 	deepResearch: {
 		options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
 		description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",

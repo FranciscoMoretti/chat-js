@@ -91,7 +91,9 @@ function createAiSchema<G extends GatewayType>(g: G) {
             .describe("Requires TAVILY_API_KEY or FIRECRAWL_API_KEY"),
         }),
         urlRetrieval: z.object({
-          enabled: z.boolean().describe("Requires FIRECRAWL_API_KEY"),
+          enabled: z
+            .boolean()
+            .describe("Requires the selected URL retrieval tool’s credentials"),
         }),
         codeExecution: z.object({
           enabled: z

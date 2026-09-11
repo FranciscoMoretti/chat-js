@@ -100,7 +100,7 @@ const config = defineConfig({
         enabled: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
       },
       urlRetrieval: {
-        enabled: true, // Requires FIRECRAWL_API_KEY
+        enabled: true, // Requires the selected URL retrieval tool’s credentials
       },
       codeExecution: {
         enabled: true, // Vercel-native, no key needed

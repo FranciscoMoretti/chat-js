@@ -36,7 +36,7 @@ describe("collectEnvChecklist", () => {
 		);
 	});
 
-	it("includes installable tool env requirements", () => {
+	it("uses selected retrieval credentials without requiring Firecrawl", () => {
 		const entries = collectEnvChecklist({
 			gateway: "vercel",
 			coreFeatures: {
@@ -48,7 +48,7 @@ describe("collectEnvChecklist", () => {
 			},
 			builtInTools: {
 				webSearch: false,
-				urlRetrieval: false,
+				urlRetrieval: true,
 				deepResearch: false,
 				codeExecution: false,
 				imageGeneration: false,
@@ -61,14 +61,15 @@ describe("collectEnvChecklist", () => {
 			},
 			installableToolEnvRequirements: [
 				{
-					description: "FIRECRAWL_API_KEY",
-					options: [["FIRECRAWL_API_KEY"]],
+					description: "PAGE_TOKEN",
+					options: [["PAGE_TOKEN"]],
 				},
 			],
 		});
 
-		expect(entries.some((entry) => entry.vars === "FIRECRAWL_API_KEY")).toBe(
-			true,
+		expect(entries.some((entry) => entry.vars === "PAGE_TOKEN")).toBe(true);
+		expect(entries.some((entry) => entry.vars.includes("FIRECRAWL"))).toBe(
+			false,
 		);
 	});
 });

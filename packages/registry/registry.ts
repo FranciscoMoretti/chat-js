@@ -21,6 +21,7 @@ export const toolItems = [
 	},
 	{
 		id: "retrieve-url",
+		slot: "retrieveUrl",
 		toolExport: "retrieveUrl",
 		rendererExport: "RetrieveUrlRenderer",
 		description: "Fetch structured information from a single URL",
