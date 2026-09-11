@@ -16,7 +16,9 @@ const COST_CENTS = 5; // Vercel Sandbox execution
 
 export const codeExecution = ({
   costAccumulator,
+  sandboxName,
 }: {
+  sandboxName?: string;
   costAccumulator?: { addAPICost(name: string, cost: number): void };
 }) =>
   tool({
@@ -91,7 +93,7 @@ Output rules:
 
       try {
         log.info({ requestId, title, runtime, language }, "creating sandbox");
-        sandbox = await createSandbox(runtime, abortSignal);
+        sandbox = await createSandbox(runtime, abortSignal, sandboxName);
         abortSignal?.addEventListener("abort", stop, { once: true });
         abortSignal?.throwIfAborted();
         log.debug({ requestId }, "sandbox created");

@@ -31,11 +31,13 @@ export function getSandboxRuntime(
 
 export function createSandbox(
   runtime: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  name?: string
 ): Promise<Sandbox> {
   return Sandbox.create({
     runtime,
     persistent: false,
+    name,
     signal,
     timeout: 5 * 60 * 1000,
     resources: { vcpus: 2 },

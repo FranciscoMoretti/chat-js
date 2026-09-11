@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
+import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { createModuleLogger } from "../lib/logger";
 import { executeJavaScriptInSandbox } from "../tools/platform/code-execution.javascript";
 import { executePythonInSandbox } from "../tools/platform/code-execution.python";
@@ -12,14 +13,21 @@ import {
 for (const language of ["javascript", "python"] as const) {
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
     test.setTimeout(120_000);
+    const name = eveCodeSandboxName({
+      ownerId: "local-sdk-fixture",
+      sessionId: crypto.randomUUID(),
+      callId: language,
+    });
     const sandbox = await createSandbox(
       language === "javascript" ? "node22" : "python3.13",
-      AbortSignal.timeout(30_000)
+      AbortSignal.timeout(30_000),
+      name
     );
     const log = createModuleLogger("sandbox-sdk-test");
     const requestId = crypto.randomUUID();
     try {
       expect(sandbox.persistent).toBe(false);
+      expect(sandbox.name).toBe(name);
       const context = {
         sandbox,
         log,

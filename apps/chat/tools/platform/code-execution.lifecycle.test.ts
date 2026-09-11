@@ -35,7 +35,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 test("cancelling code execution stops its sandbox and settles cleanup once", async () => {
-  const tool = codeExecution({});
+  const tool = codeExecution({ sandboxName: "named-fixture" });
   if (!tool.execute) {
     throw new Error("Missing executor");
   }
@@ -58,7 +58,11 @@ test("cancelling code execution stops its sandbox and settles cleanup once", asy
   await expect(result).resolves.toMatchObject({
     message: "Sandbox execution failed: Sandbox stopped",
   });
-  expect(execution.create).toHaveBeenCalledWith("node22", controller.signal);
+  expect(execution.create).toHaveBeenCalledWith(
+    "node22",
+    controller.signal,
+    "named-fixture"
+  );
   expect(execution.cleanup).toHaveBeenCalledOnce();
 });
 
