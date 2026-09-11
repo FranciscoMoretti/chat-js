@@ -299,6 +299,9 @@ export async function createEveConversation(
           eq(eveConversation.operationId, operationId)
         )
       );
+    if (existing) {
+      assertCreationAvailable(existing.state);
+    }
     if (
       !existing ||
       existing.firstMessage !== message ||
@@ -311,7 +314,6 @@ export async function createEveConversation(
         "This operation already has a different message, attachments, model, or source turn."
       );
     }
-    assertCreationAvailable(existing.state);
     const binding = boundConversation(existing);
     if (binding) {
       return binding;

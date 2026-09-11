@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
+import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   captureEveDocumentCheckpoint,
   getAccessibleEveDocument,
@@ -115,6 +116,9 @@ test("document purge requires the owned family fence, erases inherited revisions
   await beginEveConversationDeletion(owner, child.id);
   await expect(purgeEveFamilyDocuments(stranger, root.id)).rejects.toThrow();
   await expect(purgeEveFamilyDocuments(owner, child.id)).rejects.toThrow();
+  await expect(completeEveConversationDeletion(owner, root.id)).rejects.toThrow(
+    "content cleanup is incomplete"
+  );
   await purgeEveFamilyDocuments(owner, root.id);
   await purgeEveFamilyDocuments(owner, root.id);
   for (const table of [

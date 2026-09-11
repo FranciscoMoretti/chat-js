@@ -3,6 +3,7 @@ import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
+import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -565,4 +566,101 @@ test("unresolved creation prevents a partial family deletion", async () => {
     "Finish recovering"
   );
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
+});
+
+test("final application deletion erases family content, preserves accounting and rejects old creation replay", async () => {
+  const operation = crypto.randomUUID();
+  const start = vi.fn(async () => crypto.randomUUID());
+  const root = await createEveConversation(
+    owner,
+    operation,
+    "Private initial text",
+    start,
+    "model",
+    "hash"
+  );
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Child text",
+    start,
+    undefined,
+    undefined,
+    { conversationId: root.id, beforeTurnId: "turn_0" }
+  );
+  const unrelated = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Keep this",
+    start
+  );
+  await updateEveConversationMetadata(owner, root.id, {
+    title: "Private title",
+    isPinned: true,
+    visibility: "public",
+  });
+  await db.insert(eveUsage).values({
+    eventId: crypto.randomUUID(),
+    sessionId: root.sessionId,
+    turnId: "turn_0",
+    ownerId: owner,
+    costUsd: "0.01",
+    chargedCents: 1,
+  });
+  const accounting = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, root.sessionId));
+  await expect(completeEveConversationDeletion(owner, root.id)).rejects.toThrow(
+    "pending deletion"
+  );
+  await beginEveConversationDeletion(owner, child.id);
+  await expect(
+    completeEveConversationDeletion("other", root.id)
+  ).rejects.toThrow("pending deletion");
+  await expect(
+    completeEveConversationDeletion(owner, child.id)
+  ).rejects.toThrow("pending deletion");
+  await completeEveConversationDeletion(owner, root.id);
+  await completeEveConversationDeletion(owner, root.id);
+  for (const id of [root.id, child.id]) {
+    const [row] = await db
+      .select()
+      .from(eveConversation)
+      .where(eq(eveConversation.id, id));
+    expect(row).toMatchObject({
+      state: "deleted",
+      firstMessage: "",
+      title: null,
+      initialModelId: null,
+      initialContentHash: null,
+      visibility: "private",
+      isPinned: false,
+    });
+    expect(row.sessionId).toBe(
+      id === root.id ? root.sessionId : child.sessionId
+    );
+    expect(await getEveConversation(owner, id)).toBeUndefined();
+  }
+  expect((await getEveCreation(owner, operation))?.operationId).toBe(operation);
+  expect((await getEveConversation(owner, unrelated.id))?.firstMessage).toBe(
+    "Keep this"
+  );
+  expect(
+    await db
+      .select()
+      .from(eveUsage)
+      .where(eq(eveUsage.sessionId, root.sessionId))
+  ).toEqual(accounting);
+  await expect(
+    createEveConversation(
+      owner,
+      operation,
+      "Private initial text",
+      start,
+      "model",
+      "hash"
+    )
+  ).rejects.toThrow("can no longer be created");
+  expect(start).toHaveBeenCalledTimes(3);
 });

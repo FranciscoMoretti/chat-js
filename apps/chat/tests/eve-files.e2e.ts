@@ -2,6 +2,7 @@ import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
+import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
@@ -353,6 +354,9 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     releaseEveFamilyFileReferences(owner, remaining)
   ).rejects.toThrow("cleanup is incomplete");
   await completeEveFilePurge(owner, [key]);
+  await expect(
+    completeEveConversationDeletion(owner, remaining)
+  ).rejects.toThrow("content cleanup is incomplete");
   await releaseEveFamilyFileReferences(owner, remaining);
   await releaseEveFamilyFileReferences(owner, remaining);
   expect(
