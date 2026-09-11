@@ -22,6 +22,7 @@ import {
 	promptProjectName,
 	promptStorage,
 	promptSearchTool,
+	promptUrlRetrievalTool,
 	promptCodeExecutionTool,
 } from "../helpers/prompts";
 import {
@@ -107,6 +108,7 @@ const createOptionsSchema = z.object({
 	storageConfig: z.string().optional(),
 	gateway: z.string().optional(),
 	searchTool: z.string().optional(),
+	urlRetrievalTool: z.string().optional(),
 	codeExecutionTool: z.string().optional(),
 });
 
@@ -117,6 +119,10 @@ export const create = new Command()
 		"code-execution tool name or registry address",
 	)
 	.option("--search-tool <item>", "search tool name or registry address")
+	.option(
+		"--url-retrieval-tool <item>",
+		"URL retrieval tool name or registry address",
+	)
 	.description("scaffold a new ChatJS chat application")
 	.argument("[directory]", "target directory for the project")
 	.option(
@@ -211,38 +217,43 @@ export const create = new Command()
 			const toolSources = assistantTools.installableTools.map((tool) =>
 				itemAddress(tool, "tool"),
 			);
-			if (options.searchTool) assistantTools.builtInTools.webSearch = true;
-			const needsSearch =
-				assistantTools.builtInTools.webSearch ||
-				assistantTools.builtInTools.deepResearch ||
-				options.searchTool;
-			const searchSource = needsSearch
-				? itemAddress(
-						options.searchTool ?? (await promptSearchTool(options.yes)),
-						"tool",
-					)
-				: undefined;
-			if (searchSource) {
-				const metadata = toolDefinitionSchema.parse(
-					(await readItem(searchSource, targetDir)).meta?.chatjs,
-				);
-				if (metadata.slot !== "webSearch")
-					throw new Error("Selected tool must declare the webSearch slot.");
-				toolSources.push(searchSource);
-			}
-			if (options.codeExecutionTool)
-				assistantTools.builtInTools.codeExecution = true;
-			if (assistantTools.builtInTools.codeExecution) {
+			if (assistantTools.builtInTools.deepResearch)
+				assistantTools.builtInTools.webSearch = true;
+			const selections = [
+				{
+					source: options.searchTool,
+					feature: "webSearch",
+					slot: "webSearch",
+					prompt: promptSearchTool,
+				},
+				{
+					source: options.codeExecutionTool,
+					feature: "codeExecution",
+					slot: "codeExecution",
+					prompt: promptCodeExecutionTool,
+				},
+				{
+					source: options.urlRetrievalTool,
+					feature: "urlRetrieval",
+					slot: "retrieveUrl",
+					prompt: promptUrlRetrievalTool,
+				},
+			] as const;
+			for (const selection of selections) {
+				if (selection.source)
+					assistantTools.builtInTools[selection.feature] = true;
+				if (!assistantTools.builtInTools[selection.feature]) continue;
 				const source = itemAddress(
-					options.codeExecutionTool ??
-						(await promptCodeExecutionTool(options.yes)),
+					selection.source ?? (await selection.prompt(options.yes)),
 					"tool",
 				);
 				const metadata = toolDefinitionSchema.parse(
 					(await readItem(source, targetDir)).meta?.chatjs,
 				);
-				if (metadata.slot !== "codeExecution")
-					throw new Error("Selected tool must declare the codeExecution slot.");
+				if (metadata.slot !== selection.slot)
+					throw new Error(
+						`Selected tool must declare the ${selection.slot} slot.`,
+					);
 				toolSources.push(source);
 			}
 			const expectedTools = [];
@@ -296,7 +307,7 @@ export const create = new Command()
 					]);
 					await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
 					await rm(join(targetDir, "lib/ai/gateway.ts"));
-					// A fresh clone receives the requested search and execution selections as well.
+					// A fresh clone receives the requested tool selections as well.
 					const toolDirectory = join(targetDir, "tools/chatjs");
 					for (const entry of await readdir(toolDirectory, {
 						withFileTypes: true,
@@ -315,7 +326,10 @@ export const create = new Command()
 						);
 						if (
 							metadata.slot === "webSearch" ||
-							metadata.slot === "codeExecution"
+							metadata.slot === "codeExecution" ||
+							metadata.slot === "retrieveUrl" ||
+							(metadata.id === "retrieve-url" &&
+								metadata.toolExport === "retrieveUrl")
 						)
 							await rm(join(toolDirectory, entry.name), { recursive: true });
 					}

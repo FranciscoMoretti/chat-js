@@ -3,6 +3,16 @@ title: Retrieve URL
 description: Extract structured content from a single web page through Firecrawl
 ---
 
+## Select during creation
+
+```bash
+npx @chat-js/cli@latest create my-app --yes --url-retrieval-tool retrieve-url
+```
+
+Interactive creation offers Firecrawl or an external registry item when you enable
+URL retrieval. Fresh apps install only the selected retrieval implementation.
+Firecrawl’s SDK is installed when the selected retrieval or search item needs it.
+
 ## Installation
 
 Start in a ChatJS app with `chat.config.ts` and `components.json`.
@@ -30,6 +40,19 @@ results include title, content, URL, description, and optional language.
 This item retrieves a supplied page, rather than searching the web. Missing
 credentials, invalid URLs, and provider failures produce error results.
 Returned URLs omit query strings and fragments.
+
+## External implementations
+
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --url-retrieval-tool https://example.com/r/read-page.json
+```
+
+Your registry item declares `slot: "retrieveUrl"` in `meta.chatjs` and its installed
+`chatjs.json` descriptor. Export a standard AI SDK tool with your own input/output
+schemas. A renderer is optional. Declare credentials in `envRequirements` so the
+CLI checklist and app validation ask for your variables rather than Firecrawl’s.
+Only one item can occupy this selection.
 
 ## Customize
 

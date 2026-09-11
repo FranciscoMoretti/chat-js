@@ -523,3 +523,28 @@ export async function promptCodeExecutionTool(
 	handleCancel(address);
 	return String(address).trim();
 }
+
+export async function promptUrlRetrievalTool(
+	skipPrompt: boolean,
+): Promise<string> {
+	if (skipPrompt) return "retrieve-url";
+	const choice = await select({
+		message: "Which URL retrieval tool should chat use?",
+		options: [
+			{
+				value: "retrieve-url",
+				label: "Firecrawl",
+				hint: "Requires FIRECRAWL_API_KEY",
+			},
+			{ value: "external", label: "External registry item" },
+		],
+	});
+	handleCancel(choice);
+	if (choice !== "external") return choice;
+	const address = await text({
+		message: "URL retrieval tool registry address:",
+		validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+	});
+	handleCancel(address);
+	return String(address).trim();
+}

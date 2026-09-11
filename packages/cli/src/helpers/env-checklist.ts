@@ -110,6 +110,7 @@ export function collectEnvChecklist(input: {
 	for (const tool of BUILT_IN_TOOL_KEYS) {
 		if (
 			tool === "webSearch" ||
+			tool === "urlRetrieval" ||
 			tool === "deepResearch" ||
 			tool === "codeExecution"
 		)

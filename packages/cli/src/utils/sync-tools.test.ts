@@ -249,3 +249,39 @@ test("external execution tools compose with search and preserve credential alter
 	await writeFile(selection, "// user code");
 	await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
+
+test("URL retrieval uses the selected export and credentials and rejects duplicate providers", async () => {
+	const root = await project();
+	const install = async (id: string) => {
+		const dir = join(root, "tools/chatjs", id);
+		await mkdir(dir, { recursive: true });
+		await writeFile(join(dir, "tool.ts"), "export const readPage = {};");
+		await writeFile(
+			join(dir, "chatjs.json"),
+			JSON.stringify({
+				contractVersion: 1,
+				kind: "tool",
+				id,
+				slot: "retrieveUrl",
+				toolExport: "readPage",
+				envRequirements: [{ options: [["PAGE_TOKEN"]] }],
+			}),
+		);
+	};
+	await install("custom-retrieval");
+	await syncTools(root);
+	const server = await readFile(join(root, "tools/chatjs/tools.ts"), "utf8");
+	expect(server).toContain("readPage as tool");
+	expect(server).toContain("retrieveUrl: tool");
+	const requirements = await readFile(
+		join(root, "tools/chatjs/url-retrieval-config.ts"),
+		"utf8",
+	);
+	expect(requirements).toContain("PAGE_TOKEN");
+	expect(requirements).not.toContain("FIRECRAWL");
+	await install("second-retrieval");
+	await expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
+	expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf8")).toBe(
+		server,
+	);
+});

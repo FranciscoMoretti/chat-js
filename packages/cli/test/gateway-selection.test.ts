@@ -123,6 +123,15 @@ import {z} from "zod";
 export const lookup = tool({inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`},
       ]});
     }
+    if (path === "/external-retrieval.json") {
+      const definition = { contractVersion: 1, kind: "tool", id: "acme-retrieval", slot: "retrieveUrl", toolExport: "readPage", envRequirements: [{options: [["ACME_RETRIEVAL_KEY"]]}] };
+      return Response.json({name: definition.id, type: "registry:item", dependencies: ["ai", "zod"], meta: {chatjs: definition}, files: [
+        {path: "chatjs.json", type: "registry:file", target: "~/tools/chatjs/acme-retrieval/chatjs.json", content: JSON.stringify(definition)},
+        {path: "tool.ts", type: "registry:file", target: "~/tools/chatjs/acme-retrieval/tool.ts", content: `import {tool} from "ai";
+import {z} from "zod";
+export const readPage = tool({inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`},
+      ]});
+    }
     if (path === "/contracts.tgz") return new Response(Bun.file(archive));
 		if (path === "/gateway.json")
 			return Response.json({
@@ -197,12 +206,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ...(gateway === "acme" ? ["--storage-provider", `http://127.0.0.1:${registryServer.port}/external-storage.json`, "--storage-config", '{"bucket":"test"}'] : gateway === "openai" ? ["--storage-provider", "s3", "--storage-config", '{"bucket":"test","region":"us-east-1"}'] : []),
 			"--yes",
 			"--no-electron",
- ...(gateway === "vercel" ? ["--search-tool", "firecrawl-search", "--code-execution-tool", "vercel-code-execution"] : gateway === "acme" ? ["--code-execution-tool", `http://127.0.0.1:${registryServer.port}/external-execution.json`, "--search-tool", `http://127.0.0.1:${registryServer.port}/external-search.json`] : []),
+ ...(gateway === "vercel" ? ["--search-tool", "firecrawl-search", "--code-execution-tool", "vercel-code-execution", "--url-retrieval-tool", "retrieve-url"] : gateway === "acme" ? ["--url-retrieval-tool", `http://127.0.0.1:${registryServer.port}/external-retrieval.json`, "--code-execution-tool", `http://127.0.0.1:${registryServer.port}/external-execution.json`, "--search-tool", `http://127.0.0.1:${registryServer.port}/external-search.json`] : []),
 		]);
 		const manifestPath = join(cwd, "package.json");
 		const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
  if (gateway === "vercel") {
  expect(manifest.dependencies["@vercel/sandbox"]).toBeDefined();
+ expect(await readFile(join(cwd, "tools/chatjs/url-retrieval-config.ts"), "utf8")).toContain("FIRECRAWL_API_KEY");
+ expect(await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()).toBe(true);
  expect(await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")).toContain("vercel-code-execution/tool");
  expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
  expect(await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()).toBe(false);
@@ -249,8 +260,15 @@ assert.deepEqual(result, {stdout: "echo hello", exitCode: 0});
 assert.ok(tools.webSearch.execute);
 const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
 assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
+assert.ok(tools.retrieveUrl.execute);
+const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: undefined});
+assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `);
       await run(cwd, ["bun", "verify-execution.ts"]);
+      expect(manifest.dependencies["@mendable/firecrawl-js"]).toBeUndefined();
+      expect(await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()).toBe(false);
+      expect(await readFile(join(cwd, "tools/chatjs/url-retrieval-config.ts"), "utf8")).toContain("ACME_RETRIEVAL_KEY");
+      expect(await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")).not.toContain("tool-retrieveUrl");
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
       expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
       await writeFile(join(cwd, "verify-storage.ts"), `import { Files } from "files-sdk";
