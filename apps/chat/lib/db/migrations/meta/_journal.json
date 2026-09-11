@@ -435,6 +435,13 @@
       "when": 1789145749379,
       "tag": "0061_lush_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1789164513874,
+      "tag": "0062_bored_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

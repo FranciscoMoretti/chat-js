@@ -1,0 +1,1 @@
+ALTER TABLE "EveConversation" ADD COLUMN "usageStreamIndex" integer DEFAULT 0 NOT NULL;

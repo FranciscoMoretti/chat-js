@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "./client";
-import { eveUsage, userCredit } from "./schema";
+import { eveConversation, eveUsage, userCredit } from "./schema";
 
 function hasConflictingCost(stored: string | null, incoming: string | null) {
   return (
@@ -111,4 +111,49 @@ export async function recordEveUsage(input: {
     }
     return (costUsd ?? existing?.costUsd) != null;
   });
+}
+
+/** This cursor is billing progress, never a second copy of the transcript. */
+export async function getEveUsageCursor(ownerId: string, sessionId: string) {
+  const [row] = await db
+    .select({ streamIndex: eveConversation.usageStreamIndex })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  if (!row) {
+    throw new Error("Conversation not found.");
+  }
+  return row.streamIndex;
+}
+
+/** Advance only after durable ingestion; concurrent older readers cannot rewind it. */
+export async function advanceEveUsageCursor(
+  ownerId: string,
+  sessionId: string,
+  streamIndex: number
+) {
+  if (!Number.isSafeInteger(streamIndex) || streamIndex < 0) {
+    throw new Error("Invalid Eve usage cursor.");
+  }
+  const [row] = await db
+    .update(eveConversation)
+    .set({
+      usageStreamIndex: sql`greatest(${eveConversation.usageStreamIndex}, ${streamIndex})`,
+    })
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    )
+    .returning({ id: eveConversation.id });
+  if (!row) {
+    throw new Error("Conversation not found.");
+  }
 }

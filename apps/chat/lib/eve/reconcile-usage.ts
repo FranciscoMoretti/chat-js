@@ -1,33 +1,36 @@
-import { Client } from "eve/client";
-import { listEveOwnerBindings, ownsEveSession } from "../db/eve-queries";
+import { Client, type MessageStreamEvent } from "eve/client";
+import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
+import { listEveOwnerBindings } from "../db/eve-queries";
 import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 
-/** Repair missed hook writes from Eve's finite authoritative stream snapshot. */
+/** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
 export async function reconcileEveUsage(ownerId: string, sessionId: string) {
   assertEveConfigured();
-  if (!(await ownsEveSession(ownerId, sessionId))) {
-    throw new Error("Conversation not found.");
-  }
+  const startIndex = await getEveUsageCursor(ownerId, sessionId);
   const client = new Client({
     host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": ownerId },
   });
-  const snapshot = await client.sessions
-    .attach(sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+  const session = client.sessions.attach(sessionId);
+  let streamIndex = startIndex;
   let unresolved = false;
-  const latestActivity = snapshot.events.findLast(
-    (event) =>
-      event.type === "message.received" || event.type === "message.completed"
-  );
-  if (latestActivity) {
-    await ingestEveActivity(ownerId, sessionId, latestActivity);
-  }
-  for (const event of snapshot.events) {
+  let latestActivity: MessageStreamEvent | undefined;
+  for await (const event of session.stream({
+    startIndex,
+    follow: false,
+    signal: AbortSignal.timeout(15_000),
+  })) {
+    streamIndex += 1;
+    if (
+      event.type === "message.received" ||
+      event.type === "message.completed"
+    ) {
+      latestActivity = event;
+    }
     const priced = await ingestEveUsage(ownerId, sessionId, event);
     if (
       (event.type === "step.completed" || event.type === "action.result") &&
@@ -36,10 +39,16 @@ export async function reconcileEveUsage(ownerId: string, sessionId: string) {
       unresolved = true;
     }
   }
+  if (latestActivity) {
+    await ingestEveActivity(ownerId, sessionId, latestActivity);
+  }
   if (unresolved) {
     throw new Error(
       "Completed usage needs provider cost reconciliation before starting more work."
     );
+  }
+  if (streamIndex > startIndex) {
+    await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 }
 
