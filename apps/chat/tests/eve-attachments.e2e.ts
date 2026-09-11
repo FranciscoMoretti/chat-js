@@ -4,7 +4,12 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../lib/db/client";
-import { eveStoredFile } from "../lib/db/schema";
+import {
+  eveConversation,
+  eveFileReference,
+  eveStoredFile,
+  user,
+} from "../lib/db/schema";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -58,6 +63,12 @@ test("ChatJS upload becomes a durable Eve image and creation retries retain atta
     const binding = z
       .object({ id: z.uuid(), sessionId: z.string() })
       .parse(await created.json());
+    expect(
+      await db
+        .select({ key: eveFileReference.key })
+        .from(eveFileReference)
+        .where(eq(eveFileReference.conversationId, binding.id))
+    ).toEqual([{ key: keyFromFileUrl(file.url) }]);
     await page.goto(`/chat/${binding.id}`);
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
@@ -219,6 +230,19 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       page.getByRole("textbox", { name: "Message", exact: true })
     ).toHaveText("");
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
+    const conversationId = new URL(page.url()).pathname.split("/").at(-1);
+    if (!conversationId) {
+      throw new Error("Missing conversation ID.");
+    }
+    await expect
+      .poll(async () => {
+        const rows = await db
+          .select({ key: eveFileReference.key })
+          .from(eveFileReference)
+          .where(eq(eveFileReference.conversationId, conversationId));
+        return rows.map((row) => row.key).sort();
+      })
+      .toEqual(urls.slice(1).map(keyFromFileUrl).sort());
     // Reload after durable acceptance, while the response is still in progress.
     await expect(
       page
@@ -361,6 +385,49 @@ test("uploaded attachment has durable authenticated ownership", async ({
     const downloaded = await page.request.get(file.url);
     expect(downloaded.ok()).toBe(true);
     expect(await downloaded.body()).toEqual(redPng);
+    // This test-owned upload becomes a foreign file before any conversation uses it.
+    const stranger = crypto.randomUUID();
+    await db.insert(user).values({
+      id: stranger,
+      email: `${stranger}@test.invalid`,
+      name: "Foreign file fixture",
+    });
+    try {
+      await db
+        .update(eveStoredFile)
+        .set({ ownerId: stranger })
+        .where(eq(eveStoredFile.key, key));
+      const operationId = crypto.randomUUID();
+      const rejected = await page.request.post("/api/agent-conversations", {
+        headers: { origin: new URL(page.url()).origin },
+        data: {
+          operationId,
+          modelId: "openai/gpt-5-mini",
+          message: [
+            {
+              type: "file",
+              data: file.url,
+              mediaType: "image/png",
+              filename: "foreign.png",
+            },
+          ],
+        },
+      });
+      expect(rejected.status()).toBe(400);
+      expect(await rejected.json()).toMatchObject({ creationRejected: true });
+      expect(
+        await db
+          .select({ id: eveConversation.id })
+          .from(eveConversation)
+          .where(eq(eveConversation.operationId, operationId))
+      ).toEqual([]);
+    } finally {
+      await db
+        .update(eveStoredFile)
+        .set({ ownerId: session.user.id })
+        .where(eq(eveStoredFile.key, key));
+      await db.delete(user).where(eq(user.id, stranger));
+    }
   } finally {
     execFileSync("bun", [
       "-e",

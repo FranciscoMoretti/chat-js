@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import {
   CreationConflict,
   createEveConversation,
@@ -14,6 +15,7 @@ import {
   createConversationInput,
   type EveForkInput,
 } from "@/lib/eve/contracts";
+import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
@@ -74,6 +76,10 @@ export async function POST(request: Request) {
     if (!existing) {
       try {
         await loadEveModelDefinition(input.data.modelId);
+        await assertEveFilesOwned(
+          session.user.id,
+          eveMessageFileKeys(input.data.message)
+        );
         preparedMessage = await prepareEveMessage(
           input.data.message,
           input.data.modelId
@@ -164,7 +170,8 @@ export async function POST(request: Request) {
         : createHash("sha256")
             .update(JSON.stringify(input.data.message))
             .digest("hex"),
-      input.data.fork
+      input.data.fork,
+      eveMessageFileKeys(input.data.message)
     );
     return Response.json(binding);
   } catch (cause) {

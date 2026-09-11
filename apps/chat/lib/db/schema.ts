@@ -516,7 +516,31 @@ export const eveStoredFile = pgTable(
       .references(() => user.id),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
-  (table) => [index("EveStoredFile_owner").on(table.ownerId)]
+  (table) => [
+    index("EveStoredFile_owner").on(table.ownerId),
+    uniqueIndex("EveStoredFile_key_owner").on(table.key, table.ownerId),
+  ]
+);
+
+export const eveFileReference = pgTable(
+  "EveFileReference",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    key: text("key").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.key] }),
+    index("EveFileReference_key").on(table.key),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }),
+    foreignKey({
+      columns: [table.key, table.ownerId],
+      foreignColumns: [eveStoredFile.key, eveStoredFile.ownerId],
+    }),
+  ]
 );
 
 export const eveUsage = pgTable(

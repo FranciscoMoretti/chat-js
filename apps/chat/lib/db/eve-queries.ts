@@ -1,9 +1,10 @@
 import { and, desc, eq, ilike, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { eveConversation } from "@/lib/db/schema";
+import { eveConversation, eveFileReference } from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { initializeEveForkDocuments } from "./eve-documents";
+import { referenceEveFiles } from "./eve-files";
 
 // Creation reservations remain visible for recovery; deletion records never do.
 const visibleConversation = inArray(eveConversation.state, [
@@ -165,7 +166,7 @@ async function reserveEveConversation(
         "The source conversation is not available for editing."
       );
     }
-    return await tx
+    const rows = await tx
       .insert(eveConversation)
       .values({
         ...value,
@@ -177,6 +178,29 @@ async function reserveEveConversation(
       })
       .onConflictDoNothing()
       .returning();
+    const created = rows[0];
+    if (created && source) {
+      // Retain inherited files conservatively; native history owns turn contents.
+      const references = await tx
+        .select({ key: eveFileReference.key })
+        .from(eveFileReference)
+        .where(
+          and(
+            eq(eveFileReference.conversationId, source.id),
+            eq(eveFileReference.ownerId, value.ownerId)
+          )
+        );
+      if (references.length) {
+        await tx.insert(eveFileReference).values(
+          references.map(({ key }) => ({
+            key,
+            ownerId: value.ownerId,
+            conversationId: created.id,
+          }))
+        );
+      }
+    }
+    return rows;
   });
 }
 
@@ -252,7 +276,8 @@ export async function createEveConversation(
   create: (id: string) => Promise<string>,
   initialModelId?: string,
   initialContentHash?: string,
-  fork?: EveForkInput
+  fork?: EveForkInput,
+  fileKeys: string[] = []
 ) {
   let [reservation] = await reserveEveConversation(
     {
@@ -299,6 +324,7 @@ export async function createEveConversation(
     if (fork) {
       await initializeEveForkDocuments(ownerId, reservation.id);
     }
+    await referenceEveFiles(ownerId, reservation.id, fileKeys);
     return await db.transaction(async (tx) => {
       // The reservation is already committed so native hooks can find it.
       // Transaction locks release on worker death; creating rows need no manual repair.

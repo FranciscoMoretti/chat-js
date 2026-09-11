@@ -1,9 +1,11 @@
 import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
-import { ownsEveSession } from "@/lib/db/eve-queries";
+import { referenceEveFiles } from "@/lib/db/eve-files";
+import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
+import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
@@ -33,7 +35,9 @@ async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
 
 async function readCommand(
   request: Request,
-  policy: NonNullable<ReturnType<typeof parseSessionRequest>>
+  policy: NonNullable<ReturnType<typeof parseSessionRequest>>,
+  ownerId: string,
+  conversationId: string
 ) {
   let body: string | undefined;
   let isNewMessage = false;
@@ -57,6 +61,11 @@ async function readCommand(
       modelId = selectedModel ?? input.data.modelId;
       try {
         await loadEveModelDefinition(modelId);
+        await referenceEveFiles(
+          ownerId,
+          conversationId,
+          eveMessageFileKeys(input.data.message)
+        );
         body = JSON.stringify({
           message: await prepareEveMessage(input.data.message, modelId),
         });
@@ -91,14 +100,22 @@ async function handle(
   const { path } = await context.params;
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
-  if (!(policy && (await ownsEveSession(session.user.id, policy.sessionId)))) {
+  const conversation = policy
+    ? await getBoundEveConversationForSession(session.user.id, policy.sessionId)
+    : undefined;
+  if (!(policy && conversation)) {
     return rejectRequest(request, "Conversation not found.", 404);
   }
   const query = safeStreamQuery(new URL(request.url).searchParams);
   if (!query || (request.method !== "GET" && query.size)) {
     return rejectRequest(request, "Invalid command query.", 400);
   }
-  const command = await readCommand(request, policy);
+  const command = await readCommand(
+    request,
+    policy,
+    session.user.id,
+    conversation.id
+  );
   if (command instanceof Response) {
     return command;
   }
