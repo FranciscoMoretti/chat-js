@@ -179,3 +179,40 @@ test("retains resources created before metadata and across replacements", async 
   );
   expect(mocks.removeSandbox).toHaveBeenCalledTimes(2);
 });
+
+test("an owned attempt that failed before provider creation can finish cleanup", async () => {
+  const input = await fixture();
+  await rm(join(input.sessionDirectory, "metadata.json"));
+  await rm(input.path);
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
+  const ownerPath = join(input.sessionDirectory, "owner.json");
+  const owner = {
+    version: 1,
+    backendName: "microsandbox",
+    sessionKey: input.sessionKey,
+    sessionId: "native-session",
+    writeAheadResources: true,
+  };
+  await writeFile(
+    ownerPath,
+    JSON.stringify({ ...owner, writeAheadResources: undefined })
+  );
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
+  await writeFile(ownerPath, JSON.stringify(owner));
+  for (let attempt = 0; attempt < 2; attempt++) {
+    expect(await purgeLocalEveSandboxes([input])).toEqual([
+      { sandboxNames: [], snapshotNames: [] },
+    ]);
+  }
+  expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual(owner);
+  await writeFile(
+    ownerPath,
+    JSON.stringify({ ...owner, sessionKey: "foreign" })
+  );
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
+  await writeFile(ownerPath, JSON.stringify(owner));
+  await writeFile(input.path, JSON.stringify(input.record));
+  await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
+  expect(mocks.removeSandbox).not.toHaveBeenCalled();
+  expect(remove).not.toHaveBeenCalled();
+});

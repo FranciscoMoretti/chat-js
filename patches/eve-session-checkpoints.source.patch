@@ -900,7 +900,7 @@ index 1bf6637..c28a6bc 100644
      const ctx = new ContextContainer();
      ctx.set(SessionKey, createSession());
 diff --git a/packages/eve/src/execution/sandbox/ensure.ts b/packages/eve/src/execution/sandbox/ensure.ts
-index cc925f6..6c86433 100644
+index cc925f6..1ec2df9 100644
 --- a/packages/eve/src/execution/sandbox/ensure.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.ts
 @@ -1,3 +1,6 @@
@@ -965,7 +965,7 @@ index cc925f6..6c86433 100644
        };
      },
      async delete(options) {
-@@ -278,3 +301,26 @@ async function withDevelopmentSandboxProgress<T>(
+@@ -278,3 +301,32 @@ async function withDevelopmentSandboxProgress<T>(
  function formatNodeLabel(nodeId: string): string {
    return nodeId === "__root__" ? "root" : nodeId;
  }
@@ -973,10 +973,14 @@ index cc925f6..6c86433 100644
 +/** Persist the unsanitized owner before a local backend can create any resources. */
 +async function recordLocalSandboxOwner(appRoot: string, sessionKey: string, sessionId: string) {
 +  const directory = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", sessionKey);
-+  await mkdir(directory, { recursive: true });
++  const createdDirectory = await mkdir(directory, { recursive: true });
 +  const path = join(directory, "owner.json");
 +  const temporary = `${path}.${randomUUID()}.tmp`;
-+  const identity = JSON.stringify({ version: 1, backendName: "microsandbox", sessionKey, sessionId });
++  // Only a new directory proves resource recording was enabled from its inception.
++  // Never upgrade a preexisting cache whose older provider resources may be unrecorded.
++  const identity = JSON.stringify({ version: 1, backendName: "microsandbox", sessionKey, sessionId,
++    ...(createdDirectory !== undefined ? { writeAheadResources: true } : {}),
++  });
 +  try {
 +    await writeFile(temporary, identity, { mode: 0o600 });
 +    try {
@@ -984,7 +988,9 @@ index cc925f6..6c86433 100644
 +      await link(temporary, path);
 +    } catch (error) {
 +      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
-+      if (await readFile(path, "utf8") !== identity) {
++      const owner = JSON.parse(await readFile(path, "utf8"));
++      if (owner.version !== 1 || owner.backendName !== "microsandbox" || owner.sessionKey !== sessionKey || owner.sessionId !== sessionId ||
++        (owner.writeAheadResources !== undefined && owner.writeAheadResources !== true)) {
 +        throw new Error("Sandbox session already belongs to a different owner.");
 +      }
 +    }
@@ -2797,7 +2803,7 @@ diff --git a/packages/eve/src/execution/sandbox/ensure-ownership.integration.tes
 new file mode 100644
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,111 @@
 +import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 +import { tmpdir } from "node:os";
 +import { join } from "node:path";
@@ -2877,12 +2883,14 @@ new file mode 100644
 +  const appRoot = await mkdtemp(join(tmpdir(), "eve-sandbox-owner-"));
 +  const fake = createBackend();
 +  let ownerPath = "";
++  let fresh = true;
 +  const backend = {
 +    ...fake, name: "microsandbox",
 +    create: vi.fn(async (input: SandboxBackendCreateInput) => {
 +      ownerPath = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", input.sessionKey, "owner.json");
 +      expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual({
 +        version: 1, backendName: "microsandbox", sessionKey: input.sessionKey, sessionId: "session_1",
++        ...(fresh ? { writeAheadResources: true } : {}),
 +      });
 +      return await fake.create(input);
 +    }),
@@ -2893,10 +2901,16 @@ new file mode 100644
 +    await (await ensure(input)).get();
 +    await (await ensure(input)).get();
 +    expect(backend.create).toHaveBeenCalledTimes(2);
++    // A cache that predates ownership cannot claim complete write-ahead coverage.
++    await rm(ownerPath);
++    fresh = false;
++    await (await ensure(input)).get();
++    await (await ensure(input)).get();
 +    const owner = JSON.parse(await readFile(ownerPath, "utf8"));
++    expect(owner.writeAheadResources).toBeUndefined();
 +    await writeFile(ownerPath, JSON.stringify({ ...owner, sessionId: "other-session" }));
 +    await expect((await ensure(input)).get()).rejects.toThrow("different owner");
-+    expect(backend.create).toHaveBeenCalledTimes(2);
++    expect(backend.create).toHaveBeenCalledTimes(4);
 +  } finally {
 +    await rm(appRoot, { recursive: true, force: true });
 +  }

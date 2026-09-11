@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { z } from "zod";
+import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
 
 const sandboxNamePattern = /^eve-sbx-ses-[a-f0-9]{32}$/;
 const stateSnapshotPattern = /^eve-sbx-state-[a-f0-9]{32}$/;
@@ -122,9 +123,6 @@ async function readLocalSandboxResources(input: {
       record.name
     );
   }
-  if (!sandboxNames.size) {
-    throw new Error("Sandbox resource inventory is missing.");
-  }
   const directory = join(input.sessionDirectory, "fork-checkpoints");
   const entries = await readdir(directory).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -150,6 +148,24 @@ async function readLocalSandboxResources(input: {
       throw new Error("Fork snapshot ownership is inconsistent.");
     }
     snapshots.push(record.snapshotName);
+  }
+  if (!sandboxNames.size) {
+    // The maintained backend publishes owner.json before entering creation and
+    // writes every resource identity before provider I/O. An owner-only directory
+    // can therefore be left by a failed admission/setup without a VM to remove.
+    // Snapshot evidence without a VM record is incomplete, never an empty attempt.
+    const owner = localEveSandboxOwnerSchema.parse(
+      JSON.parse(
+        await readFile(join(input.sessionDirectory, "owner.json"), "utf8")
+      )
+    );
+    if (
+      owner.writeAheadResources !== true ||
+      owner.sessionKey !== input.sessionKey ||
+      snapshots.length
+    ) {
+      throw new Error("Sandbox resource inventory is incomplete.");
+    }
   }
   return {
     sandboxNames: [...sandboxNames],

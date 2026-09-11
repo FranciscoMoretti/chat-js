@@ -8,8 +8,9 @@ import { z } from "zod";
 const legacyKeyPattern =
   /^eve-sbx-ses-microsandbox-([a-f0-9]{16})-[a-f0-9]{12}-(wrun_[0-7][0-9A-HJKMNP-TV-Z]{25})-[a-zA-Z0-9._-]+$/;
 
-const ownerSchema = z.strictObject({
+export const localEveSandboxOwnerSchema = z.strictObject({
   version: z.literal(1),
+  writeAheadResources: z.literal(true).optional(),
   backendName: z.literal("microsandbox"),
   sessionKey: z.string().min(1),
   sessionId: z.string().min(1),
@@ -82,7 +83,7 @@ export async function readLocalEveSandboxInventory(
     } catch {
       parsed = undefined;
     }
-    const owner = ownerSchema.safeParse(parsed);
+    const owner = localEveSandboxOwnerSchema.safeParse(parsed);
     if (!owner.success || owner.data.sessionKey !== entry.name) {
       unattributedDirectories.push(sessionDirectory);
       continue;
