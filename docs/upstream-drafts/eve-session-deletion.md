@@ -123,3 +123,44 @@ The internal local-resource coordinator now composes family retirement, native p
 For older local directories without ownership records, the reader uses the pinned key format only to exclude a canonical, unrelated native ULID under the current app's realpath-derived scope. It never uses a key to authorize erasure. Possible family members, malformed ownership, truncated IDs, and unknown scopes remain unresolved. The browser acceptance test runs the composed cleanup through Bun against the actual app root and local Postgres, verifies document removal and retry, and checks that the native run and pending deletion state remain until later erasure.
 
 A failed local sandbox setup can leave only an ownership record. New directories now carry `writeAheadResources: true` in that record, declaring that resource identities have been recorded before provider I/O from the directory's inception. Cleanup accepts an empty inventory only with this declaration and no snapshot evidence. Existing directories are never upgraded to this declaration, and retries preserve the original record. Source integration tests cover fresh versus preexisting directories; application tests cover empty-attempt retry and refusal of old, foreign, or incomplete inventory.
+
+## Updated external code-execution sandbox findings (2026-09-11)
+
+The separate ChatJS code-execution tool currently uses `@vercel/sandbox` 1.9.3.
+Its public create input has no caller-selected name, and its public lookup takes
+an allocated sandbox ID. Our `finally` cleanup waits for stop, but a worker crash
+between remote allocation and recording that ID remains an unaccounted resource
+window. This is separate from EVE's own VM inventory.
+
+Do not report named-resource recovery as a missing capability in the current
+Sandbox SDK. The published 3.3.0 package now exposes:
+
+- `Sandbox.create({ name, persistent, ... })` and `Sandbox.get({ name })`.
+- `Sandbox.getOrCreate({ name, ... })`; its implementation can delete and recreate
+  a named sandbox on `snapshot_not_found`, so it is inappropriate for a deletion
+  reconciliation path that must never create new resources.
+- `sandbox.delete({ deleteOrphanSnapshots, signal })`. Orphan snapshot deletion is
+  explicitly asynchronous and defaults to false. A resolved delete call must not
+  be presented as proof that every previously created snapshot has been erased.
+- Persistence enabled by default. An upgrade of our disposable code-execution
+  tool must explicitly disable persistence; otherwise stopping a sandbox changes
+  from temporary execution cleanup into retained filesystem state.
+- `stop({ signal })`, without the 1.x `blocking` option. The upgrade must adapt
+  existing cleanup code and validate terminal behavior against the new SDK.
+
+Evidence: installed 1.9.3 declarations, published 3.3.0 `dist/sandbox.d.ts` and
+`dist/sandbox.js`, and the official [SDK reference](https://vercel.com/docs/sandbox/sdk-reference)
+and [persistence announcement](https://vercel.com/changelog/sandbox-persistence-is-now-ga).
+The source audit did not allocate, list, stop, or delete any remote sandbox.
+
+The implementation direction is therefore to upgrade the application tool's SDK,
+record a stable name and owner/conversation association before allocation, and
+use lookup-only recovery plus deletion fences. Keep EVE's own SDK dependency and
+VM provider separate until their compatibility is checked. Persist unresolved
+allocation intent even when creation times out. Do not mark conversation erasure
+complete while a creation operation can still finish after the cleanup barrier,
+or while an older resource has no verified ownership record.
+
+This audit changes the integration approach; it does not complete the SDK upgrade,
+resource journal, crash recovery, or erasure verification. No new provider issue is
+ready for publication on this evidence alone.
