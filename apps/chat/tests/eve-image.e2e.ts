@@ -3,9 +3,14 @@ import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
 import { z } from "zod";
 import { db } from "../lib/db/client";
-import { eveConversation } from "../lib/db/schema";
+import {
+  eveConversation,
+  eveFileReference,
+  eveStoredFile,
+} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { evePlatformResult } from "../lib/eve/platform-result";
+import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -134,6 +139,17 @@ test("native image generation, editing and sharing preserve stored results", asy
       event.data.result.toolName === "generateImage"
   );
   expect(imageResults).toHaveLength(2);
+  const registered = await db
+    .select({ key: eveFileReference.key, ownerId: eveStoredFile.ownerId })
+    .from(eveFileReference)
+    .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
+    .where(eq(eveFileReference.conversationId, binding.id));
+  expect(registered.map((file) => file.key).sort()).toEqual(
+    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].sort()
+  );
+  expect(
+    registered.every((file) => file.ownerId === conversation.ownerId)
+  ).toBe(true);
   for (const event of imageResults) {
     if (
       event.type !== "action.result" ||

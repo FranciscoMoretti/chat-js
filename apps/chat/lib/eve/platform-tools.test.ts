@@ -132,3 +132,7 @@ test("closing the native iterator aborts an in-flight search request", async () 
     true
   );
 });
+
+vi.mock("./generated-files", () => ({
+  eveGeneratedFileUploader: () => vi.fn(),
+}));

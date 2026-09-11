@@ -135,3 +135,7 @@ test("aborting a native video request reaches the provider", async () => {
   await rejected;
   expect(signal.aborted).toBe(true);
 });
+
+vi.mock("./generated-files", () => ({
+  eveGeneratedFileUploader: () => provider.upload,
+}));

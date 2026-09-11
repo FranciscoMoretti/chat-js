@@ -1,9 +1,17 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 import { db } from "../lib/db/client";
-import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
-import { createEveConversation } from "../lib/db/eve-queries";
+import {
+  referenceEveFiles,
+  registerEveStoredFile,
+  reserveEveGeneratedFile,
+  writeEveGeneratedFile,
+} from "../lib/db/eve-files";
+import {
+  beginEveConversationDeletion,
+  createEveConversation,
+} from "../lib/db/eve-queries";
 import {
   eveConversation,
   eveFileReference,
@@ -167,4 +175,82 @@ test("attachment creation commits references before dispatch with a single appli
   } finally {
     await worker.end();
   }
+});
+
+test("generated file reservations survive storage failure and cannot write after deletion begins", async () => {
+  const conversation = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "generated",
+    async () => crypto.randomUUID()
+  );
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await reserveEveGeneratedFile(owner, conversation.id, key);
+  await expect(
+    writeEveGeneratedFile(owner, conversation.id, key, () =>
+      Promise.reject(new Error("storage failed"))
+    )
+  ).rejects.toThrow("storage failed");
+  expect(
+    await db
+      .select({ key: eveFileReference.key })
+      .from(eveFileReference)
+      .where(eq(eveFileReference.conversationId, conversation.id))
+  ).toEqual([{ key }]);
+  await beginEveConversationDeletion(owner, conversation.id);
+  let wrote = false;
+  await expect(
+    writeEveGeneratedFile(owner, conversation.id, key, () => {
+      wrote = true;
+      return Promise.resolve();
+    })
+  ).rejects.toThrow("unavailable");
+  expect(wrote).toBe(false);
+  await expect(
+    reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
+  ).rejects.toThrow("unavailable");
+});
+
+test("deletion waits for an admitted generated-file write before fencing the family", async () => {
+  const conversation = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "writing",
+    async () => crypto.randomUUID()
+  );
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await reserveEveGeneratedFile(owner, conversation.id, key);
+  const entered = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const writing = writeEveGeneratedFile(
+    owner,
+    conversation.id,
+    key,
+    async () => {
+      entered.resolve();
+      await release.promise;
+      return "stored";
+    }
+  );
+  await entered.promise;
+  const deletion = beginEveConversationDeletion(owner, conversation.id);
+  try {
+    await expect
+      .poll(async () => {
+        const [row] = await db.execute<{ blocked: boolean }>(
+          sql`select exists(select 1 from pg_locks where locktype = 'advisory' and not granted and classid::bigint = ((hashtextextended(${`eve-family:${owner}`}, 0) >> 32) & 4294967295) and objid::bigint = (hashtextextended(${`eve-family:${owner}`}, 0) & 4294967295)) as blocked`
+        );
+        return row.blocked;
+      })
+      .toBe(true);
+  } finally {
+    release.resolve();
+    await writing;
+    await deletion;
+  }
+  const [saved] = await db
+    .select({ state: eveConversation.state })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, conversation.id));
+  expect(saved.state).toBe("deleting");
 });

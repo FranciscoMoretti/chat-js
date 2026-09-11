@@ -230,3 +230,7 @@ test("native image results include nested provider cost and keep output when pri
   expect(unknown.at(-1)?.output).toEqual({ imageUrl, prompt: input.prompt });
   expect(unknown.at(-1)?.usage.costUsd).toBeUndefined();
 });
+
+vi.mock("../../lib/eve/generated-files", () => ({
+  eveGeneratedFileUploader: () => mocks.upload,
+}));

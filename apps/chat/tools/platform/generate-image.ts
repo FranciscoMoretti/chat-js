@@ -14,6 +14,7 @@ interface GenerateImageProps {
   costAccumulator?: Pick<CostAccumulator, "addLLMCost">;
   lastGeneratedImage?: { imageUrl: string; name: string } | null;
   selectedModel?: string;
+  storeFile?: typeof uploadFile;
 }
 
 const log = createModuleLogger("ai.tools.generate-image");
@@ -134,7 +135,9 @@ async function runGenerateImageTraditional({
   startMs,
   costAccumulator,
   abortSignal,
+  storeFile,
 }: {
+  storeFile: typeof uploadFile;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
@@ -210,7 +213,7 @@ async function runGenerateImageTraditional({
   const buffer = Buffer.from(res.images[0].base64, "base64");
   const timestamp = Date.now();
   const filename = `generated-image-${timestamp}.png`;
-  const result = await uploadFile(filename, buffer, "image/png");
+  const result = await storeFile(filename, buffer, "image/png");
 
   log.info(
     {
@@ -234,7 +237,9 @@ async function runGenerateImageMultimodal({
   startMs,
   costAccumulator,
   abortSignal,
+  storeFile,
 }: {
+  storeFile: typeof uploadFile;
   modelId: string;
   mode: ImageMode;
   prompt: string;
@@ -333,7 +338,7 @@ async function runGenerateImageMultimodal({
   const timestamp = Date.now();
   const ext = imageFile.mediaType.split("/")[1] || "png";
   const filename = `generated-image-${timestamp}.${ext}`;
-  const result = await uploadFile(filename, buffer, imageFile.mediaType);
+  const result = await storeFile(filename, buffer, imageFile.mediaType);
 
   log.info(
     {
@@ -350,6 +355,7 @@ async function runGenerateImageMultimodal({
 }
 
 export const generateImageTool = ({
+  storeFile = uploadFile,
   attachments = [],
   lastGeneratedImage = null,
   selectedModel,
@@ -401,6 +407,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
             startMs,
             costAccumulator,
             abortSignal,
+            storeFile,
           });
         }
 
@@ -413,6 +420,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
           startMs,
           costAccumulator,
           abortSignal,
+          storeFile,
         });
       } catch (error) {
         const resolvedError = await resolveError(error);

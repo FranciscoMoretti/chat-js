@@ -1,7 +1,11 @@
 import { type Body, Files } from "files-sdk";
 import { nanoid } from "nanoid";
 import { FILE_STORAGE_PREFIX } from "./constants";
-import { FILE_CONTENT_PATH, keyFromFileUrl } from "./file-url";
+import {
+  FILE_CONTENT_PATH,
+  isFileStorageKey,
+  keyFromFileUrl,
+} from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
@@ -30,7 +34,7 @@ function sanitizeFilename(filename: string): string {
   return withoutControlCharacters.trim() || "file";
 }
 
-function createStorageKey(filename: string): string {
+export function createFileStorageKey(filename: string): string {
   const clean = sanitizeFilename(filename);
   const dot = clean.lastIndexOf(".");
   const candidate = dot > 0 ? clean.slice(dot).toLowerCase() : "";
@@ -48,8 +52,26 @@ export async function uploadFile(
   body: Body,
   contentType?: string
 ) {
+  return await uploadFileAtKey(
+    createFileStorageKey(filename),
+    filename,
+    body,
+    contentType
+  );
+}
+
+/** Internal preallocated key, recorded by the caller before external storage I/O. */
+export async function uploadFileAtKey(
+  key: string,
+  filename: string,
+  body: Body,
+  contentType?: string
+) {
+  if (!isFileStorageKey(key)) {
+    throw new Error("Invalid storage key.");
+  }
   const pathname = sanitizeFilename(filename);
-  const uploaded = await getFiles().upload(createStorageKey(pathname), body, {
+  const uploaded = await getFiles().upload(key, body, {
     contentType,
   });
 
