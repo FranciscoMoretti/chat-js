@@ -22,6 +22,7 @@ const PureSidebarChatItem = ({
   chat,
   isActive,
   onDelete,
+  onMoveProject,
   onRename,
   onPin,
   setOpenMobile,
@@ -32,6 +33,7 @@ const PureSidebarChatItem = ({
   chat: Pick<UIChat, "id" | "title" | "isPinned" | "projectId">;
   isActive: boolean;
   onDelete?: (chatId: string) => void;
+  onMoveProject?: () => void;
   onRename: (chatId: string, title: string) => void;
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
@@ -116,6 +118,7 @@ const PureSidebarChatItem = ({
           <ChatMenuItems
             isPinned={chat.isPinned}
             onDelete={onDelete ? () => onDelete(chat.id) : undefined}
+            onMoveProject={onMoveProject}
             onRename={() => {
               setIsEditing(true);
               setEditTitle(chat.title);
@@ -150,6 +153,7 @@ export const SidebarChatItem = memo(
       prevProps.showShare !== nextProps.showShare ||
       prevProps.renderShareContent !== nextProps.renderShareContent ||
       prevProps.onDelete !== nextProps.onDelete ||
+      prevProps.onMoveProject !== nextProps.onMoveProject ||
       prevProps.onRename !== nextProps.onRename ||
       prevProps.onPin !== nextProps.onPin ||
       prevProps.chat.projectId !== nextProps.chat.projectId

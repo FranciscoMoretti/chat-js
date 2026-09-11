@@ -81,6 +81,7 @@ export async function listEveConversations(
     .select({
       id: eveConversation.id,
       title,
+      state: eveConversation.state,
       projectId: eveConversationProject.projectId,
       isPinned: eveConversation.isPinned,
       updatedAt,
@@ -112,12 +113,14 @@ export async function listEveConversations(
       ({
         id,
         title: itemTitle,
+        state,
         isPinned,
         projectId: assignedProjectId,
         updatedAt: lastActivity,
       }) => ({
         id,
         title: itemTitle,
+        state,
         isPinned,
         projectId: assignedProjectId,
         updatedAt: lastActivity,

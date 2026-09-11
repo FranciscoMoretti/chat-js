@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistance } from "date-fns";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
@@ -19,12 +19,14 @@ export function ProjectChatItem({
   chat,
   onDelete,
   onRename,
+  onMoveProject,
   renderShareContent,
 }: {
   chat: Pick<UIChat, "id" | "title" | "projectId"> & {
     updatedAt?: Date | string;
   };
   onDelete?: (chatId: string) => void;
+  onMoveProject?: () => void;
   renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
   onRename: (chatId: string, title: string) => Promise<void>;
 }) {
@@ -79,6 +81,13 @@ export function ProjectChatItem({
                   <Pencil size={16} />
                   <span>Rename</span>
                 </DropdownMenuItem>
+
+                {onMoveProject && (
+                  <DropdownMenuItem onClick={onMoveProject}>
+                    <FolderInput size={16} />
+                    <span>Move to project</span>
+                  </DropdownMenuItem>
+                )}
 
                 <ShareMenuItem onShare={() => setShareDialogOpen(true)} />
 

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
 import { useTRPC } from "@/trpc/react";
+import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
 
 export function EveHistoryList({
@@ -32,6 +33,11 @@ export function EveHistoryList({
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [moving, setMoving] = useState<{
+    id: string;
+    title: string;
+    projectId: string | null;
+  }>();
   const [query, setQuery] = useState("");
   const search = query.trim();
   const history = useInfiniteQuery(
@@ -92,6 +98,9 @@ export function EveHistoryList({
             <li key={item.id}>
               <ProjectChatItem
                 chat={item}
+                onMoveProject={
+                  item.state === "bound" ? () => setMoving(item) : undefined
+                }
                 onRename={async (id, title) => {
                   await rename.mutateAsync({ id, title });
                 }}
@@ -105,6 +114,9 @@ export function EveHistoryList({
               chat={item}
               isActive={pathname === `/chat/${item.id}`}
               key={item.id}
+              onMoveProject={
+                item.state === "bound" ? () => setMoving(item) : undefined
+              }
               onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
               onRename={async (id, title) => {
                 await rename.mutateAsync({ id, title });
@@ -155,6 +167,13 @@ export function EveHistoryList({
             ? "No matching conversations."
             : "Your conversations will appear here."}
         </p>
+      )}
+      {moving && (
+        <EveMoveProjectDialog
+          conversation={moving}
+          key={moving.id}
+          onClose={() => setMoving(undefined)}
+        />
       )}
     </SidebarGroup>
   );
