@@ -21,7 +21,7 @@ export default defineConfig({
 	define: { "process.env": "{}", IS_REACT_ACT_ENVIRONMENT: "true" },
 	resolve: {
 		alias: {
-			echarts: appRequire.resolve("echarts"),
+			echarts: createRequire(import.meta.url).resolve("echarts"),
 			"next/image": fileURLToPath(new URL("./next-image.ts", import.meta.url)),
 			react: dirname(appRequire.resolve("react/package.json")),
 			"@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
