@@ -484,7 +484,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const deletion = await beginEveConversationDeletion(owner, child.id);
   expect(deletion?.rootId).toBe(root.id);
-  expect(deletion?.conversations.map((row) => row.id).sort()).toEqual(
+  expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].sort()
   );
   expect(await getPublicEveConversation(root.id)).toBeUndefined();

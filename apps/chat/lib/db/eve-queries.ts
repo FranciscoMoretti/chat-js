@@ -1,6 +1,22 @@
-import { and, desc, eq, ilike, inArray, lt, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  lt,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { eveConversation, eveFileReference } from "@/lib/db/schema";
+import {
+  eveConversation,
+  eveConversationProject,
+  eveFileReference,
+  project,
+} from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { initializeEveForkDocuments } from "./eve-documents";
@@ -36,7 +52,7 @@ export async function getBoundEveConversationForSession(
 }
 export async function listEveConversations(
   ownerId: string,
-  { search = "", cursor }: EveHistoryInput = { search: "" }
+  { search = "", cursor, projectId }: EveHistoryInput = { search: "" }
 ) {
   const title = sql<string>`coalesce(${eveConversation.title}, left(${eveConversation.firstMessage}, 100))`;
   // Preserve PostgreSQL's microseconds: converting the cursor to Date can skip
@@ -57,19 +73,28 @@ export async function listEveConversations(
         )
       )
     : undefined;
+  const matchesProject = projectId
+    ? eq(eveConversationProject.projectId, projectId)
+    : isNull(eveConversationProject.projectId);
   const escapedSearch = search.replace(/[\\%_]/g, "\\$&");
   const rows = await db
     .select({
       id: eveConversation.id,
       title,
+      projectId: eveConversationProject.projectId,
       isPinned: eveConversation.isPinned,
       updatedAt,
     })
     .from(eveConversation)
+    .leftJoin(
+      eveConversationProject,
+      eq(eveConversationProject.conversationId, eveConversation.id)
+    )
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
         visibleConversation,
+        projectId === undefined ? undefined : matchesProject,
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
@@ -83,12 +108,14 @@ export async function listEveConversations(
   const page = rows.slice(0, 50);
   const last = page.at(-1);
   return {
-    items: page.map(({ id, title: itemTitle, isPinned }) => ({
-      id,
-      title: itemTitle,
-      isPinned,
-      projectId: null,
-    })),
+    items: page.map(
+      ({ id, title: itemTitle, isPinned, projectId: assignedProjectId }) => ({
+        id,
+        title: itemTitle,
+        isPinned,
+        projectId: assignedProjectId,
+      })
+    ),
     nextCursor:
       rows.length > 50 && last
         ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
@@ -180,6 +207,22 @@ async function reserveEveConversation(
       .returning();
     const created = rows[0];
     if (created && source) {
+      const [assignment] = await tx
+        .select({ projectId: project.id })
+        .from(project)
+        .innerJoin(
+          eveConversationProject,
+          eq(eveConversationProject.projectId, project.id)
+        )
+        .where(eq(eveConversationProject.conversationId, source.id))
+        .for("key share", { of: project });
+      if (assignment) {
+        await tx.insert(eveConversationProject).values({
+          conversationId: created.id,
+          ownerId: value.ownerId,
+          projectId: assignment.projectId,
+        });
+      }
       // Retain inherited files conservatively; native history owns turn contents.
       const references = await tx
         .select({ key: eveFileReference.key })
@@ -264,6 +307,7 @@ export async function beginEveConversationDeletion(
         id: eveConversation.id,
         sessionId: eveConversation.sessionId,
       });
+    conversations.sort((left, right) => left.id.localeCompare(right.id));
     return { rootId, conversations };
   });
 }

@@ -2,6 +2,7 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   eveConversation,
+  eveConversationProject,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
@@ -58,6 +59,9 @@ export async function completeEveConversationDeletion(
         throw new Error("Application content cleanup is incomplete.");
       }
     }
+    await tx
+      .delete(eveConversationProject)
+      .where(inArray(eveConversationProject.conversationId, ids));
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)

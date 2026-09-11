@@ -74,6 +74,7 @@ export const project = pgTable(
   },
   (t) => ({
     Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
+    Project_id_user_idx: uniqueIndex("Project_id_user_idx").on(t.id, t.userId),
   })
 );
 
@@ -503,6 +504,27 @@ export const eveConversation = pgTable(
       table.ownerId,
       table.operationId
     ),
+  ]
+);
+
+/** Removing a project detaches its conversations without deleting their native sessions. */
+export const eveConversationProject = pgTable(
+  "EveConversationProject",
+  {
+    conversationId: uuid("conversationId").primaryKey(),
+    ownerId: text("ownerId").notNull(),
+    projectId: uuid("projectId").notNull(),
+  },
+  (table) => [
+    index("EveConversationProject_project").on(table.projectId),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.projectId, table.ownerId],
+      foreignColumns: [project.id, project.userId],
+    }).onDelete("cascade"),
   ]
 );
 

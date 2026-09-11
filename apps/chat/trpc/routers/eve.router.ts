@@ -7,7 +7,10 @@ import {
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
-import { getEveMessageVotes } from "@/lib/db/queries";
+import {
+  assignEveConversationProject,
+  getEveMessageVotes,
+} from "@/lib/db/queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
@@ -27,6 +30,24 @@ const eveProcedure = protectedProcedure.use(({ next }) => {
 });
 
 export const eveRouter = createTRPCRouter({
+  assignProject: eveProcedure
+    .input(
+      z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const assigned = await assignEveConversationProject(
+        ctx.user.id,
+        input.conversationId,
+        input.projectId
+      );
+      if (!assigned) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conversation or project not found.",
+        });
+      }
+      return assigned;
+    }),
   votes: eveProcedure
     .input(z.object({ conversationId: z.uuid() }))
     .query(async ({ ctx, input }) => {

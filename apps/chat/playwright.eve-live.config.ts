@@ -21,6 +21,7 @@ export default defineConfig({
     "eve-editing.e2e.ts",
     "eve-metadata.e2e.ts",
     "eve-feedback.e2e.ts",
+    "eve-project-routing.e2e.ts",
     "eve-history.e2e.ts",
     "eve-attachments.e2e.ts",
     "eve-sharing.e2e.ts",

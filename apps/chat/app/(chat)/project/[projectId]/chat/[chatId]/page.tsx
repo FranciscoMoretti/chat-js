@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { getChatById } from "@/lib/db/queries";
+import { getEveConversationProject } from "@/lib/db/queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 
 export default async function ProjectChatPageRoute({
@@ -26,12 +26,8 @@ export default async function ProjectChatPageRoute({
   if (!session?.user) {
     redirect("/login");
   }
-  const chat = await getChatById({ id: chatId });
-  if (
-    !chat ||
-    chat.userId !== session.user.id ||
-    chat.projectId !== projectId
-  ) {
+  const project = await getEveConversationProject(session.user.id, chatId);
+  if (project?.id !== projectId) {
     notFound();
   }
   redirect(`/chat/${chatId}`);

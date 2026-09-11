@@ -36,6 +36,7 @@ import {
   type DBMessage,
   document,
   eveConversation,
+  eveConversationProject,
   eveVote,
   generationCancellation,
   message,
@@ -1410,5 +1411,82 @@ export async function saveEveMessageVote(
         isUpvoted: eveVote.isUpvoted,
       });
     return saved;
+  });
+}
+
+export async function getEveConversationProject(
+  ownerId: string,
+  conversationId: string
+) {
+  const [assigned] = await db
+    .select({
+      id: project.id,
+      name: project.name,
+      instructions: project.instructions,
+    })
+    .from(eveConversationProject)
+    .innerJoin(
+      eveConversation,
+      eq(eveConversation.id, eveConversationProject.conversationId)
+    )
+    .innerJoin(project, eq(project.id, eveConversationProject.projectId))
+    .where(
+      and(
+        eq(eveConversationProject.conversationId, conversationId),
+        eq(eveConversationProject.ownerId, ownerId),
+        inArray(eveConversation.state, ["creating", "bound", "uncertain"])
+      )
+    );
+  return assigned ?? null;
+}
+
+export async function assignEveConversationProject(
+  ownerId: string,
+  conversationId: string,
+  projectId: string | null
+) {
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [conversation] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, conversationId),
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.state, "bound")
+        )
+      );
+    if (!conversation) {
+      return null;
+    }
+    if (projectId === null) {
+      await tx
+        .delete(eveConversationProject)
+        .where(eq(eveConversationProject.conversationId, conversationId));
+    } else {
+      const [target] = await tx
+        .select({ id: project.id })
+        .from(project)
+        .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
+        .for("key share");
+      if (!target) {
+        return null;
+      }
+      await tx
+        .insert(eveConversationProject)
+        .values({ conversationId, ownerId, projectId })
+        .onConflictDoUpdate({
+          target: eveConversationProject.conversationId,
+          set: { projectId },
+        });
+    }
+    await tx
+      .update(eveConversation)
+      .set({ updatedAt: new Date() })
+      .where(eq(eveConversation.id, conversationId));
+    return { conversationId, projectId };
   });
 }
