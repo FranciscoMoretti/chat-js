@@ -175,3 +175,22 @@ it("accepts conversation-based forks and rejects raw native identities or invali
     }).success
   ).toBe(false);
 });
+
+it("allows a project for new conversations while forks inherit their existing project", () => {
+  const input = {
+    operationId: crypto.randomUUID(),
+    message: "Project conversation",
+    projectId: crypto.randomUUID(),
+  };
+  expect(createConversationInput.safeParse(input).success).toBe(true);
+  expect(
+    createConversationInput.safeParse({ ...input, projectId: "invalid" })
+      .success
+  ).toBe(false);
+  expect(
+    createConversationInput.safeParse({
+      ...input,
+      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_0" },
+    }).success
+  ).toBe(false);
+});

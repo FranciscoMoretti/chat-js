@@ -167,6 +167,8 @@ export async function getEveCreation(ownerId: string, operationId: string) {
   return row;
 }
 
+export class CreationProjectNotFound extends Error {}
+
 async function reserveEveConversation(
   value: typeof eveConversation.$inferInsert,
   fork?: EveForkInput
@@ -206,6 +208,14 @@ async function reserveEveConversation(
       .onConflictDoNothing()
       .returning();
     const created = rows[0];
+    if (created && value.initialProjectId) {
+      await assignCreationProject(
+        tx,
+        created.id,
+        value.ownerId,
+        value.initialProjectId
+      );
+    }
     if (created && source) {
       const [assignment] = await tx
         .select({ projectId: project.id })
@@ -245,6 +255,25 @@ async function reserveEveConversation(
     }
     return rows;
   });
+}
+
+async function assignCreationProject(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  conversationId: string,
+  ownerId: string,
+  projectId: string
+) {
+  const [target] = await tx
+    .select({ id: project.id })
+    .from(project)
+    .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
+    .for("key share");
+  if (!target) {
+    throw new CreationProjectNotFound("Project not found.");
+  }
+  await tx
+    .insert(eveConversationProject)
+    .values({ conversationId, ownerId, projectId: target.id });
 }
 
 /** Fence one conversation family; retirement and physical purge must finish separately. */
@@ -318,11 +347,25 @@ export async function createEveConversation(
   operationId: string,
   message: string,
   create: (id: string) => Promise<string>,
-  initialModelId?: string,
-  initialContentHash?: string,
-  fork?: EveForkInput,
-  fileKeys: string[] = []
+  {
+    initialModelId,
+    initialContentHash,
+    fork,
+    fileKeys = [],
+    initialProjectId,
+  }: {
+    initialModelId?: string;
+    initialContentHash?: string;
+    fork?: EveForkInput;
+    fileKeys?: string[];
+    initialProjectId?: string;
+  } = {}
 ) {
+  if (fork && initialProjectId) {
+    throw new CreationConflict(
+      "Forks inherit their source conversation project."
+    );
+  }
   let [reservation] = await reserveEveConversation(
     {
       ownerId,
@@ -330,6 +373,7 @@ export async function createEveConversation(
       firstMessage: message,
       initialModelId,
       initialContentHash,
+      initialProjectId,
     },
     fork
   );
@@ -351,11 +395,12 @@ export async function createEveConversation(
       existing.firstMessage !== message ||
       existing.initialModelId !== (initialModelId ?? null) ||
       existing.initialContentHash !== (initialContentHash ?? null) ||
+      existing.initialProjectId !== (initialProjectId ?? null) ||
       existing.parentConversationId !== (fork?.conversationId ?? null) ||
       existing.forkTurnId !== (fork?.beforeTurnId ?? null)
     ) {
       throw new CreationConflict(
-        "This operation already has a different message, attachments, model, or source turn."
+        "This operation already has a different message, attachments, model, project, or source turn."
       );
     }
     const binding = boundConversation(existing);

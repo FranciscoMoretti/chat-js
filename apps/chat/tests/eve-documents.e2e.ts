@@ -95,9 +95,7 @@ test("document purge requires the owned family fence, erases inherited revisions
     crypto.randomUUID(),
     "Purge fork",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: root.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: root.id, beforeTurnId: "turn_1" } }
   );
   await saveEveDocumentRevision({
     ...input,
@@ -198,9 +196,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     crypto.randomUUID(),
     "Old fork",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: source.id, beforeTurnId: "turn_2" }
+    { fork: { conversationId: source.id, beforeTurnId: "turn_2" } }
   );
   const turns = documentHistoryTurns([
     {
@@ -239,9 +235,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     crypto.randomUUID(),
     "Inherited boundary",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: child.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: child.id, beforeTurnId: "turn_1" } }
   );
   expect(
     (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
@@ -280,9 +274,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     crypto.randomUUID(),
     "Manual branch",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: chat.id, beforeTurnId: "turn_2" }
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_2" } }
   );
   expect(
     (await getEveDocumentRevision(owner, child.id, input.documentId))?.content
@@ -292,9 +284,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     crypto.randomUUID(),
     "Before manual",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: child.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: child.id, beforeTurnId: "turn_1" } }
   );
   expect(
     (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
@@ -346,9 +336,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     crypto.randomUUID(),
     "Later branch",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: chat.id, beforeTurnId: "turn_2" }
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_2" } }
   );
   // Replaying fork initialization must leave inherited boundaries unchanged.
   await initializeEveForkDocuments(owner, laterBranch.id);
@@ -357,9 +345,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     crypto.randomUUID(),
     "Earlier nested branch",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: laterBranch.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: laterBranch.id, beforeTurnId: "turn_1" } }
   );
   expect(
     (await getEveDocumentRevision(owner, laterBranch.id, input.documentId))
@@ -375,9 +361,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
       crypto.randomUUID(),
       "Checkpoint fork",
       async () => crypto.randomUUID(),
-      undefined,
-      undefined,
-      { conversationId: chat.id, beforeTurnId }
+      { fork: { conversationId: chat.id, beforeTurnId } }
     );
     const document = await getEveDocumentRevision(
       owner,
@@ -464,9 +448,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
     crypto.randomUUID(),
     "Public branch",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: chat.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_1" } }
   );
   await db
     .update(eveConversation)
@@ -679,9 +661,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     crypto.randomUUID(),
     "Fork",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: chat.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_1" } }
   );
   expect(
     (await getEveDocumentHistory(owner, child.id, input.documentId)).map(
@@ -715,9 +695,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     crypto.randomUUID(),
     "Nested",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: child.id, beforeTurnId: "turn_1" }
+    { fork: { conversationId: child.id, beforeTurnId: "turn_1" } }
   );
   expect(
     (await getEveDocumentHistory(owner, nested.id, input.documentId)).map(
@@ -785,9 +763,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     crypto.randomUUID(),
     "Long fork",
     async () => crypto.randomUUID(),
-    undefined,
-    undefined,
-    { conversationId: chat.id, beforeTurnId: "turn_500" }
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_500" } }
   );
   expect(
     (await getEveDocumentHistory(owner, child.id, input.documentId)).at(-1)?.id

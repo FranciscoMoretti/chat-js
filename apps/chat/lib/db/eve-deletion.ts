@@ -71,6 +71,7 @@ export async function completeEveConversationDeletion(
         title: null,
         initialModelId: null,
         initialContentHash: null,
+        initialProjectId: null,
         visibility: "private",
         isPinned: false,
       })

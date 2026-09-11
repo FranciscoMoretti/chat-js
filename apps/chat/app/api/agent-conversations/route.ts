@@ -5,6 +5,7 @@ import { canSpend } from "@/lib/db/credits";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import {
   CreationConflict,
+  CreationProjectNotFound,
   createEveConversation,
   getEveConversation,
   getEveCreation,
@@ -164,27 +165,41 @@ export async function POST(request: Request) {
           .object({ sessionId: z.string().min(1) })
           .parse(await result.json()).sessionId;
       },
-      input.data.modelId,
-      typeof input.data.message === "string"
-        ? undefined
-        : createHash("sha256")
-            .update(JSON.stringify(input.data.message))
-            .digest("hex"),
-      input.data.fork,
-      eveMessageFileKeys(input.data.message)
+      {
+        initialModelId: input.data.modelId,
+        initialContentHash:
+          typeof input.data.message === "string"
+            ? undefined
+            : createHash("sha256")
+                .update(JSON.stringify(input.data.message))
+                .digest("hex"),
+        fork: input.data.fork,
+        fileKeys: eveMessageFileKeys(input.data.message),
+        initialProjectId: input.data.projectId,
+      }
     );
     return Response.json(binding);
   } catch (cause) {
+    return creationFailure(cause);
+  }
+}
+
+function creationFailure(cause: unknown) {
+  if (cause instanceof CreationProjectNotFound) {
     return Response.json(
-      {
-        error:
-          cause instanceof CreationConflict
-            ? cause.message
-            : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
-      },
-      { status: 409 }
+      { error: cause.message, creationRejected: true },
+      { status: 404 }
     );
   }
+  return Response.json(
+    {
+      error:
+        cause instanceof CreationConflict
+          ? cause.message
+          : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
+    },
+    { status: 409 }
+  );
 }
 
 async function resolveFork(ownerId: string, input: EveForkInput | undefined) {

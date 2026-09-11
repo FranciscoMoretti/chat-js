@@ -61,7 +61,7 @@ test("a lost native creation reply recovers the same session from the retained c
         nativeSessionId = sessionIds[0];
         throw new Error("Simulated lost native reply before app binding");
       },
-      operation.modelId
+      { initialModelId: operation.modelId }
     )
   ).rejects.toThrow("Simulated lost native reply");
   const reservation = await getEveCreation(

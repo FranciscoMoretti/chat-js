@@ -192,9 +192,7 @@ test("forks inherit their source project once and retry cannot silently move the
       operationId,
       "Fork fixture",
       async () => crypto.randomUUID(),
-      undefined,
-      undefined,
-      { conversationId: source.id, beforeTurnId: "turn_0" }
+      { fork: { conversationId: source.id, beforeTurnId: "turn_0" } }
     );
   const fork = await createFork();
   expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
@@ -225,9 +223,7 @@ test("an unresolved fork retains its project route for creation recovery", async
       operationId,
       "Uncertain fork",
       () => Promise.reject(new Error("Lost creation reply")),
-      undefined,
-      undefined,
-      { conversationId: source.id, beforeTurnId: "turn_0" }
+      { fork: { conversationId: source.id, beforeTurnId: "turn_0" } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
@@ -241,4 +237,56 @@ test("an unresolved fork retains its project route for creation recovery", async
   expect(
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();
+});
+
+test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {
+  const projectId = crypto.randomUUID();
+  await db.insert(project).values({
+    id: projectId,
+    userId: owner,
+    name: "Creation project",
+    instructions: "First turn instructions",
+  });
+  const operationId = crypto.randomUUID();
+  const dispatch = vi.fn(async (id: string) => {
+    expect(await getEveConversationProject(owner, id)).toMatchObject({
+      id: projectId,
+      instructions: "First turn instructions",
+    });
+    return crypto.randomUUID();
+  });
+  const create = (requestedProject: string | undefined) =>
+    createEveConversation(owner, operationId, "Project creation", dispatch, {
+      fileKeys: [],
+      initialProjectId: requestedProject,
+    });
+  const binding = await create(projectId);
+  await assignEveConversationProject(owner, binding.id, ownProject);
+  expect(await create(projectId)).toEqual(binding);
+  expect(await getEveConversationProject(owner, binding.id)).toMatchObject({
+    id: ownProject,
+  });
+  await expect(create(ownProject)).rejects.toThrow("different");
+  await expect(create(undefined)).rejects.toThrow("different");
+  await db.delete(project).where(eq(project.id, projectId));
+  expect(await create(projectId)).toEqual(binding);
+  expect(dispatch).toHaveBeenCalledTimes(1);
+});
+
+test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
+  const dispatch = vi.fn(async () => crypto.randomUUID());
+  for (const projectId of [foreignProject, crypto.randomUUID()]) {
+    const operationId = crypto.randomUUID();
+    await expect(
+      createEveConversation(
+        owner,
+        operationId,
+        "Unauthorized project",
+        dispatch,
+        { fileKeys: [], initialProjectId: projectId }
+      )
+    ).rejects.toThrow("Project not found");
+    expect(await getEveCreation(owner, operationId)).toBeUndefined();
+  }
+  expect(dispatch).not.toHaveBeenCalled();
 });

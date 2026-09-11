@@ -107,7 +107,9 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
   ).toBeGreaterThan(0);
   const bound = await createEveConversation(owner, operation, "hello", start);
   await expect(
-    createEveConversation(owner, operation, "hello", start, "changed-model")
+    createEveConversation(owner, operation, "hello", start, {
+      initialModelId: "changed-model",
+    })
   ).rejects.toThrow("different");
   expect(starts).toBe(1);
   expect(await ownsEveSession(owner, bound.sessionId)).toBe(true);
@@ -220,32 +222,18 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     operation,
     "replacement",
     start,
-    undefined,
-    undefined,
-    fork
+    { fork }
   );
   expect(
-    await createEveConversation(
-      owner,
-      operation,
-      "replacement",
-      start,
-      undefined,
-      undefined,
-      fork
-    )
+    await createEveConversation(owner, operation, "replacement", start, {
+      fork,
+    })
   ).toEqual(branch);
   expect(starts).toBe(2);
   await expect(
-    createEveConversation(
-      owner,
-      operation,
-      "replacement",
-      start,
-      undefined,
-      undefined,
-      { ...fork, beforeTurnId: "turn_2" }
-    )
+    createEveConversation(owner, operation, "replacement", start, {
+      fork: { ...fork, beforeTurnId: "turn_2" },
+    })
   ).rejects.toThrow("source turn");
   await expect(
     createEveConversation(owner, operation, "replacement", start)
@@ -257,9 +245,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     crypto.randomUUID(),
     "nested replacement",
     start,
-    undefined,
-    undefined,
-    { conversationId: branch.id, beforeTurnId: "turn_2" }
+    { fork: { conversationId: branch.id, beforeTurnId: "turn_2" } }
   );
   const row = await getEveConversation(owner, nested.id);
   expect(row?.rootConversationId).toBe(root.id);
@@ -277,15 +263,9 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     await listEveConversationBranches("not-owner", nested.id)
   ).toBeUndefined();
   await expect(
-    createEveConversation(
-      "not-owner",
-      crypto.randomUUID(),
-      "foreign",
-      start,
-      undefined,
-      undefined,
-      fork
-    )
+    createEveConversation("not-owner", crypto.randomUUID(), "foreign", start, {
+      fork,
+    })
   ).rejects.toThrow("source conversation");
   expect(starts).toBe(3);
 });
@@ -444,15 +424,9 @@ test.each([
     createEveConversation(owner, operation, "deleted marker", start)
   ).rejects.toThrow("can no longer be created");
   await expect(
-    createEveConversation(
-      owner,
-      crypto.randomUUID(),
-      "fork",
-      start,
-      undefined,
-      undefined,
-      { conversationId: bound.id, beforeTurnId: "turn_0" }
-    )
+    createEveConversation(owner, crypto.randomUUID(), "fork", start, {
+      fork: { conversationId: bound.id, beforeTurnId: "turn_0" },
+    })
   ).rejects.toThrow("not available");
   expect(starts).toBe(1);
   expect(
@@ -475,9 +449,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     crypto.randomUUID(),
     "child",
     start,
-    undefined,
-    undefined,
-    { conversationId: root.id, beforeTurnId: "turn_0" }
+    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
   expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
@@ -527,9 +499,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       crypto.randomUUID(),
       "late fork",
       start,
-      undefined,
-      undefined,
-      { conversationId: root.id, beforeTurnId: "turn_0" }
+      { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
     release.resolve();
@@ -557,9 +527,7 @@ test("unresolved creation prevents a partial family deletion", async () => {
       crypto.randomUUID(),
       "uncertain child",
       () => Promise.reject(new Error("offline")),
-      undefined,
-      undefined,
-      { conversationId: root.id, beforeTurnId: "turn_0" }
+      { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
     )
   ).rejects.toThrow("offline");
   await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
@@ -576,17 +544,14 @@ test("final application deletion erases family content, preserves accounting and
     operation,
     "Private initial text",
     start,
-    "model",
-    "hash"
+    { initialModelId: "model", initialContentHash: "hash" }
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Child text",
     start,
-    undefined,
-    undefined,
-    { conversationId: root.id, beforeTurnId: "turn_0" }
+    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
   );
   const unrelated = await createEveConversation(
     owner,
@@ -653,14 +618,10 @@ test("final application deletion erases family content, preserves accounting and
       .where(eq(eveUsage.sessionId, root.sessionId))
   ).toEqual(accounting);
   await expect(
-    createEveConversation(
-      owner,
-      operation,
-      "Private initial text",
-      start,
-      "model",
-      "hash"
-    )
+    createEveConversation(owner, operation, "Private initial text", start, {
+      initialModelId: "model",
+      initialContentHash: "hash",
+    })
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
 });

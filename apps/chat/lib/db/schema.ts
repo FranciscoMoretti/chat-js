@@ -457,6 +457,8 @@ export const eveConversation = pgTable(
     firstMessage: text("firstMessage").notNull(),
     initialModelId: text("initialModelId"),
     initialContentHash: text("initialContentHash"),
+    // Immutable creation intent; retained when the project is removed.
+    initialProjectId: uuid("initialProjectId"),
     parentConversationId: uuid("parentConversationId"),
     rootConversationId: uuid("rootConversationId"),
     forkTurnId: text("forkTurnId"),

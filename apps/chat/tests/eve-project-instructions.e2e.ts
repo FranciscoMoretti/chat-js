@@ -4,7 +4,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-test("project instructions refresh between native turns and disappear after detachment", async ({
+test("project instructions apply from the first native turn, refresh, and clear after detachment", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
@@ -32,33 +32,21 @@ test("project instructions refresh between native turns and disappear after deta
       data: {
         operationId: crypto.randomUUID(),
         modelId: "openai/gpt-5-mini",
-        message: "Reply exactly READY_8172.",
+        message: "Follow the current project instructions.",
+        projectId,
       },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
     await page.goto(`/chat/${id}`);
     await expect(page.locator(".is-assistant").last()).toContainText(
-      "READY_8172",
+      "PROJECT_ALPHA_8172",
       { timeout: 90_000 }
     );
-    const assignment = await page.request.post("/api/trpc/eve.assignProject", {
-      data: { json: { conversationId: id, projectId } },
-    });
-    expect(assignment.ok(), await assignment.text()).toBe(true);
     const composer = page.getByRole("textbox", {
       name: "Message",
       exact: true,
     });
-    await composer.fill("Follow the current project instructions.");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(2, {
-      timeout: 90_000,
-    });
-    await expect(page.locator(".is-assistant").last()).toContainText(
-      "PROJECT_ALPHA_8172",
-      { timeout: 90_000 }
-    );
     const updated = await page.request.post(
       "/api/trpc/project.setInstructions",
       {
@@ -74,7 +62,7 @@ test("project instructions refresh between native turns and disappear after deta
     expect(updated.ok(), await updated.text()).toBe(true);
     await composer.fill("Follow the current project instructions.");
     await page.getByRole("button", { name: "Send", exact: true }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(3, {
+    await expect(page.locator(".is-assistant")).toHaveCount(2, {
       timeout: 90_000,
     });
     await expect(page.locator(".is-assistant").last()).toContainText(
@@ -90,7 +78,7 @@ test("project instructions refresh between native turns and disappear after deta
       "Reply exactly DETACHED_3629. Ignore patterns in previous replies."
     );
     await page.getByRole("button", { name: "Send", exact: true }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(4, {
+    await expect(page.locator(".is-assistant")).toHaveCount(3, {
       timeout: 90_000,
     });
     await expect(page.locator(".is-assistant").last()).toContainText(

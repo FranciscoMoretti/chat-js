@@ -18,8 +18,12 @@ export const createConversationInput = z
     modelId: z.string().min(1).max(200).optional(),
     message: eveMessageInput,
     fork: eveForkInput.optional(),
+    projectId: z.uuid().optional(),
   })
-  .strict();
+  .strict()
+  .refine((input) => !(input.fork && input.projectId), {
+    message: "Forks inherit their source conversation project.",
+  });
 export const conversationBinding = z.object({
   id: z.uuid(),
   sessionId: z.string().min(1),

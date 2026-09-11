@@ -143,9 +143,7 @@ test("fork reservation retains the source file references before dispatch", asyn
       dispatched = true;
       return crypto.randomUUID();
     },
-    undefined,
-    undefined,
-    { conversationId: root.id, beforeTurnId: "turn_0" }
+    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
   );
   expect(dispatched).toBe(true);
   expect(
@@ -172,10 +170,7 @@ test("attachment creation commits references before dispatch with a single appli
         expect(references.map((row) => row.key)).toEqual([key]);
         return crypto.randomUUID();
       },
-      undefined,
-      "attachment-fixture",
-      undefined,
-      [key]
+      { initialContentHash: "attachment-fixture", fileKeys: [key] }
     );
     expect(binding.sessionId).toBeTruthy();
   } finally {
