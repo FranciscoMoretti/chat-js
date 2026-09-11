@@ -843,10 +843,17 @@ index 1bf6637..c28a6bc 100644
      const ctx = new ContextContainer();
      ctx.set(SessionKey, createSession());
 diff --git a/packages/eve/src/execution/sandbox/ensure.ts b/packages/eve/src/execution/sandbox/ensure.ts
-index cc925f6..3e13810 100644
+index cc925f6..6c86433 100644
 --- a/packages/eve/src/execution/sandbox/ensure.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.ts
-@@ -118,12 +118,18 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+@@ -1,3 +1,6 @@
++import { randomUUID } from "node:crypto";
++import { link, mkdir, readFile, rm, writeFile } from "node:fs/promises";
++import { join } from "node:path";
+ import type { SandboxSession } from "#public/definitions/sandbox.js";
+ import type {
+   SandboxBackend,
+@@ -118,18 +121,28 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
        persistedSession.sessionKey === keys.sessionKey
          ? persistedSession
          : null;
@@ -867,7 +874,17 @@ index cc925f6..3e13810 100644
        runtimeContext: { appRoot },
        sessionKey: keys.sessionKey,
        tags: input.tags,
-@@ -169,6 +175,13 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+       templateKey: keys.templateKey,
+     };
+
++    if (backend.name === "microsandbox") {
++      await recordLocalSandboxOwner(appRoot, keys.sessionKey, input.sessionId);
++    }
++
+     const handle = await withDevelopmentSandboxProgress(
+       `eve: opening sandbox session "${formatNodeLabel(input.nodeId)}" on backend "${backend.name}"...`,
+       `eve: opening sandbox session "${formatNodeLabel(input.nodeId)}" on backend "${backend.name}"`,
+@@ -169,6 +182,13 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
    }
 
    return {
@@ -881,7 +898,7 @@ index cc925f6..3e13810 100644
      async captureState() {
        if (handlePromise !== undefined) {
          const handle = await handlePromise;
-@@ -180,6 +193,9 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
+@@ -180,6 +200,9 @@ export async function ensureSandboxAccess(input: EnsureSandboxAccessInput): Prom
        return {
          initialized,
          session: persistedSession,
@@ -891,6 +908,33 @@ index cc925f6..3e13810 100644
        };
      },
      async delete(options) {
+@@ -278,3 +301,26 @@ async function withDevelopmentSandboxProgress<T>(
+ function formatNodeLabel(nodeId: string): string {
+   return nodeId === "__root__" ? "root" : nodeId;
+ }
++
++/** Persist the unsanitized owner before a local backend can create any resources. */
++async function recordLocalSandboxOwner(appRoot: string, sessionKey: string, sessionId: string) {
++  const directory = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", sessionKey);
++  await mkdir(directory, { recursive: true });
++  const path = join(directory, "owner.json");
++  const temporary = `${path}.${randomUUID()}.tmp`;
++  const identity = JSON.stringify({ version: 1, backendName: "microsandbox", sessionKey, sessionId });
++  try {
++    await writeFile(temporary, identity, { mode: 0o600 });
++    try {
++      // Publish a complete record without ever replacing a different owner.
++      await link(temporary, path);
++    } catch (error) {
++      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
++      if (await readFile(path, "utf8") !== identity) {
++        throw new Error("Sandbox session already belongs to a different owner.");
++      }
++    }
++  } finally {
++    await rm(temporary, { force: true });
++  }
++}
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
 index d3cfb0b..f3f636a 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
@@ -2691,4 +2735,112 @@ index 0000000..a8b0f94
 +      await source.cancel();
 +    }
 +  });
++});
+diff --git a/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
+@@ -0,0 +1,103 @@
++import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { expect, it, vi } from "vitest";
++import { mockSandbox } from "#internal/testing/mocks/mock-sandbox.js";
++import type { SandboxBackend, SandboxBackendCreateInput } from "#public/definitions/sandbox-backend.js";
++import { createBundledRuntimeCompiledArtifactsSource, createDiskRuntimeCompiledArtifactsSource, type RuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import type { RuntimeSandboxRegistry } from "#runtime/sandbox/registry.js";
++import type { ResolvedSandboxDefinition } from "#runtime/types.js";
++import { ensureSandboxAccess } from "#execution/sandbox/ensure.js";
++import type { SandboxState } from "#sandbox/state.js";
++
++function createTestRegistry(
++  definition: Partial<ResolvedSandboxDefinition>,
++  backend: SandboxBackend,
++): RuntimeSandboxRegistry {
++  const resolved: ResolvedSandboxDefinition = {
++    backend,
++    logicalPath: "agent/sandbox/sandbox.ts",
++    sourceHash: "test-source-hash",
++    sourceId: "agent/sandbox/sandbox",
++    sourceKind: "module",
++    ...definition,
++  };
++
++  return {
++    sandbox: {
++      definition: resolved,
++      workspaceResourceRoot: { logicalPath: "", rootEntries: [] },
++    },
++  };
++}
++
++function createBackend(options?: { readonly delete?: () => Promise<void> }): SandboxBackend {
++  const sandbox = mockSandbox({ id: "sbx_session_auth" });
++  const create = vi.fn(async (input: SandboxBackendCreateInput) => {
++    return {
++      captureState: async () => ({
++        backendName: "test",
++        metadata: {},
++        sessionKey: input.sessionKey,
++      }),
++      delete: vi.fn(options?.delete ?? (async () => {})),
++      stop: vi.fn(async () => {}),
++      useSessionFn: async () => sandbox.session,
++      shutdown: async () => {},
++      session: sandbox.session,
++    };
++  });
++
++  return { create, name: "test", prewarm: vi.fn() };
++}
++
++async function ensure(input: {
++  readonly compiledArtifactsSource?: RuntimeCompiledArtifactsSource;
++  readonly ownsSandbox?: boolean;
++  readonly runOnSession?: (callback: () => Promise<void>) => Promise<void>;
++  readonly registry: RuntimeSandboxRegistry;
++  readonly state?: SandboxState;
++  readonly tags?: Record<string, string>;
++}) {
++  return await ensureSandboxAccess({
++    compiledArtifactsSource:
++      input.compiledArtifactsSource ?? createBundledRuntimeCompiledArtifactsSource(),
++    nodeId: "__root__",
++    ownsSandbox: input.ownsSandbox,
++    registry: input.registry,
++    runOnSession: input.runOnSession,
++    sessionId: "session_1",
++    state: input.state ?? null,
++    tags: input.tags,
++  });
++}
++
++
++it("records native local sandbox ownership before provider creation and rejects reassignment", async () => {
++  const appRoot = await mkdtemp(join(tmpdir(), "eve-sandbox-owner-"));
++  const fake = createBackend();
++  let ownerPath = "";
++  const backend = {
++    ...fake, name: "microsandbox",
++    create: vi.fn(async (input: SandboxBackendCreateInput) => {
++      ownerPath = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", input.sessionKey, "owner.json");
++      expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual({
++        version: 1, backendName: "microsandbox", sessionKey: input.sessionKey, sessionId: "session_1",
++      });
++      return await fake.create(input);
++    }),
++  };
++  const input = { compiledArtifactsSource: createDiskRuntimeCompiledArtifactsSource(appRoot),
++    registry: createTestRegistry({}, backend) };
++  try {
++    await (await ensure(input)).get();
++    await (await ensure(input)).get();
++    expect(backend.create).toHaveBeenCalledTimes(2);
++    const owner = JSON.parse(await readFile(ownerPath, "utf8"));
++    await writeFile(ownerPath, JSON.stringify({ ...owner, sessionId: "other-session" }));
++    await expect((await ensure(input)).get()).rejects.toThrow("different owner");
++    expect(backend.create).toHaveBeenCalledTimes(2);
++  } finally {
++    await rm(appRoot, { recursive: true, force: true });
++  }
 +});
