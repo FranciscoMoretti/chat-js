@@ -10,11 +10,16 @@ const manifestSchema = z.strictObject({
 });
 const metadataSchema = z.object({
   version: z.literal(2),
+  sandboxName: z.string().regex(/^eve-sbx-ses-[a-f0-9]{32}$/),
+  stateSnapshotName: z
+    .string()
+    .regex(/^eve-sbx-state-[a-f0-9]{32}$/)
+    .optional(),
   optionsHash: z.string().min(1),
 });
 
 /** Internal local-provider stage. Caller must retire the entire owning family first. */
-export async function purgeLocalEveForkSnapshots(input: {
+export async function purgeLocalEveSandbox(input: {
   sessionDirectory: string;
   sessionKey: string;
 }) {
@@ -33,7 +38,9 @@ export async function purgeLocalEveForkSnapshots(input: {
     }
     throw error;
   });
-  const snapshots: string[] = [];
+  const snapshots: string[] = metadata.stateSnapshotName
+    ? [metadata.stateSnapshotName]
+    : [];
   for (const entry of entries.sort()) {
     // Atomic-write leftovers precede provider creation and are not published records.
     if (entry.endsWith(".tmp")) {
@@ -51,12 +58,23 @@ export async function purgeLocalEveForkSnapshots(input: {
     }
     snapshots.push(record.snapshotName);
   }
-  if (!snapshots.length) {
-    return snapshots;
-  }
   // Validate the full set before any provider side effect. Never restore a VM,
   // list/prune global snapshots, or force removal of a referenced snapshot.
-  const { Snapshot } = await import("microsandbox");
+  const { Sandbox, Snapshot } = await import("microsandbox");
+  try {
+    const sandbox = await Sandbox.get(metadata.sandboxName);
+    await sandbox.remove();
+  } catch (error) {
+    if (
+      !(
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "sandboxNotFound"
+      )
+    ) {
+      throw error;
+    }
+  }
   for (const snapshot of snapshots) {
     try {
       await Snapshot.remove(snapshot, { force: false });
@@ -72,5 +90,5 @@ export async function purgeLocalEveForkSnapshots(input: {
     }
   }
   // Keep identity records: an interrupted caller can repeat removal safely.
-  return snapshots;
+  return { sandboxName: metadata.sandboxName, snapshotNames: snapshots };
 }
