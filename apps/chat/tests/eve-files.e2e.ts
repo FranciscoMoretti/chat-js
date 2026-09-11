@@ -5,6 +5,7 @@ import { db } from "../lib/db/client";
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
+  releaseEveFamilyFileReferences,
 } from "../lib/db/eve-file-purge";
 import {
   referenceEveFiles,
@@ -302,4 +303,62 @@ test("file purge preserves outside references and keeps durable progress across 
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, shared));
   expect(preserved.state).toBe("active");
+});
+
+test("concurrent family cleanup cannot abandon a shared file", async () => {
+  const first = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "first",
+    async () => crypto.randomUUID()
+  );
+  const second = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "second",
+    async () => crypto.randomUUID()
+  );
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await registerEveStoredFile(owner, key);
+  await referenceEveFiles(owner, first.id, [key]);
+  await referenceEveFiles(owner, second.id, [key]);
+  await expect(releaseEveFamilyFileReferences(owner, first.id)).rejects.toThrow(
+    "pending deletion"
+  );
+  await beginEveConversationDeletion(owner, first.id);
+  await beginEveConversationDeletion(owner, second.id);
+  expect(await prepareEveFamilyFilePurge(owner, first.id)).toEqual([]);
+  expect(await prepareEveFamilyFilePurge(owner, second.id)).toEqual([]);
+  const outcomes = await Promise.allSettled([
+    releaseEveFamilyFileReferences(owner, first.id),
+    releaseEveFamilyFileReferences(owner, second.id),
+  ]);
+  expect(
+    outcomes.filter((result) => result.status === "fulfilled")
+  ).toHaveLength(1);
+  expect(
+    outcomes.filter((result) => result.status === "rejected")
+  ).toHaveLength(1);
+  const references = await db
+    .select()
+    .from(eveFileReference)
+    .where(eq(eveFileReference.key, key));
+  expect(references).toHaveLength(1);
+  const remaining = references[0].conversationId;
+  await expect(
+    releaseEveFamilyFileReferences(stranger, remaining)
+  ).rejects.toThrow("pending deletion");
+  expect(await prepareEveFamilyFilePurge(owner, remaining)).toEqual([key]);
+  await expect(
+    releaseEveFamilyFileReferences(owner, remaining)
+  ).rejects.toThrow("cleanup is incomplete");
+  await completeEveFilePurge(owner, [key]);
+  await releaseEveFamilyFileReferences(owner, remaining);
+  await releaseEveFamilyFileReferences(owner, remaining);
+  expect(
+    await db
+      .select()
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, key))
+  ).toEqual([]);
 });
