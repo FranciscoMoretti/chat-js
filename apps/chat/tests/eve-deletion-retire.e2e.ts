@@ -11,6 +11,7 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { prepareEveFamilyDeletion } from "../lib/eve/prepare-deletion";
 import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
@@ -78,8 +79,14 @@ test("internal retirement settles usage after access revocation and is retryable
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
   expect(after.credits).toBe(before.credits);
+  const prepared = await prepareEveFamilyDeletion(owner, binding.id);
+  expect(prepared?.runIds).toContain(binding.sessionId);
+  expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
   const native = postgres(env.DATABASE_URL, { max: 1 });
   try {
+    expect(
+      await native`select id from workflow.workflow_runs where id = ${binding.sessionId}`
+    ).toHaveLength(1);
     const scope = {
       sessionId: binding.sessionId,
       taskIdentifier: "workflow_flows",

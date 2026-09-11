@@ -1,4 +1,5 @@
 import postgres, { type Sql } from "postgres";
+import { z } from "zod";
 import { purgeEvePostgresSessionPayloads } from "./eve-payload-purge";
 import { purgeEvePostgresQueue } from "./eve-queue-purge";
 import { fenceEvePostgresSession } from "./eve-session-fence";
@@ -9,15 +10,43 @@ export async function purgeEveNativeSession(
   scope: { sessionId: string; taskIdentifier: string },
   retire: () => Promise<void>
 ) {
+  return await withNativeSession(
+    databaseUrl,
+    scope.sessionId,
+    retire,
+    async (connection) => {
+      await prepareNativeSession(connection, scope);
+      return await purgeEvePostgresSessionPayloads(connection, scope);
+    }
+  );
+}
+
+/** Fence native work and clear its queued deliveries while retaining transcript payloads for resource inventory. */
+export async function prepareEveNativeSessionPurge(
+  databaseUrl: string,
+  scope: { sessionId: string; taskIdentifier: string },
+  retire: () => Promise<void>
+) {
+  return await withNativeSession(
+    databaseUrl,
+    scope.sessionId,
+    retire,
+    (connection) => prepareNativeSession(connection, scope)
+  );
+}
+
+async function withNativeSession<T>(
+  databaseUrl: string,
+  sessionId: string,
+  retire: () => Promise<void>,
+  afterRetirement: (connection: Sql) => Promise<T>
+) {
   // Own the pool so concurrent cleanups cannot reserve all shared connections
   // while waiting for another connection to execute their stage transactions.
   const connection = postgres(databaseUrl, { max: 2 });
   try {
-    return await withRetiredNativeSession(
-      connection,
-      scope.sessionId,
-      retire,
-      () => purgeNativeSession(connection, scope)
+    return await withRetiredNativeSession(connection, sessionId, retire, () =>
+      afterRetirement(connection)
     );
   } finally {
     await connection.end();
@@ -45,35 +74,37 @@ export async function retireEveNativeSessions(
   }
 }
 
-async function purgeNativeSession(
+async function prepareNativeSession(
   connection: Sql,
   scope: { sessionId: string; taskIdentifier: string }
 ) {
   const [purged] =
-    await connection`select session_id from workflow.eve_payload_purges where session_id = ${scope.sessionId} and task_identifier = ${scope.taskIdentifier}`;
-  if (!purged) {
-    let resources = await fenceEvePostgresSession(connection, scope.sessionId);
-    for (let pass = 0; ; pass++) {
-      if (pass === 100) {
-        throw new Error("Native cleanup inventory did not stabilize.");
-      }
-      const queued = await purgeEvePostgresQueue(connection, {
-        ...scope,
-        runIds: resources.runIds,
-      });
-      // Queued envelopes can be the only association to a detached run.
-      // Include its streams and descendants before erasing its last payloads.
-      resources = await fenceEvePostgresSession(
-        connection,
-        scope.sessionId,
-        queued.runIds
-      );
-      if (resources.runIds.every((id) => queued.runIds.includes(id))) {
-        break;
-      }
+    await connection`select run_ids as "runIds", stream_ids as "streamIds" from workflow.eve_payload_purges where session_id = ${scope.sessionId} and task_identifier = ${scope.taskIdentifier}`;
+  if (purged) {
+    return z
+      .object({ runIds: z.array(z.string()), streamIds: z.array(z.string()) })
+      .parse(purged);
+  }
+  let resources = await fenceEvePostgresSession(connection, scope.sessionId);
+  for (let pass = 0; ; pass++) {
+    if (pass === 100) {
+      throw new Error("Native cleanup inventory did not stabilize.");
+    }
+    const queued = await purgeEvePostgresQueue(connection, {
+      ...scope,
+      runIds: resources.runIds,
+    });
+    // Queued envelopes can be the only association to a detached run.
+    // Include its streams and descendants before erasing its last payloads.
+    resources = await fenceEvePostgresSession(
+      connection,
+      scope.sessionId,
+      queued.runIds
+    );
+    if (resources.runIds.every((id) => queued.runIds.includes(id))) {
+      return { runIds: queued.runIds, streamIds: resources.streamIds };
     }
   }
-  return await purgeEvePostgresSessionPayloads(connection, scope);
 }
 
 async function withRetiredNativeSession<T>(

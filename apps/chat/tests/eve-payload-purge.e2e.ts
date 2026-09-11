@@ -1,6 +1,7 @@
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 import {
+  prepareEveNativeSessionPurge,
   purgeEveNativeSession,
   retireEveNativeSessions,
 } from "../lib/db/eve-native-purge";
@@ -227,4 +228,54 @@ test("family retirement persists partial progress without erasing another member
   expect(
     await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
   ).toHaveLength(2);
+});
+
+test("preparation keeps native payloads for inventory and recovers the same identities after purge", async () => {
+  const root = await fixture();
+  const child = await fixture(root);
+  const queued = crypto.randomUUID();
+  runIds.push(queued);
+  const envelope = {
+    data: Buffer.from(
+      JSON.stringify({
+        runId: queued,
+        runInput: { attributes: { $parentRunId: child } },
+      })
+    ).toString("base64"),
+  };
+  await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
+  const scope = { sessionId: root, taskIdentifier: task };
+  let retirements = 0;
+  const retire = () => {
+    retirements++;
+    return Promise.resolve();
+  };
+  const inventory = await prepareEveNativeSessionPurge(
+    env.DATABASE_URL,
+    scope,
+    retire
+  );
+  expect(inventory.runIds).toEqual([root, child, queued].sort());
+  expect(inventory.streamIds).toEqual([root, child].sort());
+  for (const table of tables) {
+    expect(
+      await query`select run_id from ${query(`workflow.${table}`)} where run_id in ${query([root, child])}`
+    ).toHaveLength(2);
+  }
+  expect(
+    await query`select session_id from workflow.eve_payload_purges where session_id = ${root}`
+  ).toEqual([]);
+  await expect(
+    query`insert into workflow.workflow_events(id, run_id, type) values (${crypto.randomUUID()}, ${child}, 'step_completed')`
+  ).rejects.toMatchObject({ code: "55000" });
+  expect(
+    await prepareEveNativeSessionPurge(env.DATABASE_URL, scope, retire)
+  ).toEqual(inventory);
+  expect(await purgeEveNativeSession(env.DATABASE_URL, scope, retire)).toEqual(
+    inventory
+  );
+  expect(
+    await prepareEveNativeSessionPurge(env.DATABASE_URL, scope, retire)
+  ).toEqual(inventory);
+  expect(retirements).toBe(1);
 });
