@@ -33,7 +33,8 @@
     "build": "bun build.ts",
     "prepublishOnly": "bun run build",
     "test:types": "tsc --noEmit",
-    "test:unit": "bun test src"
+    "test:unit": "bun test src",
+    "test:visual": "vitest run --config visual/vitest.config.ts"
   },
   "dependencies": {},
   "devDependencies": {

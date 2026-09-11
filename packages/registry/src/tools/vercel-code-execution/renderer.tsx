@@ -1,6 +1,8 @@
 "use client";
 
 import type { UIToolInvocation } from "ai";
+import Image from "next/image";
+import { z } from "zod";
 import InteractiveChart, {
   type BaseChart,
 } from "@/components/interactive-charts";
@@ -9,30 +11,42 @@ import type { codeExecution } from "./tool";
 
 export type CodeExecutionTool = UIToolInvocation<typeof codeExecution>;
 
-function isBaseChart(input: unknown): input is BaseChart {
-  if (typeof input !== "object" || input === null) {
-    return false;
-  }
-  const maybe = input as Record<string, unknown>;
-  const hasType = typeof maybe.type === "string";
-  const hasTitle =
-    typeof maybe.title === "string" || typeof maybe.title === "undefined";
-  const hasElements = Array.isArray(maybe.elements);
-  return hasType && hasTitle && hasElements;
-}
-
-interface PngChart {
-  base64: string;
-  format: string;
-}
-
-function isPngChart(input: unknown): input is PngChart {
-  if (typeof input !== "object" || input === null) {
-    return false;
-  }
-  const maybe = input as Record<string, unknown>;
-  return typeof maybe.base64 === "string" && maybe.base64.length > 0;
-}
+const chartLabels = {
+  title: z.string().default(""),
+  x_label: z.string().optional(),
+  y_label: z.string().optional(),
+};
+const series = z.array(
+  z.object({
+    label: z.string(),
+    points: z.array(z.tuple([z.union([z.number(), z.string()]), z.number()])),
+  })
+);
+const chartSchema = z.discriminatedUnion("type", [
+  z.object({
+    ...chartLabels,
+    type: z.literal("line"),
+    x_scale: z.literal("datetime").optional(),
+    elements: series,
+  }),
+  z.object({
+    ...chartLabels,
+    type: z.literal("scatter"),
+    x_scale: z.literal("datetime").optional(),
+    elements: series,
+  }),
+  z.object({
+    ...chartLabels,
+    type: z.literal("bar"),
+    elements: z.array(
+      z.object({ group: z.string(), label: z.string(), value: z.number() })
+    ),
+  }),
+]);
+const pngSchema = z.object({
+  base64: z.string().min(1),
+  format: z.literal("png"),
+});
 
 export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
   const args = tool.input ?? {
@@ -42,10 +56,10 @@ export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
     icon: "default",
   };
   const result = tool.state === "output-available" ? tool.output : null;
-  const chart: BaseChart | null =
-    result && isBaseChart(result.chart) ? result.chart : null;
-  const pngChart: PngChart | null =
-    result && isPngChart(result.chart) ? result.chart : null;
+  const parsedChart = chartSchema.safeParse(result?.chart);
+  const chart: BaseChart | null = parsedChart.success ? parsedChart.data : null;
+  const parsedPng = pngSchema.safeParse(result?.chart);
+  const pngChart = parsedPng.success ? parsedPng.data : null;
   const code = typeof args.code === "string" ? args.code : "";
   const title = typeof args.title === "string" ? args.title : "";
   const language = args.language === "javascript" ? "javascript" : "python";
@@ -66,13 +80,14 @@ export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
       )}
 
       {pngChart && (
-        <div className="pt-1">
-          {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for base64 data URLs */}
-          {/* biome-ignore lint/correctness/useImageSize: Dynamic chart dimensions unknown */}
-          <img
+        <div className="relative aspect-[4/3] w-full">
+          <Image
             alt="Chart output"
-            className="max-w-full rounded-lg"
+            className="rounded-lg object-contain"
+            fill
+            sizes="(max-width: 768px) 100vw, 768px"
             src={`data:image/png;base64,${pngChart.base64}`}
+            unoptimized
           />
         </div>
       )}
