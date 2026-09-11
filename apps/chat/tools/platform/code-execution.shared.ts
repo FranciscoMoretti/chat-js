@@ -35,6 +35,7 @@ export function createSandbox(
 ): Promise<Sandbox> {
   return Sandbox.create({
     runtime,
+    persistent: false,
     signal,
     timeout: 5 * 60 * 1000,
     resources: { vcpus: 2 },
@@ -43,7 +44,7 @@ export function createSandbox(
 }
 
 export async function cleanupSandbox(
-  sandbox: Pick<Sandbox, "stop"> | undefined,
+  sandbox: Pick<Sandbox, "stop" | "delete"> | undefined,
   log: Pick<ReturnType<typeof createModuleLogger>, "info" | "warn">,
   requestId: string
 ): Promise<void> {
@@ -51,7 +52,14 @@ export async function cleanupSandbox(
     return;
   }
   try {
-    await sandbox.stop({ blocking: true, signal: AbortSignal.timeout(30_000) });
+    try {
+      await sandbox.stop({ signal: AbortSignal.timeout(30_000) });
+    } finally {
+      await sandbox.delete({
+        deleteOrphanSnapshots: true,
+        signal: AbortSignal.timeout(30_000),
+      });
+    }
     log.info({ requestId }, "sandbox closed");
   } catch (closeErr) {
     log.warn({ requestId, closeErr }, "failed to close sandbox");

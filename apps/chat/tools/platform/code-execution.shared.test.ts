@@ -1,4 +1,4 @@
-import type { Sandbox } from "@vercel/sandbox";
+import { Sandbox } from "@vercel/sandbox";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const envMock: {
@@ -76,7 +76,8 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   const gate = Promise.withResolvers<never>();
   const stop = vi.fn<Sandbox["stop"]>(() => gate.promise);
   const log = { info: vi.fn(), warn: vi.fn() };
-  const pending = cleanupSandbox({ stop }, log, "fixture");
+  const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+  const pending = cleanupSandbox({ stop, delete: remove }, log, "fixture");
   let settled = false;
   const observed = pending.finally(() => {
     settled = true;
@@ -85,11 +86,43 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   await Promise.resolve();
   expect(settled).toBe(false);
   expect(stop).toHaveBeenCalledWith({
-    blocking: true,
     signal: expect.any(AbortSignal),
   });
   gate.reject(new Error("stop unavailable"));
   await rejection;
   expect(log.info).not.toHaveBeenCalled();
   expect(log.warn).toHaveBeenCalledOnce();
+  expect(remove).toHaveBeenCalledWith({
+    deleteOrphanSnapshots: true,
+    signal: expect.any(AbortSignal),
+  });
+});
+
+it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
+  const { createSandbox } = await import("./code-execution.shared");
+  const create = vi
+    .spyOn(Sandbox, "create")
+    .mockRejectedValueOnce(new Error("fixture"));
+  try {
+    await expect(createSandbox("node22")).rejects.toThrow("fixture");
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ runtime: "node22", persistent: false })
+    );
+  } finally {
+    create.mockRestore();
+  }
+});
+
+it("does not report successful cleanup until deletion has completed", async () => {
+  const { cleanupSandbox } = await import("./code-execution.shared");
+  const gate = Promise.withResolvers<void>();
+  const stop = vi.fn<Sandbox["stop"]>();
+  const remove = vi.fn<Sandbox["delete"]>(() => gate.promise);
+  const log = { info: vi.fn(), warn: vi.fn() };
+  const pending = cleanupSandbox({ stop, delete: remove }, log, "fixture");
+  const rejected = expect(pending).rejects.toThrow("delete unavailable");
+  await vi.waitFor(() => expect(remove).toHaveBeenCalledOnce());
+  expect(log.info).not.toHaveBeenCalled();
+  gate.reject(new Error("delete unavailable"));
+  await rejected;
 });

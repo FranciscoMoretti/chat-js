@@ -15,6 +15,7 @@ export default defineConfig({
     "eve-document-tools.e2e.ts",
     "eve-live.e2e.ts",
     "eve-code-execution.e2e.ts",
+    "eve-sandbox-lifecycle.e2e.ts",
     "eve-search.e2e.ts",
     "eve-tool-renderers.e2e.ts",
     "eve-forks.e2e.ts",
