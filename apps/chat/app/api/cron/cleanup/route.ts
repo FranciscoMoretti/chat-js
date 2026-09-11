@@ -38,6 +38,17 @@ export async function GET(request: NextRequest) {
 }
 
 async function cleanupOrphanedAttachments() {
+  // Legacy message rows cannot prove that a file is unused by EVE. Keep
+  // existing files even when EVE admission is temporarily disabled. Replace
+  // this guard only when cleanup includes durable EVE file references.
+  if (env.WORKFLOW_POSTGRES_URL) {
+    return {
+      deletedCount: 0,
+      deletedUrls: [],
+      skipped: true,
+      reason: "eve_file_inventory_pending",
+    };
+  }
   // Skip cleanup if neither image tool nor attachments is enabled
   const imageGenerationEnabled = config.ai.tools.image.enabled;
   const attachmentsEnabled = config.features.attachments;
