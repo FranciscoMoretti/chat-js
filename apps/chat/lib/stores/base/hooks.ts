@@ -279,9 +279,9 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
 // ~60fps for smooth streaming
 const MESSAGES_THROTTLE_MS = 16;
 
-export function createChatStoreCreator<TMessage extends UIMessage>(
+export const createChatStoreCreator = <TMessage extends UIMessage>(
   initialMessages: TMessage[] = []
-): StateCreator<StoreState<TMessage>, [], []> {
+): StateCreator<StoreState<TMessage>, [], []> => {
   let throttledMessagesUpdater: (() => void) | null = null;
   const messageIndex = new MessageIndex<TMessage>();
   const throttledEffects = new Set<() => void>();
@@ -386,11 +386,11 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
         batchUpdates(() => {
           get()._messageIndex.update(messages);
           set({
-            messages,
-            status: "ready",
+            _memoizedSelectors: new Map(),
             error: undefined,
             id,
-            _memoizedSelectors: new Map(),
+            messages,
+            status: "ready",
           });
           throttledMessagesUpdater?.();
         });
@@ -404,8 +404,8 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             const messages = [...state.messages, message];
             state._messageIndex.update(messages);
             return {
-              messages,
               _memoizedSelectors: new Map(),
+              messages,
             };
           });
 
@@ -434,8 +434,8 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             const messages = state.messages.slice(0, -1);
             state._messageIndex.update(messages);
             return {
-              messages,
               _memoizedSelectors: new Map(),
+              messages,
             };
           });
           throttledMessagesUpdater?.();
@@ -451,8 +451,8 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             newMessages[index] = structuredClone(message);
             state._messageIndex.update(newMessages);
             return {
-              messages: newMessages,
               _memoizedSelectors: new Map(),
+              messages: newMessages,
             };
           });
 
@@ -488,8 +488,8 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             newMessages[index] = structuredClone(message);
             state._messageIndex.update(newMessages);
             return {
-              messages: newMessages,
               _memoizedSelectors: new Map(),
+              messages: newMessages,
             };
           });
 
@@ -539,14 +539,14 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           }
 
           set({
+            _memoizedSelectors: new Map(),
+            _messageIndex: newMessageIndex,
+            _throttledMessages: [],
+            _transientDataParts: new Map(),
+            error: undefined,
             id: undefined,
             messages: [],
             status: "ready" as const,
-            error: undefined,
-            _throttledMessages: [],
-            _messageIndex: newMessageIndex,
-            _memoizedSelectors: new Map(),
-            _transientDataParts: new Map(),
           });
         });
       },
@@ -614,7 +614,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
         }
 
         const result = selector();
-        state._memoizedSelectors.set(key, { result, deps: [...deps] });
+        state._memoizedSelectors.set(key, { deps: [...deps], result });
         return result;
       },
 
@@ -660,18 +660,17 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
       },
     };
   };
-}
+};
 
-export function createChatStore<TMessage extends UIMessage = UIMessage>(
+export const createChatStore = <TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
-) {
-  return createStore<StoreState<TMessage>>()(
+) =>
+  createStore<StoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(createChatStoreCreator<TMessage>(initialMessages)),
       { name: "chat-store" }
     )
   );
-}
 
 type ChatStoreApi<TMessage extends UIMessage = UIMessage> = ReturnType<
   typeof createChatStore<TMessage>
@@ -707,7 +706,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
   ): void;
 };
 
-export function Provider<TMessage extends UIMessage = UIMessage>({
+export const Provider = <TMessage extends UIMessage = UIMessage>({
   children,
   initialMessages,
   store,
@@ -715,7 +714,7 @@ export function Provider<TMessage extends UIMessage = UIMessage>({
   children: React.ReactNode;
   initialMessages?: TMessage[];
   store?: CompatibleChatStoreApi<TMessage>;
-}) {
+}) => {
   const storeRef = useRef<CompatibleChatStoreApi<TMessage> | null>(null);
 
   if (storeRef.current === null) {
@@ -728,7 +727,7 @@ export function Provider<TMessage extends UIMessage = UIMessage>({
     { value: storeRef.current },
     children
   );
-}
+};
 
 // Standard Zustand v5 store hook
 export function useChatStore<T, TMessage extends UIMessage = UIMessage>(
@@ -753,13 +752,13 @@ export function useChatStore<
   return useStore(store, selectorOrIdentity as (state: any) => T);
 }
 
-export function useChatStoreApi<TMessage extends UIMessage = UIMessage>() {
+export const useChatStoreApi = <TMessage extends UIMessage = UIMessage>() => {
   const store = useContext(ChatStoreContext);
   if (!store) {
     throw new Error("useChatStoreApi must be used within Provider");
   }
   return store as ChatStoreApi<TMessage>;
-}
+};
 
 // Optimized selector hooks with memoization
 export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
@@ -785,27 +784,25 @@ export const useMessageIds = <TMessage extends UIMessage = UIMessage>() =>
 // Optimized message selector with O(1) lookup
 export const useMessageById = <TMessage extends UIMessage = UIMessage>(
   messageId: string
-) => {
-  return useChatStore(
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => state.getMessageById(messageId),
       [messageId]
     )
   );
-};
 
 // Virtualization helper for large message lists
 export const useVirtualMessages = <TMessage extends UIMessage = UIMessage>(
   start: number,
   end?: number
-) => {
-  return useChatStore(
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => state.getMessagesSlice(start, end),
       [start, end]
     )
   );
-};
 
 export const useMessageCount = () => useChatStore(messageCountSelector);
 
@@ -863,13 +860,13 @@ export const useChatActions = <
 >(): ChatActions<TMessage> =>
   useChatStore(
     useShallow((state: StoreState<TMessage>) => ({
-      sendMessage: state.sendMessage || fallbackSendMessage,
-      startRun: state.startRun || fallbackStartRun,
-      regenerate: state.regenerate || fallbackRegenerate,
-      stop: state.stop || fallbackStop,
-      resumeStream: state.resumeStream || fallbackResumeStream,
       addToolResult: state.addToolResult || fallbackAddToolResult,
       clearError: state.clearError || fallbackClearError,
+      regenerate: state.regenerate || fallbackRegenerate,
+      resumeStream: state.resumeStream || fallbackResumeStream,
+      sendMessage: state.sendMessage || fallbackSendMessage,
+      startRun: state.startRun || fallbackStartRun,
+      stop: state.stop || fallbackStop,
     }))
   );
 
@@ -878,8 +875,8 @@ export const useSelector = <TMessage extends UIMessage = UIMessage, T = any>(
   key: string,
   selector: (messages: TMessage[]) => T,
   deps: any[] = []
-) => {
-  return useChatStore(
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) =>
         state.getMemoizedSelector(
@@ -890,4 +887,3 @@ export const useSelector = <TMessage extends UIMessage = UIMessage, T = any>(
       [key, selector, ...deps]
     )
   );
-};
