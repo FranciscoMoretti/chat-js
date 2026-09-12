@@ -41,7 +41,7 @@ export const SessionProvider = ({
   // undefined = not seeded from the server tree yet
   const [serverSession, setServerSession] = useState<
     Session | null | undefined
-  >(undefined);
+  >();
   const isSeeded = serverSession !== undefined;
 
   const value = useMemo<SessionContextValue>(() => {
@@ -59,7 +59,7 @@ export const SessionProvider = ({
     // seed while the client fetch is still pending or failed (e.g. blocked
     // get-session / trustedOrigins mismatch).
     const effective =
-      isClientPending || clientError != null
+      isClientPending || (clientError !== null && clientError !== undefined)
         ? (clientSession ?? seededSession)
         : clientSession;
 

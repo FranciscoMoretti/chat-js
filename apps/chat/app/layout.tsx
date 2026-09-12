@@ -25,7 +25,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  maximumScale: 1, // Disable auto-zoom on mobile Safari
+  // Disable auto-zoom on mobile Safari
+  maximumScale: 1,
   interactiveWidget: "resizes-content" as const,
 };
 

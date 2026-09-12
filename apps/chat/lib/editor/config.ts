@@ -59,7 +59,8 @@ export const handleEditorChange = ({
   });
 
   // Check if this should be debounced (similar to ProseMirror's no-debounce meta)
-  const shouldDebounce = true; // Default to debounced saving
+  // Default to debounced saving
+  const shouldDebounce = true;
 
   onSaveContent(updatedContent, shouldDebounce);
 };

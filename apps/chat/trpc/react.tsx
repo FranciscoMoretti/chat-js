@@ -6,7 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
-import SuperJSON from "superjson";
+import superjson from "superjson";
 
 import { getBaseUrl } from "@/lib/url";
 import type { AppRouter } from "@/trpc/routers/_app";
@@ -60,7 +60,7 @@ export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
             headers.set("x-trpc-source", "nextjs-react");
             return headers;
           },
-          transformer: SuperJSON,
+          transformer: superjson,
         }),
       ],
     })
