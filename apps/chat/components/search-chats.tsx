@@ -1,7 +1,7 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -21,12 +21,11 @@ const getSearchShortcutText = () => {
 export const SearchChatsButton = () => {
   const [open, setOpen] = useState(false);
   const { setOpenMobile } = useSidebar();
-  const [shortcutText, setShortcutText] = useState("Ctrl+K");
-
-  // Update shortcut text on mount
-  useEffect(() => {
-    setShortcutText(getSearchShortcutText());
-  }, []);
+  const shortcutText = useSyncExternalStore(
+    () => () => null,
+    getSearchShortcutText,
+    () => "Ctrl+K"
+  );
 
   // Global keyboard shortcut
   useEffect(() => {
