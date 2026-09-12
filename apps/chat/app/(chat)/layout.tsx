@@ -22,29 +22,11 @@ import { ChatRouteHost } from "./chat-route-host";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
-const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-
-  return (
-    <TRPCReactProvider>
-      <SessionProvider>
-        <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <SidebarInset className={sidebarInsetClassName}>
-            <Suspense fallback={<ChatLoadingShell />}>
-              <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
-            </Suspense>
-          </SidebarInset>
-        </SidebarProvider>
-      </SessionProvider>
-    </TRPCReactProvider>
-  );
-};
-
-export default ChatLayout;
-
-async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
+const ChatLayoutDynamic = async ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -106,4 +88,26 @@ async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
       </ChatProviders>
     </HydrateClient>
   );
-}
+};
+
+const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
+  return (
+    <TRPCReactProvider>
+      <SessionProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
+          <AppSidebar />
+          <SidebarInset className={sidebarInsetClassName}>
+            <Suspense fallback={<ChatLoadingShell />}>
+              <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
+            </Suspense>
+          </SidebarInset>
+        </SidebarProvider>
+      </SessionProvider>
+    </TRPCReactProvider>
+  );
+};
+
+export default ChatLayout;
