@@ -89,6 +89,7 @@ test.each([
   ["apps/electron/package.json", true],
   ["packages/thread/src/index.ts", true],
   ["scripts/sync-template.ts", true],
+  ["scripts/sync-template-snapshot.ts", true],
   [".github/workflows/cli-scaffold.yml", true],
   ["package.json", true],
   ["bun.lock", true],
@@ -147,6 +148,7 @@ test.each([
     path.startsWith("packages/thread/src/") ||
     path.startsWith("packages/registry/src/") ||
     path === "scripts/sync-template.ts" ||
+    path === "scripts/sync-template-snapshot.ts" ||
     path === "package.json"
   ) {
     expect(plannedTasks.has("@chat-js/cli#test:unit")).toBe(affected);
