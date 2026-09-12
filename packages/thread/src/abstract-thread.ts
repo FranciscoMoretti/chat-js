@@ -455,12 +455,12 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
   getRun(runId: string) {
     const run = this.#runs.get(runId);
-    return run ? this.#runs.toSnapshot(run) : undefined;
+    return run ? RunRegistry.toSnapshot(run) : undefined;
   }
 
   getRunForMessage(messageId: string) {
     const run = this.#runs.getForMessage(messageId);
-    return run ? this.#runs.toSnapshot(run) : undefined;
+    return run ? RunRegistry.toSnapshot(run) : undefined;
   }
 
   private setRunError(runId: string, error: Error | undefined) {

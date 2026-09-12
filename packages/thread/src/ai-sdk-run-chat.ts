@@ -37,6 +37,8 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
   writeRunMessage: (runId: string, message: TMessage) => void;
 }
 
+const cloneSnapshot = <T>(thing: T): T => structuredClone(thing);
+
 class ThreadRunState<
   TMessage extends UIMessage,
 > implements ChatState<TMessage> {
@@ -109,7 +111,7 @@ class ThreadRunState<
     this.writeMessage(messageWithPrefix);
   };
 
-  snapshot = <T>(thing: T): T => structuredClone(thing);
+  snapshot = cloneSnapshot;
 
   private withResumePrefix(message: TMessage): TMessage {
     const prefix = this.resumePrefix;

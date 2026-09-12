@@ -183,7 +183,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     }
 
     for (const toolCallId of toolCallIds) {
-      this.assertOwnershipAvailable(
+      RunRegistry.assertOwnershipAvailable(
         this.#runIdByToolCallId,
         toolCallId,
         runId,
@@ -191,7 +191,7 @@ export class RunRegistry<TMessage extends UIMessage> {
       );
     }
     for (const approvalId of approvalIds) {
-      this.assertOwnershipAvailable(
+      RunRegistry.assertOwnershipAvailable(
         this.#runIdByApprovalId,
         approvalId,
         runId,
@@ -211,7 +211,7 @@ export class RunRegistry<TMessage extends UIMessage> {
   }
 
   registerToolCall(runId: string, toolCallId: string) {
-    this.assertOwnershipAvailable(
+    RunRegistry.assertOwnershipAvailable(
       this.#runIdByToolCallId,
       toolCallId,
       runId,
@@ -267,10 +267,12 @@ export class RunRegistry<TMessage extends UIMessage> {
   }
 
   snapshots() {
-    return this.values().map((run) => this.toSnapshot(run));
+    return this.values().map((run) => RunRegistry.toSnapshot(run));
   }
 
-  toSnapshot(run: RunRecord<TMessage>): ThreadRun {
+  static toSnapshot<TMessage extends UIMessage>(
+    run: RunRecord<TMessage>
+  ): ThreadRun {
     return {
       error: run.error,
       id: run.spec.id,
@@ -282,7 +284,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     return [...this.#runsById.values()];
   }
 
-  private assertOwnershipAvailable(
+  private static assertOwnershipAvailable(
     owners: Map<string, string>,
     id: string,
     runId: string,
