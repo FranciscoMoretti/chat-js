@@ -20,7 +20,6 @@ export {
   useMessageById,
   useMessageCount,
   useMessageIds,
-  useSelector,
   useVirtualMessages,
 } from "./hooks";
 // Enhanced useChat hook

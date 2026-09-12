@@ -9,7 +9,7 @@ import { useStore } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { useShallow } from "zustand/shallow";
 import { createStore } from "zustand/vanilla";
-import type { StateCreator } from "zustand/vanilla";
+import type { StateCreator, StoreApi } from "zustand/vanilla";
 
 import { debug } from "./debug";
 
@@ -213,7 +213,6 @@ type SyncedChatState<TMessage extends UIMessage> = Partial<
 >;
 
 export interface StoreState<TMessage extends UIMessage = UIMessage> {
-  _memoizedSelectors: Map<string, { result: any; deps: any[] }>;
   _messageIndex: MessageIndex<TMessage>;
 
   // Performance optimizations
@@ -234,8 +233,6 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   // Optimized getters
   getLastMessageId: () => string | null;
 
-  // Memoized complex selectors
-  getMemoizedSelector: <T>(key: string, selector: () => T, deps: any[]) => T;
   getMessageById: (id: string) => TMessage | undefined;
   getMessageCount: () => number;
   getMessageIds: () => string[];
@@ -317,7 +314,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
       error: undefined,
       _throttledMessages: [...initialMessages],
       _messageIndex: messageIndex,
-      _memoizedSelectors: new Map(),
       _transientDataParts: new Map(),
       _scheduleThrottledMessagesUpdate: () => {
         throttledMessagesUpdater?.();
@@ -350,7 +346,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           set({
             messages,
             // Clear memoized selectors
-            _memoizedSelectors: new Map(),
           });
 
           // During streaming, update immediately for smooth text rendering
@@ -386,7 +381,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
         batchUpdates(() => {
           get()._messageIndex.update(messages);
           set({
-            _memoizedSelectors: new Map(),
             error: undefined,
             id,
             messages,
@@ -404,7 +398,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
             const messages = [...state.messages, message];
             state._messageIndex.update(messages);
             return {
-              _memoizedSelectors: new Map(),
               messages,
             };
           });
@@ -434,7 +427,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
             const messages = state.messages.slice(0, -1);
             state._messageIndex.update(messages);
             return {
-              _memoizedSelectors: new Map(),
               messages,
             };
           });
@@ -451,7 +443,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
             newMessages[index] = structuredClone(message);
             state._messageIndex.update(newMessages);
             return {
-              _memoizedSelectors: new Map(),
               messages: newMessages,
             };
           });
@@ -488,7 +479,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
             newMessages[index] = structuredClone(message);
             state._messageIndex.update(newMessages);
             return {
-              _memoizedSelectors: new Map(),
               messages: newMessages,
             };
           });
@@ -518,7 +508,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
             {
               ...newState,
               // Clear memoized selectors on sync
-              _memoizedSelectors: new Map(),
             },
             false
             // 'syncFromUseChat',
@@ -539,7 +528,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           }
 
           set({
-            _memoizedSelectors: new Map(),
             _messageIndex: newMessageIndex,
             _throttledMessages: [],
             _transientDataParts: new Map(),
@@ -594,28 +582,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
         const state = get();
         const messages = state._throttledMessages || state.messages;
         return messages.length;
-      },
-
-      getMemoizedSelector: <T>(
-        key: string,
-        selector: () => T,
-        deps: any[]
-      ): T => {
-        const state = get();
-        const cached = state._memoizedSelectors.get(key);
-
-        // Reference-equality dep check, matching React dependency semantics.
-        if (
-          cached &&
-          cached.deps.length === deps.length &&
-          cached.deps.every((dep, index) => Object.is(dep, deps[index]))
-        ) {
-          return cached.result;
-        }
-
-        const result = selector();
-        state._memoizedSelectors.set(key, { deps: [...deps], result });
-        return result;
       },
 
       // Effects
@@ -677,7 +643,13 @@ type ChatStoreApi<TMessage extends UIMessage = UIMessage> = ReturnType<
   typeof createChatStore<TMessage>
 >;
 
-export const ChatStoreContext = createContext<ChatStoreApi<any> | undefined>(
+// The provider can carry any message specialization; typed hooks select it at the boundary.
+type ChatStoreHandle = Pick<
+  StoreApi<unknown>,
+  "getInitialState" | "getState" | "subscribe"
+>;
+
+export const ChatStoreContext = createContext<ChatStoreHandle | undefined>(
   undefined
 );
 
@@ -730,6 +702,14 @@ export const Provider = <TMessage extends UIMessage = UIMessage>({
   );
 };
 
+export const useChatStoreApi = <TMessage extends UIMessage = UIMessage>() => {
+  const store = useContext(ChatStoreContext);
+  if (!store) {
+    throw new Error("useChatStoreApi must be used within Provider");
+  }
+  return store as ChatStoreApi<TMessage>;
+};
+
 // Standard Zustand v5 store hook
 export function useChatStore<T, TMessage extends UIMessage = UIMessage>(
   selector: (store: StoreState<TMessage>) => T
@@ -741,25 +721,15 @@ export function useChatStore<
   T = StoreState<UIMessage>,
   TMessage extends UIMessage = UIMessage,
 >(selector?: (store: StoreState<TMessage>) => T) {
-  const store = useContext(ChatStoreContext);
-  if (!store) {
-    throw new Error("useChatStore must be used within Provider");
-  }
-
+  const store = useChatStoreApi<TMessage>();
   const selectorOrIdentity =
-    selector || ((s: StoreState<TMessage>) => s as unknown as T);
+    selector ?? ((state: StoreState<TMessage>) => state);
 
-  // Use Zustand's built-in useStore
-  return useStore(store, selectorOrIdentity as (state: any) => T);
+  return useStore<ChatStoreApi<TMessage>, T | StoreState<TMessage>>(
+    store,
+    selectorOrIdentity
+  );
 }
-
-export const useChatStoreApi = <TMessage extends UIMessage = UIMessage>() => {
-  const store = useContext(ChatStoreContext);
-  if (!store) {
-    throw new Error("useChatStoreApi must be used within Provider");
-  }
-  return store as ChatStoreApi<TMessage>;
-};
 
 // Optimized selector hooks with memoization
 export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
@@ -768,11 +738,10 @@ export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
   );
 
 // Stable selector functions to avoid recreation
-const statusSelector = (state: StoreState<any>) => state.status;
-const errorSelector = (state: StoreState<any>) => state.error;
-const idSelector = (state: StoreState<any>) => state.id;
-const messageCountSelector = (state: StoreState<any>) =>
-  state.getMessageCount();
+const statusSelector = (state: StoreState) => state.status;
+const errorSelector = (state: StoreState) => state.error;
+const idSelector = (state: StoreState) => state.id;
+const messageCountSelector = (state: StoreState) => state.getMessageCount();
 
 export const useChatStatus = () => useChatStore(statusSelector);
 export const useChatError = () => useChatStore(errorSelector);
@@ -869,22 +838,4 @@ export const useChatActions = <
       startRun: state.startRun || fallbackStartRun,
       stop: state.stop || fallbackStop,
     }))
-  );
-
-// Memoized complex selector hook
-export const useSelector = <TMessage extends UIMessage = UIMessage, T = any>(
-  key: string,
-  selector: (messages: TMessage[]) => T,
-  deps: any[] = []
-) =>
-  useChatStore(
-    useCallback(
-      (state: StoreState<TMessage>) =>
-        state.getMemoizedSelector(
-          key,
-          () => selector(state.getThrottledMessages()),
-          [state.getMessageCount(), ...deps]
-        ),
-      [key, selector, ...deps]
-    )
   );

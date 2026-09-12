@@ -64,7 +64,6 @@ export const withThreadState =
 
           return {
             ...state,
-            _memoizedSelectors: new Map(),
             error: nextSnapshot.error,
             messages: nextSnapshot.messages,
             status: nextSnapshot.status,
