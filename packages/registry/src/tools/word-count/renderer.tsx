@@ -6,13 +6,20 @@ import type { wordCount } from "./tool";
 
 type WordCountRendererTool = ToolPartFromTool<typeof wordCount>;
 
-export function WordCountRenderer({
+const Stat = ({ label, value }: { label: string; value: number }) => (
+  <div className="flex flex-col items-center gap-1">
+    <span className="text-lg font-semibold">{value}</span>
+    <span className="text-muted-foreground text-xs">{label}</span>
+  </div>
+);
+
+export const WordCountRenderer = ({
   tool,
 }: {
   tool: WordCountRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) {
+}) => {
   if (tool.state === "input-available") {
     return (
       <div className="text-muted-foreground rounded-lg border p-3 text-sm">
@@ -39,13 +46,4 @@ export function WordCountRenderer({
       <Stat label="Sentences" value={sentences} />
     </div>
   );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-lg font-semibold">{value}</span>
-      <span className="text-muted-foreground text-xs">{label}</span>
-    </div>
-  );
-}
+};
