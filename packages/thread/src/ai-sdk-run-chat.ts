@@ -95,18 +95,18 @@ class ThreadRunState<
   };
 
   pushMessage = (message: TMessage) => {
-    message = this.withResumePrefix(message);
-    this.#messages.push(message);
-    this.writeMessage(message);
+    const messageWithPrefix = this.withResumePrefix(message);
+    this.#messages.push(messageWithPrefix);
+    this.writeMessage(messageWithPrefix);
   };
 
   replaceMessage = (index: number, message: TMessage) => {
     if (index !== this.#messages.length - 1) {
       throw new Error("A thread run can only replace its current response");
     }
-    message = this.withResumePrefix(message);
-    this.#messages[index] = message;
-    this.writeMessage(message);
+    const messageWithPrefix = this.withResumePrefix(message);
+    this.#messages[index] = messageWithPrefix;
+    this.writeMessage(messageWithPrefix);
   };
 
   snapshot = <T>(thing: T): T => structuredClone(thing);
@@ -149,16 +149,17 @@ export class ThreadRunChat<
         return stream.pipeThrough(
           new TransformStream<UIMessageChunk, UIMessageChunk>({
             transform(chunk, controller) {
+              let transformedChunk = chunk;
               if (
                 first &&
                 chunk.type === "start" &&
                 lastMessage?.role === "assistant"
               ) {
-                chunk = {
-                  ...chunk,
-                  messageId: chunk.messageId ?? lastMessage.id,
+                transformedChunk = {
+                  ...transformedChunk,
+                  messageId: transformedChunk.messageId ?? lastMessage.id,
                   messageMetadata:
-                    chunk.messageMetadata ?? lastMessage.metadata,
+                    transformedChunk.messageMetadata ?? lastMessage.metadata,
                 };
               }
               // Full replay starts with `start`. A continuation needs the canonical
@@ -176,7 +177,7 @@ export class ThreadRunChat<
                 });
               }
               first = false;
-              controller.enqueue(chunk);
+              controller.enqueue(transformedChunk);
             },
           })
         );
