@@ -48,15 +48,15 @@ export const aiGatewayModelSchema = z.object({
   object: z.literal("model"),
   owned_by: z.string(),
   pricing: z.object({
-    input: z.string().optional(),
-    output: z.string().optional(),
-    input_cache_read: z.string().optional(),
-    input_cache_write: z.string().optional(),
-    web_search: z.string().optional(),
     image: z.string().optional(),
-    input_tiers: z.array(pricingTierSchema).optional(),
-    output_tiers: z.array(pricingTierSchema).optional(),
+    input: z.string().optional(),
+    input_cache_read: z.string().optional(),
     input_cache_read_tiers: z.array(pricingTierSchema).optional(),
+    input_cache_write: z.string().optional(),
+    input_tiers: z.array(pricingTierSchema).optional(),
+    output: z.string().optional(),
+    output_tiers: z.array(pricingTierSchema).optional(),
+    web_search: z.string().optional(),
   }),
   tags: z.array(tagSchema).optional(),
   type: aiGatewayModelTypeInputSchema,
@@ -68,9 +68,10 @@ export type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
   type: AiGatewayModelType;
 };
 
-export function isAiGatewayModelType(type: string): type is AiGatewayModelType {
-  return supportedAiGatewayModelTypes.includes(type as AiGatewayModelType);
-}
+export const isAiGatewayModelType = (
+  type: string
+): type is AiGatewayModelType =>
+  supportedAiGatewayModelTypes.includes(type as AiGatewayModelType);
 
 export const aiGatewayModelDiscriminatorSchema = z.object({
   type: z.string(),

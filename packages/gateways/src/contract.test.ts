@@ -79,7 +79,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     const requested: string[] = [];
     const gateway = adapter.create({
       env: adapter.env,
-      fetch: async () => new Response(null, { status: 503 }),
+      fetch: () => Promise.resolve(new Response(null, { status: 503 })),
       getFallbackModels: (name) => {
         requested.push(name);
         return [];
