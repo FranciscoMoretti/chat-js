@@ -120,3 +120,27 @@ test("only canonical unrelated legacy keys are excluded; possible family resourc
     await rm(appRoot, { recursive: true, force: true });
   }
 });
+
+test("other backend caches and linked provider roots prevent a complete local inventory", async () => {
+  const appRoot = await mkdtemp(join(tmpdir(), "eve-provider-inventory-"));
+  const cacheRoot = join(appRoot, ".eve", "sandbox-cache");
+  try {
+    const other = join(cacheRoot, "docker");
+    await mkdir(other, { recursive: true });
+    expect(await readLocalEveSandboxInventory(appRoot, ["session"])).toEqual({
+      owned: [],
+      unattributedDirectories: [other],
+    });
+    await rm(other, { recursive: true });
+    const outside = join(appRoot, "outside");
+    await mkdir(outside);
+    const linked = join(cacheRoot, "microsandbox");
+    await symlink(outside, linked);
+    expect(await readLocalEveSandboxInventory(appRoot, ["session"])).toEqual({
+      owned: [],
+      unattributedDirectories: [linked],
+    });
+  } finally {
+    await rm(appRoot, { recursive: true, force: true });
+  }
+});

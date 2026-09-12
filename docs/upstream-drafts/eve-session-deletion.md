@@ -213,3 +213,13 @@ This is an internal local-provider entry point, not an enabled deletion API.
 Deployment/provider wiring, crash-left local mutation admissions, unconfirmed
 allocations, and older unattributed resources still need resolution before
 claiming complete user-facing deletion support.
+
+The pinned EVE `selectDefaultSandbox` implementation selects Vercel when
+`VERCEL` is set, otherwise Docker when available, then microsandbox on supported
+platforms, then just-bash. A development server alone therefore does not prove
+microsandbox ownership. Local inventory now refuses other backend cache entries
+and linked provider roots rather than silently ignoring them. This catches
+local evidence of mixed providers; absence of those entries does not prove that
+remote resources never existed. API wiring must establish the actual provider
+and worker storage root for the sessions being erased before using this local
+coordinator.

@@ -25,13 +25,33 @@ export async function readLocalEveSandboxInventory(
   appRoot: string,
   sessionIds: string[]
 ) {
-  const directory = join(
-    appRoot,
-    ".eve",
-    "sandbox-cache",
-    "microsandbox",
-    "sessions"
+  const cacheRoot = join(appRoot, ".eve", "sandbox-cache");
+  const backends = await readdir(cacheRoot, { withFileTypes: true }).catch(
+    (error: unknown) => {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        return [];
+      }
+      throw error;
+    }
   );
+  // Default EVE backend selection can change between launches. A local inventory
+  // must not silently ignore evidence from a different provider or follow links.
+  const unsupported = backends.filter(
+    (entry) => entry.name !== "microsandbox" || !entry.isDirectory()
+  );
+  if (unsupported.length) {
+    return {
+      owned: [],
+      unattributedDirectories: unsupported
+        .map((entry) => join(cacheRoot, entry.name))
+        .sort(),
+    };
+  }
+  const directory = join(cacheRoot, "microsandbox", "sessions");
   const entries = await readdir(directory, { withFileTypes: true }).catch(
     (error: unknown) => {
       if (
