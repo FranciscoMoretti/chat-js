@@ -1,3 +1,30 @@
+diff --git a/docs/channels/eve.mdx b/docs/channels/eve.mdx
+index 3672522..adc1de9 100644
+--- a/docs/channels/eve.mdx
++++ b/docs/channels/eve.mdx
+@@ -198,3 +198,22 @@ For scripts, server-to-server calls, evals, tests, and custom clients, use the [
+ - [Client SDK](../guides/client/overview): call the eve channel from TypeScript
+ - [Auth & route protection](../guides/auth-and-route-protection): the route auth policy
+ - [Sessions, runs & streaming](../concepts/sessions-runs-and-streaming): the routes this channel exposes
++
++## Fork imported history
++
++A saved transcript has imported message IDs such as `seed_message_2`, separate from execution turn IDs. To replace an imported user message, create a new conversation with a first message and this fork reference:
++
++```json
++{
++  "message": "Replacement question",
++  "operationId": "replacement-operation",
++  "fork": {
++    "sessionId": "owned-source-session",
++    "beforeMessageId": "seed_message_2"
++  }
++}
++```
++
++The channel must grant source access through `authorizeFork`; anonymous callers cannot fork. `beforeMessageId` selects an existing imported user message and excludes it and everything after it. Do not combine it with `beforeTurnId` or `checkpointId`. Forking the first imported user message starts with empty history.
++
++The new session retains its own authentication, instructions, limits, and execution identity. eve derives model and display history from the same durable imported prefix. Completed tool results remain historical content; tools are not replayed. Imported attachments are resolved through the destination channel on the first turn. A later source sandbox is not inherited. Application-owned documents must be restored separately to the selected boundary. Imported messages retained in the prefix remain addressable in descendant forks.
 diff --git a/packages/eve/package.json b/packages/eve/package.json
 index e2dc5f7..6868f70 100644
 --- a/packages/eve/package.json
@@ -427,10 +454,10 @@ index e5b41ab..7080588 100644
          if (authResult instanceof Response) return authResult;
 diff --git a/packages/eve/src/eve-channel/request.test.ts b/packages/eve/src/eve-channel/request.test.ts
 new file mode 100644
-index 0000000..bab4c17
+index 0000000..a49b562
 --- /dev/null
 +++ b/packages/eve/src/eve-channel/request.test.ts
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,67 @@
 +import { expect, it } from "vitest";
 +import { parseCreateBody } from "#eve-channel/request.js";
 +it("accepts a named fork while preserving its exact coordinates", () => {
@@ -439,15 +466,26 @@ index 0000000..bab4c17
 +  expect(result).not.toBeInstanceOf(Response);
 +  expect(result).toMatchObject({ fork });
 +});
-+it.each([{ checkpointId: "../invalid" }, { extra: true }])("rejects malformed named forks or unknown fields %j", (extra) => {
-+  const result = parseCreateBody({ message: "follow-up", fork: { sessionId: "source", beforeTurnId: "turn_1", ...extra } });
-+  expect(result).toBeInstanceOf(Response);
-+  if (!(result instanceof Response)) throw new Error("Expected rejection");
-+  expect(result.status).toBe(400);
-+});
++it.each([{ checkpointId: "../invalid" }, { extra: true }])(
++  "rejects malformed named forks or unknown fields %j",
++  (extra) => {
++    const result = parseCreateBody({
++      message: "follow-up",
++      fork: { sessionId: "source", beforeTurnId: "turn_1", ...extra },
++    });
++    expect(result).toBeInstanceOf(Response);
++    if (!(result instanceof Response)) throw new Error("Expected rejection");
++    expect(result.status).toBe(400);
++  },
++);
 +
 +it("accepts only an opaque operation for a server-authorized idle seed", () => {
-+  expect(parseCreateBody({ seed: true, operationId: "copy-1" })).toEqual({ seed: true, operationId: "copy-1", message: "", mode: "conversation" });
++  expect(parseCreateBody({ seed: true, operationId: "copy-1" })).toEqual({
++    seed: true,
++    operationId: "copy-1",
++    message: "",
++    mode: "conversation",
++  });
 +});
 +it.each([
 +  { seed: false, operationId: "copy-1", message: "ordinary" },
@@ -455,15 +493,40 @@ index 0000000..bab4c17
 +  { seed: true },
 +  { seed: true, operationId: "" },
 +  { seed: true, operationId: "x".repeat(257) },
-+  ...["message", "messages", "fork", "callback", "mode", "capabilities", "clientContext", "outputSchema", "activityObserver", "sourceSessionId", "forwardedPrincipal"].map((field) => ({ seed: true, operationId: "copy-1", [field]: {} })),
++  ...[
++    "message",
++    "messages",
++    "fork",
++    "callback",
++    "mode",
++    "capabilities",
++    "clientContext",
++    "outputSchema",
++    "activityObserver",
++    "sourceSessionId",
++    "forwardedPrincipal",
++  ].map((field) => ({ seed: true, operationId: "copy-1", [field]: {} })),
 +])("rejects seed payload data or execution options: %j", (payload) => {
 +  const result = parseCreateBody(payload);
 +  expect(result).toBeInstanceOf(Response);
 +  if (!(result instanceof Response)) throw new Error("Expected rejection");
 +  expect(result.status).toBe(400);
 +});
++it("accepts an imported boundary without mixing execution checkpoint coordinates", () => {
++  const fork = { sessionId: "owned-source", beforeMessageId: "seed_message_2" };
++  expect(parseCreateBody({ message: "replacement", fork })).toMatchObject({ fork });
++  for (const extra of [
++    { beforeTurnId: "turn_0" },
++    { checkpointId: crypto.randomUUID() },
++    { beforeMessageId: "seed_message_01" },
++    { beforeMessageId: "seed_message_10000" },
++  ]) {
++    const result = parseCreateBody({ message: "replacement", fork: { ...fork, ...extra } });
++    expect(result).toBeInstanceOf(Response);
++  }
++});
 diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
-index 6a52594..114c65a 100644
+index 6a52594..146a803 100644
 --- a/packages/eve/src/eve-channel/request.ts
 +++ b/packages/eve/src/eve-channel/request.ts
 @@ -1,3 +1,4 @@
@@ -492,26 +555,37 @@ index 6a52594..114c65a 100644
      input.auth.authenticator,
      input.auth.issuer ?? null,
      input.auth.principalType,
-@@ -64,6 +68,12 @@ export async function deriveOperationContinuationToken(input: {
+@@ -64,6 +68,21 @@ export async function deriveOperationContinuationToken(input: {
  }
 
  export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateBody | Response {
 +  if (payload.seed !== undefined) {
-+    if (payload.seed !== true || typeof payload.operationId !== "string" || !payload.operationId.length || payload.operationId.length > 256 || Object.keys(payload).some((key) => !["seed", "operationId"].includes(key))) {
-+      return Response.json({ error: "A seed request accepts only seed: true and an operationId.", ok: false }, { status: 400 });
++    if (
++      payload.seed !== true ||
++      typeof payload.operationId !== "string" ||
++      !payload.operationId.length ||
++      payload.operationId.length > 256 ||
++      Object.keys(payload).some((key) => !["seed", "operationId"].includes(key))
++    ) {
++      return Response.json(
++        { error: "A seed request accepts only seed: true and an operationId.", ok: false },
++        { status: 400 },
++      );
 +    }
 +    return { seed: true, operationId: payload.operationId, message: "", mode: "conversation" };
 +  }
    if (payload.inputResponses !== undefined) {
      return Response.json(
        { error: "'inputResponses' is only accepted for an existing session.", ok: false },
-@@ -110,7 +120,35 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
+@@ -110,7 +129,57 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
      );
    }
 
 +  let fork: SessionForkReference | undefined;
 +  if (payload.fork !== undefined) {
 +    const value = payload.fork;
++    const invalid = () =>
++      Response.json({ error: "Invalid session fork reference.", ok: false }, { status: 400 });
 +    if (
 +      typeof value !== "object" ||
 +      value === null ||
@@ -519,21 +593,41 @@ index 6a52594..114c65a 100644
 +      !("sessionId" in value) ||
 +      typeof value.sessionId !== "string" ||
 +      !value.sessionId.length ||
-+      value.sessionId.length > 256 ||
-+      !("beforeTurnId" in value) ||
-+      typeof value.beforeTurnId !== "string" ||
-+      value.beforeTurnId.length > 64 ||
-+      !/^turn_(0|[1-9][0-9]*)$/.test(value.beforeTurnId) ||
-+      Object.keys(value).some((key) => key !== "sessionId" && key !== "beforeTurnId" && key !== "checkpointId")
-+    ) {
-+      return Response.json(
-+        { error: "Invalid session fork reference.", ok: false },
-+        { status: 400 },
-+      );
++      value.sessionId.length > 256
++    )
++      return invalid();
++    if ("beforeMessageId" in value) {
++      if (
++        typeof value.beforeMessageId !== "string" ||
++        !/^seed_message_(0|[1-9][0-9]{0,3})$/.test(value.beforeMessageId) ||
++        Object.keys(value).some((key) => key !== "sessionId" && key !== "beforeMessageId")
++      )
++        return invalid();
++      fork = { sessionId: value.sessionId, beforeMessageId: value.beforeMessageId };
++    } else {
++      if (
++        !("beforeTurnId" in value) ||
++        typeof value.beforeTurnId !== "string" ||
++        value.beforeTurnId.length > 64 ||
++        !/^turn_(0|[1-9][0-9]*)$/.test(value.beforeTurnId) ||
++        Object.keys(value).some(
++          (key) => key !== "sessionId" && key !== "beforeTurnId" && key !== "checkpointId",
++        )
++      )
++        return invalid();
++      const checkpointId = "checkpointId" in value ? value.checkpointId : undefined;
++      if (
++        checkpointId !== undefined &&
++        (typeof checkpointId !== "string" ||
++          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkpointId))
++      )
++        return invalid();
++      fork = {
++        sessionId: value.sessionId,
++        beforeTurnId: value.beforeTurnId,
++        ...(checkpointId === undefined ? {} : { checkpointId }),
++      };
 +    }
-+    const checkpointId = "checkpointId" in value ? value.checkpointId : undefined;
-+    if (checkpointId !== undefined && (typeof checkpointId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkpointId))) return Response.json({ error: "Invalid checkpoint identity.", ok: false }, { status: 400 });
-+    fork = { sessionId: value.sessionId, beforeTurnId: value.beforeTurnId, ...(checkpointId === undefined ? {} : { checkpointId }) };
 +  }
 +
    const result: ParsedCreateBody = {
@@ -871,14 +965,22 @@ index 51bd868..ced6fa4 100644
 +  expect(state.snapshot?.session.rootSessionId).toBeUndefined();
 +});
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
-index 2aae307..6f08b1d 100644
+index 2aae307..ac7e124 100644
 --- a/packages/eve/src/execution/create-session-step.ts
 +++ b/packages/eve/src/execution/create-session-step.ts
-@@ -1,3 +1,15 @@
+@@ -1,3 +1,23 @@
++import { readSessionTranscriptPrefix } from "#execution/read-session-transcript-prefix.js";
 +import { markSeedAttachmentsPending } from "#harness/seed-attachments.js";
-+import { prepareSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++import {
++  prepareSessionTranscriptSeed,
++  type SessionTranscriptSeed,
++} from "#execution/session-transcript-seed.js";
 +import { setHarnessEmissionState } from "#harness/emission-state.js";
-+import { createSessionWaitingEvent, encodeMessageStreamEvent, stampMessageStreamEvent } from "#protocol/message.js";
++import {
++  createSessionWaitingEvent,
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++} from "#protocol/message.js";
 +import type { SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
 +import { recordLocalSessionSandboxIdentity } from "#execution/sandbox/local-session-identity.js";
 +import { getRuntimeCompiledArtifactsSandboxAppRoot } from "#runtime/compiled-artifacts-source.js";
@@ -890,7 +992,7 @@ index 2aae307..6f08b1d 100644
  import { getCompiledRuntimeAgentBundle } from "#runtime/sessions/compiled-agent-cache.js";
  import {
    type DurableCompiledArtifactsSource,
-@@ -5,6 +17,7 @@ import {
+@@ -5,6 +25,7 @@ import {
  } from "#runtime/durable-compiled-artifacts-source.js";
  import {
    createDurableSessionState,
@@ -898,7 +1000,7 @@ index 2aae307..6f08b1d 100644
    type DurableSessionState,
  } from "#execution/durable-session-store.js";
  import { createSession } from "#execution/session.js";
-@@ -33,6 +46,9 @@ export interface CreateSessionStepResult {
+@@ -33,6 +54,9 @@ export interface CreateSessionStepResult {
   */
  export async function createSessionStep(input: {
    readonly compiledArtifactsSource: DurableCompiledArtifactsSource;
@@ -908,44 +1010,83 @@ index 2aae307..6f08b1d 100644
    readonly continuationToken: string;
    readonly dynamicSubagentAgentConfig?: DynamicSubagentAgentConfig;
    readonly inheritedLimits?: RunSessionLimits;
-@@ -44,6 +60,8 @@ export async function createSessionStep(input: {
+@@ -44,6 +68,22 @@ export async function createSessionStep(input: {
  }): Promise<CreateSessionStepResult> {
    "use step";
 
-+  if (input.seed && (input.fork || input.rootSessionId || input.taskId || input.nodeId)) throw new Error("Transcript seeds require a fresh root conversation.");
-+  const preparedSeed = input.seed ? prepareSessionTranscriptSeed(input.seed) : undefined;
++  if (input.seed && (input.fork || input.rootSessionId || input.taskId || input.nodeId))
++    throw new Error("Transcript seeds require a fresh root conversation.");
++  const transcriptFork = input.fork && "beforeMessageId" in input.fork ? input.fork : undefined;
++  if (
++    transcriptFork &&
++    (input.rootSessionId ||
++      input.taskId ||
++      input.nodeId ||
++      transcriptFork.sessionId === input.sessionId)
++  )
++    throw new Error("Imported forks require a fresh root conversation.");
++  const preparedSeed = input.seed
++    ? prepareSessionTranscriptSeed(input.seed)
++    : transcriptFork
++      ? await readSessionTranscriptPrefix(transcriptFork)
++      : undefined;
    const bundle = await getCompiledRuntimeAgentBundle({
      compiledArtifactsSource: resolveDurableCompiledArtifactsSource(input.compiledArtifactsSource),
      nodeId: input.nodeId,
-@@ -95,5 +113,54 @@ export async function createSessionStep(input: {
+@@ -95,5 +135,84 @@ export async function createSessionStep(input: {
      workflowMaxSubagents: bundle.resolvedAgent.workflowTool?.maxSubagents,
    });
 
 -  return { state: createDurableSessionState({ session }) };
 +  const initialSession = preparedSeed
-+    ? setHarnessEmissionState({ ...session, history: [...session.history, ...preparedSeed.history] }, { sessionStarted: false, sequence: 0, stepIndex: 0, turnId: "" })
-+    : input.fork
-+    ? restoreSessionCheckpoint({
-+        target: { ...session, history: [] },
-+        checkpoint: await readSessionCheckpoint(input.fork),
-+      })
-+    : session;
-+  const registered = getResolvedRuntimeAgentNode(bundle.graph, input.nodeId).sandboxRegistry.sandbox;
++    ? setHarnessEmissionState(
++        {
++          ...session,
++          history: [...(transcriptFork ? [] : session.history), ...preparedSeed.history],
++        },
++        { sessionStarted: false, sequence: 0, stepIndex: 0, turnId: "" },
++      )
++    : input.fork && "beforeTurnId" in input.fork
++      ? restoreSessionCheckpoint({
++          target: { ...session, history: [] },
++          checkpoint: await readSessionCheckpoint(input.fork),
++        })
++      : session;
++  const registered = getResolvedRuntimeAgentNode(bundle.graph, input.nodeId).sandboxRegistry
++    .sandbox;
 +  const definition = registered.inheritance?.definition ?? registered.definition;
-+  const localSandboxIdentity = process.env.VERCEL ? undefined : await recordLocalSessionSandboxIdentity({
-+    appRoot: getRuntimeCompiledArtifactsSandboxAppRoot(bundle.compiledArtifactsSource) ?? process.cwd(),
-+    backendName: definition.backend.name,
-+    sessionId: input.sessionId,
-+  });
++  const localSandboxIdentity = process.env.VERCEL
++    ? undefined
++    : await recordLocalSessionSandboxIdentity({
++        appRoot:
++          getRuntimeCompiledArtifactsSandboxAppRoot(bundle.compiledArtifactsSource) ??
++          process.cwd(),
++        backendName: definition.backend.name,
++        sessionId: input.sessionId,
++      });
 +  if (input.identityWritable) {
 +    const writer = input.identityWritable.getWriter();
 +    try {
-+      await writer.write({ version: 1, snapshotVersion: DURABLE_SESSION_VERSION, sessionId: input.sessionId, local: localSandboxIdentity ?? null });
++      await writer.write({
++        version: 1,
++        snapshotVersion: DURABLE_SESSION_VERSION,
++        sessionId: input.sessionId,
++        local: localSandboxIdentity ?? null,
++      });
 +    } finally {
 +      writer.releaseLock();
 +    }
 +  }
-+  return { state: createDurableSessionState({ session: { ...(input.seed?.attachments === "channel" ? markSeedAttachmentsPending(initialSession) : initialSession), localSandboxIdentity } }) };
++  return {
++    state: createDurableSessionState({
++      session: {
++        ...(input.seed?.attachments === "channel" || transcriptFork
++          ? markSeedAttachmentsPending(initialSession)
++          : initialSession),
++        localSandboxIdentity,
++      },
++    }),
++  };
 +}
 +
 +/** Restores the display prefix in a discoverable native workflow step. */
@@ -968,10 +1109,15 @@ index 2aae307..6f08b1d 100644
 +  const prepared = prepareSessionTranscriptSeed(input.seed);
 +  const writer = input.writable.getWriter();
 +  try {
-+    for (const event of [{ type: "history.seeded" as const, data: { messages: prepared.messages } }, createSessionWaitingEvent(input.continuationToken)]) {
++    for (const event of [
++      { type: "history.seeded" as const, data: { messages: prepared.messages } },
++      createSessionWaitingEvent(input.continuationToken),
++    ]) {
 +      await writer.write(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
 +    }
-+  } finally { writer.releaseLock(); }
++  } finally {
++    writer.releaseLock();
++  }
  }
 diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
 new file mode 100644
@@ -1341,17 +1487,17 @@ index 0000000..71778c9
 +});
 diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
 new file mode 100644
-index 0000000..e9f95f0
+index 0000000..8136154
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-checkpoint.ts
-@@ -0,0 +1,68 @@
+@@ -0,0 +1,71 @@
 +import { isDeepStrictEqual } from "node:util";
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { migrateDurableSessionSnapshot } from "#execution/durable-session-migrations/snapshot.js";
 +import {
 +  SESSION_CHECKPOINT_NAMESPACE,
 +  type SessionCheckpoint,
-+  type SessionForkReference,
++  type SessionTurnForkReference,
 +} from "#execution/session-checkpoint-contract.js";
 +
 +export class SessionCheckpointNotFoundError extends Error {}
@@ -1362,7 +1508,7 @@ index 0000000..e9f95f0
 +
 +/** Reads a finite checkpoint prefix. Callers must authorize the source session before invoking this. */
 +export async function readSessionCheckpoint(
-+  input: SessionForkReference,
++  input: SessionTurnForkReference,
 +): Promise<SessionCheckpoint> {
 +  const stream = getRun(input.sessionId).getReadable<SessionCheckpoint>({
 +    namespace: SESSION_CHECKPOINT_NAMESPACE,
@@ -1381,7 +1527,10 @@ index 0000000..e9f95f0
 +        throw new Error("Invalid session checkpoint identity or version.");
 +      if (value.checkpointId !== input.checkpointId) continue;
 +      if (value.beforeTurnId !== input.beforeTurnId) {
-+        if (input.checkpointId) throw new SessionCheckpointRejectedError("Checkpoint identity already has a different source turn.");
++        if (input.checkpointId)
++          throw new SessionCheckpointRejectedError(
++            "Checkpoint identity already has a different source turn.",
++          );
 +        continue;
 +      }
 +      if (value.rejected) throw new SessionCheckpointRejectedError(value.rejected);
@@ -1608,6 +1757,228 @@ index 0000000..0a5ede6
 +      /* Cleanup must not block a timed-out read. */
 +    });
 +    reader.releaseLock();
++  }
++}
+diff --git a/packages/eve/src/execution/read-session-transcript-prefix.test.ts b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
+new file mode 100644
+index 0000000..7f784d6
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
+@@ -0,0 +1,110 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++import {
++  prepareSessionTranscriptPrefix,
++  readSessionTranscriptPrefix,
++} from "#execution/read-session-transcript-prefix.js";
++import {
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++  type UnstampedMessageStreamEvent,
++} from "#protocol/message.js";
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++const prepared = prepareSessionTranscriptSeed({
++  attachments: "channel",
++  messages: [
++    {
++      role: "user",
++      parts: [
++        { type: "text", text: "keep question" },
++        { type: "file", url: "https://owned.test/a.pdf", mediaType: "application/pdf" },
++      ],
++    },
++    {
++      role: "assistant",
++      parts: [
++        {
++          type: "dynamic-tool",
++          toolName: "read",
++          state: "output-available",
++          input: {},
++          output: { text: "kept result" },
++        },
++        { type: "text", text: "keep answer" },
++      ],
++    },
++    { role: "user", parts: [{ type: "text", text: "replace question" }] },
++    { role: "assistant", parts: [{ type: "text", text: "exclude answer" }] },
++  ],
++});
++function setup(event: UnstampedMessageStreamEvent, close = true) {
++  const cancel = vi.fn();
++  mocks.getRun.mockReturnValue({
++    getReadable: () =>
++      new ReadableStream<Uint8Array>({
++        start(controller) {
++          controller.enqueue(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
++          if (close) controller.close();
++        },
++        cancel,
++      }),
++  });
++  return cancel;
++}
++it("reconstructs only complete imported prefix and keeps attachment staging deferred", () => {
++  const result = prepareSessionTranscriptPrefix(prepared.messages, "seed_message_2");
++  expect(result.messages).toEqual(prepared.messages.slice(0, 2));
++  expect(result.history).toEqual(prepared.history.slice(0, 4));
++  expect(JSON.stringify(result)).not.toContain("replace question");
++  expect(JSON.stringify(result.history)).toContain("https://owned.test/a.pdf");
++  expect(prepareSessionTranscriptPrefix(prepared.messages, "seed_message_0")).toEqual({
++    history: [],
++    messages: [],
++  });
++});
++it.each(["seed_message_1", "seed_message_99", "turn_0", "seed_message_02"])(
++  "rejects non-user or unknown boundary %s",
++  (id) => {
++    expect(() => prepareSessionTranscriptPrefix(prepared.messages, id)).toThrow();
++  },
++);
++it("reads inherited seed without taking later turns or live source state", async () => {
++  setup({
++    type: "history.restored",
++    data: {
++      sourceSessionId: "ancestor",
++      beforeTurnId: "turn_0",
++      events: [
++        stampMessageStreamEvent({ type: "history.seeded", data: { messages: prepared.messages } }),
++      ],
++    },
++  });
++  const result = await readSessionTranscriptPrefix({
++    sessionId: "source",
++    beforeMessageId: "seed_message_2",
++  });
++  expect(result.messages).toEqual(prepared.messages.slice(0, 2));
++});
++it("fails closed without seeded history", async () => {
++  setup({ type: "history.seeded", data: { messages: [] } });
++  await expect(
++    readSessionTranscriptPrefix({ sessionId: "source", beforeMessageId: "seed_message_0" }),
++  ).rejects.toThrow();
++});
++it("bounds a stalled source and cancels its reader", async () => {
++  vi.useFakeTimers();
++  const cancel = setup({ type: "session.started", data: { sessionId: "source" } }, false);
++  const result = readSessionTranscriptPrefix({
++    sessionId: "source",
++    beforeMessageId: "seed_message_0",
++  });
++  const rejected = expect(result).rejects.toThrow("timed out");
++  await vi.advanceTimersByTimeAsync(10_001);
++  await rejected;
++  expect(cancel).toHaveBeenCalled();
++});
+diff --git a/packages/eve/src/execution/read-session-transcript-prefix.ts b/packages/eve/src/execution/read-session-transcript-prefix.ts
+new file mode 100644
+index 0000000..8977e97
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-transcript-prefix.ts
+@@ -0,0 +1,100 @@
++import { getRun } from "#internal/workflow/runtime.js";
++import { readNdjsonStream } from "#client/ndjson.js";
++import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
++import { EVE_MESSAGE_STREAM_VERSION } from "#protocol/message.js";
++import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++
++function seedPart(part: EveMessagePart): unknown {
++  switch (part.type) {
++    case "text":
++    case "reasoning":
++      return { type: part.type, text: part.text };
++    case "step-start":
++      return { type: part.type };
++    case "file":
++      return {
++        type: part.type,
++        url: part.url,
++        mediaType: part.mediaType,
++        filename: part.filename,
++        size: part.size,
++      };
++    case "dynamic-tool": {
++      const base = {
++        type: part.type,
++        toolName: part.toolName,
++        input: part.input,
++        state: part.state,
++      };
++      if (part.state === "output-available") return { ...base, output: part.output };
++      if (part.state === "output-error") return { ...base, errorText: part.errorText };
++      if (part.state === "output-denied") return { ...base, reason: part.approval?.reason };
++      break;
++    }
++  }
++  throw new Error("Imported history contains unfinished or unsupported content.");
++}
++
++export function prepareSessionTranscriptPrefix(
++  messages: readonly EveMessage[],
++  beforeMessageId: string,
++) {
++  if (!/^seed_message_(0|[1-9][0-9]{0,3})$/.test(beforeMessageId))
++    throw new Error("Invalid imported message boundary.");
++  const index = messages.findIndex((message) => message.id === beforeMessageId);
++  if (index < 0 || messages[index]?.role !== "user")
++    throw new Error("Imported user message boundary was not found.");
++  if (messages.some((message, index) => message.id !== `seed_message_${index}`))
++    throw new Error("Invalid imported message identities.");
++  if (index === 0) return { history: [], messages: [] };
++  return prepareSessionTranscriptSeed({
++    attachments: "channel",
++    messages: messages
++      .slice(0, index)
++      .map((message) => ({ role: message.role, parts: message.parts.map(seedPart) })),
++  });
++}
++
++/** Caller must authorize the source. Only immutable imported history can be selected. */
++export async function readSessionTranscriptPrefix(input: {
++  readonly sessionId: string;
++  readonly beforeMessageId: string;
++}) {
++  const abort = new AbortController();
++  let bytes = 0;
++  const stream = getRun(input.sessionId)
++    .getReadable<Uint8Array>()
++    .pipeThrough(
++      new TransformStream<Uint8Array, Uint8Array>({
++        transform(chunk, controller) {
++          bytes += chunk.byteLength;
++          if (bytes > 8 * 1024 * 1024) throw new Error("Imported history byte limit exceeded.");
++          controller.enqueue(chunk);
++        },
++      }),
++      { signal: abort.signal },
++    );
++  const timeout = setTimeout(
++    () => abort.abort(new Error("Imported history read timed out.")),
++    10_000,
++  );
++  let scanned = 0;
++  try {
++    for await (const event of readNdjsonStream(stream, {
++      streamVersion: EVE_MESSAGE_STREAM_VERSION,
++    })) {
++      if (++scanned > 50_000) throw new Error("Imported history event limit exceeded.");
++      const candidates = event.type === "history.restored" ? event.data.events : [event];
++      for (const candidate of candidates) {
++        if (candidate.type === "history.seeded")
++          return prepareSessionTranscriptPrefix(candidate.data.messages, input.beforeMessageId);
++      }
++      // A live turn before any seeded history cannot later acquire imported history.
++      if (event.type === "turn.started") break;
++    }
++    throw new Error("Imported history was not found.");
++  } finally {
++    clearTimeout(timeout);
++    abort.abort();
 +  }
 +}
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
@@ -1919,10 +2290,11 @@ index 0000000..22a3012
 +});
 diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
 new file mode 100644
-index 0000000..b70bdfb
+index 0000000..0ed65cb
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.ts
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,151 @@
++import { readSessionTranscriptPrefix } from "#execution/read-session-transcript-prefix.js";
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { readNdjsonStream } from "#client/ndjson.js";
 +import {
@@ -1932,7 +2304,10 @@ index 0000000..b70bdfb
 +  type HistoryProjectionEvent,
 +  type MessageStreamEvent,
 +} from "#protocol/message.js";
-+import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
++import type {
++  SessionForkReference,
++  SessionTurnForkReference,
++} from "#execution/session-checkpoint-contract.js";
 +
 +const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
 +const MAX_HISTORY_EVENTS = 50_000;
@@ -1943,6 +2318,23 @@ index 0000000..b70bdfb
 +  readonly fork: SessionForkReference;
 +  readonly writable: WritableStream<Uint8Array>;
 +}): Promise<void> {
++  if ("beforeMessageId" in input.fork) {
++    const prepared = await readSessionTranscriptPrefix(input.fork);
++    const writer = input.writable.getWriter();
++    try {
++      await writer.write(
++        encodeMessageStreamEvent(
++          stampMessageStreamEvent({
++            type: "history.seeded",
++            data: { messages: prepared.messages },
++          }),
++        ),
++      );
++    } finally {
++      writer.releaseLock();
++    }
++    return;
++  }
 +  const events = await readSessionHistory(input.fork);
 +  const writer = input.writable.getWriter();
 +  try {
@@ -1963,7 +2355,9 @@ index 0000000..b70bdfb
 +  }
 +}
 +
-+async function readSessionHistory(fork: SessionForkReference): Promise<HistoryProjectionEvent[]> {
++async function readSessionHistory(
++  fork: SessionTurnForkReference,
++): Promise<HistoryProjectionEvent[]> {
 +  const abort = new AbortController();
 +  const source = getRun(fork.sessionId).getReadable<Uint8Array>();
 +  let bytes = 0;
@@ -1998,12 +2392,18 @@ index 0000000..b70bdfb
 +      if (++scanned > MAX_HISTORY_EVENTS) {
 +        throw new Error("Session history scan limit exceeded.");
 +      }
-+      if (fork.checkpointId && event.type === "session.waiting" && event.data.checkpoint?.checkpointId === fork.checkpointId) {
-+        if (event.data.checkpoint.beforeTurnId !== fork.beforeTurnId) throw new Error("Session history checkpoint boundary mismatch.");
++      if (
++        fork.checkpointId &&
++        event.type === "session.waiting" &&
++        event.data.checkpoint?.checkpointId === fork.checkpointId
++      ) {
++        if (event.data.checkpoint.beforeTurnId !== fork.beforeTurnId)
++          throw new Error("Session history checkpoint boundary mismatch.");
 +        return events;
 +      }
 +      if (event.type === "turn.started" && event.data.turnId === fork.beforeTurnId) {
-+        if (fork.checkpointId) throw new Error("Session history named checkpoint boundary was not found.");
++        if (fork.checkpointId)
++          throw new Error("Session history named checkpoint boundary was not found.");
 +        return events;
 +      }
 +      if (event.type === "history.restored") {
@@ -3464,22 +3864,29 @@ index 0000000..d604cee
 +}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
-index 0000000..4a3ed11
+index 0000000..f885f4c
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint-contract.ts
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,23 @@
 +import type { DurableSessionSnapshot } from "#execution/durable-session-store.js";
 +
 +export const SESSION_CHECKPOINT_WRITER_KEY = "eve.sessionCheckpointWriter";
 +export const SESSION_CHECKPOINT_NAMESPACE = "eve.checkpoints";
 +
-+export interface SessionForkReference {
++export interface SessionTurnForkReference {
 +  readonly sessionId: string;
 +  readonly beforeTurnId: string;
 +  readonly checkpointId?: string;
 +}
 +
-+export interface SessionCheckpoint extends SessionForkReference {
++export interface SessionTranscriptForkReference {
++  readonly sessionId: string;
++  readonly beforeMessageId: string;
++}
++
++export type SessionForkReference = SessionTurnForkReference | SessionTranscriptForkReference;
++
++export interface SessionCheckpoint extends SessionTurnForkReference {
 +  readonly version: 1;
 +  readonly snapshot: DurableSessionSnapshot;
 +  readonly rejected?: "source_not_idle" | "source_advanced";
@@ -4092,10 +4499,10 @@ index 0000000..7681e35
 +}
 diff --git a/packages/eve/src/execution/session-transcript-seed.integration.test.ts b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
 new file mode 100644
-index 0000000..ca36569
+index 0000000..f226528
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
-@@ -0,0 +1,447 @@
+@@ -0,0 +1,500 @@
 +import { expect, it } from "vitest";
 +import { start } from "#internal/workflow/runtime.js";
 +import { createTestRuntime } from "#internal/testing/app-harness.js";
@@ -4540,6 +4947,59 @@ index 0000000..ca36569
 +      await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "reset" } });
 +      await source.returnValue;
 +      stream.dispose();
++    }
++  });
++});
++
++it("forks an imported user boundary and can fork that imported prefix again", async () => {
++  const fixture = await createTestRuntime({ agent: { name: "imported-boundary" } });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({compiledArtifactsSource:createBundledRuntimeCompiledArtifactsSource()});
++    const imported: SessionTranscriptSeed = {messages:[
++      {role:"user",parts:[{type:"text",text:"Retained imported question"}]},
++      {role:"assistant",parts:[{type:"text",text:"Retained imported answer"}]},
++      {role:"user",parts:[{type:"text",text:"Excluded imported question"}]},
++      {role:"assistant",parts:[{type:"text",text:"Excluded imported answer"}]},
++    ]};
++    const source = await start(workflowEntry,[{input:{message:""},seed:imported,serializedContext:context()}]);
++    const sourceStream = captureTurnEvents(source);
++    try {
++      await sourceStream.nextTurn();
++      const branch = await start(workflowEntry,[{input:{message:"Replacement question"},fork:{sessionId:source.runId,beforeMessageId:"seed_message_2"},serializedContext:context()}]);
++      const branchStream = captureTurnEvents(branch);
++      try {
++        const events = await branchStream.nextTurn();
++        expect(events.at(-1)?.type).toBe("session.waiting");
++        const reducer = defaultMessageReducer();
++        const messages = events.reduce(reducer.reduce,reducer.initial()).messages;
++        expect(messages.slice(0,2)).toEqual(prepareSessionTranscriptSeed(imported).messages.slice(0,2));
++        expect(JSON.stringify(messages)).not.toContain("Excluded imported");
++        expect(JSON.stringify(messages)).toContain("Replacement question");
++        const saved = await readSessionCheckpoint({sessionId:branch.runId,beforeTurnId:"turn_0"});
++        expect(saved.snapshot.session.history).toEqual(prepareSessionTranscriptSeed({messages:imported.messages.slice(0,2)}).history);
++        expect(saved.snapshot.session.sandboxState?.forkCheckpoint).toBeUndefined();
++        const nested = await start(workflowEntry,[{input:{message:"Replace first imported question"},fork:{sessionId:branch.runId,beforeMessageId:"seed_message_0"},serializedContext:context()}]);
++        const nestedStream = captureTurnEvents(nested);
++        try {
++          const nestedEvents = await nestedStream.nextTurn();
++          expect(nestedEvents.at(-1)?.type).toBe("session.waiting");
++          const nestedCheckpoint = await readSessionCheckpoint({sessionId:nested.runId,beforeTurnId:"turn_0"});
++          expect(nestedCheckpoint.snapshot.session.history).toEqual([]);
++          expect(JSON.stringify(nestedEvents.reduce(reducer.reduce,reducer.initial()).messages)).not.toContain("Retained imported");
++        } finally {
++          await runtime.dispatchSession({sessionId:nested.runId,command:{kind:"reset"}});
++          await nested.returnValue;
++          nestedStream.dispose();
++        }
++      } finally {
++        await runtime.dispatchSession({sessionId:branch.runId,command:{kind:"reset"}});
++        await branch.returnValue;
++        branchStream.dispose();
++      }
++    } finally {
++      await runtime.dispatchSession({sessionId:source.runId,command:{kind:"reset"}});
++      await source.returnValue;
++      sourceStream.dispose();
 +    }
 +  });
 +});
@@ -5259,7 +5719,7 @@ index 0000000..fb25140
 +  return sessionInboxWireV7Schema.parse(command.kind === "checkpoint" ? { ...command, version: 7 } : { ...encodeSessionCommandV6(command), version: 7 });
 +}
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0b..d7c64c4 100644
+index d3cfb0b..c2d76ff 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
 @@ -1,3 +1,10 @@
@@ -5305,15 +5765,16 @@ index d3cfb0b..d7c64c4 100644
    const crashCleanupState: CrashCleanupState = {
      caller: undefined,
      callerResolved: false,
-@@ -187,6 +201,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -187,6 +201,8 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
        | DynamicSubagentAgentConfig
        | undefined;
 
++    if (input.fork && "beforeMessageId" in input.fork && (mode !== "conversation" || input.taskId || rootSessionIdFromParent || serializedBundle.nodeId || hasDelegatedCallerContext(input.serializedContext))) throw new Error("Imported forks require a fresh root conversation.");
 +    if (input.seed && (mode !== "conversation" || input.input.message || input.fork || input.taskId || rootSessionIdFromParent || serializedBundle.nodeId || hasDelegatedCallerContext(input.serializedContext))) throw new Error("Transcript seeds require a fresh idle root conversation.");
      const commandInbox = createSessionCommandInbox();
      const stableCommandToken = sessionCommandHookToken(sessionId);
      const authorizationHookToken = `${sessionId}:auth`;
-@@ -197,9 +212,12 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -197,9 +213,12 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          await Promise.allSettled([
            createSessionStep({
              compiledArtifactsSource: serializedBundle.source,
@@ -5326,7 +5787,7 @@ index d3cfb0b..d7c64c4 100644
              nodeId: serializedBundle.nodeId,
              outputSchema: input.input.outputSchema,
              rootSessionId: rootSessionIdFromParent,
-@@ -212,6 +230,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -212,6 +231,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          ]);
 
        if (sessionCreation.status === "rejected") throw sessionCreation.reason;
@@ -5334,7 +5795,7 @@ index d3cfb0b..d7c64c4 100644
        if (stableClaim.status === "rejected") throw stableClaim.reason;
        if (authorizationClaim.status === "rejected") throw authorizationClaim.reason;
        if (continuationClaim.status === "rejected") {
-@@ -246,11 +265,18 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -246,11 +266,18 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          : undefined;
        crashCleanupState.callerResolved = true;
 
@@ -5354,7 +5815,7 @@ index d3cfb0b..d7c64c4 100644
            deliveryMetadata:
              input.serializedContext["eve.channelDelivery"] === undefined
                ? undefined
-@@ -388,7 +414,7 @@ async function runDriverLoop(input: {
+@@ -388,7 +415,7 @@ async function runDriverLoop(input: {
    readonly capabilities?: SessionCapabilities;
    readonly commandInbox: SessionCommandInbox;
    readonly driverWritable: WritableStream<Uint8Array>;
@@ -5363,7 +5824,7 @@ index d3cfb0b..d7c64c4 100644
    readonly crashCleanupState: CrashCleanupState;
    readonly mode: RunMode;
    readonly serializedContext: Record<string, unknown>;
-@@ -473,7 +499,7 @@ async function runDriverLoop(input: {
+@@ -473,7 +500,7 @@ async function runDriverLoop(input: {
      `${input.sessionState.sessionId}:turn-control:${String(turnDispatchIndex++)}`;
 
    const bufferedDeliveries: DeliverHookPayload[] = [];
@@ -5372,7 +5833,7 @@ index d3cfb0b..d7c64c4 100644
    const cancelledTaskIds = new Set<string>();
    const seenTaskDeliveries = new Set<string>();
    const stateCursor = new SessionStateCursor({
-@@ -538,7 +564,9 @@ async function runDriverLoop(input: {
+@@ -538,7 +565,9 @@ async function runDriverLoop(input: {
    try {
      await sessionTimeout?.start();
 
@@ -5383,7 +5844,7 @@ index d3cfb0b..d7c64c4 100644
 
      while (true) {
        if (action.kind === "done") {
-@@ -644,6 +672,7 @@ async function runDriverLoop(input: {
+@@ -644,6 +673,7 @@ async function runDriverLoop(input: {
          };
        }
 
@@ -6346,3 +6807,24 @@ index 4c9110e..7aec9d0 100644
    /**
     * Runtime tags the backend should attach to sandbox resources when
     * the underlying provider supports tags.
+diff --git a/research/imported-message-forks.md b/research/imported-message-forks.md
+new file mode 100644
+index 0000000..2ffbf1c
+--- /dev/null
++++ b/research/imported-message-forks.md
+@@ -0,0 +1,15 @@
++---
++issue: null
++status: local-draft
++last_updated: 2026-09-12
++---
++
++# Imported message forks
++
++Saved public transcripts contain no source execution checkpoints. A new owner needs to edit or regenerate their imported conversation without granting access to the publisher's private session state.
++
++Extend the existing authorized fork reference with `{ sessionId, beforeMessageId }`, mutually exclusive with execution checkpoint coordinates. Resolve the selected imported user boundary from the source's immutable `history.seeded` projection, including when nested inside restored history. Use the same sanitized prefix for model history and display. Empty prefixes are valid; unknown IDs and assistant boundaries fail closed.
++
++Start a fresh root conversation at native turn zero. Retain completed tool results as content, defer attachment staging under destination authorization, and never inherit a later sandbox. The host application owns document checkpoint mapping and safe model metadata. These remain application integration work before enabling edit/regenerate controls.
++
++The implementation uses bounded stream reads and validates imported identities. Local native tests cover prefix exclusion, deferred files, malformed references, stalled streams, exact model/display agreement, and descendant forks. No issue or proposal has been published.
