@@ -26,7 +26,7 @@ export const withRegistryTransport = <T>(
     const original = globalThis.fetch;
     globalThis.fetch = new Proxy(original, {
       apply(target, receiver, args: Parameters<typeof fetch>) {
-        const input = args[0];
+        const [input] = args;
         const url = input instanceof Request ? input.url : String(input);
         requireSecure(url);
         return Reflect.apply(target, receiver, args).then(
@@ -46,10 +46,16 @@ export const withRegistryTransport = <T>(
       globalThis.fetch = original;
     }
   };
-  const result = pending.then(run);
-  pending = result.then(
-    () => {},
-    () => {}
-  );
+  const result = (async (): Promise<T> => {
+    await pending;
+    return run();
+  })();
+  pending = (async (): Promise<void> => {
+    try {
+      await result;
+    } catch {
+      return undefined;
+    }
+  })();
   return result;
 };
