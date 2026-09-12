@@ -98,3 +98,25 @@ export async function completeEveConversationDeletion(
       .where(condition);
   });
 }
+
+/** Includes identity tombstones so owners can retry and inspect completed deletion. */
+export async function getEveDeletionState(
+  ownerId: string,
+  conversationId: string
+) {
+  const [row] = await db
+    .select({
+      id: eveConversation.id,
+      rootId: eveConversation.rootConversationId,
+      state: eveConversation.state,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.id, conversationId)
+      )
+    )
+    .limit(1);
+  return row ? { rootId: row.rootId ?? row.id, state: row.state } : undefined;
+}

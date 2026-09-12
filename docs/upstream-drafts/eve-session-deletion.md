@@ -343,3 +343,12 @@ scope. The browser retirement test now uses Gemini Flash Lite and verifies
 composed cleanup again after native erasure with settled credits unchanged.
 Unknown authored workflow coverage and uncertain external allocations remain
 unresolved; this is still an internal coordinator, not the public deletion UI.
+
+ChatJS now exposes owner-only deletion/status endpoints for the verified local
+configuration. DELETE operates on the conversation family and reports completed,
+pending with an explicit retry requirement, or not started. GET reads status
+without resuming work; completed tombstones support idempotent retries. Foreign
+origins and ownership are rejected. Hosted-provider configurations are refused
+before access revocation. Browser tests cover both retry after native erasure
+and full retirement/erasure initiated by the API for a fresh conversation.
+The sidebar action and hosted-provider cleanup are still outstanding.

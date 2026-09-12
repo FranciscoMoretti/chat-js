@@ -151,6 +151,26 @@ test("internal retirement settles usage after access revocation and is retryable
       )
     ).toEqual(receipt);
     expect(await purgeResources()).toEqual(prepared);
+    const deletionUrl = `/api/agent-conversations/${binding.id}`;
+    const deletion = await page.request.delete(deletionUrl, {
+      headers: { origin: new URL(page.url()).origin },
+    });
+    expect(deletion.status(), await deletion.text()).toBe(200);
+    expect(await deletion.json()).toEqual({
+      status: "deleted",
+      rootId: binding.id,
+    });
+    expect(await (await page.request.get(deletionUrl)).json()).toEqual({
+      status: "deleted",
+      rootId: binding.id,
+    });
+    expect(
+      (
+        await page.request.delete(deletionUrl, {
+          headers: { origin: new URL(page.url()).origin },
+        })
+      ).status()
+    ).toBe(200);
     const [settled] = await db
       .select()
       .from(userCredit)
@@ -169,4 +189,66 @@ test("internal retirement settles usage after access revocation and is retryable
       .where(eq(eveDocumentCheckpoint.conversationId, binding.id));
     await tx.delete(eveConversation).where(eq(eveConversation.id, binding.id));
   });
+});
+
+test("deletion API retires a fresh conversation and reports its durable tombstone", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const owner = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json())
+    .user.id;
+  await db
+    .insert(userCredit)
+    .values({ userId: owner, credits: 1000 })
+    .onConflictDoUpdate({
+      target: userCredit.userId,
+      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+    });
+  const origin = new URL(page.url()).origin;
+  const response = await page.request.post("/api/agent-conversations", {
+    headers: { origin },
+    data: {
+      operationId: crypto.randomUUID(),
+      modelId: "google/gemini-2.5-flash-lite",
+      message: "Reply exactly deletion-api-ok. Do not call tools.",
+    },
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+  const binding = z
+    .object({ id: z.uuid(), sessionId: z.string() })
+    .parse(await response.json());
+  await page.goto(`/chat/${binding.id}`);
+  await expect(page.locator(".is-assistant")).toContainText("deletion-api-ok", {
+    timeout: 90_000,
+  });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  const url = `/api/agent-conversations/${binding.id}`;
+  expect(await (await page.request.get(url)).json()).toEqual({
+    status: "active",
+    rootId: binding.id,
+  });
+  const deleted = await page.request.delete(url, { headers: { origin } });
+  expect(deleted.status(), await deleted.text()).toBe(200);
+  expect(await deleted.json()).toEqual({
+    status: "deleted",
+    rootId: binding.id,
+  });
+  expect(await (await page.request.get(url)).json()).toEqual({
+    status: "deleted",
+    rootId: binding.id,
+  });
+  expect(
+    (await page.request.delete(url, { headers: { origin } })).status()
+  ).toBe(200);
+  const native = postgres(env.DATABASE_URL, { max: 1 });
+  try {
+    expect(
+      await native`select id from workflow.workflow_runs where id = ${binding.sessionId}`
+    ).toHaveLength(0);
+  } finally {
+    await native.end();
+  }
 });
