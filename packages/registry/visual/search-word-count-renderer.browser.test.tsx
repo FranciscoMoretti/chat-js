@@ -92,6 +92,7 @@ test("search and word-count renderers preserve their visible states", async () =
             messageId="word-count-message"
             tool={{
               errorText: "Tool unavailable",
+              input: undefined,
               state: "output-error",
               toolCallId: "word-count-error",
             }}
