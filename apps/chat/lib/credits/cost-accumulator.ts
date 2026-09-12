@@ -34,7 +34,15 @@ interface APICostEntry {
   type: "api";
 }
 
-type CostEntry = LLMCostEntry | APICostEntry;
+interface ImageCostEntry {
+  count: number;
+  modelId: string;
+  source: string;
+  type: "image";
+  usage: UsageInfo;
+}
+
+type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
 
 /**
  * Accumulates costs from multiple LLM and external API calls.
@@ -46,6 +54,16 @@ export class CostAccumulator {
   /** Add LLM cost from generateText/streamText usage */
   addLLMCost(modelId: AppModelId, usage: UsageInfo, source: string): void {
     this.entries.push({ type: "llm", modelId, usage, source });
+  }
+
+  /** Dedicated image models are priced per image, in dollars in the gateway catalog. */
+  addImageCost(
+    modelId: string,
+    count: number,
+    usage: UsageInfo,
+    source: string
+  ): void {
+    this.entries.push({ type: "image", modelId, count, usage, source });
   }
 
   /** Add fixed external API cost (in cents) */
@@ -69,6 +87,20 @@ export class CostAccumulator {
     // Sum API costs directly
     for (const entry of apiEntries) {
       total += entry.cost;
+    }
+
+    const imageEntries = this.entries.filter((entry) => entry.type === "image");
+    if (imageEntries.length > 0) {
+      const { fetchModels } = await import("../ai/models");
+      const models = await fetchModels();
+      for (const entry of imageEntries) {
+        const price = Number(
+          models.find((model) => model.id === entry.modelId)?.pricing?.image
+        );
+        if (Number.isFinite(price) && price > 0) {
+          total += price * entry.count * 100;
+        }
+      }
     }
 
     if (llmEntries.length === 0) {

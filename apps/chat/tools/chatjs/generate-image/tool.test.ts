@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   modelDefinition: vi.fn(),
   imageModel: vi.fn(),
   uploadFile: vi.fn(),
+  downloadFile: vi.fn(),
 }));
 vi.mock("ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("ai")>()),
@@ -24,7 +25,13 @@ vi.mock("@/lib/config", () => ({
     ai: { tools: { image: { enabled: true, default: "test-image" } } },
   },
 }));
-vi.mock("@/lib/file-storage", () => ({ uploadFile: mocks.uploadFile }));
+vi.mock("@/lib/file-storage", () => ({
+  uploadFile: mocks.uploadFile,
+  downloadFile: mocks.downloadFile,
+}));
+vi.mock("@/lib/ai/models", () => ({
+  fetchModels: async () => [{ id: "test-image", pricing: { image: "0.04" } }],
+}));
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn() }),
 }));
@@ -78,9 +85,11 @@ it("uses request attachments and prior image for editing and records model usage
     Buffer.from("image"),
     "image/png"
   );
+  expect(await costAccumulator.getTotalCost()).toBe(4);
   expect(costAccumulator.getEntries()).toEqual([
     {
-      type: "llm",
+      type: "image",
+      count: 1,
       modelId: "test-image",
       usage: { inputTokens: 10, outputTokens: 20 },
       source: "generateImage-traditional",
@@ -104,7 +113,11 @@ it("generates without optional request services", async () => {
 });
 
 it("uses the selected multimodal model from request context", async () => {
-  mocks.modelDefinition.mockResolvedValue({ output: { image: true } });
+  mocks.modelDefinition.mockResolvedValue({
+    id: "google/image-model-reasoning",
+    apiModelId: "google/image-model",
+    output: { image: true },
+  });
   mocks.imageModel.mockReturnValue("selected-model");
   mocks.generateText.mockResolvedValue({
     files: [{ mediaType: "image/png", uint8Array: Buffer.from("image") }],
@@ -119,7 +132,10 @@ it("uses the selected multimodal model from request context", async () => {
     {
       toolCallId: "selected",
       messages: [],
-      context: { selectedModel: "google/image-model", costAccumulator },
+      context: {
+        selectedModel: "google/image-model-reasoning",
+        costAccumulator,
+      },
     }
   );
   expect(mocks.imageModel).toHaveBeenCalledWith("google/image-model");
@@ -127,9 +143,54 @@ it("uses the selected multimodal model from request context", async () => {
   expect(costAccumulator.getEntries()).toEqual([
     {
       type: "llm",
-      modelId: "google/image-model",
+      modelId: "google/image-model-reasoning",
       usage: { inputTokens: 3, outputTokens: 4 },
       source: "generateImage-multimodal",
     },
   ]);
+});
+
+it.each([
+  "http://127.0.0.1/private",
+  "https://attacker.example/image.png",
+  "https://attacker.example/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+])("rejects unapproved image URL %s", async (imageUrl) => {
+  if (!generateImageTool.execute) {
+    throw new Error("Missing execution");
+  }
+  await expect(
+    generateImageTool.execute(
+      { prompt: "Edit" },
+      {
+        toolCallId: "bad",
+        messages: [],
+        context: { lastGeneratedImage: { imageUrl, name: "image" } },
+      }
+    )
+  ).rejects.toThrow("only accepts uploaded");
+  expect(mocks.downloadFile).not.toHaveBeenCalled();
+  expect(mocks.generateImage).not.toHaveBeenCalled();
+});
+
+it("reads uploaded images directly from storage", async () => {
+  mocks.downloadFile.mockResolvedValue(new Blob(["stored"]));
+  if (!generateImageTool.execute) {
+    throw new Error("Missing execution");
+  }
+  await generateImageTool.execute(
+    { prompt: "Edit" },
+    {
+      toolCallId: "stored",
+      messages: [],
+      context: {
+        lastGeneratedImage: {
+          imageUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+          name: "image",
+        },
+      },
+    }
+  );
+  expect(mocks.downloadFile).toHaveBeenCalledWith(
+    "abcdefghijklmnopqrstuvwx.png"
+  );
 });

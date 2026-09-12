@@ -165,7 +165,7 @@ export async function createCoreChatAgent({
               (part) => part.type === "file"
             ),
             lastGeneratedImage,
-            selectedModel: modelDefinition.apiModelId,
+            selectedModel: selectedModelId,
           },
         ])
       ),

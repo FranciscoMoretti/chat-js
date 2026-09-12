@@ -11,7 +11,8 @@ import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
-import { uploadFile } from "@/lib/file-storage";
+import { downloadFile, uploadFile } from "@/lib/file-storage";
+import { keyFromFileUrl } from "@/lib/file-url";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
 
@@ -28,13 +29,18 @@ type ImageMode = "edit" | "generate";
 async function resolveImageModel(selectedModel?: string): Promise<{
   modelId: string;
   multimodal: boolean;
+  usageModelId?: AppModelId;
 }> {
   // If the user's selected chat model can generate images, prefer it
   if (selectedModel) {
     try {
       const model = await getAppModelDefinition(selectedModel as AppModelId);
       if (model.output.image) {
-        return { modelId: selectedModel, multimodal: true };
+        return {
+          modelId: model.apiModelId,
+          usageModelId: model.id,
+          multimodal: true,
+        };
       }
     } catch {
       // Not in app models registry, fall through
@@ -55,7 +61,11 @@ async function resolveImageModel(selectedModel?: string): Promise<{
     const model = await getAppModelDefinition(defaultId as AppModelId);
     // Default could be a multimodal language model (e.g. gemini-3-pro-image)
     if (model.output.image) {
-      return { modelId: defaultId, multimodal: true };
+      return {
+        modelId: model.apiModelId,
+        usageModelId: model.id,
+        multimodal: true,
+      };
     }
   } catch {
     // Not in app models registry → dedicated image model (e.g. dall-e-3)
@@ -64,10 +74,25 @@ async function resolveImageModel(selectedModel?: string): Promise<{
   return { modelId: defaultId, multimodal: false };
 }
 
-async function fetchImageBuffer(url: string): Promise<Buffer> {
-  const response = await fetch(new URL(url, getBaseUrl()));
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+const INLINE_IMAGE =
+  /^data:image\/(?:png|jpeg|webp|gif);base64,([A-Za-z0-9+/=]+)$/;
+
+async function fetchImageBuffer(value: string): Promise<Buffer> {
+  // Inline images do not initiate a network request.
+  const inline = INLINE_IMAGE.exec(value);
+  if (inline) {
+    return Buffer.from(inline[1], "base64");
+  }
+  const url = new URL(value, getBaseUrl());
+  const origin = new URL(getBaseUrl()).origin;
+  const key = keyFromFileUrl(value);
+  if (url.origin !== origin || url.username || url.password || !key) {
+    throw new Error(
+      "Image editing only accepts uploaded ChatJS files or inline images."
+    );
+  }
+  // Read the configured storage directly. Never follow user-supplied URLs or redirects.
+  return Buffer.from(await (await downloadFile(key)).arrayBuffer());
 }
 
 async function collectEditImages({
@@ -200,16 +225,12 @@ async function runGenerateImageTraditional({
   const filename = `generated-image-${timestamp}.png`;
   const result = await uploadFile(filename, buffer, "image/png");
 
-  if (res.usage) {
-    costAccumulator?.addLLMCost(
-      imageDefault as AppModelId,
-      {
-        inputTokens: res.usage.inputTokens,
-        outputTokens: res.usage.outputTokens,
-      },
-      "generateImage-traditional"
-    );
-  }
+  costAccumulator?.addImageCost(
+    imageDefault,
+    res.images.length,
+    res.usage ?? {},
+    "generateImage-traditional"
+  );
 
   log.info(
     {
@@ -226,6 +247,7 @@ async function runGenerateImageTraditional({
 
 async function runGenerateImageMultimodal({
   modelId,
+  usageModelId,
   mode,
   prompt,
   imageParts,
@@ -234,6 +256,7 @@ async function runGenerateImageMultimodal({
   costAccumulator,
 }: {
   modelId: string;
+  usageModelId?: AppModelId;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
@@ -243,7 +266,7 @@ async function runGenerateImageMultimodal({
 }): Promise<{ imageUrl: string; prompt: string }> {
   // Build messages with image context if in edit mode
   interface ImageContent {
-    image: URL;
+    image: Buffer;
     type: "image";
   }
   interface TextContent {
@@ -252,19 +275,12 @@ async function runGenerateImageMultimodal({
   }
   const userContent: Array<TextContent | ImageContent> = [];
 
-  // Add reference images if in edit mode
   if (mode === "edit") {
-    if (lastGeneratedImage) {
-      userContent.push({
-        type: "image",
-        image: new URL(lastGeneratedImage.imageUrl, getBaseUrl()),
-      });
-    }
-    for (const part of imageParts) {
-      userContent.push({
-        type: "image",
-        image: new URL(part.url, getBaseUrl()),
-      });
+    for (const image of await collectEditImages({
+      imageParts,
+      lastGeneratedImage,
+    })) {
+      userContent.push({ type: "image", image });
     }
   }
 
@@ -311,7 +327,7 @@ async function runGenerateImageMultimodal({
 
   if (res.usage) {
     costAccumulator?.addLLMCost(
-      modelId as AppModelId,
+      usageModelId ?? (modelId as AppModelId),
       res.usage,
       "generateImage-multimodal"
     );
@@ -369,7 +385,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
   execute: async (
     { prompt },
     { context }: ToolExecutionOptions<ChatToolContext>
-  ) => {
+  ): Promise<{ imageUrl: string; prompt: string }> => {
     const {
       attachments = [],
       lastGeneratedImage = null,
@@ -398,13 +414,17 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
     );
 
     try {
-      const { modelId: effectiveModelId, multimodal } =
-        await resolveImageModel(selectedModel);
+      const {
+        modelId: effectiveModelId,
+        multimodal,
+        usageModelId,
+      } = await resolveImageModel(selectedModel);
 
       // Use multimodal path for language models with image generation
       if (multimodal) {
         return await runGenerateImageMultimodal({
           modelId: effectiveModelId,
+          usageModelId,
           mode,
           prompt,
           imageParts,

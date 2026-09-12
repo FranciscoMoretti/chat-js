@@ -1,4 +1,3 @@
-import { page } from "@vitest/browser/context";
 import { takeSnapshot } from "@uiverify/vitest";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -64,8 +63,13 @@ test("image tool loading, success, and unavailable states", async () => {
 		await expect
 			.poll(() => container.querySelector("img")?.complete)
 			.toBe(true);
-		await takeSnapshot("image-tool-states");
-		await page.screenshot({ element: container });
+		const button = container.querySelector<HTMLButtonElement>("button");
+    if (!button) throw new Error("Image button missing");
+    await act(async () => button.focus());
+    const actions = container.querySelector<HTMLElement>(".group-focus-within\\:opacity-100");
+    if (!actions) throw new Error("Image actions missing");
+    await expect.poll(() => getComputedStyle(actions).opacity).toBe("1");
+    await takeSnapshot("image-tool-states");
 	} finally {
 		await act(async () => root.unmount());
 		container.remove();
