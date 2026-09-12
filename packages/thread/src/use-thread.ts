@@ -79,9 +79,6 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
     tree: TreeHelpers<TMessage>;
   };
 
-// The snapshot cache must be updated synchronously when its thread changes so
-// useSyncExternalStore subscribes to, and reads from, the same thread in a render.
-// oxlint-disable react/refs
 const useThreadSnapshot = <TMessage extends UIMessage>(
   thread: AbstractThread<TMessage>,
   throttleWaitMs?: number
@@ -141,7 +138,6 @@ const useThreadSnapshot = <TMessage extends UIMessage>(
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
-// oxlint-enable react/refs
 
 const useThreadField = <
   TMessage extends UIMessage,
@@ -161,9 +157,6 @@ const useThreadField = <
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
 
-// The hook deliberately keeps the current thread and callback handlers in refs:
-// changing an external thread or id must take effect during the same render.
-// oxlint-disable react/refs
 export const useThread = <TMessage extends UIMessage = UIMessage>(
   options: UseThreadOptions<TMessage> = {}
 ): UseThreadHelpers<TMessage> => {
@@ -273,4 +266,3 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
     },
   };
 };
-// oxlint-enable react/refs
