@@ -91,21 +91,30 @@ const assistant = (id: string): UIMessage => ({
 });
 
 const HookHarness = ({
+  onCommit,
   onRender,
   options,
 }: {
+  onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void;
   onRender: (helpers: UseThreadHelpers) => void;
   options: UseThreadOptions;
 }) => {
-  onRender(useThread(options));
-  return null;
+  const helpers = useThread(options);
+  onRender(helpers);
+  return createElement("div", {
+    ref: () => onCommit?.(helpers.setMessages),
+  });
 };
 
-const renderUseThread = (initialOptions: UseThreadOptions) => {
+const renderUseThread = (
+  initialOptions: UseThreadOptions,
+  onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
+) => {
   let current: UseThreadHelpers | undefined;
   let renderer: ReactTestRenderer | undefined;
   const render = (options: UseThreadOptions) =>
     createElement(HookHarness, {
+      onCommit,
       onRender: (helpers) => {
         current = helpers;
       },
@@ -193,6 +202,22 @@ describe("useThread", () => {
       throw new Error("Expected a response message");
     }
     expect(getMessageText(response)).toBe("reply");
+    hook.unmount();
+  });
+
+  test("forwards setters called by an initial commit ref", () => {
+    let isFirstCommit = true;
+    const hook = renderUseThread(
+      { messages: [user("user-a")] },
+      (setMessages) => {
+        if (isFirstCommit) {
+          isFirstCommit = false;
+          setMessages([user("user-b")]);
+        }
+      }
+    );
+
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
     hook.unmount();
   });
   test("uses current callbacks without replacing the chat transport", async () => {

@@ -22,6 +22,9 @@ import type {
   TreeSendOptions,
 } from "./types";
 
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 type ThreadHookOptions = {
   experimental_throttle?: number;
   resume?: boolean;
@@ -183,8 +186,8 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
       })
   );
   void setDispatchers;
-  const [thread, setThread] = useState<AbstractThread<TMessage>>(
-    () =>
+  const [thread, setThread] = useState<AbstractThread<TMessage>>(() => {
+    const initialThread =
       externalThread ??
       new Thread({
         ...ownOptions,
@@ -193,8 +196,16 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
         onFinish: dispatchers.onFinish,
         onToolCall: dispatchers.onToolCall,
         sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
-      })
-  );
+      });
+    dispatchers.update(initialThread, {
+      onData,
+      onError,
+      onFinish,
+      onToolCall,
+      sendAutomaticallyWhen,
+    });
+    return initialThread;
+  });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
   const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
@@ -218,7 +229,7 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
     );
   }
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     dispatchers.update(thread, {
       onData,
       onError,
