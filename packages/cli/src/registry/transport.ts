@@ -3,7 +3,7 @@
  * Serialize operations so this temporary host policy cannot leak between calls.
  */
 let pending: Promise<void> = Promise.resolve();
-function requireSecure(url: string, redirect = false) {
+const requireSecure = (url: string, redirect = false): void => {
   const parsed = new URL(url);
   if (parsed.protocol === "https:") {
     return;
@@ -18,11 +18,11 @@ function requireSecure(url: string, redirect = false) {
   throw new Error(
     "Registry requests must use HTTPS (HTTP is allowed only on loopback, without redirects)."
   );
-}
-export function withRegistryTransport<T>(
+};
+export const withRegistryTransport = <T>(
   operation: () => Promise<T>
-): Promise<T> {
-  const run = async () => {
+): Promise<T> => {
+  const run = async (): Promise<T> => {
     const original = globalThis.fetch;
     globalThis.fetch = new Proxy(original, {
       apply(target, receiver, args: Parameters<typeof fetch>) {
@@ -52,4 +52,4 @@ export function withRegistryTransport<T>(
     () => {}
   );
   return result;
-}
+};
