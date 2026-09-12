@@ -236,76 +236,86 @@ export function EveMessages({
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) {
-  return messages.map((message) => (
-    <Message className="flex-col" from={message.role} key={message.id}>
-      <MessageContent className="min-w-0 max-w-full">
-        <span className="sr-only">
-          {message.role === "user" ? "You" : "Assistant"}
-        </span>
-        {message.parts.map((part, index) => (
-          <Part
-            disabled={disabled}
-            isReadonly={isReadonly}
-            // Eve message parts are append-only; their index is their stable identity.
-            // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
-            key={`${message.id}:${index}`}
-            messageId={message.id}
-            part={part}
-            respond={respond}
-          />
-        ))}
-      </MessageContent>
-      <MessageActions className={message.role === "user" ? "justify-end" : ""}>
-        {message.role === "user" && onEdit && (
+  let precedingUser: EveMessage | undefined;
+  return messages.map((message) => {
+    const userMessage = precedingUser;
+    if (message.role === "user") {
+      precedingUser = message;
+    }
+    return (
+      <Message className="flex-col" from={message.role} key={message.id}>
+        <MessageContent className="min-w-0 max-w-full">
+          <span className="sr-only">
+            {message.role === "user" ? "You" : "Assistant"}
+          </span>
+          {message.parts.map((part, index) => (
+            <Part
+              disabled={disabled}
+              isReadonly={isReadonly}
+              // Eve message parts are append-only; their index is their stable identity.
+              // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
+              key={`${message.id}:${index}`}
+              messageId={message.id}
+              part={part}
+              respond={respond}
+            />
+          ))}
+        </MessageContent>
+        <MessageActions
+          className={message.role === "user" ? "justify-end" : ""}
+        >
+          {message.role === "user" && onEdit && (
+            <MessageAction
+              disabled={actionsDisabled || !eveUserForkBoundary(message)}
+              onClick={() => onEdit(message)}
+              tooltip="Edit message"
+            >
+              <Pencil size={14} />
+            </MessageAction>
+          )}
+          {message.role === "assistant" && onRegenerate && (
+            <MessageAction
+              disabled={
+                actionsDisabled ||
+                !(message.metadata?.turnId || message.metadata?.modelId) ||
+                !(userMessage && eveUserForkBoundary(userMessage))
+              }
+              onClick={() => {
+                if (userMessage) {
+                  onRegenerate(userMessage, message);
+                }
+              }}
+              tooltip="Regenerate response"
+            >
+              <RotateCcw size={14} />
+            </MessageAction>
+          )}
+          {conversationId && !isReadonly && message.role === "assistant" && (
+            <EveFeedbackActions
+              conversationId={conversationId}
+              disabled={disabled}
+              messageId={message.id}
+            />
+          )}
           <MessageAction
-            disabled={actionsDisabled || !eveUserForkBoundary(message)}
-            onClick={() => onEdit(message)}
-            tooltip="Edit message"
-          >
-            <Pencil size={14} />
-          </MessageAction>
-        )}
-        {message.role === "assistant" && onRegenerate && (
-          <MessageAction
-            disabled={actionsDisabled || !message.metadata?.turnId}
-            onClick={() => {
-              const userMessage = messages
-                .slice(0, messages.indexOf(message))
-                .findLast((item) => item.role === "user");
-              if (userMessage) {
-                onRegenerate(userMessage, message);
+            onClick={async () => {
+              const text = message.parts
+                .filter((part) => part.type === "text")
+                .map((part) => part.text)
+                .join("\n");
+              try {
+                await navigator.clipboard.writeText(text);
+                toast.success("Copied to clipboard!");
+              } catch {
+                toast.error("Unable to copy this message.");
               }
             }}
-            tooltip="Regenerate response"
+            tooltip="Copy"
           >
-            <RotateCcw size={14} />
+            <Copy size={14} />
           </MessageAction>
-        )}
-        {conversationId && !isReadonly && message.role === "assistant" && (
-          <EveFeedbackActions
-            conversationId={conversationId}
-            disabled={disabled}
-            messageId={message.id}
-          />
-        )}
-        <MessageAction
-          onClick={async () => {
-            const text = message.parts
-              .filter((part) => part.type === "text")
-              .map((part) => part.text)
-              .join("\n");
-            try {
-              await navigator.clipboard.writeText(text);
-              toast.success("Copied to clipboard!");
-            } catch {
-              toast.error("Unable to copy this message.");
-            }
-          }}
-          tooltip="Copy"
-        >
-          <Copy size={14} />
-        </MessageAction>
-      </MessageActions>
-    </Message>
-  ));
+        </MessageActions>
+      </Message>
+    );
+  });
 }

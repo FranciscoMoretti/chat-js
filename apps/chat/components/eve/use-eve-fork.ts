@@ -142,7 +142,8 @@ export function useEveFork(
       const modelId = regeneration
         ? responseModel(
             regeneration.events,
-            regeneration.response.metadata?.turnId ?? ""
+            regeneration.response.metadata?.turnId ?? "",
+            regeneration.response.metadata?.modelId
           )
         : selectedModel;
       const fork = resolveForkSource(
