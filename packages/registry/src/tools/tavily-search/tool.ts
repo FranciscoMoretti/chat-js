@@ -21,26 +21,6 @@ Use for:
 
 Avoid:
 - Pulling content from a single known URL (use retrieveUrl instead)`,
-  // Keep defaultable fields required and nullable for strict tool calling.
-  inputSchema: z.object({
-    search_queries: searchQueriesSchema,
-    topics: z
-      .array(z.enum(["general", "news"]))
-      .describe(
-        "Array of topic types to search for. Pass null for general search."
-      )
-      .nullable(),
-    searchDepth: z
-      .enum(["basic", "advanced"])
-      .describe('Search depth to use. Pass null for "basic".')
-      .nullable(),
-    exclude_domains: z
-      .array(z.string())
-      .describe(
-        "Domains to exclude from all results. Pass null for no exclusions."
-      )
-      .nullable(),
-  }),
   execute: async (
     {
       search_queries,
@@ -68,10 +48,10 @@ Avoid:
     const log = createModuleLogger("tools/web-search");
     log.debug(
       {
-        queriesCount: search_queries.length,
-        topics,
-        searchDepth,
         exclude_domains,
+        queriesCount: search_queries.length,
+        searchDepth,
+        topics,
       },
       "webSearch.execute"
     );
@@ -81,10 +61,8 @@ Avoid:
     const safeExcludeDomains = exclude_domains ?? [];
 
     const result = await executeMultiQuerySearch({
-      search_queries: search_queries.map((query) => ({
-        query: query.query,
-        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
-      })),
+      completeTitle: "Search complete",
+      dataStream,
       search: async ({ query, maxResults }, index) => {
         if (!env.TAVILY_API_KEY) {
           throw new Error("Set TAVILY_API_KEY to enable Tavily search.");
@@ -93,25 +71,27 @@ Avoid:
         const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
           query,
           {
-            maxResults,
-            searchDepth: safeSearchDepth,
-            topic,
             days: topic === "news" ? 7 : undefined,
             excludeDomains: safeExcludeDomains,
             includeAnswer: true,
+            maxResults,
+            searchDepth: safeSearchDepth,
+            topic,
           }
         );
         return response.results.map(({ title, url, content }) => ({
+          content,
           title,
           url,
-          content,
         }));
       },
-      dataStream,
+      search_queries: search_queries.map((query) => ({
+        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+        query: query.query,
+      })),
+      title: "Searching",
       toolCallId,
       writeTopLevelUpdates,
-      title: "Searching",
-      completeTitle: "Search complete",
     });
 
     // Report API cost
@@ -119,4 +99,24 @@ Avoid:
 
     return result;
   },
+  // Keep defaultable fields required and nullable for strict tool calling.
+  inputSchema: z.object({
+    exclude_domains: z
+      .array(z.string())
+      .describe(
+        "Domains to exclude from all results. Pass null for no exclusions."
+      )
+      .nullable(),
+    searchDepth: z
+      .enum(["basic", "advanced"])
+      .describe('Search depth to use. Pass null for "basic".')
+      .nullable(),
+    search_queries: searchQueriesSchema,
+    topics: z
+      .array(z.enum(["general", "news"]))
+      .describe(
+        "Array of topic types to search for. Pass null for general search."
+      )
+      .nullable(),
+  }),
 });
