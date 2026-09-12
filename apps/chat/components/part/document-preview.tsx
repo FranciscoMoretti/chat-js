@@ -240,12 +240,15 @@ const getActionText = (
   tense: "present" | "past"
 ) => {
   switch (type) {
-    case "create":
+    case "create": {
       return tense === "present" ? "Creating" : "Created";
-    case "update":
+    }
+    case "update": {
       return tense === "present" ? "Updating" : "Updated";
-    default:
+    }
+    default: {
       return "";
+    }
   }
 };
 

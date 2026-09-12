@@ -238,7 +238,7 @@ const PureArtifactPanel = ({
   useEffect(() => {
     if (artifact.documentId !== "init" && artifact.status !== "streaming") {
       switch (artifact.kind) {
-        case "code":
+        case "code": {
           codeArtifact.initialize?.({
             documentId: artifact.documentId,
             setMetadata: createTypedMetadataSetter(
@@ -250,7 +250,8 @@ const PureArtifactPanel = ({
             isAuthenticated,
           });
           break;
-        case "sheet":
+        }
+        case "sheet": {
           sheetArtifact.initialize?.({
             documentId: artifact.documentId,
             setMetadata: createTypedMetadataSetter(
@@ -262,7 +263,8 @@ const PureArtifactPanel = ({
             isAuthenticated,
           });
           break;
-        case "text":
+        }
+        case "text": {
           textArtifact.initialize?.({
             documentId: artifact.documentId,
             setMetadata,
@@ -271,8 +273,10 @@ const PureArtifactPanel = ({
             isAuthenticated,
           });
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
     }
   }, [
@@ -311,7 +315,7 @@ const PureArtifactPanel = ({
 
   const renderArtifactContent = () => {
     switch (artifact.kind) {
-      case "code":
+      case "code": {
         return (
           <>
             <codeArtifact.content
@@ -334,7 +338,8 @@ const PureArtifactPanel = ({
             ) : null}
           </>
         );
-      case "sheet":
+      }
+      case "sheet": {
         return (
           <>
             <sheetArtifact.content
@@ -357,7 +362,8 @@ const PureArtifactPanel = ({
             ) : null}
           </>
         );
-      case "text":
+      }
+      case "text": {
         return (
           <>
             <textArtifact.content
@@ -374,8 +380,10 @@ const PureArtifactPanel = ({
             ) : null}
           </>
         );
-      default:
+      }
+      default: {
         return null;
+      }
     }
   };
 

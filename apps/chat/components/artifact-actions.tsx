@@ -169,7 +169,7 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
 export const ArtifactActions = memo(
   (props: ArtifactActionsProps) => {
     switch (props.artifact.kind) {
-      case "code":
+      case "code": {
         return (
           <TypedArtifactActions
             {...props}
@@ -181,7 +181,8 @@ export const ArtifactActions = memo(
             )}
           />
         );
-      case "sheet":
+      }
+      case "sheet": {
         return (
           <TypedArtifactActions
             {...props}
@@ -193,7 +194,8 @@ export const ArtifactActions = memo(
             )}
           />
         );
-      case "text":
+      }
+      case "text": {
         return (
           <TypedArtifactActions
             {...props}
@@ -202,8 +204,10 @@ export const ArtifactActions = memo(
             setMetadata={props.setMetadata}
           />
         );
-      default:
+      }
+      default: {
         throw new Error("Artifact definition not found!");
+      }
     }
   },
   (prevProps, nextProps) => {
