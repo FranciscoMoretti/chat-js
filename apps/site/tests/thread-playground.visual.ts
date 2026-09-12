@@ -14,19 +14,19 @@ const output = fileURLToPath(
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
-async function capture(page: Page, name: string) {
+const capture = async (page: Page, name: string) => {
   await page.getByTestId("thread-playground").screenshot({
     animations: "disabled",
+    path: `${output}${name}.png`,
     style:
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
-    path: `${output}${name}.png`,
   });
-}
+};
 
 try {
   const page = await browser.newPage({
-    viewport: { width: 1440, height: 1200 },
     reducedMotion: "reduce",
+    viewport: { height: 1200, width: 1440 },
   });
   page.on("pageerror", (error) => errors.push(error.message));
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
@@ -190,7 +190,7 @@ try {
   // Branch creation must preserve the original branch and select the new reply.
   const originalCount = await page.locator("[data-node-id]").count();
   await page
-    .getByRole("button", { name: "Branch from here", exact: true })
+    .getByRole("button", { exact: true, name: "Branch from here" })
     .last()
     .click();
   await page.waitForFunction(
@@ -221,7 +221,7 @@ try {
   await page.clock.runFor(1800);
   await page.evaluate(() => document.documentElement.classList.add("dark"));
   await capture(page, "threads-dark-live");
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
   assert.equal(
     await page.evaluate(
