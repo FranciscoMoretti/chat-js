@@ -37,7 +37,7 @@ function getEffectiveModelId(
 
 function getModelOrderIndex(
   modelId: AppModelId | undefined,
-  models: Array<{ id: string }>
+  models: { id: string }[]
 ): number {
   if (!modelId) {
     return Number.POSITIVE_INFINITY;

@@ -23,7 +23,8 @@ export function KeyboardShortcuts() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setOpenMobile, router]);
 
-  return null; // This component only handles keyboard events
+  // This component only handles keyboard events
+  return null;
 }
 
 // Helper function to get platform-specific shortcut text

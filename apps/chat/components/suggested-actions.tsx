@@ -142,7 +142,7 @@ function PureSuggestedActions({
       return;
     }
 
-    const primaryRequest = submission.requestSpecs[0];
+    const [primaryRequest] = submission.requestSpecs;
     if (primaryRequest) {
       runParallelThreadRequestSpecs({
         chatId,

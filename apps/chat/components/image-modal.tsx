@@ -36,7 +36,7 @@ async function handleCopyImage(
     const blob = await response.blob();
     await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
     toast.success("Copied image to clipboard!");
-  } catch (_error) {
+  } catch {
     toast.error("Failed to copy image to clipboard");
   }
 }
@@ -61,7 +61,7 @@ async function handleDownload(
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  } catch (_error) {
+  } catch {
     toast.error("Failed to download image");
   }
 }

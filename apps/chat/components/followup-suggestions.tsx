@@ -26,7 +26,7 @@ function FollowUpSuggestions({
 
   const handleClick = useCallback(
     (suggestion: string) => {
-      const sendMessage = storeApi.getState().sendMessage;
+      const { sendMessage } = storeApi.getState();
       if (!sendMessage) {
         return;
       }

@@ -28,12 +28,9 @@ function MessageEditorContent({
 }: MessageEditorProps & { onModelChange?: (modelId: string) => void }) {
   const status = useChatStatus();
 
-  const handleOnSendMessage = useCallback(
-    (_: ChatMessage) => {
-      setMode("view");
-    },
-    [setMode]
-  );
+  const handleOnSendMessage = useCallback(() => {
+    setMode("view");
+  }, [setMode]);
 
   return (
     <div className="w-full">

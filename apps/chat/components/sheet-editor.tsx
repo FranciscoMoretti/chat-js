@@ -101,7 +101,7 @@ const PureSpreadsheetEditor = ({
     setLocalRows(initialRows);
   }, [initialRows]);
 
-  const generateCsv = (data: Array<Array<string | number>>) => unparse(data);
+  const generateCsv = (data: (string | number)[][]) => unparse(data);
 
   const handleRowsChange = (newRows: Record<string, string | number>[]) => {
     if (isReadonly) {
