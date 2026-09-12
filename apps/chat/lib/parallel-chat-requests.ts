@@ -37,14 +37,14 @@ function persistenceGateKey(chatId: string, userMessageId: string) {
 }
 
 function createPersistenceGate(): PersistenceGate {
-  let rejectPromise: (error: unknown) => void = () => {};
-  let resolvePromise: () => void = () => {};
+  let rejectPromise: (error: unknown) => void = () => undefined;
+  let resolvePromise: () => void = () => undefined;
   let settled = false;
   const promise = new Promise<void>((resolve, reject) => {
     rejectPromise = reject;
     resolvePromise = resolve;
   });
-  promise.catch(() => {});
+  promise.catch(() => undefined);
 
   return {
     promise,
@@ -231,7 +231,7 @@ export async function runParallelThreadRequestSpecs({
               });
             }
           },
-          () => {}
+          () => undefined
         )
       : Promise.resolve();
 

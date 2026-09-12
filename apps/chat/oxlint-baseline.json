@@ -39,8 +39,7 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/use-chat.ts",
-        "lib/utils.ts"
+        "lib/stores/base/use-chat.ts"
       ],
       "rules": {
         "curly": "off"
@@ -437,22 +436,10 @@
         "components/ui/toggle.tsx",
         "hooks/chat-sync-hooks.ts",
         "lib/app-chat-runtime.ts",
-        "lib/application-thread.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
-        "lib/chat-tree-actions.ts",
-        "lib/config.ts",
-        "lib/create-anonymous-session.ts",
-        "lib/data-stream.ts",
-        "lib/db/mcp-queries.ts",
-        "lib/db/queries.ts",
         "lib/editor/config.ts",
-        "lib/file-storage.ts",
-        "lib/logger.ts",
-        "lib/message-conversion.ts",
-        "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/social-auth.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/base/use-chat.ts",
         "lib/stores/custom-store-provider.tsx",
@@ -462,7 +449,6 @@
         "lib/stores/hooks-message-parts.ts",
         "lib/stores/hooks-threads.ts",
         "lib/stores/with-thread-state.ts",
-        "lib/utils.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
@@ -707,12 +693,7 @@
       }
     },
     {
-      "files": [
-        "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/gated-chat-transport.test.ts",
-        "lib/redis/client.test.ts",
-        "trpc/init.ts"
-      ],
+      "files": ["trpc/init.ts"],
       "rules": {
         "no-promise-executor-return": "off"
       }
@@ -1683,14 +1664,9 @@
       "files": [
         "components/parallel-response-cards.tsx",
         "components/sheet-editor.tsx",
-        "lib/ai/eval-agent.ts",
         "lib/ai/mcp/cache.ts",
-        "lib/db/queries.ts",
-        "lib/file-storage.ts",
-        "lib/parallel-chat-requests.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-message-parts.ts",
-        "lib/utils.ts",
         "trpc/routers/chat.router.ts"
       ],
       "rules": {
@@ -1881,14 +1857,9 @@
       "files": [
         "components/data-stream-handler.tsx",
         "hooks/use-mobile.ts",
-        "lib/ai/completion-queue.test.ts",
-        "lib/cancellation-aware-chat-transport.test.ts",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
-        "lib/redis/client.test.ts",
-        "lib/social-auth.test.ts",
         "providers/session-provider.tsx",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],

@@ -97,11 +97,11 @@ function observeCancellation({
   target: GenerationCancellationTarget;
 }) {
   if (!signal || signal.aborted) {
-    return () => {};
+    return () => undefined;
   }
 
   const cancel = () => {
-    onCancel(target).catch(() => {});
+    onCancel(target).catch(() => undefined);
   };
   signal.addEventListener("abort", cancel, { once: true });
 

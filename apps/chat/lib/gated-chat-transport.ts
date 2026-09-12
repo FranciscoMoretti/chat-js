@@ -16,7 +16,7 @@ function waitForGate(ready: Promise<void>, signal?: AbortSignal) {
     return ready;
   }
   if (signal.aborted) {
-    ready.catch(() => {});
+    ready.catch(() => undefined);
     return Promise.reject(createAbortError());
   }
 
