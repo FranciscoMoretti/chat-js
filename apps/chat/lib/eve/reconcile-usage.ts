@@ -59,13 +59,29 @@ export async function reconcileEveOwnerUsage(ownerId: string) {
       "Resolve uncertain session creation before starting more work."
     );
   }
-  for (let offset = 0; offset < bindings.length; offset += 4) {
-    await Promise.all(
-      bindings.slice(offset, offset + 4).map(async (row) => {
-        if (row.sessionId) {
-          await reconcileEveUsage(ownerId, row.sessionId);
+  const pending = bindings.values();
+  let failure: { cause: unknown } | undefined;
+  // A slow stream occupies only its own slot. On failure, drain existing reads
+  // before returning so a retry cannot overlap billing work left by this call.
+  const worker = async () => {
+    while (!failure) {
+      const next = pending.next();
+      if (next.done) {
+        return;
+      }
+      try {
+        if (next.value.sessionId) {
+          await reconcileEveUsage(ownerId, next.value.sessionId);
         }
-      })
-    );
+      } catch (cause) {
+        failure ??= { cause };
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(4, bindings.length) }, worker)
+  );
+  if (failure) {
+    throw failure.cause;
   }
 }
