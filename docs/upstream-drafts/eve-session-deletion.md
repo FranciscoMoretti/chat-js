@@ -126,11 +126,18 @@ A failed local sandbox setup can leave only an ownership record. New directories
 
 ## Updated external code-execution sandbox findings (2026-09-11)
 
-The separate ChatJS code-execution tool currently uses `@vercel/sandbox` 1.9.3.
-Its public create input has no caller-selected name, and its public lookup takes
-an allocated sandbox ID. Our `finally` cleanup waits for stop, but a worker crash
-between remote allocation and recording that ID remains an unaccounted resource
-window. This is separate from EVE's own VM inventory.
+The initial audit found the separate ChatJS code-execution tool using
+`@vercel/sandbox` 1.9.3, which could not select a name before allocation.
+The application has since upgraded to pinned 3.3.0. Its disposable sandboxes
+explicitly disable persistence, and cleanup awaits stop and deletion with
+independent timeouts. Native code calls now derive an opaque, stable resource
+name from the authenticated owner, native session, and call ID.
+
+Real JavaScript and Python SDK lifecycle tests verified execution and subsequent
+lookup-by-name returning not found. Native browser tests verified rendered
+output, once-only billing, and reload. These establish normal cleanup, not
+recovery from a worker crash or an uncertain create response. That remaining
+window is separate from EVE's own VM inventory.
 
 Do not report named-resource recovery as a missing capability in the current
 Sandbox SDK. The published 3.3.0 package now exposes:
@@ -142,25 +149,28 @@ Sandbox SDK. The published 3.3.0 package now exposes:
 - `sandbox.delete({ deleteOrphanSnapshots, signal })`. Orphan snapshot deletion is
   explicitly asynchronous and defaults to false. A resolved delete call must not
   be presented as proof that every previously created snapshot has been erased.
-- Persistence enabled by default. An upgrade of our disposable code-execution
-  tool must explicitly disable persistence; otherwise stopping a sandbox changes
-  from temporary execution cleanup into retained filesystem state.
-- `stop({ signal })`, without the 1.x `blocking` option. The upgrade must adapt
-  existing cleanup code and validate terminal behavior against the new SDK.
+- Persistence enabled by default. Our disposable code-execution tool now
+  explicitly sets `persistent: false`.
+- `stop({ signal })`, without the 1.x `blocking` option. Our cleanup now uses
+  the new signature and attempts deletion even if stopping fails.
 
-Evidence: installed 1.9.3 declarations, published 3.3.0 `dist/sandbox.d.ts` and
+Initial audit evidence: then-installed 1.9.3 declarations, published 3.3.0 `dist/sandbox.d.ts` and
 `dist/sandbox.js`, and the official [SDK reference](https://vercel.com/docs/sandbox/sdk-reference)
 and [persistence announcement](https://vercel.com/changelog/sandbox-persistence-is-now-ga).
 The source audit did not allocate, list, stop, or delete any remote sandbox.
 
-The implementation direction is therefore to upgrade the application tool's SDK,
-record a stable name and owner/conversation association before allocation, and
+The next implementation must durably record the stable name and its
+owner/conversation association before allocation, and
 use lookup-only recovery plus deletion fences. Keep EVE's own SDK dependency and
 VM provider separate until their compatibility is checked. Persist unresolved
 allocation intent even when creation times out. Do not mark conversation erasure
 complete while a creation operation can still finish after the cleanup barrier,
 or while an older resource has no verified ownership record.
 
-This audit changes the integration approach; it does not complete the SDK upgrade,
-resource journal, crash recovery, or erasure verification. No new provider issue is
-ready for publication on this evidence alone.
+The SDK upgrade and stable naming are implemented. The resource journal, crash
+recovery, and conversation erasure verification remain incomplete. The existing
+`resolveEveConversationScope` helper already handles first-turn binding delay
+for generated files; sandbox registration should reuse that trusted scope and
+the owner-family deletion lock. Retain unresolved allocation intent instead of
+assuming a timeout proves no resource exists. No provider issue is ready for
+publication on this evidence alone.
