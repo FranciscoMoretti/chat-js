@@ -67,21 +67,14 @@ jobs:
       - name: Install Playwright browsers
         if: steps.affected.outputs.run == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: apps/chat/node_modules/.bin/playwright install --with-deps chromium
-      - name: Capture Linux visual baselines
-        if: steps.affected.outputs.run == 'true'
+      - if: steps.affected.outputs.run == 'true'
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: bunx turbo run test:e2e --affected -- --update-snapshots=all
+        run: bunx turbo run test:e2e --affected
       - uses: actions/upload-artifact@v4
         if: steps.affected.outputs.run == 'true' && always() && !cancelled()
         with:
           name: playwright-report
           path: apps/chat/playwright-report/
-          retention-days: 7
-      - uses: actions/upload-artifact@v4
-        if: steps.affected.outputs.run == 'true' && always() && !cancelled()
-        with:
-          name: playwright-linux-snapshots
-          path: apps/chat/tests/**/*.png
           retention-days: 7
