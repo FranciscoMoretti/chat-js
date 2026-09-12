@@ -15,20 +15,11 @@
     },
     {
       "files": [
-        "apps/videos/src/threads-launch.tsx",
-        "apps/videos/src/story.ts"
+        "apps/videos/src/story.ts",
+        "apps/videos/src/threads-launch.tsx"
       ],
       "rules": {
         "complexity": "off"
-      }
-    },
-    {
-      "files": [
-        "apps/videos/src/threads-launch.tsx",
-        "packages/cli/src/utils/run-command.ts"
-      ],
-      "rules": {
-        "func-style": "off"
       }
     },
     {
@@ -54,22 +45,7 @@
       }
     },
     {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "no-negated-condition": "off"
-      }
-    },
-    {
-      "files": ["apps/videos/src/threads-launch.tsx"],
-      "rules": {
-        "no-nested-ternary": "off"
-      }
-    },
-    {
-      "files": [
-        "apps/electron/src/main.ts",
-        "apps/site/components/thread-playground-model.ts"
-      ],
+      "files": ["apps/site/components/thread-playground-model.ts"],
       "rules": {
         "no-use-before-define": "off"
       }
@@ -87,14 +63,7 @@
       }
     },
     {
-      "files": ["packages/cli/src/utils/run-command.ts"],
-      "rules": {
-        "promise/param-names": "off"
-      }
-    },
-    {
       "files": [
-        "apps/electron/src/main.ts",
         "apps/electron/src/preload.ts",
         "packages/thread/src/abstract-thread.ts"
       ],
@@ -109,27 +78,9 @@
       }
     },
     {
-      "files": ["apps/videos/src/threads-launch.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
       "files": ["packages/thread/test/use-thread-types.ts"],
       "rules": {
         "react/invariant": "off"
-      }
-    },
-    {
-      "files": ["apps/site/app/threads/page.tsx"],
-      "rules": {
-        "react/jsx-curly-brace-presence": "off"
-      }
-    },
-    {
-      "files": ["apps/videos/src/threads-launch.tsx"],
-      "rules": {
-        "react/jsx-no-useless-fragment": "off"
       }
     },
     {
@@ -139,10 +90,7 @@
       }
     },
     {
-      "files": [
-        "apps/site/components/thread-showcase.tsx",
-        "packages/cli/src/helpers/scaffold.ts"
-      ],
+      "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "sort-keys": "off"
       }
@@ -157,18 +105,6 @@
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "unicorn/no-negated-condition": "off"
-      }
-    },
-    {
-      "files": ["packages/thread/src/abstract-thread.ts"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
       }
     },
     {
