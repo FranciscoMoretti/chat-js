@@ -58,8 +58,8 @@ const deepResearchToolConfigSchema = z.object({
     .describe("Max search queries per research topic"),
 });
 
-const createAiSchema = <G extends GatewayType>(g: G) => {
-  return z.object({
+const createAiSchema = <G extends GatewayType>(g: G) =>
+  z.object({
     gateway: z.literal(g),
     providerOrder: z
       .array(z.string())
@@ -155,7 +155,6 @@ const createAiSchema = <G extends GatewayType>(g: G) => {
       })
       .describe("Default model and runtime configuration grouped by tool"),
   });
-};
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 

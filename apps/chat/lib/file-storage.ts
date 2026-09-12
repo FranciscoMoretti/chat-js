@@ -101,17 +101,12 @@ export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
 export const downloadFile = (
   key: string,
   range?: { start: number; end?: number }
-) => {
-  return getFiles().download(key, range ? { range } : undefined);
-};
+) => getFiles().download(key, range ? { range } : undefined);
 
-export const getFileMetadata = (key: string) => {
-  return getFiles().head(key);
-};
+export const getFileMetadata = (key: string) => getFiles().head(key);
 
-export const storageSupportsRange = (): boolean => {
-  return getFiles().capabilities.rangeRead;
-};
+export const storageSupportsRange = (): boolean =>
+  getFiles().capabilities.rangeRead;
 
 export const getFileProviderUrl = async (
   key: string
