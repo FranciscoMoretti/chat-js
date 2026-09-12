@@ -18,10 +18,15 @@ export function run(
     let timedOut = false;
     const signal = (value: NodeJS.Signals) => {
       try {
-        if (grouped && child.pid) process.kill(-child.pid, value);
-        else child.kill(value);
+        if (grouped && child.pid) {
+          process.kill(-child.pid, value);
+        } else {
+          child.kill(value);
+        }
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ESRCH") reject(error);
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") {
+          reject(error);
+        }
       }
     };
     child.stdout.on("data", (chunk) => {
@@ -48,14 +53,18 @@ export function run(
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      if (timedOut) return;
-      if (code === 0) resolve();
-      else
+      if (timedOut) {
+        return;
+      }
+      if (code === 0) {
+        resolve();
+      } else {
         reject(
           new Error(
             `${command.join(" ")} failed in ${cwd}:\n${stdout}\n${stderr}`
           )
         );
+      }
     });
   });
 }

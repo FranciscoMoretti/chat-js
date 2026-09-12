@@ -2,10 +2,8 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  toolDefinitionSchema,
-  type ToolDefinition,
-} from "../../../registry/metadata";
+import { toolDefinitionSchema } from "../../../registry/metadata";
+import type { ToolDefinition } from "../../../registry/metadata";
 import { legacyTools } from "./legacy-tools";
 import { preflight } from "./preflight";
 
@@ -15,8 +13,10 @@ function hash(content: string) {
   return createHash("sha256").update(content).digest("hex");
 }
 async function readOptional(path: string) {
-  return readFile(path, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return null;
+  return readFile(path, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return null;
+    }
     throw error;
   });
 }
@@ -27,27 +27,30 @@ function generatedSource(body: string) {
   return `${generated}// Content: ${hash(body)}\n${body}`;
 }
 function checkGenerated(content: string | null, path: string) {
-  if (!content) return;
+  if (!content) {
+    return;
+  }
   const lines = content.split("\n");
   if (
     !content.startsWith(generated) ||
     lines[1] !== `// Content: ${hash(lines.slice(2).join("\n"))}`
-  )
+  ) {
     throw new Error(
       `${path} contains custom or legacy registrations. Preserve them in custom-tools.ts/custom-ui.ts and remove the old generated index before running chat-js sync.`
     );
+  }
 }
 
 const selections = {
+  codeExecution: {
+    file: "code-execution",
+    requirement: "codeExecutionEnvRequirement",
+  },
   retrieveUrl: {
     file: "url-retrieval",
     requirement: "urlRetrievalEnvRequirement",
   },
   webSearch: { file: "search", requirement: "searchEnvRequirement" },
-  codeExecution: {
-    file: "code-execution",
-    requirement: "codeExecutionEnvRequirement",
-  },
 } as const;
 const selectionFiles = Object.values(selections).flatMap(({ file }) => [
   `${file}.ts`,
@@ -70,7 +73,9 @@ export async function syncTools(
   await preflight(cwd, targets);
   const dir = join(cwd, directory);
   const entries = await readdir(dir, { withFileTypes: true }).catch((error) => {
-    if (error.code === "ENOENT") return [];
+    if (error.code === "ENOENT") {
+      return [];
+    }
     throw error;
   });
   const toolsPath = join(dir, "tools.ts");
@@ -81,26 +86,33 @@ export async function syncTools(
     previousTools && previousUi && !previousTools.startsWith(generated)
       ? await legacyTools(cwd, previousTools, previousUi)
       : null;
-  for (const filename of selectionFiles)
+  for (const filename of selectionFiles) {
     checkGenerated(await readOptional(join(dir, filename)), filename);
+  }
   if (!legacy) {
     checkGenerated(previousTools, toolsPath);
     checkGenerated(previousUi, uiPath);
   }
   const definitions = [...(legacy ?? [])];
   for (const entry of entries) {
-    if (entry.isSymbolicLink())
+    if (entry.isSymbolicLink()) {
       throw new Error(`Tool directories must not be symlinks: ${entry.name}`);
-    if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
+    }
+    if (!entry.isDirectory() || entry.name.startsWith("_")) {
+      continue;
+    }
     const descriptor = `${directory}/${entry.name}/chatjs.json`;
     await preflight(cwd, [descriptor]);
     const content = await readOptional(join(cwd, descriptor));
-    if (!content) continue;
+    if (!content) {
+      continue;
+    }
     const definition = toolDefinitionSchema.parse(JSON.parse(content));
-    if (definition.id !== entry.name)
+    if (definition.id !== entry.name) {
       throw new Error(
         `Tool descriptor id must match its directory: ${entry.name}`
       );
+    }
     await preflight(cwd, [
       `${directory}/${entry.name}/tool.ts`,
       ...(definition.rendererExport
@@ -108,10 +120,13 @@ export async function syncTools(
         : []),
     ]);
     await readFile(join(dir, entry.name, "tool.ts"));
-    if (definition.rendererExport)
+    if (definition.rendererExport) {
       await readFile(join(dir, entry.name, "renderer.tsx"));
+    }
     const existing = definitions.findIndex((item) => item.id === definition.id);
-    if (existing !== -1) definitions.splice(existing, 1);
+    if (existing !== -1) {
+      definitions.splice(existing, 1);
+    }
     definitions.push(definition);
   }
   const ids = new Set(definitions.map((item) => item.id));
@@ -130,10 +145,11 @@ export async function syncTools(
     if (
       !ids.has(match[1]) &&
       (!wasSelection || entries.some((entry) => entry.name === match[1]))
-    )
+    ) {
       throw new Error(
         `Missing descriptor for previously registered tool: ${match[1]}. Restore chatjs.json before syncing.`
       );
+    }
   }
   for (const expected of options.expected ?? []) {
     const installed = definitions.find((item) => item.id === expected.id);
@@ -145,34 +161,41 @@ export async function syncTools(
   }
   definitions.sort((a, b) => a.id.localeCompare(b.id));
   for (const slot of Object.keys(selections)) {
-    if (definitions.filter((item) => item.slot === slot).length > 1)
+    if (definitions.filter((item) => item.slot === slot).length > 1) {
       throw new Error(
         `Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`
       );
+    }
   }
   const registrations = definitions;
   const renderers = registrations.filter((item) => item.rendererExport);
   const keys = registrations.map(registrationKey);
-  if (new Set(keys).size !== keys.length)
+  if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
-  if (options.checkOnly) return definitions;
+  }
+  if (options.checkOnly) {
+    return definitions;
+  }
   const toolBody = `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${registrationKey(item)}: tool${i},`).join("\n")}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
   const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${registrationKey(item)}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
   await mkdir(dir, { recursive: true });
-  if ((await readOptional(join(dir, "custom-tools.ts"))) === null)
+  if ((await readOptional(join(dir, "custom-tools.ts"))) === null) {
     await writeFile(
       join(dir, "custom-tools.ts"),
       'import type { ToolSet } from "ai";\n\nexport const customTools = {} satisfies ToolSet;\n'
     );
-  if ((await readOptional(join(dir, "custom-ui.ts"))) === null)
+  }
+  if ((await readOptional(join(dir, "custom-ui.ts"))) === null) {
     await writeFile(
       join(dir, "custom-ui.ts"),
       'import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n\nexport const customUi = {} satisfies Partial<ToolRendererRegistry>;\n'
     );
+  }
   for (const definition of legacy ?? []) {
     const descriptor = join(dir, definition.id, "chatjs.json");
-    if ((await readOptional(descriptor)) === null)
+    if ((await readOptional(descriptor)) === null) {
       await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
+    }
   }
   for (const [slot, spec] of Object.entries(selections)) {
     const selected = definitions.find((item) => item.slot === slot);
@@ -189,7 +212,7 @@ export async function syncTools(
     await writeFile(
       join(dir, `${spec.file}-config.ts`),
       generatedSource(
-        `export const ${spec.requirement} = ${JSON.stringify({ options: envOptions, description: selected ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : `Install a ${slot} tool` })};\n`
+        `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
       )
     );
   }

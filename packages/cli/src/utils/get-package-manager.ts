@@ -10,7 +10,7 @@ export function inferPackageManager(cwd = process.cwd()): PackageManager {
     if (fs.existsSync(manifestPath)) {
       try {
         const manifest: unknown = JSON.parse(
-          fs.readFileSync(manifestPath, "utf8")
+          fs.readFileSync(manifestPath, "utf-8")
         );
         if (
           manifest &&
@@ -24,16 +24,25 @@ export function inferPackageManager(cwd = process.cwd()): PackageManager {
             declared === "npm" ||
             declared === "pnpm" ||
             declared === "yarn"
-          )
+          ) {
             return declared;
+          }
         }
       } catch (error) {
-        if (!(error instanceof SyntaxError)) throw error;
+        if (!(error instanceof SyntaxError)) {
+          throw error;
+        }
       }
     }
-    if (fs.existsSync(path.join(currentDir, "pnpm-lock.yaml"))) return "pnpm";
-    if (fs.existsSync(path.join(currentDir, "yarn.lock"))) return "yarn";
-    if (fs.existsSync(path.join(currentDir, "package-lock.json"))) return "npm";
+    if (fs.existsSync(path.join(currentDir, "pnpm-lock.yaml"))) {
+      return "pnpm";
+    }
+    if (fs.existsSync(path.join(currentDir, "yarn.lock"))) {
+      return "yarn";
+    }
+    if (fs.existsSync(path.join(currentDir, "package-lock.json"))) {
+      return "npm";
+    }
     if (
       fs.existsSync(path.join(currentDir, "bun.lock")) ||
       fs.existsSync(path.join(currentDir, "bun.lockb"))
@@ -53,10 +62,18 @@ export function inferPackageManager(cwd = process.cwd()): PackageManager {
 
 export function launcherPackageManager(): PackageManager {
   const ua = process.env.npm_config_user_agent ?? "";
-  if (ua.startsWith("pnpm/")) return "pnpm";
-  if (ua.startsWith("yarn/")) return "yarn";
-  if (ua.startsWith("npm/")) return "npm";
-  if (ua.startsWith("bun/")) return "bun";
+  if (ua.startsWith("pnpm/")) {
+    return "pnpm";
+  }
+  if (ua.startsWith("yarn/")) {
+    return "yarn";
+  }
+  if (ua.startsWith("npm/")) {
+    return "npm";
+  }
+  if (ua.startsWith("bun/")) {
+    return "bun";
+  }
 
   return "bun";
 }

@@ -35,12 +35,14 @@ beforeAll(async () => {
   const output = join(cliDirectory, "../registry/dist/r");
   const names = (await readdir(output)).sort();
   const first = await Promise.all(
-    names.map((name) => readFile(join(output, name), "utf8"))
+    names.map((name) => readFile(join(output, name), "utf-8"))
   );
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   expect((await readdir(output)).sort()).toEqual(names);
   expect(
-    await Promise.all(names.map((name) => readFile(join(output, name), "utf8")))
+    await Promise.all(
+      names.map((name) => readFile(join(output, name), "utf-8"))
+    )
   ).toEqual(first);
   await run(cliDirectory, ["bun", "run", "build"]);
   await run(cliDirectory, ["bun", "pm", "pack", "--destination", root]);
@@ -48,11 +50,11 @@ beforeAll(async () => {
   await writeFile(
     join(root, "cli/package.json"),
     JSON.stringify({
-      private: true,
       dependencies: {
         "@chat-js/cli": `file:${join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
       },
       overrides: { "@chat-js/gateways": `file:${archive}` },
+      private: true,
     })
   );
   await run(join(root, "cli"), ["bun", "install"]);
@@ -63,7 +65,7 @@ afterAll(async () => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
-      rm(root, { recursive: true, force: true }),
+      rm(root, { force: true, recursive: true }),
       new Promise<never>((_, reject) => {
         timeout = setTimeout(
           () => reject(new Error("Gateway test cleanup timed out")),
@@ -78,17 +80,15 @@ afterAll(async () => {
 
 const executionDefinition = {
   contractVersion: 1,
-  kind: "tool",
+  envRequirements: [{ options: [["ACME_EXECUTION_TOKEN"]] }],
   id: "acme-execution",
+  kind: "tool",
+  rendererExport: "CommandRenderer",
   slot: "codeExecution",
   toolExport: "runCommand",
-  rendererExport: "CommandRenderer",
-  envRequirements: [{ options: [["ACME_EXECUTION_TOKEN"]] }],
 };
 const external = externalGatewayFixture();
 const registryServer = Bun.serve({
-  port: 0,
-  hostname: "127.0.0.1",
   async fetch(request) {
     const path = new URL(request.url).pathname;
     if (path === "/external-storage.json")
@@ -269,11 +269,16 @@ export const readPage = tool({inputSchema: z.object({target: z.string()}), execu
     }
     return new Response("Not found", { status: 404 });
   },
+  hostname: "127.0.0.1",
+  port: 0,
 });
 afterAll(() => {
   registryServer.stop(true);
-  if (originalRegistryUrl === undefined) delete process.env.CHATJS_REGISTRY_URL;
-  else process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
+  if (originalRegistryUrl === undefined) {
+    delete process.env.CHATJS_REGISTRY_URL;
+  } else {
+    process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
+  }
 });
 
 for (const gateway of [...GATEWAYS, "acme"]) {
@@ -326,30 +331,30 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           : []),
     ]);
     const manifestPath = join(cwd, "package.json");
-    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     if (gateway === "vercel") {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeDefined();
       expect(
         await readFile(
           join(cwd, "tools/chatjs/url-retrieval-config.ts"),
-          "utf8"
+          "utf-8"
         )
       ).toContain("FIRECRAWL_API_KEY");
       expect(
         await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()
       ).toBe(true);
       expect(
-        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
       ).toContain("vercel-code-execution/tool");
       expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()
       ).toBe(false);
       expect(
-        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
       ).toContain("firecrawl-search/tool");
       expect(
-        await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf-8")
       ).toContain("FIRECRAWL_API_KEY");
     }
 
@@ -358,8 +363,9 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         ? "@ai-sdk/openai-compatible"
         : gatewayMetadata[gateway as keyof typeof gatewayMetadata].dependency;
     for (const { dependency } of Object.values(gatewayMetadata)) {
-      if (dependency !== selectedSdk)
+      if (dependency !== selectedSdk) {
         expect(manifest.dependencies[dependency]).toBeUndefined();
+      }
     }
     // The shared npm archive must not carry any other adapter implementations.
     for (const name of GATEWAYS) {
@@ -383,11 +389,11 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           join(cwd, "tools/platform/code-execution-contract.ts")
         ).exists()
       ).toBe(false);
-      expect(await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")).toContain(
-        "acme-execution/renderer"
-      );
       expect(
-        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
+      ).toContain("acme-execution/renderer");
+      expect(
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
       ).not.toContain("tool-webSearch");
       expect(
         await Bun.file(
@@ -397,7 +403,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(
         await readFile(
           join(cwd, "tools/chatjs/code-execution-config.ts"),
-          "utf8"
+          "utf-8"
         )
       ).toContain("ACME_EXECUTION_TOKEN");
       await writeFile(
@@ -424,11 +430,11 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
       expect(
         await readFile(
           join(cwd, "tools/chatjs/url-retrieval-config.ts"),
-          "utf8"
+          "utf-8"
         )
       ).toContain("ACME_RETRIEVAL_KEY");
       expect(
-        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
       ).not.toContain("tool-retrieveUrl");
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
       expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
@@ -476,9 +482,9 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { enabled: true, def
     );
     if (gateway === "vercel") {
       await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
-      const index = await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8");
+      const index = await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8");
       await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
-      expect(await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")).toBe(
+      expect(await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")).toBe(
         index
       );
       await run(cwd, [
@@ -491,7 +497,7 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { enabled: true, def
       ]);
       await run(cwd, ["node", cliEntry, "sync"]);
       expect(
-        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf8")
+        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
       ).toContain("getWeather as tool");
     }
     await run(cwd, ["bun", "run", "test:types"]);
@@ -546,8 +552,9 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         "gateway-type-check.ts",
         "probe.ts",
         "probe-config.ts",
-      ])
+      ]) {
         await rm(join(cwd, name));
+      }
       await run(cwd, ["bun", "run", "lint"]);
       const longDirectory = join(cwd, "tools/chatjs/long-renderer");
       await mkdir(longDirectory);
@@ -567,10 +574,10 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         join(longDirectory, "chatjs.json"),
         JSON.stringify({
           contractVersion: 1,
-          kind: "tool",
           id: "long-renderer",
-          toolExport,
+          kind: "tool",
           rendererExport,
+          toolExport,
         })
       );
       await run(cwd, ["node", cliEntry, "sync"]);

@@ -16,10 +16,10 @@ export function isSafeTarget(targetPath: string, root: string): boolean {
     return false;
   }
 
-  const normalizedTarget = path.normalize(decodedPath.replace(/\\/g, "/"));
+  const normalizedTarget = path.normalize(decodedPath.replaceAll("\\", "/"));
   const normalizedRoot = path.normalize(root);
   const targetSegments = decodedPath
-    .replace(/\\/g, "/")
+    .replaceAll("\\", "/")
     .split("/")
     .filter(Boolean);
   const normalizedSegments = normalizedTarget.split(/[\\/]+/).filter(Boolean);

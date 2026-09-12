@@ -1,10 +1,9 @@
 // Serve the built registry against the locally packed, not-yet-published contracts.
 import { rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+
 const [archive, addressFile] = process.argv.slice(2);
 const server = Bun.serve({
-  port: 0,
-  hostname: "127.0.0.1",
   async fetch(request) {
     const path = new URL(request.url).pathname;
     if (path === "/contracts.tgz") return new Response(Bun.file(archive));
@@ -24,6 +23,8 @@ const server = Bun.serve({
       );
     return Response.json(item);
   },
+  hostname: "127.0.0.1",
+  port: 0,
 });
 const temporaryAddressFile = `${addressFile}.tmp`;
 await writeFile(

@@ -13,13 +13,15 @@ export async function runCommand(
     });
     child.on("error", rejectPromise);
     child.on("close", (code) => {
-      if (code === 0) resolvePromise();
-      else
+      if (code === 0) {
+        resolvePromise();
+      } else {
         rejectPromise(
           new Error(
             `${command} exited with code ${code}\n${stderr.join("")}`.trim()
           )
         );
+      }
     });
   });
 }

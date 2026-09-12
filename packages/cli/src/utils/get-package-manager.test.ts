@@ -21,7 +21,7 @@ describe("inferPackageManager", () => {
       } else {
         process.env.npm_config_user_agent = originalUserAgent;
       }
-      rmSync(cwd, { recursive: true, force: true });
+      rmSync(cwd, { force: true, recursive: true });
     }
   });
 
@@ -41,7 +41,7 @@ describe("inferPackageManager", () => {
       } else {
         process.env.npm_config_user_agent = originalUserAgent;
       }
-      rmSync(cwd, { recursive: true, force: true });
+      rmSync(cwd, { force: true, recursive: true });
     }
   });
 });
@@ -55,7 +55,7 @@ for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
       writeFileSync(join(cwd, "pnpm-lock.yaml"), "");
       expect(inferPackageManager(cwd)).toBe("pnpm");
     } finally {
-      rmSync(cwd, { recursive: true, force: true });
+      rmSync(cwd, { force: true, recursive: true });
     }
   });
 }

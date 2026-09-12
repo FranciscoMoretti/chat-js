@@ -7,7 +7,7 @@ import { toolItems } from "../../../registry/registry";
 // evaluate source or discard unknown registrations during migration.
 export async function legacyTools(cwd: string, tools: string, ui: string) {
   const compact = (source: string) =>
-    source.replace(/\/\/[^\n]*/g, "").replace(/\s+/g, "");
+    source.replaceAll(/\/\/[^\n]*/g, "").replaceAll(/\s+/g, "");
   let server = compact(tools);
   let client = compact(ui).replace(
     'importtype{ToolRendererRegistry}from"@/lib/ai/tool-renderer-registry";',
@@ -23,9 +23,12 @@ export async function legacyTools(cwd: string, tools: string, ui: string) {
     const clientImport = compact(
       `import { ${item.rendererExport} } from "@/tools/chatjs/${item.id}/renderer";`
     );
-    if (server.includes(serverImport) !== client.includes(clientImport))
+    if (server.includes(serverImport) !== client.includes(clientImport)) {
       return null;
-    if (!server.includes(serverImport)) continue;
+    }
+    if (!server.includes(serverImport)) {
+      continue;
+    }
     server = server.replace(serverImport, "");
     client = client.replace(clientImport, "");
     definitions.push(item);
@@ -36,14 +39,17 @@ export async function legacyTools(cwd: string, tools: string, ui: string) {
   const clientEntries = client.match(
     /^exportconstui=\{([^{}]*)\}(?:satisfiesToolRendererRegistry)?;$/
   )?.[1];
-  if (serverEntries === undefined || clientEntries === undefined) return null;
+  if (serverEntries === undefined || clientEntries === undefined) {
+    return null;
+  }
   const entries = (body: string) =>
     body.split(",").filter(Boolean).sort().join(",");
   if (
     entries(serverEntries) !==
     entries(definitions.map((item) => item.toolExport).join(","))
-  )
+  ) {
     return null;
+  }
   if (
     entries(clientEntries) !==
     entries(
@@ -51,8 +57,9 @@ export async function legacyTools(cwd: string, tools: string, ui: string) {
         .map((item) => `"tool-${item.toolExport}":${item.rendererExport}`)
         .join(",")
     )
-  )
+  ) {
     return null;
+  }
   for (const item of definitions) {
     await readFile(join(cwd, "tools/chatjs", item.id, "tool.ts"));
     await readFile(join(cwd, "tools/chatjs", item.id, "renderer.tsx"));
