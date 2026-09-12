@@ -50,7 +50,7 @@ const PureDocumentTool = ({
     }
 
     if (tool.state === "output-available" && tool.output) {
-      const output = tool.output;
+      const { output } = tool;
       if (output.status === "success") {
         setArtifact((prev) => ({
           ...prev,
@@ -63,7 +63,7 @@ const PureDocumentTool = ({
   }, [tool, messageId, kind, inputTitle, inputContent, setArtifact]);
 
   if (tool.state === "output-error" || tool.output?.status === "error") {
-    const output = tool.output;
+    const { output } = tool;
     const error = output?.status === "error" ? output.error : tool.errorText;
 
     return (

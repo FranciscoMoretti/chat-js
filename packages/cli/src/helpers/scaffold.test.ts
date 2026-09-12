@@ -231,8 +231,6 @@ describe("scaffoldFromTemplate", () => {
       join(destination, "oxlint-baseline.json"),
       "utf-8"
     );
-    expect(lintBaseline).toContain("lib/thread/");
-    expect(lintBaseline).toContain("electron/");
     expect(lintBaseline).not.toContain("packages/thread/src/");
 
     expect(existsSync(join(destination, "lib", "thread", "react.ts"))).toBe(

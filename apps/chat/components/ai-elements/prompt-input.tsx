@@ -270,6 +270,21 @@ export type PromptInputAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   className?: string;
 };
 
+export const PromptInputHoverCard = ({
+  openDelay = 0,
+  closeDelay = 0,
+  ...props
+}: PromptInputHoverCardProps) => (
+  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+);
+
+export const PromptInputHoverCardContent = ({
+  align = "start",
+  ...props
+}: PromptInputHoverCardContentProps) => (
+  <HoverCardContent align={align} {...props} />
+);
+
 export const PromptInputAttachment = ({
   data,
   className,
@@ -425,7 +440,8 @@ export type PromptInputProps = Omit<
   HTMLAttributes<HTMLFormElement>,
   "onSubmit" | "onError"
 > & {
-  accept?: string; // e.g., "image/*" or leave undefined for any
+  // e.g., "image/*" or leave undefined for any
+  accept?: string;
   multiple?: boolean;
   // When true, accepts drops anywhere on document. Default false (opt-in).
   globalDrop?: boolean;
@@ -433,7 +449,8 @@ export type PromptInputProps = Omit<
   syncHiddenInput?: boolean;
   // Minimal constraints
   maxFiles?: number;
-  maxFileSize?: number; // bytes
+  // bytes
+  maxFileSize?: number;
   onError?: (err: {
     code: "max_files" | "max_file_size" | "accept";
     message: string;
@@ -583,7 +600,9 @@ export const PromptInput = ({
 
   // Let provider know about our hidden file input so external menus can call openFileDialog()
   useEffect(() => {
-    if (!usingProvider) return;
+    if (!usingProvider) {
+      return;
+    }
     controller.__registerFileInput(inputRef, () => inputRef.current?.click());
   }, [usingProvider, controller]);
 
@@ -598,7 +617,9 @@ export const PromptInput = ({
   // Attach drop handlers on nearest form and document (opt-in)
   useEffect(() => {
     const form = formRef.current;
-    if (!form) return;
+    if (!form) {
+      return;
+    }
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -622,7 +643,9 @@ export const PromptInput = ({
   }, [add]);
 
   useEffect(() => {
-    if (!globalDrop) return;
+    if (!globalDrop) {
+      return;
+    }
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -649,7 +672,9 @@ export const PromptInput = ({
     () => () => {
       if (!usingProvider) {
         for (const f of files) {
-          if (f.url) URL.revokeObjectURL(f.url);
+          if (f.url) {
+            URL.revokeObjectURL(f.url);
+          }
         }
       }
     },
@@ -704,7 +729,7 @@ export const PromptInput = ({
 
     // Convert blob URLs to data URLs asynchronously
     Promise.all(
-      files.map(async ({ id, ...item }) => {
+      files.map(async ({ id: _id, ...item }) => {
         if (item.url && item.url.startsWith("blob:")) {
           return {
             ...item,
@@ -736,7 +761,7 @@ export const PromptInput = ({
             controller.textInput.clear();
           }
         }
-      } catch (error) {
+      } catch {
         // Don't clear on error - user may want to retry
       }
     });
@@ -811,7 +836,7 @@ export const PromptInputTextarea = ({
       e.preventDefault();
 
       // Check if the submit button is disabled before submitting
-      const form = e.currentTarget.form;
+      const { form } = e.currentTarget;
       const submitButton = form?.querySelector(
         'button[type="submit"]'
       ) as HTMLButtonElement | null;
@@ -1243,14 +1268,6 @@ export const PromptInputSelectValue = ({
 
 export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
-export const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
-  ...props
-}: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
-);
-
 export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger
 >;
@@ -1262,13 +1279,6 @@ export const PromptInputHoverCardTrigger = (
 export type PromptInputHoverCardContentProps = ComponentProps<
   typeof HoverCardContent
 >;
-
-export const PromptInputHoverCardContent = ({
-  align = "start",
-  ...props
-}: PromptInputHoverCardContentProps) => (
-  <HoverCardContent align={align} {...props} />
-);
 
 export type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
 
