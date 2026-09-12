@@ -16,7 +16,7 @@ import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
 
-function getProvisionalChatHref({
+const getProvisionalChatHref = ({
   chatId,
   projectId,
   source,
@@ -24,24 +24,22 @@ function getProvisionalChatHref({
   chatId: string;
   projectId: string | null;
   source: "home" | "project";
-}) {
+}) => {
   if (source === "project") {
     return projectId ? (`/project/${projectId}/chat/${chatId}` as Route) : null;
   }
 
   return `/chat/${chatId}` as Route;
-}
+};
 
-function isInitialRoute(
+const isInitialRoute = (
   route: ReturnType<typeof useCurrentChatRoute>
 ): route is Extract<
   ReturnType<typeof useCurrentChatRoute>,
   { type: "home" | "projectHome" }
-> {
-  return route.type === "home" || route.type === "projectHome";
-}
+> => route.type === "home" || route.type === "projectHome";
 
-export function useStartProvisionalChat(chatId: string) {
+export const useStartProvisionalChat = (chatId: string) => {
   const currentRoute = useCurrentChatRoute();
   const changeModel = useModelChange();
   const { data: session } = useSession();
@@ -116,4 +114,4 @@ export function useStartProvisionalChat(chatId: string) {
     },
     [changeModel, chatId, currentRoute, session?.user, storeApi]
   );
-}
+};

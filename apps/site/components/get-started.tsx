@@ -7,10 +7,10 @@ import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
 
-export function GetStarted() {
+export const GetStarted = () => {
   const [copied, setCopied] = useState(false);
 
-  async function handleCopy() {
+  const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(command);
       setCopied(true);
@@ -21,7 +21,7 @@ export function GetStarted() {
     } catch {
       // Ignore clipboard permission failures.
     }
-  }
+  };
 
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
@@ -101,4 +101,4 @@ export function GetStarted() {
       </div>
     </section>
   );
-}
+};
