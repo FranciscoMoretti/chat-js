@@ -44,11 +44,11 @@ const lineNumberTransformer: ShikiTransformer = {
   },
 };
 
-export async function highlightCode(
+export const highlightCode = async (
   code: string,
   language: BundledLanguage,
   showLineNumbers = false
-) {
+) => {
   const transformers: ShikiTransformer[] = showLineNumbers
     ? [lineNumberTransformer]
     : [];
@@ -65,7 +65,7 @@ export async function highlightCode(
       transformers,
     }),
   ]);
-}
+};
 
 export const CodeBlock = ({
   code,
