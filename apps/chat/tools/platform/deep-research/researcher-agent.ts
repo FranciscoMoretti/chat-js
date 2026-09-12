@@ -14,6 +14,42 @@ import { createTelemetry } from "./types";
 import type { AgentOptions } from "./types";
 import { getAllTools, getModelContextWindow, getTodayStr } from "./utils";
 
+const compressResearch = async (
+  researchMessages: ModelMessage[],
+  options: AgentOptions
+): Promise<string> => {
+  const { config, abortSignal } = options;
+  const model = await getLanguageModel(config.compression_model as ModelId);
+  const messages: ModelMessage[] = [
+    {
+      content: compressResearchSystemPrompt({ date: getTodayStr() }),
+      role: "system" as const,
+    },
+    ...researchMessages,
+    { content: compressResearchSimpleHumanMessage, role: "user" as const },
+  ];
+  const contextWindow = await getModelContextWindow(
+    config.compression_model as ModelId
+  );
+  const truncatedMessages = truncateMessages(messages, contextWindow);
+  const response = await generateText({
+    model,
+    messages: truncatedMessages,
+    maxOutputTokens: config.compression_model_max_tokens,
+    ...createTelemetry("compressResearch", options),
+    maxRetries: 3,
+    abortSignal,
+  });
+  if (response.usage) {
+    options.costAccumulator?.addLLMCost(
+      config.compression_model as AppModelId,
+      response.usage,
+      "deep-research-compress"
+    );
+  }
+  return response.text;
+};
+
 export const runResearcher = async (
   topic: string,
   options: AgentOptions
@@ -93,48 +129,4 @@ export const runResearcher = async (
   });
 
   return compressed;
-};
-
-const compressResearch = async (
-  researchMessages: ModelMessage[],
-  options: AgentOptions
-): Promise<string> => {
-  const { config, abortSignal } = options;
-  const model = await getLanguageModel(config.compression_model as ModelId);
-
-  const messages: ModelMessage[] = [
-    {
-      content: compressResearchSystemPrompt({ date: getTodayStr() }),
-      role: "system" as const,
-    },
-    ...researchMessages,
-    {
-      content: compressResearchSimpleHumanMessage,
-      role: "user" as const,
-    },
-  ];
-
-  const contextWindow = await getModelContextWindow(
-    config.compression_model as ModelId
-  );
-  const truncatedMessages = truncateMessages(messages, contextWindow);
-
-  const response = await generateText({
-    model,
-    messages: truncatedMessages,
-    maxOutputTokens: config.compression_model_max_tokens,
-    ...createTelemetry("compressResearch", options),
-    maxRetries: 3,
-    abortSignal,
-  });
-
-  if (response.usage) {
-    options.costAccumulator?.addLLMCost(
-      config.compression_model as AppModelId,
-      response.usage,
-      "deep-research-compress"
-    );
-  }
-
-  return response.text;
 };
