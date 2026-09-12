@@ -630,11 +630,11 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         "WordCountRendererWithAnIntentionallyLongNameForFormattingVerification";
       await writeFile(
         join(longDirectory, "tool.ts"),
-        `import { wordCount } from "../word-count/tool"; export const ${toolExport} = wordCount;`
+        `export { wordCount as ${toolExport} } from "../word-count/tool";`
       );
       await writeFile(
         join(longDirectory, "renderer.tsx"),
-        `import { WordCountRenderer } from "../word-count/renderer"; export const ${rendererExport} = WordCountRenderer;`
+        `export { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";`
       );
       await writeFile(
         join(longDirectory, "chatjs.json"),
