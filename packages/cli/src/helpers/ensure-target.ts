@@ -3,7 +3,7 @@ import { readdir, lstat } from "node:fs/promises";
 import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
 
-export async function ensureTargetEmpty(targetDir: string): Promise<void> {
+export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   const targetStats = await lstat(targetDir).catch((error) => {
     if (error.code === "ENOENT") {
       return null;
@@ -32,4 +32,4 @@ export async function ensureTargetEmpty(targetDir: string): Promise<void> {
     logger.error("Please choose an empty directory or remove existing files.");
     process.exit(1);
   }
-}
+};
