@@ -38,9 +38,10 @@ export type ParsedChatIdFromPathname =
       projectId: null;
     };
 
-const SHARE_ROUTE_PATTERN = /^\/share\/([^/]+)$/;
-const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/([^/]+))?$/;
-const CHAT_ROUTE_PATTERN = /^\/chat\/([^/]+)$/;
+const SHARE_ROUTE_PATTERN = /^\/share\/(?<shareId>[^/]+)$/u;
+const PROJECT_ROUTE_PATTERN =
+  /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
+const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 
 /**
  * Parse a Next.js pathname into the chat route shape.
@@ -49,29 +50,28 @@ const CHAT_ROUTE_PATTERN = /^\/chat\/([^/]+)$/;
 export function parseChatIdFromPathname(
   pathname: string | null
 ): ParsedChatIdFromPathname {
-  const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
-  if (shareMatch) {
+  const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
+  if (shareId) {
     return {
       type: "share",
-      id: shareMatch[1],
+      id: shareId,
       source: "share",
       projectId: null,
     };
   }
 
-  const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
-  if (projectMatch) {
-    const projectId = projectMatch[1];
-    const chatId = projectMatch[2];
+  const projectGroups = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
+  if (projectGroups?.projectId) {
+    const { chatId, projectId } = projectGroups;
     if (chatId) {
       return { type: "projectChat", id: chatId, source: "project", projectId };
     }
     return { type: "projectHome", id: null, source: "project", projectId };
   }
 
-  const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
-  if (chatMatch) {
-    return { type: "chat", id: chatMatch[1], source: "chat", projectId: null };
+  const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.chatId;
+  if (chatId) {
+    return { type: "chat", id: chatId, source: "chat", projectId: null };
   }
 
   if (pathname === "/") {
