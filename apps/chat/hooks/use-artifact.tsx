@@ -45,7 +45,7 @@ const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
 
-export function ArtifactProvider({ children }: { children: ReactNode }) {
+export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
   const [artifact, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
   const [metadataStore, setMetadataStore] = useState<MetadataStore>({});
@@ -90,25 +90,27 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
       {children}
     </ArtifactContext.Provider>
   );
-}
+};
 
-function useArtifactContext() {
+const useArtifactContext = () => {
   const context = useContext(ArtifactContext);
   if (!context) {
     throw new Error("Artifact hooks must be used within ArtifactProvider");
   }
   return context;
-}
+};
 
-export function useArtifactSelector<Selected>(selector: Selector<Selected>) {
+export const useArtifactSelector = <Selected,>(
+  selector: Selector<Selected>
+) => {
   const { artifact } = useArtifactContext();
 
   const selectedValue = useMemo(() => selector(artifact), [artifact, selector]);
 
   return selectedValue;
-}
+};
 
-export function useArtifact() {
+export const useArtifact = () => {
   const {
     artifact,
     setArtifact,
@@ -157,4 +159,4 @@ export function useArtifact() {
     }),
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
-}
+};
