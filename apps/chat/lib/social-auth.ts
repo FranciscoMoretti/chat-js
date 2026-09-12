@@ -15,26 +15,22 @@ const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(
 
 const SOCIAL_AUTH_PROVIDER_ID_SET = new Set<string>(SOCIAL_AUTH_PROVIDER_IDS);
 
-export function isSocialAuthProvider(
+export const isSocialAuthProvider = (
   value: string | null | undefined
-): value is SocialAuthProvider {
-  return typeof value === "string" && SOCIAL_AUTH_PROVIDER_ID_SET.has(value);
-}
+): value is SocialAuthProvider =>
+  typeof value === "string" && SOCIAL_AUTH_PROVIDER_ID_SET.has(value);
 
-export function getEnabledSocialAuthProviders(
+export const getEnabledSocialAuthProviders = (
   authentication: AuthenticationConfig
-): SocialAuthProvider[] {
-  return SOCIAL_AUTH_PROVIDER_IDS.filter(
-    (provider) => authentication[provider]
-  );
-}
+): SocialAuthProvider[] =>
+  SOCIAL_AUTH_PROVIDER_IDS.filter((provider) => authentication[provider]);
 
-export function sortSocialAuthProvidersByLastUsed<
+export const sortSocialAuthProvidersByLastUsed = <
   TProvider extends { id: SocialAuthProvider },
 >(
   providers: readonly TProvider[],
   lastUsedProvider: string | null | undefined
-): TProvider[] {
+): TProvider[] => {
   if (!isSocialAuthProvider(lastUsedProvider)) {
     return [...providers];
   }
@@ -43,4 +39,4 @@ export function sortSocialAuthProvidersByLastUsed<
     ...providers.filter(({ id }) => id === lastUsedProvider),
     ...providers.filter(({ id }) => id !== lastUsedProvider),
   ];
-}
+};

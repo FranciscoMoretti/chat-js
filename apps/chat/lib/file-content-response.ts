@@ -10,7 +10,7 @@ import { keyFromFileUrl } from "./file-url";
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-function parseRange(value: string, size: number) {
+const parseRange = (value: string, size: number) => {
   const match = RANGE_HEADER.exec(value);
   if (!match) {
     return null;
@@ -31,9 +31,9 @@ function parseRange(value: string, size: number) {
     start < size
     ? { start, end }
     : null;
-}
+};
 
-export async function createFileContentResponse(request: Request) {
+export const createFileContentResponse = async (request: Request) => {
   const key = keyFromFileUrl(request.url);
   if (!key) {
     return new Response("Invalid file URL", { status: 400 });
@@ -91,4 +91,4 @@ export async function createFileContentResponse(request: Request) {
     }
     return new Response("File download failed", { status: 500 });
   }
-}
+};
