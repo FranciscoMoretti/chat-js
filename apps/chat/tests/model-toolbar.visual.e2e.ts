@@ -9,12 +9,14 @@ test("model selector and artifact toolbar visual fixture", async ({ page }) => {
   const toolbarControl = toolbar.locator(":scope > div.absolute");
 
   await expect(fixture).toBeVisible();
-  await expect(selector).toHaveText("GPT-5 Nano");
+  await expect(selector).toHaveText("Primary fixture model");
   await expect(fixture).toHaveScreenshot("model-toolbar-closed.png");
 
   await selector.click();
   await expect(page.getByPlaceholder("Search models...")).toBeVisible();
-  await expect(page.getByText("GPT-5 Mini", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Reasoning fixture model", { exact: true })
+  ).toBeVisible();
   await expect(fixture).toHaveScreenshot("model-selector-open.png");
 
   await selector.click();

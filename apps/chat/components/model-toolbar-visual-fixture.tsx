@@ -4,7 +4,8 @@ import { useState } from "react";
 
 import { ModelSelector } from "@/components/model-selector";
 import { Toolbar } from "@/components/toolbar";
-import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
+import type { AppModelDefinition } from "@/lib/ai/app-models";
+import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage } from "@/lib/ai/types";
 import {
   Provider as ChatStoreProvider,
@@ -19,7 +20,7 @@ const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   };
 
 const createModel = (
-  id: AppModelId,
+  id: AppModelDefinition["id"],
   name: string,
   options: Pick<
     AppModelDefinition,
@@ -53,16 +54,34 @@ const createModel = (
   type: "language",
 });
 
+const primaryFixtureModel = createModel(
+  gatewayModelDefaults.workflows.title,
+  "Primary fixture model"
+);
+
+const alternativeFixtureModels = [
+  createModel(
+    gatewayModelDefaults.tools.code.edits,
+    "Reasoning fixture model",
+    {
+      reasoning: true,
+      toolCall: true,
+    }
+  ),
+  createModel(
+    gatewayModelDefaults.workflows.chatImageCompatible,
+    "Alternative fixture model",
+    { reasoning: false, toolCall: true }
+  ),
+];
+
 const fixtureModels = [
-  createModel("openai/gpt-5-nano", "GPT-5 Nano"),
-  createModel("openai/gpt-5-mini", "GPT-5 Mini", {
-    reasoning: true,
-    toolCall: true,
-  }),
-  createModel("openai/gpt-4o-mini", "GPT-4o Mini", {
-    reasoning: false,
-    toolCall: true,
-  }),
+  primaryFixtureModel,
+  ...alternativeFixtureModels.filter(
+    (model, index, models) =>
+      model.id !== primaryFixtureModel.id &&
+      models.findIndex(({ id }) => id === model.id) === index
+  ),
 ];
 
 const ToolbarFixture = () => {
@@ -105,8 +124,8 @@ export const ModelToolbarVisualFixture = () => (
           </p>
           <ModelSelector
             onModelSelectionChangeAction={() => null}
-            selectedModelId="openai/gpt-5-nano"
-            selectedModelSelection="openai/gpt-5-nano"
+            selectedModelId={primaryFixtureModel.id}
+            selectedModelSelection={primaryFixtureModel.id}
           />
         </section>
         <ToolbarFixture />
