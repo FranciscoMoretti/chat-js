@@ -29,23 +29,23 @@ const gatewayVideoModelId = <G extends GatewayType>() =>
   z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
 
 const deepResearchToolConfigSchema = z.object({
-  defaultModel: z.string(),
-  finalReportModel: z.string(),
   allowClarification: z
     .boolean()
     .describe("Whether to ask clarifying questions before starting research"),
-  maxResearcherIterations: z
-    .number()
-    .int()
-    .min(1)
-    .max(10)
-    .describe("Maximum supervisor loop iterations"),
+  defaultModel: z.string(),
+  finalReportModel: z.string(),
   maxConcurrentResearchUnits: z
     .number()
     .int()
     .min(1)
     .max(20)
     .describe("Topics researched in parallel per iteration"),
+  maxResearcherIterations: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .describe("Maximum supervisor loop iterations"),
   maxSearchQueries: z
     .number()
     .int()
@@ -56,84 +56,84 @@ const deepResearchToolConfigSchema = z.object({
 
 const createAiSchema = <G extends GatewayType>(g: G) =>
   z.object({
+    anonymousModels: z
+      .array(gatewayModelId<G>())
+      .describe("Models available to anonymous users"),
+    curatedDefaults: z
+      .array(gatewayModelId<G>())
+      .describe("Default models enabled for new users"),
+    disabledModels: z
+      .array(gatewayModelId<G>())
+      .describe("Models to hide from all users"),
     gateway: z.literal(g),
     providerOrder: z
       .array(z.string())
       .describe("Provider sort order in model selector"),
-    disabledModels: z
-      .array(gatewayModelId<G>())
-      .describe("Models to hide from all users"),
-    curatedDefaults: z
-      .array(gatewayModelId<G>())
-      .describe("Default models enabled for new users"),
-    anonymousModels: z
-      .array(gatewayModelId<G>())
-      .describe("Models available to anonymous users"),
-    workflows: z
-      .object({
-        chat: gatewayModelId<G>(),
-        title: gatewayModelId<G>(),
-        pdf: gatewayModelId<G>(),
-        chatImageCompatible: gatewayModelId<G>(),
-      })
-      .describe("Default model for shared app workflows"),
     tools: z
       .object({
-        webSearch: z.object({
-          enabled: z
-            .boolean()
-            .describe("Requires TAVILY_API_KEY or FIRECRAWL_API_KEY"),
-        }),
-        urlRetrieval: z.object({
-          enabled: z
-            .boolean()
-            .describe("Requires the selected URL retrieval tool’s credentials"),
+        code: z.object({
+          edits: gatewayModelId<G>(),
         }),
         codeExecution: z.object({
           enabled: z
             .boolean()
             .describe("Requires Vercel sandbox credentials outside Vercel"),
         }),
-        mcp: z.object({
-          enabled: z.boolean().describe("Requires MCP_ENCRYPTION_KEY"),
+        deepResearch: deepResearchToolConfigSchema.extend({
+          defaultModel: gatewayModelId<G>(),
+          enabled: z.boolean().describe("Requires web search access"),
+          finalReportModel: gatewayModelId<G>(),
         }),
         documents: z.object({
           enabled: z.boolean().describe("Document create/edit/review support"),
           types: z.object({
-            text: z.boolean(),
             code: z.boolean(),
             sheet: z.boolean(),
+            text: z.boolean(),
           }),
         }),
         followupSuggestions: z.object({
-          enabled: z.boolean(),
           default: gatewayModelId<G>(),
+          enabled: z.boolean(),
+        }),
+        image: z.object({
+          default: gatewayImageModelId<G>().optional(),
+          enabled: z.boolean().describe("Enable the installed image tool"),
+        }),
+        mcp: z.object({
+          enabled: z.boolean().describe("Requires MCP_ENCRYPTION_KEY"),
+        }),
+        sheet: z.object({
+          analyze: gatewayModelId<G>(),
+          format: gatewayModelId<G>(),
         }),
         text: z.object({
           polish: gatewayModelId<G>(),
         }),
-        sheet: z.object({
-          format: gatewayModelId<G>(),
-          analyze: gatewayModelId<G>(),
-        }),
-        code: z.object({
-          edits: gatewayModelId<G>(),
-        }),
-        image: z.object({
-          enabled: z.boolean().describe("Enable the installed image tool"),
-          default: gatewayImageModelId<G>().optional(),
+        urlRetrieval: z.object({
+          enabled: z
+            .boolean()
+            .describe("Requires the selected URL retrieval tool’s credentials"),
         }),
         video: z.object({
-          enabled: z.boolean().describe("Enable the installed video tool"),
           default: gatewayVideoModelId<G>().optional(),
+          enabled: z.boolean().describe("Enable the installed video tool"),
         }),
-        deepResearch: deepResearchToolConfigSchema.extend({
-          enabled: z.boolean().describe("Requires web search access"),
-          defaultModel: gatewayModelId<G>(),
-          finalReportModel: gatewayModelId<G>(),
+        webSearch: z.object({
+          enabled: z
+            .boolean()
+            .describe("Requires TAVILY_API_KEY or FIRECRAWL_API_KEY"),
         }),
       })
       .describe("Default model and runtime configuration grouped by tool"),
+    workflows: z
+      .object({
+        chat: gatewayModelId<G>(),
+        chatImageCompatible: gatewayModelId<G>(),
+        pdf: gatewayModelId<G>(),
+        title: gatewayModelId<G>(),
+      })
+      .describe("Default model for shared app workflows"),
   });
 
 const installedGatewaySchema = createAiSchema(gatewayType);
@@ -153,18 +153,18 @@ export const pricingConfigSchema = z.object({
     .optional(),
   pro: z
     .object({
-      name: z.string(),
       monthlyPrice: z.number(),
+      name: z.string(),
       summary: z.string(),
     })
     .optional(),
 });
 
 export const anonymousConfigObjectSchema = z.object({
-  credits: z.number().describe("Message credits for anonymous users"),
   availableTools: z
     .array(toolName())
     .describe("Tools available to anonymous users"),
+  credits: z.number().describe("Message credits for anonymous users"),
   rateLimit: z
     .object({
       requestsPerMinute: z.number(),
@@ -174,8 +174,8 @@ export const anonymousConfigObjectSchema = z.object({
 });
 
 export const ANONYMOUS_DEFAULTS: z.input<typeof anonymousConfigObjectSchema> = {
-  credits: 10,
   availableTools: [],
+  credits: 10,
   rateLimit: {
     requestsPerMinute: 5,
     requestsPerMonth: 10,
@@ -186,25 +186,25 @@ export const anonymousConfigSchema =
   anonymousConfigObjectSchema.default(ANONYMOUS_DEFAULTS);
 
 export const attachmentsConfigObjectSchema = z.object({
-  maxBytes: z.number().describe("Max file size in bytes after compression"),
-  maxDimension: z.number().describe("Max image dimension"),
   acceptedTypes: z
     .object({
-      "image/png": z.array(z.string()),
-      "image/jpeg": z.array(z.string()),
       "application/pdf": z.array(z.string()),
+      "image/jpeg": z.array(z.string()),
+      "image/png": z.array(z.string()),
     })
     .describe("Accepted MIME types with their file extensions"),
+  maxBytes: z.number().describe("Max file size in bytes after compression"),
+  maxDimension: z.number().describe("Max image dimension"),
 });
 
 export const ATTACHMENTS_DEFAULTS = {
+  acceptedTypes: {
+    "application/pdf": [".pdf"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/png": [".png"],
+  },
   maxBytes: 1024 * 1024,
   maxDimension: 2048,
-  acceptedTypes: {
-    "image/png": [".png"],
-    "image/jpeg": [".jpg", ".jpeg"],
-    "application/pdf": [".pdf"],
-  },
 };
 
 export const attachmentsConfigSchema =
@@ -229,12 +229,12 @@ export const featuresConfigSchema =
   featuresConfigObjectSchema.default(FEATURES_DEFAULTS);
 
 export const authenticationConfigObjectSchema = z.object({
-  google: z
-    .boolean()
-    .describe("Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET)"),
   github: z
     .boolean()
     .describe("GitHub OAuth (requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)"),
+  google: z
+    .boolean()
+    .describe("Google OAuth (requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET)"),
   vercel: z
     .boolean()
     .describe(
@@ -264,129 +264,118 @@ export const desktopAppConfigSchema =
   desktopAppConfigObjectSchema.default(DESKTOP_APP_DEFAULTS);
 
 export const configDescriptionSchema = z.object({
-  appPrefix: z.string().default("chatjs"),
+  ai: installedGatewaySchema,
+  anonymous: anonymousConfigObjectSchema,
+  appDescription: z.string().default("AI chat powered by ChatJS"),
   appName: z.string().default("My AI Chat"),
+  appPrefix: z.string().default("chatjs"),
   appTitle: z
     .string()
     .optional()
     .describe("Browser tab title (defaults to appName)"),
-  appDescription: z.string().default("AI chat powered by ChatJS"),
   appUrl: z.url().default("https://your-domain.com"),
-  organization: z.object({
-    name: z.string(),
-    contact: z.object({
-      privacyEmail: z.string().email(),
-      legalEmail: z.string().email(),
-    }),
-  }),
-  services: z.object({
-    hosting: z.string(),
-    aiProviders: z.array(z.string()),
-    paymentProcessors: z.array(z.string()),
-  }),
+  attachments: attachmentsConfigObjectSchema,
+  authentication: authenticationConfigObjectSchema,
+  desktopApp: desktopAppConfigObjectSchema,
   features: featuresConfigObjectSchema,
-  pricing: pricingConfigSchema.optional(),
   legal: z.object({
-    minimumAge: z.number(),
     governingLaw: z.string(),
+    minimumAge: z.number(),
     refundPolicy: z.string(),
+  }),
+  organization: z.object({
+    contact: z.object({
+      legalEmail: z.string().email(),
+      privacyEmail: z.string().email(),
+    }),
+    name: z.string(),
   }),
   policies: z.object({
     privacy: z.object({
-      title: z.string(),
       lastUpdated: z.string().optional(),
+      title: z.string(),
     }),
     terms: z.object({
-      title: z.string(),
       lastUpdated: z.string().optional(),
+      title: z.string(),
     }),
   }),
-  authentication: authenticationConfigObjectSchema,
-  desktopApp: desktopAppConfigObjectSchema,
-  ai: installedGatewaySchema,
-  anonymous: anonymousConfigObjectSchema,
-  attachments: attachmentsConfigObjectSchema,
+  pricing: pricingConfigSchema.optional(),
+  services: z.object({
+    aiProviders: z.array(z.string()),
+    hosting: z.string(),
+    paymentProcessors: z.array(z.string()),
+  }),
 });
 
 export const configSchema = z.object({
-  appPrefix: z.string().default("chatjs"),
+  ai: aiConfigSchema,
+  anonymous: anonymousConfigSchema,
+  appDescription: z.string().default("AI chat powered by ChatJS"),
   appName: z.string().default("My AI Chat"),
+  appPrefix: z.string().default("chatjs"),
   appTitle: z
     .string()
     .optional()
     .describe("Browser tab title (defaults to appName)"),
-  appDescription: z.string().default("AI chat powered by ChatJS"),
   appUrl: z.url().default("https://your-domain.com"),
-
-  organization: z
-    .object({
-      name: z.string(),
-      contact: z.object({
-        privacyEmail: z.string().email(),
-        legalEmail: z.string().email(),
-      }),
-    })
-    .default({
-      name: "Your Organization",
-      contact: {
-        privacyEmail: "privacy@your-domain.com",
-        legalEmail: "legal@your-domain.com",
-      },
-    }),
-
-  services: z
-    .object({
-      hosting: z.string(),
-      aiProviders: z.array(z.string()),
-      paymentProcessors: z.array(z.string()),
-    })
-    .default({
-      hosting: "Vercel",
-      aiProviders: ["OpenAI", "Anthropic", "Google"],
-      paymentProcessors: [],
-    }),
-
+  attachments: attachmentsConfigSchema,
+  authentication: authenticationConfigSchema,
+  desktopApp: desktopAppConfigSchema,
   features: featuresConfigSchema,
-
-  pricing: pricingConfigSchema.optional(),
-
   legal: z
     .object({
-      minimumAge: z.number(),
       governingLaw: z.string(),
+      minimumAge: z.number(),
       refundPolicy: z.string(),
     })
     .default({
-      minimumAge: 13,
       governingLaw: "United States",
+      minimumAge: 13,
       refundPolicy: "no-refunds",
     }),
-
+  organization: z
+    .object({
+      contact: z.object({
+        legalEmail: z.string().email(),
+        privacyEmail: z.string().email(),
+      }),
+      name: z.string(),
+    })
+    .default({
+      contact: {
+        legalEmail: "legal@your-domain.com",
+        privacyEmail: "privacy@your-domain.com",
+      },
+      name: "Your Organization",
+    }),
   policies: z
     .object({
       privacy: z.object({
-        title: z.string(),
         lastUpdated: z.string().optional(),
+        title: z.string(),
       }),
       terms: z.object({
-        title: z.string(),
         lastUpdated: z.string().optional(),
+        title: z.string(),
       }),
     })
     .default({
       privacy: { title: "Privacy Policy" },
       terms: { title: "Terms of Service" },
     }),
-
-  authentication: authenticationConfigSchema,
-
-  desktopApp: desktopAppConfigSchema,
-
-  ai: aiConfigSchema,
-
-  anonymous: anonymousConfigSchema,
-
-  attachments: attachmentsConfigSchema,
+  pricing: pricingConfigSchema.optional(),
+  services: z
+    .object({
+      aiProviders: z.array(z.string()),
+      hosting: z.string(),
+      paymentProcessors: z.array(z.string()),
+    })
+    .default({
+      aiProviders: ["OpenAI", "Anthropic", "Google"],
+      hosting: "Vercel",
+      paymentProcessors: [],
+    }),
 });
 
 // Output types (after defaults applied)
@@ -485,18 +474,15 @@ const mergeToolsConfig = <T extends Record<string, unknown>>(
   const result: Record<string, unknown> = { ...defaults };
   for (const [key, val] of Object.entries(user)) {
     const defVal = result[key];
-    if (
+    result[key] =
       val !== null &&
       typeof val === "object" &&
       !Array.isArray(val) &&
       defVal !== null &&
       typeof defVal === "object" &&
       !Array.isArray(defVal)
-    ) {
-      result[key] = { ...defVal, ...(val as object) };
-    } else {
-      result[key] = val;
-    }
+        ? { ...defVal, ...(val as object) }
+        : val;
   }
   return result as T;
 };

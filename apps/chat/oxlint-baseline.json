@@ -473,7 +473,6 @@
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
-        "lib/features-config.ts",
         "lib/message-conversion.ts",
         "lib/stores/base/hooks.ts",
         "lib/types/anonymous.ts",
@@ -1256,9 +1255,9 @@
         "lib/draft-chat-submission.ts",
         "lib/env-schema.ts",
         "lib/env.ts",
-        "lib/features-config.ts",
         "lib/file-content-response.ts",
         "lib/files/upload-prep.ts",
+        "lib/features-config.ts",
         "lib/logger.ts",
         "lib/message-conversion.ts",
         "lib/parallel-chat-requests.test.ts",
@@ -1501,12 +1500,6 @@
       ],
       "rules": {
         "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["lib/config-schema.ts"],
-      "rules": {
-        "unicorn/prefer-ternary": "off"
       }
     },
     {
