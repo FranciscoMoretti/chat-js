@@ -11,7 +11,7 @@ import {
 
 import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
-import { ThreadSnapshotStore } from "./thread-snapshot-store";
+import { SnapshotStore } from "./thread-snapshot-store";
 import type {
   MessageTreeSnapshot,
   ThreadInit,
@@ -124,7 +124,7 @@ const useThreadSnapshot = <TMessage extends UIMessage>(
   throttleWaitMs?: number
 ) => {
   const store = useMemo(
-    () => new ThreadSnapshotStore(thread, throttleWaitMs),
+    () => new SnapshotStore(thread, throttleWaitMs),
     [thread, throttleWaitMs]
   );
 

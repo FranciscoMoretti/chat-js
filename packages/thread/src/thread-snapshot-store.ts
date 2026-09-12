@@ -2,7 +2,7 @@ import type { UIMessage } from "ai";
 
 import type { AbstractThread } from "./abstract-thread";
 
-export class ThreadSnapshotStore<TMessage extends UIMessage> {
+export class SnapshotStore<TMessage extends UIMessage> {
   #snapshot: ReturnType<AbstractThread<TMessage>["getSnapshot"]>;
   readonly thread: AbstractThread<TMessage>;
   readonly throttleWaitMs: number | undefined;
