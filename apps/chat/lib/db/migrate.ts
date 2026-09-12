@@ -45,10 +45,12 @@ const runMigrate = async () => {
   console.log("✅ Migrations completed in", end - start, "ms");
 };
 
-try {
-  await runMigrate();
-} catch (error) {
-  console.error("❌ Migration failed");
-  console.error(error);
-  process.exitCode = 1;
-}
+void (async () => {
+  try {
+    await runMigrate();
+  } catch (error) {
+    console.error("❌ Migration failed");
+    console.error(error);
+    process.exitCode = 1;
+  }
+})();
