@@ -314,9 +314,9 @@ export const mcpRouter = createTRPCRouter({
                         : null,
                   }))
                 )
-                .catch((err) => {
+                .catch((error) => {
                   log.warn(
-                    { connectorId: connector.id, err },
+                    { connectorId: connector.id, err: error },
                     "failed to list tools"
                   );
                   return [];
@@ -331,9 +331,9 @@ export const mcpRouter = createTRPCRouter({
                     mimeType: res.mimeType ?? null,
                   }))
                 )
-                .catch((err) => {
+                .catch((error) => {
                   log.warn(
-                    { connectorId: connector.id, err },
+                    { connectorId: connector.id, err: error },
                     "failed to list resources"
                   );
                   return [];
@@ -352,9 +352,9 @@ export const mcpRouter = createTRPCRouter({
                       })) ?? [],
                   }))
                 )
-                .catch((err) => {
+                .catch((error) => {
                   log.warn(
-                    { connectorId: connector.id, err },
+                    { connectorId: connector.id, err: error },
                     "failed to list prompts"
                   );
                   return [];

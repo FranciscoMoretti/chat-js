@@ -87,7 +87,7 @@ export const chatRouter = createTRPCRouter({
         sourceMessages.map((msg) => ({
           ...msg,
           chatId: input.chatId,
-        })) as Array<ChatMessage & { chatId: string }>,
+        })) as (ChatMessage & { chatId: string })[],
         sourceDocuments,
         newChatId,
         ctx.user.id
@@ -159,8 +159,6 @@ export const chatRouter = createTRPCRouter({
         chatId: message.chatId,
         messageId: input.messageId,
       });
-
-      return;
     }),
 
   generateTitle: publicProcedure
@@ -340,7 +338,6 @@ export const chatRouter = createTRPCRouter({
         chatId: input.chatId,
         title: input.title,
       });
-      return;
     }),
 
   setIsPinned: protectedProcedure
