@@ -8,6 +8,8 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
+  // ChatJS owns tool selection, execution, rendered results, and usage accounting.
+  defaultTools: false,
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   model: defineDynamic({
     events: {

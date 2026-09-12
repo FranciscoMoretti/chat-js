@@ -22,7 +22,8 @@ test("native search retains sources, progress and billing across reload", async 
     headers: { origin: new URL(page.url()).origin },
     data: {
       operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini",
+      modelId: "google/gemini-2.5-flash-lite",
+      selectedTool: "webSearch",
       message:
         'Use webSearch exactly twice, separately: first query "IANA example domains", then query "MDN JavaScript Array". Each call should have one query, maximum 2 results, basic depth. Use no other tool. Summarize the sources in one sentence.',
     },

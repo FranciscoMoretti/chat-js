@@ -51,6 +51,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 60_000,
   });
+  await expect(page.getByRole("log")).not.toContainText("Validation error:");
   await expect
     .poll(async () => {
       const entries = await db
@@ -73,7 +74,11 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   await page.getByRole("button", { name: "1×", exact: true }).click();
   await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await expect(
+    page.getByRole("menuitem", { name: "2x", exact: true })
+  ).toHaveCount(0);
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await related.getByRole("button").first().click();
   await expect(page).not.toHaveURL(new RegExp(`/chat/${binding.id}$`), {
     timeout: 90_000,

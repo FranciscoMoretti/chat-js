@@ -1,8 +1,44 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { z } from "zod";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+
+test("compiled ChatJS tools exclude optional Eve defaults that bypass application policy", async () => {
+  const pointer = z
+    .object({ runtimeAppRoot: z.string() })
+    .parse(JSON.parse(await readFile(".eve/dev-runtime/current.json", "utf8")));
+  const manifest = z
+    .object({
+      tools: z.array(z.object({ name: z.string() })),
+      dynamicTools: z.array(z.object({ slug: z.string() })),
+    })
+    .parse(
+      JSON.parse(
+        await readFile(
+          join(
+            pointer.runtimeAppRoot,
+            ".eve/compile/compiled-agent-manifest.json"
+          ),
+          "utf8"
+        )
+      )
+    );
+  // All application tools are dynamic so each turn applies the selected-tool policy.
+  expect(manifest.tools).toEqual([]);
+  expect(manifest.dynamicTools.map((tool) => tool.slug).sort()).toEqual([
+    "application",
+    "confirm_note",
+    "connection_search",
+    "documents",
+    "mcp",
+    "platform",
+    "research",
+  ]);
+});
 
 test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
   page,
