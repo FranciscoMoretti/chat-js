@@ -189,7 +189,6 @@
         "components/upgrade-cta/login-prompt.tsx",
         "components/upgrade-cta/share-menu-item.tsx",
         "components/with-skeleton.tsx",
-        "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
@@ -438,7 +437,6 @@
         "components/multimodal-input.tsx",
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
-        "hooks/chat-sync-hooks.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {
