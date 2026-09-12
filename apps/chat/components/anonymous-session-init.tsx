@@ -53,7 +53,6 @@ export const AnonymousSessionInit = () => {
         queryClient.invalidateQueries({
           queryKey: trpc.credits.getAvailableCredits.queryKey(),
         });
-        return;
       }
     } else {
       setAnonymousSession(createAnonymousSession());

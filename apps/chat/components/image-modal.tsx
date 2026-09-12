@@ -57,9 +57,9 @@ const handleDownload = async (
     const a = document.createElement("a");
     a.href = url;
     a.download = `image-${Date.now()}.png`;
-    document.body.appendChild(a);
+    document.body.append(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     URL.revokeObjectURL(url);
   } catch (_error) {
     toast.error("Failed to download image");

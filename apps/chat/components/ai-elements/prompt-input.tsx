@@ -157,7 +157,9 @@ export const PromptInputProvider = ({
     (FileUIPart & { id: string })[]
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const openRef = useRef<() => void>(() => {});
+  const openRef = useRef<() => void>(() => {
+    // The provider registers the file dialog callback after mounting.
+  });
 
   const add = useCallback((files: File[] | FileList) => {
     const incoming = Array.from(files);
@@ -165,17 +167,16 @@ export const PromptInputProvider = ({
       return;
     }
 
-    setAttachements((prev) =>
-      prev.concat(
-        incoming.map((file) => ({
-          id: nanoid(),
-          type: "file" as const,
-          url: URL.createObjectURL(file),
-          mediaType: file.type,
-          filename: file.name,
-        }))
-      )
-    );
+    setAttachements((prev) => [
+      ...prev,
+      ...incoming.map((file) => ({
+        id: nanoid(),
+        type: "file" as const,
+        url: URL.createObjectURL(file),
+        mediaType: file.type,
+        filename: file.name,
+      })),
+    ]);
   }, []);
 
   const remove = useCallback((id: string) => {
@@ -542,14 +543,15 @@ export const PromptInput = ({
             filename: file.name,
           });
         }
-        return prev.concat(next);
+        return [...prev, ...next];
       });
     },
     [matchesAccept, maxFiles, maxFileSize, onError]
   );
 
   const add = usingProvider
-    ? (files: File[] | FileList) => controller.attachments.add(files)
+    ? (incomingFiles: File[] | FileList) =>
+        controller.attachments.add(incomingFiles)
     : addLocal;
 
   const remove = usingProvider
@@ -1123,7 +1125,7 @@ export const PromptInputSpeechButton = ({
       speechRecognition.onresult = (event) => {
         let finalTranscript = "";
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
           const result = event.results[i];
           if (result.isFinal) {
             finalTranscript += result[0]?.transcript ?? "";
