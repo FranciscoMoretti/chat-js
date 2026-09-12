@@ -498,8 +498,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     };
   }
 
-  private createTree(snapshot = this.#state.getSnapshot()) {
-    return new MessageTree<TMessage>({ snapshot });
+  private createTree(snapshot?: ThreadStateSnapshot<TMessage>) {
+    const resolvedSnapshot = snapshot ?? this.#state.getSnapshot();
+    return new MessageTree<TMessage>({ snapshot: resolvedSnapshot });
   }
 
   private static createRunHost<TMessage extends UIMessage>(
