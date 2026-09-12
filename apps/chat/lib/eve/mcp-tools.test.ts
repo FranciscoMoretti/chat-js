@@ -1,7 +1,11 @@
 import { jsonSchema, tool } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 import mcp from "../../agent/tools/mcp";
-import { discoverEveMcpTools, executeEveMcpTool } from "./mcp-tools";
+import {
+  discoverEveMcpTools,
+  executeEveMcpTool,
+  requestEveMcpApproval,
+} from "./mcp-tools";
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -249,44 +253,100 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
   ).resolves.toMatchObject({ output: "Echo output" });
 });
 
-it("refuses a policy that escalates after a definition was discovered without approval", async () => {
-  const [description] = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(description.requiresApproval).toBe(false);
+it("refuses a policy that escalates between request and execution without a receipt", async () => {
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "test" },
+      context,
+      []
+    )
+  ).toBe("not-applicable");
   mocks.tools.mockResolvedValue({
     echo: { ...definition, needsApproval: true },
   });
   await expect(
-    executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "test" },
-      context,
-      [],
-      description.requiresApproval
-    )
+    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("approval policy changed");
   expect(execute).not.toHaveBeenCalled();
 });
 
-it.each([
-  true,
-  () => false,
-  async () => true,
-])("keeps policy-bearing MCP tools available with a durable approval requirement", async (needsApproval) => {
+it("preserves conditional policy semantics and requires an owner receipt when true", async () => {
+  const needsApproval = vi.fn(
+    (input: { text: string }) => input.text === "write"
+  );
   mocks.tools.mockResolvedValue({ echo: { ...definition, needsApproval } });
-  const [description] = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(description.requiresApproval).toBe(true);
-  expect(JSON.stringify(description)).not.toContain("needsApproval");
+  const messages = [{ role: "user" as const, content: "Read then write" }];
+  expect(await discoverEveMcpTools("owner", context.abortSignal)).toHaveLength(
+    1
+  );
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "read" },
+      context,
+      messages
+    )
+  ).toBe("not-applicable");
   expect(
     await executeEveMcpTool(
       "connector",
       "echo",
-      { text: "test" },
+      { text: "read" },
       context,
-      [],
-      description.requiresApproval
+      messages
     )
   ).toMatchObject({ output: "Echo output" });
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "write" },
+      context,
+      messages
+    )
+  ).toBe("user-approval");
+  await expect(
+    executeEveMcpTool("connector", "echo", { text: "write" }, context, messages)
+  ).rejects.toThrow("approval policy changed");
+  const approval = {
+    requestId: "request",
+    responder: {
+      principalId: "owner",
+      principalType: "user",
+      authenticator: "test",
+    },
+  };
+  expect(
+    await executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "write" },
+      { ...context, approval },
+      messages
+    )
+  ).toMatchObject({ output: "Echo output" });
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "write" },
+      {
+        ...context,
+        approval: {
+          ...approval,
+          responder: { ...approval.responder, principalId: "other" },
+        },
+      },
+      messages
+    )
+  ).rejects.toThrow("approval policy changed");
+  expect(needsApproval).toHaveBeenLastCalledWith(
+    { text: "write" },
+    { toolCallId: "call", messages, context: undefined }
+  );
 });
 
 it("registers native per-call approval restricted to the session owner", async () => {

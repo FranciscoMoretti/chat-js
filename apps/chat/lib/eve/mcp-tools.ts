@@ -84,7 +84,6 @@ export async function discoverEveMcpTools(
       name: string;
       connectorId: string;
       remoteName: string;
-      requiresApproval: boolean;
     }
   > = [];
   for (const connector of connectors) {
@@ -108,7 +107,6 @@ export async function discoverEveMcpTools(
               ...(await describeEveTool(definition)),
               connectorId: connector.id,
               remoteName,
-              requiresApproval: Boolean(tool.needsApproval),
               name: createToolId(
                 connector.nameId,
                 remoteName,
@@ -130,9 +128,8 @@ export async function executeEveMcpTool(
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
-  messages: readonly ModelMessage[],
-  nativeApprovalRequired = false
+  context: Pick<ToolContext, "session" | "callId" | "abortSignal" | "approval">,
+  messages: readonly ModelMessage[]
 ) {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!ownerId) {
@@ -148,12 +145,18 @@ export async function executeEveMcpTool(
       throw new Error("MCP tool is no longer available.");
     }
     const tool = tools[remoteName];
-    // The durable definition guarantees an owner-approved native gate only when
-    // discovered with this flag. A newly required policy must be rediscovered.
-    if (tool.needsApproval && !nativeApprovalRequired) {
+    const validatedTool = await validateMcpTool(tool);
+    if (
+      (await requiresMcpApproval(
+        validatedTool,
+        input,
+        context.callId,
+        messages
+      )) &&
+      context.approval?.responder.principalId !== ownerId
+    ) {
       throw new Error("MCP approval policy changed; retry after rediscovery.");
     }
-    const validatedTool = await validateMcpTool(tool);
     let result: unknown;
     for await (const output of executeEveTool(
       validatedTool,
@@ -198,4 +201,58 @@ async function validateMcpTool(tool: Tool) {
           : { success: false, error: new Error("Invalid tool input.") },
     }),
   };
+}
+
+/** Native request evaluation; only serializable identifiers enter durable callbacks. */
+export async function requestEveMcpApproval(
+  connectorId: string,
+  remoteName: string,
+  input: unknown,
+  context: Pick<ToolContext, "session" | "callId">,
+  messages: readonly ModelMessage[]
+): Promise<"user-approval" | "not-applicable"> {
+  const ownerId = context.session.auth.initiator?.principalId;
+  if (!ownerId) {
+    throw new Error("MCP tools require an authenticated owner.");
+  }
+  const connector = assertConnector(
+    await getMcpConnectorById({ id: connectorId }),
+    ownerId
+  );
+  return await withConnector(
+    connector,
+    AbortSignal.timeout(30_000),
+    async (tools) => {
+      if (!Object.hasOwn(tools, remoteName)) {
+        throw new Error("MCP tool is no longer available.");
+      }
+      return (await requiresMcpApproval(
+        await validateMcpTool(tools[remoteName]),
+        input,
+        context.callId,
+        messages
+      ))
+        ? "user-approval"
+        : "not-applicable";
+    }
+  );
+}
+
+async function requiresMcpApproval(
+  tool: Tool,
+  input: unknown,
+  callId: string,
+  messages: readonly ModelMessage[]
+) {
+  const validated = await asSchema(tool.inputSchema).validate?.(input);
+  if (!validated?.success) {
+    throw new Error("Invalid tool input.");
+  }
+  return typeof tool.needsApproval === "function"
+    ? await tool.needsApproval(validated.value, {
+        toolCallId: callId,
+        messages: [...messages],
+        context: undefined,
+      })
+    : Boolean(tool.needsApproval);
 }

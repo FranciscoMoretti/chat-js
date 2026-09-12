@@ -4,6 +4,7 @@ import { eveMcpResult } from "../../lib/eve/mcp-result";
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
+  requestEveMcpApproval,
 } from "../../lib/eve/mcp-tools";
 import { createModuleLogger } from "../../lib/logger";
 
@@ -26,20 +27,18 @@ export default defineDynamic({
       );
       const messages = superjson.stringify(context.messages);
       const definitions: Record<string, ReturnType<typeof defineTool>> = {};
-      for (const {
-        name,
-        connectorId,
-        remoteName,
-        requiresApproval,
-        ...description
-      } of tools) {
+      for (const { name, connectorId, remoteName, ...description } of tools) {
         definitions[name] = defineTool<unknown, unknown>({
           ...description,
           approval: {
-            // Callback policies also require approval on every call: native
-            // execution has no per-call receipt to safely skip a changing policy.
-            request: () =>
-              requiresApproval ? "user-approval" : "not-applicable",
+            request: (approvalContext) =>
+              requestEveMcpApproval(
+                connectorId,
+                remoteName,
+                approvalContext.toolInput,
+                approvalContext,
+                superjson.parse(messages)
+              ),
             response: ({ responder, session }) =>
               responder.principalId === session.initiator?.principalId
                 ? { status: "allowed" }
@@ -51,8 +50,7 @@ export default defineDynamic({
               remoteName,
               input,
               toolContext,
-              superjson.parse(messages),
-              requiresApproval
+              superjson.parse(messages)
             ),
           toModelOutput: (output) => eveMcpResult.parse(output).modelOutput,
         });

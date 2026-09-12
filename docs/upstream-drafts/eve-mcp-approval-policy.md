@@ -12,20 +12,32 @@ rediscovering the tool at execution is insufficient: a previously optional tool
 can become approval-required before execution. Executing the new definition
 without checking the decision would bypass the new policy.
 
-The local adapter currently captures whether the discovered tool has a policy.
-Policy-bearing tools always use native owner approval. Execution rejects a new
-policy if the captured definition had no approval gate. This handles boolean
-policies and refuses escalation, but conditional policies conservatively prompt
-for every call, including inputs their callback would allow without a prompt.
-It is not exact conditional-policy parity.
+The local maintained EVE patch exposes an optional `ToolContext.approval` receipt.
+The harness derives receipts from approval batches resolved in its current
+invocation and the native allowed settlement audit. A step-local map binds each
+receipt to the session, call ID, tool name, and exact input. The executor wrapper
+only exposes a matching receipt, including the authorized responder identity.
+Old settlement history alone cannot create a receipt; a new invocation replaces
+the map, and duplicate call identities are rejected. No application approval
+store or second transcript is added.
 
-Before publishing an upstream request, confirm the supported way for tool
-execution to inspect a durable native approval decision tied to the same call,
-input, tool identity, and responder. If no public interface exists, request one
-or a native boundary that evaluates the current policy immediately before
-execution. Avoid creating a second application approval/transcript store.
+The MCP adapter evaluates boolean or conditional policies with validated input,
+call ID, and the original model messages at request time. At execution it
+rechecks the current policy against the current server definition. A required
+policy only proceeds with the native receipt for the owner; newly required
+approval without a receipt fails before the remote tool executes. A conditional
+policy returning false does not prompt. Owner-only native response authorization
+remains in place.
 
-Local tests cover the conservative gate, owner-only responses, schema validation,
-and refusal when a policy appears after discovery. Compiled runtime approval
-resume and real MCP OAuth reconnect still need end-to-end verification. This
-note does not claim an upstream bug has been reproduced or reported.
+Local tests cover conditional input behavior, policy escalation, foreign
+responders, schema validation, receipt identity mismatches, missing/old audit
+state, ambiguous calls, and clearing receipt state. A native harness test uses a
+deterministic model to resolve an owner approval through the real pending-input
+coordinator and forward its receipt to the authored executor. A foreign approval
+remains pending without executing the tool or model. These tests use no remote
+model or database.
+
+Compiled deployment/resume across worker restarts and real MCP OAuth reconnect
+still need end-to-end verification. The public shape and step-local lifetime
+need upstream review before proposing adoption. This draft does not claim that
+an upstream issue has been published.
