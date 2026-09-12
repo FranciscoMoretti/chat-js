@@ -26,22 +26,22 @@ const series = z.array(
 const chartSchema = z.discriminatedUnion("type", [
   z.object({
     ...chartLabels,
+    elements: series,
     type: z.literal("line"),
     x_scale: z.literal("datetime").optional(),
-    elements: series,
   }),
   z.object({
     ...chartLabels,
+    elements: series,
     type: z.literal("scatter"),
     x_scale: z.literal("datetime").optional(),
-    elements: series,
   }),
   z.object({
     ...chartLabels,
-    type: z.literal("bar"),
     elements: z.array(
       z.object({ group: z.string(), label: z.string(), value: z.number() })
     ),
+    type: z.literal("bar"),
   }),
 ]);
 const pngSchema = z.object({

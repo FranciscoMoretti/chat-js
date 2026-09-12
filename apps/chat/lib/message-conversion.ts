@@ -28,9 +28,9 @@ const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
       activeStreamId: message.activeStreamId,
       createdAt: message.createdAt,
       isPrimaryParallel: message.isPrimaryParallel,
-      parentMessageId: message.parentMessageId,
       parallelGroupId: message.parallelGroupId,
       parallelIndex: message.parallelIndex,
+      parentMessageId: message.parentMessageId,
       selectedModel: isSelectedModelValue(message.selectedModel)
         ? message.selectedModel
         : ("" as ModelId),
@@ -70,9 +70,9 @@ export const chatMessageToDbMessage = (
     id: message.id,
     isPrimaryParallel: message.metadata?.isPrimaryParallel ?? null,
     lastContext: message.metadata?.usage || null,
-    parentMessageId,
     parallelGroupId: message.metadata?.parallelGroupId || null,
     parallelIndex: message.metadata?.parallelIndex ?? null,
+    parentMessageId,
     role: message.role,
     selectedModel,
     selectedTool: message.metadata?.selectedTool || null,
