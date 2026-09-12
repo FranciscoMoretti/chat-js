@@ -1009,12 +1009,6 @@
       }
     },
     {
-      "files": ["lib/anonymous-session-client.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
       "files": ["lib/app-chat-runtime.ts"],
       "rules": {
         "func-style": "off"
@@ -1075,19 +1069,7 @@
       }
     },
     {
-      "files": ["lib/files/upload-prep.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
       "files": ["lib/gated-chat-transport.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/message-conversion.ts"],
       "rules": {
         "func-style": "off"
       }
@@ -1100,12 +1082,6 @@
     },
     {
       "files": ["lib/runtime-registry/runtime-registry-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/start-provisional-chat.ts"],
       "rules": {
         "func-style": "off"
       }
@@ -1154,18 +1130,6 @@
     },
     {
       "files": ["lib/stores/with-tracing.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/thread-utils.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/thread-utils.ts"],
       "rules": {
         "func-style": "off"
       }
@@ -1532,12 +1496,6 @@
     },
     {
       "files": ["lib/editor/config.ts"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/message-conversion.ts"],
       "rules": {
         "no-inline-comments": "off"
       }
@@ -1994,12 +1952,6 @@
     },
     {
       "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["lib/draft-chat-submission.ts"],
       "rules": {
         "prefer-destructuring": "off"
       }
@@ -3821,12 +3773,6 @@
       }
     },
     {
-      "files": ["lib/files/upload-prep.ts"],
-      "rules": {
-        "require-unicode-regexp": "off"
-      }
-    },
-    {
       "files": ["app/(auth)/device-login/page.tsx"],
       "rules": {
         "sort-keys": "off"
@@ -4416,12 +4362,6 @@
     },
     {
       "files": ["lib/env.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/file-content-response.ts"],
       "rules": {
         "sort-keys": "off"
       }

@@ -2,9 +2,9 @@
 
 import imageCompression from "browser-image-compression";
 
-const FILE_EXTENSION_REGEX = /\.[^.]+$/;
+const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
-async function compressImageIfNeeded(
+const compressImageIfNeeded = async (
   file: File,
   {
     maxBytes,
@@ -15,7 +15,7 @@ async function compressImageIfNeeded(
     maxDimension: number;
     minQuality?: number;
   }
-): Promise<File> {
+): Promise<File> => {
   if (!file.type.startsWith("image/")) {
     return file;
   }
@@ -67,9 +67,9 @@ async function compressImageIfNeeded(
   } catch {
     return file;
   }
-}
+};
 
-export async function processFilesForUpload(
+export const processFilesForUpload = async (
   files: File[],
   options: {
     maxBytes: number;
@@ -80,7 +80,7 @@ export async function processFilesForUpload(
   pdfFiles: File[];
   stillOversized: File[];
   unsupportedFiles: File[];
-}> {
+}> => {
   const processedImages: File[] = [];
   const pdfFiles: File[] = [];
   const stillOversized: File[] = [];
@@ -107,4 +107,4 @@ export async function processFilesForUpload(
   }
 
   return { processedImages, pdfFiles, stillOversized, unsupportedFiles };
-}
+};
