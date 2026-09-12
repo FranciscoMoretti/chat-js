@@ -1,7 +1,6 @@
 import { defineConfig } from "@/lib/config-schema";
 
 const isProd = process.env.NODE_ENV === "production";
-
 /**
  * ChatJS Configuration
  *
@@ -9,69 +8,9 @@ const isProd = process.env.NODE_ENV === "production";
  * @see https://chatjs.dev/docs/reference/config
  */
 const config = defineConfig({
-  appPrefix: "chatjs",
-  appName: "ChatJS",
-  appTitle: "ChatJS - The prod ready AI chat app",
-  appDescription:
-    "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
-  appUrl: "https://www.demo.chatjs.dev",
-  organization: {
-    name: "ChatJS",
-    contact: {
-      privacyEmail: "privacy@chatjs.dev",
-      legalEmail: "legal@chatjs.dev",
-    },
-  },
-  services: {
-    hosting: "Vercel",
-    aiProviders: [
-      "OpenAI",
-      "Anthropic",
-      "xAI",
-      "Google",
-      "Meta",
-      "Mistral",
-      "Alibaba",
-      "Amazon",
-      "Cohere",
-      "DeepSeek",
-      "Perplexity",
-      "Vercel",
-      "Inception",
-      "Moonshot",
-      "Morph",
-      "ZAI",
-    ],
-    paymentProcessors: [],
-  },
-  features: {
-    attachments: true, // Requires BLOB_READ_WRITE_TOKEN
-    parallelResponses: true,
-  },
-  legal: {
-    minimumAge: 13,
-    governingLaw: "United States",
-    refundPolicy: "no-refunds",
-  },
-  policies: {
-    privacy: {
-      title: "Privacy Policy",
-      lastUpdated: "July 24, 2025",
-    },
-    terms: {
-      title: "Terms of Service",
-      lastUpdated: "July 24, 2025",
-    },
-  },
-  authentication: {
-    google: true, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-    github: true, // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-    vercel: true, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-  },
-  desktopApp: {
-    enabled: true,
-  },
   ai: {
+    anonymousModels: ["openai/gpt-5-nano"],
+    disabledModels: [],
     gateway: "vercel",
     providerOrder: [
       "openai",
@@ -90,69 +29,139 @@ const config = defineConfig({
       "morph",
       "zai",
     ],
-    disabledModels: [],
-    anonymousModels: ["openai/gpt-5-nano"],
-    workflows: {
-      chatImageCompatible: "openai/gpt-4o-mini",
-    },
     tools: {
-      webSearch: {
-        enabled: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
-      },
-      urlRetrieval: {
-        enabled: true, // Requires the selected URL retrieval tool’s credentials
+      code: {
+        edits: "openai/gpt-5-mini",
       },
       codeExecution: {
-        enabled: true, // Vercel-native, no key needed
+        // Vercel-native, no key needed
+        enabled: true,
       },
-      mcp: {
-        enabled: true, // Requires MCP_ENCRYPTION_KEY
+      deepResearch: {
+        allowClarification: true,
+        defaultModel: "openai/gpt-5-nano",
+        // Requires webSearch
+        enabled: true,
+        finalReportModel: "openai/gpt-5-mini",
+        maxConcurrentResearchUnits: 2,
+        maxResearcherIterations: 1,
+        maxSearchQueries: 2,
       },
       followupSuggestions: {
         enabled: true,
       },
+      image: {
+        default: "google/gemini-3-pro-image",
+        // Requires BLOB_READ_WRITE_TOKEN
+        enabled: true,
+      },
+      mcp: {
+        // Requires MCP_ENCRYPTION_KEY
+        enabled: true,
+      },
+      sheet: {
+        analyze: "openai/gpt-5-mini",
+        format: "openai/gpt-5-mini",
+      },
       text: {
         polish: "openai/gpt-5-mini",
       },
-      sheet: {
-        format: "openai/gpt-5-mini",
-        analyze: "openai/gpt-5-mini",
+      urlRetrieval: {
+        // Requires the selected URL retrieval tool’s credentials
+        enabled: true,
       },
-      code: {
-        edits: "openai/gpt-5-mini",
+      webSearch: {
+        // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
+        enabled: true,
       },
-      image: {
-        enabled: true, // Requires BLOB_READ_WRITE_TOKEN
-        default: "google/gemini-3-pro-image",
-      },
-      deepResearch: {
-        enabled: true, // Requires webSearch
-        defaultModel: "openai/gpt-5-nano",
-        finalReportModel: "openai/gpt-5-mini",
-        allowClarification: true,
-        maxResearcherIterations: 1,
-        maxConcurrentResearchUnits: 2,
-        maxSearchQueries: 2,
-      },
+    },
+    workflows: {
+      chatImageCompatible: "openai/gpt-4o-mini",
     },
   },
   anonymous: {
-    credits: isProd ? 10 : 1000,
     availableTools: [],
+    credits: isProd ? 10 : 1000,
     rateLimit: {
       requestsPerMinute: isProd ? 5 : 60,
       requestsPerMonth: isProd ? 10 : 1000,
     },
   },
+  appDescription:
+    "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
+  appName: "ChatJS",
+  appPrefix: "chatjs",
+  appTitle: "ChatJS - The prod ready AI chat app",
+  appUrl: "https://www.demo.chatjs.dev",
   attachments: {
-    maxBytes: 1024 * 1024, // 1MB
-    maxDimension: 2048,
     acceptedTypes: {
-      "image/png": [".png"],
-      "image/jpeg": [".jpg", ".jpeg"],
       "application/pdf": [".pdf"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+    },
+    // 1MB
+    maxBytes: 1024 * 1024,
+    maxDimension: 2048,
+  },
+  authentication: {
+    // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+    github: true,
+    // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+    google: true,
+    // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+    vercel: true,
+  },
+  desktopApp: {
+    enabled: true,
+  },
+  features: {
+    // Requires BLOB_READ_WRITE_TOKEN
+    attachments: true,
+    parallelResponses: true,
+  },
+  legal: {
+    governingLaw: "United States",
+    minimumAge: 13,
+    refundPolicy: "no-refunds",
+  },
+  organization: {
+    contact: {
+      legalEmail: "legal@chatjs.dev",
+      privacyEmail: "privacy@chatjs.dev",
+    },
+    name: "ChatJS",
+  },
+  policies: {
+    privacy: {
+      lastUpdated: "July 24, 2025",
+      title: "Privacy Policy",
+    },
+    terms: {
+      lastUpdated: "July 24, 2025",
+      title: "Terms of Service",
     },
   },
+  services: {
+    aiProviders: [
+      "OpenAI",
+      "Anthropic",
+      "xAI",
+      "Google",
+      "Meta",
+      "Mistral",
+      "Alibaba",
+      "Amazon",
+      "Cohere",
+      "DeepSeek",
+      "Perplexity",
+      "Vercel",
+      "Inception",
+      "Moonshot",
+      "Morph",
+      "ZAI",
+    ],
+    hosting: "Vercel",
+    paymentProcessors: [],
+  },
 });
-
 export default config;

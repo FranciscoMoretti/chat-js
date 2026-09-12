@@ -150,7 +150,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
-      "dependsOn": ["^test:types"],
+      "dependsOn": ["^test:types", "@chat-js/thread#test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -176,6 +176,10 @@
         "$TURBO_ROOT$/packages/registry/build.ts",
         "$TURBO_ROOT$/oxlint-baseline.json"
       ]
+    },
+    "@chat-js/thread#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
     }
   }
 }

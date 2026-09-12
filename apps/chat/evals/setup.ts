@@ -5,8 +5,5 @@ config({
   path: ".env.local",
 });
 
-vi.mock("server-only", () => {
-  return {
-    // mock server-only module
-  };
-});
+// Mock the server-only module in the evaluation runtime.
+vi.mock("server-only", () => ({}));

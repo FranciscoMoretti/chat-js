@@ -3,9 +3,9 @@ import { LangfuseExporter } from "langfuse-vercel";
 
 import { config } from "@/lib/config";
 
-export function register() {
+export const register = () => {
   registerOTel({
     serviceName: config.appPrefix,
     traceExporter: new LangfuseExporter(),
   });
-}
+};
