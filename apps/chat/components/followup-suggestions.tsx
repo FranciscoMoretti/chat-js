@@ -26,7 +26,7 @@ const FollowUpSuggestions = ({
 
   const handleClick = useCallback(
     (suggestion: string) => {
-      const sendMessage = storeApi.getState().sendMessage;
+      const { sendMessage } = storeApi.getState();
       if (!sendMessage) {
         return;
       }
@@ -91,6 +91,23 @@ const FollowUpSuggestions = ({
   );
 };
 
+const FollowUpSuggestionsPart = ({
+  messageId,
+  partIdx,
+}: {
+  messageId: string;
+  partIdx: number;
+}) => {
+  const part = useMessagePartByPartIdx(
+    messageId,
+    partIdx,
+    "data-followupSuggestions"
+  );
+  const { data } = part;
+
+  return <FollowUpSuggestions suggestions={data.suggestions} />;
+};
+
 export const FollowUpSuggestionsParts = ({
   messageId,
 }: {
@@ -109,21 +126,4 @@ export const FollowUpSuggestionsParts = ({
     return null;
   }
   return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
-};
-
-const FollowUpSuggestionsPart = ({
-  messageId,
-  partIdx,
-}: {
-  messageId: string;
-  partIdx: number;
-}) => {
-  const part = useMessagePartByPartIdx(
-    messageId,
-    partIdx,
-    "data-followupSuggestions"
-  );
-  const { data } = part;
-
-  return <FollowUpSuggestions suggestions={data.suggestions} />;
 };

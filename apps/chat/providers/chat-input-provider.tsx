@@ -51,8 +51,10 @@ interface ChatInputProviderProps {
   initialTool?: UiToolName | null;
   isProjectContext?: boolean;
   localStorageEnabled?: boolean;
-  overrideModelId?: AppModelId; // For message editing where we want to use the original model
-  overrideModelSelection?: SelectedModelValue; // For message editing with multi-model selection
+  // For message editing where we want to use the original model
+  overrideModelId?: AppModelId;
+  // For message editing with multi-model selection
+  overrideModelSelection?: SelectedModelValue;
 }
 
 export const ChatInputProvider = ({

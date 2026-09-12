@@ -40,7 +40,7 @@ const ShareDialogContent = ({
   const setVisibilityMutation = useSetVisibility();
 
   const isPublic = chat?.visibility === "public";
-  const isPending = setVisibilityMutation.isPending;
+  const { isPending } = setVisibilityMutation;
 
   const handleShare = () => {
     setVisibilityMutation.mutate(

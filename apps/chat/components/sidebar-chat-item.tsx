@@ -55,7 +55,7 @@ const PureSidebarChatItem = ({
       await onRename(chat.id, editTitle.trim());
       setIsEditing(false);
       toast.success("Chat renamed successfully");
-    } catch (_error) {
+    } catch {
       setEditTitle(chat.title);
       setIsEditing(false);
     }

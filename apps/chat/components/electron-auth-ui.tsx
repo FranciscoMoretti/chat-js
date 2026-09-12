@@ -26,7 +26,7 @@ export const ElectronBrowserSignIn = ({
       <Button
         className="w-full"
         onClick={() => {
-          const requestAuth = window.requestAuth;
+          const { requestAuth } = window;
           if (typeof requestAuth !== "function") {
             return;
           }

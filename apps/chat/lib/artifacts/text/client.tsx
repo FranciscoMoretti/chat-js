@@ -124,8 +124,8 @@ export const textArtifact = new Artifact<"text">({
           role: "user",
           parts: [
             {
-              type: "text",
               text: "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
+              type: "text",
             },
           ],
           metadata: {

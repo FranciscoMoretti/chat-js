@@ -61,7 +61,7 @@ test("Tavily forwards native options and preserves source events", async () => {
   expect(events).toContainEqual(
     expect.objectContaining({
       data: expect.objectContaining({
-        results: [expect.objectContaining({ title: "Source", source: "web" })],
+        results: [expect.objectContaining({ source: "web", title: "Source" })],
         status: "completed",
         toolCallId: "call",
         type: "web",

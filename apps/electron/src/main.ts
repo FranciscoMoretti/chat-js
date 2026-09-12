@@ -267,22 +267,6 @@ ipcMain.handle("chatjs:cancel-auth-flow", async () => {
   await resetAuthFlow();
 });
 
-ipcMain.removeHandler("better-auth:signOut");
-ipcMain.handle("better-auth:signOut", async () => {
-  const result = await electronAuthClient.signOut();
-  await syncAuthSessionCookies();
-  return result;
-});
-
-ipcMain.removeHandler("better-auth:getUser");
-ipcMain.handle("better-auth:getUser", async () => {
-  const sessionResult = await electronAuthClient.getSession();
-  return sessionResult.data?.user ?? null;
-});
-
-const getAppAssetPath = (...segments: string[]): string =>
-  path.join(app.getAppPath(), ...segments);
-
 const isBetterAuthCookieName = (name: string): boolean =>
   name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
   name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
@@ -346,6 +330,22 @@ const syncAuthSessionCookies = async (
     )
   );
 };
+
+ipcMain.removeHandler("better-auth:signOut");
+ipcMain.handle("better-auth:signOut", async () => {
+  const result = await electronAuthClient.signOut();
+  await syncAuthSessionCookies();
+  return result;
+});
+
+ipcMain.removeHandler("better-auth:getUser");
+ipcMain.handle("better-auth:getUser", async () => {
+  const sessionResult = await electronAuthClient.getSession();
+  return sessionResult.data?.user ?? null;
+});
+
+const getAppAssetPath = (...segments: string[]): string =>
+  path.join(app.getAppPath(), ...segments);
 
 const hasSessionCookie = (cookieHeader: string): boolean =>
   /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/u.test(cookieHeader);

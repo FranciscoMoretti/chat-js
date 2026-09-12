@@ -1,4 +1,4 @@
-export function getUrlWithoutParams(url: string): string {
+export const getUrlWithoutParams = (url: string): string => {
   try {
     const parsed = new URL(url);
     return `${parsed.origin}${parsed.pathname}`;
@@ -7,4 +7,4 @@ export function getUrlWithoutParams(url: string): string {
     const qIndex = url.indexOf("?");
     return qIndex === -1 ? url : url.slice(0, qIndex);
   }
-}
+};
