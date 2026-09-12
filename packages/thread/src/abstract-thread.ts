@@ -42,25 +42,23 @@ type SendMessageInput<TMessage extends UIMessage> = Parameters<
   AbstractChat<TMessage>["sendMessage"]
 >[0];
 
-function getInputMessageId<TMessage extends UIMessage>(
+const getInputMessageId = <TMessage extends UIMessage>(
   input: NonNullable<SendMessageInput<TMessage>>
-) {
-  return "id" in input ? (input.id ?? input.messageId) : input.messageId;
-}
+) => ("id" in input ? (input.id ?? input.messageId) : input.messageId);
 
-function specializeMessage<TMessage extends UIMessage>(message: UIMessage) {
+const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) => {
   // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
   // TMessage may narrow metadata or parts beyond the base UIMessage shape.
   return message as TMessage;
-}
+};
 
-async function createMessageFromInput<TMessage extends UIMessage>({
+const createMessageFromInput = async <TMessage extends UIMessage>({
   fallbackId,
   input,
 }: {
   fallbackId: string;
   input: NonNullable<SendMessageInput<TMessage>>;
-}): Promise<TMessage> {
+}): Promise<TMessage> => {
   const messageId = getInputMessageId(input) ?? fallbackId;
   const { metadata } = input;
   if ("text" in input || "files" in input) {
@@ -85,7 +83,7 @@ async function createMessageFromInput<TMessage extends UIMessage>({
     metadata,
     role: input.role ?? "user",
   });
-}
+};
 
 export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   readonly id: string;

@@ -78,26 +78,30 @@ class StateBackedThread extends AbstractThread<UIMessage> {
   }
 }
 
-function user(id: string): UIMessage {
-  return { id, parts: [{ text: id, type: "text" }], role: "user" };
-}
+const user = (id: string): UIMessage => ({
+  id,
+  parts: [{ text: id, type: "text" }],
+  role: "user",
+});
 
-function assistant(id: string): UIMessage {
-  return { id, parts: [], role: "assistant" };
-}
+const assistant = (id: string): UIMessage => ({
+  id,
+  parts: [],
+  role: "assistant",
+});
 
-function HookHarness({
+const HookHarness = ({
   onRender,
   options,
 }: {
   onRender: (helpers: UseThreadHelpers) => void;
   options: UseThreadOptions;
-}) {
+}) => {
   onRender(useThread(options));
   return null;
-}
+};
 
-function renderUseThread(initialOptions: UseThreadOptions) {
+const renderUseThread = (initialOptions: UseThreadOptions) => {
   let current: UseThreadHelpers | undefined;
   let renderer: ReactTestRenderer | undefined;
   const render = (options: UseThreadOptions) =>
@@ -126,9 +130,9 @@ function renderUseThread(initialOptions: UseThreadOptions) {
       act(() => renderer?.update(render(options)));
     },
   };
-}
+};
 
-async function waitFor(predicate: () => boolean) {
+const waitFor = async (predicate: () => boolean) => {
   for (let attempt = 0; attempt < 500; attempt += 1) {
     if (predicate()) {
       return;
@@ -136,7 +140,7 @@ async function waitFor(predicate: () => boolean) {
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for condition");
-}
+};
 
 describe("useThread", () => {
   test("observes messages sent through a custom state-backed AbstractThread", async () => {

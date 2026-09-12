@@ -9,11 +9,11 @@ import { MemoryThreadState } from "../src/thread-state";
 
 declare const messageId: string;
 
-function useCompatibilityCheck() {
+const useCompatibilityCheck = () => {
   const thread = useThread();
   const chatCompatible: UseChatHelpers<UIMessage> = thread;
 
-  chatCompatible.messages;
+  void chatCompatible.messages;
   chatCompatible.sendMessage({ text: "hello" });
   chatCompatible.setMessages((messages) => messages);
 
@@ -23,9 +23,9 @@ function useCompatibilityCheck() {
   thread.tree.getChildren(null);
   thread.tree.getSiblings(messageId);
   thread.tree.stopAll();
-  thread.tree.activeRuns;
-  thread.tree.runs;
-  thread.tree.status;
+  void thread.tree.activeRuns;
+  void thread.tree.runs;
+  void thread.tree.status;
   thread.tree.setActiveRun(messageId);
   thread.tree.getRunForMessage(messageId);
   thread.tree.getSnapshot();
@@ -33,9 +33,9 @@ function useCompatibilityCheck() {
 
   const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
   return explicitHelpers;
-}
+};
 
-function useExternalThreadCheck() {
+const useExternalThreadCheck = () => {
   const thread = new Thread<UIMessage>();
   const defaultThread = useThread({ thread });
   const state = new MemoryThreadState<UIMessage>();
@@ -50,15 +50,15 @@ function useExternalThreadCheck() {
     thread: new StateBackedThread(state),
   });
   return { defaultThread, stateBackedThread };
-}
+};
 
-function useInvalidOwnershipChecks() {
+const useInvalidOwnershipChecks = () => {
   const state = new MemoryThreadState<UIMessage>();
   // @ts-expect-error Thread uses its own memory-backed state.
-  new Thread({ state });
+  void new Thread({ state });
   // @ts-expect-error useThread accepts a thread, not a chat projection.
   useThread({ chat: new Thread<UIMessage>() });
-}
+};
 
 void useCompatibilityCheck;
 void useExternalThreadCheck;

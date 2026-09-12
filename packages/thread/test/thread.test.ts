@@ -133,11 +133,13 @@ class StateBackedThread extends AbstractThread<UIMessage> {
   }
 }
 
-function user(id: string): UIMessage {
-  return { id, parts: [{ text: id, type: "text" }], role: "user" };
-}
+const user = (id: string): UIMessage => ({
+  id,
+  parts: [{ text: id, type: "text" }],
+  role: "user",
+});
 
-function assistantWithTool(id: string): UIMessage {
+const assistantWithTool = (id: string): UIMessage => {
   return {
     id,
     parts: [
@@ -152,16 +154,16 @@ function assistantWithTool(id: string): UIMessage {
     ],
     role: "assistant",
   };
-}
+};
 
-function requireMessage(message: UIMessage | undefined) {
+const requireMessage = (message: UIMessage | undefined) => {
   if (!message) {
     throw new Error("Expected message to exist");
   }
   return message;
-}
+};
 
-async function waitFor(predicate: () => boolean) {
+const waitFor = async (predicate: () => boolean) => {
   for (let attempt = 0; attempt < 500; attempt += 1) {
     if (predicate()) {
       return;
@@ -169,7 +171,7 @@ async function waitFor(predicate: () => boolean) {
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for request");
-}
+};
 
 describe("Thread", () => {
   test("creates a complete initial snapshot for custom state adapters", () => {

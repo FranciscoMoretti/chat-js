@@ -15,7 +15,7 @@ const { dirname, join, resolve } = path;
 const smokeTimeout = 180_000;
 const packageDirectory = resolve(import.meta.dir, "..");
 
-function run(command: string[], cwd: string) {
+const run = (command: string[], cwd: string) => {
   const result = Bun.spawnSync({
     cmd: command,
     cwd,
@@ -33,7 +33,7 @@ function run(command: string[], cwd: string) {
       ].join("\n")
     );
   }
-}
+};
 
 test(
   "the packed package loads its core and React entry points",

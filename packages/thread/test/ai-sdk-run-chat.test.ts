@@ -97,24 +97,20 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
   };
 }
 
-function userMessage(): UIMessage {
-  return {
-    id: "user-1",
-    parts: [{ text: "Compare me", type: "text" }],
-    role: "user",
-  };
-}
+const userMessage = (): UIMessage => ({
+  id: "user-1",
+  parts: [{ text: "Compare me", type: "text" }],
+  role: "user",
+});
 
-function createSpec(): ThreadRunSpec {
-  return {
-    id: "run-1",
-    initialPathMessageId: "user-1",
-    parentMessageId: "user-1",
-    siblingOrder: 0,
-  };
-}
+const createSpec = (): ThreadRunSpec => ({
+  id: "run-1",
+  initialPathMessageId: "user-1",
+  parentMessageId: "user-1",
+  siblingOrder: 0,
+});
 
-function emitRichResponse(transport: ControlledTransport) {
+const emitRichResponse = (transport: ControlledTransport) => {
   transport.emit(
     { messageId: "assistant-1", type: "start" },
     { id: "reasoning-1", type: "reasoning-start" },
@@ -126,9 +122,9 @@ function emitRichResponse(transport: ControlledTransport) {
     { finishReason: "stop", type: "finish" }
   );
   transport.finish();
-}
+};
 
-async function waitFor(predicate: () => boolean) {
+const waitFor = async (predicate: () => boolean) => {
   for (let attempt = 0; attempt < 500; attempt += 1) {
     if (predicate()) {
       return;
@@ -136,7 +132,7 @@ async function waitFor(predicate: () => boolean) {
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for request");
-}
+};
 
 describe("ThreadRunChat", () => {
   test("matches the AI SDK React Chat reducer for one response", async () => {
