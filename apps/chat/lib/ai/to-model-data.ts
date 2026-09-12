@@ -2,7 +2,7 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
-export function toModelData(model: AiGatewayModel): ModelData {
+export const toModelData = (model: AiGatewayModel): ModelData => {
   const tags = model.tags ?? [];
 
   return {
@@ -32,4 +32,4 @@ export function toModelData(model: AiGatewayModel): ModelData {
       video: model.type === "video",
     },
   };
-}
+};

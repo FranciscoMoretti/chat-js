@@ -9,9 +9,9 @@ import { generateUUID } from "@/lib/utils";
 
 const FOLLOWUP_CONTEXT_MESSAGES = 2;
 
-export async function generateFollowupSuggestions(
+export const generateFollowupSuggestions = async (
   modelMessages: ModelMessage[]
-) {
+) => {
   const maxQuestionCount = 5;
   const minQuestionCount = 3;
   const maxCharactersPerQuestion = 80;
@@ -34,15 +34,15 @@ export async function generateFollowupSuggestions(
       }),
     }),
   });
-}
+};
 
-export async function streamFollowupSuggestions({
+export const streamFollowupSuggestions = async ({
   followupSuggestionsResult,
   writer,
 }: {
   followupSuggestionsResult: ReturnType<typeof generateFollowupSuggestions>;
   writer: StreamWriter;
-}) {
+}) => {
   const dataPartId = generateUUID();
   const result = await followupSuggestionsResult;
 
@@ -58,4 +58,4 @@ export async function streamFollowupSuggestions({
       },
     });
   }
-}
+};
