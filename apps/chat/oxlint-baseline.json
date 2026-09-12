@@ -133,7 +133,6 @@
         "components/message-siblings.tsx",
         "components/messages-pane.tsx",
         "components/messages.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/new-chat-button.tsx",
         "components/parallel-response-cards.test.ts",
@@ -189,7 +188,6 @@
         "components/tag.tsx",
         "components/text-editor.tsx",
         "components/theme-provider.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert-dialog.tsx",
         "components/ui/badge.tsx",
         "components/ui/card.tsx",
@@ -292,7 +290,6 @@
         "components/lexical-chat-input.tsx",
         "components/message-editor.tsx",
         "components/message.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/parallel-response-cards.tsx",
         "components/part/document-preview.tsx",
@@ -304,7 +301,6 @@
         "components/sidebar-project-item.tsx",
         "components/sidebar-projects.tsx",
         "components/sidebar-toggle.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert.tsx",
         "components/ui/badge.tsx",
         "components/ui/empty.tsx",
@@ -335,7 +331,6 @@
       "files": [
         "components/part/tool-part.test.tsx",
         "lib/clone-messages.test.ts",
-        "lib/db/queries.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
@@ -536,7 +531,6 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/chat-sync.tsx",
-        "components/model-selector.tsx",
         "components/parallel-response-cards.tsx",
         "components/ui/sidebar.tsx",
         "lib/stores/with-thread-state.ts"
@@ -557,7 +551,6 @@
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
         "hooks/chat-sync-hooks.ts",
-        "lib/db/queries.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {
@@ -598,7 +591,7 @@
       }
     },
     {
-      "files": ["components/anonymous-session-init.tsx", "lib/db/queries.ts"],
+      "files": ["components/anonymous-session-init.tsx"],
       "rules": {
         "no-useless-return": "off"
       }
@@ -647,7 +640,6 @@
         "components/data-stream-handler.tsx",
         "components/electron-auth-ui.tsx",
         "components/followup-suggestions.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/part/document-tool.tsx",
         "components/part/tool-part.tsx",
@@ -720,7 +712,6 @@
         "components/chat-sync.tsx",
         "components/electron-auth-handler.tsx",
         "components/electron-auth-ui.tsx",
-        "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/stores/base/hooks.ts"
       ],
@@ -747,7 +738,6 @@
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
@@ -878,7 +868,6 @@
         "components/message-siblings.tsx",
         "components/messages-pane.tsx",
         "components/messages.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/new-chat-button.tsx",
         "components/parallel-response-cards.tsx",
@@ -933,7 +922,6 @@
         "components/tag.tsx",
         "components/text-editor.tsx",
         "components/theme-provider.tsx",
-        "components/toolbar.tsx",
         "components/ui/accordion.tsx",
         "components/ui/alert-dialog.tsx",
         "components/ui/alert.tsx",
@@ -1021,10 +1009,7 @@
       }
     },
     {
-      "files": [
-        "components/settings/mcp-create-dialog.tsx",
-        "components/toolbar.tsx"
-      ],
+      "files": ["components/settings/mcp-create-dialog.tsx"],
       "rules": {
         "react/jsx-handler-names": "off"
       }
@@ -1229,7 +1214,6 @@
         "components/image-editor.tsx",
         "components/interactive-chart-impl.tsx",
         "components/lexical-chat-input.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/parallel-response-cards.tsx",
         "components/part/document-common.tsx",
@@ -1257,7 +1241,6 @@
         "components/suggested-actions.tsx",
         "components/text-editor.tsx",
         "components/thinking-message.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert.tsx",
         "components/ui/badge.tsx",
         "components/ui/button-group.tsx",
@@ -1296,7 +1279,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
-        "lib/db/migrate.ts",
         "lib/db/queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
@@ -1383,7 +1365,7 @@
       }
     },
     {
-      "files": ["lib/db/migrate.ts", "lib/stores/base/hooks.ts"],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/catch-error-name": "off"
       }
@@ -1427,7 +1409,6 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/interactive-chart-impl.tsx",
-        "components/model-selector.tsx",
         "components/search-chats-dialog.tsx",
         "components/sidebar-chats-list.tsx"
       ],
@@ -1464,15 +1445,9 @@
       }
     },
     {
-      "files": ["components/sheet-editor.tsx", "components/toolbar.tsx"],
+      "files": ["components/sheet-editor.tsx"],
       "rules": {
         "unicorn/no-new-array": "off"
-      }
-    },
-    {
-      "files": ["components/toolbar.tsx"],
-      "rules": {
-        "unicorn/no-useless-spread": "off"
       }
     },
     {
@@ -1542,7 +1517,6 @@
         "components/image-modal.tsx",
         "components/multimodal-input.tsx",
         "components/sidebar-chat-item.tsx",
-        "lib/db/queries.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {
@@ -1584,7 +1558,6 @@
         "components/code-editor.tsx",
         "components/data-stream-handler.tsx",
         "components/diffview.tsx",
-        "components/model-selector.tsx",
         "components/part/document-common.tsx",
         "components/part/document-preview.tsx"
       ],
