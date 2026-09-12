@@ -198,3 +198,18 @@ Unconfirmed creation remains unresolved: lookup of its name must not be treated
 as proof that a still-pending create cannot finish later. This includes a crash
 between the successful provider reply and committing creation confirmation.
 Older unindexed code sandboxes also remain outside this ownership guarantee.
+
+### Integrated local family deletion
+
+The internal `deleteLocalEveConversationFamily` entry point now composes resource
+cleanup, native payload purge, and final application tombstones in that order.
+Failures retain pending deletion; retirement and purge receipts allow retry after
+partial native erasure. A local PostgreSQL test deletes through a fork, checks
+that both family members lose their native and application payloads, retries,
+and verifies an unrelated conversation survives. An uncertain sandbox allocation
+blocks the sequence before native erasure.
+
+This is an internal local-provider entry point, not an enabled deletion API.
+Deployment/provider wiring, crash-left local mutation admissions, unconfirmed
+allocations, and older unattributed resources still need resolution before
+claiming complete user-facing deletion support.

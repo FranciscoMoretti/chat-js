@@ -8,6 +8,7 @@ export default defineConfig({
       "tests/eve-contracts.e2e.ts",
       "tests/eve-usage-cursor.e2e.ts",
       "tests/eve-code-sandboxes.e2e.ts",
+      "tests/eve-delete-family.e2e.ts",
       "tests/eve-postgres-stream-resume.e2e.ts",
       "tests/eve-votes.e2e.ts",
       "tests/eve-projects.e2e.ts",
