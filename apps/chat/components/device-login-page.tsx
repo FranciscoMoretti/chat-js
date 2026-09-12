@@ -20,6 +20,12 @@ type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
 
+export const getDeviceLoginDisplayState = (
+  state: DeviceLoginState,
+  shouldWaitForApp: boolean
+): DeviceLoginState =>
+  shouldWaitForApp && state === "checking-session" ? "waiting-for-app" : state;
+
 const DeviceAuthScreen = ({
   state,
   onRetry,
@@ -97,7 +103,7 @@ export const DeviceLoginPage = () => {
   const isCompletedView =
     searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
   const shouldWaitForApp = isCompletedView || !isElectronTransferQuery(query);
-  const displayState = shouldWaitForApp ? "waiting-for-app" : state;
+  const displayState = getDeviceLoginDisplayState(state, shouldWaitForApp);
 
   useEffect(() => {
     if (shouldWaitForApp) {
