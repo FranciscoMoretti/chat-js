@@ -444,7 +444,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   stopAll() {
     return Promise.all(
       this.#runs.getActive().map((run) => run.chat.stop())
-    ).then(() => {});
+    ).then(() => undefined);
   }
 
   stopRun(runId: string) {
@@ -805,7 +805,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.publish();
     const finished = start(chat).finally(() => this.publish());
     // startRun may be detached; observing the rejection keeps finished awaitable.
-    void finished.catch(() => {});
+    void finished.catch(() => undefined);
     record.finished = finished;
     return this.createRunHandle(record);
   }
