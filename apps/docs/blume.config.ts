@@ -16,70 +16,40 @@ const contentSections = [
 ] as const;
 
 export default defineConfig({
-  title: "ChatJS Documentation",
-  description:
-    "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices.",
-  content: {
-    root: ".",
-    include: [
-      "*.mdx",
-      ...contentSections.map((section) => `${section}/**/*.mdx`),
-    ],
-  },
-  deployment: {
-    base: "/docs",
-    site: "https://chatjs.dev",
-  },
-  github: {
-    owner: "FranciscoMoretti",
-    repo: "chat-js",
-    dir: "apps/docs",
-  },
-  lastModified: true,
-  dateFormat: { dateStyle: "medium" },
-  seo: {
-    x: {
-      creator: "@franmoretti_",
-      handle: "@franmoretti_",
-    },
-    og: {
-      site: "ChatJS",
-      description:
-        "Production-ready AI chat documentation for auth, streaming, tools, and deployment.",
-    },
-  },
-  logo: {
-    image: {
-      alt: "ChatJS",
-      light: "/logo/light.svg",
-      dark: "/logo/dark.svg",
-    },
-    text: "",
-  },
   ai: {
     // Publish monorepo agent skills at /.well-known/agent-skills/
     skills: "../../.agents/skills",
     // WebMCP in-page tools (search_docs / get_page / list_pages) — on by default
     webmcp: true,
   },
-  search: {
-    popular: [
-      { href: "/quickstart", label: "Quickstart", icon: "rocket" },
-      { href: "/core/configuration", label: "Configuration", icon: "settings" },
-      { href: "/features/overview", label: "Features", icon: "sparkles" },
-      { href: "/deployment/vercel", label: "Deploy to Vercel", icon: "cloud" },
-      { href: "/cookbook", label: "Cookbook", icon: "book-open" },
-      { href: "/cli", label: "CLI", icon: "terminal" },
+  content: {
+    include: [
+      "*.mdx",
+      ...contentSections.map((section) => `${section}/**/*.mdx`),
     ],
+    root: ".",
   },
-  redirects: [
-    { from: "/core/use-thread", to: "/threads" },
-    { from: "/core/file-storage", to: "/storage" },
-    { from: "/core/registry", to: "/registry" },
-    { from: "/core/tool-registry", to: "/tools/overview" },
-    { from: "/cookbook/add-tools", to: "/tools/install" },
-    { from: "/cookbook/tools", to: "/tools/authoring" },
-  ],
+  dateFormat: { dateStyle: "medium" },
+  deployment: {
+    base: "/docs",
+    site: "https://chatjs.dev",
+  },
+  description:
+    "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices.",
+  github: {
+    dir: "apps/docs",
+    owner: "FranciscoMoretti",
+    repo: "chat-js",
+  },
+  lastModified: true,
+  logo: {
+    image: {
+      alt: "ChatJS",
+      dark: "/logo/dark.svg",
+      light: "/logo/light.svg",
+    },
+    text: "",
+  },
   navigation: {
     featured: [
       {
@@ -235,9 +205,39 @@ export default defineConfig({
       { label: "Cookbook", path: "/cookbook", href: "/cookbook" },
     ],
   },
+  redirects: [
+    { from: "/core/use-thread", to: "/threads" },
+    { from: "/core/file-storage", to: "/storage" },
+    { from: "/core/registry", to: "/registry" },
+    { from: "/core/tool-registry", to: "/tools/overview" },
+    { from: "/cookbook/add-tools", to: "/tools/install" },
+    { from: "/cookbook/tools", to: "/tools/authoring" },
+  ],
+  search: {
+    popular: [
+      { href: "/quickstart", label: "Quickstart", icon: "rocket" },
+      { href: "/core/configuration", label: "Configuration", icon: "settings" },
+      { href: "/features/overview", label: "Features", icon: "sparkles" },
+      { href: "/deployment/vercel", label: "Deploy to Vercel", icon: "cloud" },
+      { href: "/cookbook", label: "Cookbook", icon: "book-open" },
+      { href: "/cli", label: "CLI", icon: "terminal" },
+    ],
+  },
+  seo: {
+    og: {
+      description:
+        "Production-ready AI chat documentation for auth, streaming, tools, and deployment.",
+      site: "ChatJS",
+    },
+    x: {
+      creator: "@franmoretti_",
+      handle: "@franmoretti_",
+    },
+  },
   theme: {
-    accent: { light: "#171717", dark: "#fafafa" },
-    background: { light: "#ffffff", dark: "#0a0a0a" },
+    accent: { dark: "#fafafa", light: "#171717" },
+    background: { dark: "#0a0a0a", light: "#ffffff" },
     radius: "md",
   },
+  title: "ChatJS Documentation",
 });

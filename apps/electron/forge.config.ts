@@ -32,7 +32,7 @@ function loadBranding(): Branding {
   }
 
   const branding = JSON.parse(
-    readFileSync(brandingPath, "utf8")
+    readFileSync(brandingPath, "utf-8")
   ) as Partial<Branding>;
 
   if (!branding.appName || !branding.appPrefix || !branding.appUrl) {

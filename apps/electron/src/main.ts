@@ -5,11 +5,11 @@ import {
   BrowserWindow,
   ipcMain,
   Menu,
-  type MenuItemConstructorOptions,
   nativeImage,
   shell,
   Tray,
 } from "electron";
+import type { MenuItemConstructorOptions } from "electron";
 
 import { ELECTRON_AUTH_COOKIE_PREFIX } from "@/lib/electron-auth";
 

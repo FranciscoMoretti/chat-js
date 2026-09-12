@@ -61,17 +61,18 @@ export function stateAt(t: number, content: LaunchScript = script) {
     prefixLength < content.prompt.length &&
     prefixLength < content.porto.prompt.length &&
     content.prompt[prefixLength] === content.porto.prompt[prefixLength]
-  )
-    prefixLength++;
+  ) {
+    prefixLength += 1;
+  }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
   const selected: PathId =
     t >= 33 ? "food" : t >= 19 ? "city" : t >= 12.2 ? "food" : "city";
   const editing = t >= 42.2 && t < 44.8;
   const edited = t >= 44.8;
-  const following = t >= 24 && t < 41.5,
-    family = t >= 24 && t < 33,
-    budget = t >= 34;
+  const following = t >= 24 && t < 41.5;
+  const family = t >= 24 && t < 33;
+  const budget = t >= 34;
   const followup = family ? content.family : content.budget;
   const progress = clamp((t - (family ? 24.6 : 34.6)) / 2.4);
   const texts = {
@@ -132,8 +133,8 @@ export function presentationAt(wallTime: number) {
     (wallTime >= 34.5 ? 1.5 : 0);
   const beat = captionBeats.find((b) => time >= b.start && time < b.end);
   if (!beat) return { demoTime: time, caption: null, opacity: 0 };
-  const elapsed = time - beat.start,
-    duration = beat.end - beat.start;
+  const elapsed = time - beat.start;
+  const duration = beat.end - beat.start;
   return {
     demoTime: beat.start,
     caption: beat.label,
@@ -150,7 +151,7 @@ export function cursorAt(t: number) {
   ];
   const move = moves.find(([start, end]) => t >= start && t < end);
   if (!move) return null;
-  const [start, , duration, ax, ay, bx, by] = move,
-    k = ease((t - start) / duration);
+  const [start, , duration, ax, ay, bx, by] = move;
+  const k = ease((t - start) / duration);
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
 }
