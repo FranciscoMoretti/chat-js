@@ -6,26 +6,25 @@ import { isSelectedModelValue } from "./ai/types";
 import type { ChatMessage, UiToolName } from "./ai/types";
 
 // Helper functions for type conversion
-export function dbChatToUIChat(chat: Chat): UIChat {
-  return {
-    id: chat.id,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt,
-    title: chat.title,
-    visibility: chat.visibility,
-    userId: chat.userId,
-    isPinned: chat.isPinned,
-    projectId: chat.projectId ?? null,
-  };
-}
+export const dbChatToUIChat = (chat: Chat): UIChat => ({
+  id: chat.id,
+  createdAt: chat.createdAt,
+  updatedAt: chat.updatedAt,
+  title: chat.title,
+  visibility: chat.visibility,
+  userId: chat.userId,
+  isPinned: chat.isPinned,
+  projectId: chat.projectId ?? null,
+});
 
-function _dbMessageToChatMessage(message: DBMessage): ChatMessage {
+const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
   // Note: This function should not be used directly for messages with parts
   // Use getAllMessagesByChatId which reconstructs parts from Part table
   // Parts are now stored in Part table, not in Message.parts
-  return {
+  // Parts are stored in Part table - use getAllMessagesByChatId instead.
+  ({
     id: message.id,
-    parts: [], // Parts are stored in Part table - use getAllMessagesByChatId instead
+    parts: [],
     role: message.role as ChatMessage["role"],
     metadata: {
       createdAt: message.createdAt,
@@ -40,13 +39,12 @@ function _dbMessageToChatMessage(message: DBMessage): ChatMessage {
       selectedTool: (message.selectedTool as UiToolName | null) || undefined,
       usage: message.lastContext as ChatMessage["metadata"]["usage"],
     },
-  };
-}
+  });
 
-export function chatMessageToDbMessage(
+export const chatMessageToDbMessage = (
   message: ChatMessage,
   chatId: string
-): DBMessage {
+): DBMessage => {
   const parentMessageId = message.metadata.parentMessageId || null;
   const selectedModel = message.metadata.selectedModel;
 
@@ -79,4 +77,4 @@ export function chatMessageToDbMessage(
     activeStreamId: message.metadata?.activeStreamId || null,
     canceledAt: null,
   };
-}
+};

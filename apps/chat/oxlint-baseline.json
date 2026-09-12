@@ -214,7 +214,6 @@
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
@@ -225,22 +224,16 @@
         "lib/clone-messages.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/queries.ts",
         "lib/editor/config.ts",
-        "lib/files/upload-prep.ts",
         "lib/gated-chat-transport.test.ts",
-        "lib/message-conversion.ts",
         "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/start-provisional-chat.ts",
         "lib/stop-response.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/custom-store-provider.tsx",
         "lib/stores/with-message-parts.ts",
         "lib/stores/with-thread-state.ts",
         "lib/stores/with-tracing.ts",
-        "lib/thread-utils.test.ts",
-        "lib/thread-utils.ts",
         "lib/url-utils.tsx",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
@@ -409,7 +402,6 @@
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
-        "lib/message-conversion.ts",
         "lib/types/anonymous.ts",
         "providers/chat-input-provider.tsx",
         "trpc/server.tsx"
@@ -503,7 +495,6 @@
         "components/ui/form.tsx",
         "components/ui/scroll-area.tsx",
         "lib/app-chat-runtime.ts",
-        "lib/db/queries.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/thread-utils.ts"
       ],
@@ -567,7 +558,6 @@
         "components/settings/mcp-details-page.tsx",
         "components/share-button.tsx",
         "components/suggested-actions.tsx",
-        "lib/draft-chat-submission.ts",
         "lib/files/upload-prep.ts",
         "lib/message-conversion.ts",
         "lib/start-provisional-chat.ts",
@@ -1078,10 +1068,7 @@
       }
     },
     {
-      "files": [
-        "components/settings/mcp-details-page.tsx",
-        "lib/files/upload-prep.ts"
-      ],
+      "files": ["components/settings/mcp-details-page.tsx"],
       "rules": {
         "require-unicode-regexp": "off"
       }
@@ -1187,12 +1174,10 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
-        "lib/db/queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
         "lib/env-schema.ts",
         "lib/env.ts",
-        "lib/file-content-response.ts",
         "lib/files/upload-prep.ts",
         "lib/features-config.ts",
         "lib/logger.ts",
