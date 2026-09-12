@@ -30,6 +30,9 @@ describe("CostAccumulator", () => {
         "test"
       );
       const cost = await accumulator.getTotalCost();
+      expect(getAppModelDefinition).toHaveBeenCalledWith(
+        gatewayModelDefaults.workflows.chat
+      );
       // 1000 * 0.00001 = 0.01 (input)
       // 500 * 0.00003 = 0.015 (output)
       // Total = 0.025 dollars = 2.5 cents, ceil = 3
@@ -136,6 +139,9 @@ describe("CostAccumulator", () => {
       const cost = await accumulator.getTotalCost();
       // 2.5 + 2.5 = 5 cents
       expect(cost).toBe(5);
+      expect(getAppModelDefinition).toHaveBeenCalledExactlyOnceWith(
+        gatewayModelDefaults.workflows.chat
+      );
     });
   });
   describe("getEntries", () => {
