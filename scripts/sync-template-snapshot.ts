@@ -14,21 +14,29 @@ export type SnapshotOptions = {
 class SnapshotIoLimiter {
   private activeOperations = 0;
   private readonly concurrency: number;
-  private readonly queue: (() => void)[] = [];
+  private readonly queue: { resolve: (value: null) => void }[] = [];
+  private reservedOperations = 0;
   private readonly onActiveOperationsChange?: (
     activeOperations: number
   ) => void;
 
   constructor({ concurrency, onActiveOperationsChange }: SnapshotOptions) {
     this.concurrency = concurrency ?? SNAPSHOT_CONCURRENCY;
+    if (!Number.isInteger(this.concurrency) || this.concurrency < 1) {
+      throw new RangeError("Snapshot concurrency must be a positive integer");
+    }
     this.onActiveOperationsChange = onActiveOperationsChange;
   }
 
   async run<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.activeOperations >= this.concurrency) {
+    if (
+      this.activeOperations >= this.concurrency ||
+      this.reservedOperations > 0
+    ) {
       const deferred = Promise.withResolvers<null>();
-      this.queue.push(() => deferred.resolve(null));
+      this.queue.push(deferred);
       await deferred.promise;
+      this.reservedOperations -= 1;
     }
 
     this.activeOperations += 1;
@@ -36,9 +44,15 @@ class SnapshotIoLimiter {
     try {
       return await operation();
     } finally {
-      this.activeOperations -= 1;
-      this.onActiveOperationsChange?.(this.activeOperations);
-      this.queue.shift()?.();
+      const next = this.queue.shift();
+      if (next) {
+        this.reservedOperations += 1;
+        this.activeOperations -= 1;
+        next.resolve(null);
+      } else {
+        this.activeOperations -= 1;
+        this.onActiveOperationsChange?.(this.activeOperations);
+      }
     }
   }
 }
