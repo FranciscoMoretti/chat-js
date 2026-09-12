@@ -1,12 +1,12 @@
 import { spawn } from "node:child_process";
 
 /** Bound the entire operation, including pipes inherited by descendants. */
-export function run(
+export const run = (
   cwd: string,
   command: string[],
   timeoutMs = 180_000
-): Promise<void> {
-  return new Promise((resolve, reject) => {
+): Promise<void> =>
+  new Promise((resolve, reject) => {
     const grouped = process.platform !== "win32";
     const child = spawn(command[0], command.slice(1), {
       cwd,
@@ -67,4 +67,3 @@ export function run(
       }
     });
   });
-}

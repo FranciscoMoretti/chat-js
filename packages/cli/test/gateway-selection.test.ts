@@ -8,7 +8,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import pathModule from "node:path";
 import { fileURLToPath } from "node:url";
 
 import gatewayPackage from "@chat-js/gateways/package.json";
@@ -18,6 +18,8 @@ import cliPackage from "../package.json";
 import { GATEWAYS } from "../src/types";
 import { externalGatewayFixture } from "./external-gateway";
 import { run } from "./run-command";
+
+const { dirname, join } = pathModule;
 
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
 const root = await mkdtemp(join(tmpdir(), "chatjs-gateway-integration-"));
@@ -91,7 +93,7 @@ const external = externalGatewayFixture();
 const registryServer = Bun.serve({
   async fetch(request) {
     const path = new URL(request.url).pathname;
-    if (path === "/external-storage.json")
+    if (path === "/external-storage.json") {
       return Response.json({
         name: "acme-bucket",
         type: "registry:item",
@@ -118,7 +120,8 @@ export function createStorageAdapter(options: {bucket: string}) {
           },
         ],
       });
-    if (path === "/external-execution.json")
+    }
+    if (path === "/external-execution.json") {
       return Response.json({
         name: "acme-execution",
         type: "registry:item",
@@ -153,20 +156,18 @@ export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runComman
           },
         ],
       });
+    }
     if (path === "/external-search.json") {
       const definition = {
         contractVersion: 1,
-        kind: "tool",
+        envRequirements: [],
         id: "acme-search",
+        kind: "tool",
         slot: "webSearch",
         toolExport: "lookup",
-        envRequirements: [],
       };
       return Response.json({
-        name: "acme-search",
-        type: "registry:item",
         dependencies: ["ai", "zod"],
-        meta: { chatjs: definition },
         files: [
           {
             path: "chatjs.json",
@@ -183,22 +184,22 @@ import {z} from "zod";
 export const lookup = tool({inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`,
           },
         ],
+        meta: { chatjs: definition },
+        name: "acme-search",
+        type: "registry:item",
       });
     }
     if (path === "/external-retrieval.json") {
       const definition = {
         contractVersion: 1,
-        kind: "tool",
+        envRequirements: [{ options: [["ACME_RETRIEVAL_KEY"]] }],
         id: "acme-retrieval",
+        kind: "tool",
         slot: "retrieveUrl",
         toolExport: "readPage",
-        envRequirements: [{ options: [["ACME_RETRIEVAL_KEY"]] }],
       };
       return Response.json({
-        name: definition.id,
-        type: "registry:item",
         dependencies: ["ai", "zod"],
-        meta: { chatjs: definition },
         files: [
           {
             path: "chatjs.json",
@@ -215,10 +216,15 @@ import {z} from "zod";
 export const readPage = tool({inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`,
           },
         ],
+        meta: { chatjs: definition },
+        name: definition.id,
+        type: "registry:item",
       });
     }
-    if (path === "/contracts.tgz") return new Response(Bun.file(archive));
-    if (path === "/gateway.json")
+    if (path === "/contracts.tgz") {
+      return new Response(Bun.file(archive));
+    }
+    if (path === "/gateway.json") {
       return Response.json({
         ...external.root,
         dependencies: external.root.dependencies.map((d) =>
@@ -230,18 +236,19 @@ export const readPage = tool({inputSchema: z.object({target: z.string()}), execu
           `http://127.0.0.1:${registryServer.port}/adapter.json`,
         ],
       });
-    if (path === "/adapter.json") return Response.json(external.adapter);
+    }
+    if (path === "/adapter.json") {
+      return Response.json(external.adapter);
+    }
     if (path === "/v1/chat/completions") {
-      if (request.headers.get("authorization") !== "Bearer fixture-key")
+      if (request.headers.get("authorization") !== "Bearer fixture-key") {
         return new Response("Unauthorized", { status: 401 });
+      }
       const body = await request.json();
-      if (body.model !== "gpt-5-mini")
+      if (body.model !== "gpt-5-mini") {
         return new Response("Wrong model", { status: 400 });
+      }
       return Response.json({
-        id: "fixture-response",
-        object: "chat.completion",
-        created: 1,
-        model: body.model,
         choices: [
           {
             index: 0,
@@ -249,21 +256,26 @@ export const readPage = tool({inputSchema: z.object({target: z.string()}), execu
             finish_reason: "stop",
           },
         ],
-        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        created: 1,
+        id: "fixture-response",
+        model: body.model,
+        object: "chat.completion",
+        usage: { completion_tokens: 1, prompt_tokens: 1, total_tokens: 2 },
       });
     }
-    if (/^\/[a-z0-9-]+\.json$/.test(path)) {
+    if (/^\/[a-z0-9-]+\.json$/u.test(path)) {
       const file = Bun.file(
         join(cliDirectory, "../registry/dist/r", path.slice(1))
       );
       if (await file.exists()) {
         const item = await file.json();
-        if (item.dependencies)
+        if (item.dependencies) {
           item.dependencies = item.dependencies.map((d: string) =>
             d.startsWith("@chat-js/gateways@")
               ? `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
               : d
           );
+        }
         return Response.json(item);
       }
     }

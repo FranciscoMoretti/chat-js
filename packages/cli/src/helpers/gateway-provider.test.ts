@@ -1,22 +1,24 @@
 import { expect, it } from "bun:test";
 import { mkdtemp, rm, readFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import pathModule from "node:path";
 
 import { builtInGateways } from "../../../registry/src/gateways/catalog";
 import { configureGatewayProvider } from "./gateway-provider";
 import { scaffoldFromTemplate } from "./scaffold";
 
+const { join } = pathModule;
+
 it("wires selected defaults and snapshot identity without managing dependencies", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "chatjs-wiring-"));
+  const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-wiring-"));
   try {
     await scaffoldFromTemplate(cwd);
     await rm(join(cwd, "lib/ai/models.generated.ts"));
     const manifest = await readFile(join(cwd, "package.json"), "utf-8");
     for (const item of builtInGateways) {
       await configureGatewayProvider(cwd, {
-        source: item.name,
         definition: item.meta.chatjs,
+        source: item.name,
       });
       expect(
         await readFile(join(cwd, "lib/ai/gateway-model-defaults.ts"), "utf-8")
@@ -35,8 +37,8 @@ it("wires selected defaults and snapshot identity without managing dependencies"
     await symlink(join(cwd, "package.json"), target);
     await expect(
       configureGatewayProvider(cwd, {
-        source: "vercel",
         definition: builtInGateways[0].meta.chatjs,
+        source: "vercel",
       })
     ).rejects.toThrow("symlink");
     expect(await readFile(join(cwd, "package.json"), "utf-8")).toBe(manifest);
@@ -44,6 +46,6 @@ it("wires selected defaults and snapshot identity without managing dependencies"
       await readFile(join(cwd, "lib/ai/models.generated.ts"), "utf-8")
     ).toBe(snapshot);
   } finally {
-    await rm(cwd, { recursive: true, force: true });
+    await rm(cwd, { force: true, recursive: true });
   }
 });

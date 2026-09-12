@@ -3,10 +3,14 @@ import { readFileSync } from "node:fs";
 import { builtInGateways } from "../src/registry/gateways";
 
 /** An independently hosted registry with a name, credentials and file layout unknown to the CLI. */
-export function externalGatewayFixture() {
-  const base = structuredClone(
-    builtInGateways.find((item) => item.meta.chatjs.id === "openai-compatible")!
+export const externalGatewayFixture = () => {
+  const openAiCompatibleGateway = builtInGateways.find(
+    (item) => item.meta.chatjs.id === "openai-compatible"
   );
+  if (!openAiCompatibleGateway) {
+    throw new Error("Missing OpenAI-compatible gateway fixture");
+  }
+  const base = structuredClone(openAiCompatibleGateway);
   const adapter = readFileSync(
     new URL(
       "../../registry/src/gateways/openai-compatible/gateway.ts",
@@ -21,10 +25,10 @@ export function externalGatewayFixture() {
     adapter: {
       files: [
         {
-          path: "adapter.ts",
-          type: "registry:file",
-          target: "~/lib/ai/gateway/adapter.ts",
           content: adapter,
+          path: "adapter.ts",
+          target: "~/lib/ai/gateway/adapter.ts",
+          type: "registry:file",
         },
       ],
       name: "acme-adapter",
@@ -34,10 +38,10 @@ export function externalGatewayFixture() {
       ...base,
       files: [
         {
-          path: "gateway.ts",
-          type: "registry:file",
-          target: "~/lib/ai/gateway.ts",
           content: 'export { Gateway } from "./gateway/adapter";\n',
+          path: "gateway.ts",
+          target: "~/lib/ai/gateway.ts",
+          type: "registry:file",
         },
       ],
       meta: {
@@ -52,4 +56,4 @@ export function externalGatewayFixture() {
       registryDependencies: ["./adapter.json"],
     },
   };
-}
+};

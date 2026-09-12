@@ -1,14 +1,16 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import pathModule from "node:path";
+
+const { dirname, join, resolve } = pathModule;
 
 const repoRoot = resolve(import.meta.dir, "../../../..");
 const turbo = join(repoRoot, "node_modules/.bin/turbo");
 let fixture: string;
 
-function run(command: string[]) {
-  return Bun.spawnSync(command, {
+const run = (command: string[]) =>
+  Bun.spawnSync(command, {
     cwd: fixture,
     env: {
       ...process.env,
@@ -16,15 +18,14 @@ function run(command: string[]) {
       TURBO_SCM_HEAD: "",
     },
   });
-}
 
-function git(...args: string[]) {
+const git = (...args: string[]) => {
   const result = run(["git", ...args]);
   if (result.exitCode !== 0) {
     throw new Error(result.stderr.toString());
   }
   return result.stdout.toString().trim();
-}
+};
 
 beforeAll(async () => {
   fixture = await mkdtemp(join(tmpdir(), "chatjs-turbo-affected-"));
@@ -57,7 +58,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (fixture) {
-    await rm(fixture, { recursive: true, force: true });
+    await rm(fixture, { force: true, recursive: true });
   }
 });
 

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import pathModule from "node:path";
 
 import { buildConfigTs } from "./config-builder";
 import {
@@ -11,18 +11,22 @@ import {
   scaffoldFromTemplate,
 } from "./scaffold";
 
+const { join } = pathModule;
+
 const tempDirs: string[] = [];
 const originalUserAgent = process.env.npm_config_user_agent;
 
-async function makeTempDir(name: string): Promise<string> {
-  const dir = join(tmpdir(), `chat-js-cli-${name}-${crypto.randomUUID()}`);
+const makeTempDir = (name: string): string => {
+  const dir = pathModule.join(
+    tmpdir(),
+    `chat-js-cli-${name}-${crypto.randomUUID()}`
+  );
   tempDirs.push(dir);
   return dir;
-}
+};
 
-function getCliPackageRoot(): string {
-  return resolve(import.meta.dirname, "../..");
-}
+const getCliPackageRoot = (): string =>
+  pathModule.resolve(import.meta.dirname, "../..");
 
 afterEach(async () => {
   if (originalUserAgent === undefined) {
@@ -31,7 +35,7 @@ afterEach(async () => {
     process.env.npm_config_user_agent = originalUserAgent;
   }
   await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
+    tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
 
@@ -41,36 +45,36 @@ describe("buildConfigTs", () => {
       appName: "My Chat",
       appPrefix: "my-chat",
       appUrl: "http://localhost:3000",
-      withElectron: false,
-      gateway: "vercel",
-      coreFeatures: {
-        attachments: false,
-        parallelResponses: true,
-        documents: true,
-        mcp: false,
-        followupSuggestions: true,
-      },
-      documentTypes: {
-        text: true,
-        code: true,
-        sheet: true,
-      },
-      builtInTools: {
-        webSearch: false,
-        urlRetrieval: false,
-        deepResearch: false,
-        codeExecution: false,
-        imageGeneration: false,
-        videoGeneration: false,
-      },
       auth: {
-        google: false,
         github: true,
+        google: false,
         vercel: false,
       },
+      builtInTools: {
+        codeExecution: false,
+        deepResearch: false,
+        imageGeneration: false,
+        urlRetrieval: false,
+        videoGeneration: false,
+        webSearch: false,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: true,
+        followupSuggestions: true,
+        mcp: false,
+        parallelResponses: true,
+      },
+      documentTypes: {
+        code: true,
+        sheet: true,
+        text: true,
+      },
+      gateway: "vercel",
+      withElectron: false,
     });
 
-    expect(output).toMatch(/desktopApp:\s*{\s*enabled:\s*false,/m);
+    expect(output).toMatch(/desktopApp:\s*\{\s*enabled:\s*false,/mu);
     expect(output).toContain("parallelResponses: true");
     expect(output).toContain("documents: {");
     expect(output).toContain("text: true");
@@ -84,36 +88,36 @@ describe("buildConfigTs", () => {
       appName: "My Chat",
       appPrefix: "my-chat",
       appUrl: "http://localhost:3000",
-      withElectron: true,
-      gateway: "vercel",
-      coreFeatures: {
-        attachments: false,
-        parallelResponses: true,
-        documents: true,
-        mcp: false,
-        followupSuggestions: true,
-      },
-      documentTypes: {
-        text: true,
-        code: true,
-        sheet: true,
-      },
-      builtInTools: {
-        webSearch: false,
-        urlRetrieval: false,
-        deepResearch: false,
-        codeExecution: false,
-        imageGeneration: false,
-        videoGeneration: false,
-      },
       auth: {
-        google: false,
         github: true,
+        google: false,
         vercel: false,
       },
+      builtInTools: {
+        codeExecution: false,
+        deepResearch: false,
+        imageGeneration: false,
+        urlRetrieval: false,
+        videoGeneration: false,
+        webSearch: false,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: true,
+        followupSuggestions: true,
+        mcp: false,
+        parallelResponses: true,
+      },
+      documentTypes: {
+        code: true,
+        sheet: true,
+        text: true,
+      },
+      gateway: "vercel",
+      withElectron: true,
     });
 
-    expect(output).toMatch(/desktopApp:\s*{\s*enabled:\s*true,/m);
+    expect(output).toMatch(/desktopApp:\s*\{\s*enabled:\s*true,/mu);
     expect(output).toContain("parallelResponses: true");
     expect(output).toContain("documents: {");
     expect(output).toContain("text: true");
@@ -127,39 +131,39 @@ describe("buildConfigTs", () => {
       appName: "My Chat",
       appPrefix: "my-chat",
       appUrl: "http://localhost:3000",
-      withElectron: false,
-      gateway: "openai-compatible",
-      coreFeatures: {
-        attachments: false,
-        parallelResponses: true,
-        documents: true,
-        mcp: false,
-        followupSuggestions: true,
-      },
-      documentTypes: {
-        text: true,
-        code: true,
-        sheet: true,
-      },
-      builtInTools: {
-        webSearch: true,
-        urlRetrieval: true,
-        deepResearch: true,
-        codeExecution: true,
-        imageGeneration: true,
-        videoGeneration: true,
-      },
       auth: {
-        google: false,
         github: true,
+        google: false,
         vercel: false,
       },
+      builtInTools: {
+        codeExecution: true,
+        deepResearch: true,
+        imageGeneration: true,
+        urlRetrieval: true,
+        videoGeneration: true,
+        webSearch: true,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: true,
+        followupSuggestions: true,
+        mcp: false,
+        parallelResponses: true,
+      },
+      documentTypes: {
+        code: true,
+        sheet: true,
+        text: true,
+      },
+      gateway: "openai-compatible",
+      withElectron: false,
     });
 
     expect(output).toContain('gateway: "openai-compatible"');
     expect(output).toContain("image: {");
     expect(output).toContain('default: "gpt-image-1"');
-    expect(output).toMatch(/video:\s*{\s*enabled:\s*false,/m);
+    expect(output).toMatch(/video:\s*\{\s*enabled:\s*false,/mu);
   });
 });
 
@@ -234,7 +238,7 @@ describe("scaffoldFromTemplate", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/);
+    expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/u);
     for (const script of Object.values(packageJson.scripts)) {
       expect(script).not.toContain("bun ");
       expect(script).not.toContain("bunx");
@@ -319,8 +323,8 @@ describe("scaffoldFromTemplate", () => {
     try {
       await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
       await scaffoldElectron(projectDir, {
-        projectName: "my-chat-app",
         packageManager: "npm",
+        projectName: "my-chat-app",
       });
 
       const packageJson = JSON.parse(
@@ -353,7 +357,7 @@ describe("scaffoldFromGit", () => {
     await mkdir(source, { recursive: true });
     await writeFile(
       join(source, "package.json"),
-      JSON.stringify({ name: "plain-template", dependencies: {} })
+      JSON.stringify({ dependencies: {}, name: "plain-template" })
     );
     for (const args of [
       ["init"],
@@ -387,8 +391,8 @@ describe("scaffoldElectron", () => {
 
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
-      projectName: "my-chat-app",
       packageManager: "npm",
+      projectName: "my-chat-app",
     });
 
     const packageJson = JSON.parse(
@@ -401,7 +405,7 @@ describe("scaffoldElectron", () => {
       pnpm?: unknown;
     };
 
-    expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/);
+    expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/u);
     expect(packageJson.pnpm).toBeUndefined();
     expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.5.6");
     expect(packageJson.devDependencies["better-auth"]).toBe("1.5.6");
@@ -436,8 +440,8 @@ describe("scaffoldElectron", () => {
 
     await scaffoldFromTemplate(projectDir, { packageManager: "pnpm" });
     await scaffoldElectron(projectDir, {
-      projectName: "my-chat-app",
       packageManager: "pnpm",
+      projectName: "my-chat-app",
     });
 
     const packageJson = JSON.parse(
