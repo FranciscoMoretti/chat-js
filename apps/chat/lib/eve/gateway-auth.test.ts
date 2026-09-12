@@ -76,7 +76,7 @@ it("ordinary requests still require a bound session and cannot reset it", async 
   });
 });
 
-it("checkpoint readiness is read-only and requires the source owner", async () => {
+it("checkpoint readiness and capture require the source owner", async () => {
   const read = request(
     "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0",
     "GET"
@@ -90,5 +90,19 @@ it("checkpoint readiness is read-only and requires the source owner", async () =
   expect(mocks.owns).toHaveBeenCalledWith("owner", "source");
   const write = request("/eve/v1/session/source/checkpoint", "POST");
   write.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(write)).toMatchObject({
+    principalId: "owner",
+  });
+  mocks.owns.mockResolvedValue(false);
   expect(await authenticateEveGateway(write)).toBeNull();
+  const named = request(
+    `/eve/v1/session/source/checkpoint/${crypto.randomUUID()}?beforeTurnId=turn_1`,
+    "GET"
+  );
+  named.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(named)).toBeNull();
+  mocks.owns.mockResolvedValue(true);
+  expect(await authenticateEveGateway(named)).toMatchObject({
+    principalId: "owner",
+  });
 });

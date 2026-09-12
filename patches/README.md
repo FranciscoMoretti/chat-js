@@ -162,3 +162,18 @@ publication remain subject to user review.
 ## PostgreSQL workflow cancellation
 
 `workflow-world-postgres@5.0.0-beta.40.patch` removes per-run serialization of distinct queue deliveries. A cancellation delivery must reach the workflow while an earlier invocation eagerly awaits a pending step. Exact delivery idempotency keys retain their existing in-flight and completed-message deduplication. The local queue concurrency regression and live MCP cancellation/next-message test cover this change; see `docs/upstream-drafts/eve-pending-tool-cancellation.md` for the unpublished report.
+
+## Named idle checkpoints
+
+The installed patch adds an immutable named checkpoint command to session inbox
+wire version 7. Dispatch negotiates that capability; older consumers reject it.
+The serialized driver captures completed native history without another model
+turn, prepares application document snapshots through the checkpoint-bearing
+`session.waiting` hook, and uses a separate resource snapshot key. Forks carry the
+named identity through both native history and display restoration. Readiness
+checks precede native child allocation and never return snapshot contents.
+
+The compiled ChatJS regression covers idle capture, later source document edits,
+two Gemini follow-up forks, inherited display history, and reload. See the
+unpublished `docs/upstream-drafts/eve-fork-checkpoint-readiness.md` for limitations
+and the remaining composer integration.

@@ -11,6 +11,9 @@ import { parseSessionRequest } from "./request-policy";
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint$/;
 
+const namedCheckpointLookupPath =
+  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/i;
+
 const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/;
 
 export async function authenticateEveGateway(request: Request) {
@@ -67,8 +70,12 @@ export async function authenticateEveGateway(request: Request) {
 }
 
 function gatewaySessionPolicy(path: string, method: string) {
-  const checkpointSession =
-    method === "GET" ? checkpointLookupPath.exec(path)?.[1] : undefined;
+  const ordinaryCheckpoint =
+    (method === "GET" || method === "POST") &&
+    checkpointLookupPath.exec(path)?.[1];
+  const namedCheckpoint =
+    method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
+  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
   return checkpointSession
     ? { sessionId: checkpointSession }
     : parseSessionRequest(path, method);

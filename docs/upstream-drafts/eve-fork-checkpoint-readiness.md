@@ -1,70 +1,59 @@
-# Draft: expose checkpoint readiness before allocating a fork
+# Draft: expose immutable checkpoint capture and readiness for forks
 
 Unpublished integration note for EVE 0.52.2.
 
 ChatJS comparison requests create a primary native session, then fork additional
 responses before `turn_0`. Returning a session identity does not guarantee that
-the workflow has written that initial checkpoint. A child can therefore be
-allocated before its source snapshot exists, turning an ordinary initialization
-race into a failed child session.
+the workflow has written that initial checkpoint. A child can otherwise be
+allocated before its source snapshot exists.
 
-The maintained local patch adds an authenticated, read-only checkpoint lookup.
-It returns only the requested session/turn identity and readiness, never the
-snapshot. Missing checkpoints have a specific retryable response; invalid or
-corrupt records fail closed. ChatJS verifies source ownership and waits for this
-receipt before dispatching a new native fork. Existing native operations recover
-without requiring their source checkpoint again. Application operation IDs stay
-unchanged through an uncertain outcome.
+Continuing a completed answer with multiple models needs a different boundary.
+The next ordinary before-turn checkpoint is captured when the next message
+arrives. Capturing it early under that same key would conflict with subsequent
+manual document edits. The installed local patch therefore adds immutable named
+checkpoints, captured by the serialized native session driver while idle.
 
-Local tests cover delayed readiness, exact identity, bounded waiting, malformed
-and corrupt records, owner authorization, and refusing native allocation before
-readiness. The browser test additionally creates two short Gemini Flash-Lite
-responses through the real local application and switches between them.
+The authenticated API provides a read-only before-turn readiness lookup, a named
+capture command, and a named readiness lookup. Readiness receipts expose only
+session, turn, and checkpoint identities. Missing records are explicitly
+retryable. Named capture rejects advanced or active source boundaries, preserves
+its original snapshot on retry, and runs no model step. Fork requests carry the
+same named identity through native restoration and display-history restoration.
+The display reader stops at the named marker without waiting for a future user
+turn or including later source events.
 
-The lookup currently uses EVE's checkpoint reader, which reads snapshot payloads
-from the workflow stream. This is not an inexpensive metadata-only readiness
-index. An upstream API should ideally expose durable readiness without reading
-the history twice, or provide creation/fork semantics that safely wait for the
-source checkpoint themselves.
+Session inbox wire version 7 advertises checkpoint support. Older or unversioned
+payloads cannot acquire this new meaning through migration. Checkpoint dispatch
+negotiates the consumer version rather than using the legacy stable-inbox fast
+path. The HTTP fork parser accepts the named field while rejecting unknown or
+malformed fields. Integration testing exposed both the fast-path and parser gaps;
+regression tests now cover them.
 
-A separate gap remains for continuing an idle completed answer with multiple
-models: the next before-turn checkpoint is normally captured when the next
-message arrives. Capturing it early under the same turn key would conflict with
-manual document edits made while idle. The proposed follow-up is a serialized,
-immutable named checkpoint with matching document/resource boundaries; this
-note does not claim that capability is implemented.
+ChatJS verifies bound source ownership before native access. Its native checkpoint
+hook captures an immutable document revision manifest before checkpoint
+publication. Migration 0067 was applied only to local PostgreSQL. Manifests have
+owner/conversation foreign keys, preserve empty snapshots, and are removed by
+family document cleanup. Named forks inherit that manifest and earlier ordinary
+turn boundaries. Their own next-turn boundary captures the selected idle
+documents. Missing or mismatched manifests prevent native allocation. Existing
+native operations can recover without requiring their source checkpoint again.
 
-The isolated source implementation now carries checkpoint commands through
-session inbox wire version 7 and the serialized session driver. Review found
-that its decoder accepted those commands when labeled with versions 0–6 or
-without a version; regression tests reproduced all eight cases. The decoder now
-rejects them before migration. The source implementation also retains the
-existing before-turn readiness route, so rebuilding it will preserve the API
-used by initial response comparisons.
+Validation includes source unit tests, a real serialized workflow integration,
+local PostgreSQL ownership/retry/nested-fork/deletion tests, and the compiled
+ChatJS browser flow. The live regression creates a short Gemini Flash Lite
+answer, captures it while idle, edits the source document, and forks two Gemini
+follow-ups. Both retain the captured revision, render inherited and new native
+messages, and restore correctly on reload. The same browser test exposed the
+HTTP parser rejection before the fix. App lint, types, and unit checks also pass.
 
-Source validation covers immutable retry identity, idle/advanced-source
-rejection, failed document preparation, historic wire rejection, and readiness
-receipts. The focused inbox/checkpoint suite passes 180 tests; a separate driver
-and restoration selection passes 114 tests. These are hermetic source tests,
-not proof of compiled worker recovery or application-level continuation.
+The checkpoint lookup still reads snapshot payloads from the workflow stream.
+This is not an inexpensive metadata-only readiness index. An upstream API should
+expose durable readiness without reading history twice, or safely wait for the
+source checkpoint as part of creation. All database validation here used local
+PostgreSQL, not Neon.
 
-Before enabling this capability in ChatJS, document manifests need a named
-checkpoint identity independent of the normal before-turn manifest. The native
-serialized capture must prepare that exact manifest before publishing its
-receipt, and forks must resolve the same immutable identity. The running app
-still uses the installed before-turn implementation; the broader idle source
-changes have not been installed.
-
-ChatJS now has the application-side named document manifest and fork identity.
-Migration 0067 was applied only to local PostgreSQL. The manifest records revision
-references with owner/conversation foreign keys, is immutable on retry, and is
-removed by family document cleanup. Named forks inherit that manifest and only
-earlier ordinary turn boundaries; their own next-turn boundary captures the
-selected idle documents. Missing or mismatched manifests prevent native
-allocation. The native readiness receipt must also match the named identity,
-with no fallback to an ordinary turn lookup.
-
-Local database tests verify manual edits, concurrent capture retries, immutable
-empty manifests, nested forks, owner isolation, identity conflicts, and deletion.
-The native capture hook and compiled continuation browser flow remain to be
-connected and validated before exposing multi-model follow-ups in the UI.
+Remaining ChatJS work includes connecting the multi-model follow-up composer and
+its retained operation/recovery UI to this path. The native/browser validation
+does not prove that UI integration, crash recovery at every resource boundary,
+or full application feature parity. No upstream publication or production
+cutover has occurred.

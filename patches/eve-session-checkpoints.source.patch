@@ -1,5 +1,25 @@
+diff --git a/packages/eve/src/channel/session.ts b/packages/eve/src/channel/session.ts
+index ba955d39..b405073f 100644
+--- a/packages/eve/src/channel/session.ts
++++ b/packages/eve/src/channel/session.ts
+@@ -51,6 +51,7 @@ export interface Session {
+     turnId?: string;
+   }): Promise<CancelTurnResult>;
+   /** Queues compaction on this exact session ID. */
++  checkpoint?(input: { checkpointId: string; beforeTurnId: string }): Promise<CompactSessionResult>;
+   compact(): Promise<CompactSessionResult>;
+   /** Queues a context clear on this exact session ID. */
+   clear(): Promise<ClearSessionResult>;
+@@ -156,6 +157,7 @@ export function createSession(
+       if (options?.turnId !== undefined) command.turnId = options.turnId;
+       return await runtime.dispatchSession({ command, sessionId: id });
+     },
++    async checkpoint(input) { return await runtime.dispatchSession({ command: { kind: "checkpoint", ...input }, sessionId: id }); },
+     async compact() {
+       return await runtime.dispatchSession({ command: { kind: "compact" }, sessionId: id });
+     },
 diff --git a/packages/eve/src/channel/types.ts b/packages/eve/src/channel/types.ts
-index cca4a3e..16b20c1 100644
+index cca4a3e8..210f201c 100644
 --- a/packages/eve/src/channel/types.ts
 +++ b/packages/eve/src/channel/types.ts
 @@ -1,3 +1,4 @@
@@ -7,7 +27,45 @@ index cca4a3e..16b20c1 100644
  import type { UserContent } from "ai";
 
  import type { SessionInboxAddress } from "#execution/wire/session-inbox-contract.js";
-@@ -453,6 +454,8 @@ export interface SessionCapabilities {
+@@ -223,6 +224,7 @@ export type SessionCommand =
+       readonly tasks?: boolean;
+       readonly turnId?: string;
+     }
++  | CheckpointSessionHookPayload
+   | { readonly kind: "compact" }
+   | { readonly kind: "clear" }
+   | { readonly kind: "reset"; readonly reason?: string };
+@@ -239,6 +241,8 @@ export type ResetSessionResult =
+ export type SessionCommandResult<TCommand extends SessionCommand = SessionCommand> =
+   TCommand extends { readonly kind: "send" }
+     ? SessionSendCommandResult
++    : TCommand extends { readonly kind: "checkpoint" }
++      ? CompactSessionResult
+     : TCommand extends { readonly kind: "cancel" }
+       ? CancelTurnResult
+       : TCommand extends { readonly kind: "compact" }
+@@ -293,6 +297,12 @@ export interface SessionTimeoutHookPayload {
+ }
+
+ /** Requests a context compaction without delivering model input. */
++export interface CheckpointSessionHookPayload {
++  readonly kind: "checkpoint";
++  readonly checkpointId: string;
++  readonly beforeTurnId: string;
++}
++
+ export interface CompactSessionHookPayload {
+   readonly kind: "compact";
+ }
+@@ -378,6 +388,7 @@ export interface SubagentAuthorizationEventHookPayload {
+  * Serializable payload sent through the workflow `resumeHook`.
+  */
+ export type HookPayload =
++  | CheckpointSessionHookPayload
+   | ClearSessionHookPayload
+   | CompactSessionHookPayload
+   | DeliverHookPayload
+@@ -453,6 +464,8 @@ export interface SessionCapabilities {
   * subagent tool wrapper).
   */
  export interface RunInput {
@@ -17,7 +75,7 @@ index cca4a3e..16b20c1 100644
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
 diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
-index 43979d6..c265249 100644
+index 43979d68..c2652494 100644
 --- a/packages/eve/src/client/message-reducer.ts
 +++ b/packages/eve/src/client/message-reducer.ts
 @@ -67,6 +67,21 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
@@ -43,7 +101,7 @@ index 43979d6..c265249 100644
        return upsertMessage(data, {
          id: optimisticUserMessageId(event.data.submissionId),
 diff --git a/packages/eve/src/client/stream-version.test.ts b/packages/eve/src/client/stream-version.test.ts
-index 201e48a..de0664b 100644
+index 201e48a3..de0664b4 100644
 --- a/packages/eve/src/client/stream-version.test.ts
 +++ b/packages/eve/src/client/stream-version.test.ts
 @@ -4,7 +4,7 @@ import { readMessageStreamVersion } from "#client/stream-version.js";
@@ -66,7 +124,7 @@ index 201e48a..de0664b 100644
    });
  });
 diff --git a/packages/eve/src/client/stream-version.ts b/packages/eve/src/client/stream-version.ts
-index 0cb4fcc..d3127e1 100644
+index 0cb4fcc2..d3127e15 100644
 --- a/packages/eve/src/client/stream-version.ts
 +++ b/packages/eve/src/client/stream-version.ts
 @@ -7,6 +7,7 @@ const supportedMessageStreamVersions = {
@@ -78,7 +136,7 @@ index 0cb4fcc..d3127e1 100644
 
  /** Reads and validates the schema version declared by a message stream response. */
 diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
-index e757d05..2e98bca 100644
+index e757d051..2e98bcab 100644
 --- a/packages/eve/src/context/keys.ts
 +++ b/packages/eve/src/context/keys.ts
 @@ -4,6 +4,10 @@
@@ -105,10 +163,36 @@ index e757d05..2e98bca 100644
  export const InitiatorAuthKey = new ContextKey<SessionAuthContext | null>("eve.initiatorAuth");
  export const SessionIdKey = new ContextKey<string>("eve.sessionId");
 diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
-index e5b41ab..c537af5 100644
+index e5b41ab9..cd054b1d 100644
 --- a/packages/eve/src/eve-channel/index.ts
 +++ b/packages/eve/src/eve-channel/index.ts
-@@ -150,6 +150,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -1,3 +1,5 @@
++import { handleCheckpointReadiness } from "#execution/checkpoint-readiness.js";
++import { readSessionCheckpoint, SessionCheckpointNotFoundError, SessionCheckpointRejectedError } from "#execution/read-session-checkpoint.js";
+ import type { SessionAuthContext, SessionTraceContext } from "#channel/types.js";
+ import type { Session } from "#channel/session.js";
+ import { resolveForwardedPrincipal } from "#channel/forwarded-principal.js";
+@@ -104,6 +106,19 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+       GET(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
+       HEAD(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
+
++      GET("/eve/v1/operation/:operationId", async (req, { params, resolveSession }) => {
++        const authResult = await routeAuth(req, input.auth);
++        if (authResult instanceof Response) return authResult;
++        if (authResult.principalType === "anonymous" || !params.operationId) {
++          return Response.json({ error: "Operation lookup requires an authenticated principal and operation id.", ok: false }, { status: 400 });
++        }
++        const token = await deriveOperationContinuationToken({ auth: authResult, operationId: params.operationId });
++        const owner = await resolveSession(token);
++        return owner
++          ? Response.json({ sessionId: owner.id }, { headers: { "cache-control": "no-store" } })
++          : Response.json({ error: "Operation not found.", code: "eve_operation_not_found" }, { status: 404, headers: { "cache-control": "no-store" } });
++      }),
++
+       GET(EVE_INFO_ROUTE_PATH, async (req, args) => {
+         const authResult = await routeAuth(req, input.auth);
+         if (authResult instanceof Response) return authResult;
+@@ -150,6 +165,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
 
          const body = parseCreateBody(payload);
          if (body instanceof Response) return body;
@@ -131,7 +215,7 @@ index e5b41ab..c537af5 100644
          // Top-level sessions own their trace. Callback sessions are delegated
          // remote agents and intentionally continue the dispatching agent trace.
          const parsedParentTraceContext =
-@@ -236,6 +252,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -236,6 +267,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            request: req,
          });
          if (messageResult instanceof Response) return messageResult;
@@ -154,7 +238,7 @@ index e5b41ab..c537af5 100644
          const createSession = readRouteSessionCreator(args);
          if (createSession === undefined) {
            return Response.json(
-@@ -247,6 +279,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -247,6 +294,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          let handle: Awaited<ReturnType<typeof createSession>>;
          try {
            handle = await createSession({
@@ -162,8 +246,106 @@ index e5b41ab..c537af5 100644
              activityObserver: body.activityObserver,
              auth: messageResult.auth,
              capabilities:
+@@ -274,12 +322,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+           );
+         }
+
++        // Workflow start returns a candidate before its continuation hook is claimed.
++        // A create-once caller must receive the durable owner, including when a
++        // concurrent candidate won. Never let it bind the losing candidate ID.
++        let acceptedSessionId = handle.sessionId;
++        if (operationToken !== undefined) {
++          const deadline = Date.now() + 15_000;
++          let owner = await args.resolveSession(operationToken);
++          while (owner === undefined && Date.now() < deadline && !req.signal.aborted) {
++            await new Promise<void>((resolve) => setTimeout(resolve, 100));
++            owner = await args.resolveSession(operationToken);
++          }
++          if (owner === undefined) {
++            return Response.json(
++              { error: "Operation acceptance is unresolved. Retry the same operationId.", code: "eve_operation_pending" },
++              { status: 503, headers: { "cache-control": "no-store" } },
++            );
++          }
++          acceptedSessionId = owner.id;
++        }
++
+         return Response.json(
+-          { ok: true, sessionId: handle.sessionId, status: "accepted" },
++          { ok: true, sessionId: acceptedSessionId, status: "accepted" },
+           {
+             headers: {
+               "cache-control": "no-store",
+-              [EVE_SESSION_ID_HEADER]: handle.sessionId,
++              [EVE_SESSION_ID_HEADER]: acceptedSessionId,
+             },
+             status: 202,
+           },
+@@ -405,6 +473,42 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+         );
+       }),
+
++      GET("/eve/v1/session/:sessionId/checkpoint", async (req, { params }) => {
++        const authResult = await routeAuth(req, input.auth);
++        if (authResult instanceof Response) return authResult;
++        const sessionId = requireSessionId(params);
++        if (sessionId instanceof Response) return sessionId;
++        return handleCheckpointReadiness(req, sessionId);
++      }),
++
++      POST("/eve/v1/session/:sessionId/checkpoint", async (req, { attachSession, params }) => {
++        const authResult = await routeAuth(req, input.auth);
++        if (authResult instanceof Response) return authResult;
++        const sessionId = requireSessionId(params);
++        if (sessionId instanceof Response) return sessionId;
++        const body = await req.json().catch(() => null);
++        if (!body || typeof body !== "object" || !("checkpointId" in body) || !("beforeTurnId" in body) || typeof body.checkpointId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.checkpointId) || typeof body.beforeTurnId !== "string" || !/^turn_(0|[1-9][0-9]*)$/.test(body.beforeTurnId)) return Response.json({ error: "Invalid checkpoint request." }, { status: 400 });
++        const source = attachSession(sessionId);
++        if (!source.checkpoint) return Response.json({ error: "Idle checkpoints are unavailable." }, { status: 409 });
++        const result = await source.checkpoint({ checkpointId: body.checkpointId, beforeTurnId: body.beforeTurnId });
++        return Response.json(result, { status: result.status === "accepted" ? 202 : 409, headers: { "cache-control": "no-store" } });
++      }),
++      GET("/eve/v1/session/:sessionId/checkpoint/:checkpointId", async (req, { params }) => {
++        const authResult = await routeAuth(req, input.auth);
++        if (authResult instanceof Response) return authResult;
++        const sessionId = requireSessionId(params);
++        if (sessionId instanceof Response) return sessionId;
++        const checkpointId = params?.checkpointId;
++        const beforeTurnId = new URL(req.url).searchParams.get("beforeTurnId");
++        if (typeof checkpointId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkpointId) || !beforeTurnId || !/^turn_(0|[1-9][0-9]*)$/.test(beforeTurnId)) return Response.json({ error: "Invalid checkpoint reference." }, { status: 400 });
++        try { await readSessionCheckpoint({ sessionId, checkpointId, beforeTurnId }); return Response.json({ ready: true, sessionId, checkpointId, beforeTurnId }, { headers: { "cache-control": "no-store" } }); }
++        catch (error) {
++          if (error instanceof SessionCheckpointNotFoundError) return Response.json({ code: "checkpoint_not_ready" }, { status: 404, headers: { "cache-control": "no-store" } });
++          if (error instanceof SessionCheckpointRejectedError) return Response.json({ error: error.message, checkpointRejected: true }, { status: 409 });
++          throw error;
++        }
++      }),
++
+       POST(EVE_SESSION_COMPACT_ROUTE_PATTERN, async (req, { attachSession, params }) => {
+         const authResult = await routeAuth(req, input.auth);
+         if (authResult instanceof Response) return authResult;
+diff --git a/packages/eve/src/eve-channel/request.test.ts b/packages/eve/src/eve-channel/request.test.ts
+new file mode 100644
+index 00000000..488075f4
+--- /dev/null
++++ b/packages/eve/src/eve-channel/request.test.ts
+@@ -0,0 +1,14 @@
++import { expect, it } from "vitest";
++import { parseCreateBody } from "#eve-channel/request.js";
++it("accepts a named fork while preserving its exact coordinates", () => {
++  const fork = { sessionId: "source", beforeTurnId: "turn_1", checkpointId: crypto.randomUUID() };
++  const result = parseCreateBody({ message: "follow-up", fork });
++  expect(result).not.toBeInstanceOf(Response);
++  expect(result).toMatchObject({ fork });
++});
++it.each([{ checkpointId: "../invalid" }, { extra: true }])("rejects malformed named forks or unknown fields %j", (extra) => {
++  const result = parseCreateBody({ message: "follow-up", fork: { sessionId: "source", beforeTurnId: "turn_1", ...extra } });
++  expect(result).toBeInstanceOf(Response);
++  if (!(result instanceof Response)) throw new Error("Expected rejection");
++  expect(result.status).toBe(400);
++});
 diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
-index 6a52594..644afc3 100644
+index 6a525949..10bb0c3d 100644
 --- a/packages/eve/src/eve-channel/request.ts
 +++ b/packages/eve/src/eve-channel/request.ts
 @@ -1,3 +1,4 @@
@@ -179,7 +361,7 @@ index 6a52594..644afc3 100644
    activityObserver?: ActivityObserverConfig;
    callback?: SessionCallback;
    capabilities?: SessionCapabilities;
-@@ -110,7 +112,33 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
+@@ -110,7 +112,35 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
      );
    }
 
@@ -198,14 +380,16 @@ index 6a52594..644afc3 100644
 +      typeof value.beforeTurnId !== "string" ||
 +      value.beforeTurnId.length > 64 ||
 +      !/^turn_(0|[1-9][0-9]*)$/.test(value.beforeTurnId) ||
-+      Object.keys(value).some((key) => key !== "sessionId" && key !== "beforeTurnId")
++      Object.keys(value).some((key) => key !== "sessionId" && key !== "beforeTurnId" && key !== "checkpointId")
 +    ) {
 +      return Response.json(
 +        { error: "Invalid session fork reference.", ok: false },
 +        { status: 400 },
 +      );
 +    }
-+    fork = { sessionId: value.sessionId, beforeTurnId: value.beforeTurnId };
++    const checkpointId = "checkpointId" in value ? value.checkpointId : undefined;
++    if (checkpointId !== undefined && (typeof checkpointId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkpointId))) return Response.json({ error: "Invalid checkpoint identity.", ok: false }, { status: 400 });
++    fork = { sessionId: value.sessionId, beforeTurnId: value.beforeTurnId, ...(checkpointId === undefined ? {} : { checkpointId }) };
 +  }
 +
    const result: ParsedCreateBody = {
@@ -214,7 +398,7 @@ index 6a52594..644afc3 100644
      callback,
      capabilities,
 diff --git a/packages/eve/src/eve-channel/types.ts b/packages/eve/src/eve-channel/types.ts
-index 7d6e8f7..8913d33 100644
+index 7d6e8f7f..8913d337 100644
 --- a/packages/eve/src/eve-channel/types.ts
 +++ b/packages/eve/src/eve-channel/types.ts
 @@ -88,6 +88,16 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
@@ -234,8 +418,156 @@ index 7d6e8f7..8913d33 100644
    /**
     * Route auth policy: a single {@link AuthFn} or an ordered array walked by {@link routeAuth}.
     * The first entry returning a {@link SessionAuthContext} wins; `null` / `undefined` skips to
+diff --git a/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts b/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts
+new file mode 100644
+index 00000000..c5def6d3
+--- /dev/null
++++ b/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts
+@@ -0,0 +1,39 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { createSession } from "#execution/session.js";
++import { setHarnessEmissionState } from "#harness/emission-state.js";
++import { captureIdleSessionCheckpoint } from "#execution/capture-idle-session-checkpoint.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
++const records: SessionCheckpoint[] = [];
++vi.mock("#internal/workflow/runtime.js", () => ({ getRun: () => ({ getReadable: () => Object.assign(new ReadableStream({ start(controller) { for (const row of records) controller.enqueue(row); controller.close(); } }), { getTailIndex: () => Promise.resolve(records.length - 1) }) }) }));
++beforeEach(() => { records.length = 0; });
++const request = { kind: "checkpoint" as const, checkpointId: "00000000-0000-4000-8000-000000000001", beforeTurnId: "turn_1" };
++function fixture(turnId = "", sequence = 1) {
++ const session = setHarnessEmissionState(createSession({ sessionId: "source", continuationToken: "source", turnAgent: { id: "test", instructions: [], model: { id: "test" }, tools: [], workspaceSpec: { rootEntries: [] } } }), { sessionStarted: true, sequence, stepIndex: 0, turnId });
++ session.history.push({ role: "user", content: "Question" }, { role: "assistant", content: "Completed answer" });
++ const target = { sessionId: "source", writable: new WritableStream<SessionCheckpoint>({ write(row) { records.push(structuredClone(row)); } }) };
++ return { session, target, request, prepare: vi.fn(() => Promise.resolve()) };
++}
++it("captures completed idle history with no new message and retries the same immutable checkpoint", async () => {
++ const input = fixture(); await captureIdleSessionCheckpoint(input);
++ expect(records).toHaveLength(1); expect(records[0]?.snapshot.session.history).toEqual(input.session.history); expect(input.prepare).toHaveBeenCalledTimes(1);
++ input.session.history.push({ role: "user", content: "Later" });
++ await captureIdleSessionCheckpoint({ ...input, session: setHarnessEmissionState(input.session, { sessionStarted: true, sequence: 2, stepIndex: 0, turnId: "" }) });
++ expect(records).toHaveLength(1); expect(input.prepare).toHaveBeenCalledTimes(1);
++ await writeSessionCheckpoint({ ...input, delivery: { message: "Ordinary next turn" } });
++ expect(records).toHaveLength(2);
++ expect((await readSessionCheckpoint({ sessionId: "source", ...request })).snapshot.session.history).toHaveLength(2);
++ expect((await readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_1" })).snapshot.session.history).toHaveLength(3);
++});
++it.each([["turn_1", 1, "source_not_idle"], ["", 2, "source_advanced"]])("rejects unsafe boundary %s/%s without running preparation", async (turnId, sequence, reason) => {
++ const input = fixture(String(turnId), Number(sequence)); await captureIdleSessionCheckpoint(input);
++ expect(input.prepare).not.toHaveBeenCalled(); expect(records[0]?.rejected).toBe(reason);
++ await expect(readSessionCheckpoint({ sessionId: "source", ...request })).rejects.toThrow(String(reason));
++ await captureIdleSessionCheckpoint(input); expect(records).toHaveLength(1);
++});
++it("does not publish a checkpoint when application snapshot preparation fails", async () => {
++ const input = fixture(); input.prepare.mockRejectedValueOnce(new Error("Document snapshot failed"));
++ await expect(captureIdleSessionCheckpoint(input)).rejects.toThrow("Document snapshot failed"); expect(records).toHaveLength(0);
++ await captureIdleSessionCheckpoint(input); expect(records).toHaveLength(1);
++});
+diff --git a/packages/eve/src/execution/capture-idle-session-checkpoint.ts b/packages/eve/src/execution/capture-idle-session-checkpoint.ts
+new file mode 100644
+index 00000000..de97f4eb
+--- /dev/null
++++ b/packages/eve/src/execution/capture-idle-session-checkpoint.ts
+@@ -0,0 +1,39 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
++import type { HarnessSession } from "#harness/types.js";
++import type { SandboxAccess } from "#sandbox/state.js";
++import { getHarnessEmissionState } from "#harness/emission-state.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++import { readSessionCheckpoint, SessionCheckpointNotFoundError, SessionCheckpointRejectedError } from "#execution/read-session-checkpoint.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++/** Called only by the serialized session driver; never runs a model step. */
++export async function captureIdleSessionCheckpoint(input: {
++  readonly request: CheckpointSessionHookPayload;
++  readonly session: HarnessSession;
++  readonly sandbox?: SandboxAccess;
++  readonly target: { readonly sessionId: string; readonly writable: WritableStream<SessionCheckpoint> } | undefined;
++  readonly prepare: () => Promise<void>;
++}): Promise<void> {
++  if (!input.target || input.target.sessionId !== input.session.sessionId) throw new Error("Missing checkpoint writer for source session.");
++  const reference = { sessionId: input.session.sessionId, beforeTurnId: input.request.beforeTurnId, checkpointId: input.request.checkpointId };
++  try {
++    await readSessionCheckpoint(reference);
++    return;
++  } catch (error) {
++    if (error instanceof SessionCheckpointRejectedError) return;
++    if (!(error instanceof SessionCheckpointNotFoundError)) throw error;
++  }
++  const emission = getHarnessEmissionState(input.session.state);
++  const rejected = emission.turnId !== "" ? "source_not_idle" : `turn_${emission.sequence}` !== input.request.beforeTurnId ? "source_advanced" : undefined;
++  if (rejected) {
++    const snapshot = createDurableSessionState({ session: input.session }).snapshot;
++    if (!snapshot) throw new Error("Missing checkpoint snapshot.");
++    const writer = input.target.writable.getWriter();
++    try { await writer.write({ ...reference, version: 1, snapshot, rejected }); }
++    finally { writer.releaseLock(); }
++    return;
++  }
++  await input.prepare();
++  await writeSessionCheckpoint({ ...input, checkpointId: input.request.checkpointId, delivery: undefined });
++}
+diff --git a/packages/eve/src/execution/checkpoint-readiness.test.ts b/packages/eve/src/execution/checkpoint-readiness.test.ts
+new file mode 100644
+index 00000000..34299981
+--- /dev/null
++++ b/packages/eve/src/execution/checkpoint-readiness.test.ts
+@@ -0,0 +1,33 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { handleCheckpointReadiness } from "#execution/checkpoint-readiness.js";
++import { SessionCheckpointNotFoundError } from "#execution/read-session-checkpoint.js";
++
++const mocks = vi.hoisted(() => ({ read: vi.fn() }));
++vi.mock("#execution/read-session-checkpoint.js", () => ({
++  readSessionCheckpoint: mocks.read,
++  SessionCheckpointNotFoundError: class extends Error {},
++}));
++beforeEach(() => { mocks.read.mockReset(); });
++const request = (query = "beforeTurnId=turn_0") => new Request(`http://eve/checkpoint?${query}`);
++it("keeps the existing before-turn readiness receipt without disclosing checkpoint data", async () => {
++  mocks.read.mockResolvedValue({ snapshot: { private: "history" } });
++  const response = await handleCheckpointReadiness(request(), "source");
++  expect(response.status).toBe(200);
++  expect(response.headers.get("cache-control")).toBe("no-store");
++  expect(await response.json()).toEqual({ ready: true, sessionId: "source", beforeTurnId: "turn_0" });
++  expect(mocks.read).toHaveBeenCalledWith({ sessionId: "source", beforeTurnId: "turn_0" });
++});
++it.each(["", "beforeTurnId=turn_01", "beforeTurnId=turn_0&beforeTurnId=turn_1", "beforeTurnId=turn_0&checkpointId=other"])("rejects malformed or ambiguous coordinates %s before reading", async (query) => {
++  expect((await handleCheckpointReadiness(request(query), "source")).status).toBe(400);
++  expect(mocks.read).not.toHaveBeenCalled();
++});
++it("distinguishes pending from corrupt snapshots without exposing internal errors", async () => {
++  mocks.read.mockRejectedValueOnce(new SessionCheckpointNotFoundError("missing"));
++  const pending = await handleCheckpointReadiness(request(), "source");
++  expect(pending.status).toBe(404);
++  expect(await pending.json()).toEqual({ code: "checkpoint_not_ready" });
++  mocks.read.mockRejectedValueOnce(new Error("private corruption detail"));
++  const corrupt = await handleCheckpointReadiness(request(), "source");
++  expect(corrupt.status).toBe(503);
++  expect(await corrupt.json()).toEqual({ error: "Checkpoint lookup is unavailable." });
++});
+diff --git a/packages/eve/src/execution/checkpoint-readiness.ts b/packages/eve/src/execution/checkpoint-readiness.ts
+new file mode 100644
+index 00000000..5ffdab98
+--- /dev/null
++++ b/packages/eve/src/execution/checkpoint-readiness.ts
+@@ -0,0 +1,13 @@
++import { readSessionCheckpoint, SessionCheckpointNotFoundError } from "#execution/read-session-checkpoint.js";
++export async function handleCheckpointReadiness(request: Request, sessionId: string): Promise<Response> {
++  const query = new URL(request.url).searchParams;
++  const beforeTurnId = query.get("beforeTurnId");
++  if (query.size !== 1 || !beforeTurnId || !/^turn_(0|[1-9][0-9]*)$/.test(beforeTurnId)) return Response.json({ error: "Invalid checkpoint reference." }, { status: 400 });
++  try {
++    await readSessionCheckpoint({ sessionId, beforeTurnId });
++    return Response.json({ ready: true, sessionId, beforeTurnId }, { headers: { "cache-control": "no-store" } });
++  } catch (error) {
++    if (error instanceof SessionCheckpointNotFoundError) return Response.json({ code: "checkpoint_not_ready" }, { status: 404, headers: { "cache-control": "no-store" } });
++    return Response.json({ error: "Checkpoint lookup is unavailable." }, { status: 503, headers: { "cache-control": "no-store" } });
++  }
++}
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
-index 2aae307..3d86895 100644
+index 2aae3078..3d868957 100644
 --- a/packages/eve/src/execution/create-session-step.ts
 +++ b/packages/eve/src/execution/create-session-step.ts
 @@ -1,3 +1,7 @@
@@ -277,8 +609,738 @@ index 2aae307..3d86895 100644
 +
 +  await restoreSessionHistory(input);
  }
+diff --git a/packages/eve/src/execution/inline-turn.ts b/packages/eve/src/execution/inline-turn.ts
+index ecdbd28e..61bd460c 100644
+--- a/packages/eve/src/execution/inline-turn.ts
++++ b/packages/eve/src/execution/inline-turn.ts
+@@ -1,3 +1,4 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
+ import type { DeliverHookPayload, HookPayload, SessionCapabilities } from "#channel/types.js";
+ import { readAcceptedDeploymentId } from "#execution/accepted-delivery-deployment.js";
+ import { cancelAllIndexedSessionTasksStep } from "#execution/cancel-indexed-session-tasks-step.js";
+@@ -32,7 +33,7 @@ export type InlineTurnOutcome =
+ /** Runs same-deployment steps directly until they need the shared turn runner. */
+ export async function runInlineTurn(input: {
+   readonly bufferedDeliveries: DeliverHookPayload[];
+-  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   readonly cancelledTaskIds?: Set<string>;
+   readonly capabilities?: SessionCapabilities;
+   readonly commandInbox: SessionCommandInbox;
+@@ -159,7 +160,7 @@ function continueOutcome(
+
+ class InlineTurnControl {
+   private readonly bufferedDeliveries: DeliverHookPayload[];
+-  private readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  private readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   private readonly cancelledTaskIds: Set<string>;
+   private readonly commandInbox: SessionCommandInbox;
+   private readonly controller = new AbortController();
+@@ -170,7 +171,7 @@ class InlineTurnControl {
+
+   constructor(input: {
+     readonly bufferedDeliveries: DeliverHookPayload[];
+-    readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++    readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+     readonly cancelledTaskIds?: Set<string>;
+     readonly commandInbox: SessionCommandInbox;
+     readonly expectedTurnId: string;
+@@ -242,6 +243,7 @@ class InlineTurnControl {
+       if (command.turnPolicy === "steer" && deliveryHasMessage(command)) this.abort({});
+       return;
+     }
++    if (command.kind === "checkpoint") { this.bufferedSessionControls.push(command); return; }
+     if (command.kind === "clear" || command.kind === "compact") {
+       this.bufferedSessionControls.push(command.kind);
+       return;
+diff --git a/packages/eve/src/execution/parked-delivery-wait.ts b/packages/eve/src/execution/parked-delivery-wait.ts
+index 6389215f..9fdf8add 100644
+--- a/packages/eve/src/execution/parked-delivery-wait.ts
++++ b/packages/eve/src/execution/parked-delivery-wait.ts
+@@ -1,3 +1,4 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
+ import type { DeliverHookPayload, DeliverPayload } from "#channel/types.js";
+ import { cancelAllIndexedSessionTasksStep } from "#execution/cancel-indexed-session-tasks-step.js";
+ import { routeDeliverToChildren } from "#execution/route-child-delivery.js";
+@@ -12,6 +13,7 @@ import {
+ import { coalesceDeliveries } from "#harness/messages.js";
+
+ type NextSessionAction =
++  | CheckpointSessionHookPayload
+   | { readonly kind: "clear" }
+   | { readonly kind: "compact" }
+   | { readonly kind: "expired" }
+@@ -32,6 +34,7 @@ export interface AuthorizationCallbackInstruction {
+
+ /** What the parked driver should do with the next session activity. */
+ export type NextTurnInstruction =
++  | CheckpointSessionHookPayload
+   | { readonly kind: "clear" }
+   | { readonly kind: "compact" }
+   | { readonly kind: "expired" }
+@@ -63,7 +66,7 @@ export type NextTurnInstruction =
+ export async function nextTurnDelivery(input: {
+   readonly awaitAuthorizationCallbacks?: boolean;
+   readonly bufferedDeliveries: DeliverHookPayload[];
+-  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   readonly cancelledTaskIds?: Set<string>;
+   readonly commandInbox: SessionCommandInbox;
+   readonly deferDeliveries?: boolean;
+@@ -85,7 +88,7 @@ export async function nextTurnDelivery(input: {
+
+ async function awaitNextTurnDelivery(input: {
+   readonly bufferedDeliveries: DeliverHookPayload[];
+-  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   readonly cancelledTaskIds?: Set<string>;
+   readonly commandInbox: SessionCommandInbox;
+   readonly deferDeliveries?: boolean;
+@@ -111,7 +114,7 @@ async function awaitNextTurnDelivery(input: {
+     }
+
+     if (nextAction.kind !== "delivery") {
+-      return { kind: nextAction.kind };
++      return nextAction;
+     }
+
+     const deliver = nextAction.delivery;
+@@ -142,7 +145,7 @@ async function awaitNextTurnDelivery(input: {
+
+ async function waitForNextSessionAction(input: {
+   readonly bufferedDeliveries: DeliverHookPayload[];
+-  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   readonly cancelledTaskIds: Set<string>;
+   readonly commandInbox: SessionCommandInbox;
+   readonly deferDeliveries?: boolean;
+@@ -151,7 +154,7 @@ async function waitForNextSessionAction(input: {
+ }): Promise<NextSessionAction> {
+   const pendingSessionControl = input.bufferedSessionControls.shift();
+   if (pendingSessionControl !== undefined) {
+-    return { kind: pendingSessionControl };
++    return typeof pendingSessionControl === "string" ? { kind: pendingSessionControl } : pendingSessionControl;
+   }
+
+   while (
+@@ -212,6 +215,7 @@ async function waitForNextSessionAction(input: {
+       return { kind: "expired" };
+     }
+
++    if (decoded.kind === "checkpoint") return decoded;
+     if (decoded.kind === "clear" || decoded.kind === "compact" || decoded.kind === "reset") {
+       return { kind: decoded.kind };
+     }
+diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
+new file mode 100644
+index 00000000..c54972bc
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-checkpoint.test.ts
+@@ -0,0 +1,101 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++
++function checkpoint(): SessionCheckpoint {
++  return {
++    version: 1,
++    sessionId: "source",
++    beforeTurnId: "turn_0",
++    snapshot: {
++      version: 1,
++      session: {
++        sessionId: "source",
++        continuationToken: "",
++        history: [],
++        agent: { system: "current" },
++      },
++    },
++  };
++}
++function install(values: SessionCheckpoint[], tail = values.length - 1) {
++  const cancel = vi.fn();
++  let index = 0;
++  const stream = Object.assign(
++    new ReadableStream<SessionCheckpoint>({
++      pull(controller) {
++        const value = values[index++];
++        if (value) controller.enqueue(value);
++      },
++      cancel,
++    }),
++    { getTailIndex: async () => tail },
++  );
++  mocks.getRun.mockReturnValue({ getReadable: () => stream });
++  return { stream, cancel };
++}
++
++it("accepts identical retry records without waiting for the live stream to finish", async () => {
++  const value = checkpoint();
++  const { stream, cancel } = install([value, value]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).resolves.toEqual(value);
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(stream.locked).toBe(false);
++});
++
++it("rejects conflicting retries and foreign session records", async () => {
++  const value = checkpoint();
++  install([
++    value,
++    {
++      ...value,
++      snapshot: {
++        ...value.snapshot,
++        session: { ...value.snapshot.session, history: [{ role: "user", content: "different" }] },
++      },
++    },
++  ]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("Conflicting");
++  install([{ ...value, sessionId: "other" }]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("identity");
++});
++
++it("bounds oversized and missing checkpoint scans", async () => {
++  install([], 1_000);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("scan limit");
++  install([]);
++  await expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("not found");
++});
++
++it("times out stalled reads even when stream cancellation never settles", async () => {
++  vi.useFakeTimers();
++  const cancel = vi.fn(() => new Promise<void>(() => {}));
++  const stream = Object.assign(new ReadableStream<SessionCheckpoint>({ cancel }), {
++    getTailIndex: async () => 0,
++  });
++  mocks.getRun.mockReturnValue({ getReadable: () => stream });
++  const result = expect(
++    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
++  ).rejects.toThrow("timed out");
++  await vi.advanceTimersByTimeAsync(10_000);
++  await result;
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(stream.locked).toBe(false);
++});
+diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
+new file mode 100644
+index 00000000..e9f95f04
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-checkpoint.ts
+@@ -0,0 +1,68 @@
++import { isDeepStrictEqual } from "node:util";
++import { getRun } from "#internal/workflow/runtime.js";
++import { migrateDurableSessionSnapshot } from "#execution/durable-session-migrations/snapshot.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  type SessionCheckpoint,
++  type SessionForkReference,
++} from "#execution/session-checkpoint-contract.js";
++
++export class SessionCheckpointNotFoundError extends Error {}
++export class SessionCheckpointRejectedError extends Error {}
++
++const MAX_CHECKPOINTS = 1_000;
++const READ_TIMEOUT_MS = 10_000;
++
++/** Reads a finite checkpoint prefix. Callers must authorize the source session before invoking this. */
++export async function readSessionCheckpoint(
++  input: SessionForkReference,
++): Promise<SessionCheckpoint> {
++  const stream = getRun(input.sessionId).getReadable<SessionCheckpoint>({
++    namespace: SESSION_CHECKPOINT_NAMESPACE,
++  });
++  const reader = stream.getReader();
++  let timeout: ReturnType<typeof setTimeout> | undefined;
++  const read = async (): Promise<SessionCheckpoint> => {
++    const tail = await stream.getTailIndex();
++    if (tail >= MAX_CHECKPOINTS) throw new Error("Session checkpoint scan limit exceeded.");
++    let found: SessionCheckpoint | undefined;
++    for (let index = 0; index <= tail; index++) {
++      const { value, done } = await reader.read();
++      if (done || value === undefined)
++        throw new Error("Session checkpoint stream ended unexpectedly.");
++      if (value.version !== 1 || value.sessionId !== input.sessionId)
++        throw new Error("Invalid session checkpoint identity or version.");
++      if (value.checkpointId !== input.checkpointId) continue;
++      if (value.beforeTurnId !== input.beforeTurnId) {
++        if (input.checkpointId) throw new SessionCheckpointRejectedError("Checkpoint identity already has a different source turn.");
++        continue;
++      }
++      if (value.rejected) throw new SessionCheckpointRejectedError(value.rejected);
++      const snapshot = migrateDurableSessionSnapshot(value.snapshot);
++      if (snapshot.session.sessionId !== input.sessionId)
++        throw new Error("Invalid checkpoint snapshot identity.");
++      if (found && !isDeepStrictEqual(found.snapshot, snapshot))
++        throw new Error("Conflicting session checkpoint retries.");
++      found = { ...value, snapshot };
++    }
++    if (!found) throw new SessionCheckpointNotFoundError("Session checkpoint was not found.");
++    return found;
++  };
++  try {
++    return await Promise.race([
++      read(),
++      new Promise<never>((_resolve, reject) => {
++        timeout = setTimeout(
++          () => reject(new Error("Session checkpoint read timed out.")),
++          READ_TIMEOUT_MS,
++        );
++      }),
++    ]);
++  } finally {
++    if (timeout !== undefined) clearTimeout(timeout);
++    void reader.cancel().catch(() => {
++      /* Cleanup must not delay the result if the stream stalls or cancellation fails. */
++    });
++    reader.releaseLock();
++  }
++}
+diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
+new file mode 100644
+index 00000000..5588bb8f
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-checkpoint.test.ts
+@@ -0,0 +1,95 @@
++import { expect, it } from "vitest";
++import { createSession } from "#execution/session.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++import { setHarnessEmissionState } from "#harness/emission-state.js";
++import { restoreSessionCheckpoint } from "#execution/restore-session-checkpoint.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++function fresh(sessionId: string) {
++  return createSession({
++    sessionId,
++    continuationToken: `${sessionId}-inbox`,
++    turnAgent: {
++      id: "test",
++      instructions: ["Current instructions"],
++      model: { id: "current-model" },
++      tools: [],
++      workspaceSpec: { rootEntries: [] },
++    },
++  });
++}
++function checkpoint(): SessionCheckpoint {
++  const source = setHarnessEmissionState(
++    {
++      ...fresh("source"),
++      state: { "source-secret-state": { approval: "source-request", consumedTokens: 123 } },
++      history: [
++        { role: "user", content: "remember this" },
++        { role: "assistant", content: "Remembered." },
++      ],
++    },
++    { sessionStarted: true, sequence: 4, stepIndex: 0, turnId: "" },
++  );
++  const snapshot = createDurableSessionState({ session: source }).snapshot;
++  if (!snapshot) throw new Error("Missing test snapshot");
++  return { version: 1, sessionId: "source", beforeTurnId: "turn_4", snapshot };
++}
++
++it("restores history and sequence while retaining fresh target identity, model and state", () => {
++  const source = checkpoint();
++  const target = fresh("branch");
++  const restored = restoreSessionCheckpoint({ target, checkpoint: source });
++  expect(restored.sessionId).toBe("branch");
++  expect(restored.continuationToken).toBe("branch-inbox");
++  expect(restored.agent).toBe(target.agent);
++  expect(restored.state?.["source-secret-state"]).toBeUndefined();
++  expect(restored.state?.["eve.harness.emission"]).toEqual({
++    sessionStarted: false,
++    sequence: 4,
++    stepIndex: 0,
++    turnId: "",
++  });
++  expect(restored.history).toEqual(source.snapshot.session.history);
++  restored.history.push({ role: "user", content: "branch only" });
++  expect(source.snapshot.session.history).toHaveLength(2);
++});
++
++it("rejects wrong identities and an already-used target", () => {
++  const source = checkpoint();
++  expect(() => restoreSessionCheckpoint({ target: fresh("source"), checkpoint: source })).toThrow(
++    "Invalid",
++  );
++  expect(() =>
++    restoreSessionCheckpoint({
++      target: fresh("branch"),
++      checkpoint: { ...source, sessionId: "other" },
++    }),
++  ).toThrow("Invalid");
++  expect(() =>
++    restoreSessionCheckpoint({
++      target: { ...fresh("branch"), history: [{ role: "user", content: "existing" }] },
++      checkpoint: source,
++    }),
++  ).toThrow("fresh target");
++});
++
++it("does not revive unfinished tools or silently discard sandbox attachments", () => {
++  const source = checkpoint();
++  source.snapshot.session.history.push({
++    role: "assistant",
++    content: [{ type: "tool-call", toolCallId: "pending", toolName: "dangerous", input: {} }],
++  });
++  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
++    "unresolved tool",
++  );
++  source.snapshot.session.history.pop();
++  source.snapshot.session.history.push({
++    role: "user",
++    content: [
++      { type: "file", mediaType: "image/png", data: new URL("eve-sandbox:?path=/old/file") },
++    ],
++  });
++  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
++    "resource copying",
++  );
++});
+diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
+new file mode 100644
+index 00000000..dd42dbda
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-checkpoint.ts
+@@ -0,0 +1,66 @@
++import type { HarnessSession } from "#harness/types.js";
++import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
++import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
++
++/** Seeds a fresh session; source execution identities and capabilities are never restored. */
++export function restoreSessionCheckpoint(input: {
++  readonly target: HarnessSession;
++  readonly checkpoint: SessionCheckpoint;
++}): HarnessSession {
++  const { target, checkpoint } = input;
++  const source = checkpoint.snapshot.session;
++  const emission = getHarnessEmissionState(source.state);
++  if (
++    checkpoint.version !== 1 ||
++    checkpoint.snapshot.version !== 1 ||
++    source.sessionId !== checkpoint.sessionId ||
++    target.sessionId === source.sessionId ||
++    checkpoint.beforeTurnId !== `turn_${emission.sequence}` ||
++    emission.turnId !== ""
++  ) {
++    throw new Error("Invalid session fork checkpoint.");
++  }
++  if (target.history.length || getHarnessEmissionState(target.state).sessionStarted) {
++    throw new Error("Session checkpoint restoration requires a fresh target.");
++  }
++  const forkCheckpoint = source.sandboxState?.forkCheckpoint;
++  if (
++    (source.sandboxState?.initialized || source.sandboxState?.session != null) &&
++    !forkCheckpoint
++  ) {
++    throw new Error("Forking sandbox state requires resource copying.");
++  }
++  const pendingTools = new Set<string>();
++  for (const message of source.history) {
++    if (!Array.isArray(message.content)) continue;
++    for (const part of message.content) {
++      if (
++        !forkCheckpoint &&
++        part.type === "file" &&
++        (part.data instanceof URL
++          ? part.data.protocol === "eve-sandbox:"
++          : typeof part.data === "string" && part.data.startsWith("eve-sandbox:"))
++      ) {
++        throw new Error("Forking sandbox attachments requires resource copying.");
++      }
++      if (part.type === "tool-call" && !part.providerExecuted) pendingTools.add(part.toolCallId);
++      if (part.type === "tool-result") pendingTools.delete(part.toolCallId);
++    }
++  }
++  if (pendingTools.size) throw new Error("Cannot fork a checkpoint with unresolved tool calls.");
++  return setHarnessEmissionState(
++    {
++      ...target,
++      history: [...source.history],
++      ...(forkCheckpoint
++        ? { sandboxState: { initialized: false, session: null, forkCheckpoint } }
++        : {}),
++    },
++    {
++      sessionStarted: false,
++      sequence: emission.sequence,
++      stepIndex: 0,
++      turnId: "",
++    },
++  );
++}
+diff --git a/packages/eve/src/execution/restore-session-history-step.test.ts b/packages/eve/src/execution/restore-session-history-step.test.ts
+new file mode 100644
+index 00000000..22a3012a
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-history-step.test.ts
+@@ -0,0 +1,121 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { restoreSessionHistory } from "#execution/restore-session-history-step.js";
++import {
++  createMessageReceivedEvent,
++  createSessionWaitingEvent,
++  createStepCompletedEvent,
++  createTurnStartedEvent,
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++  type UnstampedMessageStreamEvent,
++} from "#protocol/message.js";
++
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++
++const fork = { sessionId: "source", beforeTurnId: "turn_1" };
++function setup(events: UnstampedMessageStreamEvent[], close = true) {
++  const cancel = vi.fn();
++  mocks.getRun.mockReturnValue({
++    getReadable: () =>
++      new ReadableStream<Uint8Array>({
++        start(controller) {
++          for (const event of events)
++            controller.enqueue(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
++          if (close) controller.close();
++        },
++        cancel,
++      }),
++  });
++  const output: Uint8Array[] = [];
++  const writable = new WritableStream<Uint8Array>({
++    write(chunk) {
++      output.push(chunk);
++    },
++  });
++  return { cancel, writable, output };
++}
++
++it("copies only the display prefix without billing events or continuation capabilities", async () => {
++  const { writable, output } = setup([
++    createMessageReceivedEvent({ message: "inherited", sequence: 0, turnId: "turn_0" }),
++    createStepCompletedEvent({
++      finishReason: "stop",
++      sequence: 0,
++      stepIndex: 0,
++      turnId: "turn_0",
++      usage: { costUsd: 5 },
++    }),
++    createSessionWaitingEvent("private-continuation"),
++    createTurnStartedEvent({ sequence: 1, turnId: "turn_1" }),
++    createMessageReceivedEvent({ message: "excluded", sequence: 1, turnId: "turn_1" }),
++  ]);
++  await restoreSessionHistory({ fork, writable });
++  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
++  expect(text).toContain('"history.restored"');
++  expect(text).toContain("inherited");
++  expect(text).not.toContain("private-continuation");
++  expect(text).not.toContain("step.completed");
++  expect(text).not.toContain("costUsd");
++  expect(text).not.toContain("excluded");
++  expect(writable.locked).toBe(false);
++});
++
++it("writes nothing if the requested turn is missing", async () => {
++  const { writable, output } = setup([]);
++  await expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("boundary was not found");
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
++
++it("cancels a stalled source at the deadline without leaving a pending writer", async () => {
++  vi.useFakeTimers();
++  const { writable, output, cancel } = setup([], false);
++  const result = expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("timed out");
++  await vi.advanceTimersByTimeAsync(10_000);
++  await result;
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
++
++it("bounds raw bytes before buffering an unfinished NDJSON event", async () => {
++  const { writable, output } = setup([]);
++  const chunk = new TextEncoder().encode("x".repeat(1024 * 1024));
++  mocks.getRun.mockReturnValue({
++    getReadable: () =>
++      new ReadableStream<Uint8Array>({
++        pull(controller) {
++          controller.enqueue(chunk);
++        },
++      }),
++  });
++  await expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("byte limit");
++  expect(output).toEqual([]);
++  expect(writable.locked).toBe(false);
++});
++
++
++it("restores an idle prefix at the exact named marker before any future user turn", async () => {
++  const checkpointId = crypto.randomUUID();
++  const waiting = createSessionWaitingEvent("private-continuation");
++  const { writable, output } = setup([
++    createMessageReceivedEvent({ message: "included idle history", sequence: 0, turnId: "turn_0" }),
++    { ...waiting, data: { ...waiting.data, checkpoint: { checkpointId, beforeTurnId: "turn_1" } } },
++    createMessageReceivedEvent({ message: "excluded later history", sequence: 1, turnId: "turn_1" }),
++  ], false);
++  await restoreSessionHistory({ fork: { ...fork, checkpointId }, writable });
++  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
++  expect(text).toContain("included idle history");
++  expect(text).not.toContain("excluded later history");
++  expect(text).not.toContain("private-continuation");
++});
++it("never substitutes an ordinary turn boundary for a named checkpoint", async () => {
++  const { writable, output } = setup([createTurnStartedEvent({ sequence: 1, turnId: "turn_1" })]);
++  await expect(restoreSessionHistory({ fork: { ...fork, checkpointId: crypto.randomUUID() }, writable })).rejects.toThrow("named checkpoint boundary");
++  expect(output).toEqual([]);
++});
+diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
+new file mode 100644
+index 00000000..6d3476bc
+--- /dev/null
++++ b/packages/eve/src/execution/restore-session-history-step.ts
+@@ -0,0 +1,121 @@
++import { getRun } from "#internal/workflow/runtime.js";
++import { readNdjsonStream } from "#client/ndjson.js";
++import {
++  EVE_MESSAGE_STREAM_VERSION,
++  encodeMessageStreamEvent,
++  stampMessageStreamEvent,
++  type HistoryProjectionEvent,
++  type MessageStreamEvent,
++} from "#protocol/message.js";
++import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
++
++const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
++const MAX_HISTORY_EVENTS = 50_000;
++const READ_TIMEOUT_MS = 10_000;
++
++/** Writes a display-only prefix after native checkpoint restoration has succeeded. */
++export async function restoreSessionHistory(input: {
++  readonly fork: SessionForkReference;
++  readonly writable: WritableStream<Uint8Array>;
++}): Promise<void> {
++  const events = await readSessionHistory(input.fork);
++  const writer = input.writable.getWriter();
++  try {
++    await writer.write(
++      encodeMessageStreamEvent(
++        stampMessageStreamEvent({
++          type: "history.restored",
++          data: {
++            beforeTurnId: input.fork.beforeTurnId,
++            sourceSessionId: input.fork.sessionId,
++            events,
++          },
++        }),
++      ),
++    );
++  } finally {
++    writer.releaseLock();
++  }
++}
++
++async function readSessionHistory(fork: SessionForkReference): Promise<HistoryProjectionEvent[]> {
++  const abort = new AbortController();
++  const source = getRun(fork.sessionId).getReadable<Uint8Array>();
++  let bytes = 0;
++  const stream = source.pipeThrough(
++    new TransformStream<Uint8Array, Uint8Array>({
++      transform(chunk, controller) {
++        bytes += chunk.byteLength;
++        if (bytes > MAX_HISTORY_BYTES) throw new Error("Session history byte limit exceeded.");
++        controller.enqueue(chunk);
++      },
++    }),
++    { signal: abort.signal },
++  );
++  const events: HistoryProjectionEvent[] = [];
++  const seen = new Set<string>();
++  let scanned = 0;
++  const append = (event: HistoryProjectionEvent) => {
++    if (seen.has(event.meta.id)) return;
++    seen.add(event.meta.id);
++    events.push(event);
++    if (events.length > MAX_HISTORY_EVENTS)
++      throw new Error("Session history event limit exceeded.");
++  };
++  const timeout = setTimeout(
++    () => abort.abort(new Error("Session history read timed out.")),
++    READ_TIMEOUT_MS,
++  );
++  try {
++    for await (const event of readNdjsonStream(stream, {
++      streamVersion: EVE_MESSAGE_STREAM_VERSION,
++    })) {
++      if (++scanned > MAX_HISTORY_EVENTS) {
++        throw new Error("Session history scan limit exceeded.");
++      }
++      if (fork.checkpointId && event.type === "session.waiting" && event.data.checkpoint?.checkpointId === fork.checkpointId) {
++        if (event.data.checkpoint.beforeTurnId !== fork.beforeTurnId) throw new Error("Session history checkpoint boundary mismatch.");
++        return events;
++      }
++      if (event.type === "turn.started" && event.data.turnId === fork.beforeTurnId) {
++        if (fork.checkpointId) throw new Error("Session history named checkpoint boundary was not found.");
++        return events;
++      }
++      if (event.type === "history.restored") {
++        for (const historical of event.data.events) append(historical);
++      } else if (isHistoryProjectionEvent(event)) {
++        append(event);
++      }
++    }
++    throw new Error("Session history turn boundary was not found.");
++  } finally {
++    clearTimeout(timeout);
++    abort.abort();
++  }
++}
++
++function isHistoryProjectionEvent(event: MessageStreamEvent): event is HistoryProjectionEvent {
++  switch (event.type) {
++    case "message.received":
++    case "step.started":
++    case "message.appended":
++    case "message.completed":
++    case "reasoning.appended":
++    case "reasoning.completed":
++    case "action.input.appended":
++    case "actions.requested":
++    case "action.partial":
++    case "action.result":
++    case "input.requested":
++    case "input.resolved":
++    case "approval.candidate":
++    case "approval.settled":
++    case "result.completed":
++    case "turn.completed":
++    case "turn.cancelled":
++    case "turn.failed":
++      return true;
++    default:
++      return false;
++  }
++}
 diff --git a/packages/eve/src/execution/sandbox/bindings/just-bash.ts b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
-index a3aa9df..5104e8b 100644
+index a3aa9df3..5104e8b1 100644
 --- a/packages/eve/src/execution/sandbox/bindings/just-bash.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
 @@ -1,3 +1,7 @@
@@ -335,8 +1397,280 @@ index a3aa9df..5104e8b 100644
      },
    };
  }
+diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
+new file mode 100644
+index 00000000..f0c2d504
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
+@@ -0,0 +1,129 @@
++import { createJustBashSandboxBackend } from "./just-bash.js";
++import { mkdtemp, mkdir, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { afterEach, expect, it } from "vitest";
++import { captureLocalForkCheckpoint, restoreLocalForkCheckpoint } from "./local-fork-checkpoint.js";
++
++const roots: string[] = [];
++afterEach(async () => {
++  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
++});
++
++async function setup() {
++  const root = await mkdtemp(join(tmpdir(), "eve-fork-files-"));
++  roots.push(root);
++  const filesystemRoot = join(root, "source", "fs");
++  await mkdir(join(filesystemRoot, "workspace", "attachments"), { recursive: true });
++  return {
++    root,
++    filesystemRoot,
++    checkpointsRoot: join(root, "checkpoints"),
++    sessionKey: "source",
++    checkpointKey: "turn_2",
++  };
++}
++
++it("captures immutable binary files and restores independent sessions without source environment", async () => {
++  const input = await setup();
++  const file = join(input.filesystemRoot, "workspace", "attachments", "sample.pdf");
++  await writeFile(file, new Uint8Array([0, 255, 10, 128]));
++  await writeFile(join(input.root, "source", "metadata.json"), '{"env":{"SECRET":"source-only"}}');
++  const checkpoint = await captureLocalForkCheckpoint(input);
++  if (!checkpoint) throw new Error("Missing checkpoint");
++  await writeFile(file, "changed later");
++  expect(await captureLocalForkCheckpoint(input)).toEqual(checkpoint);
++  const targetRoot = join(input.root, "branch");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
++  const restored = join(targetRoot, "fs", "workspace", "attachments", "sample.pdf");
++  expect(await readFile(restored)).toEqual(Buffer.from([0, 255, 10, 128]));
++  await expect(readFile(join(targetRoot, "metadata.json"))).rejects.toMatchObject({
++    code: "ENOENT",
++  });
++  await writeFile(restored, "branch change");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
++  expect(await readFile(restored, "utf8")).toBe("branch change");
++  expect(await readFile(file, "utf8")).toBe("changed later");
++  const sibling = join(input.root, "sibling");
++  await restoreLocalForkCheckpoint({ ...input, targetRoot: sibling, checkpoint });
++  expect(await readFile(join(sibling, "fs", "workspace", "attachments", "sample.pdf"))).toEqual(
++    Buffer.from([0, 255, 10, 128]),
++  );
++  const different = await captureLocalForkCheckpoint({ ...input, checkpointKey: "turn_3" });
++  if (!different) throw new Error("Missing checkpoint");
++  await expect(
++    restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint: different }),
++  ).rejects.toThrow("different fork checkpoint");
++});
++
++it("rejects escaping identifiers, filesystem links, and oversized snapshots", async () => {
++  const input = await setup();
++  await expect(
++    restoreLocalForkCheckpoint({
++      ...input,
++      targetRoot: join(input.root, "target"),
++      checkpoint: { version: 1, id: "../source" },
++    }),
++  ).rejects.toThrow("Invalid local");
++  const link = join(input.filesystemRoot, "workspace", "link");
++  await symlink(input.root, link);
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++  await rm(link);
++  const large = join(input.filesystemRoot, "workspace", "large");
++  await writeFile(large, "");
++  await truncate(large, 128 * 1024 * 1024 + 1);
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++});
++
++it("clones the real just-bash backend while keeping file mutations isolated", async () => {
++  const input = await setup();
++  const backend = createJustBashSandboxBackend();
++  const runtimeContext = { appRoot: input.root };
++  const source = await backend.create({
++    runtimeContext,
++    sessionKey: "source-live",
++    templateKey: null,
++  });
++  const branchHandles = [];
++  try {
++    await source.session.writeTextFile({ path: "original.txt", content: "before edit" });
++    const checkpoint = await source.captureForkCheckpoint?.("turn_1");
++    if (!checkpoint) throw new Error("Missing fork checkpoint capability");
++    await source.session.writeTextFile({ path: "original.txt", content: "after edit" });
++    const branch = await backend.create({
++      runtimeContext,
++      sessionKey: "branch-live",
++      templateKey: null,
++      forkCheckpoint: checkpoint,
++    });
++    branchHandles.push(branch);
++    expect(await branch.session.readTextFile({ path: "original.txt" })).toBe("before edit");
++    await branch.session.writeTextFile({ path: "original.txt", content: "branch edit" });
++    expect(await source.session.readTextFile({ path: "original.txt" })).toBe("after edit");
++    const saved = await branch.captureState();
++    await branch.stop();
++    const resumed = await backend.create({
++      runtimeContext,
++      sessionKey: "branch-live",
++      templateKey: null,
++      existingMetadata: saved.metadata,
++    });
++    branchHandles.push(resumed);
++    expect(await resumed.session.readTextFile({ path: "original.txt" })).toBe("branch edit");
++  } finally {
++    await source.shutdown();
++    await Promise.all(branchHandles.map((handle) => handle.shutdown()));
++  }
++});
++
++it("bounds a single wide directory before copying it", async () => {
++  const input = await setup();
++  for (let start = 0; start < 20_000; start += 100) {
++    await Promise.all(
++      Array.from({ length: 100 }, (_, offset) =>
++        writeFile(join(input.filesystemRoot, `file-${start + offset}`), ""),
++      ),
++    );
++  }
++  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
++}, 30_000);
+diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
+new file mode 100644
+index 00000000..a89306d5
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
+@@ -0,0 +1,131 @@
++import { createHash, randomUUID } from "node:crypto";
++import {
++  cp,
++  lstat,
++  mkdir,
++  opendir,
++  readFile,
++  realpath,
++  rename,
++  rm,
++  writeFile,
++} from "node:fs/promises";
++import { dirname, join } from "node:path";
++
++const MAX_FILES = 20_000;
++const MAX_BYTES = 128 * 1024 * 1024;
++const DIGEST = /^[a-f0-9]{64}$/;
++
++export class LocalForkUnsupportedError extends Error {}
++
++/** Filesystem-only snapshots: reconnect metadata and process environment are excluded. */
++export async function captureLocalForkCheckpoint(input: {
++  readonly checkpointsRoot: string;
++  readonly filesystemRoot: string;
++  readonly sessionKey: string;
++  readonly checkpointKey: string;
++}): Promise<Record<string, unknown> | undefined> {
++  const id = createHash("sha256")
++    .update(JSON.stringify([input.sessionKey, input.checkpointKey]))
++    .digest("hex");
++  const target = join(input.checkpointsRoot, id);
++  if (!(await exists(target))) {
++    try {
++      await validateFilesystem(input.filesystemRoot);
++    } catch (error) {
++      if (error instanceof LocalForkUnsupportedError) return undefined;
++      throw error;
++    }
++    await copyOnce(input.filesystemRoot, target);
++  }
++  return { version: 1, id };
++}
++
++export async function restoreLocalForkCheckpoint(input: {
++  readonly checkpointsRoot: string;
++  readonly targetRoot: string;
++  readonly checkpoint: Record<string, unknown>;
++}): Promise<void> {
++  if (
++    input.checkpoint.version !== 1 ||
++    typeof input.checkpoint.id !== "string" ||
++    !DIGEST.test(input.checkpoint.id)
++  ) {
++    throw new Error("Invalid local sandbox fork checkpoint.");
++  }
++  const source = join(input.checkpointsRoot, input.checkpoint.id);
++  const canonicalRoot = await realpath(input.checkpointsRoot);
++  if (dirname(await realpath(source)) !== canonicalRoot)
++    throw new Error("Invalid local sandbox checkpoint path.");
++  await validateFilesystem(source);
++  await publishOnce(input.targetRoot, async (temporary) => {
++    await mkdir(temporary, { recursive: true });
++    await cp(source, join(temporary, "fs"), { recursive: true, verbatimSymlinks: true });
++    await writeFile(join(temporary, "fork-checkpoint.json"), JSON.stringify(input.checkpoint));
++  });
++  const recorded = JSON.parse(
++    await readFile(join(input.targetRoot, "fork-checkpoint.json"), "utf8"),
++  );
++  if (recorded.version !== 1 || recorded.id !== input.checkpoint.id)
++    throw new Error("Sandbox session already has a different fork checkpoint.");
++}
++
++async function exists(path: string) {
++  try {
++    await lstat(path);
++    return true;
++  } catch (error) {
++    if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
++    throw error;
++  }
++}
++
++async function validateFilesystem(root: string) {
++  const pending = [root];
++  let entries = 1;
++  let bytes = 0;
++  while (pending.length) {
++    const path = pending.pop();
++    if (path === undefined) break;
++    const info = await lstat(path);
++    if (info.isSymbolicLink()) {
++      throw new LocalForkUnsupportedError(
++        "Sandbox fork symlinks require backend-specific restoration.",
++      );
++    }
++    if (info.isDirectory()) {
++      const directory = await opendir(path);
++      for await (const entry of directory) {
++        if (++entries > MAX_FILES)
++          throw new LocalForkUnsupportedError("Sandbox fork file limit exceeded.");
++        pending.push(join(path, entry.name));
++      }
++    } else if (info.isFile()) {
++      bytes += info.size;
++      if (bytes > MAX_BYTES)
++        throw new LocalForkUnsupportedError("Sandbox fork byte limit exceeded.");
++    } else {
++      throw new LocalForkUnsupportedError("Sandbox fork contains a non-file resource.");
++    }
++  }
++}
++
++async function copyOnce(source: string, target: string) {
++  await publishOnce(target, async (temporary) => {
++    await cp(source, temporary, { recursive: true, verbatimSymlinks: true });
++  });
++}
++
++async function publishOnce(target: string, populate: (temporary: string) => Promise<void>) {
++  if (await exists(target)) return;
++  await mkdir(dirname(target), { recursive: true });
++  const temporary = `${target}.${randomUUID()}.tmp`;
++  try {
++    await populate(temporary);
++    await rename(temporary, target);
++  } catch (error) {
++    if (!(await exists(target))) throw error;
++  } finally {
++    await rm(temporary, { recursive: true, force: true });
++  }
++}
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
-index c7bd18e..807f1e9 100644
+index c7bd18e1..807f1e9e 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 @@ -18,11 +18,16 @@ const runtimeMocks = vi.hoisted(() => ({
@@ -444,7 +1778,7 @@ index c7bd18e..807f1e9 100644
 +  withMicrosandboxMutation: async (_path: unknown, callback: () => Promise<unknown>) => await callback(),
 +}));
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
-index 1a4c05b..58c147d 100644
+index 1a4c05b0..58c147d8 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 @@ -1,6 +1,7 @@
@@ -565,8 +1899,92 @@ index 1a4c05b..58c147d 100644
      async captureState() {
        const metadata = await sandbox.captureState(optionsHash);
        return {
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
+new file mode 100644
+index 00000000..f6d4ee80
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
+@@ -0,0 +1,36 @@
++import { createHash } from "node:crypto";
++import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { expect, it, vi } from "vitest";
++import { withMicrosandboxMutation } from "#execution/sandbox/bindings/microsandbox-mutations.js";
++
++it("holds admission through provider work and rejects a new operation after fencing", async () => {
++  const appRoot = await mkdtemp(join(tmpdir(), "eve-mutation-fence-"));
++  const directory = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", "key");
++  const scope = join(appRoot, ".eve", "sandbox-mutations", createHash("sha256").update("owner").digest("hex"));
++  await mkdir(directory, { recursive: true });
++  await writeFile(join(directory, "owner.json"), JSON.stringify({ version: 1, backendName: "microsandbox", sessionId: "owner", sessionKey: "key" }));
++  const entered = Promise.withResolvers<void>();
++  const release = Promise.withResolvers<void>();
++  const pending = withMicrosandboxMutation(join(directory, "metadata.json"), async () => {
++    entered.resolve();
++    await release.promise;
++  });
++  try {
++    await entered.promise;
++    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
++    await writeFile(join(scope, "deleted"), "1\n", { flag: "wx" });
++    const later = vi.fn(async () => {});
++    await expect(withMicrosandboxMutation(join(directory, "metadata.json"), later)).rejects.toThrow("pending deletion");
++    expect(later).not.toHaveBeenCalled();
++    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
++    release.resolve();
++    await pending;
++    expect(await readdir(join(scope, "operations"))).toEqual([]);
++  } finally {
++    release.resolve();
++    await pending;
++    await rm(appRoot, { recursive: true, force: true });
++  }
++});
+diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
+new file mode 100644
+index 00000000..3407042f
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
+@@ -0,0 +1,36 @@
++import { createHash, randomUUID } from "node:crypto";
++import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
++import { basename, dirname, join } from "node:path";
++
++/** Admission precedes the fence check. A fence waits for every admitted provider operation. */
++export async function withMicrosandboxMutation<T>(metadataPath: string | undefined, callback: () => Promise<T>): Promise<T> {
++  if (metadataPath === undefined) return await callback();
++  const directory = dirname(metadataPath);
++  let scope = join(directory, "mutations");
++  const raw = await readFile(join(directory, "owner.json"), "utf8").catch((error: unknown) => {
++    if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
++    throw error;
++  });
++  if (raw !== undefined) {
++    const owner = JSON.parse(raw);
++    if (owner.version !== 1 || owner.backendName !== "microsandbox" || owner.sessionKey !== basename(directory) || typeof owner.sessionId !== "string") {
++      throw new Error("Sandbox ownership is invalid.");
++    }
++    const eveDirectory = dirname(dirname(dirname(dirname(directory))));
++    scope = join(eveDirectory, "sandbox-mutations", createHash("sha256").update(owner.sessionId).digest("hex"));
++  }
++  const operations = join(scope, "operations");
++  await mkdir(operations, { recursive: true });
++  const lease = join(operations, `${randomUUID()}.json`);
++  await writeFile(lease, JSON.stringify({ version: 1, pid: process.pid }), { flag: "wx", mode: 0o600 });
++  try {
++    const fenced = await access(join(scope, "deleted")).then(() => true).catch((error: unknown) => {
++      if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
++      throw error;
++    });
++    if (fenced) throw new Error("Sandbox session is pending deletion.");
++    return await callback();
++  } finally {
++    await rm(lease, { force: true });
++  }
++}
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
-index cb72e88..91952da 100644
+index cb72e887..91952da1 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
 @@ -1,10 +1,21 @@
@@ -711,7 +2129,7 @@ index cb72e88..91952da 100644
 +  expect(await readdir(resources)).toHaveLength(1);
 +});
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
-index f697452..9c0e892 100644
+index f697452f..9c0e892d 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 @@ -1,6 +1,7 @@
@@ -869,8 +2287,125 @@ index f697452..9c0e892 100644
 +    await rm(temporary, { force: true });
 +  }
 +}
+diff --git a/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
+new file mode 100644
+index 00000000..0ad314f7
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
+@@ -0,0 +1,111 @@
++import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { expect, it, vi } from "vitest";
++import { mockSandbox } from "#internal/testing/mocks/mock-sandbox.js";
++import type { SandboxBackend, SandboxBackendCreateInput } from "#public/definitions/sandbox-backend.js";
++import { createBundledRuntimeCompiledArtifactsSource, createDiskRuntimeCompiledArtifactsSource, type RuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import type { RuntimeSandboxRegistry } from "#runtime/sandbox/registry.js";
++import type { ResolvedSandboxDefinition } from "#runtime/types.js";
++import { ensureSandboxAccess } from "#execution/sandbox/ensure.js";
++import type { SandboxState } from "#sandbox/state.js";
++
++function createTestRegistry(
++  definition: Partial<ResolvedSandboxDefinition>,
++  backend: SandboxBackend,
++): RuntimeSandboxRegistry {
++  const resolved: ResolvedSandboxDefinition = {
++    backend,
++    logicalPath: "agent/sandbox/sandbox.ts",
++    sourceHash: "test-source-hash",
++    sourceId: "agent/sandbox/sandbox",
++    sourceKind: "module",
++    ...definition,
++  };
++
++  return {
++    sandbox: {
++      definition: resolved,
++      workspaceResourceRoot: { logicalPath: "", rootEntries: [] },
++    },
++  };
++}
++
++function createBackend(options?: { readonly delete?: () => Promise<void> }): SandboxBackend {
++  const sandbox = mockSandbox({ id: "sbx_session_auth" });
++  const create = vi.fn(async (input: SandboxBackendCreateInput) => {
++    return {
++      captureState: async () => ({
++        backendName: "test",
++        metadata: {},
++        sessionKey: input.sessionKey,
++      }),
++      delete: vi.fn(options?.delete ?? (async () => {})),
++      stop: vi.fn(async () => {}),
++      useSessionFn: async () => sandbox.session,
++      shutdown: async () => {},
++      session: sandbox.session,
++    };
++  });
++
++  return { create, name: "test", prewarm: vi.fn() };
++}
++
++async function ensure(input: {
++  readonly compiledArtifactsSource?: RuntimeCompiledArtifactsSource;
++  readonly ownsSandbox?: boolean;
++  readonly runOnSession?: (callback: () => Promise<void>) => Promise<void>;
++  readonly registry: RuntimeSandboxRegistry;
++  readonly state?: SandboxState;
++  readonly tags?: Record<string, string>;
++}) {
++  return await ensureSandboxAccess({
++    compiledArtifactsSource:
++      input.compiledArtifactsSource ?? createBundledRuntimeCompiledArtifactsSource(),
++    nodeId: "__root__",
++    ownsSandbox: input.ownsSandbox,
++    registry: input.registry,
++    runOnSession: input.runOnSession,
++    sessionId: "session_1",
++    state: input.state ?? null,
++    tags: input.tags,
++  });
++}
++
++
++it("records native local sandbox ownership before provider creation and rejects reassignment", async () => {
++  const appRoot = await mkdtemp(join(tmpdir(), "eve-sandbox-owner-"));
++  const fake = createBackend();
++  let ownerPath = "";
++  let fresh = true;
++  const backend = {
++    ...fake, name: "microsandbox",
++    create: vi.fn(async (input: SandboxBackendCreateInput) => {
++      ownerPath = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", input.sessionKey, "owner.json");
++      expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual({
++        version: 1, backendName: "microsandbox", sessionKey: input.sessionKey, sessionId: "session_1",
++        ...(fresh ? { writeAheadResources: true } : {}),
++      });
++      return await fake.create(input);
++    }),
++  };
++  const input = { compiledArtifactsSource: createDiskRuntimeCompiledArtifactsSource(appRoot),
++    registry: createTestRegistry({}, backend) };
++  try {
++    await (await ensure(input)).get();
++    await (await ensure(input)).get();
++    expect(backend.create).toHaveBeenCalledTimes(2);
++    // A cache that predates ownership cannot claim complete write-ahead coverage.
++    await rm(ownerPath);
++    fresh = false;
++    await (await ensure(input)).get();
++    await (await ensure(input)).get();
++    const owner = JSON.parse(await readFile(ownerPath, "utf8"));
++    expect(owner.writeAheadResources).toBeUndefined();
++    await writeFile(ownerPath, JSON.stringify({ ...owner, sessionId: "other-session" }));
++    await expect((await ensure(input)).get()).rejects.toThrow("different owner");
++    expect(backend.create).toHaveBeenCalledTimes(4);
++  } finally {
++    await rm(appRoot, { recursive: true, force: true });
++  }
++});
 diff --git a/packages/eve/src/execution/sandbox/ensure.test.ts b/packages/eve/src/execution/sandbox/ensure.test.ts
-index 1bf6637..c28a6bc 100644
+index 1bf66373..c28a6bcd 100644
 --- a/packages/eve/src/execution/sandbox/ensure.test.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.test.ts
 @@ -275,6 +275,25 @@ describe("ensureSandboxAccess", () => {
@@ -900,7 +2435,7 @@ index 1bf6637..c28a6bc 100644
      const ctx = new ContextContainer();
      ctx.set(SessionKey, createSession());
 diff --git a/packages/eve/src/execution/sandbox/ensure.ts b/packages/eve/src/execution/sandbox/ensure.ts
-index cc925f6..1ec2df9 100644
+index cc925f69..1ec2df92 100644
 --- a/packages/eve/src/execution/sandbox/ensure.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.ts
 @@ -1,3 +1,6 @@
@@ -998,1284 +2533,12 @@ index cc925f6..1ec2df9 100644
 +    await rm(temporary, { force: true });
 +  }
 +}
-diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0b..f3f636a 100644
---- a/packages/eve/src/execution/workflow-entry.ts
-+++ b/packages/eve/src/execution/workflow-entry.ts
-@@ -1,3 +1,8 @@
-+import {
-+  SESSION_CHECKPOINT_NAMESPACE,
-+  SESSION_CHECKPOINT_WRITER_KEY,
-+  type SessionCheckpoint,
-+} from "#execution/session-checkpoint-contract.js";
- import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
-
- import type {
-@@ -28,7 +33,7 @@ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-st
- import { dispatchAndAwaitTurn } from "#execution/turn-dispatch.js";
- import type { TurnDriverAction } from "#execution/turn-control-receiver.js";
- import { normalizeSerializableError } from "#execution/workflow-errors.js";
--import { createSessionStep } from "#execution/create-session-step.js";
-+import { createSessionStep, restoreSessionHistoryStep } from "#execution/create-session-step.js";
- import { settleCancelledTurnStep } from "#execution/settle-cancelled-turn-step.js";
- import { emitTerminalSessionFailureStep } from "#execution/terminal-session-failure-step.js";
- import { fireSessionCallbackStep } from "#subagents/callback-step.js";
-@@ -63,6 +68,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
-  * and deserialized at each `"use step"` boundary.
-  */
- export interface WorkflowEntryInput {
-+  readonly fork?: RunInput["fork"];
-   readonly activityCollectorRunId?: string;
-   readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
-   readonly input: RunInput["input"];
-@@ -171,6 +177,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
-   };
-
-   const driverWritable = getWritable<Uint8Array>();
-+  input.serializedContext[SESSION_CHECKPOINT_WRITER_KEY] = {
-+    sessionId,
-+    writable: getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE }),
-+  };
-   const crashCleanupState: CrashCleanupState = {
-     caller: undefined,
-     callerResolved: false,
-@@ -200,6 +210,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
-             continuationToken,
-             dynamicSubagentAgentConfig,
-             inheritedLimits: input.limits,
-+            fork: input.fork,
-             nodeId: serializedBundle.nodeId,
-             outputSchema: input.input.outputSchema,
-             rootSessionId: rootSessionIdFromParent,
-@@ -246,6 +257,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
-         : undefined;
-       crashCleanupState.callerResolved = true;
-
-+      if (input.fork) {
-+        await restoreSessionHistoryStep({ fork: input.fork, writable: driverWritable });
-+      }
-+
-       outcome = await runDriverLoop({
-         capabilities,
-         commandInbox,
-diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
-index 493017d..3e92099 100644
---- a/packages/eve/src/execution/workflow-runtime.ts
-+++ b/packages/eve/src/execution/workflow-runtime.ts
-@@ -203,6 +203,7 @@ export function createWorkflowRuntime(config: {
-         -readonly [K in keyof WorkflowEntryInput]: WorkflowEntryInput[K];
-       } = {
-         input: input.input,
-+        fork: input.fork,
-         limits: input.limits,
-         serializedContext,
-       };
-diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
-index da9ac49..3633611 100644
---- a/packages/eve/src/execution/workflow-steps.ts
-+++ b/packages/eve/src/execution/workflow-steps.ts
-@@ -1,3 +1,5 @@
-+import { SandboxKey, SessionCheckpointWriterKey } from "#context/keys.js";
-+import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
- import { buildAdapterContext } from "#channel/adapter-context.js";
- import { callAdapterEventHandler, defaultDeliverResult } from "#channel/adapter.js";
- import type { DeliverHookPayload } from "#channel/types.js";
-@@ -539,6 +541,12 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
-         return step(modelSession, stepInput);
-       };
-
-+      await writeSessionCheckpoint({
-+        session: schemaSession,
-+        delivery: resolved,
-+        target: ctx.get(SessionCheckpointWriterKey),
-+        sandbox: ctx.get(SandboxKey),
-+      });
-       return runHarnessStep(schemaSession, resolved);
-     });
-   } catch (error) {
-diff --git a/packages/eve/src/internal/testing/app-harness.ts b/packages/eve/src/internal/testing/app-harness.ts
-index 1e0b049..48b1dcb 100644
---- a/packages/eve/src/internal/testing/app-harness.ts
-+++ b/packages/eve/src/internal/testing/app-harness.ts
-@@ -38,6 +38,7 @@ import { mockSandbox, type MockSandbox } from "#internal/testing/mocks/mock-sand
-  * backend so runtime tests never depend on a host container or VM service.
-  */
- export interface TestAppDescriptor {
-+  readonly sandboxBackend?: SandboxBackend;
-   readonly agent?: {
-     readonly limits?: {
-       readonly maxInputTokensPerSession?: number | false;
-@@ -172,7 +173,7 @@ export async function createTestRuntime(descriptor: TestAppDescriptor = {}): Pro
-     modules: [
-       {
-         loadNamespace: async () => ({
--          default: defineSandbox({ backend: TEST_SANDBOX_BACKEND }),
-+          default: defineSandbox({ backend: descriptor.sandboxBackend ?? TEST_SANDBOX_BACKEND }),
-         }),
-         logicalPath: "sandbox.ts",
-       },
-diff --git a/packages/eve/src/internal/testing/durable-session-workflow.ts b/packages/eve/src/internal/testing/durable-session-workflow.ts
-index 6db0c47..ea55b33 100644
---- a/packages/eve/src/internal/testing/durable-session-workflow.ts
-+++ b/packages/eve/src/internal/testing/durable-session-workflow.ts
-@@ -1,3 +1,12 @@
-+import { getWritable } from "#compiled/@workflow/core/index.js";
-+import { SessionCheckpointWriterKey } from "#context/keys.js";
-+import { deserializeContext, serializeContext } from "#context/serialize.js";
-+import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
-+import {
-+  SESSION_CHECKPOINT_NAMESPACE,
-+  SESSION_CHECKPOINT_WRITER_KEY,
-+  type SessionCheckpoint,
-+} from "#execution/session-checkpoint-contract.js";
- /**
-  * Test fixture exercising the `createDurableSessionState` /
-  * `readDurableSession` round-trip from inside a real workflow runtime.
-@@ -206,3 +215,35 @@ export async function durableSessionRetryFixtureWorkflow(): Promise<DurableSessi
-     writeAttempt,
-   };
- }
-+
-+export async function sessionCheckpointFixtureStep(input: {
-+  readonly sessionId: string;
-+  readonly serializedContext: Record<string, unknown>;
-+}): Promise<Record<string, unknown>> {
-+  "use step";
-+  const ctx = await deserializeContext(input.serializedContext);
-+  const session = buildSyntheticSession({
-+    sessionId: input.sessionId,
-+    marker: "checkpoint",
-+    historyDepth: 1,
-+  });
-+  session.history.push({
-+    role: "user",
-+    content: [{ type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) }],
-+  });
-+  await writeSessionCheckpoint({
-+    session,
-+    delivery: { message: "next" },
-+    target: ctx.get(SessionCheckpointWriterKey),
-+  });
-+  return serializeContext(ctx);
-+}
-+
-+export async function sessionCheckpointFixtureWorkflow(): Promise<void> {
-+  "use workflow";
-+  const { workflowRunId: sessionId } = getWorkflowMetadata();
-+  const writable = getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE });
-+  const serializedContext = { [SESSION_CHECKPOINT_WRITER_KEY]: { sessionId, writable } };
-+  const restored = await sessionCheckpointFixtureStep({ sessionId, serializedContext });
-+  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
-+}
-diff --git a/packages/eve/src/protocol/message-version.ts b/packages/eve/src/protocol/message-version.ts
-index 5ff6cba..81da8b2 100644
---- a/packages/eve/src/protocol/message-version.ts
-+++ b/packages/eve/src/protocol/message-version.ts
-@@ -52,10 +52,11 @@ interface MessageStreamAppendEventsByVersion {
-     | MessageAppendedStreamEventV24
-     | ReasoningAppendedStreamEventV24;
-   "25": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
-+  "26": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
- }
-
- export type MessageStreamVersion = keyof MessageStreamAppendEventsByVersion;
--type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25">;
-+type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25" | "26">;
-
- type VersionIndependentMessageStreamEvent = Exclude<
-   UnstampedMessageStreamEvent,
-@@ -93,6 +94,7 @@ export function normalizeMessageStreamEvent(
-         version,
-         event as MessageStreamEventForVersion<LegacyMessageStreamVersion>,
-       );
-+    case "26":
-     case "25":
-       return validateCurrentMessageStreamEvent(event as MessageStreamEventForVersion<"25">);
-     default:
-diff --git a/packages/eve/src/protocol/message.test.ts b/packages/eve/src/protocol/message.test.ts
-index 99ab68d..ecb82b0 100644
---- a/packages/eve/src/protocol/message.test.ts
-+++ b/packages/eve/src/protocol/message.test.ts
-@@ -32,7 +32,7 @@ import { createEveConnectionCallbackRoutePath } from "#protocol/routes.js";
-
- describe("message stream protocol", () => {
-   it("pins the stream version for timed session events", () => {
--    expect(EVE_MESSAGE_STREAM_VERSION).toBe("25");
-+    expect(EVE_MESSAGE_STREAM_VERSION).toBe("26");
-   });
-
-   it.each(["21", "22", "23", "24"] as const)(
-diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
-index fc45f34..a7d101a 100644
---- a/packages/eve/src/protocol/message.ts
-+++ b/packages/eve/src/protocol/message.ts
-@@ -27,7 +27,7 @@ export const EVE_STREAM_TAIL_INDEX_HEADER = "x-eve-stream-tail-index";
- export const EVE_STREAM_VERSION_HEADER = "x-eve-stream-version";
- export const EVE_MESSAGE_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
- export const EVE_MESSAGE_STREAM_FORMAT = "ndjson";
--export const EVE_MESSAGE_STREAM_VERSION = "25";
-+export const EVE_MESSAGE_STREAM_VERSION = "26";
-
- /**
-  * eve-owned finish reason for one completed assistant step.
-@@ -724,6 +724,38 @@ export interface SessionCompletedStreamEvent {
-   type: "session.completed";
- }
-
-+/** Historical display events, excluding session controls, usage, and authorization capabilities. */
-+export type HistoryProjectionEvent = (
-+  | MessageReceivedStreamEvent
-+  | StepStartedStreamEvent
-+  | MessageAppendedStreamEvent
-+  | MessageCompletedStreamEvent
-+  | ReasoningAppendedStreamEvent
-+  | ReasoningCompletedStreamEvent
-+  | ActionInputAppendedStreamEvent
-+  | ActionsRequestedStreamEvent
-+  | ActionPartialStreamEvent
-+  | ActionResultStreamEvent
-+  | InputRequestedStreamEvent
-+  | InputResolvedStreamEvent
-+  | ApprovalCandidateStreamEvent
-+  | ApprovalSettledStreamEvent
-+  | ResultCompletedStreamEvent
-+  | TurnCompletedStreamEvent
-+  | TurnCancelledStreamEvent
-+  | TurnFailedStreamEvent
-+) & { readonly meta: MessageStreamEventMeta };
-+
-+/** A fork's inherited display prefix. It is not new execution or billable usage. */
-+export interface HistoryRestoredStreamEvent {
-+  readonly type: "history.restored";
-+  readonly data: {
-+    readonly sourceSessionId: string;
-+    readonly beforeTurnId: string;
-+    readonly events: readonly HistoryProjectionEvent[];
-+  };
-+}
-+
- /**
-  * Serializable event before eve stamps the durable stream envelope.
-  *
-@@ -731,6 +763,7 @@ export interface SessionCompletedStreamEvent {
-  * consumers receive {@link MessageStreamEvent}.
-  */
- export type UnstampedMessageStreamEvent =
-+  | HistoryRestoredStreamEvent
-   | ActionInputAppendedStreamEvent
-   | ApprovalCandidateStreamEvent
-   | ApprovalSettledStreamEvent
-diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
-index 35cfa0f..d6f522e 100644
---- a/packages/eve/src/public/channels/eve.test.ts
-+++ b/packages/eve/src/public/channels/eve.test.ts
-@@ -2277,3 +2277,93 @@ describe("eveChannel — forwarded principal", () => {
-     expect(handler.send).not.toHaveBeenCalled();
-   });
- });
-+
-+describe("eveChannel — native fork authorization", () => {
-+  const fork = { sessionId: "source-session", beforeTurnId: "turn_1" };
-+
-+  it("denies forks by default before resolving a replayed operation", async () => {
-+    const handler = createEveCreateHandler(
-+      { auth: () => ACCEPTED_AUTH },
-+      { activeSessionId: "existing" },
-+    );
-+    const response = await handler.fetch(
-+      createJsonMessageRequest({ message: "edit", operationId: "retry", fork }),
-+    );
-+    expect(response.status).toBe(403);
-+    expect(handler.resolveSession).not.toHaveBeenCalled();
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+
-+  it("passes only an explicitly authorized source reference to native creation", async () => {
-+    const authorizeFork = vi.fn(() => true);
-+    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
-+    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
-+    expect(response.status).toBe(202);
-+    expect(authorizeFork).toHaveBeenCalledWith({
-+      auth: ACCEPTED_AUTH,
-+      sourceSessionId: fork.sessionId,
-+    });
-+    expect(handler.createSession.mock.calls[0]?.[0].fork).toEqual(fork);
-+  });
-+
-+  it("rejects a source that the verified principal does not own", async () => {
-+    const handler = createEveCreateHandler({
-+      auth: () => ACCEPTED_AUTH,
-+      authorizeFork: () => false,
-+    });
-+    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
-+    expect(response.status).toBe(403);
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+
-+  it("denies anonymous forks even when the source policy allows them", async () => {
-+    const authorizeFork = vi.fn(() => true);
-+    const handler = createEveCreateHandler({ auth: none(), authorizeFork });
-+    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
-+    expect(response.status).toBe(403);
-+    expect(authorizeFork).not.toHaveBeenCalled();
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+
-+  it("denies an onMessage downgrade to unauthenticated execution", async () => {
-+    const handler = createEveCreateHandler({
-+      auth: () => ACCEPTED_AUTH,
-+      authorizeFork: () => true,
-+      onMessage: () => ({ auth: null }),
-+    });
-+    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
-+    expect(response.status).toBe(403);
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+
-+  it("reauthorizes a principal changed by onMessage", async () => {
-+    const authorizeFork = vi.fn(
-+      ({ auth }: { auth: SessionAuthContext }) => auth.principalId === ACCEPTED_AUTH.principalId,
-+    );
-+    const handler = createEveCreateHandler({
-+      auth: () => ACCEPTED_AUTH,
-+      authorizeFork,
-+      onMessage: () => ({ auth: OVERRIDE_AUTH }),
-+    });
-+    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
-+    expect(response.status).toBe(403);
-+    expect(authorizeFork).toHaveBeenCalledTimes(2);
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+
-+  it.each([
-+    null,
-+    {},
-+    { sessionId: "source", beforeTurnId: "turn_-1" },
-+    { ...fork, extra: "value" },
-+  ])("rejects malformed fork references before authorization: %j", async (invalid) => {
-+    const authorizeFork = vi.fn(() => true);
-+    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
-+    const response = await handler.fetch(
-+      createJsonMessageRequest({ message: "edit", fork: invalid }),
-+    );
-+    expect(response.status).toBe(400);
-+    expect(authorizeFork).not.toHaveBeenCalled();
-+    expect(handler.createSession).not.toHaveBeenCalled();
-+  });
-+});
-diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
-index 48e2bc3..27e414e 100644
---- a/packages/eve/src/public/definitions/hook.ts
-+++ b/packages/eve/src/public/definitions/hook.ts
-@@ -30,6 +30,7 @@ export interface HookEventMap {
-   readonly "input.resolved": ProtocolEvent<"input.resolved">;
-   readonly "message.appended": ProtocolEvent<"message.appended">;
-   readonly "message.completed": ProtocolEvent<"message.completed">;
-+  readonly "history.restored": ProtocolEvent<"history.restored">;
-   readonly "message.received": ProtocolEvent<"message.received">;
-   readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
-   readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
-diff --git a/packages/eve/src/sandbox/state.ts b/packages/eve/src/sandbox/state.ts
-index 5d3cb7e..a267238 100644
---- a/packages/eve/src/sandbox/state.ts
-+++ b/packages/eve/src/sandbox/state.ts
-@@ -19,9 +19,16 @@ export type SandboxSessionState = SandboxBackendSessionState;
-  * Every agent owns exactly one sandbox, so the state is just a single
-  * `initialized` flag and an optional persisted session record.
-  */
-+export interface SandboxForkCheckpoint {
-+  readonly backendName: string;
-+  readonly metadata: Record<string, unknown>;
-+}
-+
- export interface SandboxState {
-   readonly initialized: boolean;
-   readonly session: SandboxSessionState | null;
-+  /** Immutable filesystem seed, never a reconnect identity from the source session. */
-+  readonly forkCheckpoint?: SandboxForkCheckpoint;
- }
-
- /**
-@@ -32,6 +39,7 @@ export interface SandboxState {
-  */
- export interface SandboxAccess {
-   captureState(): Promise<SandboxState>;
-+  captureForkCheckpoint?(checkpointKey: string): Promise<SandboxForkCheckpoint | undefined>;
-   delete?(options?: SandboxDeleteOptions): Promise<void>;
-   get(): Promise<SandboxSession | null>;
-   stop(): Promise<void>;
-diff --git a/packages/eve/src/shared/sandbox-backend.ts b/packages/eve/src/shared/sandbox-backend.ts
-index 4c9110e..7aec9d0 100644
---- a/packages/eve/src/shared/sandbox-backend.ts
-+++ b/packages/eve/src/shared/sandbox-backend.ts
-@@ -12,6 +12,8 @@ export interface SandboxBackendHandle<SO = Record<string, never>> {
-   readonly session: SandboxSession;
-   readonly useSessionFn: SandboxSessionUseFn<SO>;
-   captureState(): Promise<SandboxBackendSessionState>;
-+  /** Captures immutable filesystem state for a turn boundary. Repeating a key returns the same snapshot. */
-+  captureForkCheckpoint?(checkpointKey: string): Promise<Record<string, unknown> | undefined>;
-   /**
-    * Permanently deletes this sandbox and its disposable backend state.
-    * Reusable or shared template state must not be deleted.
-@@ -96,6 +98,8 @@ export interface SandboxBackendCreateInput {
-   readonly templateKey: string | null;
-   readonly sessionKey: string;
-   readonly existingMetadata?: Record<string, unknown>;
-+  /** Seeds a new session from immutable filesystem state; never a source reconnect record. */
-+  readonly forkCheckpoint?: Record<string, unknown>;
-   /**
-    * Runtime tags the backend should attach to sandbox resources when
-    * the underlying provider supports tags.
-diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
-new file mode 100644
-index 0000000..c54972b
---- /dev/null
-+++ b/packages/eve/src/execution/read-session-checkpoint.test.ts
-@@ -0,0 +1,101 @@
-+import { afterEach, expect, it, vi } from "vitest";
-+import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
-+import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
-+
-+const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
-+vi.mock("#internal/workflow/runtime.js", () => mocks);
-+afterEach(() => {
-+  vi.restoreAllMocks();
-+  vi.useRealTimers();
-+});
-+
-+function checkpoint(): SessionCheckpoint {
-+  return {
-+    version: 1,
-+    sessionId: "source",
-+    beforeTurnId: "turn_0",
-+    snapshot: {
-+      version: 1,
-+      session: {
-+        sessionId: "source",
-+        continuationToken: "",
-+        history: [],
-+        agent: { system: "current" },
-+      },
-+    },
-+  };
-+}
-+function install(values: SessionCheckpoint[], tail = values.length - 1) {
-+  const cancel = vi.fn();
-+  let index = 0;
-+  const stream = Object.assign(
-+    new ReadableStream<SessionCheckpoint>({
-+      pull(controller) {
-+        const value = values[index++];
-+        if (value) controller.enqueue(value);
-+      },
-+      cancel,
-+    }),
-+    { getTailIndex: async () => tail },
-+  );
-+  mocks.getRun.mockReturnValue({ getReadable: () => stream });
-+  return { stream, cancel };
-+}
-+
-+it("accepts identical retry records without waiting for the live stream to finish", async () => {
-+  const value = checkpoint();
-+  const { stream, cancel } = install([value, value]);
-+  await expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).resolves.toEqual(value);
-+  expect(cancel).toHaveBeenCalledOnce();
-+  expect(stream.locked).toBe(false);
-+});
-+
-+it("rejects conflicting retries and foreign session records", async () => {
-+  const value = checkpoint();
-+  install([
-+    value,
-+    {
-+      ...value,
-+      snapshot: {
-+        ...value.snapshot,
-+        session: { ...value.snapshot.session, history: [{ role: "user", content: "different" }] },
-+      },
-+    },
-+  ]);
-+  await expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).rejects.toThrow("Conflicting");
-+  install([{ ...value, sessionId: "other" }]);
-+  await expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).rejects.toThrow("identity");
-+});
-+
-+it("bounds oversized and missing checkpoint scans", async () => {
-+  install([], 1_000);
-+  await expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).rejects.toThrow("scan limit");
-+  install([]);
-+  await expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).rejects.toThrow("not found");
-+});
-+
-+it("times out stalled reads even when stream cancellation never settles", async () => {
-+  vi.useFakeTimers();
-+  const cancel = vi.fn(() => new Promise<void>(() => {}));
-+  const stream = Object.assign(new ReadableStream<SessionCheckpoint>({ cancel }), {
-+    getTailIndex: async () => 0,
-+  });
-+  mocks.getRun.mockReturnValue({ getReadable: () => stream });
-+  const result = expect(
-+    readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" }),
-+  ).rejects.toThrow("timed out");
-+  await vi.advanceTimersByTimeAsync(10_000);
-+  await result;
-+  expect(cancel).toHaveBeenCalledOnce();
-+  expect(stream.locked).toBe(false);
-+});
-diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
-new file mode 100644
-index 0000000..5124bd8
---- /dev/null
-+++ b/packages/eve/src/execution/read-session-checkpoint.ts
-@@ -0,0 +1,60 @@
-+import { isDeepStrictEqual } from "node:util";
-+import { getRun } from "#internal/workflow/runtime.js";
-+import { migrateDurableSessionSnapshot } from "#execution/durable-session-migrations/snapshot.js";
-+import {
-+  SESSION_CHECKPOINT_NAMESPACE,
-+  type SessionCheckpoint,
-+  type SessionForkReference,
-+} from "#execution/session-checkpoint-contract.js";
-+
-+const MAX_CHECKPOINTS = 1_000;
-+const READ_TIMEOUT_MS = 10_000;
-+
-+/** Reads a finite checkpoint prefix. Callers must authorize the source session before invoking this. */
-+export async function readSessionCheckpoint(
-+  input: SessionForkReference,
-+): Promise<SessionCheckpoint> {
-+  const stream = getRun(input.sessionId).getReadable<SessionCheckpoint>({
-+    namespace: SESSION_CHECKPOINT_NAMESPACE,
-+  });
-+  const reader = stream.getReader();
-+  let timeout: ReturnType<typeof setTimeout> | undefined;
-+  const read = async (): Promise<SessionCheckpoint> => {
-+    const tail = await stream.getTailIndex();
-+    if (tail >= MAX_CHECKPOINTS) throw new Error("Session checkpoint scan limit exceeded.");
-+    let found: SessionCheckpoint | undefined;
-+    for (let index = 0; index <= tail; index++) {
-+      const { value, done } = await reader.read();
-+      if (done || value === undefined)
-+        throw new Error("Session checkpoint stream ended unexpectedly.");
-+      if (value.version !== 1 || value.sessionId !== input.sessionId)
-+        throw new Error("Invalid session checkpoint identity or version.");
-+      if (value.beforeTurnId !== input.beforeTurnId) continue;
-+      const snapshot = migrateDurableSessionSnapshot(value.snapshot);
-+      if (snapshot.session.sessionId !== input.sessionId)
-+        throw new Error("Invalid checkpoint snapshot identity.");
-+      if (found && !isDeepStrictEqual(found.snapshot, snapshot))
-+        throw new Error("Conflicting session checkpoint retries.");
-+      found = { ...value, snapshot };
-+    }
-+    if (!found) throw new Error("Session checkpoint was not found.");
-+    return found;
-+  };
-+  try {
-+    return await Promise.race([
-+      read(),
-+      new Promise<never>((_resolve, reject) => {
-+        timeout = setTimeout(
-+          () => reject(new Error("Session checkpoint read timed out.")),
-+          READ_TIMEOUT_MS,
-+        );
-+      }),
-+    ]);
-+  } finally {
-+    if (timeout !== undefined) clearTimeout(timeout);
-+    void reader.cancel().catch(() => {
-+      /* Cleanup must not delay the result if the stream stalls or cancellation fails. */
-+    });
-+    reader.releaseLock();
-+  }
-+}
-diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
-new file mode 100644
-index 0000000..5588bb8
---- /dev/null
-+++ b/packages/eve/src/execution/restore-session-checkpoint.test.ts
-@@ -0,0 +1,95 @@
-+import { expect, it } from "vitest";
-+import { createSession } from "#execution/session.js";
-+import { createDurableSessionState } from "#execution/durable-session-store.js";
-+import { setHarnessEmissionState } from "#harness/emission-state.js";
-+import { restoreSessionCheckpoint } from "#execution/restore-session-checkpoint.js";
-+import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
-+
-+function fresh(sessionId: string) {
-+  return createSession({
-+    sessionId,
-+    continuationToken: `${sessionId}-inbox`,
-+    turnAgent: {
-+      id: "test",
-+      instructions: ["Current instructions"],
-+      model: { id: "current-model" },
-+      tools: [],
-+      workspaceSpec: { rootEntries: [] },
-+    },
-+  });
-+}
-+function checkpoint(): SessionCheckpoint {
-+  const source = setHarnessEmissionState(
-+    {
-+      ...fresh("source"),
-+      state: { "source-secret-state": { approval: "source-request", consumedTokens: 123 } },
-+      history: [
-+        { role: "user", content: "remember this" },
-+        { role: "assistant", content: "Remembered." },
-+      ],
-+    },
-+    { sessionStarted: true, sequence: 4, stepIndex: 0, turnId: "" },
-+  );
-+  const snapshot = createDurableSessionState({ session: source }).snapshot;
-+  if (!snapshot) throw new Error("Missing test snapshot");
-+  return { version: 1, sessionId: "source", beforeTurnId: "turn_4", snapshot };
-+}
-+
-+it("restores history and sequence while retaining fresh target identity, model and state", () => {
-+  const source = checkpoint();
-+  const target = fresh("branch");
-+  const restored = restoreSessionCheckpoint({ target, checkpoint: source });
-+  expect(restored.sessionId).toBe("branch");
-+  expect(restored.continuationToken).toBe("branch-inbox");
-+  expect(restored.agent).toBe(target.agent);
-+  expect(restored.state?.["source-secret-state"]).toBeUndefined();
-+  expect(restored.state?.["eve.harness.emission"]).toEqual({
-+    sessionStarted: false,
-+    sequence: 4,
-+    stepIndex: 0,
-+    turnId: "",
-+  });
-+  expect(restored.history).toEqual(source.snapshot.session.history);
-+  restored.history.push({ role: "user", content: "branch only" });
-+  expect(source.snapshot.session.history).toHaveLength(2);
-+});
-+
-+it("rejects wrong identities and an already-used target", () => {
-+  const source = checkpoint();
-+  expect(() => restoreSessionCheckpoint({ target: fresh("source"), checkpoint: source })).toThrow(
-+    "Invalid",
-+  );
-+  expect(() =>
-+    restoreSessionCheckpoint({
-+      target: fresh("branch"),
-+      checkpoint: { ...source, sessionId: "other" },
-+    }),
-+  ).toThrow("Invalid");
-+  expect(() =>
-+    restoreSessionCheckpoint({
-+      target: { ...fresh("branch"), history: [{ role: "user", content: "existing" }] },
-+      checkpoint: source,
-+    }),
-+  ).toThrow("fresh target");
-+});
-+
-+it("does not revive unfinished tools or silently discard sandbox attachments", () => {
-+  const source = checkpoint();
-+  source.snapshot.session.history.push({
-+    role: "assistant",
-+    content: [{ type: "tool-call", toolCallId: "pending", toolName: "dangerous", input: {} }],
-+  });
-+  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
-+    "unresolved tool",
-+  );
-+  source.snapshot.session.history.pop();
-+  source.snapshot.session.history.push({
-+    role: "user",
-+    content: [
-+      { type: "file", mediaType: "image/png", data: new URL("eve-sandbox:?path=/old/file") },
-+    ],
-+  });
-+  expect(() => restoreSessionCheckpoint({ target: fresh("branch"), checkpoint: source })).toThrow(
-+    "resource copying",
-+  );
-+});
-diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
-new file mode 100644
-index 0000000..dd42dbd
---- /dev/null
-+++ b/packages/eve/src/execution/restore-session-checkpoint.ts
-@@ -0,0 +1,66 @@
-+import type { HarnessSession } from "#harness/types.js";
-+import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
-+import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
-+
-+/** Seeds a fresh session; source execution identities and capabilities are never restored. */
-+export function restoreSessionCheckpoint(input: {
-+  readonly target: HarnessSession;
-+  readonly checkpoint: SessionCheckpoint;
-+}): HarnessSession {
-+  const { target, checkpoint } = input;
-+  const source = checkpoint.snapshot.session;
-+  const emission = getHarnessEmissionState(source.state);
-+  if (
-+    checkpoint.version !== 1 ||
-+    checkpoint.snapshot.version !== 1 ||
-+    source.sessionId !== checkpoint.sessionId ||
-+    target.sessionId === source.sessionId ||
-+    checkpoint.beforeTurnId !== `turn_${emission.sequence}` ||
-+    emission.turnId !== ""
-+  ) {
-+    throw new Error("Invalid session fork checkpoint.");
-+  }
-+  if (target.history.length || getHarnessEmissionState(target.state).sessionStarted) {
-+    throw new Error("Session checkpoint restoration requires a fresh target.");
-+  }
-+  const forkCheckpoint = source.sandboxState?.forkCheckpoint;
-+  if (
-+    (source.sandboxState?.initialized || source.sandboxState?.session != null) &&
-+    !forkCheckpoint
-+  ) {
-+    throw new Error("Forking sandbox state requires resource copying.");
-+  }
-+  const pendingTools = new Set<string>();
-+  for (const message of source.history) {
-+    if (!Array.isArray(message.content)) continue;
-+    for (const part of message.content) {
-+      if (
-+        !forkCheckpoint &&
-+        part.type === "file" &&
-+        (part.data instanceof URL
-+          ? part.data.protocol === "eve-sandbox:"
-+          : typeof part.data === "string" && part.data.startsWith("eve-sandbox:"))
-+      ) {
-+        throw new Error("Forking sandbox attachments requires resource copying.");
-+      }
-+      if (part.type === "tool-call" && !part.providerExecuted) pendingTools.add(part.toolCallId);
-+      if (part.type === "tool-result") pendingTools.delete(part.toolCallId);
-+    }
-+  }
-+  if (pendingTools.size) throw new Error("Cannot fork a checkpoint with unresolved tool calls.");
-+  return setHarnessEmissionState(
-+    {
-+      ...target,
-+      history: [...source.history],
-+      ...(forkCheckpoint
-+        ? { sandboxState: { initialized: false, session: null, forkCheckpoint } }
-+        : {}),
-+    },
-+    {
-+      sessionStarted: false,
-+      sequence: emission.sequence,
-+      stepIndex: 0,
-+      turnId: "",
-+    },
-+  );
-+}
-diff --git a/packages/eve/src/execution/restore-session-history-step.test.ts b/packages/eve/src/execution/restore-session-history-step.test.ts
-new file mode 100644
-index 0000000..08071f4
---- /dev/null
-+++ b/packages/eve/src/execution/restore-session-history-step.test.ts
-@@ -0,0 +1,100 @@
-+import { afterEach, expect, it, vi } from "vitest";
-+import { restoreSessionHistory } from "#execution/restore-session-history-step.js";
-+import {
-+  createMessageReceivedEvent,
-+  createSessionWaitingEvent,
-+  createStepCompletedEvent,
-+  createTurnStartedEvent,
-+  encodeMessageStreamEvent,
-+  stampMessageStreamEvent,
-+  type UnstampedMessageStreamEvent,
-+} from "#protocol/message.js";
-+
-+const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
-+vi.mock("#internal/workflow/runtime.js", () => mocks);
-+afterEach(() => {
-+  vi.restoreAllMocks();
-+  vi.useRealTimers();
-+});
-+
-+const fork = { sessionId: "source", beforeTurnId: "turn_1" };
-+function setup(events: UnstampedMessageStreamEvent[], close = true) {
-+  const cancel = vi.fn();
-+  mocks.getRun.mockReturnValue({
-+    getReadable: () =>
-+      new ReadableStream<Uint8Array>({
-+        start(controller) {
-+          for (const event of events)
-+            controller.enqueue(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
-+          if (close) controller.close();
-+        },
-+        cancel,
-+      }),
-+  });
-+  const output: Uint8Array[] = [];
-+  const writable = new WritableStream<Uint8Array>({
-+    write(chunk) {
-+      output.push(chunk);
-+    },
-+  });
-+  return { cancel, writable, output };
-+}
-+
-+it("copies only the display prefix without billing events or continuation capabilities", async () => {
-+  const { writable, output } = setup([
-+    createMessageReceivedEvent({ message: "inherited", sequence: 0, turnId: "turn_0" }),
-+    createStepCompletedEvent({
-+      finishReason: "stop",
-+      sequence: 0,
-+      stepIndex: 0,
-+      turnId: "turn_0",
-+      usage: { costUsd: 5 },
-+    }),
-+    createSessionWaitingEvent("private-continuation"),
-+    createTurnStartedEvent({ sequence: 1, turnId: "turn_1" }),
-+    createMessageReceivedEvent({ message: "excluded", sequence: 1, turnId: "turn_1" }),
-+  ]);
-+  await restoreSessionHistory({ fork, writable });
-+  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
-+  expect(text).toContain('"history.restored"');
-+  expect(text).toContain("inherited");
-+  expect(text).not.toContain("private-continuation");
-+  expect(text).not.toContain("step.completed");
-+  expect(text).not.toContain("costUsd");
-+  expect(text).not.toContain("excluded");
-+  expect(writable.locked).toBe(false);
-+});
-+
-+it("writes nothing if the requested turn is missing", async () => {
-+  const { writable, output } = setup([]);
-+  await expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("boundary was not found");
-+  expect(output).toEqual([]);
-+  expect(writable.locked).toBe(false);
-+});
-+
-+it("cancels a stalled source at the deadline without leaving a pending writer", async () => {
-+  vi.useFakeTimers();
-+  const { writable, output, cancel } = setup([], false);
-+  const result = expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("timed out");
-+  await vi.advanceTimersByTimeAsync(10_000);
-+  await result;
-+  expect(cancel).toHaveBeenCalledOnce();
-+  expect(output).toEqual([]);
-+  expect(writable.locked).toBe(false);
-+});
-+
-+it("bounds raw bytes before buffering an unfinished NDJSON event", async () => {
-+  const { writable, output } = setup([]);
-+  const chunk = new TextEncoder().encode("x".repeat(1024 * 1024));
-+  mocks.getRun.mockReturnValue({
-+    getReadable: () =>
-+      new ReadableStream<Uint8Array>({
-+        pull(controller) {
-+          controller.enqueue(chunk);
-+        },
-+      }),
-+  });
-+  await expect(restoreSessionHistory({ fork, writable })).rejects.toThrow("byte limit");
-+  expect(output).toEqual([]);
-+  expect(writable.locked).toBe(false);
-+});
-diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
-new file mode 100644
-index 0000000..ee1a62f
---- /dev/null
-+++ b/packages/eve/src/execution/restore-session-history-step.ts
-@@ -0,0 +1,114 @@
-+import { getRun } from "#internal/workflow/runtime.js";
-+import { readNdjsonStream } from "#client/ndjson.js";
-+import {
-+  EVE_MESSAGE_STREAM_VERSION,
-+  encodeMessageStreamEvent,
-+  stampMessageStreamEvent,
-+  type HistoryProjectionEvent,
-+  type MessageStreamEvent,
-+} from "#protocol/message.js";
-+import type { SessionForkReference } from "#execution/session-checkpoint-contract.js";
-+
-+const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
-+const MAX_HISTORY_EVENTS = 50_000;
-+const READ_TIMEOUT_MS = 10_000;
-+
-+/** Writes a display-only prefix after native checkpoint restoration has succeeded. */
-+export async function restoreSessionHistory(input: {
-+  readonly fork: SessionForkReference;
-+  readonly writable: WritableStream<Uint8Array>;
-+}): Promise<void> {
-+  const events = await readSessionHistory(input.fork);
-+  const writer = input.writable.getWriter();
-+  try {
-+    await writer.write(
-+      encodeMessageStreamEvent(
-+        stampMessageStreamEvent({
-+          type: "history.restored",
-+          data: {
-+            beforeTurnId: input.fork.beforeTurnId,
-+            sourceSessionId: input.fork.sessionId,
-+            events,
-+          },
-+        }),
-+      ),
-+    );
-+  } finally {
-+    writer.releaseLock();
-+  }
-+}
-+
-+async function readSessionHistory(fork: SessionForkReference): Promise<HistoryProjectionEvent[]> {
-+  const abort = new AbortController();
-+  const source = getRun(fork.sessionId).getReadable<Uint8Array>();
-+  let bytes = 0;
-+  const stream = source.pipeThrough(
-+    new TransformStream<Uint8Array, Uint8Array>({
-+      transform(chunk, controller) {
-+        bytes += chunk.byteLength;
-+        if (bytes > MAX_HISTORY_BYTES) throw new Error("Session history byte limit exceeded.");
-+        controller.enqueue(chunk);
-+      },
-+    }),
-+    { signal: abort.signal },
-+  );
-+  const events: HistoryProjectionEvent[] = [];
-+  const seen = new Set<string>();
-+  let scanned = 0;
-+  const append = (event: HistoryProjectionEvent) => {
-+    if (seen.has(event.meta.id)) return;
-+    seen.add(event.meta.id);
-+    events.push(event);
-+    if (events.length > MAX_HISTORY_EVENTS)
-+      throw new Error("Session history event limit exceeded.");
-+  };
-+  const timeout = setTimeout(
-+    () => abort.abort(new Error("Session history read timed out.")),
-+    READ_TIMEOUT_MS,
-+  );
-+  try {
-+    for await (const event of readNdjsonStream(stream, {
-+      streamVersion: EVE_MESSAGE_STREAM_VERSION,
-+    })) {
-+      if (++scanned > MAX_HISTORY_EVENTS) {
-+        throw new Error("Session history scan limit exceeded.");
-+      }
-+      if (event.type === "turn.started" && event.data.turnId === fork.beforeTurnId) return events;
-+      if (event.type === "history.restored") {
-+        for (const historical of event.data.events) append(historical);
-+      } else if (isHistoryProjectionEvent(event)) {
-+        append(event);
-+      }
-+    }
-+    throw new Error("Session history turn boundary was not found.");
-+  } finally {
-+    clearTimeout(timeout);
-+    abort.abort();
-+  }
-+}
-+
-+function isHistoryProjectionEvent(event: MessageStreamEvent): event is HistoryProjectionEvent {
-+  switch (event.type) {
-+    case "message.received":
-+    case "step.started":
-+    case "message.appended":
-+    case "message.completed":
-+    case "reasoning.appended":
-+    case "reasoning.completed":
-+    case "action.input.appended":
-+    case "actions.requested":
-+    case "action.partial":
-+    case "action.result":
-+    case "input.requested":
-+    case "input.resolved":
-+    case "approval.candidate":
-+    case "approval.settled":
-+    case "result.completed":
-+    case "turn.completed":
-+    case "turn.cancelled":
-+    case "turn.failed":
-+      return true;
-+    default:
-+      return false;
-+  }
-+}
-diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
-new file mode 100644
-index 0000000..f0c2d50
---- /dev/null
-+++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
-@@ -0,0 +1,129 @@
-+import { createJustBashSandboxBackend } from "./just-bash.js";
-+import { mkdtemp, mkdir, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
-+import { tmpdir } from "node:os";
-+import { join } from "node:path";
-+import { afterEach, expect, it } from "vitest";
-+import { captureLocalForkCheckpoint, restoreLocalForkCheckpoint } from "./local-fork-checkpoint.js";
-+
-+const roots: string[] = [];
-+afterEach(async () => {
-+  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
-+});
-+
-+async function setup() {
-+  const root = await mkdtemp(join(tmpdir(), "eve-fork-files-"));
-+  roots.push(root);
-+  const filesystemRoot = join(root, "source", "fs");
-+  await mkdir(join(filesystemRoot, "workspace", "attachments"), { recursive: true });
-+  return {
-+    root,
-+    filesystemRoot,
-+    checkpointsRoot: join(root, "checkpoints"),
-+    sessionKey: "source",
-+    checkpointKey: "turn_2",
-+  };
-+}
-+
-+it("captures immutable binary files and restores independent sessions without source environment", async () => {
-+  const input = await setup();
-+  const file = join(input.filesystemRoot, "workspace", "attachments", "sample.pdf");
-+  await writeFile(file, new Uint8Array([0, 255, 10, 128]));
-+  await writeFile(join(input.root, "source", "metadata.json"), '{"env":{"SECRET":"source-only"}}');
-+  const checkpoint = await captureLocalForkCheckpoint(input);
-+  if (!checkpoint) throw new Error("Missing checkpoint");
-+  await writeFile(file, "changed later");
-+  expect(await captureLocalForkCheckpoint(input)).toEqual(checkpoint);
-+  const targetRoot = join(input.root, "branch");
-+  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
-+  const restored = join(targetRoot, "fs", "workspace", "attachments", "sample.pdf");
-+  expect(await readFile(restored)).toEqual(Buffer.from([0, 255, 10, 128]));
-+  await expect(readFile(join(targetRoot, "metadata.json"))).rejects.toMatchObject({
-+    code: "ENOENT",
-+  });
-+  await writeFile(restored, "branch change");
-+  await restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint });
-+  expect(await readFile(restored, "utf8")).toBe("branch change");
-+  expect(await readFile(file, "utf8")).toBe("changed later");
-+  const sibling = join(input.root, "sibling");
-+  await restoreLocalForkCheckpoint({ ...input, targetRoot: sibling, checkpoint });
-+  expect(await readFile(join(sibling, "fs", "workspace", "attachments", "sample.pdf"))).toEqual(
-+    Buffer.from([0, 255, 10, 128]),
-+  );
-+  const different = await captureLocalForkCheckpoint({ ...input, checkpointKey: "turn_3" });
-+  if (!different) throw new Error("Missing checkpoint");
-+  await expect(
-+    restoreLocalForkCheckpoint({ ...input, targetRoot, checkpoint: different }),
-+  ).rejects.toThrow("different fork checkpoint");
-+});
-+
-+it("rejects escaping identifiers, filesystem links, and oversized snapshots", async () => {
-+  const input = await setup();
-+  await expect(
-+    restoreLocalForkCheckpoint({
-+      ...input,
-+      targetRoot: join(input.root, "target"),
-+      checkpoint: { version: 1, id: "../source" },
-+    }),
-+  ).rejects.toThrow("Invalid local");
-+  const link = join(input.filesystemRoot, "workspace", "link");
-+  await symlink(input.root, link);
-+  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
-+  await rm(link);
-+  const large = join(input.filesystemRoot, "workspace", "large");
-+  await writeFile(large, "");
-+  await truncate(large, 128 * 1024 * 1024 + 1);
-+  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
-+});
-+
-+it("clones the real just-bash backend while keeping file mutations isolated", async () => {
-+  const input = await setup();
-+  const backend = createJustBashSandboxBackend();
-+  const runtimeContext = { appRoot: input.root };
-+  const source = await backend.create({
-+    runtimeContext,
-+    sessionKey: "source-live",
-+    templateKey: null,
-+  });
-+  const branchHandles = [];
-+  try {
-+    await source.session.writeTextFile({ path: "original.txt", content: "before edit" });
-+    const checkpoint = await source.captureForkCheckpoint?.("turn_1");
-+    if (!checkpoint) throw new Error("Missing fork checkpoint capability");
-+    await source.session.writeTextFile({ path: "original.txt", content: "after edit" });
-+    const branch = await backend.create({
-+      runtimeContext,
-+      sessionKey: "branch-live",
-+      templateKey: null,
-+      forkCheckpoint: checkpoint,
-+    });
-+    branchHandles.push(branch);
-+    expect(await branch.session.readTextFile({ path: "original.txt" })).toBe("before edit");
-+    await branch.session.writeTextFile({ path: "original.txt", content: "branch edit" });
-+    expect(await source.session.readTextFile({ path: "original.txt" })).toBe("after edit");
-+    const saved = await branch.captureState();
-+    await branch.stop();
-+    const resumed = await backend.create({
-+      runtimeContext,
-+      sessionKey: "branch-live",
-+      templateKey: null,
-+      existingMetadata: saved.metadata,
-+    });
-+    branchHandles.push(resumed);
-+    expect(await resumed.session.readTextFile({ path: "original.txt" })).toBe("branch edit");
-+  } finally {
-+    await source.shutdown();
-+    await Promise.all(branchHandles.map((handle) => handle.shutdown()));
-+  }
-+});
-+
-+it("bounds a single wide directory before copying it", async () => {
-+  const input = await setup();
-+  for (let start = 0; start < 20_000; start += 100) {
-+    await Promise.all(
-+      Array.from({ length: 100 }, (_, offset) =>
-+        writeFile(join(input.filesystemRoot, `file-${start + offset}`), ""),
-+      ),
-+    );
-+  }
-+  expect(await captureLocalForkCheckpoint(input)).toBeUndefined();
-+}, 30_000);
-diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
-new file mode 100644
-index 0000000..a89306d
---- /dev/null
-+++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
-@@ -0,0 +1,131 @@
-+import { createHash, randomUUID } from "node:crypto";
-+import {
-+  cp,
-+  lstat,
-+  mkdir,
-+  opendir,
-+  readFile,
-+  realpath,
-+  rename,
-+  rm,
-+  writeFile,
-+} from "node:fs/promises";
-+import { dirname, join } from "node:path";
-+
-+const MAX_FILES = 20_000;
-+const MAX_BYTES = 128 * 1024 * 1024;
-+const DIGEST = /^[a-f0-9]{64}$/;
-+
-+export class LocalForkUnsupportedError extends Error {}
-+
-+/** Filesystem-only snapshots: reconnect metadata and process environment are excluded. */
-+export async function captureLocalForkCheckpoint(input: {
-+  readonly checkpointsRoot: string;
-+  readonly filesystemRoot: string;
-+  readonly sessionKey: string;
-+  readonly checkpointKey: string;
-+}): Promise<Record<string, unknown> | undefined> {
-+  const id = createHash("sha256")
-+    .update(JSON.stringify([input.sessionKey, input.checkpointKey]))
-+    .digest("hex");
-+  const target = join(input.checkpointsRoot, id);
-+  if (!(await exists(target))) {
-+    try {
-+      await validateFilesystem(input.filesystemRoot);
-+    } catch (error) {
-+      if (error instanceof LocalForkUnsupportedError) return undefined;
-+      throw error;
-+    }
-+    await copyOnce(input.filesystemRoot, target);
-+  }
-+  return { version: 1, id };
-+}
-+
-+export async function restoreLocalForkCheckpoint(input: {
-+  readonly checkpointsRoot: string;
-+  readonly targetRoot: string;
-+  readonly checkpoint: Record<string, unknown>;
-+}): Promise<void> {
-+  if (
-+    input.checkpoint.version !== 1 ||
-+    typeof input.checkpoint.id !== "string" ||
-+    !DIGEST.test(input.checkpoint.id)
-+  ) {
-+    throw new Error("Invalid local sandbox fork checkpoint.");
-+  }
-+  const source = join(input.checkpointsRoot, input.checkpoint.id);
-+  const canonicalRoot = await realpath(input.checkpointsRoot);
-+  if (dirname(await realpath(source)) !== canonicalRoot)
-+    throw new Error("Invalid local sandbox checkpoint path.");
-+  await validateFilesystem(source);
-+  await publishOnce(input.targetRoot, async (temporary) => {
-+    await mkdir(temporary, { recursive: true });
-+    await cp(source, join(temporary, "fs"), { recursive: true, verbatimSymlinks: true });
-+    await writeFile(join(temporary, "fork-checkpoint.json"), JSON.stringify(input.checkpoint));
-+  });
-+  const recorded = JSON.parse(
-+    await readFile(join(input.targetRoot, "fork-checkpoint.json"), "utf8"),
-+  );
-+  if (recorded.version !== 1 || recorded.id !== input.checkpoint.id)
-+    throw new Error("Sandbox session already has a different fork checkpoint.");
-+}
-+
-+async function exists(path: string) {
-+  try {
-+    await lstat(path);
-+    return true;
-+  } catch (error) {
-+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
-+    throw error;
-+  }
-+}
-+
-+async function validateFilesystem(root: string) {
-+  const pending = [root];
-+  let entries = 1;
-+  let bytes = 0;
-+  while (pending.length) {
-+    const path = pending.pop();
-+    if (path === undefined) break;
-+    const info = await lstat(path);
-+    if (info.isSymbolicLink()) {
-+      throw new LocalForkUnsupportedError(
-+        "Sandbox fork symlinks require backend-specific restoration.",
-+      );
-+    }
-+    if (info.isDirectory()) {
-+      const directory = await opendir(path);
-+      for await (const entry of directory) {
-+        if (++entries > MAX_FILES)
-+          throw new LocalForkUnsupportedError("Sandbox fork file limit exceeded.");
-+        pending.push(join(path, entry.name));
-+      }
-+    } else if (info.isFile()) {
-+      bytes += info.size;
-+      if (bytes > MAX_BYTES)
-+        throw new LocalForkUnsupportedError("Sandbox fork byte limit exceeded.");
-+    } else {
-+      throw new LocalForkUnsupportedError("Sandbox fork contains a non-file resource.");
-+    }
-+  }
-+}
-+
-+async function copyOnce(source: string, target: string) {
-+  await publishOnce(target, async (temporary) => {
-+    await cp(source, temporary, { recursive: true, verbatimSymlinks: true });
-+  });
-+}
-+
-+async function publishOnce(target: string, populate: (temporary: string) => Promise<void>) {
-+  if (await exists(target)) return;
-+  await mkdir(dirname(target), { recursive: true });
-+  const temporary = `${target}.${randomUUID()}.tmp`;
-+  try {
-+    await populate(temporary);
-+    await rename(temporary, target);
-+  } catch (error) {
-+    if (!(await exists(target))) throw error;
-+  } finally {
-+    await rm(temporary, { recursive: true, force: true });
-+  }
-+}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
-index 0000000..9e3dc25
+index 00000000..4a3ed11c
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint-contract.ts
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,16 @@
 +import type { DurableSessionSnapshot } from "#execution/durable-session-store.js";
 +
 +export const SESSION_CHECKPOINT_WRITER_KEY = "eve.sessionCheckpointWriter";
@@ -2284,15 +2547,17 @@ index 0000000..9e3dc25
 +export interface SessionForkReference {
 +  readonly sessionId: string;
 +  readonly beforeTurnId: string;
++  readonly checkpointId?: string;
 +}
 +
 +export interface SessionCheckpoint extends SessionForkReference {
 +  readonly version: 1;
 +  readonly snapshot: DurableSessionSnapshot;
++  readonly rejected?: "source_not_idle" | "source_advanced";
 +}
 diff --git a/packages/eve/src/execution/session-checkpoint.integration.test.ts b/packages/eve/src/execution/session-checkpoint.integration.test.ts
 new file mode 100644
-index 0000000..ece3ab0
+index 00000000..ece3ab0d
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.integration.test.ts
 @@ -0,0 +1,49 @@
@@ -2347,7 +2612,7 @@ index 0000000..ece3ab0
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.test.ts b/packages/eve/src/execution/session-checkpoint.test.ts
 new file mode 100644
-index 0000000..291d3e1
+index 00000000..291d3e1b
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.test.ts
 @@ -0,0 +1,136 @@
@@ -2489,10 +2754,10 @@ index 0000000..291d3e1
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
 new file mode 100644
-index 0000000..8f2c349
+index 00000000..9133d4fc
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.ts
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,51 @@
 +import type { SandboxAccess } from "#sandbox/state.js";
 +import type { HarnessSession, StepInput } from "#harness/types.js";
 +import { getHarnessEmissionState } from "#harness/emission-state.js";
@@ -2503,6 +2768,7 @@ index 0000000..8f2c349
 +/** Captures native history before a new user turn; internal continuations do not create checkpoints. */
 +export async function writeSessionCheckpoint(input: {
 +  readonly session: HarnessSession;
++  readonly checkpointId?: string;
 +  readonly delivery: StepInput | undefined;
 +  readonly sandbox?: SandboxAccess;
 +  readonly target:
@@ -2511,7 +2777,7 @@ index 0000000..8f2c349
 +}): Promise<void> {
 +  const emission = getHarnessEmissionState(input.session.state);
 +  if (
-+    input.delivery?.message === undefined ||
++    (!input.checkpointId && input.delivery?.message === undefined) ||
 +    emission.turnId !== "" ||
 +    input.target?.sessionId !== input.session.sessionId
 +  )
@@ -2521,7 +2787,7 @@ index 0000000..8f2c349
 +    // Unsupported resources return no seed. Transient I/O failures propagate before
 +    // writing, so a retry cannot conflict with a previously written missing seed.
 +    const forkCheckpoint = await input.sandbox?.captureForkCheckpoint?.(
-+      `turn_${emission.sequence}`,
++      input.checkpointId ? `idle_${input.checkpointId}` : `turn_${emission.sequence}`,
 +    );
 +    sandboxState = { ...sandboxState, forkCheckpoint };
 +  }
@@ -2534,6 +2800,7 @@ index 0000000..8f2c349
 +  try {
 +    await writer.write({
 +      version: 1,
++      ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
 +      sessionId: input.session.sessionId,
 +      beforeTurnId: `turn_${emission.sequence}`,
 +      snapshot,
@@ -2544,10 +2811,10 @@ index 0000000..8f2c349
 +}
 diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
 new file mode 100644
-index 0000000..f6ed74e
+index 00000000..1d2f084c
 --- /dev/null
 +++ b/packages/eve/src/execution/session-fork.integration.test.ts
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,161 @@
 +import { defaultMessageReducer } from "#client/message-reducer.js";
 +import { expect, it } from "vitest";
 +import { start } from "#internal/workflow/runtime.js";
@@ -2671,9 +2938,47 @@ index 0000000..f6ed74e
 +    }
 +  });
 +});
++
++it("captures an idle checkpoint through the session inbox without another model turn", async () => {
++  const fixture = await createTestRuntime({ agent: { name: "idle-fork-fixture" } });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({ compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource() });
++    const source = await start(workflowEntry, [{ input: { message: "Completed source question" }, serializedContext: context() }]);
++    const sourceStream = captureTurnEvents(source);
++    try {
++      await sourceStream.nextTurn();
++      const ref = { sessionId: source.runId, beforeTurnId: "turn_1", checkpointId: crypto.randomUUID() };
++      const receipt = await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "checkpoint", checkpointId: ref.checkpointId, beforeTurnId: ref.beforeTurnId } });
++      expect(receipt.status).toBe("accepted");
++      const capture = await sourceStream.nextTurn();
++      expect(capture.some((event) => event.type === "turn.started" || event.type === "message.received")).toBe(false);
++      await expect.poll(async () => {
++        try { return (await readSessionCheckpoint(ref)).checkpointId; } catch { return undefined; }
++      }).toBe(ref.checkpointId);
++      const snapshot = await readSessionCheckpoint(ref);
++      expect(snapshot.snapshot.session.history.some((message) => message.role === "assistant")).toBe(true);
++      const branch = await start(workflowEntry, [{ input: { message: "Follow up on the completed answer" }, fork: ref, serializedContext: context() }]);
++      const branchStream = captureTurnEvents(branch);
++      try {
++        const events = await branchStream.nextTurn();
++        const reducer = defaultMessageReducer();
++        const state = events.reduce(reducer.reduce, reducer.initial());
++        expect(state.messages.filter((message) => message.role === "user").flatMap((message) => message.parts.filter((part) => part.type === "text").map((part) => part.text))).toEqual(["Completed source question", "Follow up on the completed answer"]);
++        expect(events.filter((event) => event.type === "turn.started")).toHaveLength(1);
++        expect((await readSessionCheckpoint(ref)).snapshot).toEqual(snapshot.snapshot);
++      } finally {
++        branchStream.dispose();
++        await branch.cancel();
++      }
++    } finally {
++      sourceStream.dispose();
++      await source.cancel();
++    }
++  });
++});
 diff --git a/packages/eve/src/execution/session-resource-fork.integration.test.ts b/packages/eve/src/execution/session-resource-fork.integration.test.ts
 new file mode 100644
-index 0000000..a8b0f94
+index 00000000..a8b0f943
 --- /dev/null
 +++ b/packages/eve/src/execution/session-resource-fork.integration.test.ts
 @@ -0,0 +1,122 @@
@@ -2799,201 +3104,784 @@ index 0000000..a8b0f94
 +    }
 +  });
 +});
-diff --git a/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
+diff --git a/packages/eve/src/execution/turn-control-receiver.test.ts b/packages/eve/src/execution/turn-control-receiver.test.ts
+index 1fa27888..51987a5d 100644
+--- a/packages/eve/src/execution/turn-control-receiver.test.ts
++++ b/packages/eve/src/execution/turn-control-receiver.test.ts
+@@ -1,6 +1,6 @@
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+
+-import type { DeliverHookPayload } from "#channel/types.js";
++import type { CheckpointSessionHookPayload, DeliverHookPayload } from "#channel/types.js";
+ import type { DurableSessionState } from "#execution/durable-session-store.js";
+ import { cancelAllIndexedSessionTasksStep } from "#execution/cancel-indexed-session-tasks-step.js";
+ import { SessionStateCursor } from "#execution/session-state-cursor.js";
+@@ -39,6 +39,16 @@ describe("TurnControlReceiver", () => {
+     createHookMock.mockReset();
+   });
+
++  it("buffers an immutable checkpoint arriving during an active turn without dispatching a message", async () => {
++    installControlHook([parkResult()], true);
++    const request: CheckpointSessionHookPayload = { kind: "checkpoint", checkpointId: "00000000-0000-4000-8000-000000000001", beforeTurnId: "turn_1" };
++    const bufferedSessionControls: Array<CheckpointSessionHookPayload | "clear" | "compact" | "expired" | "reset"> = [];
++    const bufferedDeliveries: DeliverHookPayload[] = [];
++    await runReceiver(bufferedDeliveries, { bufferedSessionControls, commandInbox: createCommandInbox([{ ...request, version: 7 }]) });
++    expect(bufferedSessionControls).toEqual([request]);
++    expect(bufferedDeliveries).toEqual([]);
++  });
++
+   it("forwards a buffered delivery and consumes it once the turn accepts", async () => {
+     const delivery: DeliverHookPayload = {
+       kind: "deliver",
+@@ -128,7 +138,7 @@ describe("TurnControlReceiver", () => {
+   it("buffers current and legacy sends that arrive during a turn", async () => {
+     installControlHook([parkResult()], true);
+     const bufferedDeliveries: DeliverHookPayload[] = [];
+-    const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset"> = [];
++    const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload> = [];
+
+     const action = await runReceiver(bufferedDeliveries, {
+       bufferedSessionControls,
+@@ -275,7 +285,7 @@ describe("TurnControlReceiver", () => {
+
+   it("forwards cancel and reset through the active turn's private hook", async () => {
+     installControlHook([parkResult()], true);
+-    const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset"> = [];
++    const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload> = [];
+
+     const action = await runReceiver([], {
+       bufferedSessionControls,
+@@ -301,7 +311,7 @@ describe("TurnControlReceiver", () => {
+ function runReceiver(
+   bufferedDeliveries: DeliverHookPayload[],
+   options: {
+-    readonly bufferedSessionControls?: Array<"clear" | "compact" | "expired" | "reset">;
++    readonly bufferedSessionControls?: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+     readonly commandInbox?: SessionCommandInbox;
+     readonly seenTaskDeliveries?: Set<string>;
+   } = {},
+diff --git a/packages/eve/src/execution/turn-control-receiver.ts b/packages/eve/src/execution/turn-control-receiver.ts
+index 65315878..65ba5e00 100644
+--- a/packages/eve/src/execution/turn-control-receiver.ts
++++ b/packages/eve/src/execution/turn-control-receiver.ts
+@@ -1,3 +1,4 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
+ import { createHook, type Hook } from "#compiled/@workflow/core/index.js";
+
+ import type { DeliverHookPayload } from "#channel/types.js";
+@@ -25,7 +26,7 @@ export type TurnDriverAction = NextDriverAction;
+ /** Owns one turn's driver-side control hook and public-delivery relay state. */
+ export class TurnControlReceiver {
+   private readonly bufferedDeliveries: DeliverHookPayload[];
+-  private readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  private readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   private readonly commandInbox: SessionCommandInbox;
+   private readonly control: Hook<TurnControlPayload>;
+   private readonly controlIterator: AsyncIterator<TurnControlPayload>;
+@@ -37,7 +38,7 @@ export class TurnControlReceiver {
+
+   constructor(input: {
+     readonly bufferedDeliveries: DeliverHookPayload[];
+-    readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++    readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+     readonly cancelledTaskIds?: Set<string>;
+     readonly commandInbox: SessionCommandInbox;
+     readonly expectedTurnId: string;
+@@ -96,6 +97,7 @@ export class TurnControlReceiver {
+       await this.bufferDelivery(command);
+       return undefined;
+     }
++    if (command.kind === "checkpoint") { this.bufferedSessionControls.push(command); return undefined; }
+     if (command.kind === "clear" || command.kind === "compact") {
+       this.bufferedSessionControls.push(command.kind);
+       return undefined;
+diff --git a/packages/eve/src/execution/turn-dispatch.ts b/packages/eve/src/execution/turn-dispatch.ts
+index e757e56f..7d3c9a29 100644
+--- a/packages/eve/src/execution/turn-dispatch.ts
++++ b/packages/eve/src/execution/turn-dispatch.ts
+@@ -1,3 +1,4 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
+ import type { DeliverHookPayload, HookPayload, SessionCapabilities } from "#channel/types.js";
+ import { dispatchTurnStep } from "#execution/dispatch-turn-step.js";
+ import { TurnControlReceiver } from "#execution/turn-control-receiver.js";
+@@ -33,7 +34,7 @@ export interface DispatchedTurn {
+ /** Dispatches one turn and services its private-inbox control protocol until it terminates. */
+ interface TurnDispatchInput {
+   readonly bufferedDeliveries: DeliverHookPayload[];
+-  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset">;
++  readonly bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload>;
+   readonly capabilities?: SessionCapabilities;
+   readonly cancelledTaskIds?: Set<string>;
+   readonly controlToken: string;
+diff --git a/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts b/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts
 new file mode 100644
+index 00000000..aeadaf95
 --- /dev/null
-+++ b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
-@@ -0,0 +1,111 @@
-+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-+import { tmpdir } from "node:os";
-+import { join } from "node:path";
-+import { expect, it, vi } from "vitest";
-+import { mockSandbox } from "#internal/testing/mocks/mock-sandbox.js";
-+import type { SandboxBackend, SandboxBackendCreateInput } from "#public/definitions/sandbox-backend.js";
-+import { createBundledRuntimeCompiledArtifactsSource, createDiskRuntimeCompiledArtifactsSource, type RuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
-+import type { RuntimeSandboxRegistry } from "#runtime/sandbox/registry.js";
-+import type { ResolvedSandboxDefinition } from "#runtime/types.js";
-+import { ensureSandboxAccess } from "#execution/sandbox/ensure.js";
-+import type { SandboxState } from "#sandbox/state.js";
++++ b/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts
+@@ -0,0 +1,16 @@
++import { expect, it } from "vitest";
++import { sessionInboxWire as producer } from "#execution/wire/session-inbox-encoder.js";
++import { sessionInboxWire } from "#execution/wire/session-inbox-wire.js";
++const request = { kind: "checkpoint" as const, checkpointId: "00000000-0000-4000-8000-000000000001", beforeTurnId: "turn_1" };
++it("preserves immutable checkpoint coordinates on wire7 and rejects old consumers", () => {
++  expect(sessionInboxWire.decode(producer.encode(request, { version: 7 }))).toEqual(request);
++  expect(() => producer.encode(request, { version: 6 })).toThrow("require session inbox wire version 7");
++  expect(() => sessionInboxWire.decode({ ...request, version: 7, checkpointId: "../bad" })).toThrow("Invalid idle checkpoint");
++});
 +
-+function createTestRegistry(
-+  definition: Partial<ResolvedSandboxDefinition>,
-+  backend: SandboxBackend,
-+): RuntimeSandboxRegistry {
-+  const resolved: ResolvedSandboxDefinition = {
-+    backend,
-+    logicalPath: "agent/sandbox/sandbox.ts",
-+    sourceHash: "test-source-hash",
-+    sourceId: "agent/sandbox/sandbox",
-+    sourceKind: "module",
-+    ...definition,
++// A payload's declared version is part of its persisted meaning. Migration
++// must not turn an unsupported historic command into a new control operation.
++it.each([undefined, 0, 1, 2, 3, 4, 5, 6])("rejects checkpoint commands declared as historic wire %s", (version) => {
++  const payload = version === undefined ? request : { ...request, version };
++  expect(() => sessionInboxWire.decode(payload)).toThrow();
++});
+diff --git a/packages/eve/src/execution/wire/session-inbox-contract.ts b/packages/eve/src/execution/wire/session-inbox-contract.ts
+index b50fffbb..9116df66 100644
+--- a/packages/eve/src/execution/wire/session-inbox-contract.ts
++++ b/packages/eve/src/execution/wire/session-inbox-contract.ts
+@@ -1,5 +1,5 @@
+ /** Every explicit session-inbox wire version still supported by producers. */
+-export const SESSION_INBOX_WIRE_VERSIONS = [1, 2, 3, 4, 5, 6] as const;
++export const SESSION_INBOX_WIRE_VERSIONS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+ export type SessionInboxWireVersion = (typeof SESSION_INBOX_WIRE_VERSIONS)[number];
+
+diff --git a/packages/eve/src/execution/wire/session-inbox-encoder.ts b/packages/eve/src/execution/wire/session-inbox-encoder.ts
+index b3fa727c..f3b658ba 100644
+--- a/packages/eve/src/execution/wire/session-inbox-encoder.ts
++++ b/packages/eve/src/execution/wire/session-inbox-encoder.ts
+@@ -35,10 +35,12 @@ import {
+   type SessionInboxWireV6,
+ } from "#execution/wire/session-inbox-wire.v6.js";
+
++import { encodeSessionCommandV7, type SessionInboxWireV7 } from "#execution/wire/session-inbox-wire.v7.js";
++
+ type SessionInboxCommand = DeliverHookPayload | SessionCommand | SessionTimeoutHookPayload;
+
+ /** Current wire type consumed after migration. */
+-export type SessionInboxWire = SessionInboxWireV6;
++export type SessionInboxWire = SessionInboxWireV7;
+
+ type LegacySessionInboxWireTarget = Extract<SessionInboxWireTarget, { readonly version: 0 }>;
+ type VersionedSessionInboxEncoder = (command: SessionInboxCommand) => unknown;
+@@ -55,6 +57,7 @@ const versionedEncoders = {
+   5: (command: SessionInboxCommand) =>
+     encodeSessionCommandV5(withoutOwnedTaskCancellation(command)),
+   6: encodeSessionCommandV6,
++  7: encodeSessionCommandV7,
+ } satisfies Record<SessionInboxWireVersion, VersionedSessionInboxEncoder>;
+
+ /** Encodes a command for the selected session-inbox consumer. */
+@@ -64,6 +67,7 @@ function encode(command: SessionInboxCommand, target: { readonly version: 3 }):
+ function encode(command: SessionInboxCommand, target: { readonly version: 4 }): SessionInboxWireV4;
+ function encode(command: SessionInboxCommand, target: { readonly version: 5 }): SessionInboxWireV5;
+ function encode(command: SessionInboxCommand, target: { readonly version: 6 }): SessionInboxWireV6;
++function encode(command: SessionInboxCommand, target: { readonly version: 7 }): SessionInboxWireV7;
+ function encode(
+   command: SessionInboxCommand,
+   target: { readonly version: SessionInboxWireVersion },
+@@ -82,6 +86,7 @@ function encode(
+   | SessionInboxWireV4
+   | SessionInboxWireV5
+   | SessionInboxWireV6
++  | SessionInboxWireV7
+   | Record<string, unknown>;
+ function encode(
+   command: SessionInboxCommand,
+@@ -93,7 +98,9 @@ function encode(
+   | SessionInboxWireV4
+   | SessionInboxWireV5
+   | SessionInboxWireV6
++  | SessionInboxWireV7
+   | Record<string, unknown> {
++  if (command.kind === "checkpoint" && target.version < 7) throw new SessionInboxWireError("Idle checkpoints require session inbox wire version 7.");
+   if (command.kind === "cancel" && command.tasks === true && target.version < 6) {
+     throw new SessionInboxWireError(
+       `Cannot encode session-owned task cancellation for wire version ${target.version}.`,
+@@ -139,7 +146,8 @@ function encode(
+       | SessionInboxWireV3
+       | SessionInboxWireV4
+       | SessionInboxWireV5
+-      | SessionInboxWireV6;
++      | SessionInboxWireV6
++      | SessionInboxWireV7;
+   }
+   throw new SessionInboxWireError(
+     `Cannot encode session inbox payload for unknown wire version ${JSON.stringify((target as { version?: unknown }).version)}.`,
+diff --git a/packages/eve/src/execution/wire/session-inbox-resume.test.ts b/packages/eve/src/execution/wire/session-inbox-resume.test.ts
+index 8a2b28bf..bf95ee9b 100644
+--- a/packages/eve/src/execution/wire/session-inbox-resume.test.ts
++++ b/packages/eve/src/execution/wire/session-inbox-resume.test.ts
+@@ -282,3 +282,17 @@ describe("resumeSessionInbox", () => {
+ function sessionHook(runId: string, token: string, metadata?: unknown) {
+   return { metadata, runId, token } as never;
+ }
++
++it("negotiates checkpoint support instead of using the stable inbox's legacy fast path", async () => {
++  const token = sessionCommandHookToken("session-1");
++  const hook = sessionHook("session-1", token, { sessionInboxWireVersion: 7 });
++  getHookByTokenMock.mockResolvedValue(hook);
++  const command = { kind: "checkpoint" as const, checkpointId: crypto.randomUUID(), beforeTurnId: "turn_1" };
++  await resumeSessionInbox(token, command);
++  expect(getHookByTokenMock).toHaveBeenCalledWith(token);
++  expect(resumeHookMock).toHaveBeenCalledWith(hook, { ...command, version: 7 });
++  resumeHookMock.mockClear();
++  getHookByTokenMock.mockResolvedValue(sessionHook("session-1", token, { sessionInboxWireVersion: 6 }));
++  await expect(resumeSessionInbox(token, command)).rejects.toThrow("require session inbox wire version 7");
++  expect(resumeHookMock).not.toHaveBeenCalled();
++});
+diff --git a/packages/eve/src/execution/wire/session-inbox-resume.ts b/packages/eve/src/execution/wire/session-inbox-resume.ts
+index aa890898..cfb9f446 100644
+--- a/packages/eve/src/execution/wire/session-inbox-resume.ts
++++ b/packages/eve/src/execution/wire/session-inbox-resume.ts
+@@ -61,6 +61,7 @@ function isStableInboxFastPathCompatible(
+   command: DeliverHookPayload | SessionCommand | SessionTimeoutHookPayload,
+ ): boolean {
+   if (!isSessionCommandHookToken(token)) return false;
++  if (command.kind === "checkpoint") return false;
+   if (command.kind === "cancel" && command.tasks === true) return false;
+   return !("caller" in command && command.caller?.activityObserver !== undefined);
+ }
+diff --git a/packages/eve/src/execution/wire/session-inbox-wire.ts b/packages/eve/src/execution/wire/session-inbox-wire.ts
+index 902a3d80..a42c697e 100644
+--- a/packages/eve/src/execution/wire/session-inbox-wire.ts
++++ b/packages/eve/src/execution/wire/session-inbox-wire.ts
+@@ -37,7 +37,7 @@ import { isObject } from "#shared/guards.js";
+ export type DecodedSessionInbox =
+   | DeliverHookPayload
+   | SessionTimeoutHookPayload
+-  | Extract<SessionCommand, { readonly kind: "cancel" | "clear" | "compact" | "reset" }>;
++  | Extract<SessionCommand, { readonly kind: "cancel" | "clear" | "compact" | "reset" | "checkpoint" }>;
+
+ export { SessionInboxWireError } from "#execution/wire/session-inbox-contract.js";
+
+@@ -60,6 +60,7 @@ const sessionInboxMigrations: readonly VersionMigration[] = [
+   sessionInboxWireV3Migration,
+   sessionInboxWireV4Migration,
+   sessionInboxWireV5Migration,
++  { from: 6, to: 7, migrate(prior) { if (!isObject(prior)) throw new Error("Invalid session inbox v6 value."); return { ...prior, version: 7 }; } },
+ ];
+
+ /**
+@@ -78,6 +79,11 @@ function decode(value: unknown): DecodedSessionInbox {
+   if (hasDeclaredVersion && typeof declaredVersion !== "number") {
+     throw new SessionInboxWireError(`${WIRE_LABEL}: value has no numeric "version" field.`);
+   }
++  if (isObject(value) && value.kind === "checkpoint" && declaredVersion !== 7) {
++    throw new SessionInboxWireError(
++      "Idle checkpoint commands require declared session inbox wire version 7.",
++    );
++  }
+   const normalized = normalizeSessionInboxWireV2(value);
+   if (
+     (declaredVersion === 1 || declaredVersion === 2 || declaredVersion === 3) &&
+@@ -156,6 +162,9 @@ function normalizeWire(wire: SessionInboxWire): DecodedSessionInbox {
+       return { kind: "session-timeout" };
+     case "clear":
+       return { kind: "clear" };
++    case "checkpoint":
++      if (typeof wire.checkpointId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wire.checkpointId) || typeof wire.beforeTurnId !== "string" || !/^turn_(0|[1-9][0-9]*)$/.test(wire.beforeTurnId)) throw new SessionInboxWireError("Invalid idle checkpoint request.");
++      return { kind: "checkpoint", checkpointId: wire.checkpointId, beforeTurnId: wire.beforeTurnId };
+     case "compact":
+       return { kind: "compact" };
+     case "reset":
+diff --git a/packages/eve/src/execution/wire/session-inbox-wire.v7.ts b/packages/eve/src/execution/wire/session-inbox-wire.v7.ts
+new file mode 100644
+index 00000000..fb251405
+--- /dev/null
++++ b/packages/eve/src/execution/wire/session-inbox-wire.v7.ts
+@@ -0,0 +1,16 @@
++import { z } from "#compiled/zod/index.js";
++import type { DeliverHookPayload, SessionCommand, SessionTimeoutHookPayload } from "#channel/types.js";
++import { sessionInboxWireV6Schema, encodeSessionCommandV6 } from "#execution/wire/session-inbox-wire.v6.js";
++export const sessionInboxWireV7Schema = z.discriminatedUnion("kind", [
++  sessionInboxWireV6Schema.options[0].extend({ version: z.literal(7) }),
++  sessionInboxWireV6Schema.options[1].extend({ version: z.literal(7) }),
++  sessionInboxWireV6Schema.options[2].extend({ version: z.literal(7) }),
++  sessionInboxWireV6Schema.options[3].extend({ version: z.literal(7) }),
++  sessionInboxWireV6Schema.options[4].extend({ version: z.literal(7) }),
++  sessionInboxWireV6Schema.options[5].extend({ version: z.literal(7) }),
++  z.object({ version: z.literal(7), kind: z.literal("checkpoint"), checkpointId: z.string().uuid(), beforeTurnId: z.string().regex(/^turn_(0|[1-9][0-9]*)$/) }).strict(),
++]);
++export type SessionInboxWireV7 = z.infer<typeof sessionInboxWireV7Schema>;
++export function encodeSessionCommandV7(command: DeliverHookPayload | SessionCommand | SessionTimeoutHookPayload): SessionInboxWireV7 {
++  return sessionInboxWireV7Schema.parse(command.kind === "checkpoint" ? { ...command, version: 7 } : { ...encodeSessionCommandV6(command), version: 7 });
++}
+diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
+index d3cfb0bd..d91cf7ef 100644
+--- a/packages/eve/src/execution/workflow-entry.ts
++++ b/packages/eve/src/execution/workflow-entry.ts
+@@ -1,3 +1,9 @@
++import type { CheckpointSessionHookPayload } from "#channel/types.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  SESSION_CHECKPOINT_WRITER_KEY,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
+ import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
+
+ import type {
+@@ -28,7 +34,7 @@ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-st
+ import { dispatchAndAwaitTurn } from "#execution/turn-dispatch.js";
+ import type { TurnDriverAction } from "#execution/turn-control-receiver.js";
+ import { normalizeSerializableError } from "#execution/workflow-errors.js";
+-import { createSessionStep } from "#execution/create-session-step.js";
++import { createSessionStep, restoreSessionHistoryStep } from "#execution/create-session-step.js";
+ import { settleCancelledTurnStep } from "#execution/settle-cancelled-turn-step.js";
+ import { emitTerminalSessionFailureStep } from "#execution/terminal-session-failure-step.js";
+ import { fireSessionCallbackStep } from "#subagents/callback-step.js";
+@@ -63,6 +69,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
+  * and deserialized at each `"use step"` boundary.
+  */
+ export interface WorkflowEntryInput {
++  readonly fork?: RunInput["fork"];
+   readonly activityCollectorRunId?: string;
+   readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
+   readonly input: RunInput["input"];
+@@ -171,6 +178,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+   };
+
+   const driverWritable = getWritable<Uint8Array>();
++  input.serializedContext[SESSION_CHECKPOINT_WRITER_KEY] = {
++    sessionId,
++    writable: getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE }),
 +  };
+   const crashCleanupState: CrashCleanupState = {
+     caller: undefined,
+     callerResolved: false,
+@@ -200,6 +211,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+             continuationToken,
+             dynamicSubagentAgentConfig,
+             inheritedLimits: input.limits,
++            fork: input.fork,
+             nodeId: serializedBundle.nodeId,
+             outputSchema: input.input.outputSchema,
+             rootSessionId: rootSessionIdFromParent,
+@@ -246,6 +258,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+         : undefined;
+       crashCleanupState.callerResolved = true;
+
++      if (input.fork) {
++        await restoreSessionHistoryStep({ fork: input.fork, writable: driverWritable });
++      }
 +
-+  return {
-+    sandbox: {
-+      definition: resolved,
-+      workspaceResourceRoot: { logicalPath: "", rootEntries: [] },
-+    },
-+  };
-+}
-+
-+function createBackend(options?: { readonly delete?: () => Promise<void> }): SandboxBackend {
-+  const sandbox = mockSandbox({ id: "sbx_session_auth" });
-+  const create = vi.fn(async (input: SandboxBackendCreateInput) => {
-+    return {
-+      captureState: async () => ({
-+        backendName: "test",
-+        metadata: {},
-+        sessionKey: input.sessionKey,
-+      }),
-+      delete: vi.fn(options?.delete ?? (async () => {})),
-+      stop: vi.fn(async () => {}),
-+      useSessionFn: async () => sandbox.session,
-+      shutdown: async () => {},
-+      session: sandbox.session,
-+    };
-+  });
-+
-+  return { create, name: "test", prewarm: vi.fn() };
-+}
-+
-+async function ensure(input: {
-+  readonly compiledArtifactsSource?: RuntimeCompiledArtifactsSource;
-+  readonly ownsSandbox?: boolean;
-+  readonly runOnSession?: (callback: () => Promise<void>) => Promise<void>;
-+  readonly registry: RuntimeSandboxRegistry;
-+  readonly state?: SandboxState;
-+  readonly tags?: Record<string, string>;
-+}) {
-+  return await ensureSandboxAccess({
-+    compiledArtifactsSource:
-+      input.compiledArtifactsSource ?? createBundledRuntimeCompiledArtifactsSource(),
-+    nodeId: "__root__",
-+    ownsSandbox: input.ownsSandbox,
-+    registry: input.registry,
-+    runOnSession: input.runOnSession,
-+    sessionId: "session_1",
-+    state: input.state ?? null,
-+    tags: input.tags,
-+  });
-+}
-+
-+
-+it("records native local sandbox ownership before provider creation and rejects reassignment", async () => {
-+  const appRoot = await mkdtemp(join(tmpdir(), "eve-sandbox-owner-"));
-+  const fake = createBackend();
-+  let ownerPath = "";
-+  let fresh = true;
-+  const backend = {
-+    ...fake, name: "microsandbox",
-+    create: vi.fn(async (input: SandboxBackendCreateInput) => {
-+      ownerPath = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", input.sessionKey, "owner.json");
-+      expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual({
-+        version: 1, backendName: "microsandbox", sessionKey: input.sessionKey, sessionId: "session_1",
-+        ...(fresh ? { writeAheadResources: true } : {}),
+       outcome = await runDriverLoop({
+         capabilities,
+         commandInbox,
+@@ -473,7 +489,7 @@ async function runDriverLoop(input: {
+     `${input.sessionState.sessionId}:turn-control:${String(turnDispatchIndex++)}`;
+
+   const bufferedDeliveries: DeliverHookPayload[] = [];
+-  const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset"> = [];
++  const bufferedSessionControls: Array<"clear" | "compact" | "expired" | "reset" | CheckpointSessionHookPayload> = [];
+   const cancelledTaskIds = new Set<string>();
+   const seenTaskDeliveries = new Set<string>();
+   const stateCursor = new SessionStateCursor({
+@@ -644,6 +660,7 @@ async function runDriverLoop(input: {
+         };
+       }
+
++      if (next.kind === "checkpoint") { action = await runTurn(next); continue; }
+       if (next.kind === "clear" || next.kind === "compact") {
+         action = await runTurn({ kind: next.kind });
+         continue;
+diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
+index 493017d0..b5fbbed3 100644
+--- a/packages/eve/src/execution/workflow-runtime.ts
++++ b/packages/eve/src/execution/workflow-runtime.ts
+@@ -203,6 +203,7 @@ export function createWorkflowRuntime(config: {
+         -readonly [K in keyof WorkflowEntryInput]: WorkflowEntryInput[K];
+       } = {
+         input: input.input,
++        fork: input.fork,
+         limits: input.limits,
+         serializedContext,
+       };
+@@ -233,6 +234,10 @@ export function createWorkflowRuntime(config: {
+             });
+       const attributes = {
+         ...sessionAttributes,
++        // Resource inventory must remain readable without resolving session input.
++        ...(collectorRunId === undefined
++          ? {}
++          : { "$eve.activity_collector": collectorRunId }),
+         ...(input.externalInvocation === undefined
+           ? {}
+           : buildInvocationAttributes(input.externalInvocation)),
+diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
+index da9ac49d..4dd65352 100644
+--- a/packages/eve/src/execution/workflow-steps.ts
++++ b/packages/eve/src/execution/workflow-steps.ts
+@@ -1,3 +1,6 @@
++import { captureIdleSessionCheckpoint } from "#execution/capture-idle-session-checkpoint.js";
++import { SandboxKey, SessionCheckpointWriterKey } from "#context/keys.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
+ import { buildAdapterContext } from "#channel/adapter-context.js";
+ import { callAdapterEventHandler, defaultDeliverResult } from "#channel/adapter.js";
+ import type { DeliverHookPayload } from "#channel/types.js";
+@@ -539,6 +542,23 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
+         return step(modelSession, stepInput);
+       };
+
++      if (input.input?.kind === "checkpoint") {
++        const request = input.input;
++        await captureIdleSessionCheckpoint({
++          request,
++          session: schemaSession,
++          target: ctx.get(SessionCheckpointWriterKey),
++          sandbox: ctx.get(SandboxKey),
++          prepare: () => handleEvent({ type: "session.waiting", data: { continuationToken: schemaSession.continuationToken, wait: "next-user-message", checkpoint: { checkpointId: request.checkpointId, beforeTurnId: request.beforeTurnId } } }),
++        });
++        return { next: null, session: schemaSession };
++      }
++      await writeSessionCheckpoint({
++        session: schemaSession,
++        delivery: resolved,
++        target: ctx.get(SessionCheckpointWriterKey),
++        sandbox: ctx.get(SandboxKey),
 +      });
-+      return await fake.create(input);
-+    }),
-+  };
-+  const input = { compiledArtifactsSource: createDiskRuntimeCompiledArtifactsSource(appRoot),
-+    registry: createTestRegistry({}, backend) };
-+  try {
-+    await (await ensure(input)).get();
-+    await (await ensure(input)).get();
-+    expect(backend.create).toHaveBeenCalledTimes(2);
-+    // A cache that predates ownership cannot claim complete write-ahead coverage.
-+    await rm(ownerPath);
-+    fresh = false;
-+    await (await ensure(input)).get();
-+    await (await ensure(input)).get();
-+    const owner = JSON.parse(await readFile(ownerPath, "utf8"));
-+    expect(owner.writeAheadResources).toBeUndefined();
-+    await writeFile(ownerPath, JSON.stringify({ ...owner, sessionId: "other-session" }));
-+    await expect((await ensure(input)).get()).rejects.toThrow("different owner");
-+    expect(backend.create).toHaveBeenCalledTimes(4);
-+  } finally {
-+    await rm(appRoot, { recursive: true, force: true });
-+  }
-+});
-diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
-new file mode 100644
---- /dev/null
-+++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
-@@ -0,0 +1,36 @@
-+import { createHash, randomUUID } from "node:crypto";
-+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-+import { basename, dirname, join } from "node:path";
+       return runHarnessStep(schemaSession, resolved);
+     });
+   } catch (error) {
+diff --git a/packages/eve/src/internal/testing/app-harness.ts b/packages/eve/src/internal/testing/app-harness.ts
+index 1e0b0495..48b1dcb3 100644
+--- a/packages/eve/src/internal/testing/app-harness.ts
++++ b/packages/eve/src/internal/testing/app-harness.ts
+@@ -38,6 +38,7 @@ import { mockSandbox, type MockSandbox } from "#internal/testing/mocks/mock-sand
+  * backend so runtime tests never depend on a host container or VM service.
+  */
+ export interface TestAppDescriptor {
++  readonly sandboxBackend?: SandboxBackend;
+   readonly agent?: {
+     readonly limits?: {
+       readonly maxInputTokensPerSession?: number | false;
+@@ -172,7 +173,7 @@ export async function createTestRuntime(descriptor: TestAppDescriptor = {}): Pro
+     modules: [
+       {
+         loadNamespace: async () => ({
+-          default: defineSandbox({ backend: TEST_SANDBOX_BACKEND }),
++          default: defineSandbox({ backend: descriptor.sandboxBackend ?? TEST_SANDBOX_BACKEND }),
+         }),
+         logicalPath: "sandbox.ts",
+       },
+diff --git a/packages/eve/src/internal/testing/durable-session-workflow.ts b/packages/eve/src/internal/testing/durable-session-workflow.ts
+index 6db0c472..ea55b330 100644
+--- a/packages/eve/src/internal/testing/durable-session-workflow.ts
++++ b/packages/eve/src/internal/testing/durable-session-workflow.ts
+@@ -1,3 +1,12 @@
++import { getWritable } from "#compiled/@workflow/core/index.js";
++import { SessionCheckpointWriterKey } from "#context/keys.js";
++import { deserializeContext, serializeContext } from "#context/serialize.js";
++import { writeSessionCheckpoint } from "#execution/session-checkpoint.js";
++import {
++  SESSION_CHECKPOINT_NAMESPACE,
++  SESSION_CHECKPOINT_WRITER_KEY,
++  type SessionCheckpoint,
++} from "#execution/session-checkpoint-contract.js";
+ /**
+  * Test fixture exercising the `createDurableSessionState` /
+  * `readDurableSession` round-trip from inside a real workflow runtime.
+@@ -206,3 +215,35 @@ export async function durableSessionRetryFixtureWorkflow(): Promise<DurableSessi
+     writeAttempt,
+   };
+ }
 +
-+/** Admission precedes the fence check. A fence waits for every admitted provider operation. */
-+export async function withMicrosandboxMutation<T>(metadataPath: string | undefined, callback: () => Promise<T>): Promise<T> {
-+  if (metadataPath === undefined) return await callback();
-+  const directory = dirname(metadataPath);
-+  let scope = join(directory, "mutations");
-+  const raw = await readFile(join(directory, "owner.json"), "utf8").catch((error: unknown) => {
-+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
-+    throw error;
++export async function sessionCheckpointFixtureStep(input: {
++  readonly sessionId: string;
++  readonly serializedContext: Record<string, unknown>;
++}): Promise<Record<string, unknown>> {
++  "use step";
++  const ctx = await deserializeContext(input.serializedContext);
++  const session = buildSyntheticSession({
++    sessionId: input.sessionId,
++    marker: "checkpoint",
++    historyDepth: 1,
 +  });
-+  if (raw !== undefined) {
-+    const owner = JSON.parse(raw);
-+    if (owner.version !== 1 || owner.backendName !== "microsandbox" || owner.sessionKey !== basename(directory) || typeof owner.sessionId !== "string") {
-+      throw new Error("Sandbox ownership is invalid.");
-+    }
-+    const eveDirectory = dirname(dirname(dirname(dirname(directory))));
-+    scope = join(eveDirectory, "sandbox-mutations", createHash("sha256").update(owner.sessionId).digest("hex"));
-+  }
-+  const operations = join(scope, "operations");
-+  await mkdir(operations, { recursive: true });
-+  const lease = join(operations, `${randomUUID()}.json`);
-+  await writeFile(lease, JSON.stringify({ version: 1, pid: process.pid }), { flag: "wx", mode: 0o600 });
-+  try {
-+    const fenced = await access(join(scope, "deleted")).then(() => true).catch((error: unknown) => {
-+      if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
-+      throw error;
-+    });
-+    if (fenced) throw new Error("Sandbox session is pending deletion.");
-+    return await callback();
-+  } finally {
-+    await rm(lease, { force: true });
-+  }
++  session.history.push({
++    role: "user",
++    content: [{ type: "file", mediaType: "application/pdf", data: new Uint8Array([1, 2, 3]) }],
++  });
++  await writeSessionCheckpoint({
++    session,
++    delivery: { message: "next" },
++    target: ctx.get(SessionCheckpointWriterKey),
++  });
++  return serializeContext(ctx);
 +}
-diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
-new file mode 100644
---- /dev/null
-+++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
-@@ -0,0 +1,36 @@
-+import { createHash } from "node:crypto";
-+import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
-+import { tmpdir } from "node:os";
-+import { join } from "node:path";
-+import { expect, it, vi } from "vitest";
-+import { withMicrosandboxMutation } from "#execution/sandbox/bindings/microsandbox-mutations.js";
 +
-+it("holds admission through provider work and rejects a new operation after fencing", async () => {
-+  const appRoot = await mkdtemp(join(tmpdir(), "eve-mutation-fence-"));
-+  const directory = join(appRoot, ".eve", "sandbox-cache", "microsandbox", "sessions", "key");
-+  const scope = join(appRoot, ".eve", "sandbox-mutations", createHash("sha256").update("owner").digest("hex"));
-+  await mkdir(directory, { recursive: true });
-+  await writeFile(join(directory, "owner.json"), JSON.stringify({ version: 1, backendName: "microsandbox", sessionId: "owner", sessionKey: "key" }));
-+  const entered = Promise.withResolvers<void>();
-+  const release = Promise.withResolvers<void>();
-+  const pending = withMicrosandboxMutation(join(directory, "metadata.json"), async () => {
-+    entered.resolve();
-+    await release.promise;
++export async function sessionCheckpointFixtureWorkflow(): Promise<void> {
++  "use workflow";
++  const { workflowRunId: sessionId } = getWorkflowMetadata();
++  const writable = getWritable<SessionCheckpoint>({ namespace: SESSION_CHECKPOINT_NAMESPACE });
++  const serializedContext = { [SESSION_CHECKPOINT_WRITER_KEY]: { sessionId, writable } };
++  const restored = await sessionCheckpointFixtureStep({ sessionId, serializedContext });
++  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
++}
+diff --git a/packages/eve/src/protocol/message-version.ts b/packages/eve/src/protocol/message-version.ts
+index 5ff6cbaa..81da8b25 100644
+--- a/packages/eve/src/protocol/message-version.ts
++++ b/packages/eve/src/protocol/message-version.ts
+@@ -52,10 +52,11 @@ interface MessageStreamAppendEventsByVersion {
+     | MessageAppendedStreamEventV24
+     | ReasoningAppendedStreamEventV24;
+   "25": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
++  "26": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
+ }
+
+ export type MessageStreamVersion = keyof MessageStreamAppendEventsByVersion;
+-type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25">;
++type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25" | "26">;
+
+ type VersionIndependentMessageStreamEvent = Exclude<
+   UnstampedMessageStreamEvent,
+@@ -93,6 +94,7 @@ export function normalizeMessageStreamEvent(
+         version,
+         event as MessageStreamEventForVersion<LegacyMessageStreamVersion>,
+       );
++    case "26":
+     case "25":
+       return validateCurrentMessageStreamEvent(event as MessageStreamEventForVersion<"25">);
+     default:
+diff --git a/packages/eve/src/protocol/message.test.ts b/packages/eve/src/protocol/message.test.ts
+index 99ab68d1..ecb82b07 100644
+--- a/packages/eve/src/protocol/message.test.ts
++++ b/packages/eve/src/protocol/message.test.ts
+@@ -32,7 +32,7 @@ import { createEveConnectionCallbackRoutePath } from "#protocol/routes.js";
+
+ describe("message stream protocol", () => {
+   it("pins the stream version for timed session events", () => {
+-    expect(EVE_MESSAGE_STREAM_VERSION).toBe("25");
++    expect(EVE_MESSAGE_STREAM_VERSION).toBe("26");
+   });
+
+   it.each(["21", "22", "23", "24"] as const)(
+diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
+index fc45f348..71b60ca7 100644
+--- a/packages/eve/src/protocol/message.ts
++++ b/packages/eve/src/protocol/message.ts
+@@ -27,7 +27,7 @@ export const EVE_STREAM_TAIL_INDEX_HEADER = "x-eve-stream-tail-index";
+ export const EVE_STREAM_VERSION_HEADER = "x-eve-stream-version";
+ export const EVE_MESSAGE_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
+ export const EVE_MESSAGE_STREAM_FORMAT = "ndjson";
+-export const EVE_MESSAGE_STREAM_VERSION = "25";
++export const EVE_MESSAGE_STREAM_VERSION = "26";
+
+ /**
+  * eve-owned finish reason for one completed assistant step.
+@@ -699,6 +699,8 @@ export interface SessionWaitingStreamEvent {
+   data: {
+     /** Channel-local continuation token, or the immutable session ID for an ID-only session. */
+     continuationToken: string;
++    /** Server-requested immutable idle capture; emitted before its receipt commits. */
++    checkpoint?: { checkpointId: string; beforeTurnId: string };
+     wait: "next-user-message";
+   };
+   type: "session.waiting";
+@@ -724,6 +726,38 @@ export interface SessionCompletedStreamEvent {
+   type: "session.completed";
+ }
+
++/** Historical display events, excluding session controls, usage, and authorization capabilities. */
++export type HistoryProjectionEvent = (
++  | MessageReceivedStreamEvent
++  | StepStartedStreamEvent
++  | MessageAppendedStreamEvent
++  | MessageCompletedStreamEvent
++  | ReasoningAppendedStreamEvent
++  | ReasoningCompletedStreamEvent
++  | ActionInputAppendedStreamEvent
++  | ActionsRequestedStreamEvent
++  | ActionPartialStreamEvent
++  | ActionResultStreamEvent
++  | InputRequestedStreamEvent
++  | InputResolvedStreamEvent
++  | ApprovalCandidateStreamEvent
++  | ApprovalSettledStreamEvent
++  | ResultCompletedStreamEvent
++  | TurnCompletedStreamEvent
++  | TurnCancelledStreamEvent
++  | TurnFailedStreamEvent
++) & { readonly meta: MessageStreamEventMeta };
++
++/** A fork's inherited display prefix. It is not new execution or billable usage. */
++export interface HistoryRestoredStreamEvent {
++  readonly type: "history.restored";
++  readonly data: {
++    readonly sourceSessionId: string;
++    readonly beforeTurnId: string;
++    readonly events: readonly HistoryProjectionEvent[];
++  };
++}
++
+ /**
+  * Serializable event before eve stamps the durable stream envelope.
+  *
+@@ -731,6 +765,7 @@ export interface SessionCompletedStreamEvent {
+  * consumers receive {@link MessageStreamEvent}.
+  */
+ export type UnstampedMessageStreamEvent =
++  | HistoryRestoredStreamEvent
+   | ActionInputAppendedStreamEvent
+   | ApprovalCandidateStreamEvent
+   | ApprovalSettledStreamEvent
+diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
+index 35cfa0f3..d6f522e3 100644
+--- a/packages/eve/src/public/channels/eve.test.ts
++++ b/packages/eve/src/public/channels/eve.test.ts
+@@ -2277,3 +2277,93 @@ describe("eveChannel — forwarded principal", () => {
+     expect(handler.send).not.toHaveBeenCalled();
+   });
+ });
++
++describe("eveChannel — native fork authorization", () => {
++  const fork = { sessionId: "source-session", beforeTurnId: "turn_1" };
++
++  it("denies forks by default before resolving a replayed operation", async () => {
++    const handler = createEveCreateHandler(
++      { auth: () => ACCEPTED_AUTH },
++      { activeSessionId: "existing" },
++    );
++    const response = await handler.fetch(
++      createJsonMessageRequest({ message: "edit", operationId: "retry", fork }),
++    );
++    expect(response.status).toBe(403);
++    expect(handler.resolveSession).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
 +  });
-+  try {
-+    await entered.promise;
-+    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
-+    await writeFile(join(scope, "deleted"), "1\n", { flag: "wx" });
-+    const later = vi.fn(async () => {});
-+    await expect(withMicrosandboxMutation(join(directory, "metadata.json"), later)).rejects.toThrow("pending deletion");
-+    expect(later).not.toHaveBeenCalled();
-+    expect(await readdir(join(scope, "operations"))).toHaveLength(1);
-+    release.resolve();
-+    await pending;
-+    expect(await readdir(join(scope, "operations"))).toEqual([]);
-+  } finally {
-+    release.resolve();
-+    await pending;
-+    await rm(appRoot, { recursive: true, force: true });
-+  }
++
++  it("passes only an explicitly authorized source reference to native creation", async () => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(202);
++    expect(authorizeFork).toHaveBeenCalledWith({
++      auth: ACCEPTED_AUTH,
++      sourceSessionId: fork.sessionId,
++    });
++    expect(handler.createSession.mock.calls[0]?.[0].fork).toEqual(fork);
++  });
++
++  it("rejects a source that the verified principal does not own", async () => {
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork: () => false,
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("denies anonymous forks even when the source policy allows them", async () => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: none(), authorizeFork });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(authorizeFork).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("denies an onMessage downgrade to unauthenticated execution", async () => {
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork: () => true,
++      onMessage: () => ({ auth: null }),
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("reauthorizes a principal changed by onMessage", async () => {
++    const authorizeFork = vi.fn(
++      ({ auth }: { auth: SessionAuthContext }) => auth.principalId === ACCEPTED_AUTH.principalId,
++    );
++    const handler = createEveCreateHandler({
++      auth: () => ACCEPTED_AUTH,
++      authorizeFork,
++      onMessage: () => ({ auth: OVERRIDE_AUTH }),
++    });
++    const response = await handler.fetch(createJsonMessageRequest({ message: "edit", fork }));
++    expect(response.status).toBe(403);
++    expect(authorizeFork).toHaveBeenCalledTimes(2);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it.each([
++    null,
++    {},
++    { sessionId: "source", beforeTurnId: "turn_-1" },
++    { ...fork, extra: "value" },
++  ])("rejects malformed fork references before authorization: %j", async (invalid) => {
++    const authorizeFork = vi.fn(() => true);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, authorizeFork });
++    const response = await handler.fetch(
++      createJsonMessageRequest({ message: "edit", fork: invalid }),
++    );
++    expect(response.status).toBe(400);
++    expect(authorizeFork).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
 +});
+diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
+index 48e2bc3b..27e414e4 100644
+--- a/packages/eve/src/public/definitions/hook.ts
++++ b/packages/eve/src/public/definitions/hook.ts
+@@ -30,6 +30,7 @@ export interface HookEventMap {
+   readonly "input.resolved": ProtocolEvent<"input.resolved">;
+   readonly "message.appended": ProtocolEvent<"message.appended">;
+   readonly "message.completed": ProtocolEvent<"message.completed">;
++  readonly "history.restored": ProtocolEvent<"history.restored">;
+   readonly "message.received": ProtocolEvent<"message.received">;
+   readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
+   readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
+diff --git a/packages/eve/src/sandbox/state.ts b/packages/eve/src/sandbox/state.ts
+index 5d3cb7e1..a2672383 100644
+--- a/packages/eve/src/sandbox/state.ts
++++ b/packages/eve/src/sandbox/state.ts
+@@ -19,9 +19,16 @@ export type SandboxSessionState = SandboxBackendSessionState;
+  * Every agent owns exactly one sandbox, so the state is just a single
+  * `initialized` flag and an optional persisted session record.
+  */
++export interface SandboxForkCheckpoint {
++  readonly backendName: string;
++  readonly metadata: Record<string, unknown>;
++}
++
+ export interface SandboxState {
+   readonly initialized: boolean;
+   readonly session: SandboxSessionState | null;
++  /** Immutable filesystem seed, never a reconnect identity from the source session. */
++  readonly forkCheckpoint?: SandboxForkCheckpoint;
+ }
+
+ /**
+@@ -32,6 +39,7 @@ export interface SandboxState {
+  */
+ export interface SandboxAccess {
+   captureState(): Promise<SandboxState>;
++  captureForkCheckpoint?(checkpointKey: string): Promise<SandboxForkCheckpoint | undefined>;
+   delete?(options?: SandboxDeleteOptions): Promise<void>;
+   get(): Promise<SandboxSession | null>;
+   stop(): Promise<void>;
+diff --git a/packages/eve/src/shared/sandbox-backend.ts b/packages/eve/src/shared/sandbox-backend.ts
+index 4c9110eb..7aec9d0e 100644
+--- a/packages/eve/src/shared/sandbox-backend.ts
++++ b/packages/eve/src/shared/sandbox-backend.ts
+@@ -12,6 +12,8 @@ export interface SandboxBackendHandle<SO = Record<string, never>> {
+   readonly session: SandboxSession;
+   readonly useSessionFn: SandboxSessionUseFn<SO>;
+   captureState(): Promise<SandboxBackendSessionState>;
++  /** Captures immutable filesystem state for a turn boundary. Repeating a key returns the same snapshot. */
++  captureForkCheckpoint?(checkpointKey: string): Promise<Record<string, unknown> | undefined>;
+   /**
+    * Permanently deletes this sandbox and its disposable backend state.
+    * Reusable or shared template state must not be deleted.
+@@ -96,6 +98,8 @@ export interface SandboxBackendCreateInput {
+   readonly templateKey: string | null;
+   readonly sessionKey: string;
+   readonly existingMetadata?: Record<string, unknown>;
++  /** Seeds a new session from immutable filesystem state; never a source reconnect record. */
++  readonly forkCheckpoint?: Record<string, unknown>;
+   /**
+    * Runtime tags the backend should attach to sandbox resources when
+    * the underlying provider supports tags.

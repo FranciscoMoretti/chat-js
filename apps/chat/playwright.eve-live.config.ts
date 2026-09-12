@@ -5,6 +5,7 @@ export default defineConfig({
   ...config,
   testMatch: [
     "eve-comparison-live.e2e.ts",
+    "eve-idle-checkpoint-live.e2e.ts",
     "eve-deletion-retire.e2e.ts",
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
