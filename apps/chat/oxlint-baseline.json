@@ -223,7 +223,6 @@
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/completion-queue.test.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
@@ -490,7 +489,6 @@
         "components/keyboard-shortcuts.tsx",
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
-        "lib/ai/eval-agent.ts",
         "lib/ai/token-utils.test.ts",
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
@@ -598,7 +596,6 @@
         "components/settings/mcp-details-page.tsx",
         "components/ui/form.tsx",
         "components/ui/scroll-area.tsx",
-        "lib/ai/errors.ts",
         "lib/app-chat-runtime.ts",
         "lib/db/queries.ts",
         "lib/db/schema.ts",
@@ -1292,7 +1289,6 @@
         "lib/ai/active-gateway.ts",
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
@@ -1420,7 +1416,7 @@
       }
     },
     {
-      "files": ["components/settings/models-table.tsx", "lib/ai/eval-agent.ts"],
+      "files": ["components/settings/models-table.tsx"],
       "rules": {
         "unicorn/consistent-existence-index-check": "off"
       }
@@ -1435,12 +1431,6 @@
       ],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/errors.ts"],
-      "rules": {
-        "unicorn/custom-error-definition": "off"
       }
     },
     {
@@ -1628,8 +1618,7 @@
         "components/diffview.tsx",
         "components/model-selector.tsx",
         "components/part/document-common.tsx",
-        "components/part/document-preview.tsx",
-        "lib/ai/errors.ts"
+        "components/part/document-preview.tsx"
       ],
       "rules": {
         "unicorn/switch-case-braces": "off"
