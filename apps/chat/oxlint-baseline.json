@@ -327,7 +327,6 @@
       "files": [
         "components/part/tool-part.test.tsx",
         "lib/clone-messages.test.ts",
-        "lib/db/queries.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
@@ -550,7 +549,6 @@
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
         "hooks/chat-sync-hooks.ts",
-        "lib/db/queries.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {
@@ -591,7 +589,7 @@
       }
     },
     {
-      "files": ["components/anonymous-session-init.tsx", "lib/db/queries.ts"],
+      "files": ["components/anonymous-session-init.tsx"],
       "rules": {
         "no-useless-return": "off"
       }
@@ -713,7 +711,6 @@
         "components/chat-sync.tsx",
         "components/electron-auth-handler.tsx",
         "components/electron-auth-ui.tsx",
-        "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/stores/base/hooks.ts"
       ],
@@ -740,7 +737,6 @@
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
@@ -1279,7 +1275,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
-        "lib/db/migrate.ts",
         "lib/db/queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
@@ -1366,7 +1361,7 @@
       }
     },
     {
-      "files": ["lib/db/migrate.ts", "lib/stores/base/hooks.ts"],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/catch-error-name": "off"
       }
@@ -1525,7 +1520,6 @@
         "components/image-modal.tsx",
         "components/multimodal-input.tsx",
         "components/sidebar-chat-item.tsx",
-        "lib/db/queries.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {

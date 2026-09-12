@@ -17,9 +17,6 @@ import { isSelectedModelValue } from "@/lib/ai/types";
 import { deleteFilesByUrls } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
-
-const logger = createModuleLogger("db:queries");
-
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -40,6 +37,8 @@ import {
   vote,
 } from "./schema";
 import type { DBMessage, Part, User, UserModelPreference } from "./schema";
+
+const logger = createModuleLogger("db:queries");
 
 async function _getUserByEmail(email: string): Promise<User[]> {
   try {
@@ -317,7 +316,7 @@ async function _tryGetChatById({ id }: { id: string }) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
-  } catch (_error) {
+  } catch {
     return null;
   }
 }
@@ -358,8 +357,6 @@ export async function saveMessage({
 
       // Update chat's updatedAt timestamp
       await updateChatUpdatedAt({ chatId });
-
-      return;
     });
   } catch (error) {
     logger.error({ error, chatId, id }, "saveMessage failed");
@@ -442,8 +439,6 @@ export async function saveChatMessages({
       await Promise.all(
         uniqueChatIds.map((chatId) => updateChatUpdatedAt({ chatId }))
       );
-
-      return;
     });
   } catch (error) {
     logger.error(
