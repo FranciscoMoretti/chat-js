@@ -39,11 +39,11 @@ Avoid:
       }
 
       return {
-        documentId: document.id,
-        title: document.title,
-        kind: document.kind,
         content: document.content,
         createdAt: document.createdAt,
+        documentId: document.id,
+        kind: document.kind,
+        title: document.title,
       };
     },
     inputSchema: z.object({

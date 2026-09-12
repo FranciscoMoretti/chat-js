@@ -52,7 +52,7 @@ export async function cleanupSandbox(
     await sandbox.stop();
     log.info({ requestId }, "sandbox closed");
   } catch (error) {
-    log.warn({ requestId, error }, "failed to close sandbox");
+    log.warn({ error, requestId }, "failed to close sandbox");
   }
 }
 

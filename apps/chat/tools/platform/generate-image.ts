@@ -286,7 +286,7 @@ async function runGenerateImageMultimodal({
   const isOpenAIModel = modelId.startsWith("openai/");
 
   const res = await generateText({
-    messages: [{ role: "user", content: userContent }],
+    messages: [{ content: userContent, role: "user" }],
     model: getMultimodalImageModel(modelId),
     providerOptions: {
       ...(isGoogleModel && {
@@ -373,11 +373,11 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
 
       log.info(
         {
-          mode,
-          selectedModel,
           attachmentCount: imageParts.length,
           hasLastGeneratedImage: lastGeneratedImage !== null,
+          mode,
           promptLength: prompt.length,
+          selectedModel,
         },
         "generateImage: start"
       );
@@ -389,33 +389,33 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
         // Use multimodal path for language models with image generation
         if (multimodal) {
           return await runGenerateImageMultimodal({
-            modelId: effectiveModelId,
-            mode,
-            prompt,
+            costAccumulator,
             imageParts,
             lastGeneratedImage,
+            mode,
+            modelId: effectiveModelId,
+            prompt,
             startMs,
-            costAccumulator,
           });
         }
 
         // Traditional image generation for dedicated image models
         return await runGenerateImageTraditional({
-          mode,
-          prompt,
+          costAccumulator,
           imageParts,
           lastGeneratedImage,
+          mode,
+          prompt,
           startMs,
-          costAccumulator,
         });
       } catch (error) {
         const resolvedError = await resolveError(error);
         log.error(
           {
-            mode,
-            selectedModel,
-            ms: Date.now() - startMs,
             error: serializeError(resolvedError),
+            mode,
+            ms: Date.now() - startMs,
+            selectedModel,
             ...getErrorDebugInfo(resolvedError),
           },
           "generateImage: failure"

@@ -24,7 +24,7 @@ test("Tavily forwards native options and preserves source events", async () => {
         {
           exclude_domains: ["excluded.com"],
           searchDepth: "advanced",
-          search_queries: [{ query: "news", maxResults: 3 }],
+          search_queries: [{ maxResults: 3, query: "news" }],
           topics: ["news"],
         },
         { context, messages: [], toolCallId: "call" }
@@ -61,10 +61,10 @@ test("Tavily forwards native options and preserves source events", async () => {
   expect(events).toContainEqual(
     expect.objectContaining({
       data: expect.objectContaining({
+        results: [expect.objectContaining({ title: "Source", source: "web" })],
+        status: "completed",
         toolCallId: "call",
         type: "web",
-        status: "completed",
-        results: [expect.objectContaining({ title: "Source", source: "web" })],
       }),
       type: "data-researchUpdate",
     })
@@ -91,7 +91,7 @@ test("strict tool fields remain required and explicit nulls apply defaults", asy
       const input = {
         exclude_domains: null,
         searchDepth: null,
-        search_queries: [{ query: "defaults", maxResults: null }],
+        search_queries: [{ maxResults: null, query: "defaults" }],
         topics: null,
       };
       expect(await schema.validate?.(input)).toMatchObject({ success: true });
@@ -131,7 +131,7 @@ test("search executes without ChatJS progress services", async () => {
     {
       exclude_domains: null,
       searchDepth: null,
-      search_queries: [{ query: "test", maxResults: null }],
+      search_queries: [{ maxResults: null, query: "test" }],
       topics: null,
     },
     { context: {}, messages: [], toolCallId: "standalone" }

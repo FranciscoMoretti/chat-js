@@ -24,28 +24,28 @@ ${codeGuidelines}`,
 
       if (session.user?.id) {
         await saveDocument({
-          id,
-          title,
           content,
+          id,
           kind: "code",
-          userId: session.user.id,
           messageId,
+          title,
+          userId: session.user.id,
         });
       }
 
       return {
-        status: "success",
+        date: new Date().toISOString(),
         documentId: id,
         result: "A document was created and is now visible to the user.",
-        date: new Date().toISOString(),
+        status: "success",
       };
     },
     inputSchema: z.object({
+      content: z.string().describe("The full code content of the document"),
       title: z
         .string()
         .describe(
           'Filename with extension (e.g., "script.py", "component.tsx", "utils.js")'
         ),
-      content: z.string().describe("The full code content of the document"),
     }),
   });

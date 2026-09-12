@@ -71,10 +71,10 @@ export const generateVideoTool = ({
 
       log.info(
         {
-          promptLength: prompt.length,
-          selectedModel,
           aspectRatio: finalAspectRatio,
           durationSeconds: finalDurationSeconds,
+          promptLength: prompt.length,
+          selectedModel,
         },
         "generateVideo: start"
       );
@@ -87,10 +87,10 @@ export const generateVideoTool = ({
         log.debug({ modelId }, "generateVideo: resolved model");
 
         const result = await generateVideo({
-          model: getVideoModel(modelId),
-          prompt,
           aspectRatio: finalAspectRatio,
           duration: finalDurationSeconds,
+          model: getVideoModel(modelId),
+          prompt,
           providerOptions: {
             ...(isGoogleModel && {
               google: {
@@ -100,7 +100,7 @@ export const generateVideoTool = ({
           },
         });
 
-        const video = result.video;
+        const { video } = result;
         if (!video) {
           throw new Error("No video generated");
         }
@@ -115,14 +115,14 @@ export const generateVideoTool = ({
 
         log.info(
           {
-            ms: Date.now() - startMs,
             modelId,
+            ms: Date.now() - startMs,
             videoUrl: uploaded.url,
           },
           "generateVideo: success"
         );
 
-        return { videoUrl: uploaded.url, prompt };
+        return { prompt, videoUrl: uploaded.url };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "";
         const isUnsupportedVideoGateway = errorMessage.includes(
@@ -131,19 +131,20 @@ export const generateVideoTool = ({
 
         log.error(
           {
-            ms: Date.now() - startMs,
-            selectedModel,
             error:
               error instanceof Error
                 ? { message: error.message, name: error.name }
                 : error,
+            ms: Date.now() - startMs,
+            selectedModel,
           },
           "generateVideo: failure"
         );
 
         if (isUnsupportedVideoGateway) {
           throw new Error(
-            "Video generation is not available for the active gateway."
+            "Video generation is not available for the active gateway.",
+            { cause: error }
           );
         }
 
@@ -151,9 +152,6 @@ export const generateVideoTool = ({
       }
     },
     inputSchema: z.object({
-      prompt: z
-        .string()
-        .describe("A descriptive prompt for the video to generate."),
       aspectRatio: z
         .enum(["16:9", "9:16", "1:1"])
         .optional()
@@ -165,5 +163,8 @@ export const generateVideoTool = ({
         .max(10)
         .optional()
         .describe("Optional video duration in seconds. Defaults to 5."),
+      prompt: z
+        .string()
+        .describe("A descriptive prompt for the video to generate."),
     }),
   });

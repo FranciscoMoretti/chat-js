@@ -91,23 +91,23 @@ Avoid:
         const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
           query,
           {
-            maxResults,
-            searchDepth: safeSearchDepth,
-            topic,
             days: topic === "news" ? 7 : undefined,
             excludeDomains: safeExcludeDomains,
             includeAnswer: true,
+            maxResults,
+            searchDepth: safeSearchDepth,
+            topic,
           }
         );
         return response.results.map(({ title, url, content }) => ({
+          content,
           title,
           url,
-          content,
         }));
       },
       search_queries: search_queries.map((query) => ({
-        query: query.query,
         maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+        query: query.query,
       })),
       title: "Searching",
       toolCallId,

@@ -85,33 +85,33 @@ Output rules:
     let sandbox: Sandbox | undefined;
 
     try {
-      log.info({ requestId, title, runtime, language }, "creating sandbox");
+      log.info({ language, requestId, runtime, title }, "creating sandbox");
       sandbox = await createSandbox(runtime);
       log.debug({ requestId }, "sandbox created");
 
-      log.info({ requestId, title, language }, "executing code");
+      log.info({ language, requestId, title }, "executing code");
       const result =
         language === "javascript"
           ? await executeJavaScriptInSandbox({
-              sandbox,
               code,
               log,
               requestId,
+              sandbox,
             })
           : await executePythonInSandbox({
-              sandbox,
               code,
               log,
               requestId,
+              sandbox,
             });
 
       costAccumulator?.addAPICost("codeExecution", COST_CENTS);
 
       return result;
-    } catch (err) {
-      log.error({ err, requestId, language }, "code execution failed");
+    } catch (error) {
+      log.error({ error, requestId, language }, "code execution failed");
       return {
-        message: `Sandbox execution failed: ${getErrorMessage(err)}`,
+        message: `Sandbox execution failed: ${getErrorMessage(error)}`,
         chart: "",
       };
     } finally {
@@ -119,14 +119,14 @@ Output rules:
     }
   },
   inputSchema: z.object({
-    title: z.string().describe("The title of the code snippet."),
-    language: languageSchema
-      .default(defaultExecutionLanguage)
-      .describe("The language to execute: 'python' or 'javascript'."),
     code: z
       .string()
       .describe(
         "The code to execute in the selected sandbox language. Print anything you want to return, or assign to 'result'/'results'."
       ),
+    language: languageSchema
+      .default(defaultExecutionLanguage)
+      .describe("The language to execute: 'python' or 'javascript'."),
+    title: z.string().describe("The title of the code snippet."),
   }),
 });

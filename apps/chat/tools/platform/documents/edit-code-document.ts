@@ -28,38 +28,38 @@ Avoid:
       const document = await getDocumentById({ id: documentId });
 
       if (!document) {
-        return { status: "error", error: "Document not found" };
+        return { error: "Document not found", status: "error" };
       }
 
       if (document.kind !== "code") {
-        return { status: "error", error: "Document is not a code document" };
+        return { error: "Document is not a code document", status: "error" };
       }
 
       if (session.user?.id) {
         await saveDocument({
-          id: documentId,
-          title,
           content,
+          id: documentId,
           kind: "code",
-          userId: session.user.id,
           messageId,
+          title,
+          userId: session.user.id,
         });
       }
 
       return {
-        status: "success",
+        date: new Date().toISOString(),
         documentId,
         result: "The document was updated and is now visible to the user.",
-        date: new Date().toISOString(),
+        status: "success",
       };
     },
     inputSchema: z.object({
+      content: z.string().describe("The full updated code content"),
       documentId: z.string().describe("The ID of the document to edit"),
       title: z
         .string()
         .describe(
           'Filename with extension (e.g., "script.py", "component.tsx", "utils.js")'
         ),
-      content: z.string().describe("The full updated code content"),
     }),
   });

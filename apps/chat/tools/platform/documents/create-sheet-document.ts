@@ -27,24 +27,24 @@ The spreadsheet will be created with proper column headers and data.`,
 
       if (session.user?.id) {
         await saveDocument({
-          id,
-          title,
           content,
+          id,
           kind: "sheet",
-          userId: session.user.id,
           messageId,
+          title,
+          userId: session.user.id,
         });
       }
 
       return {
-        status: "success",
+        date: new Date().toISOString(),
         documentId: id,
         result: "A document was created and is now visible to the user.",
-        date: new Date().toISOString(),
+        status: "success",
       };
     },
     inputSchema: z.object({
-      title: z.string().describe("Spreadsheet title"),
       content: z.string().describe("The full CSV content of the spreadsheet"),
+      title: z.string().describe("Spreadsheet title"),
     }),
   });

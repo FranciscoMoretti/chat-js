@@ -131,8 +131,8 @@ async function clarifyWithUser(
   const clarifyMessages = [
     {
       content: clarifyWithUserInstructions({
-        messages: messagesToString(messages),
         date: getTodayStr(),
+        messages: messagesToString(messages),
       }),
       role: "user" as const,
     },
@@ -199,8 +199,8 @@ async function writeResearchBrief(
   const briefMessages = [
     {
       content: transformMessagesIntoResearchTopicPrompt({
-        messages: messagesToString(messages),
         date: getTodayStr(),
+        messages: messagesToString(messages),
       }),
       role: "user" as const,
     },

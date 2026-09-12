@@ -35,9 +35,6 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  inputSchema: z.object({
-    url: z.string().describe("The URL to retrieve the information from."),
-  }),
   execute: async ({ url }: { url: string }) => {
     try {
       if (!app) {
@@ -110,4 +107,7 @@ Avoid:
       return { error: "Failed to retrieve content" };
     }
   },
+  inputSchema: z.object({
+    url: z.string().describe("The URL to retrieve the information from."),
+  }),
 });

@@ -28,34 +28,34 @@ Avoid:
       const document = await getDocumentById({ id: documentId });
 
       if (!document) {
-        return { status: "error", error: "Document not found" };
+        return { error: "Document not found", status: "error" };
       }
 
       if (document.kind !== "text") {
-        return { status: "error", error: "Document is not a text document" };
+        return { error: "Document is not a text document", status: "error" };
       }
 
       if (session.user?.id) {
         await saveDocument({
-          id: documentId,
-          title,
           content,
+          id: documentId,
           kind: "text",
-          userId: session.user.id,
           messageId,
+          title,
+          userId: session.user.id,
         });
       }
 
       return {
-        status: "success",
+        date: new Date().toISOString(),
         documentId,
         result: "The document was updated and is now visible to the user.",
-        date: new Date().toISOString(),
+        status: "success",
       };
     },
     inputSchema: z.object({
+      content: z.string().describe("The full updated markdown content"),
       documentId: z.string().describe("The ID of the document to edit"),
       title: z.string().describe("Document title"),
-      content: z.string().describe("The full updated markdown content"),
     }),
   });
