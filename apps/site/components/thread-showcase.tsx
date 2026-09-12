@@ -1,6 +1,7 @@
 "use client";
 
-import { getMessageText, type ThreadRunHandle } from "@chat-js/thread";
+import { getMessageText } from "@chat-js/thread";
+import type { ThreadRunHandle } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
 import {
   Check,
@@ -20,9 +21,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTreeLayout,
   initialTree,
-  type PlaygroundMessage,
   PlaygroundTransport,
-  type PlaygroundChat as ThreadChat,
+} from "./thread-playground-model";
+import type {
+  PlaygroundChat as ThreadChat,
+  PlaygroundMessage,
 } from "./thread-playground-model";
 
 import styles from "./thread-showcase.module.css";
