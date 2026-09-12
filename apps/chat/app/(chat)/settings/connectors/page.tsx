@@ -18,6 +18,20 @@ const ConnectorsSettingsHeader = () => (
   </SettingsPageHeader>
 );
 
+const ConnectorsSettingsContent = async () => {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
+
+  return (
+    <HydrateClient>
+      <SettingsPage>
+        <ConnectorsSettingsHeader />
+        <ConnectorsSettings />
+      </SettingsPage>
+    </HydrateClient>
+  );
+};
+
 const ConnectorsSettingsPage = () => (
   <Suspense
     fallback={
@@ -36,17 +50,3 @@ const ConnectorsSettingsPage = () => (
 );
 
 export default ConnectorsSettingsPage;
-
-const ConnectorsSettingsContent = async () => {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
-
-  return (
-    <HydrateClient>
-      <SettingsPage>
-        <ConnectorsSettingsHeader />
-        <ConnectorsSettings />
-      </SettingsPage>
-    </HydrateClient>
-  );
-};

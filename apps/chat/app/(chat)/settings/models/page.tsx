@@ -44,6 +44,22 @@ const ModelsSettingsHeader = ({
   </SettingsPageHeader>
 );
 
+const ModelsSettingsContent = async () => {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(
+    trpc.settings.getModelPreferences.queryOptions()
+  );
+
+  return (
+    <HydrateClient>
+      <SettingsPage>
+        <ModelsSettingsHeader showRegistryLink />
+        <ModelsSettings />
+      </SettingsPage>
+    </HydrateClient>
+  );
+};
+
 const ModelsSettingsPage = () => (
   <Suspense
     fallback={
@@ -62,19 +78,3 @@ const ModelsSettingsPage = () => (
 );
 
 export default ModelsSettingsPage;
-
-const ModelsSettingsContent = async () => {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.settings.getModelPreferences.queryOptions()
-  );
-
-  return (
-    <HydrateClient>
-      <SettingsPage>
-        <ModelsSettingsHeader showRegistryLink />
-        <ModelsSettings />
-      </SettingsPage>
-    </HydrateClient>
-  );
-};

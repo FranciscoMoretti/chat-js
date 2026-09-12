@@ -22,6 +22,37 @@ export const metadata: Metadata = {
   description: "Login to your account",
 };
 
+const LoginPageContent = async ({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) => {
+  const resolvedSearchParams = await searchParams;
+  const query = toSearchParamRecord(resolvedSearchParams);
+  const isElectronTransfer =
+    config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
+  const session = isElectronTransfer
+    ? await auth.api.getSession({ headers: await headers() })
+    : null;
+
+  if (session?.user && isElectronTransfer) {
+    return <ElectronTransferUser query={query} session={session} />;
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <AuthCardSkeleton
+          description="Sign in to your account"
+          title="Welcome back"
+        />
+      }
+    >
+      <LoginForm className="w-full" />
+    </Suspense>
+  );
+};
+
 const LoginPage = ({
   searchParams,
 }: {
@@ -55,34 +86,3 @@ const LoginPage = ({
 );
 
 export default LoginPage;
-
-const LoginPageContent = async ({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
-  const resolvedSearchParams = await searchParams;
-  const query = toSearchParamRecord(resolvedSearchParams);
-  const isElectronTransfer =
-    config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
-  const session = isElectronTransfer
-    ? await auth.api.getSession({ headers: await headers() })
-    : null;
-
-  if (session?.user && isElectronTransfer) {
-    return <ElectronTransferUser query={query} session={session} />;
-  }
-
-  return (
-    <Suspense
-      fallback={
-        <AuthCardSkeleton
-          description="Sign in to your account"
-          title="Welcome back"
-        />
-      }
-    >
-      <LoginForm className="w-full" />
-    </Suspense>
-  );
-};

@@ -25,24 +25,6 @@ const DeviceLoginFallback = () => (
   </div>
 );
 
-const DeviceLoginRoute = ({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
-  if (!config.desktopApp.enabled) {
-    redirect("/login");
-  }
-
-  return (
-    <Suspense fallback={<DeviceLoginFallback />}>
-      <DeviceLoginContent searchParams={searchParams} />
-    </Suspense>
-  );
-};
-
-export default DeviceLoginRoute;
-
 const DeviceLoginContent = async ({
   searchParams,
 }: {
@@ -67,3 +49,21 @@ const DeviceLoginContent = async ({
     </Suspense>
   );
 };
+
+const DeviceLoginRoute = ({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) => {
+  if (!config.desktopApp.enabled) {
+    redirect("/login");
+  }
+
+  return (
+    <Suspense fallback={<DeviceLoginFallback />}>
+      <DeviceLoginContent searchParams={searchParams} />
+    </Suspense>
+  );
+};
+
+export default DeviceLoginRoute;

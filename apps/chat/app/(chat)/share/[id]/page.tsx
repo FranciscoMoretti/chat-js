@@ -5,18 +5,6 @@ import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 import { SharedChatPage } from "./shared-chat-page";
 
-const SharedChatPageRoute = ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) => (
-  <Suspense fallback={<ChatLoadingShell />}>
-    <SharedChatPageContent params={params} />
-  </Suspense>
-);
-
-export default SharedChatPageRoute;
-
 const SharedChatPageContent = async ({
   params,
 }: {
@@ -34,3 +22,15 @@ const SharedChatPageContent = async ({
     </HydrateClient>
   );
 };
+
+const SharedChatPageRoute = ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => (
+  <Suspense fallback={<ChatLoadingShell />}>
+    <SharedChatPageContent params={params} />
+  </Suspense>
+);
+
+export default SharedChatPageRoute;

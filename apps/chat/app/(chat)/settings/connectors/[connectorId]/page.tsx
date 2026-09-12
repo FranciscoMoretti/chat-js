@@ -26,25 +26,6 @@ const ConnectorDetailsBodyFallback = () => (
   </div>
 );
 
-const ConnectorDetailsPage = ({
-  params,
-}: {
-  params: Promise<{ connectorId: string }>;
-}) => (
-  <Suspense
-    fallback={
-      <SettingsPage>
-        <ConnectorDetailsHeader />
-        <ConnectorDetailsBodyFallback />
-      </SettingsPage>
-    }
-  >
-    <ConnectorDetailsContent params={params} />
-  </Suspense>
-);
-
-export default ConnectorDetailsPage;
-
 const ConnectorDetailsContent = async ({
   params,
 }: {
@@ -64,3 +45,22 @@ const ConnectorDetailsContent = async ({
     </HydrateClient>
   );
 };
+
+const ConnectorDetailsPage = ({
+  params,
+}: {
+  params: Promise<{ connectorId: string }>;
+}) => (
+  <Suspense
+    fallback={
+      <SettingsPage>
+        <ConnectorDetailsHeader />
+        <ConnectorDetailsBodyFallback />
+      </SettingsPage>
+    }
+  >
+    <ConnectorDetailsContent params={params} />
+  </Suspense>
+);
+
+export default ConnectorDetailsPage;
