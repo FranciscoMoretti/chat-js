@@ -355,6 +355,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -410,6 +411,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -456,6 +458,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -492,6 +495,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -681,7 +685,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
   ChatStoreApi<TMessage>,
   "setState"
 > & {
-  setState(
+  setState: (
     partial:
       | StoreState<TMessage>
       | Partial<StoreState<TMessage>>
@@ -700,7 +704,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
             }
         )
       | undefined
-  ): void;
+  ) => void;
 };
 
 export function Provider<TMessage extends UIMessage = UIMessage>({
@@ -758,11 +762,10 @@ export function useChatStoreApi<TMessage extends UIMessage = UIMessage>() {
 }
 
 // Optimized selector hooks with memoization
-export const useChatMessages = <TMessage extends UIMessage = UIMessage>() => {
-  return useChatStore(
+export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
+  useChatStore(
     useShallow((state: StoreState<TMessage>) => state.getThrottledMessages())
   );
-};
 
 // Stable selector functions to avoid recreation
 const statusSelector = (state: StoreState<any>) => state.status;
