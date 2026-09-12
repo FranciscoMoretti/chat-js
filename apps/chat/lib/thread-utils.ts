@@ -13,11 +13,11 @@ export interface MessageNode {
   };
 }
 
-export function getParallelResponseForSlot<T extends MessageNode>(
+export const getParallelResponseForSlot = <T extends MessageNode>(
   messages: T[],
   parallelIndex: number,
   selectedMessageId: string | null
-): T | null {
+): T | null => {
   const selected = messages.find(
     (message) =>
       message.id === selectedMessageId &&
@@ -35,10 +35,10 @@ export function getParallelResponseForSlot<T extends MessageNode>(
   }
 
   return null;
-}
+};
 
 /** Safely extract a numeric timestamp from a Date object or ISO string. */
-function toTimestamp(value: Date | string | undefined | null): number {
+const toTimestamp = (value: Date | string | undefined | null): number => {
   if (!value) {
     return 0;
   }
@@ -46,12 +46,12 @@ function toTimestamp(value: Date | string | undefined | null): number {
     return value.getTime();
   }
   return new Date(value).getTime();
-}
+};
 
 // Get the default leaf (most recent message by timestamp)
-function getDefaultLeafMessage<T extends MessageNode>(
+const getDefaultLeafMessage = <T extends MessageNode>(
   allMessages: T[]
-): T | null {
+): T | null => {
   if (allMessages.length === 0) {
     return null;
   }
@@ -63,13 +63,13 @@ function getDefaultLeafMessage<T extends MessageNode>(
   );
 
   return sorted[0];
-}
+};
 
 // Build thread from leaf message using all messages
-export function buildThreadFromLeaf<T extends MessageNode>(
+export const buildThreadFromLeaf = <T extends MessageNode>(
   allMessages: T[],
   leafMessageId: string
-): T[] {
+): T[] => {
   const messageMap = new Map<string, T>();
   for (const msg of allMessages) {
     messageMap.set(msg.id, msg);
@@ -106,24 +106,26 @@ export function buildThreadFromLeaf<T extends MessageNode>(
   }
 
   return thread;
-}
+};
 
 // Get default thread (combination of the above two)
-export function getDefaultThread<T extends MessageNode>(allMessages: T[]): T[] {
+export const getDefaultThread = <T extends MessageNode>(
+  allMessages: T[]
+): T[] => {
   const defaultLeaf = getDefaultLeafMessage(allMessages);
   if (!defaultLeaf) {
     return [];
   }
 
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
-}
+};
 
-export function buildTreeSnapshotFromMessages<
+export const buildTreeSnapshotFromMessages = <
   TMessage extends UIMessage & MessageNode,
 >(
   allMessages: TMessage[],
   cursorId: string | null = getDefaultLeafMessage(allMessages)?.id ?? null
-): MessageTreeSnapshot<TMessage> {
+): MessageTreeSnapshot<TMessage> => {
   const childrenByParentId = buildChildrenMap(allMessages);
   const messagesById = new Map(
     allMessages.map((message) => [message.id, message])
@@ -179,12 +181,12 @@ export function buildTreeSnapshotFromMessages<
   }
 
   return { cursorId, nodes, version: 1 };
-}
+};
 
 // Build parent->children mapping sorted by createdAt
-export function buildChildrenMap<T extends MessageNode>(
+export const buildChildrenMap = <T extends MessageNode>(
   allMessages: T[]
-): Map<string | null, T[]> {
+): Map<string | null, T[]> => {
   const map = new Map<string | null, T[]>();
   for (const message of allMessages) {
     const parentId = message.metadata?.parentMessageId || null;
@@ -216,12 +218,12 @@ export function buildChildrenMap<T extends MessageNode>(
     });
   }
   return map;
-}
+};
 
-export function findLeafDfsToRightFromMessageId<T extends MessageNode>(
+export const findLeafDfsToRightFromMessageId = <T extends MessageNode>(
   childrenMapSorted: Map<string | null, T[]>,
   messageId: string
-): T | null {
+): T | null => {
   const children = childrenMapSorted.get(messageId);
   if (!children || children.length === 0) {
     return null;
@@ -238,4 +240,4 @@ export function findLeafDfsToRightFromMessageId<T extends MessageNode>(
     rightmostChild.id
   );
   return leaf || rightmostChild;
-}
+};
