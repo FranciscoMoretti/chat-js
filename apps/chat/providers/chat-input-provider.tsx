@@ -237,21 +237,21 @@ export const ChatInputProvider = ({
   return (
     <ChatInputContext.Provider
       value={{
-        editorRef,
-        selectedTool,
-        setSelectedTool,
         attachments,
-        setAttachments,
-        selectedModelId,
-        selectedModelSelection,
-        handleModelChange,
-        handleModelSelectionChange,
+        editorRef,
+        getInitialInput,
         getInputValue,
         handleInputChange,
-        getInitialInput,
-        isEmpty,
         handleSubmit,
+        handleModelChange,
+        handleModelSelectionChange,
         isProjectContext,
+        isEmpty,
+        selectedModelId,
+        selectedModelSelection,
+        selectedTool,
+        setAttachments,
+        setSelectedTool,
       }}
     >
       {children}

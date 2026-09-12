@@ -58,8 +58,8 @@ export const DefaultModelProvider = ({
 
   const value = useMemo(
     () => ({
-      defaultModel: currentModel,
       changeModel,
+      defaultModel: currentModel,
     }),
     [currentModel, changeModel]
   );
