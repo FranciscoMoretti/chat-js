@@ -4,9 +4,8 @@ import type { UIToolInvocation } from "ai";
 import Image from "next/image";
 import { z } from "zod";
 
-import InteractiveChart, {
-  type BaseChart,
-} from "@/components/interactive-charts";
+import InteractiveChart from "@/components/interactive-charts";
+import type { BaseChart } from "@/components/interactive-charts";
 import { SandboxComposed } from "@/components/sandbox";
 
 import type { codeExecution } from "./tool";

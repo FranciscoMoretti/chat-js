@@ -1,7 +1,8 @@
 import { PanelLeft } from "lucide-react";
 import type { ComponentProps } from "react";
 
-import { type SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
+import type { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,

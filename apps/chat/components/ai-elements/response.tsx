@@ -3,7 +3,8 @@
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
-import { type ComponentProps, memo } from "react";
+import { memo } from "react";
+import type { ComponentProps } from "react";
 import { Streamdown } from "streamdown";
 
 import { cn } from "@/lib/utils";

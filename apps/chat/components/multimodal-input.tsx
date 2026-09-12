@@ -2,12 +2,17 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
-import type React from "react";
+import type {
+  ChangeEvent,
+  ClipboardEvent,
+  MouseEvent,
+  MutableRefObject,
+  ReactNode,
+  RefObject,
+} from "react";
 import {
-  type ChangeEvent,
   createContext,
   memo,
-  type ReactNode,
   useCallback,
   useContext,
   useMemo,
@@ -27,11 +32,11 @@ import { ContextUsageFromParent } from "@/components/context-usage";
 import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import {
-  type Attachment,
-  type ChatMessage,
-  expandSelectedModelValue,
-  type SelectedModelValue,
+import { expandSelectedModelValue } from "@/lib/ai/types";
+import type {
+  Attachment,
+  ChatMessage,
+  SelectedModelValue,
 } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
@@ -483,7 +488,7 @@ function PureMultimodalInput({
   );
 
   const handlePaste = useCallback(
-    async (event: React.ClipboardEvent) => {
+    async (event: ClipboardEvent) => {
       if (responseAwareStatus !== "ready") {
         return;
       }
@@ -719,7 +724,7 @@ function PureAttachmentsButton({
   acceptImages,
   acceptFiles,
 }: {
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  fileInputRef: MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
   acceptAll: string;
   acceptImages: string;
@@ -747,7 +752,7 @@ function PureAttachmentsButton({
     [fileInputRef]
   );
 
-  const handleDesktopClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleDesktopClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (isAnonymous) {
       setShowLoginPopover(true);
@@ -854,8 +859,8 @@ const ComposerContext = createContext<{
   submission: { enabled: boolean; message?: string };
   submitForm: () => void;
   onStop: () => void;
-  onPaste: (event: React.ClipboardEvent) => Promise<void>;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onPaste: (event: ClipboardEvent) => Promise<void>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   acceptAll: string;
   acceptFiles: string;
   acceptImages: string;

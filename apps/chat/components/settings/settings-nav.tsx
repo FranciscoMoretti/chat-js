@@ -1,6 +1,7 @@
 "use client";
 
-import { Cpu, type LucideIcon, Plug, Settings } from "lucide-react";
+import { Cpu, Plug, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 

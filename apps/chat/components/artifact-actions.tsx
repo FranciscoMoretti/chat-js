@@ -1,4 +1,5 @@
-import { type Dispatch, memo, type SetStateAction, useState } from "react";
+import { memo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 
 import type {

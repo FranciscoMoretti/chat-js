@@ -8,7 +8,8 @@ import { createContext, useCallback, useContext, useRef } from "react";
 import { useStore } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { useShallow } from "zustand/shallow";
-import { createStore, type StateCreator } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla";
+import type { StateCreator } from "zustand/vanilla";
 
 import { debug } from "./debug";
 

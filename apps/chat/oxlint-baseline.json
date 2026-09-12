@@ -15,11 +15,13 @@
       }
     },
     {
-      "files": [
-        "lib/ai/gateway.ts",
-        "lib/ai/text-splitter.ts",
-        "lib/parallel-chat-requests.test.ts"
-      ],
+      "files": ["lib/ai/gateway.ts", "lib/ai/text-splitter.ts"],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["lib/parallel-chat-requests.test.ts"],
       "rules": {
         "class-methods-use-this": "off"
       }
@@ -212,7 +214,6 @@
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/eval-agent.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
@@ -226,7 +227,6 @@
         "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/gated-chat-transport.test.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/stop-response.test.ts",
@@ -249,68 +249,6 @@
       ],
       "rules": {
         "func-style": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(chat)/chat-providers.tsx",
-        "app/(chat)/chat-route-host.tsx",
-        "components/ai-elements/artifact.tsx",
-        "components/ai-elements/code-block.tsx",
-        "components/ai-elements/context.tsx",
-        "components/ai-elements/extra/conversation-content-scroll-area.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/ai-elements/response.tsx",
-        "components/ai-elements/shimmer.tsx",
-        "components/artifact-actions.tsx",
-        "components/auth-providers.tsx",
-        "components/chat-composer.tsx",
-        "components/chat-features-definitions.ts",
-        "components/chat-runtime-controller.tsx",
-        "components/chat-system.tsx",
-        "components/console.tsx",
-        "components/context-usage.tsx",
-        "components/data-stream-handler.tsx",
-        "components/diffview.tsx",
-        "components/feedback-actions.tsx",
-        "components/header-breadcrumb.tsx",
-        "components/lexical-chat-input.tsx",
-        "components/message-editor.tsx",
-        "components/message.tsx",
-        "components/multimodal-input.tsx",
-        "components/parallel-response-cards.tsx",
-        "components/part/document-preview.tsx",
-        "components/part/document-tool.tsx",
-        "components/project-home.tsx",
-        "components/responsive-tools.tsx",
-        "components/settings/connectors-settings.tsx",
-        "components/settings/settings-nav.tsx",
-        "components/sidebar-project-item.tsx",
-        "components/sidebar-projects.tsx",
-        "components/sidebar-toggle.tsx",
-        "components/ui/alert.tsx",
-        "components/ui/badge.tsx",
-        "components/ui/form.tsx",
-        "components/ui/input-group.tsx",
-        "components/ui/sidebar.tsx",
-        "hooks/chat-sync-hooks.ts",
-        "lib/app-chat-runtime.ts",
-        "lib/artifacts/code/client.tsx",
-        "lib/artifacts/sheet/client.tsx",
-        "lib/editor/config.ts",
-        "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/custom-store-provider.tsx",
-        "lib/stores/with-thread-state.ts",
-        "providers/chat-input-provider.tsx",
-        "providers/chat-models-provider.tsx",
-        "providers/default-model-provider.tsx",
-        "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "trpc/react.tsx",
-        "trpc/server.tsx"
-      ],
-      "rules": {
-        "import/consistent-type-specifier-style": "off"
       }
     },
     {
@@ -627,7 +565,6 @@
         "components/suggested-actions.tsx",
         "lib/files/upload-prep.ts",
         "lib/message-conversion.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "lib/stores/with-tracing.ts"
       ],
@@ -653,11 +590,16 @@
         "lib/cancellation-aware-chat-transport.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/redis/client.ts",
         "scripts/check-redis.ts"
       ],
+      "rules": {
+        "promise/avoid-new": "off"
+      }
+    },
+    {
+      "files": ["lib/parallel-chat-requests.ts"],
       "rules": {
         "promise/avoid-new": "off"
       }
@@ -712,7 +654,6 @@
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
@@ -1220,7 +1161,6 @@
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/eval-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
@@ -1248,8 +1188,6 @@
         "lib/features-config.ts",
         "lib/logger.ts",
         "lib/message-conversion.ts",
-        "lib/parallel-chat-requests.test.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-data-stream.test.ts",
@@ -1344,8 +1282,7 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/sheet-editor.tsx",
-        "lib/gated-chat-transport.test.ts",
-        "lib/parallel-chat-requests.ts"
+        "lib/gated-chat-transport.test.ts"
       ],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
@@ -1406,7 +1343,6 @@
         "components/data-stream-handler.tsx",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/social-auth.test.ts",
         "providers/session-provider.tsx"

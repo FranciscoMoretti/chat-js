@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
-  type ChatMessage,
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
+import type { ChatMessage } from "@/lib/ai/types";
 import { useMessageById } from "@/lib/stores/base";
 import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";

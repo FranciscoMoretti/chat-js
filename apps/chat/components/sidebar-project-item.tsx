@@ -5,10 +5,8 @@ import { useState } from "react";
 
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { InternalLink } from "@/components/internal-link";
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { ProjectIcon } from "@/components/project-icon";
 import { ProjectMenuItems } from "@/components/project-menu-items";
 import {
