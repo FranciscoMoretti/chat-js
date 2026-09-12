@@ -224,7 +224,7 @@ export const useDataPart = <T = unknown>(
       const transientData = transientDataParts.get(fullType);
       if (transientData !== undefined) {
         latest = {
-          data: transientData,
+          data: transientData as T,
           type: fullType,
         };
       }
