@@ -58,6 +58,105 @@ interface DocumentPreviewProps {
   type?: "create" | "update";
 }
 
+const LoadingSkeleton = ({
+  artifactKind: _artifactKind,
+}: {
+  artifactKind: ArtifactKind;
+}) => (
+  <div className="w-full">
+    <div className="bg-muted flex h-[57px] flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 p-4">
+      <div className="flex flex-row items-center gap-3">
+        <div className="text-muted-foreground">
+          <div className="bg-muted-foreground/20 size-4 animate-pulse rounded-md" />
+        </div>
+        <div className="bg-muted-foreground/20 h-4 w-24 animate-pulse rounded-lg" />
+      </div>
+      <div>
+        <Maximize size={16} />
+      </div>
+    </div>
+
+    <div className="bg-muted overflow-y-scroll rounded-b-2xl border border-t-0 p-8 pt-4">
+      <InlineDocumentSkeleton />
+    </div>
+  </div>
+);
+
+const DocumentContent = ({ document }: { document: Document }) => {
+  const { artifact } = useArtifact();
+
+  const containerClassName = cn(
+    "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
+    {
+      "p-4 sm:px-14 sm:py-16": document.kind === "text",
+      "p-0": document.kind === "code",
+    }
+  );
+
+  const commonProps = {
+    content: document.content ?? "",
+    isCurrentVersion: true,
+    currentVersionIndex: 0,
+    status: artifact.status,
+    saveContent: () => {
+      // No-op for preview mode
+    },
+  };
+
+  return (
+    <div className={containerClassName}>
+      {(() => {
+        if (document.kind === "text") {
+          return (
+            <Editor
+              {...commonProps}
+              onSaveContent={() => {
+                // No-op for preview mode
+              }}
+            />
+          );
+        }
+        if (document.kind === "code") {
+          return (
+            <div className="relative flex w-full flex-1">
+              <div className="absolute inset-0">
+                <CodeEditor
+                  {...commonProps}
+                  onSaveContent={() => {
+                    // No-op for preview mode
+                  }}
+                />
+              </div>
+            </div>
+          );
+        }
+        if (document.kind === "sheet") {
+          return (
+            <div className="relative flex size-full flex-1 p-4">
+              <div className="absolute inset-0">
+                <SpreadsheetEditor {...commonProps} />
+              </div>
+            </div>
+          );
+        }
+        if (document.kind === "image") {
+          return (
+            <ImageEditor
+              content={document.content ?? ""}
+              currentVersionIndex={0}
+              isCurrentVersion={true}
+              isInline={true}
+              status={artifact.status}
+              title={document.title}
+            />
+          );
+        }
+        return null;
+      })()}
+    </div>
+  );
+};
+
 export const DocumentPreview = ({
   isReadonly,
   output,
@@ -151,30 +250,6 @@ export const DocumentPreview = ({
     </div>
   );
 };
-
-const LoadingSkeleton = ({
-  artifactKind: _artifactKind,
-}: {
-  artifactKind: ArtifactKind;
-}) => (
-  <div className="w-full">
-    <div className="bg-muted flex h-[57px] flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 p-4">
-      <div className="flex flex-row items-center gap-3">
-        <div className="text-muted-foreground">
-          <div className="bg-muted-foreground/20 size-4 animate-pulse rounded-md" />
-        </div>
-        <div className="bg-muted-foreground/20 h-4 w-24 animate-pulse rounded-lg" />
-      </div>
-      <div>
-        <Maximize size={16} />
-      </div>
-    </div>
-
-    <div className="bg-muted overflow-y-scroll rounded-b-2xl border border-t-0 p-8 pt-4">
-      <InlineDocumentSkeleton />
-    </div>
-  </div>
-);
 
 const PureHitboxLayer = ({
   hitboxRef,
@@ -297,78 +372,3 @@ const DocumentHeader = memo(PureDocumentHeader, (prevProps, nextProps) => {
 
   return true;
 });
-
-const DocumentContent = ({ document }: { document: Document }) => {
-  const { artifact } = useArtifact();
-
-  const containerClassName = cn(
-    "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
-    {
-      "p-4 sm:px-14 sm:py-16": document.kind === "text",
-      "p-0": document.kind === "code",
-    }
-  );
-
-  const commonProps = {
-    content: document.content ?? "",
-    isCurrentVersion: true,
-    currentVersionIndex: 0,
-    status: artifact.status,
-    saveContent: () => {
-      // No-op for preview mode
-    },
-  };
-
-  return (
-    <div className={containerClassName}>
-      {(() => {
-        if (document.kind === "text") {
-          return (
-            <Editor
-              {...commonProps}
-              onSaveContent={() => {
-                // No-op for preview mode
-              }}
-            />
-          );
-        }
-        if (document.kind === "code") {
-          return (
-            <div className="relative flex w-full flex-1">
-              <div className="absolute inset-0">
-                <CodeEditor
-                  {...commonProps}
-                  onSaveContent={() => {
-                    // No-op for preview mode
-                  }}
-                />
-              </div>
-            </div>
-          );
-        }
-        if (document.kind === "sheet") {
-          return (
-            <div className="relative flex size-full flex-1 p-4">
-              <div className="absolute inset-0">
-                <SpreadsheetEditor {...commonProps} />
-              </div>
-            </div>
-          );
-        }
-        if (document.kind === "image") {
-          return (
-            <ImageEditor
-              content={document.content ?? ""}
-              currentVersionIndex={0}
-              isCurrentVersion={true}
-              isInline={true}
-              status={artifact.status}
-              title={document.title}
-            />
-          );
-        }
-        return null;
-      })()}
-    </div>
-  );
-};

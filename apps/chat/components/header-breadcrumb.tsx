@@ -43,6 +43,100 @@ interface HeaderBreadcrumbProps {
   user?: Session["user"];
 }
 
+const useSyncDraftValue = ({
+  isEditing,
+  setDraft,
+  value,
+}: {
+  isEditing: boolean;
+  setDraft: (val: string) => void;
+  value: string | undefined;
+}) => {
+  useEffect(() => {
+    if (!isEditing) {
+      setDraft(value ?? "");
+    }
+  }, [isEditing, setDraft, value]);
+};
+
+const performChatRename = async ({
+  chatId,
+  chatTitleDraft,
+  privateChat,
+  renameChat,
+  setChatTitleDraft,
+  setIsChatEditing,
+}: PerformChatRenameArgs) => {
+  if (!privateChat) {
+    setIsChatEditing(false);
+    return;
+  }
+  const trimmed = chatTitleDraft.trim();
+  if (!trimmed || trimmed === privateChat.title) {
+    setIsChatEditing(false);
+    setChatTitleDraft(privateChat.title ?? "");
+    return;
+  }
+  try {
+    await renameChat({ chatId, title: trimmed });
+    toast.success("Chat renamed successfully");
+  } catch {
+    // Errors handled in hook
+  } finally {
+    setIsChatEditing(false);
+  }
+};
+
+const createInputKeyDownHandler =
+  ({ onEnter, onEscape }: InputKeyHandlerOptions) =>
+  (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      onEnter();
+      return;
+    }
+    if (event.key === "Escape") {
+      onEscape();
+    }
+  };
+
+const ProjectBreadcrumb = ({
+  projectLabel,
+  projectId,
+  projectIcon,
+  projectColor,
+}: {
+  projectLabel?: string;
+  projectId: string | null;
+  projectIcon?: ProjectIconName;
+  projectColor?: ProjectColorName;
+}) => {
+  if (!(projectLabel && projectId)) {
+    return null;
+  }
+
+  return (
+    <>
+      <BreadcrumbItem>
+        <BreadcrumbLink asChild>
+          <InternalLink
+            aria-label={projectLabel}
+            className="flex items-center"
+            href={`/project/${projectId}`}
+            title={projectLabel}
+          >
+            {projectIcon && projectColor ? (
+              <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
+            ) : (
+              projectLabel
+            )}
+          </InternalLink>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+    </>
+  );
+};
+
 export const HeaderBreadcrumb = ({
   chat,
   chatId,
@@ -144,23 +238,21 @@ export const HeaderBreadcrumb = ({
             projectLabel={projectLabel}
           />
           <BreadcrumbItem className="min-w-0">
-            {
-              <PureChatBreadcrumb
-                canManageChat={canManageChat}
-                chatLabel={chatLabel}
-                chatTitleDraft={chatTitleDraft}
-                handleChatInputKeyDown={handleChatInputKeyDown}
-                handleChatRename={handleChatRename}
-                isChatEditing={isChatEditing}
-                isPinned={!!chat?.isPinned}
-                onChatTitleChange={(value: string) => setChatTitleDraft(value)}
-                onShare={() => setShowShareDialog(true)}
-                onTogglePin={handlePinToggle}
-                openChatDeleteDialog={openChatDeleteDialog}
-                showShare={!!hasMessages}
-                startChatRename={startChatRename}
-              />
-            }
+            <PureChatBreadcrumb
+              canManageChat={canManageChat}
+              chatLabel={chatLabel}
+              chatTitleDraft={chatTitleDraft}
+              handleChatInputKeyDown={handleChatInputKeyDown}
+              handleChatRename={handleChatRename}
+              isChatEditing={isChatEditing}
+              isPinned={!!chat?.isPinned}
+              onChatTitleChange={(value: string) => setChatTitleDraft(value)}
+              onShare={() => setShowShareDialog(true)}
+              onTogglePin={handlePinToggle}
+              openChatDeleteDialog={openChatDeleteDialog}
+              showShare={!!hasMessages}
+              startChatRename={startChatRename}
+            />
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -266,101 +358,7 @@ interface PerformChatRenameArgs {
   setIsChatEditing: (value: boolean) => void;
 }
 
-const performChatRename = async ({
-  chatId,
-  chatTitleDraft,
-  privateChat,
-  renameChat,
-  setChatTitleDraft,
-  setIsChatEditing,
-}: PerformChatRenameArgs) => {
-  if (!privateChat) {
-    setIsChatEditing(false);
-    return;
-  }
-  const trimmed = chatTitleDraft.trim();
-  if (!trimmed || trimmed === privateChat.title) {
-    setIsChatEditing(false);
-    setChatTitleDraft(privateChat.title ?? "");
-    return;
-  }
-  try {
-    await renameChat({ chatId, title: trimmed });
-    toast.success("Chat renamed successfully");
-  } catch {
-    // Errors handled in hook
-  } finally {
-    setIsChatEditing(false);
-  }
-};
-
 interface InputKeyHandlerOptions {
   onEnter: () => void;
   onEscape: () => void;
 }
-
-const createInputKeyDownHandler =
-  ({ onEnter, onEscape }: InputKeyHandlerOptions) =>
-  (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      onEnter();
-      return;
-    }
-    if (event.key === "Escape") {
-      onEscape();
-    }
-  };
-
-const useSyncDraftValue = ({
-  isEditing,
-  setDraft,
-  value,
-}: {
-  isEditing: boolean;
-  setDraft: (val: string) => void;
-  value: string | undefined;
-}) => {
-  useEffect(() => {
-    if (!isEditing) {
-      setDraft(value ?? "");
-    }
-  }, [isEditing, setDraft, value]);
-};
-
-const ProjectBreadcrumb = ({
-  projectLabel,
-  projectId,
-  projectIcon,
-  projectColor,
-}: {
-  projectLabel?: string;
-  projectId: string | null;
-  projectIcon?: ProjectIconName;
-  projectColor?: ProjectColorName;
-}) => {
-  if (!(projectLabel && projectId)) {
-    return null;
-  }
-
-  return (
-    <>
-      <BreadcrumbItem>
-        <BreadcrumbLink asChild>
-          <InternalLink
-            aria-label={projectLabel}
-            className="flex items-center"
-            href={`/project/${projectId}`}
-            title={projectLabel}
-          >
-            {projectIcon && projectColor ? (
-              <ProjectIcon color={projectColor} icon={projectIcon} size={16} />
-            ) : (
-              projectLabel
-            )}
-          </InternalLink>
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-      <BreadcrumbSeparator />
-    </>
-  );
-};

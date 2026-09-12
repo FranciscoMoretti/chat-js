@@ -269,6 +269,21 @@ export type PromptInputAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   className?: string;
 };
 
+export const PromptInputHoverCard = ({
+  openDelay = 0,
+  closeDelay = 0,
+  ...props
+}: PromptInputHoverCardProps) => (
+  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+);
+
+export const PromptInputHoverCardContent = ({
+  align = "start",
+  ...props
+}: PromptInputHoverCardContentProps) => (
+  <HoverCardContent align={align} {...props} />
+);
+
 export const PromptInputAttachment = ({
   data,
   className,
@@ -581,7 +596,9 @@ export const PromptInput = ({
 
   // Let provider know about our hidden file input so external menus can call openFileDialog()
   useEffect(() => {
-    if (!usingProvider) return;
+    if (!usingProvider) {
+      return;
+    }
     controller.__registerFileInput(inputRef, () => inputRef.current?.click());
   }, [usingProvider, controller]);
 
@@ -596,7 +613,9 @@ export const PromptInput = ({
   // Attach drop handlers on nearest form and document (opt-in)
   useEffect(() => {
     const form = formRef.current;
-    if (!form) return;
+    if (!form) {
+      return;
+    }
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -620,7 +639,9 @@ export const PromptInput = ({
   }, [add]);
 
   useEffect(() => {
-    if (!globalDrop) return;
+    if (!globalDrop) {
+      return;
+    }
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -647,7 +668,9 @@ export const PromptInput = ({
     () => () => {
       if (!usingProvider) {
         for (const f of files) {
-          if (f.url) URL.revokeObjectURL(f.url);
+          if (f.url) {
+            URL.revokeObjectURL(f.url);
+          }
         }
       }
     },
@@ -1241,14 +1264,6 @@ export const PromptInputSelectValue = ({
 
 export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
-export const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
-  ...props
-}: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
-);
-
 export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger
 >;
@@ -1260,13 +1275,6 @@ export const PromptInputHoverCardTrigger = (
 export type PromptInputHoverCardContentProps = ComponentProps<
   typeof HoverCardContent
 >;
-
-export const PromptInputHoverCardContent = ({
-  align = "start",
-  ...props
-}: PromptInputHoverCardContentProps) => (
-  <HoverCardContent align={align} {...props} />
-);
 
 export type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
 

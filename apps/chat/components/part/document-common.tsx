@@ -146,7 +146,9 @@ const PureDocumentToolCall = ({
         </div>
       </div>
 
-      <div className="mt-1 animate-spin">{<Loader2 size={16} />}</div>
+      <div className="mt-1 animate-spin">
+        <Loader2 size={16} />
+      </div>
     </button>
   );
 };
