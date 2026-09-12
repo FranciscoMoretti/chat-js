@@ -124,14 +124,15 @@ const emitRichResponse = (transport: ControlledTransport) => {
   transport.finish();
 };
 
-const waitFor = async (predicate: () => boolean) => {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) {
-      return;
-    }
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for request");
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for request");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("ThreadRunChat", () => {

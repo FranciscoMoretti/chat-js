@@ -161,14 +161,15 @@ const requireMessage = (message: UIMessage | undefined) => {
   return message;
 };
 
-const waitFor = async (predicate: () => boolean) => {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) {
-      return;
-    }
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for request");
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for request");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("Thread", () => {
@@ -222,7 +223,7 @@ describe("Thread", () => {
 
   test("rejects sharing one state between multiple controllers", () => {
     const state = new RecordingThreadState([user("user-1")]);
-    new StateBackedThread(state);
+    void new StateBackedThread(state);
 
     expect(() => new StateBackedThread(state)).toThrow(
       "ThreadState is already attached to an AbstractThread; retain and reuse that controller"
@@ -676,7 +677,7 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          parts: [{ type: "text", text: "partial" }],
+          parts: [{ text: "partial", type: "text" }],
           role: "assistant",
         },
       ],
@@ -711,7 +712,7 @@ describe("Thread", () => {
         {
           id: "assistant-1",
           metadata: { model: "saved" },
-          parts: [{ type: "text", text: "partial" }],
+          parts: [{ text: "partial", type: "text" }],
           role: "assistant",
         },
       ],
@@ -739,13 +740,13 @@ describe("Thread", () => {
         {
           id: "assistant-1",
           parts: [
-            { type: "text", text: "prefix " },
+            { text: "prefix ", type: "text" },
             {
-              type: "dynamic-tool",
-              toolName: "lookup",
-              toolCallId: "restored-tool",
-              state: "input-available",
               input: {},
+              state: "input-available",
+              toolCallId: "restored-tool",
+              toolName: "lookup",
+              type: "dynamic-tool",
             },
           ],
           role: "assistant",

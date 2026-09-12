@@ -132,14 +132,15 @@ const renderUseThread = (initialOptions: UseThreadOptions) => {
   };
 };
 
-const waitFor = async (predicate: () => boolean) => {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) {
-      return;
-    }
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for condition");
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for condition");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("useThread", () => {
