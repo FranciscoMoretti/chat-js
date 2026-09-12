@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
-import {
-  type GatewayType,
-  gatewayMetadata,
-} from "../../registry/src/gateways/metadata";
+import { gatewayMetadata } from "../../registry/src/gateways/metadata";
+import type { GatewayType } from "../../registry/src/gateways/metadata";
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
 import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
 import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
@@ -13,52 +11,52 @@ import gatewayPackage from "../package.json";
 import type { GatewayProvider } from "./gateway-provider";
 import type { GatewayOptions } from "./runtime";
 
-const adapters: Array<{
+const adapters: {
   name: GatewayType;
   create: (options: GatewayOptions) => GatewayProvider;
   env: Record<string, string>;
   model: string;
   image: boolean;
   video: boolean;
-}> = [
+}[] = [
   {
-    name: "vercel",
     create: (o) => new VercelGateway(o),
     env: { AI_GATEWAY_API_KEY: "test" },
-    model: "openai/gpt-5-mini",
     image: true,
+    model: "openai/gpt-5-mini",
+    name: "vercel",
     video: true,
   },
   {
-    name: "openai",
     create: (o) => new OpenAIGateway(o),
     env: { OPENAI_API_KEY: "test" },
-    model: "gpt-5-mini",
     image: true,
+    model: "gpt-5-mini",
+    name: "openai",
     video: false,
   },
   {
-    name: "openrouter",
     create: (o) => new OpenRouterGateway(o),
     env: { OPENROUTER_API_KEY: "test" },
-    model: "openai/gpt-5-mini",
     image: false,
+    model: "openai/gpt-5-mini",
+    name: "openrouter",
     video: false,
   },
   {
-    name: "openai-compatible",
     create: (o) => new OpenAICompatibleGateway(o),
     env: { OPENAI_COMPATIBLE_BASE_URL: "https://example.test/v1" },
-    model: "custom-model",
     image: true,
+    model: "custom-model",
+    name: "openai-compatible",
     video: false,
   },
   {
-    name: "litellm",
     create: (o) => new LiteLLMGateway(o),
     env: { LITELLM_BASE_URL: "https://example.test" },
-    model: "custom-model",
     image: true,
+    model: "custom-model",
+    name: "litellm",
     video: false,
   },
 ];

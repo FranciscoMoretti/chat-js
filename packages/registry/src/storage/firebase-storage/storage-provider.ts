@@ -1,3 +1,1 @@
-import { firebaseStorage } from "files-sdk/firebase-storage";
-
-export const createStorageAdapter = firebaseStorage;
+export { firebaseStorage as createStorageAdapter } from "files-sdk/firebase-storage";

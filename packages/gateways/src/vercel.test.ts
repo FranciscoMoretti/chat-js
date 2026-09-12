@@ -15,7 +15,6 @@ describe("VercelGateway", () => {
       vi.fn(() =>
         Promise.resolve(
           Response.json({
-            object: "list",
             data: [
               {
                 id: "openai/tts-1",
@@ -45,6 +44,7 @@ describe("VercelGateway", () => {
                 },
               },
             ],
+            object: "list",
           })
         )
       )
@@ -57,7 +57,7 @@ describe("VercelGateway", () => {
       id: "openai/gpt-test",
       pricing: {
         input_cache_read_tiers: [
-          { cost: "0.000001", min: 0, max: 64_000 },
+          { cost: "0.000001", max: 64_000, min: 0 },
           { cost: "0.000002", min: 64_000 },
         ],
       },

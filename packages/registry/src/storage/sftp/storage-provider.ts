@@ -1,3 +1,1 @@
-import { sftp } from "files-sdk/sftp";
-
-export const createStorageAdapter = sftp;
+export { sftp as createStorageAdapter } from "files-sdk/sftp";

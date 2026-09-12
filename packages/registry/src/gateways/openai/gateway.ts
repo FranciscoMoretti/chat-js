@@ -29,17 +29,17 @@ interface OpenAIModelResponse {
 
 function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
   return {
-    id: model.id,
-    object: "model",
+    context_window: 0,
     created: model.created ?? 0,
+    description: "",
+    id: model.id,
+    max_tokens: 0,
+    name: model.id,
+    object: "model",
     owned_by:
       (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
-    name: model.id,
-    description: "",
-    context_window: 0,
-    max_tokens: 0,
-    type: "language",
     pricing: {},
+    type: "language",
   };
 }
 

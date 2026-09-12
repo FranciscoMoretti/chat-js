@@ -1,3 +1,1 @@
-import { sharepoint } from "files-sdk/sharepoint";
-
-export const createStorageAdapter = sharepoint;
+export { sharepoint as createStorageAdapter } from "files-sdk/sharepoint";

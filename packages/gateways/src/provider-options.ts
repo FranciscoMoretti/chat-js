@@ -31,8 +31,8 @@ export function getModelProviderOptions(model: {
       return {
         anthropic: {
           thinking: {
-            type: "enabled",
             budgetTokens: 4096,
+            type: "enabled",
           },
         } satisfies AnthropicProviderOptions,
       };

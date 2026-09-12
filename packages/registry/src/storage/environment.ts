@@ -1,4 +1,5 @@
-import { getProvider, type ProviderSlug } from "files-sdk/providers";
+import { getProvider } from "files-sdk/providers";
+import type { ProviderSlug } from "files-sdk/providers";
 
 export type StorageEnvironmentVariable = {
   aliases: readonly string[];
@@ -12,7 +13,7 @@ export type StorageEnvironmentRequirement = {
   options: StorageEnvironmentVariable[][];
 };
 
-const STORAGE_OPTION_HINT = /(?:or )?pass `([^`]+)`/;
+const STORAGE_OPTION_HINT = /(?:or )?pass `(?<option>[^`]+)`/u;
 
 export function getStorageEnvironmentRequirements(
   provider: ProviderSlug,

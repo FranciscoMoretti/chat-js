@@ -33,22 +33,20 @@ const aiGatewayModelTypeInputSchema = z.union([
 
 const pricingTierSchema = z.object({
   cost: z.string(),
-  min: z.number().default(0),
   max: z.number().optional(),
+  min: z.number().default(0),
 });
 
 // Single model schema
 export const aiGatewayModelSchema = z.object({
-  id: z.string(),
-  object: z.literal("model"),
-  created: z.number(),
-  owned_by: z.string(),
-  name: z.string(),
-  description: z.string(),
   context_window: z.number(),
+  created: z.number(),
+  description: z.string(),
+  id: z.string(),
   max_tokens: z.number(),
-  type: aiGatewayModelTypeInputSchema,
-  tags: z.array(tagSchema).optional(),
+  name: z.string(),
+  object: z.literal("model"),
+  owned_by: z.string(),
   pricing: z.object({
     input: z.string().optional(),
     output: z.string().optional(),
@@ -60,6 +58,8 @@ export const aiGatewayModelSchema = z.object({
     output_tiers: z.array(pricingTierSchema).optional(),
     input_cache_read_tiers: z.array(pricingTierSchema).optional(),
   }),
+  tags: z.array(tagSchema).optional(),
+  type: aiGatewayModelTypeInputSchema,
 });
 
 type ParsedAiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
@@ -78,6 +78,6 @@ export const aiGatewayModelDiscriminatorSchema = z.object({
 
 // Parse the response envelope before validating individual supported models.
 export const aiGatewayModelsEnvelopeSchema = z.object({
-  object: z.literal("list"),
   data: z.array(z.unknown()),
+  object: z.literal("list"),
 });

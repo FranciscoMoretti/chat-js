@@ -1,3 +1,1 @@
-import { vultr } from "files-sdk/vultr";
-
-export const createStorageAdapter = vultr;
+export { vultr as createStorageAdapter } from "files-sdk/vultr";

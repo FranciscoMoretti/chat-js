@@ -3,26 +3,15 @@ import { z } from "zod";
 const model = z.string().min(1);
 const toggle = z.object({ enabled: z.boolean() });
 const media = z.discriminatedUnion("enabled", [
-  z.object({ enabled: z.literal(true), default: model }),
-  z.object({ enabled: z.literal(false), default: model.optional() }),
+  z.object({ default: model, enabled: z.literal(true) }),
+  z.object({ default: model.optional(), enabled: z.literal(false) }),
 ]);
 
 /** Serializable installation contract. Adapter behavior is checked by TypeScript and contract tests. */
 export const gatewayDefinitionSchema = z
   .object({
-    kind: z.literal("gateway"),
-    contractVersion: z.literal(1),
-    id: z.string().regex(/^[a-z][a-z0-9-]*$/),
     capabilities: z.object({ image: z.boolean(), video: z.boolean() }),
-    optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/)).default([]),
-    envRequirements: z.array(
-      z.object({
-        description: z.string().optional(),
-        options: z
-          .array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/)).min(1))
-          .min(1),
-      })
-    ),
+    contractVersion: z.literal(1),
     defaults: z.object({
       anonymousModels: z.array(model),
       curatedDefaults: z.array(model),
@@ -62,6 +51,17 @@ export const gatewayDefinitionSchema = z
         }),
       }),
     }),
+    envRequirements: z.array(
+      z.object({
+        description: z.string().optional(),
+        options: z
+          .array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).min(1))
+          .min(1),
+      })
+    ),
+    id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
+    kind: z.literal("gateway"),
+    optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).default([]),
   })
   .superRefine((definition, ctx) => {
     for (const kind of ["image", "video"] as const) {
@@ -72,8 +72,8 @@ export const gatewayDefinitionSchema = z
       ) {
         ctx.addIssue({
           code: "custom",
-          path: ["defaults", "tools", kind],
           message: `Gateway does not support ${kind} generation.`,
+          path: ["defaults", "tools", kind],
         });
       }
     }

@@ -67,13 +67,13 @@ Avoid:
       }
 
       const schema = z.object({
-        title: z.string(),
         content: z.string(),
         description: z.string(),
+        title: z.string(),
       });
 
-      let title = content.metadata.title;
-      let description = content.metadata.description;
+      const { metadata } = content;
+      let { description, title } = metadata;
       let extractedContent = content.markdown;
 
       if (!(title && description && extractedContent)) {
@@ -84,20 +84,20 @@ Avoid:
         });
 
         if (extractResult.success && extractResult.data) {
-          title = title || extractResult.data.title;
-          description = description || extractResult.data.description;
-          extractedContent = extractedContent || extractResult.data.content;
+          title ||= extractResult.data.title;
+          description ||= extractResult.data.description;
+          extractedContent ||= extractResult.data.content;
         }
       }
 
       return {
         results: [
           {
-            title: title || "Untitled",
             content: extractedContent || "",
-            url: redactedUrl,
             description: description || "",
-            language: content.metadata.language,
+            language: metadata.language,
+            title: title || "Untitled",
+            url: redactedUrl,
           },
         ],
       };

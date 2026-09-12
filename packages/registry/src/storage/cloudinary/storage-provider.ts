@@ -1,3 +1,1 @@
-import { cloudinary } from "files-sdk/cloudinary";
-
-export const createStorageAdapter = cloudinary;
+export { cloudinary as createStorageAdapter } from "files-sdk/cloudinary";

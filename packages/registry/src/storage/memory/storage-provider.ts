@@ -1,3 +1,1 @@
-import { memory } from "files-sdk/memory";
-
-export const createStorageAdapter = memory;
+export { memory as createStorageAdapter } from "files-sdk/memory";

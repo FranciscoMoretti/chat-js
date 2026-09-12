@@ -9,7 +9,7 @@ import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 import { z } from "zod";
 
-const TRAILING_SLASHES_REGEX = /\/+$/;
+const TRAILING_SLASHES_REGEX = /\/+$/u;
 
 const litellmModelsResponseSchema = z.object({
   data: z.array(
@@ -28,16 +28,16 @@ type LiteLLMModelResponse = z.infer<
 
 function toAiGatewayModel(model: LiteLLMModelResponse): AiGatewayModel {
   return {
-    id: model.id,
-    object: "model",
-    created: model.created ?? 0,
-    owned_by: model.owned_by ?? "litellm",
-    name: model.id,
-    description: "",
     context_window: 0,
+    created: model.created ?? 0,
+    description: "",
+    id: model.id,
     max_tokens: 0,
-    type: "language",
+    name: model.id,
+    object: "model",
+    owned_by: model.owned_by ?? "litellm",
     pricing: {},
+    type: "language",
   };
 }
 
@@ -54,9 +54,9 @@ export class LiteLLMGateway
       throw new Error("LITELLM_BASE_URL is not configured");
     }
     return createOpenAICompatible({
-      name: "litellm",
-      baseURL,
       apiKey,
+      baseURL,
+      name: "litellm",
     });
   }
 

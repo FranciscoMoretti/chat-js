@@ -1,3 +1,1 @@
-import { oracleCloud } from "files-sdk/oracle-cloud";
-
-export const createStorageAdapter = oracleCloud;
+export { oracleCloud as createStorageAdapter } from "files-sdk/oracle-cloud";

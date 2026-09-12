@@ -2,8 +2,8 @@ import type { Sandbox } from "@vercel/sandbox";
 
 import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
-const WHITESPACE_REGEX = /\s+/;
-const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;
+const WHITESPACE_REGEX = /\s+/u;
+const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
 function packageName(spec: string): string {
@@ -230,16 +230,14 @@ async function checkForChart(
     args: ["-f", chartPath],
   });
   if (chartCheck.exitCode === 0) {
-    const b64 = await (
-      await sandbox.runCommand({
-        cmd: "base64",
-        args: ["-w", "0", chartPath],
-      })
-    ).stdout();
+    const base64Command = await sandbox.runCommand({
+      cmd: "base64",
+      args: ["-w", "0", chartPath],
+    });
+    const b64 = await base64Command.stdout();
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
-  return;
 }
 
 function buildResponseMessage({

@@ -1,3 +1,1 @@
-import { azure } from "files-sdk/azure";
-
-export const createStorageAdapter = azure;
+export { azure as createStorageAdapter } from "files-sdk/azure";

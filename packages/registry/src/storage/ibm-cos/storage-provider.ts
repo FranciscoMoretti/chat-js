@@ -1,3 +1,1 @@
-import { ibmCos } from "files-sdk/ibm-cos";
-
-export const createStorageAdapter = ibmCos;
+export { ibmCos as createStorageAdapter } from "files-sdk/ibm-cos";

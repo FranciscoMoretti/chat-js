@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getProvider, PROVIDER_NAMES } from "files-sdk/providers";
@@ -16,11 +16,11 @@ const sdkPackage = z
   .parse(
     JSON.parse(
       readFileSync(
-        join(
-          dirname(fileURLToPath(import.meta.resolve("files-sdk"))),
+        path.join(
+          path.dirname(fileURLToPath(import.meta.resolve("files-sdk"))),
           "../package.json"
         ),
-        "utf8"
+        "utf-8"
       )
     )
   );
@@ -30,7 +30,9 @@ export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
 ).map((id) => {
   const provider = getProvider(id);
-  if (!provider) throw new Error(`Missing Files SDK provider: ${id}`);
+  if (!provider) {
+    throw new Error(`Missing Files SDK provider: ${id}`);
+  }
   return {
     name: `${id}-storage`,
     type: "registry:item" as const,
@@ -40,8 +42,9 @@ export const builtInStorage = PROVIDER_NAMES.filter(
       `files-sdk@${sdkPackage.version}`,
       ...provider.peerDeps.map((peer) => {
         const version = sdkPackage.peerDependencies[peer];
-        if (!version)
+        if (!version) {
           throw new Error(`Missing Files SDK peer version: ${peer}`);
+        }
         return `${peer}@${version}`;
       }),
     ],

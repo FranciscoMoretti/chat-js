@@ -12,8 +12,8 @@ afterEach(() => {
 });
 
 function mockModelsFetch() {
-  const fetchMock = vi.fn(() => {
-    return Promise.resolve(
+  const fetchMock = vi.fn(() =>
+    Promise.resolve(
       Response.json({
         data: [
           {
@@ -24,8 +24,8 @@ function mockModelsFetch() {
           },
         ],
       })
-    );
-  });
+    )
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -59,16 +59,16 @@ describe("LiteLLMGateway", () => {
     });
     expect(models).toEqual([
       {
-        id: "openai/gpt-4o-mini",
-        object: "model",
-        created: 1_717_986_432,
-        owned_by: "openai",
-        name: "openai/gpt-4o-mini",
-        description: "",
         context_window: 0,
+        created: 1_717_986_432,
+        description: "",
+        id: "openai/gpt-4o-mini",
         max_tokens: 0,
-        type: "language",
+        name: "openai/gpt-4o-mini",
+        object: "model",
+        owned_by: "openai",
         pricing: {},
+        type: "language",
       },
     ]);
   });

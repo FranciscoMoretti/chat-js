@@ -1,4 +1,5 @@
-import { registrySchema, type RegistryItem } from "shadcn/schema";
+import { registrySchema } from "shadcn/schema";
+import type { RegistryItem } from "shadcn/schema";
 
 import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";

@@ -1,3 +1,1 @@
-import { ovhcloud } from "files-sdk/ovhcloud";
-
-export const createStorageAdapter = ovhcloud;
+export { ovhcloud as createStorageAdapter } from "files-sdk/ovhcloud";
