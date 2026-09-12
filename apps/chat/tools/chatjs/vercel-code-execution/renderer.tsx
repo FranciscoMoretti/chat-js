@@ -49,12 +49,12 @@ const pngSchema = z.object({
   format: z.literal("png"),
 });
 
-export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
+export const CodeExecution = ({ tool }: { tool: CodeExecutionTool }) => {
   const args = tool.input ?? {
     code: "",
-    title: "",
-    language: "python",
     icon: "default",
+    language: "python",
+    title: "",
   };
   const result = tool.state === "output-available" ? tool.output : null;
   const parsedChart = chartSchema.safeParse(result?.chart);
@@ -94,4 +94,4 @@ export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
       )}
     </div>
   );
-}
+};
