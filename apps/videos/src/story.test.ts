@@ -27,8 +27,8 @@ describe("Two-path story", () => {
   it("uses overridden prompt copy throughout the edit", () => {
     const content = {
       ...script,
-      prompt: "Explore Paris.",
       porto: { ...script.porto, prompt: "Explore Rome." },
+      prompt: "Explore Paris.",
     };
     expect(stateAt(42.3, content).editText).toBe("Explore Paris.");
     expect(stateAt(43, content).editText.startsWith("Explore ")).toBe(true);

@@ -53,7 +53,7 @@ export interface UseDataPartOptions<T = unknown> {
  * }
  * ```
  */
-export function useDataParts(): UseDataPartsReturn {
+export const useDataParts = (): UseDataPartsReturn => {
   const messages = useChatMessages();
 
   return useMemo(() => {
@@ -64,7 +64,7 @@ export function useDataParts(): UseDataPartsReturn {
     const byType: Record<string, DataPart<unknown>> = {};
 
     for (const dataPart of dataParts) {
-      const key = dataPart.type.replace(/^data-/, "");
+      const key = dataPart.type.replace(/^data-/u, "");
       const existing = byType[key];
       if (
         !existing ||
@@ -77,11 +77,11 @@ export function useDataParts(): UseDataPartsReturn {
     }
 
     return {
-      byType,
       all: Object.values(byType),
+      byType,
     };
   }, [messages]);
-}
+};
 
 /**
  * Hook to extract and access a specific data part by type.
@@ -123,10 +123,10 @@ export function useDataParts(): UseDataPartsReturn {
  * }
  * ```
  */
-export function useDataPart<T = unknown>(
+export const useDataPart = <T = unknown>(
   type: string,
   options?: UseDataPartOptions<T>
-): [T | null, () => void] {
+): [T | null, () => void] => {
   const messages = useChatMessages();
   const { onData } = options || {};
 
@@ -162,8 +162,8 @@ export function useDataPart<T = unknown>(
       const transientData = transientDataParts.get(fullType);
       if (transientData !== undefined) {
         latest = {
-          type: fullType,
           data: transientData,
+          type: fullType,
         };
       }
     }
@@ -187,7 +187,7 @@ export function useDataPart<T = unknown>(
   }, [type, removeTransientDataPart]);
 
   return [result ? result.data : null, clear];
-}
+};
 
 /**
  * Extract all data parts from messages.
@@ -211,18 +211,18 @@ function extractDataPartsFromMessages(
           };
           if (dataPart.data !== undefined) {
             dataParts.push({
-              type: dataPart.type,
               data: dataPart.data,
               timestamp: dataPart.timestamp || Date.now(),
+              type: dataPart.type,
             });
           }
         }
 
         // Also check tool call results that might contain data parts
         if (part.type.startsWith("tool-") && "result" in part && part.result) {
-          const result = part.result;
+          const { result } = part;
           if (typeof result === "object" && result && "parts" in result) {
-            const parts = (result as { parts?: unknown[] }).parts;
+            const { parts } = result as { parts?: unknown[] };
             if (Array.isArray(parts)) {
               for (const nestedPart of parts) {
                 const typedPart = nestedPart as {
@@ -235,9 +235,9 @@ function extractDataPartsFromMessages(
                   typedPart.data !== undefined
                 ) {
                   dataParts.push({
-                    type: typedPart.type,
                     data: typedPart.data,
                     timestamp: typedPart.timestamp || Date.now(),
+                    type: typedPart.type,
                   });
                 }
               }

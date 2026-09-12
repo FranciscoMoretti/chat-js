@@ -4,14 +4,14 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "./client";
 import { userCredit } from "./schema";
 
-async function ensureUserCreditRow(userId: string) {
+const ensureUserCreditRow = async (userId: string) => {
   await db.insert(userCredit).values({ userId }).onConflictDoNothing();
-}
+};
 
 /**
  * Get user's current credit balance (in cents).
  */
-export async function getCredits(userId: string): Promise<number> {
+export const getCredits = async (userId: string): Promise<number> => {
   let rows = await db
     .select({ credits: userCredit.credits })
     .from(userCredit)
@@ -28,23 +28,23 @@ export async function getCredits(userId: string): Promise<number> {
   }
 
   return rows[0]?.credits ?? 0;
-}
+};
 
 /**
  * Check if user has positive credits (can spend).
  */
-export async function canSpend(userId: string): Promise<boolean> {
+export const canSpend = async (userId: string): Promise<boolean> => {
   const credits = await getCredits(userId);
   return credits > 0;
-}
+};
 
 /**
  * Deduct credits from user. Allows going slightly negative for in-progress operations.
  */
-export async function deductCredits(
+export const deductCredits = async (
   userId: string,
   amount: number
-): Promise<void> {
+): Promise<void> => {
   await ensureUserCreditRow(userId);
   await db
     .update(userCredit)
@@ -52,12 +52,12 @@ export async function deductCredits(
       credits: sql`${userCredit.credits} - ${amount}`,
     })
     .where(eq(userCredit.userId, userId));
-}
+};
 
 /**
  * Add credits to user (for purchases, refunds, etc).
  */
-async function _addCredits(userId: string, amount: number): Promise<void> {
+const _addCredits = async (userId: string, amount: number): Promise<void> => {
   await ensureUserCreditRow(userId);
   await db
     .update(userCredit)
@@ -65,4 +65,4 @@ async function _addCredits(userId: string, amount: number): Promise<void> {
       credits: sql`${userCredit.credits} + ${amount}`,
     })
     .where(eq(userCredit.userId, userId));
-}
+};

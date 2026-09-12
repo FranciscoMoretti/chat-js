@@ -1,3 +1,1 @@
-import { s3 } from "files-sdk/s3";
-
-export const createStorageAdapter = s3;
+export { s3 as createStorageAdapter } from "files-sdk/s3";

@@ -36,7 +36,7 @@ function _createHeadingTransform(level: number) {
     dependencies: [],
     export: null,
     importDOM: null,
-    regExp: new RegExp(`^(#{1,${level}})\\s$`),
+    regExp: new RegExp(`^(#{1,${level}})\\s$`, "u"),
     replace: (_textNode: TextNode) => {
       const selection = $getSelection();
       if (selection) {

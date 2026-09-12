@@ -10,7 +10,7 @@ import { toModelData } from "./to-model-data";
 
 const log = createModuleLogger("ai/models");
 
-async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
+const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
   const activeGateway = getActiveGateway();
 
   log.debug({ gateway: activeGateway.type }, "Fetching models from gateway");
@@ -29,7 +29,7 @@ async function fetchModelsRaw(): Promise<AiGatewayModel[]> {
     );
     throw error;
   }
-}
+};
 
 export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {

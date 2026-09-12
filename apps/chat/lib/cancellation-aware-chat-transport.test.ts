@@ -122,7 +122,7 @@ describe("createCancellationAwareChatTransport", () => {
     const request = transport.sendMessages(
       requestOptions({
         abortSignal: abortController.signal,
-        metadata: gateChatRequest(new Promise<void>(() => undefined)).metadata,
+        metadata: gateChatRequest(new Promise<void>(() => {})).metadata,
       })
     );
     abortController.abort();

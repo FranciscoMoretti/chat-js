@@ -1,3 +1,1 @@
-import { idriveE2 } from "files-sdk/idrive-e2";
-
-export const createStorageAdapter = idriveE2;
+export { idriveE2 as createStorageAdapter } from "files-sdk/idrive-e2";

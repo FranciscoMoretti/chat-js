@@ -5,9 +5,9 @@ import type { ToolName } from "./types";
  * This is the single source of truth for explicit tool mapping.
  */
 
-export function determineExplicitlyRequestedTools(
+export const determineExplicitlyRequestedTools = (
   selectedTool: ToolName | null
-): ToolName[] | null {
+): ToolName[] | null => {
   if (selectedTool === "deepResearch") {
     return ["deepResearch"];
   }
@@ -28,4 +28,4 @@ export function determineExplicitlyRequestedTools(
     ];
   }
   return null;
-}
+};

@@ -4,14 +4,15 @@ import equal from "fast-deep-equal";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 
-import { type StoreState, useChatStoreApi } from "@/lib/stores/base";
+import { useChatStoreApi } from "@/lib/stores/base";
+import type { StoreState } from "@/lib/stores/base";
 
 import type { ChatMessage } from "../ai/types";
 
-function useBaseChatStore<T = StoreState<ChatMessage>>(
+const useBaseChatStore = <T = StoreState<ChatMessage>>(
   selector?: (store: StoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
-) {
+) => {
   const store = useChatStoreApi<ChatMessage>();
   if (!store) {
     throw new Error("useBaseChatStore must be used within ChatStoreProvider");
@@ -20,7 +21,7 @@ function useBaseChatStore<T = StoreState<ChatMessage>>(
     (selector as (s: StoreState<ChatMessage>) => T) ??
     ((s: StoreState<ChatMessage>) => s);
   return useStoreWithEqualityFn(store, selectorOrIdentity, equalityFn);
-}
+};
 
 // Base selector hooks using throttled messages where relevant
 export const useMessageIds = () =>

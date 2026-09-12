@@ -26,28 +26,26 @@ export interface AgentOptions {
 // Telemetry Helper
 //##################
 
-export function createTelemetry(
+export const createTelemetry = (
   functionId: string,
   options: Pick<AgentOptions, "messageId" | "requestId">
-) {
-  return {
-    telemetry: {
-      integrations: chatTelemetry,
-      isEnabled: true,
-      functionId,
-      includeRuntimeContext: {
-        messageId: true,
-        langfuseTraceId: true,
-        langfuseUpdateParent: true,
-      },
+) => ({
+  runtimeContext: {
+    langfuseTraceId: options.requestId,
+    langfuseUpdateParent: false,
+    messageId: options.messageId,
+  },
+  telemetry: {
+    functionId,
+    includeRuntimeContext: {
+      langfuseTraceId: true,
+      langfuseUpdateParent: true,
+      messageId: true,
     },
-    runtimeContext: {
-      messageId: options.messageId,
-      langfuseTraceId: options.requestId,
-      langfuseUpdateParent: false,
-    },
-  };
-}
+    integrations: chatTelemetry,
+    isEnabled: true,
+  },
+});
 
 //##################
 // Structured Outputs (Zod Schemas)

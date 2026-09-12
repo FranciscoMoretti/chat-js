@@ -7,10 +7,10 @@ import type {
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
 
-export type { GatewayType } from "@/lib/ai/gateways/registry";
-
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
+
+export type { GatewayType } from "@/lib/ai/gateways/registry";
 
 // Helper to create typed model ID schemas
 const toolName = () => z.custom<ToolName>();
@@ -19,17 +19,14 @@ const toolName = () => z.custom<ToolName>();
 // AI config — discriminated union keyed on gateway
 // =====================================================
 
-function gatewayModelId<G extends GatewayType>() {
-  return z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
-}
+const gatewayModelId = <G extends GatewayType>() =>
+  z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
 
-function gatewayImageModelId<G extends GatewayType>() {
-  return z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
-}
+const gatewayImageModelId = <G extends GatewayType>() =>
+  z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
 
-function gatewayVideoModelId<G extends GatewayType>() {
-  return z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
-}
+const gatewayVideoModelId = <G extends GatewayType>() =>
+  z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
 
 const deepResearchToolConfigSchema = z.object({
   defaultModel: z.string(),
@@ -57,8 +54,8 @@ const deepResearchToolConfigSchema = z.object({
     .describe("Max search queries per research topic"),
 });
 
-function createAiSchema<G extends GatewayType>(g: G) {
-  return z.object({
+const createAiSchema = <G extends GatewayType>(g: G) =>
+  z.object({
     gateway: z.literal(g),
     providerOrder: z
       .array(z.string())
@@ -138,7 +135,6 @@ function createAiSchema<G extends GatewayType>(g: G) {
       })
       .describe("Default model and runtime configuration grouped by tool"),
   });
-}
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
@@ -476,14 +472,13 @@ export type ConfigInput = {
  * Only `ai.gateway` is required — all other `ai` fields are optional overrides
  * on top of the gateway defaults supplied by `applyDefaults`.
  */
-export function defineConfig<const T extends ConfigInput>(config: T): T {
-  return config;
-}
+export const defineConfig = <const T extends ConfigInput>(config: T): T =>
+  config;
 
-function mergeToolsConfig<T extends Record<string, unknown>>(
+const mergeToolsConfig = <T extends Record<string, unknown>>(
   defaults: T,
   user: Record<string, unknown> | undefined
-): T {
+): T => {
   if (!user) {
     return defaults;
   }
@@ -504,10 +499,10 @@ function mergeToolsConfig<T extends Record<string, unknown>>(
     }
   }
   return result as T;
-}
+};
 
 // Apply defaults to partial config
-export function applyDefaults(input: ConfigInput): Config {
+export const applyDefaults = (input: ConfigInput): Config => {
   const gateway = input.ai?.gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;
   const aiInput = input.ai as Record<string, unknown> | undefined;
@@ -527,4 +522,4 @@ export function applyDefaults(input: ConfigInput): Config {
   };
 
   return configSchema.parse({ ...input, ai: mergedAi });
-}
+};

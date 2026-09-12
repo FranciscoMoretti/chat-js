@@ -17,11 +17,11 @@ import { voteRouter } from "./vote.router";
 export const appRouter = createTRPCRouter({
   chat: chatRouter,
   credits: creditsRouter,
-  vote: voteRouter,
   document: documentRouter,
   mcp: mcpRouter,
   project: projectRouter,
   settings: settingsRouter,
+  vote: voteRouter,
 });
 
 // export type definition of API

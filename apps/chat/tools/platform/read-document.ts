@@ -23,9 +23,6 @@ Use for:
 
 Avoid:
 - Documents that were not produced in the current conversation`,
-    inputSchema: z.object({
-      documentId: z.string().describe("The ID of the document to read"),
-    }),
     execute: async ({ documentId }) => {
       const document = await getDocumentById({ id: documentId });
 
@@ -42,11 +39,14 @@ Avoid:
       }
 
       return {
-        documentId: document.id,
-        title: document.title,
-        kind: document.kind,
         content: document.content,
         createdAt: document.createdAt,
+        documentId: document.id,
+        kind: document.kind,
+        title: document.title,
       };
     },
+    inputSchema: z.object({
+      documentId: z.string().describe("The ID of the document to read"),
+    }),
   });

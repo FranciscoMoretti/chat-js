@@ -21,32 +21,29 @@ Use for:
 ${textGuidelines}
 
 The title should be descriptive of the content.`,
-    inputSchema: z.object({
-      title: z.string().describe("Document title"),
-      content: z.string().describe("The full markdown content of the document"),
-    }),
-
-    // TODO: Optimize what's rendered to the model by excluding content from messages !== curMessage
-    // toModelOutput: ({input}) => (),
     async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
 
       if (session.user?.id) {
         await saveDocument({
-          id,
-          title,
           content,
+          id,
           kind: "text",
-          userId: session.user.id,
           messageId,
+          title,
+          userId: session.user.id,
         });
       }
 
       return {
-        status: "success",
+        date: new Date().toISOString(),
         documentId: id,
         result: "A document was created and is now visible to the user.",
-        date: new Date().toISOString(),
+        status: "success",
       };
     },
+    inputSchema: z.object({
+      content: z.string().describe("The full markdown content of the document"),
+      title: z.string().describe("Document title"),
+    }),
   });

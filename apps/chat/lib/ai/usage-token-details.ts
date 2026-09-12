@@ -12,13 +12,9 @@ export type StoredLanguageModelUsage = Pick<
     reasoningTokens?: number;
   };
 
-export function getUsageTokenDetails(usage?: StoredLanguageModelUsage) {
-  return {
-    cachedInputTokens:
-      usage?.inputTokenDetails?.cacheReadTokens ??
-      usage?.cachedInputTokens ??
-      0,
-    reasoningTokens:
-      usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0,
-  };
-}
+export const getUsageTokenDetails = (usage?: StoredLanguageModelUsage) => ({
+  cachedInputTokens:
+    usage?.inputTokenDetails?.cacheReadTokens ?? usage?.cachedInputTokens ?? 0,
+  reasoningTokens:
+    usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0,
+});

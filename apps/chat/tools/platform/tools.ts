@@ -3,7 +3,8 @@ import type { ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
+import { getOrCreateMcpClient } from "@/lib/ai/mcp/mcp-client";
+import type { MCPClient } from "@/lib/ai/mcp/mcp-client";
 import type { StreamWriter } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -22,7 +23,7 @@ import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
 
-export function getTools({
+export const getTools = ({
   dataStream,
   session,
   messageId,
@@ -36,12 +37,12 @@ export function getTools({
   selectedModel: ModelId;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
-}) {
+}) => {
   const documentToolProps = {
-    session,
+    costAccumulator,
     messageId,
     selectedModel,
-    costAccumulator,
+    session,
   };
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
@@ -82,8 +83,8 @@ export function getTools({
           ...(hasEnabledDocumentType
             ? {
                 readDocument: readDocument({
-                  session,
                   dataStream,
+                  session,
                 }),
               }
             : {}),
@@ -92,35 +93,35 @@ export function getTools({
     ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
-            session,
+            costAccumulator,
             dataStream,
             messageId,
             messages: contextForLLM,
-            costAccumulator,
+            session,
           }),
         }
       : {}),
     ...enabledInstalledTools,
   };
-}
+};
 
 /**
  * Creates MCP clients for the given connectors and returns their tools.
  * Uses OAuth-aware MCP clients that can authenticate with OAuth 2.1 + PKCE.
  * Returns both the tools and a cleanup function to close all clients.
  */
-export async function getMcpTools({
+export const getMcpTools = async ({
   connectors,
 }: {
   connectors: McpConnector[];
 }): Promise<{
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
-}> {
+}> => {
   if (!config.ai.tools.mcp.enabled) {
     return {
+      cleanup: () => Promise.resolve(),
       tools: {},
-      cleanup: async () => Promise.resolve(),
     };
   }
 
@@ -128,8 +129,8 @@ export async function getMcpTools({
 
   if (enabledConnectors.length === 0) {
     return {
+      cleanup: () => Promise.resolve(),
       tools: {},
-      cleanup: async () => Promise.resolve(),
     };
   }
 
@@ -210,5 +211,5 @@ export async function getMcpTools({
     );
   };
 
-  return { tools: allTools, cleanup };
-}
+  return { cleanup, tools: allTools };
+};

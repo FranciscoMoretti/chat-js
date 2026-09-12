@@ -1,3 +1,1 @@
-import { yandex } from "files-sdk/yandex";
-
-export const createStorageAdapter = yandex;
+export { yandex as createStorageAdapter } from "files-sdk/yandex";

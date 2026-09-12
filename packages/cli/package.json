@@ -57,6 +57,8 @@
     "@types/bun": "latest",
     "@types/node": "22.13.10",
     "next": "16.3.0",
+    "png2icons": "^2.0.1",
+    "tsx": "^4.19.1",
     "typescript": "6.0.2"
   }
 }

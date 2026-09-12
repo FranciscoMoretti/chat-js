@@ -9,8 +9,8 @@ import {
   inArray,
   isNotNull,
   isNull,
-  type SQL,
 } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import type { Attachment, ChatMessage, ToolName } from "@/lib/ai/types";
 import { isSelectedModelValue } from "@/lib/ai/types";
@@ -29,20 +29,17 @@ import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
   chat,
-  type DBMessage,
   document,
   generationCancellation,
   message,
-  type Part,
   part,
   project,
   suggestion,
-  type User,
-  type UserModelPreference,
   user,
   userModelPreference,
   vote,
 } from "./schema";
+import type { DBMessage, Part, User, UserModelPreference } from "./schema";
 
 async function _getUserByEmail(email: string): Promise<User[]> {
   try {
@@ -53,7 +50,7 @@ async function _getUserByEmail(email: string): Promise<User[]> {
   }
 }
 
-export async function saveChat({
+export const saveChat = async ({
   id,
   userId,
   title,
@@ -63,7 +60,7 @@ export async function saveChat({
   userId: string;
   title: string;
   projectId?: string;
-}) {
+}) => {
   try {
     return await db.insert(chat).values({
       id,
@@ -77,9 +74,9 @@ export async function saveChat({
     console.error("Failed to save chat in database");
     throw error;
   }
-}
+};
 
-export async function saveChatIfNotExists({
+export const saveChatIfNotExists = async ({
   id,
   userId,
   title,
@@ -89,7 +86,7 @@ export async function saveChatIfNotExists({
   userId: string;
   title: string;
   projectId?: string;
-}) {
+}) => {
   try {
     return await db
       .insert(chat)
@@ -106,9 +103,9 @@ export async function saveChatIfNotExists({
     console.error("Failed to save chat in database");
     throw error;
   }
-}
+};
 
-export async function deleteChatById({ id }: { id: string }) {
+export const deleteChatById = async ({ id }: { id: string }) => {
   try {
     // Get all messages for this chat to clean up their attachments
     const messagesToDelete = await db
@@ -126,15 +123,15 @@ export async function deleteChatById({ id }: { id: string }) {
     console.error("Failed to delete chat by id from database");
     throw error;
   }
-}
+};
 
-export async function getChatsByUserId({
+export const getChatsByUserId = async ({
   id,
   projectId,
 }: {
   id: string;
   projectId?: string | null;
-}) {
+}) => {
   console.log("[getChatsByUserId] Starting", {
     userId: id,
     projectId,
@@ -193,9 +190,9 @@ export async function getChatsByUserId({
     );
     throw error;
   }
-}
+};
 
-export async function createProject({
+export const createProject = async ({
   id,
   userId,
   name,
@@ -209,7 +206,7 @@ export async function createProject({
   instructions?: string;
   icon?: string;
   iconColor?: string;
-}) {
+}) => {
   try {
     return await db.insert(project).values({
       id,
@@ -225,9 +222,9 @@ export async function createProject({
     console.error("Failed to create project in database");
     throw error;
   }
-}
+};
 
-export async function getProjectsByUserId({ userId }: { userId: string }) {
+export const getProjectsByUserId = async ({ userId }: { userId: string }) => {
   try {
     return await db
       .select()
@@ -238,9 +235,9 @@ export async function getProjectsByUserId({ userId }: { userId: string }) {
     console.error("Failed to get projects by user from database");
     throw error;
   }
-}
+};
 
-export async function getProjectById({ id }: { id: string }) {
+export const getProjectById = async ({ id }: { id: string }) => {
   try {
     const [selectedProject] = await db
       .select()
@@ -251,9 +248,9 @@ export async function getProjectById({ id }: { id: string }) {
     console.error("Failed to get project by id from database");
     throw error;
   }
-}
+};
 
-export async function updateProject({
+export const updateProject = async ({
   id,
   updates,
 }: {
@@ -264,7 +261,7 @@ export async function updateProject({
     icon: string;
     iconColor: string;
   }>;
-}) {
+}) => {
   try {
     return await db
       .update(project)
@@ -277,16 +274,16 @@ export async function updateProject({
     console.error("Failed to update project in database");
     throw error;
   }
-}
+};
 
-export async function deleteProject({ id }: { id: string }) {
+export const deleteProject = async ({ id }: { id: string }) => {
   try {
     return await db.delete(project).where(eq(project.id, id));
   } catch (error) {
     console.error("Failed to delete project from database");
     throw error;
   }
-}
+};
 
 async function _getChatsByProjectId({ projectId }: { projectId: string }) {
   try {
@@ -325,7 +322,7 @@ async function _tryGetChatById({ id }: { id: string }) {
   }
 }
 
-export async function getChatById({ id }: { id: string }) {
+export const getChatById = async ({ id }: { id: string }) => {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -333,7 +330,7 @@ export async function getChatById({ id }: { id: string }) {
     console.error("Failed to get chat by id from database");
     throw error;
   }
-}
+};
 
 export async function saveMessage({
   id,
@@ -411,11 +408,11 @@ export async function saveMessageIfNotExists({
 export async function saveChatMessages({
   messages,
 }: {
-  messages: Array<{
+  messages: {
     id: string;
     chatId: string;
     message: ChatMessage;
-  }>;
+  }[];
 }) {
   try {
     if (messages.length === 0) {
@@ -820,7 +817,7 @@ export async function getDocumentsByMessageIds({
 export async function saveDocuments({
   documents,
 }: {
-  documents: Array<{
+  documents: {
     id: string;
     title: string;
     kind: ArtifactKind;
@@ -828,7 +825,7 @@ export async function saveDocuments({
     userId: string;
     messageId: string;
     createdAt: Date;
-  }>;
+  }[];
 }) {
   if (documents.length === 0) {
     return;

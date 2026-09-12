@@ -11,10 +11,10 @@ import type { DeepResearchRuntimeConfig } from "./configuration";
 
 type McpClient = Awaited<ReturnType<typeof experimental_createMCPClient>>;
 
-async function loadMcpTools(
+const loadMcpTools = async (
   config: DeepResearchRuntimeConfig,
   existingToolNames: Set<string>
-): Promise<ToolSet> {
+): Promise<ToolSet> => {
   if (!config.mcp_config?.url) {
     return {};
   }
@@ -72,13 +72,13 @@ async function loadMcpTools(
       await client.close();
     }
   }
-}
+};
 
 // Tool Utils
 
-export async function getAllTools(
+export const getAllTools = async (
   config: DeepResearchRuntimeConfig
-): Promise<ToolSet> {
+): Promise<ToolSet> => {
   if (!config.search_enabled) {
     const mcpTools = await loadMcpTools(config, new Set<string>());
     return mcpTools;
@@ -93,19 +93,20 @@ export async function getAllTools(
   const mcpTools = await loadMcpTools(config, existingToolNames);
 
   return { ...mcpTools, ...searchTools };
-}
+};
 
-export async function getModelContextWindow(modelId: ModelId): Promise<number> {
+export const getModelContextWindow = async (
+  modelId: ModelId
+): Promise<number> => {
   const model = await getAppModelDefinition(modelId);
   return model.context_window;
-}
+};
 
 // Misc Utils
-export function getTodayStr(): string {
-  return new Date().toLocaleDateString("en-US", {
+export const getTodayStr = (): string =>
+  new Date().toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
     weekday: "short",
     year: "numeric",
-    month: "short",
-    day: "numeric",
   });
-}

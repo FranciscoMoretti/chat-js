@@ -15,18 +15,21 @@ import {
 } from "../../../../apps/chat/lib/config-schema";
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import type { RegistryIndexItem } from "../registry/schema";
-import { resolveStorage, type StorageSelection } from "../registry/storage";
+import { resolveStorage } from "../registry/storage";
+import type { StorageSelection } from "../registry/storage";
 import {
   AUTH_PROVIDERS,
-  type AuthProvider,
   BUILT_IN_TOOL_KEYS,
-  type BuiltInToolKey,
   CORE_FEATURE_KEYS,
-  type CoreFeatureKey,
   DOCUMENT_TYPE_KEYS,
-  type DocumentTypeKey,
   GATEWAYS,
-  type Gateway,
+} from "../types";
+import type {
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
 } from "../types";
 import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
@@ -45,114 +48,116 @@ const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 
 const CORE_FEATURE_LABELS: Record<CoreFeatureKey, string> = {
   attachments: "Attachments",
-  parallelResponses: "Parallel Responses",
   documents: "Documents",
-  mcp: "MCP Tool Servers",
   followupSuggestions: "Follow-up Suggestions",
+  mcp: "MCP Tool Servers",
+  parallelResponses: "Parallel Responses",
 };
 
 const DOCUMENT_TYPE_LABELS: Record<DocumentTypeKey, string> = {
-  text: "Text Documents",
   code: "Code Documents",
   sheet: "Spreadsheet Documents",
+  text: "Text Documents",
 };
 
 const DOCUMENT_TYPE_HINTS: Record<DocumentTypeKey, string> = {
-  text: "Notes, guides, markdown, and long-form writing",
   code: "Code files and snippets",
   sheet: "CSV-based tables and structured data",
+  text: "Notes, guides, markdown, and long-form writing",
 };
 
 const BUILT_IN_TOOL_LABELS: Record<BuiltInToolKey, string> = {
-  webSearch: "Web Search",
-  urlRetrieval: "URL Retrieval",
-  deepResearch: "Deep Research",
   codeExecution: "Code Sandbox",
+  deepResearch: "Deep Research",
   imageGeneration: "Image Generation",
+  urlRetrieval: "URL Retrieval",
   videoGeneration: "Video Generation",
+  webSearch: "Web Search",
 };
 
 const BUILT_IN_TOOL_HINTS: Record<BuiltInToolKey, string> = {
-  webSearch: "Search the web from chat",
-  urlRetrieval: "Fetch structured content from a specific URL",
-  deepResearch: "Run multi-step web research and generate reports",
   codeExecution: "Execute code in a sandboxed environment",
+  deepResearch: "Run multi-step web research and generate reports",
   imageGeneration: "Generate images inside chat",
+  urlRetrieval: "Fetch structured content from a specific URL",
   videoGeneration: "Generate videos inside chat",
+  webSearch: "Search the web from chat",
 };
 
 const AUTH_LABELS: Record<AuthProvider, string> = {
-  google: "Google OAuth",
   github: "GitHub OAuth",
+  google: "Google OAuth",
   vercel: "Vercel OAuth",
 };
 
-function handleCancel(value: unknown): asserts value is never {
+const handleCancel: (value: unknown) => asserts value is never = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
     process.exit(1);
   }
-}
+};
 
-function toKebabCase(value: string | undefined): string {
-  return (value ?? "")
+const toKebabCase = (value: string | undefined): string =>
+  (value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+    .replaceAll(/[^a-z0-9-]/gu, "-")
+    .replaceAll(/-+/gu, "-")
+    .replaceAll(/^-|-$/gu, "");
 
-function toSelectionRecord<T extends string>(
+const toSelectionRecord = <T extends string>(
   keys: readonly T[],
   selected: readonly string[]
-): Record<T, boolean> {
-  return Object.fromEntries(
+): Record<T, boolean> =>
+  Object.fromEntries(
     keys.map((key) => [key, selected.includes(key)])
   ) as Record<T, boolean>;
-}
 
-export async function promptProjectName(
+export const promptProjectName = async (
   targetArg: string | undefined,
   skipPrompt: boolean
-): Promise<string> {
+): Promise<string> => {
   if (skipPrompt) {
     return toKebabCase(targetArg ?? "my-chat-app") || "my-chat-app";
   }
 
   const name = await text({
-    message: "What is your project named?",
     initialValue: targetArg ?? "my-chat-app",
+    message: "What is your project named?",
     validate: (value?: string) => {
       const kebab = toKebabCase(value);
-      if (!kebab) return "Please enter a valid project name";
+      if (!kebab) {
+        return "Please enter a valid project name";
+      }
     },
   });
   handleCancel(name);
 
   return toKebabCase(name) || "my-chat-app";
-}
+};
 
-export async function promptGateway(skipPrompt: boolean): Promise<Gateway> {
-  if (skipPrompt) return "vercel";
+export const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
+  if (skipPrompt) {
+    return "vercel";
+  }
 
   const gateway = await select({
+    initialValue: "vercel" as Gateway,
     message: `Which ${highlighter.info("AI gateway")} would you like to use?`,
     options: [
       ...GATEWAYS.map((gw) => ({
-        value: gw,
-        label: gw,
         hint: gatewayEnvRequirements[gw]
           .map((requirement) => requirement.description)
           .join("; "),
+        label: gw,
+        value: gw,
       })),
       {
-        value: "__external__",
-        label: "External registry item",
         hint: "URL or local JSON path",
+        label: "External registry item",
+        value: "__external__",
       },
     ],
-    initialValue: "vercel" as Gateway,
   });
   handleCancel(gateway);
   if (gateway === "__external__") {
@@ -165,30 +170,30 @@ export async function promptGateway(skipPrompt: boolean): Promise<Gateway> {
     return String(source).trim();
   }
   return gateway;
-}
+};
 
-export async function promptStorage(
+export const promptStorage = async (
   skipPrompt: boolean,
   explicitProvider?: string,
   explicitOptions?: string,
   cwd = process.cwd()
-): Promise<StorageSelection> {
+): Promise<StorageSelection> => {
   let source = explicitProvider ?? "vercel-blob";
   if (!explicitProvider && !skipPrompt) {
     const choice = await select({
+      initialValue: "vercel-blob",
       message: "Which file storage provider would you like to use?",
       options: [
         ...INSTALLABLE_STORAGE_PROVIDERS.map((item) => ({
-          value: item.meta.chatjs.id,
           label: item.title,
+          value: item.meta.chatjs.id,
         })),
         {
-          value: "__external__",
-          label: "External registry item",
           hint: "Namespace, URL or local JSON path",
+          label: "External registry item",
+          value: "__external__",
         },
       ],
-      initialValue: "vercel-blob",
     });
     handleCancel(choice);
     source = String(choice);
@@ -205,10 +210,11 @@ export async function promptStorage(
   const keys = selection.definition.configKeys;
   let options = explicitOptions;
   if (options === undefined && keys.length) {
-    if (skipPrompt)
+    if (skipPrompt) {
       throw new Error(
         `Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`
       );
+    }
     const input = await text({
       message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
       validate: (v) => {
@@ -237,109 +243,116 @@ export async function promptStorage(
       selection.options
     ).map((r) => ({
       description: r.description,
-      options: r.options.flatMap((option) =>
-        option.reduce<string[][]>(
-          (alternatives, variable) =>
-            alternatives.flatMap((keys) =>
-              [variable.key, ...variable.aliases].map((key) => [...keys, key])
-            ),
-          [[]]
-        )
-      ),
+      options: r.options.flatMap((option) => {
+        let alternatives: string[][] = [[]];
+        for (const variable of option) {
+          alternatives = alternatives.flatMap((alternative) =>
+            [variable.key, ...variable.aliases].map((key) => [
+              ...alternative,
+              key,
+            ])
+          );
+        }
+        return alternatives;
+      }),
     }));
   }
   return selection;
-}
+};
 
-export async function promptCoreFeatures(
+export const promptCoreFeatures = async (
   skipPrompt: boolean,
   gateway: GatewayDefinition
-): Promise<Record<CoreFeatureKey, boolean>> {
+): Promise<Record<CoreFeatureKey, boolean>> => {
   const defaultTools = gateway.defaults.tools;
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: FEATURES_DEFAULTS.attachments,
-    parallelResponses: FEATURES_DEFAULTS.parallelResponses,
     documents: defaultTools.documents.enabled,
-    mcp: defaultTools.mcp.enabled,
     followupSuggestions: defaultTools.followupSuggestions.enabled,
+    mcp: defaultTools.mcp.enabled,
+    parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
 
-  if (skipPrompt) return { ...CORE_FEATURE_DEFAULTS };
+  if (skipPrompt) {
+    return { ...CORE_FEATURE_DEFAULTS };
+  }
 
   const selected = await multiselect({
+    initialValues: CORE_FEATURE_KEYS.filter(
+      (key) => CORE_FEATURE_DEFAULTS[key]
+    ),
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: CORE_FEATURE_KEYS.map((key) => ({
-      value: key,
-      label: CORE_FEATURE_LABELS[key],
       hint:
         key === "documents"
           ? "Create, edit, and review documents in chat"
           : coreFeatureEnvRequirements[
               key as keyof typeof coreFeatureEnvRequirements
             ]?.description,
+      label: CORE_FEATURE_LABELS[key],
+      value: key,
     })),
-    initialValues: CORE_FEATURE_KEYS.filter(
-      (key) => CORE_FEATURE_DEFAULTS[key]
-    ),
     required: false,
   });
   handleCancel(selected);
 
   return toSelectionRecord(CORE_FEATURE_KEYS, selected as CoreFeatureKey[]);
-}
+};
 
-export async function promptDocumentTypes(
+export const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean,
   gateway: GatewayDefinition
-): Promise<Record<DocumentTypeKey, boolean>> {
+): Promise<Record<DocumentTypeKey, boolean>> => {
   const defaultTools = gateway.defaults.tools;
   const DOCUMENT_TYPE_DEFAULTS: Record<DocumentTypeKey, boolean> = {
-    text: defaultTools.documents.types.text,
     code: defaultTools.documents.types.code,
     sheet: defaultTools.documents.types.sheet,
+    text: defaultTools.documents.types.text,
   };
 
   if (!documentsEnabled) {
     return toSelectionRecord(DOCUMENT_TYPE_KEYS, []);
   }
 
-  if (skipPrompt) return { ...DOCUMENT_TYPE_DEFAULTS };
+  if (skipPrompt) {
+    return { ...DOCUMENT_TYPE_DEFAULTS };
+  }
 
   const selected = await multiselect({
-    message: `Which ${highlighter.info("document types")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: DOCUMENT_TYPE_KEYS.map((key) => ({
-      value: key,
-      label: DOCUMENT_TYPE_LABELS[key],
-      hint: DOCUMENT_TYPE_HINTS[key],
-    })),
     initialValues: DOCUMENT_TYPE_KEYS.filter(
       (key) => DOCUMENT_TYPE_DEFAULTS[key]
     ),
+    message: `Which ${highlighter.info("document types")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
+    options: DOCUMENT_TYPE_KEYS.map((key) => ({
+      hint: DOCUMENT_TYPE_HINTS[key],
+      label: DOCUMENT_TYPE_LABELS[key],
+      value: key,
+    })),
     required: false,
   });
   handleCancel(selected);
 
   return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected as DocumentTypeKey[]);
-}
+};
 
-export async function promptAssistantTools(
+export const promptAssistantTools = async (
   registryItems: RegistryIndexItem[],
   skipPrompt: boolean,
   gateway: GatewayDefinition
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
-}> {
+}> => {
   const defaultTools = gateway.defaults.tools;
   const BUILT_IN_TOOL_DEFAULTS: Record<BuiltInToolKey, boolean> = {
+    codeExecution: defaultTools.codeExecution.enabled,
+    deepResearch: defaultTools.deepResearch.enabled,
+    imageGeneration: defaultTools.image.enabled,
+    urlRetrieval: defaultTools.urlRetrieval.enabled,
+    videoGeneration: defaultTools.video.enabled,
     webSearch:
       defaultTools.webSearch.enabled || defaultTools.deepResearch.enabled,
-    urlRetrieval: defaultTools.urlRetrieval.enabled,
-    deepResearch: defaultTools.deepResearch.enabled,
-    codeExecution: defaultTools.codeExecution.enabled,
-    imageGeneration: defaultTools.image.enabled,
-    videoGeneration: defaultTools.video.enabled,
   };
 
   const installableItems = registryItems.filter(
@@ -355,25 +368,25 @@ export async function promptAssistantTools(
   }
 
   const selected = await multiselect({
+    initialValues: supportedBuiltInTools.filter(
+      (key) => BUILT_IN_TOOL_DEFAULTS[key]
+    ),
     message: `Which ${highlighter.info("assistant tools")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: [
       ...supportedBuiltInTools.map((key) => ({
-        value: key,
-        label: BUILT_IN_TOOL_LABELS[key],
         hint:
           builtInToolEnvRequirements[
             key as keyof typeof builtInToolEnvRequirements
           ]?.description ?? BUILT_IN_TOOL_HINTS[key],
+        label: BUILT_IN_TOOL_LABELS[key],
+        value: key,
       })),
       ...installableItems.map((item) => ({
-        value: item.name,
-        label: item.name,
         hint: item.description,
+        label: item.name,
+        value: item.name,
       })),
     ],
-    initialValues: supportedBuiltInTools.filter(
-      (key) => BUILT_IN_TOOL_DEFAULTS[key]
-    ),
     required: false,
   });
   handleCancel(selected);
@@ -395,12 +408,14 @@ export async function promptAssistantTools(
       (value) => !(BUILT_IN_TOOL_KEYS as readonly string[]).includes(value)
     ),
   };
-}
+};
 
-export async function promptAuth(
+export const promptAuth = async (
   skipPrompt: boolean
-): Promise<Record<AuthProvider, boolean>> {
-  if (skipPrompt) return { ...AUTH_DEFAULTS };
+): Promise<Record<AuthProvider, boolean>> => {
+  if (skipPrompt) {
+    return { ...AUTH_DEFAULTS };
+  }
 
   const defaultProviders = AUTH_PROVIDERS.filter((p) => AUTH_DEFAULTS[p]);
 
@@ -408,13 +423,13 @@ export async function promptAuth(
 
   while (selectedProviders.length === 0) {
     const selected = await multiselect({
+      initialValues: defaultProviders,
       message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
       options: AUTH_PROVIDERS.map((p) => ({
-        value: p,
-        label: AUTH_LABELS[p],
         hint: authEnvRequirements[p].description,
+        label: AUTH_LABELS[p],
+        value: p,
       })),
-      initialValues: defaultProviders,
       required: false,
     });
     handleCancel(selected);
@@ -426,151 +441,175 @@ export async function promptAuth(
   }
 
   return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
-}
+};
 
-export async function promptElectron(
+export const promptElectron = async (
   skipPrompt: boolean,
   explicitChoice?: boolean
-): Promise<boolean> {
+): Promise<boolean> => {
   if (typeof explicitChoice === "boolean") {
     return explicitChoice;
   }
 
-  if (skipPrompt) return false;
+  if (skipPrompt) {
+    return false;
+  }
 
   const wantsElectron = await confirm({
-    message: `Include an ${highlighter.info("Electron")} desktop app?`,
     initialValue: false,
+    message: `Include an ${highlighter.info("Electron")} desktop app?`,
   });
   handleCancel(wantsElectron);
 
   return wantsElectron;
-}
+};
 
-export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
-  if (skipPrompt) return "tavily-search";
+export const promptSearchTool = async (
+  skipPrompt: boolean
+): Promise<string> => {
+  if (skipPrompt) {
+    return "tavily-search";
+  }
   const choice = await select({
     message: "Which web search tool should chat and deep research use?",
     options: [
       {
-        value: "tavily-search",
-        label: "Tavily",
         hint: "Requires TAVILY_API_KEY",
+        label: "Tavily",
+        value: "tavily-search",
       },
       {
-        value: "firecrawl-search",
-        label: "Firecrawl",
         hint: "Requires FIRECRAWL_API_KEY",
+        label: "Firecrawl",
+        value: "firecrawl-search",
       },
-      { value: "external", label: "External registry item" },
+      { label: "External registry item", value: "external" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "Search tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
-}
+};
 
-export async function promptCodeExecutionTool(
+export const promptCodeExecutionTool = async (
   skipPrompt: boolean
-): Promise<string> {
-  if (skipPrompt) return "vercel-code-execution";
+): Promise<string> => {
+  if (skipPrompt) {
+    return "vercel-code-execution";
+  }
   const choice = await select({
     message: "Which code-execution tool should chat use?",
     options: [
       {
-        value: "vercel-code-execution",
-        label: "Vercel Sandbox",
         hint: "Python and JavaScript; Vercel credentials required",
+        label: "Vercel Sandbox",
+        value: "vercel-code-execution",
       },
-      { value: "external", label: "External registry item" },
+      { label: "External registry item", value: "external" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "Code-execution tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
-}
+};
 
-export async function promptUrlRetrievalTool(
+export const promptUrlRetrievalTool = async (
   skipPrompt: boolean
-): Promise<string> {
-  if (skipPrompt) return "retrieve-url";
+): Promise<string> => {
+  if (skipPrompt) {
+    return "retrieve-url";
+  }
   const choice = await select({
     message: "Which URL retrieval tool should chat use?",
     options: [
       {
-        value: "retrieve-url",
-        label: "Firecrawl",
         hint: "Requires FIRECRAWL_API_KEY",
+        label: "Firecrawl",
+        value: "retrieve-url",
       },
-      { value: "external", label: "External registry item" },
+      { label: "External registry item", value: "external" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "URL retrieval tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
-}
+};
 
-export async function promptImageGenerationTool(
+export const promptImageGenerationTool = async (
   skipPrompt: boolean
-): Promise<string> {
-  if (skipPrompt) return "generate-image";
+): Promise<string> => {
+  if (skipPrompt) {
+    return "generate-image";
+  }
   const choice = await select({
     message: "Which image generation tool should chat use?",
     options: [
       {
-        value: "generate-image",
-        label: "Selected AI gateway",
         hint: "Uses your gateway and file storage",
+        label: "Selected AI gateway",
+        value: "generate-image",
       },
-      { value: "external", label: "External registry item" },
+      { label: "External registry item", value: "external" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "image generation tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
-}
+};
 
-export async function promptVideoGenerationTool(
+export const promptVideoGenerationTool = async (
   skipPrompt: boolean
-): Promise<string> {
-  if (skipPrompt) return "generate-video";
+): Promise<string> => {
+  if (skipPrompt) {
+    return "generate-video";
+  }
   const choice = await select({
     message: "Which video generation tool should chat use?",
     options: [
       {
-        value: "generate-video",
-        label: "Selected AI gateway",
         hint: "Uses your gateway and file storage",
+        label: "Selected AI gateway",
+        value: "generate-video",
       },
-      { value: "external", label: "External registry item" },
+      { label: "External registry item", value: "external" },
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "video generation tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
-}
+};

@@ -1,4 +1,5 @@
-import { getMessageText, type MessageTreeSnapshot } from "@chat-js/thread";
+import { getMessageText } from "@chat-js/thread";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
 import type { UseThreadHelpers } from "@chat-js/thread/react";
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
@@ -136,7 +137,7 @@ function delay(ms: number, signal?: AbortSignal) {
   });
 }
 
-const RESPONSE_NUMBER_PATTERN = /\d+/;
+const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
 export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
   sendMessages({

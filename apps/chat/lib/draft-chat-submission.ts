@@ -22,7 +22,7 @@ export interface DraftChatSubmission {
   requestSpecs: ParallelRequestSpec[];
 }
 
-export function buildDraftChatSubmission({
+export const buildDraftChatSubmission = ({
   attachments,
   input,
   normalizedSelectedModel,
@@ -36,7 +36,7 @@ export function buildDraftChatSubmission({
   parallelResponsesEnabled: boolean;
   parentMessageId: string | null;
   selectedTool: UiToolName | null;
-}): DraftChatSubmission {
+}): DraftChatSubmission => {
   const requestedModelIds = expandSelectedModelValue(normalizedSelectedModel);
   const primaryModelId = requestedModelIds[0];
 
@@ -98,4 +98,4 @@ export function buildDraftChatSubmission({
     },
     requestSpecs,
   };
-}
+};

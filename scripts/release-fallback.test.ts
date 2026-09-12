@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
@@ -11,7 +11,8 @@ const workflow = Bun.YAML.parse(
   ).text()
 );
 const step = workflow.jobs.release.steps.find(
-  (step: { name?: string }) => step.name === "Publish first-time packages"
+  (candidate: { name?: string }) =>
+    candidate.name === "Publish first-time packages"
 );
 const fallback = step.run.slice(step.run.indexOf("publish_if_missing()"));
 
@@ -60,49 +61,57 @@ gh() {
 `;
 
 test("retry repairs release metadata without republishing after verification fails", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "chatjs-release-test-"));
   try {
     const run = () =>
       Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
         cwd: directory,
       });
-    await Bun.write(join(directory, "fail-verification"), "");
+    await Bun.write(path.join(directory, "fail-verification"), "");
     expect(run().exitCode).not.toBe(0);
-    expect(await Bun.file(join(directory, "published")).exists()).toBe(true);
-    expect(await Bun.file(join(directory, "tagged")).exists()).toBe(false);
-    await rm(join(directory, "fail-verification"));
+    expect(await Bun.file(path.join(directory, "published")).exists()).toBe(
+      true
+    );
+    expect(await Bun.file(path.join(directory, "tagged")).exists()).toBe(false);
+    await rm(path.join(directory, "fail-verification"));
     expect(run().exitCode).toBe(0);
-    expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
+    expect(await Bun.file(path.join(directory, "released")).exists()).toBe(
+      true
+    );
     expect(run().exitCode).toBe(0);
-    const calls = await Bun.file(join(directory, "calls")).text();
-    expect(calls.match(/^npm publish /gm)).toHaveLength(1);
-    expect(calls.match(/^git tag /gm)).toHaveLength(1);
-    expect(calls.match(/^gh release create /gm)).toHaveLength(1);
+    const calls = await Bun.file(path.join(directory, "calls")).text();
+    expect(calls.match(/^npm publish /gmu)).toHaveLength(1);
+    expect(calls.match(/^git tag /gmu)).toHaveLength(1);
+    expect(calls.match(/^gh release create /gmu)).toHaveLength(1);
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, { force: true, recursive: true });
   }
 });
 
 test("retry pushes an existing local tag after the first push fails", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "chatjs-release-test-"));
   try {
     const run = () =>
       Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
         cwd: directory,
       });
-    await Bun.write(join(directory, "published"), "");
-    await Bun.write(join(directory, "fail-push"), "");
+    await Bun.write(path.join(directory, "published"), "");
+    await Bun.write(path.join(directory, "fail-push"), "");
     expect(run().exitCode).not.toBe(0);
-    expect(await Bun.file(join(directory, "tagged")).exists()).toBe(true);
-    expect(await Bun.file(join(directory, "released")).exists()).toBe(false);
-    await rm(join(directory, "fail-push"));
+    expect(await Bun.file(path.join(directory, "tagged")).exists()).toBe(true);
+    expect(await Bun.file(path.join(directory, "released")).exists()).toBe(
+      false
+    );
+    await rm(path.join(directory, "fail-push"));
     expect(run().exitCode).toBe(0);
-    expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
-    const calls = await Bun.file(join(directory, "calls")).text();
+    expect(await Bun.file(path.join(directory, "released")).exists()).toBe(
+      true
+    );
+    const calls = await Bun.file(path.join(directory, "calls")).text();
     expect(calls).not.toContain("npm publish");
-    expect(calls.match(/^git push /gm)).toHaveLength(2);
+    expect(calls.match(/^git push /gmu)).toHaveLength(2);
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, { force: true, recursive: true });
   }
 });
 
@@ -112,22 +121,26 @@ for (const lookupFails of [false, true]) {
       ? "registry authentication failure never triggers publication"
       : "missing version publishes and creates release metadata",
     async () => {
-      const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+      const directory = await mkdtemp(
+        path.join(tmpdir(), "chatjs-release-test-")
+      );
       try {
-        if (lookupFails) await Bun.write(join(directory, "fail-lookup"), "");
+        if (lookupFails) {
+          await Bun.write(path.join(directory, "fail-lookup"), "");
+        }
         const result = Bun.spawnSync(
           ["bash", "-euo", "pipefail", "-c", services + fallback],
           { cwd: directory }
         );
         expect(result.exitCode === 0).toBe(!lookupFails);
-        expect(await Bun.file(join(directory, "published")).exists()).toBe(
+        expect(await Bun.file(path.join(directory, "published")).exists()).toBe(
           !lookupFails
         );
-        expect(await Bun.file(join(directory, "released")).exists()).toBe(
+        expect(await Bun.file(path.join(directory, "released")).exists()).toBe(
           !lookupFails
         );
       } finally {
-        await rm(directory, { recursive: true, force: true });
+        await rm(directory, { force: true, recursive: true });
       }
     }
   );

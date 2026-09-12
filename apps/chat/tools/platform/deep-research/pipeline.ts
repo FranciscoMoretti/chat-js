@@ -1,4 +1,5 @@
-import { generateText, type ModelMessage, Output, streamText } from "ai";
+import { generateText, Output, streamText } from "ai";
+import type { ModelMessage } from "ai";
 import type { z } from "zod";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
@@ -17,92 +18,19 @@ import {
 } from "./prompts";
 import { runSupervisor } from "./supervisor-agent";
 import {
-  type AgentOptions,
   ClarifyWithUserSchema,
   createTelemetry,
-  type DeepResearchInput,
-  type DeepResearchResult,
   ResearchQuestionSchema,
+} from "./types";
+import type {
+  AgentOptions,
+  DeepResearchInput,
+  DeepResearchResult,
 } from "./types";
 import { getModelContextWindow, getTodayStr } from "./utils";
 
-// Main deep research pipeline
-export async function runDeepResearchPipeline(
-  input: DeepResearchInput,
-  config: DeepResearchRuntimeConfig,
-  dataStream: AgentOptions["dataStream"],
-  options: {
-    session: ToolSession;
-    costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
-    abortSignal?: AbortSignal;
-  }
-): Promise<DeepResearchResult> {
-  const { session, costAccumulator, abortSignal } = options;
-  console.log("runDeepResearchPipeline invoked", {
-    requestId: input.requestId,
-    messageId: input.messageId,
-  });
-
-  const ctx: AgentOptions = {
-    config,
-    dataStream,
-    requestId: input.requestId,
-    messageId: input.messageId,
-    toolCallId: input.toolCallId,
-    costAccumulator,
-    abortSignal,
-  };
-
-  // Step 1: Clarify with user
-  const clarification = await clarifyWithUser(input.messages, ctx);
-
-  if (clarification.needsClarification) {
-    return {
-      type: "clarifying_question",
-      data: clarification.clarificationMessage,
-    };
-  }
-
-  dataStream.write({
-    type: "data-researchUpdate",
-    data: {
-      toolCallId: input.toolCallId,
-      title: "Starting research",
-      type: "started",
-      timestamp: Date.now(),
-    },
-  });
-
-  // Step 2: Write research brief
-  const brief = await writeResearchBrief(input.messages, ctx);
-
-  // Step 3: Supervisor research loop
-  const notes = await runSupervisor(brief.research_brief, ctx);
-
-  // Step 4: Final report generation
-  const reportResult = await generateFinalReport({
-    ...ctx,
-    notes,
-    researchBrief: brief.research_brief,
-    reportTitle: brief.title,
-    session,
-  });
-
-  dataStream.write({
-    type: "data-researchUpdate",
-    data: {
-      toolCallId: input.toolCallId,
-      title: "Research complete",
-      type: "completed",
-      timestamp: Date.now(),
-    },
-  });
-
-  return {
-    type: "report",
-    data: reportResult,
-  };
-}
+const messagesToString = (messages: ModelMessage[]): string =>
+  messages.map((m) => `${m.role}: ${JSON.stringify(m.content)}`).join("\n");
 
 // Step 1: Clarification
 
@@ -110,10 +38,10 @@ type ClarificationResult =
   | { needsClarification: true; clarificationMessage: string }
   | { needsClarification: false; clarificationMessage?: undefined };
 
-async function clarifyWithUser(
+const clarifyWithUser = async (
   messages: ModelMessage[],
   ctx: AgentOptions
-): Promise<ClarificationResult> {
+): Promise<ClarificationResult> => {
   const { config, costAccumulator, abortSignal } = ctx;
 
   if (!config.allow_clarification) {
@@ -127,11 +55,11 @@ async function clarifyWithUser(
 
   const clarifyMessages = [
     {
-      role: "user" as const,
       content: clarifyWithUserInstructions({
-        messages: messagesToString(messages),
         date: getTodayStr(),
+        messages: messagesToString(messages),
       }),
+      role: "user" as const,
     },
   ];
   const truncatedMessages = truncateMessages(clarifyMessages, contextWindow);
@@ -156,12 +84,12 @@ async function clarifyWithUser(
   const output = response.output as z.infer<typeof ClarifyWithUserSchema>;
   if (output.need_clarification) {
     return {
-      needsClarification: true,
       clarificationMessage: output.question,
+      needsClarification: true,
     };
   }
   return { needsClarification: false };
-}
+};
 
 // Step 2: Research Brief
 
@@ -170,23 +98,23 @@ interface ResearchBrief {
   title: string;
 }
 
-async function writeResearchBrief(
+const writeResearchBrief = async (
   messages: ModelMessage[],
   ctx: AgentOptions
-): Promise<ResearchBrief> {
+): Promise<ResearchBrief> => {
   const { config, dataStream, toolCallId, costAccumulator, abortSignal } = ctx;
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
 
   dataStream.write({
+    data: {
+      status: "running",
+      title: "Writing research brief",
+      toolCallId,
+      type: "writing",
+    },
     id: dataPartId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing research brief",
-      type: "writing",
-      status: "running",
-    },
   });
 
   const contextWindow = await getModelContextWindow(
@@ -195,11 +123,11 @@ async function writeResearchBrief(
 
   const briefMessages = [
     {
-      role: "user" as const,
       content: transformMessagesIntoResearchTopicPrompt({
-        messages: messagesToString(messages),
         date: getTodayStr(),
+        messages: messagesToString(messages),
       }),
+      role: "user" as const,
     },
   ];
   const truncatedMessages = truncateMessages(briefMessages, contextWindow);
@@ -224,22 +152,22 @@ async function writeResearchBrief(
   const output = result.output as z.infer<typeof ResearchQuestionSchema>;
 
   dataStream.write({
+    data: {
+      message: output.research_brief,
+      status: "completed",
+      title: "Writing research brief",
+      toolCallId,
+      type: "writing",
+    },
     id: dataPartId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing research brief",
-      message: output.research_brief,
-      type: "writing",
-      status: "completed",
-    },
   });
 
   return {
     research_brief: output.research_brief,
     title: output.title,
   };
-}
+};
 
 // Step 4: Final Report Generation
 
@@ -250,9 +178,9 @@ type FinalReportInput = AgentOptions & {
   session: ToolSession;
 };
 
-async function generateFinalReport(
+const generateFinalReport = async (
   input: FinalReportInput
-): Promise<DocumentToolResult> {
+): Promise<DocumentToolResult> => {
   const {
     notes,
     researchBrief,
@@ -269,21 +197,21 @@ async function generateFinalReport(
   const findings = notes.join("\n");
 
   const finalReportPromptText = finalReportGenerationPrompt({
-    research_brief: researchBrief,
-    findings,
     date: getTodayStr(),
+    findings,
+    research_brief: researchBrief,
   });
 
   const finalReportUpdateId = generateUUID();
   dataStream.write({
+    data: {
+      status: "running",
+      title: "Writing final report",
+      toolCallId,
+      type: "writing",
+    },
     id: finalReportUpdateId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing final report",
-      type: "writing",
-      status: "running",
-    },
   });
 
   const contextWindow = await getModelContextWindow(
@@ -291,7 +219,7 @@ async function generateFinalReport(
   );
 
   const finalReportMessages = [
-    { role: "user" as const, content: finalReportPromptText },
+    { content: finalReportPromptText, role: "user" as const },
   ];
   const truncatedMessages = truncateMessages(
     finalReportMessages,
@@ -306,10 +234,10 @@ async function generateFinalReport(
       : finalReportPromptText;
 
   const reportTool = createTextDocumentTool({
-    session,
+    costAccumulator,
     messageId,
     selectedModel: config.final_report_model as ModelId,
-    costAccumulator,
+    session,
   });
 
   const systemPrompt = `You are a research report writer. Your task is to write the final research report and save it using the createTextDocument tool.
@@ -343,25 +271,26 @@ To write the report, call the createTextDocument tool with:
     );
   }
 
-  const createdDocumentToolResult = (await result.toolResults).find(
+  const toolResults = await result.toolResults;
+  const createdDocumentToolResult = toolResults.find(
     (tr) => tr?.toolName === "createTextDocument"
   );
 
   dataStream.write({
+    data: {
+      status: "completed",
+      title: "Writing final report",
+      toolCallId,
+      type: "writing",
+    },
     id: finalReportUpdateId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing final report",
-      type: "writing",
-      status: "completed",
-    },
   });
 
   if (!createdDocumentToolResult) {
     return {
-      status: "error",
       error: "createTextDocument tool was not called",
+      status: "error",
     };
   }
 
@@ -369,23 +298,77 @@ To write the report, call the createTextDocument tool with:
     createdDocumentToolResult.output as unknown as DocumentToolResult;
   if (output.status === "error") {
     return {
-      status: "error",
       error: output.error,
+      status: "error",
     };
   }
 
   return {
-    status: "success",
+    date: output.date,
     documentId: output.documentId,
     result: "A document was created and is now visible to the user.",
-    date: output.date,
+    status: "success",
   };
-}
+};
 
-// Helpers
-
-function messagesToString(messages: ModelMessage[]): string {
-  return messages
-    .map((m) => `${m.role}: ${JSON.stringify(m.content)}`)
-    .join("\n");
-}
+// Main deep research pipeline
+export const runDeepResearchPipeline = async (
+  input: DeepResearchInput,
+  config: DeepResearchRuntimeConfig,
+  dataStream: AgentOptions["dataStream"],
+  options: {
+    session: ToolSession;
+    costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
+    abortSignal?: AbortSignal;
+  }
+): Promise<DeepResearchResult> => {
+  const { session, costAccumulator, abortSignal } = options;
+  console.log("runDeepResearchPipeline invoked", {
+    messageId: input.messageId,
+    requestId: input.requestId,
+  });
+  const ctx: AgentOptions = {
+    abortSignal,
+    config,
+    costAccumulator,
+    dataStream,
+    messageId: input.messageId,
+    requestId: input.requestId,
+    toolCallId: input.toolCallId,
+  };
+  const clarification = await clarifyWithUser(input.messages, ctx);
+  if (clarification.needsClarification) {
+    return {
+      data: clarification.clarificationMessage,
+      type: "clarifying_question",
+    };
+  }
+  dataStream.write({
+    data: {
+      timestamp: Date.now(),
+      title: "Starting research",
+      toolCallId: input.toolCallId,
+      type: "started",
+    },
+    type: "data-researchUpdate",
+  });
+  const brief = await writeResearchBrief(input.messages, ctx);
+  const notes = await runSupervisor(brief.research_brief, ctx);
+  const reportResult = await generateFinalReport({
+    ...ctx,
+    notes,
+    reportTitle: brief.title,
+    researchBrief: brief.research_brief,
+    session,
+  });
+  dataStream.write({
+    data: {
+      timestamp: Date.now(),
+      title: "Research complete",
+      toolCallId: input.toolCallId,
+      type: "completed",
+    },
+    type: "data-researchUpdate",
+  });
+  return { data: reportResult, type: "report" };
+};

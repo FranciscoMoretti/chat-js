@@ -1,122 +1,27 @@
 import { describe, expect, test } from "bun:test";
 
 import { Chat } from "@ai-sdk/react";
-import type { ChatStatus, ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 
-import {
-  ThreadRunChat,
-  type ThreadRunHost,
-  type ThreadRunSpec,
-} from "../src/ai-sdk-run-chat";
-import { MessageTree } from "../src/message-tree";
+import { ThreadRunChat } from "../src/ai-sdk-run-chat";
+import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
+import { ControlledTransport } from "./support/run-chat-controlled-transport";
+import { TestRunHost } from "./support/test-run-host";
 
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<{
-    controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }> = [];
+const userMessage = (): UIMessage => ({
+  id: "user-1",
+  parts: [{ text: "Compare me", type: "text" }],
+  role: "user",
+});
 
-  get request() {
-    return this.requests.at(-1)?.options;
-  }
+const createSpec = (): ThreadRunSpec => ({
+  id: "run-1",
+  initialPathMessageId: "user-1",
+  parentMessageId: "user-1",
+  siblingOrder: 0,
+});
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
-    return Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push({ controller, options });
-        },
-      })
-    );
-  };
-
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
-
-  emit(...chunks: UIMessageChunk[]) {
-    for (const chunk of chunks) {
-      this.requests.at(-1)?.controller.enqueue(chunk);
-    }
-  }
-
-  finish() {
-    this.requests.at(-1)?.controller.close();
-  }
-
-  fail(error: Error) {
-    this.requests.at(-1)?.controller.error(error);
-  }
-}
-
-class TestRunHost implements ThreadRunHost<UIMessage> {
-  readonly dataPartSchemas = undefined;
-  readonly id = "thread";
-  readonly messageMetadataSchema = undefined;
-  readonly generateMessageId = () => "client-response";
-  readonly spec: ThreadRunSpec;
-  readonly tree: MessageTree<UIMessage>;
-  onData: ThreadRunHost<UIMessage>["onData"];
-  onError: ThreadRunHost<UIMessage>["onError"];
-  onFinish: ThreadRunHost<UIMessage>["onFinish"];
-  onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
-  sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
-  transport: ChatTransport<UIMessage>;
-  status: ChatStatus = "ready";
-  readonly errors: Error[] = [];
-
-  constructor(
-    transport: ChatTransport<UIMessage>,
-    userMessage: UIMessage,
-    spec: ThreadRunSpec
-  ) {
-    this.transport = transport;
-    this.spec = spec;
-    this.tree = new MessageTree({ messages: [userMessage] });
-  }
-
-  getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
-  updateRunPath = (messages: UIMessage[]) => {
-    this.tree.updatePath(messages);
-  };
-  registerToolCall() {}
-  removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
-  setRunError = (_runId: string, error: Error | undefined) => {
-    if (error) this.errors.push(error);
-  };
-  setRunStatus = (_runId: string, status: ChatStatus) => {
-    this.status = status;
-  };
-  writeRunMessage = (_runId: string, message: UIMessage) => {
-    if (this.spec.messageId && this.spec.messageId !== message.id) {
-      throw new Error("Run message identity changed");
-    }
-    if (!this.spec.messageId && this.tree.has(message.id)) {
-      throw new Error("Run message identity already exists");
-    }
-    this.spec.messageId = message.id;
-    this.tree.upsertMessage(message, this.spec.parentMessageId);
-  };
-}
-
-function userMessage(): UIMessage {
-  return {
-    id: "user-1",
-    parts: [{ text: "Compare me", type: "text" }],
-    role: "user",
-  };
-}
-
-function createSpec(): ThreadRunSpec {
-  return {
-    id: "run-1",
-    initialPathMessageId: "user-1",
-    parentMessageId: "user-1",
-    siblingOrder: 0,
-  };
-}
-
-function emitRichResponse(transport: ControlledTransport) {
+const emitRichResponse = (transport: ControlledTransport) => {
   transport.emit(
     { messageId: "assistant-1", type: "start" },
     { id: "reasoning-1", type: "reasoning-start" },
@@ -128,15 +33,18 @@ function emitRichResponse(transport: ControlledTransport) {
     { finishReason: "stop", type: "finish" }
   );
   transport.finish();
-}
+};
 
-async function waitFor(predicate: () => boolean) {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for request");
-}
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for request");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
+};
 
 describe("ThreadRunChat", () => {
   test("matches the AI SDK React Chat reducer for one response", async () => {

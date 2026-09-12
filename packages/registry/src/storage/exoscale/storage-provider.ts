@@ -1,3 +1,1 @@
-import { exoscale } from "files-sdk/exoscale";
-
-export const createStorageAdapter = exoscale;
+export { exoscale as createStorageAdapter } from "files-sdk/exoscale";

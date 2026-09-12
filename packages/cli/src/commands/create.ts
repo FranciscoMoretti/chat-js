@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { basename, join, relative, resolve } from "node:path";
+import path from "node:path";
 
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
@@ -9,10 +9,8 @@ import { z } from "zod";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
-import {
-  collectEnvChecklist,
-  type EnvVarEntry,
-} from "../helpers/env-checklist";
+import { collectEnvChecklist } from "../helpers/env-checklist";
+import type { EnvVarEntry } from "../helpers/env-checklist";
 import { configureGatewayProvider } from "../helpers/gateway-provider";
 import {
   promptAssistantTools,
@@ -43,6 +41,7 @@ import {
   readItem,
 } from "../registry/shadcn";
 import { resolveStorage } from "../registry/storage";
+import type { PackageManager } from "../types";
 import { launcherPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 import { highlighter } from "../utils/highlighter";
@@ -52,32 +51,34 @@ import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 import { syncTools } from "../utils/sync-tools";
 
-function resolveCreateTarget(targetArg: string | undefined): {
+const resolveCreateTarget = (
+  targetArg: string | undefined
+): {
   projectName: string;
   targetDir: string;
   displayPath: string;
-} {
+} => {
   if (!targetArg) {
     const projectName = "my-chat-app";
     return {
-      projectName,
-      targetDir: resolve(process.cwd(), projectName),
       displayPath: projectName,
+      projectName,
+      targetDir: path.resolve(process.cwd(), projectName),
     };
   }
 
-  const targetDir = resolve(process.cwd(), targetArg);
-  const projectName = basename(targetDir);
-  const relativePath = relative(process.cwd(), targetDir);
+  const targetDir = path.resolve(process.cwd(), targetArg);
+  const projectName = path.basename(targetDir);
+  const relativePath = path.relative(process.cwd(), targetDir);
 
   return {
+    displayPath: relativePath || ".",
     projectName,
     targetDir,
-    displayPath: relativePath || ".",
   };
-}
+};
 
-function printEnvChecklist(entries: EnvVarEntry[]): void {
+const printEnvChecklist = (entries: EnvVarEntry[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
 
@@ -101,22 +102,496 @@ function printEnvChecklist(entries: EnvVarEntry[]): void {
     }
     i -= 1;
   }
-}
+};
+
+const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
+  const toolDirectory = path.join(targetDir, "tools/chatjs");
+  const entries = await readdir(toolDirectory, { withFileTypes: true }).catch(
+    (error) => {
+      if (error.code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    }
+  );
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.isDirectory()) {
+        return;
+      }
+      const descriptor = path.join(toolDirectory, entry.name, "chatjs.json");
+      if (!existsSync(descriptor)) {
+        return;
+      }
+      await preflight(targetDir, [`tools/chatjs/${entry.name}/chatjs.json`]);
+      const metadata = toolDefinitionSchema.parse(
+        JSON.parse(await readFile(descriptor, "utf-8"))
+      );
+      const usesSelectedSlot =
+        metadata.slot === "webSearch" ||
+        metadata.slot === "codeExecution" ||
+        metadata.slot === "retrieveUrl" ||
+        metadata.slot === "generateImage" ||
+        metadata.slot === "generateVideo" ||
+        (metadata.id === "retrieve-url" &&
+          metadata.toolExport === "retrieveUrl");
+      if (usesSelectedSlot) {
+        await rm(path.join(toolDirectory, entry.name), { recursive: true });
+      }
+    })
+  );
+};
 
 const createOptionsSchema = z.object({
-  target: z.string().optional(),
-  yes: z.boolean(),
+  codeExecutionTool: z.string().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
-  storageProvider: z.string().optional(),
-  storageConfig: z.string().optional(),
   gateway: z.string().optional(),
-  searchTool: z.string().optional(),
-  urlRetrievalTool: z.string().optional(),
   imageGenerationTool: z.string().optional(),
+  searchTool: z.string().optional(),
+  storageConfig: z.string().optional(),
+  storageProvider: z.string().optional(),
+  target: z.string().optional(),
+  urlRetrievalTool: z.string().optional(),
   videoGenerationTool: z.string().optional(),
-  codeExecutionTool: z.string().optional(),
+  yes: z.boolean(),
 });
+
+type CreateOptions = z.infer<typeof createOptionsSchema>;
+type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
+
+interface ProjectTarget {
+  appName: string;
+  appPrefix: string;
+  appUrl: string;
+  displayPath: string;
+  projectName: string;
+  targetDir: string;
+}
+
+const collectToolSources = async (
+  options: CreateOptions,
+  assistantTools: AssistantTools,
+  targetDir: string
+): Promise<string[]> => {
+  const toolSources = assistantTools.installableTools.map((tool) =>
+    itemAddress(tool, "tool")
+  );
+  if (assistantTools.builtInTools.deepResearch) {
+    assistantTools.builtInTools.webSearch = true;
+  }
+  const selections = [
+    {
+      feature: "videoGeneration",
+      prompt: promptVideoGenerationTool,
+      slot: "generateVideo",
+      source: options.videoGenerationTool,
+    },
+    {
+      feature: "imageGeneration",
+      prompt: promptImageGenerationTool,
+      slot: "generateImage",
+      source: options.imageGenerationTool,
+    },
+    {
+      feature: "webSearch",
+      prompt: promptSearchTool,
+      slot: "webSearch",
+      source: options.searchTool,
+    },
+    {
+      feature: "codeExecution",
+      prompt: promptCodeExecutionTool,
+      slot: "codeExecution",
+      source: options.codeExecutionTool,
+    },
+    {
+      feature: "urlRetrieval",
+      prompt: promptUrlRetrievalTool,
+      slot: "retrieveUrl",
+      source: options.urlRetrievalTool,
+    },
+  ] as const;
+
+  const addSelection = async (index: number): Promise<void> => {
+    const selection = selections[index];
+    if (!selection) {
+      return;
+    }
+    if (selection.source) {
+      assistantTools.builtInTools[selection.feature] = true;
+    }
+    if (assistantTools.builtInTools[selection.feature]) {
+      const source = itemAddress(
+        selection.source ?? (await selection.prompt(options.yes)),
+        "tool"
+      );
+      const item = await readItem(source, targetDir);
+      const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
+      if (metadata.slot !== selection.slot) {
+        throw new Error(
+          `Selected tool must declare the ${selection.slot} slot.`
+        );
+      }
+      toolSources.push(source);
+    }
+    await addSelection(index + 1);
+  };
+
+  await addSelection(0);
+  return toolSources;
+};
+
+const promptProjectTarget = async (
+  options: CreateOptions
+): Promise<ProjectTarget> => {
+  const initialTarget = resolveCreateTarget(options.target);
+  const projectName = await promptProjectName(
+    initialTarget.projectName,
+    options.yes
+  );
+  const targetDir = options.target
+    ? initialTarget.targetDir
+    : path.resolve(process.cwd(), projectName);
+  const displayPath = options.target ? initialTarget.displayPath : projectName;
+  const appName = projectName
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+  return {
+    appName,
+    appPrefix: projectName,
+    appUrl: "http://localhost:3000",
+    displayPath,
+    projectName,
+    targetDir,
+  };
+};
+
+const loadInstallableTools = async (
+  options: CreateOptions,
+  targetDir: string
+): Promise<Awaited<ReturnType<typeof listTools>>> => {
+  if (options.yes) {
+    return [];
+  }
+
+  const registrySpinner = spinner("Loading installable tools...").start();
+  try {
+    const registryItems = await listTools(targetDir);
+    registrySpinner.succeed("Installable tools loaded.");
+    return registryItems;
+  } catch (error) {
+    registrySpinner.fail("Could not load installable tools.");
+    logger.warn(
+      error instanceof Error
+        ? error.message
+        : "Continuing with built-in tools only."
+    );
+    return [];
+  }
+};
+
+const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
+  const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
+  const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
+  const coreFeatures = await promptCoreFeatures(
+    options.yes,
+    gatewaySelection.definition
+  );
+  const documentTypes = await promptDocumentTypes(
+    options.yes,
+    coreFeatures.documents,
+    gatewaySelection.definition
+  );
+  const registryItems = await loadInstallableTools(options, targetDir);
+  const assistantTools = await promptAssistantTools(
+    registryItems,
+    options.yes,
+    gatewaySelection.definition
+  );
+  const toolSources = await collectToolSources(
+    options,
+    assistantTools,
+    targetDir
+  );
+  const expectedTools = await Promise.all(
+    toolSources.map(async (source) => {
+      const item = await readItem(source, targetDir);
+      return toolDefinitionSchema.parse(item.meta?.chatjs);
+    })
+  );
+  const usesStorage =
+    coreFeatures.attachments ||
+    assistantTools.builtInTools.imageGeneration ||
+    assistantTools.builtInTools.videoGeneration ||
+    options.storageProvider !== undefined ||
+    options.storageConfig !== undefined;
+  const storage = usesStorage
+    ? await promptStorage(
+        options.yes,
+        options.storageProvider,
+        options.storageConfig,
+        targetDir
+      )
+    : await resolveStorage("memory", targetDir);
+  const auth = await promptAuth(options.yes);
+  const withElectron = await promptElectron(options.yes, options.electron);
+
+  return {
+    assistantTools,
+    auth,
+    coreFeatures,
+    documentTypes,
+    expectedTools,
+    gateway: gatewaySelection.definition.id,
+    gatewaySelection,
+    storage,
+    toolSources,
+    usesStorage,
+    withElectron,
+  };
+};
+
+const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
+  if (!existsSync(path.join(targetDir, "lib/ai/gateway.ts"))) {
+    logger.warn(
+      "This repository has no ChatJS gateway slot. Skipping ChatJS configuration and installation."
+    );
+    return false;
+  }
+  if (!existsSync(path.join(targetDir, "lib/storage-options.ts"))) {
+    throw new Error(
+      "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
+    );
+  }
+  if (
+    existsSync(path.join(targetDir, "tools/platform/generate-image.ts")) ||
+    existsSync(path.join(targetDir, "tools/platform/generate-video.ts"))
+  ) {
+    throw new Error(
+      "This ChatJS clone uses legacy media tool factories. Update its image/video registry integration before using create --from-git."
+    );
+  }
+  // create owns the new clone's selected gateway. Remove this one slot before
+  // shadcn installs so skipping a file cannot mismatch defaults.
+  await preflight(targetDir, [
+    "lib/ai/gateway.ts",
+    "lib/storage-provider.ts",
+    "chat.config.ts",
+    "package.json",
+  ]);
+  await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
+  await rm(path.join(targetDir, "lib/ai/gateway.ts"));
+  await removeSelectedClonedTools(targetDir);
+  return true;
+};
+
+const scaffoldProject = async (
+  options: CreateOptions,
+  project: ProjectTarget,
+  packageManager: PackageManager,
+  withElectron: boolean
+): Promise<boolean> => {
+  const scaffoldSpinner = spinner("Scaffolding project...").start();
+  try {
+    if (options.fromGit) {
+      await scaffoldFromGit(options.fromGit, project.targetDir);
+      if (!(await prepareGitScaffold(project.targetDir))) {
+        scaffoldSpinner.succeed("Repository cloned.");
+        return false;
+      }
+    } else {
+      await scaffoldFromTemplate(project.targetDir, { packageManager });
+    }
+    if (withElectron) {
+      await scaffoldElectron(project.targetDir, {
+        packageManager,
+        projectName: project.projectName,
+      });
+    }
+    scaffoldSpinner.succeed("Project scaffolded.");
+    return true;
+  } catch (error) {
+    scaffoldSpinner.fail("Failed to scaffold project.");
+    throw error;
+  }
+};
+
+const writeConfiguration = async (
+  project: ProjectTarget,
+  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+): Promise<void> => {
+  const configSpinner = spinner("Writing configuration...").start();
+  try {
+    const packageJsonPath = path.join(project.targetDir, "package.json");
+    const packageJson = JSON.parse(
+      await readFile(packageJsonPath, "utf-8")
+    ) as {
+      name?: string;
+    };
+    packageJson.name = project.projectName;
+    await writeFile(
+      packageJsonPath,
+      `${JSON.stringify(packageJson, null, 2)}\n`
+    );
+    await writeFile(
+      path.join(project.targetDir, "chat.config.ts"),
+      buildConfigTs({
+        appName: project.appName,
+        appPrefix: project.appPrefix,
+        appUrl: project.appUrl,
+        auth: setup.auth,
+        builtInTools: setup.assistantTools.builtInTools,
+        coreFeatures: setup.coreFeatures,
+        documentTypes: setup.documentTypes,
+        gateway: setup.gateway,
+        gatewayDefaults: setup.gatewaySelection.definition.defaults,
+        withElectron: setup.withElectron,
+      })
+    );
+    configSpinner.succeed("Configuration written.");
+  } catch (error) {
+    configSpinner.fail("Failed to write configuration.");
+    throw error;
+  }
+};
+
+const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
+  const commands: Record<PackageManager, string[]> = {
+    bun: ["run"],
+    npm: ["exec", "--"],
+    pnpm: ["exec"],
+    yarn: ["run"],
+  };
+  return commands[packageManager];
+};
+
+const installRegistryItems = async (
+  options: CreateOptions,
+  packageManager: PackageManager,
+  project: ProjectTarget,
+  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+): Promise<Awaited<ReturnType<typeof syncTools>>> => {
+  const installSpinner = spinner(
+    "Installing selected registry items..."
+  ).start();
+  try {
+    await installItems(
+      [
+        setup.gatewaySelection.source,
+        setup.storage.source,
+        ...setup.toolSources,
+      ],
+      project.targetDir
+    );
+    await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
+    await configureStorageProvider(project.targetDir, setup.storage);
+    const installedTools = await syncTools(project.targetDir, {
+      expected: setup.expectedTools,
+    });
+    await runCommand(packageManager, ["install"], project.targetDir);
+    if (!options.fromGit) {
+      await runCommand(
+        packageManager,
+        [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
+        project.targetDir
+      );
+    }
+    installSpinner.succeed("Registry items installed and configured.");
+    return installedTools;
+  } catch (error) {
+    installSpinner.fail(
+      "Installation failed; the project may be partially installed."
+    );
+    throw error;
+  }
+};
+
+const printNextSteps = (
+  packageManager: PackageManager,
+  project: ProjectTarget,
+  setup: Awaited<ReturnType<typeof promptCreateSetup>>,
+  installedTools: Awaited<ReturnType<typeof syncTools>>
+): void => {
+  const envEntries = collectEnvChecklist({
+    auth: setup.auth,
+    builtInTools: setup.assistantTools.builtInTools,
+    coreFeatures: setup.coreFeatures,
+    gateway: setup.gateway,
+    gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
+    installableToolEnvRequirements: [
+      ...installedTools.flatMap((tool) => tool.envRequirements),
+      ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
+    ],
+  });
+
+  outro("Your ChatJS app is ready!");
+  logger.info("Next steps:");
+  logger.break();
+  logger.log(
+    `  ${highlighter.dim("1.")} cd ${highlighter.info(project.displayPath)}`
+  );
+  logger.log(
+    `  ${highlighter.dim("2.")} Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`
+  );
+  logger.log(
+    `  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run db:connect`)} then ${highlighter.info(`${packageManager} run db:push`)}`
+  );
+  logger.log(
+    `  ${highlighter.dim("4.")} ${highlighter.info(`${packageManager} run dev`)}`
+  );
+  if (setup.withElectron) {
+    logger.break();
+    logger.info("Electron desktop app:");
+    logger.log(
+      `  Run the web app first, then: ${highlighter.info(`cd electron && ${packageManager} install && ${packageManager} run dev`)}`
+    );
+  }
+  logger.break();
+  printEnvChecklist(envEntries);
+  logger.log(
+    "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
+  );
+  logger.log(
+    `  Optional Redis: set REDIS_URL, then run ${packageManager} run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis`
+  );
+  logger.break();
+  logger.log(
+    `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
+  );
+};
+
+const createProject = async (options: CreateOptions): Promise<void> => {
+  const packageManager = launcherPackageManager();
+  if (!options.yes) {
+    intro("Create ChatJS App");
+  }
+  const project = await promptProjectTarget(options);
+  await ensureTargetEmpty(project.targetDir);
+  const setup = await promptCreateSetup(options, project.targetDir);
+  logger.break();
+  if (
+    !(await scaffoldProject(
+      options,
+      project,
+      packageManager,
+      setup.withElectron
+    ))
+  ) {
+    return;
+  }
+  await writeConfiguration(project, setup);
+  const installedTools = await installRegistryItems(
+    options,
+    packageManager,
+    project,
+    setup
+  );
+  printNextSteps(packageManager, project, setup, installedTools);
+};
 
 export const create = new Command()
   .name("create")
@@ -160,359 +635,8 @@ export const create = new Command()
   )
   .action(async (directory, opts) => {
     try {
-      const options = createOptionsSchema.parse({
-        target: directory,
-        ...opts,
-      });
-
-      const packageManager = launcherPackageManager();
-
-      if (!options.yes) {
-        intro("Create ChatJS App");
-      }
-
-      const initialTarget = resolveCreateTarget(options.target);
-      const projectName = await promptProjectName(
-        initialTarget.projectName,
-        options.yes
-      );
-      const targetDir = options.target
-        ? initialTarget.targetDir
-        : resolve(process.cwd(), projectName);
-      const displayPath = options.target
-        ? initialTarget.displayPath
-        : projectName;
-
-      await ensureTargetEmpty(targetDir);
-
-      const appName = projectName
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-      const appPrefix = projectName;
-      const appUrl = "http://localhost:3000";
-
-      const gatewaySource =
-        options.gateway ?? (await promptGateway(options.yes));
-      const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
-      const gateway = gatewaySelection.definition.id;
-      const coreFeatures = await promptCoreFeatures(
-        options.yes,
-        gatewaySelection.definition
-      );
-      const documentTypes = await promptDocumentTypes(
-        options.yes,
-        coreFeatures.documents,
-        gatewaySelection.definition
-      );
-
-      let registryItems: Awaited<ReturnType<typeof listTools>> = [];
-      if (!options.yes) {
-        const registrySpinner = spinner("Loading installable tools...");
-        registrySpinner.start();
-        try {
-          registryItems = await listTools(targetDir);
-          registrySpinner.succeed("Installable tools loaded.");
-        } catch (error) {
-          registrySpinner.fail("Could not load installable tools.");
-          logger.warn(
-            error instanceof Error
-              ? error.message
-              : "Continuing with built-in tools only."
-          );
-        }
-      }
-
-      const assistantTools = await promptAssistantTools(
-        registryItems,
-        options.yes,
-        gatewaySelection.definition
-      );
-      const toolSources = assistantTools.installableTools.map((tool) =>
-        itemAddress(tool, "tool")
-      );
-      if (assistantTools.builtInTools.deepResearch)
-        assistantTools.builtInTools.webSearch = true;
-      const selections = [
-        {
-          source: options.videoGenerationTool,
-          feature: "videoGeneration",
-          slot: "generateVideo",
-          prompt: promptVideoGenerationTool,
-        },
-        {
-          source: options.imageGenerationTool,
-          feature: "imageGeneration",
-          slot: "generateImage",
-          prompt: promptImageGenerationTool,
-        },
-        {
-          source: options.searchTool,
-          feature: "webSearch",
-          slot: "webSearch",
-          prompt: promptSearchTool,
-        },
-        {
-          source: options.codeExecutionTool,
-          feature: "codeExecution",
-          slot: "codeExecution",
-          prompt: promptCodeExecutionTool,
-        },
-        {
-          source: options.urlRetrievalTool,
-          feature: "urlRetrieval",
-          slot: "retrieveUrl",
-          prompt: promptUrlRetrievalTool,
-        },
-      ] as const;
-      for (const selection of selections) {
-        if (selection.source)
-          assistantTools.builtInTools[selection.feature] = true;
-        if (!assistantTools.builtInTools[selection.feature]) continue;
-        const source = itemAddress(
-          selection.source ?? (await selection.prompt(options.yes)),
-          "tool"
-        );
-        const metadata = toolDefinitionSchema.parse(
-          (await readItem(source, targetDir)).meta?.chatjs
-        );
-        if (metadata.slot !== selection.slot)
-          throw new Error(
-            `Selected tool must declare the ${selection.slot} slot.`
-          );
-        toolSources.push(source);
-      }
-      const expectedTools = [];
-      for (const source of toolSources)
-        expectedTools.push(
-          toolDefinitionSchema.parse(
-            (await readItem(source, targetDir)).meta?.chatjs
-          )
-        );
-      const usesStorage =
-        coreFeatures.attachments ||
-        assistantTools.builtInTools.imageGeneration ||
-        assistantTools.builtInTools.videoGeneration ||
-        options.storageProvider !== undefined ||
-        options.storageConfig !== undefined;
-      const storage = usesStorage
-        ? await promptStorage(
-            options.yes,
-            options.storageProvider,
-            options.storageConfig,
-            targetDir
-          )
-        : await resolveStorage("memory", targetDir);
-      const auth = await promptAuth(options.yes);
-      const withElectron = await promptElectron(options.yes, options.electron);
-
-      logger.break();
-      const scaffoldSpinner = spinner("Scaffolding project...").start();
-      try {
-        if (options.fromGit) {
-          await scaffoldFromGit(options.fromGit, targetDir);
-          if (!existsSync(join(targetDir, "lib/ai/gateway.ts"))) {
-            scaffoldSpinner.succeed("Repository cloned.");
-            logger.warn(
-              "This repository has no ChatJS gateway slot. Skipping ChatJS configuration and installation."
-            );
-            return;
-          }
-          if (!existsSync(join(targetDir, "lib/storage-options.ts"))) {
-            throw new Error(
-              "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
-            );
-          }
-          if (
-            existsSync(join(targetDir, "tools/platform/generate-image.ts")) ||
-            existsSync(join(targetDir, "tools/platform/generate-video.ts"))
-          ) {
-            throw new Error(
-              "This ChatJS clone uses legacy media tool factories. Update its image/video registry integration before using create --from-git."
-            );
-          }
-          // create owns the new clone's selected gateway. Remove this one slot
-          // before shadcn installs so skipping a file cannot mismatch defaults.
-          await preflight(targetDir, [
-            "lib/ai/gateway.ts",
-            "lib/storage-provider.ts",
-            "chat.config.ts",
-            "package.json",
-          ]);
-          await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
-          await rm(join(targetDir, "lib/ai/gateway.ts"));
-          // A fresh clone receives the requested tool selections as well.
-          const toolDirectory = join(targetDir, "tools/chatjs");
-          for (const entry of await readdir(toolDirectory, {
-            withFileTypes: true,
-          }).catch((error) => {
-            if (error.code === "ENOENT") return [];
-            throw error;
-          })) {
-            if (!entry.isDirectory()) continue;
-            const descriptor = join(toolDirectory, entry.name, "chatjs.json");
-            if (!existsSync(descriptor)) continue;
-            await preflight(targetDir, [
-              `tools/chatjs/${entry.name}/chatjs.json`,
-            ]);
-            const metadata = toolDefinitionSchema.parse(
-              JSON.parse(await readFile(descriptor, "utf8"))
-            );
-            if (
-              metadata.slot === "webSearch" ||
-              metadata.slot === "codeExecution" ||
-              metadata.slot === "retrieveUrl" ||
-              metadata.slot === "generateImage" ||
-              metadata.slot === "generateVideo" ||
-              (metadata.id === "retrieve-url" &&
-                metadata.toolExport === "retrieveUrl")
-            )
-              await rm(join(toolDirectory, entry.name), { recursive: true });
-          }
-        } else {
-          await scaffoldFromTemplate(targetDir, {
-            packageManager,
-          });
-        }
-        if (withElectron) {
-          await scaffoldElectron(targetDir, {
-            projectName,
-            packageManager,
-          });
-        }
-        scaffoldSpinner.succeed("Project scaffolded.");
-      } catch (error) {
-        scaffoldSpinner.fail("Failed to scaffold project.");
-        throw error;
-      }
-
-      const configSpinner = spinner("Writing configuration...").start();
-      try {
-        const packageJsonPath = join(targetDir, "package.json");
-        const packageJson = JSON.parse(
-          await readFile(packageJsonPath, "utf8")
-        ) as {
-          name?: string;
-        };
-        packageJson.name = projectName;
-        await writeFile(
-          packageJsonPath,
-          `${JSON.stringify(packageJson, null, 2)}\n`
-        );
-
-        const configSource = buildConfigTs({
-          appName,
-          appPrefix,
-          appUrl,
-          withElectron,
-          gateway,
-          gatewayDefaults: gatewaySelection.definition.defaults,
-          coreFeatures,
-          documentTypes,
-          builtInTools: assistantTools.builtInTools,
-          auth,
-        });
-        await writeFile(join(targetDir, "chat.config.ts"), configSource);
-        configSpinner.succeed("Configuration written.");
-      } catch (error) {
-        configSpinner.fail("Failed to write configuration.");
-        throw error;
-      }
-
-      const installSpinner = spinner(
-        "Installing selected registry items..."
-      ).start();
-      let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
-      try {
-        await installItems(
-          [gatewaySelection.source, storage.source, ...toolSources],
-          targetDir
-        );
-        await configureGatewayProvider(targetDir, gatewaySelection);
-        await configureStorageProvider(targetDir, storage);
-        installedTools = await syncTools(targetDir, {
-          expected: expectedTools,
-        });
-        // Also materialize scaffold dependencies when registry requirements were already declared.
-        await runCommand(packageManager, ["install"], targetDir);
-        // Format copied template files after registry installation.
-        if (!options.fromGit) {
-          await runCommand(
-            packageManager,
-            [
-              ...(packageManager === "npm"
-                ? ["exec", "--"]
-                : packageManager === "pnpm"
-                  ? ["exec"]
-                  : ["run"]),
-              "oxfmt",
-              "--write",
-              ".",
-            ],
-            targetDir
-          );
-        }
-        installSpinner.succeed("Registry items installed and configured.");
-      } catch (error) {
-        installSpinner.fail(
-          "Installation failed; the project may be partially installed."
-        );
-        throw error;
-      }
-      const installableToolEnvRequirements = installedTools.flatMap(
-        (tool) => tool.envRequirements
-      );
-
-      const envEntries = collectEnvChecklist({
-        gateway,
-        gatewayRequirements: gatewaySelection.definition.envRequirements,
-        coreFeatures,
-        builtInTools: assistantTools.builtInTools,
-        auth,
-        installableToolEnvRequirements: [
-          ...installableToolEnvRequirements,
-          ...(usesStorage ? storage.definition.envRequirements : []),
-        ],
-      });
-
-      outro("Your ChatJS app is ready!");
-
-      logger.info("Next steps:");
-      logger.break();
-      logger.log(
-        `  ${highlighter.dim("1.")} cd ${highlighter.info(displayPath)}`
-      );
-      logger.log(
-        `  ${highlighter.dim("2.")} Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`
-      );
-      logger.log(
-        `  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run db:connect`)} then ${highlighter.info(`${packageManager} run db:push`)}`
-      );
-      logger.log(
-        `  ${highlighter.dim("4.")} ${highlighter.info(`${packageManager} run dev`)}`
-      );
-      if (withElectron) {
-        logger.break();
-        logger.info("Electron desktop app:");
-        logger.log(
-          `  Run the web app first, then: ${highlighter.info(`cd electron && ${packageManager} install && ${packageManager} run dev`)}`
-        );
-      }
-      logger.break();
-
-      printEnvChecklist(envEntries);
-      logger.log(
-        "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
-      );
-      logger.log(
-        "  Optional Redis: set REDIS_URL, then run " +
-          packageManager +
-          " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis"
-      );
-
-      logger.break();
-      logger.log(
-        `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
+      await createProject(
+        createOptionsSchema.parse({ target: directory, ...opts })
       );
     } catch (error) {
       handleError(error);

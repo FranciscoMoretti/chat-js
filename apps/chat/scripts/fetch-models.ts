@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 
 import { getActiveGateway } from "../lib/ai/active-gateway";
 
-async function fetchAndSaveModels() {
+const fetchAndSaveModels = async () => {
   const gateway = getActiveGateway();
 
   console.log(`Fetching models from '${gateway.type}' gateway...`);
@@ -23,6 +23,6 @@ export const models = ${JSON.stringify(models, null, 2)} as const satisfies read
   console.log(
     `Wrote ${models.length} models from '${gateway.type}' gateway to lib/ai/models.generated.ts`
   );
-}
+};
 
 fetchAndSaveModels();

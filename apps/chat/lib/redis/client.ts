@@ -4,10 +4,10 @@ import { redisConnectionOptions } from "./connection";
 
 const STARTUP_DEADLINE_MS = 10_000;
 
-export async function connectRedisClients(
+export const connectRedisClients = async (
   environment: { REDIS_URL?: string },
   onError: () => void
-) {
+) => {
   const options = redisConnectionOptions(environment);
   if (!options) {
     return null;
@@ -21,7 +21,7 @@ export async function connectRedisClients(
   try {
     await Promise.race([
       Promise.all([publisher.connect(), subscriber.connect()]),
-      new Promise<never>((_, reject) => {
+      new Promise<never>((_resolve, reject) => {
         deadline = setTimeout(
           () => reject(new Error("Redis startup timed out")),
           STARTUP_DEADLINE_MS
@@ -41,4 +41,4 @@ export async function connectRedisClients(
   } finally {
     clearTimeout(deadline);
   }
-}
+};

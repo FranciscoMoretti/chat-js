@@ -12,12 +12,10 @@ import {
   cursorAt,
   DURATION,
   ease,
-  type LaunchScript,
   presentationAt,
-  type ReplyState,
-  type StoryState,
   stateAt,
 } from "./story";
+import type { LaunchScript, ReplyState, StoryState } from "./story";
 
 import "./styles.css";
 
@@ -64,12 +62,12 @@ function ActionIcon({
   name: "edit" | "copy" | "previous" | "next" | "regenerate";
 }) {
   const paths = {
+    copy: "M9 9h12v12H9z M5 15H3V3h12v2",
+    edit: "M16 3a2.83 2.83 0 0 1 4 4L7 20l-5 1 1-5Z M14.5 4.5l4 4",
+    next: "m9 18 6-6-6-6",
+    previous: "m15 18-6-6 6-6",
     regenerate:
       "M20 7v5h-5 M4 17v-5h5 M6.1 7a7 7 0 0 1 11.6-2L20 8 M4 16l2.3 3A7 7 0 0 0 17.9 17",
-    edit: "M16 3a2.83 2.83 0 0 1 4 4L7 20l-5 1 1-5Z M14.5 4.5l4 4",
-    copy: "M9 9h12v12H9z M5 15H3V3h12v2",
-    previous: "m15 18-6-6 6-6",
-    next: "m9 18 6-6-6-6",
   };
   return (
     <svg
@@ -278,13 +276,13 @@ function ConversationTree({
       <div className="maptitle">YOUR CONVERSATION</div>
       <div
         style={{
-          position: "absolute",
-          width: 735,
-          top: 0,
-          left: 0,
           height: 640,
-          transformOrigin: "top left",
+          left: 0,
+          position: "absolute",
+          top: 0,
           transform: `translateY(${100 * ease((t - 44.8) / 0.5)}px) scale(${1 - 0.38 * ease((t - 44.8) / 0.5)})`,
+          transformOrigin: "top left",
+          width: 735,
         }}
       >
         <svg
@@ -352,7 +350,7 @@ function ConversationTree({
                 </div>
                 <div className="count">
                   {s.states[id] === "streaming"
-                    ? `${s.texts[id].trim().split(/\s+/).filter(Boolean).length} words generated`
+                    ? `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`
                     : id === "city"
                       ? "Original answer"
                       : "Alternative answer"}
@@ -425,13 +423,13 @@ function ConversationTree({
   );
 }
 export function ThreadsLaunch({ content }: { content: LaunchScript }) {
-  const frame = useCurrentFrame(),
-    { fps } = useVideoConfig(),
-    wallTime = frame / fps,
-    presentation = presentationAt(wallTime),
-    t = presentation.demoTime,
-    s = stateAt(t, content),
-    cursor = cursorAt(t);
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const wallTime = frame / fps;
+  const presentation = presentationAt(wallTime);
+  const t = presentation.demoTime;
+  const s = stateAt(t, content);
+  const cursor = cursorAt(t);
   return (
     <AbsoluteFill className="stage">
       <div className="brand">

@@ -15,7 +15,7 @@ const PROBE_TTL_SECONDS = 60;
 loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ quiet: true });
 
-async function checkRedis() {
+const checkRedis = async () => {
   const parsed = z.object(redisEnvOptions).safeParse(process.env);
   if (!parsed.success) {
     throw new Error("Invalid Redis configuration");
@@ -33,8 +33,12 @@ async function checkRedis() {
   });
   const subscriber = publisher.duplicate();
   // Failures are reported below without exposing provider errors or credentials.
-  publisher.on("error", () => undefined);
-  subscriber.on("error", () => undefined);
+  publisher.on("error", () => {
+    // Failures are reported below without exposing provider errors or credentials.
+  });
+  subscriber.on("error", () => {
+    // Failures are reported below without exposing provider errors or credentials.
+  });
   const key = `${config.appPrefix}:connection-check:${randomUUID()}`;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -89,11 +93,15 @@ async function checkRedis() {
       subscriber.destroy();
     }
   }
-}
+};
 
-checkRedis().catch(() => {
-  process.stderr.write(
-    "Redis check failed. Check REDIS_URL, TLS, credentials, network access, and command/channel permissions. See https://www.chatjs.dev/docs/reference/redis\n"
-  );
-  process.exitCode = 1;
-});
+void (async () => {
+  try {
+    await checkRedis();
+  } catch {
+    process.stderr.write(
+      "Redis check failed. Check REDIS_URL, TLS, credentials, network access, and command/channel permissions. See https://www.chatjs.dev/docs/reference/redis\n"
+    );
+    process.exitCode = 1;
+  }
+})();

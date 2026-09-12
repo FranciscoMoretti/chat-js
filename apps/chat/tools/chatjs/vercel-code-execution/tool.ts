@@ -1,6 +1,7 @@
 import type { Sandbox } from "@vercel/sandbox";
-import { type ToolExecutionOptions, tool } from "ai";
-import z from "zod";
+import { tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
+import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { createModuleLogger } from "@/lib/logger";
@@ -13,12 +14,11 @@ import {
   getErrorMessage,
   getSandboxRuntime,
 } from "./sandbox";
-import {
-  type SupportedExecutionLanguage,
-  supportedExecutionLanguages,
-} from "./types";
+import { supportedExecutionLanguages } from "./types";
+import type { SupportedExecutionLanguage } from "./types";
 
-const COST_CENTS = 5; // Vercel Sandbox execution
+// Vercel Sandbox execution.
+const COST_CENTS = 5;
 
 const languageSchema = z.enum(supportedExecutionLanguages);
 
@@ -66,17 +66,6 @@ Output rules:
 - Python values: assign 'result' or 'results', or print explicitly
 - JavaScript values: assign 'result' or 'results', return a value, or print explicitly
 - Don't rely on implicit REPL last-expression output`,
-  inputSchema: z.object({
-    title: z.string().describe("The title of the code snippet."),
-    language: languageSchema
-      .default(defaultExecutionLanguage)
-      .describe("The language to execute: 'python' or 'javascript'."),
-    code: z
-      .string()
-      .describe(
-        "The code to execute in the selected sandbox language. Print anything you want to return, or assign to 'result'/'results'."
-      ),
-  }),
   execute: async (
     {
       code,
@@ -97,37 +86,48 @@ Output rules:
     let sandbox: Sandbox | undefined;
 
     try {
-      log.info({ requestId, title, runtime, language }, "creating sandbox");
+      log.info({ language, requestId, runtime, title }, "creating sandbox");
       sandbox = await createSandbox(runtime);
       log.debug({ requestId }, "sandbox created");
 
-      log.info({ requestId, title, language }, "executing code");
+      log.info({ language, requestId, title }, "executing code");
       const result =
         language === "javascript"
           ? await executeJavaScriptInSandbox({
-              sandbox,
               code,
               log,
               requestId,
+              sandbox,
             })
           : await executePythonInSandbox({
-              sandbox,
               code,
               log,
               requestId,
+              sandbox,
             });
 
       costAccumulator?.addAPICost("codeExecution", COST_CENTS);
 
       return result;
-    } catch (err) {
-      log.error({ err, requestId, language }, "code execution failed");
+    } catch (error) {
+      log.error({ error, language, requestId }, "code execution failed");
       return {
-        message: `Sandbox execution failed: ${getErrorMessage(err)}`,
         chart: "",
+        message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
       await cleanupSandbox(sandbox, log, requestId);
     }
   },
+  inputSchema: z.object({
+    code: z
+      .string()
+      .describe(
+        "The code to execute in the selected sandbox language. Print anything you want to return, or assign to 'result'/'results'."
+      ),
+    language: languageSchema
+      .default(defaultExecutionLanguage)
+      .describe("The language to execute: 'python' or 'javascript'."),
+    title: z.string().describe("The title of the code snippet."),
+  }),
 });

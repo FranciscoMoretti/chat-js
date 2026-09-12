@@ -8,12 +8,14 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import path from "node:path";
+
+const { dirname, join, resolve } = path;
 
 const smokeTimeout = 180_000;
 const packageDirectory = resolve(import.meta.dir, "..");
 
-function run(command: string[], cwd: string) {
+const run = (command: string[], cwd: string) => {
   const result = Bun.spawnSync({
     cmd: command,
     cwd,
@@ -31,7 +33,7 @@ function run(command: string[], cwd: string) {
       ].join("\n")
     );
   }
-}
+};
 
 test(
   "the packed package loads its core and React entry points",
@@ -64,11 +66,11 @@ test(
       await writeFile(
         join(temporaryDirectory, "package.json"),
         JSON.stringify({
-          private: true,
-          type: "module",
           dependencies: {
             "@chat-js/thread": "file:./thread.tgz",
           },
+          private: true,
+          type: "module",
         })
       );
       // Unpack the actual distribution outside the workspace. Linking only the
@@ -85,7 +87,7 @@ test(
         ],
         temporaryDirectory
       );
-      async function linkDependency(name: string) {
+      const linkDependency = async (name: string) => {
         const destination = join(temporaryDirectory, "node_modules", name);
         await mkdir(dirname(destination), { recursive: true });
         await symlink(
@@ -93,7 +95,7 @@ test(
           destination,
           "dir"
         );
-      }
+      };
       await linkDependency("ai");
 
       const coreConsumerPath = join(temporaryDirectory, "core.mjs");
@@ -117,30 +119,36 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
 
       const indexSource = await readFile(
         join(installedPackage, "dist/index.js"),
-        "utf8"
+        "utf-8"
       );
       const reactSource = await readFile(
         join(installedPackage, "dist/react.js"),
-        "utf8"
+        "utf-8"
       );
       const packageMetadata = await Bun.file(
         join(installedPackage, "package.json")
       ).json();
-      const indexChunk = indexSource.match(/from "(\.\/chunk-[^"]+\.js)"/)?.[1];
-      const reactChunk = reactSource.match(/from "(\.\/chunk-[^"]+\.js)"/)?.[1];
+      const indexChunk = indexSource.match(
+        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      )?.groups?.chunk;
+      const reactChunk = reactSource.match(
+        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      )?.groups?.chunk;
 
       expect(packageMetadata.peerDependenciesMeta).toEqual({
         react: { optional: true },
       });
       expect(reactSource.startsWith('"use client";')).toBeTrue();
-      expect(reactSource.match(/"use client";/g)).toHaveLength(1);
+      expect(reactSource.match(/"use client";/gu)).toHaveLength(1);
       expect(indexChunk).toBeDefined();
       expect(reactChunk).toBe(indexChunk);
       expect(reactSource).not.toContain("class Thread");
-      if (!reactChunk) throw new Error("Expected a shared package chunk");
+      if (!reactChunk) {
+        throw new Error("Expected a shared package chunk");
+      }
       const coreChunkPath = resolve(installedPackage, "dist", reactChunk);
       expect(await Bun.file(coreChunkPath).exists()).toBeTrue();
-      const coreChunkSource = await readFile(coreChunkPath, "utf8");
+      const coreChunkSource = await readFile(coreChunkPath, "utf-8");
       expect(indexSource).not.toContain('from "react"');
       expect(coreChunkSource).not.toContain('from "react"');
       expect(coreChunkSource).not.toContain('from "@ai-sdk/react"');

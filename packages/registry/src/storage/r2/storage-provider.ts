@@ -1,3 +1,1 @@
-import { r2 } from "files-sdk/r2";
-
-export const createStorageAdapter = r2;
+export { r2 as createStorageAdapter } from "files-sdk/r2";

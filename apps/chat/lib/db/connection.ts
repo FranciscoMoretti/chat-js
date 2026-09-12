@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 export const databaseEnvOptions = {
+  DATABASE_MAX_CONNECTIONS: z
+    .preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().int().positive().optional()
+    )
+    .describe("Maximum runtime connections per app process"),
   DATABASE_MIGRATION_URL: z
     .preprocess(
       (value) => (value === "" ? undefined : value),
@@ -14,15 +20,9 @@ export const databaseEnvOptions = {
     )
     .transform((value) => value === "true")
     .describe("Enable prepared statements for runtime queries"),
-  DATABASE_MAX_CONNECTIONS: z
-    .preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().int().positive().optional()
-    )
-    .describe("Maximum runtime connections per app process"),
 };
 
-export function databaseConnection(
+export const databaseConnection = (
   environment: {
     DATABASE_URL?: string;
     DATABASE_MIGRATION_URL?: string;
@@ -30,7 +30,7 @@ export function databaseConnection(
     DATABASE_MAX_CONNECTIONS?: number;
   },
   purpose: "runtime" | "migration" = "runtime"
-) {
+) => {
   const url =
     purpose === "migration"
       ? environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
@@ -43,13 +43,13 @@ export function databaseConnection(
   const max =
     purpose === "migration" ? 1 : environment.DATABASE_MAX_CONNECTIONS;
   return {
-    url,
     options: {
+      ...(max === undefined ? {} : { max }),
       prepare:
         purpose === "migration"
           ? false
           : (environment.DATABASE_PREPARE ?? true),
-      ...(max === undefined ? {} : { max }),
     },
+    url,
   };
-}
+};

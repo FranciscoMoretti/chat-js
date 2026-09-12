@@ -6,7 +6,6 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config as loadEnvConfig } from "dotenv";
 import { z } from "zod";
@@ -33,10 +32,7 @@ interface ValidationError {
   missing: string[];
 }
 
-const projectRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  ".."
-);
+const projectRoot = path.resolve(import.meta.dirname, "..");
 const toolEnvironmentSchema = z.object({
   envRequirements: z
     .array(
@@ -48,7 +44,7 @@ const toolEnvironmentSchema = z.object({
     .default([]),
 });
 
-function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const gateway: string = config.ai.gateway;
   const missing = gatewayEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
@@ -60,9 +56,9 @@ function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
     feature: `aiGateway (${gateway})`,
     missing,
   };
-}
+};
 
-function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   if (
     !(
       config.features.attachments ||
@@ -78,9 +74,9 @@ function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
   return missing.length
     ? { feature: `fileStorage (${storageId})`, missing }
     : null;
-}
+};
 
-function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
+const validateAiTools = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   const toolEntries = Object.entries(aiToolEnvRequirements) as [
@@ -105,14 +101,14 @@ function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   return errors;
-}
+};
 
-function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
+const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
-  const authKeys = Object.keys(authEnvRequirements) as Array<
-    keyof typeof authEnvRequirements
-  >;
+  const authKeys = Object.keys(
+    authEnvRequirements
+  ) as (keyof typeof authEnvRequirements)[];
   for (const provider of authKeys) {
     if (!config.authentication[provider]) {
       continue;
@@ -142,11 +138,11 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   return errors;
-}
+};
 
-async function validateInstalledTools(
+const validateInstalledTools = async (
   env: NodeJS.ProcessEnv
-): Promise<ValidationError[]> {
+): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, "tools/chatjs");
   const entries = await fs
     .readdir(toolsDir, { withFileTypes: true })
@@ -173,7 +169,7 @@ async function validateInstalledTools(
       continue;
     }
 
-    const toolSource = await fs.readFile(toolPath, "utf8");
+    const toolSource = await fs.readFile(toolPath, "utf-8");
     const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
 
     for (const toolEnvVar of mod.envRequirements) {
@@ -188,9 +184,9 @@ async function validateInstalledTools(
   }
 
   return errors;
-}
+};
 
-function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
   if (!isProduction) {
     return null;
@@ -207,17 +203,17 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
       "APP_URL (for non-Vercel deployments) or VERCEL_URL (auto on Vercel)",
     ],
   };
-}
+};
 
-function checkGatewaySnapshot(): string | null {
+const checkGatewaySnapshot = (): string | null => {
   if (config.ai.gateway === generatedForGateway) {
     return null;
   }
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
-}
+};
 
-async function checkEnv(): Promise<void> {
-  const env = process.env;
+const checkEnv = async (): Promise<void> => {
+  const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"
@@ -280,9 +276,13 @@ async function checkEnv(): Promise<void> {
   }
 
   console.log("✅ Environment validation passed");
-}
+};
 
-checkEnv().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+void (async () => {
+  try {
+    await checkEnv();
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+})();

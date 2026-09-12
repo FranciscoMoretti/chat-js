@@ -1,32 +1,36 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
 import type { GatewaySelection } from "../registry/gateways";
 import { preflight } from "../utils/preflight";
 
 /** Wire the installed gateway; source and dependencies are installed by shadcn. */
-export async function configureGatewayProvider(
+export const configureGatewayProvider = async (
   destination: string,
   selection: GatewaySelection
-): Promise<void> {
+): Promise<void> => {
   await preflight(destination, [
     "lib/ai/gateway-model-defaults.ts",
     "lib/ai/models.generated.ts",
     ".env.example",
   ]);
-  const snapshotPath = join(destination, "lib/ai/models.generated.ts");
-  const snapshot = await readFile(snapshotPath, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
+  const snapshotPath = path.join(destination, "lib/ai/models.generated.ts");
+  const snapshot = await readFile(snapshotPath, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
     throw error;
   });
-  const example = join(destination, ".env.example");
-  let env = await readFile(example, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
+  const example = path.join(destination, ".env.example");
+  let env = await readFile(example, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
     throw error;
   });
   const { definition } = selection;
   await writeFile(
-    join(destination, "lib/ai/gateway-model-defaults.ts"),
+    path.join(destination, "lib/ai/gateway-model-defaults.ts"),
     `import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
 import type { Gateway } from "./gateway";
 
@@ -53,7 +57,9 @@ export const models: readonly AiGatewayModel[] = [];
   for (const name of new Set(
     definition.envRequirements.flatMap((r) => r.options.flat())
   )) {
-    if (!new RegExp(`^${name}=`, "m").test(env)) env += `\n${name}=\n`;
+    if (!new RegExp(`^${name}=`, "mu").test(env)) {
+      env += `\n${name}=\n`;
+    }
   }
   await writeFile(example, env);
-}
+};

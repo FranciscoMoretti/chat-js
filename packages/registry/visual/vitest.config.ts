@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { dirname } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
@@ -11,6 +11,10 @@ const appRequire = createRequire(
 );
 
 export default defineConfig({
+  css: {
+    postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+  },
+  define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
     include: [
       "@radix-ui/react-dialog",
@@ -21,30 +25,26 @@ export default defineConfig({
       "react-dom/client",
     ],
   },
-  define: { "process.env": "{}", IS_REACT_ACT_ENVIRONMENT: "true" },
-  resolve: {
-    dedupe: ["react", "react-dom"],
-    alias: {
-      echarts: createRequire(import.meta.url).resolve("echarts"),
-      "next/image": fileURLToPath(new URL("./next-image.ts", import.meta.url)),
-      react: dirname(appRequire.resolve("react/package.json")),
-      "react-dom": dirname(appRequire.resolve("react-dom/package.json")),
-      "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
-    },
-  },
   oxc: { jsx: { runtime: "automatic" } },
-  css: {
-    postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
-  },
   plugins: [uiverifyPlugin()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+      echarts: createRequire(import.meta.url).resolve("echarts"),
+      "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
+      react: path.dirname(appRequire.resolve("react/package.json")),
+      "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),
+    },
+    dedupe: ["react", "react-dom"],
+  },
   test: {
-    include: ["visual/*.browser.test.tsx"],
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
       instances: [{ browser: "chromium" }],
-      viewport: { width: 1000, height: 900 },
+      provider: playwright(),
+      viewport: { height: 900, width: 1000 },
     },
+    include: ["visual/*.browser.test.tsx"],
   },
 });

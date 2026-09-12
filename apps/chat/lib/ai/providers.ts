@@ -1,10 +1,7 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-import {
-  extractReasoningMiddleware,
-  type LanguageModelMiddleware,
-  wrapLanguageModel,
-} from "ai";
+import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
+import type { LanguageModelMiddleware } from "ai";
 
 import { getActiveGateway } from "./active-gateway";
 import type { AppModelId } from "./app-models";
@@ -33,8 +30,8 @@ export const getLanguageModel = async (modelId: AppModelId) => {
   }
 
   return wrapLanguageModel({
-    model: languageProvider,
     middleware: middlewares,
+    model: languageProvider,
   });
 };
 

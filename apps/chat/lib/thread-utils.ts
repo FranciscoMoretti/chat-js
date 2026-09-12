@@ -57,7 +57,7 @@ function getDefaultLeafMessage<T extends MessageNode>(
   }
 
   // Sort by createdAt descending and return the first one
-  const sorted = [...allMessages].sort(
+  const sorted = allMessages.toSorted(
     (a, b) =>
       toTimestamp(b.metadata?.createdAt) - toTimestamp(a.metadata?.createdAt)
   );

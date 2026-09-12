@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 
-import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import {
@@ -10,161 +9,49 @@ import {
   MemoryThreadState,
 } from "../src/thread-state";
 import type { ThreadState } from "../src/types";
+import { RecordingThreadState } from "./support/recording-thread-state";
+import { StateBackedThread } from "./support/state-backed-thread";
+import { ControlledTransport } from "./support/thread-controlled-transport";
+import { ResumeTransport } from "./support/thread-resume-transport";
 
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<{
-    abortSignal: AbortSignal | undefined;
-    controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }> = [];
-  #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
+const user = (id: string): UIMessage => ({
+  id,
+  parts: [{ text: id, type: "text" }],
+  role: "user",
+});
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
-    return Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push({
-            abortSignal: options.abortSignal,
-            controller,
-            options,
-          });
-          options.abortSignal?.addEventListener(
-            "abort",
-            () => {
-              controller.enqueue({ type: "abort" });
-              controller.close();
-            },
-            { once: true }
-          );
-        },
-      })
-    );
-  };
+const assistantWithTool = (id: string): UIMessage => ({
+  id,
+  parts: [
+    {
+      approval: { id: "shared-approval" },
+      input: { value: id },
+      state: "approval-requested",
+      toolCallId: "shared-tool",
+      toolName: "test-tool",
+      type: "dynamic-tool",
+    },
+  ],
+  role: "assistant",
+});
 
-  reconnectToStream(
-    _options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-  ): Promise<ReadableStream<UIMessageChunk> | null> {
-    const stream = this.#reconnectStream;
-    this.#reconnectStream = null;
-    return Promise.resolve(stream);
+const requireMessage = (message: UIMessage | undefined) => {
+  if (!message) {
+    throw new Error("Expected message to exist");
   }
-
-  prepareReconnect() {
-    let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
-    this.#reconnectStream = new ReadableStream({
-      start(value) {
-        controller = value;
-      },
-    });
-    if (!controller) throw new Error("Expected reconnect controller");
-    return controller;
-  }
-
-  emit(requestIndex: number, chunk: UIMessageChunk) {
-    this.requests[requestIndex]?.controller.enqueue(chunk);
-  }
-
-  finish(requestIndex: number) {
-    this.requests[requestIndex]?.controller.close();
-  }
-
-  fail(requestIndex: number, error: Error) {
-    this.requests[requestIndex]?.controller.error(error);
-  }
-
-  emitText(requestIndex: number, messageId: string, text: string) {
-    const controller = this.requests[requestIndex]?.controller;
-    controller?.enqueue({ messageId, type: "start" });
-    controller?.enqueue({ id: "text", type: "text-start" });
-    controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
-    controller?.enqueue({ id: "text", type: "text-end" });
-    controller?.close();
-  }
-}
-
-class ResumeTransport extends ControlledTransport {
-  lastReconnectOptions:
-    | Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-    | undefined;
-
-  override reconnectToStream(
-    options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-  ) {
-    this.lastReconnectOptions = options;
-    return Promise.resolve(
-      new ReadableStream<UIMessageChunk>({
-        start(controller) {
-          controller.enqueue({ id: "text", type: "text-start" });
-          controller.enqueue({
-            delta: "resumed",
-            id: "text",
-            type: "text-delta",
-          });
-          controller.enqueue({ id: "text", type: "text-end" });
-          controller.enqueue({ finishReason: "stop", type: "finish" });
-          controller.close();
-        },
-      })
-    );
-  }
-}
-
-class RecordingThreadState implements ThreadState<UIMessage> {
-  readonly #state: MemoryThreadState<UIMessage>;
-  updateCount = 0;
-
-  constructor(messages: UIMessage[]) {
-    this.#state = new MemoryThreadState({ messages });
-  }
-
-  getSnapshot = () => this.#state.getSnapshot();
-  subscribe = (listener: () => void) => this.#state.subscribe(listener);
-
-  update: ThreadState<UIMessage>["update"] = (updater) => {
-    this.updateCount += 1;
-    this.#state.update(updater);
-  };
-}
-
-class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(state: ThreadState<UIMessage>) {
-    super({ state });
-  }
-}
-
-function user(id: string): UIMessage {
-  return { id, parts: [{ text: id, type: "text" }], role: "user" };
-}
-
-function assistantWithTool(id: string): UIMessage {
-  return {
-    id,
-    parts: [
-      {
-        approval: { id: "shared-approval" },
-        input: { value: id },
-        state: "approval-requested",
-        toolCallId: "shared-tool",
-        toolName: "test-tool",
-        type: "dynamic-tool",
-      },
-    ],
-    role: "assistant",
-  };
-}
-
-function requireMessage(message: UIMessage | undefined) {
-  if (!message) throw new Error("Expected message to exist");
   return message;
-}
+};
 
-async function waitFor(predicate: () => boolean) {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for request");
-}
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for request");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
+};
 
 describe("Thread", () => {
   test("creates a complete initial snapshot for custom state adapters", () => {
@@ -207,7 +94,7 @@ describe("Thread", () => {
     const state: ThreadState<UIMessage> = {
       getSnapshot: memory.getSnapshot,
       subscribe: memory.subscribe,
-      update: () => undefined,
+      update: () => {},
     };
 
     expect(() => new StateBackedThread(state)).toThrow(
@@ -217,7 +104,7 @@ describe("Thread", () => {
 
   test("rejects sharing one state between multiple controllers", () => {
     const state = new RecordingThreadState([user("user-1")]);
-    new StateBackedThread(state);
+    void new StateBackedThread(state);
 
     expect(() => new StateBackedThread(state)).toThrow(
       "ThreadState is already attached to an AbstractThread; retain and reuse that controller"
@@ -671,23 +558,23 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
+          parts: [{ text: "partial", type: "text" }],
           role: "assistant",
-          parts: [{ type: "text", text: "partial" }],
         },
       ],
       transport,
     });
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
-    reconnect.enqueue({ type: "start", messageId: "assistant-1" });
-    reconnect.enqueue({ type: "text-start", id: "text" });
+    reconnect.enqueue({ messageId: "assistant-1", type: "start" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
     reconnect.enqueue({
-      type: "text-delta",
-      id: "text",
       delta: "complete replay",
+      id: "text",
+      type: "text-delta",
     });
-    reconnect.enqueue({ type: "text-end", id: "text" });
-    reconnect.enqueue({ type: "finish", finishReason: "stop" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
+    reconnect.enqueue({ finishReason: "stop", type: "finish" });
     reconnect.close();
     await resumed;
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
@@ -705,9 +592,9 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          role: "assistant",
           metadata: { model: "saved" },
-          parts: [{ type: "text", text: "partial" }],
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
         },
       ],
       transport,
@@ -715,9 +602,9 @@ describe("Thread", () => {
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
     reconnect.enqueue({ type: "start" });
-    reconnect.enqueue({ type: "text-start", id: "text" });
-    reconnect.enqueue({ type: "text-delta", id: "text", delta: "replayed" });
-    reconnect.enqueue({ type: "text-end", id: "text" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
+    reconnect.enqueue({ delta: "replayed", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
     reconnect.close();
     await resumed;
     const message = requireMessage(chat.getMessage("assistant-1"));
@@ -733,32 +620,32 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          role: "assistant",
           parts: [
-            { type: "text", text: "prefix " },
+            { text: "prefix ", type: "text" },
             {
-              type: "dynamic-tool",
-              toolName: "lookup",
-              toolCallId: "restored-tool",
-              state: "input-available",
               input: {},
+              state: "input-available",
+              toolCallId: "restored-tool",
+              toolName: "lookup",
+              type: "dynamic-tool",
             },
           ],
+          role: "assistant",
         },
       ],
       transport,
     });
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
-    reconnect.enqueue({ type: "text-start", id: "text" });
-    reconnect.enqueue({ type: "text-delta", id: "text", delta: "suffix" });
-    reconnect.enqueue({ type: "text-end", id: "text" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
+    reconnect.enqueue({ delta: "suffix", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
     reconnect.close();
     await resumed;
     await chat.addToolOutput({
+      output: "found",
       tool: "lookup",
       toolCallId: "restored-tool",
-      output: "found",
     });
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
@@ -766,9 +653,9 @@ describe("Thread", () => {
       message.parts.filter((part) => part.type === "dynamic-tool")
     ).toEqual([
       expect.objectContaining({
-        toolCallId: "restored-tool",
-        state: "output-available",
         output: "found",
+        state: "output-available",
+        toolCallId: "restored-tool",
       }),
     ]);
   });

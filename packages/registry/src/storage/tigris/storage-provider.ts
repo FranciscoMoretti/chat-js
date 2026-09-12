@@ -1,3 +1,1 @@
-import { tigris } from "files-sdk/tigris";
-
-export const createStorageAdapter = tigris;
+export { tigris as createStorageAdapter } from "files-sdk/tigris";

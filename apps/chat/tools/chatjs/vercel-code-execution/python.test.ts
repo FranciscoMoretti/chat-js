@@ -6,7 +6,7 @@ import { executePythonInSandbox } from "./python";
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
-  Sandbox: { create: async () => ({ runCommand: mocks.runCommand }) },
+  Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
 }));
 
 it.each([0, 1])(
@@ -22,28 +22,28 @@ it.each([0, 1])(
       .mockResolvedValueOnce({ exitCode: 0 })
       .mockResolvedValueOnce({
         exitCode,
-        stderr: async () => `Could not install ${packageUrl}`,
+        stderr: () => `Could not install ${packageUrl}`,
       })
       .mockResolvedValueOnce({
         exitCode: 0,
-        stdout: async () => '{"success":true}',
-        stderr: async () => "",
+        stderr: () => "",
+        stdout: () => '{"success":true}',
       })
       .mockResolvedValueOnce({ exitCode: 1 });
 
     await executePythonInSandbox({
-      sandbox: await Sandbox.create(),
       code: `!pip install ${packageUrl}\nprint(4)`,
       log,
       requestId: "test-request",
+      sandbox: await Sandbox.create(),
     });
 
     expect(mocks.runCommand).toHaveBeenNthCalledWith(2, {
-      cmd: "pip",
       args: ["install", packageUrl],
+      cmd: "pip",
     });
     expect(info).toHaveBeenCalledWith(
-      { requestId: "test-request", packageCount: 1 },
+      { packageCount: 1, requestId: "test-request" },
       "installing extra packages"
     );
     expect(JSON.stringify([info.mock.calls, error.mock.calls])).not.toContain(
@@ -51,7 +51,7 @@ it.each([0, 1])(
     );
     if (exitCode !== 0) {
       expect(error).toHaveBeenCalledWith(
-        { requestId: "test-request", exitCode },
+        { exitCode, requestId: "test-request" },
         "dynamic package installation failed"
       );
     }

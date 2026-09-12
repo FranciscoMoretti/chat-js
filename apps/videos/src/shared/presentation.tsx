@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import "./presentation.css";
+
 export function Caption({
   children,
   opacity,
@@ -45,8 +46,8 @@ export function ClickPulse({
       className="clickPulse"
       style={{
         left: x,
-        top: y,
         opacity: 1 - age / 0.5,
+        top: y,
         transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
       }}
     />

@@ -94,14 +94,14 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   return Buffer.from(await file.arrayBuffer());
 };
 
-const collectEditImages = async ({
+const collectEditImages = ({
   imageParts,
   lastGeneratedImage,
 }: {
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
 }): Promise<Buffer[]> =>
-  await Promise.all([
+  Promise.all([
     ...(lastGeneratedImage
       ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
       : []),

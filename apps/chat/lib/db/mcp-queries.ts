@@ -8,12 +8,8 @@ import type {
 import { and, desc, eq, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
-import {
-  type McpConnector,
-  type McpOAuthSession,
-  mcpConnector,
-  mcpOAuthSession,
-} from "./schema";
+import { mcpConnector, mcpOAuthSession } from "./schema";
+import type { McpConnector, McpOAuthSession } from "./schema";
 
 // Full client information includes both metadata and registration response
 export type OAuthClientInformationFull = OAuthClientMetadata &
@@ -21,11 +17,11 @@ export type OAuthClientInformationFull = OAuthClientMetadata &
 
 // MCP Connector queries
 
-export async function getMcpConnectorsByUserId({
+export const getMcpConnectorsByUserId = async ({
   userId,
 }: {
   userId: string;
-}): Promise<McpConnector[]> {
+}): Promise<McpConnector[]> => {
   try {
     return await db
       .select()
@@ -36,13 +32,13 @@ export async function getMcpConnectorsByUserId({
     console.error("Failed to get MCP connectors from database", error);
     throw error;
   }
-}
+};
 
-export async function getMcpConnectorById({
+export const getMcpConnectorById = async ({
   id,
 }: {
   id: string;
-}): Promise<McpConnector | undefined> {
+}): Promise<McpConnector | undefined> => {
   try {
     const [connector] = await db
       .select()
@@ -53,9 +49,9 @@ export async function getMcpConnectorById({
     console.error("Failed to get MCP connector by id from database", error);
     throw error;
   }
-}
+};
 
-export async function getMcpConnectorByNameId({
+export const getMcpConnectorByNameId = async ({
   userId,
   nameId,
   excludeId,
@@ -63,7 +59,7 @@ export async function getMcpConnectorByNameId({
   userId: string | null;
   nameId: string;
   excludeId?: string;
-}): Promise<McpConnector | undefined> {
+}): Promise<McpConnector | undefined> => {
   try {
     const conditions = [
       eq(mcpConnector.nameId, nameId),
@@ -82,9 +78,9 @@ export async function getMcpConnectorByNameId({
     console.error("Failed to get MCP connector by nameId from database", error);
     throw error;
   }
-}
+};
 
-export async function createMcpConnector({
+export const createMcpConnector = async ({
   userId,
   name,
   nameId,
@@ -100,7 +96,7 @@ export async function createMcpConnector({
   type: "http" | "sse";
   oauthClientId?: string;
   oauthClientSecret?: string;
-}): Promise<McpConnector> {
+}): Promise<McpConnector> => {
   try {
     const [connector] = await db
       .insert(mcpConnector)
@@ -119,9 +115,9 @@ export async function createMcpConnector({
     console.error("Failed to create MCP connector in database", error);
     throw error;
   }
-}
+};
 
-export async function updateMcpConnector({
+export const updateMcpConnector = async ({
   id,
   updates,
 }: {
@@ -135,7 +131,7 @@ export async function updateMcpConnector({
     oauthClientSecret: string | null;
     enabled: boolean;
   }>;
-}): Promise<void> {
+}): Promise<void> => {
   try {
     await db
       .update(mcpConnector)
@@ -148,28 +144,28 @@ export async function updateMcpConnector({
     console.error("Failed to update MCP connector in database", error);
     throw error;
   }
-}
+};
 
-export async function deleteMcpConnector({
+export const deleteMcpConnector = async ({
   id,
 }: {
   id: string;
-}): Promise<void> {
+}): Promise<void> => {
   try {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
   } catch (error) {
     console.error("Failed to delete MCP connector from database", error);
     throw error;
   }
-}
+};
 
 // MCP OAuth Session queries
 
-export async function getAuthenticatedSession({
+export const getAuthenticatedSession = async ({
   mcpConnectorId,
 }: {
   mcpConnectorId: string;
-}): Promise<McpOAuthSession | undefined> {
+}): Promise<McpOAuthSession | undefined> => {
   const [session] = await db
     .select()
     .from(mcpOAuthSession)
@@ -182,13 +178,13 @@ export async function getAuthenticatedSession({
     .orderBy(desc(mcpOAuthSession.updatedAt))
     .limit(1);
   return session;
-}
+};
 
-export async function getSessionByState({
+export const getSessionByState = async ({
   state,
 }: {
   state: string;
-}): Promise<McpOAuthSession | undefined> {
+}): Promise<McpOAuthSession | undefined> => {
   if (!state) {
     return;
   }
@@ -197,9 +193,9 @@ export async function getSessionByState({
     .from(mcpOAuthSession)
     .where(eq(mcpOAuthSession.state, state));
   return session;
-}
+};
 
-export async function createOAuthSession({
+export const createOAuthSession = async ({
   mcpConnectorId,
   serverUrl,
   state,
@@ -211,7 +207,7 @@ export async function createOAuthSession({
   state: string;
   codeVerifier?: string;
   clientInfo?: OAuthClientInformationFull;
-}): Promise<McpOAuthSession> {
+}): Promise<McpOAuthSession> => {
   const [session] = await db
     .insert(mcpOAuthSession)
     .values({
@@ -223,15 +219,15 @@ export async function createOAuthSession({
     })
     .returning();
   return session;
-}
+};
 
-export async function setOAuthCodeVerifierOnceByState({
+export const setOAuthCodeVerifierOnceByState = async ({
   state,
   codeVerifier,
 }: {
   state: string;
   codeVerifier: string;
-}): Promise<McpOAuthSession> {
+}): Promise<McpOAuthSession> => {
   const [updated] = await db
     .update(mcpOAuthSession)
     .set({ codeVerifier })
@@ -255,15 +251,15 @@ export async function setOAuthCodeVerifierOnceByState({
     throw new Error(`Session with state ${state} not found`);
   }
   return existingSession;
-}
+};
 
-export async function setOAuthClientInfoOnceByState({
+export const setOAuthClientInfoOnceByState = async ({
   state,
   clientInfo,
 }: {
   state: string;
   clientInfo: OAuthClientInformationFull;
-}): Promise<McpOAuthSession> {
+}): Promise<McpOAuthSession> => {
   const [updated] = await db
     .update(mcpOAuthSession)
     .set({ clientInfo })
@@ -284,9 +280,9 @@ export async function setOAuthClientInfoOnceByState({
     throw new Error(`Session with state ${state} not found`);
   }
   return existingSession;
-}
+};
 
-export async function updateSessionByState({
+export const updateSessionByState = async ({
   state,
   updates,
 }: {
@@ -296,10 +292,10 @@ export async function updateSessionByState({
     clientInfo?: OAuthClientInformationFull | null;
     codeVerifier?: string | null;
   };
-}): Promise<McpOAuthSession> {
+}): Promise<McpOAuthSession> => {
   // Filter out undefined values - only include explicit values (including null)
   const setValues = Object.fromEntries(
-    Object.entries(updates).filter(([_, v]) => v !== undefined)
+    Object.entries(updates).filter(([, value]) => value !== undefined)
   );
 
   if (Object.keys(setValues).length === 0) {
@@ -322,9 +318,9 @@ export async function updateSessionByState({
     throw new Error(`Session with state ${state} not found`);
   }
   return session;
-}
+};
 
-export async function saveTokensAndCleanup({
+export const saveTokensAndCleanup = async ({
   state,
   mcpConnectorId,
   tokens,
@@ -332,7 +328,7 @@ export async function saveTokensAndCleanup({
   state: string;
   mcpConnectorId: string;
   tokens: OAuthTokens;
-}): Promise<McpOAuthSession> {
+}): Promise<McpOAuthSession> => {
   const [session] = await db
     .update(mcpOAuthSession)
     .set({ tokens })
@@ -354,22 +350,22 @@ export async function saveTokensAndCleanup({
     );
 
   return session;
-}
+};
 
-export async function deleteSessionByState({
+export const deleteSessionByState = async ({
   state,
 }: {
   state: string;
-}): Promise<void> {
+}): Promise<void> => {
   await db.delete(mcpOAuthSession).where(eq(mcpOAuthSession.state, state));
-}
+};
 
-export async function deleteSessionsByConnectorId({
+export const deleteSessionsByConnectorId = async ({
   mcpConnectorId,
 }: {
   mcpConnectorId: string;
-}): Promise<void> {
+}): Promise<void> => {
   await db
     .delete(mcpOAuthSession)
     .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
-}
+};

@@ -1,9 +1,17 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { ChatRequestOptions, UIMessage } from "ai";
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
+import { SnapshotStore } from "./thread-snapshot-store";
 import type {
   MessageTreeSnapshot,
   ThreadInit,
@@ -14,6 +22,9 @@ import type {
   TreeSendOptions,
 } from "./types";
 
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 type ThreadHookOptions = {
   experimental_throttle?: number;
   resume?: boolean;
@@ -23,6 +34,46 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
   ThreadInit<TMessage>,
   "onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
 >;
+
+class LatestThreadDispatchers<TMessage extends UIMessage> {
+  #callbacks: ThreadCallbacks<TMessage>;
+  #thread: AbstractThread<TMessage> | undefined;
+
+  constructor(callbacks: ThreadCallbacks<TMessage>) {
+    this.#callbacks = callbacks;
+  }
+
+  update(
+    thread: AbstractThread<TMessage>,
+    callbacks: ThreadCallbacks<TMessage>
+  ) {
+    this.#thread = thread;
+    this.#callbacks = callbacks;
+  }
+
+  readonly onData = (
+    dataPart: Parameters<NonNullable<ThreadCallbacks<TMessage>["onData"]>>[0]
+  ) => this.#callbacks.onData?.(dataPart);
+
+  readonly onError = (error: Error) => this.#callbacks.onError?.(error);
+
+  readonly onFinish = (
+    event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onFinish"]>>[0]
+  ) => this.#callbacks.onFinish?.(event);
+
+  readonly onToolCall = (
+    event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>>[0]
+  ) => Promise.resolve(this.#callbacks.onToolCall?.(event));
+
+  readonly sendAutomaticallyWhen = (
+    event: Parameters<
+      NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
+    >[0]
+  ) => this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
+
+  readonly setMessages: UseChatHelpers<TMessage>["setMessages"] = (messages) =>
+    this.#thread?.setMessages(messages);
+}
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
   thread: AbstractThread<TMessage>;
@@ -35,11 +86,10 @@ export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
         thread?: never;
       });
 
-function hasSuppliedThread<TMessage extends UIMessage>(
+const hasSuppliedThread = <TMessage extends UIMessage>(
   options: UseThreadOptions<TMessage>
-): options is ExternalThreadOptions<TMessage> {
-  return "thread" in options && options.thread !== undefined;
-}
+): options is ExternalThreadOptions<TMessage> =>
+  "thread" in options && options.thread !== undefined;
 
 export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
   activeRuns: ThreadRun[];
@@ -80,64 +130,29 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
     tree: TreeHelpers<TMessage>;
   };
 
-function useThreadSnapshot<TMessage extends UIMessage>(
+const useThreadSnapshot = <TMessage extends UIMessage>(
   thread: AbstractThread<TMessage>,
   throttleWaitMs?: number
-) {
-  const stateRef = useRef({
-    snapshot: thread.getSnapshot(),
-    thread,
-  });
-  if (stateRef.current.thread !== thread) {
-    stateRef.current = {
-      snapshot: thread.getSnapshot(),
-      thread,
-    };
-  }
-
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      stateRef.current.snapshot = thread.getSnapshot();
-      const publish = () => {
-        stateRef.current.snapshot = thread.getSnapshot();
-        listener();
-      };
-      if (!throttleWaitMs) return thread.subscribe(publish);
-
-      let lastCall = 0;
-      let timeout: ReturnType<typeof setTimeout> | undefined;
-      const notify = () => {
-        const elapsed = Date.now() - lastCall;
-        if (elapsed >= throttleWaitMs) {
-          lastCall = Date.now();
-          publish();
-          return;
-        }
-        if (timeout) return;
-        timeout = setTimeout(() => {
-          timeout = undefined;
-          lastCall = Date.now();
-          publish();
-        }, throttleWaitMs - elapsed);
-      };
-
-      const unsubscribe = thread.subscribe(notify);
-      return () => {
-        unsubscribe();
-        if (timeout) clearTimeout(timeout);
-      };
-    },
+) => {
+  const store = useMemo(
+    () => new SnapshotStore(thread, throttleWaitMs),
     [thread, throttleWaitMs]
   );
-  const getSnapshot = useCallback(() => stateRef.current.snapshot, []);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+  return useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot
+  );
+};
 
-function useThreadField<
+const useThreadField = <
   TMessage extends UIMessage,
   TKey extends keyof ThreadStateSnapshot<TMessage>,
->(thread: AbstractThread<TMessage>, key: TKey) {
+>(
+  thread: AbstractThread<TMessage>,
+  key: TKey
+) => {
   const subscribe = useCallback(
     (listener: () => void) => thread.subscribe(listener),
     [thread]
@@ -147,56 +162,90 @@ function useThreadField<
     [thread, key]
   );
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+};
 
-export function useThread<TMessage extends UIMessage = UIMessage>(
+export const useThread = <TMessage extends UIMessage = UIMessage>(
   options: UseThreadOptions<TMessage> = {}
-): UseThreadHelpers<TMessage> {
+): UseThreadHelpers<TMessage> => {
   const hasExternalThread = hasSuppliedThread(options);
-  const callbacksRef = useRef<ThreadCallbacks<TMessage>>(
-    hasExternalThread
-      ? {}
-      : {
-          onData: options.onData,
-          onError: options.onError,
-          onFinish: options.onFinish,
-          onToolCall: options.onToolCall,
-          sendAutomaticallyWhen: options.sendAutomaticallyWhen,
-        }
+  const externalThread = hasExternalThread ? options.thread : undefined;
+  const ownOptions = hasExternalThread ? undefined : options;
+  const onData = ownOptions?.onData;
+  const onError = ownOptions?.onError;
+  const onFinish = ownOptions?.onFinish;
+  const onToolCall = ownOptions?.onToolCall;
+  const sendAutomaticallyWhen = ownOptions?.sendAutomaticallyWhen;
+  const [dispatchers, setDispatchers] = useState(
+    () =>
+      new LatestThreadDispatchers({
+        onData,
+        onError,
+        onFinish,
+        onToolCall,
+        sendAutomaticallyWhen,
+      })
   );
+  void setDispatchers;
+  const [thread, setThread] = useState<AbstractThread<TMessage>>(() => {
+    const initialThread =
+      externalThread ??
+      new Thread({
+        ...ownOptions,
+        onData: dispatchers.onData,
+        onError: dispatchers.onError,
+        onFinish: dispatchers.onFinish,
+        onToolCall: dispatchers.onToolCall,
+        sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
+      });
+    dispatchers.update(initialThread, {
+      onData,
+      onError,
+      onFinish,
+      onToolCall,
+      sendAutomaticallyWhen,
+    });
+    return initialThread;
+  });
+  const [previousExternalThread, setPreviousExternalThread] =
+    useState(externalThread);
+  const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
 
-  if (!hasExternalThread) {
-    callbacksRef.current = {
-      onData: options.onData,
-      onError: options.onError,
-      onFinish: options.onFinish,
-      onToolCall: options.onToolCall,
-      sendAutomaticallyWhen: options.sendAutomaticallyWhen,
-    };
-  }
-
-  const threadOptions: ThreadInit<TMessage> | undefined = hasExternalThread
-    ? undefined
-    : {
-        ...options,
-        onData: (dataPart) => callbacksRef.current.onData?.(dataPart),
-        onError: (error) => callbacksRef.current.onError?.(error),
-        onFinish: (event) => callbacksRef.current.onFinish?.(event),
-        onToolCall: (event) => callbacksRef.current.onToolCall?.(event),
-        sendAutomaticallyWhen: (event) =>
-          callbacksRef.current.sendAutomaticallyWhen?.(event) ?? false,
-      };
-
-  const threadRef = useRef<AbstractThread<TMessage> | null>(null);
-  let thread = threadRef.current;
   if (
-    thread === null ||
-    (hasExternalThread && options.thread !== thread) ||
-    (!hasExternalThread && options.id !== undefined && thread.id !== options.id)
+    previousExternalThread !== externalThread ||
+    previousThreadId !== ownOptions?.id
   ) {
-    thread = hasExternalThread ? options.thread : new Thread(threadOptions);
-    threadRef.current = thread;
+    setPreviousExternalThread(externalThread);
+    setPreviousThreadId(ownOptions?.id);
+    setThread(
+      externalThread ??
+        new Thread({
+          ...ownOptions,
+          onData: dispatchers.onData,
+          onError: dispatchers.onError,
+          onFinish: dispatchers.onFinish,
+          onToolCall: dispatchers.onToolCall,
+          sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
+        })
+    );
   }
+
+  useIsomorphicLayoutEffect(() => {
+    dispatchers.update(thread, {
+      onData,
+      onError,
+      onFinish,
+      onToolCall,
+      sendAutomaticallyWhen,
+    });
+  }, [
+    dispatchers,
+    onData,
+    onError,
+    onFinish,
+    onToolCall,
+    sendAutomaticallyWhen,
+    thread,
+  ]);
 
   const snapshot = useThreadSnapshot(thread, options.experimental_throttle);
   const status = useThreadField(thread, "status");
@@ -204,13 +253,10 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
   const treeStatus = useThreadField(thread, "treeStatus");
 
   useEffect(() => {
-    if (options.resume) threadRef.current?.resumeStream();
-  }, [options.resume]);
-
-  const setMessages = useCallback<UseChatHelpers<TMessage>["setMessages"]>(
-    (messages) => threadRef.current?.setMessages(messages),
-    []
-  );
+    if (options.resume) {
+      thread.resumeStream();
+    }
+  }, [options.resume, thread]);
 
   return {
     addToolApprovalResponse: thread.addToolApprovalResponse,
@@ -223,7 +269,7 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
     regenerate: thread.regenerate,
     resumeStream: thread.resumeStream,
     sendMessage: thread.sendMessage,
-    setMessages,
+    setMessages: dispatchers.setMessages,
     status,
     stop: thread.stop,
     tree: {
@@ -255,4 +301,4 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
       stopRunForMessage: (messageId) => thread.stopRunForMessage(messageId),
     },
   };
-}
+};

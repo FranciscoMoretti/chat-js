@@ -8,16 +8,16 @@ config({
 });
 
 export default defineConfig({
-  schema: "./lib/db/schema.ts",
-  out: "./lib/db/migrations",
-  dialect: "postgresql",
   dbCredentials: {
     url: databaseConnection(
       {
-        DATABASE_URL: process.env.DATABASE_URL,
         DATABASE_MIGRATION_URL: process.env.DATABASE_MIGRATION_URL,
+        DATABASE_URL: process.env.DATABASE_URL,
       },
       "migration"
     ).url,
   },
+  dialect: "postgresql",
+  out: "./lib/db/migrations",
+  schema: "./lib/db/schema.ts",
 });

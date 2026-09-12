@@ -11,34 +11,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function mockModelsFetch() {
-  const fetchMock = vi.fn(() => {
-    return Promise.resolve(
+const mockModelsFetch = () => {
+  const fetchMock = vi.fn(() =>
+    Promise.resolve(
       Response.json({
         data: [
           {
+            created: 1_717_986_432,
             id: "openai/gpt-4o-mini",
             object: "model",
-            created: 1_717_986_432,
             owned_by: "openai",
           },
         ],
       })
-    );
-  });
+    )
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
-}
+};
 
-function getFetchCall(fetchMock: ReturnType<typeof mockModelsFetch>) {
-  return fetchMock.mock.calls[0] as unknown as [
+const getFetchCall = (fetchMock: ReturnType<typeof mockModelsFetch>) =>
+  fetchMock.mock.calls[0] as unknown as [
     string,
     {
       headers: Record<string, string>;
       next?: { revalidate: number };
     },
   ];
-}
 
 describe("LiteLLMGateway", () => {
   it("fetches models from the LiteLLM /v1/models endpoint", async () => {
@@ -59,16 +58,16 @@ describe("LiteLLMGateway", () => {
     });
     expect(models).toEqual([
       {
-        id: "openai/gpt-4o-mini",
-        object: "model",
-        created: 1_717_986_432,
-        owned_by: "openai",
-        name: "openai/gpt-4o-mini",
-        description: "",
         context_window: 0,
+        created: 1_717_986_432,
+        description: "",
+        id: "openai/gpt-4o-mini",
         max_tokens: 0,
-        type: "language",
+        name: "openai/gpt-4o-mini",
+        object: "model",
+        owned_by: "openai",
         pricing: {},
+        type: "language",
       },
     ]);
   });

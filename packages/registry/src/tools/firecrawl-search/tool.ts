@@ -1,5 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
-import { tool, type ToolExecutionOptions } from "ai";
+import { tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
@@ -10,6 +11,7 @@ import {
   searchQueriesSchema,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+
 const FIRECRAWL_COST_CENTS = 5;
 export const webSearch = tool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
@@ -20,9 +22,6 @@ Use for:
 
 Avoid:
 - Pulling content from a single known URL (use retrieveUrl instead)`,
-  inputSchema: z.object({
-    search_queries: searchQueriesSchema,
-  }),
   execute: async (
     {
       search_queries,
@@ -44,10 +43,8 @@ Avoid:
     const log = createModuleLogger("tools/web-search");
     log.debug({ queriesCount: search_queries.length }, "webSearch.execute");
     const result = await executeMultiQuerySearch({
-      search_queries: search_queries.map((query) => ({
-        query: query.query,
-        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
-      })),
+      completeTitle: "Firecrawl search complete",
+      dataStream,
       search: async ({ query, maxResults }) => {
         if (!env.FIRECRAWL_API_KEY) {
           throw new Error("Set FIRECRAWL_API_KEY to enable Firecrawl search.");
@@ -56,20 +53,22 @@ Avoid:
           apiKey: env.FIRECRAWL_API_KEY,
         }).search(query, {
           limit: maxResults,
-          timeout: 15_000,
           scrapeOptions: { formats: ["markdown"] },
+          timeout: 15_000,
         });
         return response.data.map((item) => ({
+          content: item.markdown ?? "",
           title: item.title ?? "",
           url: item.url ?? "",
-          content: item.markdown ?? "",
         }));
       },
-      dataStream,
+      search_queries: search_queries.map((query) => ({
+        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+        query: query.query,
+      })),
+      title: "Searching with Firecrawl",
       toolCallId,
       writeTopLevelUpdates,
-      title: "Searching with Firecrawl",
-      completeTitle: "Firecrawl search complete",
     });
 
     // Report API cost
@@ -77,4 +76,7 @@ Avoid:
 
     return result;
   },
+  inputSchema: z.object({
+    search_queries: searchQueriesSchema,
+  }),
 });

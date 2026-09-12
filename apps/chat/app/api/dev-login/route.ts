@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 
-async function serializeSignedCookie(
+const serializeSignedCookie = async (
   name: string,
   value: string,
   secret: string,
@@ -14,11 +14,11 @@ async function serializeSignedCookie(
     sameSite?: string;
     expires?: Date;
   }
-): Promise<string> {
+): Promise<string> => {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
   );
@@ -27,7 +27,7 @@ async function serializeSignedCookie(
     key,
     new TextEncoder().encode(value)
   );
-  const base64Sig = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  const base64Sig = btoa(String.fromCodePoint(...new Uint8Array(signature)));
   const signedValue = encodeURIComponent(`${value}.${base64Sig}`);
 
   let cookie = `${name}=${signedValue}`;
@@ -44,9 +44,9 @@ async function serializeSignedCookie(
     cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
   }
   return cookie;
-}
+};
 
-export async function GET() {
+export const GET = async () => {
   if (process.env.NODE_ENV !== "development") {
     return new Response("Not found", { status: 404 });
   }
@@ -59,10 +59,10 @@ export async function GET() {
     [devUser] = await db
       .insert(user)
       .values({
-        id,
         email: devEmail,
-        name: "Dev User",
         emailVerified: true,
+        id,
+        name: "Dev User",
       })
       .returning();
   }
@@ -72,12 +72,12 @@ export async function GET() {
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await db.insert(session).values({
-    id: crypto.randomUUID(),
-    userId: devUser.id,
-    token,
-    expiresAt,
     createdAt: now,
+    expiresAt,
+    id: crypto.randomUUID(),
+    token,
     updatedAt: now,
+    userId: devUser.id,
   });
 
   const signedSessionCookie = await serializeSignedCookie(
@@ -85,10 +85,10 @@ export async function GET() {
     token,
     env.AUTH_SECRET,
     {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
       expires: expiresAt,
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
     }
   );
 
@@ -96,7 +96,7 @@ export async function GET() {
   headers.append("Set-Cookie", signedSessionCookie);
 
   return new Response(null, {
-    status: 302,
     headers,
+    status: 302,
   });
-}
+};

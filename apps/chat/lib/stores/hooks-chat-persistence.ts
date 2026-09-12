@@ -6,16 +6,16 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 
 import type { ChatMessage } from "@/lib/ai/types";
 
-import {
-  type CustomChatStoreApi,
-  type CustomChatStoreState,
-  useCustomChatStoreApi,
+import { useCustomChatStoreApi } from "./custom-store-provider";
+import type {
+  CustomChatStoreApi,
+  CustomChatStoreState,
 } from "./custom-store-provider";
 
-function useChatPersistenceStore<T>(
+const useChatPersistenceStore = <T>(
   selector: (store: CustomChatStoreState) => T,
   equalityFn?: (a: T, b: T) => boolean
-): T {
+): T => {
   const store = useCustomChatStoreApi();
   if (!store) {
     throw new Error(
@@ -23,24 +23,22 @@ function useChatPersistenceStore<T>(
     );
   }
   return useStoreWithEqualityFn(store, selector, equalityFn);
-}
+};
 
-export function useIsChatPersisted(_chatId?: string) {
-  return useChatPersistenceStore((state) => state.isChatPersisted);
-}
+export const useIsChatPersisted = (_chatId?: string) =>
+  useChatPersistenceStore((state) => state.isChatPersisted);
 
-export function useChatPersistenceActions() {
-  return useChatPersistenceStore(
+export const useChatPersistenceActions = () =>
+  useChatPersistenceStore(
     (state) => ({
       setChatPersisted: state.setChatPersisted,
     }),
     shallow
   );
-}
 
-export function useRuntimeIsChatPersisted(
+export const useRuntimeIsChatPersisted = (
   store: CustomChatStoreApi<ChatMessage> | null | undefined
-) {
+) => {
   const [isPersisted, setIsPersisted] = useState(
     () => store?.getState().isChatPersisted ?? true
   );
@@ -56,4 +54,4 @@ export function useRuntimeIsChatPersisted(
   }, [store]);
 
   return isPersisted;
-}
+};

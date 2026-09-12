@@ -7,6 +7,8 @@
  * need to use are documented accordingly near the end.
  */
 
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { initTRPC, TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -44,7 +46,6 @@ export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -55,6 +56,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       },
     };
   },
+  transformer: superjson,
 });
 
 /**
@@ -62,7 +64,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  *
  * @see https://trpc.io/docs/server/server-side-calls
  */
-export const createCallerFactory = t.createCallerFactory;
+export const { createCallerFactory } = t;
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -90,7 +92,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   if (t._config.isDev) {
     // artificial delay in dev
     const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    await sleep(waitMs);
   }
 
   const result = await next();

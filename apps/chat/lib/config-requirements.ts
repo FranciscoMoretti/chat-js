@@ -13,14 +13,11 @@ export interface EnvRequirement {
   options: EnvVarName[][];
 }
 
-export function formatRequirementDescription(
+export const formatRequirementDescription = (
   requirement: EnvRequirement
-): string {
-  return (
-    requirement.description ??
-    requirement.options.map((option) => option.join(" + ")).join(" or ")
-  );
-}
+): string =>
+  requirement.description ??
+  requirement.options.map((option) => option.join(" + ")).join(" or ");
 
 export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
@@ -55,20 +52,16 @@ export const authEnvRequirements: Record<
   },
 };
 
-export function isRequirementSatisfied(
+export const isRequirementSatisfied = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
-): boolean {
-  return requirement.options.some((option) =>
-    option.every((name) => !!env[name])
-  );
-}
+): boolean =>
+  requirement.options.some((option) => option.every((name) => !!env[name]));
 
-export function getMissingRequirement(
+export const getMissingRequirement = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
-): string | null {
-  return isRequirementSatisfied(requirement, env)
+): string | null =>
+  isRequirementSatisfied(requirement, env)
     ? null
     : formatRequirementDescription(requirement);
-}

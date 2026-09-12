@@ -1,3 +1,1 @@
-import { pocketbase } from "files-sdk/pocketbase";
-
-export const createStorageAdapter = pocketbase;
+export { pocketbase as createStorageAdapter } from "files-sdk/pocketbase";

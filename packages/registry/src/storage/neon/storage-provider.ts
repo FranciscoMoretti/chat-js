@@ -1,3 +1,1 @@
-import { neon } from "files-sdk/neon";
-
-export const createStorageAdapter = neon;
+export { neon as createStorageAdapter } from "files-sdk/neon";

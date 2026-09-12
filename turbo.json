@@ -32,7 +32,10 @@
     "APP_URL",
     "ELECTRON_APP_URL",
     "PORT",
-    "VERCEL_URL"
+    "VERCEL_URL",
+    "PLAYWRIGHT",
+    "CI_PLAYWRIGHT",
+    "PLAYWRIGHT_TEST_BASE_URL"
   ],
   "tasks": {
     "dev": {
@@ -150,7 +153,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
-      "dependsOn": ["^test:types"],
+      "dependsOn": ["^test:types", "@chat-js/thread#test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -176,6 +179,10 @@
         "$TURBO_ROOT$/packages/registry/build.ts",
         "$TURBO_ROOT$/oxlint-baseline.json"
       ]
+    },
+    "@chat-js/thread#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
     }
   }
 }

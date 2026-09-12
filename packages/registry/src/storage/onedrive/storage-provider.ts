@@ -1,3 +1,1 @@
-import { onedrive } from "files-sdk/onedrive";
-
-export const createStorageAdapter = onedrive;
+export { onedrive as createStorageAdapter } from "files-sdk/onedrive";

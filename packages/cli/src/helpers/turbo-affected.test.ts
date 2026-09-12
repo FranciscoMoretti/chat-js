@@ -1,14 +1,16 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import pathModule from "node:path";
+
+const { dirname, join, resolve } = pathModule;
 
 const repoRoot = resolve(import.meta.dir, "../../../..");
 const turbo = join(repoRoot, "node_modules/.bin/turbo");
 let fixture: string;
 
-function run(command: string[]) {
-  return Bun.spawnSync(command, {
+const run = (command: string[]) =>
+  Bun.spawnSync(command, {
     cwd: fixture,
     env: {
       ...process.env,
@@ -16,21 +18,20 @@ function run(command: string[]) {
       TURBO_SCM_HEAD: "",
     },
   });
-}
 
-function git(...args: string[]) {
+const git = (...args: string[]) => {
   const result = run(["git", ...args]);
   if (result.exitCode !== 0) {
     throw new Error(result.stderr.toString());
   }
   return result.stdout.toString().trim();
-}
+};
 
 beforeAll(async () => {
   fixture = await mkdtemp(join(tmpdir(), "chatjs-turbo-affected-"));
   // Use the real task graph, workspace manifests, and lockfile without
   // installing dependencies or copying generated artifacts into the fixture.
-  for (const path of [
+  const files = [
     "turbo.json",
     "bun.lock",
     "package.json",
@@ -44,10 +45,16 @@ beforeAll(async () => {
       "packages/registry",
       "packages/gateways",
     ].map((workspace) => `${workspace}/package.json`),
-  ]) {
-    await mkdir(dirname(join(fixture, path)), { recursive: true });
-    await writeFile(join(fixture, path), await readFile(join(repoRoot, path)));
-  }
+  ];
+  await Promise.all(
+    files.map(async (path) => {
+      await mkdir(dirname(join(fixture, path)), { recursive: true });
+      await writeFile(
+        join(fixture, path),
+        await readFile(join(repoRoot, path))
+      );
+    })
+  );
   git("init", "-b", "main");
   git("config", "user.name", "Turbo CI test");
   git("config", "user.email", "turbo-test@example.invalid");
@@ -56,7 +63,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await rm(fixture, { recursive: true, force: true });
+  if (fixture) {
+    await rm(fixture, { force: true, recursive: true });
+  }
 });
 
 test.each([
@@ -88,7 +97,7 @@ test.each([
   const base = git("rev-parse", "HEAD");
   const target = join(fixture, path);
   await mkdir(dirname(target), { recursive: true });
-  const previous = await readFile(target, "utf8").catch(() => "");
+  const previous = await readFile(target, "utf-8").catch(() => "");
   await writeFile(target, `${previous}\n`);
   git("add", path);
   git("commit", "-m", `Change ${path}`);
@@ -124,10 +133,12 @@ test.each([
     }
   );
   expect(execution.exitCode, execution.stderr.toString()).toBe(0);
-  const plannedTasks = JSON.parse(execution.stdout.toString()).tasks.map(
-    (task: { taskId: string }) => task.taskId
+  const plannedTasks = new Set(
+    JSON.parse(execution.stdout.toString()).tasks.map(
+      (task: { taskId: string }) => task.taskId
+    )
   );
-  expect(plannedTasks.includes("@chat-js/cli#test:scaffold")).toBe(affected);
+  expect(plannedTasks.has("@chat-js/cli#test:scaffold")).toBe(affected);
   if (
     path.startsWith("apps/chat/") ||
     path.startsWith("apps/site/") ||
@@ -138,6 +149,6 @@ test.each([
     path === "scripts/sync-template.ts" ||
     path === "package.json"
   ) {
-    expect(plannedTasks.includes("@chat-js/cli#test:unit")).toBe(affected);
+    expect(plannedTasks.has("@chat-js/cli#test:unit")).toBe(affected);
   }
 });

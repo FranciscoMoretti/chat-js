@@ -11,7 +11,7 @@ const app = env.FIRECRAWL_API_KEY
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
 
-function parseUrl(url: string): URL | null {
+const parseUrl = (url: string): URL | null => {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
@@ -21,11 +21,9 @@ function parseUrl(url: string): URL | null {
   } catch {
     return null;
   }
-}
+};
 
-function redactUrl(url: URL): string {
-  return `${url.origin}${url.pathname}`;
-}
+const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
 
 export const retrieveUrl = tool({
   description: `Fetch structured information from a single URL via Firecrawl.
@@ -35,9 +33,6 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  inputSchema: z.object({
-    url: z.string().describe("The URL to retrieve the information from."),
-  }),
   execute: async ({ url }: { url: string }) => {
     try {
       if (!app) {
@@ -67,13 +62,13 @@ Avoid:
       }
 
       const schema = z.object({
-        title: z.string(),
         content: z.string(),
         description: z.string(),
+        title: z.string(),
       });
 
-      let title = content.metadata.title;
-      let description = content.metadata.description;
+      const { metadata } = content;
+      let { description, title } = metadata;
       let extractedContent = content.markdown;
 
       if (!(title && description && extractedContent)) {
@@ -84,20 +79,20 @@ Avoid:
         });
 
         if (extractResult.success && extractResult.data) {
-          title = title || extractResult.data.title;
-          description = description || extractResult.data.description;
-          extractedContent = extractedContent || extractResult.data.content;
+          title ||= extractResult.data.title;
+          description ||= extractResult.data.description;
+          extractedContent ||= extractResult.data.content;
         }
       }
 
       return {
         results: [
           {
-            title: title || "Untitled",
             content: extractedContent || "",
-            url: redactedUrl,
             description: description || "",
-            language: content.metadata.language,
+            language: metadata.language,
+            title: title || "Untitled",
+            url: redactedUrl,
           },
         ],
       };
@@ -110,4 +105,7 @@ Avoid:
       return { error: "Failed to retrieve content" };
     }
   },
+  inputSchema: z.object({
+    url: z.string().describe("The URL to retrieve the information from."),
+  }),
 });

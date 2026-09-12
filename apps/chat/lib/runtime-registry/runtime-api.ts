@@ -2,10 +2,8 @@
 
 import { useMemo } from "react";
 
-import {
-  type CreateRuntimeInput,
-  useRuntimeRegistry,
-} from "./runtime-registry-provider";
+import { useRuntimeRegistry } from "./runtime-registry-provider";
+import type { CreateRuntimeInput } from "./runtime-registry-provider";
 
 export interface RuntimeActions<TData = unknown> {
   ensureRuntime: (input: CreateRuntimeInput<TData>) => void;

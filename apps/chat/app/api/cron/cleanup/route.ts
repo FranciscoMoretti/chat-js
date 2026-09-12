@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
@@ -6,39 +7,9 @@ import { env } from "@/lib/env";
 import { deleteFilesByUrls, listFiles } from "@/lib/file-storage";
 import { isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
 
-const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000; // 4 hours
+const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000;
 
-export async function GET(request: NextRequest) {
-  try {
-    // Verify this is being called by Vercel cron
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const results = {
-      orphanedAttachments: await cleanupOrphanedAttachments(),
-      // Add other cleanup tasks here in the future
-    };
-
-    return NextResponse.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-      results,
-    });
-  } catch (error) {
-    console.error("Cleanup cron job failed:", error);
-    return NextResponse.json(
-      {
-        error: "Cleanup failed",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-async function cleanupOrphanedAttachments() {
+const cleanupOrphanedAttachments = async () => {
   // Skip cleanup if neither image tool nor attachments is enabled
   const imageGenerationEnabled = config.ai.tools.image.enabled;
   const attachmentsEnabled = config.features.attachments;
@@ -90,4 +61,34 @@ async function cleanupOrphanedAttachments() {
     console.error("Failed to cleanup orphaned attachments:", error);
     throw error;
   }
-}
+};
+
+export const GET = async (request: NextRequest) => {
+  try {
+    // Verify this is being called by Vercel cron.
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const results = {
+      // Add other cleanup tasks here in the future.
+      orphanedAttachments: await cleanupOrphanedAttachments(),
+    };
+
+    return NextResponse.json({
+      results,
+      success: true,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Cleanup cron job failed:", error);
+    return NextResponse.json(
+      {
+        details: error instanceof Error ? error.message : "Unknown error",
+        error: "Cleanup failed",
+      },
+      { status: 500 }
+    );
+  }
+};

@@ -2,15 +2,14 @@ import type { Sandbox } from "@vercel/sandbox";
 
 import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
-const WHITESPACE_REGEX = /\s+/;
-const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;
+const WHITESPACE_REGEX = /\s+/u;
+const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
-function packageName(spec: string): string {
-  return spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
-}
+const packageName = (spec: string): string =>
+  spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
 
-async function installBasePackages(
+const installBasePackages = async (
   sandbox: Sandbox,
   basePackages: readonly string[],
   requestId: string,
@@ -18,10 +17,10 @@ async function installBasePackages(
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
-}> {
+}> => {
   const installStep = await sandbox.runCommand({
-    cmd: "pip",
     args: ["install", ...basePackages],
+    cmd: "pip",
   });
   if (installStep.exitCode !== 0) {
     const installStderr = await installStep.stderr();
@@ -30,18 +29,18 @@ async function installBasePackages(
       "base package installation failed"
     );
     return {
-      success: false,
       result: {
-        message: `Failed to install base packages: ${installStderr}`,
         chart: "",
+        message: `Failed to install base packages: ${installStderr}`,
       },
+      success: false,
     };
   }
   log.info({ requestId }, "base packages installed");
   return { success: true };
-}
+};
 
-async function processExtraPackages(
+const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
   sandbox: Sandbox,
@@ -53,7 +52,7 @@ async function processExtraPackages(
     success: boolean;
     result?: CodeExecutionResult;
   };
-}> {
+}> => {
   const basePackageNames = new Set(basePackages.map((p) => p.toLowerCase()));
   const lines = code.split("\n");
   const pipLines = lines.filter((line) =>
@@ -78,27 +77,27 @@ async function processExtraPackages(
   }
 
   log.info(
-    { requestId, packageCount: extraPackages.length },
+    { packageCount: extraPackages.length, requestId },
     "installing extra packages"
   );
   const dynamicInstall = await sandbox.runCommand({
-    cmd: "pip",
     args: ["install", ...extraPackages],
+    cmd: "pip",
   });
   if (dynamicInstall.exitCode !== 0) {
     const stderr = await dynamicInstall.stderr();
     log.error(
-      { requestId, exitCode: dynamicInstall.exitCode },
+      { exitCode: dynamicInstall.exitCode, requestId },
       "dynamic package installation failed"
     );
     return {
       codeToRun: code,
       installResult: {
-        success: false,
         result: {
-          message: `Failed to install packages: ${stderr}`,
           chart: "",
+          message: `Failed to install packages: ${stderr}`,
         },
+        success: false,
       },
     };
   }
@@ -107,10 +106,9 @@ async function processExtraPackages(
     codeToRun: codeWithoutPipLines,
     installResult: { success: true },
   };
-}
+};
 
-function createWrappedCode(codeToRun: string, chartPath: string): string {
-  return `
+const createWrappedCode = (codeToRun: string, chartPath: string): string => `
 import sys
 import json
 import traceback
@@ -161,9 +159,8 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
-}
 
-async function parseExecutionOutput(execResult: {
+const parseExecutionOutput = async (execResult: {
   stdout: () => Promise<string>;
   exitCode: number;
 }): Promise<{
@@ -173,7 +170,7 @@ async function parseExecutionOutput(execResult: {
     success: boolean;
     error?: { name: string; value: string; traceback: string };
   };
-}> {
+}> => {
   const stdout = await execResult.stdout();
   let execInfo: {
     success: boolean;
@@ -206,43 +203,41 @@ async function parseExecutionOutput(execResult: {
     outputText = stdout ?? "";
     if (execResult.exitCode !== 0) {
       execInfo = {
-        success: false,
         error: {
           name: "SandboxExecutionError",
-          value: "Execution completed without a parsable status trailer",
           traceback: "",
+          value: "Execution completed without a parsable status trailer",
         },
+        success: false,
       };
     }
   }
 
-  return { outputText, chartData, execInfo };
-}
+  return { chartData, execInfo, outputText };
+};
 
-async function checkForChart(
+const checkForChart = async (
   sandbox: Sandbox,
   chartPath: string,
   requestId: string,
   log: CodeExecutionContext["log"]
-): Promise<{ base64: string; format: string } | undefined> {
+): Promise<{ base64: string; format: string } | undefined> => {
   const chartCheck = await sandbox.runCommand({
-    cmd: "test",
     args: ["-f", chartPath],
+    cmd: "test",
   });
   if (chartCheck.exitCode === 0) {
-    const b64 = await (
-      await sandbox.runCommand({
-        cmd: "base64",
-        args: ["-w", "0", chartPath],
-      })
-    ).stdout();
+    const base64Command = await sandbox.runCommand({
+      args: ["-w", "0", chartPath],
+      cmd: "base64",
+    });
+    const b64 = await base64Command.stdout();
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
-  return;
-}
+};
 
-function buildResponseMessage({
+const buildResponseMessage = ({
   outputText,
   stderr,
   execInfo,
@@ -257,7 +252,7 @@ function buildResponseMessage({
   };
   log: CodeExecutionContext["log"];
   requestId: string;
-}): string {
+}): string => {
   let message = "";
 
   if (outputText) {
@@ -268,18 +263,18 @@ function buildResponseMessage({
   }
   if (execInfo.error) {
     message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
-    log.error({ requestId, error: execInfo.error }, "python execution error");
+    log.error({ error: execInfo.error, requestId }, "python execution error");
   }
 
   return message;
-}
+};
 
-export async function executePythonInSandbox({
+export const executePythonInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> {
+}: CodeExecutionContext): Promise<CodeExecutionResult> => {
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -296,7 +291,7 @@ export async function executePythonInSandbox({
     log
   );
   if (!baseInstallResult.success) {
-    return baseInstallResult.result ?? { message: "Unknown error", chart: "" };
+    return baseInstallResult.result ?? { chart: "", message: "Unknown error" };
   }
 
   const { codeToRun, installResult } = await processExtraPackages(
@@ -307,34 +302,34 @@ export async function executePythonInSandbox({
     log
   );
   if (!installResult.success) {
-    return installResult.result ?? { message: "Unknown error", chart: "" };
+    return installResult.result ?? { chart: "", message: "Unknown error" };
   }
 
   const wrappedCode = createWrappedCode(codeToRun, chartPath);
   const execResult = await sandbox.runCommand({
-    cmd: "python3",
     args: ["-c", wrappedCode],
+    cmd: "python3",
   });
 
   const { outputText, chartData, execInfo } =
     await parseExecutionOutput(execResult);
 
   const message = buildResponseMessage({
-    outputText,
-    stderr: await execResult.stderr(),
     execInfo,
     log,
+    outputText,
     requestId,
+    stderr: await execResult.stderr(),
   });
 
   if (chartData) {
     log.info({ requestId }, "interactive chart data returned");
-    return { message: message.trim(), chart: chartData };
+    return { chart: chartData, message: message.trim() };
   }
 
   const chartOut = await checkForChart(sandbox, chartPath, requestId, log);
   return {
-    message: message.trim(),
     chart: chartOut ?? "",
+    message: message.trim(),
   };
-}
+};

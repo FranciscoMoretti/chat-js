@@ -1,5 +1,6 @@
 import type { AppModelId } from "@/lib/ai/app-models";
-import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type { ChatMessage } from "@/lib/ai/types";
 
 export type RetryMessageResult =
   | {
@@ -18,13 +19,13 @@ export type RetryMessageResult =
         | "parent_not_user";
     };
 
-export function getRetryMessageInput({
+export const getRetryMessageInput = ({
   messageId,
   messages,
 }: {
   messageId: string;
   messages: ChatMessage[];
-}): RetryMessageResult {
+}): RetryMessageResult => {
   const currentMessage = messages.find((message) => message.id === messageId);
   if (!currentMessage) {
     return { ok: false, reason: "message_not_found" };
@@ -62,4 +63,4 @@ export function getRetryMessageInput({
     parallelIndex: currentMessage.metadata.parallelIndex ?? null,
     selectedModelId: retryModelId as AppModelId,
   };
-}
+};

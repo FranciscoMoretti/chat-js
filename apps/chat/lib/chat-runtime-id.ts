@@ -7,34 +7,28 @@ export interface ParsedChatRuntimeId {
   threadId: string;
 }
 
-function encodeRuntimeIdPart(value: string) {
-  return encodeURIComponent(value);
-}
+const encodeRuntimeIdPart = (value: string) => encodeURIComponent(value);
 
-function decodeRuntimeIdPart(value: string) {
-  return decodeURIComponent(value);
-}
+const decodeRuntimeIdPart = (value: string) => decodeURIComponent(value);
 
-export function createChatThreadRuntimeId({
+export const createChatThreadRuntimeId = ({
   chatId,
   threadId,
 }: {
   chatId: string;
   threadId: string;
-}): ChatRuntimeId {
-  return `chat:${encodeRuntimeIdPart(chatId)}:thread:${encodeRuntimeIdPart(threadId)}`;
-}
+}): ChatRuntimeId =>
+  `chat:${encodeRuntimeIdPart(chatId)}:thread:${encodeRuntimeIdPart(threadId)}`;
 
-export function createMainChatRuntimeId(chatId: string): ChatRuntimeId {
-  return createChatThreadRuntimeId({
+export const createMainChatRuntimeId = (chatId: string): ChatRuntimeId =>
+  createChatThreadRuntimeId({
     chatId,
     threadId: MAIN_CHAT_THREAD_ID,
   });
-}
 
-export function parseChatRuntimeId(
+export const parseChatRuntimeId = (
   runtimeId: string | null | undefined
-): ParsedChatRuntimeId | null {
+): ParsedChatRuntimeId | null => {
   if (!runtimeId) {
     return null;
   }
@@ -59,4 +53,4 @@ export function parseChatRuntimeId(
   } catch {
     return null;
   }
-}
+};

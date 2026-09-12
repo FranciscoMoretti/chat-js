@@ -1,21 +1,14 @@
 import type { FileUIPart, ModelMessage, TextPart } from "ai";
-import { type ClassValue, clsx } from "clsx";
+import { clsx } from "clsx";
+import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 
-import type { Document } from "@/lib/db/schema";
-
-import { ChatSDKError, type ErrorCode } from "./ai/errors";
+import { ChatSDKError } from "./ai/errors";
+import type { ErrorCode } from "./ai/errors";
 import type { Attachment, ChatMessage } from "./ai/types";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-interface ApplicationError extends Error {
-  info: string;
-  status: number;
-}
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export const fetchWithErrorHandlers = async (
   ...[input, init]: Parameters<typeof fetch>
@@ -38,90 +31,9 @@ export const fetchWithErrorHandlers = async (
   }
 };
 
-function findLastArtifact(
-  messages: Array<ChatMessage>
-): { messageIndex: number; toolCallId: string } | null {
-  const allArtifacts: Array<{ messageIndex: number; toolCallId: string }> = [];
+export const generateUUID = (): string => uuidv7();
 
-  messages.forEach((msg, messageIndex) => {
-    msg.parts?.forEach((part) => {
-      if (
-        (part.type === "tool-createTextDocument" ||
-          part.type === "tool-createCodeDocument" ||
-          part.type === "tool-createSheetDocument" ||
-          part.type === "tool-editTextDocument" ||
-          part.type === "tool-editCodeDocument" ||
-          part.type === "tool-editSheetDocument" ||
-          part.type === "tool-deepResearch") &&
-        part.state === "output-available"
-      ) {
-        allArtifacts.push({
-          messageIndex,
-          toolCallId: part.toolCallId,
-        });
-      }
-    });
-  });
-
-  return allArtifacts[allArtifacts.length - 1] || null;
-}
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    const error = new Error(
-      "An error occurred while fetching the data."
-    ) as ApplicationError;
-
-    error.info = await res.json();
-    error.status = res.status;
-
-    throw error;
-  }
-
-  return res.json();
-};
-
-function getLocalStorage(key: string) {
-  if (typeof window !== "undefined") {
-    return JSON.parse(localStorage.getItem(key) || "[]");
-  }
-  return [];
-}
-
-export function generateUUID(): string {
-  return uuidv7();
-}
-
-function getMostRecentUserMessage(messages: Array<ChatMessage>) {
-  const userMessages = messages.filter((message) => message.role === "user");
-  return userMessages.at(-1);
-}
-
-function getDocumentTimestampByIndex(
-  documents: Array<Document>,
-  index: number
-) {
-  if (!documents) return new Date();
-  if (index > documents.length) return new Date();
-
-  return documents[index].createdAt;
-}
-
-function getTrailingMessageId({
-  messages,
-}: {
-  messages: Array<ChatMessage>;
-}): string | null {
-  const trailingMessage = messages.at(-1);
-
-  if (!trailingMessage) return null;
-
-  return trailingMessage.id;
-}
-
-export function getLanguageFromFileName(fileName: string): string {
+export const getLanguageFromFileName = (fileName: string): string => {
   const extension = fileName.split(".").pop()?.toLowerCase() || "";
 
   const extensionToLanguage: Record<string, string> = {
@@ -181,28 +93,29 @@ export function getLanguageFromFileName(fileName: string): string {
     R: "r",
   };
 
-  return extensionToLanguage[extension] || "python"; // Default to python
-}
+  // Default to Python.
+  return extensionToLanguage[extension] || "python";
+};
 
-export function getAttachmentsFromMessage(message: ChatMessage): Attachment[] {
-  return message.parts
+export const getAttachmentsFromMessage = (message: ChatMessage): Attachment[] =>
+  message.parts
     .filter<FileUIPart>((part) => part.type === "file")
     .map((part) => ({
+      contentType: part.mediaType,
       name: part.filename || "",
       url: part.url,
-      contentType: part.mediaType,
     }));
-}
 
-export function getTextContentFromMessage(message: ChatMessage): string {
-  return message.parts
+export const getTextContentFromMessage = (message: ChatMessage): string =>
+  message.parts
     .filter<TextPart>((part) => part.type === "text")
     .map((part) => part.text)
     .join("");
-}
 
-export function getTextContentFromModelMessage(message: ModelMessage): string {
-  const content = message.content;
+export const getTextContentFromModelMessage = (
+  message: ModelMessage
+): string => {
+  const { content } = message;
 
   if (typeof content === "string") {
     return content;
@@ -216,4 +129,4 @@ export function getTextContentFromModelMessage(message: ModelMessage): string {
       return "";
     })
     .join("\n");
-}
+};

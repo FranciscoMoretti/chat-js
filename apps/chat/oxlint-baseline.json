@@ -7,7 +7,6 @@
         "components/message-parts.tsx",
         "components/parallel-response-cards.tsx",
         "components/research-task.tsx",
-        "evals/setup.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/stores/base/hooks.ts"
       ],
@@ -37,11 +36,7 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/use-chat.ts",
-        "lib/utils.ts"
-      ],
+      "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "curly": "off"
       }
@@ -54,7 +49,6 @@
     },
     {
       "files": [
-        "lib/ai/stream-errors.ts",
         "lib/ai/text-splitter.ts",
         "lib/env-schema.ts",
         "providers/session-provider.tsx"
@@ -67,14 +61,6 @@
       "files": [
         "app/(auth)/device-login/page.tsx",
         "app/(auth)/login/page.tsx",
-        "app/(chat)/actions.ts",
-        "app/(chat)/api/chat/\\[id\\]/stream/route.ts",
-        "app/(chat)/api/chat/add-explicit-tool-request-to-messages.ts",
-        "app/(chat)/api/chat/filter-reasoning-parts.ts",
-        "app/(chat)/api/chat/get-recent-generated-image.ts",
-        "app/(chat)/api/chat/get-thread-up-to-message-id.ts",
-        "app/(chat)/api/chat/route.ts",
-        "app/(chat)/api/files/upload/route.ts",
         "app/(chat)/chat-providers.tsx",
         "app/(chat)/chat-route-host.tsx",
         "app/(chat)/layout.tsx",
@@ -84,11 +70,6 @@
         "app/(chat)/settings/models/page.tsx",
         "app/(chat)/share/\\[id\\]/page.tsx",
         "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
-        "app/actions/get-chat-models.ts",
-        "app/api/chat-model/route.ts",
-        "app/api/cron/cleanup/route.ts",
-        "app/api/dev-login/route.ts",
-        "app/api/mcp/oauth/callback/route.ts",
         "app/terms/page.tsx",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/message.tsx",
@@ -163,8 +144,6 @@
         "components/part/document-preview.tsx",
         "components/part/document-tool.tsx",
         "components/part/dynamic-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/message-reasoning.tsx",
         "components/part/read-document.tsx",
         "components/part/tool-part.tsx",
@@ -213,8 +192,6 @@
         "components/toolbar.tsx",
         "components/ui/alert-dialog.tsx",
         "components/ui/badge.tsx",
-        "components/ui/button-group.tsx",
-        "components/ui/button.tsx",
         "components/ui/card.tsx",
         "components/ui/command.tsx",
         "components/ui/dialog.tsx",
@@ -225,7 +202,6 @@
         "components/ui/form.tsx",
         "components/ui/hover-card.tsx",
         "components/ui/input-group.tsx",
-        "components/ui/input.tsx",
         "components/ui/label.tsx",
         "components/ui/popover.tsx",
         "components/ui/progress.tsx",
@@ -235,7 +211,6 @@
         "components/ui/skeleton.tsx",
         "components/ui/slider.tsx",
         "components/ui/spinner.tsx",
-        "components/ui/toggle.tsx",
         "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
@@ -244,144 +219,52 @@
         "components/with-skeleton.tsx",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "hooks/use-auto-focus.ts",
-        "hooks/use-chat-system-initial-state.ts",
-        "hooks/use-image-load-error.ts",
-        "hooks/use-media-query.tsx",
-        "hooks/use-mobile.ts",
-        "hooks/use-mounted.ts",
-        "hooks/use-navigate-to-message.ts",
-        "hooks/use-navigate-to-sibling.ts",
-        "hooks/use-shared-chat.ts",
-        "instrumentation.ts",
         "lib/ai/active-gateway.ts",
-        "lib/ai/app-models.ts",
         "lib/ai/complete-data-part.test.ts",
-        "lib/ai/complete-data-part.ts",
         "lib/ai/completion-queue.test.ts",
-        "lib/ai/completion-queue.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/determine-explicitly-requested-tools.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
-        "lib/ai/followup-suggestions.ts",
-        "lib/ai/gateways/fallback-models.ts",
-        "lib/ai/mcp-name-id.ts",
-        "lib/ai/mcp/cache.ts",
         "lib/ai/mcp/mcp-client.ts",
-        "lib/ai/models.ts",
-        "lib/ai/stream-errors.ts",
-        "lib/ai/to-model-data.ts",
-        "lib/ai/token-utils.ts",
-        "lib/ai/tool-renderer-registry.ts",
-        "lib/ai/types.ts",
-        "lib/ai/usage-token-details.ts",
         "lib/anonymous-session-client.ts",
-        "lib/anonymous-session-server.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
-        "lib/assistant-request-id.ts",
         "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/cancellation-aware-chat-transport.ts",
         "lib/chat-route.ts",
-        "lib/chat-runtime-id.ts",
         "lib/chat-tree-actions.test.ts",
-        "lib/chat-tree-actions.ts",
         "lib/clone-messages.test.ts",
         "lib/clone-messages.ts",
-        "lib/config-requirements.ts",
-        "lib/config-schema.ts",
-        "lib/create-anonymous-session.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/data-stream.ts",
         "lib/db/backfill-parts.ts",
-        "lib/db/connection.ts",
-        "lib/db/credits.ts",
-        "lib/db/encrypted-text.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
-        "lib/draft-chat-submission.ts",
         "lib/editor/config.ts",
-        "lib/electron-auth.ts",
-        "lib/file-content-response.ts",
-        "lib/file-storage.ts",
-        "lib/file-url.ts",
         "lib/files/upload-prep.ts",
         "lib/gated-chat-transport.test.ts",
-        "lib/gated-chat-transport.ts",
-        "lib/logger.ts",
         "lib/message-conversion.ts",
         "lib/parallel-chat-requests.ts",
-        "lib/playwright-test-environment.ts",
-        "lib/project-icons.ts",
-        "lib/provisional-chat-confirmations.ts",
-        "lib/redis/client.ts",
-        "lib/redis/connection.ts",
         "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/social-auth.ts",
         "lib/start-provisional-chat.ts",
         "lib/stop-response.test.ts",
-        "lib/stop-response.ts",
         "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/stores/custom-store-provider.tsx",
-        "lib/stores/hooks-base.ts",
-        "lib/stores/hooks-chat-persistence.ts",
-        "lib/stores/hooks-data-stream.ts",
-        "lib/stores/hooks-message-parts.ts",
-        "lib/stores/hooks-threads.ts",
         "lib/stores/with-message-parts.ts",
         "lib/stores/with-thread-state.ts",
         "lib/stores/with-tracing.ts",
-        "lib/stores/zustand-thread-state.test.ts",
         "lib/thread-utils.test.ts",
         "lib/thread-utils.ts",
         "lib/url-utils.tsx",
-        "lib/url.ts",
-        "lib/utils.ts",
-        "lib/utils/download-assets.ts",
-        "lib/utils/message-mapping.ts",
-        "lib/utils/message-part-validators.ts",
-        "lib/utils/rate-limit.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "providers/parse-chat-id-from-pathname.ts",
         "providers/session-provider.tsx",
-        "proxy.ts",
-        "scripts/check-db.ts",
-        "scripts/check-env.ts",
-        "scripts/check-redis.ts",
-        "scripts/fetch-models.ts",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/retrieve-url/renderer.tsx",
-        "tools/chatjs/retrieve-url/tool.ts",
         "tools/chatjs/tavily-search/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/javascript.ts",
-        "tools/chatjs/vercel-code-execution/python.ts",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/sandbox.ts",
-        "tools/chatjs/word-count/renderer.tsx",
-        "tools/platform/deep-research/configuration.ts",
-        "tools/platform/deep-research/pipeline.ts",
-        "tools/platform/deep-research/prompts.ts",
-        "tools/platform/deep-research/researcher-agent.ts",
-        "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/deep-research/types.ts",
-        "tools/platform/deep-research/utils.ts",
-        "tools/platform/documents/types.ts",
-        "tools/platform/generate-image.ts",
-        "tools/platform/generate-video.ts",
-        "tools/platform/search-presentation.ts",
-        "tools/platform/steps/multi-query-web-search.ts",
-        "tools/platform/tools.ts",
         "trpc/react.tsx",
-        "trpc/routers/mcp.router.ts",
         "trpc/server.tsx"
       ],
       "rules": {
@@ -390,12 +273,8 @@
     },
     {
       "files": [
-        "app/(chat)/api/chat/route.ts",
         "app/(chat)/chat-providers.tsx",
         "app/(chat)/chat-route-host.tsx",
-        "app/api/chat-model/route.ts",
-        "app/api/cron/cleanup/route.ts",
-        "app/api/mcp/oauth/callback/route.ts",
         "components/ai-elements/artifact.tsx",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/context.tsx",
@@ -433,63 +312,24 @@
         "components/toolbar.tsx",
         "components/ui/alert.tsx",
         "components/ui/badge.tsx",
-        "components/ui/button-group.tsx",
-        "components/ui/button.tsx",
         "components/ui/empty.tsx",
         "components/ui/form.tsx",
         "components/ui/input-group.tsx",
         "components/ui/sidebar.tsx",
-        "components/ui/toggle.tsx",
         "hooks/chat-sync-hooks.ts",
-        "lib/ai/complete-data-part.ts",
-        "lib/ai/core-chat-agent.ts",
-        "lib/ai/followup-suggestions.ts",
-        "lib/ai/gateway.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
-        "lib/ai/providers.ts",
         "lib/app-chat-runtime.ts",
-        "lib/application-thread.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
-        "lib/chat-tree-actions.ts",
-        "lib/config.ts",
-        "lib/create-anonymous-session.ts",
-        "lib/data-stream.ts",
-        "lib/db/mcp-queries.ts",
-        "lib/db/queries.ts",
         "lib/editor/config.ts",
-        "lib/file-storage.ts",
-        "lib/logger.ts",
-        "lib/message-conversion.ts",
-        "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/social-auth.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
         "lib/stores/custom-store-provider.tsx",
-        "lib/stores/hooks-base.ts",
-        "lib/stores/hooks-chat-persistence.ts",
-        "lib/stores/hooks-data-stream.ts",
-        "lib/stores/hooks-message-parts.ts",
-        "lib/stores/hooks-threads.ts",
         "lib/stores/with-thread-state.ts",
-        "lib/utils.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "tools/chatjs/tavily-search/tool.test.ts",
-        "tools/chatjs/tavily-search/tool.ts",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/tool.ts",
-        "tools/platform/deep-research/deep-research.ts",
-        "tools/platform/deep-research/pipeline.ts",
-        "tools/platform/deep-research/researcher-agent.ts",
-        "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/generate-image.ts",
-        "tools/platform/generate-video.ts",
-        "tools/platform/tools.ts",
         "trpc/react.tsx",
-        "trpc/routers/mcp.router.ts",
         "trpc/server.tsx"
       ],
       "rules": {
@@ -500,11 +340,9 @@
       "files": [
         "components/part/tool-part.test.tsx",
         "lib/clone-messages.test.ts",
-        "lib/config-schema.ts",
         "lib/db/queries.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
-        "lib/utils/download-assets.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
       ],
       "rules": {
@@ -514,7 +352,6 @@
     {
       "files": [
         "components/project-chat-item.tsx",
-        "evalite.config.ts",
         "tools/chatjs/tavily-search/renderer.tsx"
       ],
       "rules": {
@@ -534,19 +371,9 @@
       }
     },
     {
-      "files": [
-        "tools/chatjs/vercel-code-execution/tool.ts",
-        "trpc/query-client.ts",
-        "trpc/react.tsx"
-      ],
+      "files": ["trpc/react.tsx"],
       "rules": {
         "import/no-named-as-default": "off"
-      }
-    },
-    {
-      "files": ["trpc/query-client.ts"],
-      "rules": {
-        "import/no-named-as-default-member": "off"
       }
     },
     {
@@ -583,7 +410,6 @@
         "components/context-usage.tsx",
         "components/image-modal.tsx",
         "components/model-selector.tsx",
-        "components/part/generate-image.tsx",
         "components/response-error-message.tsx",
         "components/ui/breadcrumb.tsx",
         "components/ui/button-group.tsx",
@@ -598,12 +424,6 @@
       "files": ["components/model-selector.tsx"],
       "rules": {
         "jsx-a11y/role-has-required-aria-props": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/retrieve-url/tool.ts"],
-      "rules": {
-        "logical-assignment-operators": "off"
       }
     },
     {
@@ -626,8 +446,7 @@
         "components/ai-elements/message.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/favicon.tsx",
-        "components/image-modal.tsx",
-        "components/part/generate-image.tsx"
+        "components/image-modal.tsx"
       ],
       "rules": {
         "nextjs/no-img-element": "off"
@@ -655,7 +474,6 @@
     },
     {
       "files": [
-        "lib/ai/stream-errors.ts",
         "lib/ai/text-splitter.ts",
         "lib/env-schema.ts",
         "providers/session-provider.tsx"
@@ -666,21 +484,14 @@
     },
     {
       "files": [
-        "app/(chat)/api/chat/add-explicit-tool-request-to-messages.ts",
-        "app/(chat)/api/chat/route.ts",
-        "app/api/chat-model/route.ts",
-        "app/api/cron/cleanup/route.ts",
         "app/layout.tsx",
-        "chat.config.ts",
         "components/ai-elements/prompt-input.tsx",
         "components/diffview.tsx",
         "components/favicon-group.tsx",
         "components/keyboard-shortcuts.tsx",
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
-        "evals/chat-agent.eval.ts",
         "lib/ai/eval-agent.ts",
-        "lib/ai/mcp-name-id.ts",
         "lib/ai/mcp/mcp-client.ts",
         "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/ai/token-utils.test.ts",
@@ -692,22 +503,11 @@
         "lib/message-conversion.ts",
         "lib/stores/base/hooks.ts",
         "lib/types/anonymous.ts",
-        "lib/utils.ts",
-        "playwright.config.ts",
         "providers/chat-input-provider.tsx",
-        "tools/chatjs/vercel-code-execution/tool.ts",
-        "tools/platform/generate-video.ts",
-        "tools/platform/search-presentation.ts",
         "trpc/server.tsx"
       ],
       "rules": {
         "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/get-weather/renderer.tsx"],
-      "rules": {
-        "no-loss-of-precision": "off"
       }
     },
     {
@@ -727,21 +527,14 @@
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "lib/ai/token-utils.test.ts",
-        "lib/ai/token-utils.ts",
-        "lib/clone-messages.ts",
-        "lib/stores/hooks-message-parts.ts"
+        "lib/clone-messages.ts"
       ],
       "rules": {
         "no-plusplus": "off"
       }
     },
     {
-      "files": [
-        "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/gated-chat-transport.test.ts",
-        "lib/redis/client.test.ts",
-        "trpc/init.ts"
-      ],
+      "files": ["lib/redis/client.test.ts"],
       "rules": {
         "no-promise-executor-return": "off"
       }
@@ -759,9 +552,7 @@
         "components/model-selector.tsx",
         "components/parallel-response-cards.tsx",
         "components/ui/sidebar.tsx",
-        "lib/file-storage.ts",
-        "lib/stores/with-thread-state.ts",
-        "tools/platform/steps/multi-query-web-search.ts"
+        "lib/stores/with-thread-state.ts"
       ],
       "rules": {
         "no-shadow": "off"
@@ -769,8 +560,6 @@
     },
     {
       "files": [
-        "app/(chat)/api/files/upload/route.ts",
-        "app/api/chat-model/route.ts",
         "components/ai-elements/message.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/artifact-actions.tsx",
@@ -781,10 +570,8 @@
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
         "hooks/chat-sync-hooks.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
-        "lib/stores/with-tracing.ts",
-        "lib/utils.ts"
+        "lib/stores/with-tracing.ts"
       ],
       "rules": {
         "no-unused-vars": "off"
@@ -794,14 +581,12 @@
       "files": [
         "app/(auth)/device-login/page.tsx",
         "app/(auth)/login/page.tsx",
-        "app/(chat)/api/chat/route.ts",
         "app/(chat)/layout.tsx",
         "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
         "app/(chat)/settings/connectors/page.tsx",
         "app/(chat)/settings/layout.tsx",
         "app/(chat)/settings/models/page.tsx",
         "app/(chat)/share/\\[id\\]/page.tsx",
-        "app/api/cron/cleanup/route.ts",
         "components/ai-elements/context.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/device-login-page.tsx",
@@ -820,14 +605,8 @@
         "lib/app-chat-runtime.ts",
         "lib/db/queries.ts",
         "lib/db/schema.ts",
-        "lib/stop-response.ts",
         "lib/stores/base/use-data-parts.ts",
-        "lib/thread-utils.ts",
-        "proxy.ts",
-        "tools/chatjs/word-count/renderer.tsx",
-        "tools/platform/deep-research/pipeline.ts",
-        "tools/platform/deep-research/researcher-agent.ts",
-        "tools/platform/steps/search-utils.ts"
+        "lib/thread-utils.ts"
       ],
       "rules": {
         "no-use-before-define": "off"
@@ -837,9 +616,7 @@
       "files": [
         "components/anonymous-session-init.tsx",
         "lib/ai/mcp/mcp-oauth-provider.ts",
-        "lib/db/queries.ts",
-        "tools/chatjs/vercel-code-execution/python.ts",
-        "trpc/routers/chat.router.ts"
+        "lib/db/queries.ts"
       ],
       "rules": {
         "no-useless-return": "off"
@@ -850,8 +627,7 @@
         "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
         "components/deep-research-progress.tsx",
         "components/research-progress.tsx",
-        "components/user-message.tsx",
-        "tools/platform/documents/create-text-document.ts"
+        "components/user-message.tsx"
       ],
       "rules": {
         "no-warning-comments": "off"
@@ -884,7 +660,6 @@
     },
     {
       "files": [
-        "app/(chat)/api/chat/route.ts",
         "components/ai-elements/context.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/assistant-message.tsx",
@@ -894,32 +669,18 @@
         "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/part/document-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/tool-part.tsx",
         "components/settings/mcp-details-page.tsx",
         "components/share-button.tsx",
         "components/suggested-actions.tsx",
-        "components/ui/collapsible.tsx",
-        "lib/ai/token-utils.ts",
         "lib/clone-messages.test.ts",
         "lib/clone-messages.ts",
         "lib/draft-chat-submission.ts",
-        "lib/electron-auth.ts",
         "lib/files/upload-prep.ts",
         "lib/message-conversion.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-data-parts.ts",
-        "lib/stores/with-tracing.ts",
-        "lib/utils.ts",
-        "lib/utils/download-assets.test.ts",
-        "providers/parse-chat-id-from-pathname.ts",
-        "scripts/check-env.ts",
-        "tools/chatjs/retrieve-url/tool.ts",
-        "tools/platform/generate-video.ts",
-        "trpc/init.ts"
+        "lib/stores/with-tracing.ts"
       ],
       "rules": {
         "prefer-destructuring": "off"
@@ -928,10 +689,7 @@
     {
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
-        "components/settings/mcp-details-page.tsx",
-        "lib/file-content-response.ts",
-        "providers/parse-chat-id-from-pathname.ts",
-        "tools/platform/steps/search-utils.ts"
+        "components/settings/mcp-details-page.tsx"
       ],
       "rules": {
         "prefer-named-capture-group": "off"
@@ -944,18 +702,6 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/generate-video.ts"],
-      "rules": {
-        "preserve-caught-error": "off"
-      }
-    },
-    {
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "lib/ai/completion-queue.test.ts",
@@ -965,8 +711,7 @@
         "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/redis/client.ts",
-        "scripts/check-redis.ts",
-        "trpc/init.ts"
+        "scripts/check-redis.ts"
       ],
       "rules": {
         "promise/avoid-new": "off"
@@ -979,20 +724,13 @@
       }
     },
     {
-      "files": [
-        "app/(chat)/api/chat/route.ts",
-        "tools/platform/generate-image.ts"
-      ],
+      "files": ["app/(chat)/api/chat/route.ts"],
       "rules": {
         "promise/no-promise-in-callback": "off"
       }
     },
     {
-      "files": [
-        "lib/ai/completion-queue.test.ts",
-        "lib/redis/client.ts",
-        "scripts/check-redis.ts"
-      ],
+      "files": ["lib/ai/completion-queue.test.ts", "scripts/check-redis.ts"],
       "rules": {
         "promise/param-names": "off"
       }
@@ -1005,8 +743,7 @@
         "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
-        "lib/stores/base/hooks.ts",
-        "scripts/check-env.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "promise/prefer-await-to-callbacks": "off"
@@ -1038,8 +775,6 @@
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "scripts/check-db.ts",
-        "scripts/check-env.ts",
-        "scripts/check-redis.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
       "rules": {
@@ -1176,8 +911,6 @@
         "components/part/document-preview.tsx",
         "components/part/document-tool.tsx",
         "components/part/dynamic-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/message-annotations.tsx",
         "components/part/message-reasoning.tsx",
         "components/part/read-document.tsx",
@@ -1231,8 +964,6 @@
         "components/ui/avatar.tsx",
         "components/ui/badge.tsx",
         "components/ui/breadcrumb.tsx",
-        "components/ui/button-group.tsx",
-        "components/ui/button.tsx",
         "components/ui/card.tsx",
         "components/ui/checkbox.tsx",
         "components/ui/command.tsx",
@@ -1245,7 +976,6 @@
         "components/ui/form.tsx",
         "components/ui/hover-card.tsx",
         "components/ui/input-group.tsx",
-        "components/ui/input.tsx",
         "components/ui/label.tsx",
         "components/ui/popover.tsx",
         "components/ui/progress.tsx",
@@ -1261,7 +991,6 @@
         "components/ui/table.tsx",
         "components/ui/tabs.tsx",
         "components/ui/textarea.tsx",
-        "components/ui/toggle.tsx",
         "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
@@ -1277,11 +1006,8 @@
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
         "providers/session-provider.tsx",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/retrieve-url/renderer.tsx",
         "tools/chatjs/tavily-search/renderer.tsx",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/word-count/renderer.tsx",
         "trpc/react.tsx",
         "trpc/server.tsx"
       ],
@@ -1432,9 +1158,6 @@
         "components/sheet-editor.tsx",
         "components/signup-form.tsx",
         "components/toolbar.tsx",
-        "hooks/use-media-query.tsx",
-        "hooks/use-mobile.ts",
-        "hooks/use-mounted.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/stores/hooks-chat-persistence.ts",
         "providers/chat-input-provider.tsx"
@@ -1472,14 +1195,9 @@
       "files": [
         "app/layout.tsx",
         "components/create-artifact.tsx",
-        "evals/chat-agent.eval.ts",
-        "evals/my-eval.eval.ts",
         "lib/clone-messages.test.ts",
         "lib/gated-chat-transport.test.ts",
-        "lib/stores/base/hooks.ts",
-        "tools/chatjs/vercel-code-execution/python.test.ts",
-        "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/tools.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "require-await": "off"
@@ -1489,19 +1207,7 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/settings/mcp-details-page.tsx",
-        "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/mcp-name-id.ts",
-        "lib/editor/config.ts",
-        "lib/file-content-response.ts",
-        "lib/file-storage.ts",
-        "lib/file-url.ts",
-        "lib/files/upload-prep.ts",
-        "lib/stores/base/use-data-parts.ts",
-        "playwright.config.ts",
-        "providers/parse-chat-id-from-pathname.ts",
-        "tools/chatjs/vercel-code-execution/python.ts",
-        "tools/chatjs/word-count/tool.ts",
-        "tools/platform/steps/search-utils.ts"
+        "lib/files/upload-prep.ts"
       ],
       "rules": {
         "require-unicode-regexp": "off"
@@ -1512,22 +1218,10 @@
         "app/(auth)/device-login/page.tsx",
         "app/(auth)/login/page.tsx",
         "app/(auth)/register/page.tsx",
-        "app/(chat)/actions.ts",
-        "app/(chat)/api/chat/\\[id\\]/stream/route.ts",
-        "app/(chat)/api/chat/add-explicit-tool-request-to-messages.ts",
-        "app/(chat)/api/chat/route.ts",
         "app/(chat)/chat-route-host.tsx",
-        "app/api/chat-model/route.ts",
-        "app/api/cron/cleanup/route.ts",
-        "app/api/dev-login/route.ts",
-        "app/api/mcp/oauth/callback/route.ts",
-        "app/api/trpc/\\[trpc\\]/route.ts",
         "app/layout.tsx",
-        "app/manifest.ts",
         "app/privacy/page.tsx",
-        "app/sitemap.ts",
         "app/terms/page.tsx",
-        "chat.config.ts",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/context.tsx",
         "components/ai-elements/message.tsx",
@@ -1601,39 +1295,20 @@
         "components/upgrade-cta/login-cta-banner.tsx",
         "components/user-message.tsx",
         "components/version-footer.tsx",
-        "drizzle.config.ts",
-        "evalite.config.ts",
-        "evals/chat-agent.eval.ts",
-        "evals/my-eval.eval.ts",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "hooks/use-chat-system-initial-state.ts",
         "lib/ai/active-gateway.ts",
-        "lib/ai/app-models.ts",
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
-        "lib/ai/followup-suggestions.ts",
         "lib/ai/gateway-model-defaults.ts",
-        "lib/ai/gateway.ts",
         "lib/ai/gateways/fallback-models.ts",
-        "lib/ai/markdown-joiner-transform.test.ts",
         "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/mcp-name-id.ts",
         "lib/ai/mcp/mcp-client.ts",
         "lib/ai/mcp/mcp-oauth-provider.ts",
-        "lib/ai/models.generated.ts",
-        "lib/ai/prompts.ts",
-        "lib/ai/providers.ts",
-        "lib/ai/stream-errors.test.ts",
-        "lib/ai/stream-errors.ts",
-        "lib/ai/text-splitter.test.ts",
         "lib/ai/text-splitter.ts",
-        "lib/ai/to-model-data.ts",
         "lib/ai/token-utils.test.ts",
-        "lib/ai/token-utils.ts",
-        "lib/ai/types.ts",
         "lib/ai/usage-token-details.test.ts",
         "lib/anonymous-session-client.ts",
         "lib/anonymous-session-server.ts",
@@ -1651,9 +1326,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/backfill-parts.ts",
-        "lib/db/connection.test.ts",
-        "lib/db/connection.ts",
-        "lib/db/encrypted-text.ts",
         "lib/db/mcp-queries.ts",
         "lib/db/migrate.ts",
         "lib/db/queries.ts",
@@ -1666,86 +1338,32 @@
         "lib/files/upload-prep.ts",
         "lib/logger.ts",
         "lib/message-conversion.ts",
-        "lib/nuqs/mcp-search-params.server.ts",
-        "lib/nuqs/mcp-search-params.ts",
         "lib/parallel-chat-requests.test.ts",
         "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
-        "lib/redis/connection.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
-        "lib/stores/base/use-data-parts.ts",
         "lib/stores/with-data-stream.test.ts",
         "lib/stores/with-message-parts.ts",
         "lib/thread-utils.test.ts",
         "lib/types/anonymous.ts",
         "lib/utils.ts",
         "lib/utils/download-assets.test.ts",
-        "lib/utils/download-assets.ts",
-        "lib/utils/message-mapping.test.ts",
         "lib/utils/message-mapping.ts",
-        "lib/utils/message-part-validators.ts",
-        "lib/utils/rate-limit.ts",
-        "next.config.ts",
-        "playwright.config.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "providers/parse-chat-id-from-pathname.test.ts",
-        "providers/parse-chat-id-from-pathname.ts",
-        "scripts/check-db.test.ts",
-        "scripts/check-db.ts",
-        "scripts/check-redis.test.ts",
-        "tools/chatjs/code-execution-config.ts",
         "tools/chatjs/get-weather/renderer.test.tsx",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/get-weather/tool.ts",
-        "tools/chatjs/retrieve-url/tool.ts",
-        "tools/chatjs/search-config.ts",
         "tools/chatjs/tavily-search/tool.test.ts",
         "tools/chatjs/tavily-search/tool.ts",
         "tools/chatjs/tools.ts",
         "tools/chatjs/ui.ts",
-        "tools/chatjs/url-retrieval-config.ts",
-        "tools/chatjs/vercel-code-execution/javascript.ts",
-        "tools/chatjs/vercel-code-execution/python.test.ts",
-        "tools/chatjs/vercel-code-execution/python.ts",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/sandbox.test.ts",
-        "tools/chatjs/vercel-code-execution/sandbox.ts",
-        "tools/chatjs/vercel-code-execution/tool.test.ts",
-        "tools/chatjs/vercel-code-execution/tool.ts",
-        "tools/chatjs/word-count/tool.ts",
         "tools/platform/deep-research/configuration.ts",
-        "tools/platform/deep-research/deep-research.ts",
         "tools/platform/deep-research/pipeline.ts",
         "tools/platform/deep-research/researcher-agent.ts",
         "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/deep-research/types.ts",
-        "tools/platform/deep-research/utils.ts",
-        "tools/platform/documents/create-code-document.ts",
-        "tools/platform/documents/create-sheet-document.ts",
-        "tools/platform/documents/create-text-document.ts",
-        "tools/platform/documents/edit-code-document.ts",
-        "tools/platform/documents/edit-sheet-document.ts",
-        "tools/platform/documents/edit-text-document.ts",
-        "tools/platform/documents/types.ts",
-        "tools/platform/generate-image.ts",
-        "tools/platform/generate-video.ts",
-        "tools/platform/read-document.ts",
-        "tools/platform/research-updates-schema.ts",
-        "tools/platform/search-presentation.ts",
-        "tools/platform/steps/multi-query-web-search.ts",
         "tools/platform/tools.ts",
-        "trpc/init.ts",
-        "trpc/query-client.ts",
         "trpc/react.tsx",
-        "trpc/routers/_app.ts",
-        "trpc/routers/chat.router.ts",
-        "trpc/routers/document.router.ts",
-        "trpc/routers/mcp.router.ts",
-        "trpc/routers/project.router.ts",
-        "trpc/routers/settings.router.ts",
         "trpc/server.tsx"
       ],
       "rules": {
@@ -1754,38 +1372,17 @@
     },
     {
       "files": [
-        "app/(chat)/api/chat/filter-reasoning-parts.ts",
         "components/parallel-response-cards.tsx",
         "components/sheet-editor.tsx",
-        "lib/ai/eval-agent.ts",
-        "lib/ai/mcp/cache.ts",
-        "lib/db/queries.ts",
-        "lib/file-storage.ts",
-        "lib/parallel-chat-requests.test.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/with-message-parts.ts",
-        "lib/utils.ts",
-        "scripts/check-env.ts",
-        "tools/platform/generate-image.ts",
-        "tools/platform/search-presentation.ts",
-        "tools/platform/steps/multi-query-web-search.ts",
-        "trpc/routers/chat.router.ts"
+        "lib/stores/with-message-parts.ts"
       ],
       "rules": {
         "typescript/array-type": "off"
       }
     },
     {
-      "files": ["lib/ai/gateways/registry.ts"],
-      "rules": {
-        "typescript/consistent-indexed-object-style": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(chat)/api/chat/route.ts",
-        "components/create-artifact.tsx"
-      ],
+      "files": ["components/create-artifact.tsx"],
       "rules": {
         "typescript/consistent-type-imports": "off"
       }
@@ -1793,8 +1390,7 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/utils/rate-limit.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "typescript/method-signature-style": "off"
@@ -1812,12 +1408,6 @@
       }
     },
     {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "typescript/no-import-type-side-effects": "off"
-      }
-    },
-    {
       "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "typescript/prefer-function-type": "off"
@@ -1825,25 +1415,16 @@
     },
     {
       "files": [
-        "app/api/mcp/oauth/callback/route.ts",
         "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
-        "lib/stores/base/hooks.ts",
-        "tools/chatjs/vercel-code-execution/sandbox.ts",
-        "tools/chatjs/vercel-code-execution/tool.ts",
-        "tools/platform/generate-image.ts",
-        "trpc/routers/mcp.router.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "unicorn/catch-error-name": "off"
       }
     },
     {
-      "files": [
-        "lib/clone-messages.test.ts",
-        "lib/file-storage.test.ts",
-        "lib/utils/download-assets.test.ts"
-      ],
+      "files": ["lib/clone-messages.test.ts", "lib/file-storage.test.ts"],
       "rules": {
         "unicorn/consistent-assert": "off"
       }
@@ -1879,23 +1460,7 @@
       }
     },
     {
-      "files": ["scripts/check-db.test.ts", "scripts/check-redis.test.ts"],
-      "rules": {
-        "unicorn/import-style": "off"
-      }
-    },
-    {
-      "files": ["components/code-editor.tsx"],
-      "rules": {
-        "unicorn/no-abusive-eslint-disable": "off"
-      }
-    },
-    {
-      "files": [
-        "components/sheet-editor.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/utils.ts"
-      ],
+      "files": ["components/sheet-editor.tsx", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/no-array-for-each": "off"
       }
@@ -1916,9 +1481,6 @@
       "files": [
         "components/parallel-response-cards.tsx",
         "components/sidebar-chats-list.tsx",
-        "lib/ai/app-models.ts",
-        "lib/stores/hooks-threads.ts",
-        "lib/thread-utils.ts",
         "lib/utils/message-mapping.ts"
       ],
       "rules": {
@@ -1926,12 +1488,7 @@
       }
     },
     {
-      "files": [
-        "lib/file-storage.test.ts",
-        "tools/chatjs/vercel-code-execution/javascript.ts",
-        "tools/chatjs/vercel-code-execution/python.ts",
-        "tools/platform/deep-research/pipeline.ts"
-      ],
+      "files": ["lib/file-storage.test.ts"],
       "rules": {
         "unicorn/no-await-expression-member": "off"
       }
@@ -1952,17 +1509,10 @@
       "files": [
         "components/sheet-editor.tsx",
         "components/toolbar.tsx",
-        "lib/ai/text-splitter.test.ts",
         "lib/ai/token-utils.test.ts"
       ],
       "rules": {
         "unicorn/no-new-array": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/tools.ts"],
-      "rules": {
-        "unicorn/no-useless-promise-resolve-reject": "off"
       }
     },
     {
@@ -1973,33 +1523,16 @@
     },
     {
       "files": [
-        "app/(chat)/api/chat/route.ts",
         "components/data-stream-handler.tsx",
-        "hooks/use-mobile.ts",
-        "lib/ai/completion-queue.test.ts",
-        "lib/cancellation-aware-chat-transport.test.ts",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/social-auth.test.ts",
-        "providers/session-provider.tsx",
-        "scripts/check-db.ts",
-        "scripts/check-redis.ts",
-        "tools/platform/deep-research/supervisor-agent.ts"
+        "providers/session-provider.tsx"
       ],
       "rules": {
         "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": [
-        "lib/ai/models.generated.ts",
-        "tools/chatjs/get-weather/renderer.tsx"
-      ],
-      "rules": {
-        "unicorn/numeric-separators-style": "off"
       }
     },
     {
@@ -2015,17 +1548,13 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts", "lib/utils.ts"],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/prefer-at": "off"
       }
     },
     {
-      "files": [
-        "app/api/dev-login/route.ts",
-        "components/sheet-editor.tsx",
-        "lib/file-storage.ts"
-      ],
+      "files": ["components/sheet-editor.tsx"],
       "rules": {
         "unicorn/prefer-code-point": "off"
       }
@@ -2040,22 +1569,6 @@
       "files": ["components/image-modal.tsx"],
       "rules": {
         "unicorn/prefer-dom-node-remove": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(chat)/api/files/content/route.ts",
-        "lib/storage-provider.ts",
-        "lib/stores/base/use-chat.ts"
-      ],
-      "rules": {
-        "unicorn/prefer-export-from": "off"
-      }
-    },
-    {
-      "files": ["scripts/check-env.ts"],
-      "rules": {
-        "unicorn/prefer-import-meta-properties": "off"
       }
     },
     {
@@ -2075,8 +1588,6 @@
     },
     {
       "files": [
-        "app/(chat)/api/files/upload/route.ts",
-        "app/api/chat-model/route.ts",
         "components/ai-elements/prompt-input.tsx",
         "components/artifact-actions.tsx",
         "components/delete-chat-dialog.tsx",
@@ -2101,17 +1612,10 @@
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/multimodal-input.tsx",
-        "lib/ai/text-splitter.ts",
-        "lib/utils/download-assets.ts"
+        "lib/ai/text-splitter.ts"
       ],
       "rules": {
         "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/word-count/tool.ts"],
-      "rules": {
-        "unicorn/prefer-string-replace-all": "off"
       }
     },
     {
@@ -2121,21 +1625,9 @@
       }
     },
     {
-      "files": ["lib/ai/token-utils.ts", "lib/config-schema.ts"],
+      "files": ["lib/config-schema.ts"],
       "rules": {
         "unicorn/prefer-ternary": "off"
-      }
-    },
-    {
-      "files": ["scripts/check-db.test.ts", "scripts/check-redis.test.ts"],
-      "rules": {
-        "unicorn/relative-url-style": "off"
-      }
-    },
-    {
-      "files": ["electron.d.ts"],
-      "rules": {
-        "unicorn/require-module-specifiers": "off"
       }
     },
     {
@@ -2148,22 +1640,10 @@
         "components/model-selector.tsx",
         "components/part/document-common.tsx",
         "components/part/document-preview.tsx",
-        "lib/ai/errors.ts",
-        "lib/utils/message-mapping.ts",
-        "tools/platform/deep-research/deep-research.ts"
+        "lib/ai/errors.ts"
       ],
       "rules": {
         "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": [
-        "lib/db/encrypted-text.ts",
-        "scripts/check-env.ts",
-        "scripts/check-redis.test.ts"
-      ],
-      "rules": {
-        "unicorn/text-encoding-identifier-case": "off"
       }
     }
   ]

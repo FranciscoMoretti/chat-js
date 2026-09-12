@@ -2,11 +2,8 @@ import type { ModelId } from "@/lib/ai/app-models";
 import type { Chat, DBMessage } from "@/lib/db/schema";
 import type { UIChat } from "@/lib/types/ui-chat";
 
-import {
-  type ChatMessage,
-  isSelectedModelValue,
-  type UiToolName,
-} from "./ai/types";
+import { isSelectedModelValue } from "./ai/types";
+import type { ChatMessage, UiToolName } from "./ai/types";
 
 // Helper functions for type conversion
 export function dbChatToUIChat(chat: Chat): UIChat {

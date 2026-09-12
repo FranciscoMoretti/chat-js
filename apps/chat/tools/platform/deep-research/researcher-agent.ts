@@ -1,4 +1,5 @@
-import { generateText, type ModelMessage, ToolLoopAgent } from "ai";
+import { generateText, ToolLoopAgent } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -9,13 +10,50 @@ import {
   compressResearchSystemPrompt,
   researchSystemPrompt,
 } from "./prompts";
-import { type AgentOptions, createTelemetry } from "./types";
+import { createTelemetry } from "./types";
+import type { AgentOptions } from "./types";
 import { getAllTools, getModelContextWindow, getTodayStr } from "./utils";
 
-export async function runResearcher(
+const compressResearch = async (
+  researchMessages: ModelMessage[],
+  options: AgentOptions
+): Promise<string> => {
+  const { config, abortSignal } = options;
+  const model = await getLanguageModel(config.compression_model as ModelId);
+  const messages: ModelMessage[] = [
+    {
+      content: compressResearchSystemPrompt({ date: getTodayStr() }),
+      role: "system" as const,
+    },
+    ...researchMessages,
+    { content: compressResearchSimpleHumanMessage, role: "user" as const },
+  ];
+  const contextWindow = await getModelContextWindow(
+    config.compression_model as ModelId
+  );
+  const truncatedMessages = truncateMessages(messages, contextWindow);
+  const response = await generateText({
+    model,
+    messages: truncatedMessages,
+    maxOutputTokens: config.compression_model_max_tokens,
+    ...createTelemetry("compressResearch", options),
+    maxRetries: 3,
+    abortSignal,
+  });
+  if (response.usage) {
+    options.costAccumulator?.addLLMCost(
+      config.compression_model as AppModelId,
+      response.usage,
+      "deep-research-compress"
+    );
+  }
+  return response.text;
+};
+
+export const runResearcher = async (
   topic: string,
   options: AgentOptions
-): Promise<string> {
+): Promise<string> => {
   const { config, dataStream, toolCallId, abortSignal } = options;
 
   const model = await getLanguageModel(config.research_model as ModelId);
@@ -28,22 +66,22 @@ export async function runResearcher(
   }
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId,
-      title: "Starting research on topic",
       message: topic,
-      type: "thoughts",
       status: "running",
+      title: "Starting research on topic",
+      toolCallId,
+      type: "thoughts",
     },
+    type: "data-researchUpdate",
   });
 
   const researcherAgent = new ToolLoopAgent({
     model,
     instructions: researchSystemPrompt({
-      mcp_prompt: config.mcp_prompt || "",
       date: getTodayStr(),
       max_search_queries: config.search_api_max_queries,
+      mcp_prompt: config.mcp_prompt || "",
     }),
     tools,
     prepareStep: () => ({
@@ -51,10 +89,10 @@ export async function runResearcher(
         Object.keys(tools).map((name) => [
           name,
           {
-            dataStream,
             costAccumulator: options.costAccumulator,
-            writeTopLevelUpdates: false,
+            dataStream,
             toolCallIdOverride: toolCallId,
+            writeTopLevelUpdates: false,
           },
         ])
       ),
@@ -73,66 +111,22 @@ export async function runResearcher(
   });
 
   const { responseMessages } = await researcherAgent.generate({
-    prompt: topic,
     abortSignal,
+    prompt: topic,
   });
 
   const compressed = await compressResearch(responseMessages, options);
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId,
-      title: "Research topic completed",
       message: topic,
-      type: "thoughts",
       status: "completed",
+      title: "Research topic completed",
+      toolCallId,
+      type: "thoughts",
     },
+    type: "data-researchUpdate",
   });
 
   return compressed;
-}
-
-async function compressResearch(
-  researchMessages: ModelMessage[],
-  options: AgentOptions
-): Promise<string> {
-  const { config, abortSignal } = options;
-  const model = await getLanguageModel(config.compression_model as ModelId);
-
-  const messages: ModelMessage[] = [
-    {
-      role: "system" as const,
-      content: compressResearchSystemPrompt({ date: getTodayStr() }),
-    },
-    ...researchMessages,
-    {
-      role: "user" as const,
-      content: compressResearchSimpleHumanMessage,
-    },
-  ];
-
-  const contextWindow = await getModelContextWindow(
-    config.compression_model as ModelId
-  );
-  const truncatedMessages = truncateMessages(messages, contextWindow);
-
-  const response = await generateText({
-    model,
-    messages: truncatedMessages,
-    maxOutputTokens: config.compression_model_max_tokens,
-    ...createTelemetry("compressResearch", options),
-    maxRetries: 3,
-    abortSignal,
-  });
-
-  if (response.usage) {
-    options.costAccumulator?.addLLMCost(
-      config.compression_model as AppModelId,
-      response.usage,
-      "deep-research-compress"
-    );
-  }
-
-  return response.text;
-}
+};

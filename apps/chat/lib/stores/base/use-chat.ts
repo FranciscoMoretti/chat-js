@@ -1,25 +1,15 @@
-import {
-  type UIMessage,
-  type UseChatHelpers,
-  type UseChatOptions,
-} from "@ai-sdk/react";
-import { type AbstractThread, type MessageTreeSnapshot } from "@chat-js/thread";
-import {
-  type UseThreadHelpers,
-  type UseThreadOptions,
-  useThread as useOriginalChat,
-} from "@chat-js/thread/react";
+import type { UIMessage } from "@ai-sdk/react";
+import type { AbstractThread, MessageTreeSnapshot } from "@chat-js/thread";
+import { useThread as useOriginalChat } from "@chat-js/thread/react";
+import type { UseThreadHelpers } from "@chat-js/thread/react";
 import type { ChatInit } from "ai";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
-import { type StoreState, useChatStoreApi } from "./hooks";
+import { useChatStoreApi } from "./hooks";
+import type { StoreState } from "./hooks";
 
-export type {
-  UseChatHelpers,
-  UseChatOptions,
-  UseThreadHelpers,
-  UseThreadOptions,
-};
+export type { UseChatHelpers, UseChatOptions } from "@ai-sdk/react";
+export type { UseThreadHelpers, UseThreadOptions } from "@chat-js/thread/react";
 
 // Type for a compatible chat store
 type CompatibleChatStoreState<TMessage extends UIMessage> =
@@ -50,9 +40,9 @@ export type UseChatOptionsWithPerformance<
   enableBatching?: boolean;
 };
 
-export function useChat<TMessage extends UIMessage = UIMessage>(
+export const useChat = <TMessage extends UIMessage = UIMessage>(
   options: UseChatOptionsWithPerformance<TMessage>
-): UseThreadHelpers<TMessage> {
+): UseThreadHelpers<TMessage> => {
   const {
     store: customStore,
     enableBatching = true,
@@ -112,9 +102,15 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
     }
 
     return () => {
-      if (thread.onData === wrappedOnData) thread.onData = previous.onData;
-      if (thread.onError === onError) thread.onError = previous.onError;
-      if (thread.onFinish === onFinish) thread.onFinish = previous.onFinish;
+      if (thread.onData === wrappedOnData) {
+        thread.onData = previous.onData;
+      }
+      if (thread.onError === onError) {
+        thread.onError = previous.onError;
+      }
+      if (thread.onFinish === onFinish) {
+        thread.onFinish = previous.onFinish;
+      }
       if (thread.onToolCall === onToolCall) {
         thread.onToolCall = previous.onToolCall;
       }
@@ -166,14 +162,14 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
 
     // Sync functions separately and only once
     const functionsData = {
-      sendMessage: chatHelpers.sendMessage,
-      startRun: chatHelpers.tree.startRun,
-      regenerate: chatHelpers.regenerate,
-      stop: chatHelpers.stop,
-      resumeStream: chatHelpers.resumeStream,
       addToolResult: chatHelpers.addToolResult,
-      setMessages: chatHelpers.setMessages,
       clearError: chatHelpers.clearError,
+      regenerate: chatHelpers.regenerate,
+      resumeStream: chatHelpers.resumeStream,
+      sendMessage: chatHelpers.sendMessage,
+      setMessages: chatHelpers.setMessages,
+      startRun: chatHelpers.tree.startRun,
+      stop: chatHelpers.stop,
     };
 
     const chatState = { ...stateData, ...functionsData };
@@ -210,4 +206,4 @@ export function useChat<TMessage extends UIMessage = UIMessage>(
   ]);
 
   return chatHelpers;
-}
+};

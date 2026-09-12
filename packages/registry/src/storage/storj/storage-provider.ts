@@ -1,3 +1,1 @@
-import { storj } from "files-sdk/storj";
-
-export const createStorageAdapter = storj;
+export { storj as createStorageAdapter } from "files-sdk/storj";

@@ -8,18 +8,18 @@ const databaseOptionsSchema = z.object(databaseEnvOptions);
 describe("Postgres connection selection", () => {
   it("keeps runtime and migration destinations separate", () => {
     const environment = {
-      DATABASE_URL: "postgres://runtime.invalid/app",
+      DATABASE_MAX_CONNECTIONS: 3,
       DATABASE_MIGRATION_URL: "postgres://direct.invalid/app",
       DATABASE_PREPARE: false,
-      DATABASE_MAX_CONNECTIONS: 3,
+      DATABASE_URL: "postgres://runtime.invalid/app",
     };
     expect(databaseConnection(environment)).toEqual({
+      options: { max: 3, prepare: false },
       url: environment.DATABASE_URL,
-      options: { prepare: false, max: 3 },
     });
     expect(databaseConnection(environment, "migration")).toEqual({
+      options: { max: 1, prepare: false },
       url: environment.DATABASE_MIGRATION_URL,
-      options: { prepare: false, max: 1 },
     });
   });
   it("falls back to the application URL for schema operations", () => {
@@ -34,14 +34,14 @@ describe("Postgres connection selection", () => {
   it("parses explicit pool settings and treats blank optional variables as absent", () => {
     expect(
       databaseOptionsSchema.parse({
-        DATABASE_PREPARE: "false",
         DATABASE_MAX_CONNECTIONS: "2",
+        DATABASE_PREPARE: "false",
       })
-    ).toEqual({ DATABASE_PREPARE: false, DATABASE_MAX_CONNECTIONS: 2 });
+    ).toEqual({ DATABASE_MAX_CONNECTIONS: 2, DATABASE_PREPARE: false });
     const blank = databaseOptionsSchema.parse({
-      DATABASE_PREPARE: "",
-      DATABASE_MIGRATION_URL: "",
       DATABASE_MAX_CONNECTIONS: "",
+      DATABASE_MIGRATION_URL: "",
+      DATABASE_PREPARE: "",
     });
     expect(blank.DATABASE_PREPARE).toBe(true);
     expect(blank.DATABASE_MIGRATION_URL).toBeUndefined();

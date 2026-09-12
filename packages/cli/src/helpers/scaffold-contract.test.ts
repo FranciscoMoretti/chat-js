@@ -1,75 +1,48 @@
-import { afterEach, describe, expect, it } from "bun:test";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "bun:test";
 
-import { GATEWAYS, type BuiltInToolKey, type Gateway } from "../types";
+import { GATEWAYS } from "../types";
+import type { BuiltInToolKey, Gateway } from "../types";
 import { buildConfigTs } from "./config-builder";
-import { collectEnvChecklist } from "./env-checklist";
 
-const localRegistryUrl = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../../registry/items/{name}.json"
-);
-
-const tempDirs: string[] = [];
-
-async function makeTempDir(name: string): Promise<string> {
-  const dir = join(
-    tmpdir(),
-    `chat-js-scaffold-contract-${name}-${crypto.randomUUID()}`
-  );
-  tempDirs.push(dir);
-  return dir;
-}
-
-afterEach(async () => {
-  await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
-  );
-});
-
-function buildConfigFor(
+const buildConfigFor = (
   gateway: Gateway,
   builtInTools: Record<BuiltInToolKey, boolean>
-) {
-  return buildConfigTs({
+): string =>
+  buildConfigTs({
     appName: "Contract Test",
     appPrefix: "contract-test",
     appUrl: "http://localhost:3000",
-    withElectron: false,
-    gateway,
-    coreFeatures: {
-      attachments: true,
-      parallelResponses: true,
-      documents: true,
-      mcp: true,
-      followupSuggestions: true,
-    },
-    documentTypes: {
-      text: true,
-      code: true,
-      sheet: true,
-    },
-    builtInTools,
     auth: {
-      google: true,
       github: true,
+      google: true,
       vercel: true,
     },
+    builtInTools,
+    coreFeatures: {
+      attachments: true,
+      documents: true,
+      followupSuggestions: true,
+      mcp: true,
+      parallelResponses: true,
+    },
+    documentTypes: {
+      code: true,
+      sheet: true,
+      text: true,
+    },
+    gateway,
+    withElectron: false,
   });
-}
 
 describe("scaffold contracts", () => {
   it("builds valid configs for the high-risk built-in tool matrix", () => {
     const allBuiltIns = {
-      webSearch: true,
-      urlRetrieval: true,
-      deepResearch: true,
       codeExecution: true,
+      deepResearch: true,
       imageGeneration: true,
+      urlRetrieval: true,
       videoGeneration: true,
+      webSearch: true,
     } satisfies Record<BuiltInToolKey, boolean>;
 
     for (const gateway of GATEWAYS) {
@@ -79,11 +52,17 @@ describe("scaffold contracts", () => {
 
     const openaiCompatible = buildConfigFor("openai-compatible", allBuiltIns);
     expect(openaiCompatible).toContain('default: "gpt-image-1"');
-    expect(openaiCompatible).toMatch(/video:\s*{\s*enabled:\s*true,/m);
+    expect(openaiCompatible).toMatch(
+      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
+    );
 
     const litellm = buildConfigFor("litellm", allBuiltIns);
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
-    expect(litellm).toMatch(/image:\s*{\s*enabled:\s*true,/m);
-    expect(litellm).toMatch(/video:\s*{\s*enabled:\s*true,/m);
+    expect(litellm).toMatch(
+      /image:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
+    );
+    expect(litellm).toMatch(
+      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
+    );
   });
 });

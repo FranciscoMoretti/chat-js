@@ -1,5 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -21,29 +22,27 @@ const buttonGroupVariants = cva(
   }
 );
 
-function ButtonGroup({
+const ButtonGroup = ({
   className,
   orientation,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>) {
-  return (
-    <div
-      className={cn(buttonGroupVariants({ orientation }), className)}
-      data-orientation={orientation}
-      data-slot="button-group"
-      role="group"
-      {...props}
-    />
-  );
-}
+}: React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>) => (
+  <div
+    className={cn(buttonGroupVariants({ orientation }), className)}
+    data-orientation={orientation}
+    data-slot="button-group"
+    role="group"
+    {...props}
+  />
+);
 
-function ButtonGroupText({
+const ButtonGroupText = ({
   className,
   asChild = false,
   ...props
 }: React.ComponentProps<"div"> & {
   asChild?: boolean;
-}) {
+}) => {
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -55,25 +54,23 @@ function ButtonGroupText({
       {...props}
     />
   );
-}
+};
 
-function ButtonGroupSeparator({
+const ButtonGroupSeparator = ({
   className,
   orientation = "vertical",
   ...props
-}: React.ComponentProps<typeof Separator>) {
-  return (
-    <Separator
-      className={cn(
-        "bg-input relative !m-0 self-stretch data-[orientation=vertical]:h-auto",
-        className
-      )}
-      data-slot="button-group-separator"
-      orientation={orientation}
-      {...props}
-    />
-  );
-}
+}: React.ComponentProps<typeof Separator>) => (
+  <Separator
+    className={cn(
+      "bg-input relative !m-0 self-stretch data-[orientation=vertical]:h-auto",
+      className
+    )}
+    data-slot="button-group-separator"
+    orientation={orientation}
+    {...props}
+  />
+);
 
 export {
   ButtonGroup,

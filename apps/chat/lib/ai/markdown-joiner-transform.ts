@@ -1,9 +1,9 @@
 import type { TextStreamPart, ToolSet } from "ai";
 
 // Regex patterns for markdown matching
-const LINK_PATTERN = /^\[.*?\]\(.*?\)$/;
-const BOLD_PATTERN = /^\*\*.*?\*\*$/;
-const WHITESPACE_PATTERN = /\s/;
+const LINK_PATTERN = /^\[.*?\]\(.*?\)$/u;
+const BOLD_PATTERN = /^\*\*.*?\*\*$/u;
+const WHITESPACE_PATTERN = /\s/u;
 
 class MarkdownJoiner {
   private buffer = "";

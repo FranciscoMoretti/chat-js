@@ -7,6 +7,8 @@ import baseline from "./oxlint-baseline.json" with { type: "json" };
 
 export default defineConfig({
   extends: [core, react, next],
+  // Oxlint does not inherit ignorePatterns from extended configs.
+  ignorePatterns: core.ignorePatterns,
   // Existing violations only: remove file/rule entries as they are fixed.
   overrides: baseline.overrides.map(({ files, rules }) => ({
     files,

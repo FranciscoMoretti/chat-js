@@ -7,11 +7,9 @@ type GateEntry = {
 
 const gateEntries = new WeakMap<object, GateEntry>();
 
-function createAbortError() {
-  return new DOMException("Aborted", "AbortError");
-}
+const createAbortError = () => new DOMException("Aborted", "AbortError");
 
-function waitForGate(ready: Promise<void>, signal?: AbortSignal) {
+const waitForGate = (ready: Promise<void>, signal?: AbortSignal) => {
   if (!signal) {
     return ready;
   }
@@ -35,39 +33,37 @@ function waitForGate(ready: Promise<void>, signal?: AbortSignal) {
       }
     );
   });
-}
+};
 
-export function gateChatRequest(
+export const gateChatRequest = (
   ready: Promise<void>,
   metadata?: unknown
-): Pick<ChatRequestOptions, "metadata"> {
+): Pick<ChatRequestOptions, "metadata"> => {
   const token = {};
   gateEntries.set(token, { metadata, ready });
   return { metadata: token };
-}
+};
 
-export function createGatedChatTransport<TMessage extends UIMessage>(
+export const createGatedChatTransport = <TMessage extends UIMessage>(
   transport: ChatTransport<TMessage>
-): ChatTransport<TMessage> {
-  return {
-    reconnectToStream: (options) => transport.reconnectToStream(options),
-    sendMessages: async (options) => {
-      const gate =
-        typeof options.metadata === "object" && options.metadata !== null
-          ? gateEntries.get(options.metadata)
-          : undefined;
-      if (!gate) {
-        return transport.sendMessages(options);
-      }
+): ChatTransport<TMessage> => ({
+  reconnectToStream: (options) => transport.reconnectToStream(options),
+  sendMessages: async (options) => {
+    const gate =
+      typeof options.metadata === "object" && options.metadata !== null
+        ? gateEntries.get(options.metadata)
+        : undefined;
+    if (!gate) {
+      return transport.sendMessages(options);
+    }
 
-      await waitForGate(gate.ready, options.abortSignal);
-      if (options.abortSignal?.aborted) {
-        throw createAbortError();
-      }
-      return transport.sendMessages({
-        ...options,
-        metadata: gate.metadata,
-      });
-    },
-  };
-}
+    await waitForGate(gate.ready, options.abortSignal);
+    if (options.abortSignal?.aborted) {
+      throw createAbortError();
+    }
+    return transport.sendMessages({
+      ...options,
+      metadata: gate.metadata,
+    });
+  },
+});

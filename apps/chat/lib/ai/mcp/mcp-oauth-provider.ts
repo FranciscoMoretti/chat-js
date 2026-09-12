@@ -11,12 +11,12 @@ import {
   deleteSessionByState,
   getAuthenticatedSession,
   getSessionByState,
-  type OAuthClientInformationFull,
   saveTokensAndCleanup,
   setOAuthClientInfoOnceByState,
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
+import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 

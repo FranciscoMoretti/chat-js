@@ -1,5 +1,5 @@
 import { access } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import path from "node:path";
 
 import { confirm, isCancel } from "@clack/prompts";
 import { Command } from "commander";
@@ -19,21 +19,22 @@ export const add = new Command("add")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .action(async (tools: string[], options) => {
     try {
-      const cwd = resolve(options.cwd);
-      await access(join(cwd, "chat.config.ts"));
+      const cwd = path.resolve(options.cwd);
+      await access(path.join(cwd, "chat.config.ts"));
       const addresses = tools.map((tool) => itemAddress(tool, "tool"));
-      const expected = [];
-      for (const address of addresses)
-        expected.push(
-          toolDefinitionSchema.parse(
-            (await readItem(address, cwd)).meta?.chatjs
-          )
-        );
+      const expected = await Promise.all(
+        addresses.map(async (address) => {
+          const item = await readItem(address, cwd);
+          return toolDefinitionSchema.parse(item.meta?.chatjs);
+        })
+      );
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,
         });
-        if (isCancel(answer) || !answer) return;
+        if (isCancel(answer) || !answer) {
+          return;
+        }
       }
       await syncTools(cwd, { checkOnly: true });
       await installItems(addresses, cwd, options.overwrite);
@@ -41,7 +42,8 @@ export const add = new Command("add")
         await syncTools(cwd, { expected });
       } catch (error) {
         throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run chat-js sync. ${error instanceof Error ? error.message : error}`
+          `Source installation completed, but registration failed. Fix the problem and run chat-js sync. ${error instanceof Error ? error.message : error}`,
+          { cause: error }
         );
       }
     } catch (error) {

@@ -2,9 +2,7 @@ import type { UIMessage } from "ai";
 
 import type { MessageTreeSnapshot } from "./types";
 
-function clone<T>(value: T): T {
-  return structuredClone(value);
-}
+const clone = <T>(value: T): T => structuredClone(value);
 
 export class MessageTree<TMessage extends UIMessage = UIMessage> {
   readonly #childrenByParentId = new Map<string | null, string[]>();
@@ -123,7 +121,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
   getIndexes() {
     return {
       childrenByParentId: Object.fromEntries(
-        Array.from(this.#childrenByParentId.entries())
+        [...this.#childrenByParentId.entries()]
           .filter((entry): entry is [string, string[]] => entry[0] !== null)
           .map(([id, children]) => [id, [...children]])
       ),

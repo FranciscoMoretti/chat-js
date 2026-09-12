@@ -7,7 +7,7 @@ const MinChunkSize = 140;
 const encoder = getEncoding("o200k_base");
 
 // Calculate total tokens from messages
-export function calculateMessagesTokens(messages: ModelMessage[]): number {
+export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
   let totalTokens = 0;
 
   for (const message of messages) {
@@ -19,14 +19,10 @@ export function calculateMessagesTokens(messages: ModelMessage[]): number {
       totalTokens += encoder.encode(message.content).length;
     } else if (Array.isArray(message.content)) {
       for (const part of message.content) {
-        if (part.type === "text") {
-          totalTokens += encoder.encode(part.text).length;
-        }
         // Add overhead for other part types (image, file, etc.)
         // Using GPT-4V approximation: ~765 tokens for typical image
-        else {
-          totalTokens += 765;
-        }
+        totalTokens +=
+          part.type === "text" ? encoder.encode(part.text).length : 765;
       }
     }
 
@@ -35,15 +31,15 @@ export function calculateMessagesTokens(messages: ModelMessage[]): number {
   }
 
   return totalTokens;
-}
+};
 
 // trim prompt to maximum context size
-function trimPrompt(prompt: string, contextSize: number) {
+const trimPrompt = (prompt: string, contextSize: number) => {
   if (!prompt) {
     return "";
   }
 
-  const length = encoder.encode(prompt).length;
+  const { length } = encoder.encode(prompt);
   if (length <= contextSize) {
     return prompt;
   }
@@ -56,8 +52,8 @@ function trimPrompt(prompt: string, contextSize: number) {
   }
 
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize,
     chunkOverlap: 0,
+    chunkSize,
   });
   const trimmedPrompt = splitter.splitText(prompt)[0] ?? "";
 
@@ -68,27 +64,27 @@ function trimPrompt(prompt: string, contextSize: number) {
 
   // recursively trim until the prompt is within the context size
   return trimPrompt(trimmedPrompt, contextSize);
-}
+};
 
-function extractSystemMessage(
+const extractSystemMessage = (
   messages: ModelMessage[],
   preserveSystemMessage: boolean
 ): {
   systemMessage: ModelMessage | null;
   otherMessages: ModelMessage[];
-} {
+} => {
   const systemMessage =
     preserveSystemMessage && messages[0]?.role === "system"
       ? messages[0]
       : null;
   const otherMessages = systemMessage ? messages.slice(1) : messages;
-  return { systemMessage, otherMessages };
-}
+  return { otherMessages, systemMessage };
+};
 
-function handleExceededSystemMessage(
+const handleExceededSystemMessage = (
   systemMessage: ModelMessage | null,
   maxTokens: number
-): ModelMessage[] {
+): ModelMessage[] => {
   if (!systemMessage) {
     return [];
   }
@@ -99,12 +95,12 @@ function handleExceededSystemMessage(
   }
 
   return [systemMessage];
-}
+};
 
-function removeOldestMessagesUntilFit(
+const removeOldestMessagesUntilFit = (
   messages: ModelMessage[],
   availableTokens: number
-): ModelMessage[] {
+): ModelMessage[] => {
   const truncatedMessages = [...messages];
   let currentTokens = calculateMessagesTokens(truncatedMessages);
 
@@ -114,13 +110,13 @@ function removeOldestMessagesUntilFit(
   }
 
   return truncatedMessages;
-}
+};
 
-function truncateStringContent(
+const truncateStringContent = (
   lastMessage: ModelMessage,
   availableTokens: number,
   currentTokens: number
-): ModelMessage {
+): ModelMessage => {
   const tokensToRemove = currentTokens - availableTokens;
   const charsToRemove = tokensToRemove * 4;
   const truncatedContent = (lastMessage.content as string).slice(
@@ -130,9 +126,9 @@ function truncateStringContent(
   const trimmedContent = trimPrompt(truncatedContent, availableTokens);
 
   return Object.assign({}, lastMessage, { content: trimmedContent });
-}
+};
 
-function truncateToolResultPart(
+const truncateToolResultPart = (
   part: {
     type: string;
     output?: {
@@ -143,7 +139,7 @@ function truncateToolResultPart(
 ): {
   truncatedPart: unknown;
   tokensRemoved: number;
-} {
+} => {
   if (
     part.type !== "tool-result" ||
     !part.output ||
@@ -151,13 +147,14 @@ function truncateToolResultPart(
     !("value" in part.output) ||
     typeof part.output.value !== "string"
   ) {
-    return { truncatedPart: part, tokensRemoved: 0 };
+    return { tokensRemoved: 0, truncatedPart: part };
   }
 
   const partTokens = encoder.encode(part.output.value).length;
   if (partTokens > 0) {
     const targetTokens = Math.max(0, partTokens - tokensToRemove);
     return {
+      tokensRemoved: partTokens - targetTokens,
       truncatedPart: {
         ...part,
         output: {
@@ -165,22 +162,21 @@ function truncateToolResultPart(
           value: trimPrompt(part.output.value, targetTokens),
         },
       },
-      tokensRemoved: partTokens - targetTokens,
     };
   }
 
-  return { truncatedPart: null, tokensRemoved: partTokens };
-}
+  return { tokensRemoved: partTokens, truncatedPart: null };
+};
 
-function truncateToolArrayContent(
+const truncateToolArrayContent = (
   lastMessage: ModelMessage,
   availableTokens: number
-): ModelMessage {
+): ModelMessage => {
   const content = [...(lastMessage.content as unknown[])];
   const currentMessageTokens = calculateMessagesTokens([lastMessage]);
   let tokensToRemove = currentMessageTokens - availableTokens;
 
-  for (let i = content.length - 1; i >= 0 && tokensToRemove > 0; i--) {
+  for (let i = content.length - 1; i >= 0 && tokensToRemove > 0; i -= 1) {
     const part = content[i];
     const { truncatedPart, tokensRemoved } = truncateToolResultPart(
       part as {
@@ -201,13 +197,13 @@ function truncateToolArrayContent(
   }
 
   return Object.assign({}, lastMessage, { content });
-}
+};
 
-function truncateLastMessageIfNeeded(
+const truncateLastMessageIfNeeded = (
   truncatedMessages: ModelMessage[],
   availableTokens: number,
   currentTokens: number
-): void {
+): void => {
   if (currentTokens <= availableTokens || truncatedMessages.length === 0) {
     return;
   }
@@ -232,14 +228,14 @@ function truncateLastMessageIfNeeded(
       availableTokens
     );
   }
-}
+};
 
 // Truncate messages array to fit within token limit
-export function truncateMessages(
+export const truncateMessages = (
   messages: ModelMessage[],
   maxTokens: number,
   preserveSystemMessage = true
-): ModelMessage[] {
+): ModelMessage[] => {
   if (messages.length === 0) {
     return messages;
   }
@@ -273,4 +269,4 @@ export function truncateMessages(
   return systemMessage
     ? [systemMessage, ...truncatedMessages]
     : truncatedMessages;
-}
+};

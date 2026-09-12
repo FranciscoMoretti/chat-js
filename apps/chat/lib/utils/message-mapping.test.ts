@@ -8,8 +8,8 @@ describe("SDK 7 persistence boundary", () => {
       mapUIMessagePartsToDBParts(
         [
           {
-            type: "reasoning-file",
             mediaType: "image/png",
+            type: "reasoning-file",
             url: "https://example.com/reasoning.png",
           },
         ],
@@ -18,7 +18,7 @@ describe("SDK 7 persistence boundary", () => {
     ).toThrow("Unsupported part type: reasoning-file");
     expect(() =>
       mapUIMessagePartsToDBParts(
-        [{ type: "custom", kind: "provider.hidden" }],
+        [{ kind: "provider.hidden", type: "custom" }],
         "message"
       )
     ).toThrow("Unsupported part type: custom");
@@ -27,21 +27,21 @@ describe("SDK 7 persistence boundary", () => {
     const [part] = mapUIMessagePartsToDBParts(
       [
         {
-          type: "dynamic-tool",
-          toolName: "connector_lookup",
-          toolCallId: "call",
-          state: "output-available",
           input: { query: "test" },
           output: { found: true },
+          state: "output-available",
+          toolCallId: "call",
+          toolName: "connector_lookup",
+          type: "dynamic-tool",
         },
       ],
       "message"
     );
     expect(part).toMatchObject({
-      tool_name: "connector_lookup",
-      tool_toolCallId: "call",
       tool_input: { query: "test" },
+      tool_name: "connector_lookup",
       tool_output: { found: true },
+      tool_toolCallId: "call",
     });
   });
 });

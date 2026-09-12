@@ -12,19 +12,19 @@ interface ProvisionalChatConfirmation {
 
 const pendingConfirmations = new Map<string, ProvisionalChatConfirmation>();
 
-export function registerProvisionalChatConfirmation(
+export const registerProvisionalChatConfirmation = (
   chatId: string,
   confirmation: Omit<ProvisionalChatConfirmation, "acknowledged">
-) {
+) => {
   pendingConfirmations.set(chatId, {
     ...confirmation,
     acknowledged: false,
   });
-}
+};
 
-export function acknowledgeProvisionalUserMessagePersistence(
+export const acknowledgeProvisionalUserMessagePersistence = (
   acknowledgment: UserMessagePersistenceAcknowledgment
-) {
+) => {
   const entry = pendingConfirmations.get(acknowledgment.chatId);
   if (
     !entry ||
@@ -36,21 +36,21 @@ export function acknowledgeProvisionalUserMessagePersistence(
 
   entry.acknowledged = true;
   return true;
-}
+};
 
-export function claimConfirmedProvisionalChat(chatId: string) {
+export const claimConfirmedProvisionalChat = (chatId: string) => {
   const entry = pendingConfirmations.get(chatId);
   if (!entry?.acknowledged) {
     return false;
   }
   pendingConfirmations.delete(chatId);
   return true;
-}
+};
 
-export function discardUnacknowledgedProvisionalChatConfirmation(
+export const discardUnacknowledgedProvisionalChatConfirmation = (
   chatId: string,
   userMessageId: string
-) {
+) => {
   const entry = pendingConfirmations.get(chatId);
   if (!entry || entry.acknowledged || entry.userMessageId !== userMessageId) {
     return false;
@@ -58,8 +58,8 @@ export function discardUnacknowledgedProvisionalChatConfirmation(
 
   pendingConfirmations.delete(chatId);
   return true;
-}
+};
 
-export function clearProvisionalChatConfirmations() {
+export const clearProvisionalChatConfirmations = () => {
   pendingConfirmations.clear();
-}
+};

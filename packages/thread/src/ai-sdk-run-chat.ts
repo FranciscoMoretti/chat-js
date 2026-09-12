@@ -1,12 +1,12 @@
-import {
-  AbstractChat,
-  type ChatInit,
-  type ChatRequestOptions,
-  type ChatState,
-  type ChatStatus,
-  type ChatTransport,
-  type UIMessage,
-  type UIMessageChunk,
+import { AbstractChat } from "ai";
+import type {
+  ChatInit,
+  ChatRequestOptions,
+  ChatState,
+  ChatStatus,
+  ChatTransport,
+  UIMessage,
+  UIMessageChunk,
 } from "ai";
 
 export type ThreadRunSpec = {
@@ -36,6 +36,8 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
   setRunStatus: (runId: string, status: ChatStatus) => void;
   writeRunMessage: (runId: string, message: TMessage) => void;
 }
+
+const cloneSnapshot = <T>(thing: T): T => structuredClone(thing);
 
 class ThreadRunState<
   TMessage extends UIMessage,
@@ -89,25 +91,27 @@ class ThreadRunState<
 
   popMessage = () => {
     const lastMessage = this.#messages.pop();
-    if (lastMessage) this.#host.removeMessage(lastMessage.id);
+    if (lastMessage) {
+      this.#host.removeMessage(lastMessage.id);
+    }
   };
 
   pushMessage = (message: TMessage) => {
-    message = this.withResumePrefix(message);
-    this.#messages.push(message);
-    this.writeMessage(message);
+    const messageWithPrefix = this.withResumePrefix(message);
+    this.#messages.push(messageWithPrefix);
+    this.writeMessage(messageWithPrefix);
   };
 
   replaceMessage = (index: number, message: TMessage) => {
     if (index !== this.#messages.length - 1) {
       throw new Error("A thread run can only replace its current response");
     }
-    message = this.withResumePrefix(message);
-    this.#messages[index] = message;
-    this.writeMessage(message);
+    const messageWithPrefix = this.withResumePrefix(message);
+    this.#messages[index] = messageWithPrefix;
+    this.writeMessage(messageWithPrefix);
   };
 
-  snapshot = <T>(thing: T): T => structuredClone(thing);
+  snapshot = cloneSnapshot;
 
   private withResumePrefix(message: TMessage): TMessage {
     const prefix = this.resumePrefix;
@@ -139,18 +143,21 @@ export class ThreadRunChat<
         const stream = await host.transport.reconnectToStream(options);
         state.preserveReconnectError =
           stream === null && state.status === "error";
-        if (!stream) return null;
+        if (!stream) {
+          return null;
+        }
         const lastMessage = state.messages.at(-1);
         let first = true;
         return stream.pipeThrough(
           new TransformStream<UIMessageChunk, UIMessageChunk>({
             transform(chunk, controller) {
+              let chunkToEnqueue = chunk;
               if (
                 first &&
                 chunk.type === "start" &&
                 lastMessage?.role === "assistant"
               ) {
-                chunk = {
+                chunkToEnqueue = {
                   ...chunk,
                   messageId: chunk.messageId ?? lastMessage.id,
                   messageMetadata:
@@ -166,13 +173,13 @@ export class ThreadRunChat<
               ) {
                 state.resumePrefix = structuredClone(lastMessage);
                 controller.enqueue({
-                  type: "start",
                   messageId: lastMessage.id,
                   messageMetadata: lastMessage.metadata,
+                  type: "start",
                 });
               }
               first = false;
-              controller.enqueue(chunk);
+              controller.enqueue(chunkToEnqueue);
             },
           })
         );

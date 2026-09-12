@@ -7,13 +7,13 @@ import type {
   ThreadStateSnapshot,
 } from "./types";
 
-export function createThreadStateSnapshot<TMessage extends UIMessage>({
+export const createThreadStateSnapshot = <TMessage extends UIMessage>({
   initialTree,
   messages,
 }: {
   initialTree?: MessageTreeSnapshot<TMessage>;
   messages?: TMessage[];
-}): ThreadStateSnapshot<TMessage> {
+}): ThreadStateSnapshot<TMessage> => {
   const tree = new MessageTree({ messages, snapshot: initialTree });
 
   return {
@@ -26,7 +26,7 @@ export function createThreadStateSnapshot<TMessage extends UIMessage>({
     status: "ready",
     treeStatus: "ready",
   };
-}
+};
 
 export class MemoryThreadState<
   TMessage extends UIMessage = UIMessage,
@@ -54,6 +54,8 @@ export class MemoryThreadState<
 
   update: ThreadState<TMessage>["update"] = (updater) => {
     this.#snapshot = updater(this.#snapshot);
-    for (const listener of this.#listeners) listener();
+    for (const listener of this.#listeners) {
+      listener();
+    }
   };
 }

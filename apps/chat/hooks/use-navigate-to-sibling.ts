@@ -9,7 +9,7 @@ import { useSwitchToSibling } from "@/lib/stores/hooks-threads";
  * Navigate to a sibling thread while preserving branch-owned active runs.
  * Uses the store's switchToSibling for the pure state transition.
  */
-export function useNavigateToSibling() {
+export const useNavigateToSibling = () => {
   const { setDataStream } = useDataStream();
   const { artifact, closeArtifact } = useArtifact();
   const switchToSibling = useSwitchToSibling();
@@ -41,4 +41,4 @@ export function useNavigateToSibling() {
       switchToSibling,
     ]
   );
-}
+};
