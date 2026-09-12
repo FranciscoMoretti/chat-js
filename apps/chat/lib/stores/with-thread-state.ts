@@ -51,26 +51,26 @@ export const withThreadState =
       updateThreadSnapshot: (updater) => {
         let didChangeSelectedPath = false;
         set((state) => {
-          const threadSnapshot = updater(state.threadSnapshot);
+          const nextSnapshot = updater(state.threadSnapshot);
           // Sibling switches change the rendered ids. Flush throttled
           // messages in the same update so UserMessage can still resolve
           // the ids it is currently rendering; otherwise it returns null
           // and the assistant jumps up for a frame.
           didChangeSelectedPath = haveSelectedPathIdsChanged(
             state._throttledMessages ?? state.messages,
-            threadSnapshot.messages
+            nextSnapshot.messages
           );
-          state._messageIndex.update(threadSnapshot.messages);
+          state._messageIndex.update(nextSnapshot.messages);
 
           return {
             ...state,
             _memoizedSelectors: new Map(),
-            error: threadSnapshot.error,
-            messages: threadSnapshot.messages,
-            status: threadSnapshot.status,
-            threadSnapshot,
+            error: nextSnapshot.error,
+            messages: nextSnapshot.messages,
+            status: nextSnapshot.status,
+            threadSnapshot: nextSnapshot,
             ...(didChangeSelectedPath
-              ? { _throttledMessages: threadSnapshot.messages }
+              ? { _throttledMessages: nextSnapshot.messages }
               : {}),
           };
         });

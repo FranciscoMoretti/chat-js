@@ -24,9 +24,9 @@ const message = ({
   metadata: {
     activeStreamId: null,
     createdAt: new Date(parallelIndex ?? 0),
-    parentMessageId,
     parallelGroupId: parallelIndex === null ? null : "group-1",
     parallelIndex,
+    parentMessageId,
     selectedModel: gatewayModelDefaults.workflows.title,
   },
   parts: [{ text: id, type: "text" }],
@@ -42,14 +42,14 @@ describe("buildTreeSnapshotFromMessages", () => {
     });
     const first = message({
       id: "first",
-      parentMessageId: root.id,
       parallelIndex: 0,
+      parentMessageId: root.id,
       role: "assistant",
     });
     const second = message({
       id: "second",
-      parentMessageId: root.id,
       parallelIndex: 1,
+      parentMessageId: root.id,
       role: "assistant",
     });
 
