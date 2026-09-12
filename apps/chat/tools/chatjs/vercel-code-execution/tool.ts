@@ -1,7 +1,7 @@
 import type { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
-import z from "zod";
+import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { createModuleLogger } from "@/lib/logger";
@@ -17,7 +17,8 @@ import {
 import { supportedExecutionLanguages } from "./types";
 import type { SupportedExecutionLanguage } from "./types";
 
-const COST_CENTS = 5; // Vercel Sandbox execution
+// Vercel Sandbox execution.
+const COST_CENTS = 5;
 
 const languageSchema = z.enum(supportedExecutionLanguages);
 
@@ -109,10 +110,10 @@ Output rules:
 
       return result;
     } catch (error) {
-      log.error({ error, requestId, language }, "code execution failed");
+      log.error({ error, language, requestId }, "code execution failed");
       return {
-        message: `Sandbox execution failed: ${getErrorMessage(error)}`,
         chart: "",
+        message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
       await cleanupSandbox(sandbox, log, requestId);

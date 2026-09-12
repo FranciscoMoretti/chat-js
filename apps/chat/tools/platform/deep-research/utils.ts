@@ -11,10 +11,10 @@ import type { DeepResearchRuntimeConfig } from "./configuration";
 
 type McpClient = Awaited<ReturnType<typeof experimental_createMCPClient>>;
 
-async function loadMcpTools(
+const loadMcpTools = async (
   config: DeepResearchRuntimeConfig,
   existingToolNames: Set<string>
-): Promise<ToolSet> {
+): Promise<ToolSet> => {
   if (!config.mcp_config?.url) {
     return {};
   }
@@ -72,7 +72,7 @@ async function loadMcpTools(
       await client.close();
     }
   }
-}
+};
 
 // Tool Utils
 

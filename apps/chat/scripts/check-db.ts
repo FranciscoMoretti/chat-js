@@ -11,7 +11,7 @@ const CONNECT_TIMEOUT_SECONDS = 10;
 const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
-async function checkDatabase() {
+const checkDatabase = async () => {
   const parsed = z
     .object({
       ...databaseEnvOptions,
@@ -55,7 +55,7 @@ async function checkDatabase() {
       await sql.end({ timeout: CLOSE_TIMEOUT_SECONDS });
     }
   }
-}
+};
 
 checkDatabase().catch(() => {
   console.error(

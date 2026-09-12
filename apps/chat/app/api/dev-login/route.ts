@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 
-async function serializeSignedCookie(
+const serializeSignedCookie = async (
   name: string,
   value: string,
   secret: string,
@@ -14,7 +14,7 @@ async function serializeSignedCookie(
     sameSite?: string;
     expires?: Date;
   }
-): Promise<string> {
+): Promise<string> => {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -44,9 +44,9 @@ async function serializeSignedCookie(
     cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
   }
   return cookie;
-}
+};
 
-export async function GET() {
+export const GET = async () => {
   if (process.env.NODE_ENV !== "development") {
     return new Response("Not found", { status: 404 });
   }
@@ -99,4 +99,4 @@ export async function GET() {
     headers,
     status: 302,
   });
-}
+};

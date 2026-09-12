@@ -15,7 +15,7 @@ const PROBE_TTL_SECONDS = 60;
 loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ quiet: true });
 
-async function checkRedis() {
+const checkRedis = async () => {
   const parsed = z.object(redisEnvOptions).safeParse(process.env);
   if (!parsed.success) {
     throw new Error("Invalid Redis configuration");
@@ -93,7 +93,7 @@ async function checkRedis() {
       subscriber.destroy();
     }
   }
-}
+};
 
 checkRedis().catch(() => {
   process.stderr.write(

@@ -9,7 +9,7 @@ import { isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
 
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000; // 4 hours
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   try {
     // Verify this is being called by Vercel cron
     const authHeader = request.headers.get("authorization");
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+};
 
-async function cleanupOrphanedAttachments() {
+const cleanupOrphanedAttachments = async () => {
   // Skip cleanup if neither image tool nor attachments is enabled
   const imageGenerationEnabled = config.ai.tools.image.enabled;
   const attachmentsEnabled = config.features.attachments;
@@ -91,4 +91,4 @@ async function cleanupOrphanedAttachments() {
     console.error("Failed to cleanup orphaned attachments:", error);
     throw error;
   }
-}
+};

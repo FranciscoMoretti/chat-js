@@ -13,7 +13,7 @@ import { getChatById, getChatMessageWithPartsById } from "@/lib/db/queries";
 
 import { getStreamContext } from "../../route";
 
-function appendMessageResponse(message: ChatMessage) {
+const appendMessageResponse = (message: ChatMessage) => {
   const stream = createUIMessageStream<ChatMessage>({
     execute: ({ writer }) => {
       writer.write({
@@ -32,12 +32,12 @@ function appendMessageResponse(message: ChatMessage) {
       .pipeThrough(new TextEncoderStream()),
     { headers: UI_MESSAGE_STREAM_HEADERS }
   );
-}
+};
 
-export async function GET(
+export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id: chatId } = await params;
   const messageId = request.nextUrl.searchParams.get("messageId");
 
@@ -102,4 +102,4 @@ export async function GET(
   }
 
   return new Response(stream, { headers: UI_MESSAGE_STREAM_HEADERS });
-}
+};

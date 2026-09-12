@@ -11,7 +11,7 @@ import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.s
 
 const log = createModuleLogger("mcp-oauth-callback");
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   const {
     code,
     state,
@@ -123,4 +123,4 @@ export async function GET(request: NextRequest) {
       errorMessage,
     });
   }
-}
+};

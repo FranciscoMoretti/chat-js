@@ -6,6 +6,7 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
+import type { createClient } from "redis";
 import { createResumableStreamContext } from "resumable-stream";
 import type { ResumableStreamContext } from "resumable-stream";
 import throttle from "throttleit";
@@ -74,7 +75,7 @@ const redisSubscriber = redisClients?.subscriber ?? null;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
-export function getStreamContext(): ResumableStreamContext | null {
+export const getStreamContext = (): ResumableStreamContext | null => {
   if (globalStreamContext) {
     return globalStreamContext;
   }
@@ -92,21 +93,21 @@ export function getStreamContext(): ResumableStreamContext | null {
   });
 
   return globalStreamContext;
-}
+};
 
 type AnonymousSessionResult =
   | { success: true; session: AnonymousSession }
   | { success: false; error: Response };
 
-async function handleAnonymousSession({
+const handleAnonymousSession = async ({
   request,
   redis,
   selectedModelId,
 }: {
   request: NextRequest;
-  redis: ReturnType<typeof import("redis").createClient> | null;
+  redis: ReturnType<typeof createClient> | null;
   selectedModelId: AppModelId;
-}): Promise<AnonymousSessionResult> {
+}): Promise<AnonymousSessionResult> => {
   const log = createModuleLogger("api:chat:anonymous");
 
   const clientIP = getClientIP(request);
@@ -161,9 +162,9 @@ async function handleAnonymousSession({
   }
 
   return { session, success: true };
-}
+};
 
-async function handleChatValidation({
+const handleChatValidation = async ({
   chatId,
   userId,
   userMessage,
@@ -173,7 +174,7 @@ async function handleChatValidation({
   userId: string;
   userMessage: ChatMessage;
   projectId?: string;
-}): Promise<{ error: Response | null; isNewChat: boolean }> {
+}): Promise<{ error: Response | null; isNewChat: boolean }> => {
   const log = createModuleLogger("api:chat:validation");
 
   const chat = await getChatById({ id: chatId });
@@ -224,15 +225,15 @@ async function handleChatValidation({
   });
 
   return { error: null, isNewChat };
-}
+};
 
-function resolveSelectedModelId({
+const resolveSelectedModelId = ({
   requestSelectedModelId,
   selectedModel,
 }: {
   requestSelectedModelId?: AppModelId;
   selectedModel: ChatMessage["metadata"]["selectedModel"];
-}): AppModelId | null {
+}): AppModelId | null => {
   if (typeof selectedModel === "string") {
     return requestSelectedModelId ?? selectedModel;
   }
@@ -246,17 +247,17 @@ function resolveSelectedModelId({
   }
 
   return getPrimarySelectedModelId(selectedModel);
-}
+};
 
-async function checkUserCanSpend(userId: string): Promise<Response | null> {
+const checkUserCanSpend = async (userId: string): Promise<Response | null> => {
   const userCanSpend = await canSpend(userId);
   if (!userCanSpend) {
     return new Response("Insufficient credits", { status: 402 });
   }
   return null;
-}
+};
 
-async function handleUserValidationAndCredits({
+const handleUserValidationAndCredits = async ({
   chatId,
   userId,
   userMessage,
@@ -266,7 +267,7 @@ async function handleUserValidationAndCredits({
   userId: string;
   userMessage: ChatMessage;
   projectId?: string;
-}): Promise<{ error: Response } | { isNewChat: boolean }> {
+}): Promise<{ error: Response } | { isNewChat: boolean }> => {
   const validationResult = await handleChatValidation({
     chatId,
     projectId,
@@ -283,15 +284,15 @@ async function handleUserValidationAndCredits({
   }
 
   return { isNewChat: validationResult.isNewChat };
-}
+};
 
-async function getSystemPrompt({
+const getSystemPrompt = async ({
   isAnonymous,
   chatId,
 }: {
   isAnonymous: boolean;
   chatId: string;
-}): Promise<string> {
+}): Promise<string> => {
   let system = systemPrompt();
   if (!isAnonymous) {
     const currentChat = await getChatById({ id: chatId });
@@ -303,7 +304,7 @@ async function getSystemPrompt({
     }
   }
   return system;
-}
+};
 
 async function createChatStream({
   messageId,
@@ -428,8 +429,8 @@ async function createChatStream({
               }
               return {
                 ...initialMetadata,
-                usage: part.totalUsage,
                 activeStreamId: null,
+                usage: part.totalUsage,
               };
             }
           },
@@ -496,7 +497,7 @@ async function createChatStream({
   return stream;
 }
 
-function emptyChatStreamResponse() {
+const emptyChatStreamResponse = () => {
   const stream = createUIMessageStream<ChatMessage>({
     execute: () => {
       // This stream intentionally emits no messages.
@@ -510,9 +511,9 @@ function emptyChatStreamResponse() {
       "Content-Type": "text/event-stream",
     },
   });
-}
+};
 
-async function executeChatRequest({
+const executeChatRequest = async ({
   chatId,
   userMessage,
   previousMessages,
@@ -542,7 +543,7 @@ async function executeChatRequest({
   abortController: AbortController;
   timeoutId: NodeJS.Timeout;
   mcpConnectors: McpConnector[];
-}): Promise<Response> {
+}): Promise<Response> => {
   const log = createModuleLogger("api:chat:execute");
   const messageId = requestId
     ? createAssistantRequestMessageId({
@@ -673,7 +674,7 @@ async function executeChatRequest({
   }
 
   return new Response(sseStream(), { headers: sseHeaders });
-}
+};
 
 type SessionSetupResult =
   | { success: false; error: Response }
@@ -685,13 +686,13 @@ type SessionSetupResult =
       modelDefinition: AppModelDefinition;
     };
 
-async function validateAndSetupSession({
+const validateAndSetupSession = async ({
   request,
   selectedModelId,
 }: {
   request: NextRequest;
   selectedModelId: AppModelId;
-}): Promise<SessionSetupResult> {
+}): Promise<SessionSetupResult> => {
   const log = createModuleLogger("api:chat:setup");
 
   const session = await auth.api.getSession({ headers: await headers() });
@@ -740,9 +741,9 @@ async function validateAndSetupSession({
     success: true,
     userId,
   };
-}
+};
 
-async function prepareRequestContext({
+const prepareRequestContext = async ({
   userMessage,
   chatId,
   isAnonymous,
@@ -755,7 +756,7 @@ async function prepareRequestContext({
 }): Promise<{
   previousMessages: ChatMessage[];
   error: Response | null;
-}> {
+}> => {
   const log = createModuleLogger("api:chat:prepare");
 
   // Validate input token limit (50k tokens for user message)
@@ -785,7 +786,7 @@ async function prepareRequestContext({
   const previousMessages = messageThreadToParent.slice(-5);
 
   return { error: null, previousMessages };
-}
+};
 
 async function finalizeMessageAndCredits({
   messages,
@@ -884,16 +885,15 @@ type ChatPostBodyResult =
   | { success: false; error: Response }
   | { success: true; body: ChatPostBody };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object" && !Array.isArray(value);
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
 
-function parseMessageDate(value: unknown): Date | null {
+const parseMessageDate = (value: unknown): Date | null => {
   const date = value instanceof Date ? value : new Date(String(value));
   return Number.isNaN(date.getTime()) ? null : date;
-}
+};
 
-function normalizeChatMessage(value: unknown): ChatMessage | null {
+const normalizeChatMessage = (value: unknown): ChatMessage | null => {
   if (!isRecord(value)) {
     return null;
   }
@@ -937,38 +937,39 @@ function normalizeChatMessage(value: unknown): ChatMessage | null {
       selectedModel: metadata.selectedModel,
     },
   };
-}
+};
 
-function optionalString(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
+const optionalString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
 
-function optionalNullableString(value: unknown): string | null | undefined {
+const optionalNullableString = (value: unknown): string | null | undefined => {
   if (value === null || typeof value === "string") {
     return value;
   }
   return undefined;
-}
+};
 
-function optionalNullableInteger(value: unknown): number | null | undefined {
+const optionalNullableInteger = (value: unknown): number | null | undefined => {
   if (value === null) {
     return null;
   }
   return typeof value === "number" && Number.isInteger(value)
     ? value
     : undefined;
-}
+};
 
-function optionalNullableBoolean(value: unknown): boolean | null | undefined {
+const optionalNullableBoolean = (
+  value: unknown
+): boolean | null | undefined => {
   if (value === null || typeof value === "boolean") {
     return value;
   }
   return undefined;
-}
+};
 
-async function readChatPostBody(
+const readChatPostBody = async (
   request: NextRequest
-): Promise<ChatPostBodyResult> {
+): Promise<ChatPostBodyResult> => {
   let rawBody: unknown;
 
   try {
@@ -1021,9 +1022,9 @@ async function readChatPostBody(
     },
     success: true,
   };
-}
+};
 
-async function prepareChatPersistenceAndCredits({
+const prepareChatPersistenceAndCredits = async ({
   chatId,
   projectId,
   userId,
@@ -1033,7 +1034,7 @@ async function prepareChatPersistenceAndCredits({
   projectId?: string;
   userId: string | null;
   userMessage: ChatMessage;
-}): Promise<{ error: Response } | { isNewChat: boolean }> {
+}): Promise<{ error: Response } | { isNewChat: boolean }> => {
   if (userId) {
     return await handleUserValidationAndCredits({
       chatId,
@@ -1044,11 +1045,11 @@ async function prepareChatPersistenceAndCredits({
   }
 
   return { isNewChat: false };
-}
+};
 
-async function consumeAnonymousCreditBeforeStream(
+const consumeAnonymousCreditBeforeStream = async (
   anonymousSession: AnonymousSession | null
-) {
+): Promise<void> => {
   if (!anonymousSession) {
     return;
   }
@@ -1059,9 +1060,9 @@ async function consumeAnonymousCreditBeforeStream(
     ...anonymousSession,
     remainingCredits: anonymousSession.remainingCredits - 1,
   });
-}
+};
 
-async function prepareChatExecutionInputs({
+const prepareChatExecutionInputs = async ({
   anonymousPreviousMessages,
   chatId,
   isAnonymous,
@@ -1076,7 +1077,7 @@ async function prepareChatExecutionInputs({
 }): Promise<
   | { error: Response }
   | { mcpConnectors: McpConnector[]; previousMessages: ChatMessage[] }
-> {
+> => {
   const [contextResult, mcpConnectors] = await Promise.all([
     prepareRequestContext({
       anonymousPreviousMessages,
@@ -1097,9 +1098,9 @@ async function prepareChatExecutionInputs({
     mcpConnectors,
     previousMessages: contextResult.previousMessages,
   };
-}
+};
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   const log = createModuleLogger("api:chat");
   try {
     const bodyResult = await readChatPostBody(request);
@@ -1178,7 +1179,7 @@ export async function POST(request: NextRequest) {
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
       abortController.abort();
-    }, 290_000); // 290 seconds
+    }, 290_000);
 
     return await executeChatRequest({
       abortController,
@@ -1210,4 +1211,4 @@ export async function POST(request: NextRequest) {
       status: 500,
     });
   }
-}
+};

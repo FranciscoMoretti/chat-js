@@ -6,11 +6,10 @@ const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
-function packageName(spec: string): string {
-  return spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
-}
+const packageName = (spec: string): string =>
+  spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
 
-async function installBasePackages(
+const installBasePackages = async (
   sandbox: Sandbox,
   basePackages: readonly string[],
   requestId: string,
@@ -18,7 +17,7 @@ async function installBasePackages(
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
-}> {
+}> => {
   const installStep = await sandbox.runCommand({
     args: ["install", ...basePackages],
     cmd: "pip",
@@ -39,9 +38,9 @@ async function installBasePackages(
   }
   log.info({ requestId }, "base packages installed");
   return { success: true };
-}
+};
 
-async function processExtraPackages(
+const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
   sandbox: Sandbox,
@@ -53,7 +52,7 @@ async function processExtraPackages(
     success: boolean;
     result?: CodeExecutionResult;
   };
-}> {
+}> => {
   const basePackageNames = new Set(basePackages.map((p) => p.toLowerCase()));
   const lines = code.split("\n");
   const pipLines = lines.filter((line) =>
@@ -107,10 +106,9 @@ async function processExtraPackages(
     codeToRun: codeWithoutPipLines,
     installResult: { success: true },
   };
-}
+};
 
-function createWrappedCode(codeToRun: string, chartPath: string): string {
-  return `
+const createWrappedCode = (codeToRun: string, chartPath: string): string => `
 import sys
 import json
 import traceback
@@ -161,9 +159,8 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
-}
 
-async function parseExecutionOutput(execResult: {
+const parseExecutionOutput = async (execResult: {
   stdout: () => Promise<string>;
   exitCode: number;
 }): Promise<{
@@ -173,7 +170,7 @@ async function parseExecutionOutput(execResult: {
     success: boolean;
     error?: { name: string; value: string; traceback: string };
   };
-}> {
+}> => {
   const stdout = await execResult.stdout();
   let execInfo: {
     success: boolean;
@@ -217,32 +214,30 @@ async function parseExecutionOutput(execResult: {
   }
 
   return { chartData, execInfo, outputText };
-}
+};
 
-async function checkForChart(
+const checkForChart = async (
   sandbox: Sandbox,
   chartPath: string,
   requestId: string,
   log: CodeExecutionContext["log"]
-): Promise<{ base64: string; format: string } | undefined> {
+): Promise<{ base64: string; format: string } | undefined> => {
   const chartCheck = await sandbox.runCommand({
     args: ["-f", chartPath],
     cmd: "test",
   });
   if (chartCheck.exitCode === 0) {
-    const b64 = await (
-      await sandbox.runCommand({
-        args: ["-w", "0", chartPath],
-        cmd: "base64",
-      })
-    ).stdout();
+    const base64Command = await sandbox.runCommand({
+      args: ["-w", "0", chartPath],
+      cmd: "base64",
+    });
+    const b64 = await base64Command.stdout();
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
-  return;
-}
+};
 
-function buildResponseMessage({
+const buildResponseMessage = ({
   outputText,
   stderr,
   execInfo,
@@ -257,7 +252,7 @@ function buildResponseMessage({
   };
   log: CodeExecutionContext["log"];
   requestId: string;
-}): string {
+}): string => {
   let message = "";
 
   if (outputText) {
@@ -272,14 +267,14 @@ function buildResponseMessage({
   }
 
   return message;
-}
+};
 
-export async function executePythonInSandbox({
+export const executePythonInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> {
+}: CodeExecutionContext): Promise<CodeExecutionResult> => {
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -337,4 +332,4 @@ export async function executePythonInSandbox({
     chart: chartOut ?? "",
     message: message.trim(),
   };
-}
+};

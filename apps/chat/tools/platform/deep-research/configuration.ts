@@ -32,7 +32,7 @@ export interface DeepResearchRuntimeConfig {
   summarization_model_max_tokens: number;
 }
 
-export function getDeepResearchConfig(): DeepResearchRuntimeConfig {
+export const getDeepResearchConfig = (): DeepResearchRuntimeConfig => {
   const {
     defaultModel,
     finalReportModel,
@@ -65,4 +65,4 @@ export function getDeepResearchConfig(): DeepResearchRuntimeConfig {
     status_update_model: defaultModel,
     status_update_model_max_tokens: 4000,
   };
-}
+};

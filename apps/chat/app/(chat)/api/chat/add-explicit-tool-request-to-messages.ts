@@ -29,7 +29,8 @@ export const addExplicitToolRequestToMessages = (
         part.output.format === "clarifying_questions"
       ) {
         toolsToRequest = ["deepResearch"];
-        break; // Found it, no need to continue looping
+        // Found it, no need to continue looping.
+        break;
       }
     }
   }

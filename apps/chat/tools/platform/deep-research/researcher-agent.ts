@@ -14,10 +14,10 @@ import { createTelemetry } from "./types";
 import type { AgentOptions } from "./types";
 import { getAllTools, getModelContextWindow, getTodayStr } from "./utils";
 
-export async function runResearcher(
+export const runResearcher = async (
   topic: string,
   options: AgentOptions
-): Promise<string> {
+): Promise<string> => {
   const { config, dataStream, toolCallId, abortSignal } = options;
 
   const model = await getLanguageModel(config.research_model as ModelId);
@@ -93,12 +93,12 @@ export async function runResearcher(
   });
 
   return compressed;
-}
+};
 
-async function compressResearch(
+const compressResearch = async (
   researchMessages: ModelMessage[],
   options: AgentOptions
-): Promise<string> {
+): Promise<string> => {
   const { config, abortSignal } = options;
   const model = await getLanguageModel(config.compression_model as ModelId);
 
@@ -137,4 +137,4 @@ async function compressResearch(
   }
 
   return response.text;
-}
+};

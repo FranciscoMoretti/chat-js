@@ -21,13 +21,6 @@ Use for:
 ${textGuidelines}
 
 The title should be descriptive of the content.`,
-    inputSchema: z.object({
-      content: z.string().describe("The full markdown content of the document"),
-      title: z.string().describe("Document title"),
-    }),
-
-    // TODO: Optimize what's rendered to the model by excluding content from messages !== curMessage
-    // toModelOutput: ({input}) => (),
     async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
 
@@ -49,4 +42,8 @@ The title should be descriptive of the content.`,
         status: "success",
       };
     },
+    inputSchema: z.object({
+      content: z.string().describe("The full markdown content of the document"),
+      title: z.string().describe("Document title"),
+    }),
   });

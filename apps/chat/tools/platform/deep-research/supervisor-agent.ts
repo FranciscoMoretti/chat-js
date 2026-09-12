@@ -10,15 +10,15 @@ import { createTelemetry } from "./types";
 import type { AgentOptions } from "./types";
 import { getTodayStr } from "./utils";
 
-export async function runSupervisor(
+export const runSupervisor = async (
   researchBrief: string,
   options: AgentOptions
-): Promise<string[]> {
+): Promise<string[]> => {
   const { config, dataStream, toolCallId, abortSignal } = options;
   const model = await getLanguageModel(config.research_model as ModelId);
 
   // Sequential execution queue to avoid streaming race conditions and rate limits
-  let researchQueue = Promise.resolve<unknown>(undefined);
+  let researchQueue = Promise.resolve<unknown>(null);
 
   const conductResearchTool = tool({
     description: "Call this tool to conduct research on a specific topic.",
@@ -39,7 +39,7 @@ export async function runSupervisor(
 
   const researchCompleteTool = tool({
     description: "Call this tool to indicate that the research is complete.",
-    execute: async () => "Research marked as complete.",
+    execute: () => "Research marked as complete.",
     inputSchema: z.object({}),
   });
 
@@ -100,4 +100,4 @@ export async function runSupervisor(
       .filter((tr) => tr.toolName === "conductResearch")
       .map((tr) => String(tr.output))
   );
-}
+};
