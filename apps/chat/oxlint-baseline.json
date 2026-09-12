@@ -198,7 +198,6 @@
         "components/part/document-preview.tsx",
         "components/retry-button.tsx",
         "components/suggested-actions.tsx",
-        "lib/ai/completion-queue.ts",
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
