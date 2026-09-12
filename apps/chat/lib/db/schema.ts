@@ -463,6 +463,7 @@ export const eveConversation = pgTable(
     parentConversationId: uuid("parentConversationId"),
     rootConversationId: uuid("rootConversationId"),
     forkTurnId: text("forkTurnId"),
+    forkCheckpointId: uuid("forkCheckpointId"),
     title: text("title"),
     visibility: varchar("visibility", { enum: ["private", "public"] })
       .notNull()
@@ -494,6 +495,10 @@ export const eveConversation = pgTable(
       foreignColumns: [table.id, table.ownerId],
       name: "EveConversation_root_owner_fk",
     }),
+    check(
+      "EveConversation_named_fork_shape",
+      sql`${table.forkCheckpointId} is null or ${table.parentConversationId} is not null`
+    ),
     check(
       "EveConversation_fork_shape",
       sql`(
@@ -783,6 +788,68 @@ export const eveDocumentCheckpointEntry = pgTable(
         eveDocumentRevision.ownerId,
       ],
       name: "EveDocumentCheckpointEntry_revision_owner_fk",
+    }),
+  ]
+);
+
+/** Immutable document boundary captured by a serialized native idle command. */
+export const eveNamedDocumentCheckpoint = pgTable(
+  "EveNamedDocumentCheckpoint",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    checkpointId: uuid("checkpointId").notNull(),
+    turnIndex: integer("turnIndex").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.checkpointId] }),
+    uniqueIndex("EveNamedDocumentCheckpoint_owner_identity").on(
+      table.conversationId,
+      table.checkpointId,
+      table.ownerId
+    ),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveNamedDocumentCheckpoint_conversation_owner_fk",
+    }),
+    check(
+      "EveNamedDocumentCheckpoint_turn_nonnegative",
+      sql`${table.turnIndex} >= 0`
+    ),
+  ]
+);
+
+export const eveNamedDocumentCheckpointEntry = pgTable(
+  "EveNamedDocumentCheckpointEntry",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    checkpointId: uuid("checkpointId").notNull(),
+    documentId: uuid("documentId").notNull(),
+    revisionId: uuid("revisionId").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.conversationId, table.checkpointId, table.documentId],
+    }),
+    foreignKey({
+      columns: [table.conversationId, table.checkpointId, table.ownerId],
+      foreignColumns: [
+        eveNamedDocumentCheckpoint.conversationId,
+        eveNamedDocumentCheckpoint.checkpointId,
+        eveNamedDocumentCheckpoint.ownerId,
+      ],
+      name: "EveNamedDocumentCheckpointEntry_checkpoint_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.revisionId, table.documentId, table.ownerId],
+      foreignColumns: [
+        eveDocumentRevision.id,
+        eveDocumentRevision.documentId,
+        eveDocumentRevision.ownerId,
+      ],
+      name: "EveNamedDocumentCheckpointEntry_revision_owner_fk",
     }),
   ]
 );

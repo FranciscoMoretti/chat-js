@@ -87,3 +87,23 @@ it("refuses a foreign or deleted source before reservation or checkpoint access"
   expect(mocks.readiness).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+
+it("passes the same named checkpoint to readiness and native fork allocation", async () => {
+  const checkpointId = crypto.randomUUID();
+  const named = { ...input, fork: { ...input.fork, checkpointId } };
+  expect((await createEveConversationOperation("owner", named)).status).toBe(
+    200
+  );
+  expect(mocks.readiness).toHaveBeenCalledWith(
+    "owner",
+    "source",
+    "turn_0",
+    checkpointId
+  );
+  const body = JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body);
+  expect(body.fork).toEqual({
+    sessionId: "source",
+    beforeTurnId: "turn_0",
+    checkpointId,
+  });
+});

@@ -242,6 +242,7 @@ async function reserveEveConversation(
           ? (source.rootConversationId ?? source.id)
           : undefined,
         forkTurnId: fork?.beforeTurnId,
+        forkCheckpointId: fork?.checkpointId,
       })
       .onConflictDoNothing()
       .returning();
@@ -436,7 +437,8 @@ export async function createEveConversation(
       existing.initialContentHash !== (initialContentHash ?? null) ||
       existing.initialProjectId !== (initialProjectId ?? null) ||
       existing.parentConversationId !== (fork?.conversationId ?? null) ||
-      existing.forkTurnId !== (fork?.beforeTurnId ?? null)
+      existing.forkTurnId !== (fork?.beforeTurnId ?? null) ||
+      existing.forkCheckpointId !== (fork?.checkpointId ?? null)
     ) {
       throw new CreationConflict(
         "This operation already has a different message, attachments, model, project, or source turn."

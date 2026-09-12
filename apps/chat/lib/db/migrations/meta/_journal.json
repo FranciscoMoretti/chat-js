@@ -470,6 +470,13 @@
       "when": 1789195675240,
       "tag": "0066_curvy_terror",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1789198643755,
+      "tag": "0067_fluffy_lady_bullseye",
+      "breakpoints": true
     }
   ]
 }

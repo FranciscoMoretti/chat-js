@@ -111,7 +111,8 @@ export async function createEveConversationOperation(
           await waitForEveCheckpoint(
             ownerId,
             fork.sessionId,
-            fork.beforeTurnId
+            fork.beforeTurnId,
+            fork.checkpointId
           );
         }
         // Uncertain reservations may have reached Eve before their reply was lost.
@@ -196,5 +197,9 @@ async function resolveFork(ownerId: string, input: EveForkInput | undefined) {
       { status: 404 }
     );
   }
-  return { sessionId: source.sessionId, beforeTurnId: input.beforeTurnId };
+  return {
+    sessionId: source.sessionId,
+    beforeTurnId: input.beforeTurnId,
+    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
+  };
 }

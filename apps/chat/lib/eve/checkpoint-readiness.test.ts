@@ -63,3 +63,29 @@ it("times out without allocating or changing the requested checkpoint", async ()
     )
   ).toBe(true);
 });
+
+it("requires the exact named checkpoint receipt and never falls back to a turn lookup", async () => {
+  const checkpointId = crypto.randomUUID();
+  const receipt = {
+    ready: true,
+    sessionId: "source",
+    beforeTurnId: "turn_1",
+    checkpointId,
+  };
+  request.mockResolvedValueOnce(Response.json(receipt));
+  await waitForEveCheckpoint("owner", "source", "turn_1", checkpointId);
+  expect(request.mock.calls[0].slice(0, 2)).toEqual([
+    "owner",
+    `/eve/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
+  ]);
+  for (const invalid of [
+    { ...receipt, checkpointId: crypto.randomUUID() },
+    { ...receipt, checkpointId: undefined },
+    { ...receipt, ready: false },
+  ]) {
+    request.mockResolvedValueOnce(Response.json(invalid));
+    await expect(
+      waitForEveCheckpoint("owner", "source", "turn_1", checkpointId)
+    ).rejects.toThrow("Invalid source checkpoint");
+  }
+});

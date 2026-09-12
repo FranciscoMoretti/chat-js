@@ -9,6 +9,8 @@ import {
   eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
+  eveNamedDocumentCheckpoint,
+  eveNamedDocumentCheckpointEntry,
 } from "./schema";
 
 const revisionInput = z.object({
@@ -67,6 +69,22 @@ export async function purgeEveFamilyDocuments(ownerId: string, rootId: string) {
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
       );
     }
+    await tx
+      .delete(eveNamedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveNamedDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveNamedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveNamedDocumentCheckpoint.conversationId, ids)
+        )
+      );
     // Keep the FK constraints intact: unexpected references from a surviving
     // conversation fail the transaction instead of destroying its ancestry.
     await tx
@@ -377,13 +395,21 @@ export async function initializeEveForkDocuments(
     if (!(target?.parentConversationId && target.forkTurnId)) {
       throw new Error("Fork conversation not found.");
     }
-    const beforeTurn = Number(target.forkTurnId.slice("turn_".length));
-    if (!Number.isSafeInteger(beforeTurn) || beforeTurn < 0) {
-      throw new Error("Invalid fork boundary.");
-    }
+    const beforeTurn = parseForkTurnIndex(target.forkTurnId);
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
     );
+    if (target.forkCheckpointId) {
+      await initializeNamedForkDocuments(
+        tx,
+        ownerId,
+        conversationId,
+        target.parentConversationId,
+        target.forkCheckpointId,
+        beforeTurn
+      );
+      return;
+    }
     const inheritedCheckpoints = await inheritDocumentCheckpoints(
       tx,
       ownerId,
@@ -515,6 +541,74 @@ export async function captureEveDocumentCheckpoint(
       await tx
         .insert(eveDocumentCheckpointEntry)
         .values(heads.map((head) => ({ ...head, turnIndex })));
+    }
+  });
+}
+
+/** Native serialized capture calls this before publishing its named checkpoint. */
+export async function captureEveNamedDocumentCheckpoint(
+  ownerId: string,
+  conversationId: string,
+  checkpointId: string,
+  turnIndex: number
+) {
+  z.uuid().parse(checkpointId);
+  z.number().int().nonnegative().parse(turnIndex);
+  await db.transaction(async (tx) => {
+    // Coordinate with deletion as well as manual/model document writes.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
+    );
+    const [conversation] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, conversationId),
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.state, "bound")
+        )
+      );
+    if (!conversation) {
+      throw new Error("Conversation not found.");
+    }
+    const [existing] = await tx
+      .select()
+      .from(eveNamedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveNamedDocumentCheckpoint.conversationId, conversationId),
+          eq(eveNamedDocumentCheckpoint.checkpointId, checkpointId),
+          eq(eveNamedDocumentCheckpoint.ownerId, ownerId)
+        )
+      );
+    if (existing) {
+      if (existing.turnIndex !== turnIndex) {
+        throw new Error(
+          "Checkpoint identity already has a different source turn."
+        );
+      }
+      return;
+    }
+    await tx
+      .insert(eveNamedDocumentCheckpoint)
+      .values({ ownerId, conversationId, checkpointId, turnIndex });
+    const heads = await tx
+      .select()
+      .from(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, conversationId),
+          eq(eveDocumentHead.ownerId, ownerId)
+        )
+      );
+    if (heads.length) {
+      await tx
+        .insert(eveNamedDocumentCheckpointEntry)
+        .values(heads.map((head) => ({ ...head, checkpointId })));
     }
   });
 }
@@ -724,4 +818,69 @@ async function prepareManualRevision(
       historicalTurns
     );
   }
+}
+
+async function initializeNamedForkDocuments(
+  tx: DocumentTransaction,
+  ownerId: string,
+  conversationId: string,
+  sourceId: string,
+  checkpointId: string,
+  beforeTurn: number
+) {
+  const [checkpoint] = await tx
+    .select()
+    .from(eveNamedDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveNamedDocumentCheckpoint.ownerId, ownerId),
+        eq(eveNamedDocumentCheckpoint.conversationId, sourceId),
+        eq(eveNamedDocumentCheckpoint.checkpointId, checkpointId)
+      )
+    );
+  if (!checkpoint || checkpoint.turnIndex !== beforeTurn) {
+    throw new Error(
+      "Named document checkpoint is not ready or has a different source turn."
+    );
+  }
+  // Only earlier turn boundaries are inherited. The child's own next turn
+  // must capture the selected idle revision, not an older turn snapshot.
+  await inheritDocumentCheckpoints(
+    tx,
+    ownerId,
+    sourceId,
+    conversationId,
+    beforeTurn - 1
+  );
+  const entries = await tx
+    .select()
+    .from(eveNamedDocumentCheckpointEntry)
+    .where(
+      and(
+        eq(eveNamedDocumentCheckpointEntry.ownerId, ownerId),
+        eq(eveNamedDocumentCheckpointEntry.conversationId, sourceId),
+        eq(eveNamedDocumentCheckpointEntry.checkpointId, checkpointId)
+      )
+    );
+  if (entries.length) {
+    await tx
+      .insert(eveDocumentHead)
+      .values(
+        entries.map((entry) => ({
+          ownerId,
+          conversationId,
+          documentId: entry.documentId,
+          revisionId: entry.revisionId,
+        }))
+      )
+      .onConflictDoNothing();
+  }
+}
+
+function parseForkTurnIndex(turnId: string) {
+  const turnIndex = Number(turnId.slice("turn_".length));
+  if (!Number.isSafeInteger(turnIndex) || turnIndex < 0) {
+    throw new Error("Invalid fork boundary.");
+  }
+  return turnIndex;
 }

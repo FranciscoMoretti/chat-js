@@ -4,6 +4,7 @@ import { db } from "../lib/db/client";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   captureEveDocumentCheckpoint,
+  captureEveNamedDocumentCheckpoint,
   getAccessibleEveDocument,
   getEveDocumentHistory,
   getEveDocumentRevision,
@@ -24,6 +25,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveNamedDocumentCheckpoint,
+  eveNamedDocumentCheckpointEntry,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
@@ -43,6 +46,12 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  await db
+    .delete(eveNamedDocumentCheckpointEntry)
+    .where(eq(eveNamedDocumentCheckpointEntry.ownerId, owner));
+  await db
+    .delete(eveNamedDocumentCheckpoint)
+    .where(eq(eveNamedDocumentCheckpoint.ownerId, owner));
   await db
     .delete(eveDocumentCheckpointEntry)
     .where(eq(eveDocumentCheckpointEntry.ownerId, owner));
@@ -810,4 +819,166 @@ test("document references protect owned files across conversation families and r
       )
     )?.content
   ).toBe(input.content);
+});
+
+test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
+  const chat = await conversation();
+  const input = draft(chat.id);
+  const original = await saveEveDocumentRevision(input);
+  await captureEveDocumentCheckpoint(owner, chat.id, 1);
+  const manual = await saveEveDocumentRevision(
+    {
+      ...input,
+      operationId: crypto.randomUUID(),
+      expectedRevisionId: original.id,
+      turnIndex: null,
+      content: "Idle edit",
+    },
+    undefined,
+    [0, 1]
+  );
+  const checkpointId = crypto.randomUUID();
+  await Promise.all([
+    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1),
+    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1),
+  ]);
+  await saveEveDocumentRevision(
+    {
+      ...input,
+      operationId: crypto.randomUUID(),
+      expectedRevisionId: manual.id,
+      turnIndex: null,
+      content: "Later edit",
+    },
+    undefined,
+    [0, 1]
+  );
+  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
+  const operationId = crypto.randomUUID();
+  const fork = {
+    conversationId: chat.id,
+    beforeTurnId: "turn_1",
+    checkpointId,
+  };
+  const child = await createEveConversation(
+    owner,
+    operationId,
+    "Named fork",
+    async () => crypto.randomUUID(),
+    { fork }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, child.id, input.documentId))?.id
+  ).toBe(manual.id);
+  const ordinary = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Turn fork",
+    async () => crypto.randomUUID(),
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_1" } }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, ordinary.id, input.documentId))?.id
+  ).toBe(original.id);
+  await captureEveDocumentCheckpoint(owner, child.id, 1);
+  const grandchild = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Nested fork",
+    async () => crypto.randomUUID(),
+    { fork: { conversationId: child.id, beforeTurnId: "turn_1" } }
+  );
+  expect(
+    (await getEveDocumentRevision(owner, grandchild.id, input.documentId))?.id
+  ).toBe(manual.id);
+  await expect(
+    createEveConversation(
+      owner,
+      operationId,
+      "Named fork",
+      async () => crypto.randomUUID(),
+      { fork: { ...fork, checkpointId: crypto.randomUUID() } }
+    )
+  ).rejects.toThrow("different");
+});
+
+test("named checkpoints reject foreign owners, changed boundaries and deletion, and preserve empty manifests", async () => {
+  const chat = await conversation();
+  const checkpointId = crypto.randomUUID();
+  await expect(
+    captureEveNamedDocumentCheckpoint(stranger, chat.id, checkpointId, 1)
+  ).rejects.toThrow("not found");
+  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
+  await expect(
+    captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 2)
+  ).rejects.toThrow("different source turn");
+  const input = draft(chat.id);
+  await saveEveDocumentRevision(input);
+  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 1);
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Empty fork",
+    async () => crypto.randomUUID(),
+    { fork: { conversationId: chat.id, beforeTurnId: "turn_1", checkpointId } }
+  );
+  expect(
+    await getEveDocumentRevision(owner, child.id, input.documentId)
+  ).toBeUndefined();
+  // Include a nonempty manifest to verify FK-safe family cleanup too.
+  await captureEveNamedDocumentCheckpoint(
+    owner,
+    chat.id,
+    crypto.randomUUID(),
+    1
+  );
+  await beginEveConversationDeletion(owner, chat.id);
+  await expect(
+    captureEveNamedDocumentCheckpoint(owner, chat.id, crypto.randomUUID(), 1)
+  ).rejects.toThrow("not found");
+  await purgeEveFamilyDocuments(owner, chat.id);
+  await purgeEveFamilyDocuments(owner, chat.id);
+  for (const table of [
+    eveNamedDocumentCheckpointEntry,
+    eveNamedDocumentCheckpoint,
+  ]) {
+    expect(
+      await db.select().from(table).where(eq(table.conversationId, chat.id))
+    ).toEqual([]);
+  }
+});
+
+test("missing or mismatched named document boundaries stop native allocation", async () => {
+  const chat = await conversation();
+  const checkpointId = crypto.randomUUID();
+  let allocations = 0;
+  const allocate = () => {
+    allocations++;
+    return Promise.resolve(crypto.randomUUID());
+  };
+  const missing = {
+    conversationId: chat.id,
+    beforeTurnId: "turn_1",
+    checkpointId,
+  };
+  await expect(
+    createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "Missing checkpoint",
+      allocate,
+      { fork: missing }
+    )
+  ).rejects.toThrow("Named document checkpoint");
+  await captureEveNamedDocumentCheckpoint(owner, chat.id, checkpointId, 2);
+  await expect(
+    createEveConversation(
+      owner,
+      crypto.randomUUID(),
+      "Wrong boundary",
+      allocate,
+      { fork: missing }
+    )
+  ).rejects.toThrow("Named document checkpoint");
+  expect(allocations).toBe(0);
 });

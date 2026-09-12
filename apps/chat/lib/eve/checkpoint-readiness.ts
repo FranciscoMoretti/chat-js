@@ -5,10 +5,11 @@ import { eveRequest } from "./server";
 export async function waitForEveCheckpoint(
   ownerId: string,
   sessionId: string,
-  beforeTurnId: string
+  beforeTurnId: string,
+  checkpointId?: string
 ) {
   const deadline = Date.now() + 15_000;
-  const path = `/eve/v1/session/${encodeURIComponent(sessionId)}/checkpoint?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
+  const path = `/eve/v1/session/${encodeURIComponent(sessionId)}/checkpoint${checkpointId ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
   do {
     const result = await eveRequest(ownerId, path, {
       signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
@@ -18,6 +19,7 @@ export async function waitForEveCheckpoint(
       const ready = z
         .object({
           ready: z.literal(true),
+          ...(checkpointId ? { checkpointId: z.literal(checkpointId) } : {}),
           sessionId: z.literal(sessionId),
           beforeTurnId: z.literal(beforeTurnId),
         })

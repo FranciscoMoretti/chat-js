@@ -54,3 +54,17 @@ serialized capture must prepare that exact manifest before publishing its
 receipt, and forks must resolve the same immutable identity. The running app
 still uses the installed before-turn implementation; the broader idle source
 changes have not been installed.
+
+ChatJS now has the application-side named document manifest and fork identity.
+Migration 0067 was applied only to local PostgreSQL. The manifest records revision
+references with owner/conversation foreign keys, is immutable on retry, and is
+removed by family document cleanup. Named forks inherit that manifest and only
+earlier ordinary turn boundaries; their own next-turn boundary captures the
+selected idle documents. Missing or mismatched manifests prevent native
+allocation. The native readiness receipt must also match the named identity,
+with no fallback to an ordinary turn lookup.
+
+Local database tests verify manual edits, concurrent capture retries, immutable
+empty manifests, nested forks, owner isolation, identity conflicts, and deletion.
+The native capture hook and compiled continuation browser flow remain to be
+connected and validated before exposing multi-model follow-ups in the UI.

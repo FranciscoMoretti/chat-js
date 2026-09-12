@@ -4,6 +4,7 @@ import { eveMessageInput } from "./message-input";
 export const eveForkInput = z
   .object({
     conversationId: z.uuid(),
+    checkpointId: z.uuid().optional(),
     beforeTurnId: z
       .string()
       .max(64)
