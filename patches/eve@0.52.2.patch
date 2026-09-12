@@ -1345,21 +1345,22 @@ index 18e116b0..e03bd6ff 100644
 \ No newline at end of file
 diff --git a/dist/src/harness/seed-attachments.d.ts b/dist/src/harness/seed-attachments.d.ts
 new file mode 100644
-index 00000000..b651da42
+index 00000000..9a8a7d23
 --- /dev/null
 +++ b/dist/src/harness/seed-attachments.d.ts
-@@ -0,0 +1,4 @@
+@@ -0,0 +1,5 @@
 +import type { HarnessSession } from "#harness/types.js";
++export declare function hasPendingSeedAttachments(session: Pick<HarnessSession, "state">): boolean;
 +export declare function markSeedAttachmentsPending(session: HarnessSession): HarnessSession;
 +/** Keep the pending marker on failure so retries cannot silently lose attachment history. */
 +export declare function stagePendingSeedAttachments(session: HarnessSession): Promise<HarnessSession>;
 diff --git a/dist/src/harness/seed-attachments.js b/dist/src/harness/seed-attachments.js
 new file mode 100644
-index 00000000..36425cd3
+index 00000000..f1f26798
 --- /dev/null
 +++ b/dist/src/harness/seed-attachments.js
 @@ -0,0 +1 @@
-+import{stageSeedHistoryAttachments}from"#harness/attachment-staging.js";const PENDING_SEED_FILES=`eve.pending-seed-files`;function markSeedAttachmentsPending(e){return{...e,state:{...e.state,[PENDING_SEED_FILES]:!0}}}async function stagePendingSeedAttachments(e){if(e.state?.[PENDING_SEED_FILES]!==!0)return e;let t=await stageSeedHistoryAttachments(e.history),n={...e.state};return delete n[PENDING_SEED_FILES],{...e,history:t,state:n}}export{markSeedAttachmentsPending,stagePendingSeedAttachments};
++import{stageSeedHistoryAttachments}from"#harness/attachment-staging.js";const PENDING_SEED_FILES=`eve.pending-seed-files`;function hasPendingSeedAttachments(e){return e.state?.[PENDING_SEED_FILES]===!0}function markSeedAttachmentsPending(e){return{...e,state:{...e.state,[PENDING_SEED_FILES]:!0}}}async function stagePendingSeedAttachments(e){if(!hasPendingSeedAttachments(e))return e;let t=await stageSeedHistoryAttachments(e.history),n={...e.state};return delete n[PENDING_SEED_FILES],{...e,history:t,state:n}}export{hasPendingSeedAttachments,markSeedAttachmentsPending,stagePendingSeedAttachments};
 \ No newline at end of file
 diff --git a/dist/src/harness/tool-loop.js b/dist/src/harness/tool-loop.js
 index 744eb9e4..32dd3656 100644
@@ -1695,11 +1696,11 @@ index 00000000..b8fcc84b
 +}): HarnessSession;
 diff --git a/restore-session-checkpoint.js b/restore-session-checkpoint.js
 new file mode 100644
-index 00000000..d95270cb
+index 00000000..77e59f1a
 --- /dev/null
 +++ b/restore-session-checkpoint.js
 @@ -0,0 +1 @@
-+import{DURABLE_SESSION_VERSION}from"#execution/durable-session-store.js";import{getHarnessEmissionState,setHarnessEmissionState}from"#harness/emission-state.js";function restoreSessionCheckpoint(e){let{target:t,checkpoint:n}=e,r=n.snapshot.session,i=getHarnessEmissionState(r.state);if(n.version!==1||n.snapshot.version!==DURABLE_SESSION_VERSION||r.sessionId!==n.sessionId||t.sessionId===r.sessionId||n.beforeTurnId!==`turn_${i.sequence}`||i.turnId!==``)throw Error(`Invalid session fork checkpoint.`);if(t.history.length||getHarnessEmissionState(t.state).sessionStarted)throw Error(`Session checkpoint restoration requires a fresh target.`);let a=r.sandboxState?.forkCheckpoint;if((r.sandboxState?.initialized||r.sandboxState?.session!=null)&&!a)throw Error(`Forking sandbox state requires resource copying.`);let o=new Set;for(let e of r.history)if(Array.isArray(e.content))for(let t of e.content){if(!a&&t.type===`file`&&(t.data instanceof URL?t.data.protocol===`eve-sandbox:`:typeof t.data==`string`&&t.data.startsWith(`eve-sandbox:`)))throw Error(`Forking sandbox attachments requires resource copying.`);t.type===`tool-call`&&!t.providerExecuted&&o.add(t.toolCallId),t.type===`tool-result`&&o.delete(t.toolCallId)}if(o.size)throw Error(`Cannot fork a checkpoint with unresolved tool calls.`);return setHarnessEmissionState({...t,history:[...r.history],...a?{sandboxState:{initialized:!1,session:null,forkCheckpoint:a}}:{}},{sessionStarted:!1,sequence:i.sequence,stepIndex:0,turnId:``})}export{restoreSessionCheckpoint};
++import{DURABLE_SESSION_VERSION}from"#execution/durable-session-store.js";import{getHarnessEmissionState,setHarnessEmissionState}from"#harness/emission-state.js";import{hasPendingSeedAttachments,markSeedAttachmentsPending}from"#harness/seed-attachments.js";function restoreSessionCheckpoint(e){let{target:t,checkpoint:n}=e,r=n.snapshot.session,i=getHarnessEmissionState(r.state);if(n.version!==1||n.snapshot.version!==DURABLE_SESSION_VERSION||r.sessionId!==n.sessionId||t.sessionId===r.sessionId||n.beforeTurnId!==`turn_${i.sequence}`||i.turnId!==``)throw Error(`Invalid session fork checkpoint.`);if(t.history.length||getHarnessEmissionState(t.state).sessionStarted)throw Error(`Session checkpoint restoration requires a fresh target.`);let a=r.sandboxState?.forkCheckpoint;if((r.sandboxState?.initialized||r.sandboxState?.session!=null)&&!a)throw Error(`Forking sandbox state requires resource copying.`);let o=new Set;for(let e of r.history)if(Array.isArray(e.content))for(let t of e.content){if(!a&&t.type===`file`&&(t.data instanceof URL?t.data.protocol===`eve-sandbox:`:typeof t.data==`string`&&t.data.startsWith(`eve-sandbox:`)))throw Error(`Forking sandbox attachments requires resource copying.`);t.type===`tool-call`&&!t.providerExecuted&&o.add(t.toolCallId),t.type===`tool-result`&&o.delete(t.toolCallId)}if(o.size)throw Error(`Cannot fork a checkpoint with unresolved tool calls.`);return setHarnessEmissionState({...hasPendingSeedAttachments(r)?markSeedAttachmentsPending(t):t,history:[...r.history],...a?{sandboxState:{initialized:!1,session:null,forkCheckpoint:a}}:{}},{sessionStarted:!1,sequence:i.sequence,stepIndex:0,turnId:``})}export{restoreSessionCheckpoint};
 \ No newline at end of file
 diff --git a/restore-session-history-step.d.ts b/restore-session-history-step.d.ts
 new file mode 100644

@@ -1715,10 +1715,14 @@ index 0000000..0279a17
 +});
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
 new file mode 100644
-index 0000000..6f6f4f7
+index 0000000..298b470
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-checkpoint.ts
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,71 @@
++import {
++  hasPendingSeedAttachments,
++  markSeedAttachmentsPending,
++} from "#harness/seed-attachments.js";
 +import { DURABLE_SESSION_VERSION } from "#execution/durable-session-store.js";
 +import type { HarnessSession } from "#harness/types.js";
 +import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
@@ -1772,7 +1776,7 @@ index 0000000..6f6f4f7
 +  if (pendingTools.size) throw new Error("Cannot fork a checkpoint with unresolved tool calls.");
 +  return setHarnessEmissionState(
 +    {
-+      ...target,
++      ...(hasPendingSeedAttachments(source) ? markSeedAttachmentsPending(target) : target),
 +      history: [...source.history],
 +      ...(forkCheckpoint
 +        ? { sandboxState: { initialized: false, session: null, forkCheckpoint } }
@@ -5545,10 +5549,10 @@ index b41db69..8b70b88 100644
      return stageResolvedBytes(part, resolved, sandbox);
 diff --git a/packages/eve/src/harness/seed-attachments.integration.test.ts b/packages/eve/src/harness/seed-attachments.integration.test.ts
 new file mode 100644
-index 0000000..18a6a87
+index 0000000..c1f92d6
 --- /dev/null
 +++ b/packages/eve/src/harness/seed-attachments.integration.test.ts
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,207 @@
 +import { expect, it } from "vitest";
 +import type { ChannelAdapter } from "#channel/adapter.js";
 +import { loadContext } from "#context/container.js";
@@ -5700,16 +5704,76 @@ index 0000000..18a6a87
 +    expect(fetches).toBe(6);
 +  });
 +});
++
++it("stages inherited pending files under the fork's auth without copying source state", async () => {
++  const { restoreSessionCheckpoint } = await import("#execution/restore-session-checkpoint.js");
++  const runtime = await createTestRuntime();
++  const sandbox = mockSandbox({ id: "fork-sandbox" });
++  let allowed = false;
++  let fetches = 0;
++  const channel: ChannelAdapter = {
++    kind: "copy-channel",
++    fetchFile: async (_url, context) => {
++      expect(context?.session?.auth.current?.principalId).toBe("fork-owner");
++      fetches++;
++      if (!allowed) throw new Error("Temporarily unavailable");
++      return { bytes: Buffer.from("inherited"), mediaType: "image/png" };
++    },
++  };
++  await runtime.runAsSession({ channel, sandbox }, async () => {
++    loadContext().set(AuthKey, {
++      principalId: "fork-owner",
++      principalType: "user",
++      attributes: {},
++    });
++    const source = session();
++    source.state = { ...source.state, "private-source-state": "do not inherit" };
++    const snapshot = createDurableSessionState({ session: source }).snapshot;
++    if (!snapshot) throw new Error("Missing snapshot");
++    const target = createSession({
++      sessionId: "fork",
++      continuationToken: "fork-op",
++      turnAgent: {
++        id: "agent",
++        instructions: [],
++        model: { id: "mock" },
++        tools: [],
++        workspaceSpec: { rootEntries: [] },
++      },
++    });
++    const restored = restoreSessionCheckpoint({
++      target,
++      checkpoint: { version: 1, sessionId: source.sessionId, beforeTurnId: "turn_0", snapshot },
++    });
++    expect(restored.state?.["private-source-state"]).toBeUndefined();
++    expect(restored.sessionId).toBe("fork");
++    await expect(stagePendingSeedAttachments(restored)).rejects.toThrow(
++      "Attachment retrieval failed",
++    );
++    allowed = true;
++    const beforeRetry = fetches;
++    const staged = await stagePendingSeedAttachments(restored);
++    expect(fetches - beforeRetry).toBe(6);
++    expect(JSON.stringify(staged.history)).toContain("eve-sandbox:");
++    expect(JSON.stringify(source.history)).toContain("https://chatjs.local/copied/");
++    expect(await stagePendingSeedAttachments(staged)).toBe(staged);
++    expect(fetches - beforeRetry).toBe(6);
++  });
++});
 diff --git a/packages/eve/src/harness/seed-attachments.ts b/packages/eve/src/harness/seed-attachments.ts
 new file mode 100644
-index 0000000..198a998
+index 0000000..546ce7f
 --- /dev/null
 +++ b/packages/eve/src/harness/seed-attachments.ts
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,23 @@
 +import { stageSeedHistoryAttachments } from "#harness/attachment-staging.js";
 +import type { HarnessSession } from "#harness/types.js";
 +
 +const PENDING_SEED_FILES = "eve.pending-seed-files";
++
++export function hasPendingSeedAttachments(session: Pick<HarnessSession, "state">): boolean {
++  return session.state?.[PENDING_SEED_FILES] === true;
++}
 +
 +export function markSeedAttachmentsPending(session: HarnessSession): HarnessSession {
 +  return { ...session, state: { ...session.state, [PENDING_SEED_FILES]: true } };
@@ -5719,7 +5783,7 @@ index 0000000..198a998
 +export async function stagePendingSeedAttachments(
 +  session: HarnessSession,
 +): Promise<HarnessSession> {
-+  if (session.state?.[PENDING_SEED_FILES] !== true) return session;
++  if (!hasPendingSeedAttachments(session)) return session;
 +  const history = await stageSeedHistoryAttachments(session.history);
 +  const state = { ...session.state };
 +  delete state[PENDING_SEED_FILES];
