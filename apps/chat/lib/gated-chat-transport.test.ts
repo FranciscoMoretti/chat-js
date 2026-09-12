@@ -22,10 +22,8 @@ const requestOptions = (
 
 describe("createGatedChatTransport", () => {
   it("waits before forwarding a request and restores its metadata", async () => {
-    let release: () => void = () => {};
-    const ready = new Promise<void>((resolve) => {
-      release = resolve;
-    });
+    const { promise: ready, resolve: release } =
+      Promise.withResolvers<undefined>();
     const stream = new ReadableStream<UIMessageChunk>();
     let forwardedMetadata: unknown;
     const sendMessages = vi.fn(
@@ -127,15 +125,13 @@ describe("createGatedChatTransport", () => {
   });
 
   it("observes a gate rejection after a request is stopped while waiting", async () => {
-    let rejectGate: (error: Error) => void = () => {};
-    const ready = new Promise<void>((_resolve, reject) => {
-      rejectGate = reject;
-    });
+    const { promise: ready, reject: rejectGate } =
+      Promise.withResolvers<undefined>();
     const sendMessages = vi.fn(() =>
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
     const abortController = new AbortController();
@@ -153,15 +149,13 @@ describe("createGatedChatTransport", () => {
   });
 
   it("observes a rejected gate for a request that was already stopped", async () => {
-    let rejectGate: (error: Error) => void = () => {};
-    const ready = new Promise<void>((_resolve, reject) => {
-      rejectGate = reject;
-    });
+    const { promise: ready, reject: rejectGate } =
+      Promise.withResolvers<undefined>();
     const sendMessages = vi.fn(() =>
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
     const abortController = new AbortController();
