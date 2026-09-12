@@ -127,7 +127,7 @@ const setAuthOverlay = async (
   overlay.id = "chatjs-electron-auth-overlay";
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
-  overlay.style.zIndex = "999_999";
+  overlay.style.zIndex = "999999";
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
@@ -193,6 +193,9 @@ const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
     return;
   }
 
+  // Let the renderer-owned shadcn overlay handle normal auth states when the
+  // app page is already loaded. Keep the main-process DOM overlay only as a
+  // fallback during main-frame loads, where React cannot render yet.
   if (mainWindow.webContents.isLoadingMainFrame()) {
     await setAuthOverlay(mainWindow, {
       message: nextState.message,

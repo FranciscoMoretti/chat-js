@@ -216,6 +216,12 @@
       "rules": {
         "unicorn/no-useless-undefined": "off"
       }
+    },
+    {
+      "files": ["apps/electron/forge.config.ts"],
+      "rules": {
+        "unicorn/prefer-module": "off"
+      }
     }
   ]
 }

@@ -17,7 +17,7 @@ type Branding = {
   orgEmail?: string;
 };
 
-const appRoot = import.meta.dirname;
+const appRoot = __dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
