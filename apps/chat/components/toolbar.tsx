@@ -8,15 +8,8 @@ import {
   useTransform,
 } from "motion/react";
 import { nanoid } from "nanoid";
-import {
-  type Dispatch,
-  memo,
-  type ReactNode,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useOnClickOutside } from "usehooks-ts";
 
 import {
@@ -27,7 +20,8 @@ import {
 } from "@/components/ui/tooltip";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import { useChatActions, type useChatStoreApi } from "@/lib/stores/base";
+import { useChatActions } from "@/lib/stores/base";
+import type { useChatStoreApi } from "@/lib/stores/base";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 
@@ -52,7 +46,7 @@ interface ToolProps {
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
 }
 
-function Tool({
+const Tool = ({
   description,
   icon,
   selectedTool,
@@ -63,7 +57,7 @@ function Tool({
   isSingleTool,
   onClick,
   storeApi,
-}: ToolProps) {
+}: ToolProps) => {
   const { sendMessage } = useChatActions<ChatMessage>();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -108,11 +102,11 @@ function Tool({
             "bg-primary text-primary-foreground!": selectedTool === description,
           })}
           exit={{
-            scale: 0.9,
             opacity: 0,
+            scale: 0.9,
             transition: { duration: 0.1 },
           }}
-          initial={{ scale: 1, opacity: 0 }}
+          initial={{ opacity: 0, scale: 1 }}
           onClick={() => {
             handleSelect();
           }}
@@ -144,11 +138,11 @@ function Tool({
       </TooltipContent>
     </Tooltip>
   );
-}
+};
 
-const randomArr = [...new Array(6)].map((_x) => nanoid(5));
+const randomArr = Array.from({ length: 6 }, () => nanoid(5));
 
-function ReadingLevelSelector({
+const ReadingLevelSelector = ({
   setSelectedTool,
   isAnimating,
   storeApi,
@@ -156,7 +150,7 @@ function ReadingLevelSelector({
   setSelectedTool: Dispatch<SetStateAction<string | null>>;
   isAnimating: boolean;
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-}) {
+}) => {
   const { sendMessage } = useChatActions<ChatMessage>();
   const LEVELS = [
     "Elementary",
@@ -207,30 +201,30 @@ function ReadingLevelSelector({
             className={cn(
               "bg-background absolute flex flex-row items-center rounded-full border p-3",
               {
-                "bg-primary text-primary-foreground": currentLevel !== 2,
                 "bg-background text-foreground": currentLevel === 2,
+                "bg-primary text-primary-foreground": currentLevel !== 2,
               }
             )}
             drag="y"
-            dragConstraints={{ top: -dragConstraints, bottom: 0 }}
+            dragConstraints={{ bottom: 0, top: -dragConstraints }}
             dragElastic={0}
             dragMomentum={false}
             onClick={() => {
               if (currentLevel !== 2 && hasUserSelectedLevel) {
                 sendMessage?.({
-                  role: "user",
-                  parts: [
-                    {
-                      type: "text",
-                      text: `Please adjust the reading level to ${LEVELS[currentLevel]} level.`,
-                    },
-                  ],
                   metadata: {
-                    selectedModel: selectedModelId,
+                    activeStreamId: null,
                     createdAt: new Date(),
                     parentMessageId: storeApi.getState().getLastMessageId(),
-                    activeStreamId: null,
+                    selectedModel: selectedModelId,
                   },
+                  parts: [
+                    {
+                      text: `Please adjust the reading level to ${LEVELS[currentLevel]} level.`,
+                      type: "text",
+                    },
+                  ],
+                  role: "user",
                 });
 
                 setSelectedTool(null);
@@ -264,9 +258,9 @@ function ReadingLevelSelector({
       </Tooltip>
     </div>
   );
-}
+};
 
-function Tools({
+const Tools = ({
   isToolbarVisible,
   selectedTool,
   setSelectedTool,
@@ -282,8 +276,9 @@ function Tools({
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
   tools: ArtifactToolbarItem[];
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-}) {
+}) => {
   const [primaryTool, ...secondaryTools] = tools;
+  const handlePrimaryToolClick = primaryTool.onClick;
 
   return (
     <motion.div
@@ -294,18 +289,22 @@ function Tools({
     >
       <AnimatePresence>
         {isToolbarVisible &&
-          secondaryTools.map((secondaryTool) => (
-            <Tool
-              description={secondaryTool.description}
-              icon={secondaryTool.icon}
-              isAnimating={isAnimating}
-              key={secondaryTool.description}
-              onClick={secondaryTool.onClick}
-              selectedTool={selectedTool}
-              setSelectedTool={setSelectedTool}
-              storeApi={storeApi}
-            />
-          ))}
+          secondaryTools.map((secondaryTool) => {
+            const handleToolClick = secondaryTool.onClick;
+
+            return (
+              <Tool
+                description={secondaryTool.description}
+                icon={secondaryTool.icon}
+                isAnimating={isAnimating}
+                key={secondaryTool.description}
+                onClick={handleToolClick}
+                selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
+                storeApi={storeApi}
+              />
+            );
+          })}
       </AnimatePresence>
 
       <Tool
@@ -314,7 +313,7 @@ function Tools({
         isAnimating={isAnimating}
         isSingleTool={tools.length === 1}
         isToolbarVisible={isToolbarVisible}
-        onClick={primaryTool.onClick}
+        onClick={handlePrimaryToolClick}
         selectedTool={selectedTool}
         setIsToolbarVisible={setIsToolbarVisible}
         setSelectedTool={setSelectedTool}
@@ -322,9 +321,9 @@ function Tools({
       />
     </motion.div>
   );
-}
+};
 
-function PureToolbar({
+const PureToolbar = ({
   isToolbarVisible,
   setIsToolbarVisible,
   status,
@@ -338,7 +337,7 @@ function PureToolbar({
   stop: UseChatHelpers<ChatMessage>["stop"];
   artifactKind: ArtifactKind;
   storeApi: ReturnType<typeof useChatStoreApi<ChatMessage>>;
-}) {
+}) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout>(null);
 
@@ -401,28 +400,28 @@ function PureToolbar({
       <motion.div
         animate={(() => {
           if (!isToolbarVisible) {
-            return { opacity: 1, y: 0, height: 54, transition: { delay: 0 } };
+            return { height: 54, opacity: 1, transition: { delay: 0 }, y: 0 };
           }
           if (selectedTool === "adjust-reading-level") {
             return {
-              opacity: 1,
-              y: 0,
               height: 6 * 43,
-              transition: { delay: 0 },
+              opacity: 1,
               scale: 0.95,
+              transition: { delay: 0 },
+              y: 0,
             };
           }
           return {
-            opacity: 1,
-            y: 0,
             height: toolsByArtifactKind.length * 50,
-            transition: { delay: 0 },
+            opacity: 1,
             scale: 1,
+            transition: { delay: 0 },
+            y: 0,
           };
         })()}
         className="bg-background absolute right-6 bottom-6 flex cursor-pointer flex-col justify-end rounded-full border p-1.5 shadow-lg"
-        exit={{ opacity: 0, y: -20, transition: { duration: 0.1 } }}
-        initial={{ opacity: 0, y: -20, scale: 1 }}
+        exit={{ opacity: 0, transition: { duration: 0.1 }, y: -20 }}
+        initial={{ opacity: 0, scale: 1, y: -20 }}
         onAnimationComplete={() => {
           setIsAnimating(false);
         }}
@@ -445,7 +444,7 @@ function PureToolbar({
           setIsToolbarVisible(true);
         }}
         ref={toolbarRef}
-        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        transition={{ damping: 25, stiffness: 300, type: "spring" }}
       >
         {(() => {
           if (status === "streaming") {
@@ -490,7 +489,7 @@ function PureToolbar({
       </motion.div>
     </TooltipProvider>
   );
-}
+};
 
 export const Toolbar = memo(PureToolbar, (prevProps, nextProps) => {
   if (prevProps.status !== nextProps.status) {
