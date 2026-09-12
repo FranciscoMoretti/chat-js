@@ -95,13 +95,14 @@ export const ChatSync = ({
   const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
     thread,
-    onFinish: ({ message }) =>
-      completionQueueRef.current.waitForIdle().then(() => {
+    onFinish: ({ message }) => {
+      return completionQueueRef.current.waitForIdle().then(() => {
         saveChatMessage({
           chatId: id,
           message,
         });
-      }),
+      });
+    },
     transport,
     onData: (dataPart) => {
       completionQueueRef.current.enqueue(() =>
