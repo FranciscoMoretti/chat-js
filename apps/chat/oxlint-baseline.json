@@ -27,7 +27,6 @@
     {
       "files": [
         "app/(chat)/chat-route-host.tsx",
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/header-breadcrumb.tsx",
         "lib/stores/base/use-data-parts.ts"
       ],
@@ -73,7 +72,6 @@
         "app/terms/page.tsx",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/message.tsx",
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/anonymous-session-init.tsx",
         "components/app-sidebar-history-conditional.tsx",
@@ -521,7 +519,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "lib/ai/token-utils.test.ts",
         "lib/clone-messages.ts"
@@ -681,7 +678,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/settings/mcp-details-page.tsx"
       ],
       "rules": {
@@ -1197,7 +1193,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/settings/mcp-details-page.tsx",
         "lib/files/upload-prep.ts"
       ],
@@ -1444,12 +1439,6 @@
       }
     },
     {
-      "files": ["components/ai-elements/parseIncompleteMarkdown.tsx"],
-      "rules": {
-        "unicorn/filename-case": "off"
-      }
-    },
-    {
       "files": ["components/sheet-editor.tsx", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/no-array-for-each": "off"
@@ -1457,7 +1446,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/interactive-chart-impl.tsx",
         "components/model-selector.tsx",
         "components/search-chats-dialog.tsx",
@@ -1605,12 +1593,6 @@
       ],
       "rules": {
         "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/parseIncompleteMarkdown.tsx"],
-      "rules": {
-        "unicorn/prefer-string-slice": "off"
       }
     },
     {
