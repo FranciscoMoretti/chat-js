@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { calculateMessagesTokens, truncateMessages } from "./token-utils";
 
-// Mock js-tiktoken encoder for consistent testing
+// Mock js-tiktoken encoder for consistent testing.
 const _mockEncoder = {
-  encode: (text: string) => new Array(Math.ceil(text.length / 4)), // ~4 chars per token
+  encode: (text: string) => Array.from({ length: Math.ceil(text.length / 4) }),
 };
 
-// Mock the module
+// Mock the module.
 const _originalModule = await import("./token-utils");
 
 describe("truncateMessages", () => {
@@ -17,20 +17,20 @@ describe("truncateMessages", () => {
   beforeEach(() => {
     messages = [
       {
-        role: "system",
         content: "You are a helpful assistant.",
+        role: "system",
       },
       {
-        role: "user",
         content: "Hello, how are you?",
-      },
-      {
-        role: "assistant",
-        content: "I am doing well, thank you for asking!",
-      },
-      {
         role: "user",
+      },
+      {
+        content: "I am doing well, thank you for asking!",
+        role: "assistant",
+      },
+      {
         content: "Can you help me with something?",
+        role: "user",
       },
     ];
   });
@@ -83,13 +83,13 @@ describe("truncateMessages", () => {
   it("should handle string content when under token limit", () => {
     const longMessages: ModelMessage[] = [
       {
-        role: "system",
         content: "Short system message",
+        role: "system",
       },
       {
-        role: "user",
         content:
           "This is a long user message that fits within reasonable token limits",
+        role: "user",
       },
     ];
 
@@ -107,16 +107,16 @@ describe("truncateMessages", () => {
   it("should handle array content in messages", () => {
     const arrayContentMessages: ModelMessage[] = [
       {
-        role: "system",
         content: "System message",
+        role: "system",
       },
       {
-        role: "user",
         content: [
-          { type: "text", text: "Hello there" },
-          { type: "image", image: "base64data" },
-          { type: "text", text: "How are you?" },
+          { text: "Hello there", type: "text" },
+          { image: "base64data", type: "image" },
+          { text: "How are you?", type: "text" },
         ],
+        role: "user",
       },
     ];
 
@@ -127,32 +127,32 @@ describe("truncateMessages", () => {
   it("should handle tool messages with complex content", () => {
     const toolMessages: ModelMessage[] = [
       {
-        role: "system",
         content: "System message",
+        role: "system",
       },
       {
-        role: "tool",
         content: [
           {
-            type: "tool-result",
-            toolCallId: "call_1",
-            toolName: "search",
             output: {
               type: "text",
               value:
                 "This is a very long tool result that should be truncated when we exceed token limits because it contains extensive information",
             },
+            toolCallId: "call_1",
+            toolName: "search",
+            type: "tool-result",
           },
           {
-            type: "tool-result",
-            toolCallId: "call_2",
-            toolName: "fetch",
             output: {
               type: "text",
               value: "Another tool result with important data",
             },
+            toolCallId: "call_2",
+            toolName: "fetch",
+            type: "tool-result",
           },
         ],
+        role: "tool",
       },
     ];
 
@@ -166,9 +166,9 @@ describe("truncateMessages", () => {
   it("should handle system message that fits within limit", () => {
     const systemMessages: ModelMessage[] = [
       {
-        role: "system",
         content:
           "This is a system message that should fit within reasonable token limits",
+        role: "system",
       },
     ];
 
@@ -188,8 +188,8 @@ describe("truncateMessages", () => {
       "This is a very long message that should definitely be truncated when we set an extremely low token limit because it contains way too much information and text that exceeds what would normally be acceptable within the constraints we are testing here and this should trigger the content truncation logic inside the function when we provide a very restrictive token limit that forces the algorithm to cut down the content to fit within the available space.";
     const longMessages: ModelMessage[] = [
       {
-        role: "user",
         content: veryLongContent,
+        role: "user",
       },
     ];
 
@@ -220,9 +220,9 @@ describe("truncateMessages", () => {
       expect(result[0].role).toBe("system");
 
       // Subsequent messages should maintain relative order
-      for (let i = 1; i < result.length - 1; i++) {
+      for (let i = 1; i < result.length - 1; i += 1) {
         const currentIndex = messages.indexOf(result[i]);
-        const nextIndex = messages.findIndex((msg) => msg === result[i + 1]);
+        const nextIndex = messages.indexOf(result[i + 1]);
         expect(currentIndex).toBeLessThan(nextIndex);
       }
     }
@@ -231,12 +231,12 @@ describe("truncateMessages", () => {
   it("should handle messages with no content", () => {
     const emptyMessages: ModelMessage[] = [
       {
-        role: "system",
         content: "",
+        role: "system",
       },
       {
-        role: "user",
         content: "",
+        role: "user",
       },
     ];
 
@@ -247,30 +247,30 @@ describe("truncateMessages", () => {
   it("should handle mixed content types properly", () => {
     const mixedMessages: ModelMessage[] = [
       {
-        role: "system",
         content: "System prompt",
+        role: "system",
       },
       {
-        role: "user",
         content: "Text message",
-      },
-      {
         role: "user",
-        content: [
-          { type: "text", text: "Mixed content message" },
-          { type: "image", image: "data" },
-        ],
       },
       {
-        role: "tool",
+        content: [
+          { text: "Mixed content message", type: "text" },
+          { image: "data", type: "image" },
+        ],
+        role: "user",
+      },
+      {
         content: [
           {
-            type: "tool-result",
+            output: { type: "text", value: "Tool output" },
             toolCallId: "test",
             toolName: "tool",
-            output: { type: "text", value: "Tool output" },
+            type: "tool-result",
           },
         ],
+        role: "tool",
       },
     ];
 
@@ -288,7 +288,7 @@ describe("truncateMessages", () => {
 
 describe("calculateMessagesTokens", () => {
   it("should calculate tokens for string content", () => {
-    const messages: ModelMessage[] = [{ role: "user", content: "Hello world" }];
+    const messages: ModelMessage[] = [{ content: "Hello world", role: "user" }];
 
     const tokens = calculateMessagesTokens(messages);
     expect(typeof tokens).toBe("number");
@@ -298,11 +298,11 @@ describe("calculateMessagesTokens", () => {
   it("should calculate tokens for array content", () => {
     const messages: ModelMessage[] = [
       {
-        role: "user",
         content: [
-          { type: "text", text: "Hello" },
-          { type: "image", image: "base64" },
+          { text: "Hello", type: "text" },
+          { image: "base64", type: "image" },
         ],
+        role: "user",
       },
     ];
 
@@ -317,18 +317,20 @@ describe("calculateMessagesTokens", () => {
   });
 
   it("should include overhead for message structure", () => {
-    const singleMessage: ModelMessage[] = [{ role: "user", content: "test" }];
+    const singleMessage: ModelMessage[] = [{ content: "test", role: "user" }];
 
     const tokens = calculateMessagesTokens(singleMessage);
 
     // Should be more than just content tokens due to overhead
-    expect(tokens).toBeGreaterThan(5); // Minimum overhead
+    // Minimum overhead.
+    expect(tokens).toBeGreaterThan(5);
   });
 
   it("should handle empty content", () => {
-    const messages: ModelMessage[] = [{ role: "user", content: "" }];
+    const messages: ModelMessage[] = [{ content: "", role: "user" }];
 
     const tokens = calculateMessagesTokens(messages);
-    expect(tokens).toBeGreaterThanOrEqual(5); // Should still have role + overhead tokens
+    // Should still have role + overhead tokens.
+    expect(tokens).toBeGreaterThanOrEqual(5);
   });
 });

@@ -2,13 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createCompletionQueue } from "./completion-queue";
 
-function deferred() {
-  let resolve: () => void = () => {};
-  const promise = new Promise<void>((resolvePromise) => {
-    resolve = resolvePromise;
-  });
-  return { promise, resolve };
-}
+const deferred = () => {
+  const { promise, resolve: resolvePromise } = Promise.withResolvers<null>();
+  return { promise, resolve: () => resolvePromise(null) };
+};
 
 describe("createCompletionQueue", () => {
   it("runs completions in arrival order and waits for all of them", async () => {
