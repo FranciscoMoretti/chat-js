@@ -18,10 +18,10 @@ import {
 } from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";
 
-export function LoginForm({
+export const LoginForm = ({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div">) => {
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
   const [isElectron, setIsElectron] = useState(false);
@@ -84,4 +84,4 @@ export function LoginForm({
       </div>
     </div>
   );
-}
+};

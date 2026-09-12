@@ -7,13 +7,13 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
 import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
 
-export function RetryButton({
+export const RetryButton = ({
   messageId,
   className,
 }: {
   messageId: string;
   className?: string;
-}) {
+}) => {
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
@@ -70,4 +70,4 @@ export function RetryButton({
       <RefreshCcw className="h-3.5 w-3.5" />
     </Action>
   );
-}
+};

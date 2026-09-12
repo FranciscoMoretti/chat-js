@@ -23,11 +23,11 @@ interface DeleteProjectDialogProps {
   showDeleteDialog: boolean;
 }
 
-export function DeleteProjectDialog({
+export const DeleteProjectDialog = ({
   deleteId,
   showDeleteDialog,
   setShowDeleteDialog,
-}: DeleteProjectDialogProps) {
+}: DeleteProjectDialogProps) => {
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
@@ -86,4 +86,4 @@ export function DeleteProjectDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

@@ -8,7 +8,7 @@ import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
 import { config } from "@/lib/config";
 
-export function SidebarTopRow() {
+export const SidebarTopRow = () => {
   const { isMobile, openMobile, setOpenMobile, state, toggleSidebar } =
     useSidebar();
   const isExpanded = isMobile ? openMobile : state === "expanded";
@@ -55,4 +55,4 @@ export function SidebarTopRow() {
       {isExpanded && <SidebarToggle className="md:h-fit md:px-2" />}
     </div>
   );
-}
+};

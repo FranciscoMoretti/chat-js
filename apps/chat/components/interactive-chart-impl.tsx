@@ -55,7 +55,7 @@ export type BarChart = BaseChartCommon & {
 
 export type BaseChart = LineChart | ScatterChart | BarChart;
 
-function InteractiveChart({ chart }: { chart: BaseChart }) {
+const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
   const { resolvedTheme } = useTheme();
   const textColor = "#e5e5e5";
   const gridColor = "rgba(255, 255, 255, 0.1)";
@@ -264,6 +264,6 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
       </Card>
     </motion.div>
   );
-}
+};
 
 export default InteractiveChart;

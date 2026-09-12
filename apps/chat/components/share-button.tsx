@@ -28,13 +28,13 @@ import { LoginPrompt } from "./upgrade-cta/login-prompt";
 type ShareStep = "info" | "shared";
 
 // Dialog content component that only renders when dialog is open
-function ShareDialogContent({
+const ShareDialogContent = ({
   chatId,
   onClose,
 }: {
   chatId: string;
   onClose: () => void;
-}) {
+}) => {
   const [step, setStep] = useState<ShareStep>("info");
   const { data: chat } = useGetChatById(chatId);
   const setVisibilityMutation = useSetVisibility();
@@ -228,10 +228,10 @@ function ShareDialogContent({
       )}
     </>
   );
-}
+};
 
 // Extracted dialog component that can be controlled externally
-export function ShareDialog({
+export const ShareDialog = ({
   chatId,
   open,
   onOpenChange,
@@ -241,7 +241,7 @@ export function ShareDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
-}) {
+}) => {
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
   };
@@ -259,14 +259,14 @@ export function ShareDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export function ShareButton({
+export const ShareButton = ({
   chatId,
   className,
 }: {
   chatId: string;
-} & React.ComponentProps<typeof Button>) {
+} & React.ComponentProps<typeof Button>) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -297,4 +297,4 @@ export function ShareButton({
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
     </ShareDialog>
   );
-}
+};

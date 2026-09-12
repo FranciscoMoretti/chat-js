@@ -43,7 +43,7 @@ interface HeaderBreadcrumbProps {
   user?: Session["user"];
 }
 
-export function HeaderBreadcrumb({
+export const HeaderBreadcrumb = ({
   chat,
   chatId,
   user,
@@ -51,7 +51,7 @@ export function HeaderBreadcrumb({
   hasMessages,
   className,
   routeSource,
-}: HeaderBreadcrumbProps) {
+}: HeaderBreadcrumbProps) => {
   const isShared = routeSource === "share";
   const isAuthenticated = !!user;
 
@@ -178,7 +178,7 @@ export function HeaderBreadcrumb({
       />
     </>
   );
-}
+};
 
 interface ChatBreadcrumbProps {
   canManageChat: boolean;
@@ -266,14 +266,14 @@ interface PerformChatRenameArgs {
   setIsChatEditing: (value: boolean) => void;
 }
 
-async function performChatRename({
+const performChatRename = async ({
   chatId,
   chatTitleDraft,
   privateChat,
   renameChat,
   setChatTitleDraft,
   setIsChatEditing,
-}: PerformChatRenameArgs) {
+}: PerformChatRenameArgs) => {
   if (!privateChat) {
     setIsChatEditing(false);
     return;
@@ -292,18 +292,16 @@ async function performChatRename({
   } finally {
     setIsChatEditing(false);
   }
-}
+};
 
 interface InputKeyHandlerOptions {
   onEnter: () => void;
   onEscape: () => void;
 }
 
-function createInputKeyDownHandler({
-  onEnter,
-  onEscape,
-}: InputKeyHandlerOptions) {
-  return (event: KeyboardEvent<HTMLInputElement>) => {
+const createInputKeyDownHandler =
+  ({ onEnter, onEscape }: InputKeyHandlerOptions) =>
+  (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       onEnter();
       return;
@@ -312,9 +310,8 @@ function createInputKeyDownHandler({
       onEscape();
     }
   };
-}
 
-function useSyncDraftValue({
+const useSyncDraftValue = ({
   isEditing,
   setDraft,
   value,
@@ -322,15 +319,15 @@ function useSyncDraftValue({
   isEditing: boolean;
   setDraft: (val: string) => void;
   value: string | undefined;
-}) {
+}) => {
   useEffect(() => {
     if (!isEditing) {
       setDraft(value ?? "");
     }
   }, [isEditing, setDraft, value]);
-}
+};
 
-function ProjectBreadcrumb({
+const ProjectBreadcrumb = ({
   projectLabel,
   projectId,
   projectIcon,
@@ -340,7 +337,7 @@ function ProjectBreadcrumb({
   projectId: string | null;
   projectIcon?: ProjectIconName;
   projectColor?: ProjectColorName;
-}) {
+}) => {
   if (!(projectLabel && projectId)) {
     return null;
   }
@@ -366,4 +363,4 @@ function ProjectBreadcrumb({
       <BreadcrumbSeparator />
     </>
   );
-}
+};

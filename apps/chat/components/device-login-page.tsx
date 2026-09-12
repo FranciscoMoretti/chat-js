@@ -20,7 +20,7 @@ type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
 
-export function DeviceLoginPage() {
+export const DeviceLoginPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [state, setState] = useState<DeviceLoginState>("checking-session");
@@ -125,15 +125,15 @@ export function DeviceLoginPage() {
       state={state}
     />
   );
-}
+};
 
-function DeviceAuthScreen({
+const DeviceAuthScreen = ({
   state,
   onRetry,
 }: {
   state: "checking-session" | "transferring" | "waiting-for-app";
   onRetry: () => void;
-}) {
+}) => {
   const isLoading = state === "checking-session" || state === "transferring";
   let title = "You're signed in";
 
@@ -189,4 +189,4 @@ function DeviceAuthScreen({
       </div>
     </div>
   );
-}
+};

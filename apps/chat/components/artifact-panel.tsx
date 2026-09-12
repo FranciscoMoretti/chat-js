@@ -55,19 +55,19 @@ export interface UIArtifact {
   title: string;
 }
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
-function PureArtifactPanel({
+const PureArtifactPanel = ({
   isReadonly,
   isAuthenticated,
   className,
@@ -75,7 +75,7 @@ function PureArtifactPanel({
   isReadonly: boolean;
   isAuthenticated: boolean;
   className?: string;
-}) {
+}) => {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, metadata, setMetadata, closeArtifact } =
     useArtifact();
@@ -468,7 +468,7 @@ function PureArtifactPanel({
       </ArtifactContent>
     </ArtifactCard>
   );
-}
+};
 
 export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
   if (prevProps.isReadonly !== nextProps.isReadonly) {

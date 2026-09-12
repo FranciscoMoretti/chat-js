@@ -6,7 +6,7 @@ import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
-export function ProjectConfig({
+export const ProjectConfig = ({
   projectName,
   projectIcon,
   projectColor,
@@ -20,7 +20,7 @@ export function ProjectConfig({
   instructions?: string | null;
   onEditInstructions: () => void;
   onRenameProject: () => void;
-}) {
+}) => {
   const hasInstructions = !!instructions?.trim();
 
   return (
@@ -60,4 +60,4 @@ export function ProjectConfig({
       </Button>
     </div>
   );
-}
+};

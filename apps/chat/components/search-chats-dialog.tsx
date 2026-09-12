@@ -154,11 +154,11 @@ interface SearchChatsDialogProps {
   open: boolean;
 }
 
-export function SearchChatsDialog({
+export const SearchChatsDialog = ({
   open,
   onOpenChange,
   onSelectChat,
-}: SearchChatsDialogProps) {
+}: SearchChatsDialogProps) => {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -211,4 +211,4 @@ export function SearchChatsDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

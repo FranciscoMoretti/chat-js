@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/ui-chat";
-export function ProjectChatItem({
+export const ProjectChatItem = ({
   chat,
   onDelete,
   onRename,
@@ -24,7 +24,7 @@ export function ProjectChatItem({
   chat: UIChat;
   onDelete: (chatId: string) => void;
   onRename: (chatId: string, title: string) => Promise<void>;
-}) {
+}) => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
@@ -106,4 +106,4 @@ export function ProjectChatItem({
       )}
     </>
   );
-}
+};

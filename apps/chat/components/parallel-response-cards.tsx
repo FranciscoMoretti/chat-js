@@ -24,29 +24,28 @@ import {
   getStatusLabel,
 } from "./parallel-response-status";
 
-function getEffectiveModelId(
+const getEffectiveModelId = (
   message: {
     metadata: { selectedModel: ChatMessage["metadata"]["selectedModel"] };
   } | null,
   fallbackModelId: AppModelId
-): AppModelId | undefined {
-  return message?.metadata.selectedModel
+): AppModelId | undefined =>
+  message?.metadata.selectedModel
     ? (getPrimarySelectedModelId(message.metadata.selectedModel) ?? undefined)
     : fallbackModelId;
-}
 
-function getModelOrderIndex(
+const getModelOrderIndex = (
   modelId: AppModelId | undefined,
   models: { id: string }[]
-): number {
+): number => {
   if (!modelId) {
     return Number.POSITIVE_INFINITY;
   }
   const index = models.findIndex((m) => m.id === modelId);
   return index === -1 ? Number.POSITIVE_INFINITY : index;
-}
+};
 
-function PureParallelResponseCards({ messageId }: { messageId: string }) {
+const PureParallelResponseCards = ({ messageId }: { messageId: string }) => {
   const message = useMessageById<ChatMessage>(messageId);
   const thread = useApplicationThread();
   const parallelGroupInfo = useParallelGroupInfo(messageId);
@@ -215,7 +214,7 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
       })}
     </div>
   );
-}
+};
 
 export const ParallelResponseCards = memo(
   PureParallelResponseCards,

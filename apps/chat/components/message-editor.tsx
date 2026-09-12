@@ -21,11 +21,11 @@ export interface MessageEditorProps {
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
 }
 
-function MessageEditorContent({
+const MessageEditorContent = ({
   chatId,
   setMode,
   parentMessageId,
-}: MessageEditorProps & { onModelChange?: (modelId: string) => void }) {
+}: MessageEditorProps & { onModelChange?: (modelId: string) => void }) => {
   const status = useChatStatus();
 
   const handleOnSendMessage = useCallback(() => {
@@ -43,11 +43,11 @@ function MessageEditorContent({
       />
     </div>
   );
-}
+};
 
-export function MessageEditor(
+export const MessageEditor = (
   props: MessageEditorProps & { onModelChange?: (modelId: string) => void }
-) {
+) => {
   // Get the initial input value from the message content
   const initialInput = getTextContentFromMessage(props.message);
   const initialAttachments = getAttachmentsFromMessage(props.message);
@@ -74,4 +74,4 @@ export function MessageEditor(
       />
     </ChatInputProvider>
   );
-}
+};

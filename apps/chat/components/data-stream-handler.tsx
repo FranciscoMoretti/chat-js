@@ -24,25 +24,25 @@ import { useChatStoreApi } from "@/lib/stores/base";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
-function handleResearchUpdate({
+const handleResearchUpdate = ({
   delta,
   setSelectedTool,
 }: {
   delta: DataUIPart<CustomUIDataTypes>;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
-}): void {
+}): void => {
   if (delta.type === "data-researchUpdate") {
     const update = delta.data;
     if (update?.type === "completed") {
@@ -51,13 +51,13 @@ function handleResearchUpdate({
       );
     }
   }
-}
+};
 
 /**
  * Process artifact stream parts (e.g., data-suggestion for text artifacts).
  * Dispatches to artifact-specific onStreamPart handlers.
  */
-function processArtifactStreamPart({
+const processArtifactStreamPart = ({
   delta,
   artifact,
   setArtifact,
@@ -67,7 +67,7 @@ function processArtifactStreamPart({
   artifact: ReturnType<typeof useArtifact>["artifact"];
   setArtifact: ReturnType<typeof useArtifact>["setArtifact"];
   setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
-}): void {
+}): void => {
   switch (artifact.kind) {
     case "code":
       codeArtifact.onStreamPart?.({
@@ -99,9 +99,9 @@ function processArtifactStreamPart({
     default:
       break;
   }
-}
+};
 
-export function DataStreamHandler() {
+export const DataStreamHandler = () => {
   const { dataStream } = useDataStream();
   const chatStore = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, setMetadata } = useArtifact();
@@ -154,4 +154,4 @@ export function DataStreamHandler() {
   ]);
 
   return null;
-}
+};
