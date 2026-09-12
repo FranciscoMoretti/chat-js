@@ -73,4 +73,38 @@ describe("collectEnvChecklist", () => {
       false
     );
   });
+
+  it("keeps required, gateway, feature, and authentication entries ordered", () => {
+    const entries = collectEnvChecklist({
+      auth: {
+        github: true,
+        google: false,
+        vercel: false,
+      },
+      builtInTools: {
+        codeExecution: false,
+        deepResearch: false,
+        imageGeneration: false,
+        urlRetrieval: false,
+        videoGeneration: false,
+        webSearch: false,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: false,
+        followupSuggestions: false,
+        mcp: true,
+        parallelResponses: false,
+      },
+      gateway: "litellm",
+    });
+
+    expect(entries.map((entry) => entry.vars)).toEqual([
+      "AUTH_SECRET",
+      "DATABASE_URL",
+      "LITELLM_BASE_URL",
+      "MCP_ENCRYPTION_KEY",
+      "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
+    ]);
+  });
 });

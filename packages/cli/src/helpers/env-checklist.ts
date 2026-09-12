@@ -12,7 +12,6 @@ import {
   envVarDescriptions,
   gatewayEnvRequirements,
 } from "./config-requirements";
-import type { EnvRequirement } from "./config-requirements";
 
 type EnvRequirementLike = {
   description?: string;
@@ -30,11 +29,22 @@ export type EnvVarEntry = {
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 
+type EnvChecklistInput = {
+  gateway: Gateway;
+  gatewayRequirements?: EnvRequirementLike[];
+  coreFeatures: Record<CoreFeatureKey, boolean>;
+  builtInTools: Record<BuiltInToolKey, boolean>;
+  auth: Record<AuthProvider, boolean>;
+  installableToolEnvRequirements?: EnvRequirementLike[];
+};
+
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
  */
-function requirementToEntries(requirement: EnvRequirementLike): EnvVarEntry[] {
+const requirementToEntries = (
+  requirement: EnvRequirementLike
+): EnvVarEntry[] => {
   const oneOfGroup =
     requirement.options.length > 1
       ? requirement.options
@@ -51,45 +61,31 @@ function requirementToEntries(requirement: EnvRequirementLike): EnvVarEntry[] {
       .join(", ");
 
     return {
-      vars: group.map(String).join(" + "),
       description:
         description ||
         requirement.description ||
         "Required environment variable",
       oneOfGroup,
+      vars: group.map(String).join(" + "),
     };
   });
-}
+};
 
-export function collectEnvChecklist(input: {
-  gateway: Gateway;
-  gatewayRequirements?: EnvRequirementLike[];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-  installableToolEnvRequirements?: EnvRequirementLike[];
-}): EnvVarEntry[] {
-  const entries: EnvVarEntry[] = [];
+const addRequirementEntries = (
+  entries: EnvVarEntry[],
+  requirement: EnvRequirementLike | undefined,
+  seen: Set<string>,
+  dedupeKey: string | undefined = requirement?.description
+): void => {
+  if (!requirement || !dedupeKey || seen.has(dedupeKey)) {
+    return;
+  }
 
-  entries.push(
-    {
-      vars: "AUTH_SECRET",
-      description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
-    },
-    {
-      vars: "DATABASE_URL",
-      description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
-    }
-  );
+  seen.add(dedupeKey);
+  entries.push(...requirementToEntries(requirement));
+};
 
-  // --- AI Gateway ---
-  const gwReq =
-    input.gatewayRequirements ?? gatewayEnvRequirements[input.gateway] ?? [];
-  const gwEntries = gwReq.flatMap(requirementToEntries);
-
-  entries.push(...gwEntries);
-
-  // --- Top-level features ---
+const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const featureItems: EnvVarEntry[] = [];
   const seen = new Set<string>();
 
@@ -97,21 +93,14 @@ export function collectEnvChecklist(input: {
     if (!input.coreFeatures[feature]) {
       continue;
     }
-    const requirement =
+
+    addRequirementEntries(
+      featureItems,
       coreFeatureEnvRequirements[
         feature as keyof typeof coreFeatureEnvRequirements
-      ];
-    if (!requirement) {
-      continue;
-    }
-
-    // Deduplicate repeated env requirements across feature/tool selections.
-    if (seen.has(requirement.description)) {
-      continue;
-    }
-    seen.add(requirement.description);
-
-    featureItems.push(...requirementToEntries(requirement));
+      ],
+      seen
+    );
   }
 
   for (const tool of BUILT_IN_TOOL_KEYS) {
@@ -119,53 +108,63 @@ export function collectEnvChecklist(input: {
       tool === "webSearch" ||
       tool === "urlRetrieval" ||
       tool === "deepResearch" ||
-      tool === "codeExecution"
+      tool === "codeExecution" ||
+      !input.builtInTools[tool]
     ) {
       continue;
     }
-    if (!input.builtInTools[tool]) {
-      continue;
-    }
-    const requirement =
+
+    addRequirementEntries(
+      featureItems,
       builtInToolEnvRequirements[
         tool as keyof typeof builtInToolEnvRequirements
-      ];
-    if (!requirement) {
-      continue;
-    }
-    if (seen.has(requirement.description)) {
-      continue;
-    }
-    seen.add(requirement.description);
-
-    featureItems.push(...requirementToEntries(requirement));
+      ],
+      seen
+    );
   }
 
   for (const requirement of input.installableToolEnvRequirements ?? []) {
     const dedupeKey =
       requirement.description ??
       requirement.options.map((option) => option.join("+")).join("|");
-    if (seen.has(dedupeKey)) {
-      continue;
-    }
-    seen.add(dedupeKey);
-
-    featureItems.push(...requirementToEntries(requirement));
+    addRequirementEntries(featureItems, requirement, seen, dedupeKey);
   }
 
-  entries.push(...featureItems);
+  return featureItems;
+};
 
-  // --- Authentication ---
+const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const authItems: EnvVarEntry[] = [];
 
   for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
-    if (!input.auth[provider]) {
-      continue;
+    if (input.auth[provider]) {
+      authItems.push(...requirementToEntries(authEnvRequirements[provider]));
     }
-    authItems.push(...requirementToEntries(authEnvRequirements[provider]));
   }
 
-  entries.push(...authItems);
+  return authItems;
+};
 
-  return entries;
-}
+export const collectEnvChecklist = (
+  input: EnvChecklistInput
+): EnvVarEntry[] => {
+  const entries: EnvVarEntry[] = [
+    {
+      description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
+      vars: "AUTH_SECRET",
+    },
+    {
+      description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
+      vars: "DATABASE_URL",
+    },
+  ];
+
+  const gwReq =
+    input.gatewayRequirements ?? gatewayEnvRequirements[input.gateway] ?? [];
+  return [
+    ...entries,
+    ...gwReq.flatMap(requirementToEntries),
+    ...collectFeatureEntries(input),
+    ...collectAuthEntries(input),
+  ];
+};
