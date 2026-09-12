@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import pathModule from "node:path";
+import { runInNewContext } from "node:vm";
+
+import ts from "typescript";
 
 import { buildConfigTs } from "./config-builder";
 import {
@@ -395,6 +398,84 @@ describe("scaffoldFromGit", () => {
 });
 
 describe("scaffoldElectron", () => {
+  it("runs generated Forge prebuild and build hooks with the selected package manager", async () => {
+    const projectDir = await makeTempDir("electron-forge");
+    await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
+    await scaffoldElectron(projectDir, {
+      packageManager: "npm",
+      projectName: "my-chat-app",
+    });
+    const electronDir = join(projectDir, "electron");
+    await writeFile(
+      join(electronDir, "branding.json"),
+      JSON.stringify({
+        appName: "My Chat App",
+        appPrefix: "my-chat-app",
+        appUrl: "http://localhost:3000",
+      })
+    );
+    const source = await readFile(
+      join(electronDir, "forge.config.ts"),
+      "utf-8"
+    );
+    const { outputText } = ts.transpileModule(source, {
+      compilerOptions: {
+        esModuleInterop: true,
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022,
+      },
+    });
+    const commands: { args: string[]; command: string; nodeEnv?: string }[] =
+      [];
+    const configModule: {
+      default?: { hooks: Record<string, () => Promise<void>> };
+    } = {};
+    runInNewContext(outputText, {
+      __dirname: electronDir,
+      exports: configModule,
+      process: { env: {} },
+      require: (id: string) => {
+        if (id === "node:child_process") {
+          return {
+            spawnSync: (
+              command: string,
+              args: string[],
+              options: { env: NodeJS.ProcessEnv }
+            ) => {
+              commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
+              return { status: 0 };
+            },
+          };
+        }
+        if (id === "node:fs") {
+          return { existsSync, readFileSync };
+        }
+        if (id === "node:path") {
+          return pathModule;
+        }
+        if (id.startsWith("@electron-forge/maker-")) {
+          return {
+            MakerDMG: Object,
+            MakerDeb: Object,
+            MakerRpm: Object,
+            MakerSquirrel: Object,
+            MakerZIP: Object,
+          };
+        }
+        throw new Error(`Unexpected Forge dependency: ${id}`);
+      },
+    });
+    expect(configModule.default).toBeDefined();
+    await configModule.default?.hooks.generateAssets?.();
+    await configModule.default?.hooks.preStart?.();
+    await configModule.default?.hooks.prePackage?.();
+    expect(commands).toEqual([
+      { args: ["run", "prebuild"], command: "npm", nodeEnv: undefined },
+      { args: ["run", "build"], command: "npm", nodeEnv: "development" },
+      { args: ["run", "build"], command: "npm", nodeEnv: "production" },
+    ]);
+  });
+
   it("pins Better Auth versions in the generated electron app", async () => {
     const projectDir = await makeTempDir("electron");
 

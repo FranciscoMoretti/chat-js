@@ -351,7 +351,7 @@ const normalizeElectronFiles = async (
       "Run \\`bun run prebuild\\`",
       `Run \\\`${runScript(packageManager, "prebuild")}\\\``,
     ],
-    ["function runBunScript", "function runPackageManagerScript"],
+    ["runBunScript", "runPackageManagerScript"],
     [
       'spawnSync("bun", ["run", script], {',
       `spawnSync("${packageManager}", ["run", script], {`,
@@ -359,15 +359,6 @@ const normalizeElectronFiles = async (
     [
       `bun run ${scriptPlaceholder} failed`,
       `${packageManager} run ${scriptPlaceholder} failed`,
-    ],
-    ['  runBunScript("prebuild");', '  runPackageManagerScript("prebuild");'],
-    [
-      '        runBunScript("build", { NODE_ENV: "development" });',
-      '        runPackageManagerScript("build", { NODE_ENV: "development" });',
-    ],
-    [
-      '        runBunScript("build", { NODE_ENV: "production" });',
-      '        runPackageManagerScript("build", { NODE_ENV: "production" });',
     ],
   ]);
 
