@@ -39,10 +39,7 @@
         "apps/site/components/thread-showcase.tsx",
         "apps/site/components/use-cases.tsx",
         "apps/site/tests/thread-playground.visual.ts",
-        "apps/videos/src/BrandExample.tsx",
         "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/index.tsx",
-        "apps/videos/src/shared/brand.tsx",
         "apps/videos/src/shared/presentation.tsx",
         "packages/cli/src/utils/run-command.ts"
       ],
@@ -175,10 +172,7 @@
         "apps/site/components/theme-toggle.tsx",
         "apps/site/components/thread-showcase.tsx",
         "apps/site/components/use-cases.tsx",
-        "apps/videos/src/BrandExample.tsx",
         "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/index.tsx",
-        "apps/videos/src/shared/brand.tsx",
         "apps/videos/src/shared/presentation.tsx"
       ],
       "rules": {
