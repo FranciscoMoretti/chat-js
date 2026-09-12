@@ -1,9 +1,6 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-import {
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-} from "ai";
+import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 import type { LanguageModelMiddleware } from "ai";
 
 import { getActiveGateway } from "./active-gateway";
