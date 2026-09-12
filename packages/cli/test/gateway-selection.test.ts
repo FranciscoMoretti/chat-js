@@ -387,6 +387,7 @@ import { applyDefaults, aiConfigSchema } from "./lib/config-schema";
 import assert from "node:assert/strict";
 assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { enabled: true } } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
 	gateway === "vercel"

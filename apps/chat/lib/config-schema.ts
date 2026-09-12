@@ -153,7 +153,7 @@ const installedGatewaySchema = createAiSchema(gatewayType);
 
 export const aiConfigSchema = installedGatewaySchema
   .superRefine((ai, ctx) => {
-    for (const kind of ["image", "video"] as const) {
+    for (const kind of ["video"] as const) {
       if (ai.tools[kind].enabled && !gatewayCapabilities[kind]) {
         ctx.addIssue({
           code: "custom",
