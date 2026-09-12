@@ -1,5 +1,6 @@
 import { execFileSync, spawn } from "node:child_process";
 import { checkHealth } from "./dev-health";
+import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
 const origin = process.env.APP_URL;
 if (!origin || !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)) {
@@ -82,19 +83,27 @@ while (!stopping) {
 	const started = Date.now();
 	let failures = 0;
 	let wasReady = false;
+	let lastReadyAt = started;
 	while (!stopping && !exited) {
 		trackChildren();
 		try {
 			await checkHealth(origin);
 			if (!wasReady) console.info("ChatJS, Eve and database are ready");
 			wasReady = true;
+			lastReadyAt = Date.now();
 			failures = 0;
 			backoff = 5000;
 		} catch {
-			if (wasReady || Date.now() - started > 180_000) failures++;
-			if (failures >= 3) {
+			failures++;
+			if (
+				shouldRestartAfterReadinessFailures(
+					failures,
+					Date.now() - lastReadyAt,
+					wasReady,
+				)
+			) {
 				console.error(
-					"Readiness failed three times; restarting the local runtime",
+					"Readiness remained unavailable through the recovery grace period; restarting the local runtime",
 				);
 				break;
 			}
