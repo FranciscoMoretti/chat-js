@@ -200,3 +200,12 @@ and historical sessions without this evidence; the local file alone is insuffici
 New workflow drivers also reject creation results with an older handle or snapshot
 version before starting any turn. This covers a creation retry dispatched to an
 older worker, including one that ignores the new receipt writer input.
+
+The native `readSessionSandboxIdentity` helper now reads a bounded prefix of the
+birth stream and requires every creation attempt to certify the same local
+identity at snapshot version 2. It rejects hosted or missing evidence, malformed
+records, conflicting roots/providers, invalid stream indexes, and stalled reads.
+This is an internal evidence reader: deletion still requires authorization,
+native writer fences, descendant coverage, a matching filesystem record, and a
+persisted proof for retries after native payload erasure. The source fork test
+uses this reader for both parent and child sessions.

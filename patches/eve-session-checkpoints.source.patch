@@ -1215,6 +1215,203 @@ index 00000000..e9f95f04
 +    reader.releaseLock();
 +  }
 +}
+diff --git a/packages/eve/src/execution/read-session-sandbox-identity.test.ts b/packages/eve/src/execution/read-session-sandbox-identity.test.ts
+new file mode 100644
+index 00000000..05a1a695
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-sandbox-identity.test.ts
+@@ -0,0 +1,97 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { readSessionSandboxIdentity } from "#execution/read-session-sandbox-identity.js";
++
++const mocks = vi.hoisted(() => ({ getRun: vi.fn() }));
++vi.mock("#internal/workflow/runtime.js", () => mocks);
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.useRealTimers();
++});
++const local = { version: 1, sessionId: "source", appRoot: "/worker", backendName: "microsandbox" };
++const receipt = { version: 1, snapshotVersion: 2, sessionId: "source", local };
++function install(values: unknown[], tail = values.length - 1) {
++  const cancel = vi.fn();
++  let index = 0;
++  const stream = Object.assign(
++    new ReadableStream<unknown>({
++      pull(controller) {
++        if (index < values.length) controller.enqueue(values[index++]);
++      },
++      cancel,
++    }),
++    { getTailIndex: async () => tail },
++  );
++  const getReadable = vi.fn(() => stream);
++  mocks.getRun.mockReturnValue({ getReadable });
++  return { stream, cancel, getReadable };
++}
++
++it("reads identical retries without waiting for stream closure", async () => {
++  const { stream, cancel, getReadable } = install([receipt, structuredClone(receipt)]);
++  await expect(readSessionSandboxIdentity("source")).resolves.toEqual(local);
++  expect(mocks.getRun).toHaveBeenCalledWith("source");
++  expect(getReadable).toHaveBeenCalledWith({ namespace: "eve.sandbox-identity" });
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(stream.locked).toBe(false);
++});
++it.each([
++  null,
++  [],
++  {},
++  { ...receipt, version: 2 },
++  { ...receipt, snapshotVersion: 1 },
++  { ...receipt, sessionId: "foreign" },
++  { ...receipt, local: null },
++  { ...receipt, local: { ...local, sessionId: "foreign" } },
++  { ...receipt, local: { ...local, appRoot: "relative" } },
++  { ...receipt, local: { ...local, appRoot: "/bad\0root" } },
++  { ...receipt, local: { ...local, backendName: "" } },
++])("rejects uncertified receipt %#", async (invalid) => {
++  install([receipt, invalid]);
++  await expect(readSessionSandboxIdentity("source")).rejects.toThrow();
++});
++it.each(["appRoot", "backendName"])(
++  "rejects conflicting %s across creation attempts",
++  async (field) => {
++    install([receipt, { ...receipt, local: { ...local, [field]: "/different" } }]);
++    await expect(readSessionSandboxIdentity("source")).rejects.toThrow("Conflicting");
++  },
++);
++it.each([-2, 0.5, NaN, Infinity, 100])("rejects invalid or excessive tail %s", async (tail) => {
++  const { cancel } = install([], tail);
++  await expect(readSessionSandboxIdentity("source")).rejects.toThrow("scan limit");
++  expect(cancel).toHaveBeenCalledOnce();
++});
++it("rejects missing evidence", async () => {
++  install([]);
++  await expect(readSessionSandboxIdentity("source")).rejects.toThrow("not found");
++});
++it("rejects a truncated prefix", async () => {
++  const stream = Object.assign(
++    new ReadableStream({
++      start(c) {
++        c.close();
++      },
++    }),
++    { getTailIndex: async () => 0 },
++  );
++  mocks.getRun.mockReturnValue({ getReadable: () => stream });
++  await expect(readSessionSandboxIdentity("source")).rejects.toThrow("ended unexpectedly");
++  expect(stream.locked).toBe(false);
++});
++it.each(["tail", "read"])(
++  "bounds stalled %s even if cancellation never resolves",
++  async (stall) => {
++    vi.useFakeTimers();
++    const cancel = vi.fn(() => new Promise<void>(() => {}));
++    const stream = Object.assign(new ReadableStream<unknown>({ cancel }), {
++      getTailIndex: () => (stall === "tail" ? new Promise<number>(() => {}) : Promise.resolve(0)),
++    });
++    mocks.getRun.mockReturnValue({ getReadable: () => stream });
++    const result = expect(readSessionSandboxIdentity("source")).rejects.toThrow("timed out");
++    await vi.advanceTimersByTimeAsync(10_000);
++    await result;
++    expect(cancel).toHaveBeenCalledOnce();
++    expect(stream.locked).toBe(false);
++  },
++);
+diff --git a/packages/eve/src/execution/read-session-sandbox-identity.ts b/packages/eve/src/execution/read-session-sandbox-identity.ts
+new file mode 100644
+index 00000000..0a5ede60
+--- /dev/null
++++ b/packages/eve/src/execution/read-session-sandbox-identity.ts
+@@ -0,0 +1,88 @@
++import { isAbsolute } from "node:path";
++import { isDeepStrictEqual } from "node:util";
++import { getRun } from "#internal/workflow/runtime.js";
++import {
++  SESSION_SANDBOX_IDENTITY_NAMESPACE,
++  SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION,
++  type SessionSandboxIdentityReceipt,
++} from "#execution/session-sandbox-identity-contract.js";
++
++type LocalIdentity = NonNullable<SessionSandboxIdentityReceipt["local"]>;
++const MAX_RECEIPTS = 100;
++const READ_TIMEOUT_MS = 10_000;
++
++function record(value: unknown): value is Record<string, unknown> {
++  return typeof value === "object" && value !== null && !Array.isArray(value);
++}
++
++function parseLocalReceipt(value: unknown, sessionId: string): LocalIdentity {
++  if (
++    !record(value) ||
++    value.version !== 1 ||
++    value.sessionId !== sessionId ||
++    value.snapshotVersion !== SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION
++  ) {
++    throw new Error("Invalid sandbox birth receipt identity or version.");
++  }
++  const local = value.local;
++  if (
++    !record(local) ||
++    local.version !== 1 ||
++    local.sessionId !== sessionId ||
++    typeof local.appRoot !== "string" ||
++    !isAbsolute(local.appRoot) ||
++    local.appRoot.includes("\0") ||
++    typeof local.backendName !== "string" ||
++    !local.backendName.trim()
++  ) {
++    throw new Error("Sandbox birth receipt does not certify a local provider.");
++  }
++  return { version: 1, sessionId, appRoot: local.appRoot, backendName: local.backendName };
++}
++
++/**
++ * Read a finite native birth-evidence prefix. Authorize the session first and hold
++ * native writer fences when using this evidence for deletion. This does not prove
++ * filesystem ownership, descendant coverage, or resource retirement on its own.
++ */
++export async function readSessionSandboxIdentity(sessionId: string): Promise<LocalIdentity> {
++  const stream = getRun(sessionId).getReadable<unknown>({
++    namespace: SESSION_SANDBOX_IDENTITY_NAMESPACE,
++  });
++  const reader = stream.getReader();
++  let timeout: ReturnType<typeof setTimeout> | undefined;
++  const read = async (): Promise<LocalIdentity> => {
++    const tail = await stream.getTailIndex();
++    if (!Number.isSafeInteger(tail) || tail < -1 || tail >= MAX_RECEIPTS) {
++      throw new Error("Sandbox birth receipt scan limit or index is invalid.");
++    }
++    let found: LocalIdentity | undefined;
++    for (let index = 0; index <= tail; index++) {
++      const { value, done } = await reader.read();
++      if (done) throw new Error("Sandbox birth receipt stream ended unexpectedly.");
++      const local = parseLocalReceipt(value, sessionId);
++      if (found && !isDeepStrictEqual(found, local))
++        throw new Error("Conflicting sandbox birth receipts.");
++      found = local;
++    }
++    if (!found) throw new Error("Sandbox birth receipt was not found.");
++    return found;
++  };
++  try {
++    return await Promise.race([
++      read(),
++      new Promise<never>((_resolve, reject) => {
++        timeout = setTimeout(
++          () => reject(new Error("Sandbox birth receipt read timed out.")),
++          READ_TIMEOUT_MS,
++        );
++      }),
++    ]);
++  } finally {
++    if (timeout !== undefined) clearTimeout(timeout);
++    void reader.cancel().catch(() => {
++      /* Cleanup must not block a timed-out read. */
++    });
++    reader.releaseLock();
++  }
++}
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
 new file mode 100644
 index 00000000..0279a173
@@ -3264,11 +3461,11 @@ index 00000000..9133d4fc
 +}
 diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
 new file mode 100644
-index 00000000..5bfdc462
+index 00000000..4b64e1d9
 --- /dev/null
 +++ b/packages/eve/src/execution/session-fork.integration.test.ts
-@@ -0,0 +1,173 @@
-+import { SESSION_SANDBOX_IDENTITY_NAMESPACE, type SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
+@@ -0,0 +1,170 @@
++import { readSessionSandboxIdentity } from "#execution/read-session-sandbox-identity.js";
 +import { defaultMessageReducer } from "#client/message-reducer.js";
 +import { expect, it } from "vitest";
 +import { start, getRun } from "#internal/workflow/runtime.js";
@@ -3358,11 +3555,8 @@ index 00000000..5bfdc462
 +        expect(restored.snapshot.session.sessionId).toBe(branch.runId);
 +        expect(restored.snapshot.version).toBe(2);
 +        for (const sessionId of [source.runId, branch.runId]) {
-+          const reader = getRun(sessionId).getReadable<SessionSandboxIdentityReceipt>({ namespace: SESSION_SANDBOX_IDENTITY_NAMESPACE }).getReader();
-+          try {
-+            const birth = await reader.read();
-+            expect(birth.value).toMatchObject({ version: 1, snapshotVersion: 2, sessionId, local: { sessionId } });
-+          } finally { await reader.cancel(); reader.releaseLock(); }
++          const birth = await readSessionSandboxIdentity(sessionId);
++          expect(birth).toMatchObject({ version: 1, sessionId });
 +        }
 +        expect(checkpoint.snapshot.session.localSandboxIdentity?.sessionId).toBe(source.runId);
 +        expect(restored.snapshot.session.localSandboxIdentity?.sessionId).toBe(branch.runId);

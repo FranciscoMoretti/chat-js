@@ -296,3 +296,12 @@ starting a turn. An older creation worker cannot bypass the contract by ignoring
 the receipt-writer input and returning a v1 result. Focused tests cover mismatched
 handle/snapshot versions, missing snapshots, future versions, failed receipt
 publication, and historical checkpoint restoration without retroactive identity.
+
+The internal native birth reader is now implemented and exercised against real
+parent and forked session streams. It accepts identical retry records but rejects
+any conflicting or uncertified attempt, including hosted attempts following a
+local attempt. Reads have a finite prefix, a 100-record limit, and a 10-second
+deadline; cancellation cannot delay a timeout. This primitive intentionally does
+not authorize erasure. The application coordinator must still read it under
+writer fences, account for every sandbox-owning descendant, match local sidecar
+evidence, and persist verified ownership before deleting native payloads.
