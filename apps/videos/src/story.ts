@@ -52,10 +52,10 @@ export const ease = (x: number) => {
   const v = clamp(x);
   return v * v * (3 - 2 * v);
 };
-function textAt(text: string, fraction: number) {
+const textAt = (text: string, fraction: number) => {
   return text.slice(0, Math.floor(clamp(fraction) * text.length));
-}
-export function stateAt(t: number, content: LaunchScript = script) {
+};
+export const stateAt = (t: number, content: LaunchScript = script) => {
   let prefixLength = 0;
   while (
     prefixLength < content.prompt.length &&
@@ -115,7 +115,7 @@ export function stateAt(t: number, content: LaunchScript = script) {
             ? "Both paths are yours to keep."
             : "",
   };
-}
+};
 export type StoryState = ReturnType<typeof stateAt>;
 export const captionBeats = [
   { start: 10, end: 11.5, label: "Try another answer" },
@@ -124,7 +124,7 @@ export const captionBeats = [
   { start: 30.5, end: 32, label: "Continue the other" },
   { start: 40, end: 41.5, label: "Edit any message. Keep both versions." },
 ];
-export function presentationAt(wallTime: number) {
+export const presentationAt = (wallTime: number) => {
   // Cut only completed-reply holds; keep action and streaming speed unchanged.
   const time =
     wallTime +
@@ -140,8 +140,8 @@ export function presentationAt(wallTime: number) {
     caption: beat.label,
     opacity: Math.min(ease(elapsed / 0.15), ease((duration - elapsed) / 0.15)),
   };
-}
-export function cursorAt(t: number) {
+};
+export const cursorAt = (t: number) => {
   const moves = [
     [11.5, 12.5, 0.2, 600, 740, 178, 716],
     [18.1, 19.5, 0.4, 600, 740, 178, 716],
@@ -154,4 +154,4 @@ export function cursorAt(t: number) {
   const [start, , duration, ax, ay, bx, by] = move;
   const k = ease((t - start) / duration);
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
-}
+};
