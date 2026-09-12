@@ -3,7 +3,7 @@ import { build } from "bun";
 const imageImport = /^next\/image$/;
 const fixtureModule = /.*/;
 const replacedModule =
-  /\/(chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link)\.tsx$/;
+  /\/(chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link|connectors-dropdown)\.tsx$/;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
 const replacements = {
@@ -13,6 +13,7 @@ const replacements = {
   "eve-conversation.tsx": "EveConversation",
   "chat-welcome.tsx": "ChatWelcomeView",
   "internal-link.tsx": "InternalLink",
+  "connectors-dropdown.tsx": "ConnectorsDropdown",
 };
 const result = await build({
   entrypoints: ["tests/eve-comparison-ui.fixture.tsx"],

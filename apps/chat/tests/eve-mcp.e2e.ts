@@ -6,6 +6,7 @@ import { MCPClient } from "../lib/ai/mcp/mcp-client";
 import { db } from "../lib/db/client";
 import { mcpConnector, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { discoverEveMcpTools, executeEveMcpTool } from "../lib/eve/mcp-tools";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("MCP acceptance requires local Postgres.");
@@ -90,6 +91,123 @@ async function localMcpServer(
   }
   return { server, address };
 }
+
+test("composer connector controls persist and fence native tool execution", async ({
+  page,
+}, testInfo) => {
+  let calls = 0;
+  const { server, address } = await localMcpServer(() => {
+    calls += 1;
+    return { content: [{ type: "text", text: "connector fixture" }] };
+  });
+  const id = crypto.randomUUID();
+  const nameId = `test_${id.slice(0, 8)}`;
+  try {
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
+    );
+    await page.goto("/api/dev-login");
+    const { user: owner } = z
+      .object({ user: z.object({ id: z.string() }) })
+      .parse(await (await page.request.get("/api/auth/get-session")).json());
+    await db.insert(mcpConnector).values({
+      id,
+      userId: owner.id,
+      name: "Local connector fixture",
+      nameId,
+      url: `http://127.0.0.1:${address.port}/mcp`,
+      type: "http",
+      enabled: true,
+    });
+    await page.goto("/");
+    const control = page.getByRole("button", {
+      name: "Connectors",
+      exact: true,
+    });
+    const toggle = page.getByRole("switch", {
+      name: "Enable Local connector fixture",
+    });
+    const discover = () =>
+      discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
+    expect((await discover()).map((tool) => tool.name)).toContain(
+      `${nameId}__read_token`
+    );
+    await expect(control).toBeVisible();
+    await page
+      .getByRole("group", { name: "Message composer", exact: true })
+      .screenshot({
+        path: testInfo.outputPath("connectors-enabled.png"),
+        animations: "disabled",
+      });
+    await control.click();
+    await expect(toggle).toBeChecked();
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+    await expect
+      .poll(async () => {
+        const [connector] = await db
+          .select({ enabled: mcpConnector.enabled })
+          .from(mcpConnector)
+          .where(eq(mcpConnector.id, id));
+        return connector?.enabled;
+      })
+      .toBe(false);
+    expect((await discover()).map((tool) => tool.name)).not.toContain(
+      `${nameId}__read_token`
+    );
+    await expect(
+      executeEveMcpTool(
+        id,
+        "read_token",
+        {},
+        {
+          session: {
+            id: "connector-ui-fixture",
+            turn: { id: "turn_0", sequence: 0 },
+            auth: {
+              current: null,
+              initiator: {
+                principalId: owner.id,
+                principalType: "user",
+                authenticator: "fixture",
+                attributes: {},
+              },
+            },
+          },
+          callId: "stale-tool-selection",
+          abortSignal: AbortSignal.timeout(10_000),
+        },
+        []
+      )
+    ).rejects.toThrow("MCP connector is unavailable");
+    expect(calls).toBe(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await control.click();
+    await expect(toggle).not.toBeChecked();
+    await page.getByRole("menu").screenshot({
+      path: testInfo.outputPath("connectors-disabled-mobile.png"),
+      animations: "disabled",
+    });
+    await toggle.click();
+    await expect
+      .poll(async () =>
+        (await discover()).some((tool) => tool.name === `${nameId}__read_token`)
+      )
+      .toBe(true);
+    await page.getByRole("menuitem", { name: "Manage Connectors" }).click();
+    await expect(page).toHaveURL(
+      `${new URL(page.url()).origin}/settings/connectors`
+    );
+    expect(calls).toBe(0);
+  } finally {
+    await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
+    server.closeAllConnections();
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
+});
 
 test("native MCP executes and its saved result survives connector removal and reload", async ({
   page,

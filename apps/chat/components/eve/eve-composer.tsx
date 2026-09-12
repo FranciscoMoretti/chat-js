@@ -3,6 +3,7 @@
 import { type ComponentProps, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { ControlledChatComposer } from "@/components/chat-composer";
+import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
 import { AttachmentsButton } from "@/components/multimodal-input";
 import { expandSelectedModelValue } from "@/lib/ai/types";
@@ -113,6 +114,7 @@ export function EveComposer({
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}
             />
+            <ConnectorsDropdown />
           </>
         }
       />

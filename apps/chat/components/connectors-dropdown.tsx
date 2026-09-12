@@ -72,6 +72,7 @@ function PureConnectorsDropdown() {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
+              aria-label="Connectors"
               className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
               size="sm"
               variant="ghost"
@@ -110,6 +111,7 @@ function PureConnectorsDropdown() {
               </div>
               <span className="flex-1 truncate text-sm">{connector.name}</span>
               <Switch
+                aria-label={`Enable ${connector.name}`}
                 checked={connector.enabled}
                 className="scale-75"
                 onCheckedChange={(enabled) =>

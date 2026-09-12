@@ -17,6 +17,8 @@ export const useSession = () => ({
   data: { user: { id: "comparison-fixture-owner" } },
   isPending: false,
 });
+// Comparisons use no connected MCP servers; the real control is covered by eve-mcp.e2e.ts.
+export const ConnectorsDropdown = () => null;
 export function EveArtifactLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
