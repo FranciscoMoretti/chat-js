@@ -113,7 +113,7 @@ const AUTH_LABELS: Record<AuthProvider, string> = {
   vercel: "Vercel OAuth",
 };
 
-const handleCancel = (value: unknown): asserts value is never => {
+const handleCancel: (value: unknown) => asserts value is never = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
     process.exit(1);

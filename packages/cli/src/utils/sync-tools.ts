@@ -17,7 +17,7 @@ const readOptional = async (path: string): Promise<string | null> => {
   try {
     return await readFile(path, "utf-8");
   } catch (error) {
-    if (error.code === "ENOENT") {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return null;
     }
     throw error;
