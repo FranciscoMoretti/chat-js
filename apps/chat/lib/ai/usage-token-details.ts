@@ -12,7 +12,7 @@ export type StoredLanguageModelUsage = Pick<
     reasoningTokens?: number;
   };
 
-export function getUsageTokenDetails(usage?: StoredLanguageModelUsage) {
+export const getUsageTokenDetails = (usage?: StoredLanguageModelUsage) => {
   return {
     cachedInputTokens:
       usage?.inputTokenDetails?.cacheReadTokens ??
@@ -21,4 +21,4 @@ export function getUsageTokenDetails(usage?: StoredLanguageModelUsage) {
     reasoningTokens:
       usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0,
   };
-}
+};
