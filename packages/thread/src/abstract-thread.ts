@@ -438,10 +438,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
   stop = () => this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve();
 
-  stopAll() {
-    return Promise.all(
-      this.#runs.getActive().map((run) => run.chat.stop())
-    ).then(() => undefined);
+  async stopAll() {
+    await Promise.all(this.#runs.getActive().map((run) => run.chat.stop()));
   }
 
   stopRun(runId: string) {
@@ -612,11 +610,11 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   }
 
   private assertCanGenerateFrom(parentMessage: TMessage) {
-    this.assertValidRunParent(parentMessage);
+    AbstractThread.assertValidRunParent(parentMessage);
     this.#runs.assertHasCapacity(parentMessage.id);
   }
 
-  private assertValidRunParent(message: TMessage) {
+  private static assertValidRunParent(message: UIMessage) {
     if (message.role === "assistant") {
       throw new Error(
         `Cannot start a new run directly from assistant message ${message.id}; attach an input message first`
