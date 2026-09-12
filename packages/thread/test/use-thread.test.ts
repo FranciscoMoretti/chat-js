@@ -13,6 +13,11 @@ import type { ThreadState } from "../src/types";
 import { useThread } from "../src/use-thread";
 import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
 
+const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
+  Promise.resolve(null);
+const rejectSendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
+  Promise.reject(new Error("Unexpected send"));
+
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
@@ -27,9 +32,7 @@ class RejectingTransport implements ChatTransport<UIMessage> {
     return Promise.reject(new Error("transport failed"));
   };
 
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
+  reconnectToStream = reconnectToNoStream;
 }
 
 class ControlledTransport implements ChatTransport<UIMessage> {
@@ -44,9 +47,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
       })
     );
 
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
+  reconnectToStream = reconnectToNoStream;
 
   emit(requestIndex: number, chunk: UIMessageChunk) {
     this.requests[requestIndex]?.enqueue(chunk);
@@ -60,8 +61,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
 class ResumeTransport implements ChatTransport<UIMessage> {
   reconnects = 0;
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-    Promise.reject(new Error("Unexpected send"));
+  sendMessages = rejectSendMessages;
 
   reconnectToStream() {
     this.reconnects += 1;

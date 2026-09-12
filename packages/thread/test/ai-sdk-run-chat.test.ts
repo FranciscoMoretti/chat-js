@@ -7,6 +7,11 @@ import { ThreadRunChat } from "../src/ai-sdk-run-chat";
 import type { ThreadRunHost, ThreadRunSpec } from "../src/ai-sdk-run-chat";
 import { MessageTree } from "../src/message-tree";
 
+const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
+  Promise.resolve(null);
+const generateMessageId = () => "client-response";
+const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] = () => {};
+
 class ControlledTransport implements ChatTransport<UIMessage> {
   readonly requests: {
     controller: ReadableStreamDefaultController<UIMessageChunk>;
@@ -26,9 +31,7 @@ class ControlledTransport implements ChatTransport<UIMessage> {
       })
     );
 
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
+  reconnectToStream = reconnectToNoStream;
 
   emit(...chunks: UIMessageChunk[]) {
     for (const chunk of chunks) {
@@ -49,7 +52,7 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
   readonly dataPartSchemas = undefined;
   readonly id = "thread";
   readonly messageMetadataSchema = undefined;
-  readonly generateMessageId = () => "client-response";
+  readonly generateMessageId = generateMessageId;
   readonly spec: ThreadRunSpec;
   readonly tree: MessageTree<UIMessage>;
   onData: ThreadRunHost<UIMessage>["onData"];
@@ -75,7 +78,7 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
   updateRunPath = (messages: UIMessage[]) => {
     this.tree.updatePath(messages);
   };
-  registerToolCall() {}
+  registerToolCall = registerToolCall;
   removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
   setRunError = (_runId: string, error: Error | undefined) => {
     if (error) {
