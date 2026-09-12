@@ -9,13 +9,12 @@ import { config } from "@/lib/config";
 
 export type SheetArtifactMetadata = Record<string, unknown>;
 
-export function getSheetArtifactMetadata(
+export const getSheetArtifactMetadata = (
   metadata: ArtifactMetadata
-): SheetArtifactMetadata {
-  return metadata && typeof metadata === "object"
+): SheetArtifactMetadata =>
+  metadata && typeof metadata === "object"
     ? Object.fromEntries(Object.entries(metadata))
     : {};
-}
 
 export const sheetArtifact = new Artifact<"sheet", SheetArtifactMetadata>({
   kind: "sheet",

@@ -8,44 +8,40 @@ import { $getSelection, $insertNodes } from "lexical";
 import type { EditorState, LexicalEditor, TextNode } from "lexical";
 
 // Create initial editor configuration
-export function createEditorConfig() {
-  return {
-    namespace: "DocumentEditor",
-    nodes: [
-      HeadingNode,
-      ListNode,
-      ListItemNode,
-      QuoteNode,
-      CodeNode,
-      CodeHighlightNode,
-      LinkNode,
-    ],
-    onError: (error: Error) => {
-      console.error("Lexical error:", error);
-    },
-  };
-}
+export const createEditorConfig = () => ({
+  namespace: "DocumentEditor",
+  nodes: [
+    HeadingNode,
+    ListNode,
+    ListItemNode,
+    QuoteNode,
+    CodeNode,
+    CodeHighlightNode,
+    LinkNode,
+  ],
+  onError: (error: Error) => {
+    console.error("Lexical error:", error);
+  },
+});
 
 // Heading transform function equivalent to ProseMirror's headingRule
-function _createHeadingTransform(level: number) {
-  return {
-    dependencies: [],
-    export: null,
-    importDOM: null,
-    regExp: new RegExp(`^(#{1,${level}})\\s$`, "u"),
-    replace: (_textNode: TextNode) => {
-      const selection = $getSelection();
-      if (selection) {
-        const headingTag = `h${level}` as HeadingTagType;
-        const headingNode = $createHeadingNode(headingTag);
-        headingNode.append();
-        $insertNodes([headingNode]);
-      }
-    },
-    trigger: " ",
-    type: "text-match",
-  };
-}
+const _createHeadingTransform = (level: number) => ({
+  dependencies: [],
+  export: null,
+  importDOM: null,
+  regExp: new RegExp(`^(#{1,${level}})\\s$`, "u"),
+  replace: (_textNode: TextNode) => {
+    const selection = $getSelection();
+    if (selection) {
+      const headingTag = `h${level}` as HeadingTagType;
+      const headingNode = $createHeadingNode(headingTag);
+      headingNode.append();
+      $insertNodes([headingNode]);
+    }
+  },
+  trigger: " ",
+  type: "text-match",
+});
 
 export const handleEditorChange = ({
   editorState: _editorState,
