@@ -7,6 +7,8 @@ it("normalizes incomplete streamed markdown delimiters", () => {
   expect(parseIncompleteMarkdown("![partial")).toBe("");
   expect(parseIncompleteMarkdown("**bold")).toBe("**bold**");
   expect(parseIncompleteMarkdown("_italic")).toBe("_italic_");
+  expect(parseIncompleteMarkdown("😀*italic")).toBe("😀*italic*");
+  expect(parseIncompleteMarkdown("😀_italic")).toBe("😀_italic_");
   expect(parseIncompleteMarkdown("`code")).toBe("`code`");
   expect(parseIncompleteMarkdown("```code")).toBe("```code");
   expect(parseIncompleteMarkdown("~~removed")).toBe("~~removed~~");

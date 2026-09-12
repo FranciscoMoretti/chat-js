@@ -49,11 +49,12 @@ export function parseIncompleteMarkdown(text: string): string {
   const singleAsteriskMatch = result.match(singleAsteriskPattern);
   if (singleAsteriskMatch) {
     // Count single asterisks that aren't part of **
-    const singleAsterisks = [...result].reduce((acc, char, index) => {
+    const characters = [...result];
+    const singleAsterisks = characters.reduce((acc, char, index) => {
       if (char === "*") {
         // Check if it's part of a ** pair
-        const prevChar = result[index - 1];
-        const nextChar = result[index + 1];
+        const prevChar = characters[index - 1];
+        const nextChar = characters[index + 1];
         if (prevChar !== "*" && nextChar !== "*") {
           return acc + 1;
         }
@@ -72,11 +73,12 @@ export function parseIncompleteMarkdown(text: string): string {
   const singleUnderscoreMatch = result.match(singleUnderscorePattern);
   if (singleUnderscoreMatch) {
     // Count single underscores that aren't part of __
-    const singleUnderscores = [...result].reduce((acc, char, index) => {
+    const characters = [...result];
+    const singleUnderscores = characters.reduce((acc, char, index) => {
       if (char === "_") {
         // Check if it's part of a __ pair
-        const prevChar = result[index - 1];
-        const nextChar = result[index + 1];
+        const prevChar = characters[index - 1];
+        const nextChar = characters[index + 1];
         if (prevChar !== "_" && nextChar !== "_") {
           return acc + 1;
         }
