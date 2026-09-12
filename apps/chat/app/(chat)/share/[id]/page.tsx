@@ -1,6 +1,8 @@
 import { Suspense } from "react";
+
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+
 import { SharedChatPage } from "./shared-chat-page";
 
 export default function SharedChatPageRoute({

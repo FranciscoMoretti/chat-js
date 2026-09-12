@@ -1,5 +1,3 @@
-// biome-ignore-all lint: vendored chat store base.
-
 type LogLevel = "log" | "warn" | "error";
 
 interface DebugOptions {

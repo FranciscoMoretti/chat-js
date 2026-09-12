@@ -1,0 +1,1183 @@
+{
+  "overrides": [
+    {
+      "files": [
+        "packages/gateways/src/litellm.test.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/thread.test.ts"
+      ],
+      "rules": {
+        "arrow-body-style": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/site/components/thread-playground-model.ts",
+        "packages/registry/src/gateways/litellm/gateway.ts",
+        "packages/registry/src/gateways/openai-compatible/gateway.ts",
+        "packages/registry/src/gateways/openai/gateway.ts",
+        "packages/registry/src/gateways/openrouter/gateway.ts",
+        "packages/registry/src/gateways/vercel/gateway.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/ai-sdk-run-chat.ts",
+        "packages/thread/src/run-registry.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/use-thread.test.ts"
+      ],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/story.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts"
+      ],
+      "rules": {
+        "complexity": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/story.ts",
+        "packages/cli/src/commands/add.ts",
+        "packages/cli/src/commands/config.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/helpers/ensure-target.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/helpers/gateway-provider.ts",
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/storage-provider.test.ts",
+        "packages/cli/src/helpers/storage-provider.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/registry/gateways.ts",
+        "packages/cli/src/registry/storage.ts",
+        "packages/cli/src/registry/transport.ts",
+        "packages/cli/src/utils/get-package-manager.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/preflight.ts",
+        "packages/cli/src/utils/run-command.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/run-command.ts",
+        "packages/cli/test/serve-registry.ts",
+        "packages/registry/build.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/catalog.ts",
+        "packages/registry/src/storage/ftp/storage-provider.test.ts",
+        "packages/registry/src/tools/word-count/tool.test.ts",
+        "packages/registry/visual/renderer.browser.test.tsx",
+        "packages/thread/build.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/ai-sdk-run-chat.ts",
+        "packages/thread/src/run-registry.ts",
+        "packages/thread/src/thread-state.ts",
+        "packages/thread/src/use-thread.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread.test.ts",
+        "scripts/release-fallback.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "curly": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/scaffold.ts"],
+      "rules": {
+        "default-case": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/abstract-thread.ts"],
+      "rules": {
+        "eqeqeq": "off"
+      }
+    },
+    {
+      "files": [
+        ".agents/skills/worktree-ports/scripts/worktree-env.ts",
+        ".agents/skills/worktree-ports/scripts/worktree-runtime.ts",
+        "apps/docs/vitest.config.ts",
+        "apps/electron/forge.config.ts",
+        "apps/electron/scripts/generate-icons.test.js",
+        "apps/electron/src/main.ts",
+        "apps/site/components/faq.tsx",
+        "apps/site/components/features.tsx",
+        "apps/site/components/footer.tsx",
+        "apps/site/components/get-started.tsx",
+        "apps/site/components/hero.tsx",
+        "apps/site/components/logo-cloud.tsx",
+        "apps/site/components/navbar.tsx",
+        "apps/site/components/platforms.tsx",
+        "apps/site/components/tech-stack.tsx",
+        "apps/site/components/theme-toggle.tsx",
+        "apps/site/components/thread-playground-model.ts",
+        "apps/site/components/thread-showcase.tsx",
+        "apps/site/components/use-cases.tsx",
+        "apps/site/lib/utils.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/src/BrandExample.tsx",
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/index.tsx",
+        "apps/videos/src/shared/brand.tsx",
+        "apps/videos/src/shared/presentation.tsx",
+        "apps/videos/src/story.ts",
+        "packages/cli/src/commands/config.ts",
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/helpers/ensure-target.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/helpers/gateway-provider.ts",
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/helpers/storage-provider.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/helpers/vendor-thread-package.ts",
+        "packages/cli/src/registry/gateways.ts",
+        "packages/cli/src/registry/shadcn.ts",
+        "packages/cli/src/registry/storage.ts",
+        "packages/cli/src/registry/transport.ts",
+        "packages/cli/src/utils/get-package-manager.ts",
+        "packages/cli/src/utils/handle-error.ts",
+        "packages/cli/src/utils/is-safe-target.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/preflight.ts",
+        "packages/cli/src/utils/run-command.ts",
+        "packages/cli/src/utils/spinner.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/external-gateway.ts",
+        "packages/cli/test/run-command.ts",
+        "packages/gateways/src/litellm.test.ts",
+        "packages/gateways/src/models.ts",
+        "packages/gateways/src/provider-options.ts",
+        "packages/registry/src/gateways/litellm/gateway.ts",
+        "packages/registry/src/gateways/openai-compatible/gateway.ts",
+        "packages/registry/src/gateways/openai/gateway.ts",
+        "packages/registry/src/gateways/openrouter/gateway.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/environment.ts",
+        "packages/registry/src/storage/ftp/storage-provider.ts",
+        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
+        "packages/registry/src/tools/get-weather/renderer.tsx",
+        "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "packages/registry/src/tools/retrieve-url/tool.ts",
+        "packages/registry/src/tools/tavily-search/renderer.tsx",
+        "packages/registry/src/tools/vercel-code-execution/javascript.ts",
+        "packages/registry/src/tools/vercel-code-execution/python.ts",
+        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+        "packages/registry/src/tools/vercel-code-execution/sandbox.ts",
+        "packages/registry/src/tools/word-count/renderer.tsx",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/message-tree.ts",
+        "packages/thread/src/message-utils.ts",
+        "packages/thread/src/thread-state.ts",
+        "packages/thread/src/thread.ts",
+        "packages/thread/src/use-thread.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/message-tree.test.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread-types.ts",
+        "packages/thread/test/use-thread.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "func-style": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/vitest.config.ts",
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "apps/site/components/thread-showcase.tsx",
+        "apps/site/lib/utils.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/registry/gateways.ts",
+        "packages/cli/src/registry/storage.ts",
+        "packages/cli/src/utils/spinner.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/gateways/src/contract.test.ts",
+        "packages/registry/registry.ts",
+        "packages/registry/src/gateways/vercel/gateway.ts",
+        "packages/registry/src/storage/environment.ts",
+        "packages/registry/src/tools/firecrawl-search/tool.ts",
+        "packages/registry/src/tools/tavily-search/tool.ts",
+        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+        "packages/registry/src/tools/vercel-code-execution/tool.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/ai-sdk-run-chat.ts",
+        "packages/thread/src/run-registry.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/use-thread-types.ts",
+        "packages/thread/test/use-thread.test.ts"
+      ],
+      "rules": {
+        "import/consistent-type-specifier-style": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/config-builder.ts"],
+      "rules": {
+        "import/first": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/BrandExample.tsx",
+        "apps/videos/src/shared/presentation.tsx",
+        "packages/cli/src/commands/sync.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/registry/gateways.test.ts",
+        "packages/cli/src/registry/gateways.ts",
+        "packages/cli/test/serve-registry.ts",
+        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
+        "packages/registry/src/tools/firecrawl-search/tool.ts",
+        "packages/registry/src/tools/tavily-search/renderer.tsx"
+      ],
+      "rules": {
+        "import/newline-after-import": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/src/tools/vercel-code-execution/tool.ts"],
+      "rules": {
+        "import/no-named-as-default": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/src/tools/retrieve-url/tool.ts"],
+      "rules": {
+        "logical-assignment-operators": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/thread/src/ai-sdk-run-chat.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread.test.ts"
+      ],
+      "rules": {
+        "max-classes-per-file": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/scripts/stills.ts",
+        "packages/cli/src/commands/add.ts",
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/preflight.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/registry/build.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/ftp/storage-provider.test.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "no-await-in-loop": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/registry/transport.ts",
+        "packages/gateways/src/runtime.ts"
+      ],
+      "rules": {
+        "no-empty-function": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/abstract-thread.ts"],
+      "rules": {
+        "no-eq-null": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/scripts/generate-icons.test.js"],
+      "rules": {
+        "no-implicit-globals": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/src/tools/vercel-code-execution/tool.ts"],
+      "rules": {
+        "no-inline-comments": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/test/package-smoke.test.ts"],
+      "rules": {
+        "no-inner-declarations": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/src/tools/get-weather/renderer.tsx"],
+      "rules": {
+        "no-loss-of-precision": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/src/main.ts"],
+      "rules": {
+        "no-negated-condition": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/story.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/registry/src/gateways/catalog.ts",
+        "packages/thread/src/abstract-thread.ts"
+      ],
+      "rules": {
+        "no-nested-ternary": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread-types.ts"
+      ],
+      "rules": {
+        "no-new": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/utils/preflight.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/thread/src/ai-sdk-run-chat.ts"
+      ],
+      "rules": {
+        "no-param-reassign": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/story.ts",
+        "packages/registry/visual/renderer.browser.test.tsx"
+      ],
+      "rules": {
+        "no-plusplus": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/src/main.ts"],
+      "rules": {
+        "no-promise-executor-return": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/message-tree.test.ts",
+        "scripts/release-fallback.test.ts"
+      ],
+      "rules": {
+        "no-shadow": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/test/use-thread-types.ts"],
+      "rules": {
+        "no-unused-expressions": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts"
+      ],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/forge.config.ts",
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "packages/cli/src/utils/get-package-manager.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/registry/src/tools/word-count/renderer.tsx"
+      ],
+      "rules": {
+        "no-use-before-define": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/scaffold.ts"
+      ],
+      "rules": {
+        "no-useless-concat": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/src/tools/vercel-code-execution/python.ts"],
+      "rules": {
+        "no-useless-return": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/scripts/run-forge.cjs",
+        "apps/electron/src/main.ts"
+      ],
+      "rules": {
+        "node/global-require": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/story.ts"
+      ],
+      "rules": {
+        "one-var": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/site/components/thread-showcase.tsx",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/registry/transport.ts",
+        "packages/cli/src/utils/get-package-manager.ts",
+        "packages/registry/src/storage/ftp/storage-provider.test.ts",
+        "packages/registry/src/tools/retrieve-url/tool.ts",
+        "packages/thread/src/abstract-thread.ts"
+      ],
+      "rules": {
+        "prefer-destructuring": "off"
+      }
+    },
+    {
+      "files": [
+        ".agents/skills/worktree-ports/scripts/worktree-runtime.ts",
+        "apps/electron/forge.config.ts",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/registry/src/storage/environment.ts",
+        "packages/thread/test/package-smoke.test.ts"
+      ],
+      "rules": {
+        "prefer-named-capture-group": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/scaffold.ts"
+      ],
+      "rules": {
+        "prefer-template": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/commands/add.ts"],
+      "rules": {
+        "preserve-caught-error": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/e2e/docs-visual.browser.test.ts",
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "packages/cli/src/commands/config.ts",
+        "packages/cli/src/utils/run-command.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/run-command.ts"
+      ],
+      "rules": {
+        "promise/avoid-new": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/src/main.ts"],
+      "rules": {
+        "promise/no-nesting": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/utils/run-command.ts",
+        "packages/cli/test/gateway-selection.test.ts"
+      ],
+      "rules": {
+        "promise/param-names": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "apps/electron/src/preload.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/thread/src/abstract-thread.ts"
+      ],
+      "rules": {
+        "promise/prefer-await-to-callbacks": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "packages/cli/src/registry/transport.ts",
+        "packages/thread/src/abstract-thread.ts"
+      ],
+      "rules": {
+        "promise/prefer-await-to-then": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/site/app/layout.tsx",
+        "apps/site/app/page.tsx",
+        "apps/site/app/threads/page.tsx",
+        "apps/site/components/faq.tsx",
+        "apps/site/components/features.tsx",
+        "apps/site/components/footer.tsx",
+        "apps/site/components/get-started.tsx",
+        "apps/site/components/hero.tsx",
+        "apps/site/components/logo-cloud.tsx",
+        "apps/site/components/navbar.tsx",
+        "apps/site/components/platforms.tsx",
+        "apps/site/components/tech-stack.tsx",
+        "apps/site/components/theme-toggle.tsx",
+        "apps/site/components/thread-showcase.tsx",
+        "apps/site/components/use-cases.tsx",
+        "apps/videos/src/BrandExample.tsx",
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/index.tsx",
+        "apps/videos/src/shared/brand.tsx",
+        "apps/videos/src/shared/presentation.tsx",
+        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
+        "packages/registry/src/tools/get-weather/renderer.tsx",
+        "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "packages/registry/src/tools/tavily-search/renderer.tsx",
+        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+        "packages/registry/src/tools/word-count/renderer.tsx",
+        "packages/thread/test/use-thread.test.ts"
+      ],
+      "rules": {
+        "react/function-component-definition": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/test/use-thread-types.ts"],
+      "rules": {
+        "react/invariant": "off"
+      }
+    },
+    {
+      "files": ["apps/site/app/threads/page.tsx"],
+      "rules": {
+        "react/jsx-curly-brace-presence": "off"
+      }
+    },
+    {
+      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
+      "rules": {
+        "react/jsx-no-useless-fragment": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/use-thread.ts"],
+      "rules": {
+        "react/refs": "off"
+      }
+    },
+    {
+      "files": ["apps/site/components/thread-showcase.tsx"],
+      "rules": {
+        "react/todo": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/forge.config.ts",
+        "apps/electron/src/main.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/registry/transport.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/gateways/src/contract.test.ts",
+        "packages/registry/visual/renderer.browser.test.tsx"
+      ],
+      "rules": {
+        "require-await": "off"
+      }
+    },
+    {
+      "files": [
+        ".agents/skills/worktree-ports/scripts/worktree-runtime.ts",
+        "apps/docs/vitest.config.ts",
+        "apps/electron/forge.config.ts",
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/helpers/gateway-provider.ts",
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/storage-provider.ts",
+        "packages/cli/src/registry/shadcn.ts",
+        "packages/cli/src/utils/is-safe-target.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/serve-registry.ts",
+        "packages/gateways/src/definition.ts",
+        "packages/registry/metadata.ts",
+        "packages/registry/src/gateways/litellm/gateway.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/environment.ts",
+        "packages/registry/src/tools/vercel-code-execution/python.ts",
+        "packages/registry/src/tools/word-count/tool.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "scripts/release-fallback.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "require-unicode-regexp": "off"
+      }
+    },
+    {
+      "files": [
+        ".agents/skills/worktree-ports/scripts/worktree-runtime.test.ts",
+        "apps/docs/blume.config.ts",
+        "apps/docs/vitest.config.ts",
+        "apps/electron/forge.config.ts",
+        "apps/electron/scripts/generate-icons.test.js",
+        "apps/electron/scripts/run-forge.cjs",
+        "apps/electron/scripts/write-branding.ts",
+        "apps/electron/src/config.ts",
+        "apps/electron/src/lib/auth-client.ts",
+        "apps/electron/src/main.ts",
+        "apps/electron/src/preload.ts",
+        "apps/site/app/layout.tsx",
+        "apps/site/app/manifest.ts",
+        "apps/site/app/page.tsx",
+        "apps/site/app/robots.ts",
+        "apps/site/app/sitemap.ts",
+        "apps/site/app/threads/page.tsx",
+        "apps/site/components/faq.tsx",
+        "apps/site/components/features.tsx",
+        "apps/site/components/footer.tsx",
+        "apps/site/components/navbar.tsx",
+        "apps/site/components/tech-stack.tsx",
+        "apps/site/components/thread-showcase.tsx",
+        "apps/site/components/use-cases.tsx",
+        "apps/site/lib/site-config.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/scripts/stills.ts",
+        "apps/videos/src/BrandExample.tsx",
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/shared/presentation.tsx",
+        "apps/videos/src/story.test.ts",
+        "apps/videos/src/story.ts",
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/helpers/config-requirements.ts",
+        "packages/cli/src/helpers/env-checklist.test.ts",
+        "packages/cli/src/helpers/env-checklist.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/helpers/prompts.test.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/helpers/storage-provider.test.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/helpers/vendor-thread-package.ts",
+        "packages/cli/src/registry/gateways.test.ts",
+        "packages/cli/src/registry/gateways.ts",
+        "packages/cli/src/registry/shadcn.ts",
+        "packages/cli/src/registry/storage.ts",
+        "packages/cli/src/registry/transport.test.ts",
+        "packages/cli/src/utils/get-package-manager.test.ts",
+        "packages/cli/src/utils/highlighter.ts",
+        "packages/cli/src/utils/logger.ts",
+        "packages/cli/src/utils/spinner.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/external-gateway.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/serve-registry.ts",
+        "packages/gateways/src/contract.test.ts",
+        "packages/gateways/src/definition.ts",
+        "packages/gateways/src/litellm.test.ts",
+        "packages/gateways/src/models.ts",
+        "packages/gateways/src/provider-options.ts",
+        "packages/gateways/src/runtime.ts",
+        "packages/gateways/src/vercel.test.ts",
+        "packages/registry/build.ts",
+        "packages/registry/metadata.ts",
+        "packages/registry/registry.ts",
+        "packages/registry/src/gateways/catalog.ts",
+        "packages/registry/src/gateways/defaults.ts",
+        "packages/registry/src/gateways/litellm/gateway.ts",
+        "packages/registry/src/gateways/metadata.ts",
+        "packages/registry/src/gateways/openai-compatible/gateway.ts",
+        "packages/registry/src/gateways/openai/gateway.ts",
+        "packages/registry/src/gateways/openrouter/gateway.ts",
+        "packages/registry/src/gateways/vercel/gateway.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/catalog.ts",
+        "packages/registry/src/tools/firecrawl-search/tool.ts",
+        "packages/registry/src/tools/get-weather/renderer.tsx",
+        "packages/registry/src/tools/get-weather/tool.ts",
+        "packages/registry/src/tools/retrieve-url/tool.ts",
+        "packages/registry/src/tools/tavily-search/tool.ts",
+        "packages/registry/src/tools/vercel-code-execution/javascript.ts",
+        "packages/registry/src/tools/vercel-code-execution/python.ts",
+        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+        "packages/registry/src/tools/vercel-code-execution/sandbox.ts",
+        "packages/registry/src/tools/vercel-code-execution/tool.ts",
+        "packages/registry/src/tools/word-count/tool.test.ts",
+        "packages/registry/src/tools/word-count/tool.ts",
+        "packages/registry/visual/renderer.browser.test.tsx",
+        "packages/registry/visual/vitest.config.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/ai-sdk-run-chat.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "scripts/release-fallback.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "sort-keys": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/story.ts"
+      ],
+      "rules": {
+        "sort-vars": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/gateways/src/contract.test.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/test/ai-sdk-run-chat.test.ts",
+        "packages/thread/test/thread.test.ts",
+        "packages/thread/test/use-thread.test.ts"
+      ],
+      "rules": {
+        "typescript/array-type": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/config-builder.ts"],
+      "rules": {
+        "typescript/consistent-generic-constructors": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/gateways/src/gateway-provider.ts",
+        "packages/gateways/src/runtime.ts"
+      ],
+      "rules": {
+        "typescript/method-signature-style": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/src/lib/auth-client.ts"],
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/test/external-gateway.ts"],
+      "rules": {
+        "typescript/no-non-null-assertion": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/abstract-thread.ts"],
+      "rules": {
+        "typescript/no-this-alias": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/registry/src/tools/vercel-code-execution/sandbox.ts",
+        "packages/registry/src/tools/vercel-code-execution/tool.ts"
+      ],
+      "rules": {
+        "unicorn/catch-error-name": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/site/components/thread-showcase.tsx",
+        "packages/cli/src/helpers/storage-provider.ts"
+      ],
+      "rules": {
+        "unicorn/consistent-existence-index-check": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/site/components/thread-showcase.tsx",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/registry/src/storage/environment.ts"
+      ],
+      "rules": {
+        "unicorn/consistent-function-scoping": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/BrandExample.tsx",
+        "apps/videos/src/ThreadsLaunch.tsx"
+      ],
+      "rules": {
+        "unicorn/filename-case": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/vitest.config.ts",
+        "apps/electron/forge.config.ts",
+        "apps/electron/scripts/generate-icons.test.js",
+        "apps/electron/scripts/generate-icons.ts",
+        "apps/electron/scripts/write-branding.ts",
+        "apps/electron/src/main.ts",
+        "apps/videos/scripts/stills.ts",
+        "apps/videos/webpack.ts",
+        "packages/cli/src/commands/add.ts",
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/commands/sync.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/helpers/gateway-provider.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/helpers/storage-provider.test.ts",
+        "packages/cli/src/helpers/storage-provider.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/helpers/vendor-thread-package.ts",
+        "packages/cli/src/registry/gateways.test.ts",
+        "packages/cli/src/registry/transport.test.ts",
+        "packages/cli/src/utils/get-package-manager.test.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/src/utils/preflight.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/serve-registry.ts",
+        "packages/registry/build.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/catalog.ts",
+        "packages/registry/visual/vitest.config.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "scripts/release-fallback.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "unicorn/import-style": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/utils/sync-tools.ts"
+      ],
+      "rules": {
+        "unicorn/no-array-reduce": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/run-registry.ts"],
+      "rules": {
+        "unicorn/no-array-reverse": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "unicorn/no-array-sort": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/commands/add.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/registry/gateways.test.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/registry/src/tools/vercel-code-execution/javascript.ts",
+        "packages/registry/src/tools/vercel-code-execution/python.ts"
+      ],
+      "rules": {
+        "unicorn/no-await-expression-member": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/env-checklist.ts"],
+      "rules": {
+        "unicorn/no-immediate-mutation": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/src/main.ts"],
+      "rules": {
+        "unicorn/no-negated-condition": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/abstract-thread.ts"],
+      "rules": {
+        "unicorn/no-this-assignment": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/package-manifest.ts"],
+      "rules": {
+        "unicorn/no-useless-fallback-in-spread": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/e2e/docs-visual.browser.test.ts",
+        "packages/thread/src/abstract-thread.ts",
+        "packages/thread/src/run-registry.ts",
+        "packages/thread/test/thread.test.ts"
+      ],
+      "rules": {
+        "unicorn/no-useless-undefined": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "packages/registry/src/tools/get-weather/renderer.tsx"
+      ],
+      "rules": {
+        "unicorn/numeric-separators-style": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/registry/gateways.ts",
+        "packages/registry/src/storage/akamai/storage-provider.ts",
+        "packages/registry/src/storage/alibaba/storage-provider.ts",
+        "packages/registry/src/storage/appwrite/storage-provider.ts",
+        "packages/registry/src/storage/archil/storage-provider.ts",
+        "packages/registry/src/storage/azure/storage-provider.ts",
+        "packages/registry/src/storage/backblaze-b2/storage-provider.ts",
+        "packages/registry/src/storage/bunny-storage/storage-provider.ts",
+        "packages/registry/src/storage/cloudinary/storage-provider.ts",
+        "packages/registry/src/storage/digitalocean-spaces/storage-provider.ts",
+        "packages/registry/src/storage/dropbox/storage-provider.ts",
+        "packages/registry/src/storage/exoscale/storage-provider.ts",
+        "packages/registry/src/storage/filebase/storage-provider.ts",
+        "packages/registry/src/storage/firebase-storage/storage-provider.ts",
+        "packages/registry/src/storage/gcs/storage-provider.ts",
+        "packages/registry/src/storage/google-drive/storage-provider.ts",
+        "packages/registry/src/storage/hetzner/storage-provider.ts",
+        "packages/registry/src/storage/ibm-cos/storage-provider.ts",
+        "packages/registry/src/storage/idrive-e2/storage-provider.ts",
+        "packages/registry/src/storage/memory/storage-provider.ts",
+        "packages/registry/src/storage/minio/storage-provider.ts",
+        "packages/registry/src/storage/neon/storage-provider.ts",
+        "packages/registry/src/storage/netlify-blobs/storage-provider.ts",
+        "packages/registry/src/storage/onedrive/storage-provider.ts",
+        "packages/registry/src/storage/oracle-cloud/storage-provider.ts",
+        "packages/registry/src/storage/ovhcloud/storage-provider.ts",
+        "packages/registry/src/storage/pocketbase/storage-provider.ts",
+        "packages/registry/src/storage/r2/storage-provider.ts",
+        "packages/registry/src/storage/s3/storage-provider.ts",
+        "packages/registry/src/storage/scaleway/storage-provider.ts",
+        "packages/registry/src/storage/sftp/storage-provider.ts",
+        "packages/registry/src/storage/sharepoint/storage-provider.ts",
+        "packages/registry/src/storage/storj/storage-provider.ts",
+        "packages/registry/src/storage/supabase/storage-provider.ts",
+        "packages/registry/src/storage/tencent/storage-provider.ts",
+        "packages/registry/src/storage/tigris/storage-provider.ts",
+        "packages/registry/src/storage/uploadthing/storage-provider.ts",
+        "packages/registry/src/storage/vercel-blob/storage-provider.ts",
+        "packages/registry/src/storage/vultr/storage-provider.ts",
+        "packages/registry/src/storage/wasabi/storage-provider.ts",
+        "packages/registry/src/storage/webdav/storage-provider.ts",
+        "packages/registry/src/storage/yandex/storage-provider.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-export-from": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/vitest.config.ts",
+        "packages/cli/src/helpers/scaffold-contract.test.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/scaffold.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-import-meta-properties": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/forge.config.ts",
+        "apps/electron/scripts/generate-icons.test.js",
+        "apps/electron/scripts/generate-icons.ts",
+        "apps/electron/scripts/write-branding.ts",
+        "apps/electron/src/main.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-module": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/turbo-affected.test.ts"],
+      "rules": {
+        "unicorn/prefer-set-has": "off"
+      }
+    },
+    {
+      "files": ["packages/cli/src/helpers/env-checklist.ts"],
+      "rules": {
+        "unicorn/prefer-single-call": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/thread/src/message-tree.ts",
+        "packages/thread/src/run-registry.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-spread": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/helpers/config-builder.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/utils/is-safe-target.ts",
+        "packages/cli/src/utils/legacy-tools.ts",
+        "packages/registry/src/tools/word-count/tool.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-string-replace-all": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "packages/cli/src/helpers/scaffold.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-ternary": "off"
+      }
+    },
+    {
+      "files": ["packages/registry/visual/vitest.config.ts"],
+      "rules": {
+        "unicorn/relative-url-style": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/commands/config.ts",
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/scaffold.ts"
+      ],
+      "rules": {
+        "unicorn/switch-case-braces": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/forge.config.ts",
+        "apps/electron/scripts/generate-icons.test.js",
+        "packages/cli/src/commands/create.test.ts",
+        "packages/cli/src/commands/create.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/helpers/gateway-provider.ts",
+        "packages/cli/src/helpers/package-manifest.ts",
+        "packages/cli/src/helpers/scaffold.test.ts",
+        "packages/cli/src/helpers/scaffold.ts",
+        "packages/cli/src/helpers/storage-provider.test.ts",
+        "packages/cli/src/helpers/storage-provider.ts",
+        "packages/cli/src/helpers/turbo-affected.test.ts",
+        "packages/cli/src/helpers/vendor-thread-package.ts",
+        "packages/cli/src/utils/get-package-manager.ts",
+        "packages/cli/src/utils/sync-tools.test.ts",
+        "packages/cli/src/utils/sync-tools.ts",
+        "packages/cli/test/external-gateway.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/registry/src/reference-consumer.test.ts",
+        "packages/registry/src/storage/catalog.ts",
+        "packages/thread/test/package-smoke.test.ts",
+        "scripts/sync-template.ts"
+      ],
+      "rules": {
+        "unicorn/text-encoding-identifier-case": "off"
+      }
+    }
+  ]
+}

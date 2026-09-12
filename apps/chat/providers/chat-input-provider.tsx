@@ -11,6 +11,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+
 import type { LexicalChatInputRef } from "@/components/lexical-chat-input";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
@@ -19,6 +20,7 @@ import {
   type SelectedModelValue,
   type UiToolName,
 } from "@/lib/ai/types";
+
 import { useChatModels } from "./chat-models-provider";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
 

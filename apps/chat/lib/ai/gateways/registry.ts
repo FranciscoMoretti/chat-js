@@ -1,4 +1,5 @@
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
+
 import type { Gateway } from "../gateway";
 import type { gatewayType } from "../gateway-model-defaults";
 import type { generatedForGateway, models } from "../models.generated";

@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { expect, it } from "vitest";
 
 it("reports failed endpoint names without exposing connection credentials", () => {

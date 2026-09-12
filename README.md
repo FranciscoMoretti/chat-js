@@ -59,8 +59,8 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - [Pino](https://getpino.io) - Structured Logging
 - [Langfuse](https://langfuse.com) - LLM observability & analytics
 - [Vercel Analytics](https://vercel.com/analytics) - Web analytics
-- [Biome](https://biomejs.dev) - Code linting and formatting
-- [Ultracite](https://ultracite.ai) - Biome preset for humans and AI
+- [Oxlint and Oxfmt](https://oxc.rs) - Code linting and formatting
+- [Ultracite](https://ultracite.ai) - Oxlint and Oxfmt presets for humans and AI
 - [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
 - [AI Elements](https://elements.ai-sdk.dev/overview) - AI-native Components
 - [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
@@ -77,14 +77,14 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun dev`: run chat app
 - `bun dev:info`: print this worktree's assigned app URLs
 - `bun dev:docs`: run docs
-- `bun lint`: run workspace lint
-- `bun test:types`: run chat app typecheck
+- `bun lint`: check repository-wide Oxlint rules and Oxfmt formatting, plus docs health
+- `bun format`: format the repository with Oxfmt
+- `bun lint:fix`: apply safe Oxlint fixes
+- `bun test:types`: type-check the workspaces
 
-Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten
-ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`,
-and the site uses `2`, as configured in `.worktree-env.json`. The local file is
-ignored by Git and kept separate from Vercel-managed `.env.local`. Run
-`bun dev:info` instead of assuming a port.
+Ultracite supplies the Oxlint and Oxfmt presets. The `oxlint-baseline.json` files temporarily disable existing violations by file and rule; remove entries as the code is cleaned up. New files receive the full presets. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
+
+Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
 
 ## Releases
 

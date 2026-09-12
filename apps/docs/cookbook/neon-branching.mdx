@@ -77,33 +77,35 @@ bun db:branch:stop
 
 ### Commands Reference
 
-| Command                          | Description                                        |
-| -------------------------------- | -------------------------------------------------- |
-| `bun db:branch:start [name]`     | Create branch and switch to it (default: dev-local) |
-| `bun db:branch:stop [name]`      | Switch to main and delete branch                   |
-| `bun db:branch:use [name]`       | Switch to existing branch (writes `.neon-branch`)  |
-| `bun db:branch:use main`         | Switch back to main (removes `.neon-branch`)       |
-| `bun db:branch:create [name]`    | Create branch only                                 |
-| `bun db:branch:delete [name]`    | Delete branch only                                 |
-| `bun db:branch:list`             | List all branches                                  |
+| Command | Description |
+| --- | --- |
+| `bun db:branch:start [name]` | Create branch and switch to it (default: dev-local) |
+| `bun db:branch:stop [name]` | Switch to main and delete branch |
+| `bun db:branch:use [name]` | Switch to existing branch (writes `.neon-branch`) |
+| `bun db:branch:use main` | Switch back to main (removes `.neon-branch`) |
+| `bun db:branch:create [name]` | Create branch only |
+| `bun db:branch:delete [name]` | Delete branch only |
+| `bun db:branch:list` | List all branches |
 
-Default branch name is `dev-local` if not specified. Normal `bun dev` and
-`bun db:migrate` use the configured URLs, without reading `.neon-branch`.
+Default branch name is `dev-local` if not specified. Normal `bun dev` and `bun db:migrate` use the configured URLs, without reading `.neon-branch`.
 
 ## Considerations
 
 **Benefits:**
+
 - Instant branch creation (copy-on-write, no data duplication)
 - Test destructive migrations safely
 - Multiple developers can have separate branches
 - Branches inherit data from parent at creation time
 
 **Trade-offs:**
+
 - Requires Neon PostgreSQL (not compatible with other providers)
 - Branch data becomes stale relative to main over time
 - Free tier has limited branch count
 
 **Alternatives:**
+
 - Docker-based local PostgreSQL for full isolation
 - Schema-only branches (no data) for simpler cases
 - Supabase branching for Supabase users

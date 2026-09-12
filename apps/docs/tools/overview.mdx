@@ -3,17 +3,13 @@ title: Tools Overview
 description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
-The ChatJS registry distributes editable source code using shadcn. A tool includes
-server logic, dependencies, and a declarative registration
-descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system.
+The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system.
 
 ```bash
 npx @chat-js/cli@latest add word-count
 ```
 
-shadcn resolves the item and its dependencies, installs packages, and writes the
-source files. ChatJS then regenerates separate server and client registrations.
-Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
+shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
 
 ## Available tools
 
@@ -37,16 +33,9 @@ Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replac
 | `tools/chatjs/tools.ts`, `ui.ts` | Generated registrations |
 | `tools/chatjs/custom-tools.ts`, `custom-ui.ts` | Your custom registrations |
 
-Keep manual registrations in the custom modules. Sync rejects duplicate installed
-descriptor keys and edited generated indexes. Generated indexes detect collisions
-with custom registrations when loaded. Sync also refuses to remove a previously registered tool
-just because its descriptor disappeared. Restore the descriptor before syncing.
-Known legacy built-in indexes migrate automatically. Customized legacy indexes
-need an explicit move into the custom modules before removing the old indexes.
+Keep manual registrations in the custom modules. Sync rejects duplicate installed descriptor keys and edited generated indexes. Generated indexes detect collisions with custom registrations when loaded. Sync also refuses to remove a previously registered tool just because its descriptor disappeared. Restore the descriptor before syncing. Known legacy built-in indexes migrate automatically. Customized legacy indexes need an explicit move into the custom modules before removing the old indexes.
 
-Registry items specify explicit file targets. This integration uses `tools/chatjs`.
-The former `paths.tools` configuration and marker-based injection are removed.
-Built-in product tools remain in `tools/platform`.
+Registry items specify explicit file targets. This integration uses `tools/chatjs`. The former `paths.tools` configuration and marker-based injection are removed. Built-in product tools remain in `tools/platform`.
 
 ## External registries
 
@@ -65,9 +54,7 @@ Configure standard namespaces in `components.json`:
 npx @chat-js/cli@latest add @acme/my-tool
 ```
 
-You can also pass a complete registry item URL or local JSON path. Registry
-requests require HTTPS, with HTTP allowed for local loopback development.
-`--registry` has been replaced by standard namespace configuration.
+You can also pass a complete registry item URL or local JSON path. Registry requests require HTTPS, with HTTP allowed for local loopback development. `--registry` has been replaced by standard namespace configuration.
 
 ## Direct shadcn installation
 
@@ -76,13 +63,9 @@ npx shadcn@4.21.0 add @chatjs/word-count
 npx @chat-js/cli@latest sync
 ```
 
-shadcn installs source. `sync` reads installed descriptors and generates ChatJS
-registrations without evaluating third-party source. `chat-js add` performs both
-steps. If registration fails after installation, fix the reported issue and run
-`sync` again. Package installation is not transactional.
+shadcn installs source. `sync` reads installed descriptors and generates ChatJS registrations without evaluating third-party source. `chat-js add` performs both steps. If registration fails after installation, fix the reported issue and run `sync` again. Package installation is not transactional.
 
-Tool environment requirements live in `chatjs.json`, generated from typed item
-metadata. `check-env` reads those descriptors without importing server tools.
+Tool environment requirements live in `chatjs.json`, generated from typed item metadata. `check-env` reads those descriptors without importing server tools.
 
 ## Related
 

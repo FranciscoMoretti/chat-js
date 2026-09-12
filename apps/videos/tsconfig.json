@@ -1,15 +1,15 @@
 {
-	"compilerOptions": {
-		"target": "ESNext",
-		"lib": ["dom", "esnext"],
-		"strict": true,
-		"skipLibCheck": true,
-		"noEmit": true,
-		"esModuleInterop": true,
-		"module": "Preserve",
-		"moduleResolution": "bundler",
-		"jsx": "react-jsx",
-		"types": ["bun"]
-	},
-	"include": ["src", "scripts", "webpack.ts", "remotion.config.ts"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["dom", "esnext"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["bun"]
+  },
+  "include": ["src", "scripts", "webpack.ts", "remotion.config.ts"]
 }

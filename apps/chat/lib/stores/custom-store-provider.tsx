@@ -13,6 +13,7 @@ import {
 } from "react";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
+
 import type { ChatMessage } from "@/lib/ai/types";
 import { ApplicationThread } from "@/lib/application-thread";
 import {

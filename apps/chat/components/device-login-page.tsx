@@ -3,6 +3,7 @@
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -144,15 +145,15 @@ function DeviceAuthScreen({
   }
 
   return (
-    <div className="flex min-h-dvh w-screen items-center justify-center bg-background">
+    <div className="bg-background flex min-h-dvh w-screen items-center justify-center">
       <div className="w-full max-w-sm px-6">
         <Card>
           <CardHeader className="text-center">
             <div className="mb-2 flex justify-center">
               {isLoading ? (
-                <LoaderCircle className="size-8 animate-spin text-muted-foreground" />
+                <LoaderCircle className="text-muted-foreground size-8 animate-spin" />
               ) : (
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground text-background">
+                <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
                   <CheckCircle2 className="size-7" />
                 </div>
               )}
@@ -174,7 +175,7 @@ function DeviceAuthScreen({
               <p className="text-muted-foreground/60 text-xs">
                 Didn&apos;t open?{" "}
                 <Button
-                  className="h-auto p-0 text-muted-foreground/60 text-xs underline underline-offset-2 hover:text-muted-foreground hover:no-underline"
+                  className="text-muted-foreground/60 hover:text-muted-foreground h-auto p-0 text-xs underline underline-offset-2 hover:no-underline"
                   onClick={onRetry}
                   type="button"
                   variant="link"

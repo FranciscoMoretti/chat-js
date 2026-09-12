@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
 import {
   SettingsPage,
@@ -10,7 +11,7 @@ import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 function ConnectorDetailsHeader() {
   return (
     <SettingsPageHeader>
-      <h2 className="font-semibold text-lg">Connector details</h2>
+      <h2 className="text-lg font-semibold">Connector details</h2>
       <p className="text-muted-foreground text-sm">
         Tools, resources, and authorization status.
       </p>

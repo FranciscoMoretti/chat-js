@@ -2,24 +2,26 @@
 
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+
 import type { retrieveUrl } from "./tool";
 
 type RetrieveUrlRendererTool = ToolPartFromTool<typeof retrieveUrl>;
 
 function LoadingState() {
   return (
-    <div className="my-4 rounded-xl border border-border bg-card p-4">
+    <div className="border-border bg-card my-4 rounded-xl border p-4">
       <div className="flex items-center gap-4">
         <div className="relative h-10 w-10">
-          <div className="absolute inset-0 animate-pulse rounded-full bg-primary/10" />
-          <Globe className="absolute inset-0 m-auto h-5 w-5 text-primary/70" />
+          <div className="bg-primary/10 absolute inset-0 animate-pulse rounded-full" />
+          <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
         </div>
         <div className="flex-1 space-y-2">
-          <div className="h-4 w-36 animate-pulse rounded-md bg-muted-foreground/20" />
+          <div className="bg-muted-foreground/20 h-4 w-36 animate-pulse rounded-md" />
           <div className="space-y-1.5">
-            <div className="h-3 w-full animate-pulse rounded-md bg-muted-foreground/15" />
-            <div className="h-3 w-2/3 animate-pulse rounded-md bg-muted-foreground/15" />
+            <div className="bg-muted-foreground/15 h-3 w-full animate-pulse rounded-md" />
+            <div className="bg-muted-foreground/15 h-3 w-2/3 animate-pulse rounded-md" />
           </div>
         </div>
       </div>
@@ -35,10 +37,10 @@ function ErrorState({ errorMessage }: { errorMessage: string | undefined }) {
           <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
         </div>
         <div>
-          <div className="font-medium text-red-700 text-sm dark:text-red-300">
+          <div className="text-sm font-medium text-red-700 dark:text-red-300">
             Error retrieving content
           </div>
-          <div className="mt-1 text-red-600/80 text-xs dark:text-red-400/80">
+          <div className="mt-1 text-xs text-red-600/80 dark:text-red-400/80">
             {errorMessage}
           </div>
         </div>
@@ -73,22 +75,22 @@ function RetrievedContentHeader({ firstItem }: { firstItem: unknown }) {
     <div className="p-4">
       <div className="flex items-start gap-4">
         <div className="relative h-10 w-10 shrink-0">
-          <div className="absolute inset-0 rounded-lg bg-linear-to-br from-primary/10 to-transparent" />
-          <Globe className="absolute inset-0 m-auto h-5 w-5 text-primary/70" />
+          <div className="from-primary/10 absolute inset-0 rounded-lg bg-linear-to-br to-transparent" />
+          <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
-          <h2 className="truncate font-semibold text-foreground text-lg tracking-tight">
+          <h2 className="text-foreground truncate text-lg font-semibold tracking-tight">
             {title}
           </h2>
-          <p className="line-clamp-2 text-muted-foreground text-sm">
+          <p className="text-muted-foreground line-clamp-2 text-sm">
             {description}
           </p>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-medium text-primary text-xs">
+            <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-medium">
               {language}
             </span>
             <a
-              className="inline-flex items-center gap-1.5 text-muted-foreground text-xs transition-colors hover:text-primary"
+              className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 text-xs transition-colors"
               href={url || "#"}
               rel="noopener noreferrer"
               target="_blank"
@@ -109,14 +111,14 @@ function RetrievedContentDetails({ firstItem }: { firstItem: unknown }) {
   return (
     <div className="border-border border-t">
       <details className="group">
-        <summary className="flex w-full cursor-pointer items-center justify-between px-4 py-2 text-muted-foreground text-sm transition-colors hover:bg-muted">
+        <summary className="text-muted-foreground hover:bg-muted flex w-full cursor-pointer items-center justify-between px-4 py-2 text-sm transition-colors">
           <div className="flex items-center gap-2">
-            <TextIcon className="h-4 w-4 text-muted-foreground" />
+            <TextIcon className="text-muted-foreground h-4 w-4" />
             <span>View content</span>
           </div>
           <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
         </summary>
-        <div className="max-h-[50vh] overflow-y-auto bg-muted/50 p-4">
+        <div className="bg-muted/50 max-h-[50vh] overflow-y-auto p-4">
           <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
@@ -178,7 +180,7 @@ export function RetrieveUrlRenderer({
   }
 
   return (
-    <div className="my-4 overflow-hidden rounded-xl border border-border bg-card">
+    <div className="border-border bg-card my-4 overflow-hidden rounded-xl border">
       <RetrievedContentHeader firstItem={firstItem} />
       <RetrievedContentDetails firstItem={firstItem} />
     </div>

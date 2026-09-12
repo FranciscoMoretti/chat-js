@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { InternalLink } from "@/components/internal-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+
 import { ModelSelectorLogo } from "./model-selector-logo";
 
 type FeatureFilter = Record<string, boolean>;
@@ -97,7 +99,7 @@ function getFeatureIcons(model: AppModelDefinition) {
           key={config.key}
           title={config.description}
         >
-          <IconComponent className="h-3 w-3 text-muted-foreground" />
+          <IconComponent className="text-muted-foreground h-3 w-3" />
         </div>
       );
     }
@@ -165,7 +167,7 @@ function PureCommandItem({
     <UICommandItem
       className={cn(
         "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
-        isSelected && "border-l-2 border-l-primary bg-primary/10",
+        isSelected && "border-l-primary bg-primary/10 border-l-2",
         disabled && "cursor-not-allowed opacity-50"
       )}
       onSelect={() => !disabled && onSelect()}
@@ -176,14 +178,14 @@ function PureCommandItem({
         <div className="shrink-0">
           <ModelSelectorLogo modelId={model.id} />
         </div>
-        <span className="flex items-center gap-1.5 truncate font-medium text-sm">
+        <span className="flex items-center gap-1.5 truncate text-sm font-medium">
           {model.name}
           {model.reasoning && reasoningConfig && (
             <span
               className="inline-flex shrink-0 items-center gap-1"
               title={reasoningConfig.description}
             >
-              <reasoningConfig.icon className="h-3 w-3 text-muted-foreground" />
+              <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
             </span>
           )}
         </span>
@@ -198,7 +200,7 @@ function PureCommandItem({
               onMouseDown={(e) => e.stopPropagation()}
             >
               <button
-                className="flex items-center gap-0.5 rounded-full bg-primary/15 px-1.5 py-0.5 font-semibold text-foreground text-xs tabular-nums hover:bg-primary/25"
+                className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
                 type="button"
               >
                 {count}×
@@ -516,7 +518,7 @@ function PureModelSelector({
                   className="inline-flex shrink-0 items-center gap-1"
                   title={reasoningConfig.description}
                 >
-                  <reasoningConfig.icon className="h-3 w-3 text-muted-foreground" />
+                  <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
                 </span>
               )}
             </p>
@@ -580,7 +582,7 @@ function PureModelSelector({
                 <PopoverContent align="end" className="p-0">
                   <div className="p-4">
                     <div className="mb-3 flex h-7 items-center justify-between">
-                      <div className="font-medium text-sm">Filter by Tools</div>
+                      <div className="text-sm font-medium">Filter by Tools</div>
                       {activeFilterCount > 0 && (
                         <Button
                           className="h-6 text-xs"

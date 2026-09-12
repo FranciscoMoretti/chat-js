@@ -4,6 +4,7 @@ import ReactECharts from "echarts-for-react/lib/index";
 import type { EChartsOption } from "echarts-for-react/lib/types";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
+
 import { Card } from "@/components/ui/card";
 
 const CHART_COLORS = [
@@ -246,10 +247,10 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="overflow-hidden border-border bg-card">
+      <Card className="border-border bg-card overflow-hidden">
         <div className="p-6">
           {chart.title && (
-            <h3 className="mb-4 font-medium text-foreground text-lg">
+            <h3 className="text-foreground mb-4 text-lg font-medium">
               {chart.title}
             </h3>
           )}

@@ -4,6 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { ChatComposer } from "@/components/chat-composer";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
@@ -118,7 +119,7 @@ export function ProjectHome({
     >
       <div
         className={cn(
-          "mx-auto flex h-full min-h-0 w-full flex-col p-2 @[500px]:px-4 @[500px]:pb-4 md:max-w-3xl @[500px]:md:pb-6",
+          "mx-auto flex h-full min-h-0 w-full flex-col p-2 md:max-w-3xl @[500px]:px-4 @[500px]:pb-4 @[500px]:md:pb-6",
           shouldCenter && "grid grid-rows-[1fr_auto_1fr]"
         )}
       >

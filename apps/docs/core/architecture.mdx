@@ -16,6 +16,7 @@ flowchart LR
 ```
 
 The application uses:
+
 - **Next.js App Router** for the frontend and API routes
 - **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for persistent data (users, chats, messages, documents)
 - **Redis** for ephemeral data (resumable streams, caching). See [Resumable Streams](/cookbook/resumable-streams)
@@ -48,10 +49,7 @@ sequenceDiagram
     API->>DB: Save final response
 ```
 
-ChatJS stores messages with normalized **parts** (text, tool calls, files,
-reasoning) so you can query and stream updates efficiently. Each active
-assistant response has its own run. When you navigate to another branch, that
-response keeps streaming.
+ChatJS stores messages with normalized **parts** (text, tool calls, files, reasoning) so you can query and stream updates efficiently. Each active assistant response has its own run. When you navigate to another branch, that response keeps streaming.
 
 If [resumable streams](/cookbook/resumable-streams) are enabled, response chunks are published to Redis so clients can reconnect mid-generation without losing progress.
 

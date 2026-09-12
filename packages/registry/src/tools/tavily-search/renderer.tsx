@@ -1,6 +1,8 @@
 "use client";
 import type { UIToolInvocation } from "ai";
+
 import { WebSearch } from "@/components/part/web-search";
+
 import type { webSearch } from "./tool";
 export function WebSearchRenderer({
   tool,

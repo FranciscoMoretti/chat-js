@@ -4,10 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe, Plug, Settings } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
+
 import { InternalLink } from "@/components/internal-link";
 import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { Favicon } from "./favicon";
 import { getGoogleFaviconUrl } from "./get-google-favicon-url";
 import { Button } from "./ui/button";
@@ -72,12 +74,12 @@ function PureConnectorsDropdown() {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
-              className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
+              className="h-8 gap-1 p-1.5 px-2.5 @[500px]:h-10 @[500px]:gap-2"
               size="sm"
               variant="ghost"
             >
               <Plug size={14} />
-              <span className="@[500px]:inline hidden">Connectors</span>
+              <span className="hidden @[500px]:inline">Connectors</span>
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
@@ -102,10 +104,10 @@ function PureConnectorsDropdown() {
                 {faviconUrl ? (
                   <>
                     <Favicon className="size-4 rounded-sm" url={faviconUrl} />
-                    <Globe className="hidden size-4 text-muted-foreground" />
+                    <Globe className="text-muted-foreground hidden size-4" />
                   </>
                 ) : (
-                  <Globe className="size-4 text-muted-foreground" />
+                  <Globe className="text-muted-foreground size-4" />
                 )}
               </div>
               <span className="flex-1 truncate text-sm">{connector.name}</span>

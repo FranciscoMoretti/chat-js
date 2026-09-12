@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+
 import { chromium, type Page } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.

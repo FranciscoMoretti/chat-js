@@ -1,5 +1,6 @@
 "use client";
 
+import { ChatHeader } from "@/components/chat-header";
 import { ChatContent } from "@/components/chat/chat-content";
 import {
   ChatLayout,
@@ -9,7 +10,6 @@ import {
 } from "@/components/chat/chat-layout";
 import { MainChatPanel } from "@/components/chat/main-chat-panel";
 import { SecondaryChatPanel } from "@/components/chat/secondary-chat-panel";
-import { ChatHeader } from "@/components/chat-header";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import type { ChatRouteSource } from "@/lib/chat-route";
 import { useMessageIds } from "@/lib/stores/hooks-base";

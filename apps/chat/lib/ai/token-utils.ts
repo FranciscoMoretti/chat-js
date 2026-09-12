@@ -1,5 +1,6 @@
 import type { ModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
+
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
 
 const MinChunkSize = 140;
@@ -94,7 +95,6 @@ function handleExceededSystemMessage(
 
   if (typeof systemMessage.content === "string") {
     const truncatedContent = trimPrompt(systemMessage.content, maxTokens);
-    // biome-ignore lint/style/useObjectSpread: Spread syntax causes TypeScript error with ModelMessage union types
     return [Object.assign({}, systemMessage, { content: truncatedContent })];
   }
 
@@ -129,7 +129,6 @@ function truncateStringContent(
   );
   const trimmedContent = trimPrompt(truncatedContent, availableTokens);
 
-  // biome-ignore lint/style/useObjectSpread: Spread syntax causes TypeScript error with ModelMessage union types
   return Object.assign({}, lastMessage, { content: trimmedContent });
 }
 
@@ -201,7 +200,6 @@ function truncateToolArrayContent(
     tokensToRemove -= tokensRemoved;
   }
 
-  // biome-ignore lint/style/useObjectSpread: Spread syntax causes TypeScript error with ModelMessage union types
   return Object.assign({}, lastMessage, { content });
 }
 

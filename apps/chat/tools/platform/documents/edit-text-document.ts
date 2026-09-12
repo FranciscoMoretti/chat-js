@@ -1,6 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
+
 import { getDocumentById, saveDocument } from "@/lib/db/queries";
+
 import { textGuidelines } from "./text-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 

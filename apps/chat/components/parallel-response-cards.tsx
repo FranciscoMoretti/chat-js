@@ -2,6 +2,7 @@
 
 import { LoaderCircle } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
@@ -17,6 +18,7 @@ import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
+
 import {
   getParallelResponseLifecycle,
   getStatusLabel,
@@ -201,8 +203,8 @@ function PureParallelResponseCards({ messageId }: { messageId: string }) {
             type="button"
             variant="outline"
           >
-            <span className="font-medium text-sm">{modelName}</span>
-            <span className="flex items-center gap-1 text-muted-foreground text-xs">
+            <span className="text-sm font-medium">{modelName}</span>
+            <span className="text-muted-foreground flex items-center gap-1 text-xs">
               {isLoading ? (
                 <LoaderCircle className="size-3 animate-spin" />
               ) : null}

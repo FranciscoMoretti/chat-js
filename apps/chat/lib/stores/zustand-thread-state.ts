@@ -1,10 +1,11 @@
 import type { ThreadState } from "@chat-js/thread";
 import type { UIMessage } from "ai";
+
 import type { CustomChatStoreApi } from "./custom-store-provider";
 
-export class ZustandThreadState<TMessage extends UIMessage>
-  implements ThreadState<TMessage>
-{
+export class ZustandThreadState<
+  TMessage extends UIMessage,
+> implements ThreadState<TMessage> {
   readonly #store: CustomChatStoreApi<TMessage>;
 
   constructor(store: CustomChatStoreApi<TMessage>) {

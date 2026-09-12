@@ -8,7 +8,10 @@ description: Real-time web search with citations
 Enable your AI to search the web in real-time and provide answers with inline citations. The tool supports multiple queries per request for comprehensive research.
 
 <Frame>
-  <img src="/docs/images/web-search.gif" alt="AI searching the web and returning results with citations" />
+  <img
+    src="/docs/images/web-search.gif"
+    alt="AI searching the web and returning results with citations"
+  />
 </Frame>
 
 ## Quick Start
@@ -34,16 +37,14 @@ bunx @chat-js/cli create my-app --search-tool tavily-search
 # Or: --search-tool firecrawl-search
 ```
 
-Set `TAVILY_API_KEY` for Tavily or `FIRECRAWL_API_KEY` for Firecrawl in
-`.env.local`. The selected tool is used by both chat and deep research. Keys do
-not select the implementation automatically.
+Set `TAVILY_API_KEY` for Tavily or `FIRECRAWL_API_KEY` for Firecrawl in `.env.local`. The selected tool is used by both chat and deep research. Keys do not select the implementation automatically.
 
 ## Providers
 
-| Provider  | Best For           | Features                                      |
-| --------- | ------------------ | --------------------------------------------- |
-| Tavily    | General search     | Topic filtering, news mode, domain exclusions |
-| Firecrawl | Content extraction | High-quality markdown from web pages          |
+| Provider | Best For | Features |
+| --- | --- | --- |
+| Tavily | General search | Topic filtering, news mode, domain exclusions |
+| Firecrawl | Content extraction | High-quality markdown from web pages |
 
 ### Tavily
 
@@ -68,7 +69,7 @@ The tool accepts up to 2 queries per request, executed in parallel:
   search_queries: [
     { query: "latest AI developments 2024", maxResults: 5 },
     { query: "machine learning trends", maxResults: 5 },
-  ]
+  ];
 }
 ```
 
@@ -97,7 +98,7 @@ Returns search results grouped by query:
       query: { query: "...", maxResults: 5 },
       results: [{ url: "...", title: "...", content: "..." }],
     },
-  ]
+  ];
 }
 ```
 
@@ -112,24 +113,17 @@ Returns search results grouped by query:
 
 ### Tool Definition
 
-The selected implementation lives in `tools/chatjs/<id>/tool.ts`. Edit its typed
-schema, description, and execution options there. Shared progress and source
-card events are handled by `tools/platform/search-presentation.ts`.
+The selected implementation lives in `tools/chatjs/<id>/tool.ts`. Edit its typed schema, description, and execution options there. Shared progress and source card events are handled by `tools/platform/search-presentation.ts`.
 
 ### Change the selected tool
 
-Keep any custom edits, then remove the previous search tool directory (for example,
-`tools/chatjs/tavily-search`) and install the replacement:
+Keep any custom edits, then remove the previous search tool directory (for example, `tools/chatjs/tavily-search`) and install the replacement:
 
 ```bash
 bunx @chat-js/cli add firecrawl-search
 ```
 
-Sync requires exactly one installed search selection when search is used. It generates
-the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, plus
-`search-config.ts` for credentials. Do not edit generated files.
-An unused native package can be removed after checking that no other tool uses it.
-Firecrawl may also be needed by URL retrieval.
+Sync requires exactly one installed search selection when search is used. It generates the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, plus `search-config.ts` for credentials. Do not edit generated files. An unused native package can be removed after checking that no other tool uses it. Firecrawl may also be needed by URL retrieval.
 
 ## URL Retrieval
 
@@ -157,11 +151,6 @@ Use web search for discovery and URL retrieval for extracting content from known
 
 ## External search tools
 
-Pass an external registry item URL to `--search-tool`. The item exports a standard
-AI SDK tool and declares `slot: "webSearch"`. It owns its schema, output, credentials,
-and optional renderer. The multi-query schema and progress cards above describe
-the built-in items, not requirements for external search tools.
+Pass an external registry item URL to `--search-tool`. The item exports a standard AI SDK tool and declares `slot: "webSearch"`. It owns its schema, output, credentials, and optional renderer. The multi-query schema and progress cards above describe the built-in items, not requirements for external search tools.
 
-Chat and deep research both expose the selected tool to their models. See
-[Authoring tools](../tools/authoring#selecting-tools-for-app-features) for metadata
-and renderer registration.
+Chat and deep research both expose the selected tool to their models. See [Authoring tools](../tools/authoring#selecting-tools-for-app-features) for metadata and renderer registration.

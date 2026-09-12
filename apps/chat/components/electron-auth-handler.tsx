@@ -4,6 +4,7 @@ import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
@@ -137,10 +138,10 @@ function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
   }
 
   return (
-    <div className="pointer-events-auto fixed inset-0 z-[999999] flex items-center justify-center bg-background/90 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border bg-background p-6 shadow-2xl">
+    <div className="bg-background/90 pointer-events-auto fixed inset-0 z-[999999] flex items-center justify-center px-4 backdrop-blur-sm">
+      <div className="bg-background w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 text-muted-foreground">
+          <div className="text-muted-foreground mt-0.5">
             {isLoading ? (
               <LoaderCircle className="size-5 animate-spin" />
             ) : (

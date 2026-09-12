@@ -34,23 +34,23 @@ export function UseCases() {
       </div>
       <div className="relative mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p className="font-mono text-foreground/70 text-xs uppercase tracking-[0.25em]">
+          <p className="text-foreground/70 font-mono text-xs tracking-[0.25em] uppercase">
             Why developers use ChatJS
           </p>
           <h2
-            className="mt-4 font-display text-3xl tracking-tight sm:text-5xl"
+            className="font-display mt-4 text-3xl tracking-tight sm:text-5xl"
             id="use-cases-heading"
           >
             A practical starting point for shipping AI chat products
           </h2>
-          <p className="mt-6 max-w-xl text-foreground/75 text-lg leading-relaxed">
+          <p className="text-foreground/75 mt-6 max-w-xl text-lg leading-relaxed">
             ChatJS gives you a credible baseline for building AI chat apps fast:
             real product infrastructure, flexible model support, and room to
             grow beyond a demo.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <a
-              className="group inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 font-medium text-sm transition-all duration-300 hover:border-foreground/20 hover:text-foreground"
+              className="group border-border bg-card hover:border-foreground/20 hover:text-foreground inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300"
               href={siteLinks.docsGettingStarted}
             >
               See the setup guide
@@ -59,7 +59,7 @@ export function UseCases() {
               </span>
             </a>
             <a
-              className="inline-flex items-center rounded-xl border border-border bg-card px-4 py-2 font-medium text-sm transition-all duration-300 hover:border-foreground/20 hover:text-foreground"
+              className="border-border bg-card hover:border-foreground/20 hover:text-foreground inline-flex items-center rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-300"
               href={siteLinks.docs}
             >
               Explore documentation
@@ -70,25 +70,25 @@ export function UseCases() {
         <div className="grid gap-4">
           {USE_CASES.map((item, index) => (
             <article
-              className="use-case-card group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 transition-all duration-400 hover:border-border/80 hover:shadow-black/5 hover:shadow-lg dark:hover:shadow-black/20"
+              className="use-case-card group border-border/50 bg-card hover:border-border/80 relative overflow-hidden rounded-2xl border p-6 transition-all duration-400 hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20"
               key={item.title}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Top-left gradient glow on hover */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-br from-foreground/3 via-transparent to-transparent opacity-0 transition-opacity duration-400 group-hover:opacity-100"
+                className="from-foreground/3 pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-br via-transparent to-transparent opacity-0 transition-opacity duration-400 group-hover:opacity-100"
               />
 
               <div className="relative flex items-start gap-4">
-                <span className="mt-1 shrink-0 font-mono text-[10px] text-foreground/75 transition-colors duration-400 group-hover:text-foreground">
+                <span className="text-foreground/75 group-hover:text-foreground mt-1 shrink-0 font-mono text-[10px] transition-colors duration-400">
                   {item.number}
                 </span>
                 <div>
-                  <h3 className="font-semibold text-xl tracking-tight">
+                  <h3 className="text-xl font-semibold tracking-tight">
                     {item.title}
                   </h3>
-                  <p className="mt-3 text-foreground/75 leading-relaxed">
+                  <p className="text-foreground/75 mt-3 leading-relaxed">
                     {item.description}
                   </p>
                 </div>

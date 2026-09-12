@@ -1,4 +1,5 @@
 import { memo } from "react";
+
 import {
   Conversation,
   ConversationScrollButton,
@@ -7,6 +8,7 @@ import { ConversationContent } from "@/components/ai-elements/extra/conversation
 import { useChatId, useChatStatus } from "@/lib/stores/base";
 import { useMessageIds } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
+
 import { Greeting } from "./greeting";
 import { PreviewMessage } from "./message";
 import { ResponseErrorMessage } from "./response-error-message";
@@ -44,10 +46,11 @@ const PureMessagesInternal = memo(
           />
         ))}
 
-        {status === "submitted" && messageIds.length > 0 && (
-          // messages[messages.length - 1].role === 'user' &&
-          <ThinkingMessage />
-        )}
+        {status === "submitted" &&
+          messageIds.length > 0 && (
+            // messages[messages.length - 1].role === 'user' &&
+            <ThinkingMessage />
+          )}
 
         {status === "error" && <ResponseErrorMessage />}
       </>

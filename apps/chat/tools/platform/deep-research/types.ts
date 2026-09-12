@@ -1,8 +1,10 @@
 import type { ModelMessage } from "ai";
 import { z } from "zod";
+
 import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { StreamWriter } from "@/lib/ai/types";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
+
 import type { DocumentToolResult } from "../documents/types";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 

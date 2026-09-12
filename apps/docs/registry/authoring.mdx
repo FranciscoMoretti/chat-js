@@ -5,32 +5,19 @@ description: Publish tested TypeScript source through generated shadcn registry 
 
 Start with a working implementation of a supported category contract:
 
-- [Custom gateways](../gateways/custom) defines gateway exports, capabilities,
-  credentials, and model defaults.
-- [Authoring tools](../tools/authoring) defines server and renderer exports,
-  registration descriptors, and environment requirements.
+- [Custom gateways](../gateways/custom) defines gateway exports, capabilities, credentials, and model defaults.
+- [Authoring tools](../tools/authoring) defines server and renderer exports, registration descriptors, and environment requirements.
 
 ## Keep source in code
 
-In this repository, gateway source lives under
-`packages/registry/src/gateways/<id>/` and tool source under
-`packages/registry/src/tools/<id>/`. Declare files, dependencies, installation
-targets, and metadata in `packages/registry/registry.ts`.
+In this repository, gateway source lives under `packages/registry/src/gateways/<id>/` and tool source under `packages/registry/src/tools/<id>/`. Declare files, dependencies, installation targets, and metadata in `packages/registry/registry.ts`.
 
-Use standard shadcn `dependencies` for npm packages and `registryDependencies`
-for shared registry items. ChatJS metadata describes the category contract.
-The public item name does not have to contain the category name.
+Use standard shadcn `dependencies` for npm packages and `registryDependencies` for shared registry items. ChatJS metadata describes the category contract. The public item name does not have to contain the category name.
 
 ## Generate and publish JSON
 
-Run `bun run --cwd packages/registry build`. The build serializes the typed
-registry definition and descriptors, then runs shadcn to embed source files in
-`packages/registry/dist/r/*.json`. Treat these files as generated artifacts.
+Run `bun run --cwd packages/registry build`. The build serializes the typed registry definition and descriptors, then runs shadcn to embed source files in `packages/registry/dist/r/*.json`. Treat these files as generated artifacts.
 
-Publish the generated item files at your registry endpoint. Configure an alias
-using a URL template ending in `{name}.json`, as described in
-[Namespaces](./namespaces). Consumers install those files through shadcn or the
-ChatJS CLI, and own the resulting source in their app.
+Publish the generated item files at your registry endpoint. Configure an alias using a URL template ending in `{name}.json`, as described in [Namespaces](./namespaces). Consumers install those files through shadcn or the ChatJS CLI, and own the resulting source in their app.
 
-Before publishing, follow [Building and Testing](./testing) to check both the
-source and its installation into an independent app.
+Before publishing, follow [Building and Testing](./testing) to check both the source and its installation into an independent app.

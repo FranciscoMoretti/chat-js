@@ -13,6 +13,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { InternalLink } from "@/components/internal-link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/react";
+
 import { ConnectorHeader } from "./connector-header";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { SettingsPageContent } from "./settings-page";
@@ -226,7 +228,7 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
       <SettingsPageContent className="gap-4">
         <div className="animate-pulse space-y-3">
           {[1, 2].map((i) => (
-            <div className="h-20 rounded-lg bg-muted/50" key={i} />
+            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
           ))}
         </div>
       </SettingsPageContent>
@@ -243,9 +245,9 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
           </InternalLink>
         </Button>
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle className="size-6 text-destructive" />
-          <p className="mt-2 font-medium text-sm">Connector not found</p>
-          <p className="mt-1 text-muted-foreground text-xs">
+          <AlertCircle className="text-destructive size-6" />
+          <p className="mt-2 text-sm font-medium">Connector not found</p>
+          <p className="text-muted-foreground mt-1 text-xs">
             It may have been deleted or you don’t have access.
           </p>
         </div>
@@ -349,7 +351,7 @@ function DiscoveryContent({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
       </div>
     );
   }
@@ -357,8 +359,8 @@ function DiscoveryContent({
   if (showConnectButton) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <p className="font-medium text-sm">Authorization required</p>
-        <p className="max-w-xs text-muted-foreground text-xs">
+        <p className="text-sm font-medium">Authorization required</p>
+        <p className="text-muted-foreground max-w-xs text-xs">
           Connect this connector to access its tools and resources.
         </p>
         <Button onClick={onConnect}>Connect</Button>
@@ -369,9 +371,9 @@ function DiscoveryContent({
   if (isIncompatible) {
     return (
       <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="size-6 text-destructive" />
-        <p className="font-medium text-sm">Incompatible server</p>
-        <p className="max-w-xs text-muted-foreground text-xs">
+        <AlertCircle className="text-destructive size-6" />
+        <p className="text-sm font-medium">Incompatible server</p>
+        <p className="text-muted-foreground max-w-xs text-xs">
           {connectionError ??
             "This server requires pre-configured OAuth credentials."}
         </p>
@@ -382,11 +384,11 @@ function DiscoveryContent({
   if (discoveryError && !needsOAuth) {
     return (
       <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="size-6 text-destructive" />
+        <AlertCircle className="text-destructive size-6" />
         <p className="text-muted-foreground text-sm">
           Failed to connect to MCP server
         </p>
-        <p className="max-w-xs text-muted-foreground text-xs">
+        <p className="text-muted-foreground max-w-xs text-xs">
           {formatMcpError(discoveryError.message)}
         </p>
       </div>
@@ -432,10 +434,10 @@ function DetailsSection({
   const count = items.length;
 
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="bg-card rounded-lg border p-3">
       <div className="flex items-center gap-2">
         <div className="text-muted-foreground">{icon}</div>
-        <span className="font-medium text-sm">{title}</span>
+        <span className="text-sm font-medium">{title}</span>
         <span className="text-muted-foreground text-xs">({count})</span>
       </div>
       <Separator className="my-3" />
@@ -445,7 +447,7 @@ function DetailsSection({
         <div className="flex flex-wrap gap-1.5">
           {items.map((name) => (
             <span
-              className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
+              className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
               key={name}
               title={name}
             >

@@ -8,7 +8,7 @@ ChatJS uses a **gateway** to route all AI requests (model listing, chat completi
 ## Available Gateways
 
 | Gateway | Models | Auth | Image Generation | Best For |
-|---------|--------|------|------------------|----------|
+| --- | --- | --- | --- | --- |
 | [Vercel AI Gateway](/gateways/vercel) (default) | 120+ | `AI_GATEWAY_API_KEY` or auto OIDC | Dedicated image models | Vercel deployments |
 | [OpenRouter](/gateways/openrouter) | Hundreds | `OPENROUTER_API_KEY` | Via multimodal models | Broadest model access |
 | [OpenAI](/gateways/openai) | OpenAI only | `OPENAI_API_KEY` | `gpt-image-1` and others | Direct OpenAI access |
@@ -39,7 +39,8 @@ const config: ConfigInput = {
 ```
 
 <Callout type="note">
-The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when omitted.
+  The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when
+  omitted.
 </Callout>
 
 ## How Model Fetching Works
@@ -82,7 +83,8 @@ This is caught at two levels:
 - **Runtime**: each gateway checks `generatedForGateway` before using the fallback. If it doesn't match, the fallback is skipped and an empty model list is returned instead of stale model IDs.
 
 <Callout type="tip">
-After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to keep the fallback snapshot in sync.
+  After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to
+  keep the fallback snapshot in sync.
 </Callout>
 
 See [Auto-Updating Models](/cookbook/auto-updating-models) for the full implementation pattern.

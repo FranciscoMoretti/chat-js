@@ -3,15 +3,11 @@ title: "Threads"
 description: "Add branching conversations and parallel responses to your AI SDK app with @chat-js/thread"
 ---
 
-`@chat-js/thread` is a standalone package for branching AI conversations.
-Use it in your existing app without installing the ChatJS starter.
+`@chat-js/thread` is a standalone package for branching AI conversations. Use it in your existing app without installing the ChatJS starter.
 
-The React hook, `useThread`, keeps the familiar AI SDK `useChat` interface for
-the selected conversation and stores every branch in a complete message tree.
-The `Thread` controller provides the same tree and run controls outside React.
+The React hook, `useThread`, keeps the familiar AI SDK `useChat` interface for the selected conversation and stores every branch in a complete message tree. The `Thread` controller provides the same tree and run controls outside React.
 
-Use it when you need to edit earlier messages, compare alternative replies, or
-move between branches while responses continue streaming.
+Use it when you need to edit earlier messages, compare alternative replies, or move between branches while responses continue streaming.
 
 [Try the interactive demo](https://www.chatjs.dev/threads).
 
@@ -21,17 +17,13 @@ move between branches while responses continue streaming.
 bun add @chat-js/thread
 ```
 
-The package manages its AI SDK dependencies and uses your app's existing React
-instance (React 18 or newer).
+The package manages its AI SDK dependencies and uses your app's existing React instance (React 18 or newer).
 
 ## Use with React
 
-You need a React app and an AI SDK chat endpoint at `/api/chat`.
-`useThread()` uses that endpoint by default, just like `useChat()`.
-Pass a `transport` option when you need a custom endpoint or request configuration.
+You need a React app and an AI SDK chat endpoint at `/api/chat`. `useThread()` uses that endpoint by default, just like `useChat()`. Pass a `transport` option when you need a custom endpoint or request configuration.
 
-Replace the `useChat` import without changing your existing message list or
-composer:
+Replace the `useChat` import without changing your existing message list or composer:
 
 ```diff
 - import { useChat } from "@ai-sdk/react";
@@ -41,8 +33,7 @@ composer:
 + const chat = useThread();
 ```
 
-The top-level helpers remain compatible with `UseChatHelpers`, including
-`messages`, `sendMessage`, `regenerate`, `stop`, `status`, tools, and approvals.
+The top-level helpers remain compatible with `UseChatHelpers`, including `messages`, `sendMessage`, `regenerate`, `stop`, `status`, tools, and approvals.
 
 ## Mental model
 
@@ -61,21 +52,18 @@ flowchart TD
     U2 --> A3[Alternative response]
 ```
 
-Moving the cursor changes the active path. It does not delete descendants or
-stop runs on other branches.
+Moving the cursor changes the active path. It does not delete descendants or stop runs on other branches.
 
 ## Create a branch
 
-Select any message and send normally. The new user message becomes a child of
-the selected node.
+Select any message and send normally. The new user message becomes a child of the selected node.
 
 ```ts
 chat.tree.setCursor(messageId);
 await chat.sendMessage({ text: "Explore another approach" });
 ```
 
-Editing is an application-level operation. Select the original user message's
-parent, then send the replacement as a new message:
+Editing is an application-level operation. Select the original user message's parent, then send the replacement as a new message:
 
 ```ts
 chat.tree.setCursorToParentOf(originalMessageId);
@@ -90,8 +78,7 @@ See [Branching](./features/branching) for the ChatJS user experience.
 
 ## Run parallel responses
 
-Each assistant response is an independent run. Start the first response with a
-new user message, then start alternatives from that same user node:
+Each assistant response is an independent run. Start the first response with a new user message, then start alternatives from that same user node:
 
 ```ts
 const userMessageId = crypto.randomUUID();
@@ -115,9 +102,7 @@ await Promise.all([
 ]);
 ```
 
-`follow: false` leaves the cursor unchanged. The sibling appears when the first
-stream write arrives. ChatJS uses this model for multiple replies from the same
-model and for comparisons across different models.
+`follow: false` leaves the cursor unchanged. The sibling appears when the first stream write arrives. ChatJS uses this model for multiple replies from the same model and for comparisons across different models.
 
 See [Parallel Responses](./features/parallel-responses) for the product flow.
 
@@ -164,8 +149,7 @@ const chat = useThread({
 });
 ```
 
-The snapshot is `{ version: 1, cursorId, nodes }`. Runtime indexes, active
-requests, and run adapters are not persisted.
+The snapshot is `{ version: 1, cursorId, nodes }`. Runtime indexes, active requests, and run adapters are not persisted.
 
 ## Use without React
 
@@ -183,10 +167,8 @@ await thread.sendMessage({ text: "Plan a weekend in Lisbon" });
 const snapshot = thread.getSnapshot();
 ```
 
-Use `subscribe()` to observe state changes and `stopAll()` to cancel active
-requests when your application no longer needs the controller.
+Use `subscribe()` to observe state changes and `stopAll()` to cancel active requests when your application no longer needs the controller.
 
 ## Package reference
 
-The [package README](https://github.com/FranciscoMoretti/chat-js/tree/main/packages/thread)
-covers the full interface, transport metadata, and custom state adapters.
+The [package README](https://github.com/FranciscoMoretti/chat-js/tree/main/packages/thread) covers the full interface, transport metadata, and custom state adapters.

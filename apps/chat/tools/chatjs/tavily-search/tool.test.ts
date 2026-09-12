@@ -1,6 +1,8 @@
 import { asSchema, createUIMessageStream, type UIMessageChunk } from "ai";
 import { expect, test, vi } from "vitest";
+
 import type { ChatMessage } from "@/lib/ai/types";
+
 import { webSearch } from "./tool";
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));

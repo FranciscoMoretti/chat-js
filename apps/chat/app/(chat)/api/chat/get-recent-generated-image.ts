@@ -1,12 +1,13 @@
 import { z } from "zod";
+
 import type { ChatMessage } from "@/lib/ai/types";
 
 // Optional support for the built-in image result. Other installed schemas are ignored.
 const imageResult = z.object({
-  type: z.literal("tool-generateImage"),
+  output: z.object({ imageUrl: z.string().min(1) }),
   state: z.literal("output-available"),
   toolCallId: z.string(),
-  output: z.object({ imageUrl: z.string().min(1) }),
+  type: z.literal("tool-generateImage"),
 });
 
 export function getRecentGeneratedImage(

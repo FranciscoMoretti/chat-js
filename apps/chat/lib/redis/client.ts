@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+
 import { redisConnectionOptions } from "./connection";
 
 const STARTUP_DEADLINE_MS = 10_000;

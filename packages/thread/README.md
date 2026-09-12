@@ -1,25 +1,16 @@
 # @chat-js/thread
 
-Build branching AI SDK conversations without mounting one `useChat` hook per
-branch.
+Build branching AI SDK conversations without mounting one `useChat` hook per branch.
 
-`useThread` preserves the `useChat` interface for the selected path and adds a
-`tree` namespace for navigation, sibling responses, concurrent runs, and
-run-specific cancellation.
+`useThread` preserves the `useChat` interface for the selected path and adds a `tree` namespace for navigation, sibling responses, concurrent runs, and run-specific cancellation.
 
 ## Package Layers
 
-`@chat-js/thread` is the headless core. It exports the framework-independent
-`AbstractThread`, default memory-backed `Thread`, `ThreadState` contract, tree
-management, and stream orchestration.
+`@chat-js/thread` is the headless core. It exports the framework-independent `AbstractThread`, default memory-backed `Thread`, `ThreadState` contract, tree management, and stream orchestration.
 
-`@chat-js/thread/react` is the React adapter. It exports `useThread` and owns
-React subscriptions, render throttling, and hook lifecycle behavior. The core
-entry point does not import React.
+`@chat-js/thread/react` is the React adapter. It exports `useThread` and owns React subscriptions, render throttling, and hook lifecycle behavior. The core entry point does not import React.
 
-`AbstractThread` exposes `getSnapshot()` and `subscribe()`, so future Vue,
-Svelte, or vanilla adapters can observe the same controller without changing
-the core.
+`AbstractThread` exposes `getSnapshot()` and `subscribe()`, so future Vue, Svelte, or vanilla adapters can observe the same controller without changing the core.
 
 ## Install
 
@@ -27,9 +18,7 @@ the core.
 bun add @chat-js/thread
 ```
 
-The package installs its AI SDK dependencies. In a React app, `useThread`
-uses your existing React instance (React 18 or newer). React is an optional
-peer for the headless entry point.
+The package installs its AI SDK dependencies. In a React app, `useThread` uses your existing React instance (React 18 or newer). React is an optional peer for the headless entry point.
 
 ## Use
 
@@ -56,8 +45,7 @@ function Conversation() {
 }
 ```
 
-`useThread()` uses AI SDK's default transport to call `/api/chat`. Pass a
-`transport` option for a custom endpoint or request configuration.
+`useThread()` uses AI SDK's default transport to call `/api/chat`. Pass a `transport` option for a custom endpoint or request configuration.
 
 Existing rendering and composer code can continue using:
 
@@ -70,12 +58,7 @@ chat.regenerate();
 chat.stop();
 ```
 
-As in `useChat`, `sendMessage()` with no input continues a selected assistant
-message in place. Passing an explicit assistant message also streams into that
-same message ID. `regenerate({ messageId })` uses AI SDK's native regeneration
-request and stores the replacement as a sibling, preserving the original
-branch. Assistant-to-assistant targets regenerate the same way: the original
-node stays, and the replacement is inserted beside it.
+As in `useChat`, `sendMessage()` with no input continues a selected assistant message in place. Passing an explicit assistant message also streams into that same message ID. `regenerate({ messageId })` uses AI SDK's native regeneration request and stores the replacement as a sibling, preserving the original branch. Assistant-to-assistant targets regenerate the same way: the original node stays, and the replacement is inserted beside it.
 
 The selected path is a projection of the complete tree:
 
@@ -91,7 +74,7 @@ Branch from an earlier node with the same `sendMessage` helper:
 ```ts
 await chat.sendMessage(
   { text: "Create a branch" },
-  { tree: { follow: false, from: messageId } },
+  { tree: { follow: false, from: messageId } }
 );
 ```
 
@@ -111,9 +94,7 @@ await chat.stop();
 await Promise.all([first.finished, second.finished]);
 ```
 
-Selecting a pending run keeps `chat.messages` on its origin path until the
-first response message arrives. The cursor then follows that response, while
-the top-level `status`, `error`, and `stop()` helpers target the selected run.
+Selecting a pending run keeps `chat.messages` on its origin path until the first response message arrives. The cursor then follows that response, while the top-level `status`, `error`, and `stop()` helpers target the selected run.
 
 Each run has independent status, error, stream state, and cancellation:
 
@@ -124,8 +105,7 @@ await chat.tree.stopAll();
 
 ## External Ownership
 
-By default, `useThread` creates and retains a `Thread` for the hook lifetime.
-Create the controller yourself when it must outlive a particular component:
+By default, `useThread` creates and retains a `Thread` for the hook lifetime. Create the controller yourself when it must outlive a particular component:
 
 ```ts
 import { createThread } from "@chat-js/thread";
@@ -140,9 +120,7 @@ function Conversation() {
 }
 ```
 
-`Thread` extends the framework-independent `AbstractThread` and owns its
-in-memory state. To integrate another state container, create an
-`AbstractThread` subclass that supplies a `ThreadState`:
+`Thread` extends the framework-independent `AbstractThread` and owns its in-memory state. To integrate another state container, create an `AbstractThread` subclass that supplies a `ThreadState`:
 
 ```ts
 import {
@@ -150,11 +128,7 @@ import {
   createThreadStateSnapshot,
   type ThreadState,
 } from "@chat-js/thread";
-import {
-  type ChatTransport,
-  DefaultChatTransport,
-  type UIMessage,
-} from "ai";
+import { type ChatTransport, DefaultChatTransport, type UIMessage } from "ai";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
@@ -163,7 +137,7 @@ const transport = new DefaultChatTransport({ api: "/api/chat" });
 const applicationStore = createStore(
   subscribeWithSelector(() => ({
     threadSnapshot: createThreadStateSnapshot<UIMessage>({ messages: [] }),
-  })),
+  }))
 );
 
 const applicationThreadState: ThreadState<UIMessage> = {
@@ -171,7 +145,7 @@ const applicationThreadState: ThreadState<UIMessage> = {
   subscribe: (listener) =>
     applicationStore.subscribe(
       (state) => state.threadSnapshot,
-      () => listener(),
+      () => listener()
     ),
   update: (updater) => {
     applicationStore.setState((state) => ({
@@ -183,7 +157,7 @@ const applicationThreadState: ThreadState<UIMessage> = {
 class ApplicationThread extends AbstractThread<UIMessage> {
   constructor(
     state: ThreadState<UIMessage>,
-    transport: ChatTransport<UIMessage>,
+    transport: ChatTransport<UIMessage>
   ) {
     super({ state, transport });
   }
@@ -193,12 +167,7 @@ const thread = new ApplicationThread(applicationThreadState, transport);
 const chat = useThread({ thread });
 ```
 
-`ThreadState.update` invokes its updater exactly once, synchronously and
-atomically. The controller must remain the only writer so concurrent streams
-cannot overwrite each other. `createThreadStateSnapshot` initializes the full
-tree, index, selected-path, status, and run projection required by a custom
-adapter; the application store then keeps that snapshot as its canonical
-conversation state.
+`ThreadState.update` invokes its updater exactly once, synchronously and atomically. The controller must remain the only writer so concurrent streams cannot overwrite each other. `createThreadStateSnapshot` initializes the full tree, index, selected-path, status, and run projection required by a custom adapter; the application store then keeps that snapshot as its canonical conversation state.
 
 Framework adapters observe the controller through:
 
@@ -209,9 +178,7 @@ const unsubscribe = thread.subscribe(() => {
 });
 ```
 
-These methods are framework-neutral. React's `useThread` consumes them through
-`useSyncExternalStore`; other adapters can provide their own subscription
-integration.
+These methods are framework-neutral. React's `useThread` consumes them through `useSyncExternalStore`; other adapters can provide their own subscription integration.
 
 ## Persistence
 
@@ -228,12 +195,6 @@ const restored = useThread({
 });
 ```
 
-The snapshot is `{ version: 1, cursorId, nodes }`. `nodes` is the ordered
-message list with parent IDs; runtime indexes such as `messagesById` are not
-serialized. Active requests, abort controllers, errors, and run adapters are
-runtime state. `resume: true` (or `resumeStream()`) reconstructs a run for the
-selected assistant. `tree.resumeRun(runId)` only works for runs still in the
-live registry.
+The snapshot is `{ version: 1, cursorId, nodes }`. `nodes` is the ordered message list with parent IDs; runtime indexes such as `messagesById` are not serialized. Active requests, abort controllers, errors, and run adapters are runtime state. `resume: true` (or `resumeStream()`) reconstructs a run for the selected assistant. `tree.resumeRun(runId)` only works for runs still in the live registry.
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for lifecycle, identity, status, and
-AI SDK compatibility decisions.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for lifecycle, identity, status, and AI SDK compatibility decisions.

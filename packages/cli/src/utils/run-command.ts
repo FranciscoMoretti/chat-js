@@ -17,8 +17,8 @@ export async function runCommand(
       else
         rejectPromise(
           new Error(
-            `${command} exited with code ${code}\n${stderr.join("")}`.trim(),
-          ),
+            `${command} exited with code ${code}\n${stderr.join("")}`.trim()
+          )
         );
     });
   });

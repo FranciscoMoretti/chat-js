@@ -4,6 +4,7 @@ import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,7 @@ import {
 import { useGetChatById, useSetVisibility } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
@@ -88,14 +90,14 @@ function ShareDialogContent({
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3">
+            <div className="bg-muted/20 flex items-center gap-3 rounded-lg border p-3">
               {isPublic ? (
                 <>
                   <div className="text-green-600">
                     <GlobeIcon size={20} />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-sm">Public</div>
+                    <div className="text-sm font-medium">Public</div>
                     <div className="text-muted-foreground text-xs">
                       Anyone with the link can access this chat
                     </div>
@@ -107,7 +109,7 @@ function ShareDialogContent({
                     <LockIcon size={20} />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-sm">Private</div>
+                    <div className="text-sm font-medium">Private</div>
                     <div className="text-muted-foreground text-xs">
                       Only you can access this chat
                     </div>
@@ -183,7 +185,7 @@ function ShareDialogContent({
                 Link
               </label>
               <input
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                 defaultValue={`${window.location.origin}/share/${chatId}`}
                 id="link"
                 readOnly

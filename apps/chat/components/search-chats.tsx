@@ -2,7 +2,9 @@
 
 import { SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { useSidebar } from "@/components/ui/sidebar";
+
 import { SearchChatsDialog } from "./search-chats-dialog";
 import { SidebarMenuButton } from "./ui/sidebar";
 
@@ -48,7 +50,7 @@ export function SearchChatsButton() {
       >
         <SearchIcon className="h-4 w-4" />
         <span>Search chats</span>
-        <span className="ml-auto text-muted-foreground text-xs">
+        <span className="text-muted-foreground ml-auto text-xs">
           {shortcutText}
         </span>
       </SidebarMenuButton>

@@ -9,10 +9,7 @@ You want a user to stop an in-flight response without killing resumable streams.
 
 ## Solution
 
-Store a `canceledAt` timestamp on the message, not the chat. For unpublished
-responses, also record cancellation against the assistant ID derived from the
-user message. The stream loop polls `canceledAt` and aborts the provider with a
-server-owned `AbortController`.
+Store a `canceledAt` timestamp on the message, not the chat. For unpublished responses, also record cancellation against the assistant ID derived from the user message. The stream loop polls `canceledAt` and aborts the provider with a server-owned `AbortController`.
 
 Using message-level cancellation (instead of chat-level) is more precise since each message has its own stream state, aligning with the existing `activeStreamId` pattern on messages.
 
@@ -95,9 +92,7 @@ stopStream: protectedProcedure
 ```
 
 ```tsx title="components/multimodal-input.tsx"
-const stopStreamMutation = useMutation(
-  trpc.chat.stopStream.mutationOptions()
-);
+const stopStreamMutation = useMutation(trpc.chat.stopStream.mutationOptions());
 const lastMessageId = useLastMessageId();
 
 const handleStop = useCallback(() => {

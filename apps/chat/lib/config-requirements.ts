@@ -2,6 +2,7 @@ import { codeExecutionEnvRequirement } from "@/tools/chatjs/code-execution-confi
 import { imageGenerationEnvRequirement } from "@/tools/chatjs/image-generation-config";
 import { searchEnvRequirement } from "@/tools/chatjs/search-config";
 import { urlRetrievalEnvRequirement } from "@/tools/chatjs/url-retrieval-config";
+
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;

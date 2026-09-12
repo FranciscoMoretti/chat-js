@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import {
   buildTreeSnapshotFromMessages,

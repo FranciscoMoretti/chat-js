@@ -26,7 +26,7 @@ export function AuthCardSkeleton({
     <div className={cn("flex w-full flex-col gap-6", className)}>
       <Card className={cardClassName}>
         <CardHeader className="text-center">
-          <h1 className="font-semibold text-xl leading-none">{title}</h1>
+          <h1 className="text-xl leading-none font-semibold">{title}</h1>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>

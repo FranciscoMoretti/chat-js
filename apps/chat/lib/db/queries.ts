@@ -11,6 +11,7 @@ import {
   isNull,
   type SQL,
 } from "drizzle-orm";
+
 import type { Attachment, ChatMessage, ToolName } from "@/lib/ai/types";
 import { isSelectedModelValue } from "@/lib/ai/types";
 import { deleteFilesByUrls } from "@/lib/file-storage";
@@ -23,6 +24,7 @@ import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
 } from "@/lib/utils/message-mapping";
+
 import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {

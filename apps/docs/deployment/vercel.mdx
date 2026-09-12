@@ -6,7 +6,8 @@ description: Production deployment with Vercel's integrated platform
 Vercel is the recommended deployment platform. It provides integrated storage, AI Gateway, and edge infrastructure with zero configuration.
 
 <Callout type="note">
-  If you haven't set up your project yet, start with the [Quickstart](/quickstart) to scaffold and run locally first.
+  If you haven't set up your project yet, start with the
+  [Quickstart](/quickstart) to scaffold and run locally first.
 </Callout>
 
 ## Vercel Integrations
@@ -14,7 +15,7 @@ Vercel is the recommended deployment platform. It provides integrated storage, A
 ChatJS uses several Vercel platform features. Enable them in your Vercel dashboard under **Storage** and **AI**.
 
 | Integration | Purpose | Required |
-|-------------|---------|----------|
+| --- | --- | --- |
 | **Vercel Postgres** or **Neon** | Primary database | Yes |
 | **Vercel Blob** | File attachments, generated images | If using attachments/image gen |
 | **Vercel KV** | Resumable streams (Redis) | Optional |
@@ -32,9 +33,7 @@ You can switch to [OpenRouter](/gateways/openrouter) or any other [supported gat
 
 ### Blob Storage
 
-Vercel Blob is the recommended Files SDK provider for file attachments and
-generated media on Vercel. See [File storage](../storage) for the
-provider-agnostic architecture and migration behavior.
+Vercel Blob is the recommended Files SDK provider for file attachments and generated media on Vercel. See [File storage](../storage) for the provider-agnostic architecture and migration behavior.
 
 1. Go to **Storage** → **Create** → **Blob**
 2. Connect to your project
@@ -66,8 +65,7 @@ Without Redis, streams work normally but can't be resumed after disconnection.
 
 ## Cron Jobs
 
-ChatJS includes a daily cleanup job that removes orphaned managed files
-uploaded but never saved to a message.
+ChatJS includes a daily cleanup job that removes orphaned managed files uploaded but never saved to a message.
 
 ### Configuration
 
@@ -134,6 +132,7 @@ VERCEL_SANDBOX_RUNTIME=python3.13  # default
 ### Resource Limits
 
 Sandboxes run with:
+
 - 2 vCPUs
 - 5 minute timeout
 - Pre-installed: matplotlib, pandas, numpy, sympy, yfinance
@@ -143,18 +142,18 @@ Sandboxes run with:
 ### Required
 
 | Variable | Description |
-|----------|-------------|
+| --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `AUTH_SECRET` | Session encryption key |
 | `AI_GATEWAY_API_KEY` | Vercel AI Gateway key (or `OPENROUTER_API_KEY` if using OpenRouter) |
 
 ### Optional (Vercel Features)
 
-| Variable | Feature |
-|----------|---------|
+| Variable                | Feature                                |
+| ----------------------- | -------------------------------------- |
 | `BLOB_READ_WRITE_TOKEN` | Blob storage (auto-set by integration) |
-| `REDIS_URL` | KV/Redis for resumable streams |
-| `CRON_SECRET` | Secure cron endpoint |
+| `REDIS_URL`             | KV/Redis for resumable streams         |
+| `CRON_SECRET`           | Secure cron endpoint                   |
 
 ### Pull from Vercel
 
@@ -194,29 +193,25 @@ Before going live:
 
 <Accordion>
   <AccordionItem title="Enable production domain">
-    1. Go to **Settings** → **Domains**
-    2. Add your custom domain
-    3. Update OAuth callback URLs to use the new domain
+    1. Go to **Settings** → **Domains** 2. Add your custom domain 3. Update
+    OAuth callback URLs to use the new domain
   </AccordionItem>
   <AccordionItem title="Configure OAuth for production">
-    Update your OAuth apps (GitHub, Google) with production callback URLs:
-    ```
+    Update your OAuth apps (GitHub, Google) with production callback URLs: ```
     https://yourdomain.com/api/auth/callback/github
-    https://yourdomain.com/api/auth/callback/google
-    ```
+    https://yourdomain.com/api/auth/callback/google ```
   </AccordionItem>
   <AccordionItem title="Enable rate limiting">
-    Set up [Vercel Firewall](#vercel-firewall) rules for the `/api/chat` endpoint to prevent abuse. See the section above for details.
+    Set up [Vercel Firewall](#vercel-firewall) rules for the `/api/chat`
+    endpoint to prevent abuse. See the section above for details.
   </AccordionItem>
   <AccordionItem title="Set up monitoring">
-    - Enable [Vercel Analytics](https://vercel.com/analytics) for web vitals
-    - Configure [Langfuse](https://langfuse.com) for LLM observability (optional)
+    - Enable [Vercel Analytics](https://vercel.com/analytics) for web vitals -
+    Configure [Langfuse](https://langfuse.com) for LLM observability (optional)
   </AccordionItem>
   <AccordionItem title="Review storage limits">
-    Check your plan limits for:
-    - Blob storage (file count and size)
-    - KV operations (for resumable streams)
-    - AI Gateway usage
+    Check your plan limits for: - Blob storage (file count and size) - KV
+    operations (for resumable streams) - AI Gateway usage
   </AccordionItem>
 </Accordion>
 
@@ -224,18 +219,16 @@ Before going live:
 
 <Accordion>
   <AccordionItem title="Cron job not running">
-    - Verify `CRON_SECRET` is set in environment variables
-    - Check Vercel dashboard → **Logs** → filter by `/api/cron`
-    - Crons only run in production (not preview deployments)
+    - Verify `CRON_SECRET` is set in environment variables - Check Vercel
+    dashboard → **Logs** → filter by `/api/cron` - Crons only run in production
+    (not preview deployments)
   </AccordionItem>
   <AccordionItem title="Blob upload fails">
-    - Ensure `BLOB_READ_WRITE_TOKEN` is set
-    - Check blob storage isn't at capacity
-    - Verify file size is under 500MB limit
+    - Ensure `BLOB_READ_WRITE_TOKEN` is set - Check blob storage isn't at
+    capacity - Verify file size is under 500MB limit
   </AccordionItem>
   <AccordionItem title="Code execution times out">
-    - Default timeout is 5 minutes
-    - Check sandbox logs in Vercel dashboard
-    - Ensure OIDC is working (automatic on Vercel)
+    - Default timeout is 5 minutes - Check sandbox logs in Vercel dashboard -
+    Ensure OIDC is working (automatic on Vercel)
   </AccordionItem>
 </Accordion>

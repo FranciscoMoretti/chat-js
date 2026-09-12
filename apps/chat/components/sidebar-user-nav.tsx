@@ -9,8 +9,9 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+
 import { InternalLink } from "@/components/internal-link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -52,10 +53,10 @@ export function SidebarUserNav() {
             aria-hidden="true"
             className="flex h-12 items-center gap-2 rounded-md p-2"
           >
-            <div className="size-8 animate-pulse rounded-lg bg-sidebar-accent" />
+            <div className="bg-sidebar-accent size-8 animate-pulse rounded-lg" />
             <div className="grid flex-1 gap-1 group-data-[collapsible=icon]:hidden">
-              <div className="h-3 w-20 animate-pulse rounded bg-sidebar-accent" />
-              <div className="h-3 w-28 animate-pulse rounded bg-sidebar-accent" />
+              <div className="bg-sidebar-accent h-3 w-20 animate-pulse rounded" />
+              <div className="bg-sidebar-accent h-3 w-28 animate-pulse rounded" />
             </div>
           </div>
         </SidebarMenuItem>
@@ -87,7 +88,7 @@ export function SidebarUserNav() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               className={cn(
-                "mx-auto data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
+                "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mx-auto",
                 isDesktopCollapsed &&
                   "flex flex-col items-center justify-center"
               )}

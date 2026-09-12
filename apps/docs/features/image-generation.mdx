@@ -8,7 +8,10 @@ description: AI-powered image creation in your chat app
 Generate images directly in chat using AI models. Supports both generation from text prompts and iterative editing of existing images.
 
 <Frame>
-  <img src="/docs/images/image-generation.gif" alt="Generating an image from a text prompt in chat" />
+  <img
+    src="/docs/images/image-generation.gif"
+    alt="Generating an image from a text prompt in chat"
+  />
 </Frame>
 
 ## Quick Start
@@ -26,8 +29,8 @@ ai: {
 ```
 
 <Callout type="note">
-  Image generation requires a durable
-  [file storage provider](../storage) for generated images.
+  Image generation requires a durable [file storage provider](../storage) for
+  generated images.
 </Callout>
 
 Configure the default image model:
@@ -46,10 +49,10 @@ ai: {
 
 The tool operates in two modes based on context:
 
-| Mode       | Trigger                                     | Behavior                       |
-| ---------- | ------------------------------------------- | ------------------------------ |
-| `generate` | Text prompt only                            | Creates new image from scratch |
-| `edit`     | Prompt + attachments or previous generation | Uses existing images as input  |
+| Mode | Trigger | Behavior |
+| --- | --- | --- |
+| `generate` | Text prompt only | Creates new image from scratch |
+| `edit` | Prompt + attachments or previous generation | Uses existing images as input |
 
 Mode is determined automatically:
 
@@ -67,9 +70,7 @@ Users can iterate on generated images without re-uploading. The system automatic
 2. It supplies `lastGeneratedImage`, attachments, the selected model, and the cost accumulator through the AI SDK tool execution context.
 3. The installed tool uses those images as input when editing.
 
-The previous-image helper recognizes the built-in `{ imageUrl, prompt }` result.
-External tools may use different schemas. Unrecognized results are ignored rather
-than treated as an image.
+The previous-image helper recognizes the built-in `{ imageUrl, prompt }` result. External tools may use different schemas. Unrecognized results are ignored rather than treated as an image.
 
 ### User Experience
 
@@ -114,8 +115,7 @@ tools/chatjs/generate-image/tool.ts → tools/chatjs/generate-image/renderer.tsx
 return { imageUrl: result.url, prompt };
 ```
 
-The generated image is uploaded through the configured Files SDK provider and
-the ChatJS file URL is returned.
+The generated image is uploaded through the configured Files SDK provider and the ChatJS file URL is returned.
 
 ### UI States
 
@@ -142,10 +142,10 @@ ai: {
 
 The tool supports two types of models:
 
-| Type        | Description                                      | Example                       |
-| ----------- | ------------------------------------------------ | ----------------------------- |
-| Image model | Standalone image generation models               | `google/gemini-3-pro-image`   |
-| Multimodal  | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
+| Type | Description | Example |
+| --- | --- | --- |
+| Image model | Standalone image generation models | `google/gemini-3-pro-image` |
+| Multimodal | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
 
 Model selection is done in `resolveImageModel(selectedModel)` in `tools/chatjs/generate-image/tool.ts`:
 

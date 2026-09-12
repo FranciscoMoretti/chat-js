@@ -2,6 +2,7 @@
 
 import { PanelLeft } from "lucide-react";
 import Image from "next/image";
+
 import { InternalLink } from "@/components/internal-link";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -22,7 +23,7 @@ export function SidebarTopRow() {
             setOpenMobile(false);
           }}
         >
-          <span className="flex cursor-pointer items-center gap-2 rounded-md p-1 font-semibold text-lg hover:bg-muted">
+          <span className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded-md p-1 text-lg font-semibold">
             <Image
               alt={config.appName}
               className="h-5 w-5"
@@ -36,7 +37,7 @@ export function SidebarTopRow() {
       ) : (
         <button
           aria-label="Expand sidebar"
-          className="relative flex size-8 items-center justify-center rounded-md transition-colors group-hover/sidebar:bg-muted"
+          className="group-hover/sidebar:bg-muted relative flex size-8 items-center justify-center rounded-md transition-colors"
           onClick={toggleSidebar}
           type="button"
         >

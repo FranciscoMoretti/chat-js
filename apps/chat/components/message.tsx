@@ -1,6 +1,8 @@
 "use client";
 import { memo } from "react";
+
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
+
 import { AssistantMessage } from "./assistant-message";
 import { type BaseMessageProps, UserMessage } from "./user-message";
 

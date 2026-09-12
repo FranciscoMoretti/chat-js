@@ -1,53 +1,55 @@
 {
-	"name": "@chat-js/electron",
-	"version": "0.3.2",
-	"private": true,
-	"description": "ChatJS desktop application",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/FranciscoMoretti/chat-js.git"
-	},
-	"author": {
-		"name": "ChatJS",
-		"email": "support@chatjs.dev"
-	},
-	"homepage": "https://demo.chatjs.dev",
-	"main": "dist/main.js",
-	"scripts": {
-		"forge": "node ./scripts/run-forge.cjs",
-		"generate-icons": "bun scripts/generate-icons.ts",
-		"prebuild": "bun scripts/write-branding.ts && bun run generate-icons",
-		"build": "bun build src/main.ts --target=node --format=cjs --outfile dist/main.js --external electron && bun build src/preload.ts --target=browser --format=cjs --outfile dist/preload.js --external electron",
-		"start": "bun run forge start",
-		"dev": "bun run start",
-		"package": "bun run forge package",
-		"make": "bun run forge make",
-		"make:mac": "bun run forge make --platform=darwin --arch=universal",
-		"make:win": "bun run forge make --platform=win32 --arch=x64",
-		"make:linux": "bun run forge make --platform=linux --arch=x64",
-		"publish": "bun run forge publish",
-		"electron:build": "bun run build",
-		"electron:dev": "bun run dev",
-		"electron:make": "bun run make",
-		"electron:publish": "bun run publish"
-	},
-	"dependencies": {},
-	"devDependencies": {
-		"@better-auth/electron": "^1.5.6",
-		"@electron-forge/cli": "^7.11.1",
-		"@electron-forge/maker-deb": "^7.11.1",
-		"@electron-forge/maker-dmg": "^7.11.1",
-		"@electron-forge/maker-rpm": "^7.11.1",
-		"@electron-forge/maker-squirrel": "^7.11.1",
-		"@electron-forge/maker-zip": "^7.11.1",
-		"@electron-forge/shared-types": "^7.11.1",
-		"@types/node": "^22.8.6",
-		"better-auth": "^1.5.6",
-		"conf": "^15.1.0",
-		"electron": "36.0.0",
-		"png2icons": "^2.0.1",
-		"supports-color": "^7.2.0",
-		"typescript": "5.8.3",
-		"update-electron-app": "^3.1.2"
-	}
+  "name": "@chat-js/electron",
+  "version": "0.3.2",
+  "private": true,
+  "description": "ChatJS desktop application",
+  "homepage": "https://demo.chatjs.dev",
+  "author": {
+    "name": "ChatJS",
+    "email": "support@chatjs.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FranciscoMoretti/chat-js.git"
+  },
+  "main": "dist/main.js",
+  "scripts": {
+    "forge": "node ./scripts/run-forge.cjs",
+    "generate-icons": "bun scripts/generate-icons.ts",
+    "prebuild": "bun scripts/write-branding.ts && bun run generate-icons",
+    "build": "bun build src/main.ts --target=node --format=cjs --outfile dist/main.js --external electron && bun build src/preload.ts --target=browser --format=cjs --outfile dist/preload.js --external electron",
+    "start": "bun run forge start",
+    "dev": "bun run start",
+    "package": "bun run forge package",
+    "make": "bun run forge make",
+    "make:mac": "bun run forge make --platform=darwin --arch=universal",
+    "make:win": "bun run forge make --platform=win32 --arch=x64",
+    "make:linux": "bun run forge make --platform=linux --arch=x64",
+    "publish": "bun run forge publish",
+    "electron:build": "bun run build",
+    "electron:dev": "bun run dev",
+    "electron:make": "bun run make",
+    "electron:publish": "bun run publish",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@better-auth/electron": "^1.5.6",
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-deb": "^7.11.1",
+    "@electron-forge/maker-dmg": "^7.11.1",
+    "@electron-forge/maker-rpm": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/shared-types": "^7.11.1",
+    "@types/node": "^22.8.6",
+    "better-auth": "^1.5.6",
+    "conf": "^15.1.0",
+    "electron": "36.0.0",
+    "png2icons": "^2.0.1",
+    "supports-color": "^7.2.0",
+    "typescript": "5.8.3",
+    "update-electron-app": "^3.1.2"
+  }
 }

@@ -19,11 +19,11 @@ export function ProjectChats({
 
   if (chats.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 px-4 py-6">
-        <p className="font-medium text-foreground text-sm">
+      <div className="border-border/60 rounded-xl border px-4 py-6">
+        <p className="text-foreground text-sm font-medium">
           No chats in this project
         </p>
-        <p className="mt-1 text-muted-foreground text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Start a chat to keep conversations organized and re-use project
           knowledge.
         </p>

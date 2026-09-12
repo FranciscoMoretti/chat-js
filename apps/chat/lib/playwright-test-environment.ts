@@ -12,7 +12,7 @@ export function isPlaywrightTestEnvironment(
 ): boolean {
   return Boolean(
     env.PLAYWRIGHT_TEST_BASE_URL ||
-      isEnabledFlag(env.PLAYWRIGHT) ||
-      isEnabledFlag(env.CI_PLAYWRIGHT)
+    isEnabledFlag(env.PLAYWRIGHT) ||
+    isEnabledFlag(env.CI_PLAYWRIGHT)
   );
 }

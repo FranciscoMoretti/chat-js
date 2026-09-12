@@ -5,32 +5,24 @@ description: Fetch current temperature and forecast data for coordinates
 
 ## Installation
 
-Start in a ChatJS app with `chat.config.ts` and `components.json`.
-No API key is configured by this item. It calls the Open-Meteo forecast endpoint.
+Start in a ChatJS app with `chat.config.ts` and `components.json`. No API key is configured by this item. It calls the Open-Meteo forecast endpoint.
 
 ```bash
 npx @chat-js/cli@latest add get-weather
 ```
 
-The command installs the server tool, renderer, and registration descriptor under
-`tools/chatjs/get-weather/`, along with required dependencies and shared renderer
-helpers. It then regenerates the app's tool registrations.
+The command installs the server tool, renderer, and registration descriptor under `tools/chatjs/get-weather/`, along with required dependencies and shared renderer helpers. It then regenerates the app's tool registrations.
 
 ## Usage
 
 Ask your chat model: “Get the weather at latitude 51.5074, longitude -0.1278.” Use a model that supports tool calling.
 
-The tool accepts numeric `latitude` and `longitude` values. It requests current
-temperature, hourly temperatures, and daily sunrise and sunset times, with
-the timezone determined by the provider.
+The tool accepts numeric `latitude` and `longitude` values. It requests current temperature, hourly temperatures, and daily sunrise and sunset times, with the timezone determined by the provider.
 
 ## Behavior and limitations
 
-This item does not geocode place names. Supply coordinates when verifying it.
-The implementation forwards provider JSON without runtime response validation.
+This item does not geocode place names. Supply coordinates when verifying it. The implementation forwards provider JSON without runtime response validation.
 
 ## Customize
 
-Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation.
-See [Installation](./install) for updates and sync, and
-[Authoring Tools](./authoring) to publish your own item.
+Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation. See [Installation](./install) for updates and sync, and [Authoring Tools](./authoring) to publish your own item.

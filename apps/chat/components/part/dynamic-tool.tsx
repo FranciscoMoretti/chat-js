@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { DynamicToolUIPart } from "ai";
 import { WrenchIcon } from "lucide-react";
 import { useMemo } from "react";
+
 import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
 import {
   Tool,
@@ -14,6 +15,7 @@ import {
 import { Favicon } from "@/components/favicon";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { useTRPC } from "@/trpc/react";
+
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 
 interface DynamicToolPartProps {
@@ -44,7 +46,7 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
   const icon = iconUrl ? (
     <Favicon className="size-4 rounded-sm" url={iconUrl} />
   ) : (
-    <WrenchIcon className="size-4 text-muted-foreground" />
+    <WrenchIcon className="text-muted-foreground size-4" />
   );
 
   return (

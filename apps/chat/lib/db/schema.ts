@@ -15,6 +15,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;

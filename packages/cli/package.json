@@ -1,33 +1,24 @@
 {
   "name": "@chat-js/cli",
   "version": "0.8.0",
+  "private": false,
   "description": "CLI for creating and extending ChatJS apps",
+  "keywords": [
+    "ai",
+    "chatjs",
+    "cli",
+    "nextjs",
+    "scaffold"
+  ],
+  "homepage": "https://github.com/FranciscoMoretti/chat-js/tree/main/packages/cli",
+  "bugs": {
+    "url": "https://github.com/FranciscoMoretti/chat-js/issues"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
     "directory": "packages/cli"
-  },
-  "homepage": "https://github.com/FranciscoMoretti/chat-js/tree/main/packages/cli",
-  "bugs": {
-    "url": "https://github.com/FranciscoMoretti/chat-js/issues"
-  },
-  "keywords": [
-    "chatjs",
-    "ai",
-    "cli",
-    "scaffold",
-    "nextjs"
-  ],
-  "dependencies": {
-    "@chat-js/gateways": "workspace:*",
-    "@clack/prompts": "^1.0.1",
-    "commander": "^14.0.0",
-    "files-sdk": "2.1.0",
-    "kleur": "^4.1.5",
-    "ora": "^8.2.0",
-    "shadcn": "4.21.0",
-    "zod": "^4.3.6"
   },
   "bin": {
     "chat-js": "./dist/index.js"
@@ -36,7 +27,7 @@
     "dist",
     "templates"
   ],
-  "private": false,
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },
@@ -48,13 +39,24 @@
     "prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null",
     "test:scaffold": "bash scripts/test-scaffold.sh",
     "test:gateways": "bun run template:sync && bun test --timeout 180000 ./test/gateway-selection.test.ts",
-    "test:types": "tsc --noEmit"
+    "test:types": "tsc --noEmit",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write ."
   },
-  "type": "module",
+  "dependencies": {
+    "@chat-js/gateways": "workspace:*",
+    "@clack/prompts": "^1.0.1",
+    "commander": "^14.0.0",
+    "files-sdk": "2.1.0",
+    "kleur": "^4.1.5",
+    "ora": "^8.2.0",
+    "shadcn": "4.21.0",
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@types/bun": "latest",
-    "typescript": "6.0.2",
     "@types/node": "22.13.10",
-    "next": "16.3.0"
+    "next": "16.3.0",
+    "typescript": "6.0.2"
   }
 }

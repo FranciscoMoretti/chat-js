@@ -8,6 +8,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { type ReactNode, useEffect, useMemo } from "react";
+
 import { Chat } from "@/components/chat";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { ChatSystem } from "@/components/chat-system";
@@ -297,7 +298,6 @@ function useEnsureRouteRuntimeAfterCommit(
   }, [ensureRuntime, request]);
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Coordinates route data, persisted state, and live runtime fallback.
 function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
   const { data: session, isPending: isSessionPending } = useSession();
   const trpc = useTRPC();

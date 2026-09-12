@@ -2,14 +2,20 @@
 
 import { ImageOffIcon } from "lucide-react";
 import { useState } from "react";
+
 import { ImageActions, ImageModal } from "@/components/image-modal";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+
 import type { generateImageTool } from "./tool";
 
 type GenerateImageTool = ToolPartFromTool<typeof generateImageTool>;
 
-export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
+export const GenerateImageRenderer = ({
+  tool,
+}: {
+  tool: GenerateImageTool;
+}) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
@@ -17,14 +23,14 @@ export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
   if (tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
-        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
           Generating image: &quot;{tool.input.prompt}&quot;
         </div>
       </div>
     );
   }
-  const output = tool.output;
+  const { output } = tool;
   if (!output) {
     return null;
   }
@@ -34,13 +40,10 @@ export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
       <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
         <div className="group relative">
           {imageUnavailable ? (
-            <div
-              className="flex min-h-64 w-full flex-col items-center justify-center gap-2 bg-muted/30 text-muted-foreground"
-              role="status"
-            >
+            <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
               <ImageOffIcon className="size-8" />
               <span>Generated image unavailable</span>
-            </div>
+            </output>
           ) : (
             <>
               <button
@@ -48,7 +51,8 @@ export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
                 onClick={() => setDialogOpen(true)}
                 type="button"
               >
-                {/* biome-ignore lint/performance/noImgElement lint/a11y/noNoninteractiveElementInteractions: Next/Image isn't desired for dynamic external URLs; onError handles loading failure */}
+                {/* Generated media uses original URLs and the shared image error handler. */}
+                {/* oxlint-disable-next-line next/no-img-element */}
                 <img
                   alt={output.prompt}
                   className="h-auto w-full max-w-full"
@@ -80,4 +84,4 @@ export function GenerateImageRenderer({ tool }: { tool: GenerateImageTool }) {
       />
     </>
   );
-}
+};

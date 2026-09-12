@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+
 import { describe, it } from "vitest";
+
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage } from "@/lib/ai/types";
+
 import {
   clearResponseActiveStream,
   isPendingResponseStream,

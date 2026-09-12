@@ -1,31 +1,31 @@
 {
   "name": "@chat-js/registry",
   "version": "0.1.2",
+  "private": false,
   "description": "ChatJS tool and gateway registry items",
+  "keywords": [
+    "ai",
+    "chatjs",
+    "registry",
+    "tools"
+  ],
+  "homepage": "https://github.com/FranciscoMoretti/chat-js/tree/main/packages/registry",
+  "bugs": {
+    "url": "https://github.com/FranciscoMoretti/chat-js/issues"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
     "directory": "packages/registry"
   },
-  "homepage": "https://github.com/FranciscoMoretti/chat-js/tree/main/packages/registry",
-  "bugs": {
-    "url": "https://github.com/FranciscoMoretti/chat-js/issues"
-  },
-  "keywords": [
-    "chatjs",
-    "ai",
-    "registry",
-    "tools"
+  "files": [
+    "dist/r"
   ],
-  "private": false,
   "type": "module",
   "exports": {
     "./r/*": "./dist/r/*.json"
   },
-  "files": [
-    "dist/r"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -34,7 +34,9 @@
     "prepublishOnly": "bun run build",
     "test:types": "tsc --noEmit",
     "test:unit": "bun test src",
-    "test:visual": "vitest run --config visual/vitest.config.ts"
+    "test:visual": "vitest run --config visual/vitest.config.ts",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write ."
   },
   "dependencies": {},
   "devDependencies": {

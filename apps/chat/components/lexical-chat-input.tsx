@@ -28,6 +28,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
+
 import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { cn } from "@/lib/utils";
 
@@ -199,7 +200,7 @@ export const LexicalChatInput = ({
 
   const PlaceholderComponent = useCallback(
     () => (
-      <div className="lexical-placeholder pointer-events-none absolute pt-2 pl-3 text-muted-foreground">
+      <div className="lexical-placeholder text-muted-foreground pointer-events-none absolute pt-2 pl-3">
         {placeholder}
       </div>
     ),

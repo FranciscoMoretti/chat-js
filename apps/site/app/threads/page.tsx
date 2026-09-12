@@ -114,16 +114,16 @@ export default function ThreadsPage() {
           <div className="mx-auto max-w-6xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
             <div className="grid gap-12 lg:grid-cols-[minmax(0,1.12fr)_minmax(23rem,0.88fr)] lg:items-end">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 font-mono text-muted-foreground text-xs uppercase tracking-[0.18em]">
+                <div className="text-muted-foreground flex items-center gap-2 font-mono text-xs tracking-[0.18em] uppercase">
                   <GitBranch className="size-4" />
                   useThread for AI SDK
                 </div>
-                <h1 className="mt-7 max-w-4xl font-display text-4xl leading-[0.98] tracking-tight sm:text-7xl">
+                <h1 className="font-display mt-7 max-w-4xl text-4xl leading-[0.98] tracking-tight sm:text-7xl">
                   Branching conversations for AI SDK.
                 </h1>
-                <p className="mt-7 max-w-2xl text-foreground/72 text-lg leading-8 sm:text-xl">
+                <p className="text-foreground/72 mt-7 max-w-2xl text-lg leading-8 sm:text-xl">
                   Keep the{" "}
-                  <code className="font-mono text-[0.9em] text-foreground">
+                  <code className="text-foreground font-mono text-[0.9em]">
                     useChat
                   </code>{" "}
                   interface. Add a complete message tree, branch navigation, and
@@ -132,14 +132,14 @@ export default function ThreadsPage() {
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-5">
                   <a
-                    className="inline-flex min-h-11 items-center gap-2 bg-primary px-5 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-85"
+                    className="bg-primary text-primary-foreground inline-flex min-h-11 items-center gap-2 px-5 text-sm font-medium transition-opacity hover:opacity-85"
                     href="#playground"
                   >
                     Try the playground
                     <ArrowRight className="size-4" />
                   </a>
                   <a
-                    className="inline-flex min-h-11 items-center gap-2 border-border border-b text-foreground/75 text-sm transition-colors hover:text-foreground"
+                    className="border-border text-foreground/75 hover:text-foreground inline-flex min-h-11 items-center gap-2 border-b text-sm transition-colors"
                     href={`${siteLinks.docs}/threads`}
                   >
                     Read the docs
@@ -148,12 +148,12 @@ export default function ThreadsPage() {
                 </div>
               </div>
 
-              <div className="min-w-0 border-border border-y bg-card">
-                <div className="flex items-center justify-between border-border border-b px-4 py-3">
-                  <span className="font-mono text-muted-foreground text-xs">
+              <div className="border-border bg-card min-w-0 border-y">
+                <div className="border-border flex items-center justify-between border-b px-4 py-3">
+                  <span className="text-muted-foreground font-mono text-xs">
                     Chat.tsx
                   </span>
-                  <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground uppercase">
+                  <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-[10px] uppercase">
                     <Check className="size-3" /> useChat compatible
                   </span>
                 </div>
@@ -202,14 +202,14 @@ export default function ThreadsPage() {
           <div className="mx-auto max-w-6xl px-6">
             <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
               <div className="max-w-2xl">
-                <p className="font-mono text-muted-foreground text-xs uppercase tracking-[0.18em]">
+                <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                   The package, not a mockup
                 </p>
-                <h2 className="mt-4 font-display text-3xl tracking-tight sm:text-5xl">
+                <h2 className="font-display mt-4 text-3xl tracking-tight sm:text-5xl">
                   Move through the tree while it streams.
                 </h2>
               </div>
-              <p className="max-w-sm text-foreground/65 text-sm leading-6">
+              <p className="text-foreground/65 max-w-sm text-sm leading-6">
                 Branch from any message, request parallel replies, switch paths
                 mid-stream, and stop individual runs. The canvas reads directly
                 from useThread state.
@@ -219,20 +219,20 @@ export default function ThreadsPage() {
           </div>
         </section>
 
-        <section className="border-border/50 border-y bg-card py-20 sm:py-28">
+        <section className="border-border/50 bg-card border-y py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-6">
             <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
               <div>
-                <p className="font-mono text-muted-foreground text-xs uppercase tracking-[0.18em]">
+                <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                   A strict extension
                 </p>
-                <h2 className="mt-5 font-display text-3xl tracking-tight sm:text-5xl">
+                <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
                   Your chat stays linear. Its history does not.
                 </h2>
-                <p className="mt-5 text-foreground/68 leading-7">
+                <p className="text-foreground/68 mt-5 leading-7">
                   Existing message lists and composers keep using the selected
                   path. Tree-specific state is additive and namespaced under{" "}
-                  <code className="font-mono text-foreground text-sm">
+                  <code className="text-foreground font-mono text-sm">
                     chat.tree
                   </code>
                   .
@@ -240,17 +240,17 @@ export default function ThreadsPage() {
               </div>
 
               <div>
-                <div className="flex items-center gap-2 border-border border-b pb-4">
-                  <Braces className="size-4 text-muted-foreground" />
-                  <h3 className="font-medium text-sm">Same AI SDK surface</h3>
+                <div className="border-border flex items-center gap-2 border-b pb-4">
+                  <Braces className="text-muted-foreground size-4" />
+                  <h3 className="text-sm font-medium">Same AI SDK surface</h3>
                 </div>
-                <div className="grid grid-cols-2 border-border border-b sm:grid-cols-4">
+                <div className="border-border grid grid-cols-2 border-b sm:grid-cols-4">
                   {compatibility.map((item) => (
                     <div
-                      className="flex min-h-14 items-center gap-2 border-border border-r px-3 font-mono text-xs last:border-r-0 max-sm:[&:nth-child(2n)]:border-r-0 sm:[&:nth-child(4n)]:border-r-0"
+                      className="border-border flex min-h-14 items-center gap-2 border-r px-3 font-mono text-xs last:border-r-0 max-sm:[&:nth-child(2n)]:border-r-0 sm:[&:nth-child(4n)]:border-r-0"
                       key={item}
                     >
-                      <Check className="size-3.5 shrink-0 text-muted-foreground" />
+                      <Check className="text-muted-foreground size-3.5 shrink-0" />
                       {item}
                     </div>
                   ))}
@@ -259,12 +259,12 @@ export default function ThreadsPage() {
                 <div className="mt-10 grid sm:grid-cols-2">
                   {additions.map((item) => (
                     <article
-                      className="border-border border-b py-6 sm:even:border-l sm:even:pl-7 sm:odd:pr-7"
+                      className="border-border border-b py-6 sm:odd:pr-7 sm:even:border-l sm:even:pl-7"
                       key={item.title}
                     >
-                      <item.icon className="size-4 text-muted-foreground" />
+                      <item.icon className="text-muted-foreground size-4" />
                       <h3 className="mt-4 font-medium">{item.title}</h3>
-                      <p className="mt-2 text-foreground/65 text-sm leading-6">
+                      <p className="text-foreground/65 mt-2 text-sm leading-6">
                         {item.description}
                       </p>
                     </article>
@@ -279,18 +279,18 @@ export default function ThreadsPage() {
           <div className="mx-auto max-w-6xl px-6">
             <div className="grid gap-14 lg:grid-cols-[0.92fr_1.08fr] lg:items-start lg:gap-20">
               <div>
-                <p className="font-mono text-muted-foreground text-xs uppercase tracking-[0.18em]">
+                <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                   Why it keeps working
                 </p>
-                <h2 className="mt-5 font-display text-3xl tracking-tight sm:text-5xl">
+                <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
                   One tree. One AI SDK lifecycle per response.
                 </h2>
-                <p className="mt-5 max-w-xl text-foreground/68 leading-7">
+                <p className="text-foreground/68 mt-5 max-w-xl leading-7">
                   A single linear chat engine cannot safely own several branch
                   streams. useThread isolates each response while routing every
                   update into its own assistant node once streaming begins.
                 </p>
-                <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-foreground/65 text-sm">
+                <div className="text-foreground/65 mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm">
                   <span className="flex items-center gap-2">
                     <RefreshCw className="size-3.5" /> Resume per run
                   </span>
@@ -306,7 +306,7 @@ export default function ThreadsPage() {
               <div className="border-border border-t">
                 {architectureRows.map((row, index) => (
                   <div
-                    className="grid gap-2 border-border border-b py-5 sm:grid-cols-[8rem_1fr] sm:gap-6"
+                    className="border-border grid gap-2 border-b py-5 sm:grid-cols-[8rem_1fr] sm:gap-6"
                     key={row.label}
                   >
                     <div className="flex items-center gap-3 font-mono text-xs">
@@ -325,23 +325,23 @@ export default function ThreadsPage() {
           </div>
         </section>
 
-        <section className="border-border/50 border-y bg-card py-20 sm:py-24">
+        <section className="border-border/50 bg-card border-y py-20 sm:py-24">
           <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-10 px-6 lg:flex-row lg:items-end">
             <div className="max-w-2xl">
-              <p className="font-mono text-muted-foreground text-xs uppercase tracking-[0.18em]">
+              <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                 Headless by design
               </p>
-              <h2 className="mt-5 font-display text-3xl tracking-tight sm:text-5xl">
+              <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
                 Own the experience. Choose how you integrate it.
               </h2>
-              <p className="mt-5 text-foreground/68 leading-7">
+              <p className="text-foreground/68 mt-5 leading-7">
                 Install the versioned package alongside AI SDK. Your
                 conversation UI, branch controls, persistence, and server routes
                 remain application-owned.
               </p>
             </div>
             <a
-              className="inline-flex min-h-11 shrink-0 items-center gap-2 bg-primary px-5 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-85"
+              className="bg-primary text-primary-foreground inline-flex min-h-11 shrink-0 items-center gap-2 px-5 text-sm font-medium transition-opacity hover:opacity-85"
               href={`${siteLinks.docs}/threads`}
             >
               Read the docs

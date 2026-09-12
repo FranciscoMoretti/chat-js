@@ -1,5 +1,3 @@
-// biome-ignore-all lint: vendored chat store base.
-
 import {
   type UIMessage,
   type UseChatHelpers,
@@ -13,6 +11,7 @@ import {
 } from "@chat-js/thread/react";
 import type { ChatInit } from "ai";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+
 import { type StoreState, useChatStoreApi } from "./hooks";
 
 export type {
