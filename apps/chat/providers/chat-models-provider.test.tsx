@@ -2,6 +2,8 @@ import { act, create } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+import { models as generatedModels } from "@/lib/ai/models.generated";
+import { config } from "@/lib/config";
 
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
 
@@ -31,33 +33,17 @@ vi.mock("@/trpc/react", () => ({
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const models: AppModelDefinition[] = [];
+const testModel = generatedModels.find((model) => model.type === "language");
+
+if (!testModel) {
+  throw new Error("Expected a language model in the generated model snapshot");
+}
+
 const updatedModels: AppModelDefinition[] = [
   {
-    apiModelId: "openai/gpt-5-mini",
-    context_window: 128_000,
-    description: "Test model",
-    id: "openai/gpt-5-mini",
-    input: {
-      audio: false,
-      image: false,
-      pdf: false,
-      text: true,
-      video: false,
-    },
-    max_tokens: 16_000,
-    name: "Test model",
-    object: "model",
-    output: {
-      audio: false,
-      image: false,
-      text: true,
-      video: false,
-    },
-    owned_by: "openai",
-    pricing: {},
-    reasoning: false,
-    toolCall: true,
-    type: "language",
+    ...testModel,
+    apiModelId: config.ai.workflows.chat,
+    id: config.ai.workflows.chat,
   },
 ];
 
@@ -133,7 +119,7 @@ describe("ChatModelsProvider", () => {
       const updatedValue = values.at(-1);
       expect(updatedValue).not.toBe(values[0]);
       expect(updatedValue?.models).toEqual(updatedModels);
-      expect(updatedValue?.getModelById("openai/gpt-5-mini")).toBe(
+      expect(updatedValue?.getModelById(config.ai.workflows.chat)).toBe(
         updatedModels[0]
       );
     } finally {
