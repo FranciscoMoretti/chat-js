@@ -18,10 +18,17 @@ query selects `chunkId`, `eof`, and `chunkData`, filters only by `streamId`,
 and orders by `chunkId`. `enqueue()` decrements `offset` to discard the
 already downloaded prefix.
 
-This is a source-level finding. We have not yet measured wire bytes or
-validated an adapter patch. Our app's durable billing cursor avoids replaying
-settled events into its ledger, but does not by itself eliminate this
-PostgreSQL payload transfer.
+The maintained adapter patch now resolves an existing positive cursor to a
+payload-free chunk ID boundary and selects only the suffix. Local PostgreSQL
+tests validate the emitted sequence and the payload query's ID predicate;
+wire bytes have not been measured. Our app's durable billing cursor uses this
+positive-index path after the initial reconciliation.
+
+Zero and negative indices, and positive indices beyond the stored tail, retain
+the original query path. This patch does not claim to optimize those reads.
+A future-index test also exposed a notification-overlap bug: skipped chunks did
+not advance the deduplication ID, allowing the same chunk to decrement the
+offset twice. The patch records skipped IDs before decrementing the offset.
 
 ## Proposed direction
 
@@ -49,3 +56,13 @@ Use local PostgreSQL and an isolated fixture stream, not production history:
    cancellation/listener cleanup.
 
 The intended result is lower database transfer with identical stream behavior.
+
+## Current local validation
+
+`tests/eve-postgres-stream-resume.e2e.ts` covers payload-free boundary selection,
+suffix-query filtering, at-tail EOF, zero/negative indices, empty streams, live
+appends, and future-cursor delivery. Tests use an isolated local fixture and
+remove only its stream rows. Existing queue patch hunks are preserved.
+
+The live tests exercise notification overlap but do not impose a deterministic
+barrier around the initial query; a controlled race test remains desirable.

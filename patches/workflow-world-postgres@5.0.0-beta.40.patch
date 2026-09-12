@@ -56,3 +56,45 @@ diff --git a/dist/queue.js b/dist/queue.js
                  await executeTask();
                  return;
              }
+diff --git a/dist/streamer.js b/dist/streamer.js
+--- a/dist/streamer.js
++++ b/dist/streamer.js
+@@ -263,6 +263,7 @@
+                                 return;
+                             }
+                             if (offset > 0) {
++                                lastChunkId = msg.id;
+                                 offset--;
+                                 return;
+                             }
+@@ -285,6 +286,21 @@
+                         cleanups.push(() => {
+                             events.off(`strm:${name}`, onData);
+                         });
++                        // Resolve a consumed prefix without transferring its payloads.
++                        // Keep the original relative/future-index behavior when no boundary exists.
++                        if (Number.isSafeInteger(offset) && offset > 0) {
++                            const [boundary] = await drizzle
++                                .select({ id: streams.chunkId })
++                                .from(streams)
++                                .where(and(eq(streams.streamId, name), eq(streams.eof, false)))
++                                .orderBy(streams.chunkId)
++                                .offset(offset - 1)
++                                .limit(1);
++                            if (boundary) {
++                                lastChunkId = boundary.id;
++                                offset = 0;
++                            }
++                        }
+                         const chunks = await drizzle
+                             .select({
+                             id: streams.chunkId,
+@@ -292,7 +308,7 @@
+                             data: streams.chunkData,
+                         })
+                             .from(streams)
+-                            .where(and(eq(streams.streamId, name)))
++                            .where(and(eq(streams.streamId, name), ...(lastChunkId ? [gt(streams.chunkId, lastChunkId)] : [])))
+                             .orderBy(streams.chunkId);
+                         // Resolve negative offset relative to the data chunk count
+                         // (excluding the trailing EOF marker, if present)
