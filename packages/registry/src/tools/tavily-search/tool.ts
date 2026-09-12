@@ -1,5 +1,6 @@
 import { tavily } from "@tavily/core";
-import { type ToolExecutionOptions, tool } from "ai";
+import { tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";

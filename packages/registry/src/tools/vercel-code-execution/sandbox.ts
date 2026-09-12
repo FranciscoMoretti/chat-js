@@ -51,8 +51,8 @@ export async function cleanupSandbox(
   try {
     await sandbox.stop();
     log.info({ requestId }, "sandbox closed");
-  } catch (closeErr) {
-    log.warn({ requestId, closeErr }, "failed to close sandbox");
+  } catch (error) {
+    log.warn({ requestId, closeErr: error }, "failed to close sandbox");
   }
 }
 

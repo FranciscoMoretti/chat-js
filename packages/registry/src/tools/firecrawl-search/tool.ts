@@ -1,5 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
-import { tool, type ToolExecutionOptions } from "ai";
+import { tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
@@ -10,6 +11,7 @@ import {
   searchQueriesSchema,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+
 const FIRECRAWL_COST_CENTS = 5;
 export const webSearch = tool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
