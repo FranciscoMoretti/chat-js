@@ -37,27 +37,25 @@ export interface ProvisionalAppRuntimeIdentity {
 const ProvisionalAppRuntimeIdentityContext =
   createContext<ProvisionalAppRuntimeIdentity | null>(null);
 
-export function ProvisionalAppRuntimeIdentityProvider({
+export const ProvisionalAppRuntimeIdentityProvider = ({
   children,
   identity,
 }: {
   children: ReactNode;
   identity: ProvisionalAppRuntimeIdentity | null;
-}) {
-  return createElement(
+}) =>
+  createElement(
     ProvisionalAppRuntimeIdentityContext.Provider,
     { value: identity },
     children
   );
-}
 
-export function useCurrentProvisionalAppRuntimeIdentity() {
-  return useContext(ProvisionalAppRuntimeIdentityContext);
-}
+export const useCurrentProvisionalAppRuntimeIdentity = () =>
+  useContext(ProvisionalAppRuntimeIdentityContext);
 
-export function useProvisionalAppRuntimeIdentity(
+export const useProvisionalAppRuntimeIdentity = (
   scopeKey: string | null | undefined
-): ProvisionalAppRuntimeIdentity | null {
+): ProvisionalAppRuntimeIdentity | null => {
   const identityRef = useRef<{
     identity: ProvisionalAppRuntimeIdentity;
     scopeKey: string;
@@ -81,9 +79,23 @@ export function useProvisionalAppRuntimeIdentity(
   }
 
   return identityRef.current.identity;
-}
+};
 
-export function createAppRuntimeInput({
+const createAppRuntimeStore = ({
+  bootstrap,
+  initialMessages,
+  initialTree,
+}: {
+  bootstrap: boolean;
+  initialMessages?: ChatMessage[];
+  initialTree?: MessageTreeSnapshot<ChatMessage>;
+}) =>
+  createCustomChatStore<ChatMessage>(initialMessages ?? [], {
+    initialIsChatPersisted: bootstrap,
+    initialTree,
+  });
+
+export const createAppRuntimeInput = ({
   bootstrap,
   initialMessages,
   initialTree,
@@ -95,7 +107,7 @@ export function createAppRuntimeInput({
   initialTree?: MessageTreeSnapshot<ChatMessage>;
   initialTool?: UiToolName | null;
   runtimeId: ChatRuntimeId;
-}): CreateAppRuntimeInput {
+}): CreateAppRuntimeInput => {
   const parsed = parseChatRuntimeId(runtimeId);
   if (!parsed) {
     throw new Error(`Invalid chat runtime id: ${runtimeId}`);
@@ -123,27 +135,8 @@ export function createAppRuntimeInput({
     },
     runtimeId,
   };
-}
+};
 
-function createAppRuntimeStore({
-  bootstrap,
-  initialMessages,
-  initialTree,
-}: {
-  bootstrap: boolean;
-  initialMessages?: ChatMessage[];
-  initialTree?: MessageTreeSnapshot<ChatMessage>;
-}) {
-  return createCustomChatStore<ChatMessage>(initialMessages ?? [], {
-    initialIsChatPersisted: bootstrap,
-    initialTree,
-  });
-}
+export const getAppRuntimeStore = (runtime: AppRuntime) => runtime.data.store;
 
-export function getAppRuntimeStore(runtime: AppRuntime) {
-  return runtime.data.store;
-}
-
-export function getAppRuntimeThread(runtime: AppRuntime) {
-  return runtime.data.thread;
-}
+export const getAppRuntimeThread = (runtime: AppRuntime) => runtime.data.thread;

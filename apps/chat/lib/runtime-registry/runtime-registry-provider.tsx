@@ -34,26 +34,28 @@ interface RuntimeRegistryContextValue<TData = unknown> {
 const RuntimeRegistryContext =
   createContext<RuntimeRegistryContextValue | null>(null);
 
-function assertValidRuntimeId(runtimeId: RuntimeId): asserts runtimeId {
+const assertValidRuntimeId: (runtimeId: RuntimeId) => asserts runtimeId = (
+  runtimeId
+) => {
   if (!runtimeId) {
     throw new Error("Runtime id is required");
   }
-}
+};
 
-function createRuntime<TData>(
+const createRuntime = <TData,>(
   input: CreateRuntimeInput<TData>
-): Runtime<TData> {
+): Runtime<TData> => {
   assertValidRuntimeId(input.runtimeId);
 
   return {
     data: input.data,
     runtimeId: input.runtimeId,
   };
-}
+};
 
-function createInitialRuntimes<TData>(
+const createInitialRuntimes = <TData,>(
   initialRuntimes: CreateRuntimeInput<TData>[]
-) {
+) => {
   const runtimes: Runtime<TData>[] = [];
   const seenRuntimeIds = new Set<string>();
 
@@ -69,15 +71,15 @@ function createInitialRuntimes<TData>(
   }
 
   return runtimes;
-}
+};
 
-export function RuntimeRegistryProvider<TData = unknown>({
+export const RuntimeRegistryProvider = <TData = unknown,>({
   children,
   initialRuntimes = [],
 }: {
   children: ReactNode;
   initialRuntimes?: CreateRuntimeInput<TData>[];
-}) {
+}) => {
   const [runtimes, setRuntimes] = useState<Runtime<TData>[]>(() =>
     createInitialRuntimes(initialRuntimes)
   );
@@ -148,9 +150,9 @@ export function RuntimeRegistryProvider<TData = unknown>({
       {children}
     </RuntimeRegistryContext.Provider>
   );
-}
+};
 
-export function useRuntimeRegistry<TData = unknown>() {
+export const useRuntimeRegistry = <TData = unknown,>() => {
   const context = useContext(RuntimeRegistryContext);
   if (!context) {
     throw new Error(
@@ -158,13 +160,13 @@ export function useRuntimeRegistry<TData = unknown>() {
     );
   }
   return context as RuntimeRegistryContextValue<TData>;
-}
+};
 
-export function RuntimeSlots<TData = unknown>({
+export const RuntimeSlots = <TData = unknown,>({
   children,
 }: {
   children: (runtime: Runtime<TData>) => ReactNode;
-}) {
+}) => {
   const { runtimes } = useRuntimeRegistry<TData>();
 
   return (
@@ -174,4 +176,4 @@ export function RuntimeSlots<TData = unknown>({
       ))}
     </>
   );
-}
+};

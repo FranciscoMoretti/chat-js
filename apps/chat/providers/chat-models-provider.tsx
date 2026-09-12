@@ -20,13 +20,13 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
   undefined
 );
 
-export function ChatModelsProvider({
+export const ChatModelsProvider = ({
   children,
   models,
 }: {
   children: ReactNode;
   models: AppModelDefinition[];
-}) {
+}) => {
   const trpc = useTRPC();
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -73,12 +73,12 @@ export function ChatModelsProvider({
       {children}
     </ChatModelsContext.Provider>
   );
-}
+};
 
-export function useChatModels() {
+export const useChatModels = () => {
   const context = useContext(ChatModelsContext);
   if (context === undefined) {
     throw new Error("useChatModels must be used within a ChatModelsProvider");
   }
   return context;
-}
+};

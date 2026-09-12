@@ -38,13 +38,13 @@ export type CustomChatStoreState<UI_MESSAGE extends UIMessage = UIMessage> =
     ThreadStateStore<UI_MESSAGE>;
 
 const ENABLE_TRACING_ON_DEV = false;
-export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
+export const createCustomChatStore = <TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = [],
   options: {
     initialIsChatPersisted?: boolean;
     initialTree?: MessageTreeSnapshot<TMessage>;
   } = {}
-) {
+) => {
   const initialSnapshot = options.initialTree
     ? createThreadStateSnapshot({ initialTree: options.initialTree })
     : createThreadStateSnapshot({ messages: initialMessages });
@@ -74,24 +74,24 @@ export function createCustomChatStore<TMessage extends UIMessage = UIMessage>(
       { name: "chat-store" }
     )
   );
-}
+};
 
 export type CustomChatStoreApi<TMessage extends UIMessage = UIMessage> =
   ReturnType<typeof createCustomChatStore<TMessage>>;
 
 const ApplicationThreadContext = createContext<ApplicationThread | null>(null);
 
-export function useCustomChatStoreApi<
+export const useCustomChatStoreApi = <
   TMessage extends UIMessage = UIMessage,
->() {
+>() => {
   const store = useContext(ChatStoreContext);
   if (!store) {
     throw new Error("useChatStoreApi must be used within Provider");
   }
   return store as CustomChatStoreApi<TMessage>;
-}
+};
 
-export function useApplicationThread() {
+export const useApplicationThread = () => {
   const thread = useContext(ApplicationThreadContext);
   if (!thread) {
     throw new Error(
@@ -99,11 +99,11 @@ export function useApplicationThread() {
     );
   }
   return thread;
-}
+};
 
 type ChatProviderProps = Parameters<typeof ChatProvider>[0];
 
-export function CustomStoreProvider({
+export const CustomStoreProvider = ({
   initialMessages = [],
   initialTree,
   children,
@@ -117,7 +117,7 @@ export function CustomStoreProvider({
   thread?: ApplicationThread;
   threadId?: string;
 }> &
-  Omit<ChatProviderProps, "initialMessages" | "store">) {
+  Omit<ChatProviderProps, "initialMessages" | "store">) => {
   const storeRef = useRef<CustomChatStoreApi<ChatMessage> | null>(null);
 
   if (storeRef.current === null) {
@@ -154,4 +154,4 @@ export function CustomStoreProvider({
       </ChatProvider>
     </ApplicationThreadContext.Provider>
   );
-}
+};
