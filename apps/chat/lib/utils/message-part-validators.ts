@@ -83,8 +83,8 @@ const toolPartInputAvailableSchema = z.object({
 
 const toolPartApprovalRequestedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.never().optional(),
+    id: z.string(),
     reason: z.never().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
@@ -99,8 +99,8 @@ const toolPartApprovalRequestedSchema = z.object({
 
 const toolPartApprovalRespondedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.boolean(),
+    id: z.string(),
     reason: z.string().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
@@ -116,8 +116,8 @@ const toolPartApprovalRespondedSchema = z.object({
 const toolPartOutputAvailableSchema = z.object({
   approval: z
     .object({
-      id: z.string(),
       approved: z.literal(true),
+      id: z.string(),
       reason: z.string().optional(),
     })
     .optional(),
@@ -135,8 +135,8 @@ const toolPartOutputAvailableSchema = z.object({
 const toolPartOutputErrorSchema = z.object({
   approval: z
     .object({
-      id: z.string(),
       approved: z.literal(true),
+      id: z.string(),
       reason: z.string().optional(),
     })
     .optional(),
@@ -152,8 +152,8 @@ const toolPartOutputErrorSchema = z.object({
 
 const toolPartOutputDeniedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.literal(false),
+    id: z.string(),
     reason: z.string().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
@@ -207,8 +207,8 @@ const dynamicToolPartInputAvailableSchema = z.object({
 
 const dynamicToolPartApprovalRequestedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.never().optional(),
+    id: z.string(),
     reason: z.never().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
@@ -225,8 +225,8 @@ const dynamicToolPartApprovalRequestedSchema = z.object({
 
 const dynamicToolPartApprovalRespondedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.boolean(),
+    id: z.string(),
     reason: z.string().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
@@ -244,8 +244,8 @@ const dynamicToolPartApprovalRespondedSchema = z.object({
 const dynamicToolPartOutputAvailableSchema = z.object({
   approval: z
     .object({
-      id: z.string(),
       approved: z.literal(true),
+      id: z.string(),
       reason: z.string().optional(),
     })
     .optional(),
@@ -265,8 +265,8 @@ const dynamicToolPartOutputAvailableSchema = z.object({
 const dynamicToolPartOutputErrorSchema = z.object({
   approval: z
     .object({
-      id: z.string(),
       approved: z.literal(true),
+      id: z.string(),
       reason: z.string().optional(),
     })
     .optional(),
@@ -284,8 +284,8 @@ const dynamicToolPartOutputErrorSchema = z.object({
 
 const dynamicToolPartOutputDeniedSchema = z.object({
   approval: z.object({
-    id: z.string(),
     approved: z.literal(false),
+    id: z.string(),
     reason: z.string().optional(),
   }),
   callProviderMetadata: providerMetadataSchema,
