@@ -28,10 +28,12 @@ type ImageMode = "edit" | "generate";
  * (uses generateImage). Uses the dynamic model registry so it works across
  * all gateways, not just the static models.generated snapshot.
  */
-async function resolveImageModel(selectedModel?: string): Promise<{
+const resolveImageModel = async (
+  selectedModel?: string
+): Promise<{
   modelId: string;
   multimodal: boolean;
-}> {
+}> => {
   // If the user's selected chat model can generate images, prefer it
   if (selectedModel) {
     try {
@@ -60,35 +62,36 @@ async function resolveImageModel(selectedModel?: string): Promise<{
   }
 
   return { modelId: defaultId, multimodal: false };
-}
+};
 
-async function fetchImageBuffer(url: string): Promise<Buffer> {
+const fetchImageBuffer = async (url: string): Promise<Buffer> => {
   const response = await fetch(new URL(url, getBaseUrl()));
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
-}
+};
 
-async function collectEditImages({
+const collectEditImages = ({
   imageParts,
   lastGeneratedImage,
 }: {
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
-}): Promise<Buffer[]> {
-  return await Promise.all([
+}): Promise<Buffer[]> =>
+  Promise.all([
     ...(lastGeneratedImage
       ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
       : []),
     ...imageParts.map((p) => fetchImageBuffer(p.url)),
   ]);
-}
 
-function serializeError(err: unknown): {
+const serializeError = (
+  err: unknown
+): {
   name?: string;
   message: string;
   stack?: string;
   raw?: unknown;
-} {
+} => {
   if (err instanceof Error) {
     return { message: err.message, name: err.name, stack: err.stack };
   }
@@ -108,27 +111,25 @@ function serializeError(err: unknown): {
   }
 
   return { message: String(err), raw: err };
-}
+};
 
-async function resolveError(error: unknown): Promise<unknown> {
+const resolveError = async (error: unknown): Promise<unknown> => {
   if (error && typeof error === "object" && "then" in error) {
     return await (error as Promise<unknown>).catch(
       (caughtError) => caughtError
     );
   }
   return error;
-}
+};
 
-function getErrorDebugInfo(err: unknown) {
-  return {
-    errorConstructor: (err as { constructor?: { name?: string } })?.constructor
-      ?.name,
-    errorKeys: err && typeof err === "object" ? Object.keys(err) : [],
-    errorType: typeof err,
-  };
-}
+const getErrorDebugInfo = (err: unknown) => ({
+  errorConstructor: (err as { constructor?: { name?: string } })?.constructor
+    ?.name,
+  errorKeys: err && typeof err === "object" ? Object.keys(err) : [],
+  errorType: typeof err,
+});
 
-async function runGenerateImageTraditional({
+const runGenerateImageTraditional = async ({
   mode,
   prompt,
   imageParts,
@@ -142,7 +143,7 @@ async function runGenerateImageTraditional({
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
   costAccumulator?: CostAccumulator;
-}): Promise<{ imageUrl: string; prompt: string }> {
+}): Promise<{ imageUrl: string; prompt: string }> => {
   if (!config.ai.tools.image.enabled) {
     throw new Error("Image generation is not enabled");
   }
@@ -217,9 +218,9 @@ async function runGenerateImageTraditional({
   );
 
   return { imageUrl: result.url, prompt };
-}
+};
 
-async function runGenerateImageMultimodal({
+const runGenerateImageMultimodal = async ({
   modelId,
   mode,
   prompt,
@@ -235,7 +236,7 @@ async function runGenerateImageMultimodal({
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
   costAccumulator?: CostAccumulator;
-}): Promise<{ imageUrl: string; prompt: string }> {
+}): Promise<{ imageUrl: string; prompt: string }> => {
   // Build messages with image context if in edit mode
   interface ImageContent {
     image: URL;
@@ -345,7 +346,7 @@ async function runGenerateImageMultimodal({
   );
 
   return { imageUrl: result.url, prompt };
-}
+};
 
 export const generateImageTool = ({
   attachments = [],
