@@ -167,7 +167,7 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
 };
 
 export const ArtifactActions = memo(
-  function ArtifactActions(props: ArtifactActionsProps) {
+  (props: ArtifactActionsProps) => {
     switch (props.artifact.kind) {
       case "code":
         return (
@@ -229,3 +229,5 @@ export const ArtifactActions = memo(
     return true;
   }
 );
+
+ArtifactActions.displayName = "ArtifactActions";
