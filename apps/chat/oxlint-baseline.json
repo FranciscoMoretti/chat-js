@@ -334,17 +334,6 @@
     },
     {
       "files": [
-        "app/layout.tsx",
-        "components/create-artifact.tsx",
-        "lib/gated-chat-transport.test.ts",
-        "lib/stores/base/hooks.ts"
-      ],
-      "rules": {
-        "require-await": "off"
-      }
-    },
-    {
-      "files": [
         "app/(chat)/chat-route-host.tsx",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/context.tsx",
