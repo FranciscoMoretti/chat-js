@@ -193,9 +193,9 @@ export const useDataPart = <T = unknown>(
  * Extract all data parts from messages.
  * Data parts are identified by types starting with "data-".
  */
-function extractDataPartsFromMessages(
+const extractDataPartsFromMessages = (
   messages: UIMessage[]
-): DataPart<unknown>[] {
+): DataPart<unknown>[] => {
   const dataParts: DataPart<unknown>[] = [];
 
   for (const message of messages) {
@@ -249,4 +249,4 @@ function extractDataPartsFromMessages(
   }
 
   return dataParts;
-}
+};

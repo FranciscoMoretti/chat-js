@@ -21,7 +21,7 @@ let __lastActionLabel: string | undefined;
 let __clearLastActionTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Batched updates queue with priority
-const __updateQueue: Array<{ callback: () => void; priority: number }> = [];
+const __updateQueue: { callback: () => void; priority: number }[] = [];
 let __batchedUpdateScheduled = false;
 
 const markLastAction = (label: string) => {
@@ -159,11 +159,8 @@ const enhancedThrottle = <T extends (...args: never[]) => void>(
         previous = Date.now();
         timeout = null;
 
-        if (
-          typeof window !== "undefined" &&
-          (window as any).requestIdleCallback
-        ) {
-          (window as any).requestIdleCallback(execute, { timeout: 50 });
+        if (typeof window !== "undefined" && window.requestIdleCallback) {
+          window.requestIdleCallback(execute, { timeout: 50 });
         } else {
           execute();
         }
@@ -279,7 +276,8 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   stop?: UseChatHelpers<TMessage>["stop"];
 }
 
-const MESSAGES_THROTTLE_MS = 16; // ~60fps for smooth streaming
+// ~60fps for smooth streaming
+const MESSAGES_THROTTLE_MS = 16;
 
 export function createChatStoreCreator<TMessage extends UIMessage>(
   initialMessages: TMessage[] = []
@@ -351,11 +349,13 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           currentState._messageIndex.update(messages);
           set({
             messages,
-            _memoizedSelectors: new Map(), // Clear memoized selectors
+            // Clear memoized selectors
+            _memoizedSelectors: new Map(),
           });
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -364,7 +364,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
@@ -411,6 +411,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -419,7 +420,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
@@ -457,6 +458,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -465,7 +467,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
@@ -493,6 +495,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -501,7 +504,7 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
@@ -514,7 +517,8 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           set(
             {
               ...newState,
-              _memoizedSelectors: new Map(), // Clear memoized selectors on sync
+              // Clear memoized selectors on sync
+              _memoizedSelectors: new Map(),
             },
             false
             // 'syncFromUseChat',
@@ -758,11 +762,10 @@ export function useChatStoreApi<TMessage extends UIMessage = UIMessage>() {
 }
 
 // Optimized selector hooks with memoization
-export const useChatMessages = <TMessage extends UIMessage = UIMessage>() => {
-  return useChatStore(
+export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
+  useChatStore(
     useShallow((state: StoreState<TMessage>) => state.getThrottledMessages())
   );
-};
 
 // Stable selector functions to avoid recreation
 const statusSelector = (state: StoreState<any>) => state.status;

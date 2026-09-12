@@ -26,19 +26,19 @@ class DebugLogger {
     return levels.indexOf(level) >= levels.indexOf(this.level);
   }
 
-  log(...args: any[]): void {
+  log(...args: unknown[]): void {
     if (this.shouldLog("log")) {
       console.log(this.prefix, ...args);
     }
   }
 
-  warn(...args: any[]): void {
+  warn(...args: unknown[]): void {
     if (this.shouldLog("warn")) {
       console.warn(this.prefix, ...args);
     }
   }
 
-  error(...args: any[]): void {
+  error(...args: unknown[]): void {
     if (this.shouldLog("error")) {
       console.error(this.prefix, ...args);
     }
@@ -61,7 +61,7 @@ class DebugLogger {
 export const debug = new DebugLogger();
 
 // Export for external configuration
-export function configureDebug(options: DebugOptions): void {
+export const configureDebug = (options: DebugOptions): void => {
   if (options.enabled !== undefined) {
     debug.setEnabled(options.enabled);
   }
@@ -71,7 +71,7 @@ export function configureDebug(options: DebugOptions): void {
   if (options.prefix !== undefined) {
     debug.setPrefix(options.prefix);
   }
-}
+};
 
 // Export the class for custom loggers
 export { DebugLogger };
