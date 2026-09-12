@@ -683,17 +683,23 @@ describe("Thread", () => {
 
   test("unexpected application errors reject the run promise", async () => {
     const transport = new ControlledTransport();
-    const chat = new Thread({
-      sendAutomaticallyWhen: () => {
-        throw new Error("application callback failed");
-      },
-      transport,
+    const state = new RecordingThreadState([]);
+    const chat = new StateBackedThread(state, transport);
+    chat.sendAutomaticallyWhen = () => {
+      throw new Error("application callback failed");
+    };
+    let publishes = 0;
+    const unsubscribe = state.subscribe(() => {
+      publishes += 1;
     });
     const run = await chat.startRun({ message: user("user-1") });
     await waitFor(() => transport.requests.length === 1);
+    const publishesBeforeCompletion = publishes;
     transport.emitText(0, "assistant-1", "complete");
 
     await expect(run.finished).rejects.toThrow("application callback failed");
+    expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
+    unsubscribe();
   });
 
   test("regenerates an assistant as a sibling response", async () => {

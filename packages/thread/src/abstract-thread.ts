@@ -800,11 +800,15 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     };
     this.#runs.add(record);
     this.publish();
-    const finished = start(chat).finally(() => this.publish());
+    const finished = this.publishWhenFinished(start(chat));
     // startRun may be detached; observing the rejection keeps finished awaitable.
-    void finished.catch(() => {
-      // The original finished promise retains the rejection for callers.
-    });
+    void (async () => {
+      try {
+        await finished;
+      } catch {
+        // The original finished promise retains the rejection for callers.
+      }
+    })();
     record.finished = finished;
     return this.createRunHandle(record);
   }
@@ -843,7 +847,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       this.#runs.select(run.spec.id);
       this.updateTree((tree) => tree.setCursor(messageId));
     }
-    const finished = run.chat.start(options).finally(() => this.publish());
+    const finished = this.publishWhenFinished(run.chat.start(options));
     run.finished = finished;
     this.publish();
     return this.createRunHandle(run);
@@ -890,15 +894,21 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     };
   }
 
+  private async publishWhenFinished<T>(promise: Promise<T>) {
+    try {
+      return await promise;
+    } finally {
+      this.publish();
+    }
+  }
+
   private async resumeRunRequest(
     run: RunRecord<TMessage>,
     options: ChatRequestOptions
   ) {
     this.#runs.assertHasCapacity(run.spec.parentMessageId);
     run.chat.refreshPath();
-    const finished = run.chat
-      .resumeStream(options)
-      .finally(() => this.publish());
+    const finished = this.publishWhenFinished(run.chat.resumeStream(options));
     run.finished = finished;
     this.publish();
     await finished;

@@ -80,13 +80,20 @@ export const CodeBlock = ({
   const mounted = useRef(false);
 
   useEffect(() => {
-    highlightCode(code, language, showLineNumbers).then(([light, dark]) => {
+    const updateHighlightedCode = async () => {
+      const [light, dark] = await highlightCode(
+        code,
+        language,
+        showLineNumbers
+      );
       if (!mounted.current) {
         setHtml(light);
         setDarkHtml(dark);
         mounted.current = true;
       }
-    });
+    };
+
+    void updateHighlightedCode();
 
     return () => {
       mounted.current = false;

@@ -537,19 +537,22 @@ const createChatStream = async ({
       // Otherwise the client will try to resume a stream that no longer exists and we end up with a
       // stuck partial placeholder on reload.
       if (!isAnonymous) {
-        after(() =>
-          Promise.resolve(
-            updateMessageActiveStreamId({
-              activeStreamId: null,
-              id: messageId,
-            })
-          ).catch((dbError) => {
-            log.error(
-              { error: dbError },
-              "Failed to clear activeStreamId on stream error"
-            );
-          })
-        );
+        after(() => {
+          const update = updateMessageActiveStreamId({
+            activeStreamId: null,
+            id: messageId,
+          });
+          return (async () => {
+            try {
+              await update;
+            } catch (dbError) {
+              log.error(
+                { error: dbError },
+                "Failed to clear activeStreamId on stream error"
+              );
+            }
+          })();
+        });
       }
 
       log.error({ error }, "onError");

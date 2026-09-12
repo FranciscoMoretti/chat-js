@@ -17,23 +17,36 @@ import { InlineDocumentSkeleton } from "../document-skeleton";
 import { DocumentToolCall, DocumentToolResult } from "./document-common";
 
 const CodeEditor = dynamic(
-  () => import("../code-editor").then((m) => ({ default: m.CodeEditor })),
+  async () => {
+    const { CodeEditor: CodeEditorComponent } = await import("../code-editor");
+    return { default: CodeEditorComponent };
+  },
   { loading: () => <InlineDocumentSkeleton />, ssr: false }
 );
 
 const Editor = dynamic(
-  () => import("../text-editor").then((m) => ({ default: m.Editor })),
+  async () => {
+    const { Editor: EditorComponent } = await import("../text-editor");
+    return { default: EditorComponent };
+  },
   { loading: () => <InlineDocumentSkeleton />, ssr: false }
 );
 
 const ImageEditor = dynamic(
-  () => import("../image-editor").then((m) => ({ default: m.ImageEditor })),
+  async () => {
+    const { ImageEditor: ImageEditorComponent } =
+      await import("../image-editor");
+    return { default: ImageEditorComponent };
+  },
   { loading: () => <InlineDocumentSkeleton />, ssr: false }
 );
 
 const SpreadsheetEditor = dynamic(
-  () =>
-    import("../sheet-editor").then((m) => ({ default: m.SpreadsheetEditor })),
+  async () => {
+    const { SpreadsheetEditor: SpreadsheetEditorComponent } =
+      await import("../sheet-editor");
+    return { default: SpreadsheetEditorComponent };
+  },
   { loading: () => <InlineDocumentSkeleton />, ssr: false }
 );
 

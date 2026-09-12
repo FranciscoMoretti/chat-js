@@ -144,7 +144,7 @@ const PureSuggestedActions = ({
 
     const [primaryRequest] = submission.requestSpecs;
     if (primaryRequest) {
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: !!session?.user,
         message: submission.message,
@@ -152,9 +152,14 @@ const PureSuggestedActions = ({
         projectId: currentRoute.projectId,
         requestSpecs: submission.requestSpecs,
         startRun,
-      }).catch(() => {
-        // The chat-level error callback owns user-facing request errors.
       });
+      void (async () => {
+        try {
+          await runRequests;
+        } catch {
+          // The chat-level error callback owns user-facing request errors.
+        }
+      })();
     }
   };
 

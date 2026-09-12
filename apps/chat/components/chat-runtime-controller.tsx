@@ -55,9 +55,14 @@ const ChatConfirmationEffects = ({ chatId }: { chatId: string }) => {
       ]);
     };
 
-    invalidatePersistedChatQueries().catch(() => {
-      toast.error("Failed to refresh chat history");
-    });
+    const invalidation = invalidatePersistedChatQueries();
+    void (async () => {
+      try {
+        await invalidation;
+      } catch {
+        toast.error("Failed to refresh chat history");
+      }
+    })();
   }, [chatId, isChatPersisted, queryClient, trpc]);
 
   return null;

@@ -42,7 +42,7 @@ export const RetryButton = ({
       return;
     }
 
-    regenerate({
+    const retry = regenerate({
       body: {
         isPrimaryParallel: retryInput.isPrimaryParallel,
         parallelGroupId: retryInput.parallelGroupId,
@@ -50,9 +50,14 @@ export const RetryButton = ({
         selectedModelId: retryInput.selectedModelId,
       },
       messageId,
-    }).catch(() => {
-      toast.error("Could not retry this message");
     });
+    void (async () => {
+      try {
+        await retry;
+      } catch {
+        toast.error("Could not retry this message");
+      }
+    })();
   }, [messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {

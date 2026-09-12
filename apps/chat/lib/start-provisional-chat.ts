@@ -86,7 +86,7 @@ export const useStartProvisionalChat = (chatId: string) => {
         changeModel(primaryRequest.modelId);
       }
 
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: true,
         message,
@@ -94,18 +94,33 @@ export const useStartProvisionalChat = (chatId: string) => {
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,
-      })
-        .finally(() => {
+      });
+      const completeRequests = async () => {
+        let shouldDiscardConfirmation = true;
+        try {
+          const failedRequestSpecs = await runRequests;
+          shouldDiscardConfirmation = false;
           discardUnacknowledgedProvisionalChatConfirmation(chatId, message.id);
-        })
-        .then((failedRequestSpecs) => {
+
           if (failedRequestSpecs.length > 0) {
             toast.error("Failed to complete all parallel responses");
           }
-        })
-        .catch(() => {
+        } catch {
+          if (shouldDiscardConfirmation) {
+            try {
+              discardUnacknowledgedProvisionalChatConfirmation(
+                chatId,
+                message.id
+              );
+            } catch {
+              toast.error("Failed to complete all parallel responses");
+              return;
+            }
+          }
           toast.error("Failed to complete all parallel responses");
-        });
+        }
+      };
+      void completeRequests();
 
       window.history.pushState(null, "", href);
       onStarted?.();

@@ -27,17 +27,20 @@ const setCookie = (name: string, value: string, maxAge: number): void => {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   const encodedValue = encodeURIComponent(value);
   if ("cookieStore" in window) {
-    window.cookieStore
-      .set({
-        expires: Date.now() + maxAge * 1000,
-        name,
-        path: "/",
-        sameSite: "lax",
-        value: encodedValue,
-      })
-      .catch(() => {
+    const cookieSet = window.cookieStore.set({
+      expires: Date.now() + maxAge * 1000,
+      name,
+      path: "/",
+      sameSite: "lax",
+      value: encodedValue,
+    });
+    void (async () => {
+      try {
+        await cookieSet;
+      } catch {
         // Fail silently if Cookie Store API fails
-      });
+      }
+    })();
   } else {
     document.cookie = `${name}=${encodedValue}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
   }
@@ -48,9 +51,14 @@ const deleteCookie = (name: string): void => {
     return;
   }
   if ("cookieStore" in window) {
-    window.cookieStore.delete(name).catch(() => {
-      // Fail silently if Cookie Store API fails
-    });
+    const cookieDeletion = window.cookieStore.delete(name);
+    void (async () => {
+      try {
+        await cookieDeletion;
+      } catch {
+        // Fail silently if Cookie Store API fails
+      }
+    })();
   } else {
     document.cookie = `${name}=; Path=/; Max-Age=0`;
   }

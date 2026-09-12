@@ -71,12 +71,6 @@
       }
     },
     {
-      "files": ["packages/thread/src/abstract-thread.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
       "files": ["packages/thread/test/use-thread-types.ts"],
       "rules": {
         "react/invariant": "off"

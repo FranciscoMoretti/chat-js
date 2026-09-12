@@ -14,9 +14,13 @@ const waitForGate = (ready: Promise<void>, signal?: AbortSignal) => {
     return ready;
   }
   if (signal.aborted) {
-    ready.catch(() => {
-      // Observe a rejected gate after cancellation without changing the abort error.
-    });
+    void (async () => {
+      try {
+        await ready;
+      } catch {
+        // Observe a rejected gate after cancellation without changing the abort error.
+      }
+    })();
     return Promise.reject(createAbortError());
   }
 
@@ -24,16 +28,17 @@ const waitForGate = (ready: Promise<void>, signal?: AbortSignal) => {
     const abort = () => reject(createAbortError());
     const cleanup = () => signal.removeEventListener("abort", abort);
     signal.addEventListener("abort", abort, { once: true });
-    ready.then(
-      () => {
+    const resolveWhenReady = async () => {
+      try {
+        await ready;
         cleanup();
         resolve();
-      },
-      (error: unknown) => {
+      } catch (error) {
         cleanup();
         reject(error);
       }
-    );
+    };
+    void resolveWhenReady();
   });
 };
 

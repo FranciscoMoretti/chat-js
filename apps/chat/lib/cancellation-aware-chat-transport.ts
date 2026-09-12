@@ -103,9 +103,14 @@ const observeCancellation = ({
   }
 
   const cancel = () => {
-    onCancel(target).catch(() => {
-      // Cancellation is best effort; transport termination still proceeds.
-    });
+    const cancellation = onCancel(target);
+    void (async () => {
+      try {
+        await cancellation;
+      } catch {
+        // Cancellation is best effort; transport termination still proceeds.
+      }
+    })();
   };
   signal.addEventListener("abort", cancel, { once: true });
 

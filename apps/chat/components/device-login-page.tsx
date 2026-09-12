@@ -144,14 +144,19 @@ export const DeviceLoginPage = () => {
       });
     };
 
-    checkSession().catch(() => {
-      if (cancelled) {
-        return;
-      }
+    const sessionCheck = checkSession();
+    void (async () => {
+      try {
+        await sessionCheck;
+      } catch {
+        if (cancelled) {
+          return;
+        }
 
-      transferStartedRef.current = false;
-      setState("waiting-for-app");
-    });
+        transferStartedRef.current = false;
+        setState("waiting-for-app");
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -163,28 +168,31 @@ export const DeviceLoginPage = () => {
       onRetry={() => {
         transferStartedRef.current = false;
         setState("transferring");
-        authClient.electron
-          .transferUser({
-            fetchOptions: {
-              onError: () => {
-                transferStartedRef.current = false;
-                setState("waiting-for-app");
-              },
-              onSuccess: () => {
-                window.history.replaceState(
-                  {},
-                  "",
-                  `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
-                );
-                setState("waiting-for-app");
-              },
-              query,
+        const transfer = authClient.electron.transferUser({
+          fetchOptions: {
+            onError: () => {
+              transferStartedRef.current = false;
+              setState("waiting-for-app");
             },
-          })
-          .catch(() => {
+            onSuccess: () => {
+              window.history.replaceState(
+                {},
+                "",
+                `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
+              );
+              setState("waiting-for-app");
+            },
+            query,
+          },
+        });
+        void (async () => {
+          try {
+            await transfer;
+          } catch {
             transferStartedRef.current = false;
             setState("waiting-for-app");
-          });
+          }
+        })();
       }}
       state={state}
     />
