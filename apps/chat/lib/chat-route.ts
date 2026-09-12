@@ -9,8 +9,8 @@ export type {
   ParsedChatIdFromPathname,
 } from "@/providers/parse-chat-id-from-pathname";
 
-export function useCurrentChatRoute() {
+export const useCurrentChatRoute = () => {
   const pathname = usePathname();
 
   return parseChatIdFromPathname(pathname);
-}
+};

@@ -10,23 +10,24 @@ import {
   isPendingResponseStream,
 } from "./stop-response";
 
-function createMessage(id: string, activeStreamId: string | null): ChatMessage {
-  return {
-    id,
-    metadata: {
-      activeStreamId,
-      createdAt: new Date(0),
-      isPrimaryParallel: null,
-      parallelGroupId: null,
-      parallelIndex: null,
-      parentMessageId: null,
-      selectedModel: gatewayModelDefaults.workflows.title,
-      selectedTool: undefined,
-    },
-    parts: [],
-    role: "assistant",
-  };
-}
+const createMessage = (
+  id: string,
+  activeStreamId: string | null
+): ChatMessage => ({
+  id,
+  metadata: {
+    activeStreamId,
+    createdAt: new Date(0),
+    isPrimaryParallel: null,
+    parallelGroupId: null,
+    parallelIndex: null,
+    parentMessageId: null,
+    selectedModel: gatewayModelDefaults.workflows.title,
+    selectedTool: undefined,
+  },
+  parts: [],
+  role: "assistant",
+});
 
 describe("stop response", () => {
   it("optimistically marks only the selected response as inactive", () => {

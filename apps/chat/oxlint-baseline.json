@@ -212,28 +212,19 @@
         "components/with-skeleton.tsx",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
-        "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/chat-route.ts",
-        "lib/chat-tree-actions.test.ts",
-        "lib/clone-messages.test.ts",
-        "lib/clone-messages.ts",
         "lib/credits/cost-accumulator.ts",
-        "lib/data-stream.test.ts",
         "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/files/upload-prep.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/message-conversion.ts",
-        "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/start-provisional-chat.ts",
-        "lib/stop-response.test.ts",
         "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/base/use-data-parts.ts",
@@ -440,12 +431,6 @@
       }
     },
     {
-      "files": ["lib/redis/client.test.ts"],
-      "rules": {
-        "no-promise-executor-return": "off"
-      }
-    },
-    {
       "files": ["components/part/document-tool.tsx"],
       "rules": {
         "no-redeclare": "off"
@@ -598,7 +583,6 @@
         "lib/cancellation-aware-chat-transport.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
-        "lib/redis/client.test.ts",
         "lib/redis/client.ts",
         "scripts/check-redis.ts"
       ],
@@ -1170,7 +1154,6 @@
         "components/version-footer.tsx",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
@@ -1182,13 +1165,11 @@
         "lib/artifacts/sheet/client.tsx",
         "lib/artifacts/text/client.tsx",
         "lib/auth.ts",
-        "lib/chat-tree-actions.test.ts",
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
         "lib/create-anonymous-session.ts",
         "lib/credits/cost-accumulator.test.ts",
         "lib/credits/cost-accumulator.ts",
-        "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
         "lib/db/schema.ts",
@@ -1200,7 +1181,6 @@
         "lib/features-config.ts",
         "lib/logger.ts",
         "lib/message-conversion.ts",
-        "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-data-stream.test.ts",
         "lib/stores/with-message-parts.ts",
@@ -1355,7 +1335,6 @@
         "components/data-stream-handler.tsx",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
-        "lib/redis/client.test.ts",
         "lib/social-auth.test.ts",
         "providers/session-provider.tsx"
       ],
