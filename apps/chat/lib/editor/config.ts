@@ -2,14 +2,10 @@ import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import {
-  $createHeadingNode,
-  HeadingNode,
-  type HeadingTagType,
-  QuoteNode,
-} from "@lexical/rich-text";
-import type { EditorState, LexicalEditor } from "lexical";
-import { $getSelection, $insertNodes, type TextNode } from "lexical";
+import { $createHeadingNode, HeadingNode, QuoteNode } from "@lexical/rich-text";
+import type { HeadingTagType } from "@lexical/rich-text";
+import { $getSelection, $insertNodes } from "lexical";
+import type { EditorState, LexicalEditor, TextNode } from "lexical";
 
 // Create initial editor configuration
 export function createEditorConfig() {

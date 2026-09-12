@@ -3,7 +3,8 @@
 import equal from "fast-deep-equal";
 import { File, Loader2, Maximize, Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
-import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
+import type { MouseEvent } from "react";
 
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";

@@ -1,6 +1,7 @@
 "use client";
 import type { DataUIPart } from "ai";
-import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import type { ArtifactMetadata } from "@/components/create-artifact";
 import { useArtifact } from "@/hooks/use-artifact";

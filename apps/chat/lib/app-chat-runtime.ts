@@ -1,11 +1,6 @@
 import type { MessageTreeSnapshot } from "@chat-js/thread";
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  useContext,
-  useRef,
-} from "react";
+import { createContext, createElement, useContext, useRef } from "react";
+import type { ReactNode } from "react";
 
 import type { ChatRuntimeId } from "@/lib/chat-runtime-id";
 import {
@@ -17,10 +12,8 @@ import { generateUUID } from "@/lib/utils";
 
 import type { ChatMessage, UiToolName } from "./ai/types";
 import { ApplicationThread } from "./application-thread";
-import {
-  type CustomChatStoreApi,
-  createCustomChatStore,
-} from "./stores/custom-store-provider";
+import { createCustomChatStore } from "./stores/custom-store-provider";
+import type { CustomChatStoreApi } from "./stores/custom-store-provider";
 import { ZustandThreadState } from "./stores/zustand-thread-state";
 
 export interface AppRuntimeData {

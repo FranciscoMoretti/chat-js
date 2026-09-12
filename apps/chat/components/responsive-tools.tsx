@@ -1,10 +1,6 @@
 import { Settings2, X } from "lucide-react";
-import {
-  createElement,
-  type Dispatch,
-  type SetStateAction,
-  useState,
-} from "react";
+import { createElement, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import {
   DropdownMenu,

@@ -31,10 +31,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { config } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
-import {
-  type McpConnectorsDialog,
-  mcpConnectorsSettingsSearchParams,
-} from "@/lib/nuqs/mcp-search-params";
+import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
+import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
 export function ConnectorsSettings() {

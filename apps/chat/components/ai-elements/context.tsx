@@ -1,6 +1,7 @@
 "use client";
 
-import { type ComponentProps, createContext, useContext } from "react";
+import { createContext, useContext } from "react";
+import type { ComponentProps } from "react";
 import { getUsage } from "tokenlens";
 
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Progress } from "@/components/ui/progress";
-import {
-  getUsageTokenDetails,
-  type StoredLanguageModelUsage,
-} from "@/lib/ai/usage-token-details";
+import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
+import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
 import { cn } from "@/lib/utils";
 
 const PERCENT_MAX = 100;

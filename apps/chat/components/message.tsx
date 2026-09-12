@@ -4,7 +4,8 @@ import { memo } from "react";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 
 import { AssistantMessage } from "./assistant-message";
-import { type BaseMessageProps, UserMessage } from "./user-message";
+import { UserMessage } from "./user-message";
+import type { BaseMessageProps } from "./user-message";
 
 const PurePreviewMessage = ({
   messageId,

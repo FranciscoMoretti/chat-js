@@ -4,14 +4,8 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { diffWords } from "diff";
-import {
-  $createParagraphNode,
-  $getRoot,
-  type EditorConfig,
-  type LexicalEditor,
-  type SerializedTextNode,
-  TextNode,
-} from "lexical";
+import { $createParagraphNode, $getRoot, TextNode } from "lexical";
+import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import { useEffect } from "react";
 
 import { createEditorConfig } from "@/lib/editor/config";

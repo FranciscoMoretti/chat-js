@@ -1,6 +1,7 @@
 "use client";
 import { ChevronDown } from "lucide-react";
-import { type KeyboardEvent, memo, useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { toast } from "sonner";
 
 import { ChatMenuItems } from "@/components/chat-menu-items";

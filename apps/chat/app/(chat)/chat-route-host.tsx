@@ -7,7 +7,8 @@ import {
   usePathname,
   useSearchParams,
 } from "next/navigation";
-import { type ReactNode, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { Chat } from "@/components/chat";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
@@ -19,23 +20,21 @@ import {
 import { useChatSystemInitialState } from "@/hooks/use-chat-system-initial-state";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
-  type AppRuntime,
-  type AppRuntimeData,
-  type CreateAppRuntimeInput,
   createAppRuntimeInput,
   useCurrentProvisionalAppRuntimeIdentity,
 } from "@/lib/app-chat-runtime";
-import {
-  type ChatRuntimeId,
-  createMainChatRuntimeId,
-} from "@/lib/chat-runtime-id";
+import type {
+  AppRuntime,
+  AppRuntimeData,
+  CreateAppRuntimeInput,
+} from "@/lib/app-chat-runtime";
+import { createMainChatRuntimeId } from "@/lib/chat-runtime-id";
+import type { ChatRuntimeId } from "@/lib/chat-runtime-id";
 import { useRuntime, useRuntimeActions } from "@/lib/runtime-registry";
 import { useRuntimeIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useChatModels } from "@/providers/chat-models-provider";
-import {
-  type ParsedChatIdFromPathname,
-  parseChatIdFromPathname,
-} from "@/providers/parse-chat-id-from-pathname";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+import type { ParsedChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 

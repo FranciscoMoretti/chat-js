@@ -1,5 +1,6 @@
 import { Loader2, Terminal, X } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
