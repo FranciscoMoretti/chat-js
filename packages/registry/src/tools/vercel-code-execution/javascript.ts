@@ -2,7 +2,7 @@ import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
 const EXECUTION_STATUS_PREFIX = "__EXECUTION_STATUS__:";
 
-function createWrappedCode(code: string): string {
+const createWrappedCode = (code: string): string => {
   // Inject user code as a string literal so backticks / ${} in user code
   // cannot break out of the wrapper template.
   const userCodeLiteral = JSON.stringify(code);
@@ -69,34 +69,34 @@ const __run = async () => {
 
 await __run();
 `;
-}
+};
 
 type JsExecInfo = {
   success: boolean;
   error?: { name: string; value: string; traceback: string };
 };
 
-function execInfoFromExitCode(exitCode: number): JsExecInfo {
+const execInfoFromExitCode = (exitCode: number): JsExecInfo => {
   if (exitCode === 0) {
     return { success: true };
   }
   return {
-    success: false,
     error: {
       name: "SandboxExecutionError",
-      value: "Execution completed without a valid status trailer",
       traceback: "",
+      value: "Execution completed without a valid status trailer",
     },
+    success: false,
   };
-}
+};
 
-async function parseExecutionOutput(execResult: {
+const parseExecutionOutput = async (execResult: {
   stdout: () => Promise<string>;
   exitCode: number;
 }): Promise<{
   outputText: string;
   execInfo: JsExecInfo;
-}> {
+}> => {
   const stdout = await execResult.stdout();
   const lines = (stdout ?? "").split("\n");
   // Search from the end so a user console.log of the prefix cannot be
@@ -107,8 +107,8 @@ async function parseExecutionOutput(execResult: {
 
   if (statusLineIndex === -1) {
     return {
-      outputText: stdout ?? "",
       execInfo: execInfoFromExitCode(execResult.exitCode),
+      outputText: stdout ?? "",
     };
   }
 
@@ -120,27 +120,27 @@ async function parseExecutionOutput(execResult: {
     execInfo = JSON.parse(execInfoRaw) as JsExecInfo;
   } catch {
     return {
-      outputText: stdout ?? "",
       execInfo: execInfoFromExitCode(execResult.exitCode),
+      outputText: stdout ?? "",
     };
   }
   lines.splice(statusLineIndex, 1);
 
   return {
-    outputText: lines.join("\n").trim(),
     execInfo,
+    outputText: lines.join("\n").trim(),
   };
-}
+};
 
-export async function executeJavaScriptInSandbox({
+export const executeJavaScriptInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> {
+}: CodeExecutionContext): Promise<CodeExecutionResult> => {
   const execResult = await sandbox.runCommand({
-    cmd: "node",
     args: ["--input-type=module", "-e", createWrappedCode(code)],
+    cmd: "node",
   });
 
   const { outputText, execInfo } = await parseExecutionOutput(execResult);
@@ -157,13 +157,13 @@ export async function executeJavaScriptInSandbox({
   if (execInfo.error) {
     message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
     log.error(
-      { requestId, error: execInfo.error },
+      { error: execInfo.error, requestId },
       "javascript execution error"
     );
   }
 
   return {
-    message: message.trim(),
     chart: "",
+    message: message.trim(),
   };
-}
+};

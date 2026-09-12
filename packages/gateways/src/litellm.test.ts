@@ -11,15 +11,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function mockModelsFetch() {
+const mockModelsFetch = () => {
   const fetchMock = vi.fn(() =>
     Promise.resolve(
       Response.json({
         data: [
           {
+            created: 1_717_986_432,
             id: "openai/gpt-4o-mini",
             object: "model",
-            created: 1_717_986_432,
             owned_by: "openai",
           },
         ],
@@ -28,17 +28,16 @@ function mockModelsFetch() {
   );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
-}
+};
 
-function getFetchCall(fetchMock: ReturnType<typeof mockModelsFetch>) {
-  return fetchMock.mock.calls[0] as unknown as [
+const getFetchCall = (fetchMock: ReturnType<typeof mockModelsFetch>) =>
+  fetchMock.mock.calls[0] as unknown as [
     string,
     {
       headers: Record<string, string>;
       next?: { revalidate: number };
     },
   ];
-}
 
 describe("LiteLLMGateway", () => {
   it("fetches models from the LiteLLM /v1/models endpoint", async () => {
