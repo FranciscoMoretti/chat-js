@@ -299,13 +299,13 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             _throttledMessages: newThrottledMessages,
           });
 
-          throttledEffects.forEach((cb) => {
+          for (const cb of throttledEffects) {
             try {
               cb();
             } catch (err) {
               debug.warn("[chat-store-base] throttled effect error", err);
             }
-          });
+          }
         });
       }, MESSAGES_THROTTLE_MS);
     }
