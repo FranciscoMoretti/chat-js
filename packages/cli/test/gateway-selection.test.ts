@@ -35,12 +35,14 @@ beforeAll(async () => {
   await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   const output = join(cliDirectory, "../registry/dist/r");
-  const names = (await readdir(output)).sort();
+  const outputNames = await readdir(output);
+  const names = outputNames.toSorted();
   const first = await Promise.all(
     names.map((name) => readFile(join(output, name), "utf-8"))
   );
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
-  expect((await readdir(output)).sort()).toEqual(names);
+  const rebuiltOutputNames = await readdir(output);
+  expect(rebuiltOutputNames.toSorted()).toEqual(names);
   expect(
     await Promise.all(
       names.map((name) => readFile(join(output, name), "utf-8"))
@@ -95,66 +97,66 @@ const registryServer = Bun.serve({
     const path = new URL(request.url).pathname;
     if (path === "/external-storage.json") {
       return Response.json({
-        name: "acme-bucket",
-        type: "registry:item",
         dependencies: ["files-sdk@2.1.0"],
-        meta: {
-          chatjs: {
-            kind: "storage",
-            contractVersion: 1,
-            id: "acme-bucket",
-            configKeys: ["bucket"],
-            envRequirements: [{ options: [["ACME_STORAGE_TOKEN"]] }],
-          },
-        },
         files: [
           {
-            path: "provider.ts",
-            type: "registry:file",
-            target: "~/lib/storage-provider.ts",
             content: `import { memory } from "files-sdk/memory";
 export function createStorageAdapter(options: {bucket: string}) {
   if (!options.bucket) throw new Error("Missing bucket");
   return memory();
 }`,
+            path: "provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
           },
         ],
+        meta: {
+          chatjs: {
+            configKeys: ["bucket"],
+            contractVersion: 1,
+            envRequirements: [{ options: [["ACME_STORAGE_TOKEN"]] }],
+            id: "acme-bucket",
+            kind: "storage",
+          },
+        },
+        name: "acme-bucket",
+        type: "registry:item",
       });
     }
     if (path === "/external-execution.json") {
       return Response.json({
-        name: "acme-execution",
-        type: "registry:item",
         dependencies: ["ai", "zod"],
-        meta: { chatjs: executionDefinition },
         files: [
           {
-            path: "chatjs.json",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-execution/chatjs.json",
             content: JSON.stringify(executionDefinition),
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-execution/chatjs.json",
+            type: "registry:file",
           },
           {
-            path: "tool.ts",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-execution/tool.ts",
             content: `import { tool } from "ai";
 import { z } from "zod";
 export const runCommand = tool({inputSchema: z.object({command: z.string()}),
     execute: async ({command}) => ({stdout: command, exitCode: 0})});`,
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-execution/tool.ts",
+            type: "registry:file",
           },
           {
-            path: "renderer.tsx",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-execution/renderer.tsx",
             content: `"use client";
 import type { UIToolInvocation } from "ai";
 import type { runCommand } from "./tool";
 export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runCommand>}) {
  return <pre>{tool.state === "output-available" ? tool.output.stdout : tool.input?.command}</pre>;
 }`,
+            path: "renderer.tsx",
+            target: "~/tools/chatjs/acme-execution/renderer.tsx",
+            type: "registry:file",
           },
         ],
+        meta: { chatjs: executionDefinition },
+        name: "acme-execution",
+        type: "registry:item",
       });
     }
     if (path === "/external-search.json") {
@@ -170,18 +172,18 @@ export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runComman
         dependencies: ["ai", "zod"],
         files: [
           {
-            path: "chatjs.json",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-search/chatjs.json",
             content: JSON.stringify(definition),
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-search/chatjs.json",
+            type: "registry:file",
           },
           {
-            path: "tool.ts",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-search/tool.ts",
             content: `import {tool} from "ai";
 import {z} from "zod";
 export const lookup = tool({inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`,
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-search/tool.ts",
+            type: "registry:file",
           },
         ],
         meta: { chatjs: definition },
@@ -202,18 +204,18 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
         dependencies: ["ai", "zod"],
         files: [
           {
-            path: "chatjs.json",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-retrieval/chatjs.json",
             content: JSON.stringify(definition),
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-retrieval/chatjs.json",
+            type: "registry:file",
           },
           {
-            path: "tool.ts",
-            type: "registry:file",
-            target: "~/tools/chatjs/acme-retrieval/tool.ts",
             content: `import {tool} from "ai";
 import {z} from "zod";
 export const readPage = tool({inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`,
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-retrieval/tool.ts",
+            type: "registry:file",
           },
         ],
         meta: { chatjs: definition },
@@ -251,9 +253,9 @@ export const readPage = tool({inputSchema: z.object({target: z.string()}), execu
       return Response.json({
         choices: [
           {
-            index: 0,
-            message: { role: "assistant", content: "External gateway works." },
             finish_reason: "stop",
+            index: 0,
+            message: { content: "External gateway works.", role: "assistant" },
           },
         ],
         created: 1,
