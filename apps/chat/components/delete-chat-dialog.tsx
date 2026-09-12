@@ -39,8 +39,8 @@ export const DeleteChatDialog = ({
 
     try {
       await deleteChat(deleteId, {
-        onSuccess: () => toast.success("Chat deleted successfully"),
         onError: () => toast.error("Failed to delete chat"),
+        onSuccess: () => toast.success("Chat deleted successfully"),
       });
     } catch {
       // Error already handled by onError callback

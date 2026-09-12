@@ -241,26 +241,26 @@ const PureArtifactPanel = ({
         case "code": {
           codeArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata: createTypedMetadataSetter(
               setMetadata,
               getCodeArtifactMetadata
             ),
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
         }
         case "sheet": {
           sheetArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata: createTypedMetadataSetter(
               setMetadata,
               getSheetArtifactMetadata
             ),
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
         }

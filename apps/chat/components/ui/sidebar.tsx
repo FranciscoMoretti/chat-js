@@ -87,10 +87,10 @@ const SidebarProvider = ({
       // Prefer Cookie Store API when available
       if ("cookieStore" in window) {
         void window.cookieStore.set({
-          name: SIDEBAR_COOKIE_NAME,
-          value: String(openState),
-          path: "/",
           expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
+          name: SIDEBAR_COOKIE_NAME,
+          path: "/",
+          value: String(openState),
         });
       } else {
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
@@ -494,15 +494,15 @@ const sidebarMenuButtonVariants = cva(
   {
     defaultVariants: { size: "default", variant: "default" },
     variants: {
-      variant: {
-        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        outline:
-          "bg-background hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
-      },
       size: {
         default: "h-8 text-sm",
         lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
         sm: "h-7 text-xs",
+      },
+      variant: {
+        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        outline:
+          "bg-background hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
     },
   }

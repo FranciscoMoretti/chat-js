@@ -1,4 +1,3 @@
-import { AUTHENTICATION_DEFAULTS } from "./config-schema";
 import type { AuthenticationConfig } from "./config-schema";
 
 export type SocialAuthSignInOptions = {
@@ -9,9 +8,12 @@ export type SocialAuthSignInOptions = {
 
 export type SocialAuthProvider = keyof AuthenticationConfig;
 
-const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(
-  AUTHENTICATION_DEFAULTS
-) as SocialAuthProvider[];
+// Keep the sign-in buttons in product order, independent of config key order.
+const SOCIAL_AUTH_PROVIDER_IDS: SocialAuthProvider[] = [
+  "google",
+  "github",
+  "vercel",
+];
 
 const SOCIAL_AUTH_PROVIDER_ID_SET = new Set<string>(SOCIAL_AUTH_PROVIDER_IDS);
 

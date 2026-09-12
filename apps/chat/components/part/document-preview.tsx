@@ -101,8 +101,8 @@ const DocumentContent = ({ document }: { document: Document }) => {
   const containerClassName = cn(
     "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
     {
-      "p-4 sm:px-14 sm:py-16": document.kind === "text",
       "p-0": document.kind === "code",
+      "p-4 sm:px-14 sm:py-16": document.kind === "text",
     }
   );
 
@@ -194,11 +194,11 @@ const PureHitboxLayer = ({
         }
         return {
           ...artifact,
-          title: output.title,
           documentId: output.documentId,
-          messageId,
-          kind: output.kind,
           isVisible: true,
+          kind: output.kind,
+          messageId,
+          title: output.title,
         };
       });
     },

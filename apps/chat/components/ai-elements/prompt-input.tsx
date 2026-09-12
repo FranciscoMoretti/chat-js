@@ -170,11 +170,11 @@ export const PromptInputProvider = ({
     setAttachements((prev) => [
       ...prev,
       ...incoming.map((file) => ({
+        filename: file.name,
         id: nanoid(),
+        mediaType: file.type,
         type: "file" as const,
         url: URL.createObjectURL(file),
-        mediaType: file.type,
-        filename: file.name,
       })),
     ]);
   }, []);
@@ -564,11 +564,11 @@ export const PromptInput = ({
         const next: (FileUIPart & { id: string })[] = [];
         for (const file of capped) {
           next.push({
+            filename: file.name,
             id: nanoid(),
+            mediaType: file.type,
             type: "file",
             url: URL.createObjectURL(file),
-            mediaType: file.type,
-            filename: file.name,
           });
         }
         return [...prev, ...next];

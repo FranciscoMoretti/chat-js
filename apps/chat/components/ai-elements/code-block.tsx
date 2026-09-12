@@ -31,7 +31,6 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
 });
 
 const lineNumberTransformer: ShikiTransformer = {
-  name: "line-numbers",
   line(node, line) {
     node.children.unshift({
       children: [{ type: "text", value: String(line) }],
@@ -49,6 +48,7 @@ const lineNumberTransformer: ShikiTransformer = {
       type: "element",
     });
   },
+  name: "line-numbers",
 };
 
 export const highlightCode = async (

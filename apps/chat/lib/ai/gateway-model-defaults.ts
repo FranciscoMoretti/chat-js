@@ -19,64 +19,64 @@ export const gatewayModelDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  workflows: {
-    chat: "openai/gpt-5-mini",
-    title: "openai/gpt-5-nano",
-    pdf: "openai/gpt-5-mini",
-    chatImageCompatible: "openai/gpt-4o-mini",
-  },
   tools: {
-    webSearch: {
-      enabled: false,
-    },
-    urlRetrieval: {
-      enabled: false,
+    code: {
+      edits: "openai/gpt-5-mini",
     },
     codeExecution: {
+      enabled: false,
+    },
+    deepResearch: {
+      allowClarification: true,
+      defaultModel: "google/gemini-2.5-flash-lite",
+      enabled: false,
+      finalReportModel: "google/gemini-3-flash",
+      maxConcurrentResearchUnits: 2,
+      maxResearcherIterations: 1,
+      maxSearchQueries: 2,
+    },
+    documents: {
+      enabled: true,
+      types: {
+        code: true,
+        sheet: true,
+        text: true,
+      },
+    },
+    followupSuggestions: {
+      default: "google/gemini-2.5-flash-lite",
+      enabled: false,
+    },
+    image: {
+      default: "google/gemini-3-pro-image",
       enabled: false,
     },
     mcp: {
       enabled: false,
     },
-    documents: {
-      enabled: true,
-      types: {
-        text: true,
-        code: true,
-        sheet: true,
-      },
-    },
-    followupSuggestions: {
-      enabled: false,
-      default: "google/gemini-2.5-flash-lite",
+    sheet: {
+      analyze: "openai/gpt-5-mini",
+      format: "openai/gpt-5-mini",
     },
     text: {
       polish: "openai/gpt-5-mini",
     },
-    sheet: {
-      format: "openai/gpt-5-mini",
-      analyze: "openai/gpt-5-mini",
-    },
-    code: {
-      edits: "openai/gpt-5-mini",
-    },
-    image: {
+    urlRetrieval: {
       enabled: false,
-      default: "google/gemini-3-pro-image",
     },
     video: {
-      enabled: false,
       default: "xai/grok-imagine-video",
-    },
-    deepResearch: {
       enabled: false,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      finalReportModel: "google/gemini-3-flash",
-      allowClarification: true,
-      maxResearcherIterations: 1,
-      maxConcurrentResearchUnits: 2,
-      maxSearchQueries: 2,
     },
+    webSearch: {
+      enabled: false,
+    },
+  },
+  workflows: {
+    chat: "openai/gpt-5-mini",
+    chatImageCompatible: "openai/gpt-4o-mini",
+    pdf: "openai/gpt-5-mini",
+    title: "openai/gpt-5-nano",
   },
 } satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
 export const gatewayCapabilities = { image: true, video: true };

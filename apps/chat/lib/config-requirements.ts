@@ -22,29 +22,29 @@ export const formatRequirementDescription = (
 export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
 > = {
-  image: imageGenerationEnvRequirement,
-  video: videoGenerationEnvRequirement,
-  urlRetrieval: urlRetrievalEnvRequirement,
-  webSearch: searchEnvRequirement,
+  codeExecution: codeExecutionEnvRequirement,
   deepResearch: searchEnvRequirement,
+  image: imageGenerationEnvRequirement,
   mcp: {
     description: "MCP_ENCRYPTION_KEY",
     options: [["MCP_ENCRYPTION_KEY"]],
   },
-  codeExecution: codeExecutionEnvRequirement,
+  urlRetrieval: urlRetrievalEnvRequirement,
+  video: videoGenerationEnvRequirement,
+  webSearch: searchEnvRequirement,
 };
 
 export const authEnvRequirements: Record<
   keyof AuthenticationConfig,
   EnvRequirement
 > = {
-  google: {
-    description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
-    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
-  },
   github: {
     description: "AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
     options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
+  },
+  google: {
+    description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
+    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
   },
   vercel: {
     description: "VERCEL_APP_CLIENT_ID, VERCEL_APP_CLIENT_SECRET",

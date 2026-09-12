@@ -39,6 +39,14 @@ const PureConnectorsDropdown = () => {
 
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
+      onError: (
+        _err,
+        _newData,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update connector");
+      },
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
@@ -51,10 +59,6 @@ const PureConnectorsDropdown = () => {
           );
         });
         return { prev };
-      },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update connector");
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });

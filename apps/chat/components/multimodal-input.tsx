@@ -717,6 +717,11 @@ const PureMultimodalInput = ({
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: acceptedTypes,
+    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
+    // Prevent click to open file dialog since we have the button
+    noClick: true,
+    noDrag: !attachmentsEnabled,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) {
         return;
@@ -752,11 +757,6 @@ const PureMultimodalInput = ({
         setUploadQueue([]);
       }
     },
-    // Prevent click to open file dialog since we have the button
-    noClick: true,
-    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
-    noDrag: !attachmentsEnabled,
-    accept: acceptedTypes,
   });
 
   const handleStop = useCallback(() => {

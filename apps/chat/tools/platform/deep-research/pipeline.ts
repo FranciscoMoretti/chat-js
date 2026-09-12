@@ -65,10 +65,10 @@ const clarifyWithUser = async (
   const truncatedMessages = truncateMessages(clarifyMessages, contextWindow);
 
   const response = await generateText({
+    maxOutputTokens: config.research_model_max_tokens,
+    messages: truncatedMessages,
     model,
     output: Output.object({ schema: ClarifyWithUserSchema }),
-    messages: truncatedMessages,
-    maxOutputTokens: config.research_model_max_tokens,
     ...createTelemetry("clarifyWithUser", ctx),
     abortSignal,
   });
@@ -133,10 +133,10 @@ const writeResearchBrief = async (
   const truncatedMessages = truncateMessages(briefMessages, contextWindow);
 
   const result = await generateText({
+    maxOutputTokens: config.research_model_max_tokens,
+    messages: truncatedMessages,
     model,
     output: Output.object({ schema: ResearchQuestionSchema }),
-    messages: truncatedMessages,
-    maxOutputTokens: config.research_model_max_tokens,
     ...createTelemetry("writeResearchBrief", ctx),
     abortSignal,
   });
@@ -245,8 +245,9 @@ const generateFinalReport = async (
 IMPORTANT: You MUST call the createTextDocument tool with the complete report content. Do not output the report as text - save it using the tool.`;
 
   const result = streamText({
-    model: await getLanguageModel(config.final_report_model as ModelId),
     instructions: systemPrompt,
+    maxOutputTokens: config.final_report_model_max_tokens,
+    model: await getLanguageModel(config.final_report_model as ModelId),
     prompt: `Write a comprehensive research report with the title "${reportTitle}" based on the following instructions and findings.
 
 ${truncatedReportPrompt}
@@ -255,7 +256,6 @@ To write the report, call the createTextDocument tool with:
 - title: "${reportTitle}"
 - content: the full markdown content of your report`,
     tools: { createTextDocument: reportTool },
-    maxOutputTokens: config.final_report_model_max_tokens,
     ...createTelemetry("finalReportGeneration", input),
     abortSignal,
   });

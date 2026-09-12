@@ -215,6 +215,14 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
+      onError: (
+        _err,
+        _newData,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update connector");
+      },
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
@@ -228,10 +236,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         });
         return { prev };
       },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update connector");
-      },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
       },
@@ -240,6 +244,14 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
+      onError: (
+        _err,
+        _data,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to uninstall connector");
+      },
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
@@ -251,16 +263,12 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         });
         return { prev };
       },
-      onError: (_err, _data, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to uninstall connector");
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey });
       },
       onSuccess: () => {
         toast.success("Connector uninstalled");
         router.push("/settings/connectors");
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -285,8 +293,8 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   const { data: connectionStatus } = useQuery({
     ...trpc.mcp.testConnection.queryOptions({ id: connectorId }),
     enabled: connector !== null,
-    staleTime: 30_000,
     retry: false,
+    staleTime: 30_000,
   });
 
   const isAuthenticated = authStatus?.isAuthenticated ?? false;

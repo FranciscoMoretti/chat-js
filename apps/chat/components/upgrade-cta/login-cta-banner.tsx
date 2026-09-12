@@ -54,10 +54,10 @@ export const LoginCtaBanner = ({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ opacity: 1, height: "auto" }}
+        animate={{ height: "auto", opacity: 1 }}
         className="w-full"
-        exit={{ opacity: 0, height: 0 }}
-        initial={{ opacity: 0, height: 0 }}
+        exit={{ height: 0, opacity: 0 }}
+        initial={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
         <div

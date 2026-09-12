@@ -58,6 +58,12 @@ const VARIANT_CONFIG: Record<
         </span>
       ),
   },
+  image: {
+    dismissible: false,
+    getClasses: () =>
+      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
+    getMessage: () => <span>Image models are not supported here yet.</span>,
+  },
   model: {
     dismissible: false,
     getClasses: () =>
@@ -73,12 +79,6 @@ const VARIANT_CONFIG: Record<
         </InternalLink>
       </span>
     ),
-  },
-  image: {
-    dismissible: false,
-    getClasses: () =>
-      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
-    getMessage: () => <span>Image models are not supported here yet.</span>,
   },
 };
 
@@ -120,10 +120,10 @@ export const LimitDisplay = ({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ opacity: 1, height: "auto" }}
+        animate={{ height: "auto", opacity: 1 }}
         className={cn("w-full", className)}
-        exit={{ opacity: 0, height: 0 }}
-        initial={{ opacity: 0, height: 0 }}
+        exit={{ height: 0, opacity: 0 }}
+        initial={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
         <div

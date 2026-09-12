@@ -308,88 +308,88 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
     }
 
     return {
-      id: undefined,
-      messages: initialMessages,
-      status: "ready" as const,
-      error: undefined,
-      _throttledMessages: [...initialMessages],
       _messageIndex: messageIndex,
-      _transientDataParts: new Map(),
       _scheduleThrottledMessagesUpdate: () => {
         throttledMessagesUpdater?.();
       },
-
-      // Chat helpers
-      sendMessage: undefined,
-      startRun: undefined,
-      regenerate: undefined,
-      stop: undefined,
-      resumeStream: undefined,
-      addToolResult: undefined,
-      clearError: undefined,
-
-      setId: (id) => {
-        markLastAction("chat:setId");
-        batchUpdates(() => set({ id }));
-      },
-
-      setMessages: (messages) => {
-        markLastAction("chat:setMessages");
+      _syncState: (newState) => {
+        markLastAction("chat:_syncState");
         batchUpdates(() => {
-          // Avoid unnecessary work if messages haven't changed
-          const currentState = get();
-          if (messages === currentState.messages) {
-            return;
-          }
-
-          currentState._messageIndex.update(messages);
-          set({
-            messages,
-            // Clear memoized selectors
-          });
-
-          // During streaming, update immediately for smooth text rendering
-          if (currentState.status === "streaming") {
-            // High priority for streaming updates
-            batchUpdates(() => {
-              const state = get();
-              const newThrottledMessages = [...state.messages];
-              state._messageIndex.update(newThrottledMessages);
-
-              set({
-                _throttledMessages: newThrottledMessages,
-              });
-            }, 1);
-          } else {
-            throttledMessagesUpdater?.();
-          }
+          set(
+            {
+              ...newState,
+              // Clear memoized selectors on sync
+            },
+            false
+            // 'syncFromUseChat',
+          );
         });
       },
-
-      setStatus: (status) => {
-        markLastAction("chat:setStatus");
-        batchUpdates(() => set({ status }));
+      _throttledMessages: [...initialMessages],
+      _transientDataParts: new Map(),
+      addToolResult: undefined,
+      clearError: undefined,
+      clearTransientDataParts: () => {
+        markLastAction("chat:clearTransientDataParts");
+        batchUpdates(() => set({ _transientDataParts: new Map() }));
       },
-
-      setError: (error) => {
-        markLastAction("chat:setError");
-        batchUpdates(() => set({ error }));
+      error: undefined,
+      getInternalMessages: () => {
+        const state = get();
+        return state.messages;
       },
-
-      setNewChat: (id, messages) => {
-        markLastAction("chat:setNewChat");
+      // Optimized getters
+      getLastMessageId: () => {
+        const state = get();
+        return state.messages.length > 0
+          ? state.messages[state.messages.length - 1].id
+          : null;
+      },
+      getMessageById: (id) => {
+        const state = get();
+        return state._messageIndex.getById(id);
+      },
+      getMessageCount: () => {
+        const state = get();
+        const messages = state._throttledMessages || state.messages;
+        return messages.length;
+      },
+      getMessageIds: () => {
+        const state = get();
+        return (state._throttledMessages || state.messages).map((m) => m.id);
+      },
+      getMessageIndexById: (id) => {
+        const state = get();
+        return state._messageIndex.getIndexById(id);
+      },
+      getMessagesSlice: (start, end) => {
+        const state = get();
+        const messages = state._throttledMessages || state.messages;
+        return messages.slice(start, end);
+      },
+      getThrottledMessages: () => {
+        const state = get();
+        return state._throttledMessages || state.messages;
+      },
+      getTransientDataPart: (type) => {
+        const state = get();
+        return state._transientDataParts.get(type);
+      },
+      id: undefined,
+      messages: initialMessages,
+      popMessage: () => {
+        markLastAction("chat:popMessage");
         batchUpdates(() => {
-          get()._messageIndex.update(messages);
-          set({
-            error: undefined,
-            id,
-            messages,
-            status: "ready",
+          set((state) => {
+            const messages = state.messages.slice(0, -1);
+            state._messageIndex.update(messages);
+            return {
+              messages,
+            };
           });
           throttledMessagesUpdater?.();
         });
       },
-
       pushMessage: (message) => {
         markLastAction("chat:pushMessage");
         batchUpdates(() => {
@@ -419,21 +419,24 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           }
         });
       },
-
-      popMessage: () => {
-        markLastAction("chat:popMessage");
+      regenerate: undefined,
+      // Effects
+      registerThrottledMessagesEffect: (effect: () => void) => {
+        throttledEffects.add(effect);
+        return () => {
+          throttledEffects.delete(effect);
+        };
+      },
+      removeTransientDataPart: (type) => {
+        markLastAction("chat:removeTransientDataPart");
         batchUpdates(() => {
           set((state) => {
-            const messages = state.messages.slice(0, -1);
-            state._messageIndex.update(messages);
-            return {
-              messages,
-            };
+            const newTransientDataParts = new Map(state._transientDataParts);
+            newTransientDataParts.delete(type);
+            return { _transientDataParts: newTransientDataParts };
           });
-          throttledMessagesUpdater?.();
         });
       },
-
       replaceMessage: (index, message) => {
         markLastAction("chat:replaceMessage");
         batchUpdates(() => {
@@ -464,7 +467,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           }
         });
       },
-
       replaceMessageById: (id, message) => {
         markLastAction("chat:replaceMessageById");
         batchUpdates(() => {
@@ -500,21 +502,6 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           }
         });
       },
-
-      _syncState: (newState) => {
-        markLastAction("chat:_syncState");
-        batchUpdates(() => {
-          set(
-            {
-              ...newState,
-              // Clear memoized selectors on sync
-            },
-            false
-            // 'syncFromUseChat',
-          );
-        });
-      },
-
       reset: () => {
         markLastAction("chat:reset");
         batchUpdates(() => {
@@ -538,60 +525,66 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           });
         });
       },
-
-      // Optimized getters
-      getLastMessageId: () => {
-        const state = get();
-        return state.messages.length > 0
-          ? state.messages[state.messages.length - 1].id
-          : null;
+      resumeStream: undefined,
+      // Chat helpers
+      sendMessage: undefined,
+      setError: (error) => {
+        markLastAction("chat:setError");
+        batchUpdates(() => set({ error }));
       },
-
-      getMessageIds: () => {
-        const state = get();
-        return (state._throttledMessages || state.messages).map((m) => m.id);
+      setId: (id) => {
+        markLastAction("chat:setId");
+        batchUpdates(() => set({ id }));
       },
+      setMessages: (messages) => {
+        markLastAction("chat:setMessages");
+        batchUpdates(() => {
+          // Avoid unnecessary work if messages haven't changed
+          const currentState = get();
+          if (messages === currentState.messages) {
+            return;
+          }
 
-      getThrottledMessages: () => {
-        const state = get();
-        return state._throttledMessages || state.messages;
+          currentState._messageIndex.update(messages);
+          set({
+            messages,
+            // Clear memoized selectors
+          });
+
+          // During streaming, update immediately for smooth text rendering
+          if (currentState.status === "streaming") {
+            // High priority for streaming updates
+            batchUpdates(() => {
+              const state = get();
+              const newThrottledMessages = [...state.messages];
+              state._messageIndex.update(newThrottledMessages);
+
+              set({
+                _throttledMessages: newThrottledMessages,
+              });
+            }, 1);
+          } else {
+            throttledMessagesUpdater?.();
+          }
+        });
       },
-
-      getInternalMessages: () => {
-        const state = get();
-        return state.messages;
+      setNewChat: (id, messages) => {
+        markLastAction("chat:setNewChat");
+        batchUpdates(() => {
+          get()._messageIndex.update(messages);
+          set({
+            error: undefined,
+            id,
+            messages,
+            status: "ready",
+          });
+          throttledMessagesUpdater?.();
+        });
       },
-
-      getMessageById: (id) => {
-        const state = get();
-        return state._messageIndex.getById(id);
+      setStatus: (status) => {
+        markLastAction("chat:setStatus");
+        batchUpdates(() => set({ status }));
       },
-
-      getMessageIndexById: (id) => {
-        const state = get();
-        return state._messageIndex.getIndexById(id);
-      },
-
-      getMessagesSlice: (start, end) => {
-        const state = get();
-        const messages = state._throttledMessages || state.messages;
-        return messages.slice(start, end);
-      },
-
-      getMessageCount: () => {
-        const state = get();
-        const messages = state._throttledMessages || state.messages;
-        return messages.length;
-      },
-
-      // Effects
-      registerThrottledMessagesEffect: (effect: () => void) => {
-        throttledEffects.add(effect);
-        return () => {
-          throttledEffects.delete(effect);
-        };
-      },
-
       // Transient data methods
       setTransientDataPart: (type, data) => {
         markLastAction("chat:setTransientDataPart");
@@ -604,27 +597,9 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           }));
         });
       },
-
-      getTransientDataPart: (type) => {
-        const state = get();
-        return state._transientDataParts.get(type);
-      },
-
-      removeTransientDataPart: (type) => {
-        markLastAction("chat:removeTransientDataPart");
-        batchUpdates(() => {
-          set((state) => {
-            const newTransientDataParts = new Map(state._transientDataParts);
-            newTransientDataParts.delete(type);
-            return { _transientDataParts: newTransientDataParts };
-          });
-        });
-      },
-
-      clearTransientDataParts: () => {
-        markLastAction("chat:clearTransientDataParts");
-        batchUpdates(() => set({ _transientDataParts: new Map() }));
-      },
+      startRun: undefined,
+      status: "ready" as const,
+      stop: undefined,
     };
   };
 };

@@ -119,27 +119,27 @@ export const chat = pgTable("Chat", {
 export type Chat = InferSelectModel<typeof chat>;
 
 export const message = pgTable("Message", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  activeStreamId: varchar("activeStreamId", { length: 64 }),
+  annotations: json("annotations"),
+  // parts column removed - parts are now stored in Part table
+  attachments: json("attachments").notNull(),
+  /** Timestamp when this message's stream was canceled by the user. Null means not canceled. */
+  canceledAt: timestamp("canceledAt"),
   chatId: uuid("chatId")
     .notNull()
     .references(() => chat.id, {
       onDelete: "cascade",
     }),
-  parentMessageId: uuid("parentMessageId"),
-  role: varchar("role").notNull(),
-  // parts column removed - parts are now stored in Part table
-  attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
-  annotations: json("annotations"),
-  selectedModel: json("selectedModel"),
-  selectedTool: varchar("selectedTool", { length: 256 }).default(""),
-  parallelGroupId: uuid("parallelGroupId"),
-  parallelIndex: integer("parallelIndex"),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
   isPrimaryParallel: boolean("isPrimaryParallel"),
   lastContext: json("lastContext"),
-  activeStreamId: varchar("activeStreamId", { length: 64 }),
-  /** Timestamp when this message's stream was canceled by the user. Null means not canceled. */
-  canceledAt: timestamp("canceledAt"),
+  parallelGroupId: uuid("parallelGroupId"),
+  parallelIndex: integer("parallelIndex"),
+  parentMessageId: uuid("parentMessageId"),
+  role: varchar("role").notNull(),
+  selectedModel: json("selectedModel"),
+  selectedTool: varchar("selectedTool", { length: 256 }).default(""),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;
@@ -170,42 +170,42 @@ export type DBMessage = InferSelectModel<typeof message>;
 export const part = pgTable(
   "Part",
   {
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    data_blob: json("data_blob"),
+    // Data fields (generic bucket for all data-* parts)
+    data_type: varchar("data_type"),
+    file_filename: varchar("file_filename"),
+    // File fields
+    file_mediaType: varchar("file_mediaType"),
+    file_url: varchar("file_url"),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     messageId: uuid("messageId")
       .notNull()
       .references(() => message.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
     order: integer("order").notNull().default(0),
-    type: varchar("type").notNull(),
-    // Text fields
-    text_text: text("text_text"),
-    // Reasoning fields
-    reasoning_text: text("reasoning_text"),
-    // File fields
-    file_mediaType: varchar("file_mediaType"),
-    file_filename: varchar("file_filename"),
-    file_url: varchar("file_url"),
-    // Source URL fields
-    source_url_sourceId: varchar("source_url_sourceId"),
-    source_url_url: varchar("source_url_url"),
-    source_url_title: varchar("source_url_title"),
-    // Source Document fields
-    source_document_sourceId: varchar("source_document_sourceId"),
-    source_document_mediaType: varchar("source_document_mediaType"),
-    source_document_title: varchar("source_document_title"),
-    source_document_filename: varchar("source_document_filename"),
-    // Tool fields (generic for all tool-* parts)
-    tool_name: varchar("tool_name"),
-    tool_toolCallId: varchar("tool_toolCallId"),
-    tool_state: varchar("tool_state"),
-    tool_input: json("tool_input"),
-    tool_output: json("tool_output"),
-    tool_errorText: varchar("tool_errorText"),
-    // Data fields (generic bucket for all data-* parts)
-    data_type: varchar("data_type"),
-    data_blob: json("data_blob"),
     // Provider metadata
     providerMetadata: json("providerMetadata"),
+    // Reasoning fields
+    reasoning_text: text("reasoning_text"),
+    source_document_filename: varchar("source_document_filename"),
+    source_document_mediaType: varchar("source_document_mediaType"),
+    // Source Document fields
+    source_document_sourceId: varchar("source_document_sourceId"),
+    source_document_title: varchar("source_document_title"),
+    // Source URL fields
+    source_url_sourceId: varchar("source_url_sourceId"),
+    source_url_title: varchar("source_url_title"),
+    source_url_url: varchar("source_url_url"),
+    // Text fields
+    text_text: text("text_text"),
+    tool_errorText: varchar("tool_errorText"),
+    tool_input: json("tool_input"),
+    // Tool fields (generic for all tool-* parts)
+    tool_name: varchar("tool_name"),
+    tool_output: json("tool_output"),
+    tool_state: varchar("tool_state"),
+    tool_toolCallId: varchar("tool_toolCallId"),
+    type: varchar("type").notNull(),
   },
   (t) => ({
     Part_message_id_idx: index("Part_message_id_idx").on(t.messageId),

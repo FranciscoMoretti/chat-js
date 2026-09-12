@@ -57,8 +57,8 @@ const CustomConnectorRow = ({
 
   const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
     ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
-    staleTime: 30_000,
     retry: false,
+    staleTime: 30_000,
   });
 
   const needsOAuth = connectionStatus?.needsAuth ?? false;
@@ -242,6 +242,14 @@ export const ConnectorsSettings = () => {
 
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
+      onError: (
+        _err,
+        _data,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to uninstall connector");
+      },
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
@@ -253,15 +261,11 @@ export const ConnectorsSettings = () => {
         });
         return { prev };
       },
-      onError: (_err, _data, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to uninstall connector");
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey });
       },
       onSuccess: () => {
         toast.success("Connector uninstalled");
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -269,9 +273,6 @@ export const ConnectorsSettings = () => {
   const { mutate: disconnectConnector, isPending: isDisconnecting } =
     useMutation(
       trpc.mcp.disconnect.mutationOptions({
-        onSuccess: () => {
-          toast.success("Disconnected");
-        },
         onError: (err) => {
           toast.error(err.message || "Failed to disconnect");
         },
@@ -283,6 +284,9 @@ export const ConnectorsSettings = () => {
           queryClient.invalidateQueries({
             queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
           });
+        },
+        onSuccess: () => {
+          toast.success("Disconnected");
         },
       })
     );

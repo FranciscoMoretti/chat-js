@@ -28,7 +28,7 @@ export const ResearchTask = ({
         opacity: 1,
         transition: {
           height: { duration: 0.2, ease: "easeOut" },
-          opacity: { duration: 0.15, delay: 0.05 },
+          opacity: { delay: 0.05, duration: 0.15 },
         },
       }}
       exit={{

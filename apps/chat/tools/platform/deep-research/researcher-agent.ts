@@ -33,12 +33,12 @@ const compressResearch = async (
   );
   const truncatedMessages = truncateMessages(messages, contextWindow);
   const response = await generateText({
-    model,
-    messages: truncatedMessages,
     maxOutputTokens: config.compression_model_max_tokens,
+    messages: truncatedMessages,
+    model,
     ...createTelemetry("compressResearch", options),
-    maxRetries: 3,
     abortSignal,
+    maxRetries: 3,
   });
   if (response.usage) {
     options.costAccumulator?.addLLMCost(
@@ -77,13 +77,13 @@ export const runResearcher = async (
   });
 
   const researcherAgent = new ToolLoopAgent({
-    model,
     instructions: researchSystemPrompt({
       date: getTodayStr(),
       max_search_queries: config.search_api_max_queries,
       mcp_prompt: config.mcp_prompt || "",
     }),
-    tools,
+    maxOutputTokens: config.research_model_max_tokens,
+    model,
     prepareStep: () => ({
       toolsContext: Object.fromEntries(
         Object.keys(tools).map((name) => [
@@ -97,7 +97,7 @@ export const runResearcher = async (
         ])
       ),
     }),
-    maxOutputTokens: config.research_model_max_tokens,
+    tools,
     ...createTelemetry("researcher", options),
     onStepEnd: ({ usage }) => {
       if (usage) {

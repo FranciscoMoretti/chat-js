@@ -179,8 +179,8 @@ interface DiffEditorProps {
 export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
   const initialConfig = {
     ...createEditorConfig(),
-    nodes: [DiffTextNode],
     editable: false,
+    nodes: [DiffTextNode],
   };
 
   return (

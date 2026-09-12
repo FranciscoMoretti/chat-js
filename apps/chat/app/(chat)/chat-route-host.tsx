@@ -247,8 +247,8 @@ const getRouteRuntimeCreationRequest = ({
       runtimeInput: createAppRuntimeInput({
         bootstrap: true,
         initialMessages,
-        initialTree,
         initialTool,
+        initialTree,
         runtimeId,
       }),
     };
@@ -349,14 +349,14 @@ const HostedChatRoute = ({ route }: { route: HostedParsedChatRoute }) => {
       getRouteRuntimeCreationRequest({
         existingRuntime,
         initialMessages: persistedInitialState.initialMessages,
-        initialTree: persistedInitialState.initialTree,
         initialTool: persistedInitialState.initialTool,
+        initialTree: persistedInitialState.initialTree,
         persistedChat,
         persistedMessages,
         persistedRoute,
         project: projectQuery.data,
-        runtimeId,
         route,
+        runtimeId,
       }),
     [
       existingRuntime,

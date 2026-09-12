@@ -40,11 +40,11 @@ export const DefaultModelProvider = ({
       try {
         // Update cookies for persistence
         await fetch("/api/chat-model", {
-          method: "POST",
+          body: JSON.stringify({ model: modelId }),
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ model: modelId }),
+          method: "POST",
         });
       } catch (error) {
         console.error("Failed to save chat model:", error);

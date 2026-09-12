@@ -11,12 +11,12 @@ import { CodeExecution as renderer5 } from "./vercel-code-execution/renderer";
 import { WordCountRenderer as renderer6 } from "./word-count/renderer";
 
 const installed = {
+  "tool-codeExecution": renderer5,
   "tool-generateImage": renderer0,
   "tool-generateVideo": renderer1,
   "tool-getWeather": renderer2,
   "tool-retrieveUrl": renderer3,
   "tool-webSearch": renderer4,
-  "tool-codeExecution": renderer5,
   "tool-wordCount": renderer6,
 };
 for (const key of Object.keys(customUi)) {

@@ -31,6 +31,14 @@ export const ModelsTable = ({
 
   const { mutate: setModelEnabled } = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
+      onError: (
+        _err,
+        _newData,
+        context: { prev: typeof preferences } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update model preference");
+      },
       onMutate: (newData) => {
         const prev = queryClient.getQueryData(queryKey);
         queryClient.setQueryData(queryKey, (old: typeof preferences) => {
@@ -44,19 +52,15 @@ export const ModelsTable = ({
           return [
             ...old,
             {
-              modelId: newData.modelId,
-              enabled: newData.enabled,
-              userId: "",
               createdAt: new Date(),
+              enabled: newData.enabled,
+              modelId: newData.modelId,
               updatedAt: new Date(),
+              userId: "",
             },
           ];
         });
         return { prev };
-      },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update model preference");
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey });

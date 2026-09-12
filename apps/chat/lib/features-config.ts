@@ -11,13 +11,21 @@ interface FeatureConfig {
 }
 
 export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
-  reasoning: {
-    category: "capability",
-    description: "Advanced reasoning capabilities",
-    enabled: true,
-    icon: Brain,
-    key: "reasoning",
-    name: "Reasoning",
+  audioInput: {
+    category: "input",
+    description: "Supports audio input",
+    enabled: false,
+    icon: Mic,
+    key: "audioInput",
+    name: "Audio Input",
+  },
+  audioOutput: {
+    category: "output",
+    description: "Supports audio generation",
+    enabled: false,
+    icon: Mic,
+    key: "audioOutput",
+    name: "Audio Output",
   },
   functionCalling: {
     category: "capability",
@@ -35,22 +43,6 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     key: "imageInput",
     name: "Vision",
   },
-  pdfInput: {
-    category: "input",
-    description: "Supports PDF input",
-    enabled: true,
-    icon: FileText,
-    key: "pdfInput",
-    name: "PDF",
-  },
-  audioInput: {
-    category: "input",
-    description: "Supports audio input",
-    enabled: false,
-    icon: Mic,
-    key: "audioInput",
-    name: "Audio Input",
-  },
   imageOutput: {
     category: "output",
     description: "Supports image generation",
@@ -59,16 +51,36 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     key: "imageOutput",
     name: "Image Output",
   },
-  audioOutput: {
-    category: "output",
-    description: "Supports audio generation",
-    enabled: false,
-    icon: Mic,
-    key: "audioOutput",
-    name: "Audio Output",
+  pdfInput: {
+    category: "input",
+    description: "Supports PDF input",
+    enabled: true,
+    icon: FileText,
+    key: "pdfInput",
+    name: "PDF",
+  },
+  reasoning: {
+    category: "capability",
+    description: "Advanced reasoning capabilities",
+    enabled: true,
+    icon: Brain,
+    key: "reasoning",
+    name: "Reasoning",
   },
 } as const;
 
+const FEATURE_ORDER = [
+  "reasoning",
+  "functionCalling",
+  "imageInput",
+  "pdfInput",
+  "audioInput",
+  "imageOutput",
+  "audioOutput",
+] as const;
+
 // Get only enabled features
 export const getEnabledFeatures = () =>
-  Object.values(AVAILABLE_FEATURES).filter((feature) => feature.enabled);
+  FEATURE_ORDER.map((key) => AVAILABLE_FEATURES[key]).filter(
+    (feature) => feature.enabled
+  );

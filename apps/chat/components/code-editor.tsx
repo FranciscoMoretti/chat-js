@@ -114,12 +114,12 @@ const PureCodeEditor = ({
 
       if (status === "streaming" || currentContent !== content) {
         const transaction = editorRef.current.state.update({
+          annotations: [Transaction.remote.of(true)],
           changes: {
             from: 0,
             insert: content,
             to: currentContent.length,
           },
-          annotations: [Transaction.remote.of(true)],
         });
 
         editorRef.current.dispatch(transaction);

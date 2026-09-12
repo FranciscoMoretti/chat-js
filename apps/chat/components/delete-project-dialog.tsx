@@ -35,14 +35,14 @@ export const DeleteProjectDialog = ({
 
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
+      onError: () => {
+        toast.error("Failed to delete project");
+      },
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.project.list.queryKey(),
         });
         toast.success("Project deleted");
-      },
-      onError: () => {
-        toast.error("Failed to delete project");
       },
     })
   );

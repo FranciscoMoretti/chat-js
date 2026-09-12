@@ -70,9 +70,17 @@ export const useDeleteChat = () => {
   const trpc = useTRPC();
   const qc = useQueryClient();
   const allChatsKey = trpc.chat.getAllChats.queryKey();
-  // Keep onMutate before callbacks that consume its inferred rollback context.
   const deleteMutation = useMutation({
     mutationFn: trpc.chat.deleteChat.mutationOptions().mutationFn,
+    onError: (
+      _err,
+      _vars,
+      ctx: { previousAllChats?: [QueryKey, UIChat[] | undefined][] } | undefined
+    ) => {
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
+      }
+    },
     onMutate: async ({
       chatId,
     }): Promise<{
@@ -89,11 +97,6 @@ export const useDeleteChat = () => {
         (old) => old?.filter((c) => c.id !== chatId) ?? old
       );
       return { previousAllChats: snapshot };
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previousAllChats) {
-        restoreAllChatsQueries(qc, ctx.previousAllChats);
-      }
     },
     onSettled: () => {
       qc.invalidateQueries({ exact: false, queryKey: allChatsKey });
@@ -131,6 +134,27 @@ export const useRenameChat = () => {
   const allChatsKey = trpc.chat.getAllChats.queryKey();
   return useMutation({
     mutationFn: trpc.chat.renameChat.mutationOptions().mutationFn,
+    onError: (
+      _err,
+      { chatId },
+      ctx:
+        | {
+            previousAllChats?: [QueryKey, UIChat[] | undefined][];
+            previousChatById?: UIChat | null;
+          }
+        | undefined
+    ) => {
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
+      }
+      if (ctx?.previousChatById !== undefined) {
+        qc.setQueryData(
+          trpc.chat.getChatById.queryKey({ chatId }),
+          ctx.previousChatById ?? undefined
+        );
+      }
+      toast.error("Failed to rename chat");
+    },
     onMutate: async ({
       chatId,
       title,
@@ -160,18 +184,6 @@ export const useRenameChat = () => {
       }
       return { previousAllChats, previousChatById };
     },
-    onError: (_err, { chatId }, ctx) => {
-      if (ctx?.previousAllChats) {
-        restoreAllChatsQueries(qc, ctx.previousAllChats);
-      }
-      if (ctx?.previousChatById !== undefined) {
-        qc.setQueryData(
-          trpc.chat.getChatById.queryKey({ chatId }),
-          ctx.previousChatById ?? undefined
-        );
-      }
-      toast.error("Failed to rename chat");
-    },
     onSettled: async (_data, _error, { chatId }) => {
       await Promise.all([
         qc.invalidateQueries({ exact: false, queryKey: allChatsKey }),
@@ -187,6 +199,16 @@ export const useRenameProject = () => {
   const trpc = useTRPC();
   return useMutation({
     ...trpc.project.update.mutationOptions(),
+    onError: (
+      _error,
+      _variables,
+      ctx: { previous: Project[] | undefined } | undefined
+    ) => {
+      if (ctx?.previous) {
+        qc.setQueryData(trpc.project.list.queryKey(), ctx.previous);
+      }
+      toast.error("Failed to rename project");
+    },
     onMutate: async (variables) => {
       const listKey = trpc.project.list.queryKey();
       await qc.cancelQueries({ queryKey: listKey });
@@ -204,12 +226,6 @@ export const useRenameProject = () => {
       }
       return { previous };
     },
-    onError: (_error, _variables, ctx) => {
-      if (ctx?.previous) {
-        qc.setQueryData(trpc.project.list.queryKey(), ctx.previous);
-      }
-      toast.error("Failed to rename project");
-    },
     onSettled: () =>
       qc.invalidateQueries({ queryKey: trpc.project.list.queryKey() }),
     onSuccess: () => toast.success("Project renamed"),
@@ -223,6 +239,16 @@ export const usePinChat = () => {
   const allChatsKey = trpc.chat.getAllChats.queryKey();
   return useMutation({
     mutationFn: trpc.chat.setIsPinned.mutationOptions().mutationFn,
+    onError: (
+      _err,
+      _vars,
+      ctx: { previousAllChats?: [QueryKey, UIChat[] | undefined][] } | undefined
+    ) => {
+      if (ctx?.previousAllChats) {
+        restoreAllChatsQueries(qc, ctx.previousAllChats);
+      }
+      toast.error("Failed to pin chat");
+    },
     onMutate: async ({
       chatId,
       isPinned,
@@ -241,12 +267,6 @@ export const usePinChat = () => {
           old?.map((c) => (c.id === chatId ? { ...c, isPinned } : c)) ?? old
       );
       return { previousAllChats: snapshot };
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previousAllChats) {
-        restoreAllChatsQueries(qc, ctx.previousAllChats);
-      }
-      toast.error("Failed to pin chat");
     },
     onSettled: async (_data, _error, { chatId }) => {
       await Promise.all([
@@ -357,6 +377,18 @@ export const useSaveDocument = (
   const userId = session?.user?.id;
   return useMutation({
     mutationFn: trpc.document.saveDocument.mutationOptions().mutationFn,
+    onError: (
+      _err,
+      newDoc,
+      ctx: { previousDocuments: Document[] } | undefined
+    ) => {
+      if (ctx?.previousDocuments) {
+        qc.setQueryData(
+          trpc.document.getDocuments.queryKey({ id: newDoc.id }),
+          ctx.previousDocuments
+        );
+      }
+    },
     onMutate: async (
       newDoc
     ): Promise<{
@@ -378,14 +410,6 @@ export const useSaveDocument = (
         } as Document,
       ]);
       return { previousDocuments };
-    },
-    onError: (_err, newDoc, ctx) => {
-      if (ctx?.previousDocuments) {
-        qc.setQueryData(
-          trpc.document.getDocuments.queryKey({ id: newDoc.id }),
-          ctx.previousDocuments
-        );
-      }
     },
     onSettled: (result, error, params) => {
       qc.invalidateQueries({

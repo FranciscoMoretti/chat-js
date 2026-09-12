@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 import "streamdown/styles.css";
 
-const plugins = { code, mermaid, math };
+const plugins = { code, math, mermaid };
 
 type ResponseProps = ComponentProps<typeof Streamdown>;
 

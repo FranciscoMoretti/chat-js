@@ -66,16 +66,16 @@ const PureSpreadsheetEditor = ({
     };
 
     const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
-      key: i.toString(),
-      name: String.fromCodePoint(65 + i),
-      renderEditCell: isReadonly ? undefined : textEditor,
-      width: 120,
       cellClass: cn("bg-background text-foreground border-t", {
         "border-l": i !== 0,
       }),
       headerCellClass: cn("bg-muted text-foreground border-t", {
         "border-l": i !== 0,
       }),
+      key: i.toString(),
+      name: String.fromCodePoint(65 + i),
+      renderEditCell: isReadonly ? undefined : textEditor,
+      width: 120,
     }));
 
     return [rowNumberColumn, ...dataColumns];

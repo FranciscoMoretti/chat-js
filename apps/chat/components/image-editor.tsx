@@ -19,8 +19,8 @@ export const ImageEditor = ({
 }: ImageEditorProps) => (
   <div
     className={cn("flex w-full flex-row items-center justify-center", {
-      "h-[calc(100dvh-60px)]": !isInline,
       "h-[200px]": isInline,
+      "h-[calc(100dvh-60px)]": !isInline,
     })}
   >
     {status === "streaming" ? (

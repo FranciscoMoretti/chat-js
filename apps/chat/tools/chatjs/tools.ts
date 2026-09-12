@@ -11,12 +11,12 @@ import { codeExecution as tool5 } from "./vercel-code-execution/tool";
 import { wordCount as tool6 } from "./word-count/tool";
 
 const installed = {
+  codeExecution: tool5,
   generateImage: tool0,
   generateVideo: tool1,
   getWeather: tool2,
   retrieveUrl: tool3,
   webSearch: tool4,
-  codeExecution: tool5,
   wordCount: tool6,
 } satisfies ToolSet;
 for (const key of Object.keys(customTools)) {
