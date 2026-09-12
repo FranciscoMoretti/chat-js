@@ -7,14 +7,14 @@ import type { ChatMessage, UiToolName } from "./ai/types";
 
 // Helper functions for type conversion
 export const dbChatToUIChat = (chat: Chat): UIChat => ({
-  id: chat.id,
   createdAt: chat.createdAt,
-  updatedAt: chat.updatedAt,
-  title: chat.title,
-  visibility: chat.visibility,
-  userId: chat.userId,
+  id: chat.id,
   isPinned: chat.isPinned,
   projectId: chat.projectId ?? null,
+  title: chat.title,
+  updatedAt: chat.updatedAt,
+  userId: chat.userId,
+  visibility: chat.visibility,
 });
 
 const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
@@ -24,21 +24,21 @@ const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
   // Parts are stored in Part table - use getAllMessagesByChatId instead.
   ({
     id: message.id,
-    parts: [],
-    role: message.role as ChatMessage["role"],
     metadata: {
-      createdAt: message.createdAt,
       activeStreamId: message.activeStreamId,
+      createdAt: message.createdAt,
+      isPrimaryParallel: message.isPrimaryParallel,
       parentMessageId: message.parentMessageId,
       parallelGroupId: message.parallelGroupId,
       parallelIndex: message.parallelIndex,
-      isPrimaryParallel: message.isPrimaryParallel,
       selectedModel: isSelectedModelValue(message.selectedModel)
         ? message.selectedModel
         : ("" as ModelId),
       selectedTool: (message.selectedTool as UiToolName | null) || undefined,
       usage: message.lastContext as ChatMessage["metadata"]["usage"],
     },
+    parts: [],
+    role: message.role as ChatMessage["role"],
   });
 
 export const chatMessageToDbMessage = (
@@ -61,20 +61,20 @@ export const chatMessageToDbMessage = (
 
   // Parts are stored in Part table, not in Message.parts
   return {
-    id: message.id,
-    chatId,
-    role: message.role,
-    attachments: [],
-    lastContext: message.metadata?.usage || null,
-    createdAt,
+    activeStreamId: message.metadata?.activeStreamId || null,
     annotations: [],
+    attachments: [],
+    canceledAt: null,
+    chatId,
+    createdAt,
+    id: message.id,
+    isPrimaryParallel: message.metadata?.isPrimaryParallel ?? null,
+    lastContext: message.metadata?.usage || null,
     parentMessageId,
-    selectedModel,
-    selectedTool: message.metadata?.selectedTool || null,
     parallelGroupId: message.metadata?.parallelGroupId || null,
     parallelIndex: message.metadata?.parallelIndex ?? null,
-    isPrimaryParallel: message.metadata?.isPrimaryParallel ?? null,
-    activeStreamId: message.metadata?.activeStreamId || null,
-    canceledAt: null,
+    role: message.role,
+    selectedModel,
+    selectedTool: message.metadata?.selectedTool || null,
   };
 };

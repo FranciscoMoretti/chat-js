@@ -31,11 +31,11 @@ const compressImageIfNeeded = async (
   const outputMime = file.type;
 
   const options = {
+    fileType: outputMime,
+    initialQuality: Math.min(0.9, Math.max(minQuality, 0.1)),
     maxSizeMB: maxBytes / (1024 * 1024),
     maxWidthOrHeight: maxDimension,
     useWebWorker: true,
-    fileType: outputMime,
-    initialQuality: Math.min(0.9, Math.max(minQuality, 0.1)),
   } as const;
 
   try {
@@ -44,8 +44,8 @@ const compressImageIfNeeded = async (
       maybeResult instanceof File
         ? maybeResult
         : new File([maybeResult], file.name, {
-            type: outputMime,
             lastModified: Date.now(),
+            type: outputMime,
           });
     if (resultBlob.size >= file.size) {
       return file;
@@ -61,8 +61,8 @@ const compressImageIfNeeded = async (
       ext = outputMime.split("/")[1] ?? "jpg";
     }
     return new File([resultBlob], `${base}.${ext}`, {
-      type: outputMime,
       lastModified: Date.now(),
+      type: outputMime,
     });
   } catch {
     return file;
@@ -106,5 +106,5 @@ export const processFilesForUpload = async (
     }
   }
 
-  return { processedImages, pdfFiles, stillOversized, unsupportedFiles };
+  return { pdfFiles, processedImages, stillOversized, unsupportedFiles };
 };
