@@ -1,7 +1,14 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { codeToHtml } from "shiki";
 import type { BundledLanguage, ShikiTransformer } from "shiki";
@@ -100,8 +107,10 @@ export const CodeBlock = ({
     };
   }, [code, language, showLineNumbers]);
 
+  const contextValue = useMemo(() => ({ code }), [code]);
+
   return (
-    <CodeBlockContext.Provider value={{ code }}>
+    <CodeBlockContext.Provider value={contextValue}>
       <div
         className={cn(
           "group bg-background text-foreground relative w-full overflow-hidden rounded-md border",

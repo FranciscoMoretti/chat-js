@@ -65,11 +65,13 @@ export const ChatModelsProvider = ({
     (modelId: string) => allModelsMap.get(modelId),
     [allModelsMap]
   );
+  const contextValue = useMemo(
+    () => ({ allModels: models, getModelById, models: filteredModels }),
+    [filteredModels, getModelById, models]
+  );
 
   return (
-    <ChatModelsContext.Provider
-      value={{ allModels: models, getModelById, models: filteredModels }}
-    >
+    <ChatModelsContext.Provider value={contextValue}>
       {children}
     </ChatModelsContext.Provider>
   );

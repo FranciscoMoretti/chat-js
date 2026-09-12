@@ -797,6 +797,41 @@ const PureMultimodalInput = ({
     stopStreamMutation,
     thread,
   ]);
+  const composerContextValue = useMemo(
+    () => ({
+      acceptAll,
+      acceptFiles,
+      acceptImages,
+      autoFocus,
+      fileInputRef,
+      isEditMode,
+      isModelDisallowedForAnonymous,
+      onPaste: handlePaste,
+      onStop: handleStop,
+      parentMessageId,
+      removeAttachment,
+      status: responseAwareStatus,
+      submission,
+      submitForm,
+      uploadQueue,
+    }),
+    [
+      acceptAll,
+      acceptFiles,
+      acceptImages,
+      autoFocus,
+      handlePaste,
+      handleStop,
+      isEditMode,
+      isModelDisallowedForAnonymous,
+      parentMessageId,
+      removeAttachment,
+      responseAwareStatus,
+      submission,
+      submitForm,
+      uploadQueue,
+    ]
+  );
 
   return (
     <div className="relative">
@@ -842,25 +877,7 @@ const PureMultimodalInput = ({
             </div>
           )}
 
-          <ComposerContext.Provider
-            value={{
-              acceptAll,
-              acceptFiles,
-              acceptImages,
-              autoFocus,
-              fileInputRef,
-              isEditMode,
-              isModelDisallowedForAnonymous,
-              onPaste: handlePaste,
-              onStop: handleStop,
-              parentMessageId,
-              removeAttachment,
-              status: responseAwareStatus,
-              submission,
-              submitForm,
-              uploadQueue,
-            }}
-          >
+          <ComposerContext.Provider value={composerContextValue}>
             {children}
           </ComposerContext.Provider>
         </PromptInput>
