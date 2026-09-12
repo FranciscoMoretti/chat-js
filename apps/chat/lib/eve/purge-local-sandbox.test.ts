@@ -3,11 +3,21 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ remove: vi.fn(), removeSandbox: vi.fn() }));
+const mocks = vi.hoisted(() => ({ remove: vi.fn(), destroySandbox: vi.fn() }));
 const remove = mocks.remove;
 vi.mock("microsandbox", () => ({
   Snapshot: { remove: mocks.remove },
-  Sandbox: { get: async () => ({ remove: mocks.removeSandbox }) },
+  Sandbox: {
+    get: async () => ({
+      remove: () =>
+        Promise.reject(
+          Object.assign(new Error("sandbox still running"), {
+            code: "sandboxStillRunning",
+          })
+        ),
+      destroy: mocks.destroySandbox,
+    }),
+  },
 }));
 
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
@@ -15,7 +25,7 @@ import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 const directories: string[] = [];
 beforeEach(() => {
   remove.mockReset();
-  mocks.removeSandbox.mockReset();
+  mocks.destroySandbox.mockReset();
 });
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
@@ -64,7 +74,7 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "provider unavailable" })],
   });
   expect(JSON.parse(await readFile(input.path, "utf8"))).toEqual(input.record);
-  mocks.removeSandbox.mockRejectedValueOnce(
+  mocks.destroySandbox.mockRejectedValueOnce(
     Object.assign(new Error("sandbox not found"), { code: "sandboxNotFound" })
   );
   remove.mockRejectedValueOnce(
@@ -93,7 +103,7 @@ test("validates all records before deletion and rejects another session or share
     await writeFile(input.path, JSON.stringify(record));
     await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
     expect(remove).not.toHaveBeenCalled();
-    expect(mocks.removeSandbox).not.toHaveBeenCalled();
+    expect(mocks.destroySandbox).not.toHaveBeenCalled();
   }
   await writeFile(input.path, JSON.stringify(input.record));
   await writeFile(
@@ -102,7 +112,7 @@ test("validates all records before deletion and rejects another session or share
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
   expect(remove).not.toHaveBeenCalled();
-  expect(mocks.removeSandbox).not.toHaveBeenCalled();
+  expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
 
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
@@ -115,12 +125,12 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   await expect(purgeLocalEveSandboxes([parent, child])).rejects.toThrow(
     "ownership"
   );
-  expect(mocks.removeSandbox).not.toHaveBeenCalled();
+  expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
   await writeFile(child.path, JSON.stringify(child.record));
   let childRemoved = false;
   remove.mockImplementation((name: string) => {
-    if (mocks.removeSandbox.mock.calls.length !== 2) {
+    if (mocks.destroySandbox.mock.calls.length !== 2) {
       throw new Error("All family VMs must be removed first");
     }
     if (name === parent.snapshotName && !childRemoved) {
@@ -164,7 +174,7 @@ test("retains resources created before metadata and across replacements", async 
       snapshotNames: [snapshot, input.snapshotName],
     },
   ]);
-  expect(mocks.removeSandbox).toHaveBeenCalledTimes(2);
+  expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
   await writeFile(
     join(directory, `${snapshot}.json`),
     JSON.stringify({
@@ -177,7 +187,7 @@ test("retains resources created before metadata and across replacements", async 
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow(
     "ownership is inconsistent"
   );
-  expect(mocks.removeSandbox).toHaveBeenCalledTimes(2);
+  expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
 });
 
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
@@ -213,6 +223,6 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   await writeFile(ownerPath, JSON.stringify(owner));
   await writeFile(input.path, JSON.stringify(input.record));
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
-  expect(mocks.removeSandbox).not.toHaveBeenCalled();
+  expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
 });

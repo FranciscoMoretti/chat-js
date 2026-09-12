@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
-  serverExternalPackages: ["pino", "pino-pretty"],
+  serverExternalPackages: ["pino", "pino-pretty", "microsandbox"],
   images: {
     remotePatterns: [
       {

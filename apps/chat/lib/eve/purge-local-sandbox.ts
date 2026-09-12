@@ -42,7 +42,9 @@ export async function purgeLocalEveSandboxes(
   )) {
     try {
       const sandbox = await Sandbox.get(name);
-      await sandbox.remove();
+      // Retirement fences execution but can leave the VM alive. Destroy stops
+      // and removes this exact handle, refusing a same-name replacement.
+      await sandbox.destroy();
     } catch (error) {
       if (
         !(
