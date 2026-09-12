@@ -1,16 +1,11 @@
 export const siteConfig = {
-  name: "ChatJS",
-  shortName: "ChatJS",
-  title: "ChatJS",
+  creator: "@franmoretti_",
+  demoUrl: "https://demo.chatjs.dev",
   description:
     "Open-source Next.js AI chat app starter with authentication, streaming, tool calling, and 120+ model integrations for production deployments.",
-  url: "https://chatjs.dev",
-  ogImage: "/chatjs_preview_light.png",
-  creator: "@franmoretti_",
-  githubUrl: "https://github.com/franciscomoretti/chat-js",
   desktopUrl: "https://github.com/franciscomoretti/chat-js/releases/latest",
-  demoUrl: "https://demo.chatjs.dev",
   docsUrl: "https://chatjs.dev/docs",
+  githubUrl: "https://github.com/franciscomoretti/chat-js",
   keywords: [
     "AI chat app starter",
     "Next.js AI chat template",
@@ -20,22 +15,27 @@ export const siteConfig = {
     "chatbot starter kit",
     "LLM app boilerplate",
   ],
+  name: "ChatJS",
+  ogImage: "/chatjs_preview_light.png",
+  shortName: "ChatJS",
+  title: "ChatJS",
+  url: "https://chatjs.dev",
 } as const;
 
 export const siteLinks = {
-  home: siteConfig.url,
-  threads: `${siteConfig.url}/threads`,
-  docs: siteConfig.docsUrl,
-  docsGettingStarted: `${siteConfig.docsUrl}/quickstart`,
+  demo: siteConfig.demoUrl,
   desktop: siteConfig.desktopUrl,
+  docs: siteConfig.docsUrl,
   docsDesktop: `${siteConfig.docsUrl}/platforms/desktop`,
+  docsDesktopLinux: `${siteConfig.docsUrl}/platforms/desktop#linux`,
   docsDesktopMac: `${siteConfig.docsUrl}/platforms/desktop#macos`,
   docsDesktopWindows: `${siteConfig.docsUrl}/platforms/desktop#windows`,
-  docsDesktopLinux: `${siteConfig.docsUrl}/platforms/desktop#linux`,
-  demo: siteConfig.demoUrl,
-  github: siteConfig.githubUrl,
-  sitemap: `${siteConfig.url}/sitemap.xml`,
+  docsGettingStarted: `${siteConfig.docsUrl}/quickstart`,
   docsSitemap: `${siteConfig.docsUrl}/sitemap.xml`,
+  github: siteConfig.githubUrl,
+  home: siteConfig.url,
+  sitemap: `${siteConfig.url}/sitemap.xml`,
+  threads: `${siteConfig.url}/threads`,
 } as const;
 
 export const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
