@@ -4,9 +4,8 @@ import type { UIToolInvocation } from "ai";
 import Image from "next/image";
 import { z } from "zod";
 
-import InteractiveChart, {
-  type BaseChart,
-} from "@/components/interactive-charts";
+import InteractiveChart from "@/components/interactive-charts";
+import type { BaseChart } from "@/components/interactive-charts";
 import { SandboxComposed } from "@/components/sandbox";
 
 import type { codeExecution } from "./tool";
@@ -27,22 +26,22 @@ const series = z.array(
 const chartSchema = z.discriminatedUnion("type", [
   z.object({
     ...chartLabels,
+    elements: series,
     type: z.literal("line"),
     x_scale: z.literal("datetime").optional(),
-    elements: series,
   }),
   z.object({
     ...chartLabels,
+    elements: series,
     type: z.literal("scatter"),
     x_scale: z.literal("datetime").optional(),
-    elements: series,
   }),
   z.object({
     ...chartLabels,
-    type: z.literal("bar"),
     elements: z.array(
       z.object({ group: z.string(), label: z.string(), value: z.number() })
     ),
+    type: z.literal("bar"),
   }),
 ]);
 const pngSchema = z.object({
@@ -50,12 +49,12 @@ const pngSchema = z.object({
   format: z.literal("png"),
 });
 
-export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
+export const CodeExecution = ({ tool }: { tool: CodeExecutionTool }) => {
   const args = tool.input ?? {
     code: "",
-    title: "",
-    language: "python",
     icon: "default",
+    language: "python",
+    title: "",
   };
   const result = tool.state === "output-available" ? tool.output : null;
   const parsedChart = chartSchema.safeParse(result?.chart);
@@ -95,4 +94,4 @@ export function CodeExecution({ tool }: { tool: CodeExecutionTool }) {
       )}
     </div>
   );
-}
+};

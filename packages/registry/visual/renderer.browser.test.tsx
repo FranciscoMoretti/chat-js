@@ -10,18 +10,18 @@ import "../../../apps/chat/app/globals.css";
 
 vi.mock(
   "@/components/interactive-charts",
-  async () => import("../../../apps/chat/components/interactive-chart-impl")
+  () => import("../../../apps/chat/components/interactive-chart-impl")
 );
 
 // Focus this capture on chart output, independently of the code editor.
 vi.mock("@/components/sandbox", () => ({ SandboxComposed: () => null }));
 
 const malformed = [
-  { type: "line", elements: [null] },
-  { type: "scatter", elements: [{ label: "bad", points: "invalid" }] },
-  { type: "line", elements: [{ label: "bad", points: [[1, "invalid"]] }] },
-  { type: "bar", elements: [{ group: "g", label: "bad", value: "invalid" }] },
-  { type: "unknown", elements: [] },
+  { elements: [null], type: "line" },
+  { elements: [{ label: "bad", points: "invalid" }], type: "scatter" },
+  { elements: [{ label: "bad", points: [[1, "invalid"]] }], type: "line" },
+  { elements: [{ group: "g", label: "bad", value: "invalid" }], type: "bar" },
+  { elements: [], type: "unknown" },
 ];
 
 test("chart output validates shapes and fits PNG output", async () => {
@@ -35,18 +35,18 @@ test("chart output validates shapes and fits PNG output", async () => {
   canvas.width = 600;
   canvas.height = 200;
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas unavailable");
+  if (!context) {
+    throw new Error("Canvas unavailable");
+  }
   context.fillStyle = "#e5e7eb";
   context.fillRect(0, 0, 600, 200);
   context.fillStyle = "#2563eb";
   context.fillRect(40, 50, 140, 150);
   context.fillRect(220, 10, 140, 190);
   context.fillRect(400, 90, 140, 110);
-  const png = { format: "png", base64: canvas.toDataURL().split(",")[1] };
+  const png = { base64: canvas.toDataURL().split(",")[1], format: "png" };
   const valid = [
     ...["line", "scatter"].map((type) => ({
-      type,
-      title: type,
       elements: [
         {
           label: "Series",
@@ -56,15 +56,17 @@ test("chart output validates shapes and fits PNG output", async () => {
           ],
         },
       ],
+      title: type,
+      type,
     })),
     {
-      type: "bar",
-      title: "bar",
       elements: [{ group: "Series", label: "A", value: 4 }],
+      title: "bar",
+      type: "bar",
     },
   ];
   const outputs = [...malformed, ...valid, png];
-  await act(async () => {
+  await act(() => {
     root.render(
       <>
         {outputs.map((chart, index) => (
@@ -75,10 +77,10 @@ test("chart output validates shapes and fits PNG output", async () => {
           >
             <CodeExecution
               tool={{
+                input: { code: "", language: "python", title: "Chart" },
+                output: { chart, message: "" },
                 state: "output-available",
                 toolCallId: `fixture-${index}`,
-                input: { title: "Chart", language: "python", code: "" },
-                output: { message: "", chart },
               }}
             />
           </section>
@@ -86,7 +88,7 @@ test("chart output validates shapes and fits PNG output", async () => {
       </>
     );
   });
-  for (let index = 0; index < malformed.length; index++) {
+  for (let index = 0; index < malformed.length; index += 1) {
     expect(
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
     ).toBe("");
@@ -113,11 +115,13 @@ test("chart output validates shapes and fits PNG output", async () => {
     )
     .toBe(true);
   const img = container.querySelector("img");
-  if (!img) throw new Error("PNG output missing");
+  if (!img) {
+    throw new Error("PNG output missing");
+  }
   await img.decode();
   expect(img.naturalWidth).toBe(600);
   expect(img.getBoundingClientRect().width).toBeLessThanOrEqual(900);
   await takeSnapshot("validated-chart-output");
-  await act(async () => root.unmount());
+  await act(() => root.unmount());
   container.remove();
 });
