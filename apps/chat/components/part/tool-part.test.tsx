@@ -4,6 +4,7 @@ const renderers = vi.hoisted(() => ({
   "tool-codeExecution": () => null,
   "tool-webSearch": () => null,
   "tool-generateImage": () => null,
+  "tool-generateVideo": () => null,
 }));
 vi.mock("@/lib/ai/tool-renderer-registry", () => ({
   isInstalledToolType: (type: string) => Object.hasOwn(renderers, type),
@@ -11,7 +12,6 @@ vi.mock("@/lib/ai/tool-renderer-registry", () => ({
 }));
 vi.mock("./deep-research", () => ({ DeepResearch: () => null }));
 vi.mock("./document-tool", () => ({ DocumentTool: () => null }));
-vi.mock("./generate-video", () => ({ GenerateVideo: () => null }));
 vi.mock("./read-document", () => ({ ReadDocument: () => null }));
 
 import { ToolPart } from "./tool-part";
@@ -20,6 +20,7 @@ it.each([
   "tool-codeExecution",
   "tool-webSearch",
   "tool-generateImage",
+  "tool-generateVideo",
 ] as const)("routes %s through the installed item's renderer", (type) => {
   const element = ToolPart({
     isReadonly: false,

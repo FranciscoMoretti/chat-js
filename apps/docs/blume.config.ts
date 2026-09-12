@@ -130,6 +130,7 @@ export default defineConfig({
             "/tools/get-weather",
             "/tools/retrieve-url",
             "/tools/generate-image",
+            "/tools/generate-video",
             "/tools/authoring",
           ],
         },

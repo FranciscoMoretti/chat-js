@@ -2,6 +2,7 @@ import { codeExecutionEnvRequirement } from "@/tools/chatjs/code-execution-confi
 import { imageGenerationEnvRequirement } from "@/tools/chatjs/image-generation-config";
 import { searchEnvRequirement } from "@/tools/chatjs/search-config";
 import { urlRetrievalEnvRequirement } from "@/tools/chatjs/url-retrieval-config";
+import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-config";
 
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
@@ -25,6 +26,7 @@ export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
 > = {
   image: imageGenerationEnvRequirement,
+  video: videoGenerationEnvRequirement,
   urlRetrieval: urlRetrievalEnvRequirement,
   webSearch: searchEnvRequirement,
   deepResearch: searchEnvRequirement,

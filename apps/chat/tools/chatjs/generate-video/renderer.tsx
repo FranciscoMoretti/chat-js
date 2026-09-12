@@ -1,25 +1,29 @@
 "use client";
 
-import type { ChatMessage } from "@/lib/ai/types";
+import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
-export type GenerateVideoTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-generateVideo" }
->;
+import type { generateVideoTool } from "./tool";
 
-export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
-  if (tool.state === "input-available") {
+type GenerateVideoTool = ToolPartFromTool<typeof generateVideoTool>;
+
+export const GenerateVideoRenderer = ({
+  tool,
+}: {
+  tool: GenerateVideoTool;
+}) => {
+  if (tool.state === "input-streaming" || tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating video: &quot;{tool.input.prompt}&quot;
+          Generating video: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          &quot;
         </div>
       </div>
     );
   }
 
-  const output = tool.output;
+  const { output } = tool;
   if (!output) {
     const fallbackPrompt = tool.input?.prompt ?? "the same idea";
 
@@ -51,4 +55,4 @@ export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
       </div>
     </div>
   );
-}
+};

@@ -7,6 +7,14 @@ import { builtInStorage } from "./src/storage/catalog";
 
 export const toolItems = [
   {
+    id: "generate-video",
+    slot: "generateVideo",
+    toolExport: "generateVideoTool",
+    rendererExport: "GenerateVideoRenderer",
+    description: "Generate videos using the selected gateway and storage",
+    dependencies: ["ai", "zod"],
+  },
+  {
     id: "generate-image",
     slot: "generateImage",
     toolExport: "generateImageTool",

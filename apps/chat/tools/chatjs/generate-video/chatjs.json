@@ -1,0 +1,9 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "generate-video",
+  "slot": "generateVideo",
+  "toolExport": "generateVideoTool",
+  "rendererExport": "GenerateVideoRenderer",
+  "envRequirements": []
+}

@@ -146,11 +146,6 @@ function toConfigInput(input: {
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }) {
-  const gatewayToolDefaults = defaultsFor(input).tools;
-  const hasVideoDefault =
-    typeof (gatewayToolDefaults.video as { default?: unknown }).default ===
-    "string";
-
   return {
     appName: input.appName,
     appPrefix: input.appPrefix,
@@ -182,7 +177,7 @@ function toConfigInput(input: {
           enabled: input.builtInTools.imageGeneration,
         },
         video: {
-          enabled: input.builtInTools.videoGeneration && hasVideoDefault,
+          enabled: input.builtInTools.videoGeneration,
         },
       },
     },

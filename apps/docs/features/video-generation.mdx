@@ -9,7 +9,7 @@ Generate videos directly in chat using AI models. Users describe what they want 
 
 ## Quick Start
 
-Toggle in `chat.config.ts`:
+Install the [video tool](../tools/generate-video), then enable it in `chat.config.ts`:
 
 ```ts
 ai: {
@@ -54,8 +54,8 @@ The LLM fills in these parameters automatically based on the user's request.
 
 Follows the [Tool Part](/cookbook/tool-part) pattern:
 
-```
-lib/ai/tools/generate-video.ts → components/part/generate-video.tsx
+```text
+tools/chatjs/generate-video/tool.ts → tools/chatjs/generate-video/renderer.tsx
 ```
 
 ### Tool Output
@@ -97,4 +97,4 @@ When the tool runs, it resolves the model to use:
 
 ### Google Model Handling
 
-For Google (Gemini) models, `aspectRatio` is passed in provider-specific options rather than as a top-level parameter.
+For Google (Gemini) models, `aspectRatio` is passed in provider-specific options as well as the top-level parameter.
