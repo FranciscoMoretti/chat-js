@@ -1,6 +1,6 @@
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "./client";
-import { eveConversation, eveUsage, userCredit } from "./schema";
+import { eveConversation, eveGuest, eveUsage, userCredit } from "./schema";
 
 function hasConflictingCost(stored: string | null, incoming: string | null) {
   return (
@@ -47,15 +47,22 @@ export async function recordEveUsage(input: {
     return true;
   }
   return await db.transaction(async (tx) => {
-    await tx
-      .insert(userCredit)
-      .values({ userId: input.ownerId })
-      .onConflictDoNothing();
-    await tx
-      .select()
-      .from(userCredit)
-      .where(eq(userCredit.userId, input.ownerId))
+    const [guest] = await tx
+      .select({ ownerId: eveGuest.ownerId })
+      .from(eveGuest)
+      .where(eq(eveGuest.ownerId, input.ownerId))
       .for("update");
+    if (!guest) {
+      await tx
+        .insert(userCredit)
+        .values({ userId: input.ownerId })
+        .onConflictDoNothing();
+      await tx
+        .select()
+        .from(userCredit)
+        .where(eq(userCredit.userId, input.ownerId))
+        .for("update");
+    }
     const costUsd =
       input.costUsd === undefined ? null : input.costUsd.toFixed(12);
     const [existing] = await tx
@@ -84,33 +91,44 @@ export async function recordEveUsage(input: {
     } else {
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
-    // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
-    const [totals] = await tx
-      .select({
-        due: sql<number>`ceil(coalesce(sum(${eveUsage.costUsd}), 0) * 100)::integer`,
-        paid: sql<number>`coalesce(sum(${eveUsage.chargedCents}), 0)::integer`,
-      })
-      .from(eveUsage)
-      .where(
-        and(
-          eq(eveUsage.sessionId, input.sessionId),
-          eq(eveUsage.turnId, input.turnId),
-          eq(eveUsage.ownerId, input.ownerId)
-        )
-      );
-    const delta = (totals?.due ?? 0) - (totals?.paid ?? 0);
-    if (delta > 0) {
-      await tx
-        .update(userCredit)
-        .set({ credits: sql`${userCredit.credits} - ${delta}` })
-        .where(eq(userCredit.userId, input.ownerId));
-      await tx
-        .update(eveUsage)
-        .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
-        .where(eq(eveUsage.eventId, input.eventId));
+    // Guest admission spends message quota. Keep provider costs without granting
+    // signup credit or mixing monetary debits into that separate allowance.
+    if (!guest) {
+      await debitTurnUsage(tx, input);
     }
     return (costUsd ?? existing?.costUsd) != null;
   });
+}
+
+async function debitTurnUsage(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: { ownerId: string; sessionId: string; turnId: string; eventId: string }
+) {
+  // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
+  const [totals] = await tx
+    .select({
+      due: sql<number>`ceil(coalesce(sum(${eveUsage.costUsd}), 0) * 100)::integer`,
+      paid: sql<number>`coalesce(sum(${eveUsage.chargedCents}), 0)::integer`,
+    })
+    .from(eveUsage)
+    .where(
+      and(
+        eq(eveUsage.sessionId, input.sessionId),
+        eq(eveUsage.turnId, input.turnId),
+        eq(eveUsage.ownerId, input.ownerId)
+      )
+    );
+  const delta = (totals?.due ?? 0) - (totals?.paid ?? 0);
+  if (delta > 0) {
+    await tx
+      .update(userCredit)
+      .set({ credits: sql`${userCredit.credits} - ${delta}` })
+      .where(eq(userCredit.userId, input.ownerId));
+    await tx
+      .update(eveUsage)
+      .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
+      .where(eq(eveUsage.eventId, input.eventId));
+  }
 }
 
 /** This cursor is billing progress, never a second copy of the transcript. */

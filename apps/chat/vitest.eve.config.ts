@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     include: [
+      "tests/eve-guests.e2e.ts",
       "tests/eve-contracts.e2e.ts",
       "tests/eve-response-groups.e2e.ts",
       "tests/eve-usage-cursor.e2e.ts",

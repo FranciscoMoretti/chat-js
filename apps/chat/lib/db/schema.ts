@@ -321,6 +321,75 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
+// Guest ownership is separate from BetterAuth sessions and monetary credits.
+// Retain expired rows until owner cleanup: late usage must still be classified as guest usage.
+export const eveGuest = pgTable(
+  "EveGuest",
+  {
+    ownerId: text("ownerId")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
+    createdAt: timestamp("createdAt", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    messageLimit: integer("messageLimit").notNull(),
+    remainingMessages: integer("remainingMessages").notNull(),
+  },
+  (t) => [
+    check(
+      "EveGuest_message_balance",
+      sql`${t.remainingMessages} >= 0 and ${t.remainingMessages} <= ${t.messageLimit}`
+    ),
+    check("EveGuest_token_hash", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
+    index("EveGuest_expiry_idx").on(t.expiresAt),
+  ]
+);
+
+export const eveGuestRate = pgTable(
+  "EveGuestRate",
+  {
+    ipHash: varchar("ipHash", { length: 64 }).notNull(),
+    windowSeconds: integer("windowSeconds").notNull(),
+    startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
+    requests: integer("requests").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.ipHash, t.windowSeconds, t.startsAt] }),
+    check("EveGuestRate_requests", sql`${t.requests} >= 0`),
+    check("EveGuestRate_window", sql`${t.windowSeconds} in (60, 2592000)`),
+  ]
+);
+
+export const eveGuestMessage = pgTable(
+  "EveGuestMessage",
+  {
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => eveGuest.ownerId, { onDelete: "cascade" }),
+    operationId: uuid("operationId").notNull(),
+    requestHash: varchar("requestHash", { length: 64 }).notNull(),
+    reservationId: uuid("reservationId").notNull(),
+    ipHash: varchar("ipHash", { length: 64 }).notNull(),
+    state: text("state")
+      .$type<"reserved" | "committed" | "released">()
+      .notNull(),
+    reservedAt: timestamp("reservedAt", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.ownerId, t.operationId] }),
+    check(
+      "EveGuestMessage_state",
+      sql`${t.state} in ('reserved', 'committed', 'released')`
+    ),
+    check(
+      "EveGuestMessage_request_hash",
+      sql`${t.requestHash} ~ '^[0-9a-f]{64}$'`
+    ),
+  ]
+);
+
 export const generationCancellation = pgTable(
   "GenerationCancellation",
   {

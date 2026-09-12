@@ -498,6 +498,13 @@
       "when": 1789225364377,
       "tag": "0070_curved_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1789250708413,
+      "tag": "0071_funny_mathemanic",
+      "breakpoints": true
     }
   ]
 }

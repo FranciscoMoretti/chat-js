@@ -1,0 +1,259 @@
+import { randomUUID } from "node:crypto";
+import { and, eq, gt, sql } from "drizzle-orm";
+import { z } from "zod";
+import { db } from "./client";
+import { eveGuest, eveGuestMessage, eveGuestRate, user } from "./schema";
+
+const hash = z.string().regex(/^[0-9a-f]{64}$/);
+const reservation = z.object({
+  ownerId: z.string().min(1),
+  operationId: z.uuid(),
+  requestHash: hash,
+  ipHash: hash,
+  requestsPerMinute: z.number().int().nonnegative(),
+  requestsPerMonth: z.number().int().nonnegative(),
+});
+
+function windows(now: Date) {
+  return [60, 2_592_000].map((seconds) => ({
+    seconds,
+    startsAt: new Date(
+      Math.floor(now.getTime() / (seconds * 1000)) * seconds * 1000
+    ),
+  }));
+}
+
+export async function createEveGuest(input: {
+  tokenHash: string;
+  messageLimit: number;
+  expiresAt: Date;
+}) {
+  hash.parse(input.tokenHash);
+  z.number().int().nonnegative().parse(input.messageLimit);
+  if (
+    !Number.isFinite(input.expiresAt.getTime()) ||
+    input.expiresAt <= new Date()
+  ) {
+    throw new Error("Guest expiry must be in the future.");
+  }
+  return await db.transaction(async (tx) => {
+    const ownerId = randomUUID();
+    await tx.insert(user).values({
+      id: ownerId,
+      name: "Guest",
+      email: `${ownerId}@guest.invalid`,
+    });
+    const [guest] = await tx
+      .insert(eveGuest)
+      .values({ ...input, ownerId, remainingMessages: input.messageLimit })
+      .returning();
+    return guest;
+  });
+}
+
+export async function findEveGuest(tokenHash: string) {
+  if (!hash.safeParse(tokenHash).success) {
+    return;
+  }
+  const [guest] = await db
+    .select()
+    .from(eveGuest)
+    .where(
+      and(eq(eveGuest.tokenHash, tokenHash), gt(eveGuest.expiresAt, new Date()))
+    );
+  return guest;
+}
+
+/** Reserve before native admission. Ambiguous admission keeps its reservation. */
+export async function reserveEveGuestMessage(
+  input: z.infer<typeof reservation>
+) {
+  reservation.parse(input);
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
+    );
+    const [guest] = await tx
+      .select()
+      .from(eveGuest)
+      .where(eq(eveGuest.ownerId, input.ownerId))
+      .for("update");
+    const now = new Date();
+    if (!guest || guest.expiresAt <= now) {
+      return { status: "unavailable" } as const;
+    }
+    const identity = and(
+      eq(eveGuestMessage.ownerId, input.ownerId),
+      eq(eveGuestMessage.operationId, input.operationId)
+    );
+    const [existing] = await tx.select().from(eveGuestMessage).where(identity);
+    if (existing && existing.requestHash !== input.requestHash) {
+      return { status: "conflict" } as const;
+    }
+    if (existing && existing.state !== "released") {
+      return {
+        status: "replay",
+        reservationId: existing.reservationId,
+      } as const;
+    }
+    if (guest.remainingMessages === 0) {
+      return { status: "exhausted" } as const;
+    }
+    const periods = windows(now);
+    if (!(await rateAvailable(tx, input, periods))) {
+      return { status: "rate-limited" } as const;
+    }
+    for (const period of periods) {
+      await tx
+        .insert(eveGuestRate)
+        .values({
+          ipHash: input.ipHash,
+          windowSeconds: period.seconds,
+          startsAt: period.startsAt,
+          requests: 1,
+        })
+        .onConflictDoUpdate({
+          target: [
+            eveGuestRate.ipHash,
+            eveGuestRate.windowSeconds,
+            eveGuestRate.startsAt,
+          ],
+          set: { requests: sql`${eveGuestRate.requests} + 1` },
+        });
+    }
+    await tx
+      .update(eveGuest)
+      .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
+      .where(eq(eveGuest.ownerId, input.ownerId));
+    const reservationId = randomUUID();
+    await tx
+      .insert(eveGuestMessage)
+      .values({
+        ownerId: input.ownerId,
+        operationId: input.operationId,
+        requestHash: input.requestHash,
+        reservationId,
+        ipHash: input.ipHash,
+        state: "reserved",
+        reservedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [eveGuestMessage.ownerId, eveGuestMessage.operationId],
+        set: {
+          state: "reserved",
+          reservationId,
+          ipHash: input.ipHash,
+          reservedAt: now,
+        },
+      });
+    return { status: "reserved", reservationId } as const;
+  });
+}
+
+export async function commitEveGuestMessage(
+  ownerId: string,
+  operationId: string,
+  reservationId: string
+) {
+  const [row] = await db
+    .update(eveGuestMessage)
+    .set({ state: "committed" })
+    .where(
+      and(
+        eq(eveGuestMessage.ownerId, ownerId),
+        eq(eveGuestMessage.operationId, operationId),
+        eq(eveGuestMessage.reservationId, reservationId),
+        eq(eveGuestMessage.state, "reserved")
+      )
+    )
+    .returning();
+  return !!row;
+}
+
+/** Only a proven unaccepted request can be refunded; never use this on a timeout. */
+export async function releaseEveGuestMessage(
+  ownerId: string,
+  operationId: string,
+  reservationId: string
+) {
+  return await db.transaction(async (tx) => {
+    const identity = and(
+      eq(eveGuestMessage.ownerId, ownerId),
+      eq(eveGuestMessage.operationId, operationId),
+      eq(eveGuestMessage.reservationId, reservationId)
+    );
+    const [observed] = await tx.select().from(eveGuestMessage).where(identity);
+    if (!observed || observed.state !== "reserved") {
+      return false;
+    }
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${observed.ipHash}`}))`
+    );
+    await tx
+      .select()
+      .from(eveGuest)
+      .where(eq(eveGuest.ownerId, ownerId))
+      .for("update");
+    const [released] = await tx
+      .update(eveGuestMessage)
+      .set({ state: "released" })
+      .where(
+        and(
+          identity,
+          eq(eveGuestMessage.state, "reserved"),
+          eq(eveGuestMessage.ipHash, observed.ipHash),
+          eq(eveGuestMessage.reservedAt, observed.reservedAt)
+        )
+      )
+      .returning();
+    if (!released) {
+      return false;
+    }
+    await tx
+      .update(eveGuest)
+      .set({ remainingMessages: sql`${eveGuest.remainingMessages} + 1` })
+      .where(eq(eveGuest.ownerId, ownerId));
+    for (const period of windows(released.reservedAt)) {
+      await tx
+        .update(eveGuestRate)
+        .set({ requests: sql`${eveGuestRate.requests} - 1` })
+        .where(
+          and(
+            eq(eveGuestRate.ipHash, released.ipHash),
+            eq(eveGuestRate.windowSeconds, period.seconds),
+            eq(eveGuestRate.startsAt, period.startsAt)
+          )
+        );
+    }
+    return true;
+  });
+}
+
+async function rateAvailable(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: {
+    ipHash: string;
+    requestsPerMinute: number;
+    requestsPerMonth: number;
+  },
+  periods: ReturnType<typeof windows>
+) {
+  for (const period of periods) {
+    const limit =
+      period.seconds === 60 ? input.requestsPerMinute : input.requestsPerMonth;
+    const [bucket] = await tx
+      .select()
+      .from(eveGuestRate)
+      .where(
+        and(
+          eq(eveGuestRate.ipHash, input.ipHash),
+          eq(eveGuestRate.windowSeconds, period.seconds),
+          eq(eveGuestRate.startsAt, period.startsAt)
+        )
+      );
+    if ((bucket?.requests ?? 0) >= limit) {
+      return false;
+    }
+  }
+  return true;
+}
