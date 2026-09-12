@@ -18,15 +18,32 @@ import {
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
+export const user = pgTable("user", {
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  id: text("id").primaryKey(),
+  image: text("image"),
+  name: text("name").notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(
+      () =>
+        /* @__PURE__ */
+        new Date()
+    )
+    .notNull(),
+});
+
 export type User = InferSelectModel<typeof user>;
 
 export const userCredit = pgTable("UserCredit", {
+  /** Balance in cents. Default = $0.50 */
+  credits: integer("credits").notNull().default(50),
   userId: text("userId")
     .primaryKey()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  /** Balance in cents. Default = $0.50 */
-  credits: integer("credits").notNull().default(50),
 });
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
@@ -34,22 +51,22 @@ export type UserCredit = InferSelectModel<typeof userCredit>;
 export const userModelPreference = pgTable(
   "UserModelPreference",
   {
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    modelId: varchar("modelId", { length: 256 }).notNull(),
-    enabled: boolean("enabled").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    enabled: boolean("enabled").notNull(),
+    modelId: varchar("modelId", { length: 256 }).notNull(),
     updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
   },
   (t) => ({
-    pk: primaryKey({ columns: [t.userId, t.modelId] }),
     UserModelPreference_user_id_idx: index(
       "UserModelPreference_user_id_idx"
     ).on(t.userId),
+    pk: primaryKey({ columns: [t.userId, t.modelId] }),
   })
 );
 
@@ -58,8 +75,12 @@ export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 export const project = pgTable(
   "Project",
   {
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
+    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    instructions: text("instructions").notNull().default(""),
+    name: text("name").notNull(),
     updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()
@@ -67,10 +88,6 @@ export const project = pgTable(
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    instructions: text("instructions").notNull().default(""),
-    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
-    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
   },
   (t) => ({
     Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
@@ -80,23 +97,23 @@ export const project = pgTable(
 export type Project = InferSelectModel<typeof project>;
 
 export const chat = pgTable("Chat", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  isPinned: boolean("isPinned").notNull().default(false),
+  projectId: uuid("projectId").references(() => project.id, {
+    onDelete: "set null",
+  }),
+  title: text("title").notNull(),
   updatedAt: timestamp("updatedAt")
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-  title: text("title").notNull(),
   userId: text("userId")
     .notNull()
     .references(() => user.id),
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
-  isPinned: boolean("isPinned").notNull().default(false),
-  projectId: uuid("projectId").references(() => project.id, {
-    onDelete: "set null",
-  }),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -196,33 +213,33 @@ export const part = pgTable(
       t.messageId,
       t.order
     ),
-    text_chk: check(
-      "Part_text_required_if_type_text",
-      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`
-    ),
-    reasoning_chk: check(
-      "Part_reasoning_required_if_type_reasoning",
-      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`
+    data_chk: check(
+      "Part_data_required_if_type_data",
+      sql`CASE WHEN ${t.type} LIKE 'data-%' THEN ${t.data_type} IS NOT NULL ELSE TRUE END`
     ),
     file_chk: check(
       "Part_file_required_if_type_file",
       sql`CASE WHEN ${t.type} = 'file' THEN ${t.file_mediaType} IS NOT NULL AND ${t.file_url} IS NOT NULL ELSE TRUE END`
     ),
-    source_url_chk: check(
-      "Part_source_url_required_if_type_source_url",
-      sql`CASE WHEN ${t.type} = 'source-url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`
+    reasoning_chk: check(
+      "Part_reasoning_required_if_type_reasoning",
+      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`
     ),
     source_document_chk: check(
       "Part_source_document_required_if_type_source_document",
       sql`CASE WHEN ${t.type} = 'source-document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`
     ),
+    source_url_chk: check(
+      "Part_source_url_required_if_type_source_url",
+      sql`CASE WHEN ${t.type} = 'source-url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`
+    ),
+    text_chk: check(
+      "Part_text_required_if_type_text",
+      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`
+    ),
     tool_chk: check(
       "Part_tool_required_if_type_tool",
       sql`CASE WHEN ${t.type} LIKE 'tool-%' THEN ${t.tool_toolCallId} IS NOT NULL AND ${t.tool_state} IS NOT NULL ELSE TRUE END`
-    ),
-    data_chk: check(
-      "Part_data_required_if_type_data",
-      sql`CASE WHEN ${t.type} LIKE 'data-%' THEN ${t.data_type} IS NOT NULL ELSE TRUE END`
     ),
   })
 );
@@ -237,12 +254,12 @@ export const vote = pgTable(
       .references(() => chat.id, {
         onDelete: "cascade",
       }),
+    isUpvoted: boolean("isUpvoted").notNull(),
     messageId: uuid("messageId")
       .notNull()
       .references(() => message.id, {
         onDelete: "cascade",
       }),
-    isUpvoted: boolean("isUpvoted").notNull(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.chatId, table.messageId] }),
@@ -254,27 +271,27 @@ export type Vote = InferSelectModel<typeof vote>;
 export const document = pgTable(
   "Document",
   {
-    id: uuid("id").notNull().defaultRandom(),
-    createdAt: timestamp("createdAt").notNull(),
-    title: text("title").notNull(),
     content: text("content"),
+    createdAt: timestamp("createdAt").notNull(),
+    id: uuid("id").notNull().defaultRandom(),
     kind: varchar("kind", { enum: ["text", "code", "sheet"] })
       .notNull()
       .default("text"),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id),
     messageId: uuid("messageId")
       .notNull()
       .references(() => message.id, {
         onDelete: "cascade",
       }),
+    title: text("title").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.id, table.createdAt] }),
     document_message_id_idx: index("Document_message_id_idx").on(
       table.messageId
     ),
+    pk: primaryKey({ columns: [table.id, table.createdAt] }),
   })
 );
 
@@ -283,50 +300,38 @@ export type Document = InferSelectModel<typeof document>;
 export const suggestion = pgTable(
   "Suggestion",
   {
-    id: uuid("id").notNull().defaultRandom(),
-    documentId: uuid("documentId").notNull(),
+    createdAt: timestamp("createdAt").notNull(),
+    description: text("description"),
     documentCreatedAt: timestamp("documentCreatedAt").notNull(),
+    documentId: uuid("documentId").notNull(),
+    id: uuid("id").notNull().defaultRandom(),
+    isResolved: boolean("isResolved").notNull().default(false),
     originalText: text("originalText").notNull(),
     suggestedText: text("suggestedText").notNull(),
-    description: text("description"),
-    isResolved: boolean("isResolved").notNull().default(false),
     userId: text("userId")
       .notNull()
       .references(() => user.id),
-    createdAt: timestamp("createdAt").notNull(),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.id] }),
     documentRef: foreignKey({
       columns: [table.documentId, table.documentCreatedAt],
       foreignColumns: [document.id, document.createdAt],
     }),
+    pk: primaryKey({ columns: [table.id] }),
   })
 );
 
 export type Suggestion = InferSelectModel<typeof suggestion>;
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
 
 export const generationCancellation = pgTable(
   "GenerationCancellation",
   {
+    canceledAt: timestamp("canceledAt").notNull(),
+    chatId: uuid("chatId").notNull(),
     messageId: uuid("messageId").notNull(),
     userId: text("userId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    chatId: uuid("chatId").notNull(),
-    canceledAt: timestamp("canceledAt").notNull(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.messageId, table.userId] }),
@@ -334,14 +339,18 @@ export const generationCancellation = pgTable(
 );
 
 export const session = pgTable("session", {
-  id: text("id").primaryKey(),
-  expiresAt: timestamp("expires_at").notNull(),
-  token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  id: text("id").primaryKey(),
   ipAddress: text("ip_address"),
+  token: text("token").notNull().unique(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(
+      () =>
+        /* @__PURE__ */
+        new Date()
+    )
+    .notNull(),
   userAgent: text("user_agent"),
   userId: text("user_id")
     .notNull()
@@ -349,56 +358,66 @@ export const session = pgTable("session", {
 });
 
 export const account = pgTable("account", {
-  id: text("id").primaryKey(),
+  accessToken: text("access_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
   accountId: text("account_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  id: text("id").primaryKey(),
+  idToken: text("id_token"),
+  password: text("password"),
   providerId: text("provider_id").notNull(),
+  refreshToken: text("refresh_token"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(
+      () =>
+        /* @__PURE__ */
+        new Date()
+    )
+    .notNull(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  accessToken: text("access_token"),
-  refreshToken: text("refresh_token"),
-  idToken: text("id_token"),
-  accessTokenExpiresAt: timestamp("access_token_expires_at"),
-  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
-  scope: text("scope"),
-  password: text("password"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
 });
 
 export const verification = pgTable("verification", {
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
-  value: text("value").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(
+      () =>
+        /* @__PURE__ */
+        new Date()
+    )
     .notNull(),
+  value: text("value").notNull(),
 });
 
 export const mcpConnector = pgTable(
   "McpConnector",
   {
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    enabled: boolean("enabled").notNull().default(true),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
-    userId: text("userId").references(() => user.id, { onDelete: "cascade" }), // null = global
     name: varchar("name", { length: 256 }).notNull(),
-    nameId: varchar("nameId", { length: 256 }).notNull(), // unique per user, used as namespace for tool IDs
-    url: encryptedText("url").notNull(),
+    // Unique per user, used as namespace for tool IDs.
+    nameId: varchar("nameId", { length: 256 }).notNull(),
+    oauthClientId: text("oauthClientId"),
+    oauthClientSecret: encryptedText("oauthClientSecret"),
     type: varchar("type", { enum: ["http", "sse"] })
       .notNull()
       .default("http"),
-    oauthClientId: text("oauthClientId"),
-    oauthClientSecret: encryptedText("oauthClientSecret"),
-    enabled: boolean("enabled").notNull().default(true),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+    url: encryptedText("url").notNull(),
+    // Null = global.
+    userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
   },
   (t) => ({
     McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
@@ -417,16 +436,20 @@ export type McpConnector = InferSelectModel<typeof mcpConnector>;
 export const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {
+    // OAuthClientInformationFull from MCP SDK.
+    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"),
+    // PKCE verifier.
+    codeVerifier: encryptedText("codeVerifier"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     mcpConnectorId: uuid("mcpConnectorId")
       .notNull()
       .references(() => mcpConnector.id, { onDelete: "cascade" }),
     serverUrl: text("serverUrl").notNull(),
-    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"), // OAuthClientInformationFull from MCP SDK
-    tokens: encryptedJson<Record<string, unknown>>()("tokens"), // OAuthTokens from MCP SDK
-    codeVerifier: encryptedText("codeVerifier"), // PKCE verifier
-    state: text("state").unique(), // OAuth state param (unique for security)
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    // OAuth state parameter, unique for security.
+    state: text("state").unique(),
+    // OAuthTokens from MCP SDK.
+    tokens: encryptedJson<Record<string, unknown>>()("tokens"),
     updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()
@@ -442,4 +465,4 @@ export const mcpOAuthSession = pgTable(
 
 export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 
-export const schema = { user, session, account, verification };
+export const schema = { account, session, user, verification };
