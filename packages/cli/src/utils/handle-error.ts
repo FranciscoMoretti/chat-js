@@ -3,7 +3,7 @@ import { z } from "zod";
 import { highlighter } from "./highlighter";
 import { logger } from "./logger";
 
-export const handleError = (error: unknown): never => {
+export const handleError: (error: unknown) => never = (error) => {
   logger.break();
 
   if (typeof error === "string") {
