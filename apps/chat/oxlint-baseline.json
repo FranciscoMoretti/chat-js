@@ -1069,12 +1069,6 @@
       }
     },
     {
-      "files": ["lib/db/queries.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
       "files": ["lib/editor/config.ts"],
       "rules": {
         "func-style": "off"
@@ -1832,12 +1826,6 @@
     },
     {
       "files": ["lib/app-chat-runtime.ts"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["lib/db/queries.ts"],
       "rules": {
         "no-use-before-define": "off"
       }
@@ -4404,12 +4392,6 @@
     },
     {
       "files": ["lib/db/mcp-queries.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/db/queries.ts"],
       "rules": {
         "sort-keys": "off"
       }
