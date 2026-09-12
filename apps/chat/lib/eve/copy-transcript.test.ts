@@ -545,3 +545,29 @@ it.each([
   );
   expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
 });
+
+it("retains model provenance in copies of copies without carrying private metadata", () => {
+  const events = history([
+    {
+      id: "seed_message_0",
+      role: "user",
+      parts: [{ type: "text", text: "Question" }],
+    },
+    {
+      id: "seed_message_1",
+      role: "assistant",
+      metadata: {
+        modelId: "gateway/google/gemini-2.5-flash-lite",
+        result: "private-result",
+      },
+      parts: [{ type: "text", text: "Answer" }],
+    },
+  ]);
+  const copy = prepareEveCopyTranscript(events);
+  expect(copy.seed.messages[1]).toEqual({
+    role: "assistant",
+    modelId: "gateway/google/gemini-2.5-flash-lite",
+    parts: [{ type: "text", text: "Answer" }],
+  });
+  expect(JSON.stringify(copy.seed)).not.toContain("private-result");
+});

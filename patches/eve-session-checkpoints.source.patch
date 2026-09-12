@@ -1,8 +1,8 @@
 diff --git a/docs/channels/eve.mdx b/docs/channels/eve.mdx
-index 3672522..adc1de9 100644
+index 3672522..d2600f6 100644
 --- a/docs/channels/eve.mdx
 +++ b/docs/channels/eve.mdx
-@@ -198,3 +198,22 @@ For scripts, server-to-server calls, evals, tests, and custom clients, use the [
+@@ -198,3 +198,24 @@ For scripts, server-to-server calls, evals, tests, and custom clients, use the [
  - [Client SDK](../guides/client/overview): call the eve channel from TypeScript
  - [Auth & route protection](../guides/auth-and-route-protection): the route auth policy
  - [Sessions, runs & streaming](../concepts/sessions-runs-and-streaming): the routes this channel exposes
@@ -25,6 +25,8 @@ index 3672522..adc1de9 100644
 +The channel must grant source access through `authorizeFork`; anonymous callers cannot fork. `beforeMessageId` selects an existing imported user message and excludes it and everything after it. Do not combine it with `beforeTurnId` or `checkpointId`. Forking the first imported user message starts with empty history.
 +
 +The new session retains its own authentication, instructions, limits, and execution identity. eve derives model and display history from the same durable imported prefix. Completed tool results remain historical content; tools are not replayed. Imported attachments are resolved through the destination channel on the first turn. A later source sandbox is not inherited. Application-owned documents must be restored separately to the selected boundary. Imported messages retained in the prefix remain addressable in descendant forks.
++
++Imported assistant seed messages may include an optional `modelId` (1–512 characters), using the same provider/model reference as `step.started`. It is preserved in display metadata across imported forks. This informational value does not select a model or change executable history; the application chooses the model for a new turn. User seed messages and arbitrary metadata remain rejected.
 diff --git a/packages/eve/package.json b/packages/eve/package.json
 index e2dc5f7..6868f70 100644
 --- a/packages/eve/package.json
@@ -119,6 +121,19 @@ index cca4a3e..bb79932 100644
    readonly adapter: ChannelAdapter<any>;
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
+diff --git a/packages/eve/src/client/message-reducer-types.ts b/packages/eve/src/client/message-reducer-types.ts
+index b742698..25a722e 100644
+--- a/packages/eve/src/client/message-reducer-types.ts
++++ b/packages/eve/src/client/message-reducer-types.ts
+@@ -29,6 +29,8 @@ export interface EveMessage {
+  * once the turn finalizes.
+  */
+ export interface EveMessageMetadata {
++  /** Informational provider/model reference retained by imported assistant history. */
++  readonly modelId?: string;
+   readonly optimistic?: true;
+   readonly result?: unknown;
+   readonly status?: "complete" | "failed" | "streaming" | "submitted";
 diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
 index 43979d6..8682e80 100644
 --- a/packages/eve/src/client/message-reducer.ts
@@ -1761,10 +1776,10 @@ index 0000000..0a5ede6
 +}
 diff --git a/packages/eve/src/execution/read-session-transcript-prefix.test.ts b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
 new file mode 100644
-index 0000000..7f784d6
+index 0000000..7108204
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,132 @@
 +import { afterEach, expect, it, vi } from "vitest";
 +import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import {
@@ -1875,12 +1890,34 @@ index 0000000..7f784d6
 +  await rejected;
 +  expect(cancel).toHaveBeenCalled();
 +});
++
++
++it("preserves only model provenance through repeated imported forks", () => {
++  const seed = prepareSessionTranscriptSeed({ messages: [
++    { role: "user", parts: [{ type: "text", text: "First" }] },
++    { role: "assistant", modelId: "gateway/google/gemini-2.5-flash-lite", parts: [{ type: "text", text: "Answer" }] },
++    { role: "user", parts: [{ type: "text", text: "Second" }] },
++    { role: "assistant", parts: [{ type: "text", text: "Later" }] },
++    { role: "user", parts: [{ type: "text", text: "Third" }] },
++  ] });
++  const messages = seed.messages.map(message => message.role === "assistant"
++    ? { ...message, metadata: { ...message.metadata, turnId: "private", result: "private" } }
++    : message);
++  const first = prepareSessionTranscriptPrefix(messages, "seed_message_4");
++  const second = prepareSessionTranscriptPrefix(first.messages, "seed_message_2");
++  expect(second.messages[1]?.metadata).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
++  expect(second.messages).toHaveLength(2);
++  expect(second.history).toEqual(prepareSessionTranscriptSeed({ messages: [
++    { role: "user", parts: [{ type: "text", text: "First" }] },
++    { role: "assistant", parts: [{ type: "text", text: "Answer" }] },
++  ] }).history);
++});
 diff --git a/packages/eve/src/execution/read-session-transcript-prefix.ts b/packages/eve/src/execution/read-session-transcript-prefix.ts
 new file mode 100644
-index 0000000..8977e97
+index 0000000..41caba1
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-transcript-prefix.ts
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,106 @@
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { readNdjsonStream } from "#client/ndjson.js";
 +import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
@@ -1934,7 +1971,13 @@ index 0000000..8977e97
 +    attachments: "channel",
 +    messages: messages
 +      .slice(0, index)
-+      .map((message) => ({ role: message.role, parts: message.parts.map(seedPart) })),
++      .map((message) => ({
++        role: message.role,
++        parts: message.parts.map(seedPart),
++        ...(message.role === "assistant" && message.metadata?.modelId !== undefined
++          ? { modelId: message.metadata.modelId }
++          : {}),
++      })),
 +  });
 +}
 +
@@ -4499,7 +4542,7 @@ index 0000000..7681e35
 +}
 diff --git a/packages/eve/src/execution/session-transcript-seed.integration.test.ts b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
 new file mode 100644
-index 0000000..f226528
+index 0000000..f85e803
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
 @@ -0,0 +1,500 @@
@@ -4957,7 +5000,7 @@ index 0000000..f226528
 +    const runtime = createWorkflowRuntime({compiledArtifactsSource:createBundledRuntimeCompiledArtifactsSource()});
 +    const imported: SessionTranscriptSeed = {messages:[
 +      {role:"user",parts:[{type:"text",text:"Retained imported question"}]},
-+      {role:"assistant",parts:[{type:"text",text:"Retained imported answer"}]},
++      {role:"assistant",modelId:"gateway/google/gemini-2.5-flash-lite",parts:[{type:"text",text:"Retained imported answer"}]},
 +      {role:"user",parts:[{type:"text",text:"Excluded imported question"}]},
 +      {role:"assistant",parts:[{type:"text",text:"Excluded imported answer"}]},
 +    ]};
@@ -5005,10 +5048,10 @@ index 0000000..f226528
 +});
 diff --git a/packages/eve/src/execution/session-transcript-seed.test.ts b/packages/eve/src/execution/session-transcript-seed.test.ts
 new file mode 100644
-index 0000000..df6d491
+index 0000000..c46b012
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.test.ts
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,215 @@
 +import { expect, it } from "vitest";
 +import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import { defaultMessageReducer } from "#client/message-reducer.js";
@@ -5205,12 +5248,31 @@ index 0000000..df6d491
 +    ),
 +  ).toEqual(first);
 +});
++
++
++it("retains informational model provenance without changing executable history", () => {
++  const message = { role: "assistant", parts: [{ type: "text", text: "Answer" }] };
++  const plain = prepareSessionTranscriptSeed({ messages: [message] });
++  const annotated = prepareSessionTranscriptSeed({
++    messages: [{ ...message, modelId: "gateway/google/gemini-2.5-flash-lite" }],
++  });
++  expect(annotated.history).toEqual(plain.history);
++  expect(annotated.messages[0]?.metadata).toEqual({
++    modelId: "gateway/google/gemini-2.5-flash-lite",
++  });
++  for (const modelId of ["", "x".repeat(513), 42]) {
++    expect(() => prepareSessionTranscriptSeed({ messages: [{ ...message, modelId }] })).toThrow();
++  }
++  expect(() => prepareSessionTranscriptSeed({ messages: [{
++    role: "user", modelId: "gateway/model", parts: [{ type: "text", text: "Question" }],
++  }] })).toThrow();
++});
 diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
 new file mode 100644
-index 0000000..b8f9cad
+index 0000000..e952e5b
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.ts
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,161 @@
 +import type { AssistantContent, ModelMessage, ToolContent, UserContent } from "ai";
 +import { z } from "#compiled/zod/index.js";
 +import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
@@ -5246,6 +5308,7 @@ index 0000000..b8f9cad
 +        z.strictObject({ role: z.literal("user"), parts: z.array(z.union([text, file])).min(1) }),
 +        z.strictObject({
 +          role: z.literal("assistant"),
++          modelId: z.string().min(1).max(512).optional(),
 +          parts: z
 +            .array(
 +              z.union([
@@ -5360,7 +5423,14 @@ index 0000000..b8f9cad
 +      }
 +      flush();
 +    }
-+    messages.push({ id: `seed_message_${index}`, role: message.role, parts });
++    messages.push({
++      id: `seed_message_${index}`,
++      role: message.role,
++      parts,
++      ...(message.role === "assistant" && message.modelId !== undefined
++        ? { metadata: { modelId: message.modelId } }
++        : {}),
++    });
 +  }
 +  return { history, messages };
 +}
@@ -6809,7 +6879,7 @@ index 4c9110e..7aec9d0 100644
     * the underlying provider supports tags.
 diff --git a/research/imported-message-forks.md b/research/imported-message-forks.md
 new file mode 100644
-index 0000000..2ffbf1c
+index 0000000..7c14750
 --- /dev/null
 +++ b/research/imported-message-forks.md
 @@ -0,0 +1,15 @@
@@ -6825,6 +6895,6 @@ index 0000000..2ffbf1c
 +
 +Extend the existing authorized fork reference with `{ sessionId, beforeMessageId }`, mutually exclusive with execution checkpoint coordinates. Resolve the selected imported user boundary from the source's immutable `history.seeded` projection, including when nested inside restored history. Use the same sanitized prefix for model history and display. Empty prefixes are valid; unknown IDs and assistant boundaries fail closed.
 +
-+Start a fresh root conversation at native turn zero. Retain completed tool results as content, defer attachment staging under destination authorization, and never inherit a later sandbox. The host application owns document checkpoint mapping and safe model metadata. These remain application integration work before enabling edit/regenerate controls.
++Start a fresh root conversation at native turn zero. Retain completed tool results as content, defer attachment staging under destination authorization, and never inherit a later sandbox. The host application owns document checkpoint mapping and model selection. Assistant seeds now retain a bounded, informational model reference through imported forks, without importing turn identities or changing model history. Applications can use this provenance when offering regeneration.
 +
 +The implementation uses bounded stream reads and validates imported identities. Local native tests cover prefix exclusion, deferred files, malformed references, stalled streams, exact model/display agreement, and descendant forks. No issue or proposal has been published.

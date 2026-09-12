@@ -1,25 +1,35 @@
 import type { MessageStreamEvent } from "eve/client";
 
-/** Native step events retain the selected model, including inherited turns. */
-export function responseModel(
-  events: readonly MessageStreamEvent[],
-  turnId: string
-): string {
+/** First native model reference per turn, including inherited history. */
+export function responseModelReferences(events: readonly MessageStreamEvent[]) {
+  const models = new Map<string, string>();
   for (const event of events) {
     const candidates =
       event.type === "history.restored" ? event.data.events : [event];
     for (const candidate of candidates) {
       if (
         candidate.type === "step.started" &&
-        candidate.data.turnId === turnId
+        !models.has(candidate.data.turnId)
       ) {
-        // eve serializes a model reference as provider/modelId.
-        const separator = candidate.data.modelId.indexOf("/");
-        if (separator >= 0 && separator < candidate.data.modelId.length - 1) {
-          return candidate.data.modelId.slice(separator + 1);
-        }
+        models.set(candidate.data.turnId, candidate.data.modelId);
       }
     }
+  }
+  return models;
+}
+
+/** Native responses require runtime evidence; imported responses retain provenance. */
+export function responseModel(
+  events: readonly MessageStreamEvent[],
+  turnId: string,
+  importedModelId?: string
+): string {
+  const reference = turnId
+    ? responseModelReferences(events).get(turnId)
+    : importedModelId;
+  const separator = reference?.indexOf("/") ?? -1;
+  if (reference && separator > 0 && separator < reference.length - 1) {
+    return reference.slice(separator + 1);
   }
   throw new Error(
     "The response model is unavailable. Reload before regenerating."

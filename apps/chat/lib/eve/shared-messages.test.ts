@@ -215,3 +215,27 @@ it("preserves streaming and partial published tool content without runtime field
     expect(sharedEvePart(part)).toEqual([expected]);
   }
 });
+
+it("projects the original native model without private turn identities", () => {
+  const messages = sharedEveMessages([
+    {
+      type: "message.received",
+      meta: { id: "q", at: "2026-09-12T00:00:00Z" },
+      data: { message: "Question", sequence: 0, turnId: "turn_0" },
+    },
+    {
+      type: "step.started",
+      meta: { id: "s", at: "2026-09-12T00:00:00Z" },
+      data: {
+        sequence: 1,
+        stepIndex: 0,
+        turnId: "turn_0",
+        modelId: "gateway/google/gemini-2.5-flash-lite",
+      },
+    },
+  ]);
+  expect(
+    messages.find((message) => message.role === "assistant")?.metadata
+  ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
+  expect(JSON.stringify(messages)).not.toContain('"turnId"');
+});

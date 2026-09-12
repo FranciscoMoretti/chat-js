@@ -4,6 +4,7 @@ import {
   type MessageStreamEvent,
 } from "eve/client";
 import { evePlatformOutput, isEvePlatformTool } from "./platform-result";
+import { responseModelReferences } from "./response-model";
 
 /** Keep visible tool content, never the owner's approval or runtime identities. */
 function sharedTool(
@@ -127,9 +128,19 @@ export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
 export function sharedEveMessages(events: readonly MessageStreamEvent[]) {
   const reducer = defaultMessageReducer();
   const state = events.reduce(reducer.reduce, reducer.initial());
-  return state.messages.map((message) => ({
-    id: message.id,
-    role: message.role,
-    parts: message.parts.flatMap(sharedEvePart),
-  }));
+  const models = responseModelReferences(events);
+  return state.messages.map((message) => {
+    let modelId: string | undefined;
+    if (message.role === "assistant") {
+      modelId = message.metadata?.turnId
+        ? models.get(message.metadata.turnId)
+        : message.metadata?.modelId;
+    }
+    return {
+      ...(modelId ? { metadata: { modelId } } : {}),
+      id: message.id,
+      role: message.role,
+      parts: message.parts.flatMap(sharedEvePart),
+    };
+  });
 }

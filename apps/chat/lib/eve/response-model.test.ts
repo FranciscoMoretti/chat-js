@@ -47,3 +47,13 @@ it("refuses to silently substitute another model when the response evidence is m
     "response model is unavailable"
   );
 });
+
+it("uses retained imported provenance without substituting missing native evidence", () => {
+  expect(responseModel([], "", "gateway/google/gemini-2.5-flash-lite")).toBe(
+    "google/gemini-2.5-flash-lite"
+  );
+  expect(() =>
+    responseModel([], "turn_0", "gateway/google/gemini-2.5-flash-lite")
+  ).toThrow();
+  expect(() => responseModel([], "", "missing-provider")).toThrow();
+});

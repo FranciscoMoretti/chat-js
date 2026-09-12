@@ -130,7 +130,13 @@ export function prepareEveCopyTranscript(
           }),
         };
       }
-      return { role: "assistant", parts: message.parts.map(completedPart) };
+      return {
+        role: "assistant",
+        ...(message.metadata?.modelId
+          ? { modelId: message.metadata.modelId }
+          : {}),
+        parts: message.parts.map(completedPart),
+      };
     }
   );
   if (!messages.length || messages.some((message) => !message.parts.length)) {

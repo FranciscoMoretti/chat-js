@@ -81,6 +81,19 @@ index 693054fe..b2e755d1 100644
      readonly adapter: ChannelAdapter<any>;
      /** Framework task that owns this run, when the run is a task executor. */
      readonly taskId?: string;
+diff --git a/dist/src/client/message-reducer-types.d.ts b/dist/src/client/message-reducer-types.d.ts
+index e2c1d3a6..d7fa112e 100644
+--- a/dist/src/client/message-reducer-types.d.ts
++++ b/dist/src/client/message-reducer-types.d.ts
+@@ -26,6 +26,8 @@ export interface EveMessage {
+  * once the turn finalizes.
+  */
+ export interface EveMessageMetadata {
++    /** Informational provider/model reference retained by imported assistant history. */
++    readonly modelId?: string;
+     readonly optimistic?: true;
+     readonly result?: unknown;
+     readonly status?: "complete" | "failed" | "streaming" | "submitted";
 diff --git a/dist/src/client/message-reducer.js b/dist/src/client/message-reducer.js
 index d225a0dd..862c006b 100644
 --- a/dist/src/client/message-reducer.js
@@ -534,11 +547,11 @@ index 00000000..d107f4fc
 +}>;
 diff --git a/dist/src/execution/read-session-transcript-prefix.js b/dist/src/execution/read-session-transcript-prefix.js
 new file mode 100644
-index 00000000..49893649
+index 00000000..a15c8a8e
 --- /dev/null
 +++ b/dist/src/execution/read-session-transcript-prefix.js
 @@ -0,0 +1 @@
-+import{EVE_MESSAGE_STREAM_VERSION}from"#protocol/message.js";import{readNdjsonStream}from"#client/ndjson.js";import{prepareSessionTranscriptSeed}from"#execution/session-transcript-seed.js";import{getRun}from"#internal/workflow/runtime.js";function seedPart(e){switch(e.type){case`text`:case`reasoning`:return{type:e.type,text:e.text};case`step-start`:return{type:e.type};case`file`:return{type:e.type,url:e.url,mediaType:e.mediaType,filename:e.filename,size:e.size};case`dynamic-tool`:{let t={type:e.type,toolName:e.toolName,input:e.input,state:e.state};if(e.state===`output-available`)return{...t,output:e.output};if(e.state===`output-error`)return{...t,errorText:e.errorText};if(e.state===`output-denied`)return{...t,reason:e.approval?.reason};break}}throw Error(`Imported history contains unfinished or unsupported content.`)}function prepareSessionTranscriptPrefix(e,t){if(!/^seed_message_(0|[1-9][0-9]{0,3})$/.test(t))throw Error(`Invalid imported message boundary.`);let n=e.findIndex(e=>e.id===t);if(n<0||e[n]?.role!==`user`)throw Error(`Imported user message boundary was not found.`);if(e.some((e,t)=>e.id!==`seed_message_${t}`))throw Error(`Invalid imported message identities.`);return n===0?{history:[],messages:[]}:prepareSessionTranscriptSeed({attachments:`channel`,messages:e.slice(0,n).map(e=>({role:e.role,parts:e.parts.map(seedPart)}))})}async function readSessionTranscriptPrefix(e){let t=new AbortController,n=0,r=getRun(e.sessionId).getReadable().pipeThrough(new TransformStream({transform(e,t){if(n+=e.byteLength,n>8388608)throw Error(`Imported history byte limit exceeded.`);t.enqueue(e)}}),{signal:t.signal}),i=setTimeout(()=>t.abort(Error(`Imported history read timed out.`)),1e4),a=0;try{for await(let t of readNdjsonStream(r,{streamVersion:EVE_MESSAGE_STREAM_VERSION})){if(++a>5e4)throw Error(`Imported history event limit exceeded.`);let n=t.type===`history.restored`?t.data.events:[t];for(let t of n)if(t.type===`history.seeded`)return prepareSessionTranscriptPrefix(t.data.messages,e.beforeMessageId);if(t.type===`turn.started`)break}throw Error(`Imported history was not found.`)}finally{clearTimeout(i),t.abort()}}export{prepareSessionTranscriptPrefix,readSessionTranscriptPrefix};
++import{EVE_MESSAGE_STREAM_VERSION}from"#protocol/message.js";import{readNdjsonStream}from"#client/ndjson.js";import{prepareSessionTranscriptSeed}from"#execution/session-transcript-seed.js";import{getRun}from"#internal/workflow/runtime.js";function seedPart(e){switch(e.type){case`text`:case`reasoning`:return{type:e.type,text:e.text};case`step-start`:return{type:e.type};case`file`:return{type:e.type,url:e.url,mediaType:e.mediaType,filename:e.filename,size:e.size};case`dynamic-tool`:{let t={type:e.type,toolName:e.toolName,input:e.input,state:e.state};if(e.state===`output-available`)return{...t,output:e.output};if(e.state===`output-error`)return{...t,errorText:e.errorText};if(e.state===`output-denied`)return{...t,reason:e.approval?.reason};break}}throw Error(`Imported history contains unfinished or unsupported content.`)}function prepareSessionTranscriptPrefix(e,t){if(!/^seed_message_(0|[1-9][0-9]{0,3})$/.test(t))throw Error(`Invalid imported message boundary.`);let n=e.findIndex(e=>e.id===t);if(n<0||e[n]?.role!==`user`)throw Error(`Imported user message boundary was not found.`);if(e.some((e,t)=>e.id!==`seed_message_${t}`))throw Error(`Invalid imported message identities.`);return n===0?{history:[],messages:[]}:prepareSessionTranscriptSeed({attachments:`channel`,messages:e.slice(0,n).map(e=>({role:e.role,parts:e.parts.map(seedPart),...e.role===`assistant`&&e.metadata?.modelId!==void 0?{modelId:e.metadata.modelId}:{}}))})}async function readSessionTranscriptPrefix(e){let t=new AbortController,n=0,r=getRun(e.sessionId).getReadable().pipeThrough(new TransformStream({transform(e,t){if(n+=e.byteLength,n>8388608)throw Error(`Imported history byte limit exceeded.`);t.enqueue(e)}}),{signal:t.signal}),i=setTimeout(()=>t.abort(Error(`Imported history read timed out.`)),1e4),a=0;try{for await(let t of readNdjsonStream(r,{streamVersion:EVE_MESSAGE_STREAM_VERSION})){if(++a>5e4)throw Error(`Imported history event limit exceeded.`);let n=t.type===`history.restored`?t.data.events:[t];for(let t of n)if(t.type===`history.seeded`)return prepareSessionTranscriptPrefix(t.data.messages,e.beforeMessageId);if(t.type===`turn.started`)break}throw Error(`Imported history was not found.`)}finally{clearTimeout(i),t.abort()}}export{prepareSessionTranscriptPrefix,readSessionTranscriptPrefix};
 \ No newline at end of file
 diff --git a/dist/src/execution/restore-session-history-step.d.ts b/dist/src/execution/restore-session-history-step.d.ts
 new file mode 100644
@@ -716,10 +729,10 @@ index 00000000..1811fa41
 \ No newline at end of file
 diff --git a/dist/src/execution/session-transcript-seed.d.ts b/dist/src/execution/session-transcript-seed.d.ts
 new file mode 100644
-index 00000000..a71b5b34
+index 00000000..cfe3b0c7
 --- /dev/null
 +++ b/dist/src/execution/session-transcript-seed.d.ts
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,65 @@
 +import type { ModelMessage } from "ai";
 +import { z } from "#compiled/zod/index.js";
 +import type { EveMessage } from "#client/message-reducer-types.js";
@@ -740,6 +753,7 @@ index 00000000..a71b5b34
 +        }, z.core.$strict>]>>;
 +    }, z.core.$strict>, z.ZodObject<{
 +        role: z.ZodLiteral<"assistant">;
++        modelId: z.ZodOptional<z.ZodString>;
 +        parts: z.ZodArray<z.ZodUnion<readonly [z.ZodObject<{
 +            type: z.ZodLiteral<"text">;
 +            text: z.ZodString;
@@ -786,11 +800,11 @@ index 00000000..a71b5b34
 +export {};
 diff --git a/dist/src/execution/session-transcript-seed.js b/dist/src/execution/session-transcript-seed.js
 new file mode 100644
-index 00000000..64dd5a29
+index 00000000..4611feb7
 --- /dev/null
 +++ b/dist/src/execution/session-transcript-seed.js
 @@ -0,0 +1 @@
-+import{z}from"#compiled/zod/index.js";const text=z.strictObject({type:z.literal(`text`),text:z.string()}),reasoning=z.strictObject({type:z.literal(`reasoning`),text:z.string()}),file=z.strictObject({type:z.literal(`file`),url:z.url().refine(e=>[`https:`,`http:`,`data:`].includes(new URL(e).protocol),`Seed files require a copied HTTP or data URL.`),mediaType:z.string().min(1),filename:z.string().optional(),size:z.number().int().nonnegative().optional()}),toolBase={type:z.literal(`dynamic-tool`),toolName:z.string().min(1),input:z.json()},tool=z.discriminatedUnion(`state`,[z.strictObject({...toolBase,state:z.literal(`output-available`),output:z.json()}),z.strictObject({...toolBase,state:z.literal(`output-error`),errorText:z.string()}),z.strictObject({...toolBase,state:z.literal(`output-denied`),reason:z.string().optional()})]),sessionTranscriptSeed=z.strictObject({attachments:z.literal(`channel`).optional(),messages:z.array(z.discriminatedUnion(`role`,[z.strictObject({role:z.literal(`user`),parts:z.array(z.union([text,file])).min(1)}),z.strictObject({role:z.literal(`assistant`),parts:z.array(z.union([text,reasoning,file,tool,z.strictObject({type:z.literal(`step-start`)})])).min(1)})])).min(1).max(1e4)});function parseSessionTranscriptSeed(e){if(new TextEncoder().encode(JSON.stringify(e)).byteLength>8388608)throw Error(`Session transcript seed byte limit exceeded.`);return sessionTranscriptSeed.parse(e)}function prepareSessionTranscriptSeed(e){let t=parseSessionTranscriptSeed(e),n=[],r=[],i=0;for(let[e,a]of t.messages.entries()){let o=[];if(a.role===`user`){let e=[];for(let n of a.parts)o.push(n.type===`text`?{...n,state:`done`}:n),n.type===`text`?e.push(n):t.attachments!==`channel`&&n.mediaType.startsWith(`image/`)?e.push({type:`image`,image:new URL(n.url),mediaType:n.mediaType}):e.push({type:`file`,data:new URL(n.url),mediaType:n.mediaType,filename:n.filename});n.push({role:`user`,content:e})}else{let e=[],t=[],flush=()=>{e.length&&n.push({role:`assistant`,content:e}),t.length&&n.push({role:`tool`,content:t}),e=[],t=[]};for(let n of a.parts){if(n.type===`step-start`){flush(),o.push(n);continue}if(t.length&&n.type!==`dynamic-tool`&&flush(),n.type===`text`||n.type===`reasoning`)o.push({...n,state:`done`}),e.push(n);else if(n.type===`file`)o.push(n),e.push({type:`file`,data:new URL(n.url),mediaType:n.mediaType,filename:n.filename});else{let r=`seed_tool_${i++}`;e.push({type:`tool-call`,toolCallId:r,toolName:n.toolName,input:n.input});let a=n.state===`output-available`?{type:`json`,value:n.output}:{type:`error-text`,value:n.state===`output-error`?n.errorText:n.reason??`Tool execution was denied.`};t.push({type:`tool-result`,toolCallId:r,toolName:n.toolName,output:a}),n.state===`output-denied`?o.push({type:n.type,toolName:n.toolName,toolCallId:r,input:n.input,state:n.state,approval:{id:`seed_denial_${i}`,approved:!1,reason:n.reason}}):o.push({...n,toolCallId:r})}}flush()}r.push({id:`seed_message_${e}`,role:a.role,parts:o})}return{history:n,messages:r}}export{parseSessionTranscriptSeed,prepareSessionTranscriptSeed};
++import{z}from"#compiled/zod/index.js";const text=z.strictObject({type:z.literal(`text`),text:z.string()}),reasoning=z.strictObject({type:z.literal(`reasoning`),text:z.string()}),file=z.strictObject({type:z.literal(`file`),url:z.url().refine(e=>[`https:`,`http:`,`data:`].includes(new URL(e).protocol),`Seed files require a copied HTTP or data URL.`),mediaType:z.string().min(1),filename:z.string().optional(),size:z.number().int().nonnegative().optional()}),toolBase={type:z.literal(`dynamic-tool`),toolName:z.string().min(1),input:z.json()},tool=z.discriminatedUnion(`state`,[z.strictObject({...toolBase,state:z.literal(`output-available`),output:z.json()}),z.strictObject({...toolBase,state:z.literal(`output-error`),errorText:z.string()}),z.strictObject({...toolBase,state:z.literal(`output-denied`),reason:z.string().optional()})]),sessionTranscriptSeed=z.strictObject({attachments:z.literal(`channel`).optional(),messages:z.array(z.discriminatedUnion(`role`,[z.strictObject({role:z.literal(`user`),parts:z.array(z.union([text,file])).min(1)}),z.strictObject({role:z.literal(`assistant`),modelId:z.string().min(1).max(512).optional(),parts:z.array(z.union([text,reasoning,file,tool,z.strictObject({type:z.literal(`step-start`)})])).min(1)})])).min(1).max(1e4)});function parseSessionTranscriptSeed(e){if(new TextEncoder().encode(JSON.stringify(e)).byteLength>8388608)throw Error(`Session transcript seed byte limit exceeded.`);return sessionTranscriptSeed.parse(e)}function prepareSessionTranscriptSeed(e){let t=parseSessionTranscriptSeed(e),n=[],r=[],i=0;for(let[e,a]of t.messages.entries()){let o=[];if(a.role===`user`){let e=[];for(let n of a.parts)o.push(n.type===`text`?{...n,state:`done`}:n),n.type===`text`?e.push(n):t.attachments!==`channel`&&n.mediaType.startsWith(`image/`)?e.push({type:`image`,image:new URL(n.url),mediaType:n.mediaType}):e.push({type:`file`,data:new URL(n.url),mediaType:n.mediaType,filename:n.filename});n.push({role:`user`,content:e})}else{let e=[],t=[],flush=()=>{e.length&&n.push({role:`assistant`,content:e}),t.length&&n.push({role:`tool`,content:t}),e=[],t=[]};for(let n of a.parts){if(n.type===`step-start`){flush(),o.push(n);continue}if(t.length&&n.type!==`dynamic-tool`&&flush(),n.type===`text`||n.type===`reasoning`)o.push({...n,state:`done`}),e.push(n);else if(n.type===`file`)o.push(n),e.push({type:`file`,data:new URL(n.url),mediaType:n.mediaType,filename:n.filename});else{let r=`seed_tool_${i++}`;e.push({type:`tool-call`,toolCallId:r,toolName:n.toolName,input:n.input});let a=n.state===`output-available`?{type:`json`,value:n.output}:{type:`error-text`,value:n.state===`output-error`?n.errorText:n.reason??`Tool execution was denied.`};t.push({type:`tool-result`,toolCallId:r,toolName:n.toolName,output:a}),n.state===`output-denied`?o.push({type:n.type,toolName:n.toolName,toolCallId:r,input:n.input,state:n.state,approval:{id:`seed_denial_${i}`,approved:!1,reason:n.reason}}):o.push({...n,toolCallId:r})}}flush()}r.push({id:`seed_message_${e}`,role:a.role,parts:o,...a.role===`assistant`&&a.modelId!==void 0?{metadata:{modelId:a.modelId}}:{}})}return{history:n,messages:r}}export{parseSessionTranscriptSeed,prepareSessionTranscriptSeed};
 \ No newline at end of file
 diff --git a/dist/src/execution/session.js b/dist/src/execution/session.js
 index 2cd23dc1..30304a57 100644
