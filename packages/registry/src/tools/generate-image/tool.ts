@@ -4,6 +4,11 @@ import { z } from "zod";
 
 import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { AppModelId } from "@/lib/ai/app-models";
+import type {
+  GatewayImageModelIdMap,
+  GatewayModelIdMap,
+  GatewayType,
+} from "@/lib/ai/gateways/registry";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
@@ -16,6 +21,8 @@ import { getBaseUrl } from "@/lib/url";
 const log = createModuleLogger("ai.tools.generate-image");
 
 type ImageMode = "edit" | "generate";
+type ActiveGatewayModelId = GatewayModelIdMap[GatewayType];
+type ActiveGatewayImageModelId = GatewayImageModelIdMap[GatewayType];
 
 /**
  * Resolve which model to use for image generation and whether it's a
@@ -26,8 +33,16 @@ type ImageMode = "edit" | "generate";
 const resolveImageModel = async (
   selectedModel?: string
 ): Promise<
-  | { modelId: string; multimodal: true; usageModelId: AppModelId }
-  | { modelId: string; multimodal: false; usageModelId?: never }
+  | {
+      modelId: ActiveGatewayModelId;
+      multimodal: true;
+      usageModelId: AppModelId;
+    }
+  | {
+      modelId: ActiveGatewayImageModelId;
+      multimodal: false;
+      usageModelId?: never;
+    }
 > => {
   // If the user's selected chat model can generate images, prefer it
   if (selectedModel) {
@@ -257,7 +272,7 @@ const runGenerateImageMultimodal = async ({
   startMs,
   costAccumulator,
 }: {
-  modelId: string;
+  modelId: ActiveGatewayModelId;
   usageModelId: AppModelId;
   mode: ImageMode;
   prompt: string;
