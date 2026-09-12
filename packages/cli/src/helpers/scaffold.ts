@@ -55,7 +55,7 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
 ] as const;
 
 function getCliPackageRoot(): string {
-  const __dir = dirname(fileURLToPath(import.meta.url));
+  const __dir = import.meta.dirname;
 
   for (const relative of ["..", "../.."]) {
     const candidate = resolve(__dir, relative);
@@ -109,25 +109,29 @@ function runScript(packageManager: PackageManager, script: string): string {
 
 function execCommand(packageManager: PackageManager): string {
   switch (packageManager) {
-    case "bun":
+    case "bun": {
       return "bunx";
-    case "pnpm":
+    }
+    case "pnpm": {
       return "pnpm dlx";
-    case "yarn":
+    }
+    case "yarn": {
       return "yarn dlx";
-    case "npm":
+    }
+    case "npm": {
       return "npx";
+    }
   }
 }
 
 async function replaceInFile(
   filePath: string,
-  replacements: Array<[string, string]>
+  replacements: [string, string][]
 ): Promise<void> {
   if (!existsSync(filePath)) {
     return;
   }
-  let content = await readFile(filePath, "utf8");
+  let content = await readFile(filePath, "utf-8");
   for (const [search, replacement] of replacements) {
     content = content.replaceAll(search, replacement);
   }
@@ -197,10 +201,10 @@ async function applyChatTemplateSourceTransforms(
 
   const repoPackageJsonPath = join(getRepoRoot(), "package.json");
   const rootPackageJson = JSON.parse(
-    await readFile(repoPackageJsonPath, "utf8")
+    await readFile(repoPackageJsonPath, "utf-8")
   ) as { packageManager?: string };
   const packageJsonPath = join(destination, "package.json");
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
+  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     packageManager?: string;
   };
   packageJson.packageManager = rootPackageJson.packageManager;
@@ -320,7 +324,7 @@ async function normalizeChatAppFiles(
   ]);
 
   const vercelJsonPath = join(destination, "vercel.json");
-  const vercelJson = JSON.parse(await readFile(vercelJsonPath, "utf8")) as {
+  const vercelJson = JSON.parse(await readFile(vercelJsonPath, "utf-8")) as {
     installCommand?: string;
     buildCommand?: string;
   };
@@ -344,7 +348,7 @@ async function normalizeElectronFiles(
   await replaceInFile(join(destination, "forge.config.ts"), [
     [
       "Run \\`bun run prebuild\\`",
-      "Run \\`" + runScript(packageManager, "prebuild") + "\\`",
+      `Run \\\`${runScript(packageManager, "prebuild")}\\\``,
     ],
     ["function runBunScript", "function runPackageManagerScript"],
     [
@@ -384,13 +388,11 @@ async function excludeElectronFromRootTypecheck(
   projectDir: string
 ): Promise<void> {
   const tsconfigPath = join(projectDir, "tsconfig.json");
-  const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf8")) as {
+  const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8")) as {
     exclude?: string[];
   };
 
-  tsconfig.exclude = Array.from(
-    new Set([...(tsconfig.exclude ?? []), "electron"])
-  );
+  tsconfig.exclude = [...new Set([...(tsconfig.exclude ?? []), "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 }
 
@@ -416,7 +418,7 @@ export async function scaffoldFromTemplate(
   );
   const packageJsonPath = join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
-    JSON.parse(await readFile(packageJsonPath, "utf8")) as Record<
+    JSON.parse(await readFile(packageJsonPath, "utf-8")) as Record<
       string,
       unknown
     >,
@@ -428,7 +430,7 @@ export async function scaffoldFromTemplate(
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   // This is a new scaffold, so remove the reference app's selection before install.
   await rm(join(destination, "lib/ai/gateway.ts"));
-  const manifest = JSON.parse(await readFile(packageJsonPath, "utf8"));
+  const manifest = JSON.parse(await readFile(packageJsonPath, "utf-8"));
   delete manifest.dependencies["@ai-sdk/gateway"];
   delete manifest.dependencies["@vercel/blob"];
   delete manifest.dependencies["@tavily/core"];
@@ -446,7 +448,7 @@ export async function scaffoldFromTemplate(
   await rm(join(destination, "lib/storage-provider.ts"));
   await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const componentsPath = join(destination, "components.json");
-  const components = JSON.parse(await readFile(componentsPath, "utf8"));
+  const components = JSON.parse(await readFile(componentsPath, "utf-8"));
   components.registries = {
     ...components.registries,
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
@@ -462,7 +464,7 @@ export async function scaffoldElectron(
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = join(projectDir, "package.json");
   const rootPackageJson = JSON.parse(
-    await readFile(rootPackageJsonPath, "utf8")
+    await readFile(rootPackageJsonPath, "utf-8")
   ) as {
     devDependencies?: Record<string, string>;
   };
@@ -478,7 +480,7 @@ export async function scaffoldElectron(
   const packageJsonPath = join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
     JSON.parse(
-      (await readFile(packageJsonPath, "utf8"))
+      (await readFile(packageJsonPath, "utf-8"))
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
         .replace("__GITHUB_OWNER__", "your-github-username")
         .replace("__GITHUB_REPO__", opts.projectName)

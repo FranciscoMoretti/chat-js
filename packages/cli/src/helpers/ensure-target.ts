@@ -5,12 +5,17 @@ import { logger } from "../utils/logger";
 
 export async function ensureTargetEmpty(targetDir: string): Promise<void> {
   const targetStats = await lstat(targetDir).catch((error) => {
-    if (error.code === "ENOENT") return null;
+    if (error.code === "ENOENT") {
+      return null;
+    }
     throw error;
   });
-  if (!targetStats) return;
-  if (targetStats.isSymbolicLink())
+  if (!targetStats) {
+    return;
+  }
+  if (targetStats.isSymbolicLink()) {
     throw new Error("Target directory must not be a symlink.");
+  }
 
   if (!targetStats.isDirectory()) {
     logger.error(

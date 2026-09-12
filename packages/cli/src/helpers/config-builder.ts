@@ -15,8 +15,9 @@ function defaultsFor(input: {
     input.gatewayDefaults ??
     builtInGateways.find((item) => item.meta.chatjs.id === input.gateway)?.meta
       .chatjs.defaults;
-  if (!defaults)
+  if (!defaults) {
     throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
+  }
   return defaults;
 }
 
@@ -31,14 +32,14 @@ import type {
 function extractDescriptions(
   schema: z.ZodType,
   prefix = "",
-  result: Map<string, string> = new Map()
+  result = new Map<string, string>()
 ): Map<string, string> {
   if (schema.description && prefix) {
     result.set(prefix, schema.description);
   }
 
   if (schema instanceof z.ZodObject) {
-    const shape = schema.shape;
+    const { shape } = schema;
     for (const [key, propSchema] of Object.entries(shape)) {
       const path = prefix ? `${prefix}.${key}` : key;
       extractDescriptions(propSchema as z.ZodType, path, result);
@@ -47,8 +48,9 @@ function extractDescriptions(
 
   if (schema instanceof z.ZodDiscriminatedUnion) {
     for (const option of schema.options.values()) {
-      if (option instanceof z.ZodType)
+      if (option instanceof z.ZodType) {
         extractDescriptions(option, prefix, result);
+      }
     }
   }
 
@@ -66,21 +68,27 @@ function formatValue(value: unknown, indent: number): string {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
 
-  if (value === null || value === undefined) return "undefined";
-  if (typeof value === "string") return JSON.stringify(value);
+  if (value === null || value === undefined) {
+    return "undefined";
+  }
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
   if (
     typeof value === "number" &&
     Number.isSafeInteger(value) &&
     Math.abs(value) >= 10_000
   ) {
-    return String(value).replace(/(\d)(?=(\d{3})+$)/g, "$1_");
+    return String(value).replaceAll(/(\d)(?=(\d{3})+$)/g, "$1_");
   }
   if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return "[]";
+    if (value.length === 0) {
+      return "[]";
+    }
     if (value.every((v) => typeof v === "string")) {
       return `[${value.map((v) => JSON.stringify(v)).join(", ")}]`;
     }
@@ -91,7 +99,9 @@ function formatValue(value: unknown, indent: number): string {
 
   if (typeof value === "object") {
     const entries = Object.entries(value);
-    if (entries.length === 0) return "{}";
+    if (entries.length === 0) {
+      return "{}";
+    }
     return `{\n${entries
       .map(([k, v]) => `${inner}${formatKey(k)}: ${formatValue(v, indent + 1)}`)
       .join(",\n")},\n${spaces}}`;

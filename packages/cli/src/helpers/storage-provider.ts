@@ -37,24 +37,31 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
 `
   );
   const path = join(destination, ".env.example");
-  let env = await readFile(path, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
+  let env = await readFile(path, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
     throw error;
   });
   const start = "# <chatjs-storage-provider>";
   const end = "# </chatjs-storage-provider>";
   const from = env.indexOf(start);
   const to = env.indexOf(end);
-  if (from >= 0 && to >= from)
+  if (from !== -1 && to >= from) {
     env = env.slice(0, from) + env.slice(to + end.length);
+  }
   const variables = [
     ...new Set(definition.envRequirements.flatMap((r) => r.options.flat())),
   ];
   env += `\n${start}\n# ${definition.id} storage\n`;
   for (const key of variables) {
-    if (!new RegExp(`^${key}=`, "m").test(env)) env += `${key}=\n`;
+    if (!new RegExp(`^${key}=`, "m").test(env)) {
+      env += `${key}=\n`;
+    }
   }
-  for (const key of definition.optionalEnv) env += `# ${key}=\n`;
+  for (const key of definition.optionalEnv) {
+    env += `# ${key}=\n`;
+  }
   env += `${end}\n`;
   await writeFile(path, env);
 }

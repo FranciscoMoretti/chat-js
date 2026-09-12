@@ -15,18 +15,21 @@ import {
 } from "../../../../apps/chat/lib/config-schema";
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import type { RegistryIndexItem } from "../registry/schema";
-import { resolveStorage, type StorageSelection } from "../registry/storage";
+import { resolveStorage } from "../registry/storage";
+import type { StorageSelection } from "../registry/storage";
 import {
   AUTH_PROVIDERS,
-  type AuthProvider,
   BUILT_IN_TOOL_KEYS,
-  type BuiltInToolKey,
   CORE_FEATURE_KEYS,
-  type CoreFeatureKey,
   DOCUMENT_TYPE_KEYS,
-  type DocumentTypeKey,
   GATEWAYS,
-  type Gateway,
+} from "../types";
+import type {
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
 } from "../types";
 import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
@@ -121,9 +124,9 @@ function toKebabCase(value: string | undefined): string {
   return (value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replaceAll(/[^a-z0-9-]/g, "-")
+    .replaceAll(/-+/g, "-")
+    .replaceAll(/^-|-$/g, "");
 }
 
 function toSelectionRecord<T extends string>(
@@ -148,7 +151,9 @@ export async function promptProjectName(
     initialValue: targetArg ?? "my-chat-app",
     validate: (value?: string) => {
       const kebab = toKebabCase(value);
-      if (!kebab) return "Please enter a valid project name";
+      if (!kebab) {
+        return "Please enter a valid project name";
+      }
     },
   });
   handleCancel(name);
@@ -157,7 +162,9 @@ export async function promptProjectName(
 }
 
 export async function promptGateway(skipPrompt: boolean): Promise<Gateway> {
-  if (skipPrompt) return "vercel";
+  if (skipPrompt) {
+    return "vercel";
+  }
 
   const gateway = await select({
     message: `Which ${highlighter.info("AI gateway")} would you like to use?`,
@@ -228,10 +235,11 @@ export async function promptStorage(
   const keys = selection.definition.configKeys;
   let options = explicitOptions;
   if (options === undefined && keys.length) {
-    if (skipPrompt)
+    if (skipPrompt) {
       throw new Error(
         `Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`
       );
+    }
     const input = await text({
       message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
       validate: (v) => {
@@ -287,7 +295,9 @@ export async function promptCoreFeatures(
     followupSuggestions: defaultTools.followupSuggestions.enabled,
   };
 
-  if (skipPrompt) return { ...CORE_FEATURE_DEFAULTS };
+  if (skipPrompt) {
+    return { ...CORE_FEATURE_DEFAULTS };
+  }
 
   const selected = await multiselect({
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
@@ -327,7 +337,9 @@ export async function promptDocumentTypes(
     return toSelectionRecord(DOCUMENT_TYPE_KEYS, []);
   }
 
-  if (skipPrompt) return { ...DOCUMENT_TYPE_DEFAULTS };
+  if (skipPrompt) {
+    return { ...DOCUMENT_TYPE_DEFAULTS };
+  }
 
   const selected = await multiselect({
     message: `Which ${highlighter.info("document types")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
@@ -425,7 +437,9 @@ export async function promptAssistantTools(
 export async function promptAuth(
   skipPrompt: boolean
 ): Promise<Record<AuthProvider, boolean>> {
-  if (skipPrompt) return { ...AUTH_DEFAULTS };
+  if (skipPrompt) {
+    return { ...AUTH_DEFAULTS };
+  }
 
   const defaultProviders = AUTH_PROVIDERS.filter((p) => AUTH_DEFAULTS[p]);
 
@@ -461,7 +475,9 @@ export async function promptElectron(
     return explicitChoice;
   }
 
-  if (skipPrompt) return false;
+  if (skipPrompt) {
+    return false;
+  }
 
   const wantsElectron = await confirm({
     message: `Include an ${highlighter.info("Electron")} desktop app?`,
@@ -473,7 +489,9 @@ export async function promptElectron(
 }
 
 export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
-  if (skipPrompt) return "tavily-search";
+  if (skipPrompt) {
+    return "tavily-search";
+  }
   const choice = await select({
     message: "Which web search tool should chat and deep research use?",
     options: [
@@ -491,7 +509,9 @@ export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "Search tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
@@ -503,7 +523,9 @@ export async function promptSearchTool(skipPrompt: boolean): Promise<string> {
 export async function promptCodeExecutionTool(
   skipPrompt: boolean
 ): Promise<string> {
-  if (skipPrompt) return "vercel-code-execution";
+  if (skipPrompt) {
+    return "vercel-code-execution";
+  }
   const choice = await select({
     message: "Which code-execution tool should chat use?",
     options: [
@@ -516,7 +538,9 @@ export async function promptCodeExecutionTool(
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "Code-execution tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
@@ -528,7 +552,9 @@ export async function promptCodeExecutionTool(
 export async function promptUrlRetrievalTool(
   skipPrompt: boolean
 ): Promise<string> {
-  if (skipPrompt) return "retrieve-url";
+  if (skipPrompt) {
+    return "retrieve-url";
+  }
   const choice = await select({
     message: "Which URL retrieval tool should chat use?",
     options: [
@@ -541,7 +567,9 @@ export async function promptUrlRetrievalTool(
     ],
   });
   handleCancel(choice);
-  if (choice !== "external") return choice;
+  if (choice !== "external") {
+    return choice;
+  }
   const address = await text({
     message: "URL retrieval tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),

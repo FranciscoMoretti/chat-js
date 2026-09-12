@@ -20,7 +20,7 @@ async function rewriteThreadImports(directory: string): Promise<void> {
         return;
       }
 
-      const source = await readFile(path, "utf8");
+      const source = await readFile(path, "utf-8");
       let rewritten = source;
       for (const [packageImport, localImport] of THREAD_IMPORT_REPLACEMENTS) {
         rewritten = rewritten.replaceAll(packageImport, localImport);
@@ -42,7 +42,7 @@ export async function vendorThreadPackage(options: {
   await rewriteThreadImports(options.destination);
 
   const packageJsonPath = join(options.destination, "package.json");
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
+  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };

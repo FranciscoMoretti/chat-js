@@ -5,13 +5,16 @@
 let pending: Promise<void> = Promise.resolve();
 function requireSecure(url: string, redirect = false) {
   const parsed = new URL(url);
-  if (parsed.protocol === "https:") return;
+  if (parsed.protocol === "https:") {
+    return;
+  }
   if (
     !redirect &&
     parsed.protocol === "http:" &&
     ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname)
-  )
+  ) {
     return;
+  }
   throw new Error(
     "Registry requests must use HTTPS (HTTP is allowed only on loopback, without redirects)."
   );
@@ -29,8 +32,9 @@ export function withRegistryTransport<T>(
         return Reflect.apply(target, receiver, args).then(
           (response: Response) => {
             const location = response.headers.get("location");
-            if (response.status >= 300 && response.status < 400 && location)
+            if (response.status >= 300 && response.status < 400 && location) {
               requireSecure(new URL(location, url).href, true);
+            }
             return response;
           }
         );

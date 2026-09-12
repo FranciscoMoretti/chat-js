@@ -15,13 +15,17 @@ export async function configureGatewayProvider(
     ".env.example",
   ]);
   const snapshotPath = join(destination, "lib/ai/models.generated.ts");
-  const snapshot = await readFile(snapshotPath, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
+  const snapshot = await readFile(snapshotPath, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
     throw error;
   });
   const example = join(destination, ".env.example");
-  let env = await readFile(example, "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
+  let env = await readFile(example, "utf-8").catch((error) => {
+    if (error.code === "ENOENT") {
+      return "";
+    }
     throw error;
   });
   const { definition } = selection;
@@ -53,7 +57,9 @@ export const models: readonly AiGatewayModel[] = [];
   for (const name of new Set(
     definition.envRequirements.flatMap((r) => r.options.flat())
   )) {
-    if (!new RegExp(`^${name}=`, "m").test(env)) env += `\n${name}=\n`;
+    if (!new RegExp(`^${name}=`, "m").test(env)) {
+      env += `\n${name}=\n`;
+    }
   }
   await writeFile(example, env);
 }

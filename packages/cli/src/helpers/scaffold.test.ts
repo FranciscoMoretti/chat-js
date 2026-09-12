@@ -22,12 +22,15 @@ async function makeTempDir(name: string): Promise<string> {
 }
 
 function getCliPackageRoot(): string {
-  return resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  return resolve(import.meta.dirname, "../..");
 }
 
 afterEach(async () => {
-  if (originalUserAgent === undefined) delete process.env.npm_config_user_agent;
-  else process.env.npm_config_user_agent = originalUserAgent;
+  if (originalUserAgent === undefined) {
+    delete process.env.npm_config_user_agent;
+  } else {
+    process.env.npm_config_user_agent = originalUserAgent;
+  }
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
@@ -166,7 +169,7 @@ describe("scaffoldFromTemplate", () => {
     const destination = await makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf8")
+      await readFile(join(destination, "package.json"), "utf-8")
     );
     expect(manifest.dependencies["files-sdk"]).toBe("2.1.0");
     expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
@@ -182,7 +185,7 @@ describe("scaffoldFromTemplate", () => {
     await scaffoldFromTemplate(destination);
 
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf8")
+      await readFile(join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
       dependencies: Record<string, string>;
@@ -203,7 +206,7 @@ describe("scaffoldFromTemplate", () => {
     expect(existsSync(join(destination, "oxfmt.config.ts"))).toBe(true);
     const lintBaseline = await readFile(
       join(destination, "oxlint-baseline.json"),
-      "utf8"
+      "utf-8"
     );
     expect(lintBaseline).toContain("lib/thread/");
     expect(lintBaseline).toContain("electron/");
@@ -214,7 +217,7 @@ describe("scaffoldFromTemplate", () => {
     );
     const chatStoreSource = await readFile(
       join(destination, "lib", "stores", "base", "use-chat.ts"),
-      "utf8"
+      "utf-8"
     );
     expect(chatStoreSource).toContain('from "@/lib/thread"');
     expect(chatStoreSource).toContain('from "@/lib/thread/react"');
@@ -226,7 +229,7 @@ describe("scaffoldFromTemplate", () => {
     await scaffoldFromTemplate(destination, { packageManager: "npm" });
 
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf8")
+      await readFile(join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
       scripts: Record<string, string>;
@@ -239,22 +242,22 @@ describe("scaffoldFromTemplate", () => {
     }
 
     expect(
-      await readFile(join(destination, "playwright.config.ts"), "utf8")
+      await readFile(join(destination, "playwright.config.ts"), "utf-8")
     ).toContain('command: "npm run dev"');
     expect(
-      await readFile(join(destination, "scripts", "check-env.ts"), "utf8")
+      await readFile(join(destination, "scripts", "check-env.ts"), "utf-8")
     ).toContain("npm run fetch:models");
     expect(
       await readFile(
         join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
-        "utf8"
+        "utf-8"
       )
     ).toContain("npm run fetch:models");
     expect(
-      await readFile(join(destination, "scripts", "with-db.sh"), "utf8")
+      await readFile(join(destination, "scripts", "with-db.sh"), "utf-8")
     ).not.toContain("bun");
     expect(
-      await readFile(join(destination, "scripts", "db-branch-use.sh"), "utf8")
+      await readFile(join(destination, "scripts", "db-branch-use.sh"), "utf-8")
     ).not.toContain("bun");
   });
 
@@ -265,13 +268,13 @@ describe("scaffoldFromTemplate", () => {
     await scaffoldFromTemplate(destination, { packageManager: "pnpm" });
 
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf8")
+      await readFile(join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
     };
     const workspaceConfig = await readFile(
       join(destination, "pnpm-workspace.yaml"),
-      "utf8"
+      "utf-8"
     );
 
     expect(packageJson.packageManager).toBe("pnpm@10.33.1");
@@ -295,10 +298,10 @@ describe("scaffoldFromTemplate", () => {
       existsSync(join(destination, "tools", "chatjs", "get-weather"))
     ).toBe(false);
     expect(
-      await readFile(join(destination, "tools", "chatjs", "tools.ts"), "utf8")
+      await readFile(join(destination, "tools", "chatjs", "tools.ts"), "utf-8")
     ).not.toContain("getWeather");
     expect(
-      await readFile(join(destination, "tools", "chatjs", "ui.ts"), "utf8")
+      await readFile(join(destination, "tools", "chatjs", "ui.ts"), "utf-8")
     ).not.toContain("GetWeatherRenderer");
   });
 
@@ -322,12 +325,12 @@ describe("scaffoldFromTemplate", () => {
       });
 
       const packageJson = JSON.parse(
-        await readFile(join(projectDir, "package.json"), "utf8")
+        await readFile(join(projectDir, "package.json"), "utf-8")
       ) as {
         dependencies: Record<string, string>;
       };
       const electronPackageJson = JSON.parse(
-        await readFile(join(projectDir, "electron", "package.json"), "utf8")
+        await readFile(join(projectDir, "electron", "package.json"), "utf-8")
       ) as {
         devDependencies: Record<string, string>;
       };
@@ -373,7 +376,7 @@ describe("scaffoldFromGit", () => {
     await scaffoldFromGit(source, destination);
 
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf8")
+      await readFile(join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
     expect(packageJson.dependencies).toEqual({});
   });
@@ -390,7 +393,7 @@ describe("scaffoldElectron", () => {
     });
 
     const packageJson = JSON.parse(
-      await readFile(join(projectDir, "electron", "package.json"), "utf8")
+      await readFile(join(projectDir, "electron", "package.json"), "utf-8")
     ) as {
       packageManager?: string;
       devDependencies: Record<string, string>;
@@ -405,12 +408,12 @@ describe("scaffoldElectron", () => {
     expect(packageJson.devDependencies["better-auth"]).toBe("1.5.6");
     expect(packageJson.devDependencies.esbuild).toBeDefined();
     const rootPackageJson = JSON.parse(
-      await readFile(join(projectDir, "package.json"), "utf8")
+      await readFile(join(projectDir, "package.json"), "utf-8")
     ) as {
       devDependencies: Record<string, string>;
     };
     const rootTsconfig = JSON.parse(
-      await readFile(join(projectDir, "tsconfig.json"), "utf8")
+      await readFile(join(projectDir, "tsconfig.json"), "utf-8")
     ) as {
       exclude?: string[];
     };
@@ -424,7 +427,7 @@ describe("scaffoldElectron", () => {
     }
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
     expect(
-      await readFile(join(projectDir, "electron", "README.md"), "utf8")
+      await readFile(join(projectDir, "electron", "README.md"), "utf-8")
     ).not.toContain("bun ");
   });
 
@@ -439,11 +442,11 @@ describe("scaffoldElectron", () => {
     });
 
     const packageJson = JSON.parse(
-      await readFile(join(projectDir, "electron", "package.json"), "utf8")
+      await readFile(join(projectDir, "electron", "package.json"), "utf-8")
     ) as { pnpm?: unknown };
     const workspaceConfig = await readFile(
       join(projectDir, "electron", "pnpm-workspace.yaml"),
-      "utf8"
+      "utf-8"
     );
 
     expect(packageJson.pnpm).toBeUndefined();

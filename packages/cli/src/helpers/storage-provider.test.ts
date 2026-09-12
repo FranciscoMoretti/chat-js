@@ -39,8 +39,9 @@ describe("storage registry integration", () => {
     ]);
   });
   it("rejects non-object options", () => {
-    for (const input of ["", "[]", "null"])
+    for (const input of ["", "[]", "null"]) {
       expect(() => parseStorageOptions(input)).toThrow("JSON object");
+    }
   });
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "chatjs-storage-"));
@@ -75,14 +76,14 @@ describe("storage registry integration", () => {
       );
       await writeFile(join(cwd, "package.json"), "{}");
       await configureStorageProvider(cwd, selection);
-      expect(await readFile(join(cwd, "lib/storage-provider.ts"), "utf8")).toBe(
-        "// installed custom source"
-      );
-      expect(await readFile(join(cwd, "package.json"), "utf8")).toBe("{}");
       expect(
-        await readFile(join(cwd, "lib/storage-options.ts"), "utf8")
+        await readFile(join(cwd, "lib/storage-provider.ts"), "utf-8")
+      ).toBe("// installed custom source");
+      expect(await readFile(join(cwd, "package.json"), "utf-8")).toBe("{}");
+      expect(
+        await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")
       ).toContain('"bucket": "uploads"');
-      expect(await readFile(join(cwd, ".env.example"), "utf8")).toContain(
+      expect(await readFile(join(cwd, ".env.example"), "utf-8")).toContain(
         "ACME_TOKEN="
       );
       await writeFile(

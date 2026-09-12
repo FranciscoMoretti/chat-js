@@ -152,19 +152,20 @@ export function normalizeScaffoldedPackageJson(
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
     packageJson.overrides = {
-      ...(packageJson.overrides ?? {}),
+      ...packageJson.overrides,
       "@better-auth/core": betterAuthVersion,
     };
   }
 
   switch (options?.template) {
-    case "chat-app":
+    case "chat-app": {
       packageJson.type = "module";
       if (packageJson.scripts) {
         normalizeChatAppScripts(packageJson.scripts);
       }
       break;
-    case "electron":
+    }
+    case "electron": {
       if (packageJson.scripts) {
         normalizeElectronScripts(packageJson.scripts);
       }
@@ -173,8 +174,10 @@ export function normalizeScaffoldedPackageJson(
         options?.tsxVersion
       );
       break;
-    default:
+    }
+    default: {
       break;
+    }
   }
 
   if (options?.persistPackageManager !== false) {
@@ -186,10 +189,11 @@ export function normalizeScaffoldedPackageJson(
       launcherVersion ??
       execFileSync(packageManager, ["--version"], {
         cwd: tmpdir(),
-        encoding: "utf8",
+        encoding: "utf-8",
       }).trim();
-    if (!/^\d+\.\d+\.\d+/.test(version))
+    if (!/^\d+\.\d+\.\d+/.test(version)) {
       throw new Error(`Cannot determine ${packageManager} version.`);
+    }
     packageJson.packageManager = `${packageManager}@${version}`;
   }
 

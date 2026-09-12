@@ -4,12 +4,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { GATEWAYS, type BuiltInToolKey, type Gateway } from "../types";
+import { GATEWAYS } from "../types";
+import type { BuiltInToolKey, Gateway } from "../types";
 import { buildConfigTs } from "./config-builder";
 import { collectEnvChecklist } from "./env-checklist";
 
 const localRegistryUrl = resolve(
-  dirname(fileURLToPath(import.meta.url)),
+  import.meta.dirname,
   "../../../registry/items/{name}.json"
 );
 

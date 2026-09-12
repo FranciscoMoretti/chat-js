@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { builtInGateways, resolveGateway } from "./gateways";
+
 it("validates gateway integration metadata with the standard registry schema", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "chatjs-metadata-"));
   const source = join(cwd, "gateway.json");

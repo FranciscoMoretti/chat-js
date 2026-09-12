@@ -56,7 +56,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (fixture) await rm(fixture, { recursive: true, force: true });
+  if (fixture) {
+    await rm(fixture, { recursive: true, force: true });
+  }
 });
 
 test.each([
@@ -88,7 +90,7 @@ test.each([
   const base = git("rev-parse", "HEAD");
   const target = join(fixture, path);
   await mkdir(dirname(target), { recursive: true });
-  const previous = await readFile(target, "utf8").catch(() => "");
+  const previous = await readFile(target, "utf-8").catch(() => "");
   await writeFile(target, `${previous}\n`);
   git("add", path);
   git("commit", "-m", `Change ${path}`);
@@ -124,10 +126,12 @@ test.each([
     }
   );
   expect(execution.exitCode, execution.stderr.toString()).toBe(0);
-  const plannedTasks = JSON.parse(execution.stdout.toString()).tasks.map(
-    (task: { taskId: string }) => task.taskId
+  const plannedTasks = new Set(
+    JSON.parse(execution.stdout.toString()).tasks.map(
+      (task: { taskId: string }) => task.taskId
+    )
   );
-  expect(plannedTasks.includes("@chat-js/cli#test:scaffold")).toBe(affected);
+  expect(plannedTasks.has("@chat-js/cli#test:scaffold")).toBe(affected);
   if (
     path.startsWith("apps/chat/") ||
     path.startsWith("apps/site/") ||
@@ -138,6 +142,6 @@ test.each([
     path === "scripts/sync-template.ts" ||
     path === "package.json"
   ) {
-    expect(plannedTasks.includes("@chat-js/cli#test:unit")).toBe(affected);
+    expect(plannedTasks.has("@chat-js/cli#test:unit")).toBe(affected);
   }
 });
