@@ -1,16 +1,27 @@
 import { z } from "zod";
 import { eveMessageInput } from "./message-input";
 
-export const eveForkInput = z
-  .object({
-    conversationId: z.uuid(),
-    checkpointId: z.uuid().optional(),
-    beforeTurnId: z
-      .string()
-      .max(64)
-      .regex(/^turn_(0|[1-9][0-9]*)$/),
-  })
-  .strict();
+export const eveForkInput = z.union([
+  z
+    .object({
+      conversationId: z.uuid(),
+      checkpointId: z.uuid().optional(),
+      beforeTurnId: z
+        .string()
+        .max(64)
+        .regex(/^turn_(0|[1-9][0-9]*)$/),
+      beforeMessageId: z.never().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      conversationId: z.uuid(),
+      beforeMessageId: z.string().regex(/^seed_message_(0|[1-9][0-9]{0,3})$/),
+      beforeTurnId: z.never().optional(),
+      checkpointId: z.never().optional(),
+    })
+    .strict(),
+]);
 export type EveForkInput = z.infer<typeof eveForkInput>;
 
 export const createConversationInput = z

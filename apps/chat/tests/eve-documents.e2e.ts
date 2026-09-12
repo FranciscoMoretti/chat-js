@@ -1112,3 +1112,63 @@ test("imported forks restore the selected document boundary and exclude the late
     expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
   }
 });
+
+test("imported fork reservations retain their boundary across uncertain creation and reject changed retries", async () => {
+  const root = await conversation();
+  await db.insert(eveImportedDocumentCheckpoint).values(
+    [0, 2].map((messageIndex) => ({
+      ownerId: owner,
+      conversationId: root.id,
+      messageIndex,
+    }))
+  );
+  const operationId = crypto.randomUUID();
+  const fork = { conversationId: root.id, beforeMessageId: "seed_message_2" };
+  const failedDispatch = () => Promise.reject(new Error("Lost native reply"));
+  await expect(
+    createEveConversation(owner, operationId, "Replacement", failedDispatch, {
+      fork,
+    })
+  ).rejects.toThrow();
+  const [reserved] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.operationId, operationId));
+  expect(reserved).toMatchObject({
+    state: "uncertain",
+    forkMessageId: "seed_message_2",
+    forkTurnId: null,
+  });
+  const sessionId = crypto.randomUUID();
+  for (const changed of [
+    { conversationId: root.id, beforeMessageId: "seed_message_0" },
+    { conversationId: root.id, beforeTurnId: "turn_0" },
+  ]) {
+    await expect(
+      createEveConversation(
+        owner,
+        operationId,
+        "Replacement",
+        async () => sessionId,
+        { fork: changed }
+      )
+    ).rejects.toThrow("different");
+  }
+  const bound = await createEveConversation(
+    owner,
+    operationId,
+    "Replacement",
+    async () => sessionId,
+    { fork }
+  );
+  expect(bound).toEqual({ id: reserved.id, sessionId });
+  expect(
+    await createEveConversation(
+      owner,
+      operationId,
+      "Replacement",
+      failedDispatch,
+      { fork }
+    )
+  ).toEqual(bound);
+});

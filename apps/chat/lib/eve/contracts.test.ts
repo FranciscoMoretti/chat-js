@@ -194,3 +194,26 @@ it("allows a project for new conversations while forks inherit their existing pr
     }).success
   ).toBe(false);
 });
+
+it("accepts exactly one canonical imported fork boundary", () => {
+  const input = {
+    operationId: crypto.randomUUID(),
+    message: "Replacement question",
+    fork: {
+      conversationId: crypto.randomUUID(),
+      beforeMessageId: "seed_message_2",
+    },
+  };
+  expect(createConversationInput.parse(input)).toEqual(input);
+  for (const fork of [
+    { ...input.fork, beforeTurnId: "turn_0" },
+    { ...input.fork, checkpointId: crypto.randomUUID() },
+    { ...input.fork, beforeMessageId: "seed_message_02" },
+    { ...input.fork, beforeMessageId: "seed_message_10000" },
+    { ...input.fork, beforeMessageId: "message_2" },
+  ]) {
+    expect(createConversationInput.safeParse({ ...input, fork }).success).toBe(
+      false
+    );
+  }
+});

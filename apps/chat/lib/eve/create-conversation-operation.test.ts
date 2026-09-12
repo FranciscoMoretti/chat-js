@@ -119,3 +119,27 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+
+it("dispatches imported forks by message identity without requiring an execution checkpoint", async () => {
+  const imported = {
+    ...input,
+    fork: { conversationId: "source-chat", beforeMessageId: "seed_message_2" },
+  };
+  expect((await createEveConversationOperation("owner", imported)).status).toBe(
+    200
+  );
+  expect(mocks.readiness).not.toHaveBeenCalled();
+  expect(JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body).fork).toEqual({
+    sessionId: "source",
+    beforeMessageId: "seed_message_2",
+  });
+  mocks.creation.mockResolvedValue({ state: "uncertain" });
+  mocks.request
+    .mockClear()
+    .mockResolvedValue(Response.json({ sessionId: "existing-child" }));
+  expect(
+    await (await createEveConversationOperation("owner", imported)).json()
+  ).toEqual({ sessionId: "existing-child" });
+  expect(mocks.request).toHaveBeenCalledOnce();
+  expect(mocks.readiness).not.toHaveBeenCalled();
+});

@@ -117,7 +117,7 @@ export async function createEveConversationOperation(
         if (existing.status !== 404 || !lookupFailure.success) {
           throw new Error("Native operation lookup is unavailable.");
         }
-        if (fork) {
+        if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
           await waitForEveCheckpoint(
             ownerId,
             fork.sessionId,
@@ -206,6 +206,12 @@ async function resolveFork(ownerId: string, input: EveForkInput | undefined) {
       { error: "Source conversation not found.", creationRejected: true },
       { status: 404 }
     );
+  }
+  if (input.beforeMessageId) {
+    return {
+      sessionId: source.sessionId,
+      beforeMessageId: input.beforeMessageId,
+    };
   }
   return {
     sessionId: source.sessionId,

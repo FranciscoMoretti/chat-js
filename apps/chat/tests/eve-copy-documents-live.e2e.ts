@@ -21,7 +21,7 @@ const boundaryReply = /^boundary-ready\.?$/;
 test("copied document history survives source deletion and supports native editing", async ({
   page,
 }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(60_000);
   await page.addInitScript(() => {
@@ -232,4 +232,53 @@ test("copied document history survives source deletion and supports native editi
         event.data.result.toolName === "readDocument"
     )
   ).toBe(true);
+  const forkInput = {
+    operationId: crypto.randomUUID(),
+    modelId,
+    fork: { conversationId: destination.id, beforeMessageId: "seed_message_2" },
+    message: `Use readDocument with documentId "${head.documentId}" once, then reply briefly. Do not edit the document.`,
+  };
+  const forkResponse = await page.request.post("/api/agent-conversations", {
+    headers: { origin },
+    data: forkInput,
+  });
+  expect(forkResponse.ok(), await forkResponse.text()).toBe(true);
+  const forked = conversationBinding.parse(await forkResponse.json());
+  const [forkHead] = await db
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, forked.id));
+  expect(forkHead.revisionId).toBe(head.revisionId);
+  await page.goto(`/chat/${forked.id}`);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 45_000,
+  });
+  const forkSnapshot = await native.sessions
+    .attach(forked.sessionId)
+    .snapshot();
+  const seed = forkSnapshot.events.find(
+    (event) => event.type === "history.seeded"
+  );
+  expect(seed?.data.messages).toHaveLength(2);
+  expect(
+    forkSnapshot.events.some(
+      (event) =>
+        event.type === "action.result" &&
+        event.data.result.kind === "tool-result" &&
+        event.data.result.toolName === "readDocument"
+    )
+  ).toBe(true);
+  const replay = await page.request.post("/api/agent-conversations", {
+    headers: { origin },
+    data: forkInput,
+  });
+  expect(await replay.json()).toEqual(forked);
+  const changed = await page.request.post("/api/agent-conversations", {
+    headers: { origin },
+    data: {
+      ...forkInput,
+      fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
+    },
+  });
+  expect(changed.status()).toBe(409);
 });

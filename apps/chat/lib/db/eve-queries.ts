@@ -242,6 +242,7 @@ async function reserveEveConversation(
           ? (source.rootConversationId ?? source.id)
           : undefined,
         forkTurnId: fork?.beforeTurnId,
+        forkMessageId: fork?.beforeMessageId,
         forkCheckpointId: fork?.checkpointId,
       })
       .onConflictDoNothing()
@@ -381,6 +382,21 @@ export async function beginEveConversationDeletion(
   });
 }
 
+function matchesEveFork(
+  existing: Pick<
+    typeof eveConversation.$inferSelect,
+    "parentConversationId" | "forkTurnId" | "forkMessageId" | "forkCheckpointId"
+  >,
+  fork: EveForkInput | undefined
+) {
+  return (
+    existing.parentConversationId === (fork?.conversationId ?? null) &&
+    existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
+    existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
+    existing.forkCheckpointId === (fork?.checkpointId ?? null)
+  );
+}
+
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 export async function createEveConversation(
   ownerId: string,
@@ -437,9 +453,7 @@ export async function createEveConversation(
       existing.initialModelId !== (initialModelId ?? null) ||
       existing.initialContentHash !== (initialContentHash ?? null) ||
       existing.initialProjectId !== (initialProjectId ?? null) ||
-      existing.parentConversationId !== (fork?.conversationId ?? null) ||
-      existing.forkTurnId !== (fork?.beforeTurnId ?? null) ||
-      existing.forkCheckpointId !== (fork?.checkpointId ?? null)
+      !matchesEveFork(existing, fork)
     ) {
       throw new CreationConflict(
         "This operation already has a different message, attachments, model, project, or source turn."
@@ -609,6 +623,7 @@ export async function listEveConversationBranches(
       id: eveConversation.id,
       parentConversationId: eveConversation.parentConversationId,
       forkTurnId: eveConversation.forkTurnId,
+      forkMessageId: eveConversation.forkMessageId,
       firstMessage: eveConversation.firstMessage,
       createdAt: eveConversation.createdAt,
     })
