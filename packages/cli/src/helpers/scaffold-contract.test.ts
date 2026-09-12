@@ -1,35 +1,8 @@
-import { afterEach, describe, expect, it } from "bun:test";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "bun:test";
 
 import { GATEWAYS } from "../types";
 import type { BuiltInToolKey, Gateway } from "../types";
 import { buildConfigTs } from "./config-builder";
-import { collectEnvChecklist } from "./env-checklist";
-
-const localRegistryUrl = resolve(
-  import.meta.dirname,
-  "../../../registry/items/{name}.json"
-);
-
-const tempDirs: string[] = [];
-
-async function makeTempDir(name: string): Promise<string> {
-  const dir = join(
-    tmpdir(),
-    `chat-js-scaffold-contract-${name}-${crypto.randomUUID()}`
-  );
-  tempDirs.push(dir);
-  return dir;
-}
-
-afterEach(async () => {
-  await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
-  );
-});
 
 function buildConfigFor(
   gateway: Gateway,
@@ -80,11 +53,11 @@ describe("scaffold contracts", () => {
 
     const openaiCompatible = buildConfigFor("openai-compatible", allBuiltIns);
     expect(openaiCompatible).toContain('default: "gpt-image-1"');
-    expect(openaiCompatible).toMatch(/video:\s*{\s*enabled:\s*false,/m);
+    expect(openaiCompatible).toMatch(/video:\s*\{\s*enabled:\s*false,/mu);
 
     const litellm = buildConfigFor("litellm", allBuiltIns);
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
-    expect(litellm).toMatch(/image:\s*{\s*enabled:\s*false,/m);
-    expect(litellm).toMatch(/video:\s*{\s*enabled:\s*false,/m);
+    expect(litellm).toMatch(/image:\s*\{\s*enabled:\s*false,/mu);
+    expect(litellm).toMatch(/video:\s*\{\s*enabled:\s*false,/mu);
   });
 });
