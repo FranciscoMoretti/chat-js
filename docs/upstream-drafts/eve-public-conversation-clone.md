@@ -109,3 +109,12 @@ The local application now reserves a copy root, immutable preparation plan, and 
 Pre-acceptance rejection fences resource writes and provides a never-dispatched cleanup proof. Accepted copies retain their seed through uncertain native replies and recover with the same reservation identity, independent of source revocation. Deletion removes the temporary journal while preserving the operation/kind tombstone.
 
 This foundation is tested with local PostgreSQL and simulated storage/native replies. The preparation factory, authenticated channel resolver wiring, copy endpoint, cleanup coordinator, and Save UI are still pending; the journal alone does not expose copying to users.
+
+
+## Server integration
+
+The preparation service now derives the plan from a sanitized, idle public snapshot and complete authorized document ancestry. It reads files only through exact source-conversation references, under publication/ownership locks; inline attachments become independently owned stored files. Retries reuse the journal's original allocation and model, including concurrent requests. Native lookup uses `kind=seed`; creation sends only the destination operation ID and seed intent. The authenticated channel resolves the persisted accepted seed. Saving does not spend model credits or execute tools.
+
+Permanent pre-acceptance failures (revocation, changed document heads, or changed file bytes) reject and clean up the destination using never-dispatched proof. Source availability is checked before unfinished file reads, so deleting an unwritten source file cannot trap preparation in storage retries. Temporary storage/native errors retain the same operation. Cleanup failures remain discoverable as rejected/deleting, and repeating the save finishes erasure without native dispatch. Accepted copies retain normal recovery semantics.
+
+The HTTP copy endpoint, Save UI, pending/reload flow, and real native/browser copy validation remain to be integrated. Local service tests use real database transactions and simulated storage/native replies; they cover complete documents/files, concurrency, ownership denial, lost writes/native replies, revocation and interrupted cleanup.

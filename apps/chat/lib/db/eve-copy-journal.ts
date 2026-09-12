@@ -19,6 +19,37 @@ import {
 type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 const hashPattern = /^[a-f0-9]{64}$/;
 
+export class EveCopySourceChanged extends CreationConflict {}
+
+/** Caller holds source/destination family locks; the shared row lock serializes revocation. */
+export async function assertEveCopySourceAvailable(
+  tx: CopyTransaction,
+  source: {
+    sourceConversationId: string;
+    sourceSessionId: string;
+    sourceOwnerId: string;
+  }
+) {
+  const [row] = await tx
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, source.sourceConversationId),
+        eq(eveConversation.ownerId, source.sourceOwnerId),
+        eq(eveConversation.sessionId, source.sourceSessionId),
+        eq(eveConversation.state, "bound"),
+        eq(eveConversation.visibility, "public")
+      )
+    )
+    .for("share");
+  if (!row) {
+    throw new EveCopySourceChanged(
+      "Sharing was revoked before the copy was accepted."
+    );
+  }
+}
+
 export async function lockEveCopyOwners(tx: CopyTransaction, owners: string[]) {
   for (const owner of [...new Set(owners)].sort()) {
     await tx.execute(

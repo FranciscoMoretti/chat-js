@@ -1,10 +1,14 @@
 import { createHash } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./client";
-import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
+import {
+  assertEveCopySourceAvailable,
+  EveCopySourceChanged,
+  lockEveCopyOwners,
+  readEveCopy,
+} from "./eve-copy-journal";
 import { CreationConflict } from "./eve-queries";
 import {
-  eveConversation,
   eveConversationCopy,
   eveConversationCopyFile,
   eveDocumentHead,
@@ -19,12 +23,15 @@ export async function writeEveCopyFile(
   conversationId: string,
   key: string,
   storage: {
-    readSourceFile: (key: string) => Promise<Blob>;
+    readSourceFile: (
+      key: string
+    ) => Promise<Pick<Blob, "type" | "arrayBuffer">>;
     writeDestinationFile: (key: string, file: Blob) => Promise<void>;
   }
 ) {
+  const initial = await readEveCopy(db, ownerId, conversationId);
   return await db.transaction(async (tx) => {
-    await lockEveCopyOwners(tx, [ownerId]);
+    await lockEveCopyOwners(tx, [ownerId, initial.copy.sourceOwnerId]);
     const { copy, conversation } = await readEveCopy(
       tx,
       ownerId,
@@ -56,6 +63,7 @@ export async function writeEveCopyFile(
     if (copy.phase !== "preparing" || !file) {
       throw new Error("Saved copy preparation is unavailable.");
     }
+    await assertEveCopySourceAvailable(tx, copy);
     const blob =
       file.source.kind === "inline"
         ? new Blob([Buffer.from(file.source.base64, "base64")], {
@@ -68,9 +76,14 @@ export async function writeEveCopyFile(
       bytes.length !== receipt.size ||
       createHash("sha256").update(bytes).digest("hex") !== receipt.sha256
     ) {
-      throw new Error("Copy source file changed after preparation.");
+      throw new EveCopySourceChanged(
+        "Copy source file changed after preparation."
+      );
     }
-    await storage.writeDestinationFile(key, blob);
+    await storage.writeDestinationFile(
+      key,
+      new Blob([bytes], { type: receipt.mediaType })
+    );
     const [written] = await tx
       .update(eveConversationCopyFile)
       .set({ writtenAt: new Date() })
@@ -162,24 +175,7 @@ export async function acceptEveCopy(ownerId: string, conversationId: string) {
     if (!(copy.plan && copy.documentsReady)) {
       throw new Error("Copied documents are not committed.");
     }
-    const [source] = await tx
-      .select({ id: eveConversation.id })
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.id, copy.sourceConversationId),
-          eq(eveConversation.ownerId, copy.sourceOwnerId),
-          eq(eveConversation.sessionId, copy.sourceSessionId),
-          eq(eveConversation.state, "bound"),
-          eq(eveConversation.visibility, "public")
-        )
-      )
-      .for("share");
-    if (!source) {
-      throw new CreationConflict(
-        "Sharing was revoked before the copy was accepted."
-      );
-    }
+    await assertEveCopySourceAvailable(tx, copy);
     const heads = copy.plan.sourceHeads.length
       ? await tx
           .select({
@@ -209,7 +205,7 @@ export async function acceptEveCopy(ownerId: string, conversationId: string) {
           )
       )
     ) {
-      throw new CreationConflict(
+      throw new EveCopySourceChanged(
         "Published document history changed before the copy was accepted."
       );
     }

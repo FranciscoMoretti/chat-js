@@ -338,7 +338,7 @@ function decodeInlineAttachment(part: Extract<SeedPart, { type: "file" }>) {
   };
 }
 
-/** Metadata must describe committed, destination-owned files; no attachment bytes enter the seed. */
+/** Metadata binds planned destination bytes; acceptance requires matching committed receipts. */
 export async function materializeEveCopyTranscript(
   seed: Seed,
   allocations: CopyAllocations,

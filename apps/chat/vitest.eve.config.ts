@@ -16,6 +16,7 @@ export default defineConfig({
       "tests/eve-documents.e2e.ts",
       "tests/eve-copy-documents.e2e.ts",
       "tests/eve-copy-journal.e2e.ts",
+      "tests/eve-save-copy.e2e.ts",
       "tests/eve-files.e2e.ts",
       "tests/eve-file-storage.e2e.ts",
       "tests/eve-local-snapshots.e2e.ts",
