@@ -35,7 +35,7 @@ interface OpenRouterModelResponse {
   } | null;
 }
 
-function deriveTags(model: OpenRouterModelResponse): string[] {
+const deriveTags = (model: OpenRouterModelResponse): string[] => {
   const inputMods = model.architecture?.input_modalities ?? ["text"];
   const outputMods = model.architecture?.output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
@@ -60,9 +60,9 @@ function deriveTags(model: OpenRouterModelResponse): string[] {
     tags.push("tool-use");
   }
   return tags;
-}
+};
 
-function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
+const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
   const tags = deriveTags(model);
   const outputMods = model.architecture?.output_modalities ?? ["text"];
 
@@ -93,7 +93,7 @@ function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
     tags: tags.length > 0 ? (tags as AiGatewayModel["tags"]) : undefined,
     type,
   };
-}
+};
 
 export class OpenRouterGateway
   extends GatewayRuntime

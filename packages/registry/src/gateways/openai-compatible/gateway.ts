@@ -15,22 +15,20 @@ interface OpenAICompatibleModelResponse {
   owned_by: string;
 }
 
-function toAiGatewayModel(
+const toAiGatewayModel = (
   model: OpenAICompatibleModelResponse
-): AiGatewayModel {
-  return {
-    context_window: 0,
-    created: model.created ?? 0,
-    description: "",
-    id: model.id,
-    max_tokens: 0,
-    name: model.id,
-    object: "model",
-    owned_by: model.owned_by ?? "unknown",
-    pricing: {},
-    type: "language",
-  };
-}
+): AiGatewayModel => ({
+  context_window: 0,
+  created: model.created ?? 0,
+  description: "",
+  id: model.id,
+  max_tokens: 0,
+  name: model.id,
+  object: "model",
+  owned_by: model.owned_by ?? "unknown",
+  pricing: {},
+  type: "language",
+});
 
 export class OpenAICompatibleGateway
   extends GatewayRuntime

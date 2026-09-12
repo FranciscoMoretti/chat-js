@@ -26,20 +26,18 @@ type LiteLLMModelResponse = z.infer<
   typeof litellmModelsResponseSchema
 >["data"][number];
 
-function toAiGatewayModel(model: LiteLLMModelResponse): AiGatewayModel {
-  return {
-    context_window: 0,
-    created: model.created ?? 0,
-    description: "",
-    id: model.id,
-    max_tokens: 0,
-    name: model.id,
-    object: "model",
-    owned_by: model.owned_by ?? "litellm",
-    pricing: {},
-    type: "language",
-  };
-}
+const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
+  context_window: 0,
+  created: model.created ?? 0,
+  description: "",
+  id: model.id,
+  max_tokens: 0,
+  name: model.id,
+  object: "model",
+  owned_by: model.owned_by ?? "litellm",
+  pricing: {},
+  type: "language",
+});
 
 export class LiteLLMGateway
   extends GatewayRuntime
