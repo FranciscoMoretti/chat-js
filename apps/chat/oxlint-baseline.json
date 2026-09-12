@@ -677,9 +677,7 @@
       }
     },
     {
-      "files": [
-        "components/settings/mcp-details-page.tsx"
-      ],
+      "files": ["components/settings/mcp-details-page.tsx"],
       "rules": {
         "prefer-named-capture-group": "off"
       }

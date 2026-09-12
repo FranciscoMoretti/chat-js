@@ -19,16 +19,16 @@ it("completes an unterminated inline code span", () => {
 });
 
 it("does not complete inline code inside an incomplete fenced code block", () => {
-  expect(
-    parseIncompleteMarkdown("```ts\nconst command = `npm test"),
-  ).toBe("```ts\nconst command = `npm test");
+  expect(parseIncompleteMarkdown("```ts\nconst command = `npm test")).toBe(
+    "```ts\nconst command = `npm test"
+  );
 });
 
 it("preserves streamed triple-backtick fences", () => {
   expect(parseIncompleteMarkdown("```ts\nconst answer = 42")).toBe(
-    "```ts\nconst answer = 42",
+    "```ts\nconst answer = 42"
   );
   expect(parseIncompleteMarkdown("```ts\nconst answer = 42\n```")).toBe(
-    "```ts\nconst answer = 42\n```",
+    "```ts\nconst answer = 42\n```"
   );
 });
