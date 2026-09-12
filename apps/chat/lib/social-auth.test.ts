@@ -16,7 +16,7 @@ describe("isSocialAuthProvider", () => {
   it("rejects unknown provider ids", () => {
     expect(isSocialAuthProvider("discord")).toBe(false);
     expect(isSocialAuthProvider(null)).toBe(false);
-    expect(isSocialAuthProvider()).toBe(false);
+    expect(isSocialAuthProvider(undefined)).toBe(false);
   });
 });
 

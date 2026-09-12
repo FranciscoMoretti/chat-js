@@ -693,7 +693,7 @@
       }
     },
     {
-      "files": ["trpc/init.ts"],
+      "files": ["lib/redis/client.test.ts", "trpc/init.ts"],
       "rules": {
         "no-promise-executor-return": "off"
       }
@@ -1860,6 +1860,8 @@
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
+        "lib/redis/client.test.ts",
+        "lib/social-auth.test.ts",
         "providers/session-provider.tsx",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],

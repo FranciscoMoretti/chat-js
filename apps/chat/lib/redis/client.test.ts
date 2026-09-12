@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 it("cleans up both clients when one initial connection rejects", async () => {
-  clients.publisher.connect.mockResolvedValue();
+  clients.publisher.connect.mockResolvedValue(undefined);
   clients.subscriber.connect.mockRejectedValue(new Error("Unavailable"));
   const onError = vi.fn();
   expect(
@@ -38,8 +38,10 @@ it("cleans up both clients when one initial connection rejects", async () => {
 
 it("bounds initial connection retries so optional Redis cannot hang route loading", async () => {
   vi.useFakeTimers();
-  clients.publisher.connect.mockResolvedValue();
-  clients.subscriber.connect.mockImplementation(() => new Promise(() => {}));
+  clients.publisher.connect.mockResolvedValue(undefined);
+  clients.subscriber.connect.mockImplementation(
+    () => new Promise(() => undefined)
+  );
   const pending = connectRedisClients(
     { REDIS_URL: "redis://localhost" },
     vi.fn()
@@ -51,8 +53,8 @@ it("bounds initial connection retries so optional Redis cannot hang route loadin
 });
 
 it("returns the connected pair and leaves it open for normal reconnect behavior", async () => {
-  clients.publisher.connect.mockResolvedValue();
-  clients.subscriber.connect.mockResolvedValue();
+  clients.publisher.connect.mockResolvedValue(undefined);
+  clients.subscriber.connect.mockResolvedValue(undefined);
   expect(
     await connectRedisClients({ REDIS_URL: "redis://localhost" }, vi.fn())
   ).toEqual(clients);
