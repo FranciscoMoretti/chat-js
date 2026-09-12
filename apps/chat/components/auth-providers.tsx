@@ -13,9 +13,11 @@ import { config } from "@/lib/config";
 import {
   getEnabledSocialAuthProviders,
   isSocialAuthProvider,
-  type SocialAuthProvider,
-  type SocialAuthSignInOptions,
   sortSocialAuthProvidersByLastUsed,
+} from "@/lib/social-auth";
+import type {
+  SocialAuthProvider,
+  SocialAuthSignInOptions,
 } from "@/lib/social-auth";
 
 function GoogleIcon({ className }: { className?: string }) {

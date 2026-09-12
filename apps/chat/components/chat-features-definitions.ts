@@ -1,11 +1,5 @@
-import {
-  Edit3,
-  GlobeIcon,
-  Images,
-  type LucideIcon,
-  Telescope,
-  Video,
-} from "lucide-react";
+import { Edit3, GlobeIcon, Images, Telescope, Video } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";

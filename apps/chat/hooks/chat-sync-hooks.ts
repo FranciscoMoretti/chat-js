@@ -3,12 +3,8 @@
 // Hooks for chat data fetching and mutations
 // For authenticated users only - anonymous users don't persist data
 
-import {
-  type QueryKey,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
 

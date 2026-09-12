@@ -7,10 +7,8 @@
  */
 
 import type { ComponentProps } from "react";
-import {
-  type StickToBottom,
-  useStickToBottomContext,
-} from "use-stick-to-bottom";
+import { useStickToBottomContext } from "use-stick-to-bottom";
+import type { StickToBottom } from "use-stick-to-bottom";
 
 import { ScrollArea } from "@/components/ui/extra/scroll-area-viewport-ref";
 import { cn } from "@/lib/utils";

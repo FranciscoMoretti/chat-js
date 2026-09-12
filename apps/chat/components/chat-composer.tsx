@@ -1,6 +1,7 @@
 "use client";
 
-import { type ComponentProps, memo } from "react";
+import { memo } from "react";
+import type { ComponentProps } from "react";
 
 import {
   PromptInputFooter,

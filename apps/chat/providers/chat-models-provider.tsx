@@ -1,19 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import type { ReactNode } from "react";
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import {
-  type AppModelDefinition,
-  getDefaultEnabledModels,
-} from "@/lib/ai/app-models";
+import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
