@@ -6,12 +6,14 @@ import {
   ButtonGroupSeparator,
   ButtonGroupText,
 } from "@/components/ui/button-group";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +33,14 @@ export const UiPrimitivesVisualFixture = () => (
         <Button asChild variant="link">
           <a href="#as-child">As child</a>
         </Button>
+      </div>
+    </section>
+
+    <section className="max-w-3xl space-y-3">
+      <h2>Input and toggle</h2>
+      <div className="flex items-center gap-3">
+        <Input aria-label="Fixture input" defaultValue="Fixture value" />
+        <Toggle aria-label="Fixture toggle">Toggle</Toggle>
       </div>
     </section>
 
