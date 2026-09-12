@@ -32,7 +32,10 @@
     "APP_URL",
     "ELECTRON_APP_URL",
     "PORT",
-    "VERCEL_URL"
+    "VERCEL_URL",
+    "PLAYWRIGHT",
+    "CI_PLAYWRIGHT",
+    "PLAYWRIGHT_TEST_BASE_URL"
   ],
   "tasks": {
     "dev": {

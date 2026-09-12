@@ -30,24 +30,13 @@
       }
     },
     {
-      "files": [
-        "apps/videos/src/story.ts",
-        "packages/registry/visual/renderer.browser.test.tsx",
-        "scripts/sync-template.ts"
-      ],
+      "files": ["packages/registry/visual/renderer.browser.test.tsx"],
       "rules": {
         "curly": "off"
       }
     },
     {
-      "files": ["packages/cli/src/helpers/scaffold.ts"],
-      "rules": {
-        "default-case": "off"
-      }
-    },
-    {
       "files": [
-        "apps/docs/vitest.config.ts",
         "apps/electron/src/main.ts",
         "apps/site/components/faq.tsx",
         "apps/site/components/features.tsx",
@@ -62,45 +51,24 @@
         "apps/site/components/thread-playground-model.ts",
         "apps/site/components/thread-showcase.tsx",
         "apps/site/components/use-cases.tsx",
-        "apps/site/lib/utils.ts",
         "apps/site/tests/thread-playground.visual.ts",
         "apps/videos/src/BrandExample.tsx",
         "apps/videos/src/ThreadsLaunch.tsx",
         "apps/videos/src/index.tsx",
         "apps/videos/src/shared/brand.tsx",
         "apps/videos/src/shared/presentation.tsx",
-        "packages/cli/src/commands/config.ts",
-        "packages/cli/src/commands/create.test.ts",
-        "packages/cli/src/commands/create.ts",
-        "packages/cli/src/helpers/config-builder.ts",
         "packages/cli/src/helpers/env-checklist.ts",
-        "packages/cli/src/helpers/package-manifest.ts",
-        "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/helpers/scaffold.ts",
-        "packages/cli/src/registry/shadcn.ts",
-        "packages/cli/src/registry/transport.ts",
-        "packages/cli/src/utils/handle-error.ts",
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/cli/src/utils/preflight.ts",
         "packages/cli/src/utils/run-command.ts",
-        "packages/cli/src/utils/spinner.ts",
         "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/src/utils/sync-tools.ts",
-        "packages/gateways/src/models.ts",
-        "packages/gateways/src/provider-options.ts",
         "packages/registry/src/gateways/litellm/gateway.ts",
         "packages/registry/src/gateways/openai-compatible/gateway.ts",
         "packages/registry/src/gateways/openrouter/gateway.ts",
-        "packages/registry/src/reference-consumer.test.ts",
-        "packages/registry/src/storage/environment.ts",
-        "packages/registry/src/storage/ftp/storage-provider.ts",
         "packages/registry/src/tools/firecrawl-search/renderer.tsx",
         "packages/registry/src/tools/get-weather/renderer.tsx",
         "packages/registry/src/tools/retrieve-url/renderer.tsx",
         "packages/registry/src/tools/tavily-search/renderer.tsx",
         "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
-        "packages/registry/src/tools/word-count/renderer.tsx",
-        "scripts/sync-template.ts"
+        "packages/registry/src/tools/word-count/renderer.tsx"
       ],
       "rules": {
         "func-style": "off"
@@ -115,12 +83,6 @@
       ],
       "rules": {
         "import/consistent-type-specifier-style": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/src/helpers/config-builder.ts"],
-      "rules": {
-        "import/first": "off"
       }
     },
     {
@@ -151,22 +113,14 @@
         "apps/site/components/thread-playground-model.ts",
         "apps/site/tests/thread-playground.visual.ts",
         "apps/videos/scripts/stills.ts",
-        "packages/cli/src/commands/create.test.ts",
-        "packages/cli/src/commands/create.ts",
         "packages/cli/src/helpers/gateway-provider.test.ts",
         "packages/cli/src/helpers/prompts.ts",
         "packages/cli/src/helpers/turbo-affected.test.ts",
-        "packages/cli/src/utils/legacy-tools.ts",
         "packages/cli/src/utils/preflight.ts",
         "packages/cli/src/utils/sync-tools.test.ts",
         "packages/cli/src/utils/sync-tools.ts",
         "packages/cli/test/gateway-selection.test.ts",
-        "packages/registry/build.ts",
-        "packages/registry/src/reference-consumer.test.ts",
         "packages/registry/src/storage/ftp/storage-provider.test.ts",
-        "packages/thread/test/ai-sdk-run-chat.test.ts",
-        "packages/thread/test/thread.test.ts",
-        "packages/thread/test/use-thread.test.ts",
         "scripts/sync-template.ts"
       ],
       "rules": {
@@ -202,21 +156,6 @@
       }
     },
     {
-      "files": ["packages/thread/test/thread.test.ts"],
-      "rules": {
-        "no-new": "off"
-      }
-    },
-    {
-      "files": [
-        "packages/cli/src/utils/preflight.ts",
-        "packages/cli/src/utils/sync-tools.ts"
-      ],
-      "rules": {
-        "no-param-reassign": "off"
-      }
-    },
-    {
       "files": ["packages/registry/visual/renderer.browser.test.tsx"],
       "rules": {
         "no-plusplus": "off"
@@ -229,12 +168,7 @@
       }
     },
     {
-      "files": [
-        "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/helpers/scaffold.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/src/utils/sync-tools.ts"
-      ],
+      "files": ["packages/cli/src/utils/sync-tools.test.ts"],
       "rules": {
         "no-shadow": "off"
       }
@@ -254,15 +188,6 @@
       ],
       "rules": {
         "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": [
-        "packages/cli/src/helpers/package-manifest.ts",
-        "packages/cli/src/helpers/scaffold.ts"
-      ],
-      "rules": {
-        "no-useless-concat": "off"
       }
     },
     {
@@ -290,12 +215,7 @@
       }
     },
     {
-      "files": [
-        "apps/electron/forge.config.ts",
-        "packages/cli/src/helpers/config-builder.ts",
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/cli/src/utils/sync-tools.ts"
-      ],
+      "files": ["apps/electron/forge.config.ts"],
       "rules": {
         "prefer-named-capture-group": "off"
       }
@@ -332,7 +252,6 @@
       "files": [
         "apps/electron/src/main.ts",
         "apps/electron/src/preload.ts",
-        "packages/cli/src/utils/sync-tools.ts",
         "packages/thread/src/abstract-thread.ts"
       ],
       "rules": {
@@ -401,12 +320,6 @@
       }
     },
     {
-      "files": ["packages/thread/src/use-thread.ts"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "react/todo": "off"
@@ -417,8 +330,6 @@
         "apps/electron/forge.config.ts",
         "apps/electron/src/main.ts",
         "packages/cli/src/registry/transport.test.ts",
-        "packages/cli/src/utils/sync-tools.ts",
-        "packages/gateways/src/contract.test.ts",
         "packages/registry/visual/renderer.browser.test.tsx"
       ],
       "rules": {
@@ -427,17 +338,9 @@
     },
     {
       "files": [
-        "apps/electron/src/main.ts",
         "apps/site/components/thread-playground-model.ts",
         "apps/site/tests/thread-playground.visual.ts",
-        "apps/videos/src/ThreadsLaunch.tsx",
-        "packages/cli/src/helpers/config-builder.ts",
-        "packages/cli/src/helpers/package-manifest.ts",
-        "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/registry/shadcn.ts",
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/cli/src/utils/sync-tools.ts",
-        "scripts/sync-template.ts"
+        "apps/videos/src/ThreadsLaunch.tsx"
       ],
       "rules": {
         "require-unicode-regexp": "off"
@@ -449,10 +352,7 @@
         "apps/electron/src/lib/auth-client.ts",
         "apps/electron/src/main.ts",
         "apps/site/app/layout.tsx",
-        "apps/site/app/manifest.ts",
         "apps/site/app/page.tsx",
-        "apps/site/app/robots.ts",
-        "apps/site/app/sitemap.ts",
         "apps/site/app/threads/page.tsx",
         "apps/site/components/faq.tsx",
         "apps/site/components/features.tsx",
@@ -461,43 +361,21 @@
         "apps/site/components/tech-stack.tsx",
         "apps/site/components/thread-showcase.tsx",
         "apps/site/components/use-cases.tsx",
-        "apps/site/lib/site-config.ts",
         "apps/site/tests/thread-playground.visual.ts",
         "apps/videos/src/BrandExample.tsx",
         "apps/videos/src/ThreadsLaunch.tsx",
         "apps/videos/src/shared/presentation.tsx",
         "apps/videos/src/story.ts",
-        "packages/cli/src/commands/create.test.ts",
-        "packages/cli/src/commands/create.ts",
-        "packages/cli/src/helpers/config-builder.ts",
-        "packages/cli/src/helpers/config-requirements.ts",
         "packages/cli/src/helpers/env-checklist.ts",
-        "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/helpers/scaffold.ts",
         "packages/cli/src/helpers/storage-provider.test.ts",
         "packages/cli/src/registry/gateways.test.ts",
-        "packages/cli/src/registry/shadcn.ts",
         "packages/cli/src/registry/transport.test.ts",
         "packages/cli/src/utils/sync-tools.test.ts",
         "packages/cli/test/gateway-selection.test.ts",
-        "packages/gateways/src/definition.ts",
-        "packages/gateways/src/models.ts",
-        "packages/registry/build.ts",
-        "packages/registry/metadata.ts",
-        "packages/registry/registry.ts",
-        "packages/registry/src/gateways/catalog.ts",
-        "packages/registry/src/gateways/metadata.ts",
-        "packages/registry/src/reference-consumer.test.ts",
-        "packages/registry/src/storage/catalog.ts",
-        "packages/registry/src/tools/firecrawl-search/tool.ts",
         "packages/registry/src/tools/get-weather/renderer.tsx",
-        "packages/registry/src/tools/tavily-search/tool.ts",
         "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
-        "packages/registry/src/tools/vercel-code-execution/tool.ts",
         "packages/registry/visual/renderer.browser.test.tsx",
-        "packages/registry/visual/vitest.config.ts",
-        "packages/thread/test/thread.test.ts",
-        "scripts/sync-template.ts"
+        "packages/registry/visual/vitest.config.ts"
       ],
       "rules": {
         "sort-keys": "off"
@@ -534,11 +412,7 @@
       }
     },
     {
-      "files": [
-        "apps/site/components/thread-showcase.tsx",
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/registry/src/storage/environment.ts"
-      ],
+      "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
       }
@@ -554,47 +428,32 @@
     },
     {
       "files": [
-        "apps/electron/forge.config.ts",
         "apps/electron/scripts/generate-icons.test.js",
-        "apps/electron/src/main.ts",
-        "packages/cli/src/helpers/scaffold.ts",
         "packages/cli/src/registry/gateways.test.ts",
         "packages/cli/src/registry/transport.test.ts",
         "packages/cli/src/utils/get-package-manager.test.ts",
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/cli/src/utils/preflight.ts",
         "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/src/utils/sync-tools.ts",
         "packages/registry/visual/vitest.config.ts",
-        "scripts/release-fallback.test.ts",
-        "scripts/sync-template.ts"
+        "scripts/release-fallback.test.ts"
       ],
       "rules": {
         "unicorn/import-style": "off"
       }
     },
     {
-      "files": [
-        "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/utils/sync-tools.ts"
-      ],
+      "files": ["packages/cli/src/utils/sync-tools.ts"],
       "rules": {
         "unicorn/no-array-reduce": "off"
       }
     },
     {
-      "files": [
-        "packages/cli/src/utils/legacy-tools.ts",
-        "packages/cli/test/gateway-selection.test.ts",
-        "scripts/sync-template.ts"
-      ],
+      "files": ["packages/cli/test/gateway-selection.test.ts"],
       "rules": {
         "unicorn/no-array-sort": "off"
       }
     },
     {
       "files": [
-        "packages/cli/src/helpers/scaffold.ts",
         "packages/cli/src/registry/gateways.test.ts",
         "packages/cli/src/utils/sync-tools.test.ts",
         "packages/cli/test/gateway-selection.test.ts"
@@ -649,16 +508,7 @@
       }
     },
     {
-      "files": ["scripts/sync-template.ts"],
-      "rules": {
-        "unicorn/prefer-string-replace-all": "off"
-      }
-    },
-    {
-      "files": [
-        "apps/electron/src/main.ts",
-        "packages/cli/src/helpers/scaffold.ts"
-      ],
+      "files": ["apps/electron/src/main.ts"],
       "rules": {
         "unicorn/prefer-ternary": "off"
       }
@@ -667,12 +517,6 @@
       "files": ["packages/registry/visual/vitest.config.ts"],
       "rules": {
         "unicorn/relative-url-style": "off"
-      }
-    },
-    {
-      "files": ["scripts/sync-template.ts"],
-      "rules": {
-        "unicorn/text-encoding-identifier-case": "off"
       }
     }
   ]
