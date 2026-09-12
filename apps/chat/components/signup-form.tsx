@@ -18,7 +18,7 @@ import {
 } from "@/lib/electron-auth";
 
 export const SignupForm = ({
-  className,
+  className: _className,
   ...props
 }: React.ComponentProps<typeof Card>) => {
   const searchParams = useSearchParams();

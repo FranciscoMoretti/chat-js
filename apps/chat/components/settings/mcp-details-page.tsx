@@ -31,7 +31,7 @@ const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
 const formatMcpError = (message: string): string => {
   const httpMatch = message.match(HTTP_STATUS_REGEX);
   if (httpMatch) {
-    const status = httpMatch[1];
+    const [, status] = httpMatch;
     if (status === "502") {
       return "MCP server is temporarily unavailable (502 Bad Gateway)";
     }
