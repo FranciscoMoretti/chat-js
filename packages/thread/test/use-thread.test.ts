@@ -1,82 +1,25 @@
 import { describe, expect, mock, test } from "bun:test";
 
-import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 
-import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import { MemoryThreadState } from "../src/thread-state";
-import type { ThreadState } from "../src/types";
 import { useThread } from "../src/use-thread";
 import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
-
-const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
-  Promise.resolve(null);
-const rejectSendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-  Promise.reject(new Error("Unexpected send"));
+import { ControlledTransport } from "./support/hook-controlled-transport";
+import { RejectingTransport } from "./support/rejecting-transport";
+import { ResumeTransport } from "./support/resume-transport";
+import { StateBackedThread } from "./support/state-backed-thread";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-
-class RejectingTransport implements ChatTransport<UIMessage> {
-  requests = 0;
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () => {
-    this.requests += 1;
-    return Promise.reject(new Error("transport failed"));
-  };
-
-  reconnectToStream = reconnectToNoStream;
-}
-
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] = [];
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-    Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push(controller);
-        },
-      })
-    );
-
-  reconnectToStream = reconnectToNoStream;
-
-  emit(requestIndex: number, chunk: UIMessageChunk) {
-    this.requests[requestIndex]?.enqueue(chunk);
-  }
-
-  finish(requestIndex: number) {
-    this.requests[requestIndex]?.close();
-  }
-}
-
-class ResumeTransport implements ChatTransport<UIMessage> {
-  reconnects = 0;
-
-  sendMessages = rejectSendMessages;
-
-  reconnectToStream() {
-    this.reconnects += 1;
-    return Promise.resolve(null);
-  }
-}
-
-class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(
-    state: ThreadState<UIMessage>,
-    transport?: ChatTransport<UIMessage>
-  ) {
-    super({ state, transport });
-  }
-}
 
 const user = (id: string): UIMessage => ({
   id,

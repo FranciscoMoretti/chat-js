@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 
-import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import {
@@ -10,128 +9,10 @@ import {
   MemoryThreadState,
 } from "../src/thread-state";
 import type { ThreadState } from "../src/types";
-
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: {
-    abortSignal: AbortSignal | undefined;
-    controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }[] = [];
-  #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
-    Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push({
-            abortSignal: options.abortSignal,
-            controller,
-            options,
-          });
-          options.abortSignal?.addEventListener(
-            "abort",
-            () => {
-              controller.enqueue({ type: "abort" });
-              controller.close();
-            },
-            { once: true }
-          );
-        },
-      })
-    );
-
-  reconnectToStream(
-    _options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-  ): Promise<ReadableStream<UIMessageChunk> | null> {
-    const stream = this.#reconnectStream;
-    this.#reconnectStream = null;
-    return Promise.resolve(stream);
-  }
-
-  prepareReconnect() {
-    let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
-    this.#reconnectStream = new ReadableStream({
-      start(value) {
-        controller = value;
-      },
-    });
-    if (!controller) {
-      throw new Error("Expected reconnect controller");
-    }
-    return controller;
-  }
-
-  emit(requestIndex: number, chunk: UIMessageChunk) {
-    this.requests[requestIndex]?.controller.enqueue(chunk);
-  }
-
-  finish(requestIndex: number) {
-    this.requests[requestIndex]?.controller.close();
-  }
-
-  fail(requestIndex: number, error: Error) {
-    this.requests[requestIndex]?.controller.error(error);
-  }
-
-  emitText(requestIndex: number, messageId: string, text: string) {
-    const controller = this.requests[requestIndex]?.controller;
-    controller?.enqueue({ messageId, type: "start" });
-    controller?.enqueue({ id: "text", type: "text-start" });
-    controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
-    controller?.enqueue({ id: "text", type: "text-end" });
-    controller?.close();
-  }
-}
-
-class ResumeTransport extends ControlledTransport {
-  lastReconnectOptions:
-    | Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-    | undefined;
-
-  override reconnectToStream(
-    options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-  ) {
-    this.lastReconnectOptions = options;
-    return Promise.resolve(
-      new ReadableStream<UIMessageChunk>({
-        start(controller) {
-          controller.enqueue({ id: "text", type: "text-start" });
-          controller.enqueue({
-            delta: "resumed",
-            id: "text",
-            type: "text-delta",
-          });
-          controller.enqueue({ id: "text", type: "text-end" });
-          controller.enqueue({ finishReason: "stop", type: "finish" });
-          controller.close();
-        },
-      })
-    );
-  }
-}
-
-class RecordingThreadState implements ThreadState<UIMessage> {
-  readonly #state: MemoryThreadState<UIMessage>;
-  updateCount = 0;
-
-  constructor(messages: UIMessage[]) {
-    this.#state = new MemoryThreadState({ messages });
-  }
-
-  getSnapshot = () => this.#state.getSnapshot();
-  subscribe = (listener: () => void) => this.#state.subscribe(listener);
-
-  update: ThreadState<UIMessage>["update"] = (updater) => {
-    this.updateCount += 1;
-    this.#state.update(updater);
-  };
-}
-
-class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(state: ThreadState<UIMessage>) {
-    super({ state });
-  }
-}
+import { RecordingThreadState } from "./support/recording-thread-state";
+import { StateBackedThread } from "./support/state-backed-thread";
+import { ControlledTransport } from "./support/thread-controlled-transport";
+import { ResumeTransport } from "./support/thread-resume-transport";
 
 const user = (id: string): UIMessage => ({
   id,

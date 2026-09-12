@@ -1,104 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { Chat } from "@ai-sdk/react";
-import type { ChatStatus, ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 
 import { ThreadRunChat } from "../src/ai-sdk-run-chat";
-import type { ThreadRunHost, ThreadRunSpec } from "../src/ai-sdk-run-chat";
-import { MessageTree } from "../src/message-tree";
-
-const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
-  Promise.resolve(null);
-const generateMessageId = () => "client-response";
-const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] = () => {};
-
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: {
-    controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }[] = [];
-
-  get request() {
-    return this.requests.at(-1)?.options;
-  }
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
-    Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push({ controller, options });
-        },
-      })
-    );
-
-  reconnectToStream = reconnectToNoStream;
-
-  emit(...chunks: UIMessageChunk[]) {
-    for (const chunk of chunks) {
-      this.requests.at(-1)?.controller.enqueue(chunk);
-    }
-  }
-
-  finish() {
-    this.requests.at(-1)?.controller.close();
-  }
-
-  fail(error: Error) {
-    this.requests.at(-1)?.controller.error(error);
-  }
-}
-
-class TestRunHost implements ThreadRunHost<UIMessage> {
-  readonly dataPartSchemas = undefined;
-  readonly id = "thread";
-  readonly messageMetadataSchema = undefined;
-  readonly generateMessageId = generateMessageId;
-  readonly spec: ThreadRunSpec;
-  readonly tree: MessageTree<UIMessage>;
-  onData: ThreadRunHost<UIMessage>["onData"];
-  onError: ThreadRunHost<UIMessage>["onError"];
-  onFinish: ThreadRunHost<UIMessage>["onFinish"];
-  onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
-  sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
-  transport: ChatTransport<UIMessage>;
-  status: ChatStatus = "ready";
-  readonly errors: Error[] = [];
-
-  constructor(
-    transport: ChatTransport<UIMessage>,
-    initialMessage: UIMessage,
-    spec: ThreadRunSpec
-  ) {
-    this.transport = transport;
-    this.spec = spec;
-    this.tree = new MessageTree({ messages: [initialMessage] });
-  }
-
-  getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
-  updateRunPath = (messages: UIMessage[]) => {
-    this.tree.updatePath(messages);
-  };
-  registerToolCall = registerToolCall;
-  removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
-  setRunError = (_runId: string, error: Error | undefined) => {
-    if (error) {
-      this.errors.push(error);
-    }
-  };
-  setRunStatus = (_runId: string, status: ChatStatus) => {
-    this.status = status;
-  };
-  writeRunMessage = (_runId: string, message: UIMessage) => {
-    if (this.spec.messageId && this.spec.messageId !== message.id) {
-      throw new Error("Run message identity changed");
-    }
-    if (!this.spec.messageId && this.tree.has(message.id)) {
-      throw new Error("Run message identity already exists");
-    }
-    this.spec.messageId = message.id;
-    this.tree.upsertMessage(message, this.spec.parentMessageId);
-  };
-}
+import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
+import { ControlledTransport } from "./support/run-chat-controlled-transport";
+import { TestRunHost } from "./support/test-run-host";
 
 const userMessage = (): UIMessage => ({
   id: "user-1",
