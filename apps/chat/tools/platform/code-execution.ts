@@ -100,6 +100,7 @@ Output rules:
       };
 
       try {
+        abortSignal?.throwIfAborted();
         log.info({ requestId, title, runtime, language }, "creating sandbox");
         const name = await sandboxOwnership?.reserve(abortSignal);
         sandbox = await createSandbox(runtime, abortSignal, name);

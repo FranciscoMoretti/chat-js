@@ -184,3 +184,38 @@ test("unknown allocation outcomes and failed deletion retain durable ownership",
   ).rejects.toThrow("delete failed");
   expect(release).not.toHaveBeenCalled();
 });
+
+test("an already cancelled invocation never reserves or allocates a sandbox", async () => {
+  const previousCreates = execution.create.mock.calls.length;
+  const reserve = vi.fn();
+  const release = vi.fn();
+  const created = vi.fn();
+  const costAccumulator = { addAPICost: vi.fn() };
+  const tool = codeExecution({
+    sandboxOwnership: { reserve, created, release },
+    costAccumulator,
+  });
+  if (!tool.execute) {
+    throw new Error("Missing executor");
+  }
+  const controller = new AbortController();
+  controller.abort(new Error("cancelled before start"));
+  await expect(
+    tool.execute(
+      { title: "Cancelled", language: "javascript", code: "42" },
+      {
+        toolCallId: "pre-cancelled",
+        messages: [],
+        context: {},
+        abortSignal: controller.signal,
+      }
+    )
+  ).resolves.toMatchObject({
+    message: "Sandbox execution failed: cancelled before start",
+  });
+  expect(reserve).not.toHaveBeenCalled();
+  expect(created).not.toHaveBeenCalled();
+  expect(release).not.toHaveBeenCalled();
+  expect(execution.create).toHaveBeenCalledTimes(previousCreates);
+  expect(costAccumulator.addAPICost).not.toHaveBeenCalled();
+});
