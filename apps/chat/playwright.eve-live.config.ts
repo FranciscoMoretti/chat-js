@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-guest-cookie.e2e.ts",
     "eve-copy-live.e2e.ts",
     "eve-copy-regeneration-live.e2e.ts",
     "eve-copy-documents-live.e2e.ts",

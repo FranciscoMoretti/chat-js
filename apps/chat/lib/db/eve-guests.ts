@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { eveGuestOwnerId } from "../eve/guest-credential";
 import { db } from "./client";
 import { eveGuest, eveGuestMessage, eveGuestRate, user } from "./schema";
 
@@ -37,7 +38,7 @@ export async function createEveGuest(input: {
     throw new Error("Guest expiry must be in the future.");
   }
   return await db.transaction(async (tx) => {
-    const ownerId = randomUUID();
+    const ownerId = eveGuestOwnerId(input.tokenHash);
     await tx.insert(user).values({
       id: ownerId,
       name: "Guest",
@@ -51,17 +52,22 @@ export async function createEveGuest(input: {
   });
 }
 
-export async function findEveGuest(tokenHash: string) {
+/** An expired credential must never be mistaken for a not-yet-admitted guest. */
+export async function readEveGuestCredential(tokenHash: string) {
   if (!hash.safeParse(tokenHash).success) {
-    return;
+    return { status: "invalid" } as const;
   }
   const [guest] = await db
     .select()
     .from(eveGuest)
-    .where(
-      and(eq(eveGuest.tokenHash, tokenHash), gt(eveGuest.expiresAt, new Date()))
-    );
-  return guest;
+    .where(eq(eveGuest.tokenHash, tokenHash));
+  if (!guest) {
+    return { status: "missing" } as const;
+  }
+  if (guest.expiresAt <= new Date()) {
+    return { status: "expired" } as const;
+  }
+  return { status: "active", guest } as const;
 }
 
 /** Reserve before native admission. Ambiguous admission keeps its reservation. */

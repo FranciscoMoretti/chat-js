@@ -5,7 +5,7 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   commitEveGuestMessage,
   createEveGuest,
-  findEveGuest,
+  readEveGuestCredential,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
 } from "../lib/db/eve-guests";
@@ -24,6 +24,11 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
+
+async function findEveGuest(tokenHash: string) {
+  const result = await readEveGuestCredential(tokenHash);
+  return result.status === "active" ? result.guest : undefined;
+}
 
 async function guest(messageLimit = 10) {
   const credential = createEveGuestCredential();
