@@ -9,42 +9,42 @@ const providerMetadataSchema = z.unknown().optional();
  */
 
 const textPartSchema = z.object({
-  type: z.literal("text"),
-  text: z.string(),
-  state: z.enum(["streaming", "done"]).optional(),
   providerMetadata: providerMetadataSchema,
+  state: z.enum(["streaming", "done"]).optional(),
+  text: z.string(),
+  type: z.literal("text"),
 });
 
 const reasoningPartSchema = z.object({
-  type: z.literal("reasoning"),
-  text: z.string(),
-  state: z.enum(["streaming", "done"]).optional(),
   providerMetadata: providerMetadataSchema,
+  state: z.enum(["streaming", "done"]).optional(),
+  text: z.string(),
+  type: z.literal("reasoning"),
 });
 
 const filePartSchema = z.object({
-  type: z.literal("file"),
-  mediaType: z.string(),
   filename: z.string().optional(),
-  url: z.string(),
+  mediaType: z.string(),
   providerMetadata: providerMetadataSchema,
+  type: z.literal("file"),
+  url: z.string(),
 });
 
 const sourceUrlPartSchema = z.object({
-  type: z.literal("source-url"),
-  sourceId: z.string(),
-  url: z.string(),
-  title: z.string().optional(),
   providerMetadata: providerMetadataSchema,
+  sourceId: z.string(),
+  title: z.string().optional(),
+  type: z.literal("source-url"),
+  url: z.string(),
 });
 
 const sourceDocumentPartSchema = z.object({
-  type: z.literal("source-document"),
-  sourceId: z.string(),
-  mediaType: z.string(),
-  title: z.string(),
   filename: z.string().optional(),
+  mediaType: z.string(),
   providerMetadata: providerMetadataSchema,
+  sourceId: z.string(),
+  title: z.string(),
+  type: z.literal("source-document"),
 });
 
 const stepStartPartSchema = z.object({
@@ -52,77 +52,68 @@ const stepStartPartSchema = z.object({
 });
 
 const dataPartSchema = z.object({
-  type: z.string().startsWith("data-"),
-  id: z.string().optional(),
   data: z.unknown(),
+  id: z.string().optional(),
+  type: z.string().startsWith("data-"),
 });
 
 // Tool part schemas for different states
 const toolPartInputStreamingSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("input-streaming"),
-  providerExecuted: z.boolean().optional(),
+  approval: z.never().optional(),
+  errorText: z.never().optional(),
   input: z.unknown().optional(),
   output: z.never().optional(),
-  errorText: z.never().optional(),
-  approval: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-streaming"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartInputAvailableSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("input-available"),
-  providerExecuted: z.boolean().optional(),
+  approval: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
   input: z.unknown(),
   output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
-  approval: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-available"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartApprovalRequestedSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("approval-requested"),
-  input: z.unknown(),
-  providerExecuted: z.boolean().optional(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.never().optional(),
     reason: z.never().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-requested"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartApprovalRespondedSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("approval-responded"),
-  input: z.unknown(),
-  providerExecuted: z.boolean().optional(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.boolean(),
     reason: z.string().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-responded"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartOutputAvailableSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("output-available"),
-  providerExecuted: z.boolean().optional(),
-  input: z.unknown(),
-  output: z.unknown(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
-  preliminary: z.boolean().optional(),
   approval: z
     .object({
       id: z.string(),
@@ -130,17 +121,18 @@ const toolPartOutputAvailableSchema = z.object({
       reason: z.string().optional(),
     })
     .optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.unknown(),
+  preliminary: z.boolean().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-available"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartOutputErrorSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("output-error"),
-  providerExecuted: z.boolean().optional(),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.string(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z
     .object({
       id: z.string(),
@@ -148,22 +140,30 @@ const toolPartOutputErrorSchema = z.object({
       reason: z.string().optional(),
     })
     .optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.string(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-error"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 const toolPartOutputDeniedSchema = z.object({
-  type: z.string().startsWith("tool-"),
-  toolCallId: z.string(),
-  state: z.literal("output-denied"),
-  providerExecuted: z.boolean().optional(),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.literal(false),
     reason: z.string().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-denied"),
+  toolCallId: z.string(),
+  type: z.string().startsWith("tool-"),
 });
 
 // Union schema for all tool part states
@@ -179,80 +179,69 @@ const toolPartSchema = z.union([
 
 // Dynamic tool part schemas
 const dynamicToolPartInputStreamingSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("input-streaming"),
+  approval: z.never().optional(),
+  errorText: z.never().optional(),
   input: z.unknown().optional(),
   output: z.never().optional(),
-  errorText: z.never().optional(),
-  approval: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-streaming"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartInputAvailableSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("input-available"),
+  approval: z.never().optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
   input: z.unknown(),
   output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
-  approval: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("input-available"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartApprovalRequestedSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("approval-requested"),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.never().optional(),
     reason: z.never().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-requested"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartApprovalRespondedSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("approval-responded"),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.boolean(),
     reason: z.string().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("approval-responded"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartOutputAvailableSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("output-available"),
-  input: z.unknown(),
-  output: z.unknown(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
-  preliminary: z.boolean().optional(),
   approval: z
     .object({
       id: z.string(),
@@ -260,19 +249,20 @@ const dynamicToolPartOutputAvailableSchema = z.object({
       reason: z.string().optional(),
     })
     .optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.unknown(),
+  preliminary: z.boolean().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-available"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartOutputErrorSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("output-error"),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.string(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z
     .object({
       id: z.string(),
@@ -280,24 +270,34 @@ const dynamicToolPartOutputErrorSchema = z.object({
       reason: z.string().optional(),
     })
     .optional(),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.string(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-error"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 const dynamicToolPartOutputDeniedSchema = z.object({
-  type: z.literal("dynamic-tool"),
-  toolName: z.string(),
-  toolCallId: z.string(),
-  title: z.string().optional(),
-  providerExecuted: z.boolean().optional(),
-  state: z.literal("output-denied"),
-  input: z.unknown(),
-  output: z.never().optional(),
-  errorText: z.never().optional(),
-  callProviderMetadata: providerMetadataSchema,
   approval: z.object({
     id: z.string(),
     approved: z.literal(false),
     reason: z.string().optional(),
   }),
+  callProviderMetadata: providerMetadataSchema,
+  errorText: z.never().optional(),
+  input: z.unknown(),
+  output: z.never().optional(),
+  providerExecuted: z.boolean().optional(),
+  state: z.literal("output-denied"),
+  title: z.string().optional(),
+  toolCallId: z.string(),
+  toolName: z.string(),
+  type: z.literal("dynamic-tool"),
 });
 
 // Union schema for all dynamic tool part states
@@ -328,14 +328,12 @@ const _messagePartSchema = z.union([
  * Validates a tool part and returns the result
  * Returns result with success flag - if validation fails, the part should be skipped
  */
-export function validateToolPart(part: unknown) {
-  return toolPartSchema.safeParse(part);
-}
+export const validateToolPart = (part: unknown) =>
+  toolPartSchema.safeParse(part);
 
 /**
  * Validates a dynamic tool part and returns the result
  * Returns result with success flag - if validation fails, the part should be skipped
  */
-export function validateDynamicToolPart(part: unknown) {
-  return dynamicToolPartSchema.safeParse(part);
-}
+export const validateDynamicToolPart = (part: unknown) =>
+  dynamicToolPartSchema.safeParse(part);
