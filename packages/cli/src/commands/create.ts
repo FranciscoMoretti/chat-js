@@ -48,17 +48,19 @@ import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 import { syncTools } from "../utils/sync-tools";
 
-function resolveCreateTarget(targetArg: string | undefined): {
+const resolveCreateTarget = (
+  targetArg: string | undefined
+): {
   projectName: string;
   targetDir: string;
   displayPath: string;
-} {
+} => {
   if (!targetArg) {
     const projectName = "my-chat-app";
     return {
+      displayPath: projectName,
       projectName,
       targetDir: path.resolve(process.cwd(), projectName),
-      displayPath: projectName,
     };
   }
 
@@ -67,13 +69,13 @@ function resolveCreateTarget(targetArg: string | undefined): {
   const relativePath = path.relative(process.cwd(), targetDir);
 
   return {
+    displayPath: relativePath || ".",
     projectName,
     targetDir,
-    displayPath: relativePath || ".",
   };
-}
+};
 
-function printEnvChecklist(entries: EnvVarEntry[]): void {
+const printEnvChecklist = (entries: EnvVarEntry[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
 
@@ -97,19 +99,19 @@ function printEnvChecklist(entries: EnvVarEntry[]): void {
     }
     i -= 1;
   }
-}
+};
 
 const createOptionsSchema = z.object({
-  target: z.string().optional(),
-  yes: z.boolean(),
+  codeExecutionTool: z.string().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
-  storageProvider: z.string().optional(),
-  storageConfig: z.string().optional(),
   gateway: z.string().optional(),
   searchTool: z.string().optional(),
+  storageConfig: z.string().optional(),
+  storageProvider: z.string().optional(),
+  target: z.string().optional(),
   urlRetrievalTool: z.string().optional(),
-  codeExecutionTool: z.string().optional(),
+  yes: z.boolean(),
 });
 
 export const create = new Command()
@@ -222,22 +224,22 @@ export const create = new Command()
       }
       const selections = [
         {
-          source: options.searchTool,
           feature: "webSearch",
-          slot: "webSearch",
           prompt: promptSearchTool,
+          slot: "webSearch",
+          source: options.searchTool,
         },
         {
-          source: options.codeExecutionTool,
           feature: "codeExecution",
-          slot: "codeExecution",
           prompt: promptCodeExecutionTool,
+          slot: "codeExecution",
+          source: options.codeExecutionTool,
         },
         {
-          source: options.urlRetrievalTool,
           feature: "urlRetrieval",
-          slot: "retrieveUrl",
           prompt: promptUrlRetrievalTool,
+          slot: "retrieveUrl",
+          source: options.urlRetrievalTool,
         },
       ] as const;
       for (const selection of selections) {
@@ -358,8 +360,8 @@ export const create = new Command()
         }
         if (withElectron) {
           await scaffoldElectron(targetDir, {
-            projectName,
             packageManager,
+            projectName,
           });
         }
         scaffoldSpinner.succeed("Project scaffolded.");
@@ -386,13 +388,13 @@ export const create = new Command()
           appName,
           appPrefix,
           appUrl,
-          withElectron,
-          gateway,
-          gatewayDefaults: gatewaySelection.definition.defaults,
+          auth,
+          builtInTools: assistantTools.builtInTools,
           coreFeatures,
           documentTypes,
-          builtInTools: assistantTools.builtInTools,
-          auth,
+          gateway,
+          gatewayDefaults: gatewaySelection.definition.defaults,
+          withElectron,
         });
         await writeFile(path.join(targetDir, "chat.config.ts"), configSource);
         configSpinner.succeed("Configuration written.");
@@ -443,11 +445,11 @@ export const create = new Command()
       );
 
       const envEntries = collectEnvChecklist({
+        auth,
+        builtInTools: assistantTools.builtInTools,
+        coreFeatures,
         gateway,
         gatewayRequirements: gatewaySelection.definition.envRequirements,
-        coreFeatures,
-        builtInTools: assistantTools.builtInTools,
-        auth,
         installableToolEnvRequirements: [
           ...installableToolEnvRequirements,
           ...(usesStorage ? storage.definition.envRequirements : []),

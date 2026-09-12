@@ -14,7 +14,7 @@ import { applyDefaults } from "./lib/config-schema";
 console.log(JSON.stringify(applyDefaults(userConfig), null, 2));
 `;
 
-function getTsEvalCommand(pm: PackageManager): [string, string[]] {
+const getTsEvalCommand = (pm: PackageManager): [string, string[]] => {
   switch (pm) {
     case "bun": {
       return ["bun", ["--eval", EVAL_SCRIPT]];
@@ -29,7 +29,7 @@ function getTsEvalCommand(pm: PackageManager): [string, string[]] {
       return ["npx", ["tsx", "--eval", EVAL_SCRIPT]];
     }
   }
-}
+};
 
 export const config = new Command()
   .name("config")

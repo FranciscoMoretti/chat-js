@@ -7,18 +7,18 @@ import { create } from "./create";
 
 const tempDirs: string[] = [];
 
-function makeTempDir(name: string): string {
+const makeTempDir = (name: string): string => {
   const dir = path.join(
     tmpdir(),
     `chat-js-create-${name}-${crypto.randomUUID()}`
   );
   tempDirs.push(dir);
   return dir;
-}
+};
 
 afterEach(async () => {
   await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
+    tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
 
@@ -27,7 +27,7 @@ it("leaves non-ChatJS Git templates unconfigured through the full create command
   const source = makeTempDir("plain-source");
   const destination = makeTempDir("plain-clone");
   await mkdir(source, { recursive: true });
-  const manifest = JSON.stringify({ name: "plain-app", dependencies: {} });
+  const manifest = JSON.stringify({ dependencies: {}, name: "plain-app" });
   await writeFile(path.join(source, "package.json"), manifest);
   for (const args of [
     ["init"],
