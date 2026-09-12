@@ -30,8 +30,8 @@ export const getLanguageModel = async (modelId: AppModelId) => {
   }
 
   return wrapLanguageModel({
-    model: languageProvider,
     middleware: middlewares,
+    model: languageProvider,
   });
 };
 

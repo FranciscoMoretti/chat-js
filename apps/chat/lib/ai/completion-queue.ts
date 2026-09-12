@@ -3,9 +3,9 @@ export type CompletionQueue = {
   waitForIdle: () => Promise<void>;
 };
 
-export function createCompletionQueue(
+export const createCompletionQueue = (
   onError: (error: unknown) => void
-): CompletionQueue {
+): CompletionQueue => {
   let pending = Promise.resolve();
 
   return {
@@ -16,4 +16,4 @@ export function createCompletionQueue(
       return pending;
     },
   };
-}
+};

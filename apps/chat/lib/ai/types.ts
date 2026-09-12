@@ -60,9 +60,9 @@ export type UiToolName = z.infer<typeof frontendToolsSchema>;
 export type SelectedModelCounts = Partial<Record<AppModelId, number>>;
 export type SelectedModelValue = AppModelId | SelectedModelCounts;
 
-export function isSelectedModelCounts(
+export const isSelectedModelCounts = (
   value: unknown
-): value is SelectedModelCounts {
+): value is SelectedModelCounts => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -78,17 +78,16 @@ export function isSelectedModelCounts(
       Number.isInteger(count) &&
       count > 0
   );
-}
+};
 
-export function isSelectedModelValue(
+export const isSelectedModelValue = (
   value: unknown
-): value is SelectedModelValue {
-  return typeof value === "string" || isSelectedModelCounts(value);
-}
+): value is SelectedModelValue =>
+  typeof value === "string" || isSelectedModelCounts(value);
 
-export function getPrimarySelectedModelId(
+export const getPrimarySelectedModelId = (
   selectedModel: SelectedModelValue | null | undefined
-): AppModelId | null {
+): AppModelId | null => {
   if (!selectedModel) {
     return null;
   }
@@ -102,11 +101,11 @@ export function getPrimarySelectedModelId(
   ) ?? [null];
 
   return firstSelectedModelId as AppModelId | null;
-}
+};
 
-export function expandSelectedModelValue(
+export const expandSelectedModelValue = (
   selectedModel: SelectedModelValue
-): AppModelId[] {
+): AppModelId[] => {
   if (typeof selectedModel === "string") {
     return [selectedModel];
   }
@@ -124,16 +123,16 @@ export function expandSelectedModelValue(
   }
 
   return expanded;
-}
+};
 
 export const messageMetadataSchema = z.object({
+  activeStreamId: z.string().nullable(),
   createdAt: z.date(),
-  parentMessageId: z.string().nullable(),
+  isPrimaryParallel: z.boolean().nullable().optional(),
   parallelGroupId: z.string().nullable().optional(),
   parallelIndex: z.number().int().nullable().optional(),
-  isPrimaryParallel: z.boolean().nullable().optional(),
+  parentMessageId: z.string().nullable(),
   selectedModel: z.custom<SelectedModelValue>(isSelectedModelValue),
-  activeStreamId: z.string().nullable(),
   selectedTool: frontendToolsSchema.optional(),
   usage: z.custom<LanguageModelUsage | undefined>((_val) => true).optional(),
 });

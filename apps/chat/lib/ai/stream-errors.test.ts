@@ -40,9 +40,9 @@ describe("getStreamErrorToastContent", () => {
     });
 
     expect(getStreamErrorToastContent(error)).toEqual({
+      description: "Oops, the provider returned a 429.",
       message:
         "An error occurred while generating a response. Please try again.",
-      description: "Oops, the provider returned a 429.",
     });
   });
 
@@ -52,8 +52,8 @@ describe("getStreamErrorToastContent", () => {
     });
 
     expect(getStreamErrorToastContent(error)).toEqual({
-      message: "Rate limit exceeded. Please wait a moment and try again.",
       description: "Rate limit exceeded. Try again in 30 seconds.",
+      message: "Rate limit exceeded. Please wait a moment and try again.",
     });
   });
 
@@ -66,8 +66,8 @@ describe("getStreamErrorToastContent", () => {
     );
 
     expect(getStreamErrorToastContent(error)).toEqual({
-      message: "Rate limit exceeded. Please wait a moment and try again.",
       description: "Provider returned HTTP 429",
+      message: "Rate limit exceeded. Please wait a moment and try again.",
     });
   });
 });
