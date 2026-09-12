@@ -49,11 +49,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "eqeqeq": "off"
       }
@@ -106,28 +102,10 @@
         "components/settings/settings-header.tsx",
         "components/settings/settings-nav.tsx",
         "components/settings/settings-page.tsx",
-        "components/ui/badge.tsx",
-        "components/ui/command.tsx",
-        "components/ui/dropdown-menu.tsx",
-        "components/ui/extra/action-container.tsx",
-        "components/ui/extra/scroll-area-viewport-ref.tsx",
-        "components/ui/form.tsx",
-        "components/ui/hover-card.tsx",
-        "components/ui/input-group.tsx",
-        "components/ui/label.tsx",
-        "components/ui/popover.tsx",
-        "components/ui/progress.tsx",
-        "components/ui/separator.tsx",
-        "components/ui/sidebar.tsx",
-        "components/ui/skeleton.tsx",
-        "components/ui/slider.tsx",
-        "components/ui/spinner.tsx",
-        "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
         "components/upgrade-cta/login-prompt.tsx",
         "components/upgrade-cta/share-menu-item.tsx",
-        "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
@@ -170,8 +148,6 @@
     {
       "files": [
         "components/part/tool-part.test.tsx",
-        "lib/file-content-response.test.ts",
-        "lib/file-storage.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
       ],
       "rules": {
@@ -300,11 +276,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "no-eq-null": "off"
       }
@@ -322,7 +294,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
         "lib/stores/base/hooks.ts",
-        "lib/types/anonymous.ts",
         "providers/chat-input-provider.tsx",
         "trpc/server.tsx"
       ],
@@ -383,7 +354,6 @@
         "components/multimodal-input.tsx",
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
-        "hooks/chat-sync-hooks.ts",
         "lib/stores/with-tracing.ts"
       ],
       "rules": {
@@ -617,27 +587,19 @@
       "files": [
         "app/(auth)/device-login/page.tsx",
         "app/(auth)/login/page.tsx",
-        "app/(auth)/register/page.tsx",
         "app/(chat)/chat-providers.tsx",
         "app/(chat)/chat-route-host.tsx",
-        "app/(chat)/chat/\\[id\\]/page.tsx",
         "app/(chat)/layout.tsx",
         "app/(chat)/loading.tsx",
-        "app/(chat)/page.tsx",
-        "app/(chat)/project/\\[projectId\\]/chat/\\[chatId\\]/page.tsx",
-        "app/(chat)/project/\\[projectId\\]/page.tsx",
         "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
         "app/(chat)/settings/connectors/page.tsx",
         "app/(chat)/settings/layout.tsx",
         "app/(chat)/settings/loading.tsx",
         "app/(chat)/settings/models/page.tsx",
-        "app/(chat)/settings/page.tsx",
         "app/(chat)/share/\\[id\\]/page.tsx",
         "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
-        "app/layout.tsx",
         "app/loading.tsx",
         "app/not-found.tsx",
-        "app/privacy/page.tsx",
         "app/terms/page.tsx",
         "components/ai-elements/message.tsx",
         "components/ai-elements/prompt-input.tsx",
@@ -672,32 +634,15 @@
         "components/ui/accordion.tsx",
         "components/ui/alert.tsx",
         "components/ui/avatar.tsx",
-        "components/ui/badge.tsx",
         "components/ui/breadcrumb.tsx",
         "components/ui/checkbox.tsx",
-        "components/ui/command.tsx",
         "components/ui/drawer.tsx",
-        "components/ui/dropdown-menu.tsx",
-        "components/ui/extra/action-container.tsx",
-        "components/ui/extra/scroll-area-viewport-ref.tsx",
-        "components/ui/form.tsx",
-        "components/ui/hover-card.tsx",
-        "components/ui/input-group.tsx",
-        "components/ui/label.tsx",
-        "components/ui/popover.tsx",
-        "components/ui/progress.tsx",
         "components/ui/scroll-area.tsx",
         "components/ui/select.tsx",
-        "components/ui/separator.tsx",
-        "components/ui/sidebar.tsx",
-        "components/ui/skeleton.tsx",
-        "components/ui/slider.tsx",
-        "components/ui/spinner.tsx",
         "components/ui/switch.tsx",
         "components/ui/table.tsx",
         "components/ui/tabs.tsx",
         "components/ui/textarea.tsx",
-        "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
         "components/upgrade-cta/login-prompt.tsx",
@@ -998,7 +943,6 @@
         "lib/ai/markdown-joiner-transform.ts",
         "lib/ai/text-splitter.ts",
         "lib/anonymous-session-client.ts",
-        "lib/anonymous-session-server.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
         "lib/artifacts/text/client.tsx",
@@ -1006,25 +950,21 @@
         "lib/chat-tree-actions.test.ts",
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
-        "lib/create-anonymous-session.ts",
         "lib/credits/cost-accumulator.test.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
         "lib/env-schema.ts",
         "lib/env.ts",
         "lib/files/upload-prep.ts",
         "lib/features-config.ts",
-        "lib/logger.ts",
         "lib/message-conversion.ts",
         "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-data-stream.test.ts",
         "lib/stores/with-message-parts.ts",
         "lib/thread-utils.test.ts",
-        "lib/types/anonymous.ts",
         "lib/utils.ts",
         "lib/utils/message-mapping.ts",
         "providers/chat-input-provider.tsx",
@@ -1098,12 +1038,6 @@
       }
     },
     {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/consistent-assert": "off"
-      }
-    },
-    {
       "files": ["components/settings/models-table.tsx"],
       "rules": {
         "unicorn/consistent-existence-index-check": "off"
@@ -1143,12 +1077,6 @@
       ],
       "rules": {
         "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/no-await-expression-member": "off"
       }
     },
     {

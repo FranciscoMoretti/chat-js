@@ -1,3 +1,3 @@
-export default function ProjectChatPageRoute() {
-  return null;
-}
+const ProjectChatPageRoute = () => null;
+
+export default ProjectChatPageRoute;

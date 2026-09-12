@@ -37,7 +37,7 @@ try {
   const intro = page.locator("main > section").first();
   assert.match(
     (await intro.locator("pre").textContent()) ?? "",
-    /useThread\(\)/
+    /useThread\(\)/u
   );
   await intro.screenshot({
     animations: "disabled",
@@ -118,7 +118,7 @@ try {
   );
   const stoppedText = await first.textContent();
   await page.clock.runFor(1200);
-  assert.match(stoppedText ?? "", /Stopped/);
+  assert.match(stoppedText ?? "", /Stopped/u);
   assert.equal(
     await first.textContent(),
     stoppedText,
@@ -165,7 +165,7 @@ try {
   assert.match(
     (await page.locator('[data-node-id][aria-pressed="true"]').textContent()) ??
       "",
-    /Response 2 of 3/
+    /Response 2 of 3/u
   );
   await page.locator('[data-node-id="msg_02"]').click();
   assert.equal(
@@ -183,7 +183,7 @@ try {
     await page.locator('[data-node-id][data-state="streaming"]').count(),
     0
   );
-  assert.match((await second.textContent()) ?? "", /Complete/);
+  assert.match((await second.textContent()) ?? "", /Complete/u);
   await second.click();
   await capture(page, "threads-complete");
 
@@ -206,7 +206,7 @@ try {
   assert.match(
     (await page.locator('[data-node-id][aria-pressed="true"]').textContent()) ??
       "",
-    /Branch response/
+    /Branch response/u
   );
   await capture(page, "threads-new-branch");
 

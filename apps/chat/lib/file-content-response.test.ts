@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 
 import { describe, it, vi } from "vitest";
 
+import { createFileContentResponse } from "./file-content-response";
+import { uploadFile } from "./file-storage";
+
 vi.mock("@/lib/config", () => ({
   config: { appPrefix: "file-response-test" },
 }));
@@ -12,9 +15,6 @@ vi.mock("./storage-provider", async () => {
     createStorageAdapter: () => memory(),
   };
 });
-
-import { createFileContentResponse } from "./file-content-response";
-import { uploadFile } from "./file-storage";
 
 describe("file content response", () => {
   it("serves byte ranges", async () => {

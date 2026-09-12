@@ -92,7 +92,7 @@ function PricingSection({
   );
 }
 
-export default function TermsPage() {
+const TermsPage = () => {
   const currencySymbolMap: Record<string, string> = {
     USD: "$",
     EUR: "€",
@@ -261,4 +261,6 @@ export default function TermsPage() {
       </p>
     </main>
   );
-}
+};
+
+export default TermsPage;

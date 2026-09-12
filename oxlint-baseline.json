@@ -24,7 +24,6 @@
     },
     {
       "files": [
-        "apps/site/components/thread-playground-model.ts",
         "apps/videos/src/ThreadsLaunch.tsx",
         "packages/cli/src/utils/run-command.ts"
       ],
@@ -137,12 +136,6 @@
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "react/todo": "off"
-      }
-    },
-    {
-      "files": ["apps/site/tests/thread-playground.visual.ts"],
-      "rules": {
-        "require-unicode-regexp": "off"
       }
     },
     {

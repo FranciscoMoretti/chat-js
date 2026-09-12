@@ -1,6 +1,6 @@
 import { config } from "@/lib/config";
 
-export default function PrivacyPage() {
+const PrivacyPage = () => {
   const _currencySymbolMap: Record<string, string> = {
     USD: "$",
     EUR: "€",
@@ -154,4 +154,6 @@ export default function PrivacyPage() {
       </p>
     </main>
   );
-}
+};
+
+export default PrivacyPage;
