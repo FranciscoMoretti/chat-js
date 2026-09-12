@@ -26,11 +26,12 @@ type ImageMode = "edit" | "generate";
  * (uses generateImage). Uses the dynamic model registry so it works across
  * all gateways, not just the static models.generated snapshot.
  */
-async function resolveImageModel(selectedModel?: string): Promise<{
-  modelId: string;
-  multimodal: boolean;
-  usageModelId?: AppModelId;
-}> {
+async function resolveImageModel(
+  selectedModel?: string
+): Promise<
+  | { modelId: string; multimodal: true; usageModelId: AppModelId }
+  | { modelId: string; multimodal: false; usageModelId?: never }
+> {
   // If the user's selected chat model can generate images, prefer it
   if (selectedModel) {
     try {
@@ -256,7 +257,7 @@ async function runGenerateImageMultimodal({
   costAccumulator,
 }: {
   modelId: string;
-  usageModelId?: AppModelId;
+  usageModelId: AppModelId;
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
@@ -327,7 +328,7 @@ async function runGenerateImageMultimodal({
 
   if (res.usage) {
     costAccumulator?.addLLMCost(
-      usageModelId ?? (modelId as AppModelId),
+      usageModelId,
       res.usage,
       "generateImage-multimodal"
     );

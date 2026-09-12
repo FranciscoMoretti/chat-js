@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  fetchModels: vi.fn(),
   generateImage: vi.fn(),
   generateText: vi.fn(),
   modelDefinition: vi.fn(),
@@ -30,7 +31,7 @@ vi.mock("@/lib/file-storage", () => ({
   downloadFile: mocks.downloadFile,
 }));
 vi.mock("@/lib/ai/models", () => ({
-  fetchModels: async () => [{ id: "test-image", pricing: { image: "0.04" } }],
+  fetchModels: mocks.fetchModels,
 }));
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn() }),
@@ -42,6 +43,9 @@ import { generateImageTool } from "./tool";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.fetchModels.mockResolvedValue([
+    { id: "test-image", pricing: { image: "0.04" } },
+  ]);
   mocks.modelDefinition.mockResolvedValue({ output: { image: false } });
   mocks.generateImage.mockResolvedValue({
     images: [{ base64: "aW1hZ2U=" }],
@@ -193,4 +197,13 @@ it("reads uploaded images directly from storage", async () => {
   expect(mocks.downloadFile).toHaveBeenCalledWith(
     "abcdefghijklmnopqrstuvwx.png"
   );
+});
+
+it("finalizes known costs when the image pricing catalog is unavailable", async () => {
+  mocks.fetchModels.mockRejectedValue(new Error("Catalog unavailable"));
+  const accumulator = new CostAccumulator();
+  accumulator.addImageCost("test-image", 1, {}, "generateImage");
+  accumulator.addAPICost("otherTool", 5);
+  expect(await accumulator.getTotalCost()).toBe(5);
+  expect(accumulator.getEntries()).toHaveLength(2);
 });

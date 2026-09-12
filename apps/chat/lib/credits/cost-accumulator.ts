@@ -92,7 +92,8 @@ export class CostAccumulator {
     const imageEntries = this.entries.filter((entry) => entry.type === "image");
     if (imageEntries.length > 0) {
       const { fetchModels } = await import("../ai/models");
-      const models = await fetchModels();
+      // Match LLM pricing: skip unavailable catalog prices and finalize known costs.
+      const models = await fetchModels().catch(() => []);
       for (const entry of imageEntries) {
         const price = Number(
           models.find((model) => model.id === entry.modelId)?.pricing?.image
