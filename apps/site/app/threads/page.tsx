@@ -179,14 +179,12 @@ const ThreadsPage = () => (
                   {"\n\n"}
                   <span className="text-foreground">chat.messages;</span>
                   <span className="text-muted-foreground">
-                    {" "}
-                    {"// selected path"}
+                    {" // selected path"}
                   </span>
                   {"\n"}
                   <span className="text-foreground">chat.tree;</span>
                   <span className="text-muted-foreground">
-                    {" "}
-                    {"// complete tree"}
+                    {" // complete tree"}
                   </span>
                 </code>
               </pre>

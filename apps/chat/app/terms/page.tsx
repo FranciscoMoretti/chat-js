@@ -234,8 +234,9 @@ const TermsPage = () => {
 
       <h2>11. Disclaimers</h2>
       <p>
-        {config.appName} is provided "as is" and "as available" without any
-        warranties of any kind, either express or implied.
+        {config.appName} is provided &quot;as is&quot; and &quot;as
+        available&quot; without any warranties of any kind, either express or
+        implied.
       </p>
 
       <h2>12. Termination</h2>

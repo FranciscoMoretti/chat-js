@@ -1,4 +1,5 @@
-import "server-only"; // <-- ensure this file cannot be imported from the client
+// Ensure this file cannot be imported from the client.
+import "server-only";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { ResolverDef, TRPCQueryOptions } from "@trpc/tanstack-react-query";
