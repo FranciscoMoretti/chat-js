@@ -1,43 +1,21 @@
 {
   "overrides": [
     {
-      "files": ["components/chat-sync.tsx"],
+      "files": [
+        "components/chat-sync.tsx",
+        "components/lexical-chat-input.tsx",
+        "components/message-parts.tsx",
+        "components/parallel-response-cards.tsx",
+        "components/research-task.tsx",
+        "lib/ai/core-chat-agent.ts",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "arrow-body-style": "off"
       }
     },
     {
-      "files": ["components/lexical-chat-input.tsx"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["components/message-parts.tsx"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["components/research-task.tsx"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/gateway.ts"],
+      "files": ["lib/ai/gateway.ts", "lib/ai/text-splitter.ts"],
       "rules": {
         "class-methods-use-this": "off"
       }
@@ -49,19 +27,11 @@
       }
     },
     {
-      "files": ["app/(chat)/chat-route-host.tsx"],
-      "rules": {
-        "complexity": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "complexity": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-data-parts.ts"],
+      "files": [
+        "app/(chat)/chat-route-host.tsx",
+        "components/header-breadcrumb.tsx",
+        "lib/stores/base/use-data-parts.ts"
+      ],
       "rules": {
         "complexity": "off"
       }
@@ -79,1159 +49,223 @@
       }
     },
     {
-      "files": ["lib/env-schema.ts"],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "eqeqeq": "off"
       }
     },
     {
-      "files": ["providers/session-provider.tsx"],
-      "rules": {
-        "eqeqeq": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/device-login/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/login/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat-providers.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat-route-host.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/layout.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/layout.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/models/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/share/\\[id\\]/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/share/\\[id\\]/shared-chat-page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["app/terms/page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/code-block.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/anonymous-session-init.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/app-sidebar-history-conditional.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/app-sidebar.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-card.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-list.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/auth-card-skeleton.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/auth-providers.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-header.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-loading-shell.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-menu-items.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-rename-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-runtime-controller.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat-sync.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-content.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-layout.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-welcome.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/main-chat-panel.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/secondary-chat-panel.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/chat/use-chat-votes.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/clone-chat-button.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/code-editor.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/connectors-dropdown.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/console.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/context-bar.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/context-usage.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/delete-chat-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/delete-project-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/dev-login-tool.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/diffview.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/docs-link.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-ui.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/favicon.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/feedback-actions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/followup-suggestions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/get-google-favicon-url.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/get-url-without-params.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/github-link.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/header-actions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/image-editor.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/interactive-chart-impl.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/internal-link.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/keyboard-shortcuts.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/lexical-chat-input.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/login-form.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/message-actions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/message-editor.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/message-parts.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/message-siblings.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/messages-pane.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/messages.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/new-chat-button.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-status.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/deep-research.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-common.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-tool.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/dynamic-tool.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/message-reasoning.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/read-document.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/web-search.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/partial-message-loading.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-chat-item.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-chats.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-config.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-details-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-home.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-icon-picker.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-icon.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/project-menu-items.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/response-error-message.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/responsive-tools.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/retry-button.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sandbox.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connector-header.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connectors-settings.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-connect-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-create-dialog.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-settings.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-table.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-header.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-nav.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-page.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/share-button.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chats-list.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-history.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-project-item.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-projects.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-toggle.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-top-row.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-user-nav.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/signup-form.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/source-badge.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/sources.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/tag.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/text-editor.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/theme-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/badge.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/command.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/dropdown-menu.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/extra/action-container.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/extra/scroll-area-viewport-ref.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/form.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/hover-card.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/input-group.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/label.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/popover.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/progress.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/separator.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/skeleton.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/slider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/spinner.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/ui/tooltip.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/limit-display.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/login-cta-banner.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/login-prompt.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/share-menu-item.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/with-skeleton.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["hooks/chat-sync-hooks.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["hooks/use-artifact.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/active-gateway.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/app-chat-runtime.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/code/client.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/sheet/client.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/cancellation-aware-chat-transport.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/chat-route.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/chat-tree-actions.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/clone-messages.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/clone-messages.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/data-stream.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/editor/config.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/runtime-registry/runtime-api.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/runtime-registry/runtime-registry-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stop-response.test.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/debug.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-data-parts.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/custom-store-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-message-parts.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-thread-state.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-tracing.ts"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["lib/url-utils.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-models-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["providers/default-model-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["providers/session-provider.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/tavily-search/renderer.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/vercel-code-execution/renderer.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["trpc/react.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["trpc/server.tsx"],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.test.tsx"],
+      "files": [
+        "app/(auth)/device-login/page.tsx",
+        "app/(auth)/login/page.tsx",
+        "app/(chat)/chat-providers.tsx",
+        "app/(chat)/chat-route-host.tsx",
+        "app/(chat)/layout.tsx",
+        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
+        "app/(chat)/settings/connectors/page.tsx",
+        "app/(chat)/settings/layout.tsx",
+        "app/(chat)/settings/models/page.tsx",
+        "app/(chat)/share/\\[id\\]/page.tsx",
+        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
+        "app/terms/page.tsx",
+        "components/ai-elements/code-block.tsx",
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/anonymous-session-init.tsx",
+        "components/app-sidebar-history-conditional.tsx",
+        "components/app-sidebar.tsx",
+        "components/artifact-actions.tsx",
+        "components/artifact-panel.tsx",
+        "components/attachment-card.tsx",
+        "components/attachment-list.tsx",
+        "components/auth-card-skeleton.tsx",
+        "components/auth-providers.tsx",
+        "components/chat-header.tsx",
+        "components/chat-loading-shell.tsx",
+        "components/chat-menu-items.tsx",
+        "components/chat-rename-dialog.tsx",
+        "components/chat-runtime-controller.tsx",
+        "components/chat-sync.tsx",
+        "components/chat.tsx",
+        "components/chat/chat-content.tsx",
+        "components/chat/chat-layout.tsx",
+        "components/chat/chat-welcome.tsx",
+        "components/chat/main-chat-panel.tsx",
+        "components/chat/secondary-chat-panel.tsx",
+        "components/chat/use-chat-votes.ts",
+        "components/clone-chat-button.tsx",
+        "components/code-editor.tsx",
+        "components/connectors-dropdown.tsx",
+        "components/console.tsx",
+        "components/context-bar.tsx",
+        "components/context-usage.tsx",
+        "components/data-stream-handler.tsx",
+        "components/delete-chat-dialog.tsx",
+        "components/delete-project-dialog.tsx",
+        "components/dev-login-tool.tsx",
+        "components/device-login-page.tsx",
+        "components/diffview.tsx",
+        "components/docs-link.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/electron-auth-ui.tsx",
+        "components/favicon.tsx",
+        "components/feedback-actions.tsx",
+        "components/followup-suggestions.tsx",
+        "components/get-google-favicon-url.tsx",
+        "components/get-url-without-params.ts",
+        "components/github-link.tsx",
+        "components/header-actions.tsx",
+        "components/header-breadcrumb.tsx",
+        "components/image-editor.tsx",
+        "components/image-modal.tsx",
+        "components/interactive-chart-impl.tsx",
+        "components/internal-link.tsx",
+        "components/keyboard-shortcuts.tsx",
+        "components/lexical-chat-input.tsx",
+        "components/login-form.tsx",
+        "components/message-actions.tsx",
+        "components/message-editor.tsx",
+        "components/message-parts.tsx",
+        "components/message-siblings.tsx",
+        "components/messages-pane.tsx",
+        "components/messages.tsx",
+        "components/multimodal-input.tsx",
+        "components/new-chat-button.tsx",
+        "components/parallel-response-cards.test.ts",
+        "components/parallel-response-cards.tsx",
+        "components/parallel-response-status.ts",
+        "components/part/deep-research.tsx",
+        "components/part/document-common.tsx",
+        "components/part/document-preview.tsx",
+        "components/part/document-tool.tsx",
+        "components/part/dynamic-tool.tsx",
+        "components/part/message-reasoning.tsx",
+        "components/part/read-document.tsx",
+        "components/part/tool-part.tsx",
+        "components/part/web-search.tsx",
+        "components/partial-message-loading.tsx",
+        "components/project-chat-item.tsx",
+        "components/project-chats.tsx",
+        "components/project-config.tsx",
+        "components/project-details-dialog.tsx",
+        "components/project-home.tsx",
+        "components/project-icon-picker.tsx",
+        "components/project-icon.tsx",
+        "components/project-menu-items.tsx",
+        "components/response-error-message.tsx",
+        "components/responsive-tools.tsx",
+        "components/retry-button.tsx",
+        "components/sandbox.tsx",
+        "components/search-chats-dialog.tsx",
+        "components/search-chats.tsx",
+        "components/settings/connector-header.tsx",
+        "components/settings/connectors-settings.tsx",
+        "components/settings/mcp-connect-dialog.tsx",
+        "components/settings/mcp-create-dialog.tsx",
+        "components/settings/mcp-details-page.tsx",
+        "components/settings/models-settings.tsx",
+        "components/settings/models-table.tsx",
+        "components/settings/settings-header.tsx",
+        "components/settings/settings-nav.tsx",
+        "components/settings/settings-page.tsx",
+        "components/share-button.tsx",
+        "components/sheet-editor.tsx",
+        "components/sidebar-chats-list.tsx",
+        "components/sidebar-history.tsx",
+        "components/sidebar-project-item.tsx",
+        "components/sidebar-projects.tsx",
+        "components/sidebar-toggle.tsx",
+        "components/sidebar-top-row.tsx",
+        "components/sidebar-user-nav.tsx",
+        "components/signup-form.tsx",
+        "components/source-badge.tsx",
+        "components/sources.tsx",
+        "components/suggested-actions.tsx",
+        "components/tag.tsx",
+        "components/text-editor.tsx",
+        "components/theme-provider.tsx",
+        "components/ui/badge.tsx",
+        "components/ui/command.tsx",
+        "components/ui/dropdown-menu.tsx",
+        "components/ui/extra/action-container.tsx",
+        "components/ui/extra/scroll-area-viewport-ref.tsx",
+        "components/ui/form.tsx",
+        "components/ui/hover-card.tsx",
+        "components/ui/input-group.tsx",
+        "components/ui/label.tsx",
+        "components/ui/popover.tsx",
+        "components/ui/progress.tsx",
+        "components/ui/separator.tsx",
+        "components/ui/sidebar.tsx",
+        "components/ui/skeleton.tsx",
+        "components/ui/slider.tsx",
+        "components/ui/spinner.tsx",
+        "components/ui/tooltip.tsx",
+        "components/upgrade-cta/limit-display.tsx",
+        "components/upgrade-cta/login-cta-banner.tsx",
+        "components/upgrade-cta/login-prompt.tsx",
+        "components/upgrade-cta/share-menu-item.tsx",
+        "components/with-skeleton.tsx",
+        "hooks/chat-sync-hooks.ts",
+        "hooks/use-artifact.tsx",
+        "lib/ai/active-gateway.ts",
+        "lib/ai/core-chat-agent.ts",
+        "lib/app-chat-runtime.ts",
+        "lib/artifacts/code/client.tsx",
+        "lib/artifacts/sheet/client.tsx",
+        "lib/cancellation-aware-chat-transport.test.ts",
+        "lib/chat-route.ts",
+        "lib/chat-tree-actions.test.ts",
+        "lib/clone-messages.test.ts",
+        "lib/clone-messages.ts",
+        "lib/credits/cost-accumulator.ts",
+        "lib/data-stream.test.ts",
+        "lib/editor/config.ts",
+        "lib/gated-chat-transport.test.ts",
+        "lib/runtime-registry/runtime-api.ts",
+        "lib/runtime-registry/runtime-registry-provider.tsx",
+        "lib/stop-response.test.ts",
+        "lib/stores/base/debug.ts",
+        "lib/stores/base/hooks.ts",
+        "lib/stores/base/use-data-parts.ts",
+        "lib/stores/custom-store-provider.tsx",
+        "lib/stores/with-message-parts.ts",
+        "lib/stores/with-thread-state.ts",
+        "lib/stores/with-tracing.ts",
+        "lib/url-utils.tsx",
+        "providers/chat-input-provider.tsx",
+        "providers/chat-models-provider.tsx",
+        "providers/default-model-provider.tsx",
+        "providers/session-provider.tsx",
+        "tools/chatjs/tavily-search/renderer.tsx",
+        "tools/chatjs/vercel-code-execution/renderer.tsx",
+        "trpc/react.tsx",
+        "trpc/server.tsx"
+      ],
+      "rules": {
+        "func-style": "off"
+      }
+    },
+    {
+      "files": [
+        "components/part/tool-part.test.tsx",
+        "tools/chatjs/vercel-code-execution/tool.test.ts"
+      ],
       "rules": {
         "import/first": "off"
       }
     },
     {
-      "files": ["lib/file-content-response.test.ts"],
-      "rules": {
-        "import/first": "off"
-      }
-    },
-    {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "import/first": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/vercel-code-execution/tool.test.ts"],
-      "rules": {
-        "import/first": "off"
-      }
-    },
-    {
-      "files": ["components/project-chat-item.tsx"],
+      "files": [
+        "components/project-chat-item.tsx",
+        "tools/chatjs/tavily-search/renderer.tsx"
+      ],
       "rules": {
         "import/newline-after-import": "off"
       }
     },
     {
-      "files": ["tools/chatjs/tavily-search/renderer.tsx"],
-      "rules": {
-        "import/newline-after-import": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "import/no-cycle": "off"
-      }
-    },
-    {
-      "files": ["components/toolbar.tsx"],
+      "files": ["components/artifact-panel.tsx", "components/toolbar.tsx"],
       "rules": {
         "import/no-cycle": "off"
       }
@@ -1249,13 +283,7 @@
       }
     },
     {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "jsx-a11y/click-events-have-key-events": "off"
-      }
-    },
-    {
-      "files": ["components/ui/input-group.tsx"],
+      "files": ["components/image-modal.tsx", "components/ui/input-group.tsx"],
       "rules": {
         "jsx-a11y/click-events-have-key-events": "off"
       }
@@ -1267,85 +295,33 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/ui/alert.tsx"
+      ],
       "rules": {
         "jsx-a11y/heading-has-content": "off"
       }
     },
     {
-      "files": ["components/ui/alert.tsx"],
-      "rules": {
-        "jsx-a11y/heading-has-content": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
+      "files": ["components/image-modal.tsx", "components/ui/input-group.tsx"],
       "rules": {
         "jsx-a11y/no-noninteractive-element-interactions": "off"
       }
     },
     {
-      "files": ["components/ui/input-group.tsx"],
-      "rules": {
-        "jsx-a11y/no-noninteractive-element-interactions": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/context.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-card.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/context-usage.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/model-selector.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/response-error-message.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/ui/breadcrumb.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/ui/button-group.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/ui/input-group.tsx"],
-      "rules": {
-        "jsx-a11y/prefer-tag-over-role": "off"
-      }
-    },
-    {
-      "files": ["components/ui/spinner.tsx"],
+      "files": [
+        "components/ai-elements/context.tsx",
+        "components/attachment-card.tsx",
+        "components/context-usage.tsx",
+        "components/image-modal.tsx",
+        "components/model-selector.tsx",
+        "components/response-error-message.tsx",
+        "components/ui/breadcrumb.tsx",
+        "components/ui/button-group.tsx",
+        "components/ui/input-group.tsx",
+        "components/ui/spinner.tsx"
+      ],
       "rules": {
         "jsx-a11y/prefer-tag-over-role": "off"
       }
@@ -1363,67 +339,33 @@
       }
     },
     {
-      "files": ["components/dev-login-tool.tsx"],
+      "files": [
+        "components/dev-login-tool.tsx",
+        "components/device-login-page.tsx"
+      ],
       "rules": {
         "nextjs/no-html-link-for-pages": "off"
       }
     },
     {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "nextjs/no-html-link-for-pages": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "nextjs/no-img-element": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/favicon.tsx",
+        "components/image-modal.tsx"
+      ],
       "rules": {
         "nextjs/no-img-element": "off"
       }
     },
     {
-      "files": ["components/favicon.tsx"],
-      "rules": {
-        "nextjs/no-img-element": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "nextjs/no-img-element": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/code/client.tsx"],
-      "rules": {
-        "no-await-in-loop": "off"
-      }
-    },
-    {
-      "files": ["lib/clone-messages.ts"],
-      "rules": {
-        "no-await-in-loop": "off"
-      }
-    },
-    {
-      "files": ["lib/db/backfill-parts.ts"],
-      "rules": {
-        "no-await-in-loop": "off"
-      }
-    },
-    {
-      "files": ["lib/files/upload-prep.ts"],
-      "rules": {
-        "no-await-in-loop": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/tools.ts"],
+      "files": [
+        "lib/artifacts/code/client.tsx",
+        "lib/clone-messages.ts",
+        "lib/db/backfill-parts.ts",
+        "lib/files/upload-prep.ts",
+        "tools/platform/tools.ts"
+      ],
       "rules": {
         "no-await-in-loop": "off"
       }
@@ -1435,91 +377,27 @@
       }
     },
     {
-      "files": ["lib/env-schema.ts"],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "no-eq-null": "off"
       }
     },
     {
-      "files": ["providers/session-provider.tsx"],
-      "rules": {
-        "no-eq-null": "off"
-      }
-    },
-    {
-      "files": ["app/layout.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/diffview.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/favicon-group.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/keyboard-shortcuts.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/part/text-message-part.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/auth.ts"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/editor/config.ts"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/types/anonymous.ts"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["trpc/server.tsx"],
+      "files": [
+        "app/layout.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/diffview.tsx",
+        "components/favicon-group.tsx",
+        "components/keyboard-shortcuts.tsx",
+        "components/multimodal-input.tsx",
+        "components/part/text-message-part.tsx",
+        "lib/auth.ts",
+        "lib/credits/cost-accumulator.ts",
+        "lib/editor/config.ts",
+        "lib/stores/base/hooks.ts",
+        "providers/chat-input-provider.tsx",
+        "trpc/server.tsx"
+      ],
       "rules": {
         "no-inline-comments": "off"
       }
@@ -1555,247 +433,63 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/chat-sync.tsx",
+        "components/parallel-response-cards.tsx",
+        "components/ui/sidebar.tsx",
+        "lib/stores/with-thread-state.ts"
+      ],
       "rules": {
         "no-shadow": "off"
       }
     },
     {
-      "files": ["components/chat-sync.tsx"],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-thread-state.ts"],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
+      "files": [
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/artifact-actions.tsx",
+        "components/delete-chat-dialog.tsx",
+        "components/image-modal.tsx",
+        "components/message-editor.tsx",
+        "components/multimodal-input.tsx",
+        "components/sidebar-chat-item.tsx",
+        "components/signup-form.tsx",
+        "hooks/chat-sync-hooks.ts",
+        "lib/stores/with-tracing.ts"
+      ],
       "rules": {
         "no-unused-vars": "off"
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/delete-chat-dialog.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/message-editor.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chat-item.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["components/signup-form.tsx"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["hooks/chat-sync-hooks.ts"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-tracing.ts"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/device-login/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/login/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/layout.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/layout.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/models/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/share/\\[id\\]/page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/context.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/feedback-actions.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/followup-suggestions.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/research-tasks.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connectors-settings.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/ui/form.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/ui/scroll-area.tsx"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["lib/app-chat-runtime.ts"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-data-parts.ts"],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["lib/thread-utils.ts"],
+      "files": [
+        "app/(auth)/device-login/page.tsx",
+        "app/(auth)/login/page.tsx",
+        "app/(chat)/layout.tsx",
+        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
+        "app/(chat)/settings/connectors/page.tsx",
+        "app/(chat)/settings/layout.tsx",
+        "app/(chat)/settings/models/page.tsx",
+        "app/(chat)/share/\\[id\\]/page.tsx",
+        "components/ai-elements/context.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/device-login-page.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/feedback-actions.tsx",
+        "components/followup-suggestions.tsx",
+        "components/header-breadcrumb.tsx",
+        "components/multimodal-input.tsx",
+        "components/part/document-preview.tsx",
+        "components/research-tasks.tsx",
+        "components/settings/connectors-settings.tsx",
+        "components/settings/mcp-details-page.tsx",
+        "components/ui/form.tsx",
+        "components/ui/scroll-area.tsx",
+        "lib/app-chat-runtime.ts",
+        "lib/stores/base/use-data-parts.ts",
+        "lib/thread-utils.ts"
+      ],
       "rules": {
         "no-use-before-define": "off"
       }
@@ -1807,37 +501,18 @@
       }
     },
     {
-      "files": ["app/(chat)/share/\\[id\\]/shared-chat-page.tsx"],
+      "files": [
+        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
+        "components/deep-research-progress.tsx",
+        "components/research-progress.tsx",
+        "components/user-message.tsx"
+      ],
       "rules": {
         "no-warning-comments": "off"
       }
     },
     {
-      "files": ["components/deep-research-progress.tsx"],
-      "rules": {
-        "no-warning-comments": "off"
-      }
-    },
-    {
-      "files": ["components/research-progress.tsx"],
-      "rules": {
-        "no-warning-comments": "off"
-      }
-    },
-    {
-      "files": ["components/user-message.tsx"],
-      "rules": {
-        "no-warning-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "node/callback-return": "off"
-      }
-    },
-    {
-      "files": ["trpc/init.ts"],
+      "files": ["lib/stores/base/hooks.ts", "trpc/init.ts"],
       "rules": {
         "node/callback-return": "off"
       }
@@ -1849,133 +524,37 @@
       }
     },
     {
-      "files": ["components/artifact-actions.tsx"],
+      "files": [
+        "components/artifact-actions.tsx",
+        "components/chat-composer.tsx",
+        "components/chat-system.tsx",
+        "components/header-breadcrumb.tsx",
+        "components/search-chats-dialog.tsx",
+        "components/settings/model-row.tsx"
+      ],
       "rules": {
         "prefer-arrow-callback": "off"
       }
     },
     {
-      "files": ["components/chat-composer.tsx"],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": ["components/chat-system.tsx"],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats-dialog.tsx"],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": ["components/settings/model-row.tsx"],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/context.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/assistant-message.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-ui.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/followup-suggestions.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-tool.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/share-button.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["lib/files/upload-prep.ts"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["lib/message-conversion.ts"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["lib/start-provisional-chat.ts"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-tracing.ts"],
+      "files": [
+        "components/ai-elements/context.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/assistant-message.tsx",
+        "components/data-stream-handler.tsx",
+        "components/electron-auth-ui.tsx",
+        "components/followup-suggestions.tsx",
+        "components/multimodal-input.tsx",
+        "components/part/document-tool.tsx",
+        "components/part/tool-part.tsx",
+        "components/settings/mcp-details-page.tsx",
+        "components/share-button.tsx",
+        "components/suggested-actions.tsx",
+        "lib/files/upload-prep.ts",
+        "lib/message-conversion.ts",
+        "lib/start-provisional-chat.ts",
+        "lib/stores/with-tracing.ts"
+      ],
       "rules": {
         "prefer-destructuring": "off"
       }
@@ -1993,49 +572,21 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/cancellation-aware-chat-transport.test.ts"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.test.ts"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.ts"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "lib/cancellation-aware-chat-transport.test.ts",
+        "lib/gated-chat-transport.test.ts",
+        "lib/gated-chat-transport.ts",
+        "lib/redis/client.test.ts",
+        "lib/redis/client.ts",
+        "scripts/check-redis.ts"
+      ],
       "rules": {
         "promise/avoid-new": "off"
       }
     },
     {
       "files": ["lib/parallel-chat-requests.ts"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/redis/client.test.ts"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/redis/client.ts"],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["scripts/check-redis.ts"],
       "rules": {
         "promise/avoid-new": "off"
       }
@@ -2059,151 +610,40 @@
       }
     },
     {
-      "files": ["components/chat-sync.tsx"],
+      "files": [
+        "components/chat-sync.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/electron-auth-ui.tsx",
+        "lib/gated-chat-transport.ts",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "promise/prefer-await-to-callbacks": "off"
       }
     },
     {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "promise/prefer-await-to-callbacks": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-ui.tsx"],
-      "rules": {
-        "promise/prefer-await-to-callbacks": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.ts"],
-      "rules": {
-        "promise/prefer-await-to-callbacks": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "promise/prefer-await-to-callbacks": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/api/chat/route.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/code-block.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/chat-runtime-controller.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-ui.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/interactive-charts.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/retry-button.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/completion-queue.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/anonymous-session-client.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/text/client.tsx"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/cancellation-aware-chat-transport.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["lib/start-provisional-chat.ts"],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/supervisor-agent.ts"],
+      "files": [
+        "app/(chat)/api/chat/route.ts",
+        "components/ai-elements/code-block.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/chat-runtime-controller.tsx",
+        "components/device-login-page.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/electron-auth-ui.tsx",
+        "components/header-breadcrumb.tsx",
+        "components/interactive-charts.tsx",
+        "components/multimodal-input.tsx",
+        "components/part/document-preview.tsx",
+        "components/retry-button.tsx",
+        "components/suggested-actions.tsx",
+        "lib/ai/completion-queue.ts",
+        "lib/anonymous-session-client.ts",
+        "lib/artifacts/text/client.tsx",
+        "lib/cancellation-aware-chat-transport.ts",
+        "lib/gated-chat-transport.ts",
+        "lib/start-provisional-chat.ts",
+        "tools/platform/deep-research/supervisor-agent.ts"
+      ],
       "rules": {
         "promise/prefer-await-to-then": "off"
       }
@@ -2221,31 +661,20 @@
       }
     },
     {
-      "files": ["components/messages.tsx"],
+      "files": [
+        "components/messages.tsx",
+        "components/part/text-message-part.tsx"
+      ],
       "rules": {
         "react/display-name": "off"
       }
     },
     {
-      "files": ["components/part/text-message-part.tsx"],
-      "rules": {
-        "react/display-name": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "react/exhaustive-deps": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "react/exhaustive-deps": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
+      "files": [
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "react/exhaustive-deps": "off"
       }
@@ -2257,1149 +686,220 @@
       }
     },
     {
-      "files": ["app/(auth)/device-login/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/login/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/register/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat-providers.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat-route-host.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat/\\[id\\]/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/layout.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/loading.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
       "files": [
-        "app/(chat)/project/\\[projectId\\]/chat/\\[chatId\\]/page.tsx"
+        "app/(auth)/device-login/page.tsx",
+        "app/(auth)/login/page.tsx",
+        "app/(auth)/register/page.tsx",
+        "app/(chat)/chat-providers.tsx",
+        "app/(chat)/chat-route-host.tsx",
+        "app/(chat)/chat/\\[id\\]/page.tsx",
+        "app/(chat)/layout.tsx",
+        "app/(chat)/loading.tsx",
+        "app/(chat)/page.tsx",
+        "app/(chat)/project/\\[projectId\\]/chat/\\[chatId\\]/page.tsx",
+        "app/(chat)/project/\\[projectId\\]/page.tsx",
+        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
+        "app/(chat)/settings/connectors/page.tsx",
+        "app/(chat)/settings/layout.tsx",
+        "app/(chat)/settings/loading.tsx",
+        "app/(chat)/settings/models/page.tsx",
+        "app/(chat)/settings/page.tsx",
+        "app/(chat)/share/\\[id\\]/page.tsx",
+        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
+        "app/layout.tsx",
+        "app/loading.tsx",
+        "app/not-found.tsx",
+        "app/privacy/page.tsx",
+        "app/terms/page.tsx",
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/ai-elements/reasoning.tsx",
+        "components/ai-elements/response.tsx",
+        "components/anonymous-session-init.tsx",
+        "components/app-sidebar-history-conditional.tsx",
+        "components/app-sidebar.tsx",
+        "components/artifact-actions.tsx",
+        "components/artifact-panel.tsx",
+        "components/attachment-card.tsx",
+        "components/attachment-list.tsx",
+        "components/auth-card-skeleton.tsx",
+        "components/auth-providers.tsx",
+        "components/chat-header.tsx",
+        "components/chat-loading-shell.tsx",
+        "components/chat-menu-items.tsx",
+        "components/chat-rename-dialog.tsx",
+        "components/chat-runtime-controller.tsx",
+        "components/chat-sync.tsx",
+        "components/chat.tsx",
+        "components/chat/chat-content.tsx",
+        "components/chat/chat-welcome.tsx",
+        "components/chat/main-chat-panel.tsx",
+        "components/chat/secondary-chat-panel.tsx",
+        "components/clone-chat-button.tsx",
+        "components/code-editor.tsx",
+        "components/connectors-dropdown.tsx",
+        "components/console.tsx",
+        "components/context-bar.tsx",
+        "components/context-usage.tsx",
+        "components/data-stream-handler.tsx",
+        "components/delete-chat-dialog.tsx",
+        "components/delete-project-dialog.tsx",
+        "components/dev-login-tool.tsx",
+        "components/device-login-page.tsx",
+        "components/diffview.tsx",
+        "components/docs-link.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/electron-auth-ui.tsx",
+        "components/favicon.tsx",
+        "components/feedback-actions.tsx",
+        "components/followup-suggestions.tsx",
+        "components/github-link.tsx",
+        "components/header-actions.tsx",
+        "components/header-breadcrumb.tsx",
+        "components/image-editor.tsx",
+        "components/image-modal.tsx",
+        "components/interactive-chart-impl.tsx",
+        "components/internal-link.tsx",
+        "components/keyboard-shortcuts.tsx",
+        "components/lexical-chat-input.tsx",
+        "components/login-form.tsx",
+        "components/message-actions.tsx",
+        "components/message-editor.tsx",
+        "components/message-parts.tsx",
+        "components/message-siblings.tsx",
+        "components/messages-pane.tsx",
+        "components/messages.tsx",
+        "components/multimodal-input.tsx",
+        "components/new-chat-button.tsx",
+        "components/parallel-response-cards.tsx",
+        "components/part/deep-research.tsx",
+        "components/part/document-common.tsx",
+        "components/part/document-preview.tsx",
+        "components/part/document-tool.tsx",
+        "components/part/dynamic-tool.tsx",
+        "components/part/message-annotations.tsx",
+        "components/part/message-reasoning.tsx",
+        "components/part/read-document.tsx",
+        "components/part/text-message-part.tsx",
+        "components/part/tool-part.tsx",
+        "components/part/web-search.tsx",
+        "components/partial-message-loading.tsx",
+        "components/project-chat-item.tsx",
+        "components/project-chats.tsx",
+        "components/project-config.tsx",
+        "components/project-details-dialog.tsx",
+        "components/project-home.tsx",
+        "components/project-icon-picker.tsx",
+        "components/project-icon.tsx",
+        "components/project-menu-items.tsx",
+        "components/response-error-message.tsx",
+        "components/responsive-tools.tsx",
+        "components/retry-button.tsx",
+        "components/sandbox.tsx",
+        "components/search-chats-dialog.tsx",
+        "components/search-chats.tsx",
+        "components/settings/connector-header.tsx",
+        "components/settings/connectors-settings.tsx",
+        "components/settings/mcp-connect-dialog.tsx",
+        "components/settings/mcp-create-dialog.tsx",
+        "components/settings/mcp-details-page.tsx",
+        "components/settings/models-settings.tsx",
+        "components/settings/models-table.tsx",
+        "components/settings/settings-header.tsx",
+        "components/settings/settings-nav.tsx",
+        "components/settings/settings-page.tsx",
+        "components/share-button.tsx",
+        "components/sidebar-chats-list.tsx",
+        "components/sidebar-history.tsx",
+        "components/sidebar-project-item.tsx",
+        "components/sidebar-projects.tsx",
+        "components/sidebar-toggle.tsx",
+        "components/sidebar-top-row.tsx",
+        "components/sidebar-user-nav.tsx",
+        "components/signup-form.tsx",
+        "components/source-badge.tsx",
+        "components/sources.tsx",
+        "components/suggested-actions.tsx",
+        "components/tag.tsx",
+        "components/text-editor.tsx",
+        "components/theme-provider.tsx",
+        "components/ui/accordion.tsx",
+        "components/ui/alert.tsx",
+        "components/ui/avatar.tsx",
+        "components/ui/badge.tsx",
+        "components/ui/breadcrumb.tsx",
+        "components/ui/checkbox.tsx",
+        "components/ui/command.tsx",
+        "components/ui/drawer.tsx",
+        "components/ui/dropdown-menu.tsx",
+        "components/ui/extra/action-container.tsx",
+        "components/ui/extra/scroll-area-viewport-ref.tsx",
+        "components/ui/form.tsx",
+        "components/ui/hover-card.tsx",
+        "components/ui/input-group.tsx",
+        "components/ui/label.tsx",
+        "components/ui/popover.tsx",
+        "components/ui/progress.tsx",
+        "components/ui/scroll-area.tsx",
+        "components/ui/select.tsx",
+        "components/ui/separator.tsx",
+        "components/ui/sidebar.tsx",
+        "components/ui/skeleton.tsx",
+        "components/ui/slider.tsx",
+        "components/ui/spinner.tsx",
+        "components/ui/switch.tsx",
+        "components/ui/table.tsx",
+        "components/ui/tabs.tsx",
+        "components/ui/textarea.tsx",
+        "components/ui/tooltip.tsx",
+        "components/upgrade-cta/limit-display.tsx",
+        "components/upgrade-cta/login-cta-banner.tsx",
+        "components/upgrade-cta/login-prompt.tsx",
+        "components/upgrade-cta/share-menu-item.tsx",
+        "components/with-skeleton.tsx",
+        "hooks/use-artifact.tsx",
+        "lib/app-chat-runtime.ts",
+        "lib/runtime-registry/runtime-registry-provider.tsx",
+        "lib/stores/base/hooks.ts",
+        "lib/stores/custom-store-provider.tsx",
+        "providers/chat-input-provider.tsx",
+        "providers/chat-models-provider.tsx",
+        "providers/default-model-provider.tsx",
+        "providers/session-provider.tsx",
+        "tools/chatjs/tavily-search/renderer.tsx",
+        "tools/chatjs/vercel-code-execution/renderer.tsx",
+        "trpc/react.tsx",
+        "trpc/server.tsx"
       ],
       "rules": {
         "react/function-component-definition": "off"
       }
     },
     {
-      "files": ["app/(chat)/project/\\[projectId\\]/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/connectors/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/layout.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/loading.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/models/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/settings/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/share/\\[id\\]/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/share/\\[id\\]/shared-chat-page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/layout.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/loading.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/not-found.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/privacy/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["app/terms/page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/reasoning.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/response.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/anonymous-session-init.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/app-sidebar-history-conditional.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/app-sidebar.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-card.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-list.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/auth-card-skeleton.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/auth-providers.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-header.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-loading-shell.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-menu-items.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-rename-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-runtime-controller.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat-sync.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-content.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-welcome.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat/main-chat-panel.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/chat/secondary-chat-panel.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/clone-chat-button.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/code-editor.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/connectors-dropdown.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/console.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/context-bar.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/context-usage.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/delete-chat-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/delete-project-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/dev-login-tool.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/diffview.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/docs-link.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-ui.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/favicon.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/feedback-actions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/followup-suggestions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/github-link.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/header-actions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/image-editor.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/interactive-chart-impl.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/internal-link.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/keyboard-shortcuts.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/lexical-chat-input.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/login-form.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/message-actions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/message-editor.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/message-parts.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/message-siblings.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/messages-pane.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/messages.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/new-chat-button.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/deep-research.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-common.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-tool.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/dynamic-tool.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/message-annotations.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/message-reasoning.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/read-document.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/text-message-part.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/part/web-search.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/partial-message-loading.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-chat-item.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-chats.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-config.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-details-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-home.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-icon-picker.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-icon.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/project-menu-items.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/response-error-message.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/responsive-tools.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/retry-button.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sandbox.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connector-header.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connectors-settings.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-connect-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-create-dialog.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-settings.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-table.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-header.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-nav.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-page.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/share-button.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chats-list.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-history.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-project-item.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-projects.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-toggle.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-top-row.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-user-nav.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/signup-form.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/source-badge.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/sources.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/tag.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/text-editor.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/theme-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/accordion.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/alert.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/avatar.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/badge.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/breadcrumb.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/checkbox.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/command.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/drawer.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/dropdown-menu.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/extra/action-container.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/extra/scroll-area-viewport-ref.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/form.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/hover-card.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/input-group.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/label.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/popover.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/progress.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/scroll-area.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/select.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/separator.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/skeleton.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/slider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/spinner.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/switch.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/table.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/tabs.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/textarea.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/ui/tooltip.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/limit-display.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/login-cta-banner.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/login-prompt.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/share-menu-item.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/with-skeleton.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["hooks/use-artifact.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["lib/app-chat-runtime.ts"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["lib/runtime-registry/runtime-registry-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/custom-store-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-models-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["providers/default-model-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["providers/session-provider.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/tavily-search/renderer.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/vercel-code-execution/renderer.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["trpc/react.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["trpc/server.tsx"],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": ["components/auth-providers.tsx"],
+      "files": [
+        "components/auth-providers.tsx",
+        "components/ui/sidebar.tsx",
+        "hooks/use-artifact.tsx",
+        "trpc/react.tsx"
+      ],
       "rules": {
         "react/hook-use-state": "off"
       }
     },
     {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "react/hook-use-state": "off"
-      }
-    },
-    {
-      "files": ["hooks/use-artifact.tsx"],
-      "rules": {
-        "react/hook-use-state": "off"
-      }
-    },
-    {
-      "files": ["trpc/react.tsx"],
-      "rules": {
-        "react/hook-use-state": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chats-list.tsx"],
+      "files": [
+        "components/sidebar-chats-list.tsx",
+        "lib/stores/base/use-chat.ts"
+      ],
       "rules": {
         "react/immutability": "off"
       }
     },
     {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "react/immutability": "off"
-      }
-    },
-    {
-      "files": ["components/header-breadcrumb.tsx"],
-      "rules": {
-        "react/jsx-curly-brace-presence": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-common.tsx"],
+      "files": [
+        "components/header-breadcrumb.tsx",
+        "components/part/document-common.tsx"
+      ],
       "rules": {
         "react/jsx-curly-brace-presence": "off"
       }
@@ -3411,55 +911,17 @@
       }
     },
     {
-      "files": ["components/ai-elements/code-block.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/context.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/reasoning.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/chat/chat-layout.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/ui/form.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-models-provider.tsx"],
+      "files": [
+        "components/ai-elements/code-block.tsx",
+        "components/ai-elements/context.tsx",
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/reasoning.tsx",
+        "components/chat/chat-layout.tsx",
+        "components/multimodal-input.tsx",
+        "components/ui/form.tsx",
+        "providers/chat-input-provider.tsx",
+        "providers/chat-models-provider.tsx"
+      ],
       "rules": {
         "react/jsx-no-constructed-context-values": "off"
       }
@@ -3483,43 +945,19 @@
       }
     },
     {
-      "files": ["components/model-selector.tsx"],
+      "files": ["components/model-selector.tsx", "components/sheet-editor.tsx"],
       "rules": {
         "react/no-deriving-state-in-effects": "off"
       }
     },
     {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "react/no-deriving-state-in-effects": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-list.tsx"],
-      "rules": {
-        "react/no-object-type-as-default-prop": "off"
-      }
-    },
-    {
-      "files": ["components/auth-providers.tsx"],
-      "rules": {
-        "react/no-object-type-as-default-prop": "off"
-      }
-    },
-    {
-      "files": ["lib/runtime-registry/runtime-registry-provider.tsx"],
-      "rules": {
-        "react/no-object-type-as-default-prop": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/custom-store-provider.tsx"],
-      "rules": {
-        "react/no-object-type-as-default-prop": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
+      "files": [
+        "components/attachment-list.tsx",
+        "components/auth-providers.tsx",
+        "lib/runtime-registry/runtime-registry-provider.tsx",
+        "lib/stores/custom-store-provider.tsx",
+        "providers/chat-input-provider.tsx"
+      ],
       "rules": {
         "react/no-object-type-as-default-prop": "off"
       }
@@ -3531,19 +969,11 @@
       }
     },
     {
-      "files": ["app/privacy/page.tsx"],
-      "rules": {
-        "react/no-unescaped-entities": "off"
-      }
-    },
-    {
-      "files": ["app/terms/page.tsx"],
-      "rules": {
-        "react/no-unescaped-entities": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-create-dialog.tsx"],
+      "files": [
+        "app/privacy/page.tsx",
+        "app/terms/page.tsx",
+        "components/settings/mcp-create-dialog.tsx"
+      ],
       "rules": {
         "react/no-unescaped-entities": "off"
       }
@@ -3556,182 +986,58 @@
     },
     {
       "files": [
-        "components/ai-elements/extra/conversation-content-scroll-area.tsx"
+        "components/ai-elements/extra/conversation-content-scroll-area.tsx",
+        "components/model-selector.tsx",
+        "components/settings/models-table.tsx",
+        "lib/app-chat-runtime.ts",
+        "lib/stores/base/hooks.ts",
+        "lib/stores/base/use-chat.ts",
+        "lib/stores/custom-store-provider.tsx"
       ],
       "rules": {
         "react/refs": "off"
       }
     },
     {
-      "files": ["components/model-selector.tsx"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-table.tsx"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["lib/app-chat-runtime.ts"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/custom-store-provider.tsx"],
-      "rules": {
-        "react/refs": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/ai-elements/reasoning.tsx",
+        "components/artifact-panel.tsx",
+        "components/chat-rename-dialog.tsx",
+        "components/device-login-page.tsx",
+        "components/login-form.tsx",
+        "components/model-selector.tsx",
+        "components/new-chat-button.tsx",
+        "components/parallel-response-cards.tsx",
+        "components/project-details-dialog.tsx",
+        "components/search-chats.tsx",
+        "components/settings/mcp-create-dialog.tsx",
+        "components/sheet-editor.tsx",
+        "components/signup-form.tsx",
+        "components/toolbar.tsx",
+        "lib/runtime-registry/runtime-registry-provider.tsx",
+        "lib/stores/hooks-chat-persistence.ts",
+        "providers/chat-input-provider.tsx"
+      ],
       "rules": {
         "react/set-state-in-effect": "off"
       }
     },
     {
-      "files": ["components/ai-elements/reasoning.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/chat-rename-dialog.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/login-form.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/model-selector.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/new-chat-button.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/project-details-dialog.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-create-dialog.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/signup-form.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/toolbar.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["lib/runtime-registry/runtime-registry-provider.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/hooks-chat-persistence.ts"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/shimmer.tsx"],
+      "files": [
+        "components/ai-elements/shimmer.tsx",
+        "components/lexical-chat-input.tsx"
+      ],
       "rules": {
         "react/static-components": "off"
       }
     },
     {
-      "files": ["components/lexical-chat-input.tsx"],
-      "rules": {
-        "react/static-components": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "react/todo": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-list.tsx"],
-      "rules": {
-        "react/todo": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
+      "files": [
+        "components/artifact-actions.tsx",
+        "components/attachment-list.tsx",
+        "components/multimodal-input.tsx"
+      ],
       "rules": {
         "react/todo": "off"
       }
@@ -3743,25 +1049,12 @@
       }
     },
     {
-      "files": ["app/layout.tsx"],
-      "rules": {
-        "require-await": "off"
-      }
-    },
-    {
-      "files": ["components/create-artifact.tsx"],
-      "rules": {
-        "require-await": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.test.ts"],
-      "rules": {
-        "require-await": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
+      "files": [
+        "app/layout.tsx",
+        "components/create-artifact.tsx",
+        "lib/gated-chat-transport.test.ts",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "require-await": "off"
       }
@@ -3773,583 +1066,133 @@
       }
     },
     {
-      "files": ["app/(auth)/device-login/page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/login/page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/(auth)/register/page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/(chat)/chat-route-host.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/layout.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/privacy/page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["app/terms/page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/code-block.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/context.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/message.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/reasoning.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/response.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/shimmer.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/tool.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/attachment-list.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/auth-providers.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/chat-features-definitions.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/chat-runtime-controller.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/chat-sync.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/code-editor.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/connectors-dropdown.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/console.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/context-usage.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/delete-chat-dialog.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/delete-project-dialog.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/device-login-page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/diffview.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/electron-auth-handler.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/feedback-actions.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/followup-suggestions.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/icons.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/image-editor.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/interactive-chart-impl.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/lexical-chat-input.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-common.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-tool.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.test.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/part/tool-part.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/project-details-dialog.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/project-home.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/project-icon.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/research-progress.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/research-task.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/research-tasks.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/search-chats-dialog.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/settings/connectors-settings.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-create-dialog.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-table.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/settings/settings-nav.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chats-list.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-project-item.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-projects.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/sources.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/suggested-actions.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/text-editor.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/thinking-message.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/alert.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/badge.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/button-group.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/button.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/form.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/input-group.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/ui/toggle.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/limit-display.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/upgrade-cta/login-cta-banner.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/user-message.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/version-footer.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["hooks/chat-sync-hooks.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["hooks/use-artifact.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/active-gateway.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/gateway-model-defaults.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/gateways/fallback-models.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/markdown-joiner-transform.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/anonymous-session-client.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/anonymous-session-server.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/code/client.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/sheet/client.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/artifacts/text/client.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/auth.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/chat-tree-actions.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/config-requirements.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/config-schema.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/create-anonymous-session.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/data-stream.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/db/mcp-queries.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/db/schema.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/draft-chat-submission.ts"],
+      "files": [
+        "app/(auth)/device-login/page.tsx",
+        "app/(auth)/login/page.tsx",
+        "app/(auth)/register/page.tsx",
+        "app/(chat)/chat-route-host.tsx",
+        "app/layout.tsx",
+        "app/privacy/page.tsx",
+        "app/terms/page.tsx",
+        "components/ai-elements/code-block.tsx",
+        "components/ai-elements/context.tsx",
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/ai-elements/reasoning.tsx",
+        "components/ai-elements/response.tsx",
+        "components/ai-elements/shimmer.tsx",
+        "components/ai-elements/tool.tsx",
+        "components/artifact-actions.tsx",
+        "components/artifact-panel.tsx",
+        "components/attachment-list.tsx",
+        "components/auth-providers.tsx",
+        "components/chat-features-definitions.ts",
+        "components/chat-runtime-controller.tsx",
+        "components/chat-sync.tsx",
+        "components/code-editor.tsx",
+        "components/connectors-dropdown.tsx",
+        "components/console.tsx",
+        "components/context-usage.tsx",
+        "components/data-stream-handler.tsx",
+        "components/delete-chat-dialog.tsx",
+        "components/delete-project-dialog.tsx",
+        "components/device-login-page.tsx",
+        "components/diffview.tsx",
+        "components/electron-auth-handler.tsx",
+        "components/feedback-actions.tsx",
+        "components/followup-suggestions.tsx",
+        "components/icons.tsx",
+        "components/image-editor.tsx",
+        "components/interactive-chart-impl.tsx",
+        "components/lexical-chat-input.tsx",
+        "components/multimodal-input.tsx",
+        "components/parallel-response-cards.tsx",
+        "components/part/document-common.tsx",
+        "components/part/document-preview.tsx",
+        "components/part/document-tool.tsx",
+        "components/part/tool-part.test.tsx",
+        "components/part/tool-part.tsx",
+        "components/project-details-dialog.tsx",
+        "components/project-home.tsx",
+        "components/project-icon.tsx",
+        "components/research-progress.tsx",
+        "components/research-task.tsx",
+        "components/research-tasks.tsx",
+        "components/search-chats-dialog.tsx",
+        "components/settings/connectors-settings.tsx",
+        "components/settings/mcp-create-dialog.tsx",
+        "components/settings/mcp-details-page.tsx",
+        "components/settings/models-table.tsx",
+        "components/settings/settings-nav.tsx",
+        "components/sheet-editor.tsx",
+        "components/sidebar-chats-list.tsx",
+        "components/sidebar-project-item.tsx",
+        "components/sidebar-projects.tsx",
+        "components/sources.tsx",
+        "components/suggested-actions.tsx",
+        "components/text-editor.tsx",
+        "components/thinking-message.tsx",
+        "components/ui/alert.tsx",
+        "components/ui/badge.tsx",
+        "components/ui/button-group.tsx",
+        "components/ui/button.tsx",
+        "components/ui/form.tsx",
+        "components/ui/input-group.tsx",
+        "components/ui/sidebar.tsx",
+        "components/ui/toggle.tsx",
+        "components/upgrade-cta/limit-display.tsx",
+        "components/upgrade-cta/login-cta-banner.tsx",
+        "components/user-message.tsx",
+        "components/version-footer.tsx",
+        "hooks/chat-sync-hooks.ts",
+        "hooks/use-artifact.tsx",
+        "lib/ai/active-gateway.ts",
+        "lib/ai/core-chat-agent.ts",
+        "lib/ai/gateway-model-defaults.ts",
+        "lib/ai/gateways/fallback-models.ts",
+        "lib/ai/markdown-joiner-transform.ts",
+        "lib/ai/text-splitter.ts",
+        "lib/anonymous-session-client.ts",
+        "lib/artifacts/code/client.tsx",
+        "lib/artifacts/sheet/client.tsx",
+        "lib/artifacts/text/client.tsx",
+        "lib/auth.ts",
+        "lib/chat-tree-actions.test.ts",
+        "lib/config-requirements.ts",
+        "lib/config-schema.ts",
+        "lib/credits/cost-accumulator.test.ts",
+        "lib/credits/cost-accumulator.ts",
+        "lib/data-stream.test.ts",
+        "lib/db/schema.ts",
+        "lib/draft-chat-submission.ts",
+        "lib/env.ts",
+        "lib/files/upload-prep.ts",
+        "lib/features-config.ts",
+        "lib/message-conversion.ts",
+        "lib/redis/client.test.ts",
+        "lib/stores/base/hooks.ts",
+        "lib/stores/with-data-stream.test.ts",
+        "lib/stores/with-message-parts.ts",
+        "lib/thread-utils.test.ts",
+        "lib/utils.ts",
+        "lib/utils/message-mapping.ts",
+        "providers/chat-input-provider.tsx",
+        "providers/chat-models-provider.tsx",
+        "providers/default-model-provider.tsx",
+        "tools/chatjs/get-weather/renderer.test.tsx",
+        "tools/chatjs/tavily-search/tool.test.ts",
+        "tools/chatjs/tavily-search/tool.ts",
+        "tools/chatjs/tools.ts",
+        "tools/chatjs/ui.ts",
+        "tools/chatjs/vercel-code-execution/renderer.tsx",
+        "tools/platform/deep-research/configuration.ts",
+        "tools/platform/deep-research/pipeline.ts",
+        "tools/platform/deep-research/researcher-agent.ts",
+        "tools/platform/deep-research/supervisor-agent.ts",
+        "tools/platform/tools.ts",
+        "trpc/react.tsx",
+        "trpc/server.tsx"
+      ],
       "rules": {
         "sort-keys": "off"
       }
@@ -4361,199 +1204,12 @@
       }
     },
     {
-      "files": ["lib/env.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/files/upload-prep.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/features-config.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/logger.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/message-conversion.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/redis/client.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-data-stream.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-message-parts.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/thread-utils.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/types/anonymous.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/utils.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["lib/utils/message-mapping.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-input-provider.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["providers/chat-models-provider.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["providers/default-model-provider.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/get-weather/renderer.test.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/tavily-search/tool.test.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/tavily-search/tool.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/tools.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/ui.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/vercel-code-execution/renderer.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/configuration.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/pipeline.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/researcher-agent.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/supervisor-agent.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/tools.ts"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["trpc/react.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["trpc/server.tsx"],
-      "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
-      "rules": {
-        "typescript/array-type": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "typescript/array-type": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "typescript/array-type": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-message-parts.ts"],
+      "files": [
+        "components/parallel-response-cards.tsx",
+        "components/sheet-editor.tsx",
+        "lib/stores/base/hooks.ts",
+        "lib/stores/with-message-parts.ts"
+      ],
       "rules": {
         "typescript/array-type": "off"
       }
@@ -4565,31 +1221,21 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "typescript/method-signature-style": "off"
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "typescript/method-signature-style": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "typescript/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/debug.ts"],
-      "rules": {
-        "typescript/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "lib/credits/cost-accumulator.test.ts",
+        "lib/stores/base/debug.ts",
+        "lib/stores/base/hooks.ts"
+      ],
       "rules": {
         "typescript/no-explicit-any": "off"
       }
@@ -4607,97 +1253,49 @@
       }
     },
     {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/consistent-assert": "off"
-      }
-    },
-    {
       "files": ["components/settings/models-table.tsx"],
       "rules": {
         "unicorn/consistent-existence-index-check": "off"
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/sheet-editor.tsx",
+        "lib/gated-chat-transport.test.ts"
+      ],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
       }
     },
     {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.test.ts"],
-      "rules": {
-        "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
+      "files": ["components/sheet-editor.tsx", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/no-array-for-each": "off"
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "unicorn/no-array-for-each": "off"
-      }
-    },
-    {
-      "files": ["components/interactive-chart-impl.tsx"],
+      "files": [
+        "components/interactive-chart-impl.tsx",
+        "components/search-chats-dialog.tsx",
+        "components/sidebar-chats-list.tsx"
+      ],
       "rules": {
         "unicorn/no-array-reduce": "off"
       }
     },
     {
-      "files": ["components/search-chats-dialog.tsx"],
-      "rules": {
-        "unicorn/no-array-reduce": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chats-list.tsx"],
-      "rules": {
-        "unicorn/no-array-reduce": "off"
-      }
-    },
-    {
-      "files": ["components/parallel-response-cards.tsx"],
+      "files": [
+        "components/parallel-response-cards.tsx",
+        "components/sidebar-chats-list.tsx",
+        "lib/utils/message-mapping.ts"
+      ],
       "rules": {
         "unicorn/no-array-sort": "off"
       }
     },
     {
-      "files": ["components/sidebar-chats-list.tsx"],
-      "rules": {
-        "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": ["lib/utils/message-mapping.ts"],
-      "rules": {
-        "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/no-await-expression-member": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "unicorn/no-document-cookie": "off"
-      }
-    },
-    {
-      "files": ["lib/anonymous-session-client.ts"],
+      "files": ["components/ui/sidebar.tsx", "lib/anonymous-session-client.ts"],
       "rules": {
         "unicorn/no-document-cookie": "off"
       }
@@ -4715,37 +1313,14 @@
       }
     },
     {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": ["lib/cancellation-aware-chat-transport.ts"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": ["lib/gated-chat-transport.ts"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": ["lib/redis/client.test.ts"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": ["lib/social-auth.test.ts"],
-      "rules": {
-        "unicorn/no-useless-undefined": "off"
-      }
-    },
-    {
-      "files": ["providers/session-provider.tsx"],
+      "files": [
+        "components/data-stream-handler.tsx",
+        "lib/cancellation-aware-chat-transport.ts",
+        "lib/gated-chat-transport.ts",
+        "lib/redis/client.test.ts",
+        "lib/social-auth.test.ts",
+        "providers/session-provider.tsx"
+      ],
       "rules": {
         "unicorn/no-useless-undefined": "off"
       }
@@ -4781,67 +1356,30 @@
       }
     },
     {
-      "files": ["components/keyboard-shortcuts.tsx"],
+      "files": [
+        "components/keyboard-shortcuts.tsx",
+        "components/search-chats.tsx"
+      ],
       "rules": {
         "unicorn/prefer-includes": "off"
       }
     },
     {
-      "files": ["components/search-chats.tsx"],
-      "rules": {
-        "unicorn/prefer-includes": "off"
-      }
-    },
-    {
-      "files": ["lib/utils/rate-limit.ts"],
+      "files": ["lib/credits/cost-accumulator.ts", "lib/utils/rate-limit.ts"],
       "rules": {
         "unicorn/prefer-number-coercion": "off"
       }
     },
     {
-      "files": ["lib/credits/cost-accumulator.ts"],
-      "rules": {
-        "unicorn/prefer-number-coercion": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["components/delete-chat-dialog.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["components/sidebar-chat-item.tsx"],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/with-tracing.ts"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/artifact-actions.tsx",
+        "components/delete-chat-dialog.tsx",
+        "components/image-modal.tsx",
+        "components/multimodal-input.tsx",
+        "components/sidebar-chat-item.tsx",
+        "lib/stores/with-tracing.ts"
+      ],
       "rules": {
         "unicorn/prefer-optional-catch-binding": "off"
       }
@@ -4853,61 +1391,25 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
+      "files": [
+        "components/ai-elements/prompt-input.tsx",
+        "components/multimodal-input.tsx",
+        "lib/ai/text-splitter.ts"
+      ],
       "rules": {
         "unicorn/prefer-spread": "off"
       }
     },
     {
-      "files": ["components/multimodal-input.tsx"],
-      "rules": {
-        "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/text-splitter.ts"],
-      "rules": {
-        "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-actions.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/code-editor.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/data-stream-handler.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/diffview.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-common.tsx"],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-preview.tsx"],
+      "files": [
+        "components/artifact-actions.tsx",
+        "components/artifact-panel.tsx",
+        "components/code-editor.tsx",
+        "components/data-stream-handler.tsx",
+        "components/diffview.tsx",
+        "components/part/document-common.tsx",
+        "components/part/document-preview.tsx"
+      ],
       "rules": {
         "unicorn/switch-case-braces": "off"
       }
