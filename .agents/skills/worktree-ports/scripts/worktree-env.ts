@@ -9,10 +9,10 @@ const configFile = ".worktree-env.json";
 const config = await loadWorktreeConfig(configFile);
 const runtime = resolveWorktreeRuntime(config, process.env);
 
-function fail(message: string): never {
+const fail: (message: string) => never = (message) => {
   console.error(message);
   process.exit(1);
-}
+};
 
 if (args[0] === "--info") {
   const info = { ...runtime, configFile };
