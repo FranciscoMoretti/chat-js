@@ -3,7 +3,7 @@ import { z } from "zod";
 import { highlighter } from "./highlighter";
 import { logger } from "./logger";
 
-export function handleError(error: unknown): never {
+export const handleError = (error: unknown): never => {
   logger.break();
 
   if (typeof error === "string") {
@@ -30,4 +30,4 @@ export function handleError(error: unknown): never {
   logger.error("An unknown error occurred.");
   logger.break();
   process.exit(1);
-}
+};
