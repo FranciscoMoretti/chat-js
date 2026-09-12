@@ -6183,6 +6183,14 @@ index 35cfa0f..e49210f 100644
 +  expect(invalid.status).toBe(400);
 +  expect(resolveSession).not.toHaveBeenCalled();
 +});
+diff --git a/packages/eve/src/public/channels/eve.ts b/packages/eve/src/public/channels/eve.ts
+index 8b8d741..78fbce9 100644
+--- a/packages/eve/src/public/channels/eve.ts
++++ b/packages/eve/src/public/channels/eve.ts
+@@ -1 +1,3 @@
+ export * from "#eve-channel/index.js";
++
++export { parseSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
 index 48e2bc3..27e414e 100644
 --- a/packages/eve/src/public/definitions/hook.ts

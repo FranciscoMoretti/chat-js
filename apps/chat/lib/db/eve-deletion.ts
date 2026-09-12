@@ -4,6 +4,8 @@ import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveCodeSandbox,
   eveConversation,
+  eveConversationCopy,
+  eveConversationCopyFile,
   eveConversationProject,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
@@ -79,6 +81,13 @@ export async function completeEveConversationDeletion(
         throw new Error("Application content cleanup is incomplete.");
       }
     }
+    // Transcript preparation and provenance must not survive a completed family deletion.
+    await tx
+      .delete(eveConversationCopyFile)
+      .where(inArray(eveConversationCopyFile.conversationId, ids));
+    await tx
+      .delete(eveConversationCopy)
+      .where(inArray(eveConversationCopy.conversationId, ids));
     await tx
       .delete(eveConversationProject)
       .where(inArray(eveConversationProject.conversationId, ids));

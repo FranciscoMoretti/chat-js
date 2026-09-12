@@ -100,3 +100,12 @@ The next integration needs a copy journal containing immutable source/projection
 Accept the copy only after destination resources are complete. Acquire source/destination family locks in deterministic order, recheck publication under a source-row lock, and commit acceptance in a short transaction. Thereafter the destination is independent of source revocation/deletion, and native dispatch/recovery reads the accepted journal without reopening source access. Bind the native session and clear the temporary seed atomically; it must not become a permanent second transcript.
 
 Pre-acceptance rejection needs a provably never-dispatched resource-cleanup path. After acceptance, a native lookup 404 is not proof that creation never happened: retain the seed/resources for recovery. Deletion must purge copy preparation content while retaining operation/kind tombstones. The Save UI remains unexposed until this journal, resource writes, acceptance ordering, and browser recovery flow are implemented.
+
+
+## Copy journal implementation
+
+The local application now reserves a copy root, immutable preparation plan, and owned destination file keys in one transaction. File receipts bind exact bytes, MIME type, and size; document ancestry and heads commit together. Acceptance rechecks publication and captured document heads, then retains only the compact seed. Native binding clears that seed atomically, leaving eve as the transcript authority. The patched `eve/channels/eve` entry point exports `parseSessionTranscriptSeed` so application acceptance uses the native structural and byte limits instead of maintaining a second schema.
+
+Pre-acceptance rejection fences resource writes and provides a never-dispatched cleanup proof. Accepted copies retain their seed through uncertain native replies and recover with the same reservation identity, independent of source revocation. Deletion removes the temporary journal while preserving the operation/kind tombstone.
+
+This foundation is tested with local PostgreSQL and simulated storage/native replies. The preparation factory, authenticated channel resolver wiring, copy endpoint, cleanup coordinator, and Save UI are still pending; the journal alone does not expose copying to users.

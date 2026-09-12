@@ -17,6 +17,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
 export type User = InferSelectModel<typeof user>;
@@ -526,6 +527,82 @@ export const eveConversation = pgTable(
     uniqueIndex("EveConversation_owner_operation").on(
       table.ownerId,
       table.operationId
+    ),
+  ]
+);
+
+/** Temporary copy preparation is discarded once native history is bound. */
+export const eveConversationCopy = pgTable(
+  "EveConversationCopy",
+  {
+    conversationId: uuid("conversationId").primaryKey(),
+    ownerId: text("ownerId").notNull(),
+    sourceConversationId: uuid("sourceConversationId").notNull(),
+    sourceSessionId: text("sourceSessionId").notNull(),
+    sourceOwnerId: text("sourceOwnerId").notNull(),
+    projectionHash: text("projectionHash").notNull(),
+    planHash: text("planHash").notNull(),
+    plan: jsonb("plan").$type<EveCopyPlan>(),
+    seed: jsonb("seed").$type<EveCopySeed>(),
+    phase: text("phase", {
+      enum: ["preparing", "accepted", "bound", "rejected"],
+    })
+      .notNull()
+      .default("preparing"),
+    documentsReady: boolean("documentsReady").notNull().default(false),
+    acceptedAt: timestamp("acceptedAt"),
+  },
+  (table) => [
+    uniqueIndex("EveConversationCopy_owner_identity").on(
+      table.conversationId,
+      table.ownerId
+    ),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveConversationCopy_owner_fk",
+    }),
+    check(
+      "EveConversationCopy_phase_payload",
+      sql`(
+    ${table.phase} = 'preparing' and ${table.plan} is not null and ${table.seed} is null and ${table.acceptedAt} is null
+  ) or (
+    ${table.phase} = 'accepted' and ${table.plan} is null and ${table.seed} is not null and ${table.acceptedAt} is not null and ${table.documentsReady}
+  ) or (
+    ${table.phase} = 'bound' and ${table.plan} is null and ${table.seed} is null and ${table.acceptedAt} is not null and ${table.documentsReady}
+  ) or (
+    ${table.phase} = 'rejected' and ${table.plan} is null and ${table.seed} is null and ${table.acceptedAt} is null
+  )`
+    ),
+  ]
+);
+
+/** Receipt metadata is committed only after writing the allocated destination bytes. */
+export const eveConversationCopyFile = pgTable(
+  "EveConversationCopyFile",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    key: text("key").notNull(),
+    sha256: text("sha256").notNull(),
+    size: integer("size").notNull(),
+    mediaType: text("mediaType").notNull(),
+    writtenAt: timestamp("writtenAt"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.key] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [
+        eveConversationCopy.conversationId,
+        eveConversationCopy.ownerId,
+      ],
+      name: "EveConversationCopyFile_copy_owner_fk",
+    }),
+    check("EveConversationCopyFile_size", sql`${table.size} > 0`),
+    check(
+      "EveConversationCopyFile_hash",
+      sql`${table.sha256} ~ '^[a-f0-9]{64}$'`
     ),
   ]
 );

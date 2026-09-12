@@ -484,6 +484,13 @@
       "when": 1789216951650,
       "tag": "0068_eve_copy_creation_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1789217786020,
+      "tag": "0069_eve_copy_journal",
+      "breakpoints": true
     }
   ]
 }
