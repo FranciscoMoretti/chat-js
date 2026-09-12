@@ -16,9 +16,12 @@ const COST_CENTS = 5; // Vercel Sandbox execution
 
 export const codeExecution = ({
   costAccumulator,
-  sandboxName,
+  sandboxOwnership,
 }: {
-  sandboxName?: string;
+  sandboxOwnership?: {
+    reserve(signal?: AbortSignal): Promise<string>;
+    release(): Promise<void>;
+  };
   costAccumulator?: { addAPICost(name: string, cost: number): void };
 }) =>
   tool({
@@ -84,7 +87,11 @@ Output rules:
       let cleanup: Promise<void> | undefined;
       const stop = () => {
         if (!cleanup) {
-          cleanup = cleanupSandbox(sandbox, log, requestId);
+          cleanup = cleanupSandbox(sandbox, log, requestId).then(async () => {
+            if (sandbox) {
+              await sandboxOwnership?.release();
+            }
+          });
           // An abort listener starts cleanup before execution unwinds. Observe
           // early rejection now; the finally block still awaits and propagates it.
           cleanup.catch(() => undefined);
@@ -93,7 +100,8 @@ Output rules:
 
       try {
         log.info({ requestId, title, runtime, language }, "creating sandbox");
-        sandbox = await createSandbox(runtime, abortSignal, sandboxName);
+        const name = await sandboxOwnership?.reserve(abortSignal);
+        sandbox = await createSandbox(runtime, abortSignal, name);
         abortSignal?.addEventListener("abort", stop, { once: true });
         abortSignal?.throwIfAborted();
         log.debug({ requestId }, "sandbox created");

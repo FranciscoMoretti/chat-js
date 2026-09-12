@@ -1,6 +1,7 @@
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
+  eveCodeSandbox,
   eveConversation,
   eveConversationProject,
   eveDocumentCheckpoint,
@@ -43,6 +44,19 @@ export async function completeEveConversationDeletion(
       );
     }
     const ids = family.map((row) => row.id);
+    const [sandbox] = await tx
+      .select({ name: eveCodeSandbox.name })
+      .from(eveCodeSandbox)
+      .where(
+        and(
+          inArray(eveCodeSandbox.conversationId, ids),
+          eq(eveCodeSandbox.state, "unresolved")
+        )
+      )
+      .limit(1);
+    if (sandbox) {
+      throw new Error("Code sandbox cleanup is incomplete.");
+    }
     for (const table of [
       eveFileReference,
       eveDocumentCheckpointEntry,

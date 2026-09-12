@@ -8,7 +8,7 @@ import type { StreamWriter } from "../ai/types";
 import { config } from "../config";
 import type { uploadFile } from "../file-storage";
 import { executeEveTool } from "./adapt-tool";
-import { eveCodeSandboxName } from "./code-sandbox-name";
+import { eveCodeSandboxOwnership } from "./code-sandbox-ownership";
 import { eveGeneratedFileUploader } from "./generated-files";
 import { eveImageContext } from "./image-context";
 import { executeEvePlatformOperation } from "./platform-operation";
@@ -20,7 +20,7 @@ export function getEvePlatformTools({
   selectedModel,
   messages = [],
   storeFile,
-  sandboxName,
+  sandboxOwnership,
 }: {
   dataStream: Pick<StreamWriter, "write">;
   costAccumulator?: Pick<
@@ -28,7 +28,7 @@ export function getEvePlatformTools({
     "addAPICost" | "addLLMCost"
   >;
   storeFile?: typeof uploadFile;
-  sandboxName?: string;
+  sandboxOwnership?: Parameters<typeof codeExecution>[0]["sandboxOwnership"];
   selectedModel?: string;
   messages?: readonly ModelMessage[];
 }): ToolSet {
@@ -53,7 +53,7 @@ export function getEvePlatformTools({
         }
       : {}),
     ...(config.ai.tools.codeExecution.enabled
-      ? { codeExecution: codeExecution({ costAccumulator, sandboxName }) }
+      ? { codeExecution: codeExecution({ costAccumulator, sandboxOwnership }) }
       : {}),
     ...(config.ai.tools.webSearch.enabled
       ? {
@@ -83,14 +83,8 @@ export async function* executeEvePlatformTool(
   yield* executeEvePlatformOperation(context.abortSignal, (options) => {
     const tools = getEvePlatformTools({
       ...options,
-      sandboxName:
-        name === "codeExecution"
-          ? eveCodeSandboxName({
-              ownerId: context.session?.auth.initiator?.principalId,
-              sessionId: context.session?.id,
-              callId: context.callId,
-            })
-          : undefined,
+      sandboxOwnership:
+        name === "codeExecution" ? eveCodeSandboxOwnership(context) : undefined,
       selectedModel,
       messages,
       storeFile: eveGeneratedFileUploader({

@@ -136,3 +136,9 @@ test("closing the native iterator aborts an in-flight search request", async () 
 vi.mock("./generated-files", () => ({
   eveGeneratedFileUploader: () => vi.fn(),
 }));
+
+vi.mock("./code-sandbox-ownership", () => ({
+  eveCodeSandboxOwnership: () => {
+    throw new Error("Unexpected code sandbox in this tool test");
+  },
+}));

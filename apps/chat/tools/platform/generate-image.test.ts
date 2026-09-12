@@ -234,3 +234,9 @@ test("native image results include nested provider cost and keep output when pri
 vi.mock("../../lib/eve/generated-files", () => ({
   eveGeneratedFileUploader: () => mocks.upload,
 }));
+
+vi.mock("../../lib/eve/code-sandbox-ownership", () => ({
+  eveCodeSandboxOwnership: () => {
+    throw new Error("Unexpected code sandbox in this tool test");
+  },
+}));

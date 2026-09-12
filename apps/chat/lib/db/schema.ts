@@ -584,6 +584,28 @@ export const eveFileReference = pgTable(
   ]
 );
 
+// Allocation intent survives provider timeouts and worker crashes.
+export const eveCodeSandbox = pgTable(
+  "EveCodeSandbox",
+  {
+    name: text("name").primaryKey(),
+    ownerId: text("ownerId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    callId: text("callId").notNull(),
+    state: text("state", { enum: ["unresolved", "deleted"] })
+      .notNull()
+      .default("unresolved"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }),
+    index("EveCodeSandbox_conversation").on(table.conversationId),
+  ]
+);
+
 export const eveUsage = pgTable(
   "EveUsage",
   {

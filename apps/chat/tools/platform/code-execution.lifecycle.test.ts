@@ -35,7 +35,12 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 test("cancelling code execution stops its sandbox and settles cleanup once", async () => {
-  const tool = codeExecution({ sandboxName: "named-fixture" });
+  const tool = codeExecution({
+    sandboxOwnership: {
+      reserve: () => Promise.resolve("named-fixture"),
+      release: () => Promise.resolve(),
+    },
+  });
   if (!tool.execute) {
     throw new Error("Missing executor");
   }
@@ -117,4 +122,60 @@ test("abort cleanup failures stay observed while execution is still unwinding", 
   await new Promise<void>((resolve) => setImmediate(resolve));
   completion.resolve(undefined);
   await rejected;
+});
+
+test("allocation intent precedes creation and release waits for completed cleanup", async () => {
+  const reserve = vi.fn().mockResolvedValue("owned-name");
+  const release = vi.fn().mockResolvedValue(undefined);
+  const cleanup = Promise.withResolvers<void>();
+  const previousCleanups = execution.cleanup.mock.calls.length;
+  execution.run.mockResolvedValueOnce({ message: "42", chart: "" });
+  execution.cleanup.mockReturnValueOnce(cleanup.promise);
+  const tool = codeExecution({ sandboxOwnership: { reserve, release } });
+  if (!tool.execute) {
+    throw new Error("Missing executor");
+  }
+  const result = tool.execute(
+    { title: "Owned", language: "javascript", code: "42" },
+    { toolCallId: "owned", messages: [], context: {} }
+  );
+  await vi.waitFor(() =>
+    expect(execution.cleanup).toHaveBeenCalledTimes(previousCleanups + 1)
+  );
+  expect(release).not.toHaveBeenCalled();
+  expect(reserve.mock.invocationCallOrder[0]).toBeLessThan(
+    execution.create.mock.invocationCallOrder.at(-1) ?? 0
+  );
+  expect(execution.create).toHaveBeenLastCalledWith(
+    "node22",
+    undefined,
+    "owned-name"
+  );
+  cleanup.resolve();
+  await result;
+  expect(release).toHaveBeenCalledOnce();
+});
+
+test("unknown allocation outcomes and failed deletion retain durable ownership", async () => {
+  const reserve = vi.fn().mockResolvedValue("unresolved-name");
+  const release = vi.fn().mockResolvedValue(undefined);
+  const tool = codeExecution({ sandboxOwnership: { reserve, release } });
+  if (!tool.execute) {
+    throw new Error("Missing executor");
+  }
+  execution.create.mockRejectedValueOnce(new Error("lost create response"));
+  await tool.execute(
+    { title: "Lost", language: "javascript", code: "42" },
+    { toolCallId: "lost", messages: [], context: {} }
+  );
+  expect(release).not.toHaveBeenCalled();
+  execution.run.mockResolvedValueOnce({ message: "42", chart: "" });
+  execution.cleanup.mockRejectedValueOnce(new Error("delete failed"));
+  await expect(
+    tool.execute(
+      { title: "Lost", language: "javascript", code: "42" },
+      { toolCallId: "lost", messages: [], context: {} }
+    )
+  ).rejects.toThrow("delete failed");
+  expect(release).not.toHaveBeenCalled();
 });

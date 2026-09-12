@@ -1,7 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
+import { eq } from "drizzle-orm";
+import { db } from "../lib/db/client";
+import { createEveConversation } from "../lib/db/eve-queries";
+import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
+import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
+import { eveCodeSandboxOwnership } from "../lib/eve/code-sandbox-ownership";
 import { createModuleLogger } from "../lib/logger";
+import { codeExecution } from "../tools/platform/code-execution";
 import { executeJavaScriptInSandbox } from "../tools/platform/code-execution.javascript";
 import { executePythonInSandbox } from "../tools/platform/code-execution.python";
 import {
@@ -9,6 +16,7 @@ import {
   createSandbox,
   getTokenAuth,
 } from "../tools/platform/code-execution.shared";
+import { assertEveTestDatabase } from "./eve-test-database";
 
 for (const language of ["javascript", "python"] as const) {
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
@@ -59,3 +67,83 @@ for (const language of ["javascript", "python"] as const) {
     ).toBe(true);
   });
 }
+
+test("native sandbox ownership is durably released after real provider cleanup", async () => {
+  test.setTimeout(120_000);
+  assertEveTestDatabase(env.DATABASE_URL);
+  const ownerId = crypto.randomUUID();
+  await db.insert(user).values({
+    id: ownerId,
+    name: "Sandbox fixture",
+    email: `${ownerId}@test.invalid`,
+  });
+  const row = await createEveConversation(
+    ownerId,
+    crypto.randomUUID(),
+    "Ownership fixture",
+    async () => crypto.randomUUID()
+  );
+  if (!row.sessionId) {
+    throw new Error("Missing native fixture session");
+  }
+  try {
+    const sandboxOwnership = eveCodeSandboxOwnership({
+      callId: "sdk-fixture",
+      session: {
+        id: row.sessionId,
+        auth: { initiator: { principalId: ownerId } },
+      },
+    });
+    const tool = codeExecution({ sandboxOwnership });
+    if (!tool.execute) {
+      throw new Error("Missing code executor");
+    }
+    const result = await tool.execute(
+      {
+        title: "Ownership check",
+        language: "javascript",
+        code: "console.log(6 * 7)",
+      },
+      {
+        toolCallId: "sdk-fixture",
+        messages: [],
+        context: {},
+        abortSignal: AbortSignal.timeout(60_000),
+      }
+    );
+    expect(result).toMatchObject({ message: expect.stringContaining("42") });
+    const resources = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.ownerId, ownerId));
+    expect(resources).toHaveLength(1);
+    expect(resources[0].state).toBe("deleted");
+    let missing = false;
+    try {
+      await Sandbox.get({
+        name: resources[0].name,
+        resume: false,
+        signal: AbortSignal.timeout(15_000),
+        ...getTokenAuth(),
+      });
+    } catch (error) {
+      missing = error instanceof APIError && error.response.status === 404;
+    }
+    expect(missing).toBe(true);
+  } finally {
+    const resources = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.ownerId, ownerId));
+    // Preserve ownership evidence if allocation or cleanup had an uncertain outcome.
+    if (resources.every((resource) => resource.state === "deleted")) {
+      await db
+        .delete(eveCodeSandbox)
+        .where(eq(eveCodeSandbox.ownerId, ownerId));
+      await db
+        .delete(eveConversation)
+        .where(eq(eveConversation.ownerId, ownerId));
+      await db.delete(user).where(eq(user.id, ownerId));
+    }
+  }
+});

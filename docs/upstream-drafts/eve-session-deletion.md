@@ -167,10 +167,27 @@ allocation intent even when creation times out. Do not mark conversation erasure
 complete while a creation operation can still finish after the cleanup barrier,
 or while an older resource has no verified ownership record.
 
-The SDK upgrade and stable naming are implemented. The resource journal, crash
-recovery, and conversation erasure verification remain incomplete. The existing
+The SDK upgrade and stable naming are implemented. Allocation ownership is
+recorded as described below; crash recovery and full conversation erasure
+verification remain incomplete. The existing
 `resolveEveConversationScope` helper already handles first-turn binding delay
 for generated files; sandbox registration should reuse that trusted scope and
 the owner-family deletion lock. Retain unresolved allocation intent instead of
 assuming a timeout proves no resource exists. No provider issue is ready for
 publication on this evidence alone.
+
+### Durable allocation ownership (local implementation)
+
+`EveCodeSandbox` now records the stable provider name, trusted conversation,
+owner, and call before allocation. Reservation shares the owner-family lock
+with deletion. Duplicate reservations cannot allocate again, and unknown
+creation outcomes retain unresolved intent. Normal tool cleanup marks ownership
+deleted only after provider stop/deletion succeeds; a failed cleanup retains it.
+Final application deletion refuses any unresolved sandbox in the family.
+
+Local database tests cover foreign ownership, duplicate calls, deletion races,
+and the final-erasure guard. A real SDK/local-database test executes code,
+verifies the released record, and confirms provider lookup by name returns 404.
+This does not yet implement crash reconciliation: lookup of an unresolved name
+must not be treated as proof that a still-pending create cannot finish later.
+Older unindexed code sandboxes also remain outside this ownership guarantee.

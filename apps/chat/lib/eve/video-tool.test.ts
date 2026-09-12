@@ -139,3 +139,9 @@ test("aborting a native video request reaches the provider", async () => {
 vi.mock("./generated-files", () => ({
   eveGeneratedFileUploader: () => provider.upload,
 }));
+
+vi.mock("./code-sandbox-ownership", () => ({
+  eveCodeSandboxOwnership: () => {
+    throw new Error("Unexpected code sandbox in this tool test");
+  },
+}));
