@@ -56,8 +56,8 @@ type AuthRendererState =
     };
 
 let currentAuthState: AuthRendererState = {
-  status: "idle",
   message: null,
+  status: "idle",
 };
 
 if (!gotSingleInstanceLock) {
@@ -100,8 +100,8 @@ async function resetAuthFlow(): Promise<void> {
   currentAuthFlowId += 1;
 
   await setAuthState({
-    status: "idle",
     message: null,
+    status: "idle",
   });
 }
 
@@ -123,8 +123,8 @@ async function setAuthState(nextState: AuthRendererState): Promise<void> {
   // fallback during main-frame loads, where React cannot render yet.
   if (mainWindow.webContents.isLoadingMainFrame()) {
     await setAuthOverlay(mainWindow, {
-      visible: true,
       message: nextState.message,
+      visible: true,
     });
     return;
   }
@@ -238,8 +238,8 @@ ipcMain.handle("better-auth:requestAuth", async (_event, options) => {
   currentAuthFlowId += 1;
 
   await setAuthState({
-    status: "awaiting-browser",
     message: "Waiting for sign-in in your browser...",
+    status: "awaiting-browser",
   });
 
   try {
@@ -247,9 +247,9 @@ ipcMain.handle("better-auth:requestAuth", async (_event, options) => {
   } catch (error) {
     isAuthFlowInProgress = false;
     await setAuthState({
-      status: "error",
-      message: "Couldn't open the browser sign-in flow.",
       detail: error instanceof Error ? error.message : String(error),
+      message: "Couldn't open the browser sign-in flow.",
+      status: "error",
     });
     throw error;
   }
@@ -365,8 +365,8 @@ async function authenticateFromDeepLink(url: string): Promise<boolean> {
     }
 
     await setAuthState({
-      status: "finishing",
       message: "Finishing sign-in...",
+      status: "finishing",
     });
     await electronAuthClient.authenticate({ token });
     return true;
@@ -374,9 +374,9 @@ async function authenticateFromDeepLink(url: string): Promise<boolean> {
     console.error("[electron-main] deep link authentication failed", error);
     isAuthFlowInProgress = false;
     await setAuthState({
-      status: "error",
-      message: "We couldn't finish sign-in automatically.",
       detail: error instanceof Error ? error.message : String(error),
+      message: "We couldn't finish sign-in automatically.",
+      status: "error",
     });
     return false;
   }
@@ -429,15 +429,15 @@ function scheduleAuthRefresh(): void {
           isAuthFlowInProgress = false;
           if (authFlowId === currentAuthFlowId) {
             await setAuthState({
-              status: "timed-out",
+              detail: "Please try the browser flow again.",
               message:
                 "Still waiting for the desktop app to finish signing in...",
-              detail: "Please try the browser flow again.",
+              status: "timed-out",
             });
           } else {
             await setAuthState({
-              status: "idle",
               message: null,
+              status: "idle",
             });
           }
           return;
@@ -446,17 +446,17 @@ function scheduleAuthRefresh(): void {
         await syncAuthSessionCookies(targetWindow);
         isAuthFlowInProgress = false;
         await setAuthState({
-          status: "idle",
           message: null,
+          status: "idle",
         });
       })
       .catch((error) => {
         console.error("[electron-main] auth refresh failed", error);
         isAuthFlowInProgress = false;
         void setAuthState({
-          status: "error",
-          message: "Sign-in refresh failed.",
           detail: error instanceof Error ? error.message : String(error),
+          message: "Sign-in refresh failed.",
+          status: "error",
         });
       });
     pendingAuthRefreshTimer = null;
@@ -468,11 +468,11 @@ async function createWindow(): Promise<BrowserWindow> {
     ...WINDOW_DEFAULTS,
     ...(process.platform === "darwin" || process.platform === "win32"
       ? { titleBarStyle: "default" as const }
-      : { titleBarStyle: "hidden" as const, titleBarOverlay: true }),
+      : { titleBarOverlay: true, titleBarStyle: "hidden" as const }),
     webPreferences: {
-      preload: getAppAssetPath("dist", "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      preload: getAppAssetPath("dist", "preload.js"),
     },
   });
 
@@ -488,8 +488,8 @@ async function createWindow(): Promise<BrowserWindow> {
   win.webContents.on("did-finish-load", () => {
     if (currentAuthOverlayMessage) {
       void setAuthOverlay(win, {
-        visible: true,
         message: currentAuthOverlayMessage,
+        visible: true,
       });
     }
   });
@@ -518,23 +518,23 @@ async function createWindow(): Promise<BrowserWindow> {
 function createTray(): Tray {
   const iconPath = getAppAssetPath("build", "icon.png");
   const trayIcon = nativeImage.createFromPath(iconPath);
-  const t = new Tray(trayIcon.resize({ width: 16, height: 16 }));
+  const t = new Tray(trayIcon.resize({ height: 16, width: 16 }));
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `Show ${APP_NAME}`,
       click: () => {
         mainWindow?.show();
         mainWindow?.focus();
       },
+      label: `Show ${APP_NAME}`,
     },
     { type: "separator" },
     {
-      label: "Quit",
       click: () => {
         isQuitting = true;
         app.quit();
       },
+      label: "Quit",
     },
   ]);
 
