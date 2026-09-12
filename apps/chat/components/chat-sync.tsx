@@ -78,12 +78,14 @@ export const ChatSync = ({
             prepareReconnectToStreamRequest({ id: chatId }) {
               const current = thread.getSnapshot().messages.at(-1);
               const activeStreamId = current?.metadata?.activeStreamId ?? null;
-              const partialMessageId = isResumableActiveStreamId(activeStreamId)
+              const resumableMessageId = isResumableActiveStreamId(
+                activeStreamId
+              )
                 ? (current?.id ?? null)
                 : null;
 
               return {
-                api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
+                api: `/api/chat/${chatId}/stream${resumableMessageId ? `?messageId=${encodeURIComponent(resumableMessageId)}` : ""}`,
               };
             },
           }),

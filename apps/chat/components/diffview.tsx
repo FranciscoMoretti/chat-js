@@ -102,7 +102,8 @@ class DiffTextNode extends TextNode {
 
     if (prevDiffType !== currentDiffType) {
       // Update classes if diff type changed
-      return false; // Force recreation
+      // Force recreation
+      return false;
     }
 
     return super.updateDOM(prevNode as this, dom, config);

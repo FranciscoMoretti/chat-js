@@ -132,7 +132,7 @@ export const DataStreamHandler = () => {
     const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
     lastProcessedIndex.current = dataStream.length - 1;
     lastProcessedPart.current = dataStream.at(-1);
-    const messages = chatStore.getState().messages;
+    const { messages } = chatStore.getState();
 
     for (const delta of newDeltas) {
       if (!isDataPartOnMessagePath(delta, messages)) {

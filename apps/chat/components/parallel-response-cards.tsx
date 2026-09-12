@@ -138,7 +138,7 @@ const PureParallelResponseCards = ({ messageId }: { messageId: string }) => {
     }
 
     const slot = cardSlots.find(
-      (slot) => slot.parallelIndex === pendingParallelIndex
+      (candidate) => candidate.parallelIndex === pendingParallelIndex
     );
     if (!slot) {
       return;

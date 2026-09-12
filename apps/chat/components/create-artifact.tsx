@@ -109,7 +109,7 @@ export class Artifact<
   }: {
     documentId: string;
     setMetadata: Dispatch<SetStateAction<M>>;
-    trpc: ReturnType<typeof import("@/trpc/react").useTRPC>;
+    trpc: ReturnType<typeof useTRPC>;
     queryClient: QueryClient;
     isAuthenticated: boolean;
   }) => void;
