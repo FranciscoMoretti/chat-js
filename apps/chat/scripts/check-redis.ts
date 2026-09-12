@@ -95,11 +95,13 @@ const checkRedis = async () => {
   }
 };
 
-try {
-  await checkRedis();
-} catch {
-  process.stderr.write(
-    "Redis check failed. Check REDIS_URL, TLS, credentials, network access, and command/channel permissions. See https://www.chatjs.dev/docs/reference/redis\n"
-  );
-  process.exitCode = 1;
-}
+void (async () => {
+  try {
+    await checkRedis();
+  } catch {
+    process.stderr.write(
+      "Redis check failed. Check REDIS_URL, TLS, credentials, network access, and command/channel permissions. See https://www.chatjs.dev/docs/reference/redis\n"
+    );
+    process.exitCode = 1;
+  }
+})();

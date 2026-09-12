@@ -57,11 +57,13 @@ const checkDatabase = async () => {
   }
 };
 
-try {
-  await checkDatabase();
-} catch {
-  console.error(
-    "Database check failed. Check your connection settings in .env.local."
-  );
-  process.exitCode = 1;
-}
+void (async () => {
+  try {
+    await checkDatabase();
+  } catch {
+    console.error(
+      "Database check failed. Check your connection settings in .env.local."
+    );
+    process.exitCode = 1;
+  }
+})();
