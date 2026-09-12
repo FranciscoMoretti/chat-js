@@ -79,9 +79,9 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
     isReadonly,
   };
 
-  function isActionDisabled(action: {
+  const isActionDisabled = (action: {
     isDisabled?: (context: ArtifactActionContext<M>) => boolean;
-  }): boolean {
+  }): boolean => {
     if (isLoading || artifact.status === "streaming") {
       return true;
     }
@@ -89,7 +89,7 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
       return action.isDisabled(actionContext);
     }
     return false;
-  }
+  };
 
   return (
     <div className="flex flex-row gap-1">

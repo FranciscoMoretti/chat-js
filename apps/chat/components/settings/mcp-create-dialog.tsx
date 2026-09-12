@@ -273,7 +273,7 @@ export const McpCreateDialog = ({
             <p className="text-muted-foreground text-xs leading-relaxed">
               Only use connectors from developers you trust. {appName} does not
               control which tools developers make available and cannot verify
-              that they will work as intended or that they won't change.
+              that they will work as intended or that they won&apos;t change.
             </p>
 
             <DialogFooter>

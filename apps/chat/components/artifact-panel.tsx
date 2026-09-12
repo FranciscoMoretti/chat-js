@@ -187,7 +187,7 @@ const PureArtifactPanel = ({
     [document, debouncedHandleContentChange, handleContentChange, isReadonly]
   );
 
-  function getDocumentContentById(index: number) {
+  const getDocumentContentById = (index: number) => {
     if (!documents) {
       return "";
     }
@@ -195,7 +195,7 @@ const PureArtifactPanel = ({
       return "";
     }
     return documents[index].content ?? "";
-  }
+  };
 
   const handleVersionChange = (type: "next" | "prev" | "toggle" | "latest") => {
     if (!documents) {

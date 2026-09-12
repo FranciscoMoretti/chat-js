@@ -8,32 +8,18 @@ import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { ResearchTask } from "./research-task";
 
-export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
-  <div className="relative">
-    {updates.map((update, index) => (
-      <StepWrapper
-        isLast={index === updates.length - 1}
-        key={update.toolCallId}
-        update={update}
-      >
-        <ResearchTask
-          isRunning={
-            (update.type === "web" && update.status === "running") ||
-            (index === updates.length - 1 && update.type !== "completed")
-          }
-          minimal={false}
-          update={update}
-        />
-      </StepWrapper>
-    ))}
-  </div>
-);
+const icons: Record<ResearchUpdate["type"], React.ElementType> = {
+  completed: CircleCheck,
+  started: Dot,
+  thoughts: Sparkles,
+  web: FileText,
+  writing: Pencil,
+} as const;
 
-interface StepWrapperProps {
-  children: ReactNode;
-  isLast: boolean;
-  update: ResearchUpdate;
-}
+const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
+  const Icon = icons[update.type];
+  return <Icon className="text-muted-foreground h-4 w-4" />;
+};
 
 const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   <div className="flex w-full flex-row items-stretch justify-start gap-2">
@@ -63,15 +49,29 @@ const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   </div>
 );
 
-const icons: Record<ResearchUpdate["type"], React.ElementType> = {
-  web: FileText,
-  started: Dot,
-  completed: CircleCheck,
-  thoughts: Sparkles,
-  writing: Pencil,
-} as const;
+export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
+  <div className="relative">
+    {updates.map((update, index) => (
+      <StepWrapper
+        isLast={index === updates.length - 1}
+        key={update.toolCallId}
+        update={update}
+      >
+        <ResearchTask
+          isRunning={
+            (update.type === "web" && update.status === "running") ||
+            (index === updates.length - 1 && update.type !== "completed")
+          }
+          minimal={false}
+          update={update}
+        />
+      </StepWrapper>
+    ))}
+  </div>
+);
 
-const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
-  const Icon = icons[update.type];
-  return <Icon className="text-muted-foreground h-4 w-4" />;
-};
+interface StepWrapperProps {
+  children: ReactNode;
+  isLast: boolean;
+  update: ResearchUpdate;
+}
