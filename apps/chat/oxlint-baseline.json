@@ -422,12 +422,6 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "typescript/no-explicit-any": "off"
-      }
-    },
-    {
       "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "typescript/prefer-function-type": "off"
