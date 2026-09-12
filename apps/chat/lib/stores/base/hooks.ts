@@ -223,7 +223,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _throttledMessages: TMessage[] | null;
 
   // Transient data parts (not persisted in messages)
-  _transientDataParts: Map<string, any>;
+  _transientDataParts: Map<string, unknown>;
   addToolResult?: UseChatHelpers<TMessage>["addToolResult"];
   clearError?: UseChatHelpers<TMessage>["clearError"];
   clearTransientDataParts: () => void;
@@ -239,7 +239,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   getMessageIndexById: (id: string) => number | undefined;
   getMessagesSlice: (start: number, end?: number) => TMessage[];
   getThrottledMessages: () => TMessage[];
-  getTransientDataPart: (type: string) => any;
+  getTransientDataPart: (type: string) => unknown;
   id: string | undefined;
   messages: TMessage[];
   popMessage: () => void;
@@ -267,7 +267,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   setStatus: (status: ChatStatus) => void;
 
   // Transient data methods
-  setTransientDataPart: (type: string, data: any) => void;
+  setTransientDataPart: (type: string, data: unknown) => void;
   startRun?: UseThreadHelpers<TMessage>["tree"]["startRun"];
   status: ChatStatus;
   stop?: UseChatHelpers<TMessage>["stop"];

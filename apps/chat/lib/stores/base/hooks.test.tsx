@@ -48,6 +48,27 @@ const message: LabeledMessage = {
 };
 
 describe("chat store hooks", () => {
+  it("retains transient data until removed or reset", () => {
+    const store = createChatStore<LabeledMessage>();
+    const transientData = { progress: 0.5, status: "running" };
+
+    store.getState().setTransientDataPart("data-status", transientData);
+    expect(store.getState().getTransientDataPart("data-status")).toBe(
+      transientData
+    );
+
+    store.getState().removeTransientDataPart("data-status");
+    expect(
+      store.getState().getTransientDataPart("data-status")
+    ).toBeUndefined();
+
+    store.getState().setTransientDataPart("data-status", transientData);
+    store.getState().reset();
+    expect(
+      store.getState().getTransientDataPart("data-status")
+    ).toBeUndefined();
+  });
+
   it("keeps the unconfigured startRun fallback asynchronous", async () => {
     const store = createChatStore<LabeledMessage>([]);
     let actions: ReturnType<typeof useChatActions> | undefined;
