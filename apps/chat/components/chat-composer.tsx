@@ -21,10 +21,8 @@ import {
 } from "@/components/multimodal-input";
 
 /** The reference app's composer. Add, remove or reorder controls here. */
-export const ChatComposer = memo(function ChatComposer(
-  props: Omit<ComponentProps<typeof MultimodalInput>, "children">
-) {
-  return (
+export const ChatComposer = memo(
+  (props: Omit<ComponentProps<typeof MultimodalInput>, "children">) => (
     <MultimodalInput {...props}>
       <ComposerLimits />
       <ComposerAttachments />
@@ -42,5 +40,7 @@ export const ChatComposer = memo(function ChatComposer(
         </div>
       </PromptInputFooter>
     </MultimodalInput>
-  );
-});
+  )
+);
+
+ChatComposer.displayName = "ChatComposer";

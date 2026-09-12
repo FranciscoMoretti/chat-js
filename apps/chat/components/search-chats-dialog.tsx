@@ -77,76 +77,81 @@ interface SearchChatsListProps {
   onSelectChat: (chatId: string) => void;
 }
 
-const SearchChatsList = memo(function SearchChatsListInner({
-  onSelectChat,
-  deferredQuery,
-}: SearchChatsListProps) {
-  const { data: chats, isLoading } = useGetAllChats();
+const SearchChatsList = memo(
+  ({ onSelectChat, deferredQuery }: SearchChatsListProps) => {
+    const { data: chats, isLoading } = useGetAllChats();
 
-  const groupedChats = useMemo(() => {
-    if (!chats) {
-      return null;
-    }
-    const filteredChats = filterChats(chats, deferredQuery);
-    return groupChatsByDate(filteredChats);
-  }, [chats, deferredQuery]);
+    const groupedChats = useMemo(() => {
+      if (!chats) {
+        return null;
+      }
+      const filteredChats = filterChats(chats, deferredQuery);
+      return groupChatsByDate(filteredChats);
+    }, [chats, deferredQuery]);
 
-  const renderChatGroup = (
-    groupChats: UIChat[],
-    groupName: string,
-    key: string
-  ) => {
-    if (groupChats.length === 0) {
-      return null;
-    }
+    const renderChatGroup = (
+      groupChats: UIChat[],
+      groupName: string,
+      key: string
+    ) => {
+      if (groupChats.length === 0) {
+        return null;
+      }
+
+      return (
+        <CommandGroup heading={groupName} key={key}>
+          {groupChats.map((chat) => (
+            <CommandItem
+              className="flex cursor-pointer items-center gap-2 p-2"
+              key={chat.id}
+              onSelect={() => onSelectChat(chat.id)}
+              value={chat.id}
+            >
+              <MessageSquare className="text-muted-foreground h-4 w-4" />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate font-medium">{chat.title}</span>
+              </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      );
+    };
+
+    const hasResults =
+      groupedChats &&
+      (groupedChats.today.length > 0 ||
+        groupedChats.yesterday.length > 0 ||
+        groupedChats.lastWeek.length > 0 ||
+        groupedChats.lastMonth.length > 0 ||
+        groupedChats.older.length > 0);
 
     return (
-      <CommandGroup heading={groupName} key={key}>
-        {groupChats.map((chat) => (
-          <CommandItem
-            className="flex cursor-pointer items-center gap-2 p-2"
-            key={chat.id}
-            onSelect={() => onSelectChat(chat.id)}
-            value={chat.id}
-          >
-            <MessageSquare className="text-muted-foreground h-4 w-4" />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-medium">{chat.title}</span>
-            </div>
-          </CommandItem>
-        ))}
-      </CommandGroup>
+      <>
+        {!hasResults && (
+          <CommandEmpty>
+            {isLoading ? "Loading chats..." : "No chats found."}
+          </CommandEmpty>
+        )}
+
+        {groupedChats && (
+          <>
+            {renderChatGroup(groupedChats.today, "Today", "today")}
+            {renderChatGroup(groupedChats.yesterday, "Yesterday", "yesterday")}
+            {renderChatGroup(groupedChats.lastWeek, "Last 7 days", "lastWeek")}
+            {renderChatGroup(
+              groupedChats.lastMonth,
+              "Last 30 days",
+              "lastMonth"
+            )}
+            {renderChatGroup(groupedChats.older, "Older", "older")}
+          </>
+        )}
+      </>
     );
-  };
+  }
+);
 
-  const hasResults =
-    groupedChats &&
-    (groupedChats.today.length > 0 ||
-      groupedChats.yesterday.length > 0 ||
-      groupedChats.lastWeek.length > 0 ||
-      groupedChats.lastMonth.length > 0 ||
-      groupedChats.older.length > 0);
-
-  return (
-    <>
-      {!hasResults && (
-        <CommandEmpty>
-          {isLoading ? "Loading chats..." : "No chats found."}
-        </CommandEmpty>
-      )}
-
-      {groupedChats && (
-        <>
-          {renderChatGroup(groupedChats.today, "Today", "today")}
-          {renderChatGroup(groupedChats.yesterday, "Yesterday", "yesterday")}
-          {renderChatGroup(groupedChats.lastWeek, "Last 7 days", "lastWeek")}
-          {renderChatGroup(groupedChats.lastMonth, "Last 30 days", "lastMonth")}
-          {renderChatGroup(groupedChats.older, "Older", "older")}
-        </>
-      )}
-    </>
-  );
-});
+SearchChatsList.displayName = "SearchChatsListInner";
 
 interface SearchChatsDialogProps {
   onOpenChange: (open: boolean) => void;
