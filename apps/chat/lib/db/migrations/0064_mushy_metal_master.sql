@@ -1,0 +1,1 @@
+ALTER TABLE "EveCodeSandbox" ADD COLUMN "creationConfirmed" boolean DEFAULT false NOT NULL;

@@ -38,6 +38,7 @@ test("cancelling code execution stops its sandbox and settles cleanup once", asy
   const tool = codeExecution({
     sandboxOwnership: {
       reserve: () => Promise.resolve("named-fixture"),
+      created: () => Promise.resolve(),
       release: () => Promise.resolve(),
     },
   });
@@ -131,7 +132,9 @@ test("allocation intent precedes creation and release waits for completed cleanu
   const previousCleanups = execution.cleanup.mock.calls.length;
   execution.run.mockResolvedValueOnce({ message: "42", chart: "" });
   execution.cleanup.mockReturnValueOnce(cleanup.promise);
-  const tool = codeExecution({ sandboxOwnership: { reserve, release } });
+  const tool = codeExecution({
+    sandboxOwnership: { reserve, created: () => Promise.resolve(), release },
+  });
   if (!tool.execute) {
     throw new Error("Missing executor");
   }
@@ -159,7 +162,9 @@ test("allocation intent precedes creation and release waits for completed cleanu
 test("unknown allocation outcomes and failed deletion retain durable ownership", async () => {
   const reserve = vi.fn().mockResolvedValue("unresolved-name");
   const release = vi.fn().mockResolvedValue(undefined);
-  const tool = codeExecution({ sandboxOwnership: { reserve, release } });
+  const tool = codeExecution({
+    sandboxOwnership: { reserve, created: () => Promise.resolve(), release },
+  });
   if (!tool.execute) {
     throw new Error("Missing executor");
   }

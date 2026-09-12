@@ -2,6 +2,8 @@ import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 import { db } from "../lib/db/client";
 import {
+  confirmEveCodeSandboxCreation,
+  listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
@@ -93,4 +95,28 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
         .where(eq(eveCodeSandbox.conversationId, row.id))
     ).toEqual([]);
   }
+});
+
+test("only a retired owned family can inventory confirmed creation", async () => {
+  const row = await conversation();
+  const name = await reserveEveCodeSandbox(owner, row.id, "confirmed");
+  await expect(listEveCodeSandboxesForDeletion(owner, row.id)).rejects.toThrow(
+    "Retire"
+  );
+  await expect(
+    confirmEveCodeSandboxCreation("stranger", row.id, name)
+  ).rejects.toThrow("ownership");
+  await confirmEveCodeSandboxCreation(owner, row.id, name);
+  await beginEveConversationDeletion(owner, row.id);
+  expect(await listEveCodeSandboxesForDeletion(owner, row.id)).toEqual([
+    { name, conversationId: row.id, creationConfirmed: true },
+  ]);
+  await expect(
+    listEveCodeSandboxesForDeletion("stranger", row.id)
+  ).rejects.toThrow("Retire");
+  await recordEveCodeSandboxDeletion(owner, row.id, name);
+  expect(await listEveCodeSandboxesForDeletion(owner, row.id)).toEqual([]);
+  await expect(
+    confirmEveCodeSandboxCreation(owner, row.id, name)
+  ).rejects.toThrow("ownership");
 });

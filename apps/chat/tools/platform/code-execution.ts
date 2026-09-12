@@ -20,6 +20,7 @@ export const codeExecution = ({
 }: {
   sandboxOwnership?: {
     reserve(signal?: AbortSignal): Promise<string>;
+    created(name: string): Promise<void>;
     release(): Promise<void>;
   };
   costAccumulator?: { addAPICost(name: string, cost: number): void };
@@ -102,6 +103,7 @@ Output rules:
         log.info({ requestId, title, runtime, language }, "creating sandbox");
         const name = await sandboxOwnership?.reserve(abortSignal);
         sandbox = await createSandbox(runtime, abortSignal, name);
+        await sandboxOwnership?.created(sandbox.name);
         abortSignal?.addEventListener("abort", stop, { once: true });
         abortSignal?.throwIfAborted();
         log.debug({ requestId }, "sandbox created");

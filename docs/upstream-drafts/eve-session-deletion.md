@@ -188,6 +188,13 @@ Final application deletion refuses any unresolved sandbox in the family.
 Local database tests cover foreign ownership, duplicate calls, deletion races,
 and the final-erasure guard. A real SDK/local-database test executes code,
 verifies the released record, and confirms provider lookup by name returns 404.
-This does not yet implement crash reconciliation: lookup of an unresolved name
-must not be treated as proof that a still-pending create cannot finish later.
+Confirmed creation is now recorded before executing code. After native family
+retirement, the coordinator can recover a sandbox whose successful creation was
+recorded but whose cleanup did not complete. It uses lookup without resume,
+rejects unexpected identity or persistence, and confirms absence after cleanup.
+A real SDK/local-database test covers this abandoned-resource path and retry.
+
+Unconfirmed creation remains unresolved: lookup of its name must not be treated
+as proof that a still-pending create cannot finish later. This includes a crash
+between the successful provider reply and committing creation confirmation.
 Older unindexed code sandboxes also remain outside this ownership guarantee.

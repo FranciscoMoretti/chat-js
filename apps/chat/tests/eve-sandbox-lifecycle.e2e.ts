@@ -2,11 +2,19 @@ import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db/client";
-import { createEveConversation } from "../lib/db/eve-queries";
+import {
+  confirmEveCodeSandboxCreation,
+  reserveEveCodeSandbox,
+} from "../lib/db/eve-code-sandboxes";
+import {
+  beginEveConversationDeletion,
+  createEveConversation,
+} from "../lib/db/eve-queries";
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { eveCodeSandboxOwnership } from "../lib/eve/code-sandbox-ownership";
+import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
 import { createModuleLogger } from "../lib/logger";
 import { codeExecution } from "../tools/platform/code-execution";
 import { executeJavaScriptInSandbox } from "../tools/platform/code-execution.javascript";
@@ -118,6 +126,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
       .where(eq(eveCodeSandbox.ownerId, ownerId));
     expect(resources).toHaveLength(1);
     expect(resources[0].state).toBe("deleted");
+    expect(resources[0].creationConfirmed).toBe(true);
     let missing = false;
     try {
       await Sandbox.get({
@@ -130,6 +139,26 @@ test("native sandbox ownership is durably released after real provider cleanup",
       missing = error instanceof APIError && error.response.status === 404;
     }
     expect(missing).toBe(true);
+    // Simulate process loss after the successful create reply was recorded.
+    const orphanName = await reserveEveCodeSandbox(
+      ownerId,
+      row.id,
+      "orphan-fixture"
+    );
+    const orphan = await createSandbox(
+      "node22",
+      AbortSignal.timeout(30_000),
+      orphanName
+    );
+    await confirmEveCodeSandboxCreation(ownerId, row.id, orphan.name);
+    await beginEveConversationDeletion(ownerId, row.id);
+    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    const [recovered] = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.name, orphanName));
+    expect(recovered.state).toBe("deleted");
   } finally {
     const resources = await db
       .select()

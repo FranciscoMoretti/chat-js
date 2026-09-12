@@ -1,4 +1,5 @@
 import {
+  confirmEveCodeSandboxCreation,
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "../db/eve-code-sandboxes";
@@ -32,6 +33,18 @@ export function eveCodeSandboxOwnership(context: {
       );
       reservation = { ...scope, name };
       return name;
+    },
+    async created(name: string) {
+      if (!reservation || reservation.name !== name) {
+        throw new Error(
+          "Code sandbox identity does not match its allocation intent."
+        );
+      }
+      await confirmEveCodeSandboxCreation(
+        reservation.ownerId,
+        reservation.conversationId,
+        name
+      );
     },
     async release() {
       if (!reservation) {

@@ -2,6 +2,7 @@ import { purgeEveFamilyDocuments } from "../db/eve-documents";
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
+import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 
@@ -27,6 +28,7 @@ export async function purgeLocalEveFamilyResources(
     );
   }
   await purgeLocalEveSandboxes(inventory.owned);
+  await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
   await purgeEveFamilyDocuments(ownerId, family.rootId);
   await purgeEveFamilyFiles(ownerId, family.rootId);
   return family;

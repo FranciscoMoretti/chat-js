@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { eveCodeSandboxName } from "../eve/code-sandbox-name";
 import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
@@ -66,4 +66,79 @@ export async function recordEveCodeSandboxDeletion(
   if (!row) {
     throw new Error("Code sandbox ownership not found.");
   }
+}
+
+/** A successful create reply proves this invocation has finished allocating. */
+export async function confirmEveCodeSandboxCreation(
+  ownerId: string,
+  conversationId: string,
+  name: string
+) {
+  const [row] = await db
+    .update(eveCodeSandbox)
+    .set({ creationConfirmed: true })
+    .where(
+      and(
+        eq(eveCodeSandbox.ownerId, ownerId),
+        eq(eveCodeSandbox.conversationId, conversationId),
+        eq(eveCodeSandbox.name, name),
+        eq(eveCodeSandbox.state, "unresolved")
+      )
+    )
+    .returning({ name: eveCodeSandbox.name });
+  if (!row) {
+    throw new Error("Unresolved code sandbox ownership not found.");
+  }
+}
+
+/** Internal cleanup inventory; unretired families cannot authorize provider deletion. */
+export async function listEveCodeSandboxesForDeletion(
+  ownerId: string,
+  rootId: string
+) {
+  const family = await db
+    .select({
+      id: eveConversation.id,
+      state: eveConversation.state,
+      rootId: eveConversation.rootConversationId,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        or(
+          eq(eveConversation.id, rootId),
+          eq(eveConversation.rootConversationId, rootId)
+        )
+      )
+    );
+  if (
+    !family.some((row) => row.id === rootId && row.rootId === null) ||
+    family.some((row) => row.state !== "deleting" && row.state !== "deleted")
+  ) {
+    throw new Error(
+      "Retire the conversation family before code sandbox cleanup."
+    );
+  }
+  return await db
+    .select({
+      name: eveCodeSandbox.name,
+      conversationId: eveCodeSandbox.conversationId,
+      creationConfirmed: eveCodeSandbox.creationConfirmed,
+    })
+    .from(eveCodeSandbox)
+    .innerJoin(
+      eveConversation,
+      eq(eveConversation.id, eveCodeSandbox.conversationId)
+    )
+    .where(
+      and(
+        eq(eveCodeSandbox.ownerId, ownerId),
+        eq(eveCodeSandbox.state, "unresolved"),
+        or(
+          eq(eveConversation.id, rootId),
+          eq(eveConversation.rootConversationId, rootId)
+        )
+      )
+    );
 }

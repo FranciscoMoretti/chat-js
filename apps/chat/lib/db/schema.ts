@@ -592,6 +592,7 @@ export const eveCodeSandbox = pgTable(
     ownerId: text("ownerId").notNull(),
     conversationId: uuid("conversationId").notNull(),
     callId: text("callId").notNull(),
+    creationConfirmed: boolean("creationConfirmed").notNull().default(false),
     state: text("state", { enum: ["unresolved", "deleted"] })
       .notNull()
       .default("unresolved"),
