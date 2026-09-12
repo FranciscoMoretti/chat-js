@@ -76,7 +76,8 @@ async function executeAgentAndGetOutput({
     onError: (error) => {
       throw error;
     },
-    costAccumulator: new CostAccumulator(), // Discarded for evals
+    // Discarded for evals
+    costAccumulator: new CostAccumulator(),
   });
 
   await result.consumeStream();
@@ -118,19 +119,19 @@ function updateExistingToolPart(
       p.toolCallId === toolCallId
   );
 
-  if (partIndex >= 0) {
-    const part = parts[partIndex];
-    if (part.type.startsWith("tool-") && "state" in part) {
-      parts[partIndex] = {
-        ...part,
-        state: "output-available",
-        output,
-      } as ChatMessage["parts"][number];
-    }
-    return true;
+  if (partIndex === -1) {
+    return false;
   }
 
-  return false;
+  const part = parts[partIndex];
+  if (part.type.startsWith("tool-") && "state" in part) {
+    parts[partIndex] = {
+      ...part,
+      state: "output-available",
+      output,
+    } as ChatMessage["parts"][number];
+  }
+  return true;
 }
 
 function addToolResultPart(
@@ -151,18 +152,19 @@ function updateToolResults(
   toolName: string
 ): void {
   const existingIndex = toolResults.findIndex((tr) => tr.toolName === toolName);
-  if (existingIndex >= 0) {
-    toolResults[existingIndex] = {
-      ...toolResults[existingIndex],
-      state: "output-available",
-    };
-  } else {
+  if (existingIndex === -1) {
     toolResults.push({
       toolName,
       type: `tool-${toolName}`,
       state: "output-available",
     });
+    return;
   }
+
+  toolResults[existingIndex] = {
+    ...toolResults[existingIndex],
+    state: "output-available",
+  };
 }
 
 function processToolResult(
