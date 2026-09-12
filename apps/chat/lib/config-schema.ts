@@ -242,12 +242,11 @@ export const authenticationConfigObjectSchema = z.object({
     ),
 });
 
-export const AUTHENTICATION_DEFAULTS = Object.assign(
-  Object.create(null),
-  { google: false },
-  { github: true },
-  { vercel: false }
-);
+export const AUTHENTICATION_DEFAULTS = {
+  google: false,
+  github: true,
+  vercel: false,
+};
 
 export const authenticationConfigSchema =
   authenticationConfigObjectSchema.default(AUTHENTICATION_DEFAULTS);
@@ -494,20 +493,18 @@ export const applyDefaults = (input: ConfigInput): Config => {
   const gatewayDefaults = gatewayModelDefaults;
   const aiInput = input.ai as Record<string, unknown> | undefined;
 
-  const mergedWorkflows = {
-    ...gatewayDefaults.workflows,
-    ...(aiInput?.workflows as Record<string, unknown> | undefined),
-  };
-  const mergedTools = mergeToolsConfig(
-    gatewayDefaults.tools,
-    aiInput?.tools as Record<string, unknown> | undefined
-  );
   const mergedAi = {
+    gateway,
     ...gatewayDefaults,
     ...aiInput,
-    gateway,
-    tools: mergedTools,
-    workflows: mergedWorkflows,
+    workflows: {
+      ...gatewayDefaults.workflows,
+      ...(aiInput?.workflows as Record<string, unknown> | undefined),
+    },
+    tools: mergeToolsConfig(
+      gatewayDefaults.tools,
+      aiInput?.tools as Record<string, unknown> | undefined
+    ),
   };
 
   return configSchema.parse({ ...input, ai: mergedAi });
