@@ -39,7 +39,7 @@ test("ChatJS upload remains durable through creation retries and message editing
   try {
     const input = {
       operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-5-mini",
+      modelId: "google/gemini-2.5-flash-lite",
       message: [
         {
           type: "text",
@@ -220,7 +220,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
-    data: { model: "openai/gpt-5-mini" },
+    data: { model: "google/gemini-2.5-flash-lite" },
   });
   await page.goto("/");
   const urls: string[] = [];
@@ -354,7 +354,7 @@ test("an uncertain creation retains the same visible attachment and immutable re
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
-    data: { model: "openai/gpt-5-mini" },
+    data: { model: "google/gemini-2.5-flash-lite" },
   });
   await page.goto("/");
   await page.route("**/api/files/upload", (route) =>
@@ -477,7 +477,7 @@ test("uploaded attachment has durable authenticated ownership", async ({
         headers: { origin: new URL(page.url()).origin },
         data: {
           operationId,
-          modelId: "openai/gpt-5-mini",
+          modelId: "google/gemini-2.5-flash-lite",
           message: [
             {
               type: "file",

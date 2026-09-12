@@ -74,3 +74,14 @@ Copied file links are parsed as whole URL tokens and rewritten to canonical loca
 ### Remaining seed size gap
 
 The current native seed schema caps serialized input at 8 MiB. Six supported 1 MiB attachments exceed that cap after base64 encoding. Preparation now reports this limitation before dispatch rather than dropping attachments, but this is **not full attachment-copy parity**. The remaining design must support durable destination-owned resource resolution without requiring all attachment bytes to live in the seed input. Increasing a fixed cap alone does not solve long conversation histories. Keep Save unexposed until this gap, durable resource/document allocation, source revocation ordering, uncertain acceptance recovery, and application integration are resolved.
+
+
+### Native destination file resolution
+
+The local patch now accepts `attachments: "channel"` on a seed. In this mode it keeps destination URLs compact and defers byte resolution until continuation. The authored eve channel exposes the existing `fetchFile` hook with authenticated session context. ChatJS checks destination ownership before reading storage by key; it never fetches the supplied hostname.
+
+The first real turn stages these files through the standard sandbox attachment pipeline and commits compact `eve-sandbox:` references. Later model calls hydrate them normally. Saving still performs no file fetch, model call, or tool execution. Unresolved or denied files fail closed. A temporary staging failure emits a recoverable failed turn and parks the conversation, retaining the seed files and incoming user message for a later retry. Manual compaction also stages pending files before passing history to the compactor.
+
+Local native workflow tests cover six 1 MiB files, zero work on Save, reuse on later turns, and failed storage followed by successful continuation. The application resolver tests cover owner authorization, rejected access, absent authentication, and malformed/foreign URL handling. These fixtures require neither a database nor a model provider.
+
+This resolves the native attachment byte-size mechanism, but application preparation still uses its earlier data-URL materializer. Integrating compact destination references, externalizing inline files, allocating durable file/document copies, and binding the immutable copy journal remain required before exposing Save. The 8 MiB transcript JSON cap remains; long-history behavior still needs an explicit product and storage design.

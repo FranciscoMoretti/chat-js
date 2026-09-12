@@ -1,5 +1,5 @@
 diff --git a/packages/eve/src/channel/session.ts b/packages/eve/src/channel/session.ts
-index ba955d39..b405073f 100644
+index ba955d3..b405073 100644
 --- a/packages/eve/src/channel/session.ts
 +++ b/packages/eve/src/channel/session.ts
 @@ -51,6 +51,7 @@ export interface Session {
@@ -19,7 +19,7 @@ index ba955d39..b405073f 100644
        return await runtime.dispatchSession({ command: { kind: "compact" }, sessionId: id });
      },
 diff --git a/packages/eve/src/channel/types.ts b/packages/eve/src/channel/types.ts
-index cca4a3e8..bb799325 100644
+index cca4a3e..bb79932 100644
 --- a/packages/eve/src/channel/types.ts
 +++ b/packages/eve/src/channel/types.ts
 @@ -1,3 +1,4 @@
@@ -77,7 +77,7 @@ index cca4a3e8..bb799325 100644
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
 diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
-index 43979d68..8682e803 100644
+index 43979d6..8682e80 100644
 --- a/packages/eve/src/client/message-reducer.ts
 +++ b/packages/eve/src/client/message-reducer.ts
 @@ -67,6 +67,25 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
@@ -107,7 +107,7 @@ index 43979d68..8682e803 100644
        return upsertMessage(data, {
          id: optimisticUserMessageId(event.data.submissionId),
 diff --git a/packages/eve/src/client/stream-version.test.ts b/packages/eve/src/client/stream-version.test.ts
-index 201e48a3..de0664b4 100644
+index 201e48a..de0664b 100644
 --- a/packages/eve/src/client/stream-version.test.ts
 +++ b/packages/eve/src/client/stream-version.test.ts
 @@ -4,7 +4,7 @@ import { readMessageStreamVersion } from "#client/stream-version.js";
@@ -130,7 +130,7 @@ index 201e48a3..de0664b4 100644
    });
  });
 diff --git a/packages/eve/src/client/stream-version.ts b/packages/eve/src/client/stream-version.ts
-index 0cb4fcc2..d3127e15 100644
+index 0cb4fcc..d3127e1 100644
 --- a/packages/eve/src/client/stream-version.ts
 +++ b/packages/eve/src/client/stream-version.ts
 @@ -7,6 +7,7 @@ const supportedMessageStreamVersions = {
@@ -142,7 +142,7 @@ index 0cb4fcc2..d3127e15 100644
 
  /** Reads and validates the schema version declared by a message stream response. */
 diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
-index e757d051..2e98bcab 100644
+index e757d05..2e98bca 100644
 --- a/packages/eve/src/context/keys.ts
 +++ b/packages/eve/src/context/keys.ts
 @@ -4,6 +4,10 @@
@@ -169,7 +169,7 @@ index e757d051..2e98bcab 100644
  export const InitiatorAuthKey = new ContextKey<SessionAuthContext | null>("eve.initiatorAuth");
  export const SessionIdKey = new ContextKey<string>("eve.sessionId");
 diff --git a/packages/eve/src/context/providers/sandbox.ts b/packages/eve/src/context/providers/sandbox.ts
-index c1f7ad81..f88422c1 100644
+index c1f7ad8..f88422c 100644
 --- a/packages/eve/src/context/providers/sandbox.ts
 +++ b/packages/eve/src/context/providers/sandbox.ts
 @@ -35,6 +35,7 @@ export const sandboxProvider: FrameworkContextProvider<SandboxAccess> = {
@@ -181,7 +181,7 @@ index c1f7ad81..f88422c1 100644
          runOnSession: async (callback) => await contextStorage.run(ctx, callback),
          sessionId: sandboxSessionId,
 diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
-index e5b41ab9..1107a107 100644
+index e5b41ab..7080588 100644
 --- a/packages/eve/src/eve-channel/index.ts
 +++ b/packages/eve/src/eve-channel/index.ts
 @@ -1,3 +1,7 @@
@@ -201,7 +201,14 @@ index e5b41ab9..1107a107 100644
 
  export * from "#eve-channel/types.js";
 
-@@ -104,6 +108,21 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -98,12 +102,28 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+   const uploadPolicy = mergeUploadPolicy(input.uploadPolicy);
+
+   return defineChannel<undefined, EveEventContext>({
++    fetchFile: input.fetchFile,
+     cors: normalizeEveCors(input.cors),
+     turnPolicy: input.turnPolicy,
+     routes: [
        GET(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
        HEAD(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
 
@@ -223,7 +230,7 @@ index e5b41ab9..1107a107 100644
        GET(EVE_INFO_ROUTE_PATH, async (req, args) => {
          const authResult = await routeAuth(req, input.auth);
          if (authResult instanceof Response) return authResult;
-@@ -150,6 +169,25 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -150,6 +170,25 @@ export function eveChannel(input: EveChannelInput): EveChannel {
 
          const body = parseCreateBody(payload);
          if (body instanceof Response) return body;
@@ -249,7 +256,7 @@ index e5b41ab9..1107a107 100644
          // Top-level sessions own their trace. Callback sessions are delegated
          // remote agents and intentionally continue the dispatching agent trace.
          const parsedParentTraceContext =
-@@ -172,6 +210,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -172,6 +211,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
              : await deriveOperationContinuationToken({
                  auth: forwarded.auth,
                  operationId: body.operationId,
@@ -257,7 +264,7 @@ index e5b41ab9..1107a107 100644
                });
          if (operationToken !== undefined) {
            const owner = await args.resolveSession(operationToken);
-@@ -189,6 +228,18 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -189,6 +229,18 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            }
          }
 
@@ -276,7 +283,7 @@ index e5b41ab9..1107a107 100644
          const forwardedTraceAssertion =
            parsedParentTraceContext === undefined
              ? "absent"
-@@ -229,13 +280,29 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -229,13 +281,29 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            }
          }
 
@@ -307,7 +314,7 @@ index e5b41ab9..1107a107 100644
          const createSession = readRouteSessionCreator(args);
          if (createSession === undefined) {
            return Response.json(
-@@ -247,6 +314,8 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -247,6 +315,8 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          let handle: Awaited<ReturnType<typeof createSession>>;
          try {
            handle = await createSession({
@@ -316,7 +323,7 @@ index e5b41ab9..1107a107 100644
              activityObserver: body.activityObserver,
              auth: messageResult.auth,
              capabilities:
-@@ -274,12 +343,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -274,12 +344,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            );
          }
 
@@ -351,7 +358,7 @@ index e5b41ab9..1107a107 100644
              },
              status: 202,
            },
-@@ -405,6 +494,50 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -405,6 +495,50 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          );
        }),
 
@@ -404,7 +411,7 @@ index e5b41ab9..1107a107 100644
          if (authResult instanceof Response) return authResult;
 diff --git a/packages/eve/src/eve-channel/request.test.ts b/packages/eve/src/eve-channel/request.test.ts
 new file mode 100644
-index 00000000..bab4c17c
+index 0000000..bab4c17
 --- /dev/null
 +++ b/packages/eve/src/eve-channel/request.test.ts
 @@ -0,0 +1,31 @@
@@ -440,7 +447,7 @@ index 00000000..bab4c17c
 +  expect(result.status).toBe(400);
 +});
 diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
-index 6a525949..114c65a7 100644
+index 6a52594..114c65a 100644
 --- a/packages/eve/src/eve-channel/request.ts
 +++ b/packages/eve/src/eve-channel/request.ts
 @@ -1,3 +1,4 @@
@@ -519,13 +526,15 @@ index 6a525949..114c65a7 100644
      callback,
      capabilities,
 diff --git a/packages/eve/src/eve-channel/types.ts b/packages/eve/src/eve-channel/types.ts
-index 7d6e8f7f..c42975bb 100644
+index 7d6e8f7..5232d5c 100644
 --- a/packages/eve/src/eve-channel/types.ts
 +++ b/packages/eve/src/eve-channel/types.ts
-@@ -88,6 +88,30 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
+@@ -88,6 +88,32 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
   * `uploadPolicy`, `onMessage`, and `events` refine the default HTTP behavior.
   */
  export interface EveChannelInput {
++  /** Resolve owned attachment URLs through the standard sandbox staging pipeline. */
++  readonly fetchFile?: import("#shared/channel-definition.js").FetchFileFunction;
 +  /**
 +   * Authorizes an immutable copy operation for this principal and supplies its completed
 +   * public transcript. Omit to deny seed creation; return null to deny an operation.
@@ -555,7 +564,7 @@ index 7d6e8f7f..c42975bb 100644
     * The first entry returning a {@link SessionAuthContext} wins; `null` / `undefined` skips to
 diff --git a/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts b/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts
 new file mode 100644
-index 00000000..c5def6d3
+index 0000000..c5def6d
 --- /dev/null
 +++ b/packages/eve/src/execution/capture-idle-session-checkpoint.test.ts
 @@ -0,0 +1,39 @@
@@ -600,7 +609,7 @@ index 00000000..c5def6d3
 +});
 diff --git a/packages/eve/src/execution/capture-idle-session-checkpoint.ts b/packages/eve/src/execution/capture-idle-session-checkpoint.ts
 new file mode 100644
-index 00000000..de97f4eb
+index 0000000..de97f4e
 --- /dev/null
 +++ b/packages/eve/src/execution/capture-idle-session-checkpoint.ts
 @@ -0,0 +1,39 @@
@@ -645,7 +654,7 @@ index 00000000..de97f4eb
 +}
 diff --git a/packages/eve/src/execution/checkpoint-readiness.test.ts b/packages/eve/src/execution/checkpoint-readiness.test.ts
 new file mode 100644
-index 00000000..34299981
+index 0000000..3429998
 --- /dev/null
 +++ b/packages/eve/src/execution/checkpoint-readiness.test.ts
 @@ -0,0 +1,33 @@
@@ -684,7 +693,7 @@ index 00000000..34299981
 +});
 diff --git a/packages/eve/src/execution/checkpoint-readiness.ts b/packages/eve/src/execution/checkpoint-readiness.ts
 new file mode 100644
-index 00000000..5ffdab98
+index 0000000..5ffdab9
 --- /dev/null
 +++ b/packages/eve/src/execution/checkpoint-readiness.ts
 @@ -0,0 +1,13 @@
@@ -702,7 +711,7 @@ index 00000000..5ffdab98
 +  }
 +}
 diff --git a/packages/eve/src/execution/create-session-step.test.ts b/packages/eve/src/execution/create-session-step.test.ts
-index 51bd8688..ced6fa42 100644
+index 51bd868..ced6fa4 100644
 --- a/packages/eve/src/execution/create-session-step.test.ts
 +++ b/packages/eve/src/execution/create-session-step.test.ts
 @@ -10,6 +10,13 @@ vi.mock("#runtime/sessions/compiled-agent-cache.js", () => ({
@@ -846,10 +855,11 @@ index 51bd8688..ced6fa42 100644
 +  expect(state.snapshot?.session.rootSessionId).toBeUndefined();
 +});
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
-index 2aae3078..40300c8e 100644
+index 2aae307..6f08b1d 100644
 --- a/packages/eve/src/execution/create-session-step.ts
 +++ b/packages/eve/src/execution/create-session-step.ts
-@@ -1,3 +1,14 @@
+@@ -1,3 +1,15 @@
++import { markSeedAttachmentsPending } from "#harness/seed-attachments.js";
 +import { prepareSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import { setHarnessEmissionState } from "#harness/emission-state.js";
 +import { createSessionWaitingEvent, encodeMessageStreamEvent, stampMessageStreamEvent } from "#protocol/message.js";
@@ -864,7 +874,7 @@ index 2aae3078..40300c8e 100644
  import { getCompiledRuntimeAgentBundle } from "#runtime/sessions/compiled-agent-cache.js";
  import {
    type DurableCompiledArtifactsSource,
-@@ -5,6 +16,7 @@ import {
+@@ -5,6 +17,7 @@ import {
  } from "#runtime/durable-compiled-artifacts-source.js";
  import {
    createDurableSessionState,
@@ -872,7 +882,7 @@ index 2aae3078..40300c8e 100644
    type DurableSessionState,
  } from "#execution/durable-session-store.js";
  import { createSession } from "#execution/session.js";
-@@ -33,6 +45,9 @@ export interface CreateSessionStepResult {
+@@ -33,6 +46,9 @@ export interface CreateSessionStepResult {
   */
  export async function createSessionStep(input: {
    readonly compiledArtifactsSource: DurableCompiledArtifactsSource;
@@ -882,7 +892,7 @@ index 2aae3078..40300c8e 100644
    readonly continuationToken: string;
    readonly dynamicSubagentAgentConfig?: DynamicSubagentAgentConfig;
    readonly inheritedLimits?: RunSessionLimits;
-@@ -44,6 +59,8 @@ export async function createSessionStep(input: {
+@@ -44,6 +60,8 @@ export async function createSessionStep(input: {
  }): Promise<CreateSessionStepResult> {
    "use step";
 
@@ -891,7 +901,7 @@ index 2aae3078..40300c8e 100644
    const bundle = await getCompiledRuntimeAgentBundle({
      compiledArtifactsSource: resolveDurableCompiledArtifactsSource(input.compiledArtifactsSource),
      nodeId: input.nodeId,
-@@ -95,5 +112,54 @@ export async function createSessionStep(input: {
+@@ -95,5 +113,54 @@ export async function createSessionStep(input: {
      workflowMaxSubagents: bundle.resolvedAgent.workflowTool?.maxSubagents,
    });
 
@@ -919,7 +929,7 @@ index 2aae3078..40300c8e 100644
 +      writer.releaseLock();
 +    }
 +  }
-+  return { state: createDurableSessionState({ session: { ...initialSession, localSandboxIdentity } }) };
++  return { state: createDurableSessionState({ session: { ...(input.seed?.attachments === "channel" ? markSeedAttachmentsPending(initialSession) : initialSession), localSandboxIdentity } }) };
 +}
 +
 +/** Restores the display prefix in a discoverable native workflow step. */
@@ -949,7 +959,7 @@ index 2aae3078..40300c8e 100644
  }
 diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
 new file mode 100644
-index 00000000..d16a9db4
+index 0000000..d16a9db
 --- /dev/null
 +++ b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
 @@ -0,0 +1,16 @@
@@ -970,7 +980,7 @@ index 00000000..d16a9db4
 +  },
 +};
 diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts b/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
-index 51907be4..04972190 100644
+index 51907be..0497219 100644
 --- a/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
 +++ b/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
 @@ -8,13 +8,14 @@ import { projectToDurableSession } from "#execution/session.js";
@@ -1028,7 +1038,7 @@ index 51907be4..04972190 100644
 
  function buildSession(): HarnessSession {
 diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot.ts b/packages/eve/src/execution/durable-session-migrations/snapshot.ts
-index 64313e99..64f991ff 100644
+index 64313e9..64f991f 100644
 --- a/packages/eve/src/execution/durable-session-migrations/snapshot.ts
 +++ b/packages/eve/src/execution/durable-session-migrations/snapshot.ts
 @@ -18,12 +18,9 @@ import type { DurableSessionSnapshot } from "#execution/durable-session-store.js
@@ -1047,7 +1057,7 @@ index 64313e99..64f991ff 100644
  /**
   * Migrates a {@link DurableSessionSnapshot} up to
 diff --git a/packages/eve/src/execution/durable-session-store.ts b/packages/eve/src/execution/durable-session-store.ts
-index 00a4158e..4be3d7af 100644
+index 00a4158..4be3d7a 100644
 --- a/packages/eve/src/execution/durable-session-store.ts
 +++ b/packages/eve/src/execution/durable-session-store.ts
 @@ -1,3 +1,4 @@
@@ -1074,7 +1084,7 @@ index 00a4158e..4be3d7af 100644
    readonly workflowMaxSubagents?: number;
    readonly agent: {
 diff --git a/packages/eve/src/execution/inline-turn.ts b/packages/eve/src/execution/inline-turn.ts
-index ecdbd28e..61bd460c 100644
+index ecdbd28..61bd460 100644
 --- a/packages/eve/src/execution/inline-turn.ts
 +++ b/packages/eve/src/execution/inline-turn.ts
 @@ -1,3 +1,4 @@
@@ -1118,7 +1128,7 @@ index ecdbd28e..61bd460c 100644
        this.bufferedSessionControls.push(command.kind);
        return;
 diff --git a/packages/eve/src/execution/parked-delivery-wait.ts b/packages/eve/src/execution/parked-delivery-wait.ts
-index 6389215f..9fdf8add 100644
+index 6389215..9fdf8ad 100644
 --- a/packages/eve/src/execution/parked-delivery-wait.ts
 +++ b/packages/eve/src/execution/parked-delivery-wait.ts
 @@ -1,3 +1,4 @@
@@ -1197,7 +1207,7 @@ index 6389215f..9fdf8add 100644
      }
 diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
 new file mode 100644
-index 00000000..71778c98
+index 0000000..71778c9
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-checkpoint.test.ts
 @@ -0,0 +1,112 @@
@@ -1315,7 +1325,7 @@ index 00000000..71778c98
 +});
 diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
 new file mode 100644
-index 00000000..e9f95f04
+index 0000000..e9f95f0
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-checkpoint.ts
 @@ -0,0 +1,68 @@
@@ -1389,7 +1399,7 @@ index 00000000..e9f95f04
 +}
 diff --git a/packages/eve/src/execution/read-session-sandbox-identity.test.ts b/packages/eve/src/execution/read-session-sandbox-identity.test.ts
 new file mode 100644
-index 00000000..05a1a695
+index 0000000..05a1a69
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-sandbox-identity.test.ts
 @@ -0,0 +1,97 @@
@@ -1492,7 +1502,7 @@ index 00000000..05a1a695
 +);
 diff --git a/packages/eve/src/execution/read-session-sandbox-identity.ts b/packages/eve/src/execution/read-session-sandbox-identity.ts
 new file mode 100644
-index 00000000..0a5ede60
+index 0000000..0a5ede6
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-sandbox-identity.ts
 @@ -0,0 +1,88 @@
@@ -1586,7 +1596,7 @@ index 00000000..0a5ede60
 +}
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.test.ts b/packages/eve/src/execution/restore-session-checkpoint.test.ts
 new file mode 100644
-index 00000000..0279a173
+index 0000000..0279a17
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-checkpoint.test.ts
 @@ -0,0 +1,97 @@
@@ -1689,7 +1699,7 @@ index 00000000..0279a173
 +});
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
 new file mode 100644
-index 00000000..6f6f4f71
+index 0000000..6f6f4f7
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-checkpoint.ts
 @@ -0,0 +1,67 @@
@@ -1762,7 +1772,7 @@ index 00000000..6f6f4f71
 +}
 diff --git a/packages/eve/src/execution/restore-session-history-step.test.ts b/packages/eve/src/execution/restore-session-history-step.test.ts
 new file mode 100644
-index 00000000..22a3012a
+index 0000000..22a3012
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.test.ts
 @@ -0,0 +1,121 @@
@@ -1889,7 +1899,7 @@ index 00000000..22a3012a
 +});
 diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
 new file mode 100644
-index 00000000..b70bdfb6
+index 0000000..b70bdfb
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.ts
 @@ -0,0 +1,122 @@
@@ -2017,7 +2027,7 @@ index 00000000..b70bdfb6
 +}
 diff --git a/packages/eve/src/execution/sandbox-identity-read.test.ts b/packages/eve/src/execution/sandbox-identity-read.test.ts
 new file mode 100644
-index 00000000..cfb7fb64
+index 0000000..cfb7fb6
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox-identity-read.test.ts
 @@ -0,0 +1,43 @@
@@ -2066,7 +2076,7 @@ index 00000000..cfb7fb64
 +});
 diff --git a/packages/eve/src/execution/sandbox-identity-read.ts b/packages/eve/src/execution/sandbox-identity-read.ts
 new file mode 100644
-index 00000000..44e3468d
+index 0000000..44e3468
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox-identity-read.ts
 @@ -0,0 +1,21 @@
@@ -2092,7 +2102,7 @@ index 00000000..44e3468d
 +  }
 +}
 diff --git a/packages/eve/src/execution/sandbox/bindings/just-bash.ts b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
-index a3aa9df3..5104e8b1 100644
+index a3aa9df..5104e8b 100644
 --- a/packages/eve/src/execution/sandbox/bindings/just-bash.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/just-bash.ts
 @@ -1,3 +1,7 @@
@@ -2151,7 +2161,7 @@ index a3aa9df3..5104e8b1 100644
  }
 diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
 new file mode 100644
-index 00000000..f0c2d504
+index 0000000..f0c2d50
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.integration.test.ts
 @@ -0,0 +1,129 @@
@@ -2286,7 +2296,7 @@ index 00000000..f0c2d504
 +}, 30_000);
 diff --git a/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
 new file mode 100644
-index 00000000..a89306d5
+index 0000000..a89306d
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/bindings/local-fork-checkpoint.ts
 @@ -0,0 +1,131 @@
@@ -2422,7 +2432,7 @@ index 00000000..a89306d5
 +  }
 +}
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
-index c7bd18e1..807f1e9e 100644
+index c7bd18e..807f1e9 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.test.ts
 @@ -18,11 +18,16 @@ const runtimeMocks = vi.hoisted(() => ({
@@ -2530,7 +2540,7 @@ index c7bd18e1..807f1e9e 100644
 +  withMicrosandboxMutation: async (_path: unknown, callback: () => Promise<unknown>) => await callback(),
 +}));
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
-index 1a4c05b0..58c147d8 100644
+index 1a4c05b..58c147d 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-lifecycle.ts
 @@ -1,6 +1,7 @@
@@ -2653,7 +2663,7 @@ index 1a4c05b0..58c147d8 100644
        return {
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
 new file mode 100644
-index 00000000..f6d4ee80
+index 0000000..f6d4ee8
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.integration.test.ts
 @@ -0,0 +1,36 @@
@@ -2695,7 +2705,7 @@ index 00000000..f6d4ee80
 +});
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
 new file mode 100644
-index 00000000..3407042f
+index 0000000..3407042
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-mutations.ts
 @@ -0,0 +1,36 @@
@@ -2736,7 +2746,7 @@ index 00000000..3407042f
 +  }
 +}
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
-index cb72e887..91952da1 100644
+index cb72e88..91952da 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.test.ts
 @@ -1,10 +1,21 @@
@@ -2881,7 +2891,7 @@ index cb72e887..91952da1 100644
 +  expect(await readdir(resources)).toHaveLength(1);
 +});
 diff --git a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
-index f697452f..9c0e892d 100644
+index f697452..9c0e892 100644
 --- a/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 +++ b/packages/eve/src/execution/sandbox/bindings/microsandbox-runtime.ts
 @@ -1,6 +1,7 @@
@@ -3041,7 +3051,7 @@ index f697452f..9c0e892d 100644
 +}
 diff --git a/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
 new file mode 100644
-index 00000000..0ad314f7
+index 0000000..0ad314f
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/ensure-ownership.integration.test.ts
 @@ -0,0 +1,111 @@
@@ -3157,7 +3167,7 @@ index 00000000..0ad314f7
 +  }
 +});
 diff --git a/packages/eve/src/execution/sandbox/ensure.test.ts b/packages/eve/src/execution/sandbox/ensure.test.ts
-index 1bf66373..d048926b 100644
+index 1bf6637..d048926 100644
 --- a/packages/eve/src/execution/sandbox/ensure.test.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.test.ts
 @@ -84,6 +84,7 @@ function createBackend(options?: { readonly delete?: () => Promise<void> }): San
@@ -3223,7 +3233,7 @@ index 1bf66373..d048926b 100644
      const ctx = new ContextContainer();
      ctx.set(SessionKey, createSession());
 diff --git a/packages/eve/src/execution/sandbox/ensure.ts b/packages/eve/src/execution/sandbox/ensure.ts
-index cc925f69..2d10fe56 100644
+index cc925f6..2d10fe5 100644
 --- a/packages/eve/src/execution/sandbox/ensure.ts
 +++ b/packages/eve/src/execution/sandbox/ensure.ts
 @@ -1,3 +1,8 @@
@@ -3341,7 +3351,7 @@ index cc925f69..2d10fe56 100644
 +}
 diff --git a/packages/eve/src/execution/sandbox/local-session-identity.integration.test.ts b/packages/eve/src/execution/sandbox/local-session-identity.integration.test.ts
 new file mode 100644
-index 00000000..891e1c82
+index 0000000..891e1c8
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/local-session-identity.integration.test.ts
 @@ -0,0 +1,34 @@
@@ -3381,7 +3391,7 @@ index 00000000..891e1c82
 +});
 diff --git a/packages/eve/src/execution/sandbox/local-session-identity.ts b/packages/eve/src/execution/sandbox/local-session-identity.ts
 new file mode 100644
-index 00000000..d604cee1
+index 0000000..d604cee
 --- /dev/null
 +++ b/packages/eve/src/execution/sandbox/local-session-identity.ts
 @@ -0,0 +1,47 @@
@@ -3434,7 +3444,7 @@ index 00000000..d604cee1
 +}
 diff --git a/packages/eve/src/execution/session-checkpoint-contract.ts b/packages/eve/src/execution/session-checkpoint-contract.ts
 new file mode 100644
-index 00000000..4a3ed11c
+index 0000000..4a3ed11
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint-contract.ts
 @@ -0,0 +1,16 @@
@@ -3456,7 +3466,7 @@ index 00000000..4a3ed11c
 +}
 diff --git a/packages/eve/src/execution/session-checkpoint.integration.test.ts b/packages/eve/src/execution/session-checkpoint.integration.test.ts
 new file mode 100644
-index 00000000..ece3ab0d
+index 0000000..ece3ab0
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.integration.test.ts
 @@ -0,0 +1,49 @@
@@ -3511,7 +3521,7 @@ index 00000000..ece3ab0d
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.test.ts b/packages/eve/src/execution/session-checkpoint.test.ts
 new file mode 100644
-index 00000000..291d3e1b
+index 0000000..291d3e1
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.test.ts
 @@ -0,0 +1,136 @@
@@ -3653,7 +3663,7 @@ index 00000000..291d3e1b
 +});
 diff --git a/packages/eve/src/execution/session-checkpoint.ts b/packages/eve/src/execution/session-checkpoint.ts
 new file mode 100644
-index 00000000..9133d4fc
+index 0000000..9133d4f
 --- /dev/null
 +++ b/packages/eve/src/execution/session-checkpoint.ts
 @@ -0,0 +1,51 @@
@@ -3710,7 +3720,7 @@ index 00000000..9133d4fc
 +}
 diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
 new file mode 100644
-index 00000000..4b64e1d9
+index 0000000..4b64e1d
 --- /dev/null
 +++ b/packages/eve/src/execution/session-fork.integration.test.ts
 @@ -0,0 +1,170 @@
@@ -3886,7 +3896,7 @@ index 00000000..4b64e1d9
 +});
 diff --git a/packages/eve/src/execution/session-resource-fork.integration.test.ts b/packages/eve/src/execution/session-resource-fork.integration.test.ts
 new file mode 100644
-index 00000000..a8b0f943
+index 0000000..a8b0f94
 --- /dev/null
 +++ b/packages/eve/src/execution/session-resource-fork.integration.test.ts
 @@ -0,0 +1,122 @@
@@ -4014,7 +4024,7 @@ index 00000000..a8b0f943
 +});
 diff --git a/packages/eve/src/execution/session-sandbox-identity-contract.test.ts b/packages/eve/src/execution/session-sandbox-identity-contract.test.ts
 new file mode 100644
-index 00000000..050ad7b2
+index 0000000..050ad7b
 --- /dev/null
 +++ b/packages/eve/src/execution/session-sandbox-identity-contract.test.ts
 @@ -0,0 +1,15 @@
@@ -4035,7 +4045,7 @@ index 00000000..050ad7b2
 +});
 diff --git a/packages/eve/src/execution/session-sandbox-identity-contract.ts b/packages/eve/src/execution/session-sandbox-identity-contract.ts
 new file mode 100644
-index 00000000..7681e350
+index 0000000..7681e35
 --- /dev/null
 +++ b/packages/eve/src/execution/session-sandbox-identity-contract.ts
 @@ -0,0 +1,21 @@
@@ -4062,10 +4072,10 @@ index 00000000..7681e350
 +}
 diff --git a/packages/eve/src/execution/session-transcript-seed.integration.test.ts b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
 new file mode 100644
-index 00000000..e3dfa595
+index 0000000..ca36569
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
-@@ -0,0 +1,216 @@
+@@ -0,0 +1,447 @@
 +import { expect, it } from "vitest";
 +import { start } from "#internal/workflow/runtime.js";
 +import { createTestRuntime } from "#internal/testing/app-harness.js";
@@ -4261,20 +4271,65 @@ index 00000000..e3dfa595
 +it("round-trips copied attachment URLs in an idle checkpoint without fetching them", async () => {
 +  const fixture = await createTestRuntime();
 +  await fixture.run(async () => {
-+    const attachments: SessionTranscriptSeed = { messages: [{ role: "user", parts: [
-+      { type: "file", url: "https://copies.example/report.pdf", mediaType: "application/pdf", filename: "report.pdf" },
-+      { type: "file", url: "https://copies.example/image.png", mediaType: "image/png", filename: "image.png" },
-+    ] }] };
-+    const runtime = createWorkflowRuntime({ compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource() });
-+    const run = await start(workflowEntry, [{ input: { message: "" }, seed: attachments, serializedContext: context() }]);
++    const attachments: SessionTranscriptSeed = {
++      messages: [
++        {
++          role: "user",
++          parts: [
++            {
++              type: "file",
++              url: "https://copies.example/report.pdf",
++              mediaType: "application/pdf",
++              filename: "report.pdf",
++            },
++            {
++              type: "file",
++              url: "https://copies.example/image.png",
++              mediaType: "image/png",
++              filename: "image.png",
++            },
++          ],
++        },
++      ],
++    };
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const run = await start(workflowEntry, [
++      { input: { message: "" }, seed: attachments, serializedContext: context() },
++    ]);
 +    const stream = captureTurnEvents(run);
 +    try {
-+      expect((await stream.nextTurn()).map((event) => event.type)).toEqual(["history.seeded", "session.waiting"]);
-+      const ref = { sessionId: run.runId, beforeTurnId: "turn_0", checkpointId: crypto.randomUUID() };
-+      await runtime.dispatchSession({ sessionId: run.runId, command: { kind: "checkpoint", checkpointId: ref.checkpointId, beforeTurnId: ref.beforeTurnId } });
++      expect((await stream.nextTurn()).map((event) => event.type)).toEqual([
++        "history.seeded",
++        "session.waiting",
++      ]);
++      const ref = {
++        sessionId: run.runId,
++        beforeTurnId: "turn_0",
++        checkpointId: crypto.randomUUID(),
++      };
++      await runtime.dispatchSession({
++        sessionId: run.runId,
++        command: {
++          kind: "checkpoint",
++          checkpointId: ref.checkpointId,
++          beforeTurnId: ref.beforeTurnId,
++        },
++      });
 +      expect((await stream.nextTurn()).at(-1)?.type).toBe("session.waiting");
-+      await expect.poll(async () => { try { return (await readSessionCheckpoint(ref)).checkpointId; } catch { return undefined; } }).toBe(ref.checkpointId);
-+      expect((await readSessionCheckpoint(ref)).snapshot.session.history).toEqual(prepareSessionTranscriptSeed(attachments).history);
++      await expect
++        .poll(async () => {
++          try {
++            return (await readSessionCheckpoint(ref)).checkpointId;
++          } catch {
++            return undefined;
++          }
++        })
++        .toBe(ref.checkpointId);
++      expect((await readSessionCheckpoint(ref)).snapshot.session.history).toEqual(
++        prepareSessionTranscriptSeed(attachments).history,
++      );
 +    } finally {
 +      await runtime.dispatchSession({ sessionId: run.runId, command: { kind: "reset" } });
 +      await run.returnValue;
@@ -4282,9 +4337,195 @@ index 00000000..e3dfa595
 +    }
 +  });
 +});
++
++it("stages compact seed attachments on the first real workflow turn and reuses them thereafter", async () => {
++  const { eveChannel } = await import("#eve-channel/index.js");
++  const owner = { principalId: "copy-owner", principalType: "user" as const, attributes: {} };
++  let fetches = 0;
++  const fixture = await createTestRuntime({
++    modules: [
++      {
++        logicalPath: "channels/eve.ts",
++        loadNamespace: async () => ({
++          default: eveChannel({
++            auth: () => owner,
++            fetchFile: async (_url, ctx) => {
++              expect(ctx?.session?.auth.current?.principalId).toBe(owner.principalId);
++              fetches++;
++              return { bytes: Buffer.alloc(1024 * 1024, fetches), mediaType: "image/png" };
++            },
++          }),
++        }),
++      },
++    ],
++  });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const copied: SessionTranscriptSeed = {
++      attachments: "channel",
++      messages: [
++        {
++          role: "user",
++          parts: Array.from({ length: 6 }, (_, index) => ({
++            type: "file",
++            url: `https://copy.local/${index}.png`,
++            mediaType: "image/png",
++          })),
++        },
++      ],
++    };
++    const source = await start(workflowEntry, [
++      {
++        input: { message: "" },
++        seed: copied,
++        serializedContext: {
++          ...context(),
++          "eve.auth": owner,
++          "eve.channel": { kind: "channel:eve", state: {} },
++        },
++      },
++    ]);
++    const stream = captureTurnEvents(source);
++    try {
++      expect((await stream.nextTurn()).map((event) => event.type)).toEqual([
++        "history.seeded",
++        "session.waiting",
++      ]);
++      expect(fetches).toBe(0);
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Describe these files", auth: owner } },
++      });
++      const first = await stream.nextTurn();
++      expect(first.some((event) => event.type === "turn.failed")).toBe(false);
++      expect(fetches).toBe(6);
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Continue", auth: owner } },
++      });
++      await stream.nextTurn();
++      expect(fetches).toBe(6);
++      const checkpoint = await readSessionCheckpoint({
++        sessionId: source.runId,
++        beforeTurnId: "turn_1",
++      });
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).toContain("eve-sandbox:");
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).not.toContain(
++        "https://copy.local",
++      );
++    } finally {
++      await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "reset" } });
++      await source.returnValue;
++      stream.dispose();
++    }
++  });
++});
++
++it("preserves the copied transcript and failed input when file storage recovers", async () => {
++  const { eveChannel } = await import("#eve-channel/index.js");
++  const owner = { principalId: "copy-owner", principalType: "user" as const, attributes: {} };
++  let fetches = 0;
++  let available = false;
++  const fixture = await createTestRuntime({
++    modules: [
++      {
++        logicalPath: "channels/eve.ts",
++        loadNamespace: async () => ({
++          default: eveChannel({
++            auth: () => owner,
++            fetchFile: async (_url, ctx) => {
++              expect(ctx?.session?.auth.current?.principalId).toBe(owner.principalId);
++              if (!available) throw new Error("Storage temporarily unavailable");
++              fetches++;
++              return { bytes: Buffer.alloc(1024 * 1024, fetches), mediaType: "image/png" };
++            },
++          }),
++        }),
++      },
++    ],
++  });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const copied: SessionTranscriptSeed = {
++      attachments: "channel",
++      messages: [
++        {
++          role: "user",
++          parts: Array.from({ length: 6 }, (_, index) => ({
++            type: "file",
++            url: `https://copy.local/${index}.png`,
++            mediaType: "image/png",
++          })),
++        },
++      ],
++    };
++    const source = await start(workflowEntry, [
++      {
++        input: { message: "" },
++        seed: copied,
++        serializedContext: {
++          ...context(),
++          "eve.auth": owner,
++          "eve.channel": { kind: "channel:eve", state: {} },
++        },
++      },
++    ]);
++    const stream = captureTurnEvents(source);
++    try {
++      expect((await stream.nextTurn()).map((event) => event.type)).toEqual([
++        "history.seeded",
++        "session.waiting",
++      ]);
++      expect(fetches).toBe(0);
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Describe these files", auth: owner } },
++      });
++      const failed = await stream.nextTurn();
++      expect(failed.some((event) => event.type === "turn.failed")).toBe(true);
++      expect(failed.at(-1)?.type).toBe("session.waiting");
++      expect(failed.some((event) => event.type === "session.failed")).toBe(false);
++      expect(failed.some((event) => event.type === "message.received")).toBe(true);
++      expect(fetches).toBe(0);
++      available = true;
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Retry loading the files", auth: owner } },
++      });
++      const recovered = await stream.nextTurn();
++      expect(
++        recovered.some((event) => event.type === "turn.failed" || event.type === "session.failed"),
++      ).toBe(false);
++      expect(fetches).toBe(6);
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Continue", auth: owner } },
++      });
++      await stream.nextTurn();
++      expect(fetches).toBe(6);
++      const checkpoint = await readSessionCheckpoint({
++        sessionId: source.runId,
++        beforeTurnId: "turn_2",
++      });
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).toContain("Describe these files");
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).toContain("eve-sandbox:");
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).not.toContain(
++        "https://copy.local",
++      );
++    } finally {
++      await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "reset" } });
++      await source.returnValue;
++      stream.dispose();
++    }
++  });
++});
 diff --git a/packages/eve/src/execution/session-transcript-seed.test.ts b/packages/eve/src/execution/session-transcript-seed.test.ts
 new file mode 100644
-index 00000000..df6d4916
+index 0000000..df6d491
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.test.ts
 @@ -0,0 +1,196 @@
@@ -4486,10 +4727,10 @@ index 00000000..df6d4916
 +});
 diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
 new file mode 100644
-index 00000000..28e83ec3
+index 0000000..b8f9cad
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.ts
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,153 @@
 +import type { AssistantContent, ModelMessage, ToolContent, UserContent } from "ai";
 +import { z } from "#compiled/zod/index.js";
 +import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
@@ -4517,6 +4758,8 @@ index 00000000..28e83ec3
 +
 +/** Trusted server input, never a browser request body or a runtime checkpoint. */
 +const sessionTranscriptSeed = z.strictObject({
++  /** Resolve compact file URLs through the authenticated channel before the first model turn. */
++  attachments: z.literal("channel").optional(),
 +  messages: z
 +    .array(
 +      z.discriminatedUnion("role", [
@@ -4565,7 +4808,7 @@ index 00000000..28e83ec3
 +      for (const part of message.parts) {
 +        parts.push(part.type === "text" ? { ...part, state: "done" } : part);
 +        if (part.type === "text") content.push(part);
-+        else if (part.mediaType.startsWith("image/"))
++        else if (seed.attachments !== "channel" && part.mediaType.startsWith("image/"))
 +          content.push({ type: "image", image: new URL(part.url), mediaType: part.mediaType });
 +        else
 +          content.push({
@@ -4642,7 +4885,7 @@ index 00000000..28e83ec3
 +  return { history, messages };
 +}
 diff --git a/packages/eve/src/execution/session.test.ts b/packages/eve/src/execution/session.test.ts
-index 2a67320b..67b1942d 100644
+index 2a67320..67b1942 100644
 --- a/packages/eve/src/execution/session.test.ts
 +++ b/packages/eve/src/execution/session.test.ts
 @@ -341,6 +341,14 @@ describe("createSession", () => {
@@ -4661,7 +4904,7 @@ index 2a67320b..67b1942d 100644
      const session = createSession({
        continuationToken: "subagent-token",
 diff --git a/packages/eve/src/execution/session.ts b/packages/eve/src/execution/session.ts
-index 9568e79e..2b592c1b 100644
+index 9568e79..2b592c1 100644
 --- a/packages/eve/src/execution/session.ts
 +++ b/packages/eve/src/execution/session.ts
 @@ -211,6 +211,7 @@ export function projectToDurableSession(session: HarnessSession): DurableSession
@@ -4693,7 +4936,7 @@ index 9568e79e..2b592c1b 100644
      session.sandboxState = durable.sandboxState;
    }
 diff --git a/packages/eve/src/execution/turn-control-receiver.test.ts b/packages/eve/src/execution/turn-control-receiver.test.ts
-index 1fa27888..51987a5d 100644
+index 1fa2788..51987a5 100644
 --- a/packages/eve/src/execution/turn-control-receiver.test.ts
 +++ b/packages/eve/src/execution/turn-control-receiver.test.ts
 @@ -1,6 +1,6 @@
@@ -4749,7 +4992,7 @@ index 1fa27888..51987a5d 100644
      readonly seenTaskDeliveries?: Set<string>;
    } = {},
 diff --git a/packages/eve/src/execution/turn-control-receiver.ts b/packages/eve/src/execution/turn-control-receiver.ts
-index 65315878..65ba5e00 100644
+index 6531587..65ba5e0 100644
 --- a/packages/eve/src/execution/turn-control-receiver.ts
 +++ b/packages/eve/src/execution/turn-control-receiver.ts
 @@ -1,3 +1,4 @@
@@ -4784,7 +5027,7 @@ index 65315878..65ba5e00 100644
        this.bufferedSessionControls.push(command.kind);
        return undefined;
 diff --git a/packages/eve/src/execution/turn-dispatch.ts b/packages/eve/src/execution/turn-dispatch.ts
-index e757e56f..7d3c9a29 100644
+index e757e56..7d3c9a2 100644
 --- a/packages/eve/src/execution/turn-dispatch.ts
 +++ b/packages/eve/src/execution/turn-dispatch.ts
 @@ -1,3 +1,4 @@
@@ -4803,7 +5046,7 @@ index e757e56f..7d3c9a29 100644
    readonly controlToken: string;
 diff --git a/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts b/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts
 new file mode 100644
-index 00000000..aeadaf95
+index 0000000..aeadaf9
 --- /dev/null
 +++ b/packages/eve/src/execution/wire/session-inbox-checkpoint.test.ts
 @@ -0,0 +1,16 @@
@@ -4824,7 +5067,7 @@ index 00000000..aeadaf95
 +  expect(() => sessionInboxWire.decode(payload)).toThrow();
 +});
 diff --git a/packages/eve/src/execution/wire/session-inbox-contract.ts b/packages/eve/src/execution/wire/session-inbox-contract.ts
-index b50fffbb..9116df66 100644
+index b50fffb..9116df6 100644
 --- a/packages/eve/src/execution/wire/session-inbox-contract.ts
 +++ b/packages/eve/src/execution/wire/session-inbox-contract.ts
 @@ -1,5 +1,5 @@
@@ -4835,7 +5078,7 @@ index b50fffbb..9116df66 100644
  export type SessionInboxWireVersion = (typeof SESSION_INBOX_WIRE_VERSIONS)[number];
 
 diff --git a/packages/eve/src/execution/wire/session-inbox-encoder.ts b/packages/eve/src/execution/wire/session-inbox-encoder.ts
-index b3fa727c..f3b658ba 100644
+index b3fa727..f3b658b 100644
 --- a/packages/eve/src/execution/wire/session-inbox-encoder.ts
 +++ b/packages/eve/src/execution/wire/session-inbox-encoder.ts
 @@ -35,10 +35,12 @@ import {
@@ -4897,7 +5140,7 @@ index b3fa727c..f3b658ba 100644
    throw new SessionInboxWireError(
      `Cannot encode session inbox payload for unknown wire version ${JSON.stringify((target as { version?: unknown }).version)}.`,
 diff --git a/packages/eve/src/execution/wire/session-inbox-resume.test.ts b/packages/eve/src/execution/wire/session-inbox-resume.test.ts
-index 8a2b28bf..bf95ee9b 100644
+index 8a2b28b..bf95ee9 100644
 --- a/packages/eve/src/execution/wire/session-inbox-resume.test.ts
 +++ b/packages/eve/src/execution/wire/session-inbox-resume.test.ts
 @@ -282,3 +282,17 @@ describe("resumeSessionInbox", () => {
@@ -4919,7 +5162,7 @@ index 8a2b28bf..bf95ee9b 100644
 +  expect(resumeHookMock).not.toHaveBeenCalled();
 +});
 diff --git a/packages/eve/src/execution/wire/session-inbox-resume.ts b/packages/eve/src/execution/wire/session-inbox-resume.ts
-index aa890898..cfb9f446 100644
+index aa89089..cfb9f44 100644
 --- a/packages/eve/src/execution/wire/session-inbox-resume.ts
 +++ b/packages/eve/src/execution/wire/session-inbox-resume.ts
 @@ -61,6 +61,7 @@ function isStableInboxFastPathCompatible(
@@ -4931,7 +5174,7 @@ index aa890898..cfb9f446 100644
    return !("caller" in command && command.caller?.activityObserver !== undefined);
  }
 diff --git a/packages/eve/src/execution/wire/session-inbox-wire.ts b/packages/eve/src/execution/wire/session-inbox-wire.ts
-index 902a3d80..a42c697e 100644
+index 902a3d8..a42c697 100644
 --- a/packages/eve/src/execution/wire/session-inbox-wire.ts
 +++ b/packages/eve/src/execution/wire/session-inbox-wire.ts
 @@ -37,7 +37,7 @@ import { isObject } from "#shared/guards.js";
@@ -4975,7 +5218,7 @@ index 902a3d80..a42c697e 100644
      case "reset":
 diff --git a/packages/eve/src/execution/wire/session-inbox-wire.v7.ts b/packages/eve/src/execution/wire/session-inbox-wire.v7.ts
 new file mode 100644
-index 00000000..fb251405
+index 0000000..fb25140
 --- /dev/null
 +++ b/packages/eve/src/execution/wire/session-inbox-wire.v7.ts
 @@ -0,0 +1,16 @@
@@ -4996,7 +5239,7 @@ index 00000000..fb251405
 +  return sessionInboxWireV7Schema.parse(command.kind === "checkpoint" ? { ...command, version: 7 } : { ...encodeSessionCommandV6(command), version: 7 });
 +}
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0bd..d7c64c4b 100644
+index d3cfb0b..d7c64c4 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
 @@ -1,3 +1,10 @@
@@ -5129,7 +5372,7 @@ index d3cfb0bd..d7c64c4b 100644
          action = await runTurn({ kind: next.kind });
          continue;
 diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
-index 493017d0..968e9b87 100644
+index 493017d..968e9b8 100644
 --- a/packages/eve/src/execution/workflow-runtime.ts
 +++ b/packages/eve/src/execution/workflow-runtime.ts
 @@ -1,3 +1,4 @@
@@ -5169,7 +5412,7 @@ index 493017d0..968e9b87 100644
            ? {}
            : buildInvocationAttributes(input.externalInvocation)),
 diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
-index da9ac49d..4dd65352 100644
+index da9ac49..4dd6535 100644
 --- a/packages/eve/src/execution/workflow-steps.ts
 +++ b/packages/eve/src/execution/workflow-steps.ts
 @@ -1,3 +1,6 @@
@@ -5203,8 +5446,319 @@ index da9ac49d..4dd65352 100644
        return runHarnessStep(schemaSession, resolved);
      });
    } catch (error) {
+diff --git a/packages/eve/src/harness/attachment-staging.ts b/packages/eve/src/harness/attachment-staging.ts
+index b41db69..8b70b88 100644
+--- a/packages/eve/src/harness/attachment-staging.ts
++++ b/packages/eve/src/harness/attachment-staging.ts
+@@ -166,6 +166,51 @@ export async function hydrateSandboxAttachments(
+   );
+ }
+
++/** Stage only destination seed files; unlike ordinary uploads, never discard failed history. */
++export async function stageSeedHistoryAttachments(
++  messages: readonly ModelMessage[],
++): Promise<ModelMessage[]> {
++  const hasFiles = messages.some(
++    (message) =>
++      Array.isArray(message.content) && message.content.some((part) => part.type === "file"),
++  );
++  if (!hasFiles) return [...messages];
++  const container = loadContext();
++  const sandbox = await container.get(SandboxKey)?.get();
++  if (!sandbox) throw new Error("Seeded attachments require an active sandbox.");
++  const adapter = container.get(ChannelKey);
++  const context: ChannelAdapterContext = adapter
++    ? buildAdapterContext(adapter, container)
++    : {
++        ctx: container,
++        state: {},
++        session: buildSessionHandle(container),
++      };
++  const staged: ModelMessage[] = [];
++  for (const message of messages) {
++    if (message.role === "user" && Array.isArray(message.content)) {
++      staged.push({
++        ...message,
++        content: await Promise.all(
++          message.content.map((part) =>
++            part.type === "file" ? stageFilePart(part, sandbox, context, true) : part,
++          ),
++        ),
++      });
++    } else if (message.role === "assistant" && Array.isArray(message.content)) {
++      staged.push({
++        ...message,
++        content: await Promise.all(
++          message.content.map((part) =>
++            part.type === "file" ? stageFilePart(part, sandbox, context, true) : part,
++          ),
++        ),
++      });
++    } else staged.push(message);
++  }
++  return staged;
++}
++
+ function hasFileParts(content: Exclude<UserContent, string>): boolean {
+   for (const part of content) {
+     if (part.type === "file") {
+@@ -289,6 +334,7 @@ async function stageFilePart(
+   part: FilePart,
+   sandbox: SandboxSession,
+   adapterCtx: ChannelAdapterContext,
++  strict = false,
+ ): Promise<FilePart | TextPart> {
+   if (isSandboxRefUrl(part.data)) {
+     return part;
+@@ -300,7 +346,7 @@ async function stageFilePart(
+     try {
+       resolved = await tryFetchFile(part.data.href, adapterCtx);
+     } catch (error) {
+-      if (!(error instanceof EveAttachmentError)) throw error;
++      if (strict || !(error instanceof EveAttachmentError)) throw error;
+       const filename = part.filename?.trim() || "file";
+       log.warn("attachment resolver failed — degrading to text part", {
+         adapterKind: error.adapterKind,
+@@ -314,6 +360,7 @@ async function stageFilePart(
+       };
+     }
+     if (resolved === null) {
++      if (strict) throw new Error("The channel did not resolve a seeded attachment.");
+       return part;
+     }
+     return stageResolvedBytes(part, resolved, sandbox);
+diff --git a/packages/eve/src/harness/seed-attachments.integration.test.ts b/packages/eve/src/harness/seed-attachments.integration.test.ts
+new file mode 100644
+index 0000000..18a6a87
+--- /dev/null
++++ b/packages/eve/src/harness/seed-attachments.integration.test.ts
+@@ -0,0 +1,151 @@
++import { expect, it } from "vitest";
++import type { ChannelAdapter } from "#channel/adapter.js";
++import { loadContext } from "#context/container.js";
++import { AuthKey } from "#context/keys.js";
++import { createSession } from "#execution/session.js";
++import {
++  prepareSessionTranscriptSeed,
++  type SessionTranscriptSeed,
++} from "#execution/session-transcript-seed.js";
++import { createDurableSessionState } from "#execution/durable-session-store.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { mockSandbox } from "#internal/testing/mocks/mock-sandbox.js";
++import { hydrateSandboxAttachments } from "#harness/attachment-staging.js";
++import {
++  markSeedAttachmentsPending,
++  stagePendingSeedAttachments,
++} from "#harness/seed-attachments.js";
++
++const seed: SessionTranscriptSeed = {
++  attachments: "channel",
++  messages: [
++    {
++      role: "user",
++      parts: Array.from({ length: 6 }, (_, i) => ({
++        type: "file",
++        url: `https://chatjs.local/copied/${i}.png`,
++        mediaType: "image/png",
++        filename: `${i}.png`,
++      })),
++    },
++  ],
++};
++function session() {
++  return markSeedAttachmentsPending({
++    ...createSession({
++      sessionId: "destination",
++      continuationToken: "destination-op",
++      turnAgent: {
++        id: "agent",
++        instructions: [],
++        model: { id: "mock" },
++        tools: [],
++        workspaceSpec: { rootEntries: [] },
++      },
++    }),
++    history: prepareSessionTranscriptSeed(seed).history,
++  });
++}
++
++it("keeps six 1 MiB attachments out of the seed and durable history, resolving under destination auth", async () => {
++  const runtime = await createTestRuntime();
++  const sandbox = mockSandbox({ id: "destination-sandbox" });
++  const calls: string[] = [];
++  const channel: ChannelAdapter = {
++    kind: "copy-channel",
++    fetchFile: async (url, context) => {
++      expect(context?.session?.auth.current?.principalId).toBe("destination-owner");
++      calls.push(url);
++      return { bytes: Buffer.alloc(1024 * 1024, calls.length), mediaType: "image/png" };
++    },
++  };
++  await runtime.runAsSession({ channel, sandbox }, async () => {
++    loadContext().set(AuthKey, {
++      principalId: "destination-owner",
++      principalType: "user",
++      attributes: {},
++    });
++    const initial = session();
++    expect(Buffer.byteLength(JSON.stringify(seed))).toBeLessThan(2048);
++    const staged = await stagePendingSeedAttachments(initial);
++    expect(calls).toHaveLength(6);
++    expect(JSON.stringify(initial.history)).toContain("https://chatjs.local/copied/");
++    expect(JSON.stringify(staged.history)).not.toContain("https://chatjs.local/copied/");
++    expect(
++      Buffer.byteLength(JSON.stringify(createDurableSessionState({ session: staged }))),
++    ).toBeLessThan(10_000);
++    expect(await stagePendingSeedAttachments(staged)).toBe(staged);
++    expect(calls).toHaveLength(6);
++    const hydrated = await hydrateSandboxAttachments(staged.history);
++    const message = hydrated[0];
++    if (message.role !== "user" || typeof message.content === "string")
++      throw new Error("Expected user attachments");
++    expect(message.content).toHaveLength(6);
++    for (const [index, part] of message.content.entries()) {
++      if (part.type !== "file" || !Buffer.isBuffer(part.data))
++        throw new Error("Expected hydrated bytes");
++      expect(part.data.byteLength).toBe(1024 * 1024);
++      expect(part.data[0]).toBe(index + 1);
++    }
++  });
++});
++
++it.each(["denied", "unhandled"])(
++  "preserves pending seed history after %s resolution so a retry cannot drop files",
++  async (failure) => {
++    const runtime = await createTestRuntime();
++    const sandbox = mockSandbox({ id: "retry-sandbox" });
++    let ready = false;
++    const channel: ChannelAdapter = {
++      kind: "copy-channel",
++      fetchFile: async () => {
++        if (!ready) {
++          if (failure === "denied") throw new Error("Access denied");
++          return null;
++        }
++        return { bytes: Buffer.from("copied"), mediaType: "image/png" };
++      },
++    };
++    await runtime.runAsSession({ channel, sandbox }, async () => {
++      const initial = session();
++      const before = JSON.stringify(initial);
++      await expect(stagePendingSeedAttachments(initial)).rejects.toThrow();
++      expect(JSON.stringify(initial)).toBe(before);
++      ready = true;
++      const staged = await stagePendingSeedAttachments(initial);
++      expect(JSON.stringify(staged.history)).toContain("eve-sandbox:");
++      expect(JSON.stringify(staged.history)).not.toContain("could not be retrieved");
++    });
++  },
++);
++
++it("commits staged history and its marker together before a later model-selection failure", async () => {
++  const { createToolLoopHarness } = await import("#harness/tool-loop.js");
++  const runtime = await createTestRuntime();
++  const sandbox = mockSandbox({ id: "model-selection-failure" });
++  let fetches = 0;
++  const channel: ChannelAdapter = {
++    kind: "copy-channel",
++    fetchFile: async () => {
++      fetches++;
++      return { bytes: Buffer.from("copied"), mediaType: "image/png" };
++    },
++  };
++  await runtime.runAsSession({ channel, sandbox }, async () => {
++    const harness = createToolLoopHarness({
++      mode: "conversation",
++      tools: new Map(),
++      handleEvent: async () => {},
++      resolveModel: async () => {
++        throw new Error("Model configuration unavailable");
++      },
++    });
++    const failed = await harness(session(), { message: "Retain this follow up" });
++    expect(fetches).toBe(6);
++    expect(JSON.stringify(failed.session.history)).toContain("eve-sandbox:");
++    expect(JSON.stringify(failed.session.history)).not.toContain("https://chatjs.local/copied/");
++    expect(JSON.stringify(failed.session.history)).toContain("Retain this follow up");
++    expect(await stagePendingSeedAttachments(failed.session)).toBe(failed.session);
++    expect(fetches).toBe(6);
++  });
++});
+diff --git a/packages/eve/src/harness/seed-attachments.ts b/packages/eve/src/harness/seed-attachments.ts
+new file mode 100644
+index 0000000..198a998
+--- /dev/null
++++ b/packages/eve/src/harness/seed-attachments.ts
+@@ -0,0 +1,19 @@
++import { stageSeedHistoryAttachments } from "#harness/attachment-staging.js";
++import type { HarnessSession } from "#harness/types.js";
++
++const PENDING_SEED_FILES = "eve.pending-seed-files";
++
++export function markSeedAttachmentsPending(session: HarnessSession): HarnessSession {
++  return { ...session, state: { ...session.state, [PENDING_SEED_FILES]: true } };
++}
++
++/** Keep the pending marker on failure so retries cannot silently lose attachment history. */
++export async function stagePendingSeedAttachments(
++  session: HarnessSession,
++): Promise<HarnessSession> {
++  if (session.state?.[PENDING_SEED_FILES] !== true) return session;
++  const history = await stageSeedHistoryAttachments(session.history);
++  const state = { ...session.state };
++  delete state[PENDING_SEED_FILES];
++  return { ...session, history, state };
++}
+diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
+index d30fdf5..b9b4fff 100644
+--- a/packages/eve/src/harness/tool-loop.ts
++++ b/packages/eve/src/harness/tool-loop.ts
+@@ -1,3 +1,4 @@
++import { stagePendingSeedAttachments } from "#harness/seed-attachments.js";
+ import {
+   isStepCount,
+   type LanguageModelCallEndEvent,
+@@ -571,6 +572,7 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+     if (config.compactOnly === true) {
+       if (session.history.length > 0) {
+         try {
++          session = await stagePendingSeedAttachments(session);
+           const ctx = contextStorage.getStore();
+           const resolvedModel = await resolveActiveRuntimeModel({ config, ctx, session });
+           session = resolvedModel.session;
+@@ -1080,6 +1082,30 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+
+     messages = [...messages, ...preparedTurnInput];
+
++    // Resolve copied files after recording the incoming turn, so storage failures
++    // park a retryable conversation without losing its transcript or new input.
++    try {
++      const staged = await stagePendingSeedAttachments(session);
++      if (staged !== session) {
++        // Preserve current input identities used to position runtime context.
++        messages = [...staged.history, ...messages.slice(session.history.length)];
++        session = { ...staged, history: messages };
++      }
++    } catch (error) {
++      throwIfTurnAborted(config.abortSignal);
++      if (!emit || config.mode === "task") throw error;
++      stepInstrumentation?.recordError(error);
++      emissionState = await emitRecoverableFailedTurn(emit, emissionState, {
++        code: "SEED_ATTACHMENT_STAGING_FAILED",
++        continuationToken: session.continuationToken,
++        message: "Copied attachments could not be loaded. Retry when file storage is available.",
++      });
++      return {
++        next: null,
++        session: setHarnessEmissionState({ ...session, history: messages }, emissionState),
++      };
++    }
++
+     const createModelMessages = (durableMessages: readonly ModelMessage[]): ModelMessage[] => {
+       if (turnClientContext === undefined || turnClientContext.messages.length === 0) {
+         return [...durableMessages];
 diff --git a/packages/eve/src/harness/types.ts b/packages/eve/src/harness/types.ts
-index e4fde115..879af35b 100644
+index e4fde11..879af35 100644
 --- a/packages/eve/src/harness/types.ts
 +++ b/packages/eve/src/harness/types.ts
 @@ -93,6 +93,13 @@ export interface HarnessSession {
@@ -5222,7 +5776,7 @@ index e4fde115..879af35b 100644
    /** Framework task that owns this durable session, when present. */
    readonly taskId?: string;
 diff --git a/packages/eve/src/internal/testing/app-harness.ts b/packages/eve/src/internal/testing/app-harness.ts
-index 1e0b0495..48b1dcb3 100644
+index 1e0b049..48b1dcb 100644
 --- a/packages/eve/src/internal/testing/app-harness.ts
 +++ b/packages/eve/src/internal/testing/app-harness.ts
 @@ -38,6 +38,7 @@ import { mockSandbox, type MockSandbox } from "#internal/testing/mocks/mock-sand
@@ -5243,7 +5797,7 @@ index 1e0b0495..48b1dcb3 100644
          logicalPath: "sandbox.ts",
        },
 diff --git a/packages/eve/src/internal/testing/durable-session-workflow.ts b/packages/eve/src/internal/testing/durable-session-workflow.ts
-index 6db0c472..ea55b330 100644
+index 6db0c47..ea55b33 100644
 --- a/packages/eve/src/internal/testing/durable-session-workflow.ts
 +++ b/packages/eve/src/internal/testing/durable-session-workflow.ts
 @@ -1,3 +1,12 @@
@@ -5296,7 +5850,7 @@ index 6db0c472..ea55b330 100644
 +  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
 +}
 diff --git a/packages/eve/src/protocol/message-version.ts b/packages/eve/src/protocol/message-version.ts
-index 5ff6cbaa..81da8b25 100644
+index 5ff6cba..81da8b2 100644
 --- a/packages/eve/src/protocol/message-version.ts
 +++ b/packages/eve/src/protocol/message-version.ts
 @@ -52,10 +52,11 @@ interface MessageStreamAppendEventsByVersion {
@@ -5321,7 +5875,7 @@ index 5ff6cbaa..81da8b25 100644
        return validateCurrentMessageStreamEvent(event as MessageStreamEventForVersion<"25">);
      default:
 diff --git a/packages/eve/src/protocol/message.test.ts b/packages/eve/src/protocol/message.test.ts
-index 99ab68d1..ecb82b07 100644
+index 99ab68d..ecb82b0 100644
 --- a/packages/eve/src/protocol/message.test.ts
 +++ b/packages/eve/src/protocol/message.test.ts
 @@ -32,7 +32,7 @@ import { createEveConnectionCallbackRoutePath } from "#protocol/routes.js";
@@ -5334,7 +5888,7 @@ index 99ab68d1..ecb82b07 100644
 
    it.each(["21", "22", "23", "24"] as const)(
 diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
-index fc45f348..d8916092 100644
+index fc45f34..d891609 100644
 --- a/packages/eve/src/protocol/message.ts
 +++ b/packages/eve/src/protocol/message.ts
 @@ -1,3 +1,4 @@
@@ -5415,7 +5969,7 @@ index fc45f348..d8916092 100644
    | ApprovalCandidateStreamEvent
    | ApprovalSettledStreamEvent
 diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
-index 35cfa0f3..e49210f3 100644
+index 35cfa0f..e49210f 100644
 --- a/packages/eve/src/public/channels/eve.test.ts
 +++ b/packages/eve/src/public/channels/eve.test.ts
 @@ -20,6 +20,7 @@ import {
@@ -5630,7 +6184,7 @@ index 35cfa0f3..e49210f3 100644
 +  expect(resolveSession).not.toHaveBeenCalled();
 +});
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
-index 48e2bc3b..27e414e4 100644
+index 48e2bc3..27e414e 100644
 --- a/packages/eve/src/public/definitions/hook.ts
 +++ b/packages/eve/src/public/definitions/hook.ts
 @@ -30,6 +30,7 @@ export interface HookEventMap {
@@ -5642,7 +6196,7 @@ index 48e2bc3b..27e414e4 100644
    readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
    readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
 diff --git a/packages/eve/src/sandbox/state.ts b/packages/eve/src/sandbox/state.ts
-index 5d3cb7e1..a2672383 100644
+index 5d3cb7e..a267238 100644
 --- a/packages/eve/src/sandbox/state.ts
 +++ b/packages/eve/src/sandbox/state.ts
 @@ -19,9 +19,16 @@ export type SandboxSessionState = SandboxBackendSessionState;
@@ -5670,8 +6224,21 @@ index 5d3cb7e1..a2672383 100644
    delete?(options?: SandboxDeleteOptions): Promise<void>;
    get(): Promise<SandboxSession | null>;
    stop(): Promise<void>;
+diff --git a/packages/eve/src/shared/channel-definition.ts b/packages/eve/src/shared/channel-definition.ts
+index 4660f6e..2da9039 100644
+--- a/packages/eve/src/shared/channel-definition.ts
++++ b/packages/eve/src/shared/channel-definition.ts
+@@ -24,6 +24,8 @@ export interface FetchFileResult {
+
+ /** Runtime context supplied while resolving a channel-owned file URL. */
+ export interface FetchFileContext {
++  /** Authenticated session performing staging; absent for standalone resolver calls. */
++  readonly session?: Pick<SessionHandle, "auth">;
+   readonly state: Readonly<Record<string, unknown>>;
+ }
+
 diff --git a/packages/eve/src/shared/sandbox-backend.ts b/packages/eve/src/shared/sandbox-backend.ts
-index 4c9110eb..7aec9d0e 100644
+index 4c9110e..7aec9d0 100644
 --- a/packages/eve/src/shared/sandbox-backend.ts
 +++ b/packages/eve/src/shared/sandbox-backend.ts
 @@ -12,6 +12,8 @@ export interface SandboxBackendHandle<SO = Record<string, never>> {
