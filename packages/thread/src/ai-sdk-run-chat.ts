@@ -149,17 +149,17 @@ export class ThreadRunChat<
         return stream.pipeThrough(
           new TransformStream<UIMessageChunk, UIMessageChunk>({
             transform(chunk, controller) {
-              let transformedChunk = chunk;
+              let chunkToEnqueue = chunk;
               if (
                 first &&
                 chunk.type === "start" &&
                 lastMessage?.role === "assistant"
               ) {
-                transformedChunk = {
-                  ...transformedChunk,
-                  messageId: transformedChunk.messageId ?? lastMessage.id,
+                chunkToEnqueue = {
+                  ...chunk,
+                  messageId: chunk.messageId ?? lastMessage.id,
                   messageMetadata:
-                    transformedChunk.messageMetadata ?? lastMessage.metadata,
+                    chunk.messageMetadata ?? lastMessage.metadata,
                 };
               }
               // Full replay starts with `start`. A continuation needs the canonical
@@ -177,7 +177,7 @@ export class ThreadRunChat<
                 });
               }
               first = false;
-              controller.enqueue(transformedChunk);
+              controller.enqueue(chunkToEnqueue);
             },
           })
         );
