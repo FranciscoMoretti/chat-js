@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+import { Client } from "eve/client";
 import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, user } from "../lib/db/schema";
+import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -18,7 +20,8 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     data: {
       operationId: crypto.randomUUID(),
       modelId: "google/gemini-2.5-flash-lite",
-      message: "Reply exactly share-fixture-ok",
+      message:
+        "Reply exactly share-fixture-ok as plain text. Do not call tools.",
     },
   });
   expect(created.ok(), await created.text()).toBe(true);
@@ -54,6 +57,35 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       "share-fixture-ok",
       { timeout: 90_000 }
     );
+    const [owner] = await db
+      .select({ id: eveConversation.ownerId })
+      .from(eveConversation)
+      .where(eq(eveConversation.id, binding.id));
+    if (!owner) {
+      throw new Error("Missing fixture owner.");
+    }
+    const native = new Client({
+      host: env.EVE_INTERNAL_ORIGIN ?? "",
+      auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
+      headers: { "x-chatjs-owner": owner.id },
+    }).sessions.attach(binding.sessionId);
+    // Tool input can contain the same marker before an answer exists.
+    await expect
+      .poll(
+        async () => {
+          const snapshot = await native.snapshot({
+            signal: AbortSignal.timeout(10_000),
+          });
+          return snapshot.events.some(
+            (event) =>
+              event.type === "message.completed" &&
+              event.data.finishReason === "stop" &&
+              event.data.message?.trim() === "share-fixture-ok"
+          );
+        },
+        { timeout: 30_000, intervals: [1000, 2000, 4000] }
+      )
+      .toBe(true);
     await page.getByRole("button", { name: "Share chat", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("Private");
     await expect(
