@@ -15,8 +15,9 @@ export const POST = async (request: NextRequest) => {
     }
 
     const cookieStore = await cookies();
+    // One year.
     cookieStore.set("chat-model", model, {
-      maxAge: 60 * 60 * 24 * 365, // 1 year
+      maxAge: 60 * 60 * 24 * 365,
       path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

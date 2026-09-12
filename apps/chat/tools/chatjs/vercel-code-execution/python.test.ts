@@ -6,7 +6,7 @@ import { executePythonInSandbox } from "./python";
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
-  Sandbox: { create: async () => ({ runCommand: mocks.runCommand }) },
+  Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
 }));
 
 it.each([0, 1])(
@@ -22,12 +22,12 @@ it.each([0, 1])(
       .mockResolvedValueOnce({ exitCode: 0 })
       .mockResolvedValueOnce({
         exitCode,
-        stderr: async () => `Could not install ${packageUrl}`,
+        stderr: () => `Could not install ${packageUrl}`,
       })
       .mockResolvedValueOnce({
         exitCode: 0,
-        stderr: async () => "",
-        stdout: async () => '{"success":true}',
+        stderr: () => "",
+        stdout: () => '{"success":true}',
       })
       .mockResolvedValueOnce({ exitCode: 1 });
 

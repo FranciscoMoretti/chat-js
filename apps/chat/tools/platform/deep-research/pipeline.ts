@@ -346,7 +346,8 @@ To write the report, call the createTextDocument tool with:
     );
   }
 
-  const createdDocumentToolResult = (await result.toolResults).find(
+  const toolResults = await result.toolResults;
+  const createdDocumentToolResult = toolResults.find(
     (tr) => tr?.toolName === "createTextDocument"
   );
 

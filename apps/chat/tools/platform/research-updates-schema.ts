@@ -14,11 +14,11 @@ const WebSearchSchema = TaskUpdateSchema.extend({
   results: z
     .array(
       z.object({
-        url: z.string(),
-        title: z.string(),
         content: z.string(),
         source: z.enum(["web", "academic", "x"]),
+        title: z.string(),
         // tweetId: z.string().optional(),
+        url: z.string(),
       })
     )
     .optional(),

@@ -278,7 +278,9 @@ const checkEnv = async (): Promise<void> => {
   console.log("✅ Environment validation passed");
 };
 
-checkEnv().catch((error) => {
+try {
+  await checkEnv();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}
