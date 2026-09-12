@@ -143,3 +143,20 @@ it("dispatches imported forks by message identity without requiring an execution
   expect(mocks.request).toHaveBeenCalledOnce();
   expect(mocks.readiness).not.toHaveBeenCalled();
 });
+
+it("forwards selected tools on creation and includes them in the reservation identity", async () => {
+  await createEveConversationOperation("owner", {
+    ...input,
+    selectedTool: "webSearch",
+  });
+  expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
+  const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
+  expect(originalHash).toBeTypeOf("string");
+  await createEveConversationOperation("owner", {
+    ...input,
+    selectedTool: "deepResearch",
+  });
+  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
+    originalHash
+  );
+});

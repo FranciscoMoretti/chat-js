@@ -3,6 +3,7 @@ import { defineDynamic, defineTool } from "eve/tools";
 import superjson from "superjson";
 import { config } from "../../lib/config";
 import { describeEveTool, executeEveTool } from "../../lib/eve/adapt-tool";
+import { filterEveTools } from "../../lib/eve/turn-tools";
 import { tools } from "../../tools/chatjs/tools";
 
 const registeredTools: ToolSet = tools;
@@ -38,7 +39,7 @@ export default defineDynamic({
             ),
         });
       }
-      return definitions;
+      return filterEveTools(definitions);
     },
   },
 });

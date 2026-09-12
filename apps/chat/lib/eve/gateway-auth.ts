@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { frontendToolsSchema } from "../ai/types";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
@@ -47,13 +48,9 @@ export async function authenticateEveGateway(request: Request) {
       return null;
     }
   }
-  const modelId = request.headers.get("x-chatjs-model") ?? undefined;
-  if (modelId) {
-    await loadEveModelDefinition(modelId);
-  }
-  const attributes: Record<string, string> = {};
-  if (modelId) {
-    attributes.modelId = modelId;
+  const attributes = await readGatewayAttributes(request);
+  if (!attributes) {
+    return null;
   }
   return {
     attributes,
@@ -63,6 +60,28 @@ export async function authenticateEveGateway(request: Request) {
     principalId: owner,
     subject: owner,
   };
+}
+
+async function readGatewayAttributes(request: Request) {
+  const modelId = request.headers.get("x-chatjs-model") ?? undefined;
+  if (modelId) {
+    await loadEveModelDefinition(modelId);
+  }
+  const toolHeader = request.headers.get("x-chatjs-tool");
+  const selectedTool = frontendToolsSchema
+    .optional()
+    .safeParse(toolHeader ?? undefined);
+  if (!selectedTool.success) {
+    return null;
+  }
+  const attributes: Record<string, string> = {};
+  if (selectedTool.data) {
+    attributes.selectedTool = selectedTool.data;
+  }
+  if (modelId) {
+    attributes.modelId = modelId;
+  }
+  return attributes;
 }
 
 function gatewaySessionPolicy(path: string, method: string) {

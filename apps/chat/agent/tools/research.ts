@@ -6,10 +6,14 @@ import {
   eveResearchInput,
   executeEveResearch,
 } from "../../lib/eve/research-tool";
+import { eveTurnTool } from "../../lib/eve/turn-tools";
 
 export default defineDynamic({
   events: {
     "step.started": (_event, context) => {
+      if (eveTurnTool.get() && eveTurnTool.get() !== "deepResearch") {
+        return {};
+      }
       if (
         !(
           config.ai.tools.deepResearch.enabled &&

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { UiToolName } from "../ai/types";
 import { createConversationInput, type EveForkInput } from "./contracts";
 import type { EveMessageInput } from "./message-input";
 import { eveResponseGroupInput } from "./response-group-input";
@@ -27,15 +28,30 @@ export function prepareSelectedCreation(
   ownerId: string,
   draft: EveMessageInput,
   modelIds: string[],
-  scope?: CreationScope
+  scope?: CreationScope,
+  selectedTool?: UiToolName
 ) {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
     return saved;
   }
   return modelIds.length > 1
-    ? prepareResponseGroupCreation(storage, ownerId, draft, modelIds, scope)
-    : prepareCreation(storage, ownerId, draft, modelIds[0], scope);
+    ? prepareResponseGroupCreation(
+        storage,
+        ownerId,
+        draft,
+        modelIds,
+        scope,
+        selectedTool
+      )
+    : prepareCreation(
+        storage,
+        ownerId,
+        draft,
+        modelIds[0],
+        scope,
+        selectedTool
+      );
 }
 
 export function prepareCreation(
@@ -43,7 +59,8 @@ export function prepareCreation(
   ownerId: string,
   draft: EveMessageInput,
   modelId?: string,
-  context?: CreationScope & { fork?: EveForkInput }
+  context?: CreationScope & { fork?: EveForkInput },
+  selectedTool?: UiToolName
 ) {
   const key = keyFor(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
@@ -53,6 +70,7 @@ export function prepareCreation(
   const pending = createConversationInput.safeParse({
     operationId: crypto.randomUUID(),
     message: draft,
+    selectedTool,
     modelId,
     fork: context?.fork,
     projectId: context?.projectId,
@@ -99,7 +117,8 @@ export function prepareResponseGroupCreation(
   ownerId: string,
   message: EveMessageInput,
   modelIds: string[],
-  context?: CreationScope & { fork?: EveForkInput }
+  context?: CreationScope & { fork?: EveForkInput },
+  selectedTool?: UiToolName
 ) {
   const saved = readCreationRequest(storage, ownerId, context);
   if (saved) {
@@ -113,6 +132,7 @@ export function prepareResponseGroupCreation(
   const request = eveResponseGroupInput.parse({
     operationId: crypto.randomUUID(),
     message,
+    selectedTool,
     modelIds,
     projectId: context?.projectId,
     fork: context?.fork,
@@ -144,9 +164,18 @@ export function moveRejectedProjectCreation(
           storage,
           ownerId,
           pending.message,
-          pending.modelIds
+          pending.modelIds,
+          undefined,
+          pending.selectedTool
         )
-      : prepareCreation(storage, ownerId, pending.message, pending.modelId);
+      : prepareCreation(
+          storage,
+          ownerId,
+          pending.message,
+          pending.modelId,
+          undefined,
+          pending.selectedTool
+        );
   finishCreation(storage, ownerId, scope);
   return next;
 }

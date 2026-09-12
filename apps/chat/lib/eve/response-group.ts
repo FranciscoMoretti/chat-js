@@ -31,6 +31,7 @@ export async function createEveResponseGroup(
         operationId: candidate.operationId,
         modelId: candidate.modelId,
         message: input.message,
+        selectedTool: input.selectedTool,
         ...(fork ? { fork } : { projectId: input.projectId }),
       });
       if (!response.ok) {

@@ -1,3 +1,4 @@
+import type { UiToolName } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
@@ -42,6 +43,7 @@ async function readCommand(
   let body: string | undefined;
   let isNewMessage = false;
   let modelId: string | undefined;
+  let selectedTool: UiToolName | undefined;
   if (request.method === "POST") {
     const input = policy.schema.safeParse(
       await request.json().catch(() => null)
@@ -50,6 +52,7 @@ async function readCommand(
       return rejectEveCommand("Invalid command.", 400);
     }
     if ("message" in input.data) {
+      selectedTool = input.data.selectedTool;
       const selectedModel = request.headers.get("x-chatjs-selected-model");
       if (
         selectedModel &&
@@ -80,7 +83,7 @@ async function readCommand(
     }
     isNewMessage = "message" in input.data;
   }
-  return { body, isNewMessage, modelId };
+  return { body, isNewMessage, modelId, selectedTool };
 }
 
 async function handle(
@@ -119,7 +122,7 @@ async function handle(
   if (command instanceof Response) {
     return command;
   }
-  const { body, isNewMessage, modelId } = command;
+  const { body, isNewMessage, modelId, selectedTool } = command;
   try {
     const admission = await checkTurnAdmission(isNewMessage, session.user.id);
     if (admission) {
@@ -138,7 +141,8 @@ async function handle(
             ? request.signal
             : AbortSignal.timeout(30_000),
       },
-      modelId
+      modelId,
+      selectedTool
     );
     const headers = new Headers({ "cache-control": "no-store" });
     for (const key of [

@@ -6,6 +6,7 @@ import {
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "../../lib/eve/mcp-tools";
+import { eveTurnTool } from "../../lib/eve/turn-tools";
 import { createModuleLogger } from "../../lib/logger";
 
 const log = createModuleLogger("eve.mcp-registration");
@@ -13,6 +14,9 @@ const log = createModuleLogger("eve.mcp-registration");
 export default defineDynamic({
   events: {
     "step.started": async (_event, context) => {
+      if (eveTurnTool.get()) {
+        return {};
+      }
       const ownerId = context.session.auth.initiator?.principalId;
       // Dynamic resolvers do not expose EVE's execution cancellation signal.
       const discoverySignal = AbortSignal.timeout(30_000);

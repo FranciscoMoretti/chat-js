@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { canSpend } from "@/lib/db/credits";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
@@ -20,6 +19,7 @@ import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
+import { eveCreationContentHash } from "./creation-content-hash";
 
 export async function createEveConversationOperation(
   ownerId: string,
@@ -146,7 +146,8 @@ export async function createEveConversationOperation(
               fork,
             }),
           },
-          input.modelId
+          input.modelId,
+          input.selectedTool
         );
         if (!result.ok) {
           throw new Error("Session creation failed.");
@@ -157,12 +158,10 @@ export async function createEveConversationOperation(
       },
       {
         initialModelId: input.modelId,
-        initialContentHash:
-          typeof input.message === "string"
-            ? undefined
-            : createHash("sha256")
-                .update(JSON.stringify(input.message))
-                .digest("hex"),
+        initialContentHash: eveCreationContentHash(
+          input.message,
+          input.selectedTool
+        ),
         fork: input.fork,
         fileKeys: eveMessageFileKeys(input.message),
         initialProjectId: input.projectId,

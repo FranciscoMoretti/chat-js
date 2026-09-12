@@ -1,7 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 import mcp from "../../agent/tools/mcp";
 
-const mocks = vi.hoisted(() => ({ discover: vi.fn(), execute: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  discover: vi.fn(),
+  execute: vi.fn(),
+  selected: false,
+}));
 vi.mock("eve/tools", () => ({
   defineDynamic: <T>(value: T) => value,
   defineTool: <T>(value: T) => value,
@@ -65,4 +69,28 @@ it("continues ordinary chat when MCP discovery times out", async () => {
       }
     )
   ).resolves.toEqual({});
+});
+
+vi.mock("./turn-tools", () => ({
+  eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
+}));
+
+it("does not discover remote tools for an explicitly selected local capability", async () => {
+  mocks.selected = true;
+  mocks.discover.mockClear();
+  try {
+    expect(
+      await mcp.events["step.started"]?.(
+        {},
+        {
+          session: { id: "session", auth: { current: null, initiator: null } },
+          channel: {},
+          messages: [],
+        }
+      )
+    ).toEqual({});
+    expect(mocks.discover).not.toHaveBeenCalled();
+  } finally {
+    mocks.selected = false;
+  }
 });

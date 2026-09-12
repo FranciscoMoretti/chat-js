@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
 
 export const eveForkInput = z.union([
@@ -29,6 +30,7 @@ export const createConversationInput = z
     operationId: z.uuid(),
     modelId: z.string().min(1).max(200).optional(),
     message: eveMessageInput,
+    selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
     projectId: z.uuid().optional(),
   })

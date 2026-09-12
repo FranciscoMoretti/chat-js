@@ -6,6 +6,7 @@ import {
   executeEvePlatformTool,
   getEvePlatformTools,
 } from "../../lib/eve/platform-tools";
+import { filterEveTools } from "../../lib/eve/turn-tools";
 
 export default defineDynamic({
   events: {
@@ -37,7 +38,7 @@ export default defineDynamic({
             toolOutput.json(evePlatformResult.parse(output).output),
         });
       }
-      return definitions;
+      return filterEveTools(definitions);
     },
   },
 });

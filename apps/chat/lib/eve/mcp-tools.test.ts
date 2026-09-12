@@ -402,3 +402,5 @@ it("registers native per-call approval restricted to the session owner", async (
   ).toMatchObject({ status: "rejected" });
   expect(execute).not.toHaveBeenCalled();
 });
+
+vi.mock("./turn-tools", () => ({ eveTurnTool: { get: () => null } }));

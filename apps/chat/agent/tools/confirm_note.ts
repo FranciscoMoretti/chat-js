@@ -1,9 +1,10 @@
 // biome-ignore-all lint/style/useFilenamingConvention: Eve uses the filename as the public tool name.
-import { defineTool } from "eve/tools";
+import { defineDynamic, defineTool } from "eve/tools";
 import { always } from "eve/tools/approval";
 import { noteInput } from "../../lib/eve/contracts";
+import { filterEveTools } from "../../lib/eve/turn-tools";
 
-export default defineTool({
+const confirmNote = defineTool({
   description:
     "Confirm a short note after explicit human approval. No external side effects.",
   inputSchema: noteInput,
@@ -15,4 +16,10 @@ export default defineTool({
         : { status: "rejected", reason: "Only the owner may respond" },
   },
   execute: ({ note }) => Promise.resolve({ note, confirmed: true }),
+});
+
+export default defineDynamic({
+  events: {
+    "step.started": () => filterEveTools({ confirm_note: confirmNote }),
+  },
 });

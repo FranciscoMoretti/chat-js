@@ -1,5 +1,6 @@
 import { inputResponseSchema } from "eve/client";
 import { z } from "zod";
+import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
 
 const streamIndex = /^\d{1,12}$/;
@@ -8,6 +9,7 @@ const sessionPath =
 const message = z
   .object({
     message: eveMessageInput,
+    selectedTool: frontendToolsSchema.optional(),
     modelId: z.string().min(1).max(200).optional(),
   })
   .strict();

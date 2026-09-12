@@ -456,7 +456,7 @@ export async function createEveConversation(
       !matchesEveFork(existing, fork)
     ) {
       throw new CreationConflict(
-        "This operation already has a different message, attachments, model, project, or source turn."
+        "This operation already has a different message, attachments, model, tool selection, project, or source turn."
       );
     }
     const binding = boundConversation(existing);

@@ -14,6 +14,7 @@ export default defineConfig({
     "eve-delete-ui.e2e.ts",
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
+    "eve-tool-selection.e2e.ts",
     "eve-image.e2e.ts",
     "eve-research.e2e.ts",
     "eve-create-recovery.e2e.ts",

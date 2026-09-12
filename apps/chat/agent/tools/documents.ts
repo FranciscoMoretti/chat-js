@@ -10,6 +10,7 @@ import { executeEveCodeDocument } from "../../lib/eve/document-execution";
 import { documentExecutionInput } from "../../lib/eve/document-execution-contracts";
 import { executeEveDocumentTool } from "../../lib/eve/document-tools";
 import { evePlatformResult } from "../../lib/eve/platform-result";
+import { filterEveTools } from "../../lib/eve/turn-tools";
 import { codeExecutionResult } from "../../tools/platform/code-execution.schemas";
 import { codeGuidelines } from "../../tools/platform/documents/code-guidelines";
 import { sheetGuidelines } from "../../tools/platform/documents/sheet-guidelines";
@@ -26,7 +27,7 @@ export default defineDynamic({
     "step.started": () => {
       const tools: Record<string, ReturnType<typeof defineTool>> = {};
       if (!config.ai.tools.documents.enabled) {
-        return tools;
+        return filterEveTools(tools);
       }
       for (const [name, operation] of Object.entries(eveDocumentOperations)) {
         if (!config.ai.tools.documents.types[operation.kind]) {
@@ -65,7 +66,7 @@ export default defineDynamic({
             ),
         });
       }
-      return tools;
+      return filterEveTools(tools);
     },
   },
 });

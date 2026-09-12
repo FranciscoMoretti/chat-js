@@ -176,3 +176,14 @@ it("root proof headers cannot authorize descendant mutations or transcript reads
   }
   expect(mocks.descendant).not.toHaveBeenCalled();
 });
+
+it("accepts only a known tool selection as a gateway attribute", async () => {
+  const command = request("/eve/v1/session", "POST");
+  command.headers.delete("x-chatjs-deletion");
+  command.headers.set("x-chatjs-tool", "webSearch");
+  expect(await authenticateEveGateway(command)).toMatchObject({
+    attributes: { selectedTool: "webSearch" },
+  });
+  command.headers.set("x-chatjs-tool", "server__arbitrary");
+  expect(await authenticateEveGateway(command)).toBeNull();
+});

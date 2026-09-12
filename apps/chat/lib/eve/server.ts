@@ -1,4 +1,5 @@
 import { env } from "@/lib/env";
+import type { UiToolName } from "../ai/types";
 
 export function assertEveConfigured() {
   if (
@@ -18,7 +19,8 @@ export async function eveRequest(
   owner: string,
   path: string,
   init: RequestInit = {},
-  modelId?: string
+  modelId?: string,
+  selectedTool?: UiToolName
 ) {
   assertEveConfigured();
   const headers = new Headers({
@@ -27,6 +29,9 @@ export async function eveRequest(
   });
   if (modelId) {
     headers.set("x-chatjs-model", modelId);
+  }
+  if (selectedTool) {
+    headers.set("x-chatjs-tool", selectedTool);
   }
   if (init.body) {
     headers.set("content-type", "application/json");

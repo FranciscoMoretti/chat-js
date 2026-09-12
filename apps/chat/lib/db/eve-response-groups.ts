@@ -32,7 +32,7 @@ export async function reserveEveResponseGroup(
     }
     if (existing && existing.inputHash !== inputHash) {
       throw new Error(
-        "This response group already has a different message, model order, or source."
+        "This response group already has a different message, model order, tool selection, or source."
       );
     }
     const sourceId = input.fork?.conversationId ?? null;

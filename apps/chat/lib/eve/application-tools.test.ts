@@ -65,3 +65,5 @@ test("rejects custom approval policies rather than bypassing them", async () => 
   settings.approval = true;
   await expect(resolveTools()).rejects.toThrow("explicit Eve policy adapter");
 });
+
+vi.mock("./turn-tools", () => ({ filterEveTools: <T>(tools: T) => tools }));
