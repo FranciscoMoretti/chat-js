@@ -1058,8 +1058,8 @@ interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  start(): void;
-  stop(): void;
+  start: () => void;
+  stop: () => void;
   onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
   onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   onresult:
@@ -1077,13 +1077,13 @@ interface SpeechRecognitionEvent extends Event {
 
 type SpeechRecognitionResultList = {
   readonly length: number;
-  item(index: number): SpeechRecognitionResult;
+  item: (index: number) => SpeechRecognitionResult;
   [index: number]: SpeechRecognitionResult;
 };
 
 type SpeechRecognitionResult = {
   readonly length: number;
-  item(index: number): SpeechRecognitionAlternative;
+  item: (index: number) => SpeechRecognitionAlternative;
   [index: number]: SpeechRecognitionAlternative;
   isFinal: boolean;
 };

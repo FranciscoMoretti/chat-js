@@ -6,6 +6,17 @@ import type { LanguageModelMiddleware } from "ai";
 import { getActiveGateway } from "./active-gateway";
 import type { AppModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
+import type { InstalledGateway } from "./gateways/registry";
+
+type ActiveGatewayModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[0];
+type ActiveGatewayImageModelId = Parameters<
+  InstalledGateway["createImageModel"]
+>[0];
+type ActiveGatewayVideoModelId = Parameters<
+  InstalledGateway["createVideoModel"]
+>[0];
 
 export const getLanguageModel = async (modelId: AppModelId) => {
   const model = await getAppModelDefinition(modelId);
@@ -35,7 +46,7 @@ export const getLanguageModel = async (modelId: AppModelId) => {
   });
 };
 
-export const getImageModel = (modelId: string) => {
+export const getImageModel = (modelId: ActiveGatewayImageModelId) => {
   const imageModel = getActiveGateway().createImageModel(modelId);
   if (!imageModel) {
     throw new Error(
@@ -45,7 +56,7 @@ export const getImageModel = (modelId: string) => {
   return imageModel;
 };
 
-export const getVideoModel = (modelId: string) => {
+export const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
   const videoModel = getActiveGateway().createVideoModel(modelId);
   if (!videoModel) {
     throw new Error(
@@ -56,7 +67,7 @@ export const getVideoModel = (modelId: string) => {
 };
 
 // Get a multimodal language model that can generate images via generateText
-export const getMultimodalImageModel = (modelId: string) =>
+export const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
   getActiveGateway().createLanguageModel(modelId);
 
 // Model aliases removed - use getLanguageModel directly with specific model IDs
