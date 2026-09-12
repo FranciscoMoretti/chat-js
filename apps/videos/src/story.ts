@@ -3,48 +3,48 @@ export const DURATION = 48;
 export type PathId = "city" | "food";
 export type ReplyState = "streaming" | "stopped" | "complete";
 export const script = {
-  title: "Lisbon weekend",
-  prompt: "Plan a weekend in Lisbon.",
-  package: "@chat-js/thread",
-  url: "chatjs.dev/threads",
+  budget: {
+    prompt: "Make it vegetarian.",
+    reply: "Try vegetable petiscos, market salads, and a vegetarian tasca.",
+    title: "Vegetarian",
+  },
   city: {
     label: "City sights",
     text: "Saturday — Explore Alfama, then ride tram 28.\n\nSunday — Visit Belém and watch the sunset by the river.",
+  },
+  family: {
+    prompt: "Make it kid-friendly.",
+    reply: "Try the aquarium, a park picnic, and an ice cream stop.",
+    title: "With the kids",
   },
   food: {
     label: "Food trip",
     text: "Saturday — Try the pastries and visit the food market.\n\nSunday — Find a local tasca for lunch, then share petiscos.",
   },
-  family: {
-    prompt: "Make it kid-friendly.",
-    title: "With the kids",
-    reply: "Try the aquarium, a park picnic, and an ice cream stop.",
-  },
+  package: "@chat-js/thread",
   porto: {
-    title: "Porto weekend",
     label: "Porto",
     preservedNote: "Both Lisbon conversations kept",
     prompt: "Plan a weekend in Porto.",
     reply:
       "Saturday — Explore Ribeira and walk across the Dom Luís I Bridge.\n\nSunday — Visit the gardens, then catch the sunset by the river.",
+    title: "Porto weekend",
   },
-  budget: {
-    prompt: "Make it vegetarian.",
-    title: "Vegetarian",
-    reply: "Try vegetable petiscos, market salads, and a vegetarian tasca.",
-  },
+  prompt: "Plan a weekend in Lisbon.",
+  title: "Lisbon weekend",
+  url: "chatjs.dev/threads",
 };
 export type LaunchScript = typeof script;
 export const beats = [
   {
     at: 0,
-    title: "Branching conversations for AI SDK",
     subtitle: "Regenerate. Switch answers. Keep chatting.",
+    title: "Branching conversations for AI SDK",
   },
   {
     at: 48.5,
-    title: "Add branching to your chat",
     subtitle: "An npm package for your AI SDK app.",
+    title: "Add branching to your chat",
   },
 ];
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
@@ -83,28 +83,22 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
     food: t < 22.2 ? "streaming" : "complete",
   };
   return {
-    selected,
-    editing,
-    edited,
+    answer: texts[selected],
+    budget,
     editText:
       t < 42.6
         ? content.prompt
         : `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`,
-    portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
-    portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
-    following: following && (family || budget),
+    edited,
+    editing,
     family,
-    budget,
-    foodVisible: t >= 12.2,
-    reveal: ease((t - 11.5) / 0.3),
-    texts,
-    states,
-    answer: texts[selected],
+    following: following && (family || budget),
     followup: {
       ...followup,
-      text: textAt(followup.reply, progress),
       state: progress < 1 ? ("streaming" as const) : ("complete" as const),
+      text: textAt(followup.reply, progress),
     },
+    foodVisible: t >= 12.2,
     note:
       t >= 19 && t < 22
         ? "Your original is here. The other reply keeps going."
@@ -113,15 +107,21 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
           : t >= 22
             ? "Both paths are yours to keep."
             : "",
+    portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
+    portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
+    reveal: ease((t - 11.5) / 0.3),
+    selected,
+    states,
+    texts,
   };
 };
 export type StoryState = ReturnType<typeof stateAt>;
 export const captionBeats = [
-  { start: 10, end: 11.5, label: "Try another answer" },
-  { start: 16.5, end: 18, label: "Switch while replies stream" },
-  { start: 22.5, end: 24, label: "Continue either conversation" },
-  { start: 30.5, end: 32, label: "Continue the other" },
-  { start: 40, end: 41.5, label: "Edit any message. Keep both versions." },
+  { end: 11.5, label: "Try another answer", start: 10 },
+  { end: 18, label: "Switch while replies stream", start: 16.5 },
+  { end: 24, label: "Continue either conversation", start: 22.5 },
+  { end: 32, label: "Continue the other", start: 30.5 },
+  { end: 41.5, label: "Edit any message. Keep both versions.", start: 40 },
 ];
 export const presentationAt = (wallTime: number) => {
   // Cut only completed-reply holds; keep action and streaming speed unchanged.
@@ -137,8 +137,8 @@ export const presentationAt = (wallTime: number) => {
   const elapsed = time - beat.start;
   const duration = beat.end - beat.start;
   return {
-    demoTime: beat.start,
     caption: beat.label,
+    demoTime: beat.start,
     opacity: Math.min(ease(elapsed / 0.15), ease((duration - elapsed) / 0.15)),
   };
 };
