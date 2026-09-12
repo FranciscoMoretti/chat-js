@@ -83,9 +83,13 @@ it("leaves non-ChatJS Git templates unconfigured through the full create command
 
 it("rejects retired installer flags explicitly", async () => {
   create.exitOverride();
-  for (const flag of ["--no-install", "--package-manager", "--registry"]) {
-    await expect(create.parseAsync([flag], { from: "user" })).rejects.toThrow(
-      "unknown option"
-    );
-  }
+  await expect(
+    create.parseAsync(["--no-install"], { from: "user" })
+  ).rejects.toThrow("unknown option");
+  await expect(
+    create.parseAsync(["--package-manager"], { from: "user" })
+  ).rejects.toThrow("unknown option");
+  await expect(
+    create.parseAsync(["--registry"], { from: "user" })
+  ).rejects.toThrow("unknown option");
 });

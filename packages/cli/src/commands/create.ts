@@ -101,6 +101,43 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
   }
 };
 
+const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
+  const toolDirectory = path.join(targetDir, "tools/chatjs");
+  const entries = await readdir(toolDirectory, { withFileTypes: true }).catch(
+    (error) => {
+      if (error.code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    }
+  );
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.isDirectory()) {
+        return;
+      }
+      const descriptor = path.join(toolDirectory, entry.name, "chatjs.json");
+      if (!existsSync(descriptor)) {
+        return;
+      }
+      await preflight(targetDir, [`tools/chatjs/${entry.name}/chatjs.json`]);
+      const metadata = toolDefinitionSchema.parse(
+        JSON.parse(await readFile(descriptor, "utf-8"))
+      );
+      const usesSelectedSlot =
+        metadata.slot === "webSearch" ||
+        metadata.slot === "codeExecution" ||
+        metadata.slot === "retrieveUrl" ||
+        (metadata.id === "retrieve-url" &&
+          metadata.toolExport === "retrieveUrl");
+      if (usesSelectedSlot) {
+        await rm(path.join(toolDirectory, entry.name), { recursive: true });
+      }
+    })
+  );
+};
+
 const createOptionsSchema = z.object({
   codeExecutionTool: z.string().optional(),
   electron: z.boolean().optional(),
@@ -113,6 +150,70 @@ const createOptionsSchema = z.object({
   urlRetrievalTool: z.string().optional(),
   yes: z.boolean(),
 });
+
+type CreateOptions = z.infer<typeof createOptionsSchema>;
+type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
+
+const collectToolSources = async (
+  options: CreateOptions,
+  assistantTools: AssistantTools,
+  targetDir: string
+): Promise<string[]> => {
+  const toolSources = assistantTools.installableTools.map((tool) =>
+    itemAddress(tool, "tool")
+  );
+  if (assistantTools.builtInTools.deepResearch) {
+    assistantTools.builtInTools.webSearch = true;
+  }
+  const selections = [
+    {
+      feature: "webSearch",
+      prompt: promptSearchTool,
+      slot: "webSearch",
+      source: options.searchTool,
+    },
+    {
+      feature: "codeExecution",
+      prompt: promptCodeExecutionTool,
+      slot: "codeExecution",
+      source: options.codeExecutionTool,
+    },
+    {
+      feature: "urlRetrieval",
+      prompt: promptUrlRetrievalTool,
+      slot: "retrieveUrl",
+      source: options.urlRetrievalTool,
+    },
+  ] as const;
+
+  const addSelection = async (index: number): Promise<void> => {
+    const selection = selections[index];
+    if (!selection) {
+      return;
+    }
+    if (selection.source) {
+      assistantTools.builtInTools[selection.feature] = true;
+    }
+    if (assistantTools.builtInTools[selection.feature]) {
+      const source = itemAddress(
+        selection.source ?? (await selection.prompt(options.yes)),
+        "tool"
+      );
+      const item = await readItem(source, targetDir);
+      const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
+      if (metadata.slot !== selection.slot) {
+        throw new Error(
+          `Selected tool must declare the ${selection.slot} slot.`
+        );
+      }
+      toolSources.push(source);
+    }
+    await addSelection(index + 1);
+  };
+
+  await addSelection(0);
+  return toolSources;
+};
 
 export const create = new Command()
   .name("create")
@@ -216,52 +317,11 @@ export const create = new Command()
         options.yes,
         gatewaySelection.definition
       );
-      const toolSources = assistantTools.installableTools.map((tool) =>
-        itemAddress(tool, "tool")
+      const toolSources = await collectToolSources(
+        options,
+        assistantTools,
+        targetDir
       );
-      if (assistantTools.builtInTools.deepResearch) {
-        assistantTools.builtInTools.webSearch = true;
-      }
-      const selections = [
-        {
-          feature: "webSearch",
-          prompt: promptSearchTool,
-          slot: "webSearch",
-          source: options.searchTool,
-        },
-        {
-          feature: "codeExecution",
-          prompt: promptCodeExecutionTool,
-          slot: "codeExecution",
-          source: options.codeExecutionTool,
-        },
-        {
-          feature: "urlRetrieval",
-          prompt: promptUrlRetrievalTool,
-          slot: "retrieveUrl",
-          source: options.urlRetrievalTool,
-        },
-      ] as const;
-      for (const selection of selections) {
-        if (selection.source) {
-          assistantTools.builtInTools[selection.feature] = true;
-        }
-        if (!assistantTools.builtInTools[selection.feature]) {
-          continue;
-        }
-        const source = itemAddress(
-          selection.source ?? (await selection.prompt(options.yes)),
-          "tool"
-        );
-        const item = await readItem(source, targetDir);
-        const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
-        if (metadata.slot !== selection.slot) {
-          throw new Error(
-            `Selected tool must declare the ${selection.slot} slot.`
-          );
-        }
-        toolSources.push(source);
-      }
       const expectedTools = await Promise.all(
         toolSources.map(async (source) => {
           const item = await readItem(source, targetDir);
@@ -315,44 +375,7 @@ export const create = new Command()
           });
           await rm(path.join(targetDir, "lib/ai/gateway.ts"));
           // A fresh clone receives the requested tool selections as well.
-          const toolDirectory = path.join(targetDir, "tools/chatjs");
-          for (const entry of await readdir(toolDirectory, {
-            withFileTypes: true,
-          }).catch((error) => {
-            if (error.code === "ENOENT") {
-              return [];
-            }
-            throw error;
-          })) {
-            if (!entry.isDirectory()) {
-              continue;
-            }
-            const descriptor = path.join(
-              toolDirectory,
-              entry.name,
-              "chatjs.json"
-            );
-            if (!existsSync(descriptor)) {
-              continue;
-            }
-            await preflight(targetDir, [
-              `tools/chatjs/${entry.name}/chatjs.json`,
-            ]);
-            const metadata = toolDefinitionSchema.parse(
-              JSON.parse(await readFile(descriptor, "utf-8"))
-            );
-            if (
-              metadata.slot === "webSearch" ||
-              metadata.slot === "codeExecution" ||
-              metadata.slot === "retrieveUrl" ||
-              (metadata.id === "retrieve-url" &&
-                metadata.toolExport === "retrieveUrl")
-            ) {
-              await rm(path.join(toolDirectory, entry.name), {
-                recursive: true,
-              });
-            }
-          }
+          await removeSelectedClonedTools(targetDir);
         } else {
           await scaffoldFromTemplate(targetDir, {
             packageManager,
