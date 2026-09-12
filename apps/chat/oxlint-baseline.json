@@ -7,7 +7,6 @@
         "components/message-parts.tsx",
         "components/parallel-response-cards.tsx",
         "components/research-task.tsx",
-        "lib/ai/core-chat-agent.ts",
         "lib/stores/base/hooks.ts"
       ],
       "rules": {
@@ -15,11 +14,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/gateway.ts",
-        "lib/ai/text-splitter.ts",
-        "lib/parallel-chat-requests.test.ts"
-      ],
+      "files": ["lib/ai/gateway.ts", "lib/parallel-chat-requests.test.ts"],
       "rules": {
         "class-methods-use-this": "off"
       }
@@ -47,11 +42,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/env-schema.ts", "providers/session-provider.tsx"],
       "rules": {
         "eqeqeq": "off"
       }
@@ -211,7 +202,6 @@
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
-        "lib/ai/core-chat-agent.ts",
         "lib/ai/eval-agent.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
@@ -222,7 +212,6 @@
         "lib/chat-tree-actions.test.ts",
         "lib/clone-messages.test.ts",
         "lib/clone-messages.ts",
-        "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/queries.ts",
         "lib/editor/config.ts",
@@ -452,11 +441,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/env-schema.ts", "providers/session-provider.tsx"],
       "rules": {
         "no-eq-null": "off"
       }
@@ -471,7 +456,6 @@
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
         "lib/auth.ts",
-        "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
         "lib/message-conversion.ts",
         "lib/stores/base/hooks.ts",
@@ -1230,12 +1214,10 @@
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
-        "lib/ai/core-chat-agent.ts",
         "lib/ai/eval-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/text-splitter.ts",
         "lib/anonymous-session-client.ts",
         "lib/anonymous-session-server.ts",
         "lib/artifacts/code/client.tsx",
@@ -1246,8 +1228,6 @@
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
         "lib/create-anonymous-session.ts",
-        "lib/credits/cost-accumulator.test.ts",
-        "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
@@ -1320,7 +1300,6 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/credits/cost-accumulator.test.ts",
         "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts"
       ],
@@ -1467,7 +1446,13 @@
       }
     },
     {
-      "files": ["lib/credits/cost-accumulator.ts", "lib/utils/rate-limit.ts"],
+      "files": ["lib/utils/rate-limit.ts"],
+      "rules": {
+        "unicorn/prefer-number-coercion": "off"
+      }
+    },
+    {
+      "files": ["lib/credits/cost-accumulator.ts"],
       "rules": {
         "unicorn/prefer-number-coercion": "off"
       }
@@ -1495,9 +1480,14 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "components/multimodal-input.tsx",
-        "lib/ai/text-splitter.ts"
+        "components/multimodal-input.tsx"
       ],
+      "rules": {
+        "unicorn/prefer-spread": "off"
+      }
+    },
+    {
+      "files": ["lib/ai/text-splitter.ts"],
       "rules": {
         "unicorn/prefer-spread": "off"
       }

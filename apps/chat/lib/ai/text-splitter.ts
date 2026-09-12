@@ -2,22 +2,18 @@ interface TextSplitterParams {
   chunkOverlap: number;
   chunkSize: number;
 }
-
 abstract class TextSplitter implements TextSplitterParams {
   chunkSize = 1000;
   chunkOverlap = 200;
-
   constructor(fields?: Partial<TextSplitterParams>) {
     this.chunkSize = fields?.chunkSize ?? this.chunkSize;
     this.chunkOverlap = fields?.chunkOverlap ?? this.chunkOverlap;
   }
-
   abstract splitText(text: string): string[];
-
   createDocuments(texts: string[]): string[] {
     const documents: string[] = [];
     for (const text of texts) {
-      if (text == null) {
+      if (text === null || text === undefined) {
         continue;
       }
       for (const chunk of this.splitText(text)) {
@@ -26,17 +22,14 @@ abstract class TextSplitter implements TextSplitterParams {
     }
     return documents;
   }
-
   splitDocuments(documents: string[]): string[] {
     return this.createDocuments(documents);
   }
-
-  private joinDocs(docs: string[], separator: string): string | null {
+  private static joinDocs(docs: string[], separator: string): string | null {
     const text = docs.join(separator).trim();
     return text === "" ? null : text;
   }
-
-  private addCurrentDocToResults({
+  private static addCurrentDocToResults({
     docs,
     currentDoc,
     separator,
@@ -45,12 +38,11 @@ abstract class TextSplitter implements TextSplitterParams {
     currentDoc: string[];
     separator: string;
   }): void {
-    const doc = this.joinDocs(currentDoc, separator);
+    const doc = TextSplitter.joinDocs(currentDoc, separator);
     if (doc !== null) {
       docs.push(doc);
     }
   }
-
   private trimCurrentDocForOverlap({
     currentDoc,
     overlapLimit,
@@ -72,56 +64,47 @@ abstract class TextSplitter implements TextSplitterParams {
     }
     return updatedTotal;
   }
-
   mergeSplits(splits: string[], separator: string): string[] {
     const docs: string[] = [];
     const currentDoc: string[] = [];
     let total = 0;
     const overlapLimit = separator === "" ? 0 : this.chunkOverlap;
-
     for (const d of splits) {
       const _len = d.length;
       if (total + _len > this.chunkSize) {
         if (total > this.chunkSize) {
-          console.warn(
-            `Created a chunk of size ${total}, +
-which is longer than the specified ${this.chunkSize}`
-          );
+          console.warn(`Created a chunk of size ${total}, +
+which is longer than the specified ${this.chunkSize}`);
         }
         if (currentDoc.length > 0) {
-          this.addCurrentDocToResults({ docs, currentDoc, separator });
+          TextSplitter.addCurrentDocToResults({ currentDoc, docs, separator });
           total = this.trimCurrentDocForOverlap({
             currentDoc,
+            nextLength: _len,
             overlapLimit,
             total,
-            nextLength: _len,
           });
         }
       }
       currentDoc.push(d);
       total += _len;
     }
-
-    this.addCurrentDocToResults({ docs, currentDoc, separator });
+    TextSplitter.addCurrentDocToResults({ currentDoc, docs, separator });
     return docs;
   }
 }
-
 export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams {
   separators: string[];
 }
-
 export class RecursiveCharacterTextSplitter
   extends TextSplitter
   implements RecursiveCharacterTextSplitterParams
 {
   separators: string[] = ["\n\n", "\n", ".", ",", ">", "<", " ", ""];
-
   constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {
     super(fields);
     this.separators = fields?.separators ?? this.separators;
   }
-
   private findBestSeparator(text: string): string {
     for (const s of this.separators) {
       if (s === "" || text.includes(s)) {
@@ -130,8 +113,7 @@ export class RecursiveCharacterTextSplitter
     }
     return this.separators.at(-1) ?? "";
   }
-
-  private combineParenthesizedPhrases(parts: string[]): string[] {
+  private static combineParenthesizedPhrases(parts: string[]): string[] {
     const combined: string[] = [];
     for (let i = 0; i < parts.length; i += 1) {
       const current = parts[i] ?? "";
@@ -149,7 +131,6 @@ export class RecursiveCharacterTextSplitter
     }
     return combined;
   }
-
   private handleSpaceSeparatorOptimization(
     text: string,
     splits: string[]
@@ -157,11 +138,10 @@ export class RecursiveCharacterTextSplitter
     const trimmed = text.trim();
     if (trimmed.length <= this.chunkSize) {
       const parts = splits.map((s) => s.trim()).filter((s) => s !== "");
-      return this.combineParenthesizedPhrases(parts);
+      return RecursiveCharacterTextSplitter.combineParenthesizedPhrases(parts);
     }
     return null;
   }
-
   private processSplits(
     splits: string[],
     separator: string,
@@ -186,23 +166,19 @@ export class RecursiveCharacterTextSplitter
       finalChunks.push(...mergedText);
     }
   }
-
   splitText(text: string): string[] {
     if (this.chunkOverlap >= this.chunkSize) {
       throw new Error("Cannot have chunkOverlap >= chunkSize");
     }
     const finalChunks: string[] = [];
-
     const separator = this.findBestSeparator(text);
     const splits = separator ? text.split(separator) : text.split("");
-
     if (separator === " ") {
       const optimized = this.handleSpaceSeparatorOptimization(text, splits);
       if (optimized) {
         return optimized;
       }
     }
-
     this.processSplits(splits, separator, finalChunks);
     return finalChunks;
   }
