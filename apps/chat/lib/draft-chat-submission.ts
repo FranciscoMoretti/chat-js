@@ -72,6 +72,16 @@ export const buildDraftChatSubmission = ({
   return {
     message: {
       id: generateUUID(),
+      metadata: {
+        activeStreamId: null,
+        createdAt: new Date(),
+        isPrimaryParallel: null,
+        parallelGroupId,
+        parallelIndex: null,
+        parentMessageId,
+        selectedModel: normalizedSelectedModel,
+        selectedTool: selectedTool || undefined,
+      },
       parts: [
         ...attachments.map((attachment) => ({
           mediaType: attachment.contentType,
@@ -84,16 +94,6 @@ export const buildDraftChatSubmission = ({
           type: "text",
         },
       ],
-      metadata: {
-        createdAt: new Date(),
-        parentMessageId,
-        parallelGroupId,
-        parallelIndex: null,
-        isPrimaryParallel: null,
-        selectedModel: normalizedSelectedModel,
-        activeStreamId: null,
-        selectedTool: selectedTool || undefined,
-      },
       role: "user",
     },
     requestSpecs,

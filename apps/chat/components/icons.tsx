@@ -1,7 +1,7 @@
 export const GitIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     strokeLinejoin="round"
-    style={{ color: "currentcolor", width: size, height: size }}
+    style={{ color: "currentcolor", height: size, width: size }}
     viewBox="0 0 16 16"
   >
     <title>Git</title>
