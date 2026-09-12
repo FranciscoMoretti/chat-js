@@ -93,7 +93,9 @@ Preparation inventories files across all captured revision contents and titles, 
 
 ### Durable application acceptance still required
 
-The next integration needs an explicit creation kind on the conversation reservation and a copy journal containing immutable source/projection/resource identities, stable allocations, temporary seed data, and resource-completion receipts. Normal message creation and copy creation must reject reuse of an operation across kinds. Native identity remains the destination reservation ID, and copy lookup uses `kind=seed`.
+Conversation reservations now persist `creationKind: message | copy`, with existing rows defaulting to `message`. PostgreSQL requires copy reservations to be fresh roots. Ordinary creation rejects copy operations before native lookup and again inside reservation/binding checks; retries cannot cross native namespaces. A normal message fork from a copied root remains valid. The local migration and creation/deletion contracts are verified.
+
+The next integration needs a copy journal containing immutable source/projection/resource identities, stable allocations, temporary seed data, and resource-completion receipts. Copy creation must likewise reject an existing message reservation before preparing resources. Native identity remains the destination reservation ID, and copy lookup uses `kind=seed`.
 
 Accept the copy only after destination resources are complete. Acquire source/destination family locks in deterministic order, recheck publication under a source-row lock, and commit acceptance in a short transaction. Thereafter the destination is independent of source revocation/deletion, and native dispatch/recovery reads the accepted journal without reopening source access. Bind the native session and clear the temporary seed atomically; it must not become a permanent second transcript.
 

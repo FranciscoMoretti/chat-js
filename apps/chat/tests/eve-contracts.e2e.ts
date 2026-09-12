@@ -402,9 +402,17 @@ test.each([
     await getDeletingEveConversationForSession("other", bound.sessionId)
   ).toBeUndefined();
 
-  expect(
-    (await listEveConversations(owner)).items.some((row) => row.id === bound.id)
-  ).toBe(false);
+  const recoveryRow = (await listEveConversations(owner)).items.find(
+    (row) => row.id === bound.id
+  );
+  // Pending deletion remains discoverable so its owner can resume cleanup.
+  // The transcript and native access above remain fenced throughout.
+  if (state === "deleting") {
+    expect(recoveryRow).toMatchObject({ id: bound.id, state: "deleting" });
+    expect(recoveryRow).not.toHaveProperty("sessionId");
+  } else {
+    expect(recoveryRow).toBeUndefined();
+  }
   expect(await listEveConversationBranches(owner, bound.id)).toBeUndefined();
   expect(
     await updateEveConversationMetadata(owner, bound.id, {
@@ -624,4 +632,66 @@ test("final application deletion erases family content, preserves accounting and
     })
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
+});
+
+const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
+  "creating",
+  "uncertain",
+  "bound",
+];
+test.each(
+  copyReservationStates
+)("ordinary creation cannot consume a %s copy reservation", async (state) => {
+  const operationId = crypto.randomUUID();
+  const sessionId = state === "bound" ? crypto.randomUUID() : null;
+  const [copy] = await db
+    .insert(eveConversation)
+    .values({
+      ownerId: owner,
+      operationId,
+      firstMessage: "Same visible title",
+      creationKind: "copy",
+      state,
+      sessionId,
+    })
+    .returning();
+  const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+  await expect(
+    createEveConversation(owner, operationId, "Same visible title", create)
+  ).rejects.toThrow("different");
+  expect(create).not.toHaveBeenCalled();
+  expect(await getEveCreation(owner, operationId)).toMatchObject({
+    id: copy.id,
+    creationKind: "copy",
+    state,
+    sessionId,
+  });
+});
+
+test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
+  const sourceOperation = crypto.randomUUID();
+  const source = await createEveConversation(
+    owner,
+    sourceOperation,
+    "Source",
+    () => Promise.resolve(crypto.randomUUID())
+  );
+  await expect(
+    db.insert(eveConversation).values({
+      ownerId: owner,
+      operationId: crypto.randomUUID(),
+      firstMessage: "Invalid copy fork",
+      creationKind: "copy",
+      parentConversationId: source.id,
+      rootConversationId: source.id,
+      forkTurnId: "turn_0",
+    })
+  ).rejects.toThrow();
+  await expect(
+    db.execute(sql`insert into "EveConversation" ("ownerId", "operationId", "firstMessage", "creationKind")
+    values (${owner}, ${crypto.randomUUID()}, 'Invalid kind', 'unrecognized')`)
+  ).rejects.toThrow();
+  expect(await getEveCreation(owner, sourceOperation)).toMatchObject({
+    creationKind: "message",
+  });
 });

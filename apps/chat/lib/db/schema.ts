@@ -455,6 +455,9 @@ export const eveConversation = pgTable(
       .notNull()
       .references(() => user.id),
     operationId: uuid("operationId").notNull(),
+    creationKind: text("creationKind", { enum: ["message", "copy"] })
+      .notNull()
+      .default("message"),
     firstMessage: text("firstMessage").notNull(),
     initialModelId: text("initialModelId"),
     initialContentHash: text("initialContentHash"),
@@ -480,6 +483,17 @@ export const eveConversation = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
   (table) => [
+    check(
+      "EveConversation_creation_kind",
+      sql`${table.creationKind} in ('message', 'copy')`
+    ),
+    check(
+      "EveConversation_copy_root",
+      sql`${table.creationKind} <> 'copy' or (
+      ${table.parentConversationId} is null and ${table.rootConversationId} is null and
+      ${table.forkTurnId} is null and ${table.forkCheckpointId} is null
+    )`
+    ),
     uniqueIndex("EveConversation_id_owner").on(table.id, table.ownerId),
     index("EveConversation_owner_root").on(
       table.ownerId,

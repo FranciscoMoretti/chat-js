@@ -107,3 +107,15 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     checkpointId,
   });
 });
+
+it("rejects saved-copy operations before ordinary native lookup or dispatch", async () => {
+  mocks.creation.mockResolvedValue({
+    state: "uncertain",
+    creationKind: "copy",
+  });
+  const response = await createEveConversationOperation("owner", input);
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({ creationRejected: true });
+  expect(mocks.reserve).not.toHaveBeenCalled();
+  expect(mocks.request).not.toHaveBeenCalled();
+});

@@ -432,6 +432,7 @@ export async function createEveConversation(
     }
     if (
       !existing ||
+      existing.creationKind !== "message" ||
       existing.firstMessage !== message ||
       existing.initialModelId !== (initialModelId ?? null) ||
       existing.initialContentHash !== (initialContentHash ?? null) ||
@@ -479,6 +480,7 @@ export async function createEveConversation(
       if (
         !(
           current &&
+          current.creationKind === "message" &&
           (current.state === "creating" || current.state === "uncertain")
         )
       ) {
