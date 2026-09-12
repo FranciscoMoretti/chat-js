@@ -5,26 +5,23 @@ import { useEffect } from "react";
 
 const FALLBACK_FOCUS_TIMEOUT_MS = 120;
 
-function isTypingSurface(element: Element | null): boolean {
-  return (
-    (element instanceof HTMLInputElement &&
-      !element.readOnly &&
-      !element.disabled &&
-      element.type !== "hidden") ||
-    (element instanceof HTMLTextAreaElement &&
-      !element.readOnly &&
-      !element.disabled) ||
-    (element instanceof HTMLElement && element.isContentEditable)
-  );
-}
+const isTypingSurface = (element: Element | null): boolean =>
+  (element instanceof HTMLInputElement &&
+    !element.readOnly &&
+    !element.disabled &&
+    element.type !== "hidden") ||
+  (element instanceof HTMLTextAreaElement &&
+    !element.readOnly &&
+    !element.disabled) ||
+  (element instanceof HTMLElement && element.isContentEditable);
 
-export function useAutoFocus({
+export const useAutoFocus = ({
   autoFocus,
   editor,
 }: {
   autoFocus: boolean;
   editor: LexicalEditor | null;
-}) {
+}) => {
   useEffect(() => {
     if (!(autoFocus && editor)) {
       return;
@@ -57,4 +54,4 @@ export function useAutoFocus({
       }
     };
   }, [autoFocus, editor]);
-}
+};

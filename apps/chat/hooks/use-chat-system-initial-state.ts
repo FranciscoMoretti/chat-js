@@ -12,13 +12,13 @@ type MessageWithNonStringId = Omit<ChatMessage, "id"> & {
   id: string | number;
 };
 
-export function useChatSystemInitialState(
+export const useChatSystemInitialState = (
   messages: MessageWithNonStringId[] | null | undefined
 ): {
   initialMessages: ChatMessage[];
   initialTree: ReturnType<typeof buildTreeSnapshotFromMessages<ChatMessage>>;
   initialTool: UiToolName | null;
-} {
+} => {
   const normalizedMessages = useMemo<ChatMessage[]>(() => {
     if (!messages) {
       return [];
@@ -66,7 +66,7 @@ export function useChatSystemInitialState(
 
   return {
     initialMessages,
-    initialTree,
     initialTool,
+    initialTree,
   };
-}
+};
