@@ -1,47 +1,49 @@
 import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import path from "node:path";
 
 const THREAD_IMPORT_REPLACEMENTS = [
   ["@chat-js/thread/react", "@/lib/thread/react"],
   ["@chat-js/thread", "@/lib/thread"],
 ] as const;
 
-async function rewriteThreadImports(directory: string): Promise<void> {
+const rewriteThreadImports = async (directory: string): Promise<void> => {
   const entries = await readdir(directory, { withFileTypes: true });
 
   await Promise.all(
     entries.map(async (entry) => {
-      const path = join(directory, entry.name);
+      const entryPath = path.join(directory, entry.name);
       if (entry.isDirectory()) {
-        await rewriteThreadImports(path);
+        await rewriteThreadImports(entryPath);
         return;
       }
-      if (!(entry.isFile() && [".ts", ".tsx"].includes(extname(entry.name)))) {
+      if (
+        !(entry.isFile() && [".ts", ".tsx"].includes(path.extname(entry.name)))
+      ) {
         return;
       }
 
-      const source = await readFile(path, "utf-8");
+      const source = await readFile(entryPath, "utf-8");
       let rewritten = source;
       for (const [packageImport, localImport] of THREAD_IMPORT_REPLACEMENTS) {
         rewritten = rewritten.replaceAll(packageImport, localImport);
       }
       if (rewritten !== source) {
-        await writeFile(path, rewritten);
+        await writeFile(entryPath, rewritten);
       }
     })
   );
-}
+};
 
-export async function vendorThreadPackage(options: {
+export const vendorThreadPackage = async (options: {
   destination: string;
   threadSourceDir: string;
-}): Promise<void> {
-  const localThreadDir = join(options.destination, "lib", "thread");
-  await rm(localThreadDir, { recursive: true, force: true });
+}): Promise<void> => {
+  const localThreadDir = path.join(options.destination, "lib", "thread");
+  await rm(localThreadDir, { force: true, recursive: true });
   await cp(options.threadSourceDir, localThreadDir, { recursive: true });
   await rewriteThreadImports(options.destination);
 
-  const packageJsonPath = join(options.destination, "package.json");
+  const packageJsonPath = path.join(options.destination, "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
@@ -56,4 +58,4 @@ export async function vendorThreadPackage(options: {
     );
   }
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
-}
+};
