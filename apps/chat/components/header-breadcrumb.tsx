@@ -282,9 +282,14 @@ export const HeaderBreadcrumb = ({
 
   const handleChatInputKeyDown = createInputKeyDownHandler({
     onEnter: () => {
-      handleChatRename().catch(() => {
-        // No-op: already handled via rename hook
-      });
+      const rename = handleChatRename();
+      void (async () => {
+        try {
+          await rename;
+        } catch {
+          // No-op: already handled via rename hook
+        }
+      })();
     },
     onEscape: () => {
       setIsChatEditing(false);

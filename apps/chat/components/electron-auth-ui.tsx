@@ -30,11 +30,15 @@ export const ElectronBrowserSignIn = ({
           if (typeof requestAuth !== "function") {
             return;
           }
-          Promise.resolve()
-            .then(() => requestAuth())
-            .catch((error) => {
+          const launchBrowserSignIn = async () => {
+            try {
+              await Promise.resolve();
+              await requestAuth();
+            } catch (error) {
               console.error("Failed to launch browser sign-in", error);
-            });
+            }
+          };
+          void launchBrowserSignIn();
           window.setTimeout(() => setOpened(true), 300);
         }}
         type="button"

@@ -23,9 +23,11 @@ export const runSupervisor = async (
   const conductResearchTool = tool({
     description: "Call this tool to conduct research on a specific topic.",
     execute: ({ research_topic }) => {
-      researchQueue = researchQueue.then(() =>
-        runResearcher(research_topic, options)
-      );
+      const previousResearch = researchQueue;
+      researchQueue = (async () => {
+        await previousResearch;
+        return runResearcher(research_topic, options);
+      })();
       return researchQueue as Promise<string>;
     },
     inputSchema: z.object({

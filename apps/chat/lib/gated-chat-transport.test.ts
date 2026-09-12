@@ -82,13 +82,26 @@ describe("createGatedChatTransport", () => {
       reconnectToStream: async () => null,
       sendMessages,
     });
+    const abortController = new AbortController();
+    const removeEventListener = vi.spyOn(
+      abortController.signal,
+      "removeEventListener"
+    );
 
     const request = transport.sendMessages(
-      requestOptions(gateChatRequest(Promise.reject(gateError)).metadata)
+      requestOptions(
+        gateChatRequest(Promise.reject(gateError)).metadata,
+        abortController.signal
+      )
     );
 
     await assert.rejects(request, gateError);
     assert.equal(sendMessages.mock.calls.length, 0);
+    assert.equal(
+      removeEventListener.mock.calls.filter(([type]) => type === "abort")
+        .length,
+      1
+    );
   });
 
   it("does not forward a request that was already stopped", async () => {
@@ -110,6 +123,58 @@ describe("createGatedChatTransport", () => {
     );
 
     await assert.rejects(request, { name: "AbortError" });
+    assert.equal(sendMessages.mock.calls.length, 0);
+  });
+
+  it("observes a gate rejection after a request is stopped while waiting", async () => {
+    let rejectGate: (error: Error) => void = () => {};
+    const ready = new Promise<void>((_resolve, reject) => {
+      rejectGate = reject;
+    });
+    const sendMessages = vi.fn(() =>
+      Promise.resolve(new ReadableStream<UIMessageChunk>())
+    );
+    const transport = createGatedChatTransport<UIMessage>({
+      reconnectToStream: async () => null,
+      sendMessages,
+    });
+    const abortController = new AbortController();
+    const request = transport.sendMessages(
+      requestOptions(gateChatRequest(ready).metadata, abortController.signal)
+    );
+
+    abortController.abort();
+    await assert.rejects(request, { name: "AbortError" });
+
+    rejectGate(new Error("persist failed after cancellation"));
+    await Promise.resolve();
+
+    assert.equal(sendMessages.mock.calls.length, 0);
+  });
+
+  it("observes a rejected gate for a request that was already stopped", async () => {
+    let rejectGate: (error: Error) => void = () => {};
+    const ready = new Promise<void>((_resolve, reject) => {
+      rejectGate = reject;
+    });
+    const sendMessages = vi.fn(() =>
+      Promise.resolve(new ReadableStream<UIMessageChunk>())
+    );
+    const transport = createGatedChatTransport<UIMessage>({
+      reconnectToStream: async () => null,
+      sendMessages,
+    });
+    const abortController = new AbortController();
+    abortController.abort();
+
+    const request = transport.sendMessages(
+      requestOptions(gateChatRequest(ready).metadata, abortController.signal)
+    );
+    await assert.rejects(request, { name: "AbortError" });
+
+    rejectGate(new Error("persist failed before request started"));
+    await Promise.resolve();
+
     assert.equal(sendMessages.mock.calls.length, 0);
   });
 });

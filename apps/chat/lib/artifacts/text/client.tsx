@@ -7,7 +7,11 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import { config } from "@/lib/config";
 
 const DiffView = dynamic(
-  () => import("@/components/diffview").then((m) => ({ default: m.DiffView })),
+  async () => {
+    const { DiffView: DiffViewComponent } =
+      await import("@/components/diffview");
+    return { default: DiffViewComponent };
+  },
   {
     loading: () => <DocumentSkeleton artifactKind="text" />,
     ssr: false,
@@ -15,7 +19,11 @@ const DiffView = dynamic(
 );
 
 const Editor = dynamic(
-  () => import("@/components/text-editor").then((m) => ({ default: m.Editor })),
+  async () => {
+    const { Editor: EditorComponent } =
+      await import("@/components/text-editor");
+    return { default: EditorComponent };
+  },
   {
     loading: () => <DocumentSkeleton artifactKind="text" />,
     ssr: false,

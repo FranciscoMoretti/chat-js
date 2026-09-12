@@ -184,32 +184,6 @@
       }
     },
     {
-      "files": [
-        "app/(chat)/api/chat/route.ts",
-        "components/ai-elements/code-block.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/chat-runtime-controller.tsx",
-        "components/device-login-page.tsx",
-        "components/electron-auth-handler.tsx",
-        "components/electron-auth-ui.tsx",
-        "components/header-breadcrumb.tsx",
-        "components/interactive-charts.tsx",
-        "components/multimodal-input.tsx",
-        "components/part/document-preview.tsx",
-        "components/retry-button.tsx",
-        "components/suggested-actions.tsx",
-        "lib/anonymous-session-client.ts",
-        "lib/artifacts/text/client.tsx",
-        "lib/cancellation-aware-chat-transport.ts",
-        "lib/gated-chat-transport.ts",
-        "lib/start-provisional-chat.ts",
-        "tools/platform/deep-research/supervisor-agent.ts"
-      ],
-      "rules": {
-        "promise/prefer-await-to-then": "off"
-      }
-    },
-    {
       "files": ["lib/gated-chat-transport.ts"],
       "rules": {
         "promise/prefer-catch": "off"

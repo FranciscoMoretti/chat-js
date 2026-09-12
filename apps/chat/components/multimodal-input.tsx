@@ -515,7 +515,7 @@ const PureMultimodalInput = ({
     if (primaryRequest) {
       handleModelChange(primaryRequest.modelId);
 
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: !!session?.user,
         message,
@@ -523,17 +523,20 @@ const PureMultimodalInput = ({
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,
-      })
-        .then(async (failedRequestSpecs) => {
+      });
+      const completeRequests = async () => {
+        try {
+          const failedRequestSpecs = await runRequests;
           if (failedRequestSpecs.length > 0) {
             toast.error("Failed to complete all parallel responses");
           }
 
           await invalidatePersistedMessages();
-        })
-        .catch(() => {
+        } catch {
           toast.error("Failed to complete all parallel responses");
-        });
+        }
+      };
+      void completeRequests();
     } else {
       toast.error("No model selected");
     }

@@ -56,10 +56,12 @@ const ElectronAuthOverlay = ({
             {canCancel ? (
               <Button
                 className="mt-2"
-                onClick={() => {
-                  window.electronAPI?.cancelAuthFlow?.().catch((error) => {
+                onClick={async () => {
+                  try {
+                    await window.electronAPI?.cancelAuthFlow?.();
+                  } catch (error) {
                     console.error("Failed to cancel Electron auth flow", error);
-                  });
+                  }
                 }}
                 size="sm"
                 type="button"
@@ -129,16 +131,18 @@ export const ElectronAuthHandler = () => {
       return;
     }
 
-    const authStatePromise = window.electronAPI?.getAuthState?.();
-    authStatePromise
-      ?.then((state) => {
+    const loadAuthState = async () => {
+      try {
+        const state = await window.electronAPI?.getAuthState?.();
         if (state) {
           setAuthState(state);
         }
-      })
-      ?.catch((error) => {
+      } catch (error) {
         console.error("Failed to read Electron auth state", error);
-      });
+      }
+    };
+
+    void loadAuthState();
 
     const syncAndRefresh = async () => {
       await window.electronAPI?.syncAuthSession?.();
@@ -146,17 +150,27 @@ export const ElectronAuthHandler = () => {
     };
 
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
-      syncAndRefresh().catch((error) => {
-        console.error(
-          "Failed to sync auth session after authentication",
-          error
-        );
-      });
+      const syncAuthenticatedSession = async () => {
+        try {
+          await syncAndRefresh();
+        } catch (error) {
+          console.error(
+            "Failed to sync auth session after authentication",
+            error
+          );
+        }
+      };
+      void syncAuthenticatedSession();
     });
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
-      syncAndRefresh().catch((error) => {
-        console.error("Failed to sync auth session after user update", error);
-      });
+      const syncUpdatedUser = async () => {
+        try {
+          await syncAndRefresh();
+        } catch (error) {
+          console.error("Failed to sync auth session after user update", error);
+        }
+      };
+      void syncUpdatedUser();
     });
     const unsubscribeAuthError = window.onAuthError(
       (ctx: ElectronAuthErrorContext) => {
