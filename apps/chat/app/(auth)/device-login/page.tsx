@@ -27,11 +27,11 @@ function DeviceLoginFallback() {
   );
 }
 
-export default function DeviceLoginRoute({
+const DeviceLoginRoute = ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+}) => {
   if (!config.desktopApp.enabled) {
     redirect("/login");
   }
@@ -41,7 +41,9 @@ export default function DeviceLoginRoute({
       <DeviceLoginContent searchParams={searchParams} />
     </Suspense>
   );
-}
+};
+
+export default DeviceLoginRoute;
 
 async function DeviceLoginContent({
   searchParams,

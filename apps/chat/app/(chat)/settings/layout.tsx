@@ -6,17 +6,13 @@ import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <Suspense fallback={<SettingsLayoutShell />}>
-      <SettingsLayoutContent>{children}</SettingsLayoutContent>
-    </Suspense>
-  );
-}
+const SettingsLayout = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<SettingsLayoutShell />}>
+    <SettingsLayoutContent>{children}</SettingsLayoutContent>
+  </Suspense>
+);
+
+export default SettingsLayout;
 
 function SettingsLayoutShell({ children }: { children?: React.ReactNode }) {
   return (
