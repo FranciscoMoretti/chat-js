@@ -1,6 +1,6 @@
 export const FILE_CONTENT_PATH = "/api/files/content";
 
-const STORAGE_KEY = /^[A-Za-z0-9_-]{24}(?:\.[a-z0-9]{1,10})?$/;
+const STORAGE_KEY = /^[A-Za-z0-9_-]{24}(?:\.[a-z0-9]{1,10})?$/u;
 const URL_PARSE_BASE = "http://chatjs.local";
 
 export function isFileStorageKey(value: string): boolean {
