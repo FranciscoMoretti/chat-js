@@ -11,11 +11,11 @@ import {
 
 import { Button } from "./ui/button";
 
-export function SidebarToggle({
+export const SidebarToggle = ({
   className,
   onClick,
   ...props
-}: ComponentProps<typeof SidebarTrigger>) {
+}: ComponentProps<typeof SidebarTrigger>) => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -39,4 +39,4 @@ export function SidebarToggle({
       <TooltipContent align="start">Toggle Sidebar</TooltipContent>
     </Tooltip>
   );
-}
+};

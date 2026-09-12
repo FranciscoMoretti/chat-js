@@ -30,7 +30,7 @@ interface EditorProps {
 }
 
 // Content update plugin
-function ContentUpdatePlugin({
+const ContentUpdatePlugin = ({
   content,
   status,
   onSaveContent,
@@ -40,7 +40,7 @@ function ContentUpdatePlugin({
   status: "streaming" | "idle";
   onSaveContent: (content: string, debounce: boolean) => void;
   isReadonly?: boolean;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
   const isProgrammaticUpdate = useRef(false);
 
@@ -107,14 +107,14 @@ function ContentUpdatePlugin({
   };
 
   return <OnChangePlugin onChange={handleChange} />;
-}
+};
 
-function PureEditor({
+const PureEditor = ({
   content,
   onSaveContent,
   status,
   isReadonly,
-}: EditorProps) {
+}: EditorProps) => {
   const initialConfig = createEditorConfig();
 
   const editorConfig = {
@@ -146,17 +146,14 @@ function PureEditor({
       </LexicalComposer>
     </div>
   );
-}
+};
 
-function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
-  return (
-    prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
-    prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
-    prevProps.content === nextProps.content &&
-    prevProps.onSaveContent === nextProps.onSaveContent &&
-    prevProps.isReadonly === nextProps.isReadonly
-  );
-}
+const areEqual = (prevProps: EditorProps, nextProps: EditorProps) =>
+  prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
+  prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
+  !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
+  prevProps.content === nextProps.content &&
+  prevProps.onSaveContent === nextProps.onSaveContent &&
+  prevProps.isReadonly === nextProps.isReadonly;
 
 export const Editor = memo(PureEditor, areEqual);

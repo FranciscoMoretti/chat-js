@@ -18,7 +18,7 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-function getLanguageExtension(language: string) {
+const getLanguageExtension = (language: string) => {
   switch (language) {
     case "typescript":
       return javascript({ jsx: false, typescript: true });
@@ -31,15 +31,15 @@ function getLanguageExtension(language: string) {
     default:
       return python();
   }
-}
+};
 
-function PureCodeEditor({
+const PureCodeEditor = ({
   content,
   onSaveContent,
   status,
   isReadonly,
   language = "python",
-}: EditorProps) {
+}: EditorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
@@ -125,9 +125,9 @@ function PureCodeEditor({
   return (
     <div className="not-prose relative w-full text-sm" ref={containerRef} />
   );
-}
+};
 
-function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
+const areEqual = (prevProps: EditorProps, nextProps: EditorProps) => {
   if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
     return false;
   }
@@ -148,6 +148,6 @@ function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
   }
 
   return true;
-}
+};
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);

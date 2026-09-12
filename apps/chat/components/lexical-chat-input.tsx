@@ -23,11 +23,11 @@ import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { cn } from "@/lib/utils";
 
 // Plugin to handle Enter key submissions
-function EnterKeySubmitPlugin({
+const EnterKeySubmitPlugin = ({
   onEnterSubmit,
 }: {
   onEnterSubmit?: (event: KeyboardEvent) => boolean;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -52,14 +52,14 @@ function EnterKeySubmitPlugin({
   }, [editor, onEnterSubmit]);
 
   return null;
-}
+};
 
 // Plugin to get editor instance for imperative ref
-function EditorRefPlugin({
+const EditorRefPlugin = ({
   setEditor,
 }: {
   setEditor: (editor: LexicalEditor) => void;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -67,7 +67,7 @@ function EditorRefPlugin({
   }, [editor, setEditor]);
 
   return null;
-}
+};
 
 interface LexicalChatInputRef {
   clear: () => void;
@@ -96,9 +96,9 @@ const theme = {
   paragraph: "editor-paragraph",
 };
 
-function onError(error: Error) {
+const onError = (error: Error) => {
   console.error("Lexical error:", error);
-}
+};
 
 export const LexicalChatInput = ({
   initialValue = "",

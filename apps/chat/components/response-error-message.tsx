@@ -5,7 +5,7 @@ import { useChatActions } from "@/lib/stores/base";
 
 import { Button } from "./ui/button";
 
-export function ResponseErrorMessage() {
+export const ResponseErrorMessage = () => {
   const { regenerate } = useChatActions<ChatMessage>();
 
   return (
@@ -41,4 +41,4 @@ export function ResponseErrorMessage() {
       </Button>
     </div>
   );
-}
+};

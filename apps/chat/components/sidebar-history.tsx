@@ -11,7 +11,7 @@ import { useSession } from "@/providers/session-provider";
 import { SidebarChatsList } from "./sidebar-chats-list";
 import { SidebarProjects } from "./sidebar-projects";
 
-export function SidebarHistory() {
+export const SidebarHistory = () => {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
 
@@ -37,4 +37,4 @@ export function SidebarHistory() {
       </SidebarGroup>
     </>
   );
-}
+};

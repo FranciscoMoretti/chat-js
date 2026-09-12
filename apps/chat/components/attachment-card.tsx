@@ -15,15 +15,13 @@ import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
-function LoadingPreview() {
-  return (
-    <div className="flex size-full items-center justify-center">
-      <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
-    </div>
-  );
-}
+const LoadingPreview = () => (
+  <div className="flex size-full items-center justify-center">
+    <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
+  </div>
+);
 
-function ImagePreview({ name, url }: { name: string; url: string }) {
+const ImagePreview = ({ name, url }: { name: string; url: string }) => {
   const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (imageUnavailable) {
     return (
@@ -49,21 +47,19 @@ function ImagePreview({ name, url }: { name: string; url: string }) {
       unoptimized={imageProps.unoptimized}
     />
   );
-}
+};
 
-function FilePreview({ isPdf }: { isPdf: boolean }) {
-  return (
-    <div className="flex size-full items-center justify-center">
-      {isPdf ? (
-        <FileTextIcon className="size-5 text-red-500" />
-      ) : (
-        <PaperclipIcon className="text-muted-foreground size-5" />
-      )}
-    </div>
-  );
-}
+const FilePreview = ({ isPdf }: { isPdf: boolean }) => (
+  <div className="flex size-full items-center justify-center">
+    {isPdf ? (
+      <FileTextIcon className="size-5 text-red-500" />
+    ) : (
+      <PaperclipIcon className="text-muted-foreground size-5" />
+    )}
+  </div>
+);
 
-function AttachmentPreview({
+const AttachmentPreview = ({
   isUploading,
   isImage,
   isPdf,
@@ -75,7 +71,7 @@ function AttachmentPreview({
   isPdf: boolean;
   name: string;
   url: string;
-}) {
+}) => {
   if (isUploading) {
     return <LoadingPreview />;
   }
@@ -83,9 +79,9 @@ function AttachmentPreview({
     return <ImagePreview name={name} url={url} />;
   }
   return <FilePreview isPdf={isPdf} />;
-}
+};
 
-export function AttachmentCard({
+export const AttachmentCard = ({
   attachment,
   isUploading,
   onRemove,
@@ -95,7 +91,7 @@ export function AttachmentCard({
   isUploading: boolean;
   onRemove?: () => void;
   className?: string;
-}) {
+}) => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
@@ -135,4 +131,4 @@ export function AttachmentCard({
       )}
     </div>
   );
-}
+};

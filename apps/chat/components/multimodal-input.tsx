@@ -80,27 +80,24 @@ import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 /** Derive accept string for images only */
-function getAcceptImages(acceptedTypes: Record<string, string[]>): string {
-  return Object.entries(acceptedTypes)
+const getAcceptImages = (acceptedTypes: Record<string, string[]>): string =>
+  Object.entries(acceptedTypes)
     .filter(([mime]) => mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
     .join(",");
-}
 
 /** Derive accept string for non-image files only */
-function getAcceptFiles(acceptedTypes: Record<string, string[]>): string {
-  return Object.entries(acceptedTypes)
+const getAcceptFiles = (acceptedTypes: Record<string, string[]>): string =>
+  Object.entries(acceptedTypes)
     .filter(([mime]) => !mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
     .join(",");
-}
 
 /** Derive accept string for all file types */
-function getAcceptAll(acceptedTypes: Record<string, string[]>): string {
-  return Object.values(acceptedTypes).flat().join(",");
-}
+const getAcceptAll = (acceptedTypes: Record<string, string[]>): string =>
+  Object.values(acceptedTypes).flat().join(",");
 
-function PureMultimodalInput({
+const PureMultimodalInput = ({
   children,
   chatId,
   status,
@@ -118,7 +115,7 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
-}) {
+}) => {
   const thread = useApplicationThread();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
@@ -715,9 +712,9 @@ function PureMultimodalInput({
       </div>
     </div>
   );
-}
+};
 
-function PureAttachmentsButton({
+const PureAttachmentsButton = ({
   fileInputRef,
   status,
   acceptAll,
@@ -729,7 +726,7 @@ function PureAttachmentsButton({
   acceptAll: string;
   acceptImages: string;
   acceptFiles: string;
-}) {
+}) => {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const isAnonymous = !session?.user;
@@ -846,7 +843,7 @@ function PureAttachmentsButton({
       </PopoverContent>
     </Popover>
   );
-}
+};
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
@@ -868,15 +865,15 @@ const ComposerContext = createContext<{
   removeAttachment: (attachment: Attachment) => void;
 } | null>(null);
 
-function useComposer() {
+const useComposer = () => {
   const context = useContext(ComposerContext);
   if (!context) {
     throw new Error("Place composer parts inside MultimodalInput");
   }
   return context;
-}
+};
 
-export function ComposerLimits() {
+export const ComposerLimits = () => {
   const { isEditMode, isModelDisallowedForAnonymous } = useComposer();
   return isEditMode ? null : (
     <LimitDisplay
@@ -884,9 +881,9 @@ export function ComposerLimits() {
       forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
     />
   );
-}
+};
 
-export function ComposerAttachments() {
+export const ComposerAttachments = () => {
   const { uploadQueue, removeAttachment } = useComposer();
   const { attachments } = useChatInput();
   return (
@@ -897,9 +894,9 @@ export function ComposerAttachments() {
       uploadQueue={uploadQueue}
     />
   );
-}
+};
 
-export function ComposerInput() {
+export const ComposerInput = () => {
   const { autoFocus, submission, submitForm, onPaste } = useComposer();
   const { editorRef, getInitialInput, handleInputChange } = useChatInput();
   const isMobile = useIsMobile();
@@ -933,9 +930,9 @@ export function ComposerInput() {
       ref={editorRef}
     />
   );
-}
+};
 
-export function ComposerAttachButton() {
+export const ComposerAttachButton = () => {
   const { fileInputRef, status, acceptAll, acceptImages, acceptFiles } =
     useComposer();
   return config.features.attachments ? (
@@ -947,9 +944,9 @@ export function ComposerAttachButton() {
       status={status}
     />
   ) : null;
-}
+};
 
-export function ComposerModelPicker() {
+export const ComposerModelPicker = () => {
   const {
     selectedModelId,
     selectedModelSelection,
@@ -963,9 +960,9 @@ export function ComposerModelPicker() {
       selectedModelSelection={selectedModelSelection}
     />
   );
-}
+};
 
-export function ComposerTools() {
+export const ComposerTools = () => {
   const { selectedModelId, selectedTool, setSelectedTool } = useChatInput();
   return (
     <ResponsiveTools
@@ -974,9 +971,9 @@ export function ComposerTools() {
       tools={selectedTool}
     />
   );
-}
+};
 
-export function ComposerContextUsage() {
+export const ComposerContextUsage = () => {
   const { parentMessageId } = useComposer();
   const { selectedModelId } = useChatInput();
   return (
@@ -987,9 +984,9 @@ export function ComposerContextUsage() {
       selectedModelId={selectedModelId}
     />
   );
-}
+};
 
-export function ComposerSubmit() {
+export const ComposerSubmit = () => {
   const { status, submission, submitForm, onStop } = useComposer();
   return (
     <PromptInputSubmit
@@ -1012,7 +1009,7 @@ export function ComposerSubmit() {
       status={status}
     />
   );
-}
+};
 
 export const MultimodalInput = memo(
   PureMultimodalInput,

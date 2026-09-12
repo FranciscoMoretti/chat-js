@@ -139,15 +139,12 @@ const PureSpreadsheetEditor = ({
   );
 };
 
-function areEqual(prevProps: SheetEditorProps, nextProps: SheetEditorProps) {
-  return (
-    prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
-    prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
-    prevProps.content === nextProps.content &&
-    prevProps.saveContent === nextProps.saveContent &&
-    prevProps.isReadonly === nextProps.isReadonly
-  );
-}
+const areEqual = (prevProps: SheetEditorProps, nextProps: SheetEditorProps) =>
+  prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
+  prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
+  !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
+  prevProps.content === nextProps.content &&
+  prevProps.saveContent === nextProps.saveContent &&
+  prevProps.isReadonly === nextProps.isReadonly;
 
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);

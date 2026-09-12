@@ -14,13 +14,13 @@ import {
 import { cn, generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-function FollowUpSuggestions({
+const FollowUpSuggestions = ({
   suggestions,
   className,
 }: {
   suggestions: string[];
   className?: string;
-}) {
+}) => {
   const storeApi = useChatStoreApi();
   const { selectedModelId, selectedTool } = useChatInput();
 
@@ -89,9 +89,13 @@ function FollowUpSuggestions({
       </Suggestions>
     </div>
   );
-}
+};
 
-export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
+export const FollowUpSuggestionsParts = ({
+  messageId,
+}: {
+  messageId: string;
+}) => {
   const types = useMessagePartTypesById(messageId);
   const ids = useMessageIds();
   const isLastMessage = ids.at(-1) === messageId;
@@ -105,15 +109,15 @@ export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
     return null;
   }
   return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
-}
+};
 
-function FollowUpSuggestionsPart({
+const FollowUpSuggestionsPart = ({
   messageId,
   partIdx,
 }: {
   messageId: string;
   partIdx: number;
-}) {
+}) => {
   const part = useMessagePartByPartIdx(
     messageId,
     partIdx,
@@ -122,4 +126,4 @@ function FollowUpSuggestionsPart({
   const { data } = part;
 
   return <FollowUpSuggestions suggestions={data.suggestions} />;
-}
+};

@@ -17,10 +17,10 @@ import {
   isElectronRenderer,
 } from "@/lib/electron-auth";
 
-export function SignupForm({
+export const SignupForm = ({
   className,
   ...props
-}: React.ComponentProps<typeof Card>) {
+}: React.ComponentProps<typeof Card>) => {
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
   const [isElectron, setIsElectron] = useState(false);
@@ -83,4 +83,4 @@ export function SignupForm({
       </div>
     </div>
   );
-}
+};

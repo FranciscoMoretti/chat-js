@@ -16,7 +16,7 @@ import {
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 
-export function SidebarProjects() {
+export const SidebarProjects = () => {
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
@@ -87,4 +87,4 @@ export function SidebarProjects() {
       />
     </>
   );
-}
+};

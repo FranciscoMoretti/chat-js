@@ -34,17 +34,17 @@ interface ArtifactActionsProps {
   setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>;
 }
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
 interface TypedArtifactActionsProps<M extends ArtifactMetadata> extends Omit<
   ArtifactActionsProps,
@@ -55,7 +55,7 @@ interface TypedArtifactActionsProps<M extends ArtifactMetadata> extends Omit<
   setMetadata: Dispatch<SetStateAction<M>>;
 }
 
-function TypedArtifactActions<M extends ArtifactMetadata>({
+const TypedArtifactActions = <M extends ArtifactMetadata>({
   artifact,
   artifactDefinition,
   handleVersionChange,
@@ -65,7 +65,7 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
   metadata,
   setMetadata,
   isReadonly,
-}: TypedArtifactActionsProps<M>) {
+}: TypedArtifactActionsProps<M>) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const actionContext: ArtifactActionContext<M> = {
@@ -164,7 +164,7 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
         ))}
     </div>
   );
-}
+};
 
 export const ArtifactActions = memo(
   function ArtifactActions(props: ArtifactActionsProps) {

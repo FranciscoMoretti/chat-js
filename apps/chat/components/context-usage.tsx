@@ -28,13 +28,13 @@ const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
 const ICON_STROKE_WIDTH = 2;
 
-function ContextIconStandalone({
+const ContextIconStandalone = ({
   usedTokens,
   maxTokens,
 }: {
   usedTokens: number;
   maxTokens: number;
-}) {
+}) => {
   const circumference = 2 * Math.PI * ICON_RADIUS;
   const usedPercent = usedTokens / maxTokens;
   const dashOffset = circumference * (1 - usedPercent);
@@ -72,9 +72,9 @@ function ContextIconStandalone({
       />
     </svg>
   );
-}
+};
 
-function ContextUsage({
+const ContextUsage = ({
   usage,
   selectedModelId,
   iconOnly = false,
@@ -82,7 +82,7 @@ function ContextUsage({
   usage: StoredLanguageModelUsage;
   selectedModelId: ModelId;
   iconOnly?: boolean;
-}) {
+}) => {
   const contextMax = useMemo(() => {
     try {
       const cw = getContextWindow(selectedModelId as unknown as string);
@@ -130,9 +130,9 @@ function ContextUsage({
       </ContextContent>
     </Context>
   );
-}
+};
 
-export function ContextUsageFromParent({
+export const ContextUsageFromParent = ({
   parentMessageId,
   selectedModelId,
   iconOnly = false,
@@ -142,7 +142,7 @@ export function ContextUsageFromParent({
   selectedModelId: AppModelId;
   iconOnly?: boolean;
   className?: string;
-}) {
+}) => {
   const usage = useLastUsageUntilMessageId(parentMessageId);
   const { getModelById } = useChatModels();
   const modelDefinition = getModelById(selectedModelId);
@@ -160,4 +160,4 @@ export function ContextUsageFromParent({
       />
     </div>
   );
-}
+};

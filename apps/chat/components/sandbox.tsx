@@ -25,13 +25,13 @@ interface SandboxComposedProps {
   title?: string;
 }
 
-export function SandboxComposed({
+export const SandboxComposed = ({
   code,
   output,
   language = "tsx",
   title,
   state,
-}: SandboxComposedProps) {
+}: SandboxComposedProps) => {
   const [activeTab, setActiveTab] = React.useState("code");
 
   return (
@@ -55,4 +55,4 @@ export function SandboxComposed({
       </SandboxContent>
     </Sandbox>
   );
-}
+};

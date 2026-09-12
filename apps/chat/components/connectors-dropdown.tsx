@@ -23,7 +23,7 @@ import {
 import { Switch } from "./ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-function PureConnectorsDropdown() {
+const PureConnectorsDropdown = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -135,6 +135,6 @@ function PureConnectorsDropdown() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
 export const ConnectorsDropdown = memo(PureConnectorsDropdown);

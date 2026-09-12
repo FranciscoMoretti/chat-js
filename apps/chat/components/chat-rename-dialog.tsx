@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-export function ChatRenameDialog({
+export const ChatRenameDialog = ({
   open,
   onOpenChange,
   currentTitle,
@@ -25,7 +25,7 @@ export function ChatRenameDialog({
   currentTitle: string;
   onSubmit: (title: string) => Promise<void>;
   isLoading: boolean;
-}) {
+}) => {
   const [chatTitle, setChatTitle] = useState(currentTitle);
 
   useEffect(() => {
@@ -88,4 +88,4 @@ export function ChatRenameDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

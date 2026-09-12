@@ -5,7 +5,7 @@ import { AttachmentList } from "@/components/attachment-list";
 import type { Attachment } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
-export function ContextBar({
+export const ContextBar = ({
   attachments,
   uploadQueue,
   onRemoveAction,
@@ -15,7 +15,7 @@ export function ContextBar({
   uploadQueue: string[];
   onRemoveAction: (attachment: Attachment) => void;
   className?: string;
-}) {
+}) => {
   const hasBarContent = attachments.length > 0 || uploadQueue.length > 0;
 
   if (!hasBarContent) {
@@ -34,4 +34,4 @@ export function ContextBar({
       )}
     </PromptInputHeader>
   );
-}
+};

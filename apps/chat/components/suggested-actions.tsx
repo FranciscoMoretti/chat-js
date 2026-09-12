@@ -29,11 +29,11 @@ interface SuggestedActionsProps {
   selectedModelId: AppModelId;
 }
 
-function PureSuggestedActions({
+const PureSuggestedActions = ({
   chatId,
   selectedModelId,
   className,
-}: SuggestedActionsProps) {
+}: SuggestedActionsProps) => {
   const { startRun } = useChatActions<ChatMessage>();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
   const startProvisionalChat = useStartProvisionalChat(chatId);
@@ -228,6 +228,6 @@ function PureSuggestedActions({
       ) : null}
     </div>
   );
-}
+};
 
 export const SuggestedActions = memo(PureSuggestedActions);

@@ -16,7 +16,7 @@ import { useMessageIds } from "@/lib/stores/hooks-base";
 import type { UIChat } from "@/lib/types/ui-chat";
 import { useSession } from "@/providers/session-provider";
 
-export function Chat({
+export const Chat = ({
   chat,
   id,
   isReadonly,
@@ -28,7 +28,7 @@ export function Chat({
   isReadonly: boolean;
   projectId?: string;
   routeSource: ChatRouteSource;
-}) {
+}) => {
   const { data: session } = useSession();
   const hasMessages = useMessageIds().length > 0;
   const isSecondaryPanelVisible = useArtifactSelector(
@@ -68,4 +68,4 @@ export function Chat({
       </ChatLayoutSecondary>
     </ChatLayout>
   );
-}
+};

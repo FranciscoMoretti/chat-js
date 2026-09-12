@@ -32,7 +32,7 @@ import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
-export function ProjectHome({
+export const ProjectHome = ({
   chatId,
   projectId,
   status,
@@ -42,7 +42,7 @@ export function ProjectHome({
   projectId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   className?: string;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const parentMessageId = useLastMessageId();
@@ -209,4 +209,4 @@ export function ProjectHome({
       </div>
     </div>
   );
-}
+};
