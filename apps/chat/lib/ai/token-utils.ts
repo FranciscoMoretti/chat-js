@@ -91,7 +91,7 @@ const handleExceededSystemMessage = (
 
   if (typeof systemMessage.content === "string") {
     const truncatedContent = trimPrompt(systemMessage.content, maxTokens);
-    return [{ ...systemMessage, content: truncatedContent }];
+    return [Object.assign({}, systemMessage, { content: truncatedContent })];
   }
 
   return [systemMessage];
@@ -125,7 +125,7 @@ const truncateStringContent = (
   );
   const trimmedContent = trimPrompt(truncatedContent, availableTokens);
 
-  return { ...lastMessage, content: trimmedContent };
+  return Object.assign({}, lastMessage, { content: trimmedContent });
 };
 
 const truncateToolResultPart = (
@@ -196,7 +196,7 @@ const truncateToolArrayContent = (
     tokensToRemove -= tokensRemoved;
   }
 
-  return { ...lastMessage, content };
+  return Object.assign({}, lastMessage, { content });
 };
 
 const truncateLastMessageIfNeeded = (
