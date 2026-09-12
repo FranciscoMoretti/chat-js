@@ -30,41 +30,6 @@ const cliDirectory = join(import.meta.dir, "..");
 const cliEntry = join(root, "cli/node_modules/@chat-js/cli/dist/index.js");
 const archive = join(root, `chat-js-gateways-${gatewayPackage.version}.tgz`);
 
-beforeAll(async () => {
-  await run(packageDirectory, ["bun", "run", "build"]);
-  await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
-  await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
-  const output = join(cliDirectory, "../registry/dist/r");
-  const outputNames = await readdir(output);
-  const names = outputNames.toSorted();
-  const first = await Promise.all(
-    names.map((name) => readFile(join(output, name), "utf-8"))
-  );
-  await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
-  const rebuiltOutputNames = await readdir(output);
-  expect(rebuiltOutputNames.toSorted()).toEqual(names);
-  expect(
-    await Promise.all(
-      names.map((name) => readFile(join(output, name), "utf-8"))
-    )
-  ).toEqual(first);
-  await run(cliDirectory, ["bun", "run", "build"]);
-  await run(cliDirectory, ["bun", "pm", "pack", "--destination", root]);
-  await mkdir(join(root, "cli"));
-  await writeFile(
-    join(root, "cli/package.json"),
-    JSON.stringify({
-      dependencies: {
-        "@chat-js/cli": `file:${join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
-      },
-      overrides: { "@chat-js/gateways": `file:${archive}` },
-      private: true,
-    })
-  );
-  await run(join(root, "cli"), ["bun", "install"]);
-  process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
-});
-
 afterAll(async () => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -286,6 +251,42 @@ export const readPage = tool({inputSchema: z.object({target: z.string()}), execu
   hostname: "127.0.0.1",
   port: 0,
 });
+
+beforeAll(async () => {
+  await run(packageDirectory, ["bun", "run", "build"]);
+  await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
+  await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
+  const output = join(cliDirectory, "../registry/dist/r");
+  const outputNames = await readdir(output);
+  const names = outputNames.toSorted();
+  const first = await Promise.all(
+    names.map((name) => readFile(join(output, name), "utf-8"))
+  );
+  await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
+  const rebuiltOutputNames = await readdir(output);
+  expect(rebuiltOutputNames.toSorted()).toEqual(names);
+  expect(
+    await Promise.all(
+      names.map((name) => readFile(join(output, name), "utf-8"))
+    )
+  ).toEqual(first);
+  await run(cliDirectory, ["bun", "run", "build"]);
+  await run(cliDirectory, ["bun", "pm", "pack", "--destination", root]);
+  await mkdir(join(root, "cli"));
+  await writeFile(
+    join(root, "cli/package.json"),
+    JSON.stringify({
+      dependencies: {
+        "@chat-js/cli": `file:${join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
+      },
+      overrides: { "@chat-js/gateways": `file:${archive}` },
+      private: true,
+    })
+  );
+  await run(join(root, "cli"), ["bun", "install"]);
+  process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
+});
+
 afterAll(() => {
   registryServer.stop(true);
   if (originalRegistryUrl === undefined) {
@@ -294,6 +295,55 @@ afterAll(() => {
     process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
   }
 });
+
+const gatewaySource = (gateway: Gateway | "acme"): string =>
+  gateway === "acme"
+    ? `http://127.0.0.1:${registryServer.port}/gateway.json`
+    : gateway;
+
+const storageArguments = (gateway: Gateway | "acme"): string[] => {
+  if (gateway === "acme") {
+    return [
+      "--storage-provider",
+      `http://127.0.0.1:${registryServer.port}/external-storage.json`,
+      "--storage-config",
+      '{"bucket":"test"}',
+    ];
+  }
+  if (gateway === "openai") {
+    return [
+      "--storage-provider",
+      "s3",
+      "--storage-config",
+      '{"bucket":"test","region":"us-east-1"}',
+    ];
+  }
+  return [];
+};
+
+const toolArguments = (gateway: Gateway | "acme"): string[] => {
+  if (gateway === "vercel") {
+    return [
+      "--search-tool",
+      "firecrawl-search",
+      "--code-execution-tool",
+      "vercel-code-execution",
+      "--url-retrieval-tool",
+      "retrieve-url",
+    ];
+  }
+  if (gateway === "acme") {
+    return [
+      "--url-retrieval-tool",
+      `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
+      "--code-execution-tool",
+      `http://127.0.0.1:${registryServer.port}/external-execution.json`,
+      "--search-tool",
+      `http://127.0.0.1:${registryServer.port}/external-search.json`,
+    ];
+  }
+  return [];
+};
 
 for (const gateway of [...GATEWAYS, "acme"]) {
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
@@ -304,45 +354,11 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "create",
       gateway,
       "--gateway",
-      gateway === "acme"
-        ? `http://127.0.0.1:${registryServer.port}/gateway.json`
-        : gateway,
-      ...(gateway === "acme"
-        ? [
-            "--storage-provider",
-            `http://127.0.0.1:${registryServer.port}/external-storage.json`,
-            "--storage-config",
-            '{"bucket":"test"}',
-          ]
-        : gateway === "openai"
-          ? [
-              "--storage-provider",
-              "s3",
-              "--storage-config",
-              '{"bucket":"test","region":"us-east-1"}',
-            ]
-          : []),
+      gatewaySource(gateway),
+      ...storageArguments(gateway),
       "--yes",
       "--no-electron",
-      ...(gateway === "vercel"
-        ? [
-            "--search-tool",
-            "firecrawl-search",
-            "--code-execution-tool",
-            "vercel-code-execution",
-            "--url-retrieval-tool",
-            "retrieve-url",
-          ]
-        : gateway === "acme"
-          ? [
-              "--url-retrieval-tool",
-              `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
-              "--code-execution-tool",
-              `http://127.0.0.1:${registryServer.port}/external-execution.json`,
-              "--search-tool",
-              `http://127.0.0.1:${registryServer.port}/external-search.json`,
-            ]
-          : []),
+      ...toolArguments(gateway),
     ]);
     const manifestPath = join(cwd, "package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
