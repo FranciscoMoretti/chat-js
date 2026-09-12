@@ -12,12 +12,10 @@ import {
   cursorAt,
   DURATION,
   ease,
-  type LaunchScript,
   presentationAt,
-  type ReplyState,
-  type StoryState,
   stateAt,
 } from "./story";
+import type { LaunchScript, ReplyState, StoryState } from "./story";
 
 import "./styles.css";
 
@@ -352,7 +350,7 @@ function ConversationTree({
                 </div>
                 <div className="count">
                   {s.states[id] === "streaming"
-                    ? `${s.texts[id].trim().split(/\s+/).filter(Boolean).length} words generated`
+                    ? `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`
                     : id === "city"
                       ? "Original answer"
                       : "Alternative answer"}

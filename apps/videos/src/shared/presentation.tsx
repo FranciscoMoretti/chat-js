@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import "./presentation.css";
+
 export function Caption({
   children,
   opacity,
