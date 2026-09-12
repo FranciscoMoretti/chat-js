@@ -36,8 +36,8 @@ function cloneMessages<
 
     const clonedMessage: T = {
       ...message,
-      id: newId,
       chatId: newChatId,
+      id: newId,
       parentMessageId: newParentId,
     };
     clonedMessages.push(clonedMessage);
@@ -188,7 +188,7 @@ function updateDocumentReferencesInMessageParts<
   T extends { parts: ChatMessage["parts"] },
 >(messages: T[], documentIdMap: Map<string, string>): T[] {
   return messages.map((message) => {
-    const parts = message.parts;
+    const { parts } = message;
     let updatedParts: ChatMessage["parts"] = [];
 
     if (Array.isArray(parts)) {
@@ -352,8 +352,13 @@ export function cloneMessagesWithDocuments<
 
   // Step 2: Create message ID mapping for later use
   const messageIdMap = new Map<string, string>();
-  for (let i = 0; i < sourceMessages.length; i++) {
-    messageIdMap.set(sourceMessages[i].id, clonedMessagesBase[i].id);
+  for (let i = 0; i < sourceMessages.length; i += 1) {
+    const sourceMessage = sourceMessages[i];
+    const clonedMessage = clonedMessagesBase[i];
+    if (!sourceMessage || !clonedMessage) {
+      throw new Error(`Message at index ${i} not found while cloning`);
+    }
+    messageIdMap.set(sourceMessage.id, clonedMessage.id);
   }
 
   // Step 2b: If messages have metadata.parentMessageId (ChatMessage),
@@ -419,9 +424,9 @@ export function cloneMessagesWithDocuments<
   );
 
   return {
-    clonedMessages: messagesWithUpdatedDocRefs,
     clonedDocuments,
-    messageIdMap,
+    clonedMessages: messagesWithUpdatedDocRefs,
     documentIdMap,
+    messageIdMap,
   };
 }
