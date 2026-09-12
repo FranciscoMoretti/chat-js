@@ -1,8 +1,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
-import { AbstractThread, Thread, type ThreadState } from "../src";
-import { type UseThreadHelpers, useThread } from "../src/react";
+import { AbstractThread, Thread } from "../src";
+import type { ThreadState } from "../src";
+import { useThread } from "../src/react";
+import type { UseThreadHelpers } from "../src/react";
 import { MemoryThreadState } from "../src/thread-state";
 
 declare const messageId: string;

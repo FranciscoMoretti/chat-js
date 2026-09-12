@@ -3,32 +3,28 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { ChatStatus, ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-import {
-  ThreadRunChat,
-  type ThreadRunHost,
-  type ThreadRunSpec,
-} from "../src/ai-sdk-run-chat";
+import { ThreadRunChat } from "../src/ai-sdk-run-chat";
+import type { ThreadRunHost, ThreadRunSpec } from "../src/ai-sdk-run-chat";
 import { MessageTree } from "../src/message-tree";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<{
+  readonly requests: {
     controller: ReadableStreamDefaultController<UIMessageChunk>;
     options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }> = [];
+  }[] = [];
 
   get request() {
     return this.requests.at(-1)?.options;
   }
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
-    return Promise.resolve(
+  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
+    Promise.resolve(
       new ReadableStream({
         start: (controller) => {
           this.requests.push({ controller, options });
         },
       })
     );
-  };
 
   reconnectToStream() {
     return Promise.resolve(null);
@@ -67,12 +63,12 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
 
   constructor(
     transport: ChatTransport<UIMessage>,
-    userMessage: UIMessage,
+    initialMessage: UIMessage,
     spec: ThreadRunSpec
   ) {
     this.transport = transport;
     this.spec = spec;
-    this.tree = new MessageTree({ messages: [userMessage] });
+    this.tree = new MessageTree({ messages: [initialMessage] });
   }
 
   getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
@@ -82,7 +78,9 @@ class TestRunHost implements ThreadRunHost<UIMessage> {
   registerToolCall() {}
   removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
   setRunError = (_runId: string, error: Error | undefined) => {
-    if (error) this.errors.push(error);
+    if (error) {
+      this.errors.push(error);
+    }
   };
   setRunStatus = (_runId: string, status: ChatStatus) => {
     this.status = status;
@@ -132,7 +130,9 @@ function emitRichResponse(transport: ControlledTransport) {
 
 async function waitFor(predicate: () => boolean) {
   for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
+    if (predicate()) {
+      return;
+    }
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for request");

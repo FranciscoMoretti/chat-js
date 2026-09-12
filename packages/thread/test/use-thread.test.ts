@@ -2,18 +2,16 @@ import { describe, expect, mock, test } from "bun:test";
 
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { createElement } from "react";
-import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { act, create } from "react-test-renderer";
+import type { ReactTestRenderer } from "react-test-renderer";
 
 import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import { MemoryThreadState } from "../src/thread-state";
 import type { ThreadState } from "../src/types";
-import {
-  type UseThreadHelpers,
-  type UseThreadOptions,
-  useThread,
-} from "../src/use-thread";
+import { useThread } from "../src/use-thread";
+import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -35,8 +33,7 @@ class RejectingTransport implements ChatTransport<UIMessage> {
 }
 
 class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<ReadableStreamDefaultController<UIMessageChunk>> =
-    [];
+  readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] = [];
 
   sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
     Promise.resolve(
@@ -117,7 +114,9 @@ function renderUseThread(initialOptions: UseThreadOptions) {
 
   return {
     get current() {
-      if (!current) throw new Error("Expected useThread to render");
+      if (!current) {
+        throw new Error("Expected useThread to render");
+      }
       return current;
     },
     unmount() {
@@ -131,7 +130,9 @@ function renderUseThread(initialOptions: UseThreadOptions) {
 
 async function waitFor(predicate: () => boolean) {
   for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
+    if (predicate()) {
+      return;
+    }
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for condition");
@@ -183,7 +184,9 @@ describe("useThread", () => {
       "assistant-1",
     ]);
     const response = hook.current.messages.at(-1);
-    if (!response) throw new Error("Expected a response message");
+    if (!response) {
+      throw new Error("Expected a response message");
+    }
     expect(getMessageText(response)).toBe("reply");
     hook.unmount();
   });

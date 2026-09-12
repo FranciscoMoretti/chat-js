@@ -12,15 +12,15 @@ import {
 import type { ThreadState } from "../src/types";
 
 class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<{
+  readonly requests: {
     abortSignal: AbortSignal | undefined;
     controller: ReadableStreamDefaultController<UIMessageChunk>;
     options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
-  }> = [];
+  }[] = [];
   #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) => {
-    return Promise.resolve(
+  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
+    Promise.resolve(
       new ReadableStream({
         start: (controller) => {
           this.requests.push({
@@ -39,7 +39,6 @@ class ControlledTransport implements ChatTransport<UIMessage> {
         },
       })
     );
-  };
 
   reconnectToStream(
     _options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
@@ -56,7 +55,9 @@ class ControlledTransport implements ChatTransport<UIMessage> {
         controller = value;
       },
     });
-    if (!controller) throw new Error("Expected reconnect controller");
+    if (!controller) {
+      throw new Error("Expected reconnect controller");
+    }
     return controller;
   }
 
@@ -154,13 +155,17 @@ function assistantWithTool(id: string): UIMessage {
 }
 
 function requireMessage(message: UIMessage | undefined) {
-  if (!message) throw new Error("Expected message to exist");
+  if (!message) {
+    throw new Error("Expected message to exist");
+  }
   return message;
 }
 
 async function waitFor(predicate: () => boolean) {
   for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
+    if (predicate()) {
+      return;
+    }
     await Bun.sleep(1);
   }
   throw new Error("Timed out waiting for request");
@@ -207,7 +212,7 @@ describe("Thread", () => {
     const state: ThreadState<UIMessage> = {
       getSnapshot: memory.getSnapshot,
       subscribe: memory.subscribe,
-      update: () => undefined,
+      update: () => {},
     };
 
     expect(() => new StateBackedThread(state)).toThrow(
@@ -671,23 +676,23 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          role: "assistant",
           parts: [{ type: "text", text: "partial" }],
+          role: "assistant",
         },
       ],
       transport,
     });
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
-    reconnect.enqueue({ type: "start", messageId: "assistant-1" });
-    reconnect.enqueue({ type: "text-start", id: "text" });
+    reconnect.enqueue({ messageId: "assistant-1", type: "start" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
     reconnect.enqueue({
-      type: "text-delta",
-      id: "text",
       delta: "complete replay",
+      id: "text",
+      type: "text-delta",
     });
-    reconnect.enqueue({ type: "text-end", id: "text" });
-    reconnect.enqueue({ type: "finish", finishReason: "stop" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
+    reconnect.enqueue({ finishReason: "stop", type: "finish" });
     reconnect.close();
     await resumed;
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
@@ -705,9 +710,9 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          role: "assistant",
           metadata: { model: "saved" },
           parts: [{ type: "text", text: "partial" }],
+          role: "assistant",
         },
       ],
       transport,
@@ -715,9 +720,9 @@ describe("Thread", () => {
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
     reconnect.enqueue({ type: "start" });
-    reconnect.enqueue({ type: "text-start", id: "text" });
-    reconnect.enqueue({ type: "text-delta", id: "text", delta: "replayed" });
-    reconnect.enqueue({ type: "text-end", id: "text" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
+    reconnect.enqueue({ delta: "replayed", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
     reconnect.close();
     await resumed;
     const message = requireMessage(chat.getMessage("assistant-1"));
@@ -733,7 +738,6 @@ describe("Thread", () => {
         user("user-1"),
         {
           id: "assistant-1",
-          role: "assistant",
           parts: [
             { type: "text", text: "prefix " },
             {
@@ -744,21 +748,22 @@ describe("Thread", () => {
               input: {},
             },
           ],
+          role: "assistant",
         },
       ],
       transport,
     });
     const reconnect = transport.prepareReconnect();
     const resumed = chat.resumeStream();
-    reconnect.enqueue({ type: "text-start", id: "text" });
-    reconnect.enqueue({ type: "text-delta", id: "text", delta: "suffix" });
-    reconnect.enqueue({ type: "text-end", id: "text" });
+    reconnect.enqueue({ id: "text", type: "text-start" });
+    reconnect.enqueue({ delta: "suffix", id: "text", type: "text-delta" });
+    reconnect.enqueue({ id: "text", type: "text-end" });
     reconnect.close();
     await resumed;
     await chat.addToolOutput({
+      output: "found",
       tool: "lookup",
       toolCallId: "restored-tool",
-      output: "found",
     });
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
@@ -766,9 +771,9 @@ describe("Thread", () => {
       message.parts.filter((part) => part.type === "dynamic-tool")
     ).toEqual([
       expect.objectContaining({
-        toolCallId: "restored-tool",
-        state: "output-available",
         output: "found",
+        state: "output-available",
+        toolCallId: "restored-tool",
       }),
     ]);
   });

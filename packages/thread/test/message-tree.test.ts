@@ -137,7 +137,9 @@ describe("MessageTree", () => {
 
     expect(restored.getSnapshot()).toEqual(tree.getSnapshot());
     expect(
-      restored.getSnapshot().nodes.map(({ message }) => message.id)
+      restored
+        .getSnapshot()
+        .nodes.map(({ message: nodeMessage }) => nodeMessage.id)
     ).toEqual(["u1", "a1"]);
     expect(restored.getIndexes().rootIds).toEqual(["u1"]);
   });
