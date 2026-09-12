@@ -413,10 +413,7 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/hooks.ts"
-      ],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "typescript/method-signature-style": "off"
       }
