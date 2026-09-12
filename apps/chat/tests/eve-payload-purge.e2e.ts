@@ -233,8 +233,7 @@ test("family retirement persists partial progress without erasing another member
 test("preparation keeps native payloads for inventory and recovers the same identities after purge", async () => {
   const root = await fixture();
   const child = await fixture(root);
-  const queued = crypto.randomUUID();
-  runIds.push(queued);
+  const queued = await fixture();
   const envelope = {
     data: Buffer.from(
       JSON.stringify({
@@ -256,7 +255,7 @@ test("preparation keeps native payloads for inventory and recovers the same iden
     retire
   );
   expect(inventory.runIds).toEqual([root, child, queued].sort());
-  expect(inventory.streamIds).toEqual([root, child].sort());
+  expect(inventory.streamIds).toEqual([root, child, queued].sort());
   for (const table of tables) {
     expect(
       await query`select run_id from ${query(`workflow.${table}`)} where run_id in ${query([root, child])}`
@@ -278,4 +277,36 @@ test("preparation keeps native payloads for inventory and recovers the same iden
     await prepareEveNativeSessionPurge(env.DATABASE_URL, scope, retire)
   ).toEqual(inventory);
   expect(retirements).toBe(1);
+});
+
+test("missing queue-discovered runs stop preparation before payload erasure", async () => {
+  const root = await fixture();
+  const missing = crypto.randomUUID();
+  runIds.push(missing);
+  const envelope = {
+    data: Buffer.from(
+      JSON.stringify({
+        runId: missing,
+        runInput: { attributes: { $parentRunId: root } },
+      })
+    ).toString("base64"),
+  };
+  await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
+  const scope = { sessionId: root, taskIdentifier: task };
+  await expect(
+    prepareEveNativeSessionPurge(env.DATABASE_URL, scope, () =>
+      Promise.resolve()
+    )
+  ).rejects.toThrow("Resolve missing runs");
+  expect(
+    await query`select id from workflow.workflow_runs where id = ${root}`
+  ).toHaveLength(1);
+  expect(
+    await query`select session_id from workflow.eve_payload_purges where session_id = ${root}`
+  ).toHaveLength(0);
+  await expect(
+    prepareEveNativeSessionPurge(env.DATABASE_URL, scope, () =>
+      Promise.resolve()
+    )
+  ).rejects.toThrow("Resolve missing runs");
 });

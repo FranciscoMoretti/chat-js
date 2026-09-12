@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const runRow = z.object({
   id: z.string(),
+  workflowName: z.string().min(1),
   status: z.enum(["pending", "running", "completed", "failed", "cancelled"]),
   parentId: z.string().nullable(),
   eveParentId: z.string().nullable(),
@@ -51,7 +52,7 @@ export async function readEvePostgresRunInventoryInTransaction(
         or child.attributes->>'$eve.parent' = parent.id
         or child.id = parent.collector_id
     )
-    select run.id, run.status,
+    select run.id, run.name as "workflowName", run.status,
       run.attributes->>'$parentRunId' as "parentId",
       run.attributes->>'$eve.parent' as "eveParentId",
       run.attributes->>'$eve.activity_collector' as "collectorId"
@@ -67,14 +68,17 @@ export async function readEvePostgresRunInventoryInTransaction(
   }
   const runIds = runs.map((run) => run.id);
   const known = new Set(runIds);
+  // Queue envelopes can be the only retained association to a run. Absence of
+  // its row does not prove it never executed or allocated external resources.
   const missingRunIds = [
-    ...new Set(
-      runs.flatMap((run) =>
+    ...new Set([
+      ...seeds.filter((id) => !known.has(id)),
+      ...runs.flatMap((run) =>
         [run.parentId, run.eveParentId, run.collectorId].filter(
           (id): id is string => id !== null && !known.has(id)
         )
-      )
-    ),
+      ),
+    ]),
   ].sort();
   const streams = z.array(z.object({ id: z.string() })).parse(
     await query`

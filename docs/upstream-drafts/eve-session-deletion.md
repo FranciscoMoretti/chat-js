@@ -312,3 +312,10 @@ already pending deletion, and denies ordinary session access and mutation verbs.
 The installed-package regression checks the response contract and rejection of a
 hosted retry after local evidence. Descendant authorization and persisting verified
 family coverage remain prerequisites for using it in the erasure coordinator.
+
+The native inventory now includes each run's workflow name for explicit resource
+coverage classification. A queue-discovered run whose native row is missing is
+reported as incomplete ownership, rather than silently omitted: a missing row
+cannot prove the run never allocated external resources. Local database tests
+verify preparation and retries remain blocked without erasing payloads, while
+ordinary cleanup and retries after a completed purge still succeed.

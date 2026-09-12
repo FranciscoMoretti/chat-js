@@ -1,6 +1,9 @@
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
-import { readEvePostgresRunInventory } from "../lib/db/eve-run-inventory";
+import {
+  readEvePostgresRunInventory,
+  readEvePostgresRunInventoryInTransaction,
+} from "../lib/db/eve-run-inventory";
 import { env } from "../lib/env";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -65,6 +68,9 @@ test("inventories native descendants and collectors without returning payloads o
   expect(inventory.streamIds.sort()).toEqual(
     [ownedStream, collectorStream].sort()
   );
+  expect(
+    inventory.runs.every((row) => row.workflowName === "inventory-fixture")
+  ).toBe(true);
   expect(inventory.activeRunIds).toEqual([]);
   expect(inventory.missingRunIds).toEqual([]);
   expect(inventory.ambiguousStreamIds).toEqual([]);
@@ -107,4 +113,16 @@ test("cyclic parent metadata terminates without duplicating records", async () =
   expect(inventory.runs.map((row) => row.id).sort()).toEqual(
     [root, child].sort()
   );
+});
+
+test("retains missing queue-discovered seeds as incomplete ownership", async () => {
+  const root = await run();
+  const missing = crypto.randomUUID();
+  const inventory = await query.begin(
+    "isolation level repeatable read read only",
+    async (transaction) =>
+      readEvePostgresRunInventoryInTransaction(transaction, root, [missing])
+  );
+  expect(inventory.missingRunIds).toEqual([missing]);
+  expect(inventory.runs.map((row) => row.id)).toEqual([root]);
 });
