@@ -12,16 +12,16 @@ const PATH_SEPARATOR = /[\\/]/;
 
 let files: Files | undefined;
 
-function getFiles(): Files {
+const getFiles = (): Files => {
   files ??= new Files({
     adapter: createStorageAdapter(storageOptions),
     prefix: FILE_STORAGE_PREFIX,
     retries: 2,
   });
   return files;
-}
+};
 
-function sanitizeFilename(filename: string): string {
+const sanitizeFilename = (filename: string): string => {
   const basename = filename.split(PATH_SEPARATOR).at(-1) ?? "";
   const withoutControlCharacters = [...basename]
     .filter((character) => {
@@ -30,26 +30,26 @@ function sanitizeFilename(filename: string): string {
     })
     .join("");
   return withoutControlCharacters.trim() || "file";
-}
+};
 
-function createStorageKey(filename: string): string {
+const createStorageKey = (filename: string): string => {
   const clean = sanitizeFilename(filename);
   const dot = clean.lastIndexOf(".");
   const candidate = dot > 0 ? clean.slice(dot).toLowerCase() : "";
   const extension = SAFE_EXTENSION.test(candidate) ? candidate : "";
   return `${nanoid(24)}${extension}`;
-}
+};
 
-function createFileUrl(key: string): string {
+const createFileUrl = (key: string): string => {
   const search = new URLSearchParams({ key });
   return `${FILE_CONTENT_PATH}?${search}`;
-}
+};
 
-export async function uploadFile(
+export const uploadFile = async (
   filename: string,
   body: Body,
   contentType?: string
-) {
+) => {
   const pathname = sanitizeFilename(filename);
   const uploaded = await getFiles().upload(createStorageKey(pathname), body, {
     contentType,
@@ -60,9 +60,9 @@ export async function uploadFile(
     pathname,
     url: createFileUrl(uploaded.key),
   };
-}
+};
 
-export async function listFiles() {
+export const listFiles = async () => {
   const files: {
     pathname: string;
     uploadedAt: Date;
@@ -76,9 +76,9 @@ export async function listFiles() {
     });
   }
   return { files };
-}
+};
 
-export async function deleteFilesByUrls(urls: string[]): Promise<void> {
+export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   const keys = [
     ...new Set(
       urls.map(keyFromFileUrl).filter((key): key is string => key !== null)
@@ -96,24 +96,26 @@ export async function deleteFilesByUrls(urls: string[]): Promise<void> {
       `Failed to delete ${errors.length} stored file(s)`
     );
   }
-}
+};
 
-export function downloadFile(
+export const downloadFile = (
   key: string,
   range?: { start: number; end?: number }
-) {
+) => {
   return getFiles().download(key, range ? { range } : undefined);
-}
+};
 
-export function getFileMetadata(key: string) {
+export const getFileMetadata = (key: string) => {
   return getFiles().head(key);
-}
+};
 
-export function storageSupportsRange(): boolean {
+export const storageSupportsRange = (): boolean => {
   return getFiles().capabilities.rangeRead;
-}
+};
 
-export async function getFileProviderUrl(key: string): Promise<string | null> {
+export const getFileProviderUrl = async (
+  key: string
+): Promise<string | null> => {
   const fileService = getFiles();
   if (!fileService.capabilities.signedUrl.supported) {
     return null;
@@ -121,4 +123,4 @@ export async function getFileProviderUrl(key: string): Promise<string | null> {
   const value = await fileService.url(key);
   const url = new URL(value);
   return url.protocol === "http:" || url.protocol === "https:" ? value : null;
-}
+};
