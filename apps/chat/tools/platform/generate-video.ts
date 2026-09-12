@@ -21,7 +21,7 @@ const DEFAULT_ASPECT_RATIO = "16:9";
 const DEFAULT_DURATION_SECONDS = 5;
 const ALLOWED_EXTENSIONS = new Set(["mp4", "webm", "mov"]);
 
-function resolveVideoExtension(mediaType?: string): string {
+const resolveVideoExtension = (mediaType?: string): string => {
   if (!mediaType) {
     return "mp4";
   }
@@ -38,9 +38,9 @@ function resolveVideoExtension(mediaType?: string): string {
 
   const mappedSubtype = subtype === "quicktime" ? "mov" : subtype;
   return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
-}
+};
 
-async function resolveVideoModel(selectedModel?: string): Promise<string> {
+const resolveVideoModel = async (selectedModel?: string): Promise<string> => {
   if (selectedModel) {
     try {
       const model = await getAppModelDefinition(selectedModel as AppModelId);
@@ -55,7 +55,7 @@ async function resolveVideoModel(selectedModel?: string): Promise<string> {
     throw new Error("Video generation is not enabled");
   }
   return config.ai.tools.video.default;
-}
+};
 
 export const generateVideoTool = ({
   costAccumulator,

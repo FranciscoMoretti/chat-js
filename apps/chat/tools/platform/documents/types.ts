@@ -56,10 +56,8 @@ const toolTypeToKindMap: Record<DocumentToolType, ArtifactKind> = {
   "tool-editTextDocument": "text",
 };
 
-export function getToolKind(toolType: DocumentToolType): ArtifactKind {
-  return toolTypeToKindMap[toolType];
-}
+export const getToolKind = (toolType: DocumentToolType): ArtifactKind =>
+  toolTypeToKindMap[toolType];
 
-export function isEditTool(toolType: DocumentToolType): boolean {
-  return (editDocumentToolTypes as readonly string[]).includes(toolType);
-}
+export const isEditTool = (toolType: DocumentToolType): boolean =>
+  (editDocumentToolTypes as readonly string[]).includes(toolType);
