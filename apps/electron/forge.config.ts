@@ -21,7 +21,29 @@ const appRoot = __dirname;
 const brandingPath = join(appRoot, "branding.json");
 let prebuildComplete = false;
 
-function loadBranding(): Branding {
+const runBunScript = (script: string, env: NodeJS.ProcessEnv = {}): void => {
+  const result = spawnSync("bun", ["run", script], {
+    env: { ...process.env, ...env },
+    stdio: "inherit",
+  });
+
+  if (result.status !== 0) {
+    throw new Error(
+      `bun run ${script} failed with exit code ${result.status ?? "unknown"}`
+    );
+  }
+};
+
+const ensurePrebuild = (): void => {
+  if (prebuildComplete) {
+    return;
+  }
+
+  runBunScript("prebuild");
+  prebuildComplete = true;
+};
+
+const loadBranding = (): Branding => {
   ensurePrebuild();
 
   if (!existsSync(brandingPath)) {
@@ -42,57 +64,23 @@ function loadBranding(): Branding {
   }
 
   return branding as Branding;
-}
+};
 
-function runBunScript(script: string, env: NodeJS.ProcessEnv = {}): void {
-  const result = spawnSync("bun", ["run", script], {
-    stdio: "inherit",
-    env: { ...process.env, ...env },
-  });
-
-  if (result.status !== 0) {
-    throw new Error(
-      `bun run ${script} failed with exit code ${result.status ?? "unknown"}`
-    );
-  }
-}
-
-function ensurePrebuild(): void {
-  if (prebuildComplete) {
-    return;
-  }
-
-  runBunScript("prebuild");
-  prebuildComplete = true;
-}
-
-function createForgeConfig(): ForgeConfig {
+const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
 
   return {
-    packagerConfig: {
-      name: appName,
-      executableName: appPrefix,
-      icon: "./build/icon",
-      appBundleId: `dev.${appPrefix}.app`,
-      appCategoryType: "public.app-category.productivity",
-      asar: true,
-      protocols: [
-        {
-          name: `${appName} Auth`,
-          schemes: [appPrefix],
-        },
-      ],
-      ignore: [
-        /^\/out($|\/)/,
-        /^\/release($|\/)/,
-        /^\/src($|\/)/,
-        /^\/node_modules($|\/)/,
-        /^\/scripts($|\/)/,
-        /^\/README\.md$/,
-        /^\/tsconfig\.json$/,
-      ],
+    hooks: {
+      generateAssets: async () => {
+        ensurePrebuild();
+      },
+      prePackage: async () => {
+        runBunScript("build", { NODE_ENV: "production" });
+      },
+      preStart: async () => {
+        runBunScript("build", { NODE_ENV: "development" });
+      },
     },
     makers: [
       new MakerZIP({}, ["darwin"]),
@@ -138,19 +126,31 @@ function createForgeConfig(): ForgeConfig {
         ["linux"]
       ),
     ],
-    hooks: {
-      generateAssets: async () => {
-        ensurePrebuild();
-      },
-      preStart: async () => {
-        runBunScript("build", { NODE_ENV: "development" });
-      },
-      prePackage: async () => {
-        runBunScript("build", { NODE_ENV: "production" });
-      },
+    packagerConfig: {
+      appBundleId: `dev.${appPrefix}.app`,
+      appCategoryType: "public.app-category.productivity",
+      asar: true,
+      executableName: appPrefix,
+      icon: "./build/icon",
+      ignore: [
+        /^\/out($|\/)/u,
+        /^\/release($|\/)/u,
+        /^\/src($|\/)/u,
+        /^\/node_modules($|\/)/u,
+        /^\/scripts($|\/)/u,
+        /^\/README\.md$/u,
+        /^\/tsconfig\.json$/u,
+      ],
+      name: appName,
+      protocols: [
+        {
+          name: `${appName} Auth`,
+          schemes: [appPrefix],
+        },
+      ],
     },
   };
-}
+};
 
 const config = createForgeConfig();
 

@@ -8,11 +8,11 @@ const appRoot = resolve(__dirname, "..");
 const buildDir = join(appRoot, "build");
 const outputFiles = ["icon.png", "icon.icns", "icon.ico"];
 
-function cleanupGeneratedIcons() {
+const cleanupGeneratedIcons = () => {
   for (const file of outputFiles) {
     rmSync(join(buildDir, file), { force: true });
   }
-}
+};
 
 describe("generate-icons", () => {
   test("writes Forge-compatible icon assets", () => {
@@ -20,8 +20,8 @@ describe("generate-icons", () => {
 
     const result = spawnSync("bun", ["scripts/generate-icons.ts"], {
       cwd: appRoot,
+      encoding: "utf-8",
       stdio: "pipe",
-      encoding: "utf8",
     });
 
     expect(result.status).toBe(0);

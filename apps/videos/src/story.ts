@@ -52,9 +52,8 @@ export const ease = (x: number) => {
   const v = clamp(x);
   return v * v * (3 - 2 * v);
 };
-const textAt = (text: string, fraction: number) => {
-  return text.slice(0, Math.floor(clamp(fraction) * text.length));
-};
+const textAt = (text: string, fraction: number) =>
+  text.slice(0, Math.floor(clamp(fraction) * text.length));
 export const stateAt = (t: number, content: LaunchScript = script) => {
   let prefixLength = 0;
   while (
