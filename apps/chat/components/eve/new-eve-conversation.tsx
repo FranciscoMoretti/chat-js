@@ -3,16 +3,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome";
 import {
-  CreationRejected,
-  requestConversation,
-} from "@/lib/eve/create-conversation";
-import { draftMessage } from "@/lib/eve/draft";
+  expandSelectedModelValue,
+  getPrimarySelectedModelId,
+  type SelectedModelValue,
+} from "@/lib/ai/types";
+import { CreationRejected } from "@/lib/eve/create-conversation";
+import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import {
   finishCreation,
-  prepareCreation,
-  readCreation,
+  prepareSelectedCreation,
+  readCreationRequest,
 } from "@/lib/eve/pending-create";
-import { useDefaultModel } from "@/providers/default-model-provider";
+import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
+import {
+  useDefaultModel,
+  useModelChange,
+} from "@/providers/default-model-provider";
 import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { useEveAttachments } from "./use-eve-attachments";
@@ -29,38 +35,30 @@ export function NewEveConversation({
     [projectId]
   );
   const selectedModel = useDefaultModel();
+  const changeModel = useModelChange();
+  const [selection, setSelection] = useState<SelectedModelValue>();
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
   const [projectRejected, setProjectRejected] = useState(false);
   const [retained, setRetained] = useState(false);
   const [retainedModelId, setRetainedModelId] = useState<string>();
+  const [retainedModelIds, setRetainedModelIds] = useState<string[]>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   useEffect(() => {
     try {
-      const pending = readCreation(sessionStorage, ownerId, scope);
+      const pending = readCreationRequest(sessionStorage, ownerId, scope);
       if (pending) {
         setRetained(true);
-        setDraft(
-          typeof pending.message === "string"
-            ? pending.message
-            : (pending.message.find((part) => part.type === "text")?.text ?? "")
+        const restored = restoreDraft(pending.message);
+        setDraft(restored.text);
+        setAttachments(restored.attachments);
+        setRetainedModelIds(
+          "modelIds" in pending ? pending.modelIds : undefined
         );
-        setAttachments(
-          typeof pending.message === "string"
-            ? []
-            : pending.message
-                .filter((part) => part.type === "file")
-                .map((part) => ({
-                  url: part.data,
-                  name: part.filename,
-                  contentType: part.mediaType,
-                  digest: "",
-                }))
-        );
-        setRetainedModelId(pending.modelId);
+        setRetainedModelId("modelIds" in pending ? undefined : pending.modelId);
       }
     } catch {
       setError("The saved draft could not be restored.");
@@ -74,23 +72,29 @@ export function NewEveConversation({
     setBusy(true);
     setError("");
     try {
-      const operation = prepareCreation(
+      const modelIds = expandSelectedModelValue(selection ?? selectedModel);
+      const operation = prepareSelectedCreation(
         sessionStorage,
         ownerId,
         draftMessage(draft, files.attachments),
-        selectedModel,
+        modelIds,
         scope
       );
-      setDraft(
-        typeof operation.message === "string"
-          ? operation.message
-          : (operation.message.find((part) => part.type === "text")?.text ?? "")
+      setDraft(restoreDraft(operation.message).text);
+      setRetainedModelId(
+        "modelIds" in operation ? undefined : operation.modelId
       );
-      setRetainedModelId(operation.modelId);
+      setRetainedModelIds(
+        "modelIds" in operation ? operation.modelIds : undefined
+      );
       setRetained(true);
-      const binding = await requestConversation(operation);
-      finishCreation(sessionStorage, ownerId, scope);
-      window.location.assign(`/chat/${binding.id}`);
+      const id = await resolveCreationRequest(
+        sessionStorage,
+        ownerId,
+        operation,
+        scope
+      );
+      window.location.assign(`/chat/${id}`);
     } catch (cause) {
       if (
         cause instanceof CreationRejected &&
@@ -101,6 +105,7 @@ export function NewEveConversation({
       } else if (cause instanceof CreationRejected) {
         finishCreation(sessionStorage, ownerId, scope);
         setRetainedModelId(undefined);
+        setRetainedModelIds(undefined);
         setRetained(false);
       }
       setError(
@@ -131,10 +136,21 @@ export function NewEveConversation({
         disabled={busy}
         draft={draft}
         files={files}
+        modelSelection={{
+          value: selection ?? selectedModel,
+          onChange: async (value) => {
+            setSelection(value);
+            const primary = getPrimarySelectedModelId(value);
+            if (primary) {
+              await changeModel(primary);
+            }
+          },
+        }}
         onDraftChange={setDraft}
         onSubmit={submit}
         readOnly={retained}
         retainedModelId={retainedModelId}
+        retainedModelIds={retainedModelIds}
       />
       {error && <p role="alert">{error}</p>}
     </>

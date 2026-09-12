@@ -1,8 +1,6 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
@@ -14,13 +12,13 @@ import { useMessageById } from "@/lib/stores/base";
 import { useApplicationThread } from "@/lib/stores/custom-store-provider";
 import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";
 import { getParallelResponseForSlot } from "@/lib/thread-utils";
-import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import {
   getParallelResponseLifecycle,
   getStatusLabel,
 } from "./parallel-response-status";
+import { ResponseChoiceCards } from "./response-choice-cards";
 
 function getEffectiveModelId(
   message: {
@@ -189,58 +187,43 @@ function ParallelCardsContent({
   }
 
   return (
-    <div className="mt-3 flex flex-wrap justify-end gap-2">
-      {sortedCardSlots.map((slot) => {
+    <ResponseChoiceCards
+      slots={sortedCardSlots.map((slot) => {
         const modelId = getEffectiveModelId(slot.message, slot.modelId);
         const modelName = modelId
           ? (getModelById(modelId)?.name ?? modelId)
           : "Model";
-        const isSelected = selectedParallelIndex === slot.parallelIndex;
+        const selected = selectedParallelIndex === slot.parallelIndex;
         const lifecycle = getParallelResponseLifecycle(
           slot.message,
           slot.run?.status
         );
-        const isLoading = lifecycle === "queued" || lifecycle === "generating";
-        const statusLabel = getStatusLabel(isSelected, lifecycle);
-
-        return (
-          <Button
-            className={cn(
-              "h-auto min-w-[160px] flex-col items-start gap-1 rounded-xl px-3 py-2 text-left",
-              isSelected && "border-primary bg-primary/5 text-primary"
-            )}
-            key={`${message.id}-${slot.parallelIndex}`}
-            onClick={() => {
-              if (slot.message) {
-                activatedRunIdRef.current = null;
-                setPendingParallelIndex(null);
-                navigateToMessage(slot.message.id);
-              } else if (slot.run) {
-                activatedRunIdRef.current = slot.run.id;
-                setPendingParallelIndex(slot.parallelIndex);
-                thread.setActiveRun(slot.run.id);
-              } else {
-                setPendingParallelIndex(slot.parallelIndex);
-                navigateToMessage(message.id);
-              }
-              if (modelId) {
-                handleModelChange?.(modelId);
-              }
-            }}
-            type="button"
-            variant="outline"
-          >
-            <span className="font-medium text-sm">{modelName}</span>
-            <span className="flex items-center gap-1 text-muted-foreground text-xs">
-              {isLoading ? (
-                <LoaderCircle className="size-3 animate-spin" />
-              ) : null}
-              {statusLabel}
-            </span>
-          </Button>
-        );
+        return {
+          id: `${message.id}-${slot.parallelIndex}`,
+          modelName,
+          selected,
+          loading: lifecycle === "queued" || lifecycle === "generating",
+          statusLabel: getStatusLabel(selected, lifecycle),
+          onSelect: () => {
+            if (slot.message) {
+              activatedRunIdRef.current = null;
+              setPendingParallelIndex(null);
+              navigateToMessage(slot.message.id);
+            } else if (slot.run) {
+              activatedRunIdRef.current = slot.run.id;
+              setPendingParallelIndex(slot.parallelIndex);
+              thread.setActiveRun(slot.run.id);
+            } else {
+              setPendingParallelIndex(slot.parallelIndex);
+              navigateToMessage(message.id);
+            }
+            if (modelId) {
+              handleModelChange?.(modelId);
+            }
+          },
+        };
       })}
-    </div>
+    />
   );
 }
 

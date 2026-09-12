@@ -1,5 +1,12 @@
+import { z } from "zod";
 import { createConversationInput, type EveForkInput } from "./contracts";
 import type { EveMessageInput } from "./message-input";
+import { eveResponseGroupInput } from "./response-group-input";
+
+const creationRequest = z.union([
+  createConversationInput,
+  eveResponseGroupInput,
+]);
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 export type CreationScope =
@@ -14,6 +21,22 @@ const keyFor = (ownerId: string, scope?: CreationScope) => {
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
+
+export function prepareSelectedCreation(
+  storage: StorageAccess,
+  ownerId: string,
+  draft: EveMessageInput,
+  modelIds: string[],
+  scope?: CreationScope
+) {
+  const saved = readCreationRequest(storage, ownerId, scope);
+  if (saved) {
+    return saved;
+  }
+  return modelIds.length > 1
+    ? prepareResponseGroupCreation(storage, ownerId, draft, modelIds, scope)
+    : prepareCreation(storage, ownerId, draft, modelIds[0], scope);
+}
 
 export function prepareCreation(
   storage: StorageAccess,
@@ -53,8 +76,49 @@ export function readCreation(
   ownerId: string,
   scope?: CreationScope
 ) {
+  const request = readCreationRequest(storage, ownerId, scope);
+  if (request && "modelIds" in request) {
+    throw new Error(
+      "Recover the saved comparison before starting another request."
+    );
+  }
+  return request;
+}
+
+export function readCreationRequest(
+  storage: StorageAccess,
+  ownerId: string,
+  scope?: CreationScope
+) {
   const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? createConversationInput.parse(JSON.parse(stored)) : undefined;
+  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
+}
+
+export function prepareResponseGroupCreation(
+  storage: StorageAccess,
+  ownerId: string,
+  message: EveMessageInput,
+  modelIds: string[],
+  context?: CreationScope & { fork?: EveForkInput }
+) {
+  const saved = readCreationRequest(storage, ownerId, context);
+  if (saved) {
+    if (!("modelIds" in saved)) {
+      throw new Error(
+        "Recover the saved conversation before starting a comparison."
+      );
+    }
+    return saved;
+  }
+  const request = eveResponseGroupInput.parse({
+    operationId: crypto.randomUUID(),
+    message,
+    modelIds,
+    projectId: context?.projectId,
+    fork: context?.fork,
+  });
+  storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
+  return request;
 }
 
 /** Only call after the server definitively rejected the original operation. */
@@ -65,21 +129,24 @@ export function moveRejectedProjectCreation(
   operationId: string
 ) {
   const scope = { projectId };
-  const pending = readCreation(storage, ownerId, scope);
+  const pending = readCreationRequest(storage, ownerId, scope);
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
     throw new Error("The saved request changed. Reload before continuing.");
   }
-  if (readCreation(storage, ownerId)) {
+  if (readCreationRequest(storage, ownerId)) {
     throw new Error(
       "Finish the saved request in New Chat before recovering this draft."
     );
   }
-  const next = prepareCreation(
-    storage,
-    ownerId,
-    pending.message,
-    pending.modelId
-  );
+  const next =
+    "modelIds" in pending
+      ? prepareResponseGroupCreation(
+          storage,
+          ownerId,
+          pending.message,
+          pending.modelIds
+        )
+      : prepareCreation(storage, ownerId, pending.message, pending.modelId);
   finishCreation(storage, ownerId, scope);
   return next;
 }

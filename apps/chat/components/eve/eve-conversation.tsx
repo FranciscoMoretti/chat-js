@@ -21,7 +21,9 @@ import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkControls } from "./eve-fork-controls";
 import { EveMessages } from "./eve-messages";
+import type { EveResponseCardCandidate } from "./eve-response-group-cards";
 import { useEveAttachments } from "./use-eve-attachments";
+import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 
 const pendingMessageSchema = z.object({
@@ -38,15 +40,25 @@ export function EveConversation({
   conversationId,
   ownerId,
   header,
+  onStatusChange,
+  draftScopeId,
+  onNavigationBlockedChange,
 }: {
   sessionId: string;
   conversationId: string;
   ownerId: string;
   header: ReactNode;
+  onStatusChange?: (status: EveResponseCardCandidate["status"]) => void;
+  draftScopeId?: string;
+  onNavigationBlockedChange?: (blocked: boolean) => void;
 }) {
   const fork = useEveFork(ownerId, conversationId);
   const selectedModel = useDefaultModel();
-  const files = useEveAttachments();
+  const composerDraft = useEveComposerDraft(
+    ownerId,
+    draftScopeId ?? conversationId
+  );
+  const files = useEveAttachments(composerDraft);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const storageKey = `chatjs.eve.pending-message:${sessionId}`;
@@ -57,10 +69,22 @@ export function EveConversation({
   const afterCancellation = useRef(0);
   const receivedMessages = useRef(0);
   const commandLock = useRef(false);
-  const [draft, setDraft] = useState("");
+  const { text: draft, setText: setDraft } = composerDraft;
   const [error, setError] = useState<Error>();
   const [commandPending, setCommandPending] = useState(false);
   const [cancelPending, setCancelPending] = useState(false);
+  useEffect(() => {
+    onNavigationBlockedChange?.(
+      !composerDraft.loaded ||
+        !!composerDraft.error ||
+        files.uploadQueue.length > 0
+    );
+  }, [
+    composerDraft.loaded,
+    composerDraft.error,
+    files.uploadQueue.length,
+    onNavigationBlockedChange,
+  ]);
   const agent = useEveAgent({
     host: "/api",
     initialSession: { sessionId, streamIndex: 0 },
@@ -180,6 +204,16 @@ export function EveConversation({
         part.type === "dynamic-tool" && part.state === "approval-requested"
     )
   );
+  useEffect(() => {
+    let status: EveResponseCardCandidate["status"] = agent.status;
+    if (displayedError) {
+      status = "error";
+    }
+    if (hasApproval) {
+      status = "awaiting-input";
+    }
+    onStatusChange?.(status);
+  }, [agent.status, displayedError, hasApproval, onStatusChange]);
   async function run(action: () => Promise<unknown>) {
     if (commandLock.current) {
       return;
@@ -337,7 +371,13 @@ export function EveConversation({
             <p aria-live="polite" className="text-muted-foreground text-sm">
               {statusLabel}
             </p>
-            {displayedError && <p role="alert">{displayedError}</p>}
+            {[displayedError, composerDraft.error]
+              .filter(Boolean)
+              .map((message) => (
+                <p key={message} role="alert">
+                  {message}
+                </p>
+              ))}
             {pendingMessage && !commandPending && (
               <div className="space-y-2 text-sm" role="status">
                 <p>
@@ -382,6 +422,7 @@ export function EveConversation({
             <EveComposer
               busy={busy}
               disabled={
+                !composerDraft.loaded ||
                 busy ||
                 commandPending ||
                 cancelPending ||

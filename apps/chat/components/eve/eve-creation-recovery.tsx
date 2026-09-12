@@ -3,17 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  CreationRejected,
-  requestConversation,
-} from "@/lib/eve/create-conversation";
+import { CreationRejected } from "@/lib/eve/create-conversation";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import {
   type CreationScope,
-  finishCreation,
   moveRejectedProjectCreation,
-  readCreation,
+  readCreationRequest,
 } from "@/lib/eve/pending-create";
+import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 
 export function EveCreationRecovery({
   ownerId,
@@ -30,7 +27,8 @@ export function EveCreationRecovery({
 }) {
   const router = useRouter();
   const lock = useRef(false);
-  const [pending, setPending] = useState<ReturnType<typeof readCreation>>();
+  const [pending, setPending] =
+    useState<ReturnType<typeof readCreationRequest>>();
   const [rejected, setRejected] = useState(initiallyRejected);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,7 +36,7 @@ export function EveCreationRecovery({
   useEffect(() => {
     setRejected(initiallyRejected);
     try {
-      const saved = readCreation(sessionStorage, ownerId, scope);
+      const saved = readCreationRequest(sessionStorage, ownerId, scope);
       setPending(
         saved &&
           (operationId
@@ -61,14 +59,13 @@ export function EveCreationRecovery({
     setBusy(true);
     setError("");
     try {
-      const binding = await requestConversation(pending);
-      if (
-        readCreation(sessionStorage, ownerId, scope)?.operationId ===
-        pending.operationId
-      ) {
-        finishCreation(sessionStorage, ownerId, scope);
-      }
-      window.location.assign(`/chat/${binding.id}`);
+      const id = await resolveCreationRequest(
+        sessionStorage,
+        ownerId,
+        pending,
+        scope
+      );
+      window.location.assign(`/chat/${id}`);
     } catch (cause) {
       if (cause instanceof CreationRejected && scope?.projectId) {
         setRejected(true);

@@ -9,6 +9,29 @@ export const draftAttachment = z.object({
 });
 export type DraftAttachment = z.infer<typeof draftAttachment>;
 
+export function restoreDraft(message: EveMessageInput): {
+  text: string;
+  attachments: DraftAttachment[];
+} {
+  if (typeof message === "string") {
+    return { text: message, attachments: [] };
+  }
+  return {
+    text: message
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n"),
+    attachments: message
+      .filter((part) => part.type === "file")
+      .map((part) => ({
+        url: part.data,
+        name: part.filename,
+        contentType: part.mediaType,
+        digest: "",
+      })),
+  };
+}
+
 export function draftMessage(
   text: string,
   attachments: DraftAttachment[]

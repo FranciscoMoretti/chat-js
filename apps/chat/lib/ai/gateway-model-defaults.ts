@@ -19,7 +19,7 @@ export const gatewayModelDefaults = {
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
   workflows: {
-    chat: "openai/gpt-5-mini",
+    chat: "google/gemini-2.5-flash-lite",
     title: "openai/gpt-5-nano",
     pdf: "openai/gpt-5-mini",
     chatImageCompatible: "openai/gpt-4o-mini",

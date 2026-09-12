@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { ControlledChatComposer } from "@/components/chat-composer";
 import { ContextBar } from "@/components/context-bar";
 import { AttachmentsButton } from "@/components/multimodal-input";
+import { expandSelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -14,6 +15,8 @@ import type { useEveAttachments } from "./use-eve-attachments";
 export function EveComposer({
   files,
   retainedModelId,
+  retainedModelIds,
+  modelSelection,
   ...props
 }: Omit<
   ComponentProps<typeof ControlledChatComposer>,
@@ -21,17 +24,25 @@ export function EveComposer({
 > & {
   files: ReturnType<typeof useEveAttachments>;
   retainedModelId?: string;
+  retainedModelIds?: string[];
+  modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
 }) {
   const input = useRef<HTMLInputElement>(null);
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
-  const model = getModelById(retainedModelId ?? selected);
+  const models = (
+    retainedModelId
+      ? [retainedModelId]
+      : expandSelectedModelValue(modelSelection?.value ?? selected)
+  ).map(getModelById);
   const unsupported =
     !props.readOnly &&
-    files.attachments.some((file) =>
-      file.contentType === "application/pdf"
-        ? !model?.input.pdf
-        : !model?.input.image
+    models.some((model) =>
+      files.attachments.some((file) =>
+        file.contentType === "application/pdf"
+          ? !model?.input.pdf
+          : !model?.input.image
+      )
     );
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
@@ -97,15 +108,17 @@ export function EveComposer({
               />
             )}
             <EveModelPicker
-              disabled={locked || !!retainedModelId}
+              disabled={locked || props.readOnly || !!retainedModelId}
+              modelSelection={modelSelection}
               retainedModelId={retainedModelId}
+              retainedModelIds={retainedModelIds}
             />
           </>
         }
       />
       {unsupported && (
         <p className="text-destructive text-sm" role="alert">
-          Choose a model that supports the attached files.
+          Choose models that support all attached files.
         </p>
       )}
     </div>

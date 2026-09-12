@@ -5,8 +5,10 @@ import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header";
 import { auth } from "@/lib/auth";
 import { getEveConversation } from "@/lib/db/eve-queries";
+import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { EveArtifactLayout } from "./eve-artifact-layout";
+import { EveComparisonConversation } from "./eve-comparison-conversation";
 import { EveConversation } from "./eve-conversation";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveShareButton } from "./eve-share-dialog";
@@ -54,6 +56,21 @@ export async function EveChatPage({
     />
   );
   if (selected?.sessionId && selected.state === "bound") {
+    const group = await getEveResponseGroupForConversation(
+      session.user.id,
+      selected.id
+    );
+    if (group) {
+      return (
+        <EveComparisonConversation
+          conversationId={selected.id}
+          header={header}
+          initialGroup={group}
+          key={selected.sessionId}
+          ownerId={session.user.id}
+        />
+      );
+    }
     return (
       <EveConversation
         conversationId={selected.id}

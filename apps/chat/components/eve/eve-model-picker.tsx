@@ -1,6 +1,10 @@
 "use client";
 
 import { ModelSelector } from "@/components/model-selector";
+import {
+  getPrimarySelectedModelId,
+  type SelectedModelValue,
+} from "@/lib/ai/types";
 import { useChatModels } from "@/providers/chat-models-provider";
 import {
   useDefaultModel,
@@ -10,20 +14,43 @@ import {
 export function EveModelPicker({
   disabled = false,
   retainedModelId,
+  retainedModelIds,
+  modelSelection,
 }: {
   disabled?: boolean;
   retainedModelId?: string;
+  retainedModelIds?: string[];
+  modelSelection?: {
+    value: SelectedModelValue;
+    onChange: (value: SelectedModelValue) => Promise<void>;
+  };
 }) {
   const defaultModel = useDefaultModel();
   const changeModel = useModelChange();
   const { getModelById } = useChatModels();
+  if (retainedModelIds) {
+    const names = retainedModelIds
+      .map((id) => getModelById(id)?.name ?? id)
+      .join(", ");
+    return (
+      <span className="inline-flex h-8 items-center px-2 text-sm" title={names}>
+        {retainedModelIds.length} models
+      </span>
+    );
+  }
   const selectedModel =
-    (retainedModelId && getModelById(retainedModelId)?.id) || defaultModel;
+    (retainedModelId && getModelById(retainedModelId)?.id) ||
+    getPrimarySelectedModelId(modelSelection?.value) ||
+    defaultModel;
   return (
     <fieldset disabled={disabled}>
       <ModelSelector
-        allowMultiple={false}
+        allowMultiple={!!modelSelection}
         onModelSelectionChangeAction={async (selection) => {
+          if (modelSelection) {
+            await modelSelection.onChange(selection);
+            return;
+          }
           const model =
             typeof selection === "string" ? getModelById(selection) : undefined;
           if (model) {
@@ -31,7 +58,7 @@ export function EveModelPicker({
           }
         }}
         selectedModelId={selectedModel}
-        selectedModelSelection={selectedModel}
+        selectedModelSelection={modelSelection?.value ?? selectedModel}
       />
     </fieldset>
   );

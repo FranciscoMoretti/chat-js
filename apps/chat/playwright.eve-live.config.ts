@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-comparison-live.e2e.ts",
     "eve-deletion-retire.e2e.ts",
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
@@ -14,6 +15,8 @@ export default defineConfig({
     "eve-document-run.e2e.ts",
     "eve-document-tools.e2e.ts",
     "eve-document-auto-open.e2e.ts",
+    "eve-response-cards.e2e.ts",
+    "eve-comparison-ui.e2e.ts",
     "eve-live.e2e.ts",
     "eve-code-execution.e2e.ts",
     "eve-sandbox-lifecycle.e2e.ts",

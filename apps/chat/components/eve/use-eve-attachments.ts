@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { toast } from "sonner";
 import { config } from "@/lib/config";
 import {
@@ -10,8 +10,15 @@ import {
 } from "@/lib/eve/draft";
 import { processFilesForUpload } from "@/lib/files/upload-prep";
 
-export function useEveAttachments() {
-  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
+export function useEveAttachments(state?: {
+  attachments: DraftAttachment[];
+  setAttachments: Dispatch<SetStateAction<DraftAttachment[]>>;
+}) {
+  const [localAttachments, setLocalAttachments] = useState<DraftAttachment[]>(
+    []
+  );
+  const attachments = state?.attachments ?? localAttachments;
+  const setAttachments = state?.setAttachments ?? setLocalAttachments;
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
   const lock = useRef(false);
   async function upload(files: File[]) {
