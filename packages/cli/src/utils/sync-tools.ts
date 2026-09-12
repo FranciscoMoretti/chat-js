@@ -111,7 +111,9 @@ const collectDefinitions = async (
   if (entry.isDirectory() && !entry.name.startsWith("_")) {
     const definition = await readToolDefinition(cwd, directory, entry.name);
     if (definition) {
-      const existing = definitions.findIndex((item) => item.id === definition.id);
+      const existing = definitions.findIndex(
+        (item) => item.id === definition.id
+      );
       if (existing !== -1) {
         definitions.splice(existing, 1);
       }
@@ -168,10 +170,7 @@ const validateExpected = (
 ): void => {
   for (const requested of expected) {
     const installed = definitions.find((item) => item.id === requested.id);
-    if (
-      !installed ||
-      JSON.stringify(installed) !== JSON.stringify(requested)
-    ) {
+    if (!installed || JSON.stringify(installed) !== JSON.stringify(requested)) {
       throw new Error(
         `Installed descriptor does not match requested tool ${requested.id}. Check the registry item's files and overwrite choices.`
       );
@@ -189,7 +188,9 @@ const validateSelections = (definitions: ToolDefinition[]): void => {
   }
 };
 
-const buildEnvironmentOptions = (selected: ToolDefinition | undefined): string[][] => {
+const buildEnvironmentOptions = (
+  selected: ToolDefinition | undefined
+): string[][] => {
   if (!selected) {
     return [];
   }
@@ -245,7 +246,9 @@ const writeSelectionConfigs = async (
   await writeSelectionConfigs(dir, definitions, entries, index + 1);
 };
 
-const sourceFor = (registrations: ToolDefinition[]): { toolBody: string; uiBody: string } => {
+const sourceFor = (
+  registrations: ToolDefinition[]
+): { toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
   return {
     toolBody: `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${registrationKey(item)}: tool${i},`).join("\n")}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
