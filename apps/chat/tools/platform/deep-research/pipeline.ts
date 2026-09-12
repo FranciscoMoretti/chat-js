@@ -30,7 +30,7 @@ import type {
 import { getModelContextWindow, getTodayStr } from "./utils";
 
 // Main deep research pipeline
-export async function runDeepResearchPipeline(
+export const runDeepResearchPipeline = async (
   input: DeepResearchInput,
   config: DeepResearchRuntimeConfig,
   dataStream: AgentOptions["dataStream"],
@@ -39,7 +39,7 @@ export async function runDeepResearchPipeline(
     costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
     abortSignal?: AbortSignal;
   }
-): Promise<DeepResearchResult> {
+): Promise<DeepResearchResult> => {
   const { session, costAccumulator, abortSignal } = options;
   console.log("runDeepResearchPipeline invoked", {
     messageId: input.messageId,
@@ -105,7 +105,7 @@ export async function runDeepResearchPipeline(
     data: reportResult,
     type: "report",
   };
-}
+};
 
 // Step 1: Clarification
 
@@ -113,10 +113,10 @@ type ClarificationResult =
   | { needsClarification: true; clarificationMessage: string }
   | { needsClarification: false; clarificationMessage?: undefined };
 
-async function clarifyWithUser(
+const clarifyWithUser = async (
   messages: ModelMessage[],
   ctx: AgentOptions
-): Promise<ClarificationResult> {
+): Promise<ClarificationResult> => {
   const { config, costAccumulator, abortSignal } = ctx;
 
   if (!config.allow_clarification) {
@@ -164,7 +164,7 @@ async function clarifyWithUser(
     };
   }
   return { needsClarification: false };
-}
+};
 
 // Step 2: Research Brief
 
@@ -173,10 +173,10 @@ interface ResearchBrief {
   title: string;
 }
 
-async function writeResearchBrief(
+const writeResearchBrief = async (
   messages: ModelMessage[],
   ctx: AgentOptions
-): Promise<ResearchBrief> {
+): Promise<ResearchBrief> => {
   const { config, dataStream, toolCallId, costAccumulator, abortSignal } = ctx;
   const model = await getLanguageModel(config.research_model as ModelId);
   const dataPartId = generateUUID();
@@ -242,7 +242,7 @@ async function writeResearchBrief(
     research_brief: output.research_brief,
     title: output.title,
   };
-}
+};
 
 // Step 4: Final Report Generation
 
@@ -253,9 +253,9 @@ type FinalReportInput = AgentOptions & {
   session: ToolSession;
 };
 
-async function generateFinalReport(
+const generateFinalReport = async (
   input: FinalReportInput
-): Promise<DocumentToolResult> {
+): Promise<DocumentToolResult> => {
   const {
     notes,
     researchBrief,
@@ -384,12 +384,9 @@ To write the report, call the createTextDocument tool with:
     result: "A document was created and is now visible to the user.",
     status: "success",
   };
-}
+};
 
 // Helpers
 
-function messagesToString(messages: ModelMessage[]): string {
-  return messages
-    .map((m) => `${m.role}: ${JSON.stringify(m.content)}`)
-    .join("\n");
-}
+const messagesToString = (messages: ModelMessage[]): string =>
+  messages.map((m) => `${m.role}: ${JSON.stringify(m.content)}`).join("\n");
