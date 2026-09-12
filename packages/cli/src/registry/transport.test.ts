@@ -25,9 +25,9 @@ test("shadcn transitive registry requests retain transport policy and restore ho
       installItems([`http://127.0.0.1:${server.port}/root.json`], cwd)
     ).rejects.toThrow("HTTPS");
     expect(globalThis.fetch).toBe(original);
-    expect(await withRegistryTransport(() => "next operation")).toBe(
-      "next operation"
-    );
+    expect(
+      await withRegistryTransport(() => Promise.resolve("next operation"))
+    ).toBe("next operation");
     expect(globalThis.fetch).toBe(original);
   } finally {
     server.stop(true);
