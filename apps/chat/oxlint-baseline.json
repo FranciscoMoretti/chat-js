@@ -207,7 +207,6 @@
         "components/ui/form.tsx",
         "components/ui/hover-card.tsx",
         "components/ui/input-group.tsx",
-        "components/ui/input.tsx",
         "components/ui/label.tsx",
         "components/ui/popover.tsx",
         "components/ui/progress.tsx",
@@ -217,7 +216,6 @@
         "components/ui/skeleton.tsx",
         "components/ui/slider.tsx",
         "components/ui/spinner.tsx",
-        "components/ui/toggle.tsx",
         "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
@@ -226,15 +224,6 @@
         "components/with-skeleton.tsx",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "hooks/use-auto-focus.ts",
-        "hooks/use-chat-system-initial-state.ts",
-        "hooks/use-image-load-error.ts",
-        "hooks/use-media-query.tsx",
-        "hooks/use-mobile.ts",
-        "hooks/use-mounted.ts",
-        "hooks/use-navigate-to-message.ts",
-        "hooks/use-navigate-to-sibling.ts",
-        "hooks/use-shared-chat.ts",
         "lib/ai/active-gateway.ts",
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/completion-queue.test.ts",
@@ -290,14 +279,12 @@
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "providers/parse-chat-id-from-pathname.ts",
         "providers/session-provider.tsx",
         "tools/chatjs/get-weather/renderer.tsx",
         "tools/chatjs/retrieve-url/renderer.tsx",
         "tools/chatjs/tavily-search/renderer.tsx",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
         "tools/chatjs/word-count/renderer.tsx",
-        "tools/platform/deep-research/pipeline.ts",
         "trpc/react.tsx",
         "trpc/server.tsx"
       ],
@@ -350,7 +337,6 @@
         "components/ui/form.tsx",
         "components/ui/input-group.tsx",
         "components/ui/sidebar.tsx",
-        "components/ui/toggle.tsx",
         "hooks/chat-sync-hooks.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
@@ -381,7 +367,6 @@
       "files": [
         "components/part/tool-part.test.tsx",
         "lib/clone-messages.test.ts",
-        "lib/config-schema.ts",
         "lib/db/queries.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
@@ -529,8 +514,6 @@
     },
     {
       "files": [
-        "app/api/chat-model/route.ts",
-        "app/api/cron/cleanup/route.ts",
         "app/layout.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/diffview.tsx",
@@ -589,7 +572,7 @@
       }
     },
     {
-      "files": ["lib/redis/client.test.ts", "trpc/init.ts"],
+      "files": ["lib/redis/client.test.ts"],
       "rules": {
         "no-promise-executor-return": "off"
       }
@@ -607,7 +590,6 @@
         "components/model-selector.tsx",
         "components/parallel-response-cards.tsx",
         "components/ui/sidebar.tsx",
-        "lib/file-storage.ts",
         "lib/stores/with-thread-state.ts"
       ],
       "rules": {
@@ -645,7 +627,6 @@
         "app/(chat)/settings/layout.tsx",
         "app/(chat)/settings/models/page.tsx",
         "app/(chat)/share/\\[id\\]/page.tsx",
-        "app/api/cron/cleanup/route.ts",
         "components/ai-elements/context.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/device-login-page.tsx",
@@ -737,7 +718,6 @@
         "components/settings/mcp-details-page.tsx",
         "components/share-button.tsx",
         "components/suggested-actions.tsx",
-        "components/ui/collapsible.tsx",
         "lib/clone-messages.test.ts",
         "lib/clone-messages.ts",
         "lib/draft-chat-submission.ts",
@@ -786,8 +766,7 @@
         "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/redis/client.ts",
-        "scripts/check-redis.ts",
-        "trpc/init.ts"
+        "scripts/check-redis.ts"
       ],
       "rules": {
         "promise/avoid-new": "off"
@@ -822,8 +801,7 @@
         "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
-        "lib/stores/base/hooks.ts",
-        "scripts/check-env.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "promise/prefer-await-to-callbacks": "off"
@@ -855,8 +833,6 @@
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "scripts/check-db.ts",
-        "scripts/check-env.ts",
-        "scripts/check-redis.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
       "rules": {
@@ -1060,7 +1036,6 @@
         "components/ui/form.tsx",
         "components/ui/hover-card.tsx",
         "components/ui/input-group.tsx",
-        "components/ui/input.tsx",
         "components/ui/label.tsx",
         "components/ui/popover.tsx",
         "components/ui/progress.tsx",
@@ -1076,7 +1051,6 @@
         "components/ui/table.tsx",
         "components/ui/tabs.tsx",
         "components/ui/textarea.tsx",
-        "components/ui/toggle.tsx",
         "components/ui/tooltip.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
@@ -1247,9 +1221,6 @@
         "components/sheet-editor.tsx",
         "components/signup-form.tsx",
         "components/toolbar.tsx",
-        "hooks/use-media-query.tsx",
-        "hooks/use-mobile.ts",
-        "hooks/use-mounted.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/stores/hooks-chat-persistence.ts",
         "providers/chat-input-provider.tsx"
@@ -1289,8 +1260,7 @@
         "components/create-artifact.tsx",
         "lib/clone-messages.test.ts",
         "lib/gated-chat-transport.test.ts",
-        "lib/stores/base/hooks.ts",
-        "tools/chatjs/vercel-code-execution/python.test.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "require-await": "off"
@@ -1300,7 +1270,6 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/settings/mcp-details-page.tsx",
-        "lib/file-storage.ts",
         "lib/files/upload-prep.ts",
         "lib/stores/base/use-data-parts.ts"
       ],
@@ -1392,7 +1361,6 @@
         "components/version-footer.tsx",
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
-        "hooks/use-chat-system-initial-state.ts",
         "lib/ai/active-gateway.ts",
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/core-chat-agent.ts",
@@ -1454,8 +1422,6 @@
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "providers/parse-chat-id-from-pathname.test.ts",
-        "providers/parse-chat-id-from-pathname.ts",
         "tools/chatjs/code-execution-config.ts",
         "tools/chatjs/get-weather/renderer.test.tsx",
         "tools/chatjs/get-weather/renderer.tsx",
@@ -1470,7 +1436,6 @@
         "tools/platform/deep-research/pipeline.ts",
         "tools/platform/deep-research/researcher-agent.ts",
         "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/research-updates-schema.ts",
         "tools/platform/tools.ts",
         "trpc/react.tsx",
         "trpc/server.tsx"
@@ -1613,10 +1578,7 @@
       }
     },
     {
-      "files": [
-        "lib/file-storage.test.ts",
-        "tools/platform/deep-research/pipeline.ts"
-      ],
+      "files": ["lib/file-storage.test.ts"],
       "rules": {
         "unicorn/no-await-expression-member": "off"
       }
@@ -1652,7 +1614,6 @@
     {
       "files": [
         "components/data-stream-handler.tsx",
-        "hooks/use-mobile.ts",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
@@ -1689,7 +1650,7 @@
       }
     },
     {
-      "files": ["components/sheet-editor.tsx", "lib/file-storage.ts"],
+      "files": ["components/sheet-editor.tsx"],
       "rules": {
         "unicorn/prefer-code-point": "off"
       }

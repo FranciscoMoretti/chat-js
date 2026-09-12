@@ -8,9 +8,7 @@
         "packages/registry/src/gateways/openai/gateway.ts",
         "packages/registry/src/gateways/openrouter/gateway.ts",
         "packages/registry/src/gateways/vercel/gateway.ts",
-        "packages/thread/src/abstract-thread.ts",
-        "packages/thread/test/ai-sdk-run-chat.test.ts",
-        "packages/thread/test/use-thread.test.ts"
+        "packages/thread/src/abstract-thread.ts"
       ],
       "rules": {
         "class-methods-use-this": "off"
@@ -20,19 +18,10 @@
       "files": [
         "apps/videos/src/ThreadsLaunch.tsx",
         "apps/videos/src/story.ts",
-        "packages/cli/src/commands/create.ts",
-        "packages/cli/src/helpers/env-checklist.ts",
-        "packages/cli/src/utils/sync-tools.ts",
         "packages/cli/test/gateway-selection.test.ts"
       ],
       "rules": {
         "complexity": "off"
-      }
-    },
-    {
-      "files": ["packages/registry/visual/renderer.browser.test.tsx"],
-      "rules": {
-        "curly": "off"
       }
     },
     {
@@ -57,52 +46,20 @@
         "apps/videos/src/index.tsx",
         "apps/videos/src/shared/brand.tsx",
         "apps/videos/src/shared/presentation.tsx",
-        "packages/cli/src/helpers/env-checklist.ts",
-        "packages/cli/src/utils/run-command.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/registry/src/gateways/litellm/gateway.ts",
-        "packages/registry/src/gateways/openai-compatible/gateway.ts",
-        "packages/registry/src/gateways/openrouter/gateway.ts",
-        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
-        "packages/registry/src/tools/get-weather/renderer.tsx",
-        "packages/registry/src/tools/retrieve-url/renderer.tsx",
-        "packages/registry/src/tools/tavily-search/renderer.tsx",
-        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
-        "packages/registry/src/tools/word-count/renderer.tsx"
+        "packages/cli/src/utils/run-command.ts"
       ],
       "rules": {
         "func-style": "off"
       }
     },
     {
-      "files": [
-        "apps/site/components/thread-playground-model.ts",
-        "apps/site/components/thread-showcase.tsx",
-        "apps/videos/src/ThreadsLaunch.tsx",
-        "packages/registry/src/tools/vercel-code-execution/renderer.tsx"
-      ],
-      "rules": {
-        "import/consistent-type-specifier-style": "off"
-      }
-    },
-    {
-      "files": [
-        "apps/videos/src/BrandExample.tsx",
-        "apps/videos/src/shared/presentation.tsx",
-        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
-        "packages/registry/src/tools/tavily-search/renderer.tsx"
-      ],
+      "files": ["apps/videos/src/BrandExample.tsx"],
       "rules": {
         "import/newline-after-import": "off"
       }
     },
     {
-      "files": [
-        "packages/thread/src/ai-sdk-run-chat.ts",
-        "packages/thread/test/ai-sdk-run-chat.test.ts",
-        "packages/thread/test/thread.test.ts",
-        "packages/thread/test/use-thread.test.ts"
-      ],
+      "files": ["packages/thread/src/ai-sdk-run-chat.ts"],
       "rules": {
         "max-classes-per-file": "off"
       }
@@ -115,28 +72,13 @@
         "apps/videos/scripts/stills.ts",
         "packages/cli/src/helpers/gateway-provider.test.ts",
         "packages/cli/src/helpers/prompts.ts",
-        "packages/cli/src/helpers/turbo-affected.test.ts",
         "packages/cli/src/utils/preflight.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/src/utils/sync-tools.ts",
         "packages/cli/test/gateway-selection.test.ts",
         "packages/registry/src/storage/ftp/storage-provider.test.ts",
         "scripts/sync-template.ts"
       ],
       "rules": {
         "no-await-in-loop": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/src/registry/transport.ts"],
-      "rules": {
-        "no-empty-function": "off"
-      }
-    },
-    {
-      "files": ["packages/registry/src/tools/get-weather/renderer.tsx"],
-      "rules": {
-        "no-loss-of-precision": "off"
       }
     },
     {
@@ -156,45 +98,23 @@
       }
     },
     {
-      "files": ["packages/registry/visual/renderer.browser.test.tsx"],
-      "rules": {
-        "no-plusplus": "off"
-      }
-    },
-    {
       "files": ["apps/electron/src/main.ts"],
       "rules": {
         "no-promise-executor-return": "off"
       }
     },
     {
-      "files": ["packages/cli/src/utils/sync-tools.test.ts"],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/src/helpers/env-checklist.ts"],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
       "files": [
         "apps/electron/src/main.ts",
         "apps/site/components/thread-playground-model.ts",
-        "packages/cli/test/gateway-selection.test.ts",
-        "packages/registry/src/tools/word-count/renderer.tsx"
+        "packages/cli/test/gateway-selection.test.ts"
       ],
       "rules": {
         "no-use-before-define": "off"
       }
     },
     {
-      "files": [
-        "apps/electron/scripts/run-forge.cjs",
-        "apps/electron/src/main.ts"
-      ],
+      "files": ["apps/electron/src/main.ts"],
       "rules": {
         "node/global-require": "off"
       }
@@ -206,10 +126,7 @@
       }
     },
     {
-      "files": [
-        "apps/site/components/thread-showcase.tsx",
-        "packages/cli/src/registry/transport.ts"
-      ],
+      "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "prefer-destructuring": "off"
       }
@@ -261,7 +178,6 @@
     {
       "files": [
         "apps/electron/src/main.ts",
-        "packages/cli/src/registry/transport.ts",
         "packages/thread/src/abstract-thread.ts"
       ],
       "rules": {
@@ -289,13 +205,7 @@
         "apps/videos/src/ThreadsLaunch.tsx",
         "apps/videos/src/index.tsx",
         "apps/videos/src/shared/brand.tsx",
-        "apps/videos/src/shared/presentation.tsx",
-        "packages/registry/src/tools/firecrawl-search/renderer.tsx",
-        "packages/registry/src/tools/get-weather/renderer.tsx",
-        "packages/registry/src/tools/retrieve-url/renderer.tsx",
-        "packages/registry/src/tools/tavily-search/renderer.tsx",
-        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
-        "packages/registry/src/tools/word-count/renderer.tsx"
+        "apps/videos/src/shared/presentation.tsx"
       ],
       "rules": {
         "react/function-component-definition": "off"
@@ -326,22 +236,13 @@
       }
     },
     {
-      "files": [
-        "apps/electron/forge.config.ts",
-        "apps/electron/src/main.ts",
-        "packages/cli/src/registry/transport.test.ts",
-        "packages/registry/visual/renderer.browser.test.tsx"
-      ],
+      "files": ["apps/electron/forge.config.ts", "apps/electron/src/main.ts"],
       "rules": {
         "require-await": "off"
       }
     },
     {
-      "files": [
-        "apps/site/components/thread-playground-model.ts",
-        "apps/site/tests/thread-playground.visual.ts",
-        "apps/videos/src/ThreadsLaunch.tsx"
-      ],
+      "files": ["apps/site/tests/thread-playground.visual.ts"],
       "rules": {
         "require-unicode-regexp": "off"
       }
@@ -365,17 +266,7 @@
         "apps/videos/src/BrandExample.tsx",
         "apps/videos/src/ThreadsLaunch.tsx",
         "apps/videos/src/shared/presentation.tsx",
-        "apps/videos/src/story.ts",
-        "packages/cli/src/helpers/env-checklist.ts",
-        "packages/cli/src/helpers/storage-provider.test.ts",
-        "packages/cli/src/registry/gateways.test.ts",
-        "packages/cli/src/registry/transport.test.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/test/gateway-selection.test.ts",
-        "packages/registry/src/tools/get-weather/renderer.tsx",
-        "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
-        "packages/registry/visual/renderer.browser.test.tsx",
-        "packages/registry/visual/vitest.config.ts"
+        "apps/videos/src/story.ts"
       ],
       "rules": {
         "sort-keys": "off"
@@ -400,12 +291,6 @@
       }
     },
     {
-      "files": ["packages/thread/src/abstract-thread.ts"],
-      "rules": {
-        "typescript/no-this-alias": "off"
-      }
-    },
-    {
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "unicorn/consistent-existence-index-check": "off"
@@ -427,57 +312,9 @@
       }
     },
     {
-      "files": [
-        "apps/electron/scripts/generate-icons.test.js",
-        "packages/cli/src/registry/gateways.test.ts",
-        "packages/cli/src/registry/transport.test.ts",
-        "packages/cli/src/utils/get-package-manager.test.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/registry/visual/vitest.config.ts",
-        "scripts/release-fallback.test.ts"
-      ],
-      "rules": {
-        "unicorn/import-style": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/src/utils/sync-tools.ts"],
-      "rules": {
-        "unicorn/no-array-reduce": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/test/gateway-selection.test.ts"],
-      "rules": {
-        "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": [
-        "packages/cli/src/registry/gateways.test.ts",
-        "packages/cli/src/utils/sync-tools.test.ts",
-        "packages/cli/test/gateway-selection.test.ts"
-      ],
-      "rules": {
-        "unicorn/no-await-expression-member": "off"
-      }
-    },
-    {
-      "files": ["packages/cli/src/helpers/env-checklist.ts"],
-      "rules": {
-        "unicorn/no-immediate-mutation": "off"
-      }
-    },
-    {
       "files": ["apps/electron/src/main.ts"],
       "rules": {
         "unicorn/no-negated-condition": "off"
-      }
-    },
-    {
-      "files": ["packages/thread/src/abstract-thread.ts"],
-      "rules": {
-        "unicorn/no-this-assignment": "off"
       }
     },
     {
@@ -487,22 +324,13 @@
       }
     },
     {
-      "files": [
-        "apps/electron/src/main.ts",
-        "packages/registry/src/tools/get-weather/renderer.tsx"
-      ],
+      "files": ["apps/electron/src/main.ts"],
       "rules": {
         "unicorn/numeric-separators-style": "off"
       }
     },
     {
-      "files": [
-        "apps/electron/forge.config.ts",
-        "apps/electron/scripts/generate-icons.test.js",
-        "apps/electron/scripts/generate-icons.ts",
-        "apps/electron/scripts/write-branding.ts",
-        "apps/electron/src/main.ts"
-      ],
+      "files": ["apps/electron/forge.config.ts", "apps/electron/src/main.ts"],
       "rules": {
         "unicorn/prefer-module": "off"
       }
@@ -511,12 +339,6 @@
       "files": ["apps/electron/src/main.ts"],
       "rules": {
         "unicorn/prefer-ternary": "off"
-      }
-    },
-    {
-      "files": ["packages/registry/visual/vitest.config.ts"],
-      "rules": {
-        "unicorn/relative-url-style": "off"
       }
     }
   ]
