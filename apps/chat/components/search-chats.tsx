@@ -14,7 +14,7 @@ const getSearchShortcutText = () => {
     return "Ctrl+K";
   }
 
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
   return isMac ? "Cmd+K" : "Ctrl+K";
 };
 

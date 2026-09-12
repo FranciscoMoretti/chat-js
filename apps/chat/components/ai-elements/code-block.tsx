@@ -27,8 +27,7 @@ const lineNumberTransformer: ShikiTransformer = {
   name: "line-numbers",
   line(node, line) {
     node.children.unshift({
-      type: "element",
-      tagName: "span",
+      children: [{ type: "text", value: String(line) }],
       properties: {
         className: [
           "inline-block",
@@ -39,7 +38,8 @@ const lineNumberTransformer: ShikiTransformer = {
           "text-muted-foreground",
         ],
       },
-      children: [{ type: "text", value: String(line) }],
+      tagName: "span",
+      type: "element",
     });
   },
 };

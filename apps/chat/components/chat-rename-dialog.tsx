@@ -38,10 +38,8 @@ export const ChatRenameDialog = ({
     const trimmedValue = chatTitle.trim();
     if (trimmedValue && trimmedValue !== currentTitle) {
       await onSubmit(trimmedValue);
-      onOpenChange(false);
-    } else {
-      onOpenChange(false);
     }
+    onOpenChange(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {

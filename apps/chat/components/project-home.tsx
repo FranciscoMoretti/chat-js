@@ -93,9 +93,9 @@ export const ProjectHome = ({
     await renameProjectMutation.mutateAsync({
       id: projectId,
       updates: {
-        name: data.name,
         icon: data.icon,
         iconColor: data.color,
+        name: data.name,
       },
     });
     queryClient.invalidateQueries({

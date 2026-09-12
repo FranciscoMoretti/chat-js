@@ -27,6 +27,10 @@ const VARIANT_CONFIG: Record<
 > = {
   credits: {
     dismissible: true,
+    getClasses: ({ isAtLimit }) =>
+      isAtLimit
+        ? "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200"
+        : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
     getMessage: ({ remaining, isAtLimit }) =>
       isAtLimit ? (
         <span>
@@ -53,13 +57,11 @@ const VARIANT_CONFIG: Record<
           </InternalLink>
         </span>
       ),
-    getClasses: ({ isAtLimit }) =>
-      isAtLimit
-        ? "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200"
-        : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
   },
   model: {
     dismissible: false,
+    getClasses: () =>
+      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
     getMessage: () => (
       <span>
         This model isn&apos;t available for anonymous users.{" "}
@@ -71,14 +73,12 @@ const VARIANT_CONFIG: Record<
         </InternalLink>
       </span>
     ),
-    getClasses: () =>
-      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
   },
   image: {
     dismissible: false,
-    getMessage: () => <span>Image models are not supported here yet.</span>,
     getClasses: () =>
       "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
+    getMessage: () => <span>Image models are not supported here yet.</span>,
   },
 };
 
@@ -133,7 +133,10 @@ export const LimitDisplay = ({
           )}
         >
           <div className="flex-1">
-            {config.getMessage({ remaining, isAtLimit })}
+            {config.getMessage({
+              isAtLimit,
+              remaining,
+            })}
           </div>
           {config.dismissible ? (
             <Button

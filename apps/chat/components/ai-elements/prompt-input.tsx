@@ -157,25 +157,26 @@ export const PromptInputProvider = ({
     (FileUIPart & { id: string })[]
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const openRef = useRef<() => void>(() => {});
+  const openRef = useRef<() => void>(() => {
+    // The provider registers the file dialog callback after mounting.
+  });
 
   const add = useCallback((files: File[] | FileList) => {
-    const incoming = Array.from(files);
+    const incoming = [...files];
     if (incoming.length === 0) {
       return;
     }
 
-    setAttachements((prev) =>
-      prev.concat(
-        incoming.map((file) => ({
-          id: nanoid(),
-          type: "file" as const,
-          url: URL.createObjectURL(file),
-          mediaType: file.type,
-          filename: file.name,
-        }))
-      )
-    );
+    setAttachements((prev) => [
+      ...prev,
+      ...incoming.map((file) => ({
+        id: nanoid(),
+        type: "file" as const,
+        url: URL.createObjectURL(file),
+        mediaType: file.type,
+        filename: file.name,
+      })),
+    ]);
   }, []);
 
   const remove = useCallback((id: string) => {
@@ -205,12 +206,12 @@ export const PromptInputProvider = ({
 
   const attachments = useMemo<AttachmentsContext>(
     () => ({
-      files: attachements,
       add,
-      remove,
       clear,
-      openFileDialog,
       fileInputRef,
+      files: attachements,
+      openFileDialog,
+      remove,
     }),
     [attachements, add, remove, clear, openFileDialog]
   );
@@ -225,13 +226,13 @@ export const PromptInputProvider = ({
 
   const controller = useMemo<PromptInputControllerProps>(
     () => ({
-      textInput: {
-        value: textInput,
-        setInput: setTextInput,
-        clear: clearInput,
-      },
-      attachments,
       __registerFileInput,
+      attachments,
+      textInput: {
+        clear: clearInput,
+        setInput: setTextInput,
+        value: textInput,
+      },
     }),
     [textInput, clearInput, attachments, __registerFileInput]
   );
@@ -527,7 +528,7 @@ export const PromptInput = ({
 
   const addLocal = useCallback(
     (fileList: File[] | FileList) => {
-      const incoming = Array.from(fileList);
+      const incoming = [...fileList];
       const accepted = incoming.filter((f) => matchesAccept(f));
       if (incoming.length && accepted.length === 0) {
         onError?.({
@@ -570,14 +571,15 @@ export const PromptInput = ({
             filename: file.name,
           });
         }
-        return prev.concat(next);
+        return [...prev, ...next];
       });
     },
     [matchesAccept, maxFiles, maxFileSize, onError]
   );
 
   const add = usingProvider
-    ? (files: File[] | FileList) => controller.attachments.add(files)
+    ? (incomingFiles: File[] | FileList) =>
+        controller.attachments.add(incomingFiles)
     : addLocal;
 
   const remove = usingProvider
@@ -698,12 +700,12 @@ export const PromptInput = ({
 
   const ctx = useMemo<AttachmentsContext>(
     () => ({
-      files: files.map((item) => ({ ...item, id: item.id })),
       add,
-      remove,
       clear,
-      openFileDialog,
       fileInputRef: inputRef,
+      files: files.map((item) => ({ ...item, id: item.id })),
+      openFileDialog,
+      remove,
     }),
     [files, add, remove, clear, openFileDialog]
   );
@@ -738,7 +740,13 @@ export const PromptInput = ({
       })
     ).then((convertedFiles: FileUIPart[]) => {
       try {
-        const result = onSubmit({ text, files: convertedFiles }, event);
+        const result = onSubmit(
+          {
+            files: convertedFiles,
+            text,
+          },
+          event
+        );
 
         // Handle both sync and async onSubmit
         if (result instanceof Promise) {
@@ -885,11 +893,11 @@ export const PromptInputTextarea = ({
 
   const controlledProps = controller
     ? {
-        value: controller.textInput.value,
         onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
           controller.textInput.setInput(e.currentTarget.value);
           onChange?.(e);
         },
+        value: controller.textInput.value,
       }
     : {
         onChange,
@@ -1148,7 +1156,7 @@ export const PromptInputSpeechButton = ({
       speechRecognition.onresult = (event) => {
         let finalTranscript = "";
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
           const result = event.results[i];
           if (result.isFinal) {
             finalTranscript += result[0]?.transcript ?? "";

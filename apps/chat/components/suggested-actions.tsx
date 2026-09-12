@@ -44,9 +44,9 @@ const PureSuggestedActions = ({
     () =>
       [
         {
+          icon: PenLineIcon,
           id: "write",
           label: "Write",
-          icon: PenLineIcon,
           prompts: [
             "Write a concise email to reschedule a meeting",
             "Turn these bullet points into a clear memo",
@@ -56,9 +56,9 @@ const PureSuggestedActions = ({
           ],
         },
         {
+          icon: GraduationCapIcon,
           id: "learn",
           label: "Learn",
-          icon: GraduationCapIcon,
           prompts: [
             "Explain this concept like I'm smart but new to it",
             "Quiz me on this topic (start easy, ramp up)",
@@ -68,9 +68,9 @@ const PureSuggestedActions = ({
           ],
         },
         {
+          icon: Code2Icon,
           id: "code",
           label: "Code",
-          icon: Code2Icon,
           prompts: [
             "Implement this feature and explain tradeoffs",
             "Find the bug in this snippet and fix it",
@@ -80,9 +80,9 @@ const PureSuggestedActions = ({
           ],
         },
         {
+          icon: SparklesIcon,
           id: "life",
           label: "Life stuff",
-          icon: SparklesIcon,
           prompts: [
             "Plan a simple healthy meal prep for the week",
             "Help me choose between these options (pros/cons)",

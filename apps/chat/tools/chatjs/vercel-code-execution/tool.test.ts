@@ -1,5 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { codeExecution } from "./tool";
+
 const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),
   create: vi.fn(),
@@ -19,8 +21,6 @@ vi.mock("./javascript", () => ({
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
-
-import { codeExecution } from "./tool";
 
 const sandbox = { id: "isolated-sandbox" };
 beforeEach(() => {

@@ -10,7 +10,7 @@ import type { DocumentToolType } from "@/tools/platform/documents/types";
 
 import { DocumentPreview } from "./document-preview";
 
-type DocumentTool = Extract<
+type DocumentToolPart = Extract<
   ChatMessage["parts"][number],
   { type: DocumentToolType }
 >;
@@ -18,7 +18,7 @@ type DocumentTool = Extract<
 interface DocumentToolComponentProps {
   isReadonly: boolean;
   messageId: string;
-  tool: DocumentTool;
+  tool: DocumentToolPart;
 }
 
 const PureDocumentTool = ({
@@ -78,7 +78,11 @@ const PureDocumentTool = ({
   ) {
     return (
       <DocumentPreview
-        input={{ title: inputTitle, kind, content: inputContent }}
+        input={{
+          content: inputContent,
+          kind,
+          title: inputTitle,
+        }}
         isLastArtifact={isLastArtifact}
         isReadonly={isReadonly}
         messageId={messageId}
@@ -86,8 +90,8 @@ const PureDocumentTool = ({
           tool.output
             ? {
                 documentId: tool.output.documentId,
-                title: inputTitle,
                 kind,
+                title: inputTitle,
               }
             : undefined
         }

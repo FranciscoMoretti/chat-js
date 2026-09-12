@@ -11,10 +11,10 @@ import { ResearchTasks } from "./research-tasks";
 
 // Add the updateName mapping (consider moving to a shared util later)
 const updateName = {
-  web: "Web Search",
-  started: "Started",
   completed: "Completed",
+  started: "Started",
   thoughts: "Thoughts",
+  web: "Web Search",
   writing: "Writing",
 } as const;
 

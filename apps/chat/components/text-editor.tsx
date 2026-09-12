@@ -99,8 +99,8 @@ const ContentUpdatePlugin = ({
   const handleChange = (editorState: EditorState) => {
     if (!(isReadonly || isProgrammaticUpdate.current)) {
       handleEditorChange({
-        editorState,
         editor,
+        editorState,
         onSaveContent,
       });
     }

@@ -81,37 +81,39 @@ const PureParallelResponseCards = ({ messageId }: { messageId: string }) => {
         : null;
 
       return {
+        message: actualMessage ?? null,
         modelId,
         parallelIndex,
-        message: actualMessage ?? null,
         run: parallelGroupInfo?.runsByParallelIndex[parallelIndex],
       };
     });
   }, [message, parallelGroupInfo]);
 
-  const sortedCardSlots = useMemo(() => {
-    return cardSlots.toSorted((left, right) => {
-      const leftOrder = getModelOrderIndex(
-        getEffectiveModelId(left.message, left.modelId),
-        models
-      );
-      const rightOrder = getModelOrderIndex(
-        getEffectiveModelId(right.message, right.modelId),
-        models
-      );
+  const sortedCardSlots = useMemo(
+    () =>
+      cardSlots.toSorted((left, right) => {
+        const leftOrder = getModelOrderIndex(
+          getEffectiveModelId(left.message, left.modelId),
+          models
+        );
+        const rightOrder = getModelOrderIndex(
+          getEffectiveModelId(right.message, right.modelId),
+          models
+        );
 
-      if (leftOrder !== rightOrder) {
-        return leftOrder - rightOrder;
-      }
+        if (leftOrder !== rightOrder) {
+          return leftOrder - rightOrder;
+        }
 
-      const leftMessageId =
-        left.message?.id ?? `${left.modelId}:${left.parallelIndex}`;
-      const rightMessageId =
-        right.message?.id ?? `${right.modelId}:${right.parallelIndex}`;
+        const leftMessageId =
+          left.message?.id ?? `${left.modelId}:${left.parallelIndex}`;
+        const rightMessageId =
+          right.message?.id ?? `${right.modelId}:${right.parallelIndex}`;
 
-      return leftMessageId.localeCompare(rightMessageId);
-    });
-  }, [cardSlots, models]);
+        return leftMessageId.localeCompare(rightMessageId);
+      }),
+    [cardSlots, models]
+  );
 
   const selectedParallelIndex = useMemo(() => {
     if (pendingParallelIndex !== null) {
@@ -136,7 +138,7 @@ const PureParallelResponseCards = ({ messageId }: { messageId: string }) => {
     }
 
     const slot = cardSlots.find(
-      (slot) => slot.parallelIndex === pendingParallelIndex
+      (candidate) => candidate.parallelIndex === pendingParallelIndex
     );
     if (!slot) {
       return;

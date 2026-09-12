@@ -26,7 +26,7 @@ import { ConnectorHeader } from "./connector-header";
 import { McpConnectDialog } from "./mcp-connect-dialog";
 import { SettingsPageContent } from "./settings-page";
 
-const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
+const HTTP_STATUS_REGEX = /HTTP (?<status>\d{3})/u;
 
 const formatMcpError = (message: string): string => {
   const httpMatch = message.match(HTTP_STATUS_REGEX);
@@ -348,7 +348,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       if (!connector) {
         return;
       }
-      toggleEnabled({ id: connector.id, enabled });
+      toggleEnabled({
+        enabled,
+        id: connector.id,
+      });
     },
     [connector, toggleEnabled]
   );

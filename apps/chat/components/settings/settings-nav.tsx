@@ -17,15 +17,23 @@ type SettingsNavItem = {
 
 const getNavItems = (): SettingsNavItem[] => {
   const items: SettingsNavItem[] = [
-    { href: "/settings", label: "General", icon: Settings },
-    { href: "/settings/models", label: "Models", icon: Cpu },
+    {
+      href: "/settings",
+      icon: Settings,
+      label: "General",
+    },
+    {
+      href: "/settings/models",
+      icon: Cpu,
+      label: "Models",
+    },
   ];
 
   if (config.ai.tools.mcp.enabled) {
     items.push({
       href: "/settings/connectors",
-      label: "Connectors",
       icon: Plug,
+      label: "Connectors",
     });
   }
 

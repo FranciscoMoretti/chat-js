@@ -18,23 +18,19 @@ const PurePreviewMessage = ({
     return null;
   }
 
-  return (
-    <>
-      {role === "user" ? (
-        <UserMessage
-          isLoading={isLoading}
-          isReadonly={isReadonly}
-          messageId={messageId}
-          parentMessageId={parentMessageId}
-        />
-      ) : (
-        <AssistantMessage
-          isLoading={isLoading}
-          isReadonly={isReadonly}
-          messageId={messageId}
-        />
-      )}
-    </>
+  return role === "user" ? (
+    <UserMessage
+      isLoading={isLoading}
+      isReadonly={isReadonly}
+      messageId={messageId}
+      parentMessageId={parentMessageId}
+    />
+  ) : (
+    <AssistantMessage
+      isLoading={isLoading}
+      isReadonly={isReadonly}
+      messageId={messageId}
+    />
   );
 };
 

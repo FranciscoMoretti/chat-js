@@ -137,6 +137,85 @@ const ProjectBreadcrumb = ({
   );
 };
 
+interface ChatBreadcrumbProps {
+  canManageChat: boolean;
+  chatLabel: string;
+  chatTitleDraft: string;
+  handleChatInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+  handleChatRename: () => Promise<void> | void;
+  isChatEditing: boolean;
+  isPinned: boolean;
+  onChatTitleChange: (value: string) => void;
+  onShare: () => void;
+  onTogglePin: () => void;
+  openChatDeleteDialog: () => void;
+  showShare?: boolean;
+  startChatRename: () => void;
+}
+
+const PureChatBreadcrumb = memo(
+  ({
+    canManageChat,
+    chatLabel,
+    chatTitleDraft,
+    handleChatInputKeyDown,
+    handleChatRename,
+    isChatEditing,
+    isPinned,
+    onChatTitleChange,
+    onShare,
+    onTogglePin,
+    openChatDeleteDialog,
+    showShare,
+    startChatRename: startChatRenameProp,
+  }: ChatBreadcrumbProps) => {
+    if (isChatEditing) {
+      return (
+        <Input
+          autoFocus
+          className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
+          maxLength={255}
+          onBlur={handleChatRename}
+          onChange={(event) => onChatTitleChange(event.target.value)}
+          onKeyDown={handleChatInputKeyDown}
+          value={chatTitleDraft}
+        />
+      );
+    }
+
+    if (canManageChat) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
+              type="button"
+            >
+              <span className="truncate">{chatLabel}</span>
+              <ChevronDown
+                aria-hidden
+                className="text-muted-foreground size-4 shrink-0"
+              />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <ChatMenuItems
+              isPinned={isPinned}
+              onDelete={openChatDeleteDialog}
+              onRename={startChatRenameProp}
+              onShare={onShare}
+              onTogglePin={onTogglePin}
+              showShare={showShare}
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return <BreadcrumbPage>{chatLabel}</BreadcrumbPage>;
+  }
+);
+
 export const HeaderBreadcrumb = ({
   chat,
   chatId,
@@ -271,85 +350,6 @@ export const HeaderBreadcrumb = ({
     </>
   );
 };
-
-interface ChatBreadcrumbProps {
-  canManageChat: boolean;
-  chatLabel: string;
-  chatTitleDraft: string;
-  handleChatInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
-  handleChatRename: () => Promise<void> | void;
-  isChatEditing: boolean;
-  isPinned: boolean;
-  onChatTitleChange: (value: string) => void;
-  onShare: () => void;
-  onTogglePin: () => void;
-  openChatDeleteDialog: () => void;
-  showShare?: boolean;
-  startChatRename: () => void;
-}
-
-const PureChatBreadcrumb = memo(
-  ({
-    canManageChat,
-    chatLabel,
-    chatTitleDraft,
-    handleChatInputKeyDown,
-    handleChatRename,
-    isChatEditing,
-    isPinned,
-    onChatTitleChange,
-    onShare,
-    onTogglePin,
-    openChatDeleteDialog,
-    showShare,
-    startChatRename: startChatRenameProp,
-  }: ChatBreadcrumbProps) => {
-    if (isChatEditing) {
-      return (
-        <Input
-          autoFocus
-          className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
-          maxLength={255}
-          onBlur={handleChatRename}
-          onChange={(event) => onChatTitleChange(event.target.value)}
-          onKeyDown={handleChatInputKeyDown}
-          value={chatTitleDraft}
-        />
-      );
-    }
-
-    if (canManageChat) {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
-              type="button"
-            >
-              <span className="truncate">{chatLabel}</span>
-              <ChevronDown
-                aria-hidden
-                className="text-muted-foreground size-4 shrink-0"
-              />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <ChatMenuItems
-              isPinned={isPinned}
-              onDelete={openChatDeleteDialog}
-              onRename={startChatRenameProp}
-              onShare={onShare}
-              onTogglePin={onTogglePin}
-              showShare={showShare}
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    }
-
-    return <BreadcrumbPage>{chatLabel}</BreadcrumbPage>;
-  }
-);
 
 PureChatBreadcrumb.displayName = "InnerChatBreadcrumb";
 

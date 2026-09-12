@@ -38,15 +38,15 @@ const FollowUpSuggestions = ({
         role: "user",
         parts: [
           {
-            type: "text",
             text: suggestion,
+            type: "text",
           },
         ],
         metadata: {
+          activeStreamId: null,
           createdAt: new Date(),
           parentMessageId,
           selectedModel: selectedModelId,
-          activeStreamId: null,
           selectedTool: (selectedTool as UiToolName | null) || undefined,
         },
       };

@@ -71,9 +71,9 @@ export const ToolPart = ({ part, messageId, isReadonly }: ToolPartProps) => {
 
   if (isInstalledToolType(type)) {
     return renderInstalledTool({
-      part,
-      messageId,
       isReadonly,
+      messageId,
+      part,
     });
   }
 

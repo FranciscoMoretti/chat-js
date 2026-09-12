@@ -11,20 +11,56 @@ interface ToolDefinition {
 }
 
 export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
-  webSearch: { name: "Web Search", icon: GlobeIcon, shortName: "Search" },
+  webSearch: {
+    icon: GlobeIcon,
+    name: "Web Search",
+    shortName: "Search",
+  },
   deepResearch: {
-    name: "Deep Research",
     icon: Telescope,
+    name: "Deep Research",
     shortName: "Research",
   },
-  generateImage: { name: "Create an image", icon: Images, shortName: "Image" },
-  generateVideo: { name: "Create a video", icon: Video, shortName: "Video" },
-  createTextDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
-  createCodeDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
-  createSheetDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
-  editTextDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
-  editCodeDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
-  editSheetDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
+  generateImage: {
+    icon: Images,
+    name: "Create an image",
+    shortName: "Image",
+  },
+  generateVideo: {
+    icon: Video,
+    name: "Create a video",
+    shortName: "Video",
+  },
+  createTextDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
+  createCodeDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
+  createSheetDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
+  editTextDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
+  editCodeDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
+  editSheetDocument: {
+    icon: Edit3,
+    name: "Canvas",
+    shortName: "Canvas",
+  },
 };
 
 /**

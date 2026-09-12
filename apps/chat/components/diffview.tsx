@@ -11,9 +11,9 @@ import { useEffect } from "react";
 import { createEditorConfig } from "@/lib/editor/config";
 
 const DiffType = {
-  Unchanged: 0,
   Deleted: -1,
   Inserted: 1,
+  Unchanged: 0,
 };
 
 // Define diff types
@@ -102,7 +102,8 @@ class DiffTextNode extends TextNode {
 
     if (prevDiffType !== currentDiffType) {
       // Update classes if diff type changed
-      return false; // Force recreation
+      // Force recreation
+      return false;
     }
 
     return super.updateDOM(prevNode as this, dom, config);

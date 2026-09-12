@@ -112,8 +112,8 @@ export const ModelsTable = ({
   const handleToggle = useCallback(
     (modelId: string, currentlyEnabled: boolean) => {
       setModelEnabled({
-        modelId,
         enabled: !currentlyEnabled,
+        modelId,
       });
     },
     [setModelEnabled]

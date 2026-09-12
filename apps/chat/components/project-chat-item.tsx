@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/ui-chat";
+
 export const ProjectChatItem = ({
   chat,
   onDelete,
