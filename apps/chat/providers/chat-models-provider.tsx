@@ -68,7 +68,7 @@ export const ChatModelsProvider = ({
 
   return (
     <ChatModelsContext.Provider
-      value={{ models: filteredModels, allModels: models, getModelById }}
+      value={{ allModels: models, getModelById, models: filteredModels }}
     >
       {children}
     </ChatModelsContext.Provider>

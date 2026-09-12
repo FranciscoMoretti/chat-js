@@ -15,8 +15,8 @@ export const getQueryClient = cache(makeQueryClient);
 
 export const trpc = createTRPCOptionsProxy({
   ctx: createTRPCContext,
-  router: appRouter,
   queryClient: getQueryClient,
+  router: appRouter,
 });
 
 export const HydrateClient = (props: { children: React.ReactNode }) => {
