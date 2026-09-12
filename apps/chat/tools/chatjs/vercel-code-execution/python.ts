@@ -2,8 +2,8 @@ import type { Sandbox } from "@vercel/sandbox";
 
 import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
-const WHITESPACE_REGEX = /\s+/;
-const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/;
+const WHITESPACE_REGEX = /\s+/u;
+const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
 function packageName(spec: string): string {

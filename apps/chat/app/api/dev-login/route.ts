@@ -27,7 +27,7 @@ async function serializeSignedCookie(
     key,
     new TextEncoder().encode(value)
   );
-  const base64Sig = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  const base64Sig = btoa(String.fromCodePoint(...new Uint8Array(signature)));
   const signedValue = encodeURIComponent(`${value}.${base64Sig}`);
 
   let cookie = `${name}=${signedValue}`;

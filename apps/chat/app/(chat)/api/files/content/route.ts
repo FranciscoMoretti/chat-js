@@ -1,3 +1,1 @@
-import { createFileContentResponse } from "@/lib/file-content-response";
-
-export const GET = createFileContentResponse;
+export { createFileContentResponse as GET } from "@/lib/file-content-response";
