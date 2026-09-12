@@ -1,7 +1,5 @@
-import {
-  createThreadStateSnapshot,
-  type ThreadStateSnapshot,
-} from "@chat-js/thread";
+import { createThreadStateSnapshot } from "@chat-js/thread";
+import type { ThreadStateSnapshot } from "@chat-js/thread";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
 

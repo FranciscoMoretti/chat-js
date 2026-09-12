@@ -3,13 +3,13 @@
 import {
   createContext,
   Fragment,
-  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
+import type { ReactNode } from "react";
 
 export type RuntimeId = string;
 

@@ -2,23 +2,21 @@
 
 import React, {
   createContext,
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 
 import type { LexicalChatInputRef } from "@/components/lexical-chat-input";
 import type { AppModelId } from "@/lib/ai/app-models";
-import {
-  type Attachment,
-  getPrimarySelectedModelId,
-  type SelectedModelValue,
-  type UiToolName,
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type {
+  Attachment,
+  SelectedModelValue,
+  UiToolName,
 } from "@/lib/ai/types";
 
 import { useChatModels } from "./chat-models-provider";

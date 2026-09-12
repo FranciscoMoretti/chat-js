@@ -8,10 +8,8 @@ import { toast } from "sonner";
 import { ChatComposer } from "@/components/chat-composer";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

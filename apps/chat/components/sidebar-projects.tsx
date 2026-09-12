@@ -5,10 +5,8 @@ import { FolderPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
 import {
   SidebarMenuButton,

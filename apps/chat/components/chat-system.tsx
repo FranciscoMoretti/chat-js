@@ -1,17 +1,16 @@
 "use client";
 
 import type { MessageTreeSnapshot } from "@chat-js/thread";
-import { memo, type ReactNode } from "react";
+import { memo } from "react";
+import type { ReactNode } from "react";
 
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import type { ApplicationThread } from "@/lib/application-thread";
-import {
-  type CustomChatStoreApi,
-  CustomStoreProvider,
-} from "@/lib/stores/custom-store-provider";
+import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
+import type { CustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 
 export const ChatSystem = memo(function PureChatSystem({

@@ -1,16 +1,10 @@
 "use client";
 
 import type { UIMessage } from "@ai-sdk/react";
-import {
-  createThreadStateSnapshot,
-  type MessageTreeSnapshot,
-} from "@chat-js/thread";
-import {
-  createContext,
-  type PropsWithChildren,
-  useContext,
-  useRef,
-} from "react";
+import { createThreadStateSnapshot } from "@chat-js/thread";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
+import { createContext, useContext, useRef } from "react";
+import type { PropsWithChildren } from "react";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
@@ -23,23 +17,16 @@ import {
 } from "@/lib/stores/base";
 import { generateUUID } from "@/lib/utils";
 
-import {
-  type ChatPersistenceAugmentedState,
-  withChatPersistence,
-} from "./with-chat-persistence";
-import {
-  type DataStreamAugmentedState,
-  withDataStream,
-} from "./with-data-stream";
-import {
-  type PartsAugmentedState,
-  withMessageParts,
-} from "./with-message-parts";
-import {
-  type ParallelRunsAugmentedState,
-  withParallelRuns,
-} from "./with-parallel-runs";
-import { type ThreadStateStore, withThreadState } from "./with-thread-state";
+import { withChatPersistence } from "./with-chat-persistence";
+import type { ChatPersistenceAugmentedState } from "./with-chat-persistence";
+import { withDataStream } from "./with-data-stream";
+import type { DataStreamAugmentedState } from "./with-data-stream";
+import { withMessageParts } from "./with-message-parts";
+import type { PartsAugmentedState } from "./with-message-parts";
+import { withParallelRuns } from "./with-parallel-runs";
+import type { ParallelRunsAugmentedState } from "./with-parallel-runs";
+import { withThreadState } from "./with-thread-state";
+import type { ThreadStateStore } from "./with-thread-state";
 import { withTracing } from "./with-tracing";
 import { ZustandThreadState } from "./zustand-thread-state";
 

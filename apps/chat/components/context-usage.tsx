@@ -18,10 +18,8 @@ import {
 } from "@/components/ai-elements/context";
 import { Button } from "@/components/ui/button";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import {
-  getUsageTokenDetails,
-  type StoredLanguageModelUsage,
-} from "@/lib/ai/usage-token-details";
+import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
+import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
 import { useLastUsageUntilMessageId } from "@/lib/stores/hooks-base";
 import { useChatModels } from "@/providers/chat-models-provider";
 

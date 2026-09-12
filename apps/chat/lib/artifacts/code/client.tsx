@@ -2,12 +2,10 @@ import { Copy, List, MessageSquare, Play, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { CodeEditor } from "@/components/code-editor";
-import {
-  Console,
-  type ConsoleOutput,
-  type ConsoleOutputContent,
-} from "@/components/console";
-import { Artifact, type ArtifactMetadata } from "@/components/create-artifact";
+import { Console } from "@/components/console";
+import type { ConsoleOutput, ConsoleOutputContent } from "@/components/console";
+import { Artifact } from "@/components/create-artifact";
+import type { ArtifactMetadata } from "@/components/create-artifact";
 import { config } from "@/lib/config";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 

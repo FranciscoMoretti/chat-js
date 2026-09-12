@@ -6,11 +6,13 @@ import { useMemo } from "react";
 import { AnonymousSessionInit } from "@/components/anonymous-session-init";
 import { AppRuntimeSlot } from "@/components/chat-runtime-controller";
 import {
-  type AppRuntimeData,
-  type CreateAppRuntimeInput,
   createAppRuntimeInput,
   ProvisionalAppRuntimeIdentityProvider,
   useProvisionalAppRuntimeIdentity,
+} from "@/lib/app-chat-runtime";
+import type {
+  AppRuntimeData,
+  CreateAppRuntimeInput,
 } from "@/lib/app-chat-runtime";
 import { RuntimeRegistryProvider, RuntimeSlots } from "@/lib/runtime-registry";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";

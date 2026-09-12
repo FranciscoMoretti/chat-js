@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 import { ChatSync } from "@/components/chat-sync";
 import {
-  type AppRuntime,
   getAppRuntimeStore,
   getAppRuntimeThread,
 } from "@/lib/app-chat-runtime";
+import type { AppRuntime } from "@/lib/app-chat-runtime";
 import { claimConfirmedProvisionalChat } from "@/lib/provisional-chat-confirmations";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
