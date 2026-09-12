@@ -19,7 +19,7 @@ index ba955d39..b405073f 100644
        return await runtime.dispatchSession({ command: { kind: "compact" }, sessionId: id });
      },
 diff --git a/packages/eve/src/channel/types.ts b/packages/eve/src/channel/types.ts
-index cca4a3e8..210f201c 100644
+index cca4a3e8..bb799325 100644
 --- a/packages/eve/src/channel/types.ts
 +++ b/packages/eve/src/channel/types.ts
 @@ -1,3 +1,4 @@
@@ -65,23 +65,29 @@ index cca4a3e8..210f201c 100644
    | ClearSessionHookPayload
    | CompactSessionHookPayload
    | DeliverHookPayload
-@@ -453,6 +464,8 @@ export interface SessionCapabilities {
+@@ -453,6 +464,10 @@ export interface SessionCapabilities {
   * subagent tool wrapper).
   */
  export interface RunInput {
++  /** Server-authorized public transcript; creates an idle conversation without a first turn. */
++  readonly seed?: import("#execution/session-transcript-seed.js").SessionTranscriptSeed;
 +  /** Server-authorized native checkpoint used to seed a new independent session. */
 +  readonly fork?: SessionForkReference;
    readonly adapter: ChannelAdapter<any>;
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
 diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
-index 43979d68..c2652494 100644
+index 43979d68..8682e803 100644
 --- a/packages/eve/src/client/message-reducer.ts
 +++ b/packages/eve/src/client/message-reducer.ts
-@@ -67,6 +67,21 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
+@@ -67,6 +67,25 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
 
  function reduceMessageData(data: EveMessageData, event: EveAgentReducerEvent): EveMessageData {
    switch (event.type) {
++    case "history.seeded": {
++      const ids = new Set(event.data.messages.map((message) => message.id));
++      return { messages: [...event.data.messages, ...data.messages.filter((message) => !ids.has(message.id))] };
++    }
 +    case "history.restored": {
 +      // Rebuild independently so a repeated durable write cannot append deltas twice.
 +      let inherited: EveMessageData = { messages: [] };
@@ -588,7 +594,7 @@ index 00000000..5ffdab98
 +  }
 +}
 diff --git a/packages/eve/src/execution/create-session-step.test.ts b/packages/eve/src/execution/create-session-step.test.ts
-index 51bd8688..e2bdf73d 100644
+index 51bd8688..ced6fa42 100644
 --- a/packages/eve/src/execution/create-session-step.test.ts
 +++ b/packages/eve/src/execution/create-session-step.test.ts
 @@ -10,6 +10,13 @@ vi.mock("#runtime/sessions/compiled-agent-cache.js", () => ({
@@ -693,7 +699,7 @@ index 51bd8688..e2bdf73d 100644
        resolvedAgent: {
          config: {},
          workflowTool: { maxSubagents: 5 },
-@@ -261,3 +279,19 @@ describe("createSessionStep", () => {
+@@ -261,3 +279,37 @@ describe("createSessionStep", () => {
      expect(state.snapshot?.session.workflowMaxSubagents).toBe(5);
    });
  });
@@ -713,11 +719,32 @@ index 51bd8688..e2bdf73d 100644
 +  })).rejects.toThrow("identity receipt unavailable");
 +  expect(identityWritable.locked).toBe(false);
 +});
++
++it("seeds only published history while retaining fresh instructions, limits and sandbox identity", async () => {
++  vi.mocked(getCompiledRuntimeAgentBundle).mockResolvedValue({
++    compiledArtifactsSource: { kind: "bundled" },
++    resolvedAgent: { config: {} },
++    turnAgent: TestTurnAgent,
++  } as never);
++  const { state } = await createSessionStep({
++    compiledArtifactsSource: { kind: "bundled" }, continuationToken: "viewer-continuation",
++    sessionId: "viewer-copy", seed: { messages: [{ role: "user", parts: [{ type: "text", text: "Published question" }] }] },
++  });
++  expect(state.snapshot?.session.history).toEqual([{ role: "user", content: [{ type: "text", text: "Published question" }] }]);
++  expect(state.snapshot?.session.agent.system).toContain("You are a test assistant.");
++  expect(state.snapshot?.session.sandboxState).toBeUndefined();
++  expect(state.snapshot?.session.localSandboxIdentity).toMatchObject({ sessionId: "viewer-copy" });
++  expect(state.snapshot?.session.continuationToken).toBe("viewer-continuation");
++  expect(state.snapshot?.session.rootSessionId).toBeUndefined();
++});
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
-index 2aae3078..e3f55367 100644
+index 2aae3078..40300c8e 100644
 --- a/packages/eve/src/execution/create-session-step.ts
 +++ b/packages/eve/src/execution/create-session-step.ts
-@@ -1,3 +1,11 @@
+@@ -1,3 +1,14 @@
++import { prepareSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++import { setHarnessEmissionState } from "#harness/emission-state.js";
++import { createSessionWaitingEvent, encodeMessageStreamEvent, stampMessageStreamEvent } from "#protocol/message.js";
 +import type { SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
 +import { recordLocalSessionSandboxIdentity } from "#execution/sandbox/local-session-identity.js";
 +import { getRuntimeCompiledArtifactsSandboxAppRoot } from "#runtime/compiled-artifacts-source.js";
@@ -729,7 +756,7 @@ index 2aae3078..e3f55367 100644
  import { getCompiledRuntimeAgentBundle } from "#runtime/sessions/compiled-agent-cache.js";
  import {
    type DurableCompiledArtifactsSource,
-@@ -5,6 +13,7 @@ import {
+@@ -5,6 +16,7 @@ import {
  } from "#runtime/durable-compiled-artifacts-source.js";
  import {
    createDurableSessionState,
@@ -737,21 +764,33 @@ index 2aae3078..e3f55367 100644
    type DurableSessionState,
  } from "#execution/durable-session-store.js";
  import { createSession } from "#execution/session.js";
-@@ -33,6 +42,8 @@ export interface CreateSessionStepResult {
+@@ -33,6 +45,9 @@ export interface CreateSessionStepResult {
   */
  export async function createSessionStep(input: {
    readonly compiledArtifactsSource: DurableCompiledArtifactsSource;
 +  readonly identityWritable?: WritableStream<SessionSandboxIdentityReceipt>;
 +  readonly fork?: SessionForkReference;
++  readonly seed?: SessionTranscriptSeed;
    readonly continuationToken: string;
    readonly dynamicSubagentAgentConfig?: DynamicSubagentAgentConfig;
    readonly inheritedLimits?: RunSessionLimits;
-@@ -95,5 +106,36 @@ export async function createSessionStep(input: {
+@@ -44,6 +59,8 @@ export async function createSessionStep(input: {
+ }): Promise<CreateSessionStepResult> {
+   "use step";
+
++  if (input.seed && (input.fork || input.rootSessionId || input.taskId || input.nodeId)) throw new Error("Transcript seeds require a fresh root conversation.");
++  const preparedSeed = input.seed ? prepareSessionTranscriptSeed(input.seed) : undefined;
+   const bundle = await getCompiledRuntimeAgentBundle({
+     compiledArtifactsSource: resolveDurableCompiledArtifactsSource(input.compiledArtifactsSource),
+     nodeId: input.nodeId,
+@@ -95,5 +112,54 @@ export async function createSessionStep(input: {
      workflowMaxSubagents: bundle.resolvedAgent.workflowTool?.maxSubagents,
    });
 
 -  return { state: createDurableSessionState({ session }) };
-+  const initialSession = input.fork
++  const initialSession = preparedSeed
++    ? setHarnessEmissionState({ ...session, history: [...session.history, ...preparedSeed.history] }, { sessionStarted: false, sequence: 0, stepIndex: 0, turnId: "" })
++    : input.fork
 +    ? restoreSessionCheckpoint({
 +        target: { ...session, history: [] },
 +        checkpoint: await readSessionCheckpoint(input.fork),
@@ -783,6 +822,22 @@ index 2aae3078..e3f55367 100644
 +  "use step";
 +
 +  await restoreSessionHistory(input);
++}
++
++/** Emits only seeded display and idle lifecycle; never dispatches a model or tool. */
++export async function emitSessionTranscriptSeedStep(input: {
++  readonly seed: SessionTranscriptSeed;
++  readonly continuationToken: string;
++  readonly writable: WritableStream<Uint8Array>;
++}): Promise<void> {
++  "use step";
++  const prepared = prepareSessionTranscriptSeed(input.seed);
++  const writer = input.writable.getWriter();
++  try {
++    for (const event of [{ type: "history.seeded" as const, data: { messages: prepared.messages } }, createSessionWaitingEvent(input.continuationToken)]) {
++      await writer.write(encodeMessageStreamEvent(stampMessageStreamEvent(event)));
++    }
++  } finally { writer.releaseLock(); }
  }
 diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
 new file mode 100644
@@ -1726,10 +1781,10 @@ index 00000000..22a3012a
 +});
 diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
 new file mode 100644
-index 00000000..6d3476bc
+index 00000000..b70bdfb6
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.ts
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,122 @@
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { readNdjsonStream } from "#client/ndjson.js";
 +import {
@@ -1828,6 +1883,7 @@ index 00000000..6d3476bc
 +
 +function isHistoryProjectionEvent(event: MessageStreamEvent): event is HistoryProjectionEvent {
 +  switch (event.type) {
++    case "history.seeded":
 +    case "message.received":
 +    case "step.started":
 +    case "message.appended":
@@ -3896,6 +3952,582 @@ index 00000000..7681e350
 +    throw new Error("Session creation used an unsupported snapshot contract. Upgrade the worker before continuing.");
 +  }
 +}
+diff --git a/packages/eve/src/execution/session-transcript-seed.integration.test.ts b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
+new file mode 100644
+index 00000000..e3dfa595
+--- /dev/null
++++ b/packages/eve/src/execution/session-transcript-seed.integration.test.ts
+@@ -0,0 +1,216 @@
++import { expect, it } from "vitest";
++import { start } from "#internal/workflow/runtime.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { captureTurnEvents } from "#internal/testing/events.js";
++import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import { workflowEntry } from "#execution/workflow-entry.js";
++import { createWorkflowRuntime } from "#execution/workflow-runtime.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import { defaultMessageReducer } from "#client/message-reducer.js";
++import { getHarnessEmissionState } from "#harness/emission-state.js";
++import {
++  prepareSessionTranscriptSeed,
++  type SessionTranscriptSeed,
++} from "#execution/session-transcript-seed.js";
++
++function context() {
++  return {
++    "eve.auth": null,
++    "eve.bundle": { source: createBundledRuntimeCompiledArtifactsSource() },
++    "eve.channel": { kind: "http", state: {} },
++    "eve.mode": "conversation",
++  };
++}
++const seed: SessionTranscriptSeed = {
++  messages: [
++    { role: "user", parts: [{ type: "text", text: "Published question" }] },
++    {
++      role: "assistant",
++      parts: [
++        {
++          type: "dynamic-tool",
++          toolName: "calculate",
++          input: { n: 2 },
++          state: "output-available",
++          output: { result: 4 },
++        },
++        { type: "text", text: "Published answer" },
++      ],
++    },
++  ],
++};
++
++it("creates idle native history, checkpoints without a turn, and retains the seed through continuation and nested forks", async () => {
++  const fixture = await createTestRuntime({ agent: { name: "transcript-seed" } });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const source = await start(workflowEntry, [
++      { input: { message: "" }, seed, serializedContext: context() },
++    ]);
++    const stream = captureTurnEvents(source);
++    try {
++      const events = await stream.nextTurn();
++      expect(events.map((event) => event.type)).toEqual(["history.seeded", "session.waiting"]);
++      const reducer = defaultMessageReducer();
++      expect(events.reduce(reducer.reduce, reducer.initial()).messages).toEqual(
++        prepareSessionTranscriptSeed(seed).messages,
++      );
++      const checkpoint = {
++        sessionId: source.runId,
++        beforeTurnId: "turn_0",
++        checkpointId: crypto.randomUUID(),
++      };
++      expect(
++        await runtime.dispatchSession({
++          sessionId: source.runId,
++          command: {
++            kind: "checkpoint",
++            checkpointId: checkpoint.checkpointId,
++            beforeTurnId: checkpoint.beforeTurnId,
++          },
++        }),
++      ).toMatchObject({ status: "accepted" });
++      const idle = await stream.nextTurn();
++      expect(
++        idle.some((event) => event.type === "turn.started" || event.type === "actions.requested"),
++      ).toBe(false);
++      expect(idle.at(-1)?.type).toBe("session.waiting");
++      await expect
++        .poll(async () => {
++          try {
++            return (await readSessionCheckpoint(checkpoint)).checkpointId;
++          } catch {
++            return undefined;
++          }
++        })
++        .toBe(checkpoint.checkpointId);
++      const saved = await readSessionCheckpoint(checkpoint);
++      expect(saved.snapshot.session.history).toEqual(prepareSessionTranscriptSeed(seed).history);
++      expect(saved.snapshot.session.sessionId).toBe(source.runId);
++      expect(saved.snapshot.session.rootSessionId).toBeUndefined();
++      expect(getHarnessEmissionState(saved.snapshot.session.state)).toEqual({
++        sessionStarted: false,
++        sequence: 0,
++        stepIndex: 0,
++        turnId: "",
++      });
++      const branch = await start(workflowEntry, [
++        {
++          input: { message: "Follow up on my copy" },
++          fork: checkpoint,
++          serializedContext: context(),
++        },
++      ]);
++      const branchStream = captureTurnEvents(branch);
++      try {
++        const branchEvents = await branchStream.nextTurn();
++        expect(branchEvents.filter((event) => event.type === "session.started")).toHaveLength(1);
++        expect(branchEvents.filter((event) => event.type === "turn.started")).toHaveLength(1);
++        const projection = branchEvents.reduce(reducer.reduce, reducer.initial());
++        expect(projection.messages.slice(0, 2)).toEqual(
++          prepareSessionTranscriptSeed(seed).messages,
++        );
++        const second = await start(workflowEntry, [
++          {
++            input: { message: "Another follow up" },
++            fork: { sessionId: branch.runId, beforeTurnId: "turn_0" },
++            serializedContext: context(),
++          },
++        ]);
++        const secondStream = captureTurnEvents(second);
++        try {
++          const replay = await secondStream.nextTurn();
++          expect(replay.reduce(reducer.reduce, reducer.initial()).messages.slice(0, 2)).toEqual(
++            prepareSessionTranscriptSeed(seed).messages,
++          );
++        } finally {
++          await runtime.dispatchSession({ sessionId: second.runId, command: { kind: "reset" } });
++          await second.returnValue;
++          secondStream.dispose();
++        }
++      } finally {
++        await runtime.dispatchSession({ sessionId: branch.runId, command: { kind: "reset" } });
++        await branch.returnValue;
++        branchStream.dispose();
++      }
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Continue here" } },
++      });
++      const continued = await stream.nextTurn();
++      expect(continued.filter((event) => event.type === "session.started")).toHaveLength(1);
++      expect(continued.find((event) => event.type === "turn.started")).toMatchObject({
++        data: { turnId: "turn_0" },
++      });
++      const firstTurn = await readSessionCheckpoint({
++        sessionId: source.runId,
++        beforeTurnId: "turn_0",
++      });
++      expect(firstTurn.snapshot.session.history).toEqual(
++        prepareSessionTranscriptSeed(seed).history,
++      );
++      expect((await readSessionCheckpoint(checkpoint)).snapshot).toEqual(saved.snapshot);
++    } finally {
++      await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "reset" } });
++      await source.returnValue;
++      stream.dispose();
++    }
++  });
++});
++
++it.each([
++  { input: { message: "Do not run this" } },
++  { fork: { sessionId: "private-source", beforeTurnId: "turn_0" } },
++  { taskId: "delegated-task" },
++  { serializedContext: { ...context(), "eve.mode": "task" } },
++])(
++  "rejects seeded execution or checkpoint modes before emitting copied history: %j",
++  async (overrides) => {
++    const fixture = await createTestRuntime();
++    await fixture.run(async () => {
++      const run = await start(workflowEntry, [
++        { input: { message: "" }, seed, serializedContext: context(), ...overrides },
++      ]);
++      const stream = captureTurnEvents(run);
++      try {
++        const events = await stream.nextTurn();
++        expect(events.at(-1)?.type).toBe("session.failed");
++        expect(
++          events.some((event) =>
++            ["history.seeded", "turn.started", "actions.requested"].includes(event.type),
++          ),
++        ).toBe(false);
++      } finally {
++        await expect(run.returnValue).rejects.toThrow();
++        stream.dispose();
++      }
++    });
++  },
++);
++
++it("round-trips copied attachment URLs in an idle checkpoint without fetching them", async () => {
++  const fixture = await createTestRuntime();
++  await fixture.run(async () => {
++    const attachments: SessionTranscriptSeed = { messages: [{ role: "user", parts: [
++      { type: "file", url: "https://copies.example/report.pdf", mediaType: "application/pdf", filename: "report.pdf" },
++      { type: "file", url: "https://copies.example/image.png", mediaType: "image/png", filename: "image.png" },
++    ] }] };
++    const runtime = createWorkflowRuntime({ compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource() });
++    const run = await start(workflowEntry, [{ input: { message: "" }, seed: attachments, serializedContext: context() }]);
++    const stream = captureTurnEvents(run);
++    try {
++      expect((await stream.nextTurn()).map((event) => event.type)).toEqual(["history.seeded", "session.waiting"]);
++      const ref = { sessionId: run.runId, beforeTurnId: "turn_0", checkpointId: crypto.randomUUID() };
++      await runtime.dispatchSession({ sessionId: run.runId, command: { kind: "checkpoint", checkpointId: ref.checkpointId, beforeTurnId: ref.beforeTurnId } });
++      expect((await stream.nextTurn()).at(-1)?.type).toBe("session.waiting");
++      await expect.poll(async () => { try { return (await readSessionCheckpoint(ref)).checkpointId; } catch { return undefined; } }).toBe(ref.checkpointId);
++      expect((await readSessionCheckpoint(ref)).snapshot.session.history).toEqual(prepareSessionTranscriptSeed(attachments).history);
++    } finally {
++      await runtime.dispatchSession({ sessionId: run.runId, command: { kind: "reset" } });
++      await run.returnValue;
++      stream.dispose();
++    }
++  });
++});
+diff --git a/packages/eve/src/execution/session-transcript-seed.test.ts b/packages/eve/src/execution/session-transcript-seed.test.ts
+new file mode 100644
+index 00000000..df6d4916
+--- /dev/null
++++ b/packages/eve/src/execution/session-transcript-seed.test.ts
+@@ -0,0 +1,196 @@
++import { expect, it } from "vitest";
++import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++import { defaultMessageReducer } from "#client/message-reducer.js";
++import { stampMessageStreamEvent } from "#protocol/message.js";
++
++it("derives paired tools and ordered assistant continuations without executable approval identities", () => {
++  const prepared = prepareSessionTranscriptSeed({
++    messages: [
++      { role: "user", parts: [{ type: "text", text: "Calculate" }] },
++      {
++        role: "assistant",
++        parts: [
++          { type: "reasoning", text: "Visible reasoning" },
++          {
++            type: "dynamic-tool",
++            toolName: "calculate",
++            input: { n: 2 },
++            state: "output-available",
++            output: { result: 4 },
++          },
++          { type: "text", text: "Four" },
++          { type: "step-start" },
++          {
++            type: "dynamic-tool",
++            toolName: "failed",
++            input: {},
++            state: "output-error",
++            errorText: "Failure",
++          },
++          {
++            type: "dynamic-tool",
++            toolName: "denied",
++            input: {},
++            state: "output-denied",
++            reason: "Not allowed",
++          },
++        ],
++      },
++    ],
++  });
++  expect(prepared.history.map((message) => message.role)).toEqual([
++    "user",
++    "assistant",
++    "tool",
++    "assistant",
++    "assistant",
++    "tool",
++  ]);
++  expect(prepared.history[2]).toEqual({
++    role: "tool",
++    content: [
++      {
++        type: "tool-result",
++        toolCallId: "seed_tool_0",
++        toolName: "calculate",
++        output: { type: "json", value: { result: 4 } },
++      },
++    ],
++  });
++  expect(prepared.history.at(-1)).toMatchObject({
++    role: "tool",
++    content: [
++      { toolCallId: "seed_tool_1", output: { type: "error-text", value: "Failure" } },
++      { toolCallId: "seed_tool_2", output: { type: "error-text", value: "Not allowed" } },
++    ],
++  });
++  expect(prepared.messages[1]?.parts[1]).toMatchObject({
++    state: "output-available",
++    toolCallId: "seed_tool_0",
++  });
++  expect(prepared.messages.every((message) => message.metadata === undefined)).toBe(true);
++  expect(JSON.stringify(prepared.history)).not.toContain("approval");
++});
++
++it.each([
++  { type: "authorization", url: "https://private.example/code" },
++  {
++    type: "dynamic-tool",
++    toolName: "pending",
++    input: {},
++    state: "approval-requested",
++    approval: { id: "private" },
++  },
++  {
++    type: "dynamic-tool",
++    toolName: "partial",
++    input: {},
++    state: "output-available",
++    output: {},
++    partial: true,
++  },
++  {
++    type: "dynamic-tool",
++    toolName: "private",
++    input: {},
++    state: "output-error",
++    errorText: "oops",
++    toolMetadata: { private: true },
++  },
++  { type: "text", text: "unfinished", state: "streaming" },
++  { type: "file", mediaType: "application/pdf", url: "eve-sandbox://private/file.pdf" },
++])("rejects unresolved or capability-bearing seed parts: %j", (part) => {
++  expect(() =>
++    prepareSessionTranscriptSeed({ messages: [{ role: "assistant", parts: [part] }] }),
++  ).toThrow();
++});
++
++it("rejects source identities and system instructions instead of importing hidden state", () => {
++  for (const message of [
++    { role: "system", parts: [{ type: "text", text: "private instructions" }] },
++    { id: "source", role: "user", parts: [{ type: "text", text: "Visible" }] },
++    {
++      role: "assistant",
++      metadata: { turnId: "source" },
++      parts: [{ type: "text", text: "Visible" }],
++    },
++    {
++      role: "user",
++      parts: [
++        { type: "dynamic-tool", toolName: "x", input: {}, state: "output-error", errorText: "x" },
++      ],
++    },
++  ])
++    expect(() => prepareSessionTranscriptSeed({ messages: [message] })).toThrow();
++});
++
++it("keeps copied image and PDF references in both display and model history", () => {
++  const prepared = prepareSessionTranscriptSeed({
++    messages: [
++      {
++        role: "user",
++        parts: [
++          {
++            type: "file",
++            url: "https://copies.example/image.png",
++            mediaType: "image/png",
++            filename: "image.png",
++            size: 12,
++          },
++          {
++            type: "file",
++            url: "https://copies.example/report.pdf",
++            mediaType: "application/pdf",
++            filename: "report.pdf",
++          },
++        ],
++      },
++    ],
++  });
++  expect(prepared.history[0]).toEqual({
++    role: "user",
++    content: [
++      { type: "image", image: new URL("https://copies.example/image.png"), mediaType: "image/png" },
++      {
++        type: "file",
++        data: new URL("https://copies.example/report.pdf"),
++        mediaType: "application/pdf",
++        filename: "report.pdf",
++      },
++    ],
++  });
++  expect(prepared.messages[0]?.parts[0]).toMatchObject({
++    url: "https://copies.example/image.png",
++    size: 12,
++  });
++});
++
++it("replays a seeded prefix idempotently without replacing real destination turns", () => {
++  const prepared = prepareSessionTranscriptSeed({
++    messages: [{ role: "user", parts: [{ type: "text", text: "Copied question" }] }],
++  });
++  const reducer = defaultMessageReducer();
++  const event = stampMessageStreamEvent({
++    type: "history.seeded",
++    data: { messages: prepared.messages },
++  });
++  const first = reducer.reduce(reducer.initial(), event);
++  const next = reducer.reduce(
++    first,
++    stampMessageStreamEvent({
++      type: "message.received",
++      data: { message: "New question", sequence: 0, turnId: "turn_0" },
++    }),
++  );
++  expect(next.messages).toHaveLength(2);
++  expect(reducer.reduce(next, event)).toEqual(next);
++  expect(
++    reducer.reduce(
++      reducer.initial(),
++      stampMessageStreamEvent({
++        type: "history.restored",
++        data: { sourceSessionId: "destination", beforeTurnId: "turn_0", events: [event] },
++      }),
++    ),
++  ).toEqual(first);
++});
+diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
+new file mode 100644
+index 00000000..ac1c3f25
+--- /dev/null
++++ b/packages/eve/src/execution/session-transcript-seed.ts
+@@ -0,0 +1,146 @@
++import type { AssistantContent, ModelMessage, ToolContent, UserContent } from "ai";
++import { z } from "#compiled/zod/index.js";
++import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
++
++const text = z.strictObject({ type: z.literal("text"), text: z.string() });
++const reasoning = z.strictObject({ type: z.literal("reasoning"), text: z.string() });
++const file = z.strictObject({
++  type: z.literal("file"),
++  url: z
++    .url()
++    .refine(
++      (value) => ["https:", "http:", "data:"].includes(new URL(value).protocol),
++      "Seed files require a copied HTTP or data URL.",
++    ),
++  mediaType: z.string().min(1),
++  filename: z.string().optional(),
++  size: z.number().int().nonnegative().optional(),
++});
++const toolBase = { type: z.literal("dynamic-tool"), toolName: z.string().min(1), input: z.json() };
++const tool = z.discriminatedUnion("state", [
++  z.strictObject({ ...toolBase, state: z.literal("output-available"), output: z.json() }),
++  z.strictObject({ ...toolBase, state: z.literal("output-error"), errorText: z.string() }),
++  z.strictObject({ ...toolBase, state: z.literal("output-denied"), reason: z.string().optional() }),
++]);
++
++/** Trusted server input, never a browser request body or a runtime checkpoint. */
++export const sessionTranscriptSeed = z.strictObject({
++  messages: z
++    .array(
++      z.discriminatedUnion("role", [
++        z.strictObject({ role: z.literal("user"), parts: z.array(z.union([text, file])).min(1) }),
++        z.strictObject({
++          role: z.literal("assistant"),
++          parts: z
++            .array(
++              z.union([
++                text,
++                reasoning,
++                file,
++                tool,
++                z.strictObject({ type: z.literal("step-start") }),
++              ]),
++            )
++            .min(1),
++        }),
++      ]),
++    )
++    .min(1)
++    .max(10_000),
++});
++export type SessionTranscriptSeed = z.infer<typeof sessionTranscriptSeed>;
++
++/** Derives both native model history and display from one capability-free transcript. */
++export function prepareSessionTranscriptSeed(value: unknown): {
++  readonly history: ModelMessage[];
++  readonly messages: EveMessage[];
++} {
++  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > 8 * 1024 * 1024)
++    throw new Error("Session transcript seed byte limit exceeded.");
++  const seed = sessionTranscriptSeed.parse(value);
++  const history: ModelMessage[] = [];
++  const messages: EveMessage[] = [];
++  let toolSequence = 0;
++  for (const [index, message] of seed.messages.entries()) {
++    const parts: EveMessagePart[] = [];
++    if (message.role === "user") {
++      const content: UserContent = [];
++      for (const part of message.parts) {
++        parts.push(part.type === "text" ? { ...part, state: "done" } : part);
++        if (part.type === "text") content.push(part);
++        else if (part.mediaType.startsWith("image/"))
++          content.push({ type: "image", image: new URL(part.url), mediaType: part.mediaType });
++        else
++          content.push({
++            type: "file",
++            data: new URL(part.url),
++            mediaType: part.mediaType,
++            filename: part.filename,
++          });
++      }
++      history.push({ role: "user", content });
++    } else {
++      let content: AssistantContent = [];
++      let results: ToolContent = [];
++      const flush = () => {
++        if (content.length) history.push({ role: "assistant", content });
++        if (results.length) history.push({ role: "tool", content: results });
++        content = [];
++        results = [];
++      };
++      for (const part of message.parts) {
++        if (part.type === "step-start") {
++          flush();
++          parts.push(part);
++          continue;
++        }
++        // A tool result must precede any subsequent assistant text or reasoning.
++        if (results.length && part.type !== "dynamic-tool") flush();
++        if (part.type === "text" || part.type === "reasoning") {
++          parts.push({ ...part, state: "done" });
++          content.push(part);
++        } else if (part.type === "file") {
++          parts.push(part);
++          content.push({
++            type: "file",
++            data: new URL(part.url),
++            mediaType: part.mediaType,
++            filename: part.filename,
++          });
++        } else {
++          const toolCallId = `seed_tool_${toolSequence++}`;
++          content.push({
++            type: "tool-call",
++            toolCallId,
++            toolName: part.toolName,
++            input: part.input,
++          });
++          const output =
++            part.state === "output-available"
++              ? { type: "json" as const, value: part.output }
++              : {
++                  type: "error-text" as const,
++                  value:
++                    part.state === "output-error"
++                      ? part.errorText
++                      : (part.reason ?? "Tool execution was denied."),
++                };
++          results.push({ type: "tool-result", toolCallId, toolName: part.toolName, output });
++          if (part.state === "output-denied") {
++            parts.push({
++              type: part.type,
++              toolName: part.toolName,
++              toolCallId,
++              input: part.input,
++              state: part.state,
++              approval: { id: `seed_denial_${toolSequence}`, approved: false, reason: part.reason },
++            });
++          } else parts.push({ ...part, toolCallId });
++        }
++      }
++      flush();
++    }
++    messages.push({ id: `seed_message_${index}`, role: message.role, parts });
++  }
++  return { history, messages };
++}
 diff --git a/packages/eve/src/execution/session.test.ts b/packages/eve/src/execution/session.test.ts
 index 2a67320b..67b1942d 100644
 --- a/packages/eve/src/execution/session.test.ts
@@ -4251,7 +4883,7 @@ index 00000000..fb251405
 +  return sessionInboxWireV7Schema.parse(command.kind === "checkpoint" ? { ...command, version: 7 } : { ...encodeSessionCommandV6(command), version: 7 });
 +}
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0bd..c7c67f94 100644
+index d3cfb0bd..d7c64c4b 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
 @@ -1,3 +1,10 @@
@@ -4265,8 +4897,11 @@ index d3cfb0bd..c7c67f94 100644
  import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
 
  import type {
-@@ -28,7 +35,7 @@ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-st
+@@ -26,9 +33,10 @@ import { SessionStateCursor } from "#execution/session-state-cursor.js";
+ import { rebaseTaskAgentHandleMutations } from "#subagents/handles/rebase.js";
+ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-step.js";
  import { dispatchAndAwaitTurn } from "#execution/turn-dispatch.js";
++import { emitSessionTranscriptSeedStep } from "#execution/create-session-step.js";
  import type { TurnDriverAction } from "#execution/turn-control-receiver.js";
  import { normalizeSerializableError } from "#execution/workflow-errors.js";
 -import { createSessionStep } from "#execution/create-session-step.js";
@@ -4274,15 +4909,16 @@ index d3cfb0bd..c7c67f94 100644
  import { settleCancelledTurnStep } from "#execution/settle-cancelled-turn-step.js";
  import { emitTerminalSessionFailureStep } from "#execution/terminal-session-failure-step.js";
  import { fireSessionCallbackStep } from "#subagents/callback-step.js";
-@@ -63,6 +70,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
+@@ -63,6 +71,8 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
   * and deserialized at each `"use step"` boundary.
   */
  export interface WorkflowEntryInput {
 +  readonly fork?: RunInput["fork"];
++  readonly seed?: RunInput["seed"];
    readonly activityCollectorRunId?: string;
    readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
    readonly input: RunInput["input"];
-@@ -171,6 +179,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -171,6 +181,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
    };
 
    const driverWritable = getWritable<Uint8Array>();
@@ -4293,7 +4929,15 @@ index d3cfb0bd..c7c67f94 100644
    const crashCleanupState: CrashCleanupState = {
      caller: undefined,
      callerResolved: false,
-@@ -197,9 +209,11 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -187,6 +201,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+       | DynamicSubagentAgentConfig
+       | undefined;
+
++    if (input.seed && (mode !== "conversation" || input.input.message || input.fork || input.taskId || rootSessionIdFromParent || serializedBundle.nodeId || hasDelegatedCallerContext(input.serializedContext))) throw new Error("Transcript seeds require a fresh idle root conversation.");
+     const commandInbox = createSessionCommandInbox();
+     const stableCommandToken = sessionCommandHookToken(sessionId);
+     const authorizationHookToken = `${sessionId}:auth`;
+@@ -197,9 +212,12 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          await Promise.allSettled([
            createSessionStep({
              compiledArtifactsSource: serializedBundle.source,
@@ -4302,10 +4946,11 @@ index d3cfb0bd..c7c67f94 100644
              dynamicSubagentAgentConfig,
              inheritedLimits: input.limits,
 +            fork: input.fork,
++            seed: input.seed,
              nodeId: serializedBundle.nodeId,
              outputSchema: input.input.outputSchema,
              rootSessionId: rootSessionIdFromParent,
-@@ -212,6 +226,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -212,6 +230,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          ]);
 
        if (sessionCreation.status === "rejected") throw sessionCreation.reason;
@@ -4313,7 +4958,7 @@ index d3cfb0bd..c7c67f94 100644
        if (stableClaim.status === "rejected") throw stableClaim.reason;
        if (authorizationClaim.status === "rejected") throw authorizationClaim.reason;
        if (continuationClaim.status === "rejected") {
-@@ -246,6 +261,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -246,11 +265,18 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          : undefined;
        crashCleanupState.callerResolved = true;
 
@@ -4321,10 +4966,28 @@ index d3cfb0bd..c7c67f94 100644
 +        await restoreSessionHistoryStep({ fork: input.fork, writable: driverWritable });
 +      }
 +
++      if (input.seed) {
++        await emitSessionTranscriptSeedStep({ seed: input.seed, continuationToken: continuationToken || sessionId, writable: driverWritable });
++      }
        outcome = await runDriverLoop({
          capabilities,
          commandInbox,
-@@ -473,7 +492,7 @@ async function runDriverLoop(input: {
+         driverWritable,
+-        initialInput: {
++        initialInput: input.seed ? undefined : {
+           deliveryMetadata:
+             input.serializedContext["eve.channelDelivery"] === undefined
+               ? undefined
+@@ -388,7 +414,7 @@ async function runDriverLoop(input: {
+   readonly capabilities?: SessionCapabilities;
+   readonly commandInbox: SessionCommandInbox;
+   readonly driverWritable: WritableStream<Uint8Array>;
+-  readonly initialInput: HookPayload;
++  readonly initialInput?: HookPayload;
+   readonly crashCleanupState: CrashCleanupState;
+   readonly mode: RunMode;
+   readonly serializedContext: Record<string, unknown>;
+@@ -473,7 +499,7 @@ async function runDriverLoop(input: {
      `${input.sessionState.sessionId}:turn-control:${String(turnDispatchIndex++)}`;
 
    const bufferedDeliveries: DeliverHookPayload[] = [];
@@ -4333,7 +4996,18 @@ index d3cfb0bd..c7c67f94 100644
    const cancelledTaskIds = new Set<string>();
    const seenTaskDeliveries = new Set<string>();
    const stateCursor = new SessionStateCursor({
-@@ -644,6 +663,7 @@ async function runDriverLoop(input: {
+@@ -538,7 +564,9 @@ async function runDriverLoop(input: {
+   try {
+     await sessionTimeout?.start();
+
+-    let action: TurnDriverAction = await runTurn(input.initialInput);
++    let action: TurnDriverAction = input.initialInput
++      ? await runTurn(input.initialInput)
++      : { kind: "park", sessionState: input.sessionState, serializedContext: input.serializedContext };
+
+     while (true) {
+       if (action.kind === "done") {
+@@ -644,6 +672,7 @@ async function runDriverLoop(input: {
          };
        }
 
@@ -4342,18 +5016,35 @@ index d3cfb0bd..c7c67f94 100644
          action = await runTurn({ kind: next.kind });
          continue;
 diff --git a/packages/eve/src/execution/workflow-runtime.ts b/packages/eve/src/execution/workflow-runtime.ts
-index 493017d0..b5fbbed3 100644
+index 493017d0..968e9b87 100644
 --- a/packages/eve/src/execution/workflow-runtime.ts
 +++ b/packages/eve/src/execution/workflow-runtime.ts
-@@ -203,6 +203,7 @@ export function createWorkflowRuntime(config: {
+@@ -1,3 +1,4 @@
++import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
+ import { randomBytes } from "node:crypto";
+
+ import { context, trace } from "#compiled/@opentelemetry/api/index.js";
+@@ -139,6 +140,10 @@ export function createWorkflowRuntime(config: {
+ }): Runtime {
+   return {
+     async createSession(input: RunInput): Promise<RunHandle> {
++      if (input.seed) {
++        if (input.mode !== "conversation" || input.input.message || input.fork || input.parent || input.callback || input.taskId || config.nodeId) throw new Error("Transcript seeds require a fresh idle root conversation.");
++        prepareSessionTranscriptSeed(input.seed);
++      }
+       const bundle = await getCompiledRuntimeAgentBundle({
+         compiledArtifactsSource: config.compiledArtifactsSource,
+         nodeId: config.nodeId,
+@@ -203,6 +208,8 @@ export function createWorkflowRuntime(config: {
          -readonly [K in keyof WorkflowEntryInput]: WorkflowEntryInput[K];
        } = {
          input: input.input,
 +        fork: input.fork,
++        seed: input.seed,
          limits: input.limits,
          serializedContext,
        };
-@@ -233,6 +234,10 @@ export function createWorkflowRuntime(config: {
+@@ -233,6 +240,10 @@ export function createWorkflowRuntime(config: {
              });
        const attributes = {
          ...sessionAttributes,
@@ -4530,10 +5221,15 @@ index 99ab68d1..ecb82b07 100644
 
    it.each(["21", "22", "23", "24"] as const)(
 diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
-index fc45f348..71b60ca7 100644
+index fc45f348..d8916092 100644
 --- a/packages/eve/src/protocol/message.ts
 +++ b/packages/eve/src/protocol/message.ts
-@@ -27,7 +27,7 @@ export const EVE_STREAM_TAIL_INDEX_HEADER = "x-eve-stream-tail-index";
+@@ -1,3 +1,4 @@
++import type { EveMessage } from "#client/message-reducer-types.js";
+ import type { FileUIPart, ProviderMetadata, TextUIPart, UserContent } from "ai";
+
+ import {
+@@ -27,7 +28,7 @@ export const EVE_STREAM_TAIL_INDEX_HEADER = "x-eve-stream-tail-index";
  export const EVE_STREAM_VERSION_HEADER = "x-eve-stream-version";
  export const EVE_MESSAGE_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
  export const EVE_MESSAGE_STREAM_FORMAT = "ndjson";
@@ -4542,7 +5238,7 @@ index fc45f348..71b60ca7 100644
 
  /**
   * eve-owned finish reason for one completed assistant step.
-@@ -699,6 +699,8 @@ export interface SessionWaitingStreamEvent {
+@@ -699,6 +700,8 @@ export interface SessionWaitingStreamEvent {
    data: {
      /** Channel-local continuation token, or the immutable session ID for an ID-only session. */
      continuationToken: string;
@@ -4551,12 +5247,18 @@ index fc45f348..71b60ca7 100644
      wait: "next-user-message";
    };
    type: "session.waiting";
-@@ -724,6 +726,38 @@ export interface SessionCompletedStreamEvent {
+@@ -724,6 +727,44 @@ export interface SessionCompletedStreamEvent {
    type: "session.completed";
  }
 
 +/** Historical display events, excluding session controls, usage, and authorization capabilities. */
++export interface HistorySeededStreamEvent {
++  readonly type: "history.seeded";
++  readonly data: { readonly messages: readonly EveMessage[] };
++}
++
 +export type HistoryProjectionEvent = (
++  | HistorySeededStreamEvent
 +  | MessageReceivedStreamEvent
 +  | StepStartedStreamEvent
 +  | MessageAppendedStreamEvent
@@ -4590,10 +5292,11 @@ index fc45f348..71b60ca7 100644
  /**
   * Serializable event before eve stamps the durable stream envelope.
   *
-@@ -731,6 +765,7 @@ export interface SessionCompletedStreamEvent {
+@@ -731,6 +772,8 @@ export interface SessionCompletedStreamEvent {
   * consumers receive {@link MessageStreamEvent}.
   */
  export type UnstampedMessageStreamEvent =
++  | HistorySeededStreamEvent
 +  | HistoryRestoredStreamEvent
    | ActionInputAppendedStreamEvent
    | ApprovalCandidateStreamEvent
