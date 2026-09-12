@@ -131,7 +131,9 @@ export const presentationAt = (wallTime: number) => {
     (wallTime >= 26.5 ? 2 : 0) +
     (wallTime >= 34.5 ? 1.5 : 0);
   const beat = captionBeats.find((b) => time >= b.start && time < b.end);
-  if (!beat) return { demoTime: time, caption: null, opacity: 0 };
+  if (!beat) {
+    return { caption: null, demoTime: time, opacity: 0 };
+  }
   const elapsed = time - beat.start;
   const duration = beat.end - beat.start;
   return {
@@ -149,7 +151,9 @@ export const cursorAt = (t: number) => {
     [44, 45.1, 0.3, 650, 620, 962, 555],
   ];
   const move = moves.find(([start, end]) => t >= start && t < end);
-  if (!move) return null;
+  if (!move) {
+    return null;
+  }
   const [start, , duration, ax, ay, bx, by] = move;
   const k = ease((t - start) / duration);
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import path from "node:path";
 
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -18,7 +18,7 @@ type Branding = {
 };
 
 const appRoot = __dirname;
-const brandingPath = join(appRoot, "branding.json");
+const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
 const runBunScript = (script: string, env: NodeJS.ProcessEnv = {}): void => {

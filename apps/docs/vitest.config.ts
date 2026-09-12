@@ -9,30 +9,28 @@ import type { Plugin } from "vitest/config";
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
-function serveBuiltDocs(): Plugin {
-  return {
-    configureServer(server) {
-      server.middlewares.use((request, _response, next) => {
-        const [pathname = "/", query] = (request.url ?? "/").split("?");
+const serveBuiltDocs = (): Plugin => ({
+  configureServer(server) {
+    server.middlewares.use((request, _response, next) => {
+      const [pathname = "/", query] = (request.url ?? "/").split("?");
 
-        if (pathname === "/docs" || pathname.startsWith("/docs/")) {
-          let publicPath = pathname.slice("/docs".length) || "/";
-          const candidate = path.join(dist, publicPath);
+      if (pathname === "/docs" || pathname.startsWith("/docs/")) {
+        let publicPath = pathname.slice("/docs".length) || "/";
+        const candidate = path.join(dist, publicPath);
 
-          if (existsSync(candidate) && statSync(candidate).isDirectory()) {
-            publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
-          }
-
-          request.url = `${publicPath}${query ? `?${query}` : ""}`;
+        if (existsSync(candidate) && statSync(candidate).isDirectory()) {
+          publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
         }
 
-        next();
-      });
-    },
-    enforce: "pre",
-    name: "serve-built-docs",
-  };
-}
+        request.url = `${publicPath}${query ? `?${query}` : ""}`;
+      }
+
+      next();
+    });
+  },
+  enforce: "pre",
+  name: "serve-built-docs",
+});
 
 export default defineConfig({
   plugins: [serveBuiltDocs(), uiverifyPlugin()],

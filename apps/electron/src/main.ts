@@ -1,4 +1,4 @@
-import * as path from "node:path";
+import path from "node:path";
 
 import {
   app,
@@ -311,7 +311,7 @@ async function syncAuthSessionCookies(
   }
 
   const cookies = cookieHeader
-    .split(/;\s*/)
+    .split(/;\s*/u)
     .map((entry: string) => {
       const index = entry.indexOf("=");
       if (index < 1) {
@@ -344,7 +344,7 @@ async function syncAuthSessionCookies(
 }
 
 function hasSessionCookie(cookieHeader: string): boolean {
-  return /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/.test(
+  return /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/u.test(
     cookieHeader
   );
 }
