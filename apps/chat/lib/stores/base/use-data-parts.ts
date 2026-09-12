@@ -33,6 +33,68 @@ export interface UseDataPartOptions<T = unknown> {
 }
 
 /**
+ * Extract all data parts from messages.
+ * Data parts are identified by types starting with "data-".
+ */
+const extractDataPartsFromMessages = (
+  messages: UIMessage[]
+): DataPart<unknown>[] => {
+  const dataParts: DataPart<unknown>[] = [];
+
+  for (const message of messages) {
+    // Check message parts for data parts
+    if (message.parts && Array.isArray(message.parts)) {
+      for (const part of message.parts) {
+        // Check if this part is a data part (starts with "data-")
+        if (part.type.startsWith("data-") && "data" in part) {
+          const dataPart = part as {
+            type: string;
+            data: unknown;
+            timestamp?: number;
+          };
+          if (dataPart.data !== undefined) {
+            dataParts.push({
+              data: dataPart.data,
+              timestamp: dataPart.timestamp || Date.now(),
+              type: dataPart.type,
+            });
+          }
+        }
+
+        // Also check tool call results that might contain data parts
+        if (part.type.startsWith("tool-") && "result" in part && part.result) {
+          const { result } = part;
+          if (typeof result === "object" && result && "parts" in result) {
+            const { parts } = result as { parts?: unknown[] };
+            if (Array.isArray(parts)) {
+              for (const nestedPart of parts) {
+                const typedPart = nestedPart as {
+                  type?: string;
+                  data?: unknown;
+                  timestamp?: number;
+                };
+                if (
+                  typedPart.type?.startsWith("data-") &&
+                  typedPart.data !== undefined
+                ) {
+                  dataParts.push({
+                    data: typedPart.data,
+                    timestamp: typedPart.timestamp || Date.now(),
+                    type: typedPart.type,
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return dataParts;
+};
+
+/**
  * Hook to extract and access data parts from messages.
  * Returns the latest value for each data part type.
  *
@@ -187,66 +249,4 @@ export const useDataPart = <T = unknown>(
   }, [type, removeTransientDataPart]);
 
   return [result ? result.data : null, clear];
-};
-
-/**
- * Extract all data parts from messages.
- * Data parts are identified by types starting with "data-".
- */
-const extractDataPartsFromMessages = (
-  messages: UIMessage[]
-): DataPart<unknown>[] => {
-  const dataParts: DataPart<unknown>[] = [];
-
-  for (const message of messages) {
-    // Check message parts for data parts
-    if (message.parts && Array.isArray(message.parts)) {
-      for (const part of message.parts) {
-        // Check if this part is a data part (starts with "data-")
-        if (part.type.startsWith("data-") && "data" in part) {
-          const dataPart = part as {
-            type: string;
-            data: unknown;
-            timestamp?: number;
-          };
-          if (dataPart.data !== undefined) {
-            dataParts.push({
-              data: dataPart.data,
-              timestamp: dataPart.timestamp || Date.now(),
-              type: dataPart.type,
-            });
-          }
-        }
-
-        // Also check tool call results that might contain data parts
-        if (part.type.startsWith("tool-") && "result" in part && part.result) {
-          const { result } = part;
-          if (typeof result === "object" && result && "parts" in result) {
-            const { parts } = result as { parts?: unknown[] };
-            if (Array.isArray(parts)) {
-              for (const nestedPart of parts) {
-                const typedPart = nestedPart as {
-                  type?: string;
-                  data?: unknown;
-                  timestamp?: number;
-                };
-                if (
-                  typedPart.type?.startsWith("data-") &&
-                  typedPart.data !== undefined
-                ) {
-                  dataParts.push({
-                    data: typedPart.data,
-                    timestamp: typedPart.timestamp || Date.now(),
-                    type: typedPart.type,
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return dataParts;
 };
