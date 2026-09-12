@@ -410,7 +410,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
         "lib/message-conversion.ts",
-        "lib/stores/base/hooks.ts",
         "lib/types/anonymous.ts",
         "providers/chat-input-provider.tsx",
         "trpc/server.tsx"
@@ -1231,7 +1230,6 @@
       "files": [
         "components/parallel-response-cards.tsx",
         "components/sheet-editor.tsx",
-        "lib/stores/base/hooks.ts",
         "lib/stores/with-message-parts.ts"
       ],
       "rules": {

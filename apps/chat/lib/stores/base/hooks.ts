@@ -685,7 +685,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
   ChatStoreApi<TMessage>,
   "setState"
 > & {
-  setState: (
+  setState(
     partial:
       | StoreState<TMessage>
       | Partial<StoreState<TMessage>>
@@ -704,7 +704,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
             }
         )
       | undefined
-  ) => void;
+  ): void;
 };
 
 export function Provider<TMessage extends UIMessage = UIMessage>({
