@@ -3,7 +3,25 @@ import path from "node:path";
 
 import type { PackageManager } from "../types";
 
-export function inferPackageManager(cwd = process.cwd()): PackageManager {
+export const launcherPackageManager = (): PackageManager => {
+  const ua = process.env.npm_config_user_agent ?? "";
+  if (ua.startsWith("pnpm/")) {
+    return "pnpm";
+  }
+  if (ua.startsWith("yarn/")) {
+    return "yarn";
+  }
+  if (ua.startsWith("npm/")) {
+    return "npm";
+  }
+  if (ua.startsWith("bun/")) {
+    return "bun";
+  }
+
+  return "bun";
+};
+
+export const inferPackageManager = (cwd = process.cwd()): PackageManager => {
   let currentDir = path.resolve(cwd);
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");
@@ -18,7 +36,7 @@ export function inferPackageManager(cwd = process.cwd()): PackageManager {
           "packageManager" in manifest &&
           typeof manifest.packageManager === "string"
         ) {
-          const declared = manifest.packageManager.split("@")[0];
+          const [declared] = manifest.packageManager.split("@");
           if (
             declared === "bun" ||
             declared === "npm" ||
@@ -58,22 +76,4 @@ export function inferPackageManager(cwd = process.cwd()): PackageManager {
   }
 
   return launcherPackageManager();
-}
-
-export function launcherPackageManager(): PackageManager {
-  const ua = process.env.npm_config_user_agent ?? "";
-  if (ua.startsWith("pnpm/")) {
-    return "pnpm";
-  }
-  if (ua.startsWith("yarn/")) {
-    return "yarn";
-  }
-  if (ua.startsWith("npm/")) {
-    return "npm";
-  }
-  if (ua.startsWith("bun/")) {
-    return "bun";
-  }
-
-  return "bun";
-}
+};

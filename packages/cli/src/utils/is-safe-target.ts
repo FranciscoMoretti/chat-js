@@ -1,6 +1,6 @@
 import path from "node:path";
 
-export function isSafeTarget(targetPath: string, root: string): boolean {
+export const isSafeTarget = (targetPath: string, root: string): boolean => {
   if (targetPath.includes("\0")) {
     return false;
   }
@@ -22,13 +22,13 @@ export function isSafeTarget(targetPath: string, root: string): boolean {
     .replaceAll("\\", "/")
     .split("/")
     .filter(Boolean);
-  const normalizedSegments = normalizedTarget.split(/[\\/]+/).filter(Boolean);
+  const normalizedSegments = normalizedTarget.split(/[\\/]+/u).filter(Boolean);
 
   if (targetSegments.includes("..") || normalizedSegments.includes("..")) {
     return false;
   }
 
-  if (/^[a-zA-Z]:[\\/]/.test(decodedPath)) {
+  if (/^[a-zA-Z]:[\\/]/u.test(decodedPath)) {
     return false;
   }
 
@@ -40,4 +40,4 @@ export function isSafeTarget(targetPath: string, root: string): boolean {
     resolvedPath === normalizedRoot ||
     resolvedPath.startsWith(`${normalizedRoot}${path.sep}`)
   );
-}
+};
