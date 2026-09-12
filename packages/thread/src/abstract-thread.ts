@@ -115,7 +115,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.transport = options.transport ?? new DefaultChatTransport();
     this.#runs = new RunRegistry(options.concurrency);
     this.#state = options.state;
-    this.#runHost = this.createRunHost();
+    this.#runHost = AbstractThread.createRunHost(this);
     if (ownedThreadStates.has(options.state)) {
       throw new Error(
         "ThreadState is already attached to an AbstractThread; retain and reuse that controller"
@@ -502,8 +502,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return new MessageTree<TMessage>({ snapshot });
   }
 
-  private createRunHost(): ThreadRunHost<TMessage> {
-    const thread = this;
+  private static createRunHost<TMessage extends UIMessage>(
+    thread: AbstractThread<TMessage>
+  ): ThreadRunHost<TMessage> {
     return {
       get dataPartSchemas() {
         return thread.dataPartSchemas;
