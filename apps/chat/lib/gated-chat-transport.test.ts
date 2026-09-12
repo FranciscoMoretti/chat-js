@@ -45,7 +45,7 @@ describe("createGatedChatTransport", () => {
     await Promise.resolve();
     assert.equal(sendMessages.mock.calls.length, 0);
 
-    release();
+    release(undefined);
     assert.equal(await request, stream);
     assert.equal(sendMessages.mock.calls.length, 1);
     assert.equal(forwardedMetadata, originalMetadata);
