@@ -8,6 +8,7 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import pathModule from "node:path";
 import { runInNewContext } from "node:vm";
@@ -412,11 +413,18 @@ describe("scaffoldElectron", () => {
       packageManager: "npm",
       projectName: "my-chat-app",
     });
-    await symlink(
-      pathModule.resolve(getCliPackageRoot(), "../../node_modules"),
-      join(projectDir, "node_modules"),
-      "dir"
-    );
+    const electronDir = join(projectDir, "electron");
+    const nodeModules = join(electronDir, "node_modules");
+    const resolveDependency = createRequire(import.meta.url).resolve;
+    await mkdir(join(nodeModules, ".bin"), { recursive: true });
+    await Promise.all([
+      symlink(resolveDependency("tsx/cli"), join(nodeModules, ".bin/tsx")),
+      symlink(
+        pathModule.dirname(resolveDependency("png2icons/package.json")),
+        join(nodeModules, "png2icons"),
+        "dir"
+      ),
+    ]);
     // Isolate app configuration so prebuild needs no environment credentials.
     await writeFile(
       join(projectDir, "lib/config.ts"),
@@ -427,7 +435,6 @@ describe("scaffoldElectron", () => {
         organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
       };`
     );
-    const electronDir = join(projectDir, "electron");
     const result = Bun.spawnSync(["npm", "run", "prebuild"], {
       cwd: electronDir,
       stderr: "pipe",
