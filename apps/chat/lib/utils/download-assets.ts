@@ -18,11 +18,11 @@ export type DownloadImplementation = (args: {
   url: URL;
 }) => Promise<AssetDownloadResult>;
 
-async function defaultDownload({
+const defaultDownload = async ({
   url,
 }: {
   url: URL;
-}): Promise<AssetDownloadResult> {
+}): Promise<AssetDownloadResult> => {
   const isApplicationUrl = url.origin === new URL(getBaseUrl()).origin;
   const key = isApplicationUrl ? keyFromFileUrl(url.toString()) : null;
   if (key) {
@@ -51,10 +51,10 @@ async function defaultDownload({
   }
   const contentType = response.headers.get("content-type") || undefined;
   const arrayBuffer = await response.arrayBuffer();
-  return { mediaType: contentType, data: new Uint8Array(arrayBuffer) };
-}
+  return { data: new Uint8Array(arrayBuffer), mediaType: contentType };
+};
 
-function toHttpUrl(value: unknown): URL | null {
+const toHttpUrl = (value: unknown): URL | null => {
   if (
     typeof value === "object" &&
     value !== null &&
@@ -81,16 +81,16 @@ function toHttpUrl(value: unknown): URL | null {
     }
   }
   return null;
-}
+};
 
 /**
  * Collects all http(s) URLs from file/image parts in the provided messages and downloads them.
  * Returns a map keyed by the normalized URL string.
  */
-async function downloadAssetsFromModelMessages(
+const downloadAssetsFromModelMessages = async (
   messages: ModelMessage[],
   downloadImplementation: DownloadImplementation = defaultDownload
-): Promise<Record<string, AssetDownloadResult>> {
+): Promise<Record<string, AssetDownloadResult>> => {
   const urlSet = new Set<string>();
 
   for (const message of messages) {
@@ -109,22 +109,22 @@ async function downloadAssetsFromModelMessages(
     }
   }
 
-  const urls = Array.from(urlSet).map((u) => new URL(u));
+  const urls = [...urlSet].map((url) => new URL(url));
   const downloaded = await Promise.all(
     urls.map(async (url) => ({
-      url,
       data: await downloadImplementation({ url }),
+      url,
     }))
   );
   return Object.fromEntries(
     downloaded.map(({ url, data }) => [url.toString(), data])
   );
-}
+};
 
-function mapFilePart(
+const mapFilePart = (
   part: FilePart,
   downloaded: Record<string, AssetDownloadResult>
-): FilePart | null {
+): FilePart | null => {
   const url = toHttpUrl(part.data);
   if (url) {
     const found = downloaded[url.toString()];
@@ -140,12 +140,12 @@ function mapFilePart(
     }
   }
   return part;
-}
+};
 
-function mapImagePart(
+const mapImagePart = (
   part: ImagePart,
   downloaded: Record<string, AssetDownloadResult>
-): ImagePart | null {
+): ImagePart | null => {
   const url = toHttpUrl(part.image);
   if (url) {
     const found = downloaded[url.toString()];
@@ -161,16 +161,16 @@ function mapImagePart(
     }
   }
   return part;
-}
+};
 
 /**
  * Inlines any URL-based file/image parts within ModelMessage[] by replacing the URLs
  * with downloaded binary data. This ensures providers receive actual bytes.
  */
-export async function replaceFilePartUrlByBinaryDataInMessages(
+export const replaceFilePartUrlByBinaryDataInMessages = async (
   messages: ModelMessage[],
   downloadImplementation: DownloadImplementation = defaultDownload
-): Promise<ModelMessage[]> {
+): Promise<ModelMessage[]> => {
   const downloaded = await downloadAssetsFromModelMessages(
     messages,
     downloadImplementation
@@ -223,4 +223,4 @@ export async function replaceFilePartUrlByBinaryDataInMessages(
     .slice(0, firstUserIndex)
     .filter((message) => message.role === "system");
   return [...leadingSystemMessages, ...availableMessages.slice(firstUserIndex)];
-}
+};
