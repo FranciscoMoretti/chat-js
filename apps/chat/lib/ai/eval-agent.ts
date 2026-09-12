@@ -8,19 +8,16 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
-
 // No-op StreamWriter for evals - tools can write but nothing happens
-function createNoOpStreamWriter(): StreamWriter {
-  return {
-    write: () => {
-      // Intentional no-op for evaluation context
-    },
+const createNoOpStreamWriter = (): StreamWriter =>
+  ({
     merge: () => {
       // Intentional no-op for evaluation context
     },
-  } as unknown as StreamWriter;
-}
-
+    write: () => {
+      // Intentional no-op for evaluation context
+    },
+  }) as unknown as StreamWriter;
 export interface EvalAgentResult {
   assistantMessage: ChatMessage;
   finalText: string;
@@ -32,8 +29,7 @@ export interface EvalAgentResult {
   }[];
   usage: LanguageModelUsage | undefined;
 }
-
-async function executeAgentAndGetOutput({
+const executeAgentAndGetOutput = async ({
   userMessage,
   previousMessages,
   selectedModelId,
@@ -60,118 +56,138 @@ async function executeAgentAndGetOutput({
       ReturnType<typeof createCoreChatAgent>
     >["result"]["responseMessages"]
   >;
-}> {
+}> => {
   const noOpStreamWriter = createNoOpStreamWriter();
-
+  const system = systemPrompt();
+  const costAccumulator = new CostAccumulator();
   const { result, contextForLLM } = await createCoreChatAgent({
-    system: systemPrompt(),
-    userMessage,
-    previousMessages,
-    selectedModelId,
-    explicitlyRequestedTools,
-    userId,
     abortSignal,
-    messageId,
+    // Discarded for evals
+    costAccumulator,
     dataStream: noOpStreamWriter,
+    explicitlyRequestedTools,
+    messageId,
     onError: (error) => {
       throw error;
     },
-    // Discarded for evals
-    costAccumulator: new CostAccumulator(),
+    previousMessages,
+    selectedModelId,
+    system,
+    userId,
+    userMessage,
   });
-
   await result.consumeStream();
   const responseMessages = await result.responseMessages;
   const output = await result.output;
+  return { contextForLLM, output: output || "", responseMessages, result };
+};
 
-  return { result, contextForLLM, output: output || "", responseMessages };
-}
-
-function processToolCall(
-  content: { toolCallId?: string; toolName: string; input: unknown },
+const processToolCall = (
+  content: {
+    toolCallId?: string;
+    toolName: string;
+    input: unknown;
+  },
   parts: ChatMessage["parts"],
-  toolResults: { toolName: string; type: string; state?: string }[]
-): void {
+  toolResults: {
+    toolName: string;
+    type: string;
+    state?: string;
+  }[]
+): void => {
   const toolCallId = content.toolCallId || generateUUID();
   const toolPartType = `tool-${content.toolName}` as const;
   parts.push({
-    type: toolPartType,
-    toolCallId,
-    state: "input-available",
     input: content.input,
+    state: "input-available",
+    toolCallId,
+    type: toolPartType,
   } as ChatMessage["parts"][number]);
   toolResults.push({
+    state: "input-available",
     toolName: content.toolName,
     type: toolPartType,
-    state: "input-available",
   });
-}
+};
 
-function updateExistingToolPart(
+const updateExistingToolPart = (
   parts: ChatMessage["parts"],
   toolCallId: string | undefined,
   output: unknown
-): boolean {
+): boolean => {
   const partIndex = parts.findIndex(
     (p) =>
       p.type.startsWith("tool-") &&
       "toolCallId" in p &&
       p.toolCallId === toolCallId
   );
-
   if (partIndex === -1) {
     return false;
   }
-
   const part = parts[partIndex];
   if (part.type.startsWith("tool-") && "state" in part) {
     parts[partIndex] = {
       ...part,
-      state: "output-available",
       output,
+      state: "output-available",
     } as ChatMessage["parts"][number];
   }
   return true;
-}
+};
 
-function addToolResultPart(
-  content: { toolCallId?: string; toolName: string; output: unknown },
+const addToolResultPart = (
+  content: {
+    toolCallId?: string;
+    toolName: string;
+    output: unknown;
+  },
   parts: ChatMessage["parts"]
-): void {
+): void => {
   const toolPartType = `tool-${content.toolName}` as const;
   parts.push({
-    type: toolPartType,
-    toolCallId: content.toolCallId || generateUUID(),
-    state: "output-available",
     output: content.output,
+    state: "output-available",
+    toolCallId: content.toolCallId || generateUUID(),
+    type: toolPartType,
   } as ChatMessage["parts"][number]);
-}
+};
 
-function updateToolResults(
-  toolResults: { toolName: string; type: string; state?: string }[],
+const updateToolResults = (
+  toolResults: {
+    toolName: string;
+    type: string;
+    state?: string;
+  }[],
   toolName: string
-): void {
+): void => {
   const existingIndex = toolResults.findIndex((tr) => tr.toolName === toolName);
   if (existingIndex === -1) {
     toolResults.push({
+      state: "output-available",
       toolName,
       type: `tool-${toolName}`,
-      state: "output-available",
     });
     return;
   }
-
   toolResults[existingIndex] = {
     ...toolResults[existingIndex],
     state: "output-available",
   };
-}
+};
 
-function processToolResult(
-  content: { toolCallId?: string; toolName: string; output: unknown },
+const processToolResult = (
+  content: {
+    toolCallId?: string;
+    toolName: string;
+    output: unknown;
+  },
   parts: ChatMessage["parts"],
-  toolResults: { toolName: string; type: string; state?: string }[]
-): void {
+  toolResults: {
+    toolName: string;
+    type: string;
+    state?: string;
+  }[]
+): void => {
   const updated = updateExistingToolPart(
     parts,
     content.toolCallId,
@@ -181,23 +197,26 @@ function processToolResult(
     addToolResultPart(content, parts);
   }
   updateToolResults(toolResults, content.toolName);
-}
+};
 
-function extractToolCallsAndResults(
+const extractToolCallsAndResults = (
   steps: Awaited<
     Awaited<ReturnType<typeof createCoreChatAgent>>["result"]["steps"]
   >
 ): {
   parts: ChatMessage["parts"];
-  toolResults: { toolName: string; type: string; state?: string }[];
-} {
+  toolResults: {
+    toolName: string;
+    type: string;
+    state?: string;
+  }[];
+} => {
   const toolResults: {
     toolName: string;
     type: string;
     state?: string;
   }[] = [];
   const parts: ChatMessage["parts"] = [];
-
   for (const step of steps ?? []) {
     for (const content of step.content) {
       if (content.type === "tool-call") {
@@ -207,11 +226,10 @@ function extractToolCallsAndResults(
       }
     }
   }
-
   return { parts, toolResults };
-}
+};
 
-async function generateSuggestions(
+const generateSuggestions = async (
   contextForLLM: Awaited<
     ReturnType<typeof createCoreChatAgent>
   >["contextForLLM"],
@@ -220,12 +238,11 @@ async function generateSuggestions(
       ReturnType<typeof createCoreChatAgent>
     >["result"]["responseMessages"]
   >
-): Promise<string[]> {
+): Promise<string[]> => {
   const followupSuggestionsResult = generateFollowupSuggestions([
     ...contextForLLM,
     ...responseMessages,
   ]);
-
   const result = await followupSuggestionsResult;
   let lastSuggestions: string[] = [];
   for await (const chunk of result.partialOutputStream) {
@@ -235,11 +252,10 @@ async function generateSuggestions(
       );
     }
   }
-
   return lastSuggestions.length > 0 ? lastSuggestions.slice(-5) : [];
-}
+};
 
-export async function runCoreChatAgentEval({
+export const runCoreChatAgentEval = async ({
   userMessage,
   previousMessages = [],
   selectedModelId,
@@ -255,58 +271,52 @@ export async function runCoreChatAgentEval({
   userId?: string | null;
   activeTools: ToolName[];
   abortSignal?: AbortSignal;
-}): Promise<EvalAgentResult> {
+}): Promise<EvalAgentResult> => {
   const messageId = generateUUID();
   const requestedTools = determineExplicitlyRequestedTools(selectedTool);
   const explicitlyRequestedTools =
     requestedTools === null
       ? activeTools
       : requestedTools.filter((tool) => activeTools.includes(tool));
-
   const { result, contextForLLM, output, responseMessages } =
     await executeAgentAndGetOutput({
-      userMessage,
+      abortSignal,
+      explicitlyRequestedTools,
+      messageId,
       previousMessages,
       selectedModelId,
-      explicitlyRequestedTools,
       userId,
-      abortSignal,
-      messageId,
+      userMessage,
     });
-
   const steps = (await result.steps) ?? [];
   const { parts, toolResults } = extractToolCallsAndResults(steps);
-
   if (output) {
     parts.unshift({
-      type: "text",
       text: output,
+      type: "text",
     });
   }
-
   const assistantMessage: ChatMessage = {
     id: messageId,
-    role: "assistant",
-    parts,
     metadata: {
+      activeStreamId: null,
       createdAt: new Date(),
       parentMessageId: userMessage.id,
       selectedModel: selectedModelId,
-      activeStreamId: null,
     },
+    parts,
+    role: "assistant",
   };
-
   const followupSuggestions = await generateSuggestions(
     contextForLLM,
     responseMessages
   );
   const usage = await result.usage;
-
   return {
-    finalText: output,
     assistantMessage,
-    usage,
-    toolResults,
+    finalText: output,
     followupSuggestions,
+    toolResults,
+    usage,
   };
-}
+};
