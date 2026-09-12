@@ -41,8 +41,8 @@ export const setAnonymousSession = async (
 ): Promise<void> => {
   const cookieStore = await cookies();
   cookieStore.set(ANONYMOUS_SESSION_COOKIES_KEY, JSON.stringify(session), {
-    path: "/",
     maxAge: ANONYMOUS_LIMITS.SESSION_DURATION,
+    path: "/",
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
