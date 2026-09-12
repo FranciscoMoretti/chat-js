@@ -5,7 +5,7 @@ import type { ChatMessage } from "@/lib/ai/types";
 
 import { getRetryMessageInput } from "./chat-tree-actions";
 
-function message({
+const message = ({
   id,
   isPrimaryParallel = null,
   parallelGroupId = null,
@@ -21,11 +21,9 @@ function message({
   parentMessageId?: string | null;
   role: "assistant" | "user";
   selectedModel?: ChatMessage["metadata"]["selectedModel"];
-}): ChatMessage {
-  return {
+}): ChatMessage =>
+  ({
     id,
-    role,
-    parts: [{ type: "text", text: id }],
     metadata: {
       activeStreamId: null,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -35,9 +33,9 @@ function message({
       parentMessageId,
       selectedModel,
     },
-  } as ChatMessage;
-}
-
+    parts: [{ text: id, type: "text" }],
+    role,
+  }) as ChatMessage;
 describe("getRetryMessageInput", () => {
   it("selects the response model for an assistant retry", () => {
     const root = message({ id: "root", role: "user" });
@@ -47,18 +45,15 @@ describe("getRetryMessageInput", () => {
       role: "assistant",
       selectedModel: gatewayModelDefaults.workflows.title,
     });
-
     const result = getRetryMessageInput({
       messageId: assistant.id,
       messages: [root, assistant],
     });
-
     expect(result).toMatchObject({
       ok: true,
       selectedModelId: gatewayModelDefaults.workflows.title,
     });
   });
-
   it("preserves the parallel response slot for an assistant retry", () => {
     const root = message({ id: "root", role: "user" });
     const assistant = message({
@@ -69,12 +64,10 @@ describe("getRetryMessageInput", () => {
       parentMessageId: root.id,
       role: "assistant",
     });
-
     const result = getRetryMessageInput({
       messageId: assistant.id,
       messages: [root, assistant],
     });
-
     expect(result).toMatchObject({
       isPrimaryParallel: false,
       ok: true,
@@ -82,29 +75,24 @@ describe("getRetryMessageInput", () => {
       parallelIndex: 1,
     });
   });
-
   it("uses the previous message as parent when metadata has no parent id", () => {
     const root = message({ id: "root", role: "user" });
     const assistant = message({ id: "assistant", role: "assistant" });
-
     const result = getRetryMessageInput({
       messageId: assistant.id,
       messages: [root, assistant],
     });
-
     expect(result.ok).toBe(true);
     expect(result.ok ? result.selectedModelId : null).toBe(
       gatewayModelDefaults.workflows.chat
     );
   });
-
   it("reports missing parent messages", () => {
     const assistant = message({
       id: "assistant",
       parentMessageId: "missing",
       role: "assistant",
     });
-
     expect(
       getRetryMessageInput({ messageId: assistant.id, messages: [assistant] })
     ).toEqual({ ok: false, reason: "parent_not_found" });

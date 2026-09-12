@@ -6,9 +6,12 @@ import { downloadFile, uploadFile } from "./file-storage";
 import { keyFromFileUrl } from "./file-url";
 import { generateUUID } from "./utils";
 
-function cloneMessages<
+const cloneMessages = <
   T extends { id: string; chatId: string; parentMessageId?: string | null },
->(sourceMessages: T[], newChatId: string): T[] {
+>(
+  sourceMessages: T[],
+  newChatId: string
+): T[] => {
   // First pass: Create mapping from old IDs to new IDs
   const idMap = new Map<string, string>();
   for (const message of sourceMessages) {
@@ -44,32 +47,32 @@ function cloneMessages<
   }
 
   return clonedMessages;
-}
-function createDocumentIdMap<T extends { id: string }>(
+};
+const createDocumentIdMap = <T extends { id: string }>(
   documents: T[]
-): Map<string, string> {
+): Map<string, string> => {
   const documentIdMap = new Map<string, string>();
   for (const document of documents) {
     documentIdMap.set(document.id, generateUUID());
   }
   return documentIdMap;
-}
+};
 
-function updateDocumentIdInPart(
+const updateDocumentIdInPart = (
   oldDocId: string,
   documentIdMap: Map<string, string>
-): string {
+): string => {
   const newDocId = documentIdMap.get(oldDocId);
   if (!newDocId) {
     throw new Error(`Document ID ${oldDocId} not found in mapping`);
   }
   return newDocId;
-}
+};
 
-function transformDeepResearchPart(
+const transformDeepResearchPart = (
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
-): ChatMessage["parts"][number] {
+): ChatMessage["parts"][number] => {
   if (part.type !== "tool-deepResearch") {
     return part;
   }
@@ -88,42 +91,36 @@ function transformDeepResearchPart(
       documentId: newDocId,
     },
   };
-}
+};
 
-function isEditDocumentPart(
+const isEditDocumentPart = (
   part: ChatMessage["parts"][number]
 ): part is Extract<
   ChatMessage["parts"][number],
   | { type: "tool-editTextDocument" }
   | { type: "tool-editCodeDocument" }
   | { type: "tool-editSheetDocument" }
-> {
-  return (
-    part.type === "tool-editTextDocument" ||
-    part.type === "tool-editCodeDocument" ||
-    part.type === "tool-editSheetDocument"
-  );
-}
+> =>
+  part.type === "tool-editTextDocument" ||
+  part.type === "tool-editCodeDocument" ||
+  part.type === "tool-editSheetDocument";
 
-function isCreateDocumentPart(
+const isCreateDocumentPart = (
   part: ChatMessage["parts"][number]
 ): part is Extract<
   ChatMessage["parts"][number],
   | { type: "tool-createTextDocument" }
   | { type: "tool-createCodeDocument" }
   | { type: "tool-createSheetDocument" }
-> {
-  return (
-    part.type === "tool-createTextDocument" ||
-    part.type === "tool-createCodeDocument" ||
-    part.type === "tool-createSheetDocument"
-  );
-}
+> =>
+  part.type === "tool-createTextDocument" ||
+  part.type === "tool-createCodeDocument" ||
+  part.type === "tool-createSheetDocument";
 
-function transformEditDocumentPart(
+const transformEditDocumentPart = (
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
-): ChatMessage["parts"][number] {
+): ChatMessage["parts"][number] => {
   if (!isEditDocumentPart(part)) {
     return part;
   }
@@ -142,12 +139,12 @@ function transformEditDocumentPart(
       documentId: newDocId,
     },
   };
-}
+};
 
-function transformCreateDocumentPart(
+const transformCreateDocumentPart = (
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
-): ChatMessage["parts"][number] {
+): ChatMessage["parts"][number] => {
   if (!isCreateDocumentPart(part)) {
     return part;
   }
@@ -166,12 +163,12 @@ function transformCreateDocumentPart(
       documentId: newDocId,
     },
   };
-}
+};
 
-function transformPartWithDocumentId(
+const transformPartWithDocumentId = (
   part: ChatMessage["parts"][number],
   documentIdMap: Map<string, string>
-): ChatMessage["parts"][number] {
+): ChatMessage["parts"][number] => {
   if (part.type === "tool-deepResearch") {
     return transformDeepResearchPart(part, documentIdMap);
   }
@@ -182,12 +179,15 @@ function transformPartWithDocumentId(
     return transformCreateDocumentPart(part, documentIdMap);
   }
   return part;
-}
+};
 
-function updateDocumentReferencesInMessageParts<
+const updateDocumentReferencesInMessageParts = <
   T extends { parts: ChatMessage["parts"] },
->(messages: T[], documentIdMap: Map<string, string>): T[] {
-  return messages.map((message) => {
+>(
+  messages: T[],
+  documentIdMap: Map<string, string>
+): T[] =>
+  messages.map((message) => {
     const { parts } = message;
     let updatedParts: ChatMessage["parts"] = [];
 
@@ -202,15 +202,14 @@ function updateDocumentReferencesInMessageParts<
       parts: updatedParts,
     };
   });
-}
-function cloneDocuments<
+const cloneDocuments = <
   T extends { id: string; messageId: string; userId: string },
 >(
   sourceDocuments: T[],
   documentIdMap: Map<string, string>,
   messageIdMap: Map<string, string>,
   newUserId: string
-): T[] {
+): T[] => {
   const clonedDocuments: T[] = [];
 
   for (const document of sourceDocuments) {
@@ -234,9 +233,9 @@ function cloneDocuments<
   }
 
   return clonedDocuments;
-}
+};
 
-async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
+const cloneFileUIPart = async (part: FileUIPart): Promise<FileUIPart> => {
   try {
     // Skip if no URL is provided
     if (!part.url) {
@@ -284,11 +283,13 @@ async function cloneFileUIPart(part: FileUIPart): Promise<FileUIPart> {
     // Return original attachment as fallback to avoid breaking the cloning process
     return part;
   }
-}
+};
 
-export async function cloneAttachmentsInMessages<
+export const cloneAttachmentsInMessages = async <
   T extends { parts: ChatMessage["parts"] },
->(messages: T[]): Promise<T[]> {
+>(
+  messages: T[]
+): Promise<T[]> => {
   const clonedMessages: T[] = [];
 
   for (const message of messages) {
@@ -315,9 +316,9 @@ export async function cloneAttachmentsInMessages<
   }
 
   return clonedMessages;
-}
+};
 
-export function cloneMessagesWithDocuments<
+export const cloneMessagesWithDocuments = <
   TMessage extends {
     id: string;
     chatId: string;
@@ -346,7 +347,7 @@ export function cloneMessagesWithDocuments<
   clonedDocuments: TDocument[];
   messageIdMap: Map<string, string>;
   documentIdMap: Map<string, string>;
-} {
+} => {
   // Step 1: Clone messages (id, chatId, and parentMessageId field)
   const clonedMessagesBase = cloneMessages(sourceMessages, newChatId);
 
@@ -429,4 +430,4 @@ export function cloneMessagesWithDocuments<
     documentIdMap,
     messageIdMap,
   };
-}
+};

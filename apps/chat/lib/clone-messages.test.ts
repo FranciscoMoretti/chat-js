@@ -21,7 +21,7 @@ vi.mock("@/lib/config", () => ({
 
 vi.mock("./file-storage", () => fileStorage);
 
-function createMessage({
+const createMessage = ({
   id,
   parentMessageId = null,
   chatId,
@@ -29,20 +29,18 @@ function createMessage({
   id: string;
   parentMessageId?: string | null;
   chatId: string;
-}): ChatMessage & { chatId: string } {
-  return {
-    chatId,
-    id,
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date("2024-01-01T00:00:00.000Z"),
-      parentMessageId,
-      selectedModel: gatewayModelDefaults.workflows.chat,
-    },
-    parts: [],
-    role: "user",
-  };
-}
+}): ChatMessage & { chatId: string } => ({
+  chatId,
+  id,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date("2024-01-01T00:00:00.000Z"),
+    parentMessageId,
+    selectedModel: gatewayModelDefaults.workflows.chat,
+  },
+  parts: [],
+  role: "user",
+});
 
 describe("cloneMessagesWithDocuments", () => {
   it("clones message ids, chatId and parentMessageId thread structure", () => {

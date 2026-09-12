@@ -34,28 +34,26 @@ const message: ChatMessage = {
   role: "user",
 };
 
-function requestOptions({
+const requestOptions = ({
   abortSignal,
   metadata,
 }: {
   abortSignal?: AbortSignal;
   metadata?: unknown;
-} = {}): Parameters<ChatTransport<ChatMessage>["sendMessages"]>[0] {
-  return {
-    abortSignal,
-    body: {
-      parallelGroupId,
-      parallelIndex: 1,
-      requestId,
-      selectedModelId: gatewayModelDefaults.workflows.title,
-    },
-    chatId,
-    messageId: undefined,
-    messages: [message],
-    metadata,
-    trigger: "submit-message",
-  };
-}
+} = {}): Parameters<ChatTransport<ChatMessage>["sendMessages"]>[0] => ({
+  abortSignal,
+  body: {
+    parallelGroupId,
+    parallelIndex: 1,
+    requestId,
+    selectedModelId: gatewayModelDefaults.workflows.title,
+  },
+  chatId,
+  messageId: undefined,
+  messages: [message],
+  metadata,
+  trigger: "submit-message",
+});
 
 describe("createCancellationAwareChatTransport", () => {
   it("cancels the exact forwarded request identity", async () => {
