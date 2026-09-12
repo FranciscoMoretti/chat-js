@@ -26,8 +26,12 @@ test("ChatJS upload remains durable through creation retries and message editing
   page,
 }) => {
   test.setTimeout(180_000);
+  page.setDefaultNavigationTimeout(60_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  await page.request.post("/api/chat-model", {
+    data: { model: "google/gemini-2.5-flash-lite" },
+  });
   const upload = await page.request.post("/api/files/upload", {
     multipart: {
       file: { name: "eve-square.png", mimeType: "image/png", buffer: redPng },
@@ -138,6 +142,22 @@ test("ChatJS upload remains durable through creation retries and message editing
     await expect(
       editor.getByRole("button", { name: "eve-square.png", exact: true })
     ).toBeVisible();
+    await expect
+      .poll(() =>
+        editor
+          .getByRole("img", { name: "eve-square.png", exact: true })
+          .evaluate(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0
+          )
+      )
+      .toBe(true);
+    await editor.screenshot({
+      path: "tests/eve-results/screenshots/eve-edit-restored-attachment.png",
+      animations: "disabled",
+    });
     await editor
       .getByRole("textbox", { name: "Message", exact: true })
       .fill(

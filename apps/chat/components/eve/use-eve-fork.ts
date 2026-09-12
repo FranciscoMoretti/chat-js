@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState } from "react";
+import { config } from "@/lib/config";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import { responseModel } from "@/lib/eve/response-model";
+import { restoreEveAttachment } from "@/lib/eve/restore-attachment";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
@@ -156,17 +158,12 @@ export function useEveFork(
         message.parts
           .filter((part) => part.type === "file")
           .map(async (part) => {
-            if (!part.url?.startsWith(`data:${part.mediaType};base64,`)) {
-              throw new Error(
-                "This attachment cannot yet be restored for editing."
-              );
-            }
-            const blob = await (await fetch(part.url)).blob();
-            return uploadAttachment(
-              new File([blob], part.filename ?? "attachment", {
-                type: part.mediaType,
-              })
+            const file = await restoreEveAttachment(
+              part,
+              window.location.origin,
+              config.attachments.maxBytes
             );
+            return uploadAttachment(file);
           })
       );
       setDraft(text);
