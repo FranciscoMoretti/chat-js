@@ -154,52 +154,42 @@ const toConfigInput = (input: {
   documentTypes: Record<DocumentTypeKey, boolean>;
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
-}) => {
-  const gatewayToolDefaults = defaultsFor(input).tools;
-  const hasImageDefault =
-    typeof (gatewayToolDefaults.image as { default?: unknown }).default ===
-    "string";
-  const hasVideoDefault =
-    typeof (gatewayToolDefaults.video as { default?: unknown }).default ===
-    "string";
-
-  return {
-    ai: {
-      gateway: input.gateway,
-      tools: {
-        codeExecution: { enabled: input.builtInTools.codeExecution },
-        deepResearch: { enabled: input.builtInTools.deepResearch },
-        documents: {
-          enabled: input.coreFeatures.documents,
-          types: input.documentTypes,
-        },
-        followupSuggestions: {
-          enabled: input.coreFeatures.followupSuggestions,
-        },
-        image: {
-          enabled: input.builtInTools.imageGeneration && hasImageDefault,
-        },
-        mcp: { enabled: input.coreFeatures.mcp },
-        urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
-        video: {
-          enabled: input.builtInTools.videoGeneration && hasVideoDefault,
-        },
-        webSearch: { enabled: input.builtInTools.webSearch },
+}) => ({
+  ai: {
+    gateway: input.gateway,
+    tools: {
+      codeExecution: { enabled: input.builtInTools.codeExecution },
+      deepResearch: { enabled: input.builtInTools.deepResearch },
+      documents: {
+        enabled: input.coreFeatures.documents,
+        types: input.documentTypes,
       },
+      followupSuggestions: {
+        enabled: input.coreFeatures.followupSuggestions,
+      },
+      image: {
+        enabled: input.builtInTools.imageGeneration,
+      },
+      mcp: { enabled: input.coreFeatures.mcp },
+      urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
+      video: {
+        enabled: input.builtInTools.videoGeneration,
+      },
+      webSearch: { enabled: input.builtInTools.webSearch },
     },
-    appName: input.appName,
-    appPrefix: input.appPrefix,
-    appUrl: input.appUrl,
-    authentication: input.auth,
-    desktopApp: {
-      enabled: input.withElectron,
-    },
-    features: {
-      attachments: input.coreFeatures.attachments,
-      parallelResponses: input.coreFeatures.parallelResponses,
-    },
-  };
-};
+  },
+  appName: input.appName,
+  appPrefix: input.appPrefix,
+  appUrl: input.appUrl,
+  authentication: input.auth,
+  desktopApp: {
+    enabled: input.withElectron,
+  },
+  features: {
+    attachments: input.coreFeatures.attachments,
+    parallelResponses: input.coreFeatures.parallelResponses,
+  },
+});
 
 export const buildConfigTs = (input: {
   appName: string;

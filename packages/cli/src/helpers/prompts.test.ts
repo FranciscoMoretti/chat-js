@@ -63,3 +63,14 @@ it("enables web search when external defaults enable deep research", async () =>
   expect(builtInTools.deepResearch).toBe(true);
   expect(builtInTools.webSearch).toBe(true);
 });
+
+it("keeps unconfigured media tools disabled with --yes", async () => {
+  const definition = externalGatewayFixture().root.meta.chatjs;
+  definition.capabilities.image = false;
+  definition.capabilities.video = false;
+  definition.defaults.tools.image = { enabled: false };
+  definition.defaults.tools.video = { enabled: false };
+  const { builtInTools } = await promptAssistantTools([], true, definition);
+  expect(builtInTools.imageGeneration).toBe(false);
+  expect(builtInTools.videoGeneration).toBe(false);
+});

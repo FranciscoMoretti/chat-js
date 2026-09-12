@@ -133,7 +133,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain("video: {");
     expect(output).toContain("enabled: false");
   });
-  it("keeps unsupported media tools disabled for openai-compatible scaffolds", () => {
+  it("preserves selected media tools for openai-compatible scaffolds", () => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -170,7 +170,9 @@ describe("buildConfigTs", () => {
     expect(output).toContain('gateway: "openai-compatible"');
     expect(output).toContain("image: {");
     expect(output).toContain('default: "gpt-image-1"');
-    expect(output).toMatch(/video:\s*\{\s*enabled:\s*false,/mu);
+    expect(output).toMatch(
+      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
+    );
   });
 });
 

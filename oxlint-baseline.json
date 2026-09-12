@@ -7,8 +7,7 @@
         "packages/registry/src/gateways/openai-compatible/gateway.ts",
         "packages/registry/src/gateways/openai/gateway.ts",
         "packages/registry/src/gateways/openrouter/gateway.ts",
-        "packages/registry/src/gateways/vercel/gateway.ts",
-        "packages/thread/src/abstract-thread.ts"
+        "packages/registry/src/gateways/vercel/gateway.ts"
       ],
       "rules": {
         "class-methods-use-this": "off"
@@ -17,8 +16,7 @@
     {
       "files": [
         "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/story.ts",
-        "packages/cli/test/gateway-selection.test.ts"
+        "apps/videos/src/story.ts"
       ],
       "rules": {
         "complexity": "off"
@@ -53,12 +51,6 @@
       }
     },
     {
-      "files": ["apps/videos/src/BrandExample.tsx"],
-      "rules": {
-        "import/newline-after-import": "off"
-      }
-    },
-    {
       "files": ["packages/thread/src/ai-sdk-run-chat.ts"],
       "rules": {
         "max-classes-per-file": "off"
@@ -73,7 +65,6 @@
         "packages/cli/src/helpers/gateway-provider.test.ts",
         "packages/cli/src/helpers/prompts.ts",
         "packages/cli/src/utils/preflight.ts",
-        "packages/cli/test/gateway-selection.test.ts",
         "packages/registry/src/storage/ftp/storage-provider.test.ts",
         "scripts/sync-template.ts"
       ],
@@ -90,8 +81,7 @@
     {
       "files": [
         "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/story.ts",
-        "packages/cli/test/gateway-selection.test.ts"
+        "apps/videos/src/story.ts"
       ],
       "rules": {
         "no-nested-ternary": "off"
@@ -106,8 +96,7 @@
     {
       "files": [
         "apps/electron/src/main.ts",
-        "apps/site/components/thread-playground-model.ts",
-        "packages/cli/test/gateway-selection.test.ts"
+        "apps/site/components/thread-playground-model.ts"
       ],
       "rules": {
         "no-use-before-define": "off"
@@ -120,21 +109,9 @@
       }
     },
     {
-      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
-      "rules": {
-        "one-var": "off"
-      }
-    },
-    {
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/forge.config.ts"],
-      "rules": {
-        "prefer-named-capture-group": "off"
       }
     },
     {
@@ -157,10 +134,7 @@
       }
     },
     {
-      "files": [
-        "packages/cli/src/utils/run-command.ts",
-        "packages/cli/test/gateway-selection.test.ts"
-      ],
+      "files": ["packages/cli/src/utils/run-command.ts"],
       "rules": {
         "promise/param-names": "off"
       }
@@ -249,9 +223,7 @@
     },
     {
       "files": [
-        "apps/electron/forge.config.ts",
         "apps/electron/src/lib/auth-client.ts",
-        "apps/electron/src/main.ts",
         "apps/site/app/layout.tsx",
         "apps/site/app/page.tsx",
         "apps/site/app/threads/page.tsx",
@@ -263,19 +235,10 @@
         "apps/site/components/thread-showcase.tsx",
         "apps/site/components/use-cases.tsx",
         "apps/site/tests/thread-playground.visual.ts",
-        "apps/videos/src/BrandExample.tsx",
-        "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/shared/presentation.tsx",
-        "apps/videos/src/story.ts"
+        "packages/cli/src/helpers/scaffold.ts"
       ],
       "rules": {
         "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
-      "rules": {
-        "sort-vars": "off"
       }
     },
     {

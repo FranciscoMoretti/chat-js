@@ -49,6 +49,14 @@ const selections = {
     file: "code-execution",
     requirement: "codeExecutionEnvRequirement",
   },
+  generateImage: {
+    file: "image-generation",
+    requirement: "imageGenerationEnvRequirement",
+  },
+  generateVideo: {
+    file: "video-generation",
+    requirement: "videoGenerationEnvRequirement",
+  },
   retrieveUrl: {
     file: "url-retrieval",
     requirement: "urlRetrievalEnvRequirement",

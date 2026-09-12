@@ -84,29 +84,6 @@ const BUILT_IN_TOOL_HINTS: Record<BuiltInToolKey, string> = {
   webSearch: "Search the web from chat",
 };
 
-const isSupportedBuiltInTool = (
-  gateway: GatewayDefinition,
-  key: BuiltInToolKey
-): boolean => {
-  const gatewayToolDefaults = gateway.defaults.tools;
-
-  if (key === "imageGeneration") {
-    return (
-      gateway.capabilities.image &&
-      typeof gatewayToolDefaults.image.default === "string"
-    );
-  }
-
-  if (key === "videoGeneration") {
-    return (
-      gateway.capabilities.video &&
-      typeof gatewayToolDefaults.video.default === "string"
-    );
-  }
-
-  return true;
-};
-
 const AUTH_LABELS: Record<AuthProvider, string> = {
   github: "GitHub OAuth",
   google: "Google OAuth",
@@ -381,9 +358,7 @@ export const promptAssistantTools = async (
   const installableItems = registryItems.filter(
     (item) => !item.hidden && !item.meta?.chatjs?.slot
   );
-  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS.filter((key) =>
-    isSupportedBuiltInTool(gateway, key)
-  );
+  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
 
   if (skipPrompt) {
     return {
@@ -575,6 +550,64 @@ export const promptUrlRetrievalTool = async (
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
+    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+  });
+  handleCancel(address);
+  return String(address).trim();
+};
+
+export const promptImageGenerationTool = async (
+  skipPrompt: boolean
+): Promise<string> => {
+  if (skipPrompt) {
+    return "generate-image";
+  }
+  const choice = await select({
+    message: "Which image generation tool should chat use?",
+    options: [
+      {
+        hint: "Uses your gateway and file storage",
+        label: "Selected AI gateway",
+        value: "generate-image",
+      },
+      { label: "External registry item", value: "external" },
+    ],
+  });
+  handleCancel(choice);
+  if (choice !== "external") {
+    return choice;
+  }
+  const address = await text({
+    message: "image generation tool registry address:",
+    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+  });
+  handleCancel(address);
+  return String(address).trim();
+};
+
+export const promptVideoGenerationTool = async (
+  skipPrompt: boolean
+): Promise<string> => {
+  if (skipPrompt) {
+    return "generate-video";
+  }
+  const choice = await select({
+    message: "Which video generation tool should chat use?",
+    options: [
+      {
+        hint: "Uses your gateway and file storage",
+        label: "Selected AI gateway",
+        value: "generate-video",
+      },
+      { label: "External registry item", value: "external" },
+    ],
+  });
+  handleCancel(choice);
+  if (choice !== "external") {
+    return choice;
+  }
+  const address = await text({
+    message: "video generation tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);

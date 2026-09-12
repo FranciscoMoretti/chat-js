@@ -21,7 +21,10 @@ import {
 } from "@/components/ui/tooltip";
 
 export const UiPrimitivesVisualFixture = () => (
-  <main className="space-y-8 p-8" data-testid="ui-primitives-fixture">
+  <main
+    className="space-y-8 px-8 pt-8 pb-40"
+    data-testid="ui-primitives-fixture"
+  >
     <section className="max-w-3xl space-y-3">
       <h1>Button variants</h1>
       <div className="flex flex-wrap gap-3">

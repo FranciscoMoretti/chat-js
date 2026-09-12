@@ -23,6 +23,8 @@ import {
   promptStorage,
   promptSearchTool,
   promptUrlRetrievalTool,
+  promptImageGenerationTool,
+  promptVideoGenerationTool,
   promptCodeExecutionTool,
 } from "../helpers/prompts";
 import {
@@ -130,6 +132,8 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
         metadata.slot === "webSearch" ||
         metadata.slot === "codeExecution" ||
         metadata.slot === "retrieveUrl" ||
+        metadata.slot === "generateImage" ||
+        metadata.slot === "generateVideo" ||
         (metadata.id === "retrieve-url" &&
           metadata.toolExport === "retrieveUrl");
       if (usesSelectedSlot) {
@@ -144,11 +148,13 @@ const createOptionsSchema = z.object({
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
+  imageGenerationTool: z.string().optional(),
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
   target: z.string().optional(),
   urlRetrievalTool: z.string().optional(),
+  videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
 
@@ -176,6 +182,18 @@ const collectToolSources = async (
     assistantTools.builtInTools.webSearch = true;
   }
   const selections = [
+    {
+      feature: "videoGeneration",
+      prompt: promptVideoGenerationTool,
+      slot: "generateVideo",
+      source: options.videoGenerationTool,
+    },
+    {
+      feature: "imageGeneration",
+      prompt: promptImageGenerationTool,
+      slot: "generateImage",
+      source: options.imageGenerationTool,
+    },
     {
       feature: "webSearch",
       prompt: promptSearchTool,
@@ -347,6 +365,14 @@ const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
   if (!existsSync(path.join(targetDir, "lib/storage-options.ts"))) {
     throw new Error(
       "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
+    );
+  }
+  if (
+    existsSync(path.join(targetDir, "tools/platform/generate-image.ts")) ||
+    existsSync(path.join(targetDir, "tools/platform/generate-video.ts"))
+  ) {
+    throw new Error(
+      "This ChatJS clone uses legacy media tool factories. Update its image/video registry integration before using create --from-git."
     );
   }
   // create owns the new clone's selected gateway. Remove this one slot before
@@ -577,6 +603,14 @@ export const create = new Command()
   .option(
     "--url-retrieval-tool <item>",
     "URL retrieval tool name or registry address"
+  )
+  .option(
+    "--image-generation-tool <item>",
+    "image generation tool name or registry address"
+  )
+  .option(
+    "--video-generation-tool <item>",
+    "video generation tool name or registry address"
   )
   .description("scaffold a new ChatJS chat application")
   .argument("[directory]", "target directory for the project")

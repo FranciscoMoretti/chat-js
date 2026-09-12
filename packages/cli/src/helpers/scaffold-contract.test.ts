@@ -53,16 +53,16 @@ describe("scaffold contracts", () => {
     const openaiCompatible = buildConfigFor("openai-compatible", allBuiltIns);
     expect(openaiCompatible).toContain('default: "gpt-image-1"');
     expect(openaiCompatible).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
+      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
     );
 
     const litellm = buildConfigFor("litellm", allBuiltIns);
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
     expect(litellm).toMatch(
-      /image:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
+      /image:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
     );
     expect(litellm).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
+      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
     );
   });
 });

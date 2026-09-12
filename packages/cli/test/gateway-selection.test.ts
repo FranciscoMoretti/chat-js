@@ -156,6 +156,68 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
         type: "registry:item",
       });
     }
+    if (path === "/external-video.json") {
+      const definition = {
+        contractVersion: 1,
+        envRequirements: [{ options: [["ACME_VIDEO_KEY"]] }],
+        id: "acme-video",
+        kind: "tool",
+        slot: "generateVideo",
+        toolExport: "animate",
+      };
+      return Response.json({
+        dependencies: ["ai", "zod"],
+        files: [
+          {
+            content:
+              'import { tool } from "ai"; import { z } from "zod"; export const animate = tool({ inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-video/tool.ts",
+            type: "registry:file",
+          },
+          {
+            content: JSON.stringify(definition),
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-video/chatjs.json",
+            type: "registry:file",
+          },
+        ],
+        meta: { chatjs: definition },
+        name: "acme-video",
+        type: "registry:item",
+      });
+    }
+    if (path === "/external-image.json") {
+      const definition = {
+        contractVersion: 1,
+        envRequirements: [{ options: [["ACME_IMAGE_KEY"]] }],
+        id: "acme-image",
+        kind: "tool",
+        slot: "generateImage",
+        toolExport: "paint",
+      };
+      return Response.json({
+        dependencies: ["ai", "zod"],
+        files: [
+          {
+            content:
+              'import { tool } from "ai"; import { z } from "zod"; export const paint = tool({ inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-image/tool.ts",
+            type: "registry:file",
+          },
+          {
+            content: JSON.stringify(definition),
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-image/chatjs.json",
+            type: "registry:file",
+          },
+        ],
+        meta: { chatjs: definition },
+        name: "acme-image",
+        type: "registry:item",
+      });
+    }
     if (path === "/external-retrieval.json") {
       const definition = {
         contractVersion: 1,
@@ -324,6 +386,10 @@ const storageArguments = (gateway: Gateway | "acme"): string[] => {
 const toolArguments = (gateway: Gateway | "acme"): string[] => {
   if (gateway === "vercel") {
     return [
+      "--video-generation-tool",
+      "generate-video",
+      "--image-generation-tool",
+      "generate-image",
       "--search-tool",
       "firecrawl-search",
       "--code-execution-tool",
@@ -334,6 +400,10 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
   }
   if (gateway === "acme") {
     return [
+      "--video-generation-tool",
+      `http://127.0.0.1:${registryServer.port}/external-video.json`,
+      "--image-generation-tool",
+      `http://127.0.0.1:${registryServer.port}/external-image.json`,
       "--url-retrieval-tool",
       `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
       "--code-execution-tool",
@@ -360,10 +430,53 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--no-electron",
       ...toolArguments(gateway),
     ]);
+    expect(
+      await Bun.file(join(cwd, "tools/platform/generate-image.ts")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "components/part/generate-image.tsx")).exists()
+    ).toBe(false);
+    if (gateway !== "vercel") {
+      expect(
+        await Bun.file(
+          join(cwd, "tools/chatjs/generate-image/tool.ts")
+        ).exists()
+      ).toBe(false);
+      expect(
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
+      ).not.toContain("generate-image/renderer");
+    }
+    if (gateway === "vercel" || gateway === "acme") {
+      expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
+        /image:\s*\{[^}]*\benabled:\s*true/u
+      );
+    }
+    expect(
+      await Bun.file(join(cwd, "tools/platform/generate-video.ts")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "components/part/generate-video.tsx")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "tools/chatjs/generate-video/tool.ts")).exists()
+    ).toBe(gateway === "vercel");
+    if (gateway === "vercel" || gateway === "acme") {
+      expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
+        /video:\s*\{[^}]*\benabled:\s*true/u
+      );
+    }
     const manifestPath = join(cwd, "package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     if (gateway === "vercel") {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeDefined();
+      expect(
+        await Bun.file(
+          join(cwd, "tools/chatjs/generate-image/tool.ts")
+        ).exists()
+      ).toBe(true);
+      expect(
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
+      ).toContain("generate-image/renderer");
       expect(
         await readFile(
           join(cwd, "tools/chatjs/url-retrieval-config.ts"),
@@ -415,6 +528,21 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 
     if (gateway === "acme") {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
+      expect(
+        await readFile(
+          join(cwd, "tools/chatjs/video-generation-config.ts"),
+          "utf-8"
+        )
+      ).toContain("ACME_VIDEO_KEY");
+      expect(
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
+      ).not.toContain("tool-generateVideo");
+      expect(
+        await readFile(
+          join(cwd, "tools/chatjs/image-generation-config.ts"),
+          "utf-8"
+        )
+      ).toContain("ACME_IMAGE_KEY");
       expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(
@@ -450,6 +578,10 @@ assert.ok(tools.webSearch.execute);
 const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
 assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
 assert.ok(tools.retrieveUrl.execute);
+assert.ok(tools.generateVideo.execute);
+assert.deepEqual(await tools.generateVideo.execute({subject: "ocean"}, {toolCallId: "video", messages: [], context: {}}), {asset: "ocean"});
+assert.ok(tools.generateImage.execute);
+assert.deepEqual(await tools.generateImage.execute({subject: "mountains"}, {toolCallId: "image", messages: [], context: {}}), {asset: "mountains"});
 const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: {}});
 assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `
@@ -568,12 +700,13 @@ import { applyDefaults, aiConfigSchema } from "./lib/config-schema";
 import assert from "node:assert/strict";
 assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { enabled: true } } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true, default: "video" } } }).success, false);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true } } }).success, true);`
 }
 
 `

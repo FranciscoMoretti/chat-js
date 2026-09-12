@@ -17,6 +17,8 @@ export default defineConfig({
   define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
     include: [
+      "@radix-ui/react-dialog",
+      "sonner",
       "echarts",
       "next/dist/client/image-component",
       "react",
@@ -31,7 +33,9 @@ export default defineConfig({
       echarts: createRequire(import.meta.url).resolve("echarts"),
       "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
       react: path.dirname(appRequire.resolve("react/package.json")),
+      "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),
     },
+    dedupe: ["react", "react-dom"],
   },
   test: {
     browser: {

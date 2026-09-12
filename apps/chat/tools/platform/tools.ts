@@ -1,4 +1,4 @@
-import type { FileUIPart, ModelMessage, Tool } from "ai";
+import type { ModelMessage, Tool } from "ai";
 
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
@@ -18,8 +18,6 @@ import { createTextDocumentTool } from "./documents/create-text-document";
 import { editCodeDocumentTool } from "./documents/edit-code-document";
 import { editSheetDocumentTool } from "./documents/edit-sheet-document";
 import { editTextDocumentTool } from "./documents/edit-text-document";
-import { generateImageTool } from "./generate-image";
-import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
 
@@ -30,8 +28,6 @@ export const getTools = ({
   session,
   messageId,
   selectedModel,
-  attachments = [],
-  lastGeneratedImage = null,
   contextForLLM,
   costAccumulator,
 }: {
@@ -39,8 +35,6 @@ export const getTools = ({
   session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
-  attachments: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
 }) => {
@@ -53,6 +47,8 @@ export const getTools = ({
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
       ([name]) =>
+        (name !== "generateVideo" || config.ai.tools.video.enabled) &&
+        (name !== "generateImage" || config.ai.tools.image.enabled) &&
         (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
         (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
         (name !== "codeExecution" || config.ai.tools.codeExecution.enabled)
@@ -94,16 +90,6 @@ export const getTools = ({
             : {}),
         }
       : {}),
-    ...(config.ai.tools.image.enabled
-      ? {
-          generateImage: generateImageTool({
-            attachments,
-            costAccumulator,
-            lastGeneratedImage,
-            selectedModel,
-          }),
-        }
-      : {}),
     ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
@@ -113,11 +99,6 @@ export const getTools = ({
             messages: contextForLLM,
             session,
           }),
-        }
-      : {}),
-    ...(config.ai.tools.video.enabled
-      ? {
-          generateVideo: generateVideoTool({ costAccumulator, selectedModel }),
         }
       : {}),
     ...enabledInstalledTools,

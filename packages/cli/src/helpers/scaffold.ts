@@ -434,6 +434,14 @@ export const scaffoldFromTemplate = async (
   delete manifest.dependencies["@vercel/blob"];
   delete manifest.dependencies["@tavily/core"];
   delete manifest.dependencies["@mendable/firecrawl-js"];
+  await rm(join(destination, "tools/chatjs/generate-video"), {
+    recursive: true,
+    force: true,
+  });
+  await rm(join(destination, "tools/chatjs/generate-image"), {
+    recursive: true,
+    force: true,
+  });
   await rm(join(destination, "tools/chatjs/retrieve-url"), {
     force: true,
     recursive: true,

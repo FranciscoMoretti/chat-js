@@ -98,6 +98,8 @@ export default defineConfig({
             "/tools/word-count",
             "/tools/get-weather",
             "/tools/retrieve-url",
+            "/tools/generate-image",
+            "/tools/generate-video",
             "/tools/authoring",
           ],
           label: "Tools",

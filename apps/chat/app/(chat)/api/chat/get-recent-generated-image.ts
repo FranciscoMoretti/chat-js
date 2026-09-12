@@ -1,4 +1,14 @@
+import { z } from "zod";
+
 import type { ChatMessage } from "@/lib/ai/types";
+
+// Optional support for the built-in image result. Other installed schemas are ignored.
+const imageResult = z.object({
+  output: z.object({ imageUrl: z.string().min(1) }),
+  state: z.literal("output-available"),
+  toolCallId: z.string(),
+  type: z.literal("tool-generateImage"),
+});
 
 export const getRecentGeneratedImage = (
   messages: ChatMessage[]
@@ -6,21 +16,14 @@ export const getRecentGeneratedImage = (
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
-
-  if (lastAssistantMessage?.parts && lastAssistantMessage.parts.length > 0) {
-    for (const part of lastAssistantMessage.parts) {
-      if (
-        part.type === "tool-generateImage" &&
-        part.state === "output-available" &&
-        part.output?.imageUrl
-      ) {
-        return {
-          imageUrl: part.output.imageUrl,
-          name: `generated-image-${part.toolCallId}.png`,
-        };
-      }
+  for (const part of lastAssistantMessage?.parts ?? []) {
+    const result = imageResult.safeParse(part);
+    if (result.success) {
+      return {
+        imageUrl: result.data.output.imageUrl,
+        name: `generated-image-${result.data.toolCallId}.png`,
+      };
     }
   }
-
   return null;
 };

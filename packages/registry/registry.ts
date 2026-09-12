@@ -9,6 +9,23 @@ import { builtInStorage } from "./src/storage/catalog";
 export const toolItems = [
   {
     dependencies: ["ai", "zod"],
+    description: "Generate videos using the selected gateway and storage",
+    id: "generate-video",
+    rendererExport: "GenerateVideoRenderer",
+    slot: "generateVideo",
+    toolExport: "generateVideoTool",
+  },
+  {
+    dependencies: ["ai", "zod", "lucide-react"],
+    description:
+      "Generate and edit images using the selected gateway and storage",
+    id: "generate-image",
+    rendererExport: "GenerateImageRenderer",
+    slot: "generateImage",
+    toolExport: "generateImageTool",
+  },
+  {
+    dependencies: ["ai", "zod"],
     description: "Count words, characters, and sentences in text",
     id: "word-count",
     rendererExport: "WordCountRenderer",

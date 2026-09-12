@@ -82,8 +82,6 @@ export async function createCoreChatAgent({
     contextForLLM,
     messageId,
     selectedModel: modelDefinition.apiModelId,
-    attachments: userMessage.parts.filter((part) => part.type === "file"),
-    lastGeneratedImage,
     costAccumulator,
   });
 
@@ -161,7 +159,16 @@ export async function createCoreChatAgent({
       toolsContext: Object.fromEntries(
         Object.keys(allTools).map((name) => [
           name,
-          { dataStream, costAccumulator, writeTopLevelUpdates: true },
+          {
+            dataStream,
+            costAccumulator,
+            writeTopLevelUpdates: true,
+            attachments: userMessage.parts.filter(
+              (part) => part.type === "file"
+            ),
+            lastGeneratedImage,
+            selectedModel: selectedModelId,
+          },
         ])
       ),
     }),

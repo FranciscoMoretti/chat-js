@@ -36,10 +36,7 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/use-chat.ts"
-      ],
+      "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "curly": "off"
       }
@@ -147,8 +144,6 @@
         "components/part/document-preview.tsx",
         "components/part/document-tool.tsx",
         "components/part/dynamic-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/message-reasoning.tsx",
         "components/part/read-document.tsx",
         "components/part/tool-part.tsx",
@@ -243,7 +238,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/backfill-parts.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/files/upload-prep.ts",
@@ -256,35 +250,20 @@
         "lib/stop-response.test.ts",
         "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/stores/custom-store-provider.tsx",
-        "lib/stores/hooks-base.ts",
-        "lib/stores/hooks-chat-persistence.ts",
-        "lib/stores/hooks-data-stream.ts",
-        "lib/stores/hooks-message-parts.ts",
-        "lib/stores/hooks-threads.ts",
         "lib/stores/with-message-parts.ts",
         "lib/stores/with-thread-state.ts",
         "lib/stores/with-tracing.ts",
-        "lib/stores/zustand-thread-state.test.ts",
         "lib/thread-utils.test.ts",
         "lib/thread-utils.ts",
         "lib/url-utils.tsx",
-        "lib/utils.ts",
-        "lib/utils/download-assets.ts",
-        "lib/utils/message-mapping.ts",
-        "lib/utils/message-part-validators.ts",
-        "lib/utils/rate-limit.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
         "providers/session-provider.tsx",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/retrieve-url/renderer.tsx",
         "tools/chatjs/tavily-search/renderer.tsx",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/word-count/renderer.tsx",
         "trpc/react.tsx",
         "trpc/server.tsx"
       ],
@@ -344,13 +323,7 @@
         "lib/editor/config.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
         "lib/stores/custom-store-provider.tsx",
-        "lib/stores/hooks-base.ts",
-        "lib/stores/hooks-chat-persistence.ts",
-        "lib/stores/hooks-data-stream.ts",
-        "lib/stores/hooks-message-parts.ts",
-        "lib/stores/hooks-threads.ts",
         "lib/stores/with-thread-state.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
@@ -370,7 +343,6 @@
         "lib/db/queries.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
-        "lib/utils/download-assets.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
       ],
       "rules": {
@@ -438,7 +410,6 @@
         "components/context-usage.tsx",
         "components/image-modal.tsx",
         "components/model-selector.tsx",
-        "components/part/generate-image.tsx",
         "components/response-error-message.tsx",
         "components/ui/breadcrumb.tsx",
         "components/ui/button-group.tsx",
@@ -475,8 +446,7 @@
         "components/ai-elements/message.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/favicon.tsx",
-        "components/image-modal.tsx",
-        "components/part/generate-image.tsx"
+        "components/image-modal.tsx"
       ],
       "rules": {
         "nextjs/no-img-element": "off"
@@ -533,18 +503,11 @@
         "lib/message-conversion.ts",
         "lib/stores/base/hooks.ts",
         "lib/types/anonymous.ts",
-        "lib/utils.ts",
         "providers/chat-input-provider.tsx",
         "trpc/server.tsx"
       ],
       "rules": {
         "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["tools/chatjs/get-weather/renderer.tsx"],
-      "rules": {
-        "no-loss-of-precision": "off"
       }
     },
     {
@@ -564,8 +527,7 @@
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "lib/ai/token-utils.test.ts",
-        "lib/clone-messages.ts",
-        "lib/stores/hooks-message-parts.ts"
+        "lib/clone-messages.ts"
       ],
       "rules": {
         "no-plusplus": "off"
@@ -608,10 +570,8 @@
         "components/sidebar-chat-item.tsx",
         "components/signup-form.tsx",
         "hooks/chat-sync-hooks.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/queries.ts",
-        "lib/stores/with-tracing.ts",
-        "lib/utils.ts"
+        "lib/stores/with-tracing.ts"
       ],
       "rules": {
         "no-unused-vars": "off"
@@ -646,10 +606,7 @@
         "lib/db/queries.ts",
         "lib/db/schema.ts",
         "lib/stores/base/use-data-parts.ts",
-        "lib/thread-utils.ts",
-        "tools/chatjs/word-count/renderer.tsx",
-        "tools/platform/deep-research/pipeline.ts",
-        "tools/platform/deep-research/researcher-agent.ts"
+        "lib/thread-utils.ts"
       ],
       "rules": {
         "no-use-before-define": "off"
@@ -712,8 +669,6 @@
         "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/part/document-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/tool-part.tsx",
         "components/settings/mcp-details-page.tsx",
         "components/share-button.tsx",
@@ -725,11 +680,7 @@
         "lib/message-conversion.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-data-parts.ts",
-        "lib/stores/with-tracing.ts",
-        "lib/utils.ts",
-        "lib/utils/download-assets.test.ts"
+        "lib/stores/with-tracing.ts"
       ],
       "rules": {
         "prefer-destructuring": "off"
@@ -748,12 +699,6 @@
       "files": ["lib/ai/token-utils.ts"],
       "rules": {
         "prefer-object-spread": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "prefer-spread": "off"
       }
     },
     {
@@ -779,10 +724,7 @@
       }
     },
     {
-      "files": [
-        "app/(chat)/api/chat/route.ts",
-        "tools/platform/generate-image.ts"
-      ],
+      "files": ["app/(chat)/api/chat/route.ts"],
       "rules": {
         "promise/no-promise-in-callback": "off"
       }
@@ -969,8 +911,6 @@
         "components/part/document-preview.tsx",
         "components/part/document-tool.tsx",
         "components/part/dynamic-tool.tsx",
-        "components/part/generate-image.tsx",
-        "components/part/generate-video.tsx",
         "components/part/message-annotations.tsx",
         "components/part/message-reasoning.tsx",
         "components/part/read-document.tsx",
@@ -1066,11 +1006,8 @@
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
         "providers/session-provider.tsx",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/retrieve-url/renderer.tsx",
         "tools/chatjs/tavily-search/renderer.tsx",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "tools/chatjs/word-count/renderer.tsx",
         "trpc/react.tsx",
         "trpc/server.tsx"
       ],
@@ -1270,8 +1207,7 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/settings/mcp-details-page.tsx",
-        "lib/files/upload-prep.ts",
-        "lib/stores/base/use-data-parts.ts"
+        "lib/files/upload-prep.ts"
       ],
       "rules": {
         "require-unicode-regexp": "off"
@@ -1406,31 +1342,21 @@
         "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
-        "lib/stores/base/use-data-parts.ts",
         "lib/stores/with-data-stream.test.ts",
         "lib/stores/with-message-parts.ts",
         "lib/thread-utils.test.ts",
         "lib/types/anonymous.ts",
         "lib/utils.ts",
         "lib/utils/download-assets.test.ts",
-        "lib/utils/download-assets.ts",
-        "lib/utils/message-mapping.test.ts",
         "lib/utils/message-mapping.ts",
-        "lib/utils/message-part-validators.ts",
-        "lib/utils/rate-limit.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "tools/chatjs/code-execution-config.ts",
         "tools/chatjs/get-weather/renderer.test.tsx",
-        "tools/chatjs/get-weather/renderer.tsx",
-        "tools/chatjs/search-config.ts",
         "tools/chatjs/tavily-search/tool.test.ts",
         "tools/chatjs/tavily-search/tool.ts",
         "tools/chatjs/tools.ts",
         "tools/chatjs/ui.ts",
-        "tools/chatjs/url-retrieval-config.ts",
         "tools/chatjs/vercel-code-execution/renderer.tsx",
         "tools/platform/deep-research/configuration.ts",
         "tools/platform/deep-research/pipeline.ts",
@@ -1464,8 +1390,7 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/utils/rate-limit.ts"
+        "lib/stores/base/hooks.ts"
       ],
       "rules": {
         "typescript/method-signature-style": "off"
@@ -1480,12 +1405,6 @@
       ],
       "rules": {
         "typescript/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "typescript/no-import-type-side-effects": "off"
       }
     },
     {
@@ -1505,11 +1424,7 @@
       }
     },
     {
-      "files": [
-        "lib/clone-messages.test.ts",
-        "lib/file-storage.test.ts",
-        "lib/utils/download-assets.test.ts"
-      ],
+      "files": ["lib/clone-messages.test.ts", "lib/file-storage.test.ts"],
       "rules": {
         "unicorn/consistent-assert": "off"
       }
@@ -1545,11 +1460,7 @@
       }
     },
     {
-      "files": [
-        "components/sheet-editor.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/utils.ts"
-      ],
+      "files": ["components/sheet-editor.tsx", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/no-array-for-each": "off"
       }
@@ -1570,7 +1481,6 @@
       "files": [
         "components/parallel-response-cards.tsx",
         "components/sidebar-chats-list.tsx",
-        "lib/stores/hooks-threads.ts",
         "lib/utils/message-mapping.ts"
       ],
       "rules": {
@@ -1626,12 +1536,6 @@
       }
     },
     {
-      "files": ["tools/chatjs/get-weather/renderer.tsx"],
-      "rules": {
-        "unicorn/numeric-separators-style": "off"
-      }
-    },
-    {
       "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "unicorn/prefer-add-event-listener": "off"
@@ -1644,7 +1548,7 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts", "lib/utils.ts"],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/prefer-at": "off"
       }
@@ -1665,12 +1569,6 @@
       "files": ["components/image-modal.tsx"],
       "rules": {
         "unicorn/prefer-dom-node-remove": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "unicorn/prefer-export-from": "off"
       }
     },
     {
@@ -1714,8 +1612,7 @@
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/multimodal-input.tsx",
-        "lib/ai/text-splitter.ts",
-        "lib/utils/download-assets.ts"
+        "lib/ai/text-splitter.ts"
       ],
       "rules": {
         "unicorn/prefer-spread": "off"
@@ -1743,8 +1640,7 @@
         "components/model-selector.tsx",
         "components/part/document-common.tsx",
         "components/part/document-preview.tsx",
-        "lib/ai/errors.ts",
-        "lib/utils/message-mapping.ts"
+        "lib/ai/errors.ts"
       ],
       "rules": {
         "unicorn/switch-case-braces": "off"

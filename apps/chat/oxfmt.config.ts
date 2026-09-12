@@ -7,6 +7,6 @@ export default defineConfig({
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
-    "**/tools/chatjs/{tools,ui,search-config,code-execution-config,url-retrieval-config}.ts",
+    "**/tools/chatjs/{tools,ui,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
   ],
 });
