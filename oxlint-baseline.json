@@ -15,7 +15,7 @@
     },
     {
       "files": [
-        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/threads-launch.tsx",
         "apps/videos/src/story.ts"
       ],
       "rules": {
@@ -24,7 +24,7 @@
     },
     {
       "files": [
-        "apps/videos/src/ThreadsLaunch.tsx",
+        "apps/videos/src/threads-launch.tsx",
         "packages/cli/src/utils/run-command.ts"
       ],
       "rules": {
@@ -60,7 +60,7 @@
       }
     },
     {
-      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
+      "files": ["apps/videos/src/threads-launch.tsx"],
       "rules": {
         "no-nested-ternary": "off"
       }
@@ -109,7 +109,7 @@
       }
     },
     {
-      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
+      "files": ["apps/videos/src/threads-launch.tsx"],
       "rules": {
         "react/function-component-definition": "off"
       }
@@ -127,7 +127,7 @@
       }
     },
     {
-      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
+      "files": ["apps/videos/src/threads-launch.tsx"],
       "rules": {
         "react/jsx-no-useless-fragment": "off"
       }
@@ -157,15 +157,6 @@
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": [
-        "apps/videos/src/BrandExample.tsx",
-        "apps/videos/src/ThreadsLaunch.tsx"
-      ],
-      "rules": {
-        "unicorn/filename-case": "off"
       }
     },
     {
