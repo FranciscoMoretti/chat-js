@@ -233,8 +233,7 @@
     {
       "files": [
         "components/ai-elements/message.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/hooks.ts"
+        "components/ai-elements/prompt-input.tsx"
       ],
       "rules": {
         "react/exhaustive-deps": "off"
@@ -384,12 +383,6 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "react/use-memo": "off"
-      }
-    },
-    {
       "files": [
         "app/layout.tsx",
         "components/create-artifact.tsx",
@@ -485,10 +478,7 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/stores/base/hooks.ts"
-      ],
+      "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "typescript/no-explicit-any": "off"
       }
