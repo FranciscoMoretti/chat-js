@@ -3,10 +3,12 @@
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+
 import { InternalLink } from "@/components/internal-link";
 import { useGetCredits } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+
 import { Button } from "../ui/button";
 
 const VARIANT_CONFIG: Record<

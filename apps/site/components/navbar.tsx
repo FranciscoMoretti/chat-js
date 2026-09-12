@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { siteLinks } from "@/lib/site-config";
+
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS = [
@@ -15,10 +16,10 @@ const NAV_LINKS = [
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/80 backdrop-blur-xl">
+    <header className="border-border/40 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-xl">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link
-          className="flex items-center gap-2.5 font-semibold text-lg tracking-tight"
+          className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
           href="/"
         >
           <svg
@@ -51,7 +52,7 @@ export function Navbar() {
         <div className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (
             <a
-              className="text-foreground/75 text-sm transition-colors hover:text-foreground"
+              className="text-foreground/75 hover:text-foreground text-sm transition-colors"
               href={link.href}
               key={link.label}
             >
@@ -63,18 +64,18 @@ export function Navbar() {
 
         {/* Mobile toggle */}
         <details className="relative md:hidden">
-          <summary className="cursor-pointer list-none rounded-lg p-2 text-foreground/75 transition-colors hover:bg-secondary hover:text-foreground">
+          <summary className="text-foreground/75 hover:bg-secondary hover:text-foreground cursor-pointer list-none rounded-lg p-2 transition-colors">
             <span className="sr-only">Toggle menu</span>
             <span aria-hidden="true" className="text-sm">
               Menu
             </span>
           </summary>
 
-          <div className="absolute inset-x-0 top-full w-[min(18rem,calc(100vw-3rem))] rounded-2xl border border-border/40 bg-background/95 p-4 shadow-xl backdrop-blur-xl">
+          <div className="border-border/40 bg-background/95 absolute inset-x-0 top-full w-[min(18rem,calc(100vw-3rem))] rounded-2xl border p-4 shadow-xl backdrop-blur-xl">
             <div className="flex flex-col gap-4">
               {NAV_LINKS.map((link) => (
                 <a
-                  className="text-foreground/75 text-sm transition-colors hover:text-foreground"
+                  className="text-foreground/75 hover:text-foreground text-sm transition-colors"
                   href={link.href}
                   key={link.label}
                 >

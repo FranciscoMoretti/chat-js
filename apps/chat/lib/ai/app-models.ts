@@ -1,5 +1,7 @@
 import { unstable_cache as cache } from "next/cache";
+
 import { config } from "@/lib/config";
+
 import type { AppModelId, ModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";

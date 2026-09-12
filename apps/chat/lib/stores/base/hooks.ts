@@ -1,5 +1,3 @@
-// biome-ignore-all lint: vendored chat store base.
-
 "use client";
 
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
@@ -11,6 +9,7 @@ import { useStore } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { useShallow } from "zustand/shallow";
 import { createStore, type StateCreator } from "zustand/vanilla";
+
 import { debug } from "./debug";
 
 // --- Performance monitoring and batching ---

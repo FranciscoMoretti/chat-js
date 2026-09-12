@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <div className="container mx-auto p-6">
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="space-y-4 text-center">
-            <h1 className="font-semibold text-4xl text-foreground">404</h1>
+            <h1 className="text-foreground text-4xl font-semibold">404</h1>
             <h2 className="text-muted-foreground text-xl">Page Not Found</h2>
-            <p className="max-w-md text-muted-foreground">
+            <p className="text-muted-foreground max-w-md">
               The page you are looking for does not exist or has been moved.
             </p>
             <Button asChild>

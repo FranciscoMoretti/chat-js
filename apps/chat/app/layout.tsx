@@ -7,6 +7,7 @@ import Script from "next/script";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
+
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
 import { config } from "@/lib/config";

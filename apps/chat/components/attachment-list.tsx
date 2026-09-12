@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+
 import {
   PromptInputHoverCard,
   PromptInputHoverCardContent,
@@ -39,7 +40,7 @@ function AttachmentIcon({
     if (imageUnavailable) {
       return (
         <>
-          <ImageOffIcon className="size-3 text-muted-foreground" />
+          <ImageOffIcon className="text-muted-foreground size-3" />
           <span className="sr-only">Preview unavailable</span>
         </>
       );
@@ -62,7 +63,7 @@ function AttachmentIcon({
     return <FileTextIcon className="size-3 text-red-500" />;
   }
 
-  return <PaperclipIcon className="size-3 text-muted-foreground" />;
+  return <PaperclipIcon className="text-muted-foreground size-3" />;
 }
 
 function AttachmentPill({
@@ -82,7 +83,7 @@ function AttachmentPill({
   return (
     <div
       className={cn(
-        "group relative flex h-8 cursor-default select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground",
+        "group border-border hover:bg-accent hover:text-accent-foreground relative flex h-8 cursor-default items-center gap-1.5 rounded-md border px-1.5 text-sm font-medium transition-all select-none",
         isUploading && "opacity-60"
       )}
       data-testid="input-attachment-preview"
@@ -90,13 +91,13 @@ function AttachmentPill({
       <div className="relative size-5 shrink-0">
         <div
           className={cn(
-            "absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded bg-background transition-opacity",
+            "bg-background absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded transition-opacity",
             onRemove && !isUploading && "group-hover:opacity-0"
           )}
         >
           {isUploading ? (
             <Loader2Icon
-              className="size-3 animate-spin text-muted-foreground"
+              className="text-muted-foreground size-3 animate-spin"
               data-testid="input-attachment-loader"
             />
           ) : (
@@ -185,7 +186,7 @@ function AttachmentItem({
       </HoverCardTrigger>
       <PromptInputHoverCardContent className="w-auto p-2">
         <div className="flex items-center gap-2.5">
-          <h4 className="min-w-0 flex-1 truncate px-0.5 font-semibold text-sm leading-none">
+          <h4 className="min-w-0 flex-1 truncate px-0.5 text-sm leading-none font-semibold">
             {attachmentLabel}
           </h4>
           <div className="flex gap-1">

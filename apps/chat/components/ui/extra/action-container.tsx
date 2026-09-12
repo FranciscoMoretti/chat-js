@@ -1,8 +1,8 @@
 "use client";
 
 import type * as React from "react";
-import { InternalLink } from "@/components/internal-link";
 
+import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 
 type ActionContainerProps = React.ComponentProps<"div">;
@@ -11,7 +11,7 @@ function ActionContainer({ className, ...props }: ActionContainerProps) {
   return (
     <div
       className={cn(
-        "group relative rounded-xl border border-border/60 bg-muted/20 px-4 py-3 transition-all duration-200 hover:border-primary/25",
+        "group border-border/60 bg-muted/20 hover:border-primary/25 relative rounded-xl border px-4 py-3 transition-all duration-200",
         className
       )}
       {...props}

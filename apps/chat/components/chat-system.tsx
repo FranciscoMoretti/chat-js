@@ -2,6 +2,7 @@
 
 import type { MessageTreeSnapshot } from "@chat-js/thread";
 import { memo, type ReactNode } from "react";
+
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { AppModelId } from "@/lib/ai/app-models";

@@ -1,23 +1,25 @@
 {
-	"name": "@chatjs/docs",
-	"private": true,
-	"engines": {
-		"node": ">=22.12.0 <25"
-	},
-	"volta": {
-		"node": "22.22.2"
-	},
-	"scripts": {
-		"build": "blume build",
-		"dev": "blume dev --port ${PORT:-4321}",
-		"preview": "blume preview",
-		"docs:links": "blume validate --external --strict",
-		"docs:audit": "blume audit",
-		"docs:eval": "blume eval",
-		"lint": "blume doctor",
-		"test:visual": "blume build && vitest run --config vitest.config.ts"
-	},
-	"devDependencies": {
-		"blume": "^1.6.3"
-	}
+  "name": "@chatjs/docs",
+  "private": true,
+  "scripts": {
+    "build": "blume build",
+    "dev": "blume dev --port ${PORT:-4321}",
+    "preview": "blume preview",
+    "docs:links": "blume validate --external --strict",
+    "docs:audit": "blume audit",
+    "docs:eval": "blume eval",
+    "lint": "oxlint . && oxfmt --check .",
+    "test:visual": "blume build && vitest run --config vitest.config.ts",
+    "docs:doctor": "blume doctor",
+    "format": "oxfmt --write ."
+  },
+  "devDependencies": {
+    "blume": "^1.6.3"
+  },
+  "engines": {
+    "node": ">=22.12.0 <25"
+  },
+  "volta": {
+    "node": "22.22.2"
+  }
 }

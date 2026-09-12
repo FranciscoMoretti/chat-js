@@ -13,6 +13,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { Fragment, useCallback, useMemo } from "react";
 import { toast } from "sonner";
+
 import { InternalLink } from "@/components/internal-link";
 import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
@@ -147,7 +148,7 @@ export function ConnectorsSettings() {
     return (
       <SettingsPageContent className="gap-4">
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="font-medium text-sm">MCP is not enabled</p>
+          <p className="text-sm font-medium">MCP is not enabled</p>
         </div>
       </SettingsPageContent>
     );
@@ -157,7 +158,7 @@ export function ConnectorsSettings() {
       <SettingsPageContent className="gap-4">
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((i) => (
-            <div className="h-20 rounded-lg bg-muted/50" key={i} />
+            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
           ))}
         </div>
       </SettingsPageContent>
@@ -171,8 +172,8 @@ export function ConnectorsSettings() {
     <SettingsPageContent className="gap-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-medium text-sm">Custom connectors</p>
-          <p className="mt-0.5 text-muted-foreground text-xs">
+          <p className="text-sm font-medium">Custom connectors</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Connect MCP servers you trust to extend your AI with tools.
           </p>
         </div>
@@ -198,11 +199,11 @@ export function ConnectorsSettings() {
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="mb-4 rounded-full bg-muted p-3">
-              <Radio className="size-6 text-muted-foreground" />
+            <div className="bg-muted mb-4 rounded-full p-3">
+              <Radio className="text-muted-foreground size-6" />
             </div>
-            <p className="font-medium text-sm">No custom connectors</p>
-            <p className="mt-1 max-w-sm text-muted-foreground text-xs">
+            <p className="text-sm font-medium">No custom connectors</p>
+            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               Add a custom MCP connector to access tools from your services.
             </p>
           </div>
@@ -211,7 +212,7 @@ export function ConnectorsSettings() {
 
       {globalConnectors.length > 0 ? (
         <div>
-          <p className="font-medium text-sm">Built-in connectors</p>
+          <p className="text-sm font-medium">Built-in connectors</p>
           <div className="divide-y">
             {globalConnectors.map((connector) => (
               <BuiltInConnectorRow connector={connector} key={connector.id} />

@@ -1,5 +1,6 @@
 import type { ModelMessage } from "ai";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { calculateMessagesTokens, truncateMessages } from "./token-utils";
 
 // Mock js-tiktoken encoder for consistent testing

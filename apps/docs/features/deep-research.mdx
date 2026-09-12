@@ -47,6 +47,7 @@ flowchart LR
 If enabled, the agent analyzes the user's request and asks clarifying questions when the scope is ambiguous. This ensures the research stays focused.
 
 When clarification is needed:
+
 - The agent responds with a question and pauses execution
 - You provide the requested information in your next message
 - If you explicitly selected the deep research tool, it remains selected after you respond
@@ -67,6 +68,7 @@ A supervisor agent orchestrates the research:
 5. Continues until research is complete or iteration limit is reached
 
 Each researcher agent:
+
 - Executes web searches on its assigned topic
 - Gathers relevant information from multiple sources
 - Compresses findings into concise notes
@@ -96,7 +98,7 @@ ai: {
 ```
 
 | Option | Default | Description |
-|--------|---------|-------------|
+| --- | --- | --- |
 | `allowClarification` | `true` | Whether to ask clarifying questions |
 | `maxResearcherIterations` | `1` | Max supervisor loop iterations |
 | `maxConcurrentResearchUnits` | `2` | Topics researched in parallel |
@@ -113,12 +115,12 @@ ai: {
 
 The research progress is shown in real-time:
 
-| State | Shows |
-|-------|-------|
-| `started` | Research has begun |
-| `writing` | Writing research brief or final report |
-| `thoughts` | Research topics being investigated |
-| `completed` | Research finished, report available |
+| State       | Shows                                  |
+| ----------- | -------------------------------------- |
+| `started`   | Research has begun                     |
+| `writing`   | Writing research brief or final report |
+| `thoughts`  | Research topics being investigated     |
+| `completed` | Research finished, report available    |
 
 Each research topic shows its own progress indicator as it's being investigated.
 

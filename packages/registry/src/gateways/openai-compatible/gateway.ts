@@ -3,10 +3,10 @@ import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+import type { ImageModel } from "ai";
 
 interface OpenAICompatibleModelResponse {
   created: number;

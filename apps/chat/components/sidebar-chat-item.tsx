@@ -2,6 +2,7 @@
 import { MoreHorizontal } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
+
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { InternalLink } from "@/components/internal-link";
 import { ShareDialog } from "@/components/share-button";
@@ -72,7 +73,7 @@ const PureSidebarChatItem = ({
   return (
     <SidebarMenuItem>
       {isEditing ? (
-        <div className="flex w-full items-center gap-2 overflow-hidden rounded-md bg-background p-2 text-left text-sm">
+        <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
           <Input
             autoFocus
             className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -100,7 +101,7 @@ const PureSidebarChatItem = ({
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
-            className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
             showOnHover={!isActive}
           >
             <MoreHorizontal size={16} />

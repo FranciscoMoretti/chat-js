@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { describe, it, vi } from "vitest";
+
 import {
   createGatedChatTransport,
   gateChatRequest,

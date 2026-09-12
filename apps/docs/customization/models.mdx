@@ -8,7 +8,10 @@ description: Add, remove, or configure AI models
 Configure which AI models are available in your app and how they behave. All model configuration lives in `chat.config.ts` under `config.ai`.
 
 <Frame>
-  <img src="/docs/images/ai-models.gif" alt="Selecting AI models in the chat interface" />
+  <img
+    src="/docs/images/ai-models.gif"
+    alt="Selecting AI models in the chat interface"
+  />
 </Frame>
 
 ## Configuration Options
@@ -99,12 +102,12 @@ ai: {
 
 `ai.workflows` sets the default model for shared app workflows (tasks that don't have a user-facing model picker):
 
-| Field               | Description                                              |
-| ------------------- | -------------------------------------------------------- |
-| `chat`              | Main conversation model                                  |
-| `title`             | Generates chat titles                                    |
-| `pdf`               | PDF document analysis                                    |
-| `chatImageCompatible` | Chat fallback model when image input is required       |
+| Field                 | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `chat`                | Main conversation model                          |
+| `title`               | Generates chat titles                            |
+| `pdf`                 | PDF document analysis                            |
+| `chatImageCompatible` | Chat fallback model when image input is required |
 
 ```ts
 ai: {
@@ -121,17 +124,17 @@ ai: {
 
 `ai.tools` configures the default model for each tool. These are merged with the gateway defaults — only fields you provide override the defaults.
 
-| Tool field                          | Description                                                           |
-| ----------------------------------- | --------------------------------------------------------------------- |
-| `followupSuggestions.default`       | Generates follow-up questions                                         |
-| `text.polish`                       | Text refinement                                                       |
-| `sheet.format`                      | Spreadsheet formatting                                                |
-| `sheet.analyze`                     | Spreadsheet analysis                                                  |
-| `code.edits`                        | Code modifications                                                    |
-| `image.default`                     | Image generation (see [Image Generation](/features/image-generation)) |
-| `video.default`                     | Video generation (see [Video Generation](/features/video-generation)) |
-| `deepResearch.defaultModel`         | Research and supervision agent (see [Deep Research](/features/deep-research)) |
-| `deepResearch.finalReportModel`     | Final report synthesis for deep research                              |
+| Tool field | Description |
+| --- | --- |
+| `followupSuggestions.default` | Generates follow-up questions |
+| `text.polish` | Text refinement |
+| `sheet.format` | Spreadsheet formatting |
+| `sheet.analyze` | Spreadsheet analysis |
+| `code.edits` | Code modifications |
+| `image.default` | Image generation (see [Image Generation](/features/image-generation)) |
+| `video.default` | Video generation (see [Video Generation](/features/video-generation)) |
+| `deepResearch.defaultModel` | Research and supervision agent (see [Deep Research](/features/deep-research)) |
+| `deepResearch.finalReportModel` | Final report synthesis for deep research |
 
 ```ts
 ai: {

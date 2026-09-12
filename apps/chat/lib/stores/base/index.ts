@@ -1,5 +1,3 @@
-// biome-ignore-all lint: vendored chat store base.
-
 // Types
 export type { UIMessage } from "@ai-sdk/react";
 export { configureDebug, DebugLogger, debug } from "./debug";
@@ -26,11 +24,7 @@ export {
   useVirtualMessages,
 } from "./hooks";
 // Enhanced useChat hook
-export {
-  type UseChatHelpers,
-  type UseChatOptions,
-  useChat,
-} from "./use-chat";
+export { type UseChatHelpers, type UseChatOptions, useChat } from "./use-chat";
 // Data parts hooks
 export {
   type DataPart,

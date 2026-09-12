@@ -1,63 +1,67 @@
 {
-	"name": "chatjs-monorepo",
-	"private": true,
-	"packageManager": "bun@1.3.1",
-	"license": "Apache-2.0",
-	"workspaces": [
-		"apps/*",
-		"packages/*"
-	],
-	"scripts": {
-		"worktree-env": "bun .agents/skills/worktree-ports/scripts/worktree-env.ts",
-		"dev": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run dev --filter=@chatjs/chat",
-		"dev:info": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env --info",
-		"dev:docs": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env docs -- turbo run dev --filter=@chatjs/docs",
-		"dev:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- turbo run dev --filter=@chatjs/site",
-		"build": "dotenv -e .env.local -- turbo run build",
-		"fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
-		"test:e2e": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test:e2e --filter=@chatjs/chat",
-		"format": "turbo run format",
-		"lint": "turbo run lint",
-		"clean:modules": "find . -name node_modules -type d -prune -exec rm -rf {} +",
-		"test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
-		"test:unit": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && turbo run test:unit",
-		"test:types": "turbo run test:types",
-		"docs:links": "turbo run docs:links --filter=@chatjs/docs",
-		"test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
-		"uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive",
-		"uiverify:docs": "bun run test:visual:docs && bun run uiverify:upload:docs",
-		"template:sync": "bun scripts/sync-template.ts",
-		"template:check": "bun scripts/sync-template.ts --check",
-		"chat-js": "bun --filter @chat-js/cli start",
-		"db:generate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:generate",
-		"db:migrate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:migrate",
-		"db:branch:start": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:branch:start",
-		"db:branch:stop": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:branch:stop",
-		"start:chat": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run start",
-		"release": "changeset publish",
-		"dev:electron": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env electron -- turbo run electron:dev --filter=@chat-js/electron",
-		"build:electron": "turbo run electron:build --filter=@chat-js/electron",
-		"dist:electron": "turbo run electron:make --filter=@chat-js/electron",
-		"test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts"
-	},
-	"overrides": {
-		"//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",
-		"@better-auth/core": "1.5.6",
-		"//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",
-		"astro": "7.3.1"
-	},
-	"devDependencies": {
-		"@changesets/changelog-github": "^0.5.2",
-		"@changesets/cli": "^2.29.8",
-		"@uiverify/vitest": "^1.2.1",
-		"@vitest/browser-playwright": "^4.1.11",
-		"dotenv-cli": "^8.0.0",
-		"playwright": "^1.59.1",
-		"turbo": "2.10.12",
-		"uiverify": "^1.4.2",
-		"vitest": "^4.1.11"
-	},
-	"engines": {
-		"node": ">=22"
-	}
+  "name": "chatjs-monorepo",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "worktree-env": "bun .agents/skills/worktree-ports/scripts/worktree-env.ts",
+    "dev": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run dev --filter=@chatjs/chat",
+    "dev:info": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env --info",
+    "dev:docs": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env docs -- turbo run dev --filter=@chatjs/docs",
+    "dev:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- turbo run dev --filter=@chatjs/site",
+    "build": "dotenv -e .env.local -- turbo run build",
+    "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
+    "test:e2e": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test:e2e --filter=@chatjs/chat",
+    "format": "oxfmt --write .",
+    "lint": "ultracite check . && bun run --filter=@chatjs/docs docs:doctor",
+    "clean:modules": "find . -name node_modules -type d -prune -exec rm -rf {} +",
+    "test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
+    "test:unit": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && turbo run test:unit",
+    "test:types": "turbo run test:types",
+    "docs:links": "turbo run docs:links --filter=@chatjs/docs",
+    "test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
+    "uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive",
+    "uiverify:docs": "bun run test:visual:docs && bun run uiverify:upload:docs",
+    "template:sync": "bun scripts/sync-template.ts",
+    "template:check": "bun scripts/sync-template.ts --check",
+    "chat-js": "bun --filter @chat-js/cli start",
+    "db:generate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:generate",
+    "db:migrate": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:migrate",
+    "db:branch:start": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:branch:start",
+    "db:branch:stop": "dotenv -e .env.local -- bun --filter=@chatjs/chat run db:branch:stop",
+    "start:chat": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run start",
+    "release": "changeset publish",
+    "dev:electron": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env electron -- turbo run electron:dev --filter=@chat-js/electron",
+    "build:electron": "turbo run electron:build --filter=@chat-js/electron",
+    "dist:electron": "turbo run electron:make --filter=@chat-js/electron",
+    "test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
+    "lint:fix": "oxlint --fix ."
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "@uiverify/vitest": "^1.2.1",
+    "@vitest/browser-playwright": "^4.1.11",
+    "dotenv-cli": "^8.0.0",
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0",
+    "playwright": "^1.59.1",
+    "turbo": "2.10.12",
+    "uiverify": "^1.4.2",
+    "ultracite": "7.11.1",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",
+    "//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",
+    "@better-auth/core": "1.5.6",
+    "astro": "7.3.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.3.1"
 }

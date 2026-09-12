@@ -3,9 +3,7 @@ title: Parallel Responses
 description: Generate independent replies from one or more models and compare them as conversation branches
 ---
 
-Parallel responses let you request several replies to one user message. You can
-compare different models, ask one model for multiple alternatives, or combine
-both approaches in the same response group.
+Parallel responses let you request several replies to one user message. You can compare different models, ask one model for multiple alternatives, or combine both approaches in the same response group.
 
 ## Request responses
 
@@ -15,9 +13,7 @@ both approaches in the same response group.
 4. Set the response count for each selected model.
 5. Send your message.
 
-The total response count must be greater than one. Selecting one model with a
-count of three creates three independent replies from that model. Selecting
-three models with a count of one creates one reply from each model.
+The total response count must be greater than one. Selecting one model with a count of three creates three independent replies from that model. Selecting three models with a count of one creates one reply from each model.
 
 <Callout type="note">
   Parallel responses require authentication. Anonymous sessions are limited to a
@@ -26,10 +22,7 @@ three models with a count of one creates one reply from each model.
 
 ## Independent runs
 
-ChatJS assigns each response a stable message ID and starts an independent
-`useThread` run. The tree node appears when the first stream write arrives. In
-an active conversation, secondary responses keep their own streaming state and
-stop control.
+ChatJS assigns each response a stable message ID and starts an independent `useThread` run. The tree node appears when the first stream write arrives. In an active conversation, secondary responses keep their own streaming state and stop control.
 
 ```mermaid
 flowchart TD
@@ -38,31 +31,21 @@ flowchart TD
     U --> C[Model B, response 1]
 ```
 
-The first response becomes the selected path. Other responses use background
-runs, so they continue streaming when you select another response or navigate
-to a different branch.
+The first response becomes the selected path. Other responses use background runs, so they continue streaming when you select another response or navigate to a different branch.
 
-For a new chat, all cards appear optimistically. The primary request persists
-the chat and user message, then emits an acknowledgment containing the user
-message and response-group identities. ChatJS starts the secondary runs only
-after that acknowledgment, avoiding duplicate chat creation without delaying
-ordinary single-response chats.
+For a new chat, all cards appear optimistically. The primary request persists the chat and user message, then emits an acknowledgment containing the user message and response-group identities. ChatJS starts the secondary runs only after that acknowledgment, avoiding duplicate chat creation without delaying ordinary single-response chats.
 
 ## Response cards
 
-A card appears for each requested response and shows its model and current
-state. Select a card to make that response the active conversation path.
+A card appears for each requested response and shows its model and current state. Select a card to make that response the active conversation path.
 
-After selecting a response, new messages continue from that branch. The other
-responses remain available, including any that are still generating.
+After selecting a response, new messages continue from that branch. The other responses remain available, including any that are still generating.
 
 ## Current constraints
 
 - Attachments cannot be combined with parallel responses yet.
 - Each response is billed as a separate model request.
-- Stopping the selected response does not stop other active runs. Use the
-  branch controls to select another response, or stop all runs through the
-  package API with `chat.tree.stopAll()`.
+- Stopping the selected response does not stop other active runs. Use the branch controls to select another response, or stop all runs through the package API with `chat.tree.stopAll()`.
 
 ## Related
 

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function KeyboardShortcuts() {

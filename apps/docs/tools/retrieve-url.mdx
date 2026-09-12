@@ -9,37 +9,27 @@ description: Extract structured content from a single web page through Firecrawl
 npx @chat-js/cli@latest create my-app --yes --url-retrieval-tool retrieve-url
 ```
 
-Interactive creation offers Firecrawl or an external registry item when you enable
-URL retrieval. Fresh apps install only the selected retrieval implementation.
-Firecrawl’s SDK is installed when the selected retrieval or search item needs it.
+Interactive creation offers Firecrawl or an external registry item when you enable URL retrieval. Fresh apps install only the selected retrieval implementation. Firecrawl’s SDK is installed when the selected retrieval or search item needs it.
 
 ## Installation
 
-Start in a ChatJS app with `chat.config.ts` and `components.json`.
-Set `FIRECRAWL_API_KEY` in your app environment before starting the server.
-The installed descriptor declares this credential requirement.
+Start in a ChatJS app with `chat.config.ts` and `components.json`. Set `FIRECRAWL_API_KEY` in your app environment before starting the server. The installed descriptor declares this credential requirement.
 
 ```bash
 npx @chat-js/cli@latest add retrieve-url
 ```
 
-The command installs the server tool, renderer, and registration descriptor under
-`tools/chatjs/retrieve-url/`, along with required dependencies and shared renderer
-helpers. It then regenerates the app's tool registrations.
+The command installs the server tool, renderer, and registration descriptor under `tools/chatjs/retrieve-url/`, along with required dependencies and shared renderer helpers. It then regenerates the app's tool registrations.
 
 ## Usage
 
 Ask your chat model to retrieve a specific public page and provide its complete URL. Use a model that supports tool calling.
 
-The tool accepts a `url` string using HTTP or HTTPS. It scrapes the page and
-uses extraction when title, description, or content is missing. Successful
-results include title, content, URL, description, and optional language.
+The tool accepts a `url` string using HTTP or HTTPS. It scrapes the page and uses extraction when title, description, or content is missing. Successful results include title, content, URL, description, and optional language.
 
 ## Behavior and limitations
 
-This item retrieves a supplied page, rather than searching the web. Missing
-credentials, invalid URLs, and provider failures produce error results.
-Returned URLs omit query strings and fragments.
+This item retrieves a supplied page, rather than searching the web. Missing credentials, invalid URLs, and provider failures produce error results. Returned URLs omit query strings and fragments.
 
 ## External implementations
 
@@ -48,14 +38,8 @@ npx @chat-js/cli@latest create my-app --yes \
   --url-retrieval-tool https://example.com/r/read-page.json
 ```
 
-Your registry item declares `slot: "retrieveUrl"` in `meta.chatjs` and its installed
-`chatjs.json` descriptor. Export a standard AI SDK tool with your own input/output
-schemas. A renderer is optional. Declare credentials in `envRequirements` so the
-CLI checklist and app validation ask for your variables rather than Firecrawl’s.
-Only one item can occupy this selection.
+Your registry item declares `slot: "retrieveUrl"` in `meta.chatjs` and its installed `chatjs.json` descriptor. Export a standard AI SDK tool with your own input/output schemas. A renderer is optional. Declare credentials in `envRequirements` so the CLI checklist and app validation ask for your variables rather than Firecrawl’s. Only one item can occupy this selection.
 
 ## Customize
 
-Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation.
-See [Installation](./install) for updates and sync, and
-[Authoring Tools](./authoring) to publish your own item.
+Edit the installed `tool.ts` and `renderer.tsx` to change behavior or presentation. See [Installation](./install) for updates and sync, and [Authoring Tools](./authoring) to publish your own item.

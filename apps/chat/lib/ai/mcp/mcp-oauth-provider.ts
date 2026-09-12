@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
+
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+
 import {
   createOAuthSession,
   deleteSessionByState,

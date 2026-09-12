@@ -1,4 +1,5 @@
 import { ArrowRight, FileText } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { getFaviconUrl } from "@/lib/url-utils";
 import { cn } from "@/lib/utils";
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
+
 import { Favicon } from "./favicon";
 import { FaviconGroup } from "./favicon-group";
 
@@ -28,7 +30,7 @@ const SourcesList = ({
   <div className="space-y-3">
     {sources?.map((source: SearchResultItem) => (
       <a
-        className="block rounded-lg bg-secondary p-4 transition-colors hover:bg-accent"
+        className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
         href={source.url}
         key={source.url}
         rel="noopener noreferrer"
@@ -39,7 +41,7 @@ const SourcesList = ({
             <Favicon url={getFaviconUrl(source)} />
           </div>
           <div className="flex flex-col gap-1">
-            <h4 className="font-medium text-sm leading-tight">
+            <h4 className="text-sm leading-tight font-medium">
               {source.title}
             </h4>
           </div>
@@ -113,7 +115,7 @@ function ShowSourcesButton({
 }) {
   return (
     <button
-      className="group flex items-center justify-center gap-2 rounded-lg border border-border p-2.5 transition-colors hover:bg-accent"
+      className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
       onClick={() => document.getElementById(dialogId)?.click()}
       type="button"
     >
@@ -125,10 +127,10 @@ function ShowSourcesButton({
           title: s.title,
         }))}
       />
-      <span className="text-muted-foreground text-xs group-hover:text-foreground">
+      <span className="text-muted-foreground group-hover:text-foreground text-xs">
         {sources.length} Sources
       </span>
-      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+      <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
     </button>
   );
 }

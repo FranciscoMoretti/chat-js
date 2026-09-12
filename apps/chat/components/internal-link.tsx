@@ -4,6 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
+
 import { isElectronRenderer } from "@/lib/electron-auth";
 
 type InternalLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {

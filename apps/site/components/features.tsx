@@ -103,16 +103,16 @@ const TOOLS: Feature[] = [
 
 function FeatureCard({ feature }: { feature: Feature }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-foreground/3 hover:shadow-lg">
-      <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-foreground/2 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+    <div className="group border-border/50 bg-card hover:border-border hover:shadow-foreground/3 relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="bg-foreground/2 pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
       <div className="relative flex h-full flex-col">
-        <div className="inline-flex w-fit rounded-xl border border-border/50 bg-secondary/50 p-2.5">
-          <feature.icon className="h-5 w-5 text-foreground/70" />
+        <div className="border-border/50 bg-secondary/50 inline-flex w-fit rounded-xl border p-2.5">
+          <feature.icon className="text-foreground/70 h-5 w-5" />
         </div>
-        <h3 className="mt-4 font-semibold text-lg tracking-tight">
+        <h3 className="mt-4 text-lg font-semibold tracking-tight">
           {feature.title}
         </h3>
-        <p className="mt-2 text-foreground/75 text-sm leading-relaxed">
+        <p className="text-foreground/75 mt-2 text-sm leading-relaxed">
           {feature.description}
         </p>
       </div>
@@ -123,10 +123,10 @@ function FeatureCard({ feature }: { feature: Feature }) {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-8 flex items-center gap-4">
-      <span className="font-mono text-foreground/70 text-xs uppercase tracking-[0.2em]">
+      <span className="text-foreground/70 font-mono text-xs tracking-[0.2em] uppercase">
         {children}
       </span>
-      <div className="h-px flex-1 bg-border" />
+      <div className="bg-border h-px flex-1" />
     </div>
   );
 }
@@ -142,10 +142,10 @@ export function Features() {
         <div className="absolute right-[15%] bottom-[10%] h-[400px] w-[500px] rotate-6 rounded-full bg-indigo-500/[0.012] blur-[120px] dark:bg-indigo-400/[0.018]" />
       </div>
       <div className="relative mx-auto max-w-6xl px-6">
-        <h2 className="text-center font-display text-3xl tracking-tight sm:text-5xl">
+        <h2 className="font-display text-center text-3xl tracking-tight sm:text-5xl">
           Everything you need, <span className="italic">out of the box</span>
         </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-foreground/75 text-lg">
+        <p className="text-foreground/75 mx-auto mt-6 max-w-2xl text-center text-lg">
           Production features that would take months to build, ready in minutes.
         </p>
 

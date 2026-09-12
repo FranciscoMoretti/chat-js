@@ -2,11 +2,13 @@
 
 import type { ToolUIPart } from "ai";
 import type { ComponentType } from "react";
+
 import {
   isInstalledToolType,
   toolRendererRegistry,
 } from "@/lib/ai/tool-renderer-registry";
 import type { ChatTools } from "@/lib/ai/types";
+
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
 import { GenerateImage } from "./generate-image";

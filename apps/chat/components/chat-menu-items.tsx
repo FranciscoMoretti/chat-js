@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, PinIcon, Trash2 } from "lucide-react";
+
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
@@ -36,7 +37,7 @@ export function ChatMenuItems({
       {showShare && onShare && <ShareMenuItem onShare={onShare} />}
 
       <DropdownMenuItem
-        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive"
+        className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
         onSelect={onDelete}
       >
         <Trash2 size={16} />

@@ -2,6 +2,7 @@
 import { ChevronDown } from "lucide-react";
 import { type KeyboardEvent, memo, useEffect, useState } from "react";
 import { toast } from "sonner";
+
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { DeleteChatDialog } from "@/components/delete-chat-dialog";
 import { InternalLink } from "@/components/internal-link";
@@ -27,6 +28,7 @@ import type { ChatRouteSource } from "@/lib/chat-route";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import type { UIChat } from "@/lib/types/ui-chat";
 import { cn } from "@/lib/utils";
+
 import { ShareDialog } from "./share-button";
 
 interface HeaderBreadcrumbProps {
@@ -212,7 +214,7 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
     return (
       <Input
         autoFocus
-        className="h-7 w-[220px] bg-background px-2 py-1 text-sm"
+        className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
         maxLength={255}
         onBlur={handleChatRename}
         onChange={(event) => onChatTitleChange(event.target.value)}
@@ -227,13 +229,13 @@ const PureChatBreadcrumb = memo(function InnerChatBreadcrumb({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="group flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-foreground text-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
             type="button"
           >
             <span className="truncate">{chatLabel}</span>
             <ChevronDown
               aria-hidden
-              className="size-4 shrink-0 text-muted-foreground"
+              className="text-muted-foreground size-4 shrink-0"
             />
           </button>
         </DropdownMenuTrigger>

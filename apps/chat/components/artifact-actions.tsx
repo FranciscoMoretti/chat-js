@@ -1,5 +1,6 @@
 import { type Dispatch, memo, type SetStateAction, useState } from "react";
 import { toast } from "sonner";
+
 import type {
   Artifact,
   ArtifactActionContext,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/artifacts/sheet/client";
 import { textArtifact } from "@/lib/artifacts/text/client";
 import { cn } from "@/lib/utils";
+
 import type { UIArtifact } from "./artifact-panel";
 import { Button } from "./ui/button";
 import { Toggle } from "./ui/toggle";
@@ -43,8 +45,10 @@ function createTypedMetadataSetter<M extends ArtifactMetadata>(
   };
 }
 
-interface TypedArtifactActionsProps<M extends ArtifactMetadata>
-  extends Omit<ArtifactActionsProps, "metadata" | "setMetadata"> {
+interface TypedArtifactActionsProps<M extends ArtifactMetadata> extends Omit<
+  ArtifactActionsProps,
+  "metadata" | "setMetadata"
+> {
   artifactDefinition: Artifact<string, M>;
   metadata: M;
   setMetadata: Dispatch<SetStateAction<M>>;
@@ -131,7 +135,7 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
                 </div>
               ) : (
                 <Button
-                  className={cn("h-fit hover:bg-accent", {
+                  className={cn("hover:bg-accent h-fit", {
                     "p-2": !action.label,
                     "px-2 py-1.5": action.label,
                   })}

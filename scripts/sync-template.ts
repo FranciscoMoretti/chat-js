@@ -11,6 +11,8 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
+
+import rootLintBaseline from "../oxlint-baseline.json";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 
 const rootDir = resolve(import.meta.dir, "..");
@@ -151,6 +153,28 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     threadSourceDir: join(rootDir, "packages", "thread", "src"),
   });
 
+  // Preserve file-scoped exceptions when workspace source is copied into a scaffold.
+  const baselinePath = join(destination, "oxlint-baseline.json");
+  const baseline = JSON.parse(
+    await readFile(baselinePath, "utf8")
+  ) as typeof rootLintBaseline;
+  const sourcePaths = [
+    ["packages/thread/src/", "lib/thread/"],
+    ["apps/electron/", "electron/"],
+    ["packages/registry/src/tools/", "tools/chatjs/"],
+  ];
+  for (const override of rootLintBaseline.overrides) {
+    const files = override.files.flatMap((file) =>
+      sourcePaths.flatMap(([source, target]) =>
+        file.startsWith(source) ? [target + file.slice(source.length)] : []
+      )
+    );
+    if (files.length > 0) {
+      baseline.overrides.push({ files, rules: override.rules });
+    }
+  }
+  await writeFile(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`);
+
   // Stamp the template with the monorepo-controlled Bun version at build time.
   const rootPackageJson = JSON.parse(
     await readFile(rootPackageJsonPath, "utf8")
@@ -179,11 +203,10 @@ async function applyElectronTemplateTransforms(
     /"name": "@chat-js\/electron"/,
     '"name": "__PROJECT_NAME__-electron"'
   );
-  packageJson = packageJson
-    .replace(
-      /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/,
-      '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"'
-    );
+  packageJson = packageJson.replace(
+    /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/,
+    '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"'
+  );
   await writeFile(packageJsonPath, packageJson);
 }
 
@@ -263,7 +286,9 @@ async function assertSynced(
   );
 
   if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
-    console.error(`${label}: template drift detected. Run \`bun template:sync\`.`);
+    console.error(
+      `${label}: template drift detected. Run \`bun template:sync\`.`
+    );
     return false;
   }
   console.log(`${label}: template is synced.`);

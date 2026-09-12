@@ -16,19 +16,19 @@ vi.mock("./read-document", () => ({ ReadDocument: () => null }));
 
 import { ToolPart } from "./tool-part";
 
-it.each([
-  "tool-codeExecution",
-  "tool-webSearch",
-] as const)("routes %s through the installed item's renderer", (type) => {
-  const element = ToolPart({
-    isReadonly: false,
-    messageId: "test-message",
-    part: {
-      type,
-      toolCallId: "test-call",
-      state: "input-streaming",
-      input: {},
-    },
-  });
-  expect(element?.type).toBe(renderers[type]);
-});
+it.each(["tool-codeExecution", "tool-webSearch"] as const)(
+  "routes %s through the installed item's renderer",
+  (type) => {
+    const element = ToolPart({
+      isReadonly: false,
+      messageId: "test-message",
+      part: {
+        type,
+        toolCallId: "test-call",
+        state: "input-streaming",
+        input: {},
+      },
+    });
+    expect(element?.type).toBe(renderers[type]);
+  }
+);

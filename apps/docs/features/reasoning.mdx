@@ -13,10 +13,10 @@ Models that support reasoning can "think" before answering, producing higher-qua
 
 When a model is tagged with `reasoning` by the gateway, ChatJS creates two entries in the model selector:
 
-| Variant | Model ID | Behavior |
-| ------- | -------- | -------- |
+| Variant   | Model ID                 | Behavior                  |
+| --------- | ------------------------ | ------------------------- |
 | Reasoning | `openai/gpt-5-reasoning` | Extended thinking enabled |
-| Standard | `openai/gpt-5` | No extended thinking |
+| Standard  | `openai/gpt-5`           | No extended thinking      |
 
 Both variants point to the same underlying API model. The `-reasoning` suffix controls whether reasoning options are sent with the request.
 
@@ -35,7 +35,7 @@ Reasoning parts are automatically stripped from message history before sending t
 Each provider activates reasoning differently. ChatJS handles this automatically based on the model's `owned_by` field.
 
 | Provider | Mechanism | Notes |
-| -------- | --------- | ----- |
+| --- | --- | --- |
 | OpenAI | `reasoningSummary` provider option | gpt-5 family uses `reasoningEffort: "low"` |
 | Anthropic | `thinking` provider option | Budget of 4096 tokens |
 | Google | `thinkingConfig` provider option | Budget of 10,000 tokens |

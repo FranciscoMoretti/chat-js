@@ -1,6 +1,8 @@
 import { z } from "zod";
+
 import type { StreamWriter } from "@/lib/ai/types";
 import { createModuleLogger } from "@/lib/logger";
+
 import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
 
 export const DEFAULT_MAX_RESULTS = 5;

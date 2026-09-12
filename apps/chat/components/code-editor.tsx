@@ -68,7 +68,6 @@ function PureCodeEditor({
       }
     };
     // NOTE: we only want to run this effect once
-    // eslint-disable-next-line
   }, [content, isReadonly, language]);
 
   useEffect(() => {

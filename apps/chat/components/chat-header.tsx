@@ -1,6 +1,7 @@
 "use client";
 import { Share } from "lucide-react";
 import { memo } from "react";
+
 import { HeaderActions } from "@/components/header-actions";
 import { HeaderBreadcrumb } from "@/components/header-breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -8,6 +9,7 @@ import type { Session } from "@/lib/auth";
 import type { ChatRouteSource } from "@/lib/chat-route";
 import type { UIChat } from "@/lib/types/ui-chat";
 import { cn } from "@/lib/utils";
+
 import { ShareButton } from "./share-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -33,7 +35,7 @@ function PureChatHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 flex items-center justify-between gap-2 bg-background px-2 py-1.5 md:px-2",
+        "bg-background sticky top-0 flex items-center justify-between gap-2 px-2 py-1.5 md:px-2",
         className
       )}
     >
@@ -58,7 +60,7 @@ function PureChatHeader({
         {isReadonly && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1 text-muted-foreground text-sm">
+              <div className="bg-muted/50 text-muted-foreground flex items-center gap-1.5 rounded-md px-2 py-1 text-sm">
                 <Share className="opacity-70" size={14} />
                 <span>Shared</span>
               </div>
@@ -66,7 +68,7 @@ function PureChatHeader({
             <TooltipContent>
               <div className="text-center">
                 <div className="font-medium">Shared Chat</div>
-                <div className="mt-1 text-muted-foreground text-xs">
+                <div className="text-muted-foreground mt-1 text-xs">
                   This is a shared chat
                 </div>
               </div>

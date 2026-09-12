@@ -3,18 +3,18 @@ title: Branching
 description: Explore alternative conversation paths without losing context
 ---
 
-Branching lets you fork a conversation at any message and explore another
-direction without replacing the original path. Editing a message or generating
-another response creates a sibling that you can return to later.
+Branching lets you fork a conversation at any message and explore another direction without replacing the original path. Editing a message or generating another response creates a sibling that you can return to later.
 
 <Frame>
-  <img src="/docs/images/branching.gif" alt="Navigating between conversation branches" />
+  <img
+    src="/docs/images/branching.gif"
+    alt="Navigating between conversation branches"
+  />
 </Frame>
 
 ## How it works
 
-Every message has a parent, which forms a conversation tree. ChatJS displays
-one root-to-message path at a time while keeping the other branches available.
+Every message has a parent, which forms a conversation tree. ChatJS displays one root-to-message path at a time while keeping the other branches available.
 
 ```mermaid
 flowchart TD
@@ -24,13 +24,11 @@ flowchart TD
     U2 --> A3[Assistant: Use staged environments]
 ```
 
-The selected message is the cursor. Sending a message continues from that
-cursor, so selecting an earlier node before sending creates a new branch.
+The selected message is the cursor. Sending a message continues from that cursor, so selecting an earlier node before sending creates a new branch.
 
 ## Navigate branches
 
-When a message has siblings, arrow controls show the current position, such as
-`2/3`. Use the arrows to move to the previous or next branch.
+When a message has siblings, arrow controls show the current position, such as `2/3`. Use the arrows to move to the previous or next branch.
 
 Switching branches:
 
@@ -42,18 +40,13 @@ Switching branches:
 
 ## Edit a message
 
-Editing creates a replacement branch. The original message and all of its
-descendants remain in the tree, so you can switch back with the same sibling
-controls.
+Editing creates a replacement branch. The original message and all of its descendants remain in the tree, so you can switch back with the same sibling controls.
 
 ## Data model
 
-Messages are persisted with a parent message ID. Root messages have no parent.
-The client uses `useThread` to project the selected path and to keep each active
-assistant response attached to its own reserved node.
+Messages are persisted with a parent message ID. Root messages have no parent. The client uses `useThread` to project the selected path and to keep each active assistant response attached to its own reserved node.
 
-See [useThread](../threads) for the tree, cursor, active-path, and run
-model.
+See [useThread](../threads) for the tree, cursor, active-path, and run model.
 
 ## Related
 

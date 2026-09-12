@@ -40,41 +40,24 @@
       "persistent": true
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        ".next/**",
-        "dist/**",
-        "build/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", "build/**"]
     },
     "format": {
       "cache": false
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "test": {
-      "dependsOn": [
-        "^test"
-      ],
-      "outputs": [
-        "playwright-report/**",
-        "test-results/**"
-      ]
+      "dependsOn": ["^test"],
+      "outputs": ["playwright-report/**", "test-results/**"]
     },
     "test:unit": {
-      "dependsOn": [
-        "^test:unit"
-      ]
+      "dependsOn": ["^test:unit"]
     },
     "test:types": {
-      "dependsOn": [
-        "^test:types"
-      ]
+      "dependsOn": ["^test:types"]
     },
     "docs:links": {
       "cache": false
@@ -94,10 +77,7 @@
         "icon.png",
         "scripts/**"
       ],
-      "outputs": [
-        "dist/**",
-        "build/**"
-      ]
+      "outputs": ["dist/**", "build/**"]
     },
     "electron:dev": {
       "cache": false,
@@ -105,20 +85,14 @@
     },
     "electron:publish": {
       "cache": false,
-      "dependsOn": [
-        "electron:build"
-      ]
+      "dependsOn": ["electron:build"]
     },
     "electron:make": {
       "cache": false,
-      "dependsOn": [
-        "electron:build"
-      ]
+      "dependsOn": ["electron:build"]
     },
     "@chat-js/cli#build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -132,20 +106,14 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ],
-      "outputs": [
-        "dist/**",
-        "templates/**"
-      ]
+      "outputs": ["dist/**", "templates/**"]
     },
     "@chat-js/cli#test:unit": {
-      "dependsOn": [
-        "build"
-      ],
-      "outputs": [
-        "templates/**"
-      ],
+      "dependsOn": ["build"],
+      "outputs": ["templates/**"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -159,13 +127,12 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ]
     },
     "@chat-js/cli#test:scaffold": {
-      "dependsOn": [
-        "test:unit"
-      ],
+      "dependsOn": ["test:unit"],
       "cache": false,
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -174,9 +141,7 @@
       ]
     },
     "@chat-js/registry#test:unit": {
-      "dependsOn": [
-        "^test:unit"
-      ],
+      "dependsOn": ["^test:unit"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -185,9 +150,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
-      "dependsOn": [
-        "^test:types"
-      ],
+      "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -196,9 +159,7 @@
       ]
     },
     "@chat-js/cli#test:types": {
-      "dependsOn": [
-        "^test:types"
-      ],
+      "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -212,7 +173,8 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ]
     }
   }

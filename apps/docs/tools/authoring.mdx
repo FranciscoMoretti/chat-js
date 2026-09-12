@@ -3,9 +3,7 @@ title: Authoring Tools
 description: Author tested source files and publish them as shadcn registry items
 ---
 
-Author tools as real TypeScript files that you can import, type-check, and test.
-In this repository, canonical implementations live in `packages/registry/src/tools/<id>/`.
-The app consumes installed copies through normal local imports.
+Author tools as real TypeScript files that you can import, type-check, and test. In this repository, canonical implementations live in `packages/registry/src/tools/<id>/`. The app consumes installed copies through normal local imports.
 
 ## Server and renderer
 
@@ -24,15 +22,11 @@ export const wordCount = tool({
 });
 ```
 
-The renderer exports a named React component. Use the source tool's inferred
-input/output types and the shared `ToolPartFromTool` helper, keeping runtime imports of
-server code out of the client bundle. See the existing word-count source for
-loading, result, and error states.
+The renderer exports a named React component. Use the source tool's inferred input/output types and the shared `ToolPartFromTool` helper, keeping runtime imports of server code out of the client bundle. See the existing word-count source for loading, result, and error states.
 
 ## Item metadata
 
-Declare standard shadcn files and dependencies in `packages/registry/registry.ts`.
-ChatJS metadata describes only registration and environment requirements:
+Declare standard shadcn files and dependencies in `packages/registry/registry.ts`. ChatJS metadata describes only registration and environment requirements:
 
 ```json
 {
@@ -45,11 +39,7 @@ ChatJS metadata describes only registration and environment requirements:
 }
 ```
 
-The same metadata is emitted as `meta.chatjs` in the registry item and as an
-installed `tools/chatjs/word-count/chatjs.json` descriptor. Items with renderers target
-`tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`.
-Shared helpers use standard `registryDependencies`. npm packages use
-`dependencies` or `devDependencies`.
+The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor. Items with renderers target `tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`. Shared helpers use standard `registryDependencies`. npm packages use `dependencies` or `devDependencies`.
 
 For credentials, declare environment alternatives in the typed item metadata:
 
@@ -57,22 +47,13 @@ For credentials, declare environment alternatives in the typed item metadata:
 const envRequirements = [{ options: [["FIRECRAWL_API_KEY"]] }];
 ```
 
-Every outer requirement must be satisfied. Within one requirement, `options`
-contains alternatives, and each alternative lists variables needed together.
-The build serializes this data into the descriptor. The installed app's
-`check-env` command reads it without evaluating remote source. The old
-`toolEnvVars` source parser and registry authoring-type npm exports are removed.
+Every outer requirement must be satisfied. Within one requirement, `options` contains alternatives, and each alternative lists variables needed together. The build serializes this data into the descriptor. The installed app's `check-env` command reads it without evaluating remote source. The old `toolEnvVars` source parser and registry authoring-type npm exports are removed.
 
 ## Selecting tools for app features
 
-Search, code-execution, and URL retrieval items are standard AI SDK tools. Their metadata can
-use `slot: "webSearch"`, `slot: "codeExecution"`, or `slot: "retrieveUrl"` to select the model-facing name
-and feature toggle. This does not impose an input schema, output schema, or renderer.
-Only one item per selection can be installed at a time.
+Search, code-execution, and URL retrieval items are standard AI SDK tools. Their metadata can use `slot: "webSearch"`, `slot: "codeExecution"`, or `slot: "retrieveUrl"` to select the model-facing name and feature toggle. This does not impose an input schema, output schema, or renderer. Only one item per selection can be installed at a time.
 
-The following example is the complete installed `tools/chatjs/my-sandbox/chatjs.json`
-descriptor. In the published shadcn registry item, put this same object under
-`meta.chatjs`, including `slot`. Do not put these fields at the registry item root.
+The following example is the complete installed `tools/chatjs/my-sandbox/chatjs.json` descriptor. In the published shadcn registry item, put this same object under `meta.chatjs`, including `slot`. Do not put these fields at the registry item root.
 
 ```json
 {
@@ -86,41 +67,19 @@ descriptor. In the published shadcn registry item, put this same object under
 }
 ```
 
-The `runCommand` export is a `tool({ inputSchema, execute })` value. Its input
-might be `{ command: string }` and its output `{ stdout: string, exitCode: number }`.
-It does not need to accept Python/JavaScript fields or return ChatJS chart data.
-Likewise, a search item can accept `{ query: string }` and return its own results.
-The model reads the selected tool's schema and description.
+The `runCommand` export is a `tool({ inputSchema, execute })` value. Its input might be `{ command: string }` and its output `{ stdout: string, exitCode: number }`. It does not need to accept Python/JavaScript fields or return ChatJS chart data. Likewise, a search item can accept `{ query: string }` and return its own results. The model reads the selected tool's schema and description.
 
-An optional `rendererExport` registers that item's UI. Infer renderer props from
-its own tool using `UIToolInvocation<typeof runCommand>` from `ai`. Without a
-renderer, the tool still executes and its results reach the model, but it has no
-custom tool panel. The Vercel execution item ships its code/chart renderer. Tavily
-and Firecrawl reuse the search progress component and emit its progress events.
-These are presentation choices, not requirements for external tools.
+An optional `rendererExport` registers that item's UI. Infer renderer props from its own tool using `UIToolInvocation<typeof runCommand>` from `ai`. Without a renderer, the tool still executes and its results reach the model, but it has no custom tool panel. The Vercel execution item ships its code/chart renderer. Tavily and Firecrawl reuse the search progress component and emit its progress events. These are presentation choices, not requirements for external tools.
 
 ## Optional request context
 
-ChatJS passes request services through the AI SDK's `toolsContext`. Built-in
-tools use `ChatToolContext` from `@/lib/ai/tool-context` for the stream writer,
-cost accumulator, and progress options. Tools that do not need these services
-can ignore context entirely. Keep provider credentials and configuration inside
-the installed implementation. No factory or provider-specific app contract is required.
+ChatJS passes request services through the AI SDK's `toolsContext`. Built-in tools use `ChatToolContext` from `@/lib/ai/tool-context` for the stream writer, cost accumulator, and progress options. Tools that do not need these services can ignore context entirely. Keep provider credentials and configuration inside the installed implementation. No factory or provider-specific app contract is required.
 
-Registry distribution does not make source independent of its host app. The built-in
-items still import ChatJS environment, logging, and UI helpers. A third-party item
-can use those helpers or keep its implementation independent.
+Registry distribution does not make source independent of its host app. The built-in items still import ChatJS environment, logging, and UI helpers. A third-party item can use those helpers or keep its implementation independent.
 
-Cost reporting is explicit: the app supplies a request-local accumulator, and a
-tool that uses it reports its provider costs. The registry does not infer billing
-from arbitrary tool results. Authentication and credit checks belong to the app's
-request handling. Tools that access private user data must additionally check
-permissions and require the relevant context instead of silently proceeding when
-it is absent. Provider API keys remain server-side configuration, separate from
-end-user authentication.
+Cost reporting is explicit: the app supplies a request-local accumulator, and a tool that uses it reports its provider costs. The registry does not infer billing from arbitrary tool results. Authentication and credit checks belong to the app's request handling. Tools that access private user data must additionally check permissions and require the relevant context instead of silently proceeding when it is absent. Provider API keys remain server-side configuration, separate from end-user authentication.
 
-Deep research exposes the selected search tool to its model with the same schema
-and output. It does not parse the output as a fixed search-result structure.
+Deep research exposes the selected search tool to its model with the same schema and output. It does not parse the output as a fixed search-result structure.
 
 ## Build and verify
 
@@ -130,21 +89,15 @@ bun run --cwd packages/registry test:unit
 bun run --cwd packages/registry build
 ```
 
-The small build script emits `registry.json`, then pinned `shadcn@4.21.0 build`
-reads the actual sources and generates `dist/r/*.json`. Do not hand-maintain JSON
-source strings. Publish those generated files from your registry endpoint.
+The small build script emits `registry.json`, then pinned `shadcn@4.21.0 build` reads the actual sources and generates `dist/r/*.json`. Do not hand-maintain JSON source strings. Publish those generated files from your registry endpoint.
 
-Install the built item into an independent ChatJS app and type-check it. Source
-tests validate execution logic, while installation tests catch missing files,
-dependencies, incorrect targets, and renderer registration problems.
+Install the built item into an independent ChatJS app and type-check it. Source tests validate execution logic, while installation tests catch missing files, dependencies, incorrect targets, and renderer registration problems.
 
 ```bash
 npx @chat-js/cli@latest add https://example.com/r/word-count.json
 ```
 
-Third-party registries use the same standard item format and descriptor contract.
-There is no runtime plugin loader or general compatibility solver. The installed
-app's TypeScript checks validate composition against its actual local contracts.
+Third-party registries use the same standard item format and descriptor contract. There is no runtime plugin loader or general compatibility solver. The installed app's TypeScript checks validate composition against its actual local contracts.
 
 ## Related
 

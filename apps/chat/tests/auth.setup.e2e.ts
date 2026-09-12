@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import { test as setup } from "@playwright/test";
 
 const authFile = path.resolve("playwright/.auth/session.json");

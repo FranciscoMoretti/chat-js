@@ -1,7 +1,9 @@
 import type { DynamicToolUIPart } from "ai";
 import { isDataUIPart, isStaticToolUIPart, isToolUIPart } from "ai";
+
 import type { ChatMessage } from "@/lib/ai/types";
 import type { Part } from "@/lib/db/schema";
+
 import {
   validateDynamicToolPart,
   validateToolPart,

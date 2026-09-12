@@ -12,6 +12,7 @@ Users want to control which AI capabilities are used for their request. Without 
 ## Solution
 
 Add a tool selector in the chat input that:
+
 1. Shows available tools based on model capabilities
 2. Stores the selection in message metadata
 3. Expands UI selections to actual tool names
@@ -38,7 +39,13 @@ flowchart LR
 ### 1. Define UI Tool Options
 
 ```ts title="components/chat-features-definitions.ts"
-import { Edit3, GlobeIcon, Images, type LucideIcon, Telescope } from "lucide-react";
+import {
+  Edit3,
+  GlobeIcon,
+  Images,
+  type LucideIcon,
+  Telescope,
+} from "lucide-react";
 import type { UiToolName } from "@/lib/ai/types";
 
 type ToolDefinition = {
@@ -49,7 +56,11 @@ type ToolDefinition = {
 
 export const toolDefinitions: Record<UiToolName, ToolDefinition> = {
   webSearch: { name: "Web Search", icon: GlobeIcon, shortName: "Search" },
-  deepResearch: { name: "Deep Research", icon: Telescope, shortName: "Research" },
+  deepResearch: {
+    name: "Deep Research",
+    icon: Telescope,
+    shortName: "Research",
+  },
   generateImage: { name: "Create an image", icon: Images, shortName: "Image" },
   createTextDocument: { name: "Canvas", icon: Edit3, shortName: "Canvas" },
   // ... other document tools share the same Canvas definition
@@ -134,7 +145,8 @@ import { determineExplicitlyRequestedTools } from "@/lib/ai/determine-explicitly
 
 // In POST handler:
 const selectedTool = userMessage.metadata.selectedTool ?? null;
-const explicitlyRequestedTools = determineExplicitlyRequestedTools(selectedTool);
+const explicitlyRequestedTools =
+  determineExplicitlyRequestedTools(selectedTool);
 
 // Pass to core chat agent
 const { result } = await createCoreChatAgent({
@@ -155,7 +167,12 @@ addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
 ```tsx title="components/responsive-tools.tsx"
 import { Settings2, X } from "lucide-react";
 import { enabledTools, toolDefinitions } from "./chat-features-definitions";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 
 export function ResponsiveTools({
@@ -212,7 +229,7 @@ export function ResponsiveTools({
 ## Key files
 
 | File | Purpose |
-|------|---------|
+| --- | --- |
 | `components/chat-features-definitions.ts` | UI tool definitions (name, icon, shortName) |
 | `components/responsive-tools.tsx` | Tool selector dropdown component |
 | `lib/ai/determine-explicitly-requested-tools.ts` | Maps UI selection to actual tool names |

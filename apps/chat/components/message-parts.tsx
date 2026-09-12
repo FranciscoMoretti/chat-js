@@ -8,10 +8,12 @@ import {
   isToolUIPart,
 } from "ai";
 import { memo } from "react";
+
 import {
   useMessagePartByPartIdx,
   useMessagePartTypesById,
 } from "@/lib/stores/hooks-message-parts";
+
 import { DynamicToolPart } from "./part/dynamic-tool";
 import { ReasoningPart } from "./part/message-reasoning";
 import { TextMessagePart } from "./part/text-message-part";
@@ -81,7 +83,6 @@ function PureMessageParts({
       <MessagePart
         isLoading={isLoading && i === types.length - 1}
         isReadonly={isReadonly}
-        // biome-ignore lint/suspicious/noArrayIndexKey: we only have index at this point
         key={`message-${messageId}-${t}-${i}`}
         messageId={messageId}
         partIdx={i}

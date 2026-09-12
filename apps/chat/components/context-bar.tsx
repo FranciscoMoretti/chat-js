@@ -23,7 +23,7 @@ export function ContextBar({
   }
 
   return (
-    <PromptInputHeader className={cn("w-full border-b bg-muted", className)}>
+    <PromptInputHeader className={cn("bg-muted w-full border-b", className)}>
       {(attachments.length > 0 || uploadQueue.length > 0) && (
         <AttachmentList
           attachments={attachments}

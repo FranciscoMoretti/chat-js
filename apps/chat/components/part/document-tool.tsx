@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect } from "react";
+
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useIsLastArtifact } from "@/lib/stores/hooks-message-parts";
@@ -9,6 +10,7 @@ import {
   getToolKind,
   isEditTool,
 } from "@/tools/platform/documents/types";
+
 import { DocumentPreview } from "./document-preview";
 
 type DocumentTool = Extract<

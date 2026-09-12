@@ -1,9 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
+/* oxlint-disable nextjs/no-img-element -- Sandbox screenshots use dynamic image URLs. */
 "use client";
 
 import type { ToolUIPart } from "ai";
 import React from "react";
 import type { BundledLanguage } from "shiki";
+
 import {
   Sandbox,
   SandboxCode,
@@ -38,7 +39,7 @@ export function SandboxComposed({
       <SandboxHeader state={state} title={title} />
       <SandboxContent>
         <SandboxTabs onValueChange={setActiveTab} value={activeTab}>
-          <div className="flex items-center border-border border-b">
+          <div className="border-border flex items-center border-b">
             <SandboxTabsList>
               <SandboxTabsTrigger value="code">Code</SandboxTabsTrigger>
               <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>

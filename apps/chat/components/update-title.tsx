@@ -12,11 +12,11 @@ export const UpdateTitle = ({
 }) => {
   if (isRunning) {
     return (
-      <Shimmer as="h3" className={cn("font-medium text-sm", className)}>
+      <Shimmer as="h3" className={cn("text-sm font-medium", className)}>
         {title}
       </Shimmer>
     );
   }
 
-  return <h3 className={cn("font-medium text-sm", className)}>{title}</h3>;
+  return <h3 className={cn("text-sm font-medium", className)}>{title}</h3>;
 };

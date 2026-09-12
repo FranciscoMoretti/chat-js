@@ -4,11 +4,13 @@ import equal from "fast-deep-equal";
 import { File, Loader2, Maximize, Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
 import { type MouseEvent, memo, useCallback, useMemo, useRef } from "react";
+
 import { useDocuments } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import type { Document } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
+
 import type { UIArtifact } from "../artifact-panel";
 import { InlineDocumentSkeleton } from "../document-skeleton";
 import { DocumentToolCall, DocumentToolResult } from "./document-common";
@@ -155,19 +157,19 @@ const LoadingSkeleton = ({
   artifactKind: ArtifactKind;
 }) => (
   <div className="w-full">
-    <div className="flex h-[57px] flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 bg-muted p-4">
+    <div className="bg-muted flex h-[57px] flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 p-4">
       <div className="flex flex-row items-center gap-3">
         <div className="text-muted-foreground">
-          <div className="size-4 animate-pulse rounded-md bg-muted-foreground/20" />
+          <div className="bg-muted-foreground/20 size-4 animate-pulse rounded-md" />
         </div>
-        <div className="h-4 w-24 animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="bg-muted-foreground/20 h-4 w-24 animate-pulse rounded-lg" />
       </div>
       <div>
         <Maximize size={16} />
       </div>
     </div>
 
-    <div className="overflow-y-scroll rounded-b-2xl border border-t-0 bg-muted p-8 pt-4">
+    <div className="bg-muted overflow-y-scroll rounded-b-2xl border border-t-0 p-8 pt-4">
       <InlineDocumentSkeleton />
     </div>
   </div>
@@ -217,7 +219,7 @@ const PureHitboxLayer = ({
       role="presentation"
     >
       <div className="flex w-full items-center justify-end p-4">
-        <div className="absolute top-[13px] right-[9px] rounded-md p-2 hover:bg-accent">
+        <div className="hover:bg-accent absolute top-[13px] right-[9px] rounded-md p-2">
           <Maximize size={16} />
         </div>
       </div>
@@ -257,7 +259,7 @@ const PureDocumentHeader = ({
   isStreaming: boolean;
   type: "create" | "update";
 }) => (
-  <div className="flex flex-row items-start justify-between gap-2 rounded-t-2xl border border-b-0 bg-muted p-4 sm:items-center">
+  <div className="bg-muted flex flex-row items-start justify-between gap-2 rounded-t-2xl border border-b-0 p-4 sm:items-center">
     <div className="flex flex-row items-start gap-3 sm:items-center">
       <div className="text-muted-foreground">
         {(() => {
@@ -299,7 +301,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
   const { artifact } = useArtifact();
 
   const containerClassName = cn(
-    "h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0 bg-muted",
+    "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
     {
       "p-4 sm:px-14 sm:py-16": document.kind === "text",
       "p-0": document.kind === "code",

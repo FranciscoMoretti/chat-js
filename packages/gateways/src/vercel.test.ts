@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 
 afterEach(() => {
@@ -44,9 +45,9 @@ describe("VercelGateway", () => {
                 },
               },
             ],
-          }),
-        ),
-      ),
+          })
+        )
+      )
     );
 
     const models = await new VercelGateway().fetchModels();

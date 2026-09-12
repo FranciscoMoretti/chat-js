@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -189,7 +190,7 @@ function PureSuggestedActions({
                 variant={selected ? "default" : "outline"}
               >
                 <Icon className="size-4" />
-                <span className="@[500px]:inline hidden">{c.label}</span>
+                <span className="hidden @[500px]:inline">{c.label}</span>
               </Suggestion>
             </motion.div>
           );
@@ -199,17 +200,17 @@ function PureSuggestedActions({
       {selectedCategory ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="absolute start-0 @[500px]:top-full @[500px]:bottom-auto bottom-full z-20 w-full @[500px]:pt-2 @[500px]:pb-0 pb-2"
+          className="absolute start-0 bottom-full z-20 w-full pb-2 @[500px]:top-full @[500px]:bottom-auto @[500px]:pt-2 @[500px]:pb-0"
           initial={{ opacity: 0, y: 6 }}
           key={selectedCategory.id}
           transition={{ duration: 0.15 }}
         >
-          <div className="w-full rounded-xl border bg-background p-2 shadow-sm">
+          <div className="bg-background w-full rounded-xl border p-2 shadow-sm">
             <div className="flex w-full flex-col">
               {selectedCategory.prompts.map((prompt, index) => (
                 <div className="w-full" key={prompt}>
                   <Button
-                    className="h-auto w-full justify-start whitespace-pre-wrap rounded-lg px-3 py-2 text-left text-sm"
+                    className="h-auto w-full justify-start rounded-lg px-3 py-2 text-left text-sm whitespace-pre-wrap"
                     onClick={() => sendPrompt(prompt)}
                     type="button"
                     variant="ghost"

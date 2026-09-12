@@ -41,13 +41,15 @@ const config: ConfigInput = {
 ```
 
 <Callout type="note">
-Model IDs must match the model names configured in your LiteLLM proxy. These typically follow the `provider/model` format (e.g., `openai/gpt-4o`, `anthropic/claude-sonnet-4-20250514`).
+  Model IDs must match the model names configured in your LiteLLM proxy. These
+  typically follow the `provider/model` format (e.g., `openai/gpt-4o`,
+  `anthropic/claude-sonnet-4-20250514`).
 </Callout>
 
 ## Authentication
 
 | Variable | Description |
-|----------|-------------|
+| --- | --- |
 | `LITELLM_BASE_URL` | Required. The base URL of your LiteLLM proxy (e.g., `http://localhost:4000`) |
 | `LITELLM_API_KEY` | Optional. A master key or virtual key for your LiteLLM proxy |
 

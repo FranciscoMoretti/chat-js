@@ -10,9 +10,7 @@
 
 ### Minor Changes
 
-- [#201](https://github.com/FranciscoMoretti/chat-js/pull/201) [`dbd6cb0`](https://github.com/FranciscoMoretti/chat-js/commit/dbd6cb0cfa8ed5ae497fa500e1f45a869974f235) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Add LiteLLM gateway scaffolding support, including generated config defaults,
-  environment checklist coverage for `LITELLM_BASE_URL`, and optional
-  `LITELLM_API_KEY` documentation for authenticated proxies.
+- [#201](https://github.com/FranciscoMoretti/chat-js/pull/201) [`dbd6cb0`](https://github.com/FranciscoMoretti/chat-js/commit/dbd6cb0cfa8ed5ae497fa500e1f45a869974f235) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Add LiteLLM gateway scaffolding support, including generated config defaults, environment checklist coverage for `LITELLM_BASE_URL`, and optional `LITELLM_API_KEY` documentation for authenticated proxies.
 
 ## 0.6.5
 
@@ -32,9 +30,7 @@
 
 ### Patch Changes
 
-- [#180](https://github.com/FranciscoMoretti/chat-js/pull/180) [`eee3cdc`](https://github.com/FranciscoMoretti/chat-js/commit/eee3cdcf32c89129d895774cfed420914c058214) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Unify package releases around Changesets by removing the dedicated registry
-  deploy workflow and switching the CLI's default registry source to the
-  published `@chat-js/registry` package on npm.
+- [#180](https://github.com/FranciscoMoretti/chat-js/pull/180) [`eee3cdc`](https://github.com/FranciscoMoretti/chat-js/commit/eee3cdcf32c89129d895774cfed420914c058214) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Unify package releases around Changesets by removing the dedicated registry deploy workflow and switching the CLI's default registry source to the published `@chat-js/registry` package on npm.
 
 ## 0.6.2
 
@@ -68,7 +64,6 @@
 - [#94](https://github.com/FranciscoMoretti/chat-js/pull/94) [`2a8a7cc`](https://github.com/FranciscoMoretti/chat-js/commit/2a8a7cc2b0649bd73e41999dbf0528a21e8065be) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - ## Config defaults & `defineConfig` helper
 
   ### New features
-
   - **`defineConfig()` helper** — new type-safe wrapper for `chat.config.ts`. The gateway type is inferred from `ai.gateway`, so autocomplete and type errors are scoped to the model IDs available in the chosen gateway. Replace `satisfies ConfigInput` with `defineConfig({...})`.
   - **Gateway-specific defaults** — all AI config fields (models, tools, workflows) are now optional. Omitted fields are automatically filled from per-gateway defaults at runtime via `applyDefaults()`. Only `ai.gateway` is required.
   - **`chatjs config` CLI command** — new command that prints the fully-resolved configuration for the current project, applying all defaults. Useful for debugging and verifying your setup.

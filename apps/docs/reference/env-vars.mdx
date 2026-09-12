@@ -7,8 +7,8 @@ This page lists every environment variable recognized by ChatJS, grouped by cate
 
 <Callout type="note">
   Missing required variables will cause the build to fail immediately. Variables
-  that are required only when a feature or gateway is enabled are validated based
-  on your `chat.config.ts` settings.
+  that are required only when a feature or gateway is enabled are validated
+  based on your `chat.config.ts` settings.
 </Callout>
 
 ## Required
@@ -16,7 +16,7 @@ This page lists every environment variable recognized by ChatJS, grouped by cate
 These two variables must always be set. Without them the app will not start.
 
 | Variable | Description | How to get it |
-|----------|-------------|---------------|
+| --- | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart), or any Postgres provider |
 | `AUTH_SECRET` | Secret used to sign and encrypt session tokens (Better Auth) | Run `openssl rand -base64 32` or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
 
@@ -38,27 +38,27 @@ authentication: {
 
 ### GitHub OAuth
 
-| Variable | Description |
-|----------|-------------|
-| `AUTH_GITHUB_ID` | GitHub OAuth app client ID |
+| Variable             | Description                    |
+| -------------------- | ------------------------------ |
+| `AUTH_GITHUB_ID`     | GitHub OAuth app client ID     |
 | `AUTH_GITHUB_SECRET` | GitHub OAuth app client secret |
 
 **Setup:** Go to [GitHub Developer Settings](https://github.com/settings/developers) → **New OAuth App**. Set the callback URL to `https://yourdomain.com/api/auth/callback/github`.
 
 ### Google OAuth
 
-| Variable | Description |
-|----------|-------------|
-| `AUTH_GOOGLE_ID` | Google OAuth 2.0 client ID |
+| Variable             | Description                    |
+| -------------------- | ------------------------------ |
+| `AUTH_GOOGLE_ID`     | Google OAuth 2.0 client ID     |
 | `AUTH_GOOGLE_SECRET` | Google OAuth 2.0 client secret |
 
 **Setup:** Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **Create credentials** → **OAuth 2.0 Client ID** (Web application). Add `https://yourdomain.com/api/auth/callback/google` as an authorized redirect URI.
 
 ### Vercel OAuth
 
-| Variable | Description |
-|----------|-------------|
-| `VERCEL_APP_CLIENT_ID` | Vercel OAuth integration client ID |
+| Variable                   | Description                            |
+| -------------------------- | -------------------------------------- |
+| `VERCEL_APP_CLIENT_ID`     | Vercel OAuth integration client ID     |
 | `VERCEL_APP_CLIENT_SECRET` | Vercel OAuth integration client secret |
 
 **Setup:** Follow the [Sign In with Vercel](https://vercel.com/docs/integrations/create-integration) guide to create an integration.
@@ -80,12 +80,13 @@ ai: {
 Provides access to 120+ models from OpenAI, Anthropic, Google, xAI, Meta, and more through a single key. This is the default gateway.
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `AI_GATEWAY_API_KEY` | Self-hosted / local dev | API key for Vercel AI Gateway |
 | `VERCEL_OIDC_TOKEN` | Auto-set on Vercel | OIDC token injected automatically on Vercel deployments |
 
 <Callout type="tip">
-  On Vercel deployments, `VERCEL_OIDC_TOKEN` is injected automatically. You only need `AI_GATEWAY_API_KEY` for local development or non-Vercel hosting.
+  On Vercel deployments, `VERCEL_OIDC_TOKEN` is injected automatically. You only
+  need `AI_GATEWAY_API_KEY` for local development or non-Vercel hosting.
 </Callout>
 
 **Setup:** Go to [Vercel AI Gateway](https://vercel.com/ai-gateway) and create an API key.
@@ -94,9 +95,9 @@ Provides access to 120+ models from OpenAI, Anthropic, Google, xAI, Meta, and mo
 
 Provides access to hundreds of models with per-token pricing.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key (`sk-or-v1-...`) |
+| Variable             | Required | Description                              |
+| -------------------- | -------- | ---------------------------------------- |
+| `OPENROUTER_API_KEY` | Yes      | Your OpenRouter API key (`sk-or-v1-...`) |
 
 **Setup:** Create an account at [OpenRouter](https://openrouter.ai), then go to [API Keys](https://openrouter.ai/keys).
 
@@ -104,9 +105,9 @@ Provides access to hundreds of models with per-token pricing.
 
 Direct connection to the OpenAI API. Use when you only need OpenAI models.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | Your OpenAI API key (`sk-...`) |
+| Variable         | Required | Description                    |
+| ---------------- | -------- | ------------------------------ |
+| `OPENAI_API_KEY` | Yes      | Your OpenAI API key (`sk-...`) |
 
 **Setup:** Follow the [OpenAI quickstart](https://developers.openai.com/api/docs/quickstart) to create an API key.
 
@@ -115,7 +116,7 @@ Direct connection to the OpenAI API. Use when you only need OpenAI models.
 Works with any endpoint that follows the OpenAI API format: Ollama, LM Studio, vLLM, Azure OpenAI, and others.
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `OPENAI_COMPATIBLE_BASE_URL` | Yes | Base URL of the compatible API (e.g., `http://localhost:11434/v1`) |
 | `OPENAI_COMPATIBLE_API_KEY` | Yes | API key for the compatible provider |
 
@@ -126,7 +127,7 @@ Works with any endpoint that follows the OpenAI API format: Ollama, LM Studio, v
 Routes requests through a LiteLLM proxy for centralized model access, key management, routing, and spend tracking.
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `LITELLM_BASE_URL` | Yes | Base URL of the LiteLLM proxy (e.g., `http://localhost:4000`) |
 | `LITELLM_API_KEY` | Optional | Master key or virtual key if your LiteLLM proxy requires authentication |
 
@@ -152,13 +153,14 @@ ai: {
 ```
 
 | Variable | Feature | Description | Get it |
-|----------|---------|-------------|--------|
+| --- | --- | --- | --- |
 | `TAVILY_API_KEY` | `webSearch` | Tavily API key for web search (recommended) | [app.tavily.com](https://app.tavily.com) |
 | `FIRECRAWL_API_KEY` | `webSearch`, `urlRetrieval` | Firecrawl API key for web search and URL content extraction | [firecrawl.dev](https://www.firecrawl.dev) |
 | `EXA_API_KEY` | _none_ | Recognized by env schema but not used by build-time `webSearch` validation | [Exa API key guide](https://docs.exa.ai/reference/getting-started) |
 
 <Callout type="note">
-  If both `TAVILY_API_KEY` and `FIRECRAWL_API_KEY` are set, Tavily is used for regular chat web search. Firecrawl is always used for URL retrieval.
+  If both `TAVILY_API_KEY` and `FIRECRAWL_API_KEY` are set, Tavily is used for
+  regular chat web search. Firecrawl is always used for URL retrieval.
 </Callout>
 
 ### MCP Connectors
@@ -174,7 +176,7 @@ ai: {
 ```
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `MCP_ENCRYPTION_KEY` | Yes | 44-character base64 key used to encrypt stored MCP server credentials (URLs, OAuth tokens) |
 
 **Generate a key:**
@@ -184,22 +186,18 @@ openssl rand -base64 32
 ```
 
 <Callout type="note">
-  The key must be exactly 44 characters (32 bytes encoded as base64). Changing this key after deployment will invalidate all stored MCP connector credentials.
+  The key must be exactly 44 characters (32 bytes encoded as base64). Changing
+  this key after deployment will invalidate all stored MCP connector
+  credentials.
 </Callout>
 
 ### Postgres Hosting
 
-`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your
-host provides a separate direct endpoint for schema operations. It falls back to
-`DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler
-without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS`
-to a positive per-process limit. See [Database](./database) for deployment behavior.
+`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your host provides a separate direct endpoint for schema operations. It falls back to `DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS` to a positive per-process limit. See [Database](./database) for deployment behavior.
 
 ### File Storage
 
-Attachments, image generation, and video generation require a durable storage
-adapter compatible with Files SDK. Storage requirements are generated from the selected provider and
-validated by `scripts/check-env.ts`.
+Attachments, image generation, and video generation require a durable storage adapter compatible with Files SDK. Storage requirements are generated from the selected provider and validated by `scripts/check-env.ts`.
 
 ```typescript title="chat.config.ts"
 features: {
@@ -213,11 +211,7 @@ ai: {
 }
 ```
 
-Provider credentials belong in environment variables or the provider SDK's
-credential chain. Non-secret adapter options belong in
-`lib/storage-options.ts`. See [File storage](../storage) and the
-[Files SDK provider reference](https://files-sdk.dev/docs/providers) for the
-requirements of your selected provider.
+Provider credentials belong in environment variables or the provider SDK's credential chain. Non-secret adapter options belong in `lib/storage-options.ts`. See [File storage](../storage) and the [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the requirements of your selected provider.
 
 <Callout type="tip">
   When using Vercel Blob, connect a store in your project dashboard under
@@ -238,7 +232,7 @@ ai: {
 ```
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `VERCEL_OIDC_TOKEN` | Auto-set on Vercel | Used automatically for OIDC auth on Vercel deployments |
 | `VERCEL_TEAM_ID` | Self-hosted only | Your Vercel team ID (`team_...`) |
 | `VERCEL_PROJECT_ID` | Self-hosted only | Your Vercel project ID (`prj_...`) |
@@ -263,7 +257,7 @@ ai: {
 Allows users to reconnect to an ongoing AI generation after a page refresh or network interruption.
 
 | Variable | Description | Get it |
-|----------|-------------|--------|
+| --- | --- | --- |
 | `REDIS_URL` | Redis TCP/TLS URL for stream coordination and anonymous rate limits | [Redis setup](./redis) |
 
 Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. To check a configured provider, use your package manager: `npm run redis:connect`, `pnpm redis:connect`, `yarn redis:connect`, or `bun redis:connect`.
@@ -272,8 +266,8 @@ Without `REDIS_URL`, streams work normally but cannot be resumed after disconnec
 
 Secures the `/api/cron/cleanup` endpoint that removes orphaned managed files.
 
-| Variable | Description |
-|----------|-------------|
+| Variable      | Description                                                 |
+| ------------- | ----------------------------------------------------------- |
 | `CRON_SECRET` | Bearer token that the cron runner must send to authenticate |
 
 **Generate a secret:**
@@ -287,7 +281,7 @@ On Vercel, the platform automatically sends `CRON_SECRET` as a `Authorization: B
 ### App URL
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| --- | --- | --- |
 | `APP_URL` | Non-Vercel deployments | Full public URL of the app including protocol (e.g., `https://myapp.com`) |
 | `VERCEL_URL` | Auto-set by Vercel | Hostname auto-injected by the Vercel platform; used when `APP_URL` is not set |
 
@@ -296,7 +290,7 @@ On Vercel, the platform automatically sends `CRON_SECRET` as a `Authorization: B
 ChatJS uses [OpenTelemetry](https://opentelemetry.io) via `@vercel/otel` and exports traces to [Langfuse](https://langfuse.com) for LLM observability. These variables are read by the `langfuse-vercel` exporter and are not part of the Zod env schema. The Langfuse SDK picks them up automatically from the environment.
 
 | Variable | Description | Get it |
-|----------|-------------|--------|
+| --- | --- | --- |
 | `LANGFUSE_PUBLIC_KEY` | Langfuse project public key | [Langfuse Cloud](https://cloud.langfuse.com) → Project Settings → API Keys |
 | `LANGFUSE_SECRET_KEY` | Langfuse project secret key | Same as above |
 | `LANGFUSE_BASE_URL` | Langfuse API base URL (default: `https://cloud.langfuse.com`) | Set to your self-hosted Langfuse URL if applicable |
@@ -310,7 +304,7 @@ Omitting these variables disables trace export. The app runs normally without th
 All variables in one place:
 
 | Variable | Category | Required |
-|----------|----------|----------|
+| --- | --- | --- |
 | `DATABASE_URL` | Core | Always |
 | `AUTH_SECRET` | Core | Always |
 | `AI_GATEWAY_API_KEY` | Gateway | Vercel gateway (non-Vercel hosting) |

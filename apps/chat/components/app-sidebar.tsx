@@ -1,4 +1,5 @@
 import { Cpu } from "lucide-react";
+
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SearchChatsButton } from "@/components/search-chats";
@@ -14,6 +15,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
 import { SidebarUserNav } from "./sidebar-user-nav";
 
