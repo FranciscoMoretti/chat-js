@@ -3,6 +3,15 @@ import { FILE_CONTENT_PATH, isFileStorageKey } from "../file-url";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
+/** Legacy keys have no EVE row; only EVE deletion fences deny an existing URL. */
+export async function isEveFileUnavailable(key: string) {
+  const [file] = await db
+    .select({ state: eveStoredFile.state })
+    .from(eveStoredFile)
+    .where(eq(eveStoredFile.key, key));
+  return file !== undefined && file.state !== "active";
+}
+
 const DOCUMENT_FILE_URL = new RegExp(
   `${FILE_CONTENT_PATH}\\?key=([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
   "g"
@@ -14,6 +23,33 @@ export async function reserveEveUpload(ownerId: string, key: string) {
     throw new Error("Invalid upload ownership reservation.");
   }
   await db.insert(eveStoredFile).values({ ownerId, key });
+}
+
+/** Serialize admitted storage writes with orphan cleanup and reference creation. */
+export async function writeEveUpload<T>(
+  ownerId: string,
+  key: string,
+  write: () => Promise<T>
+) {
+  return await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [file] = await tx
+      .select({ key: eveStoredFile.key })
+      .from(eveStoredFile)
+      .where(
+        and(
+          eq(eveStoredFile.key, key),
+          eq(eveStoredFile.ownerId, ownerId),
+          eq(eveStoredFile.state, "active")
+        )
+      );
+    if (!file) {
+      throw new Error("Upload reservation is unavailable.");
+    }
+    return await write();
+  });
 }
 
 /** Register server-created keys only; a caller-supplied URL is not ownership proof. */

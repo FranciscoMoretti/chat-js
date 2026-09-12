@@ -9,12 +9,15 @@ import {
   releaseEveFamilyFileReferences,
 } from "../lib/db/eve-file-purge";
 import {
+  isEveFileUnavailable,
   referenceEveFiles,
   registerEveStoredFile,
   reserveEveGeneratedFile,
   reserveEveUpload,
   writeEveGeneratedFile,
+  writeEveUpload,
 } from "../lib/db/eve-files";
+import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -380,4 +383,91 @@ test("upload reservations are durable and reject existing identities even for th
   await expect(reserveEveUpload("", key)).rejects.toThrow(
     "Invalid upload ownership"
   );
+});
+
+test("orphan cleanup retains references and young uploads and retries reappearing tombstones", async () => {
+  const keys = Array.from({ length: 5 }, () =>
+    crypto.randomUUID().replaceAll("-", "").slice(0, 24)
+  );
+  const [orphan, referenced, young, legacy, foreign] = keys;
+  await Promise.all([
+    reserveEveUpload(owner, orphan),
+    reserveEveUpload(owner, referenced),
+    reserveEveUpload(owner, young),
+    reserveEveUpload(stranger, foreign),
+  ]);
+  await db
+    .update(eveStoredFile)
+    .set({ createdAt: new Date("2025-01-01") })
+    .where(inArray(eveStoredFile.key, [orphan, referenced, foreign]));
+  const conversation = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "retained reference",
+    async () => crypto.randomUUID()
+  );
+  await referenceEveFiles(owner, conversation.id, [referenced]);
+  const cutoff = new Date("2026-01-01");
+  const fenced = await prepareEveOrphanedFilePurge(keys, cutoff);
+  expect(fenced.map((file) => file.key).sort()).toEqual(
+    [orphan, foreign].sort()
+  );
+  expect(fenced.find((file) => file.key === foreign)?.ownerId).toBe(stranger);
+  expect(fenced.some((file) => file.key === legacy)).toBe(false);
+  await expect(
+    referenceEveFiles(owner, conversation.id, [orphan])
+  ).rejects.toThrow("not owned");
+  let wrote = false;
+  await expect(
+    writeEveUpload(owner, orphan, () => {
+      wrote = true;
+      return Promise.resolve();
+    })
+  ).rejects.toThrow("unavailable");
+  expect(wrote).toBe(false);
+  expect(await isEveFileUnavailable(orphan)).toBe(true);
+  expect(await isEveFileUnavailable(referenced)).toBe(false);
+  expect(await isEveFileUnavailable(legacy)).toBe(false);
+  await completeEveFilePurge(owner, [orphan]);
+  // A provider inventory discovers the same object after a delayed completion.
+  expect(await prepareEveOrphanedFilePurge([orphan], cutoff)).toEqual([
+    { key: orphan, ownerId: owner },
+  ]);
+});
+
+test("orphan cleanup waits for an admitted upload before committing its fence", async () => {
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await reserveEveUpload(owner, key);
+  await db
+    .update(eveStoredFile)
+    .set({ createdAt: new Date("2025-01-01") })
+    .where(eq(eveStoredFile.key, key));
+  const entered = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const writing = writeEveUpload(owner, key, async () => {
+    entered.resolve();
+    await release.promise;
+    return "stored";
+  });
+  await entered.promise;
+  const cleanup = prepareEveOrphanedFilePurge([key], new Date("2026-01-01"));
+  try {
+    await expect
+      .poll(async () => {
+        const [row] = await db.execute<{ blocked: boolean }>(
+          sql`select exists(select 1 from pg_locks where locktype = 'advisory' and not granted and classid::bigint = ((hashtextextended(${`eve-family:${owner}`}, 0) >> 32) & 4294967295) and objid::bigint = (hashtextextended(${`eve-family:${owner}`}, 0) & 4294967295)) as blocked`
+        );
+        return row.blocked;
+      })
+      .toBe(true);
+  } finally {
+    release.resolve();
+    await writing;
+    await cleanup;
+  }
+  const [file] = await db
+    .select()
+    .from(eveStoredFile)
+    .where(eq(eveStoredFile.key, key));
+  expect(file.state).toBe("deleting");
 });

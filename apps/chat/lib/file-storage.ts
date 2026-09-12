@@ -88,14 +88,21 @@ export async function listFiles() {
     uploadedAt: Date;
     url: string;
   }> = [];
+  for await (const file of iterateStoredFiles()) {
+    files.push(file);
+  }
+  return { files };
+}
+
+/** Stream metadata so cleanup need not retain the entire storage inventory. */
+export async function* iterateStoredFiles() {
   for await (const file of getFiles().listAll()) {
-    files.push({
+    yield {
       pathname: file.key,
       uploadedAt: new Date(file.lastModified ?? Date.now()),
       url: createFileUrl(file.key),
-    });
+    };
   }
-  return { files };
 }
 
 export async function deleteFilesByUrls(urls: string[]): Promise<void> {

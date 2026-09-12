@@ -4,6 +4,8 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../lib/db/client";
+import { completeEveFilePurge } from "../lib/db/eve-file-purge";
+import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
 import {
   eveConversation,
   eveFileReference,
@@ -528,6 +530,49 @@ test("uploaded attachment has durable authenticated ownership", async ({
       "-e",
       'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls([process.argv[1]]);',
       file.url,
+    ]);
+    await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
+  }
+});
+
+test("a fenced orphan URL stops serving bytes before physical removal", async ({
+  page,
+}) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const upload = await page.request.post("/api/files/upload", {
+    multipart: {
+      file: { name: "orphan-fence.png", mimeType: "image/png", buffer: redPng },
+    },
+  });
+  expect(upload.ok()).toBe(true);
+  const { url } = z.object({ url: z.string() }).parse(await upload.json());
+  const key = keyFromFileUrl(url);
+  if (!key) {
+    throw new Error("Missing uploaded key");
+  }
+  try {
+    expect((await page.request.get(url)).ok()).toBe(true);
+    // Advance eligibility for this single test-owned key, never run a global sweep.
+    const fenced = await prepareEveOrphanedFilePurge(
+      [key],
+      new Date(Date.now() + 1000)
+    );
+    expect(fenced).toHaveLength(1);
+    const denied = await page.request.get(url, { maxRedirects: 0 });
+    expect(denied.status()).toBe(404);
+    expect(denied.headers().location).toBeUndefined();
+    expect(denied.headers()["cache-control"]).toBe("private, no-store");
+    await completeEveFilePurge(fenced[0].ownerId, [key]);
+    expect((await page.request.get(url, { maxRedirects: 0 })).status()).toBe(
+      404
+    );
+  } finally {
+    execFileSync("bun", [
+      "--no-env-file",
+      "-e",
+      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
+      JSON.stringify([url]),
     ]);
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }

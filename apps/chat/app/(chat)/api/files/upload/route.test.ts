@@ -13,6 +13,11 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/lib/db/eve-files", () => ({
   reserveEveUpload: mocks.register,
+  writeEveUpload: async (
+    _owner: string,
+    _key: string,
+    write: () => Promise<unknown>
+  ) => await write(),
 }));
 vi.mock("@/lib/file-storage", () => ({
   createFileStorageKey: () => "abcdefghijklmnopqrstuvwx.png",

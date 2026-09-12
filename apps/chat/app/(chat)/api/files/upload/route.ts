@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
-import { reserveEveUpload } from "@/lib/db/eve-files";
+import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
 import { env } from "@/lib/env";
 import { createFileStorageKey, uploadFileAtKey } from "@/lib/file-storage";
 
@@ -69,7 +69,10 @@ export async function POST(request: Request) {
         await reserveEveUpload(session.user.id, key);
       }
       // Keep the reservation if storage fails: an uncertain write can still finish.
-      const data = await uploadFileAtKey(key, filename, fileBuffer, file.type);
+      const write = () => uploadFileAtKey(key, filename, fileBuffer, file.type);
+      const data = env.WORKFLOW_POSTGRES_URL
+        ? await writeEveUpload(session.user.id, key, write)
+        : await write();
       return NextResponse.json(data);
     } catch (_error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });

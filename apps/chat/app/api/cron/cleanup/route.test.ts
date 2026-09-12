@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   references: vi.fn(),
   list: vi.fn(),
   remove: vi.fn(),
+  cleanupEve: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
   env: mocks.env,
@@ -25,12 +26,16 @@ vi.mock("@/lib/file-storage", () => ({
   deleteFilesByUrls: mocks.remove,
   listFiles: mocks.list,
 }));
+vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
+  cleanupEveOrphanedFiles: mocks.cleanupEve,
+}));
 
 import { GET } from "./route";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.CRON_SECRET = "fixture-secret";
+  mocks.cleanupEve.mockResolvedValue({ deletedCount: 0, skipped: false });
 });
 
 test.each([
@@ -48,9 +53,10 @@ test.each([
   expect(mocks.references).not.toHaveBeenCalled();
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.remove).not.toHaveBeenCalled();
+  expect(mocks.cleanupEve).not.toHaveBeenCalled();
 });
 
-test("legacy cleanup cannot erase EVE files even while new EVE admission is disabled", async () => {
+test("cleanup uses EVE ownership even while new EVE admission is disabled", async () => {
   const response = await GET(
     new NextRequest("http://localhost/api/cron/cleanup", {
       headers: { authorization: "Bearer fixture-secret" },
@@ -61,14 +67,17 @@ test("legacy cleanup cannot erase EVE files even while new EVE admission is disa
     results: {
       orphanedAttachments: {
         deletedCount: 0,
-        skipped: true,
-        reason: "eve_file_inventory_pending",
+        skipped: false,
       },
     },
   });
   expect(mocks.references).not.toHaveBeenCalled();
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.remove).not.toHaveBeenCalled();
+  expect(mocks.cleanupEve).toHaveBeenCalledOnce();
+  expect(mocks.cleanupEve.mock.calls[0]?.[0].getTime()).toBeLessThanOrEqual(
+    Date.now() - 4 * 60 * 60 * 1000
+  );
 });
 
 test("cleanup still requires cron authorization", async () => {

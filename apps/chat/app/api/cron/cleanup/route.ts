@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
+import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 import { deleteFilesByUrls, listFiles } from "@/lib/file-storage";
 import { isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
 
@@ -41,16 +42,12 @@ export async function GET(request: NextRequest) {
 }
 
 async function cleanupOrphanedAttachments() {
-  // Legacy message rows cannot prove that a file is unused by EVE. Keep
-  // existing files even when EVE admission is temporarily disabled. Replace
-  // this guard only when cleanup includes durable EVE file references.
+  // Use EVE ownership even when admission is disabled; never infer its
+  // references from legacy message rows or delete uninventoried legacy files.
   if (env.WORKFLOW_POSTGRES_URL) {
-    return {
-      deletedCount: 0,
-      deletedUrls: [],
-      skipped: true,
-      reason: "eve_file_inventory_pending",
-    };
+    return await cleanupEveOrphanedFiles(
+      new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME)
+    );
   }
   // Skip cleanup if neither image tool nor attachments is enabled
   const imageGenerationEnabled = config.ai.tools.image.enabled;
