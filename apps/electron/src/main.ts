@@ -1,4 +1,5 @@
 import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import {
   app,
@@ -16,13 +17,13 @@ import { ELECTRON_AUTH_COOKIE_PREFIX } from "@/lib/electron-auth";
 import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
 import { electronAuthClient } from "./lib/auth-client";
 
-function isSquirrelStartupEvent(): boolean {
+const isSquirrelStartupEvent = (): boolean => {
   if (process.platform !== "win32") {
     return false;
   }
 
   return process.argv.some((arg) => arg.startsWith("--squirrel-"));
-}
+};
 
 if (isSquirrelStartupEvent()) {
   app.quit();
@@ -64,7 +65,7 @@ if (!gotSingleInstanceLock) {
   app.quit();
 }
 
-function registerProtocolClient(): void {
+const registerProtocolClient = (): void => {
   if (process.defaultApp) {
     if (process.platform === "win32" && process.argv.length >= 2) {
       app.setAsDefaultProtocolClient(APP_SCHEME, process.execPath, [
@@ -80,59 +81,17 @@ function registerProtocolClient(): void {
   }
 
   app.setAsDefaultProtocolClient(APP_SCHEME);
-}
+};
 
-function broadcastAuthState(): void {
+const broadcastAuthState = (): void => {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return;
   }
 
   mainWindow.webContents.send("chatjs:auth-state-changed", currentAuthState);
-}
+};
 
-async function resetAuthFlow(): Promise<void> {
-  if (pendingAuthRefreshTimer) {
-    clearTimeout(pendingAuthRefreshTimer);
-    pendingAuthRefreshTimer = null;
-  }
-
-  isAuthFlowInProgress = false;
-  currentAuthFlowId += 1;
-
-  await setAuthState({
-    message: null,
-    status: "idle",
-  });
-}
-
-async function setAuthState(nextState: AuthRendererState): Promise<void> {
-  currentAuthState = nextState;
-  broadcastAuthState();
-
-  if (nextState.status === "idle") {
-    await setAuthOverlay(mainWindow, { visible: false });
-    return;
-  }
-
-  if (!mainWindow || mainWindow.isDestroyed()) {
-    return;
-  }
-
-  // Let the renderer-owned shadcn overlay handle normal auth states when the
-  // app page is already loaded. Keep the main-process DOM overlay only as a
-  // fallback during main-frame loads, where React cannot render yet.
-  if (mainWindow.webContents.isLoadingMainFrame()) {
-    await setAuthOverlay(mainWindow, {
-      message: nextState.message,
-      visible: true,
-    });
-    return;
-  }
-
-  await setAuthOverlay(mainWindow, { visible: false });
-}
-
-async function setAuthOverlay(
+const setAuthOverlay = async (
   win: BrowserWindow | null,
   options:
     | {
@@ -142,7 +101,7 @@ async function setAuthOverlay(
         visible: true;
         message: string;
       }
-): Promise<void> {
+): Promise<void> => {
   if (!win || win.isDestroyed()) {
     return;
   }
@@ -201,9 +160,16 @@ async function setAuthOverlay(
   try {
     if (win.webContents.isLoadingMainFrame()) {
       win.webContents.once("did-finish-load", () => {
-        win.webContents.executeJavaScript(script).catch((error) => {
-          console.warn("[electron-main] failed to update auth overlay", error);
-        });
+        void (async () => {
+          try {
+            await win.webContents.executeJavaScript(script);
+          } catch (error) {
+            console.warn(
+              "[electron-main] failed to update auth overlay",
+              error
+            );
+          }
+        })();
       });
       return;
     }
@@ -212,7 +178,49 @@ async function setAuthOverlay(
   } catch (error) {
     console.warn("[electron-main] failed to update auth overlay", error);
   }
-}
+};
+
+const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
+  currentAuthState = nextState;
+  broadcastAuthState();
+
+  if (nextState.status === "idle") {
+    await setAuthOverlay(mainWindow, { visible: false });
+    return;
+  }
+
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  // Let the renderer-owned shadcn overlay handle normal auth states when the
+  // app page is already loaded. Keep the main-process DOM overlay only as a
+  // fallback during main-frame loads, where React cannot render yet.
+  if (mainWindow.webContents.isLoadingMainFrame()) {
+    await setAuthOverlay(mainWindow, {
+      message: nextState.message,
+      visible: true,
+    });
+    return;
+  }
+
+  await setAuthOverlay(mainWindow, { visible: false });
+};
+
+const resetAuthFlow = async (): Promise<void> => {
+  if (pendingAuthRefreshTimer) {
+    clearTimeout(pendingAuthRefreshTimer);
+    pendingAuthRefreshTimer = null;
+  }
+
+  isAuthFlowInProgress = false;
+  currentAuthFlowId += 1;
+
+  await setAuthState({
+    message: null,
+    status: "idle",
+  });
+};
 
 // Setup the @better-auth/electron main process handler.
 // Registers the protocol handler, deep-link listeners, CSP updates, and
@@ -272,22 +280,18 @@ ipcMain.handle("better-auth:getUser", async () => {
   return sessionResult.data?.user ?? null;
 });
 
-function getAppAssetPath(...segments: string[]): string {
-  return path.join(app.getAppPath(), ...segments);
-}
+const getAppAssetPath = (...segments: string[]): string =>
+  path.join(app.getAppPath(), ...segments);
 
-function isBetterAuthCookieName(name: string): boolean {
-  return (
-    name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
-    name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
-    name.endsWith("session_token") ||
-    name.endsWith("session_data")
-  );
-}
+const isBetterAuthCookieName = (name: string): boolean =>
+  name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
+  name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
+  name.endsWith("session_token") ||
+  name.endsWith("session_data");
 
-async function syncAuthSessionCookies(
+const syncAuthSessionCookies = async (
   win?: BrowserWindow | null
-): Promise<void> {
+): Promise<void> => {
   const targetWindow = win ?? mainWindow;
   const targetSession = targetWindow?.webContents.session;
 
@@ -341,15 +345,12 @@ async function syncAuthSessionCookies(
       })
     )
   );
-}
+};
 
-function hasSessionCookie(cookieHeader: string): boolean {
-  return /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/u.test(
-    cookieHeader
-  );
-}
+const hasSessionCookie = (cookieHeader: string): boolean =>
+  /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/u.test(cookieHeader);
 
-async function authenticateFromDeepLink(url: string): Promise<boolean> {
+const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
   try {
     if (!isAuthFlowInProgress) {
       return false;
@@ -380,9 +381,9 @@ async function authenticateFromDeepLink(url: string): Promise<boolean> {
     });
     return false;
   }
-}
+};
 
-async function waitForElectronSession(timeoutMs = 8_000): Promise<boolean> {
+const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
   const start = Date.now();
 
   while (Date.now() - start < timeoutMs) {
@@ -400,13 +401,13 @@ async function waitForElectronSession(timeoutMs = 8_000): Promise<boolean> {
       console.warn("[electron-main] session check failed while waiting", error);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await sleep(250);
   }
 
   return false;
-}
+};
 
-function scheduleAuthRefresh(): void {
+const scheduleAuthRefresh = (): void => {
   const targetWindow = mainWindow;
   const authFlowId = currentAuthFlowId;
 
@@ -423,23 +424,24 @@ function scheduleAuthRefresh(): void {
   targetWindow.focus();
 
   pendingAuthRefreshTimer = setTimeout(() => {
-    void waitForElectronSession()
-      .then(async (ready) => {
+    void (async () => {
+      try {
+        const ready = await waitForElectronSession();
         if (!ready) {
           isAuthFlowInProgress = false;
-          if (authFlowId === currentAuthFlowId) {
-            await setAuthState({
-              detail: "Please try the browser flow again.",
-              message:
-                "Still waiting for the desktop app to finish signing in...",
-              status: "timed-out",
-            });
-          } else {
-            await setAuthState({
-              message: null,
-              status: "idle",
-            });
-          }
+          await setAuthState(
+            authFlowId === currentAuthFlowId
+              ? {
+                  detail: "Please try the browser flow again.",
+                  message:
+                    "Still waiting for the desktop app to finish signing in...",
+                  status: "timed-out",
+                }
+              : {
+                  message: null,
+                  status: "idle",
+                }
+          );
           return;
         }
 
@@ -449,21 +451,21 @@ function scheduleAuthRefresh(): void {
           message: null,
           status: "idle",
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("[electron-main] auth refresh failed", error);
         isAuthFlowInProgress = false;
-        void setAuthState({
+        await setAuthState({
           detail: error instanceof Error ? error.message : String(error),
           message: "Sign-in refresh failed.",
           status: "error",
         });
-      });
+      }
+    })();
     pendingAuthRefreshTimer = null;
   }, 250);
-}
+};
 
-async function createWindow(): Promise<BrowserWindow> {
+const createWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
     ...WINDOW_DEFAULTS,
     ...(process.platform === "darwin" || process.platform === "win32"
@@ -513,9 +515,9 @@ async function createWindow(): Promise<BrowserWindow> {
   }
 
   return win;
-}
+};
 
-function createTray(): Tray {
+const createTray = (): Tray => {
   const iconPath = getAppAssetPath("build", "icon.png");
   const trayIcon = nativeImage.createFromPath(iconPath);
   const t = new Tray(trayIcon.resize({ height: 16, width: 16 }));
@@ -551,9 +553,9 @@ function createTray(): Tray {
   });
 
   return t;
-}
+};
 
-function setupApplicationMenu(): void {
+const setupApplicationMenu = (): void => {
   if (process.platform !== "darwin") {
     return;
   }
@@ -595,21 +597,15 @@ function setupApplicationMenu(): void {
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-}
+};
 
-function setupAutoUpdater(): void {
+const setupAutoUpdater = async (): Promise<void> => {
   if (!app.isPackaged) {
     return;
   }
 
   try {
-    const { updateElectronApp } = require("update-electron-app") as {
-      updateElectronApp: (options?: {
-        logger?: Pick<typeof console, "error" | "log" | "warn">;
-        notifyUser?: boolean;
-        updateInterval?: string;
-      }) => void;
-    };
+    const { updateElectronApp } = await import("update-electron-app");
 
     updateElectronApp({
       logger: console,
@@ -622,7 +618,7 @@ function setupAutoUpdater(): void {
       error
     );
   }
-}
+};
 
 ipcMain.handle("chatjs:sync-auth-session", async () => {
   await syncAuthSessionCookies();
@@ -630,30 +626,32 @@ ipcMain.handle("chatjs:sync-auth-session", async () => {
 
 ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
-app.whenReady().then(async () => {
+void (async () => {
+  await app.whenReady();
   app.setName(APP_NAME);
   setupApplicationMenu();
   mainWindow = await createWindow();
   tray = createTray();
-  setupAutoUpdater();
+  void setupAutoUpdater();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      void createWindow().then((window) => {
-        mainWindow = window;
-      });
+      void (async () => {
+        mainWindow = await createWindow();
+      })();
     } else {
       mainWindow?.show();
     }
   });
-});
+})();
 
 app.on("open-url", (_event, url) => {
-  void authenticateFromDeepLink(url).then((didAuthenticate) => {
+  void (async () => {
+    const didAuthenticate = await authenticateFromDeepLink(url);
     if (didAuthenticate) {
       scheduleAuthRefresh();
     }
-  });
+  })();
 });
 
 app.on("second-instance", (_event, commandLine) => {
@@ -662,11 +660,12 @@ app.on("second-instance", (_event, commandLine) => {
   );
 
   if (deepLinkUrl) {
-    void authenticateFromDeepLink(deepLinkUrl).then((didAuthenticate) => {
+    void (async () => {
+      const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
       if (didAuthenticate) {
         scheduleAuthRefresh();
       }
-    });
+    })();
   }
 });
 

@@ -24,7 +24,6 @@
     },
     {
       "files": [
-        "apps/electron/src/main.ts",
         "apps/site/components/get-started.tsx",
         "apps/site/components/hero.tsx",
         "apps/site/components/logo-cloud.tsx",
@@ -73,24 +72,12 @@
       }
     },
     {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "no-promise-executor-return": "off"
-      }
-    },
-    {
       "files": [
         "apps/electron/src/main.ts",
         "apps/site/components/thread-playground-model.ts"
       ],
       "rules": {
         "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "node/global-require": "off"
       }
     },
     {
@@ -102,7 +89,6 @@
     {
       "files": [
         "apps/docs/e2e/docs-visual.browser.test.ts",
-        "apps/electron/src/main.ts",
         "apps/site/components/thread-playground-model.ts",
         "packages/cli/src/utils/run-command.ts",
         "packages/cli/test/gateway-selection.test.ts",
@@ -110,12 +96,6 @@
       ],
       "rules": {
         "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "promise/no-nesting": "off"
       }
     },
     {
@@ -135,10 +115,7 @@
       }
     },
     {
-      "files": [
-        "apps/electron/src/main.ts",
-        "packages/thread/src/abstract-thread.ts"
-      ],
+      "files": ["packages/thread/src/abstract-thread.ts"],
       "rules": {
         "promise/prefer-await-to-then": "off"
       }
@@ -183,12 +160,6 @@
       }
     },
     {
-      "files": ["apps/electron/forge.config.ts", "apps/electron/src/main.ts"],
-      "rules": {
-        "require-await": "off"
-      }
-    },
-    {
       "files": ["apps/site/tests/thread-playground.visual.ts"],
       "rules": {
         "require-unicode-regexp": "off"
@@ -196,7 +167,6 @@
     },
     {
       "files": [
-        "apps/electron/src/lib/auth-client.ts",
         "apps/site/app/layout.tsx",
         "apps/site/app/page.tsx",
         "apps/site/app/threads/page.tsx",
@@ -212,12 +182,6 @@
       "files": ["packages/gateways/src/gateway-provider.ts"],
       "rules": {
         "typescript/method-signature-style": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/src/lib/auth-client.ts"],
-      "rules": {
-        "typescript/no-explicit-any": "off"
       }
     },
     {
@@ -254,21 +218,9 @@
       }
     },
     {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "unicorn/numeric-separators-style": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/forge.config.ts", "apps/electron/src/main.ts"],
+      "files": ["apps/electron/forge.config.ts"],
       "rules": {
         "unicorn/prefer-module": "off"
-      }
-    },
-    {
-      "files": ["apps/electron/src/main.ts"],
-      "rules": {
-        "unicorn/prefer-ternary": "off"
       }
     }
   ]
