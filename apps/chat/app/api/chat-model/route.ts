@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Route for updating selected-model cookie because setting in an action causes a refresh
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   try {
     const { model } = await request.json();
 
@@ -29,4 +29,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+};

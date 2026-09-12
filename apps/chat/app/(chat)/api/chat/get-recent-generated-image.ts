@@ -1,8 +1,8 @@
 import type { ChatMessage } from "@/lib/ai/types";
 
-export function getRecentGeneratedImage(
+export const getRecentGeneratedImage = (
   messages: ChatMessage[]
-): { imageUrl: string; name: string } | null {
+): { imageUrl: string; name: string } | null => {
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
@@ -23,4 +23,4 @@ export function getRecentGeneratedImage(
   }
 
   return null;
-}
+};

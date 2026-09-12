@@ -1,9 +1,9 @@
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
 
-export function addExplicitToolRequestToMessages(
+export const addExplicitToolRequestToMessages = (
   messages: ChatMessage[],
   explicitlyRequestedTools: ToolName[] | null
-) {
+) => {
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
@@ -40,4 +40,4 @@ export function addExplicitToolRequestToMessages(
       type: "text",
     });
   }
-}
+};
