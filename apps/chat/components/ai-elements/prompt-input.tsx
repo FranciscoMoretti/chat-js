@@ -144,10 +144,10 @@ export type PromptInputProviderProps = PropsWithChildren<{
  * Optional global provider that lifts PromptInput state outside of PromptInput.
  * If you don't use it, PromptInput stays fully self-managed.
  */
-export function PromptInputProvider({
+export const PromptInputProvider = ({
   initialInput: initialTextInput = "",
   children,
-}: PromptInputProviderProps) {
+}: PromptInputProviderProps) => {
   // ----- textInput state
   const [textInput, setTextInput] = useState(initialTextInput);
   const clearInput = useCallback(() => setTextInput(""), []);
@@ -243,7 +243,7 @@ export function PromptInputProvider({
       </ProviderAttachmentsContext.Provider>
     </PromptInputController.Provider>
   );
-}
+};
 
 // ============================================================================
 // Component Context & Hooks
@@ -269,11 +269,11 @@ export type PromptInputAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   className?: string;
 };
 
-export function PromptInputAttachment({
+export const PromptInputAttachment = ({
   data,
   className,
   ...props
-}: PromptInputAttachmentProps) {
+}: PromptInputAttachmentProps) => {
   const attachments = usePromptInputAttachments();
 
   const filename = data.filename || "";
@@ -358,7 +358,7 @@ export function PromptInputAttachment({
       </PromptInputHoverCardContent>
     </PromptInputHoverCard>
   );
-}
+};
 
 export type PromptInputAttachmentsProps = Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -367,11 +367,11 @@ export type PromptInputAttachmentsProps = Omit<
   children: (attachment: FileUIPart & { id: string }) => ReactNode;
 };
 
-export function PromptInputAttachments({
+export const PromptInputAttachments = ({
   children,
   className,
   ...props
-}: PromptInputAttachmentsProps) {
+}: PromptInputAttachmentsProps) => {
   const attachments = usePromptInputAttachments();
 
   if (!attachments.files.length) {
@@ -388,7 +388,7 @@ export function PromptInputAttachments({
       ))}
     </div>
   );
-}
+};
 
 export type PromptInputActionAddAttachmentsProps = ComponentProps<
   typeof DropdownMenuItem

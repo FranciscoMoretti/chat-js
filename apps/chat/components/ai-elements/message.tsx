@@ -333,12 +333,12 @@ export type MessageAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   onRemove?: () => void;
 };
 
-export function MessageAttachment({
+export const MessageAttachment = ({
   data,
   className,
   onRemove,
   ...props
-}: MessageAttachmentProps) {
+}: MessageAttachmentProps) => {
   const filename = data.filename || "";
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
@@ -409,15 +409,15 @@ export function MessageAttachment({
       )}
     </div>
   );
-}
+};
 
 export type MessageAttachmentsProps = ComponentProps<"div">;
 
-export function MessageAttachments({
+export const MessageAttachments = ({
   children,
   className,
   ...props
-}: MessageAttachmentsProps) {
+}: MessageAttachmentsProps) => {
   if (!children) {
     return null;
   }
@@ -433,7 +433,7 @@ export function MessageAttachments({
       {children}
     </div>
   );
-}
+};
 
 export type MessageToolbarProps = ComponentProps<"div">;
 
