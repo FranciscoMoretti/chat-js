@@ -1,14 +1,12 @@
 "use client";
 
 import type { AbstractThread } from "@chat-js/thread";
-import { type DataUIPart, safeValidateUIMessages } from "ai";
+import { safeValidateUIMessages } from "ai";
+import type { DataUIPart } from "ai";
 import { z } from "zod";
 
-import {
-  type ChatMessage,
-  type CustomUIDataTypes,
-  messageMetadataSchema,
-} from "@/lib/ai/types";
+import { messageMetadataSchema } from "@/lib/ai/types";
+import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 
 const serializedMessageMetadataSchema = messageMetadataSchema.extend({
   createdAt: z.coerce.date(),

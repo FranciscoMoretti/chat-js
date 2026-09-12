@@ -5,12 +5,12 @@ import type {
 } from "@ai-sdk/provider";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import {
-  type AiGatewayModel,
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";

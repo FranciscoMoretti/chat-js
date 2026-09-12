@@ -1,4 +1,5 @@
-import { type ModelMessage, Output, streamText } from "ai";
+import { Output, streamText } from "ai";
+import type { ModelMessage } from "ai";
 import { z } from "zod";
 
 import { getLanguageModel } from "@/lib/ai/providers";
