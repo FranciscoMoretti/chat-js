@@ -1,4 +1,5 @@
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
 
 const candidates = [
@@ -26,7 +27,7 @@ const candidates = [
 
 const forgeEntrypoint = candidates.find((candidate) => {
   try {
-    require("node:fs").accessSync(candidate);
+    fs.accessSync(candidate);
     return true;
   } catch {
     return false;
