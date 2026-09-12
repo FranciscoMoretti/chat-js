@@ -1,27 +1,13 @@
 {
   "overrides": [
     {
-      "files": [
-        "components/chat-sync.tsx",
-        "components/lexical-chat-input.tsx",
-        "components/message-parts.tsx",
-        "components/parallel-response-cards.tsx",
-        "components/research-task.tsx",
-        "lib/ai/core-chat-agent.ts",
-        "lib/stores/base/hooks.ts"
-      ],
+      "files": ["components/chat-sync.tsx"],
       "rules": {
         "arrow-body-style": "off"
       }
     },
     {
-      "files": ["lib/ai/gateway.ts", "lib/ai/text-splitter.ts"],
-      "rules": {
-        "class-methods-use-this": "off"
-      }
-    },
-    {
-      "files": ["lib/parallel-chat-requests.test.ts"],
+      "files": ["lib/ai/gateway.ts", "lib/parallel-chat-requests.test.ts"],
       "rules": {
         "class-methods-use-this": "off"
       }
@@ -37,148 +23,15 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "curly": "off"
-      }
-    },
-    {
       "files": ["tools/platform/deep-research/deep-research.ts"],
       "rules": {
         "default-case": "off"
       }
     },
     {
-      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
-      "rules": {
-        "eqeqeq": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(auth)/device-login/page.tsx",
-        "app/(auth)/login/page.tsx",
-        "app/(chat)/chat-providers.tsx",
-        "app/(chat)/chat-route-host.tsx",
-        "app/(chat)/layout.tsx",
-        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
-        "app/(chat)/settings/connectors/page.tsx",
-        "app/(chat)/settings/layout.tsx",
-        "app/(chat)/settings/models/page.tsx",
-        "app/(chat)/share/\\[id\\]/page.tsx",
-        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
-        "app/terms/page.tsx",
-        "components/ai-elements/code-block.tsx",
-        "components/ai-elements/message.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/artifact-actions.tsx",
-        "components/artifact-panel.tsx",
-        "components/auth-providers.tsx",
-        "components/chat/chat-content.tsx",
-        "components/chat/chat-layout.tsx",
-        "components/chat/chat-welcome.tsx",
-        "components/chat/main-chat-panel.tsx",
-        "components/chat/secondary-chat-panel.tsx",
-        "components/chat/use-chat-votes.ts",
-        "components/get-url-without-params.ts",
-        "components/parallel-response-cards.test.ts",
-        "components/parallel-response-status.ts",
-        "components/part/deep-research.tsx",
-        "components/part/document-common.tsx",
-        "components/part/document-preview.tsx",
-        "components/part/document-tool.tsx",
-        "components/part/dynamic-tool.tsx",
-        "components/part/message-reasoning.tsx",
-        "components/part/read-document.tsx",
-        "components/part/tool-part.tsx",
-        "components/part/web-search.tsx",
-        "components/settings/connector-header.tsx",
-        "components/settings/connectors-settings.tsx",
-        "components/settings/mcp-connect-dialog.tsx",
-        "components/settings/mcp-create-dialog.tsx",
-        "components/settings/mcp-details-page.tsx",
-        "components/settings/models-settings.tsx",
-        "components/settings/models-table.tsx",
-        "components/settings/settings-header.tsx",
-        "components/settings/settings-nav.tsx",
-        "components/settings/settings-page.tsx",
-        "components/upgrade-cta/limit-display.tsx",
-        "components/upgrade-cta/login-cta-banner.tsx",
-        "components/upgrade-cta/login-prompt.tsx",
-        "components/upgrade-cta/share-menu-item.tsx",
-        "hooks/use-artifact.tsx",
-        "lib/ai/active-gateway.ts",
-        "lib/ai/core-chat-agent.ts",
-        "lib/app-chat-runtime.ts",
-        "lib/artifacts/code/client.tsx",
-        "lib/artifacts/sheet/client.tsx",
-        "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/chat-route.ts",
-        "lib/chat-tree-actions.test.ts",
-        "lib/clone-messages.test.ts",
-        "lib/clone-messages.ts",
-        "lib/credits/cost-accumulator.ts",
-        "lib/data-stream.test.ts",
-        "lib/editor/config.ts",
-        "lib/gated-chat-transport.test.ts",
-        "lib/runtime-registry/runtime-api.ts",
-        "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/stop-response.test.ts",
-        "lib/stores/base/debug.ts",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-data-parts.ts",
-        "lib/stores/custom-store-provider.tsx",
-        "lib/stores/with-message-parts.ts",
-        "lib/stores/with-thread-state.ts",
-        "lib/stores/with-tracing.ts",
-        "lib/url-utils.tsx",
-        "providers/chat-input-provider.tsx",
-        "providers/chat-models-provider.tsx",
-        "providers/default-model-provider.tsx",
-        "providers/session-provider.tsx",
-        "tools/chatjs/tavily-search/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "trpc/react.tsx",
-        "trpc/server.tsx"
-      ],
-      "rules": {
-        "func-style": "off"
-      }
-    },
-    {
-      "files": [
-        "components/part/tool-part.test.tsx",
-        "tools/chatjs/vercel-code-execution/tool.test.ts"
-      ],
-      "rules": {
-        "import/first": "off"
-      }
-    },
-    {
-      "files": [
-        "components/project-chat-item.tsx",
-        "tools/chatjs/tavily-search/renderer.tsx"
-      ],
-      "rules": {
-        "import/newline-after-import": "off"
-      }
-    },
-    {
       "files": ["components/artifact-panel.tsx", "components/toolbar.tsx"],
       "rules": {
         "import/no-cycle": "off"
-      }
-    },
-    {
-      "files": ["lib/editor/config.ts"],
-      "rules": {
-        "import/no-duplicates": "off"
-      }
-    },
-    {
-      "files": ["trpc/react.tsx"],
-      "rules": {
-        "import/no-named-as-default": "off"
       }
     },
     {
@@ -270,135 +123,6 @@
       }
     },
     {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "no-empty-function": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
-      "rules": {
-        "no-eq-null": "off"
-      }
-    },
-    {
-      "files": [
-        "app/layout.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/diffview.tsx",
-        "components/favicon-group.tsx",
-        "components/keyboard-shortcuts.tsx",
-        "components/multimodal-input.tsx",
-        "components/part/text-message-part.tsx",
-        "lib/auth.ts",
-        "lib/credits/cost-accumulator.ts",
-        "lib/editor/config.ts",
-        "lib/stores/base/hooks.ts",
-        "providers/chat-input-provider.tsx",
-        "trpc/server.tsx"
-      ],
-      "rules": {
-        "no-inline-comments": "off"
-      }
-    },
-    {
-      "files": ["components/ui/slider.tsx"],
-      "rules": {
-        "no-nested-ternary": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx"],
-      "rules": {
-        "no-param-reassign": "off"
-      }
-    },
-    {
-      "files": ["components/ai-elements/prompt-input.tsx"],
-      "rules": {
-        "no-plusplus": "off"
-      }
-    },
-    {
-      "files": ["lib/redis/client.test.ts"],
-      "rules": {
-        "no-promise-executor-return": "off"
-      }
-    },
-    {
-      "files": ["components/part/document-tool.tsx"],
-      "rules": {
-        "no-redeclare": "off"
-      }
-    },
-    {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "components/chat-sync.tsx",
-        "components/parallel-response-cards.tsx",
-        "components/ui/sidebar.tsx",
-        "lib/stores/with-thread-state.ts"
-      ],
-      "rules": {
-        "no-shadow": "off"
-      }
-    },
-    {
-      "files": [
-        "components/ai-elements/message.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/artifact-actions.tsx",
-        "components/delete-chat-dialog.tsx",
-        "components/image-modal.tsx",
-        "components/message-editor.tsx",
-        "components/multimodal-input.tsx",
-        "components/sidebar-chat-item.tsx",
-        "components/signup-form.tsx",
-        "lib/stores/with-tracing.ts"
-      ],
-      "rules": {
-        "no-unused-vars": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(auth)/device-login/page.tsx",
-        "app/(auth)/login/page.tsx",
-        "app/(chat)/layout.tsx",
-        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
-        "app/(chat)/settings/connectors/page.tsx",
-        "app/(chat)/settings/layout.tsx",
-        "app/(chat)/settings/models/page.tsx",
-        "app/(chat)/share/\\[id\\]/page.tsx",
-        "components/ai-elements/context.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/device-login-page.tsx",
-        "components/electron-auth-handler.tsx",
-        "components/feedback-actions.tsx",
-        "components/followup-suggestions.tsx",
-        "components/header-breadcrumb.tsx",
-        "components/multimodal-input.tsx",
-        "components/part/document-preview.tsx",
-        "components/research-tasks.tsx",
-        "components/settings/connectors-settings.tsx",
-        "components/settings/mcp-details-page.tsx",
-        "components/ui/form.tsx",
-        "components/ui/scroll-area.tsx",
-        "lib/app-chat-runtime.ts",
-        "lib/stores/base/use-data-parts.ts",
-        "lib/thread-utils.ts"
-      ],
-      "rules": {
-        "no-use-before-define": "off"
-      }
-    },
-    {
-      "files": ["components/anonymous-session-init.tsx"],
-      "rules": {
-        "no-useless-return": "off"
-      }
-    },
-    {
       "files": [
         "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
         "components/deep-research-progress.tsx",
@@ -416,54 +140,6 @@
       }
     },
     {
-      "files": ["components/chat-rename-dialog.tsx"],
-      "rules": {
-        "oxc/branches-sharing-code": "off"
-      }
-    },
-    {
-      "files": [
-        "components/artifact-actions.tsx",
-        "components/chat-composer.tsx",
-        "components/chat-system.tsx",
-        "components/header-breadcrumb.tsx",
-        "components/search-chats-dialog.tsx",
-        "components/settings/model-row.tsx"
-      ],
-      "rules": {
-        "prefer-arrow-callback": "off"
-      }
-    },
-    {
-      "files": [
-        "components/ai-elements/context.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/assistant-message.tsx",
-        "components/data-stream-handler.tsx",
-        "components/electron-auth-ui.tsx",
-        "components/followup-suggestions.tsx",
-        "components/multimodal-input.tsx",
-        "components/part/document-tool.tsx",
-        "components/part/tool-part.tsx",
-        "components/settings/mcp-details-page.tsx",
-        "components/share-button.tsx",
-        "components/suggested-actions.tsx",
-        "lib/files/upload-prep.ts",
-        "lib/message-conversion.ts",
-        "lib/start-provisional-chat.ts",
-        "lib/stores/with-tracing.ts"
-      ],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "prefer-named-capture-group": "off"
-      }
-    },
-    {
       "files": ["lib/ai/token-utils.ts"],
       "rules": {
         "prefer-object-spread": "off"
@@ -475,16 +151,10 @@
         "lib/cancellation-aware-chat-transport.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
-        "lib/redis/client.test.ts",
+        "lib/parallel-chat-requests.ts",
         "lib/redis/client.ts",
         "scripts/check-redis.ts"
       ],
-      "rules": {
-        "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["lib/parallel-chat-requests.ts"],
       "rules": {
         "promise/avoid-new": "off"
       }
@@ -499,12 +169,6 @@
       "files": ["app/(chat)/api/chat/route.ts"],
       "rules": {
         "promise/no-promise-in-callback": "off"
-      }
-    },
-    {
-      "files": ["scripts/check-redis.ts"],
-      "rules": {
-        "promise/param-names": "off"
       }
     },
     {
@@ -584,94 +248,7 @@
       }
     },
     {
-      "files": [
-        "app/(auth)/device-login/page.tsx",
-        "app/(auth)/login/page.tsx",
-        "app/(chat)/chat-providers.tsx",
-        "app/(chat)/chat-route-host.tsx",
-        "app/(chat)/layout.tsx",
-        "app/(chat)/loading.tsx",
-        "app/(chat)/settings/connectors/\\[connectorId\\]/page.tsx",
-        "app/(chat)/settings/connectors/page.tsx",
-        "app/(chat)/settings/layout.tsx",
-        "app/(chat)/settings/loading.tsx",
-        "app/(chat)/settings/models/page.tsx",
-        "app/(chat)/share/\\[id\\]/page.tsx",
-        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
-        "app/loading.tsx",
-        "app/not-found.tsx",
-        "app/terms/page.tsx",
-        "components/ai-elements/message.tsx",
-        "components/ai-elements/prompt-input.tsx",
-        "components/ai-elements/reasoning.tsx",
-        "components/ai-elements/response.tsx",
-        "components/chat/chat-content.tsx",
-        "components/chat/chat-welcome.tsx",
-        "components/chat/main-chat-panel.tsx",
-        "components/chat/secondary-chat-panel.tsx",
-        "components/messages.tsx",
-        "components/part/deep-research.tsx",
-        "components/part/document-common.tsx",
-        "components/part/document-preview.tsx",
-        "components/part/document-tool.tsx",
-        "components/part/dynamic-tool.tsx",
-        "components/part/message-annotations.tsx",
-        "components/part/message-reasoning.tsx",
-        "components/part/read-document.tsx",
-        "components/part/text-message-part.tsx",
-        "components/part/tool-part.tsx",
-        "components/part/web-search.tsx",
-        "components/settings/connector-header.tsx",
-        "components/settings/connectors-settings.tsx",
-        "components/settings/mcp-connect-dialog.tsx",
-        "components/settings/mcp-create-dialog.tsx",
-        "components/settings/mcp-details-page.tsx",
-        "components/settings/models-settings.tsx",
-        "components/settings/models-table.tsx",
-        "components/settings/settings-header.tsx",
-        "components/settings/settings-nav.tsx",
-        "components/settings/settings-page.tsx",
-        "components/ui/accordion.tsx",
-        "components/ui/alert.tsx",
-        "components/ui/avatar.tsx",
-        "components/ui/breadcrumb.tsx",
-        "components/ui/checkbox.tsx",
-        "components/ui/drawer.tsx",
-        "components/ui/scroll-area.tsx",
-        "components/ui/select.tsx",
-        "components/ui/switch.tsx",
-        "components/ui/table.tsx",
-        "components/ui/tabs.tsx",
-        "components/ui/textarea.tsx",
-        "components/upgrade-cta/limit-display.tsx",
-        "components/upgrade-cta/login-cta-banner.tsx",
-        "components/upgrade-cta/login-prompt.tsx",
-        "components/upgrade-cta/share-menu-item.tsx",
-        "hooks/use-artifact.tsx",
-        "lib/app-chat-runtime.ts",
-        "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/custom-store-provider.tsx",
-        "providers/chat-input-provider.tsx",
-        "providers/chat-models-provider.tsx",
-        "providers/default-model-provider.tsx",
-        "providers/session-provider.tsx",
-        "tools/chatjs/tavily-search/renderer.tsx",
-        "tools/chatjs/vercel-code-execution/renderer.tsx",
-        "trpc/react.tsx",
-        "trpc/server.tsx"
-      ],
-      "rules": {
-        "react/function-component-definition": "off"
-      }
-    },
-    {
-      "files": [
-        "components/auth-providers.tsx",
-        "components/ui/sidebar.tsx",
-        "hooks/use-artifact.tsx",
-        "trpc/react.tsx"
-      ],
+      "files": ["components/auth-providers.tsx", "trpc/react.tsx"],
       "rules": {
         "react/hook-use-state": "off"
       }
@@ -683,15 +260,6 @@
       ],
       "rules": {
         "react/immutability": "off"
-      }
-    },
-    {
-      "files": [
-        "components/header-breadcrumb.tsx",
-        "components/part/document-common.tsx"
-      ],
-      "rules": {
-        "react/jsx-curly-brace-presence": "off"
       }
     },
     {
@@ -714,12 +282,6 @@
       ],
       "rules": {
         "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
-      "files": ["components/message.tsx"],
-      "rules": {
-        "react/jsx-no-useless-fragment": "off"
       }
     },
     {
@@ -756,16 +318,6 @@
       "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "react/no-react-children": "off"
-      }
-    },
-    {
-      "files": [
-        "app/privacy/page.tsx",
-        "app/terms/page.tsx",
-        "components/settings/mcp-create-dialog.tsx"
-      ],
-      "rules": {
-        "react/no-unescaped-entities": "off"
       }
     },
     {
@@ -850,31 +402,15 @@
       }
     },
     {
-      "files": ["components/settings/mcp-details-page.tsx"],
-      "rules": {
-        "require-unicode-regexp": "off"
-      }
-    },
-    {
       "files": [
-        "app/(auth)/device-login/page.tsx",
-        "app/(auth)/login/page.tsx",
-        "app/(auth)/register/page.tsx",
         "app/(chat)/chat-route-host.tsx",
-        "app/layout.tsx",
-        "app/privacy/page.tsx",
-        "app/terms/page.tsx",
         "components/ai-elements/code-block.tsx",
         "components/ai-elements/context.tsx",
         "components/ai-elements/message.tsx",
         "components/ai-elements/prompt-input.tsx",
-        "components/ai-elements/reasoning.tsx",
         "components/ai-elements/response.tsx",
         "components/ai-elements/shimmer.tsx",
-        "components/ai-elements/tool.tsx",
-        "components/artifact-actions.tsx",
         "components/artifact-panel.tsx",
-        "components/attachment-list.tsx",
         "components/auth-providers.tsx",
         "components/chat-features-definitions.ts",
         "components/chat-runtime-controller.tsx",
@@ -886,92 +422,46 @@
         "components/data-stream-handler.tsx",
         "components/delete-chat-dialog.tsx",
         "components/delete-project-dialog.tsx",
-        "components/device-login-page.tsx",
         "components/diffview.tsx",
-        "components/electron-auth-handler.tsx",
-        "components/feedback-actions.tsx",
         "components/followup-suggestions.tsx",
         "components/icons.tsx",
         "components/image-editor.tsx",
         "components/interactive-chart-impl.tsx",
         "components/lexical-chat-input.tsx",
         "components/multimodal-input.tsx",
-        "components/parallel-response-cards.tsx",
-        "components/part/document-common.tsx",
         "components/part/document-preview.tsx",
         "components/part/document-tool.tsx",
-        "components/part/tool-part.test.tsx",
-        "components/part/tool-part.tsx",
-        "components/project-details-dialog.tsx",
-        "components/project-home.tsx",
         "components/project-icon.tsx",
-        "components/research-progress.tsx",
         "components/research-task.tsx",
-        "components/research-tasks.tsx",
-        "components/search-chats-dialog.tsx",
         "components/settings/connectors-settings.tsx",
         "components/settings/mcp-create-dialog.tsx",
         "components/settings/mcp-details-page.tsx",
         "components/settings/models-table.tsx",
-        "components/settings/settings-nav.tsx",
         "components/sheet-editor.tsx",
-        "components/sidebar-chats-list.tsx",
-        "components/sidebar-project-item.tsx",
-        "components/sidebar-projects.tsx",
-        "components/sources.tsx",
-        "components/suggested-actions.tsx",
-        "components/text-editor.tsx",
         "components/thinking-message.tsx",
-        "components/ui/alert.tsx",
-        "components/ui/badge.tsx",
-        "components/ui/button-group.tsx",
         "components/ui/button.tsx",
         "components/ui/form.tsx",
-        "components/ui/input-group.tsx",
         "components/ui/sidebar.tsx",
         "components/ui/toggle.tsx",
         "components/upgrade-cta/limit-display.tsx",
         "components/upgrade-cta/login-cta-banner.tsx",
-        "components/user-message.tsx",
         "components/version-footer.tsx",
         "hooks/chat-sync-hooks.ts",
-        "hooks/use-artifact.tsx",
-        "lib/ai/active-gateway.ts",
-        "lib/ai/core-chat-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
-        "lib/ai/gateways/fallback-models.ts",
-        "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/text-splitter.ts",
-        "lib/anonymous-session-client.ts",
-        "lib/artifacts/code/client.tsx",
-        "lib/artifacts/sheet/client.tsx",
-        "lib/artifacts/text/client.tsx",
         "lib/auth.ts",
-        "lib/chat-tree-actions.test.ts",
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
-        "lib/credits/cost-accumulator.test.ts",
-        "lib/credits/cost-accumulator.ts",
-        "lib/data-stream.test.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
         "lib/env-schema.ts",
         "lib/env.ts",
-        "lib/files/upload-prep.ts",
         "lib/features-config.ts",
         "lib/message-conversion.ts",
-        "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/with-data-stream.test.ts",
-        "lib/stores/with-message-parts.ts",
-        "lib/thread-utils.test.ts",
         "lib/utils.ts",
         "lib/utils/message-mapping.ts",
         "providers/chat-input-provider.tsx",
-        "providers/chat-models-provider.tsx",
         "providers/default-model-provider.tsx",
-        "tools/chatjs/get-weather/renderer.test.tsx",
-        "tools/chatjs/tavily-search/tool.test.ts",
         "tools/chatjs/tavily-search/tool.ts",
         "tools/chatjs/tools.ts",
         "tools/chatjs/ui.ts",
@@ -980,29 +470,10 @@
         "tools/platform/deep-research/pipeline.ts",
         "tools/platform/deep-research/researcher-agent.ts",
         "tools/platform/deep-research/supervisor-agent.ts",
-        "tools/platform/tools.ts",
-        "trpc/react.tsx",
-        "trpc/server.tsx"
+        "tools/platform/tools.ts"
       ],
       "rules": {
         "sort-keys": "off"
-      }
-    },
-    {
-      "files": [
-        "components/parallel-response-cards.tsx",
-        "components/sheet-editor.tsx",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/with-message-parts.ts"
-      ],
-      "rules": {
-        "typescript/array-type": "off"
-      }
-    },
-    {
-      "files": ["components/create-artifact.tsx"],
-      "rules": {
-        "typescript/consistent-type-imports": "off"
       }
     },
     {
@@ -1017,8 +488,6 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/credits/cost-accumulator.test.ts",
-        "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts"
       ],
       "rules": {
@@ -1032,31 +501,9 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "unicorn/catch-error-name": "off"
-      }
-    },
-    {
-      "files": ["components/settings/models-table.tsx"],
-      "rules": {
-        "unicorn/consistent-existence-index-check": "off"
-      }
-    },
-    {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "components/sheet-editor.tsx",
-        "lib/gated-chat-transport.test.ts"
-      ],
+      "files": ["lib/gated-chat-transport.test.ts"],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx", "lib/stores/base/hooks.ts"],
-      "rules": {
-        "unicorn/no-array-for-each": "off"
       }
     },
     {
@@ -1070,11 +517,7 @@
       }
     },
     {
-      "files": [
-        "components/parallel-response-cards.tsx",
-        "components/sidebar-chats-list.tsx",
-        "lib/utils/message-mapping.ts"
-      ],
+      "files": ["lib/utils/message-mapping.ts"],
       "rules": {
         "unicorn/no-array-sort": "off"
       }
@@ -1086,25 +529,9 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "unicorn/no-immediate-mutation": "off"
-      }
-    },
-    {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "unicorn/no-new-array": "off"
-      }
-    },
-    {
       "files": [
         "components/data-stream-handler.tsx",
-        "lib/cancellation-aware-chat-transport.ts",
-        "lib/gated-chat-transport.ts",
-        "lib/redis/client.test.ts",
-        "lib/social-auth.test.ts",
-        "providers/session-provider.tsx"
+        "lib/social-auth.test.ts"
       ],
       "rules": {
         "unicorn/no-useless-undefined": "off"
@@ -1123,50 +550,9 @@
       }
     },
     {
-      "files": ["components/sheet-editor.tsx"],
-      "rules": {
-        "unicorn/prefer-code-point": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "unicorn/prefer-dom-node-append": "off"
-      }
-    },
-    {
-      "files": ["components/image-modal.tsx"],
-      "rules": {
-        "unicorn/prefer-dom-node-remove": "off"
-      }
-    },
-    {
-      "files": [
-        "components/keyboard-shortcuts.tsx",
-        "components/search-chats.tsx"
-      ],
-      "rules": {
-        "unicorn/prefer-includes": "off"
-      }
-    },
-    {
       "files": ["lib/credits/cost-accumulator.ts", "lib/utils/rate-limit.ts"],
       "rules": {
         "unicorn/prefer-number-coercion": "off"
-      }
-    },
-    {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "components/artifact-actions.tsx",
-        "components/delete-chat-dialog.tsx",
-        "components/image-modal.tsx",
-        "components/multimodal-input.tsx",
-        "components/sidebar-chat-item.tsx",
-        "lib/stores/with-tracing.ts"
-      ],
-      "rules": {
-        "unicorn/prefer-optional-catch-binding": "off"
       }
     },
     {
@@ -1176,27 +562,9 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "components/multimodal-input.tsx",
-        "lib/ai/text-splitter.ts"
-      ],
+      "files": ["lib/ai/text-splitter.ts"],
       "rules": {
         "unicorn/prefer-spread": "off"
-      }
-    },
-    {
-      "files": [
-        "components/artifact-actions.tsx",
-        "components/artifact-panel.tsx",
-        "components/code-editor.tsx",
-        "components/data-stream-handler.tsx",
-        "components/diffview.tsx",
-        "components/part/document-common.tsx",
-        "components/part/document-preview.tsx"
-      ],
-      "rules": {
-        "unicorn/switch-case-braces": "off"
       }
     }
   ]
