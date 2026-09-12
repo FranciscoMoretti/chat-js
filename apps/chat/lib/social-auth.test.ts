@@ -53,7 +53,7 @@ describe("getEnabledSocialAuthProviders", () => {
     ).toEqual(["github", "vercel"]);
   });
 
-  it("returns providers in config order", () => {
+  it("returns providers in product order", () => {
     expect(
       getEnabledSocialAuthProviders({
         github: true,

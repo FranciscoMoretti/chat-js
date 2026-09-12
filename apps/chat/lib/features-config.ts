@@ -8,6 +8,7 @@ interface FeatureConfig {
   icon: LucideIcon;
   key: string;
   name: string;
+  order: number;
 }
 
 export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
@@ -18,6 +19,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Mic,
     key: "audioInput",
     name: "Audio Input",
+    order: 4,
   },
   audioOutput: {
     category: "output",
@@ -26,6 +28,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Mic,
     key: "audioOutput",
     name: "Audio Output",
+    order: 6,
   },
   functionCalling: {
     category: "capability",
@@ -34,6 +37,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Zap,
     key: "functionCalling",
     name: "Tools",
+    order: 1,
   },
   imageInput: {
     category: "input",
@@ -42,6 +46,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Eye,
     key: "imageInput",
     name: "Vision",
+    order: 2,
   },
   imageOutput: {
     category: "output",
@@ -50,6 +55,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Image,
     key: "imageOutput",
     name: "Image Output",
+    order: 5,
   },
   pdfInput: {
     category: "input",
@@ -58,6 +64,7 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: FileText,
     key: "pdfInput",
     name: "PDF",
+    order: 3,
   },
   reasoning: {
     category: "capability",
@@ -66,21 +73,12 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     icon: Brain,
     key: "reasoning",
     name: "Reasoning",
+    order: 0,
   },
 } as const;
 
-const FEATURE_ORDER = [
-  "reasoning",
-  "functionCalling",
-  "imageInput",
-  "pdfInput",
-  "audioInput",
-  "imageOutput",
-  "audioOutput",
-] as const;
-
 // Get only enabled features
 export const getEnabledFeatures = () =>
-  FEATURE_ORDER.map((key) => AVAILABLE_FEATURES[key]).filter(
-    (feature) => feature.enabled
-  );
+  Object.values(AVAILABLE_FEATURES)
+    .filter((feature) => feature.enabled)
+    .toSorted((left, right) => left.order - right.order);

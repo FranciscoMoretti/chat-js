@@ -9,18 +9,22 @@ export type SocialAuthSignInOptions = {
 export type SocialAuthProvider = keyof AuthenticationConfig;
 
 // Keep the sign-in buttons in product order, independent of config key order.
-const SOCIAL_AUTH_PROVIDER_IDS: SocialAuthProvider[] = [
-  "google",
-  "github",
-  "vercel",
-];
-
-const SOCIAL_AUTH_PROVIDER_ID_SET = new Set<string>(SOCIAL_AUTH_PROVIDER_IDS);
+const SOCIAL_AUTH_PROVIDER_ORDER: Record<SocialAuthProvider, number> = {
+  github: 1,
+  google: 0,
+  vercel: 2,
+};
 
 export const isSocialAuthProvider = (
   value: string | null | undefined
 ): value is SocialAuthProvider =>
-  typeof value === "string" && SOCIAL_AUTH_PROVIDER_ID_SET.has(value);
+  typeof value === "string" && Object.hasOwn(SOCIAL_AUTH_PROVIDER_ORDER, value);
+
+const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(SOCIAL_AUTH_PROVIDER_ORDER)
+  .filter(isSocialAuthProvider)
+  .toSorted(
+    (a, b) => SOCIAL_AUTH_PROVIDER_ORDER[a] - SOCIAL_AUTH_PROVIDER_ORDER[b]
+  );
 
 export const getEnabledSocialAuthProviders = (
   authentication: AuthenticationConfig
