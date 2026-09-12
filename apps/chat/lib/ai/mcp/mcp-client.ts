@@ -13,10 +13,8 @@ import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
 
 import { invalidateAllMcpCaches } from "./cache";
-import {
-  McpOAuthClientProvider,
-  OAuthAuthorizationRequiredError,
-} from "./mcp-oauth-provider";
+import { McpOAuthClientProvider } from "./mcp-oauth-provider";
+import { OAuthAuthorizationRequiredError } from "./oauth-authorization-required-error";
 
 const log = createModuleLogger("mcp-client");
 

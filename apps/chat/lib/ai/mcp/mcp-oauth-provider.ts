@@ -20,8 +20,6 @@ import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
-export { OAuthAuthorizationRequiredError } from "./oauth-authorization-required-error";
-
 const log = createModuleLogger("mcp-oauth-provider");
 
 /**
