@@ -16,6 +16,7 @@ import {
 } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+
 import {
   PromptInput,
   PromptInputButton,
@@ -57,6 +58,7 @@ import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { LexicalChatInput } from "./lexical-chat-input";
 import { ModelSelector } from "./model-selector";
 import { getResponseAwareStatus } from "./parallel-response-status";
@@ -676,8 +678,8 @@ function PureMultimodalInput({
           <input {...getInputProps()} />
 
           {isDragActive && attachmentsEnabled && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-primary border-dashed bg-accent/80">
-              <div className="font-medium text-primary">
+            <div className="border-primary bg-accent/80 absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed">
+              <div className="text-primary font-medium">
                 Drop images or PDFs here to attach
               </div>
             </div>
@@ -819,7 +821,7 @@ function PureAttachmentsButton({
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <PromptInputButton
-              className="@[500px]:size-10 size-8"
+              className="size-8 @[500px]:size-10"
               data-testid="attachments-button"
               disabled={status !== "ready"}
               onClick={handleDesktopClick}
@@ -950,7 +952,7 @@ export function ComposerModelPicker() {
   } = useChatInput();
   return (
     <ModelSelector
-      className="@[500px]:h-10 h-8 w-fit max-w-none shrink justify-start truncate @[500px]:px-3 px-2 @[500px]:text-sm text-xs"
+      className="h-8 w-fit max-w-none shrink justify-start truncate px-2 text-xs @[500px]:h-10 @[500px]:px-3 @[500px]:text-sm"
       onModelSelectionChangeAction={handleModelSelectionChange}
       selectedModelId={selectedModelId}
       selectedModelSelection={selectedModelSelection}
@@ -974,7 +976,7 @@ export function ComposerContextUsage() {
   const { selectedModelId } = useChatInput();
   return (
     <ContextUsageFromParent
-      className="@[500px]:block hidden"
+      className="hidden @[500px]:block"
       iconOnly
       parentMessageId={parentMessageId}
       selectedModelId={selectedModelId}
@@ -986,7 +988,7 @@ export function ComposerSubmit() {
   const { status, submission, submitForm, onStop } = useComposer();
   return (
     <PromptInputSubmit
-      className="@[500px]:size-10 size-8 shrink-0"
+      className="size-8 shrink-0 @[500px]:size-10"
       disabled={status === "ready" && !submission.enabled}
       onClick={(event) => {
         event.preventDefault();

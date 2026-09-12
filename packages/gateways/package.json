@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Gateway contracts and shared runtime utilities for ChatJS registry extensions",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
+    "directory": "packages/gateways"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/*.test.ts",
+    "README.md"
+  ],
   "type": "module",
   "exports": {
     "./defaults": {
@@ -49,12 +60,6 @@
       "default": "./dist/definition.js"
     }
   },
-  "files": [
-    "dist",
-    "src",
-    "!src/*.test.ts",
-    "README.md"
-  ],
   "publishConfig": {
     "access": "public"
   },
@@ -62,33 +67,28 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "test:types": "bun run build && tsc --noEmit",
     "test:unit": "vitest run",
-    "lint": "bunx @biomejs/biome@2.4.10 check src package.json tsconfig.json tsconfig.build.json",
-    "format": "bunx @biomejs/biome@2.4.10 check --write src package.json tsconfig.json tsconfig.build.json",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write .",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "4.0.49",
+    "@ai-sdk/gateway": "4.0.75",
+    "@ai-sdk/google": "4.0.64",
+    "@ai-sdk/openai": "4.0.59",
+    "@ai-sdk/openai-compatible": "3.0.44",
+    "@ai-sdk/provider": "4.0.10",
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "@types/node": "^22.8.6",
+    "ai": "7.0.93",
+    "typescript": "6.0.2",
+    "vitest": "^4.0.0"
+  },
   "peerDependencies": {
     "@ai-sdk/provider": "4.0.10",
     "ai": "7.0.93"
-  },
-  "devDependencies": {
-    "@ai-sdk/provider": "4.0.10",
-    "ai": "7.0.93",
-    "@ai-sdk/gateway": "4.0.75",
-    "@ai-sdk/openai": "4.0.59",
-    "@ai-sdk/openai-compatible": "3.0.44",
-    "@openrouter/ai-sdk-provider": "3.0.0",
-    "typescript": "6.0.2",
-    "vitest": "^4.0.0",
-    "@types/node": "^22.8.6",
-    "@ai-sdk/anthropic": "4.0.49",
-    "@ai-sdk/google": "4.0.64"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/FranciscoMoretti/chat-js.git",
-    "directory": "packages/gateways"
   }
 }

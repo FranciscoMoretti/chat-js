@@ -7,8 +7,7 @@ description: Implement ChatJS tRPC routers, TanStack Query hooks, mutations, and
 
 ## Backend
 
-- Add feature routers under `apps/chat/trpc/routers/*.router.ts` and register
-  them in `apps/chat/trpc/routers/_app.ts`.
+- Add feature routers under `apps/chat/trpc/routers/*.router.ts` and register them in `apps/chat/trpc/routers/_app.ts`.
 - Use `protectedProcedure` for authenticated operations.
 - Validate inputs with Zod and verify ownership before mutations.
 - Keep database access in `apps/chat/lib/db/queries.ts`.
@@ -25,8 +24,7 @@ const query = useQuery({
 });
 ```
 
-For mutations, use generated mutation options and invalidate related keys after
-success:
+For mutations, use generated mutation options and invalidate related keys after success:
 
 ```tsx
 const trpc = useTRPC();

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 
 const originalBaseURL = process.env.LITELLM_BASE_URL;
@@ -22,7 +23,7 @@ function mockModelsFetch() {
             owned_by: "openai",
           },
         ],
-      }),
+      })
     );
   });
   vi.stubGlobal("fetch", fetchMock);

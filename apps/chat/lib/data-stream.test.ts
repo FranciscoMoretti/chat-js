@@ -1,7 +1,9 @@
 import type { DataUIPart } from "ai";
 import { describe, expect, it } from "vitest";
+
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
+
 import { isDataPartOnMessagePath } from "./data-stream";
 
 function messageWithDataPart(part: ChatMessage["parts"][number]): ChatMessage {

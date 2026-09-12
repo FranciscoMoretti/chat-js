@@ -30,38 +30,38 @@ export function Hero() {
       {/* Background atmosphere — layered organic gradients */}
       <div className="pointer-events-none absolute inset-0">
         {/* Top fade from card into bg */}
-        <div className="absolute inset-x-0 top-0 h-[500px] bg-gradient-to-b from-card/40 via-transparent to-transparent" />
+        <div className="from-card/40 absolute inset-x-0 top-0 h-[500px] bg-gradient-to-b via-transparent to-transparent" />
         {/* Warm accent blob — left */}
         <div className="absolute top-[25%] left-[15%] h-[500px] w-[600px] -rotate-12 rounded-full bg-amber-500/2.5 blur-[120px] dark:bg-amber-400/3" />
         {/* Cool accent blob — right */}
         <div className="absolute top-[35%] right-[10%] h-[450px] w-[550px] rotate-12 rounded-full bg-indigo-500/2 blur-[120px] dark:bg-indigo-400/2.5" />
         {/* Center glow behind mockup */}
-        <div className="absolute bottom-[5%] left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-foreground/2 blur-[120px]" />
+        <div className="bg-foreground/2 absolute bottom-[5%] left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full blur-[120px]" />
       </div>
 
       {/* Decorative sparkles */}
       <Sparkle
-        className="pointer-events-none absolute top-32 left-[12%] hidden animate-sparkle text-foreground/7 sm:block"
+        className="animate-sparkle text-foreground/7 pointer-events-none absolute top-32 left-[12%] hidden sm:block"
         size={20}
       />
       <Sparkle
-        className="pointer-events-none absolute top-48 right-[18%] hidden animate-sparkle text-foreground/5 sm:block"
+        className="animate-sparkle text-foreground/5 pointer-events-none absolute top-48 right-[18%] hidden sm:block"
         size={14}
       />
       <Sparkle
-        className="pointer-events-none absolute bottom-[30%] left-[8%] hidden animate-sparkle text-foreground/6 lg:block"
+        className="animate-sparkle text-foreground/6 pointer-events-none absolute bottom-[30%] left-[8%] hidden lg:block"
         size={10}
       />
       <Sparkle
-        className="pointer-events-none absolute top-[60%] right-[8%] hidden animate-sparkle text-foreground/4 lg:block"
+        className="animate-sparkle text-foreground/4 pointer-events-none absolute top-[60%] right-[8%] hidden lg:block"
         size={16}
       />
 
       <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-20 sm:pt-28 sm:pb-28">
         {/* Badge */}
-        <div className="flex animate-fade-in-up justify-center">
+        <div className="animate-fade-in-up flex justify-center">
           <a
-            className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-1.5 text-foreground/75 text-sm backdrop-blur-sm transition-colors hover:border-foreground/20 hover:text-foreground"
+            className="border-border/60 bg-card/70 text-foreground/75 hover:border-foreground/20 hover:text-foreground inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm backdrop-blur-sm transition-colors"
             href="https://github.com/franciscomoretti/chat-js"
             rel="noreferrer"
             target="_blank"
@@ -82,7 +82,7 @@ export function Hero() {
 
         {/* Headline */}
         <h1
-          className="mx-auto mt-8 max-w-4xl animate-fade-in-up text-center font-display text-5xl text-foreground tracking-tight sm:text-7xl lg:text-8xl"
+          className="animate-fade-in-up font-display text-foreground mx-auto mt-8 max-w-4xl text-center text-5xl tracking-tight sm:text-7xl lg:text-8xl"
           style={{ animationDelay: "0.1s" }}
         >
           Ship AI chat in <span className="italic">minutes</span>, not months
@@ -90,7 +90,7 @@ export function Hero() {
 
         {/* Subhead */}
         <p
-          className="mx-auto mt-8 max-w-2xl animate-fade-in-up text-center text-foreground/75 text-lg leading-relaxed sm:text-xl"
+          className="animate-fade-in-up text-foreground/75 mx-auto mt-8 max-w-2xl text-center text-lg leading-relaxed sm:text-xl"
           style={{ animationDelay: "0.2s" }}
         >
           An open-source, production-ready AI chat foundation. Authentication,
@@ -99,18 +99,18 @@ export function Hero() {
 
         {/* CTA */}
         <div
-          className="mt-10 flex animate-fade-in-up flex-col items-center gap-6 sm:flex-row sm:justify-center"
+          className="animate-fade-in-up mt-10 flex flex-col items-center gap-6 sm:flex-row sm:justify-center"
           style={{ animationDelay: "0.3s" }}
         >
           <a
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 font-medium text-primary-foreground text-sm shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:shadow-primary/20 hover:shadow-xl"
+            className="bg-primary text-primary-foreground shadow-primary/15 hover:shadow-primary/20 inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-medium shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
             href={siteLinks.docsGettingStarted}
           >
             Get Started
             <ArrowRight className="h-4 w-4" />
           </a>
           <a
-            className="inline-flex items-center gap-2 rounded-xl border border-foreground/15 px-8 py-3.5 font-medium text-foreground/70 text-sm transition-all hover:-translate-y-0.5 hover:border-foreground/25 hover:text-foreground/90"
+            className="border-foreground/15 text-foreground/70 hover:border-foreground/25 hover:text-foreground/90 inline-flex items-center gap-2 rounded-xl border px-8 py-3.5 text-sm font-medium transition-all hover:-translate-y-0.5"
             href={siteLinks.demo}
           >
             Live Demo
@@ -120,15 +120,15 @@ export function Hero() {
 
         {/* Chat Preview */}
         <div
-          className="perspective-distant relative mx-auto mt-20 max-w-3xl animate-fade-in-up"
+          className="animate-fade-in-up relative mx-auto mt-20 max-w-3xl perspective-distant"
           style={{ animationDelay: "0.5s" }}
         >
           {/* Layered ambient glow */}
-          <div className="pointer-events-none absolute -inset-8 rounded-3xl bg-foreground/[0.07] blur-3xl" />
-          <div className="pointer-events-none absolute -inset-16 rounded-4xl bg-foreground/4 blur-[80px]" />
+          <div className="bg-foreground/[0.07] pointer-events-none absolute -inset-8 rounded-3xl blur-3xl" />
+          <div className="bg-foreground/4 pointer-events-none absolute -inset-16 rounded-4xl blur-[80px]" />
 
           {/* Screenshot with depth */}
-          <div className="relative animate-float rounded-2xl shadow-[0_20px_70px_-10px_rgba(0,0,0,0.35)] ring-1 ring-foreground/[0.08] transition-transform duration-700 [transform:rotateX(2deg)] dark:shadow-[0_20px_70px_-10px_rgba(0,0,0,0.7)] hover:[transform:rotateX(0deg)]">
+          <div className="animate-float ring-foreground/[0.08] relative [transform:rotateX(2deg)] rounded-2xl shadow-[0_20px_70px_-10px_rgba(0,0,0,0.35)] ring-1 transition-transform duration-700 hover:[transform:rotateX(0deg)] dark:shadow-[0_20px_70px_-10px_rgba(0,0,0,0.7)]">
             <div className="overflow-hidden rounded-2xl">
               <Image
                 alt="ChatJS — AI chat interface"

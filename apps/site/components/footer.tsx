@@ -26,7 +26,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link
-              className="flex items-center gap-2.5 font-semibold text-lg tracking-tight"
+              className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
               href="/"
             >
               <svg
@@ -54,7 +54,7 @@ export function Footer() {
               </svg>
               ChatJS
             </Link>
-            <p className="mt-3 max-w-xs text-foreground/75 text-sm leading-relaxed">
+            <p className="text-foreground/75 mt-3 max-w-xs text-sm leading-relaxed">
               The open-source, production-ready AI chat foundation.
             </p>
           </div>
@@ -68,12 +68,12 @@ export function Footer() {
               Footer navigation
             </h2>
             <div>
-              <h3 className="font-medium text-sm">Product</h3>
+              <h3 className="text-sm font-medium">Product</h3>
               <ul className="mt-4 space-y-3">
                 {PRODUCT_LINKS.map((link) => (
                   <li key={link.label}>
                     <a
-                      className="text-foreground/75 text-sm transition-colors hover:text-foreground"
+                      className="text-foreground/75 hover:text-foreground text-sm transition-colors"
                       href={link.href}
                     >
                       {link.label}
@@ -83,12 +83,12 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="font-medium text-sm">Community</h3>
+              <h3 className="text-sm font-medium">Community</h3>
               <ul className="mt-4 space-y-3">
                 {COMMUNITY_LINKS.map((link) => (
                   <li key={link.label}>
                     <a
-                      className="text-foreground/75 text-sm transition-colors hover:text-foreground"
+                      className="text-foreground/75 hover:text-foreground text-sm transition-colors"
                       href={link.href}
                     >
                       {link.label}
@@ -101,7 +101,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 border-border/40 border-t pt-6">
+        <div className="border-border/40 mt-12 border-t pt-6">
           <p className="text-foreground/65 text-sm">
             &copy; {new Date().getFullYear()} ChatJS. Open source under the
             Apache 2.0 license.

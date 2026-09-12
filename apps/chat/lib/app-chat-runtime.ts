@@ -6,6 +6,7 @@ import {
   useContext,
   useRef,
 } from "react";
+
 import type { ChatRuntimeId } from "@/lib/chat-runtime-id";
 import {
   createMainChatRuntimeId,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/chat-runtime-id";
 import type { CreateRuntimeInput, Runtime } from "@/lib/runtime-registry";
 import { generateUUID } from "@/lib/utils";
+
 import type { ChatMessage, UiToolName } from "./ai/types";
 import { ApplicationThread } from "./application-thread";
 import {

@@ -1,6 +1,7 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   useGetAllChats,
@@ -9,6 +10,7 @@ import {
 } from "@/hooks/chat-sync-hooks";
 import type { UIChat } from "@/lib/types/ui-chat";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+
 import { DeleteChatDialog } from "./delete-chat-dialog";
 import { SidebarChatItem } from "./sidebar-chat-item";
 import { Skeleton } from "./ui/skeleton";
@@ -106,7 +108,7 @@ export function SidebarChatsList() {
 
   if (chats.length === 0) {
     return (
-      <div className="flex w-full flex-row items-center justify-center gap-2 px-2 py-4 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex w-full flex-row items-center justify-center gap-2 px-2 py-4 text-sm">
         Start chatting to see your conversation history!
       </div>
     );
@@ -124,7 +126,7 @@ export function SidebarChatsList() {
     <>
       {groupedChats.pinned.length > 0 && (
         <>
-          <div className="px-2 py-1 text-sidebar-foreground/50 text-xs">
+          <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
             Pinned
           </div>
           {groupedChats.pinned.map((chat) => (
@@ -152,7 +154,7 @@ export function SidebarChatsList() {
       {groupedChats.today.length > 0 && (
         <>
           <div
-            className={`px-2 py-1 text-sidebar-foreground/50 text-xs ${groupedChats.pinned.length > 0 ? "mt-6" : ""}`}
+            className={`text-sidebar-foreground/50 px-2 py-1 text-xs ${groupedChats.pinned.length > 0 ? "mt-6" : ""}`}
           >
             Today
           </div>
@@ -180,7 +182,7 @@ export function SidebarChatsList() {
 
       {groupedChats.yesterday.length > 0 && (
         <>
-          <div className="mt-6 px-2 py-1 text-sidebar-foreground/50 text-xs">
+          <div className="text-sidebar-foreground/50 mt-6 px-2 py-1 text-xs">
             Yesterday
           </div>
           {groupedChats.yesterday.map((chat) => (
@@ -207,7 +209,7 @@ export function SidebarChatsList() {
 
       {groupedChats.lastWeek.length > 0 && (
         <>
-          <div className="mt-6 px-2 py-1 text-sidebar-foreground/50 text-xs">
+          <div className="text-sidebar-foreground/50 mt-6 px-2 py-1 text-xs">
             Last 7 days
           </div>
           {groupedChats.lastWeek.map((chat) => (
@@ -234,7 +236,7 @@ export function SidebarChatsList() {
 
       {groupedChats.lastMonth.length > 0 && (
         <>
-          <div className="mt-6 px-2 py-1 text-sidebar-foreground/50 text-xs">
+          <div className="text-sidebar-foreground/50 mt-6 px-2 py-1 text-xs">
             Last 30 days
           </div>
           {groupedChats.lastMonth.map((chat) => (
@@ -261,7 +263,7 @@ export function SidebarChatsList() {
 
       {groupedChats.older.length > 0 && (
         <>
-          <div className="mt-6 px-2 py-1 text-sidebar-foreground/50 text-xs">
+          <div className="text-sidebar-foreground/50 mt-6 px-2 py-1 text-xs">
             Older
           </div>
           {groupedChats.older.map((chat) => (

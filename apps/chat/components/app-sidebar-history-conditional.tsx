@@ -1,6 +1,7 @@
 "use client";
 
 import { LogIn } from "lucide-react";
+
 import { InternalLink } from "@/components/internal-link";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { Button } from "@/components/ui/button";

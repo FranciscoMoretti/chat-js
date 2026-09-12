@@ -1,6 +1,7 @@
 "use client";
 
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+
 import type { wordCount } from "./tool";
 
 type WordCountRendererTool = ToolPartFromTool<typeof wordCount>;
@@ -14,7 +15,7 @@ export function WordCountRenderer({
 }) {
   if (tool.state === "input-available") {
     return (
-      <div className="rounded-lg border p-3 text-muted-foreground text-sm">
+      <div className="text-muted-foreground rounded-lg border p-3 text-sm">
         Counting words...
       </div>
     );
@@ -43,7 +44,7 @@ export function WordCountRenderer({
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="font-semibold text-lg">{value}</span>
+      <span className="text-lg font-semibold">{value}</span>
       <span className="text-muted-foreground text-xs">{label}</span>
     </div>
   );

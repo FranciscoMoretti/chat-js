@@ -6,12 +6,12 @@ import { join } from "node:path";
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
 const workflow = Bun.YAML.parse(
-	await Bun.file(
-		new URL("../.github/workflows/release.yml", import.meta.url),
-	).text(),
+  await Bun.file(
+    new URL("../.github/workflows/release.yml", import.meta.url)
+  ).text()
 );
 const step = workflow.jobs.release.steps.find(
-	(step: { name?: string }) => step.name === "Publish first-time packages",
+  (step: { name?: string }) => step.name === "Publish first-time packages"
 );
 const fallback = step.run.slice(step.run.indexOf("publish_if_missing()"));
 
@@ -60,75 +60,75 @@ gh() {
 `;
 
 test("retry repairs release metadata without republishing after verification fails", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
-	try {
-		const run = () =>
-			Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
-				cwd: directory,
-			});
-		await Bun.write(join(directory, "fail-verification"), "");
-		expect(run().exitCode).not.toBe(0);
-		expect(await Bun.file(join(directory, "published")).exists()).toBe(true);
-		expect(await Bun.file(join(directory, "tagged")).exists()).toBe(false);
-		await rm(join(directory, "fail-verification"));
-		expect(run().exitCode).toBe(0);
-		expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
-		expect(run().exitCode).toBe(0);
-		const calls = await Bun.file(join(directory, "calls")).text();
-		expect(calls.match(/^npm publish /gm)).toHaveLength(1);
-		expect(calls.match(/^git tag /gm)).toHaveLength(1);
-		expect(calls.match(/^gh release create /gm)).toHaveLength(1);
-	} finally {
-		await rm(directory, { recursive: true, force: true });
-	}
+  const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+  try {
+    const run = () =>
+      Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
+        cwd: directory,
+      });
+    await Bun.write(join(directory, "fail-verification"), "");
+    expect(run().exitCode).not.toBe(0);
+    expect(await Bun.file(join(directory, "published")).exists()).toBe(true);
+    expect(await Bun.file(join(directory, "tagged")).exists()).toBe(false);
+    await rm(join(directory, "fail-verification"));
+    expect(run().exitCode).toBe(0);
+    expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
+    expect(run().exitCode).toBe(0);
+    const calls = await Bun.file(join(directory, "calls")).text();
+    expect(calls.match(/^npm publish /gm)).toHaveLength(1);
+    expect(calls.match(/^git tag /gm)).toHaveLength(1);
+    expect(calls.match(/^gh release create /gm)).toHaveLength(1);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("retry pushes an existing local tag after the first push fails", async () => {
-	const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
-	try {
-		const run = () =>
-			Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
-				cwd: directory,
-			});
-		await Bun.write(join(directory, "published"), "");
-		await Bun.write(join(directory, "fail-push"), "");
-		expect(run().exitCode).not.toBe(0);
-		expect(await Bun.file(join(directory, "tagged")).exists()).toBe(true);
-		expect(await Bun.file(join(directory, "released")).exists()).toBe(false);
-		await rm(join(directory, "fail-push"));
-		expect(run().exitCode).toBe(0);
-		expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
-		const calls = await Bun.file(join(directory, "calls")).text();
-		expect(calls).not.toContain("npm publish");
-		expect(calls.match(/^git push /gm)).toHaveLength(2);
-	} finally {
-		await rm(directory, { recursive: true, force: true });
-	}
+  const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+  try {
+    const run = () =>
+      Bun.spawnSync(["bash", "-euo", "pipefail", "-c", services + fallback], {
+        cwd: directory,
+      });
+    await Bun.write(join(directory, "published"), "");
+    await Bun.write(join(directory, "fail-push"), "");
+    expect(run().exitCode).not.toBe(0);
+    expect(await Bun.file(join(directory, "tagged")).exists()).toBe(true);
+    expect(await Bun.file(join(directory, "released")).exists()).toBe(false);
+    await rm(join(directory, "fail-push"));
+    expect(run().exitCode).toBe(0);
+    expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
+    const calls = await Bun.file(join(directory, "calls")).text();
+    expect(calls).not.toContain("npm publish");
+    expect(calls.match(/^git push /gm)).toHaveLength(2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 for (const lookupFails of [false, true]) {
-	test(
-		lookupFails
-			? "registry authentication failure never triggers publication"
-			: "missing version publishes and creates release metadata",
-		async () => {
-			const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
-			try {
-				if (lookupFails) await Bun.write(join(directory, "fail-lookup"), "");
-				const result = Bun.spawnSync(
-					["bash", "-euo", "pipefail", "-c", services + fallback],
-					{ cwd: directory },
-				);
-				expect(result.exitCode === 0).toBe(!lookupFails);
-				expect(await Bun.file(join(directory, "published")).exists()).toBe(
-					!lookupFails,
-				);
-				expect(await Bun.file(join(directory, "released")).exists()).toBe(
-					!lookupFails,
-				);
-			} finally {
-				await rm(directory, { recursive: true, force: true });
-			}
-		},
-	);
+  test(
+    lookupFails
+      ? "registry authentication failure never triggers publication"
+      : "missing version publishes and creates release metadata",
+    async () => {
+      const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
+      try {
+        if (lookupFails) await Bun.write(join(directory, "fail-lookup"), "");
+        const result = Bun.spawnSync(
+          ["bash", "-euo", "pipefail", "-c", services + fallback],
+          { cwd: directory }
+        );
+        expect(result.exitCode === 0).toBe(!lookupFails);
+        expect(await Bun.file(join(directory, "published")).exists()).toBe(
+          !lookupFails
+        );
+        expect(await Bun.file(join(directory, "released")).exists()).toBe(
+          !lookupFails
+        );
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
 }

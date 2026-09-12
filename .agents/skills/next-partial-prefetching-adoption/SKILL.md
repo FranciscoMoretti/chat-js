@@ -1,12 +1,7 @@
 ---
 name: next-partial-prefetching-adoption
 description: >
-  Turn on Partial Prefetching in a Next.js app and work through the
-  insights it surfaces. Use when the user wants to enable or adopt
-  Partial Prefetching, flip the `partialPrefetching` flag, opt routes
-  in with `export const prefetch = 'partial'`, audit
-  `<Link prefetch={true}>` calls, or resolve the
-  link-prefetch-partial and instant-shell-url-data insights.
+  Turn on Partial Prefetching in a Next.js app and work through the insights it surfaces. Use when the user wants to enable or adopt Partial Prefetching, flip the `partialPrefetching` flag, opt routes in with `export const prefetch = 'partial'`, audit `<Link prefetch={true}>` calls, or resolve the link-prefetch-partial and instant-shell-url-data insights.
 ---
 
 # next-partial-prefetching-adoption
@@ -65,7 +60,7 @@ Then, for each one:
 
    ```tsx
    // See: https://nextjs.org/docs/app/guides/adopting-partial-prefetching
-   export const prefetch = 'partial'
+   export const prefetch = "partial";
    ```
 
    If the route reads URL data (`params`, `searchParams`), the default link still warms only its skeleton (the guide's [URL data](https://nextjs.org/docs/app/guides/adopting-partial-prefetching#url-data) section), so it's a runtime-prefetch candidate for step 5, not a finished adoption. Keep `prefetch={true}` on its links and mark the route:
@@ -73,7 +68,7 @@ Then, for each one:
    ```tsx
    // TODO(runtime-prefetch): assess with the user whether URL data should resolve before click.
    // See: https://nextjs.org/docs/app/guides/runtime-prefetching
-   export const prefetch = 'partial'
+   export const prefetch = "partial";
    ```
 
    Use that exact prefix so step 5 can grep them back. Don't cache or decide anything for these routes now.

@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import { z } from "zod";
+
 import { redisConnectionOptions, redisEnvOptions } from "./connection";
 
 const schema = z.object(redisEnvOptions);

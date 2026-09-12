@@ -29,13 +29,13 @@ The `chat.config.ts` file controls all feature toggles, branding, and app settin
 <AccordionItem title="What the default config includes">
   The default configuration gives you a minimal, working setup:
 
-| Setting             | Default           | Notes                                                         |
-| ------------------- | ----------------- | ------------------------------------------------------------- |
-| **Gateway**         | Vercel AI Gateway | Use `create --gateway openrouter` for OpenRouter                    |
-| **Authentication**  | GitHub only       | Google and Vercel OAuth disabled                              |
-| **Features**        | All disabled      | No sandbox, web search, MCP, image generation, or attachments |
-| **Anonymous users** | 10 credits        | Limited access, no tools                                      |
-| **Models**          | Curated list      | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5     |
+| Setting | Default | Notes |
+| --- | --- | --- |
+| **Gateway** | Vercel AI Gateway | Use `create --gateway openrouter` for OpenRouter |
+| **Authentication** | GitHub only | Google and Vercel OAuth disabled |
+| **Features** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
+| **Anonymous users** | 10 credits | Limited access, no tools |
+| **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
 
 This keeps your initial setup simple. The CLI will tell you exactly which environment variables are needed based on your choices.
 
@@ -73,6 +73,7 @@ Expand the sections below for setup instructions:
     createdb chatjs
     # DATABASE_URL=postgres://localhost:5432/chatjs
     ```
+
   </AccordionItem>
   <AccordionItem title="AI Gateway">
     ChatJS supports multiple AI gateways. Pick one:
@@ -96,6 +97,7 @@ Expand the sections below for setup instructions:
     Use any endpoint that follows the OpenAI API format (Ollama, LM Studio, vLLM, Azure).
 
     See [Gateways Overview](/gateways/overview) for a full comparison and configuration details.
+
   </AccordionItem>
   <AccordionItem title="Authentication (at least one provider required)">
     **GitHub (Recommended)**
@@ -118,6 +120,7 @@ Expand the sections below for setup instructions:
     2. Create a new integration with **Sign In with Vercel**
     3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
     4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
+
   </AccordionItem>
   <AccordionItem title="File Storage (Optional)">
     Required for file attachments, image generation, and video generation. The
@@ -130,6 +133,7 @@ Expand the sections below for setup instructions:
 
     See [File storage](./storage) for provider configuration,
     credentials, and migration behavior.
+
   </AccordionItem>
 </Accordion>
 
@@ -186,15 +190,15 @@ Once you're running locally, deploy your app:
 <AccordionItem title="Optional Features">
   These environment variables enable additional capabilities:
 
-| Variable              | Feature           | Setup Guide                                            |
-| --------------------- | ----------------- | ------------------------------------------------------ |
-| `REDIS_URL`           | Resumable streams | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) |
-| `TAVILY_API_KEY`      | Web search        | [Tavily](https://app.tavily.com)                       |
-| `FIRECRAWL_API_KEY`   | Web search        | [Firecrawl](https://firecrawl.dev)                     |
-| `LANGFUSE_PUBLIC_KEY` | LLM observability | [Langfuse](https://langfuse.com)                       |
-| `LANGFUSE_SECRET_KEY` | LLM observability | [Langfuse](https://langfuse.com)                       |
-| `MCP_ENCRYPTION_KEY`  | MCP connectors    | `openssl rand -base64 32` (must be exactly 44 chars)   |
-| `CRON_SECRET`         | Cleanup cron job  | [Generate](https://generate-secret.vercel.app/32)      |
+| Variable | Feature | Setup Guide |
+| --- | --- | --- |
+| `REDIS_URL` | Resumable streams | [Vercel KV](https://vercel.com/docs/storage/vercel-kv) |
+| `TAVILY_API_KEY` | Web search | [Tavily](https://app.tavily.com) |
+| `FIRECRAWL_API_KEY` | Web search | [Firecrawl](https://firecrawl.dev) |
+| `LANGFUSE_PUBLIC_KEY` | LLM observability | [Langfuse](https://langfuse.com) |
+| `LANGFUSE_SECRET_KEY` | LLM observability | [Langfuse](https://langfuse.com) |
+| `MCP_ENCRYPTION_KEY` | MCP connectors | `openssl rand -base64 32` (must be exactly 44 chars) |
+| `CRON_SECRET` | Cleanup cron job | [Generate](https://generate-secret.vercel.app/32) |
 
 </AccordionItem>
 </Accordion>

@@ -2,6 +2,7 @@
 
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
+
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/base";
@@ -61,7 +62,7 @@ function FollowUpSuggestions({
 
   return (
     <div className={cn("mt-2 mb-2 flex flex-col gap-2", className)}>
-      <div className="font-medium text-muted-foreground text-xs">Related</div>
+      <div className="text-muted-foreground text-xs font-medium">Related</div>
       <Suggestions className="gap-1.5">
         {(() => {
           const seen = new Map<string, number>();
@@ -71,7 +72,7 @@ function FollowUpSuggestions({
             const key = count === 0 ? s : `${s}-${count}`;
             return (
               <Suggestion
-                className="h-7 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground h-7"
                 key={key}
                 onClick={handleClick}
                 size="sm"

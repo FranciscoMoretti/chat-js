@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { mapUIMessagePartsToDBParts } from "./message-mapping";
 
 describe("SDK 7 persistence boundary", () => {

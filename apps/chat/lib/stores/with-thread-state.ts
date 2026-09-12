@@ -4,6 +4,7 @@ import {
 } from "@chat-js/thread";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
+
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
 
 export type ThreadStateStore<TMessage extends UIMessage> =

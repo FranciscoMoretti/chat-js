@@ -1,5 +1,6 @@
 import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID } from "@/lib/utils";
+
 import { deduplicateByDomainAndUrl } from "./search-utils";
 
 export interface SearchQuery {

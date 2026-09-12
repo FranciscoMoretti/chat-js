@@ -2,8 +2,26 @@ const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 const candidates = [
-  path.resolve(__dirname, "..", "..", "..", "node_modules", "@electron-forge", "cli", "dist", "electron-forge.js"),
-  path.resolve(__dirname, "..", "node_modules", "@electron-forge", "cli", "dist", "electron-forge.js"),
+  path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "node_modules",
+    "@electron-forge",
+    "cli",
+    "dist",
+    "electron-forge.js"
+  ),
+  path.resolve(
+    __dirname,
+    "..",
+    "node_modules",
+    "@electron-forge",
+    "cli",
+    "dist",
+    "electron-forge.js"
+  ),
 ];
 
 const forgeEntrypoint = candidates.find((candidate) => {
@@ -20,9 +38,13 @@ if (!forgeEntrypoint) {
   process.exit(1);
 }
 
-const result = spawnSync(process.execPath, [forgeEntrypoint, ...process.argv.slice(2)], {
-  stdio: "inherit",
-  env: process.env,
-});
+const result = spawnSync(
+  process.execPath,
+  [forgeEntrypoint, ...process.argv.slice(2)],
+  {
+    stdio: "inherit",
+    env: process.env,
+  }
+);
 
 process.exit(result.status ?? 1);

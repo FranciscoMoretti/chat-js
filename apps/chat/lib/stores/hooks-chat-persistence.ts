@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
+
 import type { ChatMessage } from "@/lib/ai/types";
+
 import {
   type CustomChatStoreApi,
   type CustomChatStoreState,

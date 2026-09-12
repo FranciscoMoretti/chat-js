@@ -1,7 +1,7 @@
 import { builtInGateways } from "./registry/gateways";
 
 export type PackageManager = "bun" | "npm" | "pnpm" | "yarn";
-export const GATEWAYS = builtInGateways.map(item => item.meta.chatjs.id);
+export const GATEWAYS = builtInGateways.map((item) => item.meta.chatjs.id);
 export type Gateway = string;
 
 export const AUTH_PROVIDERS = ["google", "github", "vercel"] as const;

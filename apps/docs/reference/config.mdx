@@ -178,13 +178,13 @@ export type Config = {
 
 The `ai.gateway` field determines which AI backend is used for model creation and model-list fetching. Validated at build time.
 
-| Value                 | Backend                                          | Required Env Vars                           |
-| --------------------- | ------------------------------------------------ | ------------------------------------------- |
-| `"vercel"` (default)  | [Vercel AI Gateway](/gateways/vercel)            | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
-| `"openrouter"`        | [OpenRouter](/gateways/openrouter)               | `OPENROUTER_API_KEY`                        |
-| `"openai"`            | [OpenAI](/gateways/openai)                       | `OPENAI_API_KEY`                            |
-| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL`                |
-| `"litellm"`           | [LiteLLM](/gateways/litellm)                     | `LITELLM_BASE_URL`                          |
+| Value | Backend | Required Env Vars |
+| --- | --- | --- |
+| `"vercel"` (default) | [Vercel AI Gateway](/gateways/vercel) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
+| `"openrouter"` | [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
+| `"openai"` | [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
+| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` |
+| `"litellm"` | [LiteLLM](/gateways/litellm) | `LITELLM_BASE_URL` |
 
 ## Feature flags + env validation
 

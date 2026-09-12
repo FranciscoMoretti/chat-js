@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
 import {
   SettingsPage,
@@ -10,7 +11,7 @@ import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 function ConnectorsSettingsHeader() {
   return (
     <SettingsPageHeader>
-      <h2 className="font-semibold text-lg">Connectors & MCP</h2>
+      <h2 className="text-lg font-semibold">Connectors & MCP</h2>
       <p className="text-muted-foreground text-sm">
         Connect to Model Context Protocol servers to extend AI capabilities with
         external tools.

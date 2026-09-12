@@ -3,12 +3,9 @@ title: Provisional Chat Runtime
 description: Keep first-message chat execution alive while App Router moves from a draft route to a persisted chat route
 ---
 
-This cookbook used to describe the route-transition provider. That provider has
-been removed from the active architecture. The current first-message flow is
-owned by persistent chat runtimes instead of a temporary route transition.
+This cookbook used to describe the route-transition provider. That provider has been removed from the active architecture. The current first-message flow is owned by persistent chat runtimes instead of a temporary route transition.
 
-For the full migration plan, see `CHAT_RUNTIME_MIGRATION_PLAN.md` at the repo
-root.
+For the full migration plan, see `CHAT_RUNTIME_MIGRATION_PLAN.md` at the repo root.
 
 ## The Problem
 
@@ -20,14 +17,11 @@ The first-message flow has competing requirements:
 4. Backend queries for persisted chat data must not run before the provisional chat is confirmed
 5. Streams should continue even when the route tree changes
 
-Using a route-local controller makes the App Router navigation own too much of
-the chat lifecycle. A route remount can stop the stream, lose optimistic state,
-or fetch persisted chat data before the server has confirmed the row.
+Using a route-local controller makes the App Router navigation own too much of the chat lifecycle. A route remount can stop the stream, lose optimistic state, or fetch persisted chat data before the server has confirmed the row.
 
 ## Current Solution
 
-`ChatRuntimeRegistryProvider` owns live chat runtime entries. A provisional chat
-starts by registering a runtime with:
+`ChatRuntimeRegistryProvider` owns live chat runtime entries. A provisional chat starts by registering a runtime with:
 
 - the generated chat id
 - an owned chat store
@@ -36,13 +30,9 @@ starts by registering a runtime with:
 - parallel request specs
 - `persistenceStatus: "provisional"`
 
-`MountedChatRuntimes` renders controllers outside the route tree, so
-streaming continues while navigation changes which chat is visible.
+`MountedChatRuntimes` renders controllers outside the route tree, so streaming continues while navigation changes which chat is visible.
 
-`ChatRouteHost` is now a view resolver. It decides whether the visible route is
-backed by a live runtime store or by persisted query data. Persisted chat and
-message queries are enabled only when there is no live runtime or when the live
-runtime is confirmed.
+`ChatRouteHost` is now a view resolver. It decides whether the visible route is backed by a live runtime store or by persisted query data. Persisted chat and message queries are enabled only when there is no live runtime or when the live runtime is confirmed.
 
 ## Parts Involved
 
@@ -87,9 +77,7 @@ Persisted routes use:
 path:${pathname}
 ```
 
-When a live runtime backs the route, the visible `ChatSystem` uses the runtime id
-instead. That keeps the visible tree attached to the runtime-owned store without
-reintroducing a separate transition key model.
+When a live runtime backs the route, the visible `ChatSystem` uses the runtime id instead. That keeps the visible tree attached to the runtime-owned store without reintroducing a separate transition key model.
 
 ## Query Gating
 
@@ -98,8 +86,7 @@ Persisted chat queries should only run when one of these is true:
 - there is no live runtime for the route chat id
 - the live runtime has `persistenceStatus: "confirmed"`
 
-This prevents provisional routes from calling `chat.getChatById` or
-`chat.getChatMessages` before the server has confirmed the chat.
+This prevents provisional routes from calling `chat.getChatById` or `chat.getChatMessages` before the server has confirmed the chat.
 
 ## Parallel Responses
 

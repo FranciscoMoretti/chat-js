@@ -1,6 +1,7 @@
 import { Copy, LineChart, Redo2, Sparkles, Undo2 } from "lucide-react";
 import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
+
 import { Artifact, type ArtifactMetadata } from "@/components/create-artifact";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
 import { config } from "@/lib/config";

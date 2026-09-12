@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";

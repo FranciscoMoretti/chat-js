@@ -3,7 +3,6 @@ import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type {
@@ -12,6 +11,7 @@ import type {
   StrictLiterals,
 } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+import type { ImageModel } from "ai";
 
 type OpenaiLanguageModelId = StrictLiterals<
   ExtractModelIdFromProvider<typeof createOpenAI>

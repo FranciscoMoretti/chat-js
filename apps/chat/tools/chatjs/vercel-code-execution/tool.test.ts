@@ -29,28 +29,28 @@ beforeEach(() => {
   mocks.python.mockResolvedValue({ message: "4", chart: "" });
   mocks.javascript.mockResolvedValue({ message: "4", chart: "" });
 });
-it.each([
-  "python",
-  "javascript",
-] as const)("dispatches %s to the sandbox and cleans up", async (language) => {
-  const result = await codeExecution.execute?.(
-    { title: "Calculate", language, code: "source" },
-    { toolCallId: "test", messages: [], context: {} }
-  );
-  expect(result).toEqual({ message: "4", chart: "" });
-  expect(mocks.create).toHaveBeenCalledWith(language);
-  const executor = language === "python" ? mocks.python : mocks.javascript;
-  const unused = language === "python" ? mocks.javascript : mocks.python;
-  expect(executor).toHaveBeenCalledWith(
-    expect.objectContaining({ sandbox, code: "source" })
-  );
-  expect(unused).not.toHaveBeenCalled();
-  expect(mocks.cleanup).toHaveBeenCalledWith(
-    sandbox,
-    expect.anything(),
-    expect.any(String)
-  );
-});
+it.each(["python", "javascript"] as const)(
+  "dispatches %s to the sandbox and cleans up",
+  async (language) => {
+    const result = await codeExecution.execute?.(
+      { title: "Calculate", language, code: "source" },
+      { toolCallId: "test", messages: [], context: {} }
+    );
+    expect(result).toEqual({ message: "4", chart: "" });
+    expect(mocks.create).toHaveBeenCalledWith(language);
+    const executor = language === "python" ? mocks.python : mocks.javascript;
+    const unused = language === "python" ? mocks.javascript : mocks.python;
+    expect(executor).toHaveBeenCalledWith(
+      expect.objectContaining({ sandbox, code: "source" })
+    );
+    expect(unused).not.toHaveBeenCalled();
+    expect(mocks.cleanup).toHaveBeenCalledWith(
+      sandbox,
+      expect.anything(),
+      expect.any(String)
+    );
+  }
+);
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
   const result = await codeExecution.execute?.(

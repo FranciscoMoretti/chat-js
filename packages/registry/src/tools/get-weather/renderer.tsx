@@ -1,9 +1,11 @@
 "use client";
 
 import { format, isWithinInterval } from "date-fns";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+
 import type { getWeather, WeatherAtLocation } from "./tool";
 
 type GetWeatherRendererTool = ToolPartFromTool<typeof getWeather>;
@@ -219,7 +221,7 @@ function WeatherCard({
               { "bg-indigo-100": !isDay }
             )}
           />
-          <div className="font-medium text-4xl text-blue-50">
+          <div className="text-4xl font-medium text-blue-50">
             {n(weatherAtLocation.current.temperature_2m)}
             {weatherAtLocation.current_units.temperature_2m}
           </div>
@@ -231,7 +233,7 @@ function WeatherCard({
       <div className="flex flex-row justify-between">
         {displayTimes.map((time, index) => (
           <div className="flex flex-col items-center gap-1" key={time}>
-            <div className="text-blue-100 text-xs">
+            <div className="text-xs text-blue-100">
               {format(new Date(time), "ha")}
             </div>
             <div
@@ -241,7 +243,7 @@ function WeatherCard({
                 { "bg-indigo-200": !isDay }
               )}
             />
-            <div className="text-blue-50 text-sm">
+            <div className="text-sm text-blue-50">
               {n(displayTemperatures[index])}
               {weatherAtLocation.hourly_units.temperature_2m}
             </div>

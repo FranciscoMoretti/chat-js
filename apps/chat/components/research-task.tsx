@@ -1,8 +1,10 @@
 import { Loader2, SearchIcon } from "lucide-react";
 import { motion } from "motion/react";
+
 import { Badge } from "@/components/ui/badge";
 import { UpdateTitle } from "@/components/update-title";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import { WebSourceBadge } from "./source-badge";
 
 export const ResearchTask = ({
@@ -45,7 +47,7 @@ export const ResearchTask = ({
             <div className="flex flex-wrap gap-2">
               {update.queries.map((query) => (
                 <Badge
-                  className="flex items-center gap-1 bg-muted"
+                  className="bg-muted flex items-center gap-1"
                   key={query}
                   variant="outline"
                 >
@@ -71,7 +73,7 @@ export const ResearchTask = ({
           {update.type === "web" && update.status === "running" && (
             <div className="py-2">
               <div className="flex items-center gap-3">
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                <Loader2 className="text-muted-foreground size-4 animate-spin" />
                 <p className="text-xsize-neutral-500">Searching the web...</p>
               </div>
             </div>
@@ -79,14 +81,14 @@ export const ResearchTask = ({
           {/* {Thoughts} */}
           {update.type === "thoughts" && (
             <div className="space-y-2">
-              <p className="font-light text-foreground text-sm">
+              <p className="text-foreground text-sm font-light">
                 {update.message}
               </p>
             </div>
           )}
           {update.type === "writing" && update.message && (
             <div className="space-y-2">
-              <p className="font-light text-foreground text-sm">
+              <p className="text-foreground text-sm font-light">
                 {update.message}
               </p>
             </div>

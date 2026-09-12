@@ -1,5 +1,6 @@
 import { File, Loader2, Pencil } from "lucide-react";
 import { memo } from "react";
+
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
@@ -69,7 +70,7 @@ function PureDocumentToolResult({
 
   return (
     <button
-      className="flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border bg-background px-3 py-2"
+      className="bg-background flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border px-3 py-2"
       onClick={() => {
         setArtifact({
           documentId: result.id,
@@ -128,7 +129,7 @@ function PureDocumentToolCall({
       type="button"
     >
       <div className="flex flex-row items-start gap-3">
-        <div className="mt-1 text-muted-foreground">
+        <div className="text-muted-foreground mt-1">
           {(() => {
             if (type === "create") {
               return <File size={16} />;

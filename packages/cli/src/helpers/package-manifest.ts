@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
+
 import type { PackageManager } from "../types";
 
 type DependencyMap = Record<string, string>;
@@ -47,7 +48,7 @@ function resolveBetterAuthVersion(packageJson: PackageJson): string | null {
 
 function pinBetterAuthVersions(
   dependencyGroup: DependencyMap | undefined,
-  version: string,
+  version: string
 ): void {
   if (!dependencyGroup) {
     return;
@@ -65,18 +66,17 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
 
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
-  scripts["dev:inspect"] =
-    "tsx scripts/check-env.ts && next dev --inspect";
+  scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
   scripts.prod =
     "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && next build && next start";
   scripts.lint = "ultracite check";
-  scripts.format = "ultracite fix";
+  scripts.format = "oxfmt --write .";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
   scripts["redis:connect"] = "tsx scripts/check-redis.ts";
-  scripts["db:migrate"] =
-    "tsx lib/db/migrate.ts";
-  scripts["dev:neon"] = "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
+  scripts["db:migrate"] = "tsx lib/db/migrate.ts";
+  scripts["dev:neon"] =
+    "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
   scripts["db:migrate:neon"] = "bash scripts/with-db.sh tsx lib/db/migrate.ts";
   scripts["db:backfill-parts"] = "tsx lib/db/backfill-parts.ts";
   scripts["db:branch:start"] =
@@ -88,7 +88,7 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
     "export PLAYWRIGHT=True && playwright test --workers=4 && vitest run";
   scripts["test:e2e"] = "export PLAYWRIGHT=True && playwright test --workers=4";
   scripts["ai:devtools"] = "npx @ai-sdk/devtools";
-  scripts["fetch:models"] = "tsx scripts/fetch-models.ts && ultracite fix";
+  scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
 }
 
 function normalizeElectronScripts(scripts: ScriptMap): void {
@@ -125,7 +125,7 @@ function normalizeElectronScripts(scripts: ScriptMap): void {
 
 function normalizeElectronDevDependencies(
   devDependencies: DependencyMap | undefined,
-  tsxVersion?: string,
+  tsxVersion?: string
 ): void {
   if (!devDependencies) {
     return;
@@ -144,7 +144,7 @@ export function normalizeScaffoldedPackageJson(
     persistPackageManager?: boolean;
     template?: "chat-app" | "electron";
     tsxVersion?: string;
-  },
+  }
 ): PackageJson {
   const betterAuthVersion = resolveBetterAuthVersion(packageJson);
 
@@ -170,7 +170,7 @@ export function normalizeScaffoldedPackageJson(
       }
       normalizeElectronDevDependencies(
         packageJson.devDependencies,
-        options?.tsxVersion,
+        options?.tsxVersion
       );
       break;
     default:
@@ -180,7 +180,7 @@ export function normalizeScaffoldedPackageJson(
   if (options?.persistPackageManager !== false) {
     const packageManager = options?.packageManager ?? "bun";
     const launcherVersion = process.env.npm_config_user_agent?.match(
-      new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`),
+      new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`)
     )?.[1];
     const version =
       launcherVersion ??

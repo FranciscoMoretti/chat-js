@@ -3,6 +3,7 @@ import { formatDistance } from "date-fns";
 import type { Dispatch, SetStateAction } from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
+
 import { useDocuments, useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -24,6 +25,7 @@ import {
 } from "@/lib/stores/base";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+
 import {
   Artifact as ArtifactCard,
   ArtifactClose,
@@ -380,15 +382,15 @@ function PureArtifactPanel({
   return (
     <ArtifactCard
       className={cn(
-        "h-full w-full rounded-none border-0 border-border bg-background transition-all duration-200 ease-out",
+        "border-border bg-background h-full w-full rounded-none border-0 transition-all duration-200 ease-out",
         className
       )}
       data-testid="artifact"
     >
-      <ArtifactHeader className="items-start bg-background/80 p-2">
+      <ArtifactHeader className="bg-background/80 items-start p-2">
         <div className="flex flex-row items-start gap-4">
           <ArtifactClose
-            className="h-fit p-2 hover:bg-accent"
+            className="hover:bg-accent h-fit p-2"
             data-testid="artifact-close-button"
             onClick={closeArtifact}
             variant="outline"
@@ -418,7 +420,7 @@ function PureArtifactPanel({
                 );
               }
               return (
-                <div className="mt-2 h-3 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
+                <div className="bg-muted-foreground/20 mt-2 h-3 w-32 animate-pulse rounded-md" />
               );
             })()}
           </div>
@@ -440,7 +442,7 @@ function PureArtifactPanel({
 
       <ArtifactContent className="flex h-full flex-col p-0">
         <ScrollArea className="h-full max-w-full!">
-          <div className="flex flex-col items-center bg-background/80">
+          <div className="bg-background/80 flex flex-col items-center">
             {renderArtifactContent()}
 
             {isCurrentVersion && !isReadonly && (

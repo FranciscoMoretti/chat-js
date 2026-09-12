@@ -3,10 +3,7 @@ title: Custom Storage
 description: Publish a third-party storage integration using the standard ChatJS registry contract
 ---
 
-Your item installs one entry point at `~/lib/storage-provider.ts`. Export a
-synchronous `createStorageAdapter(options)` function returning a Files SDK
-`Adapter`. You can wrap an existing Files SDK provider or implement its adapter
-interface. Your provider ID does not need to exist in the built-in catalog.
+Your item installs one entry point at `~/lib/storage-provider.ts`. Export a synchronous `createStorageAdapter(options)` function returning a Files SDK `Adapter`. You can wrap an existing Files SDK provider or implement its adapter interface. Your provider ID does not need to exist in the built-in catalog.
 
 ## Author source
 
@@ -23,14 +20,9 @@ export function createStorageAdapter(options: {
 }
 ```
 
-The receiving app generates `storage-options.ts` with
-`storageOptions satisfies Parameters<typeof createStorageAdapter>[0]`.
-Its shared file layer passes those options to your factory and wraps the returned
-adapter in `Files`. Type-check the installed app to verify both contracts.
+The receiving app generates `storage-options.ts` with `storageOptions satisfies Parameters<typeof createStorageAdapter>[0]`. Its shared file layer passes those options to your factory and wraps the returned adapter in `Files`. Type-check the installed app to verify both contracts.
 
-Read custom credentials inside your adapter from its documented environment
-variables. Creating the factory should not upload files or perform other remote
-operations. The installer reads metadata, without executing your source.
+Read custom credentials inside your adapter from its documented environment variables. Creating the factory should not upload files or perform other remote operations. The installer reads metadata, without executing your source.
 
 ## Declare the registry item
 
@@ -47,18 +39,9 @@ Use standard shadcn files and dependencies, plus this `meta.chatjs` shape:
 }
 ```
 
-`configKeys` supplies configuration hints for the CLI prompt. TypeScript checks
-the actual option shape. Each environment requirement must be satisfied. Its
-`options` are alternatives, with every variable in one alternative required.
-Declare variables your implementation actually reads. For the S3 wrapper above,
-use S3's configuration and credential requirements instead of the illustrative
-`ACME_STORAGE_TOKEN`.
+`configKeys` supplies configuration hints for the CLI prompt. TypeScript checks the actual option shape. Each environment requirement must be satisfied. Its `options` are alternatives, with every variable in one alternative required. Declare variables your implementation actually reads. For the S3 wrapper above, use S3's configuration and credential requirements instead of the illustrative `ACME_STORAGE_TOKEN`.
 
-Declare `files-sdk` and your provider's peer packages under `dependencies`.
-List the source file with `type: "registry:file"` and
-`target: "~/lib/storage-provider.ts"`. Extra implementation files and shared
-registry dependencies are supported through standard shadcn fields.
-The CLI owns `lib/storage-options.ts`, so your item should not install that file.
+Declare `files-sdk` and your provider's peer packages under `dependencies`. List the source file with `type: "registry:file"` and `target: "~/lib/storage-provider.ts"`. Extra implementation files and shared registry dependencies are supported through standard shadcn fields. The CLI owns `lib/storage-options.ts`, so your item should not install that file.
 
 ## Install and verify
 
@@ -70,14 +53,8 @@ npx @chat-js/cli@latest create my-app --yes \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
 
-Namespace addresses such as `@acme/storage` also work when configured in
-`components.json` at the resolution location. A complete URL works before the
-new app has a namespace configuration.
+Namespace addresses such as `@acme/storage` also work when configured in `components.json` at the resolution location. A complete URL works before the new app has a namespace configuration.
 
-Run the receiving app's type checks and `check-env`, then verify upload,
-download, and deletion with your adapter. Metadata validation alone cannot prove
-that credentials, network access, or storage operations work.
+Run the receiving app's type checks and `check-env`, then verify upload, download, and deletion with your adapter. Metadata validation alone cannot prove that credentials, network access, or storage operations work.
 
-This selection flow applies to app creation. `chat-js add` and `sync` still
-handle tools. Switching a deployed app's storage requires a separate object
-migration and configuration change, as described in [File Storage](../storage).
+This selection flow applies to app creation. `chat-js add` and `sync` still handle tools. Switching a deployed app's storage requires a separate object migration and configuration change, as described in [File Storage](../storage).

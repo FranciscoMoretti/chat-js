@@ -11,6 +11,7 @@ import {
   type ResumableStreamContext,
 } from "resumable-stream";
 import throttle from "throttleit";
+
 import {
   type AppModelDefinition,
   type AppModelId,
@@ -65,6 +66,7 @@ import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { generateUUID } from "@/lib/utils";
 import { checkAnonymousRateLimit, getClientIP } from "@/lib/utils/rate-limit";
+
 import { generateTitleFromUserMessage } from "../../actions";
 import { getThreadUpToMessageId } from "./get-thread-up-to-message-id";
 

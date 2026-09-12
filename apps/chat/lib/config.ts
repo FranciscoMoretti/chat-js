@@ -1,4 +1,5 @@
 import userConfig from "@/chat.config";
+
 import type { ActiveGatewayType } from "./ai/app-model-id";
 import { type AiConfig, applyDefaults, type Config } from "./config-schema";
 

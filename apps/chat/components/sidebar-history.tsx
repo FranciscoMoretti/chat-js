@@ -7,6 +7,7 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { useSession } from "@/providers/session-provider";
+
 import { SidebarChatsList } from "./sidebar-chats-list";
 import { SidebarProjects } from "./sidebar-projects";
 

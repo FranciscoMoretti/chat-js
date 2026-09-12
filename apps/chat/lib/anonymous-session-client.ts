@@ -1,6 +1,7 @@
 "use client";
 import type { AnonymousSession } from "@/lib/types/anonymous";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { ANONYMOUS_SESSION_COOKIES_KEY } from "./constants";
 
 // Client-side cookie helpers
@@ -38,7 +39,6 @@ function setCookie(name: string, value: string, maxAge: number): void {
         // Fail silently if Cookie Store API fails
       });
   } else {
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=${encodedValue}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
   }
 }
@@ -52,7 +52,6 @@ function deleteCookie(name: string): void {
       // Fail silently if Cookie Store API fails
     });
   } else {
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=; Path=/; Max-Age=0`;
   }
 }

@@ -2,6 +2,7 @@
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,7 +111,7 @@ export function ImageModal({
   return (
     <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent
-        className="h-screen w-screen max-w-none rounded-none border-none bg-background/50 p-0 backdrop-blur-sm sm:max-w-none"
+        className="bg-background/50 h-screen w-screen max-w-none rounded-none border-none p-0 backdrop-blur-sm sm:max-w-none"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">
@@ -137,19 +138,13 @@ export function ImageModal({
               <span>Image unavailable</span>
             </span>
           ) : (
-            <>
-              {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
-              {/* biome-ignore lint/correctness/useImageSize: Dynamic image dimensions unknown */}
-              {/* biome-ignore lint/a11y/useKeyWithClickEvents: Click handled by parent button */}
-              {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: Stops propagation to parent and handles loading failure */}
-              <img
-                alt={imageName ?? "Expanded image"}
-                className="max-h-[90vh] max-w-[90vw] object-contain"
-                onClick={(e) => e.stopPropagation()}
-                onError={handleImageError}
-                src={imageUrl || undefined}
-              />
-            </>
+            <img
+              alt={imageName ?? "Expanded image"}
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              onClick={(e) => e.stopPropagation()}
+              onError={handleImageError}
+              src={imageUrl || undefined}
+            />
           )}
         </button>
         {showActions && !imageUnavailable && (

@@ -1,4 +1,5 @@
 import * as path from "node:path";
+
 import {
   app,
   BrowserWindow,
@@ -9,7 +10,9 @@ import {
   shell,
   Tray,
 } from "electron";
+
 import { ELECTRON_AUTH_COOKIE_PREFIX } from "@/lib/electron-auth";
+
 import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
 import { electronAuthClient } from "./lib/auth-client";
 
@@ -282,7 +285,9 @@ function isBetterAuthCookieName(name: string): boolean {
   );
 }
 
-async function syncAuthSessionCookies(win?: BrowserWindow | null): Promise<void> {
+async function syncAuthSessionCookies(
+  win?: BrowserWindow | null
+): Promise<void> {
   const targetWindow = win ?? mainWindow;
   const targetSession = targetWindow?.webContents.session;
 
@@ -318,8 +323,12 @@ async function syncAuthSessionCookies(win?: BrowserWindow | null): Promise<void>
         value: entry.slice(index + 1),
       };
     })
-    .filter((cookie): cookie is { name: string; value: string } => cookie !== null)
-    .filter((cookie: { name: string; value: string }) => isBetterAuthCookieName(cookie.name));
+    .filter(
+      (cookie): cookie is { name: string; value: string } => cookie !== null
+    )
+    .filter((cookie: { name: string; value: string }) =>
+      isBetterAuthCookieName(cookie.name)
+    );
 
   await Promise.all(
     cookies.map((cookie: { name: string; value: string }) =>
@@ -335,7 +344,9 @@ async function syncAuthSessionCookies(win?: BrowserWindow | null): Promise<void>
 }
 
 function hasSessionCookie(cookieHeader: string): boolean {
-  return /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/.test(cookieHeader);
+  return /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/.test(
+    cookieHeader
+  );
 }
 
 async function authenticateFromDeepLink(url: string): Promise<boolean> {
@@ -419,7 +430,8 @@ function scheduleAuthRefresh(): void {
           if (authFlowId === currentAuthFlowId) {
             await setAuthState({
               status: "timed-out",
-              message: "Still waiting for the desktop app to finish signing in...",
+              message:
+                "Still waiting for the desktop app to finish signing in...",
               detail: "Please try the browser flow again.",
             });
           } else {

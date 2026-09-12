@@ -1,5 +1,6 @@
 "use client";
 import { notFound } from "next/navigation";
+
 import { Chat } from "@/components/chat";
 import { ChatSystem } from "@/components/chat-system";
 import { WithSkeleton } from "@/components/with-skeleton";

@@ -25,23 +25,23 @@ export function Faq() {
   return (
     <section
       aria-labelledby="faq-heading"
-      className="relative bg-secondary/50 py-24 sm:py-32"
+      className="bg-secondary/50 relative py-24 sm:py-32"
     >
       {/* Edge blending for smooth transitions */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-background to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent" />
+      <div className="from-background pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b to-transparent" />
+      <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t to-transparent" />
       <div className="relative mx-auto max-w-4xl px-6">
         <div className="text-center">
-          <p className="font-mono text-foreground/70 text-xs uppercase tracking-[0.25em]">
+          <p className="text-foreground/70 font-mono text-xs tracking-[0.25em] uppercase">
             FAQ
           </p>
           <h2
-            className="mt-4 font-display text-3xl tracking-tight sm:text-5xl"
+            className="font-display mt-4 text-3xl tracking-tight sm:text-5xl"
             id="faq-heading"
           >
             Frequently asked questions
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-foreground/75 text-lg leading-relaxed">
+          <p className="text-foreground/75 mx-auto mt-6 max-w-2xl text-lg leading-relaxed">
             These answers cover the common evaluation points for teams looking
             for a Next.js AI chat template they can extend in production.
           </p>
@@ -50,13 +50,13 @@ export function Faq() {
         <div className="mt-12 space-y-4">
           {FAQS.map((item) => (
             <details
-              className="group rounded-2xl border border-border/50 bg-card p-6"
+              className="group border-border/50 bg-card rounded-2xl border p-6"
               key={item.question}
             >
-              <summary className="cursor-pointer list-none font-semibold text-lg tracking-tight marker:hidden">
+              <summary className="cursor-pointer list-none text-lg font-semibold tracking-tight marker:hidden">
                 {item.question}
               </summary>
-              <p className="mt-4 text-foreground/75 leading-relaxed">
+              <p className="text-foreground/75 mt-4 leading-relaxed">
                 {item.answer}
               </p>
             </details>

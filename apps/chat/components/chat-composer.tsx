@@ -1,6 +1,7 @@
 "use client";
 
 import { type ComponentProps, memo } from "react";
+
 import {
   PromptInputFooter,
   PromptInputTools,
@@ -27,8 +28,8 @@ export const ChatComposer = memo(function ChatComposer(
       <ComposerLimits />
       <ComposerAttachments />
       <ComposerInput />
-      <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
-        <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
+      <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
+        <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
           <ComposerAttachButton />
           <ComposerModelPicker />
           <ConnectorsDropdown />

@@ -2,6 +2,7 @@
 
 import { ImageOffIcon } from "lucide-react";
 import { useState } from "react";
+
 import { ImageActions, ImageModal } from "@/components/image-modal";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 import type { ChatMessage } from "@/lib/ai/types";
@@ -19,7 +20,7 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
   if (tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
-        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
           Generating image: &quot;{tool.input.prompt}&quot;
         </div>
@@ -37,7 +38,7 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
         <div className="group relative">
           {imageUnavailable ? (
             <div
-              className="flex min-h-64 w-full flex-col items-center justify-center gap-2 bg-muted/30 text-muted-foreground"
+              className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2"
               role="status"
             >
               <ImageOffIcon className="size-8" />
@@ -50,7 +51,6 @@ export function GenerateImage({ tool }: { tool: GenerateImageTool }) {
                 onClick={() => setDialogOpen(true)}
                 type="button"
               >
-                {/* biome-ignore lint/performance/noImgElement lint/a11y/noNoninteractiveElementInteractions: Next/Image isn't desired for dynamic external URLs; onError handles loading failure */}
                 <img
                   alt={output.prompt}
                   className="h-auto w-full max-w-full"

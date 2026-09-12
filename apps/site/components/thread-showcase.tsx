@@ -16,6 +16,7 @@ import {
   Square,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   buildTreeLayout,
   initialTree,
@@ -95,15 +96,15 @@ export function ThreadInstallCommand() {
   }
 
   return (
-    <div className="mt-8 max-w-3xl border border-border bg-card">
-      <div className="flex items-center justify-between border-border border-b px-3 py-2">
-        <span className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
+    <div className="border-border bg-card mt-8 max-w-3xl border">
+      <div className="border-border flex items-center justify-between border-b px-3 py-2">
+        <span className="text-muted-foreground flex items-center gap-2 px-2 text-sm">
           <Package className="size-3.5" />
           npm package
         </span>
         <button
           aria-label="Copy installation command"
-          className="grid size-8 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
           onClick={copyCommand}
           type="button"
         >
@@ -111,8 +112,8 @@ export function ThreadInstallCommand() {
         </button>
       </div>
       <div className="overflow-x-auto px-4 py-4">
-        <code className="whitespace-nowrap font-mono text-sm">
-          <span className="select-none text-muted-foreground">$ </span>
+        <code className="font-mono text-sm whitespace-nowrap">
+          <span className="text-muted-foreground select-none">$ </span>
           {INSTALL_COMMAND}
         </code>
       </div>
@@ -179,10 +180,10 @@ function Conversation({
 
   return (
     <section className={styles.conversation}>
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-5 py-3">
+      <header className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
         <div>
-          <p className="font-medium text-sm">Chat</p>
-          <p className="font-mono text-[11px] text-muted-foreground">
+          <p className="text-sm font-medium">Chat</p>
+          <p className="text-muted-foreground font-mono text-[11px]">
             {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
               ?.title ?? "Start a conversation"}
           </p>
@@ -237,7 +238,7 @@ function Conversation({
                 )}
               </div>
               <div className={styles.messageBody}>
-                <p className="whitespace-pre-wrap text-sm leading-6">
+                <p className="text-sm leading-6 whitespace-pre-wrap">
                   {getMessageText(message) || "Streaming..."}
                 </p>
               </div>
@@ -261,7 +262,7 @@ function Conversation({
                     </legend>
                     <button
                       aria-label={`Previous branch for ${message.id}`}
-                      className="grid size-7 place-items-center hover:bg-background/10 disabled:opacity-30"
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === 0}
                       onClick={() => navigateToSibling(siblingIndex - 1)}
                       title="Previous version"
@@ -274,7 +275,7 @@ function Conversation({
                     </span>
                     <button
                       aria-label={`Next branch for ${message.id}`}
-                      className="grid size-7 place-items-center hover:bg-background/10 disabled:opacity-30"
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === siblings.length - 1}
                       onClick={() => navigateToSibling(siblingIndex + 1)}
                       title="Next version"
@@ -304,7 +305,7 @@ function Conversation({
               ?.title ?? "the beginning"}
           </strong>
         </p>
-        <div className="rounded-lg border border-border focus-within:border-foreground/40">
+        <div className="border-border focus-within:border-foreground/40 rounded-lg border">
           <textarea
             aria-label="Message this branch"
             className="block min-h-16 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none"
@@ -313,13 +314,13 @@ function Conversation({
             rows={2}
             value={draft}
           />
-          <div className="flex items-center justify-between gap-2 border-border border-t p-1.5">
-            <label className="flex h-8 items-center gap-1.5 px-2 text-muted-foreground text-xs">
+          <div className="border-border flex items-center justify-between gap-2 border-t p-1.5">
+            <label className="text-muted-foreground flex h-8 items-center gap-1.5 px-2 text-xs">
               <GitBranch className="size-3.5" />
               <span>Responses</span>
               <select
                 aria-label="Number of responses"
-                className="bg-transparent font-mono text-foreground outline-none"
+                className="text-foreground bg-transparent font-mono outline-none"
                 onChange={(event) =>
                   onResponseCountChange(Number(event.target.value))
                 }
@@ -335,7 +336,7 @@ function Conversation({
             <div className="flex items-center gap-1.5">
               <button
                 aria-label="Stop selected response"
-                className="h-8 rounded-md px-2 text-muted-foreground text-xs hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground h-8 rounded-md px-2 text-xs disabled:opacity-30"
                 disabled={
                   chat.status !== "submitted" && chat.status !== "streaming"
                 }
@@ -347,7 +348,7 @@ function Conversation({
               </button>
               <button
                 aria-label="Stop all responses"
-                className="grid size-8 place-items-center text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center disabled:opacity-30"
                 disabled={chat.tree.activeRuns.length === 0}
                 onClick={() => chat.tree.stopAll()}
                 title="Stop all responses"
@@ -359,7 +360,7 @@ function Conversation({
                 aria-label={`Send message with ${responseCount} ${
                   responseCount === 1 ? "response" : "responses"
                 }`}
-                className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground disabled:opacity-40"
+                className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-md disabled:opacity-40"
                 disabled={
                   !draft.trim() ||
                   chat.tree.activeRuns.length + responseCount > MAX_ACTIVE_RUNS
@@ -374,7 +375,7 @@ function Conversation({
         </div>
         <p
           aria-live="polite"
-          className="min-h-5 pt-1.5 text-red-600 text-xs dark:text-red-400"
+          className="min-h-5 pt-1.5 text-xs text-red-600 dark:text-red-400"
         >
           {playgroundError}
         </p>
@@ -442,7 +443,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
         >
           <svg
             aria-hidden="true"
-            className="absolute inset-0 text-border"
+            className="text-border absolute inset-0"
             height={layout.height}
             width={layout.width}
           >
@@ -630,7 +631,7 @@ function PlaygroundSession() {
 
   return (
     <div className={styles.playground} data-testid="thread-playground">
-      <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
+      <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div>
           <p className={styles.playgroundTitle}>
             <span className={styles.brandGlyph}>✦</span> One conversation. Every
@@ -662,10 +663,10 @@ function PlaygroundSession() {
           responseCount={responseCount}
         />
         <aside className={styles.treePanel}>
-          <header className="flex min-h-16 items-center justify-between border-border border-b px-5 py-3">
+          <header className="border-border flex min-h-16 items-center justify-between border-b px-5 py-3">
             <div>
-              <p className="font-medium text-sm">Conversation map</p>
-              <p className="font-mono text-[11px] text-muted-foreground">
+              <p className="text-sm font-medium">Conversation map</p>
+              <p className="text-muted-foreground font-mono text-[11px]">
                 Click a card to follow its path
               </p>
             </div>

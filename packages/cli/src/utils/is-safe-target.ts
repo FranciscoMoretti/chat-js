@@ -22,14 +22,9 @@ export function isSafeTarget(targetPath: string, root: string): boolean {
     .replace(/\\/g, "/")
     .split("/")
     .filter(Boolean);
-  const normalizedSegments = normalizedTarget
-    .split(/[\\/]+/)
-    .filter(Boolean);
+  const normalizedSegments = normalizedTarget.split(/[\\/]+/).filter(Boolean);
 
-  if (
-    targetSegments.includes("..") ||
-    normalizedSegments.includes("..")
-  ) {
+  if (targetSegments.includes("..") || normalizedSegments.includes("..")) {
     return false;
   }
 

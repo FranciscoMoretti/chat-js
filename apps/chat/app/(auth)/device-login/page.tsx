@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DeviceLoginPage } from "@/components/device-login-page";
 import { auth } from "@/lib/auth";

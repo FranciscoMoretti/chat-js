@@ -1,7 +1,9 @@
 import { Loader2, Terminal, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
+
 import { Button } from "./ui/button";
 
 export interface ConsoleOutputContent {
@@ -54,16 +56,16 @@ export function Console({
 
   return consoleOutputs.length > 0 ? (
     <div className={cn("flex w-full flex-col overflow-hidden", className)}>
-      <div className="flex h-full w-full flex-col overflow-x-hidden overflow-y-scroll border-border border-t bg-muted">
-        <div className="sticky top-0 z-50 flex h-fit w-full flex-row items-center justify-between border-border border-b bg-muted px-2 py-1">
-          <div className="flex flex-row items-center gap-3 pl-2 text-foreground text-sm">
+      <div className="border-border bg-muted flex h-full w-full flex-col overflow-x-hidden overflow-y-scroll border-t">
+        <div className="border-border bg-muted sticky top-0 z-50 flex h-fit w-full flex-row items-center justify-between border-b px-2 py-1">
+          <div className="text-foreground flex flex-row items-center gap-3 pl-2 text-sm">
             <div className="text-muted-foreground">
               <Terminal size={16} />
             </div>
             <div>Console</div>
           </div>
           <Button
-            className="size-fit p-1 hover:bg-accent"
+            className="hover:bg-accent size-fit p-1"
             onClick={() => setConsoleOutputs([])}
             size="icon"
             variant="ghost"
@@ -75,7 +77,7 @@ export function Console({
         <div>
           {consoleOutputs.map((consoleOutput, index) => (
             <div
-              className="flex flex-row border-border border-b bg-muted px-4 py-2 font-mono text-sm"
+              className="border-border bg-muted flex flex-row border-b px-4 py-2 font-mono text-sm"
               key={consoleOutput.id}
             >
               <div
@@ -102,7 +104,7 @@ export function Console({
                   </div>
                 </div>
               ) : (
-                <div className="flex w-full flex-col gap-2 overflow-x-scroll text-foreground">
+                <div className="text-foreground flex w-full flex-col gap-2 overflow-x-scroll">
                   {consoleOutput.contents.map((content) =>
                     content.type === "image" ? (
                       <picture key={`${consoleOutput.id}-${content.value}`}>

@@ -1,6 +1,7 @@
 "use client";
 import { useMounted } from "@/hooks/use-mounted";
 import { cn } from "@/lib/utils";
+
 import { Skeleton } from "./ui/skeleton";
 
 export function WithSkeleton({
@@ -19,7 +20,7 @@ export function WithSkeleton({
 
       {(!mounted || isLoading) && (
         <>
-          <div className={cn("absolute inset-0 bg-background", className)} />
+          <div className={cn("bg-background absolute inset-0", className)} />
 
           <Skeleton className={cn("absolute inset-0", className)} />
         </>

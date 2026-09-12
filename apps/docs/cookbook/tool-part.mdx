@@ -99,11 +99,7 @@ export type WeatherAtLocation = {
 ```ts title="lib/ai/tools/tools.ts"
 import { getWeather } from "./get-weather";
 
-export function getTools(
-  {
-    /* ...params */
-  }
-) {
+export function getTools({/* ...params */}) {
   return {
     getWeather,
     // ... other tools

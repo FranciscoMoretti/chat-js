@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+
 import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
@@ -29,7 +30,7 @@ export function ProjectConfig({
           {projectIcon && projectColor && (
             <ProjectIcon color={projectColor} icon={projectIcon} size={24} />
           )}
-          <h1 className="font-bold text-2xl">{projectName}</h1>
+          <h1 className="text-2xl font-bold">{projectName}</h1>
           <Button
             className="h-8 w-8"
             onClick={onRenameProject}

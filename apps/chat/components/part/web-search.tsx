@@ -1,6 +1,7 @@
 "use client";
 
 import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-message-parts";
+
 import { ResearchUpdates } from "./message-annotations";
 
 export function WebSearch({

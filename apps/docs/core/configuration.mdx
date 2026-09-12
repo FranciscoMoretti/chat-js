@@ -64,13 +64,13 @@ export default config;
 
 The `ai.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
 
-| Value                 | Backend                                          | Env Dependency                              |
-| --------------------- | ------------------------------------------------ | ------------------------------------------- |
-| `"vercel"` (default)  | [Vercel AI Gateway](/gateways/vercel)            | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
-| `"openrouter"`        | [OpenRouter](/gateways/openrouter)               | `OPENROUTER_API_KEY`                        |
-| `"openai"`            | [OpenAI](/gateways/openai)                       | `OPENAI_API_KEY`                            |
-| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL`                |
-| `"litellm"`           | [LiteLLM](/gateways/litellm)                     | `LITELLM_BASE_URL`                          |
+| Value | Backend | Env Dependency |
+| --- | --- | --- |
+| `"vercel"` (default) | [Vercel AI Gateway](/gateways/vercel) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
+| `"openrouter"` | [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
+| `"openai"` | [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
+| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` |
+| `"litellm"` | [LiteLLM](/gateways/litellm) | `LITELLM_BASE_URL` |
 
 ```typescript
 ai: {
@@ -83,22 +83,20 @@ See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 ## Features
 
-Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`.
-Application-level flags live under `features`. Missing env vars are caught at
-build time via `bun run prebuild`.
+Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. Application-level flags live under `features`. Missing env vars are caught at build time via `bun run prebuild`.
 
-| Feature               | Config Key                            | Env Dependency                                                                           |
-| --------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Code Execution        | `ai.tools.codeExecution.enabled`      | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
-| Web Search            | `ai.tools.webSearch.enabled`          | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                 |
-| URL Retrieval         | `ai.tools.urlRetrieval.enabled`       | `FIRECRAWL_API_KEY`                                                                      |
-| MCP Connectors        | `ai.tools.mcp.enabled`                | `MCP_ENCRYPTION_KEY`                                                                     |
-| Image Generation      | `ai.tools.image.enabled`              | Configured file storage provider                                                         |
-| Video Generation      | `ai.tools.video.enabled`              | Configured file storage provider                                                         |
-| Deep Research         | `ai.tools.deepResearch.enabled`       | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY`                                                  |
-| Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider                                              |
-| Attachments           | `features.attachments`                | Configured file storage provider                                                         |
-| Parallel Responses    | `features.parallelResponses`          | None                                                                                     |
+| Feature | Config Key | Env Dependency |
+| --- | --- | --- |
+| Code Execution | `ai.tools.codeExecution.enabled` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
+| Web Search | `ai.tools.webSearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
+| URL Retrieval | `ai.tools.urlRetrieval.enabled` | `FIRECRAWL_API_KEY` |
+| MCP Connectors | `ai.tools.mcp.enabled` | `MCP_ENCRYPTION_KEY` |
+| Image Generation | `ai.tools.image.enabled` | Configured file storage provider |
+| Video Generation | `ai.tools.video.enabled` | Configured file storage provider |
+| Deep Research | `ai.tools.deepResearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
+| Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider |
+| Attachments | `features.attachments` | Configured file storage provider |
+| Parallel Responses | `features.parallelResponses` | None |
 
 ```typescript
 ai: {
