@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { parseSessionTranscriptSeed } from "eve/transcript";
+import type { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
 import { createFileStorageKey } from "../file-storage";
 import {
   eveCopyDocumentResources,
@@ -15,10 +16,11 @@ import {
 /** Input is an authorized public projection and ancestry, never browser-supplied content. */
 export async function prepareEveCopyPlan(
   projection: ReturnType<typeof prepareEveCopyTranscript>,
-  documents: Parameters<typeof prepareEveCopyDocuments>[0],
+  snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>,
   readPublicFile: (key: string) => Promise<Blob>,
   origin: string
 ): Promise<EveCopyPlan> {
+  const { documents, checkpoints } = snapshot;
   const resources = eveCopyDocumentResources(documents);
   const allocations = {
     files: new Map<string, string>(),
@@ -76,6 +78,17 @@ export async function prepareEveCopyPlan(
   return {
     seed: parseSessionTranscriptSeed(seed),
     files,
+    documentCheckpoints: checkpoints.map((checkpoint) => ({
+      messageIndex: checkpoint.messageIndex,
+      heads: checkpoint.heads.map((head) => {
+        const documentId = allocations.documents.get(head.documentId);
+        const revisionId = allocations.revisions.get(head.revisionId);
+        if (!(documentId && revisionId)) {
+          throw new Error("Missing copied document boundary allocation.");
+        }
+        return { documentId, revisionId };
+      }),
+    })),
     sourceHeads: documents.map((document) => ({
       documentId: document.documentId,
       revisionId: document.headRevisionId,

@@ -92,7 +92,8 @@ async function prepareCopyReservation(
   const documents = await snapshotPublicEveCopyDocuments(
     source.id,
     source.sessionId,
-    source.projection.resources
+    source.projection.resources,
+    source.boundaries
   );
   const plan = await prepareEveCopyPlan(
     source.projection,

@@ -467,6 +467,7 @@ export const eveConversation = pgTable(
     parentConversationId: uuid("parentConversationId"),
     rootConversationId: uuid("rootConversationId"),
     forkTurnId: text("forkTurnId"),
+    forkMessageId: text("forkMessageId"),
     forkCheckpointId: uuid("forkCheckpointId"),
     title: text("title"),
     visibility: varchar("visibility", { enum: ["private", "public"] })
@@ -492,7 +493,7 @@ export const eveConversation = pgTable(
       "EveConversation_copy_root",
       sql`${table.creationKind} <> 'copy' or (
       ${table.parentConversationId} is null and ${table.rootConversationId} is null and
-      ${table.forkTurnId} is null and ${table.forkCheckpointId} is null
+      ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkCheckpointId} is null
     )`
     ),
     uniqueIndex("EveConversation_id_owner").on(table.id, table.ownerId),
@@ -512,15 +513,21 @@ export const eveConversation = pgTable(
     }),
     check(
       "EveConversation_named_fork_shape",
-      sql`${table.forkCheckpointId} is null or ${table.parentConversationId} is not null`
+      sql`${table.forkCheckpointId} is null or (
+      ${table.parentConversationId} is not null and ${table.forkMessageId} is null
+    )`
     ),
     check(
       "EveConversation_fork_shape",
       sql`(
-      ${table.parentConversationId} is null and ${table.rootConversationId} is null and ${table.forkTurnId} is null
+      ${table.parentConversationId} is null and ${table.rootConversationId} is null and
+      ${table.forkTurnId} is null and ${table.forkMessageId} is null
     ) or (
       ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
-      ${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and
+      (
+        (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
+        (${table.forkMessageId} is not null and ${table.forkMessageId} ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and ${table.forkTurnId} is null)
+      ) and
       ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
     )`
     ),
@@ -941,6 +948,67 @@ export const eveNamedDocumentCheckpointEntry = pgTable(
         eveDocumentRevision.ownerId,
       ],
       name: "EveNamedDocumentCheckpointEntry_revision_owner_fk",
+    }),
+  ]
+);
+
+/** Document heads at an imported transcript message boundary. */
+export const eveImportedDocumentCheckpoint = pgTable(
+  "EveImportedDocumentCheckpoint",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    messageIndex: integer("messageIndex").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.messageIndex] }),
+    uniqueIndex("EveImportedDocumentCheckpoint_owner_identity").on(
+      table.conversationId,
+      table.messageIndex,
+      table.ownerId
+    ),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveImportedDocumentCheckpoint_conversation_owner_fk",
+    }),
+    check(
+      "EveImportedDocumentCheckpoint_message_range",
+      sql`${table.messageIndex} between 0 and 9999`
+    ),
+  ]
+);
+
+export const eveImportedDocumentCheckpointEntry = pgTable(
+  "EveImportedDocumentCheckpointEntry",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    messageIndex: integer("messageIndex").notNull(),
+    documentId: uuid("documentId").notNull(),
+    revisionId: uuid("revisionId").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.conversationId, table.messageIndex, table.documentId],
+    }),
+    foreignKey({
+      columns: [table.conversationId, table.messageIndex, table.ownerId],
+      foreignColumns: [
+        eveImportedDocumentCheckpoint.conversationId,
+        eveImportedDocumentCheckpoint.messageIndex,
+        eveImportedDocumentCheckpoint.ownerId,
+      ],
+      name: "EveImportedDocumentCheckpointEntry_checkpoint_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.revisionId, table.documentId, table.ownerId],
+      foreignColumns: [
+        eveDocumentRevision.id,
+        eveDocumentRevision.documentId,
+        eveDocumentRevision.ownerId,
+      ],
+      name: "EveImportedDocumentCheckpointEntry_revision_owner_fk",
     }),
   ]
 );

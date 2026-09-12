@@ -26,6 +26,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
@@ -49,6 +51,8 @@ afterAll(async () => {
   for (const table of [
     eveConversationCopyFile,
     eveConversationCopy,
+    eveImportedDocumentCheckpointEntry,
+    eveImportedDocumentCheckpoint,
     eveDocumentHead,
     eveDocumentRevision,
     eveFileReference,
@@ -106,6 +110,7 @@ async function fixture() {
     revisionId: sourceRevisionId,
   });
   const plan: EveCopyPlan = {
+    documentCheckpoints: [{ messageIndex: 0, heads: [] }],
     seed: {
       attachments: "channel",
       messages: [
@@ -432,7 +437,13 @@ test("invalid initial native seeds never reserve resources or become accepted", 
         projectionHash: sha256,
         title: "Invalid seed",
         modelId: "google/gemini-2.5-flash-lite",
-        plan: { seed, sourceHeads: [], files: [], documents: [] },
+        plan: {
+          seed,
+          documentCheckpoints: [{ messageIndex: 0, heads: [] }],
+          sourceHeads: [],
+          files: [],
+          documents: [],
+        },
       })
     ).rejects.toThrow(invalidSeedError);
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
@@ -490,4 +501,33 @@ test("concurrent accepted retries dispatch once and return the same binding", as
     await dispatchEveCopy(ownerId, f.saved.conversation.id, create)
   ).toEqual(bound);
   expect(create).toHaveBeenCalledTimes(1);
+});
+
+test("commits an empty imported document boundary together with copied resources", async () => {
+  const f = await fixture();
+  await prepare(f);
+  expect(
+    await db
+      .select()
+      .from(eveImportedDocumentCheckpoint)
+      .where(
+        eq(
+          eveImportedDocumentCheckpoint.conversationId,
+          f.saved.conversation.id
+        )
+      )
+  ).toEqual([
+    { conversationId: f.saved.conversation.id, ownerId, messageIndex: 0 },
+  ]);
+  expect(
+    await db
+      .select()
+      .from(eveImportedDocumentCheckpointEntry)
+      .where(
+        eq(
+          eveImportedDocumentCheckpointEntry.conversationId,
+          f.saved.conversation.id
+        )
+      )
+  ).toEqual([]);
 });

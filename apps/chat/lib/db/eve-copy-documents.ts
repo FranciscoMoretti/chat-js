@@ -1,16 +1,22 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { EveCopyBoundary } from "../eve/copy-boundaries";
 import { db } from "./client";
 import {
   eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
 } from "./schema";
 
 /** Internal copy preparation: IDs must come from the sanitized published transcript. */
 export async function snapshotPublicEveCopyDocuments(
   conversationId: string,
   sessionId: string,
-  resources: { documentIds: readonly string[]; revisionIds: readonly string[] }
+  resources: { documentIds: readonly string[]; revisionIds: readonly string[] },
+  boundaries: readonly EveCopyBoundary[]
 ) {
   const [identity] = await db
     .select({ ownerId: eveConversation.ownerId })
@@ -105,7 +111,7 @@ export async function snapshotPublicEveCopyDocuments(
         );
       }
     }
-    return heads.map((head) => {
+    const documents = heads.map((head) => {
       const history: typeof revisions = [];
       const seen = new Set<string>();
       let id: string | null = head.revisionId;
@@ -128,5 +134,127 @@ export async function snapshotPublicEveCopyDocuments(
         revisions: history.reverse(),
       };
     });
+    const checkpoints = await snapshotCopyCheckpoints(tx, {
+      conversationId,
+      ownerId: identity.ownerId,
+      documentIds,
+      boundaries,
+      byId,
+    });
+    return { documents, checkpoints };
   });
+}
+
+async function snapshotCopyCheckpoints(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: {
+    conversationId: string;
+    ownerId: string;
+    documentIds: string[];
+    boundaries: readonly EveCopyBoundary[];
+    byId: ReadonlyMap<string, { documentId: string }>;
+  }
+) {
+  const { conversationId, ownerId, documentIds, boundaries, byId } = input;
+  const checkpointHeaders = new Set<string>();
+  const checkpointEntries = new Map<
+    string,
+    { documentId: string; revisionId: string }[]
+  >();
+  const turns = boundaries
+    .filter((boundary) => boundary.sourceKind === "turn")
+    .map((boundary) => boundary.sourceIndex);
+  const imported = boundaries
+    .filter((boundary) => boundary.sourceKind === "imported")
+    .map((boundary) => boundary.sourceIndex);
+  if (turns.length && documentIds.length) {
+    const headers = await tx
+      .select({ index: eveDocumentCheckpoint.turnIndex })
+      .from(eveDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveDocumentCheckpoint.conversationId, conversationId),
+          eq(eveDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveDocumentCheckpoint.turnIndex, turns)
+        )
+      );
+    for (const header of headers) {
+      checkpointHeaders.add(`turn:${header.index}`);
+    }
+    const entries = await tx
+      .select()
+      .from(eveDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveDocumentCheckpointEntry.conversationId, conversationId),
+          eq(eveDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveDocumentCheckpointEntry.turnIndex, turns),
+          inArray(eveDocumentCheckpointEntry.documentId, documentIds)
+        )
+      );
+    for (const entry of entries) {
+      const key = `turn:${entry.turnIndex}`;
+      const values = checkpointEntries.get(key) ?? [];
+      values.push({
+        documentId: entry.documentId,
+        revisionId: entry.revisionId,
+      });
+      checkpointEntries.set(key, values);
+    }
+  }
+  if (imported.length && documentIds.length) {
+    const headers = await tx
+      .select({ index: eveImportedDocumentCheckpoint.messageIndex })
+      .from(eveImportedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpoint.conversationId, conversationId),
+          eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpoint.messageIndex, imported)
+        )
+      );
+    for (const header of headers) {
+      checkpointHeaders.add(`imported:${header.index}`);
+    }
+    const entries = await tx
+      .select()
+      .from(eveImportedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpointEntry.conversationId, conversationId),
+          eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpointEntry.messageIndex, imported),
+          inArray(eveImportedDocumentCheckpointEntry.documentId, documentIds)
+        )
+      );
+    for (const entry of entries) {
+      const key = `imported:${entry.messageIndex}`;
+      const values = checkpointEntries.get(key) ?? [];
+      values.push({
+        documentId: entry.documentId,
+        revisionId: entry.revisionId,
+      });
+      checkpointEntries.set(key, values);
+    }
+  }
+  const checkpoints = boundaries.map((boundary) => {
+    const key = `${boundary.sourceKind}:${boundary.sourceIndex}`;
+    if (documentIds.length && !checkpointHeaders.has(key)) {
+      throw new Error("Published document boundary is unavailable.");
+    }
+    const heads = checkpointEntries.get(key) ?? [];
+    for (const head of heads) {
+      if (byId.get(head.revisionId)?.documentId !== head.documentId) {
+        throw new Error(
+          "Published document boundary is outside accessible ancestry."
+        );
+      }
+    }
+    return {
+      messageIndex: boundary.messageIndex,
+      heads: heads.sort((a, b) => a.documentId.localeCompare(b.documentId)),
+    };
+  });
+
+  return checkpoints;
 }

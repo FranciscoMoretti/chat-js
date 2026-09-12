@@ -13,6 +13,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
@@ -69,6 +71,8 @@ afterAll(async () => {
   for (const table of [
     eveConversationCopyFile,
     eveConversationCopy,
+    eveImportedDocumentCheckpointEntry,
+    eveImportedDocumentCheckpoint,
     eveDocumentHead,
     eveDocumentRevision,
     eveFileReference,
@@ -221,7 +225,16 @@ async function fixture() {
       data: { continuationToken: "private-token", wait: "next-user-message" },
     },
   ]);
-  mocks.source.mockResolvedValue({ ...source, projection });
+  await db.insert(eveImportedDocumentCheckpoint).values({
+    conversationId: source.id,
+    ownerId: sourceOwnerId,
+    messageIndex: 0,
+  });
+  mocks.source.mockResolvedValue({
+    ...source,
+    projection,
+    boundaries: [{ messageIndex: 0, sourceKind: "imported", sourceIndex: 0 }],
+  });
   return {
     source,
     key,

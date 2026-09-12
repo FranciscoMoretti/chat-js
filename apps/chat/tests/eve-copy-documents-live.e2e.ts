@@ -7,6 +7,7 @@ import {
   eveConversation,
   eveDocumentHead,
   eveDocumentRevision,
+  eveImportedDocumentCheckpointEntry,
   eveUsage,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
@@ -15,11 +16,14 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash";
+const boundaryReply = /^boundary-ready\.?$/;
 
 test("copied document history survives source deletion and supports native editing", async ({
   page,
 }) => {
+  test.setTimeout(180_000);
   page.setDefaultTimeout(20_000);
+  page.setDefaultNavigationTimeout(60_000);
   await page.addInitScript(() => {
     document.addEventListener("DOMContentLoaded", () => {
       const style = document.createElement("style");
@@ -66,19 +70,41 @@ test("copied document history survives source deletion and supports native editi
     },
   });
   expect(edit.ok(), await edit.text()).toBe(true);
+  await page
+    .getByRole("textbox", { name: "Message", exact: true })
+    .fill("Reply exactly boundary-ready. Do not use tools.");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByRole("log").getByText(boundaryReply)).toBeVisible({
+    timeout: 45_000,
+  });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await db
     .update(eveConversation)
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, source.id));
-  const copied = await page.request.post("/api/agent-conversation-copies", {
+  const copyInput = {
+    sourceConversationId: source.id,
+    operationId: crypto.randomUUID(),
+    modelId,
+  };
+  let copied = await page.request.post("/api/agent-conversation-copies", {
     headers: { origin },
-    data: {
-      sourceConversationId: source.id,
-      operationId: crypto.randomUUID(),
-      modelId,
-    },
+    data: copyInput,
   });
-  expect(copied.ok(), await copied.text()).toBe(true);
+  await expect
+    .poll(
+      async () => {
+        if (copied.status() === 503) {
+          copied = await page.request.post("/api/agent-conversation-copies", {
+            headers: { origin },
+            data: copyInput,
+          });
+        }
+        return copied.status();
+      },
+      { timeout: 45_000, intervals: [1000, 2000, 4000] }
+    )
+    .toBe(200);
   const destination = conversationBinding.parse(await copied.json());
   const revisions = await db
     .select()
@@ -95,10 +121,17 @@ test("copied document history survives source deletion and supports native editi
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": head.ownerId },
   });
-  const idle = await native.sessions.attach(destination.sessionId).snapshot();
-  expect(idle.events.some((event) => event.type === "history.seeded")).toBe(
-    true
-  );
+  const copiedSession = native.sessions.attach(destination.sessionId);
+  let idle = await copiedSession.snapshot();
+  await expect
+    .poll(
+      async () => {
+        idle = await copiedSession.snapshot();
+        return idle.events.some((event) => event.type === "history.seeded");
+      },
+      { timeout: 20_000, intervals: [250, 500, 1000] }
+    )
+    .toBe(true);
   expect(
     idle.events.some(
       (event) =>
@@ -107,6 +140,24 @@ test("copied document history survives source deletion and supports native editi
   ).toBe(false);
   const latest = revisions.find((revision) => revision.id === head.revisionId);
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
+  expect(
+    await db
+      .select({
+        messageIndex: eveImportedDocumentCheckpointEntry.messageIndex,
+        documentId: eveImportedDocumentCheckpointEntry.documentId,
+        revisionId: eveImportedDocumentCheckpointEntry.revisionId,
+      })
+      .from(eveImportedDocumentCheckpointEntry)
+      .where(
+        eq(eveImportedDocumentCheckpointEntry.conversationId, destination.id)
+      )
+  ).toEqual([
+    {
+      messageIndex: 2,
+      documentId: head.documentId,
+      revisionId: head.revisionId,
+    },
+  ]);
   expect(
     revisions.find((revision) => revision.id === latest?.parentRevisionId)
       ?.content

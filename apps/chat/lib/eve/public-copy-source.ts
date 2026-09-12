@@ -1,6 +1,7 @@
 import { Client } from "eve/client";
 import { getPublicEveConversation } from "../db/eve-queries";
 import { env } from "../env";
+import { eveCopyBoundaries } from "./copy-boundaries";
 import { prepareEveCopyTranscript } from "./copy-transcript";
 import { assertEveConfigured } from "./server";
 
@@ -28,5 +29,6 @@ export async function readPublicEveCopySource(id: string) {
     sessionId: row.sessionId,
     title: row.title ?? row.firstMessage.slice(0, 100),
     projection: prepareEveCopyTranscript(snapshot.events),
+    boundaries: eveCopyBoundaries(snapshot.events),
   };
 }

@@ -416,4 +416,45 @@ function validateCopyPlan(plan: EveCopyPlan) {
       throw new Error("Invalid copied document head.");
     }
   }
+  validateCopyDocumentCheckpoints(plan);
+}
+
+function validateCopyDocumentCheckpoints(plan: EveCopyPlan) {
+  const checkpoints = new Map(
+    plan.documentCheckpoints.map((checkpoint) => [
+      checkpoint.messageIndex,
+      checkpoint,
+    ])
+  );
+  const users = plan.seed.messages.flatMap((message, index) =>
+    message.role === "user" ? [index] : []
+  );
+  if (
+    checkpoints.size !== plan.documentCheckpoints.length ||
+    checkpoints.size !== users.length ||
+    users.some((index) => !checkpoints.has(index))
+  ) {
+    throw new Error(
+      "Copied document boundaries must match imported user messages."
+    );
+  }
+  const revisionDocuments = new Map(
+    plan.documents.flatMap((document) =>
+      document.revisions.map((revision) => [revision.id, document.documentId])
+    )
+  );
+  for (const checkpoint of checkpoints.values()) {
+    const seen = new Set<string>();
+    for (const head of checkpoint.heads) {
+      if (
+        seen.has(head.documentId) ||
+        revisionDocuments.get(head.revisionId) !== head.documentId
+      ) {
+        throw new Error(
+          "Copied document boundary has invalid revision ownership."
+        );
+      }
+      seen.add(head.documentId);
+    }
+  }
 }

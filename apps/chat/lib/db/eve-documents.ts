@@ -9,6 +9,8 @@ import {
   eveDocumentCheckpointEntry,
   eveDocumentHead,
   eveDocumentRevision,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
 } from "./schema";
@@ -69,6 +71,22 @@ export async function purgeEveFamilyDocuments(ownerId: string, rootId: string) {
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${id}`}, 0))`
       );
     }
+    await tx
+      .delete(eveImportedDocumentCheckpointEntry)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpointEntry.conversationId, ids)
+        )
+      );
+    await tx
+      .delete(eveImportedDocumentCheckpoint)
+      .where(
+        and(
+          eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+          inArray(eveImportedDocumentCheckpoint.conversationId, ids)
+        )
+      );
     await tx
       .delete(eveNamedDocumentCheckpointEntry)
       .where(
@@ -398,6 +416,13 @@ export async function initializeEveForkDocuments(
     const beforeTurn = parseForkTurnIndex(target.forkTurnId);
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
+    );
+    // Native and named forks retain the complete imported transcript prefix.
+    await inheritImportedDocumentCheckpoints(
+      tx,
+      ownerId,
+      target.parentConversationId,
+      conversationId
     );
     if (target.forkCheckpointId) {
       await initializeNamedForkDocuments(
@@ -743,6 +768,52 @@ function orderRevisionHistory<
     revisionId = revision.parentRevisionId;
   }
   return history.reverse();
+}
+
+async function inheritImportedDocumentCheckpoints(
+  tx: DocumentTransaction,
+  ownerId: string,
+  sourceId: string,
+  conversationId: string
+) {
+  const headers = await tx
+    .select()
+    .from(eveImportedDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveImportedDocumentCheckpoint.conversationId, sourceId),
+        eq(eveImportedDocumentCheckpoint.ownerId, ownerId)
+      )
+    );
+  if (!headers.length) {
+    return;
+  }
+  const copied = await tx
+    .insert(eveImportedDocumentCheckpoint)
+    .values(headers.map((header) => ({ ...header, conversationId })))
+    .onConflictDoNothing()
+    .returning({ messageIndex: eveImportedDocumentCheckpoint.messageIndex });
+  if (!copied.length) {
+    return;
+  }
+  const entries = await tx
+    .select()
+    .from(eveImportedDocumentCheckpointEntry)
+    .where(
+      and(
+        eq(eveImportedDocumentCheckpointEntry.conversationId, sourceId),
+        eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+        inArray(
+          eveImportedDocumentCheckpointEntry.messageIndex,
+          copied.map((header) => header.messageIndex)
+        )
+      )
+    );
+  if (entries.length) {
+    await tx
+      .insert(eveImportedDocumentCheckpointEntry)
+      .values(entries.map((entry) => ({ ...entry, conversationId })));
+  }
 }
 
 async function inheritDocumentCheckpoints(

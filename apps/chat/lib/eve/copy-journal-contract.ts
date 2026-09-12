@@ -7,6 +7,10 @@ export type EveCopySeed = NonNullable<
 /** Server-prepared immutable intent. Never accept this payload from a browser. */
 export type EveCopyPlan = {
   seed: EveCopySeed;
+  documentCheckpoints: {
+    messageIndex: number;
+    heads: { documentId: string; revisionId: string }[];
+  }[];
   sourceHeads: { documentId: string; revisionId: string }[];
   files: {
     key: string;

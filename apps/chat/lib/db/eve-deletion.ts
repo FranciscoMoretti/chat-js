@@ -12,6 +12,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
   eveVote,
@@ -65,6 +67,8 @@ export async function completeEveConversationDeletion(
     }
     for (const table of [
       eveFileReference,
+      eveImportedDocumentCheckpointEntry,
+      eveImportedDocumentCheckpoint,
       eveNamedDocumentCheckpointEntry,
       eveNamedDocumentCheckpoint,
       eveDocumentCheckpointEntry,

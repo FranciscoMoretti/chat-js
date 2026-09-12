@@ -25,7 +25,7 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
       }}), { getTailIndex: async () => records.length - 1 });
     }});
     registerHooks({ load(url, context, nextLoad) {
-      if (url.endsWith("/internal/workflow/runtime.js")) return { format: "module", source: "export const getRun = globalThis.checkpointTestGetRun", shortCircuit: true };
+      if (url.endsWith("/internal/workflow/runtime.js")) return { format: "module", source: "export * from " + JSON.stringify(url + "?checkpoint-test-real") + "; export const getRun = globalThis.checkpointTestGetRun", shortCircuit: true };
       return nextLoad(url, context);
     }});
     const { handleCheckpointReadiness } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/checkpoint-readiness.js");

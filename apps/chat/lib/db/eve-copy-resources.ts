@@ -14,6 +14,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveStoredFile,
 } from "./schema";
 
@@ -145,6 +147,26 @@ export async function writeEveCopyDocuments(
           revisionId: document.headRevisionId,
         }))
       );
+    }
+    if (copy.plan.documentCheckpoints.length) {
+      await tx.insert(eveImportedDocumentCheckpoint).values(
+        copy.plan.documentCheckpoints.map((checkpoint) => ({
+          conversationId,
+          ownerId,
+          messageIndex: checkpoint.messageIndex,
+        }))
+      );
+      const entries = copy.plan.documentCheckpoints.flatMap((checkpoint) =>
+        checkpoint.heads.map((head) => ({
+          conversationId,
+          ownerId,
+          messageIndex: checkpoint.messageIndex,
+          ...head,
+        }))
+      );
+      if (entries.length) {
+        await tx.insert(eveImportedDocumentCheckpointEntry).values(entries);
+      }
     }
     await tx
       .update(eveConversationCopy)

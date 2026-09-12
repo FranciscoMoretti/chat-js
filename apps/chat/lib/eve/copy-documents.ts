@@ -3,7 +3,9 @@ import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
 
 /** Convert only an authorized ancestry snapshot; imported revisions have no source execution turns. */
 export function prepareEveCopyDocuments(
-  snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>,
+  snapshot: Awaited<
+    ReturnType<typeof snapshotPublicEveCopyDocuments>
+  >["documents"],
   allocations: Parameters<typeof rewriteEveCopyResources>[1]
 ) {
   for (const document of snapshot) {
@@ -41,7 +43,9 @@ export function prepareEveCopyDocuments(
 
 /** Inventory every accessible revision, including files removed from the current head. */
 export function eveCopyDocumentResources(
-  snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>
+  snapshot: Awaited<
+    ReturnType<typeof snapshotPublicEveCopyDocuments>
+  >["documents"]
 ) {
   const files = new Set<string>();
   const documents = new Set<string>();

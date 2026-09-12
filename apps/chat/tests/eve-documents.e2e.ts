@@ -25,6 +25,8 @@ import {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
   eveStoredFile,
@@ -46,6 +48,12 @@ await db.insert(user).values(
   }))
 );
 afterAll(async () => {
+  await db
+    .delete(eveImportedDocumentCheckpointEntry)
+    .where(eq(eveImportedDocumentCheckpointEntry.ownerId, owner));
+  await db
+    .delete(eveImportedDocumentCheckpoint)
+    .where(eq(eveImportedDocumentCheckpoint.ownerId, owner));
   await db
     .delete(eveNamedDocumentCheckpointEntry)
     .where(eq(eveNamedDocumentCheckpointEntry.ownerId, owner));
@@ -981,4 +989,56 @@ test("missing or mismatched named document boundaries stop native allocation", a
     )
   ).rejects.toThrow("Named document checkpoint");
   expect(allocations).toBe(0);
+});
+
+test.each([
+  false,
+  true,
+])("native descendants retain imported document boundaries, including empty ones (named=%s)", async (named) => {
+  const root = await conversation();
+  const input = draft(root.id);
+  const original = await saveEveDocumentRevision(input);
+  await db.insert(eveImportedDocumentCheckpoint).values([
+    { ownerId: owner, conversationId: root.id, messageIndex: 0 },
+    { ownerId: owner, conversationId: root.id, messageIndex: 2 },
+  ]);
+  await db.insert(eveImportedDocumentCheckpointEntry).values({
+    ownerId: owner,
+    conversationId: root.id,
+    messageIndex: 2,
+    documentId: input.documentId,
+    revisionId: original.id,
+  });
+  await captureEveDocumentCheckpoint(owner, root.id, 1);
+  const checkpointId = named ? crypto.randomUUID() : undefined;
+  if (checkpointId) {
+    await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
+  }
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Imported prefix descendant",
+    async () => crypto.randomUUID(),
+    { fork: { conversationId: root.id, beforeTurnId: "turn_1", checkpointId } }
+  );
+  await initializeEveForkDocuments(owner, child.id);
+  const headers = await db
+    .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
+    .from(eveImportedDocumentCheckpoint)
+    .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id))
+    .orderBy(eveImportedDocumentCheckpoint.messageIndex);
+  expect(headers).toEqual([{ messageIndex: 0 }, { messageIndex: 2 }]);
+  const entries = await db
+    .select()
+    .from(eveImportedDocumentCheckpointEntry)
+    .where(eq(eveImportedDocumentCheckpointEntry.conversationId, child.id));
+  expect(entries).toEqual([
+    {
+      ownerId: owner,
+      conversationId: child.id,
+      messageIndex: 2,
+      documentId: input.documentId,
+      revisionId: original.id,
+    },
+  ]);
 });
