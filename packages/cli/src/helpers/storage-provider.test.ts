@@ -59,10 +59,10 @@ describe("storage registry integration", () => {
       const item = {
         files: [
           {
-            path: "provider.ts",
-            type: "registry:file",
-            target: "~/lib/storage-provider.ts",
             content: "throw new Error('must not execute during configuration')",
+            path: "provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
           },
         ],
         meta: { chatjs: definition },
