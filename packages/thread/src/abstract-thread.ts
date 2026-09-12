@@ -802,7 +802,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.publish();
     const finished = start(chat).finally(() => this.publish());
     // startRun may be detached; observing the rejection keeps finished awaitable.
-    void finished.catch(() => undefined);
+    void finished.catch(() => {
+      // The original finished promise retains the rejection for callers.
+    });
     record.finished = finished;
     return this.createRunHandle(record);
   }

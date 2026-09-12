@@ -46,7 +46,7 @@ export const chatMessageToDbMessage = (
   chatId: string
 ): DBMessage => {
   const parentMessageId = message.metadata.parentMessageId || null;
-  const selectedModel = message.metadata.selectedModel;
+  const { selectedModel } = message.metadata;
 
   // Ensure createdAt is a Date object
   let createdAt: Date;

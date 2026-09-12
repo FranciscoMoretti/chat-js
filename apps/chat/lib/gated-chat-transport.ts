@@ -14,7 +14,9 @@ const waitForGate = (ready: Promise<void>, signal?: AbortSignal) => {
     return ready;
   }
   if (signal.aborted) {
-    ready.catch(() => undefined);
+    ready.catch(() => {
+      // Observe a rejected gate after cancellation without changing the abort error.
+    });
     return Promise.reject(createAbortError());
   }
 

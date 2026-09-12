@@ -71,7 +71,7 @@ export const useStartProvisionalChat = (chatId: string) => {
 
       const primaryRequest = requestSpecs[0] ?? null;
       const storeState = storeApi.getState();
-      const startRun = storeState.startRun;
+      const { startRun } = storeState;
 
       if (!startRun) {
         return false;
