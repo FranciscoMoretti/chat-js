@@ -67,7 +67,7 @@ describe("chat store hooks", () => {
     }
 
     try {
-      const startRun = Reflect.apply(actions.startRun, undefined, []);
+      const startRun = actions.startRun();
       await expect(startRun).rejects.toThrow("startRun not configured");
     } finally {
       act(() => rendered.unmount());
