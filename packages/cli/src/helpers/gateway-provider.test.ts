@@ -20,9 +20,23 @@ it("wires selected defaults and snapshot identity without managing dependencies"
         definition: item.meta.chatjs,
         source: item.name,
       });
-      expect(
-        await readFile(join(cwd, "lib/ai/gateway-model-defaults.ts"), "utf-8")
-      ).toContain(`gatewayType = "${item.meta.chatjs.id}"`);
+      const generatedDefaults = await readFile(
+        join(cwd, "lib/ai/gateway-model-defaults.ts"),
+        "utf-8"
+      );
+      expect(generatedDefaults).toContain(
+        `gatewayType = "${item.meta.chatjs.id}"`
+      );
+      const codeIndex = generatedDefaults.indexOf('"code": {');
+      const deepResearchIndex = generatedDefaults.indexOf('"deepResearch": {');
+      const allowClarificationIndex = generatedDefaults.indexOf(
+        '"allowClarification":'
+      );
+      const defaultModelIndex = generatedDefaults.indexOf('"defaultModel":');
+      expect(codeIndex).toBeGreaterThanOrEqual(0);
+      expect(deepResearchIndex).toBeGreaterThan(codeIndex);
+      expect(allowClarificationIndex).toBeGreaterThanOrEqual(0);
+      expect(defaultModelIndex).toBeGreaterThan(allowClarificationIndex);
       expect(
         await readFile(join(cwd, "lib/ai/models.generated.ts"), "utf-8")
       ).toContain(`generatedForGateway = "${item.meta.chatjs.id}"`);

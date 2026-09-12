@@ -63,6 +63,21 @@ test("sync registers direct installs deterministically and preserves custom modu
   );
   expect(await readFile(custom, "utf-8")).toContain("custom: {}");
 });
+test("generated registries sort by registration key instead of directory name", async () => {
+  const root = await project();
+  await install(root, "a-tool", "zebra");
+  await install(root, "z-tool", "alpha");
+  await syncTools(root);
+  const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  expect(Object.keys(tools)).toEqual(["alpha", "zebra"]);
+  expect(Object.keys(ui)).toEqual(["tool-alpha", "tool-zebra"]);
+  const { alpha } = await import(join(root, "tools/chatjs/z-tool/tool.ts"));
+  const { zebra } = await import(join(root, "tools/chatjs/a-tool/tool.ts"));
+  expect(tools.alpha).toBe(alpha);
+  expect(tools.zebra).toBe(zebra);
+  await syncTools(root);
+});
 test("missing descriptors and edited generated output fail without dropping registrations", async () => {
   const root = await project();
   await install(root);
