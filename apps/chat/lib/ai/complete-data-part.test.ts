@@ -5,7 +5,7 @@ import type { ChatMessage } from "@/lib/ai/types";
 
 import { completeDataPart, parseAppendedMessage } from "./complete-data-part";
 
-function message({
+const message = ({
   id,
   parentMessageId,
   role = "assistant",
@@ -13,22 +13,20 @@ function message({
   id: string;
   parentMessageId: string | null;
   role?: ChatMessage["role"];
-}): ChatMessage {
-  return {
-    id,
-    role,
-    parts: [{ type: "text", text: id }],
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date(),
-      isPrimaryParallel: null,
-      parallelGroupId: null,
-      parallelIndex: null,
-      parentMessageId,
-      selectedModel: gatewayModelDefaults.workflows.chat,
-    },
-  };
-}
+}): ChatMessage => ({
+  id,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date(),
+    isPrimaryParallel: null,
+    parallelGroupId: null,
+    parallelIndex: null,
+    parentMessageId,
+    selectedModel: gatewayModelDefaults.workflows.chat,
+  },
+  parts: [{ text: id, type: "text" }],
+  role,
+});
 
 describe("parseAppendedMessage", () => {
   it("parses and validates a serialized chat message", async () => {
@@ -44,11 +42,11 @@ describe("parseAppendedMessage", () => {
       ...message({ id: "assistant", parentMessageId: "user" }),
       parts: [
         {
-          type: "text",
-          text: "complete",
           providerMetadata: {
             test: { createdAt: "leave-as-string" },
           },
+          text: "complete",
+          type: "text",
         },
       ],
     };
@@ -73,8 +71,8 @@ describe("completeDataPart", () => {
 
     await completeDataPart({
       dataPart: {
-        type: "data-appendMessage",
         data: JSON.stringify(input),
+        type: "data-appendMessage",
       },
       thread: { upsertMessage },
     });

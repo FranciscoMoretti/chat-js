@@ -220,8 +220,6 @@
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
-        "lib/ai/complete-data-part.test.ts",
-        "lib/ai/completion-queue.test.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
@@ -489,7 +487,6 @@
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
         "lib/ai/eval-agent.ts",
-        "lib/ai/token-utils.test.ts",
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/db/schema.ts",
@@ -521,7 +518,6 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
-        "lib/ai/token-utils.test.ts",
         "lib/clone-messages.ts"
       ],
       "rules": {
@@ -695,7 +691,6 @@
     {
       "files": [
         "components/ai-elements/prompt-input.tsx",
-        "lib/ai/completion-queue.test.ts",
         "lib/cancellation-aware-chat-transport.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
@@ -721,7 +716,7 @@
       }
     },
     {
-      "files": ["lib/ai/completion-queue.test.ts", "scripts/check-redis.ts"],
+      "files": ["scripts/check-redis.ts"],
       "rules": {
         "promise/param-names": "off"
       }
@@ -1287,7 +1282,6 @@
         "hooks/chat-sync-hooks.ts",
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
-        "lib/ai/complete-data-part.test.ts",
         "lib/ai/core-chat-agent.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
@@ -1295,8 +1289,6 @@
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
         "lib/ai/text-splitter.ts",
-        "lib/ai/token-utils.test.ts",
-        "lib/ai/usage-token-details.test.ts",
         "lib/anonymous-session-client.ts",
         "lib/anonymous-session-server.ts",
         "lib/artifacts/code/client.tsx",
@@ -1426,7 +1418,6 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/sheet-editor.tsx",
-        "lib/ai/completion-queue.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/parallel-chat-requests.ts"
       ],
@@ -1493,11 +1484,7 @@
       }
     },
     {
-      "files": [
-        "components/sheet-editor.tsx",
-        "components/toolbar.tsx",
-        "lib/ai/token-utils.test.ts"
-      ],
+      "files": ["components/sheet-editor.tsx", "components/toolbar.tsx"],
       "rules": {
         "unicorn/no-new-array": "off"
       }
@@ -1526,12 +1513,6 @@
       "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "unicorn/prefer-add-event-listener": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/token-utils.test.ts"],
-      "rules": {
-        "unicorn/prefer-array-index-of": "off"
       }
     },
     {
