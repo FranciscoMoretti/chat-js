@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     icons: [
       {
-        src: "/icon.svg",
         sizes: "any",
+        src: "/icon.svg",
         type: "image/svg+xml",
       },
     ],
