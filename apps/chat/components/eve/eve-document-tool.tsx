@@ -1,8 +1,10 @@
 "use client";
 
 import type { EveMessagePart } from "eve/client";
+import { useEffect, useRef } from "react";
 import { useIsClient } from "usehooks-ts";
 import { DocumentToolResult } from "@/components/part/document-common";
+import { useArtifact } from "@/hooks/use-artifact";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";
 
 export function EveDocumentTool({
@@ -15,6 +17,49 @@ export function EveDocumentTool({
   isReadonly: boolean;
 }) {
   const isClient = useIsClient();
+  const { setArtifact } = useArtifact();
+  const pendingCall = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (part.state === "input-streaming" || part.state === "input-available") {
+      pendingCall.current = part.toolCallId;
+      return;
+    }
+    if (
+      part.state !== "output-available" &&
+      part.state !== "output-error" &&
+      part.state !== "output-denied"
+    ) {
+      return;
+    }
+    const wasPending = pendingCall.current === part.toolCallId;
+    pendingCall.current = undefined;
+    if (
+      !wasPending ||
+      isReadonly ||
+      part.state !== "output-available" ||
+      part.toolName === "readDocument"
+    ) {
+      return;
+    }
+    const completed = eveDocumentResult.safeParse(part.output);
+    if (!completed.success) {
+      return;
+    }
+    setArtifact((current) =>
+      current.isVisible
+        ? current
+        : {
+            documentId: completed.data.documentId,
+            revisionId: completed.data.revisionId,
+            kind: completed.data.kind,
+            title: completed.data.title,
+            content: "",
+            messageId,
+            status: "idle",
+            isVisible: true,
+          }
+    );
+  }, [part, isReadonly, messageId, setArtifact]);
   if (part.state === "output-error") {
     return <p role="alert">{part.errorText}</p>;
   }

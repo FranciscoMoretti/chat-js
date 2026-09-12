@@ -13,6 +13,7 @@ export default defineConfig({
     "eve-rejected-send.e2e.ts",
     "eve-document-run.e2e.ts",
     "eve-document-tools.e2e.ts",
+    "eve-document-auto-open.e2e.ts",
     "eve-live.e2e.ts",
     "eve-code-execution.e2e.ts",
     "eve-sandbox-lifecycle.e2e.ts",
