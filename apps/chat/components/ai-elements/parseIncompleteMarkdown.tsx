@@ -17,15 +17,15 @@ export function parseIncompleteMarkdown(text: string): string {
   if (linkMatch) {
     // If we have an unterminated [ or ![, remove it and everything after
     const startIndex = result.lastIndexOf(linkMatch[1]);
-    result = result.substring(0, startIndex);
+    result = result.slice(0, startIndex);
   }
 
   // Handle incomplete bold formatting (**)
-  const boldPattern = /(\*\*)([^*]*?)$/;
+  const boldPattern = /\*\*[^*]*$/u;
   const boldMatch = result.match(boldPattern);
   if (boldMatch) {
     // Count the number of ** in the entire string
-    const asteriskPairs = (result.match(/\*\*/g) || []).length;
+    const asteriskPairs = (result.match(/\*\*/gu) || []).length;
     // If odd number of **, we have an incomplete bold - complete it
     if (asteriskPairs % 2 === 1) {
       result = `${result}**`;
@@ -33,11 +33,11 @@ export function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete italic formatting (__)
-  const italicPattern = /(__)([^_]*?)$/;
+  const italicPattern = /__[^_]*$/u;
   const italicMatch = result.match(italicPattern);
   if (italicMatch) {
     // Count the number of __ in the entire string
-    const underscorePairs = (result.match(/__/g) || []).length;
+    const underscorePairs = (result.match(/__/gu) || []).length;
     // If odd number of __, we have an incomplete italic - complete it
     if (underscorePairs % 2 === 1) {
       result = `${result}__`;
@@ -45,11 +45,11 @@ export function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single asterisk italic (*)
-  const singleAsteriskPattern = /(\*)([^*]*?)$/;
+  const singleAsteriskPattern = /\*[^*]*$/u;
   const singleAsteriskMatch = result.match(singleAsteriskPattern);
   if (singleAsteriskMatch) {
     // Count single asterisks that aren't part of **
-    const singleAsterisks = result.split("").reduce((acc, char, index) => {
+    const singleAsterisks = [...result].reduce((acc, char, index) => {
       if (char === "*") {
         // Check if it's part of a ** pair
         const prevChar = result[index - 1];
@@ -68,11 +68,11 @@ export function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single underscore italic (_)
-  const singleUnderscorePattern = /(_)([^_]*?)$/;
+  const singleUnderscorePattern = /_[^_]*$/u;
   const singleUnderscoreMatch = result.match(singleUnderscorePattern);
   if (singleUnderscoreMatch) {
     // Count single underscores that aren't part of __
-    const singleUnderscores = result.split("").reduce((acc, char, index) => {
+    const singleUnderscores = [...result].reduce((acc, char, index) => {
       if (char === "_") {
         // Check if it's part of a __ pair
         const prevChar = result[index - 1];
@@ -91,14 +91,14 @@ export function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete inline code blocks (`) - but avoid code blocks (```)
-  const inlineCodePattern = /(`)([^`]*?)$/;
+  const inlineCodePattern = /`[^`]*$/u;
   const inlineCodeMatch = result.match(inlineCodePattern);
   if (inlineCodeMatch) {
     // Check if we're dealing with a code block (triple backticks)
     const _hasCodeBlockStart = result.includes("```");
-    const codeBlockPattern = /```[\s\S]*?```/g;
+    const codeBlockPattern = /```[\s\S]*?```/gu;
     const _completeCodeBlocks = (result.match(codeBlockPattern) || []).length;
-    const allTripleBackticks = (result.match(/```/g) || []).length;
+    const allTripleBackticks = (result.match(/```/gu) || []).length;
 
     // If we have an odd number of ``` sequences, we're inside an incomplete code block
     // In this case, don't complete inline code
@@ -129,11 +129,11 @@ export function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete strikethrough formatting (~~)
-  const strikethroughPattern = /(~~)([^~]*?)$/;
+  const strikethroughPattern = /~~[^~]*$/u;
   const strikethroughMatch = result.match(strikethroughPattern);
   if (strikethroughMatch) {
     // Count the number of ~~ in the entire string
-    const tildePairs = (result.match(/~~/g) || []).length;
+    const tildePairs = (result.match(/~~/gu) || []).length;
     // If odd number of ~~, we have an incomplete strikethrough - complete it
     if (tildePairs % 2 === 1) {
       result = `${result}~~`;

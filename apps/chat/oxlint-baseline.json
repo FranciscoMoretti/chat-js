@@ -1609,7 +1609,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/multimodal-input.tsx",
         "lib/ai/text-splitter.ts"
