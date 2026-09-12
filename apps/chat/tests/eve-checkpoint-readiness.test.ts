@@ -54,6 +54,21 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
     const corrupt = await handleCheckpointReadiness(request(), "source");
     assert.equal(corrupt.status, 503);
     assert.deepEqual(await corrupt.json(), { error: "Checkpoint lookup is unavailable." });
+    const { handleSandboxIdentityRead } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/sandbox-identity-read.js");
+    const identityRequest = () => new Request("http://eve/session/source/sandbox-identity");
+    records = [];
+    assert.equal((await handleSandboxIdentityRead(identityRequest(), "source")).status, 503);
+    const birth = { version: 1, snapshotVersion: 2, sessionId: "source", local: { version: 1, sessionId: "source", appRoot: "/worker", backendName: "microsandbox" } };
+    records = [birth, structuredClone(birth)];
+    const certified = await handleSandboxIdentityRead(identityRequest(), "source");
+    assert.equal(certified.status, 200);
+    assert.equal(certified.headers.get("cache-control"), "no-store");
+    assert.deepEqual(await certified.json(), birth);
+    records.push({ ...birth, local: null });
+    assert.equal((await handleSandboxIdentityRead(identityRequest(), "source")).status, 503);
+    const identityReads = readCount;
+    assert.equal((await handleSandboxIdentityRead(new Request("http://eve/session/source/sandbox-identity?sessionId=other"), "source")).status, 400);
+    assert.equal(readCount, identityReads);
     process.stdout.write("verified");
   `,
     ],

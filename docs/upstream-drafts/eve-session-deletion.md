@@ -305,3 +305,10 @@ deadline; cancellation cannot delay a timeout. This primitive intentionally does
 not authorize erasure. The application coordinator must still read it under
 writer fences, account for every sandbox-owning descendant, match local sidecar
 evidence, and persist verified ownership before deleting native payloads.
+
+The birth reader is now reachable through an authenticated read-only native
+sandbox-identity route. ChatJS restricts that route to an owner-matched session
+already pending deletion, and denies ordinary session access and mutation verbs.
+The installed-package regression checks the response contract and rejection of a
+hosted retry after local evidence. Descendant authorization and persisting verified
+family coverage remain prerequisites for using it in the erasure coordinator.

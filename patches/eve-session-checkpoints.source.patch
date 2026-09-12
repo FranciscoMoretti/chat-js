@@ -175,16 +175,17 @@ index c1f7ad81..f88422c1 100644
          runOnSession: async (callback) => await contextStorage.run(ctx, callback),
          sessionId: sandboxSessionId,
 diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
-index e5b41ab9..cd054b1d 100644
+index e5b41ab9..f4401051 100644
 --- a/packages/eve/src/eve-channel/index.ts
 +++ b/packages/eve/src/eve-channel/index.ts
-@@ -1,3 +1,5 @@
+@@ -1,3 +1,6 @@
++import { handleSandboxIdentityRead } from "#execution/sandbox-identity-read.js";
 +import { handleCheckpointReadiness } from "#execution/checkpoint-readiness.js";
 +import { readSessionCheckpoint, SessionCheckpointNotFoundError, SessionCheckpointRejectedError } from "#execution/read-session-checkpoint.js";
  import type { SessionAuthContext, SessionTraceContext } from "#channel/types.js";
  import type { Session } from "#channel/session.js";
  import { resolveForwardedPrincipal } from "#channel/forwarded-principal.js";
-@@ -104,6 +106,19 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -104,6 +107,19 @@ export function eveChannel(input: EveChannelInput): EveChannel {
        GET(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
        HEAD(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
 
@@ -204,7 +205,7 @@ index e5b41ab9..cd054b1d 100644
        GET(EVE_INFO_ROUTE_PATH, async (req, args) => {
          const authResult = await routeAuth(req, input.auth);
          if (authResult instanceof Response) return authResult;
-@@ -150,6 +165,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -150,6 +166,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
 
          const body = parseCreateBody(payload);
          if (body instanceof Response) return body;
@@ -227,7 +228,7 @@ index e5b41ab9..cd054b1d 100644
          // Top-level sessions own their trace. Callback sessions are delegated
          // remote agents and intentionally continue the dispatching agent trace.
          const parsedParentTraceContext =
-@@ -236,6 +267,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -236,6 +268,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            request: req,
          });
          if (messageResult instanceof Response) return messageResult;
@@ -250,7 +251,7 @@ index e5b41ab9..cd054b1d 100644
          const createSession = readRouteSessionCreator(args);
          if (createSession === undefined) {
            return Response.json(
-@@ -247,6 +294,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -247,6 +295,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          let handle: Awaited<ReturnType<typeof createSession>>;
          try {
            handle = await createSession({
@@ -258,7 +259,7 @@ index e5b41ab9..cd054b1d 100644
              activityObserver: body.activityObserver,
              auth: messageResult.auth,
              capabilities:
-@@ -274,12 +322,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -274,12 +323,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            );
          }
 
@@ -293,10 +294,18 @@ index e5b41ab9..cd054b1d 100644
              },
              status: 202,
            },
-@@ -405,6 +473,42 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -405,6 +474,50 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          );
        }),
 
++      GET("/eve/v1/session/:sessionId/sandbox-identity", async (req, { params }) => {
++        const authResult = await routeAuth(req, input.auth);
++        if (authResult instanceof Response) return authResult;
++        const sessionId = requireSessionId(params);
++        if (sessionId instanceof Response) return sessionId;
++        return handleSandboxIdentityRead(req, sessionId);
++      }),
++
 +      GET("/eve/v1/session/:sessionId/checkpoint", async (req, { params }) => {
 +        const authResult = await routeAuth(req, input.auth);
 +        if (authResult instanceof Response) return authResult;
@@ -1840,6 +1849,82 @@ index 00000000..6d3476bc
 +      return true;
 +    default:
 +      return false;
++  }
++}
+diff --git a/packages/eve/src/execution/sandbox-identity-read.test.ts b/packages/eve/src/execution/sandbox-identity-read.test.ts
+new file mode 100644
+index 00000000..cfb7fb64
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox-identity-read.test.ts
+@@ -0,0 +1,43 @@
++import { beforeEach, expect, it, vi } from "vitest";
++import { handleSandboxIdentityRead } from "#execution/sandbox-identity-read.js";
++const mocks = vi.hoisted(() => ({ read: vi.fn() }));
++vi.mock("#execution/read-session-sandbox-identity.js", () => ({
++  readSessionSandboxIdentity: mocks.read,
++}));
++beforeEach(() => {
++  mocks.read.mockReset();
++});
++it("returns only validated birth evidence without caching", async () => {
++  const local = {
++    version: 1,
++    appRoot: "/worker",
++    backendName: "microsandbox",
++    sessionId: "session",
++  };
++  mocks.read.mockResolvedValue(local);
++  const response = await handleSandboxIdentityRead(new Request("http://eve/identity"), "session");
++  expect(response.status).toBe(200);
++  expect(response.headers.get("cache-control")).toBe("no-store");
++  expect(await response.json()).toEqual({
++    version: 1,
++    snapshotVersion: 2,
++    sessionId: "session",
++    local,
++  });
++  expect(mocks.read).toHaveBeenCalledWith("session");
++});
++it("rejects unexpected query input before reading", async () => {
++  const response = await handleSandboxIdentityRead(
++    new Request("http://eve/identity?sessionId=other"),
++    "session",
++  );
++  expect(response.status).toBe(400);
++  expect(mocks.read).not.toHaveBeenCalled();
++});
++it("does not disclose corruption details and never certifies a failed lookup", async () => {
++  mocks.read.mockRejectedValue(new Error("private details"));
++  const response = await handleSandboxIdentityRead(new Request("http://eve/identity"), "session");
++  expect(response.status).toBe(503);
++  expect(response.headers.get("cache-control")).toBe("no-store");
++  expect(await response.json()).toEqual({ error: "Sandbox identity evidence is unavailable." });
++});
+diff --git a/packages/eve/src/execution/sandbox-identity-read.ts b/packages/eve/src/execution/sandbox-identity-read.ts
+new file mode 100644
+index 00000000..44e3468d
+--- /dev/null
++++ b/packages/eve/src/execution/sandbox-identity-read.ts
+@@ -0,0 +1,21 @@
++import { readSessionSandboxIdentity } from "#execution/read-session-sandbox-identity.js";
++
++/** The channel must authorize the session before calling this internal evidence endpoint. */
++export async function handleSandboxIdentityRead(
++  request: Request,
++  sessionId: string,
++): Promise<Response> {
++  const headers = { "cache-control": "no-store" };
++  if (new URL(request.url).search) {
++    return Response.json({ error: "Invalid sandbox identity request." }, { status: 400, headers });
++  }
++  try {
++    const local = await readSessionSandboxIdentity(sessionId);
++    return Response.json({ version: 1, snapshotVersion: 2, sessionId, local }, { headers });
++  } catch {
++    return Response.json(
++      { error: "Sandbox identity evidence is unavailable." },
++      { status: 503, headers },
++    );
 +  }
 +}
 diff --git a/packages/eve/src/execution/sandbox/bindings/just-bash.ts b/packages/eve/src/execution/sandbox/bindings/just-bash.ts

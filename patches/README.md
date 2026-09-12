@@ -209,3 +209,10 @@ This is an internal evidence reader: deletion still requires authorization,
 native writer fences, descendant coverage, a matching filesystem record, and a
 persisted proof for retries after native payload erasure. The source fork test
 uses this reader for both parent and child sessions.
+
+An authenticated native `GET /eve/v1/session/:sessionId/sandbox-identity` route
+exposes this evidence to internal cleanup callers. ChatJS only authorizes it with
+the deletion header and an owner-matched deleting session binding; ordinary
+session access cannot read it. Missing or invalid evidence returns an uncached
+503 without internal error details. This route does not authorize descendant
+sessions or perform deletion; coordinator coverage and retry proofs remain open.
