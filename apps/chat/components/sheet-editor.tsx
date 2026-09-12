@@ -21,6 +21,8 @@ interface SheetEditorProps {
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
 
+const generateCsv = (data: (string | number)[][]) => unparse(data);
+
 const PureSpreadsheetEditor = ({
   content,
   saveContent,
@@ -100,8 +102,6 @@ const PureSpreadsheetEditor = ({
   useEffect(() => {
     setLocalRows(initialRows);
   }, [initialRows]);
-
-  const generateCsv = (data: (string | number)[][]) => unparse(data);
 
   const handleRowsChange = (newRows: Record<string, string | number>[]) => {
     if (isReadonly) {

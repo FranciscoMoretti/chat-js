@@ -37,7 +37,7 @@ const Toggle = ({
 }: React.ComponentProps<typeof TogglePrimitive.Root> &
   VariantProps<typeof toggleVariants>) => (
   <TogglePrimitive.Root
-    className={cn(toggleVariants({ variant, size, className }))}
+    className={cn(toggleVariants({ className, size, variant }))}
     data-slot="toggle"
     {...props}
   />

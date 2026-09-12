@@ -55,11 +55,11 @@ const groupChatsByDate = (chats: UIChat[]): GroupedChats => {
       return groups;
     },
     {
+      lastMonth: [],
+      lastWeek: [],
+      older: [],
       today: [],
       yesterday: [],
-      lastWeek: [],
-      lastMonth: [],
-      older: [],
     } as GroupedChats
   );
 };
