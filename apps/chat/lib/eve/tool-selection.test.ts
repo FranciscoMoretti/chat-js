@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import {
   ContextContainer,
   contextStorage,
@@ -18,7 +18,11 @@ import {
 import { selectedEveTools } from "./selected-tools";
 import { eveTurnTool, filterEveTools } from "./turn-tools";
 
-function startTurn(selectedTool?: string) {
+vi.mock("../types/anonymous", () => ({
+  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
+}));
+
+function startTurn(selectedTool?: string, principalType = "user") {
   return selectionHook.events?.["turn.started"]?.(
     {
       type: "turn.started",
@@ -36,7 +40,10 @@ function startTurn(selectedTool?: string) {
             principalId: "owner",
             principalType: "user",
             authenticator: "gateway",
-            attributes: selectedTool ? { selectedTool } : {},
+            attributes: {
+              ...(selectedTool ? { selectedTool } : {}),
+              ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
+            },
           },
           initiator: {
             principalId: "owner",
@@ -167,5 +174,22 @@ it("restores the selected capability from Eve serialized context before a resume
     ).toEqual(["readDocument", "createTextDocument"]);
     await startTurn();
     expect(eveTurnTool.get()).toBeNull();
+  });
+});
+
+it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
+  await contextStorage.run(new ContextContainer(), async () => {
+    const tools = {
+      webSearch: {},
+      deepResearch: {},
+      confirm_note: {},
+      server__echo: {},
+    };
+    await startTurn(undefined, "guest");
+    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    await startTurn("deepResearch", "guest");
+    expect(filterEveTools(tools)).toEqual({});
+    await startTurn();
+    expect(filterEveTools(tools)).toEqual(tools);
   });
 });

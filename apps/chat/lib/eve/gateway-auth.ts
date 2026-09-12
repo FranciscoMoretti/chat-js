@@ -1,11 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import { frontendToolsSchema } from "../ai/types";
+import { readEveGuestOwner } from "../db/eve-guests";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
 } from "../db/eve-queries";
 import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
 import { env } from "../env";
+import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
@@ -51,6 +53,21 @@ export async function authenticateEveGateway(request: Request) {
   const attributes = await readGatewayAttributes(request);
   if (!attributes) {
     return null;
+  }
+  const guest = await readEveGuestOwner(owner);
+  if (
+    guest &&
+    request.headers.get("x-chatjs-deletion") !== "1" &&
+    !guestAttributesAllowed(
+      guest.expiresAt,
+      attributes,
+      path === "/eve/v1/session"
+    )
+  ) {
+    return null;
+  }
+  if (guest) {
+    attributes.chatjsGuest = "true";
   }
   return {
     attributes,
@@ -129,5 +146,24 @@ async function authorizeDeletionRequest(
     env.WORKFLOW_POSTGRES_URL,
     rootSessionId,
     sessionId
+  );
+}
+
+function guestAttributesAllowed(
+  expiresAt: Date,
+  attributes: Record<string, string>,
+  requiresModel: boolean
+) {
+  return (
+    expiresAt > new Date() &&
+    (!requiresModel || !!attributes.modelId) &&
+    (!attributes.modelId ||
+      ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
+        (model) => model === attributes.modelId
+      )) &&
+    (!attributes.selectedTool ||
+      ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
+        (tool) => tool === attributes.selectedTool
+      ))
   );
 }

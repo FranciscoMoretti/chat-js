@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   discover: vi.fn(),
   execute: vi.fn(),
   selected: false,
+  guest: false,
 }));
 vi.mock("eve/tools", () => ({
   defineDynamic: <T>(value: T) => value,
@@ -72,6 +73,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
 });
 
 vi.mock("./turn-tools", () => ({
+  eveTurnGuest: { get: () => mocks.guest },
   eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
 }));
 
@@ -92,5 +94,28 @@ it("does not discover remote tools for an explicitly selected local capability",
     expect(mocks.discover).not.toHaveBeenCalled();
   } finally {
     mocks.selected = false;
+  }
+});
+
+it("never discovers registered account connectors for a guest", async () => {
+  mocks.guest = true;
+  mocks.discover.mockClear();
+  try {
+    expect(
+      await mcp.events["step.started"]?.(
+        {},
+        {
+          session: {
+            id: "guest-session",
+            auth: { current: null, initiator: null },
+          },
+          channel: {},
+          messages: [],
+        }
+      )
+    ).toEqual({});
+    expect(mocks.discover).not.toHaveBeenCalled();
+  } finally {
+    mocks.guest = false;
   }
 });

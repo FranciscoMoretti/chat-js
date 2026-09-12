@@ -319,3 +319,12 @@ async function admissionGuest(
   }
   return { status: "ready", guest } as const;
 }
+
+/** Includes expired identities so cleanup and policy never reclassify a guest as a user. */
+export async function readEveGuestOwner(ownerId: string) {
+  const [guest] = await db
+    .select({ expiresAt: eveGuest.expiresAt })
+    .from(eveGuest)
+    .where(eq(eveGuest.ownerId, ownerId));
+  return guest;
+}

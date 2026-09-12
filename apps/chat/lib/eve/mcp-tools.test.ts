@@ -403,4 +403,7 @@ it("registers native per-call approval restricted to the session owner", async (
   expect(execute).not.toHaveBeenCalled();
 });
 
-vi.mock("./turn-tools", () => ({ eveTurnTool: { get: () => null } }));
+vi.mock("./turn-tools", () => ({
+  eveTurnTool: { get: () => null },
+  eveTurnGuest: { get: () => false },
+}));
