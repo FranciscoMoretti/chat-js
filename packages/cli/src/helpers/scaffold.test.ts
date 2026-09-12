@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import pathModule from "node:path";
 import { runInNewContext } from "node:vm";
@@ -398,6 +405,58 @@ describe("scaffoldFromGit", () => {
 });
 
 describe("scaffoldElectron", () => {
+  it("runs generated Electron prebuild under Node and tsx", async () => {
+    const projectDir = await makeTempDir("electron-node-prebuild");
+    await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
+    await scaffoldElectron(projectDir, {
+      packageManager: "npm",
+      projectName: "my-chat-app",
+    });
+    await symlink(
+      pathModule.resolve(getCliPackageRoot(), "../../node_modules"),
+      join(projectDir, "node_modules"),
+      "dir"
+    );
+    // Isolate app configuration so prebuild needs no environment credentials.
+    await writeFile(
+      join(projectDir, "lib/config.ts"),
+      `export const config = {
+        appName: "Node Prebuild",
+        appPrefix: "node-prebuild",
+        appUrl: "http://localhost:3000",
+        organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
+      };`
+    );
+    const electronDir = join(projectDir, "electron");
+    const result = Bun.spawnSync(["npm", "run", "prebuild"], {
+      cwd: electronDir,
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    expect({
+      exitCode: result.exitCode,
+      stderr: result.stderr.toString(),
+    }).toEqual({ exitCode: 0, stderr: "" });
+    const branding = JSON.parse(
+      await readFile(join(electronDir, "branding.json"), "utf-8")
+    );
+    expect(branding).toEqual({
+      appName: "Node Prebuild",
+      appPrefix: "node-prebuild",
+      appUrl: "http://localhost:3000",
+      orgEmail: "test@example.com",
+      orgName: "Test",
+    });
+    const icons = await Promise.all(
+      ["png", "icns", "ico"].map((extension) =>
+        readFile(join(electronDir, "build", `icon.${extension}`))
+      )
+    );
+    for (const icon of icons) {
+      expect(icon.length).toBeGreaterThan(0);
+    }
+  });
+
   it("runs generated Forge prebuild and build hooks with the selected package manager", async () => {
     const projectDir = await makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });

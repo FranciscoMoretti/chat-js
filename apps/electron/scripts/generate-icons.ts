@@ -1,9 +1,10 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as png2icons from "png2icons";
 
-const root = path.resolve(import.meta.dir, "..");
+const root = fileURLToPath(new URL("..", import.meta.url));
 const src = path.join(root, "icon.png");
 const buildDir = path.join(root, "build");
 const outputBase = path.join(buildDir, "icon");
