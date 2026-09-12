@@ -1,5 +1,42 @@
 # @chat-js/cli
 
+## 1.0.0
+
+### Major Changes
+
+- [#346](https://github.com/FranciscoMoretti/chat-js/pull/346) [`2962417`](https://github.com/FranciscoMoretti/chat-js/commit/296241729e7235be9e91149f37f79b7dfb678fb7) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Build standard registry JSON from tested TypeScript sources using shadcn. Use shadcn for gateway/tool installation and generate typed registrations from local tool descriptors. Add `chat-js sync` and separate custom registration modules.
+
+  Registry v1 publishes `dist/r/`; historical v0 npm artifacts keep their legacy format. Publish registry v1 and gateway contracts before promoting the CLI. Remove `--registry`, `--no-install`, `--package-manager`, and `paths.tools` in favor of standard namespaces, immediate installation, package-manager detection, and explicit registry targets. Known legacy built-in registrations migrate on sync.
+
+### Minor Changes
+
+- [#308](https://github.com/FranciscoMoretti/chat-js/pull/308) [`18db694`](https://github.com/FranciscoMoretti/chat-js/commit/18db694b9b67263904707a85f93673f494ea0e6d) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Upgrade ChatJS and generated applications to AI SDK 7 and provider v4. Thread now requires ai >=7.0.93 and @ai-sdk/react >=4.0.96 within their current majors, with Node >=22. Preserve canonical assistant identity, restored tool ownership, and errors across reconnects.
+
+- [#351](https://github.com/FranciscoMoretti/chat-js/pull/351) [`0fef3dc`](https://github.com/FranciscoMoretti/chat-js/commit/0fef3dca5d7f02e9cbec4a5dce5b2df3fb0fbf55) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Make generated Postgres setup independent of the database host. Support a separate schema connection and runtime pooling options, run explicit migrations without Vercel environment flags, and expose Neon branching through opt-in commands.
+
+  Guide Postgres setup by host and add an explicit, read-only `db:connect` check.
+
+- [#352](https://github.com/FranciscoMoretti/chat-js/pull/352) [`03ca3c5`](https://github.com/FranciscoMoretti/chat-js/commit/03ca3c5047e72ce45353174a46de6dfad577c59e) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Validate standard Redis connection URLs, document provider setup, and add a redis:connect capability check for generated apps.
+
+- [#332](https://github.com/FranciscoMoretti/chat-js/pull/332) [`5b6664e`](https://github.com/FranciscoMoretti/chat-js/commit/5b6664e7b846851228605933160281b07a4b0ce2) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Select AI gateways during ChatJS creation through shadcn-format registry items, including external registry URLs. Install only the selected adapter source and its declared dependencies. Keep shared contracts and runtime utilities in @chat-js/gateways, and validate configuration against the installed adapter.
+
+- [#358](https://github.com/FranciscoMoretti/chat-js/pull/358) [`5d55983`](https://github.com/FranciscoMoretti/chat-js/commit/5d5598361cf3bed3e7df5a2efa2b467e0dc9a54e) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Extract Tavily and Firecrawl search into selectable registry tools shared by chat and deep research. Add the webSearch factory slot, selected credential requirements, and the --search-tool create option.
+
+- [#360](https://github.com/FranciscoMoretti/chat-js/pull/360) [`62cdaf2`](https://github.com/FranciscoMoretti/chat-js/commit/62cdaf2316cbfa1a8e5100e41d88513671962c5c) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Distribute Vercel code execution as a source registry item. Let code-execution and search selections export standard AI SDK tools with their own schemas and optional renderers. Install only the selected implementations in new apps and pass request services through AI SDK tool context.
+
+- [#362](https://github.com/FranciscoMoretti/chat-js/pull/362) [`d1e1eb8`](https://github.com/FranciscoMoretti/chat-js/commit/d1e1eb89245145d3afd7cba4ec37f35ce9dfa838) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Select image generation from built-in or external registry items. Fresh apps install only the selected image tool and renderer, with request services supplied through AI SDK context.
+
+- [#361](https://github.com/FranciscoMoretti/chat-js/pull/361) [`10e1996`](https://github.com/FranciscoMoretti/chat-js/commit/10e1996a72c64619a00ec5482d67c9a9c05dda62) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Select URL retrieval tools during creation using the retrieveUrl slot. Install only the selected provider and derive its credential requirements from registry metadata.
+
+- [#363](https://github.com/FranciscoMoretti/chat-js/pull/363) [`0a8ca04`](https://github.com/FranciscoMoretti/chat-js/commit/0a8ca041baabe045e17a351b4e8836c3c2850a2c) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Install video generation as a selectable registry tool with optional renderer, provider credentials, and request context. Omit the built-in implementation from unselected apps.
+
+- [#350](https://github.com/FranciscoMoretti/chat-js/pull/350) [`5691d2a`](https://github.com/FranciscoMoretti/chat-js/commit/5691d2aa1e3ea1866e991db6678f186ca8acfaaa) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Install storage adapters through shadcn registry items. Support external storage items during app creation, generate typed provider options, and validate declared environment requirements without requiring a built-in Files SDK provider name.
+
+### Patch Changes
+
+- Updated dependencies [[`ea73556`](https://github.com/FranciscoMoretti/chat-js/commit/ea73556a6d3805687ba9dcf755d9d766376dcddf), [`5b6664e`](https://github.com/FranciscoMoretti/chat-js/commit/5b6664e7b846851228605933160281b07a4b0ce2)]:
+  - @chat-js/gateways@0.2.0
+
 ## 0.8.0
 
 ### Minor Changes
@@ -64,6 +101,7 @@
 - [#94](https://github.com/FranciscoMoretti/chat-js/pull/94) [`2a8a7cc`](https://github.com/FranciscoMoretti/chat-js/commit/2a8a7cc2b0649bd73e41999dbf0528a21e8065be) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - ## Config defaults & `defineConfig` helper
 
   ### New features
+
   - **`defineConfig()` helper** — new type-safe wrapper for `chat.config.ts`. The gateway type is inferred from `ai.gateway`, so autocomplete and type errors are scoped to the model IDs available in the chosen gateway. Replace `satisfies ConfigInput` with `defineConfig({...})`.
   - **Gateway-specific defaults** — all AI config fields (models, tools, workflows) are now optional. Omitted fields are automatically filled from per-gateway defaults at runtime via `applyDefaults()`. Only `ai.gateway` is required.
   - **`chatjs config` CLI command** — new command that prints the fully-resolved configuration for the current project, applying all defaults. Useful for debugging and verifying your setup.
