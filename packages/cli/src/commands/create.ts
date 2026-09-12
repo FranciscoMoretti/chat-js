@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { basename, join, relative, resolve } from "node:path";
+import path from "node:path";
 
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
@@ -9,10 +9,8 @@ import { z } from "zod";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
-import {
-  collectEnvChecklist,
-  type EnvVarEntry,
-} from "../helpers/env-checklist";
+import { collectEnvChecklist } from "../helpers/env-checklist";
+import type { EnvVarEntry } from "../helpers/env-checklist";
 import { configureGatewayProvider } from "../helpers/gateway-provider";
 import {
   promptAssistantTools,
@@ -59,14 +57,14 @@ function resolveCreateTarget(targetArg: string | undefined): {
     const projectName = "my-chat-app";
     return {
       projectName,
-      targetDir: resolve(process.cwd(), projectName),
+      targetDir: path.resolve(process.cwd(), projectName),
       displayPath: projectName,
     };
   }
 
-  const targetDir = resolve(process.cwd(), targetArg);
-  const projectName = basename(targetDir);
-  const relativePath = relative(process.cwd(), targetDir);
+  const targetDir = path.resolve(process.cwd(), targetArg);
+  const projectName = path.basename(targetDir);
+  const relativePath = path.relative(process.cwd(), targetDir);
 
   return {
     projectName,
@@ -166,7 +164,7 @@ export const create = new Command()
       );
       const targetDir = options.target
         ? initialTarget.targetDir
-        : resolve(process.cwd(), projectName);
+        : path.resolve(process.cwd(), projectName);
       const displayPath = options.target
         ? initialTarget.displayPath
         : projectName;
@@ -219,8 +217,9 @@ export const create = new Command()
       const toolSources = assistantTools.installableTools.map((tool) =>
         itemAddress(tool, "tool")
       );
-      if (assistantTools.builtInTools.deepResearch)
+      if (assistantTools.builtInTools.deepResearch) {
         assistantTools.builtInTools.webSearch = true;
+      }
       const selections = [
         {
           source: options.searchTool,
@@ -242,29 +241,31 @@ export const create = new Command()
         },
       ] as const;
       for (const selection of selections) {
-        if (selection.source)
+        if (selection.source) {
           assistantTools.builtInTools[selection.feature] = true;
-        if (!assistantTools.builtInTools[selection.feature]) continue;
+        }
+        if (!assistantTools.builtInTools[selection.feature]) {
+          continue;
+        }
         const source = itemAddress(
           selection.source ?? (await selection.prompt(options.yes)),
           "tool"
         );
-        const metadata = toolDefinitionSchema.parse(
-          (await readItem(source, targetDir)).meta?.chatjs
-        );
-        if (metadata.slot !== selection.slot)
+        const item = await readItem(source, targetDir);
+        const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
+        if (metadata.slot !== selection.slot) {
           throw new Error(
             `Selected tool must declare the ${selection.slot} slot.`
           );
+        }
         toolSources.push(source);
       }
-      const expectedTools = [];
-      for (const source of toolSources)
-        expectedTools.push(
-          toolDefinitionSchema.parse(
-            (await readItem(source, targetDir)).meta?.chatjs
-          )
-        );
+      const expectedTools = await Promise.all(
+        toolSources.map(async (source) => {
+          const item = await readItem(source, targetDir);
+          return toolDefinitionSchema.parse(item.meta?.chatjs);
+        })
+      );
       const usesStorage =
         coreFeatures.attachments ||
         assistantTools.builtInTools.imageGeneration ||
@@ -287,14 +288,14 @@ export const create = new Command()
       try {
         if (options.fromGit) {
           await scaffoldFromGit(options.fromGit, targetDir);
-          if (!existsSync(join(targetDir, "lib/ai/gateway.ts"))) {
+          if (!existsSync(path.join(targetDir, "lib/ai/gateway.ts"))) {
             scaffoldSpinner.succeed("Repository cloned.");
             logger.warn(
               "This repository has no ChatJS gateway slot. Skipping ChatJS configuration and installation."
             );
             return;
           }
-          if (!existsSync(join(targetDir, "lib/storage-options.ts"))) {
+          if (!existsSync(path.join(targetDir, "lib/storage-options.ts"))) {
             throw new Error(
               "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
             );
@@ -307,24 +308,36 @@ export const create = new Command()
             "chat.config.ts",
             "package.json",
           ]);
-          await rm(join(targetDir, "lib/storage-provider.ts"), { force: true });
-          await rm(join(targetDir, "lib/ai/gateway.ts"));
+          await rm(path.join(targetDir, "lib/storage-provider.ts"), {
+            force: true,
+          });
+          await rm(path.join(targetDir, "lib/ai/gateway.ts"));
           // A fresh clone receives the requested tool selections as well.
-          const toolDirectory = join(targetDir, "tools/chatjs");
+          const toolDirectory = path.join(targetDir, "tools/chatjs");
           for (const entry of await readdir(toolDirectory, {
             withFileTypes: true,
           }).catch((error) => {
-            if (error.code === "ENOENT") return [];
+            if (error.code === "ENOENT") {
+              return [];
+            }
             throw error;
           })) {
-            if (!entry.isDirectory()) continue;
-            const descriptor = join(toolDirectory, entry.name, "chatjs.json");
-            if (!existsSync(descriptor)) continue;
+            if (!entry.isDirectory()) {
+              continue;
+            }
+            const descriptor = path.join(
+              toolDirectory,
+              entry.name,
+              "chatjs.json"
+            );
+            if (!existsSync(descriptor)) {
+              continue;
+            }
             await preflight(targetDir, [
               `tools/chatjs/${entry.name}/chatjs.json`,
             ]);
             const metadata = toolDefinitionSchema.parse(
-              JSON.parse(await readFile(descriptor, "utf8"))
+              JSON.parse(await readFile(descriptor, "utf-8"))
             );
             if (
               metadata.slot === "webSearch" ||
@@ -332,8 +345,11 @@ export const create = new Command()
               metadata.slot === "retrieveUrl" ||
               (metadata.id === "retrieve-url" &&
                 metadata.toolExport === "retrieveUrl")
-            )
-              await rm(join(toolDirectory, entry.name), { recursive: true });
+            ) {
+              await rm(path.join(toolDirectory, entry.name), {
+                recursive: true,
+              });
+            }
           }
         } else {
           await scaffoldFromTemplate(targetDir, {
@@ -354,9 +370,9 @@ export const create = new Command()
 
       const configSpinner = spinner("Writing configuration...").start();
       try {
-        const packageJsonPath = join(targetDir, "package.json");
+        const packageJsonPath = path.join(targetDir, "package.json");
         const packageJson = JSON.parse(
-          await readFile(packageJsonPath, "utf8")
+          await readFile(packageJsonPath, "utf-8")
         ) as {
           name?: string;
         };
@@ -378,7 +394,7 @@ export const create = new Command()
           builtInTools: assistantTools.builtInTools,
           auth,
         });
-        await writeFile(join(targetDir, "chat.config.ts"), configSource);
+        await writeFile(path.join(targetDir, "chat.config.ts"), configSource);
         configSpinner.succeed("Configuration written.");
       } catch (error) {
         configSpinner.fail("Failed to write configuration.");
@@ -403,18 +419,15 @@ export const create = new Command()
         await runCommand(packageManager, ["install"], targetDir);
         // Format copied template files after registry installation.
         if (!options.fromGit) {
+          let oxfmtCommand = ["run"];
+          if (packageManager === "npm") {
+            oxfmtCommand = ["exec", "--"];
+          } else if (packageManager === "pnpm") {
+            oxfmtCommand = ["exec"];
+          }
           await runCommand(
             packageManager,
-            [
-              ...(packageManager === "npm"
-                ? ["exec", "--"]
-                : packageManager === "pnpm"
-                  ? ["exec"]
-                  : ["run"]),
-              "oxfmt",
-              "--write",
-              ".",
-            ],
+            [...oxfmtCommand, "oxfmt", "--write", "."],
             targetDir
           );
         }
@@ -471,9 +484,9 @@ export const create = new Command()
         "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
       );
       logger.log(
-        "  Optional Redis: set REDIS_URL, then run " +
-          packageManager +
-          " run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis"
+        `  Optional Redis: set REDIS_URL, then run ${
+          packageManager
+        } run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis`
       );
 
       logger.break();
