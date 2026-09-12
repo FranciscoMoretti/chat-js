@@ -5,8 +5,8 @@ import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { SignupForm } from "@/components/signup-form";
 
 export const metadata: Metadata = {
-  title: "Create an account",
   description: "Create an account to get started.",
+  title: "Create an account",
 };
 
 const RegisterPage = () => (

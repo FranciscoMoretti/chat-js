@@ -18,8 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Login",
   description: "Login to your account",
+  title: "Login",
 };
 
 const LoginPageContent = async ({
