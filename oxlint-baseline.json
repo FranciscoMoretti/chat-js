@@ -24,12 +24,7 @@
     },
     {
       "files": [
-        "apps/site/components/get-started.tsx",
-        "apps/site/components/hero.tsx",
-        "apps/site/components/logo-cloud.tsx",
         "apps/site/components/thread-playground-model.ts",
-        "apps/site/components/thread-showcase.tsx",
-        "apps/site/tests/thread-playground.visual.ts",
         "apps/videos/src/ThreadsLaunch.tsx",
         "packages/cli/src/utils/run-command.ts"
       ],
@@ -81,12 +76,6 @@
       }
     },
     {
-      "files": ["apps/site/components/thread-showcase.tsx"],
-      "rules": {
-        "prefer-destructuring": "off"
-      }
-    },
-    {
       "files": [
         "apps/docs/e2e/docs-visual.browser.test.ts",
         "apps/site/components/thread-playground-model.ts",
@@ -121,16 +110,7 @@
       }
     },
     {
-      "files": [
-        "apps/site/app/layout.tsx",
-        "apps/site/app/page.tsx",
-        "apps/site/app/threads/page.tsx",
-        "apps/site/components/get-started.tsx",
-        "apps/site/components/hero.tsx",
-        "apps/site/components/logo-cloud.tsx",
-        "apps/site/components/thread-showcase.tsx",
-        "apps/videos/src/ThreadsLaunch.tsx"
-      ],
+      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
       "rules": {
         "react/function-component-definition": "off"
       }
@@ -167,11 +147,7 @@
     },
     {
       "files": [
-        "apps/site/app/layout.tsx",
-        "apps/site/app/page.tsx",
-        "apps/site/app/threads/page.tsx",
         "apps/site/components/thread-showcase.tsx",
-        "apps/site/tests/thread-playground.visual.ts",
         "packages/cli/src/helpers/scaffold.ts"
       ],
       "rules": {
@@ -182,12 +158,6 @@
       "files": ["packages/gateways/src/gateway-provider.ts"],
       "rules": {
         "typescript/method-signature-style": "off"
-      }
-    },
-    {
-      "files": ["apps/site/components/thread-showcase.tsx"],
-      "rules": {
-        "unicorn/consistent-existence-index-check": "off"
       }
     },
     {
