@@ -117,7 +117,7 @@ async function handleAnonymousSession({
     return {
       error: Response.json(
         { error: rateLimitResult.error, type: "RATE_LIMIT_EXCEEDED" },
-        { status: 429, headers: rateLimitResult.headers || {} }
+        { headers: rateLimitResult.headers || {}, status: 429 }
       ),
       success: false,
     };
@@ -132,11 +132,11 @@ async function handleAnonymousSession({
       error: Response.json(
         {
           error: "You've used your free credits. Sign up to continue chatting!",
-          type: "ANONYMOUS_LIMIT_EXCEEDED",
           suggestion:
             "Create an account to get more credits and access to more AI models",
+          type: "ANONYMOUS_LIMIT_EXCEEDED",
         },
-        { status: 402, headers: rateLimitResult.headers || {} }
+        { headers: rateLimitResult.headers || {}, status: 402 }
       ),
       success: false,
     };
@@ -151,10 +151,10 @@ async function handleAnonymousSession({
     return {
       error: Response.json(
         {
-          error: "Model not available for anonymous users",
           availableModels: ANONYMOUS_LIMITS.AVAILABLE_MODELS,
+          error: "Model not available for anonymous users",
         },
-        { status: 403, headers: rateLimitResult.headers || {} }
+        { headers: rateLimitResult.headers || {}, status: 403 }
       ),
       success: false,
     };
@@ -368,49 +368,48 @@ async function createChatStream({
       // message has been persisted by the primary request.
       if (userId && isPrimaryParallel !== false) {
         dataStream.write({
-          id: generateUUID(),
-          type: "data-userMessagePersisted",
           data: {
             chatId,
             parallelGroupId,
             userMessageId: userMessage.id,
           },
+          id: generateUUID(),
           transient: true,
+          type: "data-userMessagePersisted",
         });
       }
 
       const { result, contextForLLM } = await createCoreChatAgent({
-        system,
-        userMessage,
-        previousMessages,
-        selectedModelId,
-        explicitlyRequestedTools,
-        userId,
-        isAnonymous,
         abortSignal: abortController.signal,
-        messageId,
+        costAccumulator,
         dataStream,
+        explicitlyRequestedTools,
+        isAnonymous,
+        mcpConnectors,
+        messageId,
+        onChunk,
         onError: (error) => {
           log.error({ error }, "streamText error");
         },
-        onChunk,
-        mcpConnectors,
-        costAccumulator,
+        previousMessages,
+        selectedModelId,
+        system,
+        userId,
+        userMessage,
       });
 
       const initialMetadata: ChatMessage["metadata"] = {
+        activeStreamId: isAnonymous ? null : streamId,
         createdAt: new Date(),
-        parentMessageId: userMessage.id,
+        isPrimaryParallel,
         parallelGroupId,
         parallelIndex,
-        isPrimaryParallel,
+        parentMessageId: userMessage.id,
         selectedModel: selectedModelId,
-        activeStreamId: isAnonymous ? null : streamId,
       };
 
       dataStream.merge(
         result.toUIMessageStream({
-          sendReasoning: true,
           messageMetadata: ({ part }) => {
             // send custom information to the client on start:
             if (part.type === "start") {
@@ -434,6 +433,7 @@ async function createChatStream({
               };
             }
           },
+          sendReasoning: true,
         })
       );
       await result.consumeStream();
@@ -462,8 +462,8 @@ async function createChatStream({
         after(() =>
           Promise.resolve(
             updateMessageActiveStreamId({
-              id: messageId,
               activeStreamId: null,
+              id: messageId,
             })
           ).catch((dbError) => {
             log.error(
@@ -480,15 +480,15 @@ async function createChatStream({
     onFinish: async ({ messages }) => {
       clearTimeout(timeoutId);
       await finalizeMessageAndCredits({
-        messages,
-        userId,
-        isAnonymous,
         chatId,
         costAccumulator,
-        selectedModelId,
+        isAnonymous,
+        isPrimaryParallel,
+        messages,
         parallelGroupId,
         parallelIndex,
-        isPrimaryParallel,
+        selectedModelId,
+        userId,
       });
     },
   });

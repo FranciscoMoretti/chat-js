@@ -125,8 +125,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
 
       log.info({ connectorId: connector.id }, "Initiating OAuth authorization");
@@ -138,8 +138,8 @@ export const mcpRouter = createTRPCRouter({
       const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
-        url: connector.url,
         type: connector.type,
+        url: connector.url,
       });
 
       await mcpClient.connect();
@@ -160,7 +160,7 @@ export const mcpRouter = createTRPCRouter({
       }
 
       log.info(
-        { connectorId: connector.id, authUrl: authUrl.toString() },
+        { authUrl: authUrl.toString(), connectorId: connector.id },
         "OAuth authorization URL generated"
       );
 
@@ -176,8 +176,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
 
       const session = await getAuthenticatedSession({
@@ -185,8 +185,8 @@ export const mcpRouter = createTRPCRouter({
       });
 
       return {
-        isAuthenticated: !!session?.tokens,
         hasSession: !!session,
+        isAuthenticated: !!session?.tokens,
       };
     }),
 
@@ -194,10 +194,10 @@ export const mcpRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1).max(MCP_NAME_MAX_LENGTH),
-        url: z.string().url(),
-        type: z.enum(["http", "sse"]),
         oauthClientId: z.string().optional(),
         oauthClientSecret: z.string().optional(),
+        type: z.enum(["http", "sse"]),
+        url: z.string().url(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -208,13 +208,13 @@ export const mcpRouter = createTRPCRouter({
       });
 
       return await createMcpConnector({
-        userId: ctx.user.id,
         name: input.name,
         nameId,
-        url: input.url,
-        type: input.type,
         oauthClientId: input.oauthClientId,
         oauthClientSecret: input.oauthClientSecret,
+        type: input.type,
+        url: input.url,
+        userId: ctx.user.id,
       });
     }),
 
@@ -224,8 +224,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own",
+        userId: ctx.user.id,
       });
       await deleteMcpConnector({ id: input.id });
       await removeMcpClient(input.id);
@@ -241,8 +241,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
       await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
       await removeMcpClient(input.id);
@@ -260,8 +260,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
 
       const fetchDiscovery = async (): Promise<DiscoveryResult> => {
@@ -274,8 +274,8 @@ export const mcpRouter = createTRPCRouter({
         const mcpClient = getOrCreateMcpClient({
           id: connector.id,
           name: connector.name,
-          url: connector.url,
           type: connector.type,
+          url: connector.url,
         });
 
         await mcpClient.connect();
@@ -307,11 +307,11 @@ export const mcpRouter = createTRPCRouter({
                 .tools()
                 .then((tools) =>
                   Object.entries(tools).map(([name, tool]) => ({
-                    name,
                     description:
                       typeof tool.description === "string"
                         ? tool.description
                         : null,
+                    name,
                   }))
                 )
                 .catch((error) => {
@@ -325,10 +325,10 @@ export const mcpRouter = createTRPCRouter({
                 .listResources()
                 .then((r) =>
                   r.resources.map((res) => ({
-                    name: res.name,
-                    uri: res.uri,
                     description: res.description ?? null,
                     mimeType: res.mimeType ?? null,
+                    name: res.name,
+                    uri: res.uri,
                   }))
                 )
                 .catch((error) => {
@@ -342,14 +342,14 @@ export const mcpRouter = createTRPCRouter({
                 .listPrompts()
                 .then((r) =>
                   r.prompts.map((p) => ({
-                    name: p.name,
-                    description: p.description ?? null,
                     arguments:
                       p.arguments?.map((arg) => ({
                         name: arg.name,
                         description: arg.description ?? null,
                         required: arg.required ?? false,
                       })) ?? [],
+                    description: p.description ?? null,
+                    name: p.name,
                   }))
                 )
                 .catch((error) => {
@@ -364,17 +364,17 @@ export const mcpRouter = createTRPCRouter({
           log.info(
             {
               connectorId: connector.id,
-              toolsCount: toolsResult.length,
-              resourcesCount: resourcesResult.length,
               promptsCount: promptsResult.length,
+              resourcesCount: resourcesResult.length,
+              toolsCount: toolsResult.length,
             },
             "MCP discovery completed"
           );
 
           return {
-            tools: toolsResult,
-            resources: resourcesResult,
             prompts: promptsResult,
+            resources: resourcesResult,
+            tools: toolsResult,
           };
         } finally {
           // Don't close the client - keep it cached for reuse
@@ -412,14 +412,14 @@ export const mcpRouter = createTRPCRouter({
             const mcpClient = getOrCreateMcpClient({
               id: connector.id,
               name: connector.name,
-              url: connector.url,
               type: connector.type,
+              url: connector.url,
             });
             const result = await mcpClient.attemptConnection();
             return {
-              status: result.status,
-              needsAuth: result.needsAuth,
               error: result.error,
+              needsAuth: result.needsAuth,
+              status: result.status,
             };
           };
 
@@ -451,8 +451,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
 
       await removeMcpClient(connector.id);
@@ -461,15 +461,15 @@ export const mcpRouter = createTRPCRouter({
       const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
-        url: connector.url,
         type: connector.type,
+        url: connector.url,
       });
 
       await mcpClient.connect();
 
       return {
-        status: mcpClient.status,
         needsAuth: mcpClient.status === "authorizing",
+        status: mcpClient.status,
       };
     }),
 
@@ -484,8 +484,8 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own-or-global",
+        userId: ctx.user.id,
       });
 
       const fetchConnectionStatus =
@@ -498,8 +498,8 @@ export const mcpRouter = createTRPCRouter({
           const mcpClient = getOrCreateMcpClient({
             id: connector.id,
             name: connector.name,
-            url: connector.url,
             type: connector.type,
+            url: connector.url,
           });
 
           const result = await mcpClient.attemptConnection();
@@ -507,17 +507,17 @@ export const mcpRouter = createTRPCRouter({
           log.debug(
             {
               connectorId: connector.id,
-              status: result.status,
-              needsAuth: result.needsAuth,
               error: result.error,
+              needsAuth: result.needsAuth,
+              status: result.status,
             },
             "MCP connection test completed"
           );
 
           return {
-            status: result.status,
-            needsAuth: result.needsAuth,
             error: result.error,
+            needsAuth: result.needsAuth,
+            status: result.status,
           };
         };
 
@@ -532,16 +532,16 @@ export const mcpRouter = createTRPCRouter({
   toggleEnabled: protectedProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
         enabled: z.boolean(),
+        id: z.string().uuid(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       assertMcpEnabled();
       await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own",
+        userId: ctx.user.id,
       });
       await updateMcpConnector({
         id: input.id,
@@ -555,12 +555,12 @@ export const mcpRouter = createTRPCRouter({
       z.object({
         id: z.string().uuid(),
         updates: z.object({
+          enabled: z.boolean().optional(),
           name: z.string().min(1).max(MCP_NAME_MAX_LENGTH).optional(),
-          url: z.string().url().optional(),
-          type: z.enum(["http", "sse"]).optional(),
           oauthClientId: z.string().nullable().optional(),
           oauthClientSecret: z.string().nullable().optional(),
-          enabled: z.boolean().optional(),
+          type: z.enum(["http", "sse"]).optional(),
+          url: z.string().url().optional(),
         }),
       })
     )
@@ -568,16 +568,16 @@ export const mcpRouter = createTRPCRouter({
       assertMcpEnabled();
       const connector = await getConnectorWithPermission({
         id: input.id,
-        userId: ctx.user.id,
         permission: "own",
+        userId: ctx.user.id,
       });
 
       const updates = { ...input.updates };
       if (updates.name) {
         const nameId = await validateAndGenerateNameId({
+          excludeId: input.id,
           name: updates.name,
           userId: connector.userId,
-          excludeId: input.id,
         });
         (updates as typeof updates & { nameId: string }).nameId = nameId;
       }

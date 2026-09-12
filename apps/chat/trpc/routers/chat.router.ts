@@ -78,8 +78,8 @@ export const chatRouter = createTRPCRouter({
       // Insert the new chat
       await saveChat({
         id: newChatId,
-        userId: ctx.user.id,
         title: `${sourceChat.title}`,
+        userId: ctx.user.id,
       });
 
       // Clone messages and documents with updated IDs
@@ -100,8 +100,8 @@ export const chatRouter = createTRPCRouter({
       // Save cloned messages first, then documents due to foreign key dependency
       await saveChatMessages({
         messages: messagesWithClonedAttachments.map((msg) => ({
-          id: msg.id,
           chatId: newChatId,
+          id: msg.id,
           message: msg,
         })),
       });
@@ -169,12 +169,12 @@ export const chatRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { text: title } = await generateText({
-        model: await getLanguageModel(config.ai.workflows.title),
         instructions: `\n
         - you will generate a short title based on the first message a user begins a conversation with
         - ensure it is not more than 80 characters long
         - the title should be a summary of the user's message
         - do not use quotes or colons`,
+        model: await getLanguageModel(config.ai.workflows.title),
         prompt: input.message,
         telemetry: { integrations: chatTelemetry, isEnabled: true },
       });
@@ -192,9 +192,9 @@ export const chatRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       console.log("[getAllChats] Starting", {
-        userId: ctx.user.id,
-        projectId: input?.projectId,
         inputType: typeof input?.projectId,
+        projectId: input?.projectId,
+        userId: ctx.user.id,
       });
 
       try {

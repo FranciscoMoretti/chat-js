@@ -16,21 +16,21 @@ export const projectRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1),
-        instructions: z.string().default(""),
         icon: z.enum(PROJECT_ICONS).optional(),
         iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
+        instructions: z.string().default(""),
+        name: z.string().min(1),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const id = generateUUID();
       await createProject({
-        id,
-        userId: ctx.user.id,
-        name: input.name,
-        instructions: input.instructions,
         icon: input.icon,
         iconColor: input.iconColor,
+        id,
+        instructions: input.instructions,
+        name: input.name,
+        userId: ctx.user.id,
       });
       return { id };
     }),
@@ -112,10 +112,10 @@ export const projectRouter = createTRPCRouter({
       z.object({
         id: z.string().uuid(),
         updates: z.object({
-          name: z.string().min(1).optional(),
-          instructions: z.string().optional(),
           icon: z.enum(PROJECT_ICONS).optional(),
           iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
+          instructions: z.string().optional(),
+          name: z.string().min(1).optional(),
         }),
       })
     )

@@ -110,10 +110,10 @@ export async function GET(request: NextRequest) {
         : "Token exchange failed";
     log.error(
       {
+        connectorId: connector.id,
         error: oauthError,
         errorMessage,
         errorStack: oauthError instanceof Error ? oauthError.stack : undefined,
-        connectorId: connector.id,
       },
       "OAuth token exchange failed"
     );

@@ -21,7 +21,7 @@ it("skips an absent optional Redis and rejects REST credentials without exposing
         ],
         {
           cwd,
-          encoding: "utf8",
+          encoding: "utf-8",
           env: {
             NODE_ENV: "test",
             REDIS_URL: url,
