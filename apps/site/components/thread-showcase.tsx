@@ -35,7 +35,7 @@ const MAX_ACTIVE_RUNS = 8;
 
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
 
-function responseState(chat: PlaygroundChat, message: PlaygroundMessage) {
+const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
   if (message.role !== "assistant") {
     return "complete";
   }
@@ -50,15 +50,15 @@ function responseState(chat: PlaygroundChat, message: PlaygroundMessage) {
     return "stopped";
   }
   return "complete";
-}
+};
 
-function ResponseStatus({
+const ResponseStatus = ({
   chat,
   message,
 }: {
   chat: PlaygroundChat;
   message: PlaygroundMessage;
-}) {
+}) => {
   const state = responseState(chat, message);
   const live = state === "streaming" || state === "submitted";
   const tokens = Math.ceil(getMessageText(message).length / 4);
@@ -83,12 +83,12 @@ function ResponseStatus({
       )}
     </span>
   );
-}
+};
 
-export function ThreadInstallCommand() {
+export const ThreadInstallCommand = () => {
   const [copied, setCopied] = useState(false);
 
-  async function copyCommand() {
+  const copyCommand = async () => {
     try {
       await navigator.clipboard.writeText(INSTALL_COMMAND);
       setCopied(true);
@@ -96,7 +96,7 @@ export function ThreadInstallCommand() {
     } catch {
       setCopied(false);
     }
-  }
+  };
 
   return (
     <div className="border-border bg-card mt-8 max-w-3xl border">
@@ -122,9 +122,9 @@ export function ThreadInstallCommand() {
       </div>
     </div>
   );
-}
+};
 
-function Conversation({
+const Conversation = ({
   chat,
   draft,
   onBranch,
@@ -142,7 +142,7 @@ function Conversation({
   onSend: () => Promise<void>;
   playgroundError: string | null;
   responseCount: number;
-}) {
+}) => {
   const transcript = useRef<HTMLDivElement>(null);
   const followTranscript = useRef(true);
   useEffect(() => {
@@ -158,7 +158,7 @@ function Conversation({
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const cursorId = chat.tree.cursorId;
+  const { cursorId } = chat.tree;
   const textLength = chat.messages.reduce(
     (length, message) => length + getMessageText(message).length,
     0
@@ -166,8 +166,8 @@ function Conversation({
   useEffect(() => {
     if (textLength && followTranscript.current) {
       transcript.current?.scrollTo({
-        top: transcript.current.scrollHeight,
         behavior: "instant",
+        top: transcript.current.scrollHeight,
       });
     }
   }, [textLength]);
@@ -175,8 +175,8 @@ function Conversation({
     followTranscript.current = true;
     if (cursorId) {
       transcript.current?.scrollTo({
-        top: transcript.current.scrollHeight,
         behavior: "instant",
+        top: transcript.current.scrollHeight,
       });
     }
   }, [cursorId]);
@@ -212,16 +212,16 @@ function Conversation({
           const siblingIndex = siblings.findIndex(
             (sibling) => sibling.id === message.id
           );
-          const hasSiblings = siblings.length > 1 && siblingIndex >= 0;
+          const hasSiblings = siblings.length > 1 && siblingIndex !== -1;
 
-          function navigateToSibling(nextIndex: number) {
+          const navigateToSibling = (nextIndex: number) => {
             const sibling = siblings[nextIndex];
             if (!sibling) {
               return;
             }
             const leaf = chat.tree.getLeaves(sibling.id).at(-1);
             chat.tree.setCursor(leaf?.id ?? sibling.id);
-          }
+          };
 
           return (
             <article
@@ -385,9 +385,9 @@ function Conversation({
       </form>
     </section>
   );
-}
+};
 
-function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
+const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
   const layout = useMemo(
     () =>
       buildTreeLayout({
@@ -398,7 +398,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
   );
   const activeIds = new Set(chat.messages.map((message) => message.id));
   const canvas = useRef<HTMLDivElement>(null);
-  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState({ height: 0, width: 0 });
   useEffect(() => {
     const viewport = canvas.current;
     if (!viewport) {
@@ -406,8 +406,8 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
     }
     const observer = new ResizeObserver(() =>
       setViewportSize({
-        width: viewport.clientWidth,
         height: viewport.clientHeight,
+        width: viewport.clientWidth,
       })
     );
     observer.observe(viewport);
@@ -428,20 +428,20 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
     <div className={styles.treeScroll} ref={canvas}>
       <div
         style={{
+          height: layout.height * scale + 24,
           position: "relative",
           width: Math.max(viewportSize.width, layout.width * scale + 24),
-          height: layout.height * scale + 24,
         }}
       >
         <div
           className="absolute"
           style={{
             height: layout.height,
-            width: layout.width,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
             left: Math.max(12, (viewportSize.width - layout.width * scale) / 2),
             top: 12,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            width: layout.width,
           }}
         >
           <svg
@@ -523,18 +523,18 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
       </div>
     </div>
   );
-}
+};
 
-function PlaygroundSession() {
+const PlaygroundSession = () => {
   const [draft, setDraft] = useState("");
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
   const [responseCount, setResponseCount] = useState(1);
   const idCounter = useRef(100);
 
-  function generateMessageId() {
+  const generateMessageId = () => {
     idCounter.current += 1;
     return `msg_${idCounter.current}`;
-  }
+  };
 
   const [stoppedIds, setStoppedIds] = useState<ReadonlySet<string>>(new Set());
   const thread = useThread<PlaygroundMessage>({
@@ -550,19 +550,17 @@ function PlaygroundSession() {
   });
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
-  function messageInput(text: string, title: string, messageId?: string) {
-    return {
-      messageId,
-      metadata: {
-        activeStreamId: null,
-        createdAt: new Date().toISOString(),
-        title,
-      },
-      text,
-    };
-  }
+  const messageInput = (text: string, title: string, messageId?: string) => ({
+    messageId,
+    metadata: {
+      activeStreamId: null,
+      createdAt: new Date().toISOString(),
+      title,
+    },
+    text,
+  });
 
-  async function sendDraft(text = draft.trim(), count = responseCount) {
+  const sendDraft = async (text = draft.trim(), count = responseCount) => {
     if (!text) {
       return;
     }
@@ -602,9 +600,9 @@ function PlaygroundSession() {
         error instanceof Error ? error.message : "Unable to start this response"
       );
     }
-  }
+  };
 
-  async function branchFrom(messageId: string) {
+  const branchFrom = async (messageId: string) => {
     setPlaygroundError(null);
     try {
       const message = chat.tree.messagesById[messageId];
@@ -630,7 +628,7 @@ function PlaygroundSession() {
         error instanceof Error ? error.message : "Unable to create this branch"
       );
     }
-  }
+  };
 
   return (
     <div className={styles.playground} data-testid="thread-playground">
@@ -697,9 +695,9 @@ function PlaygroundSession() {
       </div>
     </div>
   );
-}
+};
 
-export function ThreadPlayground() {
+export const ThreadPlayground = () => {
   const [session, setSession] = useState(0);
   return (
     <div>
@@ -714,13 +712,11 @@ export function ThreadPlayground() {
       </div>
     </div>
   );
-}
+};
 
-export function ThreadShowcase() {
-  return (
-    <>
-      <ThreadPlayground />
-      <ThreadInstallCommand />
-    </>
-  );
-}
+export const ThreadShowcase = () => (
+  <>
+    <ThreadPlayground />
+    <ThreadInstallCommand />
+  </>
+);

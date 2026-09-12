@@ -28,8 +28,8 @@ export const aiToolEnvRequirements: Partial<
   webSearch: searchEnvRequirement,
   deepResearch: searchEnvRequirement,
   mcp: {
-    options: [["MCP_ENCRYPTION_KEY"]],
     description: "MCP_ENCRYPTION_KEY",
+    options: [["MCP_ENCRYPTION_KEY"]],
   },
   codeExecution: codeExecutionEnvRequirement,
 };
@@ -39,16 +39,16 @@ export const authEnvRequirements: Record<
   EnvRequirement
 > = {
   google: {
-    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
     description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
+    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
   },
   github: {
-    options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
     description: "AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
+    options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
   },
   vercel: {
-    options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
     description: "VERCEL_APP_CLIENT_ID, VERCEL_APP_CLIENT_SECRET",
+    options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
   },
 };
 

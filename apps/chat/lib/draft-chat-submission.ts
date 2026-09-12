@@ -38,7 +38,7 @@ export const buildDraftChatSubmission = ({
   selectedTool: UiToolName | null;
 }): DraftChatSubmission => {
   const requestedModelIds = expandSelectedModelValue(normalizedSelectedModel);
-  const primaryModelId = requestedModelIds[0];
+  const [primaryModelId] = requestedModelIds;
 
   if (!primaryModelId) {
     throw new Error(
@@ -74,14 +74,14 @@ export const buildDraftChatSubmission = ({
       id: generateUUID(),
       parts: [
         ...attachments.map((attachment) => ({
+          mediaType: attachment.contentType,
+          name: attachment.name,
           type: "file" as const,
           url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
         })),
         {
-          type: "text",
           text: input,
+          type: "text",
         },
       ],
       metadata: {

@@ -18,7 +18,7 @@ const parseRange = (value: string, size: number) => {
   if (match.groups?.suffix) {
     const length = Number(match.groups.suffix);
     return Number.isSafeInteger(length) && length > 0 && size > 0
-      ? { start: Math.max(size - length, 0), end: size - 1 }
+      ? { end: size - 1, start: Math.max(size - length, 0) }
       : null;
   }
   const start = Number(match.groups?.start);
@@ -29,7 +29,7 @@ const parseRange = (value: string, size: number) => {
     start >= 0 &&
     start <= end &&
     start < size
-    ? { start, end }
+    ? { end, start }
     : null;
 };
 
@@ -44,8 +44,8 @@ export const createFileContentResponse = async (request: Request) => {
     if (providerUrl) {
       return new Response(null, {
         headers: {
-          Location: providerUrl,
           "Cache-Control": "private, no-store",
+          Location: providerUrl,
         },
         status: 307,
       });
