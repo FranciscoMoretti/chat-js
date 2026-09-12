@@ -8,6 +8,9 @@ import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 
+const checkpointLookupPath =
+  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint$/;
+
 const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/;
 
 export async function authenticateEveGateway(request: Request) {
@@ -40,7 +43,7 @@ export async function authenticateEveGateway(request: Request) {
       (operationLookupPath.test(path) && request.method === "GET")
     )
   ) {
-    const policy = parseSessionRequest(path, request.method);
+    const policy = gatewaySessionPolicy(path, request.method);
     if (!(policy && (await ownsEveSession(owner, policy.sessionId)))) {
       return null;
     }
@@ -61,4 +64,12 @@ export async function authenticateEveGateway(request: Request) {
     principalId: owner,
     subject: owner,
   };
+}
+
+function gatewaySessionPolicy(path: string, method: string) {
+  const checkpointSession =
+    method === "GET" ? checkpointLookupPath.exec(path)?.[1] : undefined;
+  return checkpointSession
+    ? { sessionId: checkpointSession }
+    : parseSessionRequest(path, method);
 }

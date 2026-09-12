@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
-import { createConversationInput } from "@/lib/eve/contracts";
-import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
 import { sameOrigin } from "@/lib/eve/request-policy";
+import { createEveResponseGroup } from "@/lib/eve/response-group";
+import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
+import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 
 export async function POST(request: Request) {
   if (!isEveEnabled()) {
@@ -16,14 +17,28 @@ export async function POST(request: Request) {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
   }
-  const input = createConversationInput.safeParse(
+  const input = eveResponseGroupInput.safeParse(
     await request.json().catch(() => null)
   );
   if (!input.success) {
     return Response.json(
-      { error: "Enter a message between 1 and 16,000 characters." },
+      { error: "Invalid response group request." },
       { status: 400 }
     );
   }
-  return await createEveConversationOperation(session.user.id, input.data);
+  try {
+    return Response.json(
+      eveResponseGroupResult.parse(
+        await createEveResponseGroup(session.user.id, input.data)
+      )
+    );
+  } catch {
+    return Response.json(
+      {
+        error:
+          "Response group is unavailable or unresolved. Retain the original request before retrying.",
+      },
+      { status: 409 }
+    );
+  }
 }

@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     include: [
       "tests/eve-contracts.e2e.ts",
+      "tests/eve-response-groups.e2e.ts",
       "tests/eve-usage-cursor.e2e.ts",
       "tests/eve-code-sandboxes.e2e.ts",
       "tests/eve-delete-family.e2e.ts",

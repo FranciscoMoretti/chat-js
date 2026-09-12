@@ -15,12 +15,14 @@ import {
   eveConversation,
   eveConversationProject,
   eveFileReference,
+  eveResponseGroup,
   project,
 } from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
+import { tombstoneEveResponseGroups } from "./eve-response-groups";
 
 // Creation reservations remain visible for recovery; deletion records never do.
 const visibleConversation = inArray(eveConversation.state, [
@@ -179,6 +181,27 @@ export async function getEveCreation(ownerId: string, operationId: string) {
 
 export class CreationProjectNotFound extends Error {}
 
+async function assertResponseGroupCandidateAvailable(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  operationId: string
+) {
+  const [deletedGroup] = await tx
+    .select({ id: eveResponseGroup.id })
+    .from(eveResponseGroup)
+    .where(
+      and(
+        eq(eveResponseGroup.ownerId, ownerId),
+        eq(eveResponseGroup.deleted, true),
+        sql`${operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+      )
+    )
+    .limit(1);
+  if (deletedGroup) {
+    throw new CreationConflict("This response group has been deleted.");
+  }
+}
+
 async function reserveEveConversation(
   value: typeof eveConversation.$inferInsert,
   fork?: EveForkInput
@@ -187,6 +210,11 @@ async function reserveEveConversation(
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
+    );
+    await assertResponseGroupCandidateAvailable(
+      tx,
+      value.ownerId,
+      value.operationId
     );
     const [source] = fork
       ? await tx
@@ -326,6 +354,7 @@ export async function beginEveConversationDeletion(
         "Finish recovering conversation creation before deleting this conversation."
       );
     }
+    await tombstoneEveResponseGroups(tx, ownerId, family);
     // Document writers hold this same lock through their commit. Once the fence
     // commits, later writers fail their bound-conversation check.
     for (const row of family) {

@@ -1,5 +1,6 @@
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "./client";
+import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveCodeSandbox,
   eveConversation,
@@ -43,6 +44,7 @@ export async function completeEveConversationDeletion(
         "The entire conversation family must be pending deletion."
       );
     }
+    await tombstoneEveResponseGroups(tx, ownerId, family);
     const ids = family.map((row) => row.id);
     const [sandbox] = await tx
       .select({ name: eveCodeSandbox.name })

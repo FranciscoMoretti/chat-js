@@ -7,6 +7,7 @@ import {
   index,
   integer,
   json,
+  jsonb,
   numeric,
   pgTable,
   primaryKey,
@@ -504,6 +505,40 @@ export const eveConversation = pgTable(
     )`
     ),
     uniqueIndex("EveConversation_owner_operation").on(
+      table.ownerId,
+      table.operationId
+    ),
+  ]
+);
+
+/** Immutable fan-out intent. Native sessions remain the only transcript store. */
+export const eveResponseGroup = pgTable(
+  "EveResponseGroup",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id),
+    operationId: uuid("operationId").notNull(),
+    inputHash: text("inputHash"),
+    candidates:
+      jsonb("candidates").$type<
+        Array<{
+          modelId: string;
+          operationId: string;
+          rejection?: { error: string; code?: "project_not_found" };
+        }>
+      >(),
+    candidateOperationIds: uuid("candidateOperationIds").array().notNull(),
+    sourceConversationId: uuid("sourceConversationId"),
+    sourceIdentityKnown: boolean("sourceIdentityKnown")
+      .notNull()
+      .default(false),
+    deleted: boolean("deleted").notNull().default(false),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("EveResponseGroup_owner_operation").on(
       table.ownerId,
       table.operationId
     ),
