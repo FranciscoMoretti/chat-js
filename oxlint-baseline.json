@@ -37,8 +37,7 @@
         "packages/cli/src/helpers/gateway-provider.test.ts",
         "packages/cli/src/helpers/prompts.ts",
         "packages/cli/src/utils/preflight.ts",
-        "packages/registry/src/storage/ftp/storage-provider.test.ts",
-        "scripts/sync-template.ts"
+        "packages/registry/src/storage/ftp/storage-provider.test.ts"
       ],
       "rules": {
         "no-await-in-loop": "off"

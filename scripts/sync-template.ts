@@ -234,23 +234,26 @@ const collectSnapshot = async (
   prefix = ""
 ): Promise<Map<string, string>> => {
   const entries = await readdir(dir, { withFileTypes: true });
-  const output = new Map<string, string>();
-  for (const entry of entries) {
-    const absolute = join(dir, entry.name);
-    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-    if (entry.isDirectory()) {
-      const nested = await collectSnapshot(absolute, rel);
-      for (const [nestedPath, hash] of nested) {
-        output.set(nestedPath, hash);
+  const snapshots = await Promise.all(
+    entries.map(async (entry) => {
+      const absolute = join(dir, entry.name);
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        return collectSnapshot(absolute, rel);
       }
-      continue;
+      if (!entry.isFile()) {
+        return new Map<string, string>();
+      }
+      const bytes = await readFile(absolute);
+      const hash = createHash("sha256").update(bytes).digest("hex");
+      return new Map([[rel, hash]]);
+    })
+  );
+  const output = new Map<string, string>();
+  for (const snapshot of snapshots) {
+    for (const [nestedPath, hash] of snapshot) {
+      output.set(nestedPath, hash);
     }
-    if (!entry.isFile()) {
-      continue;
-    }
-    const bytes = await readFile(absolute);
-    const hash = createHash("sha256").update(bytes).digest("hex");
-    output.set(rel, hash);
   }
   return output;
 };
