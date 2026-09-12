@@ -1,8 +1,18 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import type { EveMessagePart } from "eve/client";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
-import { ArtifactProvider, useArtifact } from "../hooks/use-artifact";
+import { SidebarProvider } from "../components/ui/sidebar";
+import { useArtifact } from "../hooks/use-artifact";
+import { TRPCProvider } from "../trpc/react";
+import {
+  conversationId,
+  existingId,
+  queryClient,
+  trpcClient,
+} from "./eve-artifact-query.fixture";
 
 type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
 const completed: Part = {
@@ -21,7 +31,7 @@ const completed: Part = {
   },
 };
 function Fixture() {
-  const { artifact, closeArtifact, setArtifact } = useArtifact();
+  const { artifact, setArtifact } = useArtifact();
   const [part, setPart] = useState<Part>(completed);
   const [readOnly, setReadOnly] = useState(false);
   return (
@@ -59,7 +69,8 @@ function Fixture() {
             setArtifact({
               ...artifact,
               title: "Existing draft",
-              documentId: "existing",
+              documentId: existingId,
+              revisionId: undefined,
               isVisible: true,
             })
           }
@@ -70,14 +81,6 @@ function Fixture() {
       </div>
       <p>Mode: {readOnly ? "readonly" : "owner"}</p>
       <EveDocumentTool isReadonly={readOnly} messageId="message" part={part} />
-      {artifact.isVisible && (
-        <section aria-label="Opened artifact" className="rounded border p-4">
-          <h2>{artifact.title}</h2>
-          <button onClick={closeArtifact} type="button">
-            Close artifact
-          </button>
-        </section>
-      )}
     </main>
   );
 }
@@ -86,7 +89,13 @@ if (!root) {
   throw new Error("Missing fixture root");
 }
 createRoot(root).render(
-  <ArtifactProvider>
-    <Fixture />
-  </ArtifactProvider>
+  <QueryClientProvider client={queryClient}>
+    <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
+      <SidebarProvider defaultOpen={false}>
+        <EveArtifactLayout conversationId={conversationId}>
+          <Fixture />
+        </EveArtifactLayout>
+      </SidebarProvider>
+    </TRPCProvider>
+  </QueryClientProvider>
 );
