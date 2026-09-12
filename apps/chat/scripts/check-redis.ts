@@ -74,7 +74,7 @@ const checkRedis = async () => {
         await subscriber.unsubscribe(key);
         await publisher.del(key);
       })(),
-      new Promise<never>((_, reject) => {
+      new Promise<never>((_resolve, reject) => {
         deadline = setTimeout(
           () => reject(new Error("Redis check timed out")),
           CHECK_DEADLINE_MS

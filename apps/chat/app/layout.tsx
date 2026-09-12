@@ -13,32 +13,32 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(config.appUrl),
-  title: config.appTitle ?? config.appName,
   description: config.appDescription,
+  metadataBase: new URL(config.appUrl),
   openGraph: {
-    siteName: config.appName,
-    url: config.appUrl,
-    title: config.appTitle ?? config.appName,
     description: config.appDescription,
+    siteName: config.appName,
+    title: config.appTitle ?? config.appName,
+    url: config.appUrl,
   },
+  title: config.appTitle ?? config.appName,
 };
 
 export const viewport = {
+  interactiveWidget: "resizes-content" as const,
   // Disable auto-zoom on mobile Safari
   maximumScale: 1,
-  interactiveWidget: "resizes-content" as const,
 };
 
 const geist = Geist({
-  subsets: ["latin"],
   display: "swap",
+  subsets: ["latin"],
   variable: "--font-geist",
 });
 
 const geistMono = Geist_Mono({
-  subsets: ["latin"],
   display: "swap",
+  subsets: ["latin"],
   variable: "--font-geist-mono",
 });
 
