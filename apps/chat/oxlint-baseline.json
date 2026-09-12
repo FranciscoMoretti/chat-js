@@ -133,7 +133,6 @@
         "components/message-siblings.tsx",
         "components/messages-pane.tsx",
         "components/messages.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/new-chat-button.tsx",
         "components/parallel-response-cards.test.ts",
@@ -189,7 +188,6 @@
         "components/tag.tsx",
         "components/text-editor.tsx",
         "components/theme-provider.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert-dialog.tsx",
         "components/ui/badge.tsx",
         "components/ui/card.tsx",
@@ -297,7 +295,6 @@
         "components/lexical-chat-input.tsx",
         "components/message-editor.tsx",
         "components/message.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/parallel-response-cards.tsx",
         "components/part/document-preview.tsx",
@@ -309,7 +306,6 @@
         "components/sidebar-project-item.tsx",
         "components/sidebar-projects.tsx",
         "components/sidebar-toggle.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert.tsx",
         "components/ui/badge.tsx",
         "components/ui/empty.tsx",
@@ -549,7 +545,6 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/chat-sync.tsx",
-        "components/model-selector.tsx",
         "components/parallel-response-cards.tsx",
         "components/ui/sidebar.tsx",
         "lib/stores/with-thread-state.ts"
@@ -666,7 +661,6 @@
         "components/data-stream-handler.tsx",
         "components/electron-auth-ui.tsx",
         "components/followup-suggestions.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/part/document-tool.tsx",
         "components/part/tool-part.tsx",
@@ -902,7 +896,6 @@
         "components/message-siblings.tsx",
         "components/messages-pane.tsx",
         "components/messages.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/new-chat-button.tsx",
         "components/parallel-response-cards.tsx",
@@ -957,7 +950,6 @@
         "components/tag.tsx",
         "components/text-editor.tsx",
         "components/theme-provider.tsx",
-        "components/toolbar.tsx",
         "components/ui/accordion.tsx",
         "components/ui/alert-dialog.tsx",
         "components/ui/alert.tsx",
@@ -1045,10 +1037,7 @@
       }
     },
     {
-      "files": [
-        "components/settings/mcp-create-dialog.tsx",
-        "components/toolbar.tsx"
-      ],
+      "files": ["components/settings/mcp-create-dialog.tsx"],
       "rules": {
         "react/jsx-handler-names": "off"
       }
@@ -1253,7 +1242,6 @@
         "components/image-editor.tsx",
         "components/interactive-chart-impl.tsx",
         "components/lexical-chat-input.tsx",
-        "components/model-selector.tsx",
         "components/multimodal-input.tsx",
         "components/parallel-response-cards.tsx",
         "components/part/document-common.tsx",
@@ -1281,7 +1269,6 @@
         "components/suggested-actions.tsx",
         "components/text-editor.tsx",
         "components/thinking-message.tsx",
-        "components/toolbar.tsx",
         "components/ui/alert.tsx",
         "components/ui/badge.tsx",
         "components/ui/button-group.tsx",
@@ -1469,7 +1456,6 @@
       "files": [
         "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/interactive-chart-impl.tsx",
-        "components/model-selector.tsx",
         "components/search-chats-dialog.tsx",
         "components/sidebar-chats-list.tsx"
       ],
@@ -1506,19 +1492,9 @@
       }
     },
     {
-      "files": [
-        "components/sheet-editor.tsx",
-        "components/toolbar.tsx",
-        "lib/ai/token-utils.test.ts"
-      ],
+      "files": ["components/sheet-editor.tsx", "lib/ai/token-utils.test.ts"],
       "rules": {
         "unicorn/no-new-array": "off"
-      }
-    },
-    {
-      "files": ["components/toolbar.tsx"],
-      "rules": {
-        "unicorn/no-useless-spread": "off"
       }
     },
     {
@@ -1637,7 +1613,6 @@
         "components/code-editor.tsx",
         "components/data-stream-handler.tsx",
         "components/diffview.tsx",
-        "components/model-selector.tsx",
         "components/part/document-common.tsx",
         "components/part/document-preview.tsx",
         "lib/ai/errors.ts"
