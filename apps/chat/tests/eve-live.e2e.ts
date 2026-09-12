@@ -91,6 +91,62 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   expect(replayed.reduce((total, row) => total + row.chargedCents, 0)).toBe(
     charged
   );
+  const client = new Client({
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
+    headers: {
+      authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
+      "x-chatjs-owner": ownerId,
+    },
+  });
+  const session = client.sessions.attach(sessionId);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  expect((await session.compact()).status).toBe("accepted");
+  await expect
+    .poll(
+      async () => {
+        const snapshot = await session.snapshot();
+        return snapshot.events.some(
+          (event) => event.type === "compaction.completed"
+        );
+      },
+      { timeout: 90_000, intervals: [1000] }
+    )
+    .toBe(true);
+  const compacted = await session.snapshot();
+  const compactionUsage = compacted.events.filter(
+    (event) => event.type === "compaction.usage"
+  );
+  expect(compactionUsage.length).toBeGreaterThan(0);
+  for (const event of compactionUsage) {
+    expect(event.meta.id.startsWith("evt_")).toBe(true);
+    expect(event.data.sessionId).toBe(sessionId);
+    expect(event.data.usage?.costUsd).toBeGreaterThan(0);
+    // No reconciliation before this read: the authored billing hook must have
+    // received and recorded the same event delivered by the public client.
+    const [recorded] = await db
+      .select()
+      .from(eveUsage)
+      .where(eq(eveUsage.eventId, event.meta.id));
+    expect(recorded?.sessionId).toBe(sessionId);
+    expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
+  }
+  const rewind = await client.sessions.attach(sessionId).snapshot();
+  expect(
+    rewind.events.filter((event) => event.type === "compaction.usage")
+  ).toEqual(compactionUsage);
+  const beforeReplay = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, sessionId));
+  await reconcileEveUsage(ownerId, sessionId);
+  const afterReplay = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, sessionId));
+  expect(afterReplay.length).toBe(beforeReplay.length);
+  expect(afterReplay.reduce((total, row) => total + row.chargedCents, 0)).toBe(
+    beforeReplay.reduce((total, row) => total + row.chargedCents, 0)
+  );
   await page.reload();
   await expect(page.getByRole("log")).toContainText("4 words");
   await mkdir("tests/eve-results/screenshots", { recursive: true });

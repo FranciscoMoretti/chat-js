@@ -22,7 +22,11 @@ export async function ingestEveUsage(
       costUsd: event.data.status === "rejected" ? 0 : recordedCost,
     });
   }
-  if (event.type !== "step.completed" && event.type !== "step.failed") {
+  if (
+    event.type !== "step.completed" &&
+    event.type !== "compaction.usage" &&
+    event.type !== "step.failed"
+  ) {
     return;
   }
   return await recordEveUsage({
@@ -31,10 +35,10 @@ export async function ingestEveUsage(
     eventId: event.meta.id,
     turnId: event.data.turnId,
     costUsd:
-      event.type === "step.completed" ? event.data.usage?.costUsd : undefined,
+      event.type === "step.failed" ? undefined : event.data.usage?.costUsd,
     generationId:
-      event.type === "step.completed"
-        ? event.data.providerMetadata?.gateway?.generationId
-        : undefined,
+      event.type === "step.failed"
+        ? undefined
+        : event.data.providerMetadata?.gateway?.generationId,
   });
 }

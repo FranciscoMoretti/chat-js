@@ -108,9 +108,12 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows[0].chargedCents).toBe(5);
 });
 
-test("missing cost blocks cursor advancement until durable provider reconciliation", async () => {
+test.each([
+  "step.completed",
+  "compaction.usage",
+])("missing %s cost blocks cursor advancement until durable provider reconciliation", async (type) => {
   const id = await session();
-  const event = step(undefined);
+  const event = { ...step(undefined), type };
   transport.stream.mockImplementation(function* ({ startIndex }) {
     if (startIndex === 0) {
       yield event;
@@ -129,6 +132,27 @@ test("missing cost blocks cursor advancement until durable provider reconciliati
   });
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
+});
+
+test("compaction attempts share per-turn rounding and replay does not double-charge", async () => {
+  const id = await session();
+  const events = [
+    step(0.004),
+    { ...step(0.003), type: "compaction.usage" },
+    { ...step(0.004), type: "compaction.usage" },
+  ];
+  transport.stream.mockImplementation(function* ({ startIndex }) {
+    yield* events.slice(startIndex);
+  });
+  await reconcileEveUsage(owner, id);
+  await reconcileEveUsage(owner, id);
+  const rows = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, id));
+  expect(rows).toHaveLength(3);
+  expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(2);
+  expect(await getEveUsageCursor(owner, id)).toBe(3);
 });
 
 test("cursor writes are monotonic, owner scoped, and fenced after retirement", async () => {

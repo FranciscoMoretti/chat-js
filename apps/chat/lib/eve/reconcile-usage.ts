@@ -34,7 +34,9 @@ export async function reconcileEveUsage(ownerId: string, sessionId: string) {
     }
     const priced = await ingestEveUsage(ownerId, sessionId, event);
     if (
-      (event.type === "step.completed" || event.type === "action.result") &&
+      (event.type === "step.completed" ||
+        event.type === "compaction.usage" ||
+        event.type === "action.result") &&
       priced === false
     ) {
       unresolved = true;

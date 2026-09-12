@@ -16,6 +16,7 @@ const namedCheckpointLookupPath =
   /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/i;
 
 const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/;
+const compactionPath = /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/compact$/;
 
 export async function authenticateEveGateway(request: Request) {
   if (env.EVE_ENABLED !== "true" || !env.EVE_GATEWAY_SECRET) {
@@ -65,6 +66,10 @@ export async function authenticateEveGateway(request: Request) {
 }
 
 function gatewaySessionPolicy(path: string, method: string) {
+  const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
+  if (compactionSession) {
+    return { sessionId: compactionSession };
+  }
   const ordinaryCheckpoint =
     (method === "GET" || method === "POST") &&
     checkpointLookupPath.exec(path)?.[1];

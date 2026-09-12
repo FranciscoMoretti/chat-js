@@ -118,6 +118,27 @@ it("checkpoint readiness and capture require the source owner", async () => {
   });
 });
 
+it("internal compaction requires a gateway credential and the bound owner", async () => {
+  const compact = request("/eve/v1/session/source/compact", "POST");
+  compact.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(compact)).toBeNull();
+  mocks.owns.mockResolvedValue(true);
+  expect(await authenticateEveGateway(compact)).toMatchObject({
+    principalId: "owner",
+  });
+  expect(mocks.owns).toHaveBeenCalledWith("owner", "source");
+  compact.headers.set("authorization", "Bearer wrong");
+  expect(await authenticateEveGateway(compact)).toBeNull();
+  expect(
+    await authenticateEveGateway(
+      request("/eve/v1/session/source/compact", "POST")
+    )
+  ).toBeNull();
+  const read = request("/eve/v1/session/source/compact", "GET");
+  read.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(read)).toBeNull();
+});
+
 it("ordinary owner access cannot read internal sandbox birth evidence", async () => {
   const read = request("/eve/v1/session/session/sandbox-identity", "GET");
   read.headers.delete("x-chatjs-deletion");

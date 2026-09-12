@@ -27,6 +27,50 @@ index 3672522..d2600f6 100644
 +The new session retains its own authentication, instructions, limits, and execution identity. eve derives model and display history from the same durable imported prefix. Completed tool results remain historical content; tools are not replayed. Imported attachments are resolved through the destination channel on the first turn. A later source sandbox is not inherited. Application-owned documents must be restored separately to the selected boundary. Imported messages retained in the prefix remain addressable in descendant forks.
 +
 +Imported assistant seed messages may include an optional `modelId` (1–512 characters), using the same provider/model reference as `step.started`. It is preserved in display metadata across imported forks. This informational value does not select a model or change executable history; the application chooses the model for a new turn. User seed messages and arbitrary metadata remain rejected.
+diff --git a/docs/guides/client/streaming.mdx b/docs/guides/client/streaming.mdx
+index 95d2cbf..712af93 100644
+--- a/docs/guides/client/streaming.mdx
++++ b/docs/guides/client/streaming.mdx
+@@ -24,7 +24,7 @@ The cancellation result is discriminated by `status`: only `accepted` includes
+
+ Cancellation does not replace stream consumption. Continue reading the response to observe its terminal `turn.cancelled` and `session.waiting` boundary and to advance the client session cursor normally. Use `session.cancel({ turnId })` instead when you have only a fixed session handle and an observed turn ID.
+
+-Between turns, `session.compact()` queues context compaction without sending model input. An accepted request reports the session id; consume the durable stream through the following `session.waiting` boundary before sending the next turn. `compaction.completed` confirms that summarization succeeded; without it, eve preserves the previous history, including when the model returns an empty summary. A never-started session returns `no_active_session` as a successful no-op.
++Between turns, `session.compact()` queues context compaction without sending model input. An accepted request reports the session id; consume the durable stream through the following `session.waiting` boundary before sending the next turn. `compaction.completed` confirms that summarization succeeded; without it, eve preserves the previous history, including when the model returns an empty summary. A never-started session returns `no_active_session` as a successful no-op. Each returned compaction model call also emits `compaction.usage` with available token/cost usage and the gateway generation reference, before the summary is validated. Multiple attempts produce separate usage events, including attempts whose summaries are rejected. Subscribe through the durable stream or authored hooks; missing cost remains unknown rather than zero.
+
+ ```ts
+ const compaction = await session.compact();
+diff --git a/e2e/fixtures/agent-cancellation/evals/cancellation/compact-channel-session.eval.ts b/e2e/fixtures/agent-cancellation/evals/cancellation/compact-channel-session.eval.ts
+index 06a18bf..9ed6ade 100644
+--- a/e2e/fixtures/agent-cancellation/evals/cancellation/compact-channel-session.eval.ts
++++ b/e2e/fixtures/agent-cancellation/evals/cancellation/compact-channel-session.eval.ts
+@@ -1,5 +1,5 @@
+ import { defineEval, type EveEvalTargetHandle } from "eve/evals";
+-import { satisfies } from "eve/evals/expect";
++import { equals, satisfies } from "eve/evals/expect";
+
+ interface MessageResponse {
+   readonly ok: boolean;
+@@ -86,8 +86,19 @@ export default defineEval({
+     const compacted = await liveCompaction.result();
+     compacted.event("compaction.requested", { count: 1 });
+     compacted.event("compaction.completed", { count: 1 });
++    compacted.event("compaction.usage", { count: 1 });
++    const replay = await t.target
++      .watchTurn(sessionId, {
++        startIndex: initial.events.length,
++      })
++      .result();
++    await t.require(
++      replay.events.filter((event) => event.type === "compaction.usage"),
++      equals(compacted.events.filter((event) => event.type === "compaction.usage")),
++    );
+     compacted.eventOrder([
+       { type: "compaction.requested" },
++      { type: "compaction.usage" },
+       { type: "compaction.completed" },
+       { type: "session.waiting" },
+     ]);
 diff --git a/packages/eve/package.json b/packages/eve/package.json
 index e2dc5f7..6868f70 100644
 --- a/packages/eve/package.json
@@ -121,6 +165,18 @@ index cca4a3e..bb79932 100644
    readonly adapter: ChannelAdapter<any>;
    /** Framework task that owns this run, when the run is a task executor. */
    readonly taskId?: string;
+diff --git a/packages/eve/src/client/index.ts b/packages/eve/src/client/index.ts
+index 894fc63..89c719b 100644
+--- a/packages/eve/src/client/index.ts
++++ b/packages/eve/src/client/index.ts
+@@ -100,6 +100,7 @@ export type {
+   AssistantStepFinishReason,
+   AuthorizationOutcome,
+   CompactionCompletedStreamEvent,
++  CompactionUsageStreamEvent,
+   CompactionRequestedStreamEvent,
+   AuthorizationCompletedStreamEvent,
+   ConnectionAuthorizationOutcome,
 diff --git a/packages/eve/src/client/message-reducer-types.ts b/packages/eve/src/client/message-reducer-types.ts
 index b742698..25a722e 100644
 --- a/packages/eve/src/client/message-reducer-types.ts
@@ -6078,6 +6134,193 @@ index b41db69..8b70b88 100644
        return part;
      }
      return stageResolvedBytes(part, resolved, sandbox);
+diff --git a/packages/eve/src/harness/compaction.test.ts b/packages/eve/src/harness/compaction.test.ts
+index 995ccbd..5f60011 100644
+--- a/packages/eve/src/harness/compaction.test.ts
++++ b/packages/eve/src/harness/compaction.test.ts
+@@ -826,3 +826,57 @@ describe("compactMessages: summarization fallback", () => {
+     );
+   });
+ });
++
++describe("compaction usage evidence", () => {
++  it("records returned provider usage before rejecting an empty summary", async () => {
++    const { generateText } = await import("ai");
++    vi.mocked(generateText).mockResolvedValue({
++      text: "",
++      finishReason: "content-filter",
++      usage: { inputTokens: 20, outputTokens: 0 },
++      providerMetadata: { gateway: { cost: "0.002", generationId: "summary-1" } },
++    } as Awaited<ReturnType<typeof generateText>>);
++    const onUsage = vi.fn().mockResolvedValue(undefined);
++    await expect(
++      compactMessages(
++        [user("retain this"), assistant("retained answer")],
++        {} as Parameters<typeof compactMessages>[1],
++        { recentWindowSize: 1, threshold: ROOMY },
++        undefined,
++        undefined,
++        undefined,
++        undefined,
++        true,
++        onUsage,
++      ),
++    ).rejects.toThrow("empty summary");
++    expect(onUsage).toHaveBeenCalledExactlyOnceWith({
++      usage: { costUsd: 0.002, inputTokens: 20, outputTokens: 0 },
++      providerMetadata: { gateway: { generationId: "summary-1" } },
++    });
++  });
++
++  it("records each paid attempt when shrinking the retained window", async () => {
++    const { generateText } = await import("ai");
++    vi.mocked(generateText).mockResolvedValue({
++      text: "summary ".repeat(1000),
++      usage: { inputTokens: 20, outputTokens: 10 },
++      providerMetadata: { gateway: { cost: 0.001 } },
++    } as Awaited<ReturnType<typeof generateText>>);
++    const onUsage = vi.fn().mockResolvedValue(undefined);
++    await compactMessages(
++      [user("old"), assistant("old answer"), user("new"), assistant("new answer")],
++      {} as Parameters<typeof compactMessages>[1],
++      { recentWindowSize: 1, threshold: 100 },
++      undefined,
++      undefined,
++      undefined,
++      undefined,
++      true,
++      onUsage,
++    );
++    expect(vi.mocked(generateText).mock.calls.length).toBeGreaterThan(1);
++    expect(onUsage).toHaveBeenCalledTimes(vi.mocked(generateText).mock.calls.length);
++    expect(onUsage.mock.calls.every(([evidence]) => evidence.usage.costUsd === 0.001)).toBe(true);
++  });
++});
+diff --git a/packages/eve/src/harness/compaction.ts b/packages/eve/src/harness/compaction.ts
+index 29fa9bc..6188001 100644
+--- a/packages/eve/src/harness/compaction.ts
++++ b/packages/eve/src/harness/compaction.ts
+@@ -1,3 +1,4 @@
++import { modelUsageEvidence } from "#harness/model-usage.js";
+ import { generateText, type LanguageModel, type ModelMessage, type TelemetryOptions } from "ai";
+
+ import {
+@@ -186,6 +187,7 @@ export async function compactMessages(
+   headers?: Record<string, string>,
+   abortSignal?: AbortSignal,
+   forceSummary = false,
++  onUsage?: (evidence: ReturnType<typeof modelUsageEvidence>) => Promise<void>,
+ ): Promise<ModelMessage[]> {
+   const { conversation, previousCheckpoint } = extractPreviousCheckpoint(messages);
+   const recentConfig = forceSummary ? { ...config, recentWindowSize: 1 } : config;
+@@ -225,6 +227,9 @@ export async function compactMessages(
+       temperature: 0,
+     });
+
++    // A paid attempt remains billable even when its summary is unusable.
++    await onUsage?.(modelUsageEvidence(result));
++
+     if (result.text.trim().length === 0) {
+       throw new Error(
+         `The compaction model returned an empty summary. Finish reason: ${result.finishReason}.`,
+diff --git a/packages/eve/src/harness/model-usage.ts b/packages/eve/src/harness/model-usage.ts
+new file mode 100644
+index 0000000..12c3480
+--- /dev/null
++++ b/packages/eve/src/harness/model-usage.ts
+@@ -0,0 +1,92 @@
++import type { LanguageModelUsage, ProviderMetadata } from "ai";
++import type { StepCompletedProviderMetadata } from "#protocol/message.js";
++
++export function modelUsageEvidence(input: {
++  readonly usage?: LanguageModelUsage;
++  readonly providerMetadata?: ProviderMetadata;
++}) {
++  return {
++    providerMetadata: extractStepProviderMetadata(input.providerMetadata),
++    usage: extractStepUsage({
++      costUsd: extractGatewayCostUsd(input.providerMetadata),
++      usage: input.usage,
++    }),
++  };
++}
++
++/**
++ * Projects the AI SDK's `LanguageModelUsage` into the flat `step.completed`
++ * event usage shape. Returns `undefined` when the SDK reports no usage.
++ */
++function extractStepUsage(input: {
++  readonly costUsd: number | undefined;
++  readonly usage: LanguageModelUsage | undefined;
++}):
++  | {
++      costUsd?: number;
++      inputTokens?: number;
++      outputTokens?: number;
++      cacheReadTokens?: number;
++      cacheWriteTokens?: number;
++    }
++  | undefined {
++  const result: {
++    costUsd?: number;
++    inputTokens?: number;
++    outputTokens?: number;
++    cacheReadTokens?: number;
++    cacheWriteTokens?: number;
++  } = {};
++
++  if (input.costUsd !== undefined) result.costUsd = input.costUsd;
++
++  const usage = input.usage;
++  if (usage === undefined) {
++    return Object.keys(result).length > 0 ? result : undefined;
++  }
++
++  if (usage.inputTokens !== undefined) result.inputTokens = usage.inputTokens;
++  if (usage.outputTokens !== undefined) result.outputTokens = usage.outputTokens;
++  if (usage.inputTokenDetails?.cacheReadTokens !== undefined) {
++    result.cacheReadTokens = usage.inputTokenDetails.cacheReadTokens;
++  }
++  if (usage.inputTokenDetails?.cacheWriteTokens !== undefined) {
++    result.cacheWriteTokens = usage.inputTokenDetails.cacheWriteTokens;
++  }
++
++  return Object.keys(result).length > 0 ? result : undefined;
++}
++
++function extractStepProviderMetadata(
++  providerMetadata: ProviderMetadata | undefined,
++): StepCompletedProviderMetadata | undefined {
++  const generationId = readGatewayGenerationId(providerMetadata);
++  return generationId === undefined ? undefined : { gateway: { generationId } };
++}
++
++function extractGatewayCostUsd(providerMetadata: ProviderMetadata | undefined): number | undefined {
++  const gateway = readGatewayMetadata(providerMetadata);
++  const cost = gateway?.cost;
++  if (typeof cost === "number" && Number.isFinite(cost)) {
++    return cost;
++  }
++  if (typeof cost === "string") {
++    const parsed = Number(cost);
++    return Number.isFinite(parsed) ? parsed : undefined;
++  }
++  return undefined;
++}
++
++function readGatewayGenerationId(
++  providerMetadata: ProviderMetadata | undefined,
++): string | undefined {
++  const generationId = readGatewayMetadata(providerMetadata)?.generationId;
++  return typeof generationId === "string" && generationId.length > 0 ? generationId : undefined;
++}
++
++function readGatewayMetadata(
++  providerMetadata: ProviderMetadata | undefined,
++): ProviderMetadata[string] | undefined {
++  const gateway = providerMetadata?.gateway;
++  return gateway && typeof gateway === "object" && !Array.isArray(gateway) ? gateway : undefined;
++}
 diff --git a/packages/eve/src/harness/seed-attachments.integration.test.ts b/packages/eve/src/harness/seed-attachments.integration.test.ts
 new file mode 100644
 index 0000000..c1f92d6
@@ -6320,8 +6563,191 @@ index 0000000..546ce7f
 +  delete state[PENDING_SEED_FILES];
 +  return { ...session, history, state };
 +}
+diff --git a/packages/eve/src/harness/step-hooks.ts b/packages/eve/src/harness/step-hooks.ts
+index e1af89d..70566cb 100644
+--- a/packages/eve/src/harness/step-hooks.ts
++++ b/packages/eve/src/harness/step-hooks.ts
+@@ -1,9 +1,8 @@
++import { modelUsageEvidence } from "#harness/model-usage.js";
+ import type {
+   ContentPart,
+-  LanguageModelUsage,
+   ModelMessage,
+   PrepareStepFunction,
+-  ProviderMetadata,
+   StepResult,
+   ToolSet,
+   ToolResultPart,
+@@ -14,7 +13,6 @@ import {
+   createActionResultEvent,
+   createActionsRequestedEvent,
+   createStepCompletedEvent,
+-  type StepCompletedProviderMetadata,
+ } from "#protocol/message.js";
+ import {
+   createRuntimeToolResultFromToolError,
+@@ -323,14 +321,10 @@ export async function emitStepActions(
+   await emitFn(
+     createStepCompletedEvent({
+       finishReason: normalizeAssistantStepFinishReason(step.finishReason),
+-      providerMetadata: extractStepProviderMetadata(step.providerMetadata),
+       sequence: state.sequence,
+       stepIndex: state.stepIndex,
+       turnId: state.turnId,
+-      usage: extractStepUsage({
+-        costUsd: extractGatewayCostUsd(step.providerMetadata),
+-        usage: step.usage,
+-      }),
++      ...modelUsageEvidence(step),
+     }),
+   );
+ }
+@@ -410,80 +404,3 @@ function extractToolResultParts(messages: readonly ModelMessage[]): ToolResultPa
+
+   return parts;
+ }
+-
+-/**
+- * Projects the AI SDK's `LanguageModelUsage` into the flat `step.completed`
+- * event usage shape. Returns `undefined` when the SDK reports no usage.
+- */
+-function extractStepUsage(input: {
+-  readonly costUsd: number | undefined;
+-  readonly usage: LanguageModelUsage | undefined;
+-}):
+-  | {
+-      costUsd?: number;
+-      inputTokens?: number;
+-      outputTokens?: number;
+-      cacheReadTokens?: number;
+-      cacheWriteTokens?: number;
+-    }
+-  | undefined {
+-  const result: {
+-    costUsd?: number;
+-    inputTokens?: number;
+-    outputTokens?: number;
+-    cacheReadTokens?: number;
+-    cacheWriteTokens?: number;
+-  } = {};
+-
+-  if (input.costUsd !== undefined) result.costUsd = input.costUsd;
+-
+-  const usage = input.usage;
+-  if (usage === undefined) {
+-    return Object.keys(result).length > 0 ? result : undefined;
+-  }
+-
+-  if (usage.inputTokens !== undefined) result.inputTokens = usage.inputTokens;
+-  if (usage.outputTokens !== undefined) result.outputTokens = usage.outputTokens;
+-  if (usage.inputTokenDetails?.cacheReadTokens !== undefined) {
+-    result.cacheReadTokens = usage.inputTokenDetails.cacheReadTokens;
+-  }
+-  if (usage.inputTokenDetails?.cacheWriteTokens !== undefined) {
+-    result.cacheWriteTokens = usage.inputTokenDetails.cacheWriteTokens;
+-  }
+-
+-  return Object.keys(result).length > 0 ? result : undefined;
+-}
+-
+-function extractStepProviderMetadata(
+-  providerMetadata: ProviderMetadata | undefined,
+-): StepCompletedProviderMetadata | undefined {
+-  const generationId = readGatewayGenerationId(providerMetadata);
+-  return generationId === undefined ? undefined : { gateway: { generationId } };
+-}
+-
+-function extractGatewayCostUsd(providerMetadata: ProviderMetadata | undefined): number | undefined {
+-  const gateway = readGatewayMetadata(providerMetadata);
+-  const cost = gateway?.cost;
+-  if (typeof cost === "number" && Number.isFinite(cost)) {
+-    return cost;
+-  }
+-  if (typeof cost === "string") {
+-    const parsed = Number(cost);
+-    return Number.isFinite(parsed) ? parsed : undefined;
+-  }
+-  return undefined;
+-}
+-
+-function readGatewayGenerationId(
+-  providerMetadata: ProviderMetadata | undefined,
+-): string | undefined {
+-  const generationId = readGatewayMetadata(providerMetadata)?.generationId;
+-  return typeof generationId === "string" && generationId.length > 0 ? generationId : undefined;
+-}
+-
+-function readGatewayMetadata(
+-  providerMetadata: ProviderMetadata | undefined,
+-): ProviderMetadata[string] | undefined {
+-  const gateway = providerMetadata?.gateway;
+-  return gateway && typeof gateway === "object" && !Array.isArray(gateway) ? gateway : undefined;
+-}
+diff --git a/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts b/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
+index 10b9a44..f611cef 100644
+--- a/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
++++ b/packages/eve/src/harness/tool-loop-compaction-accounting.test.ts
+@@ -1,6 +1,8 @@
+ import { generateText, jsonSchema, type LanguageModel, ToolLoopAgent } from "ai";
+ import { afterEach, describe, expect, it, vi } from "vitest";
+
++import { LiveStepDynamicModelSelectionKey } from "#context/keys.js";
++import { ContextContainer, contextStorage } from "#context/container.js";
+ import { appendPendingInputBatch } from "#harness/input-requests.js";
+ import { createToolLoopHarness } from "#harness/tool-loop.js";
+ import type { HarnessSession, StepFn, StepNext, ToolLoopHarnessConfig } from "#harness/types.js";
+@@ -431,3 +433,49 @@ describe("tool-loop structured compaction accounting", () => {
+     ).toEqual(largeOutput);
+   });
+ });
++
++it.each(["summary", ""])(
++  "emits compaction usage before checkpoint validation (%j)",
++  async (text) => {
++    vi.mocked(generateText).mockResolvedValue({
++      text,
++      finishReason: "stop",
++      usage: { inputTokens: 30, outputTokens: 5 },
++      providerMetadata: { gateway: { cost: 0.004, generationId: "compact-generation" } },
++    } as Awaited<ReturnType<typeof generateText>>);
++    const handleEvent = vi.fn().mockResolvedValue(undefined);
++    const runStep = createToolLoopHarness(
++      createTestConfig({
++        compactOnly: true,
++        dispatchDynamicModelEvent: async ({ ctx }) => {
++          ctx.setVirtualContext(LiveStepDynamicModelSelectionKey, {
++            reference: { id: "test-model" },
++          });
++        },
++        handleEvent,
++        resolveModel: vi
++          .fn()
++          .mockResolvedValue({ provider: "gateway", modelId: "test-model" } as LanguageModel),
++      }),
++    );
++    const session = createTestSession({ history: [{ role: "user", content: "retain me" }] });
++    session.agent = { ...session.agent, dynamicModel: true, modelReference: undefined };
++    await contextStorage.run(new ContextContainer(), () => runStep(session));
++    const events = handleEvent.mock.calls.map(([event]) => event);
++    expect(events.map((event) => event.type)).toEqual([
++      "compaction.requested",
++      "compaction.usage",
++      ...(text ? ["compaction.completed"] : []),
++      "session.waiting",
++    ]);
++    expect(events[1]).toMatchObject({
++      type: "compaction.usage",
++      data: {
++        sessionId: "test-session",
++        turnId: "turn_0",
++        usage: { costUsd: 0.004, inputTokens: 30, outputTokens: 5 },
++        providerMetadata: { gateway: { generationId: "compact-generation" } },
++      },
++    });
++  },
++);
 diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
-index d30fdf5..b9b4fff 100644
+index d30fdf5..045c6d0 100644
 --- a/packages/eve/src/harness/tool-loop.ts
 +++ b/packages/eve/src/harness/tool-loop.ts
 @@ -1,3 +1,4 @@
@@ -6329,15 +6755,41 @@ index d30fdf5..b9b4fff 100644
  import {
    isStepCount,
    type LanguageModelCallEndEvent,
-@@ -571,6 +572,7 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+@@ -53,6 +54,7 @@ import {
+   createApprovalCandidateEvent,
+   createApprovalSettledEvent,
+   createCompactionCompletedEvent,
++  createCompactionUsageEvent,
+   createCompactionRequestedEvent,
+   createContextClearedEvent,
+   createInputResolvedEvent,
+@@ -571,7 +573,25 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
      if (config.compactOnly === true) {
        if (session.history.length > 0) {
          try {
 +          session = await stagePendingSeedAttachments(session);
            const ctx = contextStorage.getStore();
++          // Resolve live provider objects again after hydration, just as for
++          // ordinary model work. This is resolver dispatch only: compaction
++          // does not emit a synthetic step or turn to the durable stream.
++          if (ctx !== undefined && config.dispatchDynamicModelEvent !== undefined) {
++            await config.dispatchDynamicModelEvent({
++              ctx,
++              event: {
++                data: {
++                  sequence: emissionState.sequence,
++                  stepIndex: emissionState.stepIndex,
++                  turnId: activeTurnId(emissionState),
++                },
++                type: "step.started",
++              } as UnstampedMessageStreamEvent,
++              messages: projectHistory(session.history, session.state),
++            });
++          }
            const resolvedModel = await resolveActiveRuntimeModel({ config, ctx, session });
            session = resolvedModel.session;
-@@ -1080,6 +1082,30 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+
+@@ -1080,6 +1100,30 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
 
      messages = [...messages, ...preparedTurnInput];
 
@@ -6368,6 +6820,24 @@ index d30fdf5..b9b4fff 100644
      const createModelMessages = (durableMessages: readonly ModelMessage[]): ModelMessage[] => {
        if (turnClientContext === undefined || turnClientContext.messages.length === 0) {
          return [...durableMessages];
+@@ -3183,6 +3227,17 @@ async function maybeCompact(input: {
+         buildGatewayAttributionHeaders(compaction.model, input.runtimeIdentity),
+         input.abortSignal,
+         input.force === true,
++        async (evidence) => {
++          await emit?.(
++            createCompactionUsageEvent({
++              ...evidence,
++              modelId: formatLanguageModelGatewayId(compaction.model),
++              sequence: emissionState.sequence,
++              sessionId: session.sessionId,
++              turnId: emissionState.turnId,
++            }),
++          );
++        },
+       )
+     : [...ordinary];
+   messages = [...canonical.memory, ...compactedOrdinary];
 diff --git a/packages/eve/src/harness/types.ts b/packages/eve/src/harness/types.ts
 index e4fde11..879af35 100644
 --- a/packages/eve/src/harness/types.ts
@@ -6499,7 +6969,7 @@ index 99ab68d..ecb82b0 100644
 
    it.each(["21", "22", "23", "24"] as const)(
 diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
-index fc45f34..d891609 100644
+index fc45f34..86fe0ce 100644
 --- a/packages/eve/src/protocol/message.ts
 +++ b/packages/eve/src/protocol/message.ts
 @@ -1,3 +1,4 @@
@@ -6516,7 +6986,25 @@ index fc45f34..d891609 100644
 
  /**
   * eve-owned finish reason for one completed assistant step.
-@@ -699,6 +700,8 @@ export interface SessionWaitingStreamEvent {
+@@ -617,6 +618,17 @@ export interface CompactionRequestedStreamEvent {
+   type: "compaction.requested";
+ }
+
++/** Usage returned by one compaction model call, including rejected summary attempts. */
++export interface CompactionUsageStreamEvent {
++  data: Pick<StepCompletedStreamEvent["data"], "usage" | "providerMetadata"> & {
++    modelId: string;
++    sequence: number;
++    sessionId: string;
++    turnId: string;
++  };
++  type: "compaction.usage";
++}
++
+ /**
+  * Stream event emitted after one compaction checkpoint message has been
+  * appended to the durable session history.
+@@ -699,6 +711,8 @@ export interface SessionWaitingStreamEvent {
    data: {
      /** Channel-local continuation token, or the immutable session ID for an ID-only session. */
      continuationToken: string;
@@ -6525,7 +7013,7 @@ index fc45f34..d891609 100644
      wait: "next-user-message";
    };
    type: "session.waiting";
-@@ -724,6 +727,44 @@ export interface SessionCompletedStreamEvent {
+@@ -724,6 +738,44 @@ export interface SessionCompletedStreamEvent {
    type: "session.completed";
  }
 
@@ -6570,7 +7058,7 @@ index fc45f34..d891609 100644
  /**
   * Serializable event before eve stamps the durable stream envelope.
   *
-@@ -731,6 +772,8 @@ export interface SessionCompletedStreamEvent {
+@@ -731,11 +783,14 @@ export interface SessionCompletedStreamEvent {
   * consumers receive {@link MessageStreamEvent}.
   */
  export type UnstampedMessageStreamEvent =
@@ -6579,6 +7067,23 @@ index fc45f34..d891609 100644
    | ActionInputAppendedStreamEvent
    | ApprovalCandidateStreamEvent
    | ApprovalSettledStreamEvent
+   | ContextClearedStreamEvent
+   | CompactionCompletedStreamEvent
++  | CompactionUsageStreamEvent
+   | CompactionRequestedStreamEvent
+   | AuthorizationCompletedStreamEvent
+   | AuthorizationRequiredStreamEvent
+@@ -1804,3 +1859,10 @@ function formatActionResultOutput(output: unknown): string {
+
+   return "Action failed.";
+ }
++
++/** Creates durable usage evidence for one completed compaction model call. */
++export function createCompactionUsageEvent(
++  data: CompactionUsageStreamEvent["data"],
++): CompactionUsageStreamEvent {
++  return { type: "compaction.usage", data };
++}
 diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
 index 35cfa0f..e49210f 100644
 --- a/packages/eve/src/public/channels/eve.test.ts
@@ -6795,10 +7300,18 @@ index 35cfa0f..e49210f 100644
 +  expect(resolveSession).not.toHaveBeenCalled();
 +});
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
-index 48e2bc3..27e414e 100644
+index 48e2bc3..54caad2 100644
 --- a/packages/eve/src/public/definitions/hook.ts
 +++ b/packages/eve/src/public/definitions/hook.ts
-@@ -30,6 +30,7 @@ export interface HookEventMap {
+@@ -23,6 +23,7 @@ export interface HookEventMap {
+   readonly "actions.requested": ProtocolEvent<"actions.requested">;
+   readonly "authorization.completed": ProtocolEvent<"authorization.completed">;
+   readonly "authorization.required": ProtocolEvent<"authorization.required">;
++  readonly "compaction.usage": ProtocolEvent<"compaction.usage">;
+   readonly "compaction.completed": ProtocolEvent<"compaction.completed">;
+   readonly "compaction.requested": ProtocolEvent<"compaction.requested">;
+   readonly "context.cleared": ProtocolEvent<"context.cleared">;
+@@ -30,6 +31,7 @@ export interface HookEventMap {
    readonly "input.resolved": ProtocolEvent<"input.resolved">;
    readonly "message.appended": ProtocolEvent<"message.appended">;
    readonly "message.completed": ProtocolEvent<"message.completed">;
@@ -6877,6 +7390,27 @@ index 4c9110e..7aec9d0 100644
    /**
     * Runtime tags the backend should attach to sandbox resources when
     * the underlying provider supports tags.
+diff --git a/research/compaction-usage.md b/research/compaction-usage.md
+new file mode 100644
+index 0000000..c09bc4f
+--- /dev/null
++++ b/research/compaction-usage.md
+@@ -0,0 +1,15 @@
++---
++issue: null
++status: local-draft
++last_updated: 2026-09-12
++---
++
++# Compaction usage evidence
++
++Compaction may invoke its summary model repeatedly, and a returned summary may be rejected as empty. The current completion event describes a committed checkpoint and cannot account for those separate calls.
++
++Emit `compaction.usage` after each returned model call and before validating its summary. Include the compaction model reference, session/turn coordinates, available token/cost usage, and the gateway generation reference. Expose the event through authored hooks and the durable client stream. Reuse the ordinary model-step usage projection. Keep `compaction.completed` reserved for successfully appended checkpoints.
++
++A missing provider cost remains unknown; it must not be inferred as zero. A transport failure that returns no provider result still needs separate provider reconciliation. This change does not reconstruct usage for historical compactions that emitted no evidence.
++
++Local tests cover empty summaries, repeated paid attempts, manual compaction event ordering, and application ledger replay/rounding. No issue or proposal has been published.
 diff --git a/research/imported-message-forks.md b/research/imported-message-forks.md
 new file mode 100644
 index 0000000..7c14750
