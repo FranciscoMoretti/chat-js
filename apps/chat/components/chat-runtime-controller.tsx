@@ -49,8 +49,8 @@ const ChatConfirmationEffects = ({ chatId }: { chatId: string }) => {
           }),
         }),
         queryClient.invalidateQueries({
-          queryKey: trpc.chat.getAllChats.queryKey(),
           exact: false,
+          queryKey: trpc.chat.getAllChats.queryKey(),
         }),
       ]);
     };

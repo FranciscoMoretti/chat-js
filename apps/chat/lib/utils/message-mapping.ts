@@ -416,8 +416,8 @@ const mapDBPartToUIPart = (part: Part): ChatMessage["parts"][number] | null => {
 
     case "file": {
       return {
-        type: "file" as const,
         mediaType: part.file_mediaType ?? "",
+        type: "file" as const,
         ...(part.file_filename ? { filename: part.file_filename } : {}),
         url: part.file_url ?? "",
       };

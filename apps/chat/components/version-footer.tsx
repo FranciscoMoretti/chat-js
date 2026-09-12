@@ -40,7 +40,7 @@ export const VersionFooter = ({
       className="bg-background flex w-full flex-col justify-between gap-4 border-t p-4 lg:flex-row"
       exit={{ y: isMobile ? 200 : 77 }}
       initial={{ y: isMobile ? 200 : 77 }}
-      transition={{ type: "spring", stiffness: 140, damping: 20 }}
+      transition={{ damping: 20, stiffness: 140, type: "spring" }}
     >
       <div>
         <div>You are viewing a previous version</div>

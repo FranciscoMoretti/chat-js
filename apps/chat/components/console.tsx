@@ -83,11 +83,11 @@ export const Console = ({
             >
               <div
                 className={cn("w-12 shrink-0", {
+                  "text-emerald-500": consoleOutput.status === "completed",
                   "text-muted-foreground": [
                     "in_progress",
                     "loading_packages",
                   ].includes(consoleOutput.status),
-                  "text-emerald-500": consoleOutput.status === "completed",
                   "text-red-400": consoleOutput.status === "failed",
                 })}
               >

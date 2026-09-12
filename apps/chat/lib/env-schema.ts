@@ -21,6 +21,37 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
  */
 export const serverEnvSchema = {
   ...databaseEnvOptions,
+  // AI Gateway keys (one required depending on config.ai.gateway)
+  AI_GATEWAY_API_KEY: z
+    .string()
+    .optional()
+    .describe("Vercel AI Gateway API key"),
+  AUTH_GITHUB_ID: z.string().optional().describe("GitHub OAuth app client ID"),
+  AUTH_GITHUB_SECRET: z
+    .string()
+    .optional()
+    .describe("GitHub OAuth app client secret"),
+  // Authentication providers (enable in chat.config.ts)
+  AUTH_GOOGLE_ID: z.string().optional().describe("Google OAuth client ID"),
+  AUTH_GOOGLE_SECRET: z
+    .string()
+    .optional()
+    .describe("Google OAuth client secret"),
+  AUTH_SECRET: z
+    .preprocess(
+      (value) =>
+        isPlaywrightTestEnvironmentEnabled &&
+        (value === null || value === undefined || value === "")
+          ? "playwright-test-auth-secret"
+          : value,
+      z.string().min(1)
+    )
+    .describe("NextAuth.js secret for signing session tokens"),
+  // Optional cleanup cron job secret
+  CRON_SECRET: z
+    .string()
+    .optional()
+    .describe("Secret for cleanup cron job endpoint"),
   // Required core
   DATABASE_URL: z
     .preprocess(
@@ -32,28 +63,26 @@ export const serverEnvSchema = {
       z.string().min(1)
     )
     .describe("Postgres connection string"),
-  AUTH_SECRET: z
-    .preprocess(
-      (value) =>
-        isPlaywrightTestEnvironmentEnabled &&
-        (value === null || value === undefined || value === "")
-          ? "playwright-test-auth-secret"
-          : value,
-      z.string().min(1)
-    )
-    .describe("NextAuth.js secret for signing session tokens"),
-
-  // Authentication providers (enable in chat.config.ts)
-  AUTH_GOOGLE_ID: z.string().optional().describe("Google OAuth client ID"),
-  AUTH_GOOGLE_SECRET: z
+  LITELLM_API_KEY: z
     .string()
     .optional()
-    .describe("Google OAuth client secret"),
-  AUTH_GITHUB_ID: z.string().optional().describe("GitHub OAuth app client ID"),
-  AUTH_GITHUB_SECRET: z
+    .describe("LiteLLM proxy API key (master or virtual key)"),
+  LITELLM_BASE_URL: z
+    .string()
+    .url()
+    .optional()
+    .describe("LiteLLM proxy base URL"),
+  OPENAI_API_KEY: z.string().optional().describe("OpenAI API key"),
+  OPENAI_COMPATIBLE_API_KEY: z
     .string()
     .optional()
-    .describe("GitHub OAuth app client secret"),
+    .describe("API key for OpenAI-compatible provider"),
+  OPENAI_COMPATIBLE_BASE_URL: z
+    .string()
+    .url()
+    .optional()
+    .describe("Base URL for OpenAI-compatible provider"),
+  OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
   VERCEL_APP_CLIENT_ID: z
     .string()
     .optional()
@@ -62,49 +91,19 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel OAuth integration client secret"),
-
-  // AI Gateway keys (one required depending on config.ai.gateway)
-  AI_GATEWAY_API_KEY: z
-    .string()
-    .optional()
-    .describe("Vercel AI Gateway API key"),
   VERCEL_OIDC_TOKEN: z
     .string()
     .optional()
     .describe("Vercel OIDC token (auto-set on Vercel deployments)"),
-  OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
-  OPENAI_COMPATIBLE_BASE_URL: z
-    .string()
-    .url()
-    .optional()
-    .describe("Base URL for OpenAI-compatible provider"),
-  OPENAI_COMPATIBLE_API_KEY: z
-    .string()
-    .optional()
-    .describe("API key for OpenAI-compatible provider"),
-  OPENAI_API_KEY: z.string().optional().describe("OpenAI API key"),
-  LITELLM_BASE_URL: z
-    .string()
-    .url()
-    .optional()
-    .describe("LiteLLM proxy base URL"),
-  LITELLM_API_KEY: z
-    .string()
-    .optional()
-    .describe("LiteLLM proxy API key (master or virtual key)"),
-
-  // Optional cleanup cron job secret
-  CRON_SECRET: z
-    .string()
-    .optional()
-    .describe("Secret for cleanup cron job endpoint"),
-
   // Optional features (enable in chat.config.ts)
   ...redisEnvOptions,
-  TAVILY_API_KEY: z
-    .string()
+  // App URL (for non-Vercel deployments) - full URL including https://
+  APP_URL: z
+    .url()
     .optional()
-    .describe("Tavily API key for web search"),
+    .describe(
+      "App URL for non-Vercel deployments (full URL including https://)"
+    ),
   EXA_API_KEY: z.string().optional().describe("Exa API key for web search"),
   FIRECRAWL_API_KEY: z
     .string()
@@ -114,44 +113,38 @@ export const serverEnvSchema = {
     .union([z.string().length(44), z.literal("")])
     .optional()
     .describe("Encryption key for MCP server credentials (base64, 44 chars)"),
-
-  // Sandbox (for non-Vercel deployments)
-  VERCEL_TEAM_ID: z
+  TAVILY_API_KEY: z
     .string()
     .optional()
-    .describe("Vercel team ID for sandbox (non-Vercel deployments)"),
+    .describe("Tavily API key for web search"),
   VERCEL_PROJECT_ID: z
     .string()
     .optional()
     .describe("Vercel project ID for sandbox (non-Vercel deployments)"),
-  VERCEL_TOKEN: z
-    .string()
-    .optional()
-    .describe("Vercel API token for sandbox (non-Vercel deployments)"),
   VERCEL_SANDBOX_RUNTIME: z
     .string()
     .min(1)
     .optional()
     .describe("Legacy default Vercel sandbox runtime identifier for Python"),
-  VERCEL_SANDBOX_RUNTIME_PYTHON: z
-    .string()
-    .min(1)
-    .optional()
-    .describe("Vercel sandbox runtime identifier for Python execution"),
   VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: z
     .string()
     .min(1)
     .optional()
     .describe("Vercel sandbox runtime identifier for JavaScript execution"),
-
-  // App URL (for non-Vercel deployments) - full URL including https://
-  APP_URL: z
-    .url()
+  VERCEL_SANDBOX_RUNTIME_PYTHON: z
+    .string()
+    .min(1)
     .optional()
-    .describe(
-      "App URL for non-Vercel deployments (full URL including https://)"
-    ),
-
+    .describe("Vercel sandbox runtime identifier for Python execution"),
+  // Sandbox (for non-Vercel deployments)
+  VERCEL_TEAM_ID: z
+    .string()
+    .optional()
+    .describe("Vercel team ID for sandbox (non-Vercel deployments)"),
+  VERCEL_TOKEN: z
+    .string()
+    .optional()
+    .describe("Vercel API token for sandbox (non-Vercel deployments)"),
   // Vercel platform (auto-set by Vercel)
   VERCEL_URL: z.string().optional().describe("Auto-set by Vercel platform"),
 };

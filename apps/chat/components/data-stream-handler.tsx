@@ -71,23 +71,23 @@ const processArtifactStreamPart = ({
   switch (artifact.kind) {
     case "code": {
       codeArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata: createTypedMetadataSetter(
           setMetadata,
           getCodeArtifactMetadata
         ),
+        streamPart: delta,
       });
       break;
     }
     case "sheet": {
       sheetArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata: createTypedMetadataSetter(
           setMetadata,
           getSheetArtifactMetadata
         ),
+        streamPart: delta,
       });
       break;
     }

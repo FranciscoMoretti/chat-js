@@ -51,13 +51,13 @@ const mcpConnectorFormSchema = z.object({
     .max(MCP_NAME_MAX_LENGTH, {
       message: `Name must be at most ${MCP_NAME_MAX_LENGTH} characters`,
     }),
+  oauthClientId: z.string().optional(),
+  oauthClientSecret: z.string().optional(),
+  type: z.enum(["http", "sse"]),
   url: z
     .string()
     .min(1, { message: "URL is required" })
     .url({ message: "Please enter a valid URL" }),
-  type: z.enum(["http", "sse"]),
-  oauthClientId: z.string().optional(),
-  oauthClientSecret: z.string().optional(),
 });
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
@@ -78,7 +78,6 @@ export const McpCreateDialog = ({
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const form = useForm<McpConnectorFormValues>({
-    resolver: zodResolver(mcpConnectorFormSchema),
     defaultValues: {
       name: "",
       oauthClientId: "",
@@ -86,6 +85,7 @@ export const McpCreateDialog = ({
       type: "http",
       url: "",
     },
+    resolver: zodResolver(mcpConnectorFormSchema),
   });
 
   useEffect(() => {
@@ -116,9 +116,9 @@ export const McpCreateDialog = ({
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
-      url: values.url.trim(),
       oauthClientId: values.oauthClientId?.trim() || undefined,
       oauthClientSecret: values.oauthClientSecret?.trim() || undefined,
+      url: values.url.trim(),
     };
 
     await createConnector({

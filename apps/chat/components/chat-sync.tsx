@@ -65,16 +65,6 @@ export const ChatSync = ({
           transport: new DefaultChatTransport({
             api: "/api/chat",
             fetch: fetchWithErrorHandlers,
-            prepareSendMessagesRequest({ messages, id: chatId, body }) {
-              return {
-                body: {
-                  id: chatId,
-                  message: messages.at(-1),
-                  prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
-                  ...body,
-                },
-              };
-            },
             prepareReconnectToStreamRequest({ id: chatId }) {
               const current = thread.getSnapshot().messages.at(-1);
               const activeStreamId = current?.metadata?.activeStreamId ?? null;
@@ -88,6 +78,16 @@ export const ChatSync = ({
                 api: `/api/chat/${chatId}/stream${resumableMessageId ? `?messageId=${encodeURIComponent(resumableMessageId)}` : ""}`,
               };
             },
+            prepareSendMessagesRequest({ messages, id: chatId, body }) {
+              return {
+                body: {
+                  id: chatId,
+                  message: messages.at(-1),
+                  prevMessages: isAuthenticated ? [] : messages.slice(0, -1),
+                  ...body,
+                },
+              };
+            },
           }),
         })
       ),
@@ -96,16 +96,6 @@ export const ChatSync = ({
 
   const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
-    thread,
-    onFinish: ({ message }) => {
-      return completionQueueRef.current.waitForIdle().then(() => {
-        saveChatMessage({
-          chatId: id,
-          message,
-        });
-      });
-    },
-    transport,
     onData: (dataPart) => {
       completionQueueRef.current.enqueue(() =>
         completeDataPart({ dataPart, thread })
@@ -126,6 +116,16 @@ export const ChatSync = ({
       const { message, description } = getStreamErrorToastContent(error);
       toast.error(message, description ? { description } : undefined);
     },
+    onFinish: ({ message }) => {
+      return completionQueueRef.current.waitForIdle().then(() => {
+        saveChatMessage({
+          chatId: id,
+          message,
+        });
+      });
+    },
+    thread,
+    transport,
   });
 
   useEffect(() => {

@@ -4,6 +4,25 @@ import path from "node:path";
 import type { GatewaySelection } from "../registry/gateways";
 import { preflight } from "../utils/preflight";
 
+const sortJsonKeys = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(sortJsonKeys);
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .toSorted(([left], [right]) => {
+          if (left === right) {
+            return 0;
+          }
+          return left < right ? -1 : 1;
+        })
+        .map(([key, nestedValue]) => [key, sortJsonKeys(nestedValue)])
+    );
+  }
+  return value;
+};
+
 /** Wire the installed gateway; source and dependencies are installed by shadcn. */
 export const configureGatewayProvider = async (
   destination: string,
@@ -35,7 +54,7 @@ export const configureGatewayProvider = async (
 import type { Gateway } from "./gateway";
 
 export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];
-export const gatewayModelDefaults = ${JSON.stringify(definition.defaults, null, 2)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
+export const gatewayModelDefaults = ${JSON.stringify(sortJsonKeys(definition.defaults), null, 2)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
 export const gatewayCapabilities = ${JSON.stringify(definition.capabilities)};
 export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirements)};
 export const gatewayEnvVariables = ${JSON.stringify([...new Set([...definition.envRequirements.flatMap((r) => r.options.flat()), ...definition.optionalEnv])])};

@@ -141,10 +141,6 @@ export const getMcpTools = async ({
     try {
       // Get or create OAuth-aware MCP client
       const mcpClient = getOrCreateMcpClient({
-        id: connector.id,
-        name: connector.name,
-        url: connector.url,
-        type: connector.type,
         // Legacy Basic auth headers for connectors that have client credentials
         headers:
           connector.oauthClientId && connector.oauthClientSecret
@@ -152,6 +148,10 @@ export const getMcpTools = async ({
                 Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
               }
             : undefined,
+        id: connector.id,
+        name: connector.name,
+        type: connector.type,
+        url: connector.url,
       });
 
       // Attempt to connect

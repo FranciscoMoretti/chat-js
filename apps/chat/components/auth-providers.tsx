@@ -114,8 +114,8 @@ export const SocialAuthProviders = ({
   const signIn = async (provider: SocialAuthProvider) => {
     try {
       const result = await authClient.signIn.social({
-        provider,
         callbackURL,
+        provider,
         ...signInOptions,
         fetchOptions: {
           query,

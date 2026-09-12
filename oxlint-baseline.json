@@ -85,12 +85,6 @@
     {
       "files": ["apps/site/components/thread-showcase.tsx"],
       "rules": {
-        "sort-keys": "off"
-      }
-    },
-    {
-      "files": ["apps/site/components/thread-showcase.tsx"],
-      "rules": {
         "unicorn/consistent-function-scoping": "off"
       }
     },

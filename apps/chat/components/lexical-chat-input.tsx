@@ -222,8 +222,8 @@ export const LexicalChatInput = ({
               onPaste={onPaste}
               spellCheck={true}
               style={{
-                WebkitBoxShadow: "none",
                 MozBoxShadow: "none",
+                WebkitBoxShadow: "none",
                 boxShadow: "none",
               }}
               // aria-placeholder={placeholder}

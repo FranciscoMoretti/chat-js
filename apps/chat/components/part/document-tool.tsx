@@ -39,12 +39,12 @@ const PureDocumentTool = ({
     if (tool.state === "input-streaming" || tool.state === "input-available") {
       setArtifact((prev) => ({
         ...prev,
-        documentId: "init",
-        title: inputTitle,
         content: inputContent,
+        documentId: "init",
         kind,
         messageId,
         status: "streaming",
+        title: inputTitle,
         ...(prev.status !== "streaming" && { isVisible: true }),
       }));
     }
@@ -54,9 +54,9 @@ const PureDocumentTool = ({
       if (output.status === "success") {
         setArtifact((prev) => ({
           ...prev,
+          date: output.date,
           documentId: output.documentId,
           status: "idle",
-          date: output.date,
         }));
       }
     }

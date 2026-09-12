@@ -538,14 +538,14 @@ const PlaygroundSession = () => {
 
   const [stoppedIds, setStoppedIds] = useState<ReadonlySet<string>>(new Set());
   const thread = useThread<PlaygroundMessage>({
+    concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
+    generateId: generateMessageId,
+    initialTree,
     onFinish: ({ message, isAbort }) => {
       if (isAbort) {
         setStoppedIds((previous) => new Set([...previous, message.id]));
       }
     },
-    concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
-    generateId: generateMessageId,
-    initialTree,
     transport: new PlaygroundTransport(),
   });
   const chat: PlaygroundChat = { ...thread, stoppedIds };

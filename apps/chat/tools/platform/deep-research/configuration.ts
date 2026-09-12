@@ -44,25 +44,21 @@ export const getDeepResearchConfig = (): DeepResearchRuntimeConfig => {
 
   return {
     // General Configuration
-    max_structured_output_retries: 3,
     allow_clarification: allowClarification,
-    max_concurrent_research_units: maxConcurrentResearchUnits,
-
-    // Research Configuration
-    search_enabled: true,
-    search_api_max_queries: maxSearchQueries,
-    max_researcher_iterations: maxResearcherIterations,
-
-    // Model Configuration - use same model for research/compression/summarization
-    summarization_model: defaultModel,
-    summarization_model_max_tokens: 4000,
-    research_model: defaultModel,
-    research_model_max_tokens: 4000,
     compression_model: defaultModel,
     compression_model_max_tokens: 4000,
     final_report_model: finalReportModel,
     final_report_model_max_tokens: 6000,
+    max_concurrent_research_units: maxConcurrentResearchUnits,
+    max_researcher_iterations: maxResearcherIterations,
+    max_structured_output_retries: 3,
+    research_model: defaultModel,
+    research_model_max_tokens: 4000,
+    search_api_max_queries: maxSearchQueries,
+    search_enabled: true,
     status_update_model: defaultModel,
     status_update_model_max_tokens: 4000,
+    summarization_model: defaultModel,
+    summarization_model_max_tokens: 4000,
   };
 };

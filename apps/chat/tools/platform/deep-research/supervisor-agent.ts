@@ -49,17 +49,17 @@ export const runSupervisor = async (
   const maxSteps = config.max_researcher_iterations + 1;
 
   const supervisorAgent = new ToolLoopAgent({
-    model,
     instructions: leadResearcherPrompt({
       date: getTodayStr(),
       max_concurrent_research_units: config.max_concurrent_research_units,
     }),
+    maxOutputTokens: config.research_model_max_tokens,
+    model,
+    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
     tools: {
       conductResearch: conductResearchTool,
       researchComplete: researchCompleteTool,
     },
-    maxOutputTokens: config.research_model_max_tokens,
-    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
     ...createTelemetry("supervisor", options),
     onStepEnd: ({ usage, toolCalls }) => {
       if (usage) {

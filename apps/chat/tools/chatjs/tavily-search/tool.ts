@@ -21,26 +21,6 @@ Use for:
 
 Avoid:
 - Pulling content from a single known URL (use retrieveUrl instead)`,
-  // Keep defaultable fields required and nullable for strict tool calling.
-  inputSchema: z.object({
-    exclude_domains: z
-      .array(z.string())
-      .describe(
-        "Domains to exclude from all results. Pass null for no exclusions."
-      )
-      .nullable(),
-    searchDepth: z
-      .enum(["basic", "advanced"])
-      .describe('Search depth to use. Pass null for "basic".')
-      .nullable(),
-    search_queries: searchQueriesSchema,
-    topics: z
-      .array(z.enum(["general", "news"]))
-      .describe(
-        "Array of topic types to search for. Pass null for general search."
-      )
-      .nullable(),
-  }),
   execute: async (
     {
       search_queries,
@@ -119,4 +99,24 @@ Avoid:
 
     return result;
   },
+  // Keep defaultable fields required and nullable for strict tool calling.
+  inputSchema: z.object({
+    exclude_domains: z
+      .array(z.string())
+      .describe(
+        "Domains to exclude from all results. Pass null for no exclusions."
+      )
+      .nullable(),
+    searchDepth: z
+      .enum(["basic", "advanced"])
+      .describe('Search depth to use. Pass null for "basic".')
+      .nullable(),
+    search_queries: searchQueriesSchema,
+    topics: z
+      .array(z.enum(["general", "news"]))
+      .describe(
+        "Array of topic types to search for. Pass null for general search."
+      )
+      .nullable(),
+  }),
 });

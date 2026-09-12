@@ -35,13 +35,6 @@ const FollowUpSuggestions = ({
 
       const message: ChatMessage = {
         id: generateUUID(),
-        role: "user",
-        parts: [
-          {
-            text: suggestion,
-            type: "text",
-          },
-        ],
         metadata: {
           activeStreamId: null,
           createdAt: new Date(),
@@ -49,6 +42,13 @@ const FollowUpSuggestions = ({
           selectedModel: selectedModelId,
           selectedTool: (selectedTool as UiToolName | null) || undefined,
         },
+        parts: [
+          {
+            text: suggestion,
+            type: "text",
+          },
+        ],
+        role: "user",
       };
 
       sendMessage(message);

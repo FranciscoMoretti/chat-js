@@ -156,11 +156,11 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
         ...sharedOptions,
         series,
         xAxis: {
-          type: chart.x_scale === "datetime" ? "time" : "value",
           name: chart.x_label,
-          nameLocation: "middle",
           nameGap: 40,
+          nameLocation: "middle",
           scale: true,
+          type: chart.x_scale === "datetime" ? "time" : "value",
           ...defaultAxisOptions,
           axisLabel: {
             ...defaultAxisOptions.axisLabel,
