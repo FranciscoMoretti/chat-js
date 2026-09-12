@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { parseSessionTranscriptSeed } from "eve/channels/eve";
+import { parseSessionTranscriptSeed } from "eve/transcript";
 import { createFileStorageKey } from "../file-storage";
 import {
   eveCopyDocumentResources,

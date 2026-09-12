@@ -19,6 +19,7 @@ import {
 import { env } from "../lib/env";
 import type { EveCopySeed } from "../lib/eve/copy-journal-contract";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
+import { EveModelUnavailable } from "../lib/eve/model-selection";
 import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -39,6 +40,7 @@ vi.mock("../lib/eve/public-copy-source", () => ({
 }));
 vi.mock("../lib/eve/model-selection", () => ({
   loadEveModelDefinition: mocks.model,
+  EveModelUnavailable: class extends Error {},
 }));
 vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
@@ -498,4 +500,26 @@ test("deletion of an unwritten source file rejects preparation before another st
     creationKind: "copy",
   });
   expect(mocks.request).not.toHaveBeenCalled();
+});
+
+test("a definitive model rejection tombstones the operation but transient catalog failures remain retryable", async () => {
+  const f = await fixture();
+  mocks.model.mockRejectedValueOnce(new Error("Catalog unavailable"));
+  await expect(
+    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+  ).rejects.toThrow("Catalog unavailable");
+  expect(await getEveCreation(ownerId, f.input.operationId)).toBeUndefined();
+  mocks.model.mockRejectedValueOnce(new EveModelUnavailable("Model removed"));
+  await expect(
+    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+  ).rejects.toThrow("Model removed");
+  expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
+    creationKind: "copy",
+    state: "deleted",
+  });
+  mocks.model.mockResolvedValue(undefined);
+  await expect(
+    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+  ).rejects.toThrow();
+  expect(mocks.source).not.toHaveBeenCalled();
 });

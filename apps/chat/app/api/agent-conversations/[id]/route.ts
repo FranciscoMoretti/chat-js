@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
 import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
+import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 const headers = { "cache-control": "no-store" };
@@ -75,14 +77,18 @@ export async function DELETE(request: Request, context: Context) {
       { headers }
     );
   }
-  // Hosted-provider erasure is not implemented. Reject before revoking access.
-  if (!localDeletionAvailable()) {
-    return Response.json(
-      { error: "Deletion is not available for this provider configuration." },
-      { status: 503, headers }
-    );
-  }
   try {
+    if (await isUnacceptedEveCopy(ownerId, id)) {
+      await deleteUnacceptedEveCopy(ownerId, id);
+      return Response.json({ status: "deleted", rootId: id }, { headers });
+    }
+    // Hosted native erasure is not implemented. Reject before revoking access.
+    if (!localDeletionAvailable()) {
+      return Response.json(
+        { error: "Deletion is not available for this provider configuration." },
+        { status: 503, headers }
+      );
+    }
     const deleted = await deleteLocalEveConversationFamily(
       ownerId,
       id,

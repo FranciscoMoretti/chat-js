@@ -9,6 +9,8 @@ import { config } from "../config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 
+export class EveModelUnavailable extends Error {}
+
 export function getEveModelDefinition(
   requestedId?: string,
   models = getFallbackModels(config.ai.gateway).map(toModelData)
@@ -24,7 +26,7 @@ export function getEveModelDefinition(
     !model.output.text ||
     config.ai.disabledModels.some((disabled) => disabled === model.id)
   ) {
-    throw new Error("This model is not available for chat.");
+    throw new EveModelUnavailable("This model is not available for chat.");
   }
   return {
     ...model,

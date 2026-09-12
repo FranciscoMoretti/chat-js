@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { parseSessionTranscriptSeed } from "eve/channels/eve";
+import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 import type { EveCopyPlan } from "../eve/copy-journal-contract";
 import { eveCopyResources } from "../eve/copy-transcript";
@@ -20,6 +20,65 @@ type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 const hashPattern = /^[a-f0-9]{64}$/;
 
 export class EveCopySourceChanged extends CreationConflict {}
+
+/** Durable rejection prevents a concurrent request from later reserving the discarded operation. */
+export async function rejectEveCopyPreflight(
+  ownerId: string,
+  operationId: string
+) {
+  await db.transaction(async (tx) => {
+    await lockEveCopyOwners(tx, [ownerId]);
+    const [existing] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.operationId, operationId)
+        )
+      );
+    if (existing) {
+      return;
+    }
+    const [group] = await tx
+      .select({ id: eveResponseGroup.id })
+      .from(eveResponseGroup)
+      .where(
+        and(
+          eq(eveResponseGroup.ownerId, ownerId),
+          sql`${operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+        )
+      )
+      .limit(1);
+    if (group) {
+      return;
+    }
+    await tx.insert(eveConversation).values({
+      ownerId,
+      operationId,
+      creationKind: "copy",
+      state: "deleted",
+      firstMessage: "",
+    });
+  });
+}
+
+export async function isUnacceptedEveCopy(
+  ownerId: string,
+  conversationId: string
+) {
+  const [copy] = await db
+    .select({ id: eveConversationCopy.conversationId })
+    .from(eveConversationCopy)
+    .where(
+      and(
+        eq(eveConversationCopy.ownerId, ownerId),
+        eq(eveConversationCopy.conversationId, conversationId),
+        inArray(eveConversationCopy.phase, ["preparing", "rejected"])
+      )
+    );
+  return Boolean(copy);
+}
 
 /** Caller holds source/destination family locks; the shared row lock serializes revocation. */
 export async function assertEveCopySourceAvailable(

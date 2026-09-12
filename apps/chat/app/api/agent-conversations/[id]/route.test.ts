@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   state: vi.fn(),
   remove: vi.fn(),
+  unacceptedCopy: vi.fn(),
+  removeCopy: vi.fn(),
   enabled: true,
   env: {
     APP_URL: "http://localhost:3790",
@@ -14,6 +16,12 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock("@/lib/db/eve-deletion", () => ({ getEveDeletionState: mocks.state }));
+vi.mock("@/lib/db/eve-copy-journal", () => ({
+  isUnacceptedEveCopy: mocks.unacceptedCopy,
+}));
+vi.mock("@/lib/eve/delete-unaccepted-copy", () => ({
+  deleteUnacceptedEveCopy: mocks.removeCopy,
+}));
 vi.mock("@/lib/eve/delete-local-conversation", () => ({
   deleteLocalEveConversationFamily: mocks.remove,
 }));
@@ -36,6 +44,13 @@ beforeEach(() => {
   mocks.session.mockResolvedValue({ user: { id: "owner" } });
   mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
+});
+it("cleans an unaccepted copy with never-dispatched proof instead of native retirement", async () => {
+  mocks.unacceptedCopy.mockResolvedValue(true);
+  mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://remote.example/db";
+  expect((await DELETE(request(), context)).status).toBe(200);
+  expect(mocks.removeCopy).toHaveBeenCalledWith("owner", id);
+  expect(mocks.remove).not.toHaveBeenCalled();
 });
 it("runs owner-authorized family deletion with a server-controlled worker root", async () => {
   const response = await DELETE(request(), context);

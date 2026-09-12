@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header";
 import { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 import { EveArtifactLayout } from "./eve-artifact-layout";
+import { EveCopyButton } from "./eve-copy-button";
 import { EveSharedMessages } from "./eve-shared-messages";
 
 export async function EveSharedPage({ id }: { id: string }) {
@@ -33,7 +34,9 @@ export async function EveSharedPage({ id }: { id: string }) {
             </h1>
           }
         />
-        <EveSharedMessages messages={conversation.messages} />
+        <EveSharedMessages messages={conversation.messages}>
+          <EveCopyButton sourceConversationId={conversation.id} />
+        </EveSharedMessages>
       </section>
     </EveArtifactLayout>
   );

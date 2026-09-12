@@ -4,12 +4,14 @@ import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header";
 import { auth } from "@/lib/auth";
+import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComparisonConversation } from "./eve-comparison-conversation";
 import { EveConversation } from "./eve-conversation";
+import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
@@ -81,21 +83,41 @@ export async function EveChatPage({
       />
     );
   }
+  const copy =
+    selected?.creationKind === "copy"
+      ? await getEveCopyOperation(session.user.id, selected.operationId)
+      : undefined;
+  let content = (
+    <NewEveConversation key={session.user.id} ownerId={session.user.id} />
+  );
+  if (selected) {
+    content = (
+      <EveCreationRecovery
+        firstMessage={selected.firstMessage}
+        key={selected.id}
+        operationId={selected.operationId}
+        ownerId={session.user.id}
+        scope={recoveryScope}
+      />
+    );
+  }
+  if (copy && selected?.initialModelId) {
+    content = (
+      <EveCopyButton
+        recovery={{
+          sourceConversationId: copy.copy.sourceConversationId,
+          operationId: selected.operationId,
+          modelId: selected.initialModelId,
+        }}
+        sourceConversationId={copy.copy.sourceConversationId}
+      />
+    );
+  }
   return (
     <EveArtifactLayout conversationId={conversationId}>
       <section className="flex h-full min-h-0 flex-col">
         {header}
-        {selected ? (
-          <EveCreationRecovery
-            firstMessage={selected.firstMessage}
-            key={selected.id}
-            operationId={selected.operationId}
-            ownerId={session.user.id}
-            scope={recoveryScope}
-          />
-        ) : (
-          <NewEveConversation key={session.user.id} ownerId={session.user.id} />
-        )}
+        {content}
       </section>
     </EveArtifactLayout>
   );

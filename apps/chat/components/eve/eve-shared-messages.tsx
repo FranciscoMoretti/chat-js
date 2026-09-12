@@ -1,6 +1,7 @@
 "use client";
 
 import type { EveMessage } from "eve/client";
+import type { ReactNode } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -9,8 +10,10 @@ import { EveMessages } from "./eve-messages";
 
 export function EveSharedMessages({
   messages,
+  children,
 }: {
   messages: readonly EveMessage[];
+  children?: ReactNode;
 }) {
   return (
     <Conversation>
@@ -21,6 +24,7 @@ export function EveSharedMessages({
           messages={messages}
           respond={() => undefined}
         />
+        {children}
       </ConversationContent>
     </Conversation>
   );

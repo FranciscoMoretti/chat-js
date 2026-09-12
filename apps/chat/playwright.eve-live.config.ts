@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-copy-live.e2e.ts",
     "eve-comparison-live.e2e.ts",
     "eve-idle-checkpoint-live.e2e.ts",
     "eve-deletion-retire.e2e.ts",

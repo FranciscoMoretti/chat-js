@@ -130,14 +130,16 @@ export const LexicalChatInput = ({
 }) => {
   const [editor, setEditor] = useState<LexicalEditor | null>(null);
 
-  useAutoFocus({ autoFocus, editor });
-
   useEffect(() => {
     editor?.setEditable(!readOnly);
   }, [editor, readOnly]);
 
+  useAutoFocus({ autoFocus, editor });
+
   const initialConfig: InitialConfigType = {
     namespace: "LexicalChatInput",
+    // Accept input only after the editor and its change listeners are mounted.
+    editable: false,
     theme,
     onError,
     nodes: [],
