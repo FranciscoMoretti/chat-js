@@ -16,6 +16,7 @@ const pages = [
 	{ name: "word-count", path: "/docs/tools/word-count" },
 	{ name: "get-weather", path: "/docs/tools/get-weather" },
 	{ name: "retrieve-url", path: "/docs/tools/retrieve-url" },
+	{ name: "generate-image", path: "/docs/tools/generate-image" },
 	{ name: "quickstart", path: "/docs/quickstart" },
 	{ name: "changelog", path: "/docs/changelog" },
 	{ name: "cookbook", path: "/docs/cookbook" },
