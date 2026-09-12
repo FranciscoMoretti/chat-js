@@ -11,6 +11,6 @@ loadFont({
   url: staticFile("brand/geist-mono-latin.woff2"),
   weight: "100 900",
 });
-export function Logo() {
-  return <Img src={staticFile("brand/chatjs-logo.svg")} alt="ChatJS" />;
-}
+export const Logo = () => (
+  <Img src={staticFile("brand/chatjs-logo.svg")} alt="ChatJS" />
+);
