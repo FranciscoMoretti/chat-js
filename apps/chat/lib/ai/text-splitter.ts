@@ -73,8 +73,9 @@ abstract class TextSplitter implements TextSplitterParams {
       const _len = d.length;
       if (total + _len > this.chunkSize) {
         if (total > this.chunkSize) {
-          console.warn(`Created a chunk of size ${total}, +
-which is longer than the specified ${this.chunkSize}`);
+          console.warn(
+            `Created a chunk of size ${total}, which is longer than the specified ${this.chunkSize}`
+          );
         }
         if (currentDoc.length > 0) {
           TextSplitter.addCurrentDocToResults({ currentDoc, docs, separator });
