@@ -23,7 +23,7 @@ let __clearLastActionTimer: ReturnType<typeof setTimeout> | null = null;
 const __updateQueue: Array<{ callback: () => void; priority: number }> = [];
 let __batchedUpdateScheduled = false;
 
-function markLastAction(label: string) {
+const markLastAction = (label: string) => {
   __lastActionLabel = label;
   if (typeof window !== "undefined") {
     if (__clearLastActionTimer) {
@@ -35,9 +35,9 @@ function markLastAction(label: string) {
       }
     }, 250);
   }
-}
+};
 
-function batchUpdates(callback: () => void, priority = 0) {
+const batchUpdates = (callback: () => void, priority = 0) => {
   if (typeof window === "undefined") {
     callback();
     return;
@@ -49,7 +49,9 @@ function batchUpdates(callback: () => void, priority = 0) {
     __batchedUpdateScheduled = true;
 
     // Use scheduler if available, otherwise fallback to rAF
-    const scheduler = (window as any).scheduler;
+    const { scheduler } = window as Window & {
+      scheduler?: { postTask?: (callback: () => void) => void };
+    };
     const schedule = scheduler?.postTask
       ? scheduler.postTask.bind(scheduler)
       : window.requestAnimationFrame?.bind(window) ||
@@ -61,18 +63,18 @@ function batchUpdates(callback: () => void, priority = 0) {
 
       // Sort by priority (higher priority first) and execute
       updates.sort((a, b) => b.priority - a.priority);
-      updates.forEach((update) => {
+      for (const update of updates) {
         update.callback();
-      });
+      }
     });
   }
-}
+};
 
-function startFreezeDetector({
+const startFreezeDetector = ({
   thresholdMs = 80,
 }: {
   thresholdMs?: number;
-} = {}): void {
+} = {}): void => {
   if (typeof window === "undefined" || __freezeDetectorStarted) {
     return;
   }
@@ -116,24 +118,24 @@ function startFreezeDetector({
       }
     });
   }
-}
+};
 
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
   startFreezeDetector({ thresholdMs: 80 });
 }
 
 // Enhanced throttle with requestIdleCallback support
-function enhancedThrottle<T extends (...args: any[]) => void>(
+const enhancedThrottle = <T extends (...args: never[]) => void>(
   func: T,
   wait: number
-): T {
+): T => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
   let pendingArgs: Parameters<T> | null = null;
 
   const execute = () => {
     if (pendingArgs) {
-      func.apply(null, pendingArgs);
+      func(...pendingArgs);
       pendingArgs = null;
     }
   };
@@ -167,7 +169,7 @@ function enhancedThrottle<T extends (...args: any[]) => void>(
       }, remaining);
     }
   }) as T;
-}
+};
 
 // Message indexing for O(1) lookups
 class MessageIndex<TMessage extends UIMessage> {
@@ -178,10 +180,10 @@ class MessageIndex<TMessage extends UIMessage> {
     this.idToMessage.clear();
     this.idToIndex.clear();
 
-    messages.forEach((message, index) => {
+    for (const [index, message] of messages.entries()) {
       this.idToMessage.set(message.id, message);
       this.idToIndex.set(message.id, index);
-    });
+    }
   }
 
   getById(id: string): TMessage | undefined {
