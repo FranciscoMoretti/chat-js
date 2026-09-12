@@ -234,9 +234,7 @@
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/start-provisional-chat.ts",
         "lib/stop-response.test.ts",
-        "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-data-parts.ts",
         "lib/stores/custom-store-provider.tsx",
         "lib/stores/with-message-parts.ts",
         "lib/stores/with-thread-state.ts",
@@ -1259,7 +1257,6 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "lib/credits/cost-accumulator.test.ts",
-        "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts"
       ],
       "rules": {
