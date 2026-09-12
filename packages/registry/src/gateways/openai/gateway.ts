@@ -27,21 +27,19 @@ interface OpenAIModelResponse {
   owned_by: string;
 }
 
-function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
-  return {
-    context_window: 0,
-    created: model.created ?? 0,
-    description: "",
-    id: model.id,
-    max_tokens: 0,
-    name: model.id,
-    object: "model",
-    owned_by:
-      (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
-    pricing: {},
-    type: "language",
-  };
-}
+const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
+  context_window: 0,
+  created: model.created ?? 0,
+  description: "",
+  id: model.id,
+  max_tokens: 0,
+  name: model.id,
+  object: "model",
+  owned_by:
+    (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
+  pricing: {},
+  type: "language",
+});
 
 export class OpenAIGateway
   extends GatewayRuntime

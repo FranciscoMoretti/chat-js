@@ -11,7 +11,7 @@ const app = env.FIRECRAWL_API_KEY
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
 
-function parseUrl(url: string): URL | null {
+const parseUrl = (url: string): URL | null => {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
@@ -21,11 +21,9 @@ function parseUrl(url: string): URL | null {
   } catch {
     return null;
   }
-}
+};
 
-function redactUrl(url: URL): string {
-  return `${url.origin}${url.pathname}`;
-}
+const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
 
 export const retrieveUrl = tool({
   description: `Fetch structured information from a single URL via Firecrawl.
