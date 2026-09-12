@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { readFile, realpath } from "node:fs/promises";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db/client";
@@ -56,6 +59,26 @@ test("compiled idle capture preserves native history and exact document revision
     kind: "text" as const,
   };
   const original = await saveEveDocumentRevision(document);
+  const workerRoot = await realpath(process.cwd());
+  async function birthIdentity(sessionId: string) {
+    return JSON.parse(
+      await readFile(
+        join(
+          workerRoot,
+          ".eve",
+          "sandbox-identities",
+          `${createHash("sha256").update(sessionId).digest("hex")}.json`
+        ),
+        "utf8"
+      )
+    );
+  }
+  const sourceIdentity = await birthIdentity(source.sessionId);
+  expect(sourceIdentity).toMatchObject({
+    version: 1,
+    appRoot: workerRoot,
+    sessionId: source.sessionId,
+  });
   const captureRequests: { checkpointId: string; beforeTurnId: string }[] = [];
   let groupRequests = 0;
   page.on("request", (request) => {
@@ -146,6 +169,10 @@ test("compiled idle capture preserves native history and exact document revision
     if (candidate.state !== "bound") {
       throw new Error("Follow-up did not bind");
     }
+    expect(await birthIdentity(candidate.sessionId)).toEqual({
+      ...sourceIdentity,
+      sessionId: candidate.sessionId,
+    });
     expect(
       (
         await getEveDocumentRevision(

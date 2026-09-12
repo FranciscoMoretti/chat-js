@@ -223,3 +223,54 @@ local evidence of mixed providers; absence of those entries does not prove that
 remote resources never existed. API wiring must establish the actual provider
 and worker storage root for the sessions being erased before using this local
 coordinator.
+
+### Explicit local backend configuration
+
+An internal ChatJS backend factory now validates an opt-in
+`CHATJS_EVE_LOCAL_SANDBOX_ROOT` absolute path. When invoked with that configuration, it pins
+microsandbox, requires a loopback Workflow Postgres URL, rejects hosted Vercel,
+and checks the canonical EVE-provided `runtimeContext.appRoot` before both
+prewarming and allocating/reattaching a sandbox. Without the opt-in it preserves
+EVE's default backend selection. Tests exercise the backend boundary without
+allocating resources. The factory is not wired to an authored sandbox or the running worker. Configuration is registered in the app environment schema and checked by the environment validator; setting it alone does not change the current provider.
+
+This preparatory configuration is not an ownership certificate and does not enable the
+deletion API. Introducing an authored sandbox can change EVE's source-derived
+sandbox keys; earlier versions and their ownership records must remain in the
+deletion inventory. Before exposing cleanup, every native family member needs
+an immutable provider and worker-root identity recorded at its creation, before
+any sandbox/provider operation, with later execution refusing a different
+identity. Sessions predating that record must remain unsupported until their
+resource history is explicitly reconciled. A first-use backend wrapper cannot
+retroactively supply that proof: EVE's current `ensureSandboxAccess` drops old
+reconnect metadata when the backend name or session key changes. Neither an
+empty local cache nor missing `existingMetadata` excludes prior remote resources.
+
+Response groups now retain candidate operation identities separately from their
+request hash and model-selection payload. Family retirement tombstones related
+groups under the same owner lock used by group and conversation reservation,
+clears that payload, and prevents even an unstarted candidate from being replayed
+as a standalone conversation. Groups with a source but no started candidates
+are included through an explicit source association. Groups created before this
+association contract block deletion until replay of the exact saved request
+recovers their source; unknown scope is never inferred from absent candidates.
+Local PostgreSQL tests cover partial groups, an in-flight candidate, concurrent
+reservation/retirement, unrelated groups, and direct candidate replay.
+
+### Local session-birth identity (implementation in progress)
+
+The maintained native patch now records the resolved backend and canonical worker
+root during local `createSessionStep`, before any session sandbox access. It
+publishes the sidecar atomically, preserves the identity through durable
+projection/hydration, and rejects a changed backend/root before template waits or
+allocation. Fork creation records the child's identity instead of copying the
+source's. Hosted and historical sessions are not retroactively certified.
+
+Native tests cover concurrent publication, conflicting retry, canonical aliases,
+provider/root drift, durable round trips, and independent fork identities. The
+record is not yet a deletion authorization: the coordinator must verify native
+birth evidence and descendant coverage, and prevent older workers from dropping
+the new optional snapshot field. Cross-host attempts whose creation step never
+committed also need authoritative reconciliation; a local sidecar alone cannot
+prove that the eventual session ran on that host. The user-facing deletion API
+remains disabled until these requirements and allocation recovery are handled.

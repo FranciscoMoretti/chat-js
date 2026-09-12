@@ -177,3 +177,17 @@ The compiled ChatJS regression covers idle capture, later source document edits,
 two Gemini follow-up forks, inherited display history, and reload. See the
 unpublished `docs/upstream-drafts/eve-fork-checkpoint-readiness.md` for limitations
 and the remaining composer integration.
+
+## Local sandbox identity at session creation
+
+The source and runtime patches record a local session's canonical worker root and
+resolved sandbox backend in its initial durable snapshot and an atomically
+published `.eve/sandbox-identities` record. Sandbox access checks that identity
+before provider I/O. Forks receive a fresh identity; historical sessions are not
+retroactively certified. This preserves the provider boundary while local
+conversation deletion is being completed.
+
+This is not a portable erasure receipt. Hosted sessions omit the local record.
+Deletion must still verify native birth evidence and descendants, handle provider
+allocation uncertainty, and exclude older workers that do not preserve this new
+optional snapshot field before it can rely on the record.
