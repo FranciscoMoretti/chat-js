@@ -7,11 +7,6 @@ import SuperJSON from "superjson";
 export const makeQueryClient = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000,
-      },
       dehydrate: {
         serializeData: SuperJSON.serialize,
         shouldDehydrateQuery: (query) =>
@@ -23,6 +18,11 @@ export const makeQueryClient = () => {
       },
       hydrate: {
         deserializeData: SuperJSON.deserialize,
+      },
+      queries: {
+        // With SSR, we usually want to set some default staleTime
+        // above 0 to avoid refetching immediately on the client
+        staleTime: 60 * 1000,
       },
     },
   });

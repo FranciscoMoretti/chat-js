@@ -1,7 +1,9 @@
-import { type FileUIPart, generateImage, generateText, tool } from "ai";
+import { generateImage, generateText, tool } from "ai";
+import type { FileUIPart } from "ai";
 import { z } from "zod";
 
-import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
+import { getAppModelDefinition } from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -88,7 +90,7 @@ function serializeError(err: unknown): {
   raw?: unknown;
 } {
   if (err instanceof Error) {
-    return { name: err.name, message: err.message, stack: err.stack };
+    return { message: err.message, name: err.name, stack: err.stack };
   }
 
   // Handle Promise-like objects (shouldn't happen but does sometimes)
@@ -110,17 +112,19 @@ function serializeError(err: unknown): {
 
 async function resolveError(error: unknown): Promise<unknown> {
   if (error && typeof error === "object" && "then" in error) {
-    return await (error as Promise<unknown>).catch((e) => e);
+    return await (error as Promise<unknown>).catch(
+      (caughtError) => caughtError
+    );
   }
   return error;
 }
 
 function getErrorDebugInfo(err: unknown) {
   return {
-    errorType: typeof err,
     errorConstructor: (err as { constructor?: { name?: string } })?.constructor
       ?.name,
     errorKeys: err && typeof err === "object" ? Object.keys(err) : [],
+    errorType: typeof err,
   };
 }
 
@@ -153,9 +157,9 @@ async function runGenerateImageTraditional({
   if (mode === "edit") {
     log.debug(
       {
-        note: "OpenAI edit mode",
-        lastGeneratedCount: lastGeneratedImage ? 1 : 0,
         attachmentCount: imageParts.length,
+        lastGeneratedCount: lastGeneratedImage ? 1 : 0,
+        note: "OpenAI edit mode",
       },
       "generateImage: preparing edit images"
     );
@@ -164,15 +168,15 @@ async function runGenerateImageTraditional({
       imageParts,
       lastGeneratedImage,
     });
-    promptInput = { text: prompt, images: inputImages };
+    promptInput = { images: inputImages, text: prompt };
   } else {
     promptInput = prompt;
   }
 
   const res = await generateImage({
     model: getImageModel(imageDefault),
-    prompt: promptInput,
     n: 1,
+    prompt: promptInput,
     providerOptions: {
       telemetry: { isEnabled: true },
     },
@@ -180,8 +184,8 @@ async function runGenerateImageTraditional({
 
   log.debug(
     {
-      mode,
       base64Length: res.images?.[0]?.base64?.length ?? 0,
+      mode,
     },
     "generateImage: provider response received"
   );
@@ -204,9 +208,9 @@ async function runGenerateImageTraditional({
 
   log.info(
     {
+      imageUrl: result.url,
       mode,
       ms: Date.now() - startMs,
-      imageUrl: result.url,
       uploadedFilename: filename,
     },
     "generateImage: success"
@@ -241,38 +245,38 @@ async function runGenerateImageMultimodal({
     text: string;
     type: "text";
   }
-  const userContent: Array<TextContent | ImageContent> = [];
+  const userContent: (TextContent | ImageContent)[] = [];
 
   // Add reference images if in edit mode
   if (mode === "edit") {
     if (lastGeneratedImage) {
       userContent.push({
-        type: "image",
         image: new URL(lastGeneratedImage.imageUrl, getBaseUrl()),
+        type: "image",
       });
     }
     for (const part of imageParts) {
       userContent.push({
-        type: "image",
         image: new URL(part.url, getBaseUrl()),
+        type: "image",
       });
     }
   }
 
   // Add the prompt with instruction to generate image
   userContent.push({
-    type: "text",
     text:
       mode === "edit"
         ? `Based on the provided image(s), ${prompt}`
         : `Generate an image: ${prompt}`,
+    type: "text",
   });
 
   log.debug(
     {
-      modelId,
-      mode,
       imageCount: userContent.filter((c) => c.type === "image").length,
+      mode,
+      modelId,
     },
     "generateImage: using multimodal model"
   );
@@ -282,8 +286,8 @@ async function runGenerateImageMultimodal({
   const isOpenAIModel = modelId.startsWith("openai/");
 
   const res = await generateText({
-    model: getMultimodalImageModel(modelId),
     messages: [{ role: "user", content: userContent }],
+    model: getMultimodalImageModel(modelId),
     providerOptions: {
       ...(isGoogleModel && {
         google: {
@@ -316,9 +320,9 @@ async function runGenerateImageMultimodal({
 
   log.debug(
     {
-      mode,
-      mediaType: imageFile.mediaType,
       hasBase64: !!imageFile.base64,
+      mediaType: imageFile.mediaType,
+      mode,
     },
     "generateImage: multimodal response received"
   );
@@ -331,10 +335,10 @@ async function runGenerateImageMultimodal({
 
   log.info(
     {
+      imageUrl: result.url,
       mode,
       modelId,
       ms: Date.now() - startMs,
-      imageUrl: result.url,
       uploadedFilename: filename,
     },
     "generateImage: multimodal success"
@@ -356,13 +360,6 @@ The assistant may make small, neutral adjustments to improve clarity, compositio
 
 The assistant must not add new subjects, claims, branding, or alter the tone or intent of the prompt.
 `,
-    inputSchema: z.object({
-      prompt: z
-        .string()
-        .describe(
-          "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
-        ),
-    }),
     execute: async ({ prompt }) => {
       const startMs = Date.now();
       const imageParts = attachments.filter(
@@ -426,4 +423,11 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
         throw resolvedError;
       }
     },
+    inputSchema: z.object({
+      prompt: z
+        .string()
+        .describe(
+          "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
+        ),
+    }),
   });

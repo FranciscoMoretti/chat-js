@@ -24,12 +24,6 @@ Important: You must first read the document content before editing.
 Avoid:
 - Updating immediately after a document was just created
 - Using this if there is no previous document in the conversation`,
-    inputSchema: z.object({
-      documentId: z.string().describe("The ID of the document to edit"),
-      title: z.string().describe("Document title"),
-      content: z.string().describe("The full updated markdown content"),
-    }),
-
     async execute({ documentId, title, content }): Promise<DocumentToolResult> {
       const document = await getDocumentById({ id: documentId });
 
@@ -59,4 +53,9 @@ Avoid:
         date: new Date().toISOString(),
       };
     },
+    inputSchema: z.object({
+      documentId: z.string().describe("The ID of the document to edit"),
+      title: z.string().describe("Document title"),
+      content: z.string().describe("The full updated markdown content"),
+    }),
   });

@@ -19,15 +19,6 @@ Use for:
 - Code snippets that need to be saved
 - Single-file code examples
 ${codeGuidelines}`,
-    inputSchema: z.object({
-      title: z
-        .string()
-        .describe(
-          'Filename with extension (e.g., "script.py", "component.tsx", "utils.js")'
-        ),
-      content: z.string().describe("The full code content of the document"),
-    }),
-
     async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
 
@@ -49,4 +40,12 @@ ${codeGuidelines}`,
         date: new Date().toISOString(),
       };
     },
+    inputSchema: z.object({
+      title: z
+        .string()
+        .describe(
+          'Filename with extension (e.g., "script.py", "component.tsx", "utils.js")'
+        ),
+      content: z.string().describe("The full code content of the document"),
+    }),
   });

@@ -1,4 +1,5 @@
-import { type ModelMessage, tool } from "ai";
+import { tool } from "ai";
+import type { ModelMessage } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
 
@@ -36,7 +37,6 @@ Use for:
 - Perform deep research (also autonomous research, deep search, or similar aliases)
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
-    inputSchema: z.object({}),
     execute: async (_, { toolCallId, abortSignal }) => {
       const researchConfig = getDeepResearchConfig();
 
@@ -94,4 +94,5 @@ Use for:
         };
       }
     },
+    inputSchema: z.object({}),
   });

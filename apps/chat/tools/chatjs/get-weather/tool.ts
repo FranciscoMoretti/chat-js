@@ -3,10 +3,6 @@ import { z } from "zod";
 
 export const getWeather = tool({
   description: "Get the current weather at a location",
-  inputSchema: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
   execute: async ({
     latitude,
     longitude,
@@ -21,6 +17,10 @@ export const getWeather = tool({
     const weatherData = await response.json();
     return weatherData as WeatherAtLocation;
   },
+  inputSchema: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
 });
 
 export interface WeatherAtLocation {

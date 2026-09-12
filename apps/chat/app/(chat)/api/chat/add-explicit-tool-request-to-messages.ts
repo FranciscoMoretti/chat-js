@@ -36,8 +36,8 @@ export function addExplicitToolRequestToMessages(
 
   if (toolsToRequest.length > 0 && lastMessage) {
     lastMessage.parts.push({
-      type: "text",
       text: `I want to use the tools ${toolsToRequest.join(", or ")}`,
+      type: "text",
     });
   }
 }

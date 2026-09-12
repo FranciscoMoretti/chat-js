@@ -44,7 +44,6 @@ export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -55,6 +54,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       },
     };
   },
+  transformer: superjson,
 });
 
 /**
@@ -62,7 +62,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  *
  * @see https://trpc.io/docs/server/server-side-calls
  */
-export const createCallerFactory = t.createCallerFactory;
+export const { createCallerFactory } = t;
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)

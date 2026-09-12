@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
@@ -22,16 +23,16 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({
+      results,
       success: true,
       timestamp: new Date().toISOString(),
-      results,
     });
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(
       {
-        error: "Cleanup failed",
         details: error instanceof Error ? error.message : "Unknown error",
+        error: "Cleanup failed",
       },
       { status: 500 }
     );

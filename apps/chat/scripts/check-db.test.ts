@@ -15,15 +15,15 @@ it("reports failed endpoint names without exposing connection credentials", () =
         process.execPath,
         [
           fileURLToPath(import.meta.resolve("tsx/cli")),
-          fileURLToPath(new URL("./check-db.ts", import.meta.url)),
+          fileURLToPath(new URL("check-db.ts", import.meta.url)),
         ],
         {
           cwd,
           env: {
-            NODE_ENV: "test",
-            DATABASE_URL: "postgres://user:secret-runtime@127.0.0.1:1/app",
             DATABASE_MIGRATION_URL:
               "postgres://user:secret-migration@127.0.0.1:1/app",
+            DATABASE_URL: "postgres://user:secret-runtime@127.0.0.1:1/app",
+            NODE_ENV: "test",
           },
           stdio: "pipe",
           timeout: 10_000,
@@ -43,6 +43,6 @@ it("reports failed endpoint names without exposing connection credentials", () =
     }
     expect(failed).toBe(true);
   } finally {
-    rmSync(cwd, { recursive: true, force: true });
+    rmSync(cwd, { force: true, recursive: true });
   }
 });

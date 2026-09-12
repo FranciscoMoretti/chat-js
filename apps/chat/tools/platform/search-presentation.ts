@@ -12,7 +12,6 @@ const MAX_SEARCH_QUERIES = 2; // Bound the number of parallel searches per tool 
 export const searchQueriesSchema = z
   .array(
     z.object({
-      query: z.string(),
       maxResults: z
         .number()
         .min(1)
@@ -21,6 +20,7 @@ export const searchQueriesSchema = z
         .describe(
           `Maximum number of results for this query. Pass null to use ${DEFAULT_MAX_RESULTS}.`
         ),
+      query: z.string(),
     })
   )
   .max(MAX_SEARCH_QUERIES)
@@ -36,11 +36,11 @@ export async function executeMultiQuerySearch({
   title,
   completeTitle,
 }: {
-  search_queries: Array<{ query: string; maxResults: number }>;
+  search_queries: { query: string; maxResults: number }[];
   search: (
     query: { query: string; maxResults: number },
     index: number
-  ) => Promise<Array<{ title: string; url: string; content: string }>>;
+  ) => Promise<{ title: string; url: string; content: string }[]>;
   dataStream?: StreamWriter;
   toolCallId: string;
   writeTopLevelUpdates: boolean;
@@ -54,13 +54,13 @@ export async function executeMultiQuerySearch({
   );
   if (writeTopLevelUpdates) {
     dataStream?.write({
-      type: "data-researchUpdate",
       data: {
-        toolCallId,
-        title,
         timestamp: Date.now(),
+        title,
+        toolCallId,
         type: "started",
       },
+      type: "data-researchUpdate",
     });
   }
 
@@ -68,10 +68,10 @@ export async function executeMultiQuerySearch({
   const totalSteps = 1;
 
   const { searches: searchResults, error } = await multiQueryWebSearchStep({
+    dataStream,
     queries: search_queries,
     search,
     toolCallId,
-    dataStream,
   });
   if (error) {
     log.error(
@@ -83,17 +83,17 @@ export async function executeMultiQuerySearch({
   completedSteps += 1;
   if (writeTopLevelUpdates) {
     dataStream?.write({
-      type: "data-researchUpdate",
       data: {
-        toolCallId,
-        title: completeTitle,
         timestamp: Date.now(),
+        title: completeTitle,
+        toolCallId,
         type: "completed",
       },
+      type: "data-researchUpdate",
     });
   }
   log.debug(
-    { completedSteps, totalSteps, resultGroups: searchResults.length },
+    { completedSteps, resultGroups: searchResults.length, totalSteps },
     "executeMultiQuerySearch complete"
   );
   return { searches: searchResults, ...(error ? { error } : {}) };

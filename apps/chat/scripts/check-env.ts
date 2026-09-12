@@ -6,7 +6,6 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config as loadEnvConfig } from "dotenv";
 import { z } from "zod";
@@ -33,10 +32,7 @@ interface ValidationError {
   missing: string[];
 }
 
-const projectRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  ".."
-);
+const projectRoot = path.resolve(import.meta.dirname, "..");
 const toolEnvironmentSchema = z.object({
   envRequirements: z
     .array(
@@ -110,9 +106,9 @@ function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
 function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  const authKeys = Object.keys(authEnvRequirements) as Array<
-    keyof typeof authEnvRequirements
-  >;
+  const authKeys = Object.keys(
+    authEnvRequirements
+  ) as (keyof typeof authEnvRequirements)[];
   for (const provider of authKeys) {
     if (!config.authentication[provider]) {
       continue;
@@ -173,7 +169,7 @@ async function validateInstalledTools(
       continue;
     }
 
-    const toolSource = await fs.readFile(toolPath, "utf8");
+    const toolSource = await fs.readFile(toolPath, "utf-8");
     const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
 
     for (const toolEnvVar of mod.envRequirements) {
@@ -217,7 +213,7 @@ function checkGatewaySnapshot(): string | null {
 }
 
 async function checkEnv(): Promise<void> {
-  const env = process.env;
+  const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"

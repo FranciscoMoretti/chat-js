@@ -3,11 +3,13 @@ import { z } from "zod";
 
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import {
-  type ConnectionStatusResult,
   createCachedConnectionStatus,
   createCachedDiscovery,
-  type DiscoveryResult,
   invalidateAllMcpCaches,
+} from "@/lib/ai/mcp/cache";
+import type {
+  ConnectionStatusResult,
+  DiscoveryResult,
 } from "@/lib/ai/mcp/cache";
 import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
 import { config } from "@/lib/config";
@@ -61,9 +63,9 @@ async function validateAndGenerateNameId({
   }
 
   const existing = await getMcpConnectorByNameId({
-    userId,
-    nameId: result.nameId,
     excludeId,
+    nameId: result.nameId,
+    userId,
   });
 
   if (existing) {
@@ -113,60 +115,80 @@ async function getConnectorWithPermission({
 }
 
 export const mcpRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    if (!config.ai.tools.mcp.enabled) {
-      return [];
-    }
-    return await getMcpConnectorsByUserId({ userId: ctx.user.id });
-  }),
+  /**
+   * Initiate OAuth authorization for an MCP connector.
+   * Returns the authorization URL that the client should open in a popup.
+   */
+  authorize: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      assertMcpEnabled();
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
+
+      log.info({ connectorId: connector.id }, "Initiating OAuth authorization");
+
+      // Remove any existing client to force a fresh connection
+      await removeMcpClient(connector.id);
+
+      // Create a new client and attempt to connect
+      const mcpClient = getOrCreateMcpClient({
+        id: connector.id,
+        name: connector.name,
+        url: connector.url,
+        type: connector.type,
+      });
+
+      await mcpClient.connect();
+
+      if (mcpClient.status !== "authorizing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Connector does not require OAuth authorization",
+        });
+      }
+
+      const authUrl = mcpClient.getAuthorizationUrl();
+      if (!authUrl) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get authorization URL",
+        });
+      }
+
+      log.info(
+        { connectorId: connector.id, authUrl: authUrl.toString() },
+        "OAuth authorization URL generated"
+      );
+
+      return { authorizationUrl: authUrl.toString() };
+    }),
 
   /**
-   * List connectors with their connection status.
-   * Returns only connectors that have a valid connection (for use in dropdowns, etc.)
-   * Still includes enabled/disabled state so UI can show toggles.
+   * Check if a connector has valid OAuth tokens.
    */
-  listConnected: protectedProcedure.query(async ({ ctx }) => {
-    if (!config.ai.tools.mcp.enabled) {
-      return [];
-    }
-    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
+  checkAuth: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      assertMcpEnabled();
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
 
-    const results = await Promise.all(
-      connectors.map(async (connector) => {
-        const fetchConnectionStatus =
-          async (): Promise<ConnectionStatusResult> => {
-            const mcpClient = getOrCreateMcpClient({
-              id: connector.id,
-              name: connector.name,
-              url: connector.url,
-              type: connector.type,
-            });
-            const result = await mcpClient.attemptConnection();
-            return {
-              status: result.status,
-              needsAuth: result.needsAuth,
-              error: result.error,
-            };
-          };
+      const session = await getAuthenticatedSession({
+        mcpConnectorId: connector.id,
+      });
 
-        const cachedFetch = createCachedConnectionStatus(
-          connector.id,
-          fetchConnectionStatus
-        );
-
-        try {
-          const status = await cachedFetch();
-          return { connector, status };
-        } catch {
-          return { connector, status: null };
-        }
-      })
-    );
-
-    return results
-      .filter((r) => r.status?.status === "connected")
-      .map((r) => r.connector);
-  }),
+      return {
+        isAuthenticated: !!session?.tokens,
+        hasSession: !!session,
+      };
+    }),
 
   create: protectedProcedure
     .input(
@@ -194,42 +216,6 @@ export const mcpRouter = createTRPCRouter({
         oauthClientId: input.oauthClientId,
         oauthClientSecret: input.oauthClientSecret,
       });
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string().uuid(),
-        updates: z.object({
-          name: z.string().min(1).max(MCP_NAME_MAX_LENGTH).optional(),
-          url: z.string().url().optional(),
-          type: z.enum(["http", "sse"]).optional(),
-          oauthClientId: z.string().nullable().optional(),
-          oauthClientSecret: z.string().nullable().optional(),
-          enabled: z.boolean().optional(),
-        }),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      assertMcpEnabled();
-      const connector = await getConnectorWithPermission({
-        id: input.id,
-        userId: ctx.user.id,
-        permission: "own",
-      });
-
-      const updates = { ...input.updates };
-      if (updates.name) {
-        const nameId = await validateAndGenerateNameId({
-          name: updates.name,
-          userId: connector.userId,
-          excludeId: input.id,
-        });
-        (updates as typeof updates & { nameId: string }).nameId = nameId;
-      }
-
-      await updateMcpConnector({ id: input.id, updates });
-      return { success: true };
     }),
 
   delete: protectedProcedure
@@ -262,83 +248,6 @@ export const mcpRouter = createTRPCRouter({
       await removeMcpClient(input.id);
       invalidateAllMcpCaches(input.id);
       return { success: true };
-    }),
-
-  toggleEnabled: protectedProcedure
-    .input(
-      z.object({
-        id: z.string().uuid(),
-        enabled: z.boolean(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      assertMcpEnabled();
-      await getConnectorWithPermission({
-        id: input.id,
-        userId: ctx.user.id,
-        permission: "own",
-      });
-      await updateMcpConnector({
-        id: input.id,
-        updates: { enabled: input.enabled },
-      });
-      return { success: true };
-    }),
-
-  /**
-   * Lightweight connection test - just checks if we can connect without full discovery.
-   * Much faster than discover since it doesn't fetch tools/resources/prompts.
-   * Cached for 60 seconds.
-   */
-  testConnection: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      assertMcpEnabled();
-      const connector = await getConnectorWithPermission({
-        id: input.id,
-        userId: ctx.user.id,
-        permission: "own-or-global",
-      });
-
-      const fetchConnectionStatus =
-        async (): Promise<ConnectionStatusResult> => {
-          log.debug(
-            { connectorId: connector.id, url: connector.url },
-            "testing MCP connection (cache miss)"
-          );
-
-          const mcpClient = getOrCreateMcpClient({
-            id: connector.id,
-            name: connector.name,
-            url: connector.url,
-            type: connector.type,
-          });
-
-          const result = await mcpClient.attemptConnection();
-
-          log.debug(
-            {
-              connectorId: connector.id,
-              status: result.status,
-              needsAuth: result.needsAuth,
-              error: result.error,
-            },
-            "MCP connection test completed"
-          );
-
-          return {
-            status: result.status,
-            needsAuth: result.needsAuth,
-            error: result.error,
-          };
-        };
-
-      const cachedFetch = createCachedConnectionStatus(
-        connector.id,
-        fetchConnectionStatus
-      );
-
-      return cachedFetch();
     }),
 
   /**
@@ -478,80 +387,60 @@ export const mcpRouter = createTRPCRouter({
       return cachedFetch();
     }),
 
-  /**
-   * Initiate OAuth authorization for an MCP connector.
-   * Returns the authorization URL that the client should open in a popup.
-   */
-  authorize: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      assertMcpEnabled();
-      const connector = await getConnectorWithPermission({
-        id: input.id,
-        userId: ctx.user.id,
-        permission: "own-or-global",
-      });
-
-      log.info({ connectorId: connector.id }, "Initiating OAuth authorization");
-
-      // Remove any existing client to force a fresh connection
-      await removeMcpClient(connector.id);
-
-      // Create a new client and attempt to connect
-      const mcpClient = getOrCreateMcpClient({
-        id: connector.id,
-        name: connector.name,
-        url: connector.url,
-        type: connector.type,
-      });
-
-      await mcpClient.connect();
-
-      if (mcpClient.status !== "authorizing") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Connector does not require OAuth authorization",
-        });
-      }
-
-      const authUrl = mcpClient.getAuthorizationUrl();
-      if (!authUrl) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get authorization URL",
-        });
-      }
-
-      log.info(
-        { connectorId: connector.id, authUrl: authUrl.toString() },
-        "OAuth authorization URL generated"
-      );
-
-      return { authorizationUrl: authUrl.toString() };
-    }),
+  list: protectedProcedure.query(async ({ ctx }) => {
+    if (!config.ai.tools.mcp.enabled) {
+      return [];
+    }
+    return await getMcpConnectorsByUserId({ userId: ctx.user.id });
+  }),
 
   /**
-   * Check if a connector has valid OAuth tokens.
+   * List connectors with their connection status.
+   * Returns only connectors that have a valid connection (for use in dropdowns, etc.)
+   * Still includes enabled/disabled state so UI can show toggles.
    */
-  checkAuth: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      assertMcpEnabled();
-      const connector = await getConnectorWithPermission({
-        id: input.id,
-        userId: ctx.user.id,
-        permission: "own-or-global",
-      });
+  listConnected: protectedProcedure.query(async ({ ctx }) => {
+    if (!config.ai.tools.mcp.enabled) {
+      return [];
+    }
+    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
 
-      const session = await getAuthenticatedSession({
-        mcpConnectorId: connector.id,
-      });
+    const results = await Promise.all(
+      connectors.map(async (connector) => {
+        const fetchConnectionStatus =
+          async (): Promise<ConnectionStatusResult> => {
+            const mcpClient = getOrCreateMcpClient({
+              id: connector.id,
+              name: connector.name,
+              url: connector.url,
+              type: connector.type,
+            });
+            const result = await mcpClient.attemptConnection();
+            return {
+              status: result.status,
+              needsAuth: result.needsAuth,
+              error: result.error,
+            };
+          };
 
-      return {
-        isAuthenticated: !!session?.tokens,
-        hasSession: !!session,
-      };
-    }),
+        const cachedFetch = createCachedConnectionStatus(
+          connector.id,
+          fetchConnectionStatus
+        );
+
+        try {
+          const status = await cachedFetch();
+          return { connector, status };
+        } catch {
+          return { connector, status: null };
+        }
+      })
+    );
+
+    return results
+      .filter((r) => r.status?.status === "connected")
+      .map((r) => r.connector);
+  }),
 
   /**
    * Refresh/reconnect an MCP client after OAuth completion.
@@ -582,5 +471,118 @@ export const mcpRouter = createTRPCRouter({
         status: mcpClient.status,
         needsAuth: mcpClient.status === "authorizing",
       };
+    }),
+
+  /**
+   * Lightweight connection test - just checks if we can connect without full discovery.
+   * Much faster than discover since it doesn't fetch tools/resources/prompts.
+   * Cached for 60 seconds.
+   */
+  testConnection: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      assertMcpEnabled();
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own-or-global",
+      });
+
+      const fetchConnectionStatus =
+        async (): Promise<ConnectionStatusResult> => {
+          log.debug(
+            { connectorId: connector.id, url: connector.url },
+            "testing MCP connection (cache miss)"
+          );
+
+          const mcpClient = getOrCreateMcpClient({
+            id: connector.id,
+            name: connector.name,
+            url: connector.url,
+            type: connector.type,
+          });
+
+          const result = await mcpClient.attemptConnection();
+
+          log.debug(
+            {
+              connectorId: connector.id,
+              status: result.status,
+              needsAuth: result.needsAuth,
+              error: result.error,
+            },
+            "MCP connection test completed"
+          );
+
+          return {
+            status: result.status,
+            needsAuth: result.needsAuth,
+            error: result.error,
+          };
+        };
+
+      const cachedFetch = createCachedConnectionStatus(
+        connector.id,
+        fetchConnectionStatus
+      );
+
+      return cachedFetch();
+    }),
+
+  toggleEnabled: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        enabled: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      assertMcpEnabled();
+      await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own",
+      });
+      await updateMcpConnector({
+        id: input.id,
+        updates: { enabled: input.enabled },
+      });
+      return { success: true };
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        updates: z.object({
+          name: z.string().min(1).max(MCP_NAME_MAX_LENGTH).optional(),
+          url: z.string().url().optional(),
+          type: z.enum(["http", "sse"]).optional(),
+          oauthClientId: z.string().nullable().optional(),
+          oauthClientSecret: z.string().nullable().optional(),
+          enabled: z.boolean().optional(),
+        }),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      assertMcpEnabled();
+      const connector = await getConnectorWithPermission({
+        id: input.id,
+        userId: ctx.user.id,
+        permission: "own",
+      });
+
+      const updates = { ...input.updates };
+      if (updates.name) {
+        const nameId = await validateAndGenerateNameId({
+          name: updates.name,
+          userId: connector.userId,
+          excludeId: input.id,
+        });
+        (updates as typeof updates & { nameId: string }).nameId = nameId;
+      }
+
+      await updateMcpConnector({ id: input.id, updates });
+      return { success: true };
     }),
 });

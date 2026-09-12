@@ -13,11 +13,6 @@ import { generateUUID } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 export const projectRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    const projects = await getProjectsByUserId({ userId: ctx.user.id });
-    return projects;
-  }),
-
   create: protectedProcedure
     .input(
       z.object({
@@ -59,18 +54,13 @@ export const projectRouter = createTRPCRouter({
       return project;
     }),
 
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string().uuid(),
-        updates: z.object({
-          name: z.string().min(1).optional(),
-          instructions: z.string().optional(),
-          icon: z.enum(PROJECT_ICONS).optional(),
-          iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
-        }),
-      })
-    )
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const projects = await getProjectsByUserId({ userId: ctx.user.id });
+    return projects;
+  }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const project = await getProjectById({ id: input.id });
       if (!project) {
@@ -85,7 +75,7 @@ export const projectRouter = createTRPCRouter({
           message: "Project not found",
         });
       }
-      await updateProject({ id: input.id, updates: input.updates });
+      await deleteProject({ id: input.id });
       return { success: true };
     }),
 
@@ -117,8 +107,18 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  remove: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        updates: z.object({
+          name: z.string().min(1).optional(),
+          instructions: z.string().optional(),
+          icon: z.enum(PROJECT_ICONS).optional(),
+          iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),
+        }),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const project = await getProjectById({ id: input.id });
       if (!project) {
@@ -133,7 +133,7 @@ export const projectRouter = createTRPCRouter({
           message: "Project not found",
         });
       }
-      await deleteProject({ id: input.id });
+      await updateProject({ id: input.id, updates: input.updates });
       return { success: true };
     }),
 });

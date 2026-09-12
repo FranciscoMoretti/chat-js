@@ -65,10 +65,10 @@ export async function POST(request: Request) {
     try {
       const data = await uploadFile(filename, fileBuffer, file.type);
       return NextResponse.json(data);
-    } catch (_error) {
+    } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to process request" },
       { status: 500 }

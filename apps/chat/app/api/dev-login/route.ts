@@ -18,7 +18,7 @@ async function serializeSignedCookie(
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
   );
@@ -59,10 +59,10 @@ export async function GET() {
     [devUser] = await db
       .insert(user)
       .values({
-        id,
         email: devEmail,
-        name: "Dev User",
         emailVerified: true,
+        id,
+        name: "Dev User",
       })
       .returning();
   }
@@ -72,12 +72,12 @@ export async function GET() {
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await db.insert(session).values({
-    id: crypto.randomUUID(),
-    userId: devUser.id,
-    token,
-    expiresAt,
     createdAt: now,
+    expiresAt,
+    id: crypto.randomUUID(),
+    token,
     updatedAt: now,
+    userId: devUser.id,
   });
 
   const signedSessionCookie = await serializeSignedCookie(
@@ -85,10 +85,10 @@ export async function GET() {
     token,
     env.AUTH_SECRET,
     {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
       expires: expiresAt,
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
     }
   );
 
@@ -96,7 +96,7 @@ export async function GET() {
   headers.append("Set-Cookie", signedSessionCookie);
 
   return new Response(null, {
-    status: 302,
     headers,
+    status: 302,
   });
 }

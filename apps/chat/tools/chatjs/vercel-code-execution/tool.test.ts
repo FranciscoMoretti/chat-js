@@ -1,23 +1,23 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  create: vi.fn(),
   cleanup: vi.fn(),
-  python: vi.fn(),
+  create: vi.fn(),
   javascript: vi.fn(),
+  python: vi.fn(),
 }));
 vi.mock("./sandbox", () => ({
-  createSandbox: mocks.create,
   cleanupSandbox: mocks.cleanup,
-  getSandboxRuntime: (language: string) => language,
+  createSandbox: mocks.create,
   getErrorMessage: (error: Error) => error.message,
+  getSandboxRuntime: (language: string) => language,
 }));
 vi.mock("./python", () => ({ executePythonInSandbox: mocks.python }));
 vi.mock("./javascript", () => ({
   executeJavaScriptInSandbox: mocks.javascript,
 }));
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ info: vi.fn(), debug: vi.fn(), error: vi.fn() }),
+  createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
 import { codeExecution } from "./tool";
@@ -26,22 +26,22 @@ const sandbox = { id: "isolated-sandbox" };
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.create.mockResolvedValue(sandbox);
-  mocks.python.mockResolvedValue({ message: "4", chart: "" });
-  mocks.javascript.mockResolvedValue({ message: "4", chart: "" });
+  mocks.python.mockResolvedValue({ chart: "", message: "4" });
+  mocks.javascript.mockResolvedValue({ chart: "", message: "4" });
 });
 it.each(["python", "javascript"] as const)(
   "dispatches %s to the sandbox and cleans up",
   async (language) => {
     const result = await codeExecution.execute?.(
-      { title: "Calculate", language, code: "source" },
-      { toolCallId: "test", messages: [], context: {} }
+      { code: "source", language, title: "Calculate" },
+      { context: {}, messages: [], toolCallId: "test" }
     );
-    expect(result).toEqual({ message: "4", chart: "" });
+    expect(result).toEqual({ chart: "", message: "4" });
     expect(mocks.create).toHaveBeenCalledWith(language);
     const executor = language === "python" ? mocks.python : mocks.javascript;
     const unused = language === "python" ? mocks.javascript : mocks.python;
     expect(executor).toHaveBeenCalledWith(
-      expect.objectContaining({ sandbox, code: "source" })
+      expect.objectContaining({ code: "source", sandbox })
     );
     expect(unused).not.toHaveBeenCalled();
     expect(mocks.cleanup).toHaveBeenCalledWith(
@@ -54,12 +54,12 @@ it.each(["python", "javascript"] as const)(
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
   const result = await codeExecution.execute?.(
-    { title: "Calculate", language: "python", code: "source" },
-    { toolCallId: "test", messages: [], context: {} }
+    { code: "source", language: "python", title: "Calculate" },
+    { context: {}, messages: [], toolCallId: "test" }
   );
   expect(result).toEqual({
-    message: "Sandbox execution failed: remote execution failed",
     chart: "",
+    message: "Sandbox execution failed: remote execution failed",
   });
   expect(mocks.cleanup).toHaveBeenCalledWith(
     sandbox,

@@ -3,7 +3,8 @@ import type { FileUIPart, ModelMessage, Tool } from "ai";
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { getOrCreateMcpClient, type MCPClient } from "@/lib/ai/mcp/mcp-client";
+import { getOrCreateMcpClient } from "@/lib/ai/mcp/mcp-client";
+import type { MCPClient } from "@/lib/ai/mcp/mcp-client";
 import type { StreamWriter } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -44,10 +45,10 @@ export function getTools({
   costAccumulator: CostAccumulator;
 }) {
   const documentToolProps = {
-    session,
+    costAccumulator,
     messageId,
     selectedModel,
-    costAccumulator,
+    session,
   };
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
@@ -86,8 +87,8 @@ export function getTools({
           ...(hasEnabledDocumentType
             ? {
                 readDocument: readDocument({
-                  session,
                   dataStream,
+                  session,
                 }),
               }
             : {}),
@@ -97,26 +98,26 @@ export function getTools({
       ? {
           generateImage: generateImageTool({
             attachments,
+            costAccumulator,
             lastGeneratedImage,
             selectedModel,
-            costAccumulator,
           }),
         }
       : {}),
     ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
-            session,
+            costAccumulator,
             dataStream,
             messageId,
             messages: contextForLLM,
-            costAccumulator,
+            session,
           }),
         }
       : {}),
     ...(config.ai.tools.video.enabled
       ? {
-          generateVideo: generateVideoTool({ selectedModel, costAccumulator }),
+          generateVideo: generateVideoTool({ costAccumulator, selectedModel }),
         }
       : {}),
     ...enabledInstalledTools,
@@ -138,8 +139,8 @@ export async function getMcpTools({
 }> {
   if (!config.ai.tools.mcp.enabled) {
     return {
-      tools: {},
       cleanup: async () => Promise.resolve(),
+      tools: {},
     };
   }
 
@@ -147,8 +148,8 @@ export async function getMcpTools({
 
   if (enabledConnectors.length === 0) {
     return {
-      tools: {},
       cleanup: async () => Promise.resolve(),
+      tools: {},
     };
   }
 
@@ -229,5 +230,5 @@ export async function getMcpTools({
     );
   };
 
-  return { tools: allTools, cleanup };
+  return { cleanup, tools: allTools };
 }

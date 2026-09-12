@@ -22,11 +22,6 @@ Use for:
 ${sheetGuidelines}
 
 The spreadsheet will be created with proper column headers and data.`,
-    inputSchema: z.object({
-      title: z.string().describe("Spreadsheet title"),
-      content: z.string().describe("The full CSV content of the spreadsheet"),
-    }),
-
     async execute({ title, content }): Promise<DocumentToolResult> {
       const id = generateUUID();
 
@@ -48,4 +43,8 @@ The spreadsheet will be created with proper column headers and data.`,
         date: new Date().toISOString(),
       };
     },
+    inputSchema: z.object({
+      title: z.string().describe("Spreadsheet title"),
+      content: z.string().describe("The full CSV content of the spreadsheet"),
+    }),
   });

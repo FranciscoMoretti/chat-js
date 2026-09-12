@@ -1,4 +1,5 @@
-import { generateText, type ModelMessage, ToolLoopAgent } from "ai";
+import { generateText, ToolLoopAgent } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -9,7 +10,8 @@ import {
   compressResearchSystemPrompt,
   researchSystemPrompt,
 } from "./prompts";
-import { type AgentOptions, createTelemetry } from "./types";
+import { createTelemetry } from "./types";
+import type { AgentOptions } from "./types";
 import { getAllTools, getModelContextWindow, getTodayStr } from "./utils";
 
 export async function runResearcher(
@@ -28,22 +30,22 @@ export async function runResearcher(
   }
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId,
-      title: "Starting research on topic",
       message: topic,
-      type: "thoughts",
       status: "running",
+      title: "Starting research on topic",
+      toolCallId,
+      type: "thoughts",
     },
+    type: "data-researchUpdate",
   });
 
   const researcherAgent = new ToolLoopAgent({
     model,
     instructions: researchSystemPrompt({
-      mcp_prompt: config.mcp_prompt || "",
       date: getTodayStr(),
       max_search_queries: config.search_api_max_queries,
+      mcp_prompt: config.mcp_prompt || "",
     }),
     tools,
     prepareStep: () => ({
@@ -51,10 +53,10 @@ export async function runResearcher(
         Object.keys(tools).map((name) => [
           name,
           {
-            dataStream,
             costAccumulator: options.costAccumulator,
-            writeTopLevelUpdates: false,
+            dataStream,
             toolCallIdOverride: toolCallId,
+            writeTopLevelUpdates: false,
           },
         ])
       ),
@@ -73,21 +75,21 @@ export async function runResearcher(
   });
 
   const { responseMessages } = await researcherAgent.generate({
-    prompt: topic,
     abortSignal,
+    prompt: topic,
   });
 
   const compressed = await compressResearch(responseMessages, options);
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId,
-      title: "Research topic completed",
       message: topic,
-      type: "thoughts",
       status: "completed",
+      title: "Research topic completed",
+      toolCallId,
+      type: "thoughts",
     },
+    type: "data-researchUpdate",
   });
 
   return compressed;
@@ -102,13 +104,13 @@ async function compressResearch(
 
   const messages: ModelMessage[] = [
     {
-      role: "system" as const,
       content: compressResearchSystemPrompt({ date: getTodayStr() }),
+      role: "system" as const,
     },
     ...researchMessages,
     {
-      role: "user" as const,
       content: compressResearchSimpleHumanMessage,
+      role: "user" as const,
     },
   ];
 

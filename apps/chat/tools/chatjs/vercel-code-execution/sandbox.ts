@@ -9,8 +9,8 @@ export function getTokenAuth(): Record<string, string> {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
   if (VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN) {
     return {
-      teamId: VERCEL_TEAM_ID,
       projectId: VERCEL_PROJECT_ID,
+      teamId: VERCEL_TEAM_ID,
       token: VERCEL_TOKEN,
     };
   }
@@ -33,9 +33,9 @@ export function getSandboxRuntime(
 
 export function createSandbox(runtime: string): Promise<Sandbox> {
   return Sandbox.create({
+    resources: { vcpus: 2 },
     runtime,
     timeout: 5 * 60 * 1000,
-    resources: { vcpus: 2 },
     ...getTokenAuth(),
   });
 }
@@ -51,8 +51,8 @@ export async function cleanupSandbox(
   try {
     await sandbox.stop();
     log.info({ requestId }, "sandbox closed");
-  } catch (closeErr) {
-    log.warn({ requestId, closeErr }, "failed to close sandbox");
+  } catch (error) {
+    log.warn({ requestId, error }, "failed to close sandbox");
   }
 }
 

@@ -17,18 +17,18 @@ it("skips an absent optional Redis and rejects REST credentials without exposing
         process.execPath,
         [
           fileURLToPath(import.meta.resolve("tsx/cli")),
-          fileURLToPath(new URL("./check-redis.ts", import.meta.url)),
+          fileURLToPath(new URL("check-redis.ts", import.meta.url)),
         ],
         {
           cwd,
+          encoding: "utf8",
           env: {
             NODE_ENV: "test",
+            REDIS_URL: url,
             TSX_TSCONFIG_PATH: fileURLToPath(
               new URL("../tsconfig.json", import.meta.url)
             ),
-            REDIS_URL: url,
           },
-          encoding: "utf8",
           timeout: 10_000,
         }
       );
@@ -41,6 +41,6 @@ it("skips an absent optional Redis and rejects REST credentials without exposing
       );
     }
   } finally {
-    rmSync(cwd, { recursive: true, force: true });
+    rmSync(cwd, { force: true, recursive: true });
   }
 });

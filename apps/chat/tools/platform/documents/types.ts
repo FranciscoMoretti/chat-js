@@ -48,12 +48,12 @@ export type DocumentToolType = (typeof documentToolTypes)[number];
 
 // Explicit mapping from tool type to artifact kind
 const toolTypeToKindMap: Record<DocumentToolType, ArtifactKind> = {
-  "tool-createTextDocument": "text",
   "tool-createCodeDocument": "code",
   "tool-createSheetDocument": "sheet",
-  "tool-editTextDocument": "text",
+  "tool-createTextDocument": "text",
   "tool-editCodeDocument": "code",
   "tool-editSheetDocument": "sheet",
+  "tool-editTextDocument": "text",
 };
 
 export function getToolKind(toolType: DocumentToolType): ArtifactKind {

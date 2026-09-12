@@ -33,8 +33,12 @@ async function checkRedis() {
   });
   const subscriber = publisher.duplicate();
   // Failures are reported below without exposing provider errors or credentials.
-  publisher.on("error", () => undefined);
-  subscriber.on("error", () => undefined);
+  publisher.on("error", () => {
+    // Failures are reported below without exposing provider errors or credentials.
+  });
+  subscriber.on("error", () => {
+    // Failures are reported below without exposing provider errors or credentials.
+  });
   const key = `${config.appPrefix}:connection-check:${randomUUID()}`;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   try {

@@ -4,13 +4,9 @@ import { config } from "@/lib/config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: config.appName,
-    short_name: config.appName,
-    description: config.appDescription,
-    start_url: "/",
-    display: "standalone",
     background_color: "#fff",
-    theme_color: "#fff",
+    description: config.appDescription,
+    display: "standalone",
     icons: [
       {
         src: "/icon.svg",
@@ -18,5 +14,9 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/svg+xml",
       },
     ],
+    name: config.appName,
+    short_name: config.appName,
+    start_url: "/",
+    theme_color: "#fff",
   };
 }

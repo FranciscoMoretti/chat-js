@@ -17,10 +17,10 @@ function appendMessageResponse(message: ChatMessage) {
   const stream = createUIMessageStream<ChatMessage>({
     execute: ({ writer }) => {
       writer.write({
-        id: crypto.randomUUID(),
-        type: "data-appendMessage",
         data: JSON.stringify(message),
+        id: crypto.randomUUID(),
         transient: true,
+        type: "data-appendMessage",
       });
     },
     generateId: () => message.id,

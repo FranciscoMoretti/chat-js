@@ -6,17 +6,12 @@ import {
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { after } from "next/server";
-import {
-  createResumableStreamContext,
-  type ResumableStreamContext,
-} from "resumable-stream";
+import { createResumableStreamContext } from "resumable-stream";
+import type { ResumableStreamContext } from "resumable-stream";
 import throttle from "throttleit";
 
-import {
-  type AppModelDefinition,
-  type AppModelId,
-  getAppModelDefinition,
-} from "@/lib/ai/app-models";
+import { getAppModelDefinition } from "@/lib/ai/app-models";
+import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import { createCoreChatAgent } from "@/lib/ai/core-chat-agent";
 import { determineExplicitlyRequestedTools } from "@/lib/ai/determine-explicitly-requested-tools";
 import { ChatSDKError } from "@/lib/ai/errors";
@@ -28,11 +23,10 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import { getStreamErrorMessage } from "@/lib/ai/stream-errors";
 import { calculateMessagesTokens } from "@/lib/ai/token-utils";
 import {
-  type ChatMessage,
   getPrimarySelectedModelId,
   isSelectedModelValue,
-  type ToolName,
 } from "@/lib/ai/types";
+import type { ChatMessage, ToolName } from "@/lib/ai/types";
 import {
   getAnonymousSession,
   setAnonymousSession,
@@ -91,10 +85,10 @@ export function getStreamContext(): ResumableStreamContext | null {
   }
 
   globalStreamContext = createResumableStreamContext({
-    waitUntil: after,
     keyPrefix: `${config.appPrefix}:resumable-stream`,
     publisher: redisPublisher,
     subscriber: redisSubscriber,
+    waitUntil: after,
   });
 
   return globalStreamContext;
@@ -121,11 +115,11 @@ async function handleAnonymousSession({
   if (!rateLimitResult.success) {
     log.warn({ clientIP }, "Rate limit exceeded");
     return {
-      success: false,
       error: Response.json(
         { error: rateLimitResult.error, type: "RATE_LIMIT_EXCEEDED" },
         { status: 429, headers: rateLimitResult.headers || {} }
       ),
+      success: false,
     };
   }
 
@@ -135,7 +129,6 @@ async function handleAnonymousSession({
   if (session.remainingCredits <= 0) {
     log.info("Anonymous credit limit reached");
     return {
-      success: false,
       error: Response.json(
         {
           error: "You've used your free credits. Sign up to continue chatting!",
@@ -145,6 +138,7 @@ async function handleAnonymousSession({
         },
         { status: 402, headers: rateLimitResult.headers || {} }
       ),
+      success: false,
     };
   }
 
@@ -155,7 +149,6 @@ async function handleAnonymousSession({
   ) {
     log.warn("Model not available for anonymous users");
     return {
-      success: false,
       error: Response.json(
         {
           error: "Model not available for anonymous users",
@@ -163,10 +156,11 @@ async function handleAnonymousSession({
         },
         { status: 403, headers: rateLimitResult.headers || {} }
       ),
+      success: false,
     };
   }
 
-  return { success: true, session };
+  return { session, success: true };
 }
 
 async function handleChatValidation({
@@ -190,8 +184,8 @@ async function handleChatValidation({
       log.warn(
         {
           chatId,
-          userId,
           chatUserId: chat.userId,
+          userId,
         },
         "Unauthorized - chat ownership mismatch"
       );
@@ -206,7 +200,7 @@ async function handleChatValidation({
       message: userMessage,
     });
 
-    await saveChatIfNotExists({ id: chatId, userId, title, projectId });
+    await saveChatIfNotExists({ id: chatId, projectId, title, userId });
   }
 
   const [existentMessage] = await getMessageById({ id: userMessage.id });
@@ -215,8 +209,8 @@ async function handleChatValidation({
     log.warn(
       {
         chatId,
-        userMessageId: userMessage.id,
         existentMessageChatId: existentMessage.chatId,
+        userMessageId: userMessage.id,
       },
       "Unauthorized - message chatId mismatch"
     );
@@ -224,8 +218,8 @@ async function handleChatValidation({
   }
 
   await saveMessageIfNotExists({
-    id: userMessage.id,
     chatId,
+    id: userMessage.id,
     message: userMessage,
   });
 
@@ -275,9 +269,9 @@ async function handleUserValidationAndCredits({
 }): Promise<{ error: Response } | { isNewChat: boolean }> {
   const validationResult = await handleChatValidation({
     chatId,
+    projectId,
     userId,
     userMessage,
-    projectId,
   });
   if (validationResult.error) {
     return { error: validationResult.error };
@@ -347,7 +341,7 @@ async function createChatStream({
   onChunk?: () => void;
 }) {
   const log = createModuleLogger("api:chat:stream");
-  const system = await getSystemPrompt({ isAnonymous, chatId });
+  const system = await getSystemPrompt({ chatId, isAnonymous });
 
   // Create cost accumulator to track all LLM and API costs
   const costAccumulator = new CostAccumulator();
@@ -459,20 +453,6 @@ async function createChatStream({
       }
     },
     generateId: () => messageId,
-    onFinish: async ({ messages }) => {
-      clearTimeout(timeoutId);
-      await finalizeMessageAndCredits({
-        messages,
-        userId,
-        isAnonymous,
-        chatId,
-        costAccumulator,
-        selectedModelId,
-        parallelGroupId,
-        parallelIndex,
-        isPrimaryParallel,
-      });
-    },
     onError: (error) => {
       clearTimeout(timeoutId);
       // If the stream fails, ensure the placeholder assistant message is no longer marked resumable.
@@ -497,6 +477,20 @@ async function createChatStream({
       log.error({ error }, "onError");
       return getStreamErrorMessage(error);
     },
+    onFinish: async ({ messages }) => {
+      clearTimeout(timeoutId);
+      await finalizeMessageAndCredits({
+        messages,
+        userId,
+        isAnonymous,
+        chatId,
+        costAccumulator,
+        selectedModelId,
+        parallelGroupId,
+        parallelIndex,
+        isPrimaryParallel,
+      });
+    },
   });
 
   return stream;
@@ -504,14 +498,16 @@ async function createChatStream({
 
 function emptyChatStreamResponse() {
   const stream = createUIMessageStream<ChatMessage>({
-    execute: () => undefined,
+    execute: () => {
+      // This stream intentionally emits no messages.
+    },
   });
 
   return new Response(stream.pipeThrough(new JsonToSseTransformStream()), {
     headers: {
-      "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "Content-Type": "text/event-stream",
     },
   });
 }
@@ -573,22 +569,22 @@ async function executeChatRequest({
     // The first provisional request can replay before its persistence acknowledgment arrives, so
     // placeholder creation must be idempotent.
     const insertedMessage = await saveMessageIfNotExists({
-      id: messageId,
       chatId,
+      id: messageId,
       message: {
         id: messageId,
-        role: "assistant",
-        parts: [],
         metadata: {
+          activeStreamId: streamId,
           createdAt: new Date(),
-          parentMessageId: userMessage.id,
+          isPrimaryParallel,
           parallelGroupId,
           parallelIndex,
-          isPrimaryParallel,
+          parentMessageId: userMessage.id,
           selectedModel: selectedModelId,
           selectedTool: undefined,
-          activeStreamId: streamId,
         },
+        parts: [],
+        role: "assistant",
       },
     });
 
@@ -624,22 +620,22 @@ async function executeChatRequest({
 
   // Build the data stream that will emit tokens
   const stream = await createChatStream({
-    messageId,
+    abortController,
     chatId,
-    userMessage,
-    previousMessages,
-    selectedModelId,
+    explicitlyRequestedTools,
+    isAnonymous,
+    isPrimaryParallel,
+    mcpConnectors,
+    messageId,
+    onChunk,
     parallelGroupId,
     parallelIndex,
-    isPrimaryParallel,
-    explicitlyRequestedTools,
-    userId,
-    abortController,
-    isAnonymous,
-    timeoutId,
-    mcpConnectors,
+    previousMessages,
+    selectedModelId,
     streamId,
-    onChunk,
+    timeoutId,
+    userId,
+    userMessage,
   });
 
   const publisher = redisPublisher;
@@ -660,9 +656,9 @@ async function executeChatRequest({
   }
 
   const sseHeaders = {
-    "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
   } as const;
 
   const streamContext = getStreamContext();
@@ -709,14 +705,14 @@ async function validateAndSetupSession({
     if (!user) {
       log.warn("User not found");
       return {
-        success: false,
         error: new Response("User not found", { status: 404 }),
+        success: false,
       };
     }
   } else {
     const result = await handleAnonymousSession({
-      request,
       redis: redisPublisher,
+      request,
       selectedModelId,
     });
 
@@ -732,17 +728,17 @@ async function validateAndSetupSession({
   } catch {
     log.warn("Model not found");
     return {
-      success: false,
       error: new Response("Model not found", { status: 404 }),
+      success: false,
     };
   }
 
   return {
+    anonymousSession,
+    isAnonymous,
+    modelDefinition,
     success: true,
     userId,
-    isAnonymous,
-    anonymousSession,
-    modelDefinition,
   };
 }
 
@@ -768,14 +764,14 @@ async function prepareRequestContext({
   );
 
   if (totalTokens > MAX_INPUT_TOKENS) {
-    log.warn({ totalTokens, MAX_INPUT_TOKENS }, "Token limit exceeded");
+    log.warn({ MAX_INPUT_TOKENS, totalTokens }, "Token limit exceeded");
     const error = new ChatSDKError(
       "input_too_long:chat",
       `Message too long: ${totalTokens} tokens (max: ${MAX_INPUT_TOKENS})`
     );
     return {
-      previousMessages: [],
       error: error.toResponse(),
+      previousMessages: [],
     };
   }
 
@@ -788,7 +784,7 @@ async function prepareRequestContext({
 
   const previousMessages = messageThreadToParent.slice(-5);
 
-  return { previousMessages, error: null };
+  return { error: null, previousMessages };
 }
 
 async function finalizeMessageAndCredits({
@@ -824,24 +820,24 @@ async function finalizeMessageAndCredits({
 
     if (!isAnonymous) {
       messageSaved = await updateMessage({
-        id: assistantMessage.id,
         chatId,
+        id: assistantMessage.id,
         message: {
           ...assistantMessage,
           metadata: {
             ...assistantMessage.metadata,
+            activeStreamId: null,
+            isPrimaryParallel:
+              isPrimaryParallel ??
+              assistantMessage.metadata.isPrimaryParallel ??
+              null,
             parallelGroupId:
               parallelGroupId ??
               assistantMessage.metadata.parallelGroupId ??
               null,
             parallelIndex:
               parallelIndex ?? assistantMessage.metadata.parallelIndex ?? null,
-            isPrimaryParallel:
-              isPrimaryParallel ??
-              assistantMessage.metadata.isPrimaryParallel ??
-              null,
             selectedModel: selectedModelId,
-            activeStreamId: null,
           },
         },
       });
@@ -872,7 +868,7 @@ async function finalizeMessageAndCredits({
   }
 }
 
-type ChatPostBody = {
+interface ChatPostBody {
   id: string;
   isPrimaryParallel?: boolean | null;
   message: ChatMessage;
@@ -882,7 +878,7 @@ type ChatPostBody = {
   projectId?: string;
   requestId?: string;
   selectedModelId?: AppModelId;
-};
+}
 
 type ChatPostBodyResult =
   | { success: false; error: Response }
@@ -902,7 +898,7 @@ function normalizeChatMessage(value: unknown): ChatMessage | null {
     return null;
   }
 
-  const metadata = value.metadata;
+  const { metadata } = value;
 
   if (
     typeof value.id !== "string" ||
@@ -919,8 +915,8 @@ function normalizeChatMessage(value: unknown): ChatMessage | null {
     return null;
   }
 
-  const parentMessageId = metadata.parentMessageId;
-  const activeStreamId = metadata.activeStreamId;
+  const { parentMessageId } = metadata;
+  const { activeStreamId } = metadata;
 
   const hasValidParentMessageId =
     parentMessageId === null || typeof parentMessageId === "string";
@@ -935,9 +931,9 @@ function normalizeChatMessage(value: unknown): ChatMessage | null {
     ...(value as ChatMessage),
     metadata: {
       ...(metadata as ChatMessage["metadata"]),
+      activeStreamId,
       createdAt,
       parentMessageId,
-      activeStreamId,
       selectedModel: metadata.selectedModel,
     },
   };
@@ -979,15 +975,15 @@ async function readChatPostBody(
     rawBody = await request.json();
   } catch {
     return {
-      success: false,
       error: new ChatSDKError("bad_request:api").toResponse(),
+      success: false,
     };
   }
 
   if (!isRecord(rawBody)) {
     return {
-      success: false,
       error: new ChatSDKError("bad_request:api").toResponse(),
+      success: false,
     };
   }
 
@@ -1004,13 +1000,12 @@ async function readChatPostBody(
     anonymousPreviousMessages.some((message) => !message)
   ) {
     return {
-      success: false,
       error: new ChatSDKError("bad_request:api").toResponse(),
+      success: false,
     };
   }
 
   return {
-    success: true,
     body: {
       id: rawBody.id,
       isPrimaryParallel: optionalNullableBoolean(rawBody.isPrimaryParallel),
@@ -1024,6 +1019,7 @@ async function readChatPostBody(
         | AppModelId
         | undefined,
     },
+    success: true,
   };
 }
 
@@ -1041,9 +1037,9 @@ async function prepareChatPersistenceAndCredits({
   if (userId) {
     return await handleUserValidationAndCredits({
       chatId,
+      projectId,
       userId,
       userMessage,
-      projectId,
     });
   }
 
@@ -1083,10 +1079,10 @@ async function prepareChatExecutionInputs({
 > {
   const [contextResult, mcpConnectors] = await Promise.all([
     prepareRequestContext({
-      userMessage,
+      anonymousPreviousMessages,
       chatId,
       isAnonymous,
-      anonymousPreviousMessages,
+      userMessage,
     }),
     config.ai.tools.mcp.enabled && userId && !isAnonymous
       ? getMcpConnectorsByUserId({ userId })
@@ -1098,8 +1094,8 @@ async function prepareChatExecutionInputs({
   }
 
   return {
-    previousMessages: contextResult.previousMessages,
     mcpConnectors,
+    previousMessages: contextResult.previousMessages,
   };
 }
 
@@ -1185,20 +1181,20 @@ export async function POST(request: NextRequest) {
     }, 290_000); // 290 seconds
 
     return await executeChatRequest({
+      abortController,
       chatId,
-      userMessage,
+      explicitlyRequestedTools,
+      isAnonymous,
+      isPrimaryParallel: isPrimaryParallel ?? null,
+      mcpConnectors: executionInputs.mcpConnectors,
+      parallelGroupId: responseParallelGroupId,
+      parallelIndex: parallelIndex ?? null,
       previousMessages: executionInputs.previousMessages,
       requestId,
       selectedModelId,
-      parallelGroupId: responseParallelGroupId,
-      parallelIndex: parallelIndex ?? null,
-      isPrimaryParallel: isPrimaryParallel ?? null,
-      explicitlyRequestedTools,
-      userId,
-      isAnonymous,
-      abortController,
       timeoutId,
-      mcpConnectors: executionInputs.mcpConnectors,
+      userId,
+      userMessage,
     });
   } catch (error) {
     log.error(

@@ -1,5 +1,6 @@
 import { tavily } from "@tavily/core";
-import { type ToolExecutionOptions, tool } from "ai";
+import { tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
@@ -22,21 +23,21 @@ Avoid:
 - Pulling content from a single known URL (use retrieveUrl instead)`,
   // Keep defaultable fields required and nullable for strict tool calling.
   inputSchema: z.object({
-    search_queries: searchQueriesSchema,
-    topics: z
-      .array(z.enum(["general", "news"]))
+    exclude_domains: z
+      .array(z.string())
       .describe(
-        "Array of topic types to search for. Pass null for general search."
+        "Domains to exclude from all results. Pass null for no exclusions."
       )
       .nullable(),
     searchDepth: z
       .enum(["basic", "advanced"])
       .describe('Search depth to use. Pass null for "basic".')
       .nullable(),
-    exclude_domains: z
-      .array(z.string())
+    search_queries: searchQueriesSchema,
+    topics: z
+      .array(z.enum(["general", "news"]))
       .describe(
-        "Domains to exclude from all results. Pass null for no exclusions."
+        "Array of topic types to search for. Pass null for general search."
       )
       .nullable(),
   }),
@@ -67,10 +68,10 @@ Avoid:
     const log = createModuleLogger("tools/web-search");
     log.debug(
       {
-        queriesCount: search_queries.length,
-        topics,
-        searchDepth,
         exclude_domains,
+        queriesCount: search_queries.length,
+        searchDepth,
+        topics,
       },
       "webSearch.execute"
     );
@@ -80,10 +81,8 @@ Avoid:
     const safeExcludeDomains = exclude_domains ?? [];
 
     const result = await executeMultiQuerySearch({
-      search_queries: search_queries.map((query) => ({
-        query: query.query,
-        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
-      })),
+      completeTitle: "Search complete",
+      dataStream,
       search: async ({ query, maxResults }, index) => {
         if (!env.TAVILY_API_KEY) {
           throw new Error("Set TAVILY_API_KEY to enable Tavily search.");
@@ -106,11 +105,13 @@ Avoid:
           content,
         }));
       },
-      dataStream,
+      search_queries: search_queries.map((query) => ({
+        query: query.query,
+        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+      })),
+      title: "Searching",
       toolCallId,
       writeTopLevelUpdates,
-      title: "Searching",
-      completeTitle: "Search complete",
     });
 
     // Report API cost

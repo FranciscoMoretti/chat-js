@@ -103,9 +103,9 @@ export async function getModelContextWindow(modelId: ModelId): Promise<number> {
 // Misc Utils
 export function getTodayStr(): string {
   return new Date().toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
     weekday: "short",
     year: "numeric",
-    month: "short",
-    day: "numeric",
   });
 }

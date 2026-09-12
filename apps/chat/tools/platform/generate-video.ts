@@ -1,7 +1,8 @@
 import { experimental_generateVideo as generateVideo, tool } from "ai";
 import { z } from "zod";
 
-import { type AppModelId, getAppModelDefinition } from "@/lib/ai/app-models";
+import { getAppModelDefinition } from "@/lib/ai/app-models";
+import type { AppModelId } from "@/lib/ai/app-models";
 import { getVideoModel } from "@/lib/ai/providers";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
@@ -63,22 +64,6 @@ export const generateVideoTool = ({
   tool({
     description:
       "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
-    inputSchema: z.object({
-      prompt: z
-        .string()
-        .describe("A descriptive prompt for the video to generate."),
-      aspectRatio: z
-        .enum(["16:9", "9:16", "1:1"])
-        .optional()
-        .describe("Optional output aspect ratio. Defaults to 16:9."),
-      durationSeconds: z
-        .number()
-        .int()
-        .min(1)
-        .max(10)
-        .optional()
-        .describe("Optional video duration in seconds. Defaults to 5."),
-    }),
     execute: async ({ prompt, aspectRatio, durationSeconds }) => {
       const startMs = Date.now();
       const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
@@ -165,4 +150,20 @@ export const generateVideoTool = ({
         throw error;
       }
     },
+    inputSchema: z.object({
+      prompt: z
+        .string()
+        .describe("A descriptive prompt for the video to generate."),
+      aspectRatio: z
+        .enum(["16:9", "9:16", "1:1"])
+        .optional()
+        .describe("Optional output aspect ratio. Defaults to 16:9."),
+      durationSeconds: z
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .optional()
+        .describe("Optional video duration in seconds. Defaults to 5."),
+    }),
   });

@@ -23,9 +23,6 @@ Use for:
 
 Avoid:
 - Documents that were not produced in the current conversation`,
-    inputSchema: z.object({
-      documentId: z.string().describe("The ID of the document to read"),
-    }),
     execute: async ({ documentId }) => {
       const document = await getDocumentById({ id: documentId });
 
@@ -49,4 +46,7 @@ Avoid:
         createdAt: document.createdAt,
       };
     },
+    inputSchema: z.object({
+      documentId: z.string().describe("The ID of the document to read"),
+    }),
   });

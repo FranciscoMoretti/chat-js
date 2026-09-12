@@ -71,22 +71,22 @@ await __run();
 `;
 }
 
-type JsExecInfo = {
+interface JsExecInfo {
   success: boolean;
   error?: { name: string; value: string; traceback: string };
-};
+}
 
 function execInfoFromExitCode(exitCode: number): JsExecInfo {
   if (exitCode === 0) {
     return { success: true };
   }
   return {
-    success: false,
     error: {
       name: "SandboxExecutionError",
-      value: "Execution completed without a valid status trailer",
       traceback: "",
+      value: "Execution completed without a valid status trailer",
     },
+    success: false,
   };
 }
 
@@ -107,8 +107,8 @@ async function parseExecutionOutput(execResult: {
 
   if (statusLineIndex === -1) {
     return {
-      outputText: stdout ?? "",
       execInfo: execInfoFromExitCode(execResult.exitCode),
+      outputText: stdout ?? "",
     };
   }
 
@@ -120,15 +120,15 @@ async function parseExecutionOutput(execResult: {
     execInfo = JSON.parse(execInfoRaw) as JsExecInfo;
   } catch {
     return {
-      outputText: stdout ?? "",
       execInfo: execInfoFromExitCode(execResult.exitCode),
+      outputText: stdout ?? "",
     };
   }
   lines.splice(statusLineIndex, 1);
 
   return {
-    outputText: lines.join("\n").trim(),
     execInfo,
+    outputText: lines.join("\n").trim(),
   };
 }
 
@@ -139,8 +139,8 @@ export async function executeJavaScriptInSandbox({
   requestId,
 }: CodeExecutionContext): Promise<CodeExecutionResult> {
   const execResult = await sandbox.runCommand({
-    cmd: "node",
     args: ["--input-type=module", "-e", createWrappedCode(code)],
+    cmd: "node",
   });
 
   const { outputText, execInfo } = await parseExecutionOutput(execResult);
@@ -156,13 +156,13 @@ export async function executeJavaScriptInSandbox({
   if (execInfo.error) {
     message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
     log.error(
-      { requestId, error: execInfo.error },
+      { error: execInfo.error, requestId },
       "javascript execution error"
     );
   }
 
   return {
-    message: message.trim(),
     chart: "",
+    message: message.trim(),
   };
 }

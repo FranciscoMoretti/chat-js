@@ -6,8 +6,8 @@ const envMock: {
   VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: string | undefined;
 } = {
   VERCEL_SANDBOX_RUNTIME: undefined,
-  VERCEL_SANDBOX_RUNTIME_PYTHON: undefined,
   VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: undefined,
+  VERCEL_SANDBOX_RUNTIME_PYTHON: undefined,
 };
 
 vi.mock("@/lib/env", () => ({

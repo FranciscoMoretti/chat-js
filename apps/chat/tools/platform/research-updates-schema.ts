@@ -10,7 +10,6 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
 });
 
 const WebSearchSchema = TaskUpdateSchema.extend({
-  type: z.literal("web"),
   queries: z.array(z.string()),
   results: z
     .array(
@@ -23,6 +22,7 @@ const WebSearchSchema = TaskUpdateSchema.extend({
       })
     )
     .optional(),
+  type: z.literal("web"),
 });
 
 export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
@@ -30,23 +30,23 @@ export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 export type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
 
 const StartedSchema = BaseStreamUpdateSchema.extend({
-  type: z.literal("started"),
   timestamp: z.number(),
+  type: z.literal("started"),
 });
 
 const CompletedSchema = BaseStreamUpdateSchema.extend({
-  type: z.literal("completed"),
   timestamp: z.number(),
+  type: z.literal("completed"),
 });
 
 const ThoughtsSchema = TaskUpdateSchema.extend({
-  type: z.literal("thoughts"),
   message: z.string(),
+  type: z.literal("thoughts"),
 });
 
 const WritingSchema = TaskUpdateSchema.extend({
-  type: z.literal("writing"),
   message: z.string().optional(),
+  type: z.literal("writing"),
 });
 
 const ResearchUpdateSchema = z.discriminatedUnion("type", [

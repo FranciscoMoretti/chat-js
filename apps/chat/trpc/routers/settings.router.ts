@@ -14,15 +14,15 @@ export const settingsRouter = createTRPCRouter({
   setModelEnabled: protectedProcedure
     .input(
       z.object({
-        modelId: z.string(),
         enabled: z.boolean(),
+        modelId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       await upsertUserModelPreference({
-        userId: ctx.user.id,
-        modelId: input.modelId,
         enabled: input.enabled,
+        modelId: input.modelId,
+        userId: ctx.user.id,
       });
       return { success: true };
     }),

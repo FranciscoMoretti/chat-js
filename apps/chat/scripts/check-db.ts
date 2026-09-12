@@ -30,11 +30,13 @@ async function checkDatabase() {
     const settings = databaseConnection(parsed.data, purpose);
     const sql = postgres(settings.url, {
       ...settings.options,
-      max: 1,
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
+      max: 1,
     });
     const deadline = setTimeout(() => {
-      sql.end({ timeout: 0 }).catch(() => undefined);
+      sql.end({ timeout: 0 }).catch(() => {
+        // The timeout closes the client before the query result is relevant.
+      });
     }, CHECK_DEADLINE_MS);
     try {
       await sql`select 1`;

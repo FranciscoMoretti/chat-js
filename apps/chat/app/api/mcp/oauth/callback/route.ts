@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import {
   createMcpClientForCallback,
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   };
 
   log.info(
-    { hasCode: !!code, hasState: !!state, error },
+    { error, hasCode: !!code, hasState: !!state },
     "OAuth callback received"
   );
 
@@ -81,8 +82,8 @@ export async function GET(request: NextRequest) {
     const mcpClient = createMcpClientForCallback({
       id: connector.id,
       name: connector.name,
-      url: connector.url,
       type: connector.type,
+      url: connector.url,
     });
 
     // Complete the OAuth flow (don't connect first - just exchange the code)
@@ -99,17 +100,19 @@ export async function GET(request: NextRequest) {
     await removeMcpClient(connector.id);
 
     return redirectToConnector({
-      connectorId: connector.id,
       connected: true,
+      connectorId: connector.id,
     });
-  } catch (err) {
+  } catch (oauthError) {
     const errorMessage =
-      err instanceof Error ? err.message : "Token exchange failed";
+      oauthError instanceof Error
+        ? oauthError.message
+        : "Token exchange failed";
     log.error(
       {
-        error: err,
+        error: oauthError,
         errorMessage,
-        errorStack: err instanceof Error ? err.stack : undefined,
+        errorStack: oauthError instanceof Error ? oauthError.stack : undefined,
         connectorId: connector.id,
       },
       "OAuth token exchange failed"

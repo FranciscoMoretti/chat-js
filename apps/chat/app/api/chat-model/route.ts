@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // Route for updating selected-model cookie because setting in an action causes a refresh
 export async function POST(request: NextRequest) {
@@ -15,14 +16,14 @@ export async function POST(request: NextRequest) {
 
     const cookieStore = await cookies();
     cookieStore.set("chat-model", model, {
-      path: "/",
       maxAge: 60 * 60 * 24 * 365, // 1 year
+      path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
 
     return NextResponse.json({ success: true });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to set cookie" },
       { status: 500 }
