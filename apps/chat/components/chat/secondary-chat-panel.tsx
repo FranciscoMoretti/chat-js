@@ -4,13 +4,13 @@ import { useSession } from "@/providers/session-provider";
 
 import { ArtifactPanel } from "../artifact-panel";
 
-export function SecondaryChatPanel({
+export const SecondaryChatPanel = ({
   isReadonly,
   className,
 }: {
   isReadonly: boolean;
   className?: string;
-}) {
+}) => {
   const { data: session } = useSession();
 
   return (
@@ -20,4 +20,4 @@ export function SecondaryChatPanel({
       isReadonly={isReadonly}
     />
   );
-}
+};

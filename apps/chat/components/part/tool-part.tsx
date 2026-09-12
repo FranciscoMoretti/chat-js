@@ -25,7 +25,7 @@ type InstalledToolRenderer = ComponentType<{
   isReadonly: boolean;
 }>;
 
-function renderInstalledTool({
+const renderInstalledTool = ({
   part,
   messageId,
   isReadonly,
@@ -33,7 +33,7 @@ function renderInstalledTool({
   part: ToolUIPart<ChatTools>;
   messageId: string;
   isReadonly: boolean;
-}) {
+}) => {
   const Renderer = (
     toolRendererRegistry as Record<string, InstalledToolRenderer | undefined>
   )[part.type];
@@ -43,9 +43,9 @@ function renderInstalledTool({
   }
 
   return <Renderer isReadonly={isReadonly} messageId={messageId} tool={part} />;
-}
+};
 
-export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
+export const ToolPart = ({ part, messageId, isReadonly }: ToolPartProps) => {
   const type = part.type;
 
   if (
@@ -78,4 +78,4 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
   }
 
   return null;
-}
+};

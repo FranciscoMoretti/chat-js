@@ -82,13 +82,13 @@ const VARIANT_CONFIG: Record<
   },
 };
 
-export function LimitDisplay({
+export const LimitDisplay = ({
   className,
   forceVariant,
 }: {
   className?: string;
   forceVariant?: "credits" | "model" | "image";
-}) {
+}) => {
   const { credits, isLoadingCredits } = useGetCredits();
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -149,4 +149,4 @@ export function LimitDisplay({
       </motion.div>
     </AnimatePresence>
   );
-}
+};

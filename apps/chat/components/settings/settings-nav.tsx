@@ -15,7 +15,7 @@ type SettingsNavItem = {
   icon: LucideIcon;
 };
 
-function getNavItems(): SettingsNavItem[] {
+const getNavItems = (): SettingsNavItem[] => {
   const items: SettingsNavItem[] = [
     { href: "/settings", label: "General", icon: Settings },
     { href: "/settings/models", label: "Models", icon: Cpu },
@@ -30,13 +30,13 @@ function getNavItems(): SettingsNavItem[] {
   }
 
   return items;
-}
+};
 
-export function SettingsNav({
+export const SettingsNav = ({
   orientation = "vertical",
 }: {
   orientation?: "horizontal" | "vertical";
-}) {
+}) => {
   const pathname = usePathname();
 
   const navItems = useMemo(() => getNavItems(), []);
@@ -70,4 +70,4 @@ export function SettingsNav({
       })}
     </nav>
   );
-}
+};

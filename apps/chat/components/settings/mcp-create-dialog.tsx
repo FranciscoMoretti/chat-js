@@ -63,13 +63,13 @@ const mcpConnectorFormSchema = z.object({
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
 const HIDE_ADVANCED_SETTINGS = true;
-export function McpCreateDialog({
+export const McpCreateDialog = ({
   open,
   onClose,
 }: {
   open: boolean;
   onClose: () => void;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
@@ -295,4 +295,4 @@ export function McpCreateDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

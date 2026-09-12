@@ -16,13 +16,13 @@ interface LoginCtaBannerProps {
   variant?: "default" | "amber" | "red";
 }
 
-export function LoginCtaBanner({
+export const LoginCtaBanner = ({
   message,
   className,
   variant = "default",
   dismissible = false,
   compact = false,
-}: LoginCtaBannerProps) {
+}: LoginCtaBannerProps) => {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) {
@@ -99,4 +99,4 @@ export function LoginCtaBanner({
       </motion.div>
     </AnimatePresence>
   );
-}
+};

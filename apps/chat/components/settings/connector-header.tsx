@@ -8,7 +8,7 @@ import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
 
-export function ConnectorHeader({
+export const ConnectorHeader = ({
   name,
   url,
   type,
@@ -20,7 +20,7 @@ export function ConnectorHeader({
   type: string;
   isCustom: boolean;
   statusText?: string;
-}) {
+}) => {
   const faviconUrl = type === "http" ? getGoogleFaviconUrl(url) : "";
 
   return (
@@ -63,4 +63,4 @@ export function ConnectorHeader({
       </div>
     </div>
   );
-}
+};

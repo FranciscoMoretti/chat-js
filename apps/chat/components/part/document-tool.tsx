@@ -21,11 +21,11 @@ interface DocumentToolComponentProps {
   tool: DocumentTool;
 }
 
-function PureDocumentTool({
+const PureDocumentTool = ({
   tool,
   isReadonly,
   messageId,
-}: DocumentToolComponentProps) {
+}: DocumentToolComponentProps) => {
   const { setArtifact } = useArtifact();
   const kind = getToolKind(tool.type);
   const isEdit = isEditTool(tool.type);
@@ -97,7 +97,7 @@ function PureDocumentTool({
   }
 
   return null;
-}
+};
 
 export const DocumentTool = memo(
   PureDocumentTool,

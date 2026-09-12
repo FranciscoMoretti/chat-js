@@ -16,7 +16,7 @@ interface ShareMenuItemProps {
   onShare: () => void;
 }
 
-export function ShareMenuItem({ onShare, children }: ShareMenuItemProps) {
+export const ShareMenuItem = ({ onShare, children }: ShareMenuItemProps) => {
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
 
@@ -46,4 +46,4 @@ export function ShareMenuItem({ onShare, children }: ShareMenuItemProps) {
       {children}
     </DropdownMenuItem>
   );
-}
+};

@@ -24,7 +24,7 @@ interface DynamicToolPartProps {
   part: DynamicToolUIPart;
 }
 
-export function DynamicToolPart({ part }: DynamicToolPartProps) {
+export const DynamicToolPart = ({ part }: DynamicToolPartProps) => {
   const trpc = useTRPC();
   const { data: connectors } = useQuery(trpc.mcp.list.queryOptions());
 
@@ -66,4 +66,4 @@ export function DynamicToolPart({ part }: DynamicToolPartProps) {
       </ToolContent>
     </Tool>
   );
-}
+};
