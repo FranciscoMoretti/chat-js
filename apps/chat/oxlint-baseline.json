@@ -49,11 +49,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "eqeqeq": "off"
       }
@@ -229,7 +225,9 @@
         "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/stop-response.test.ts",
+        "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts",
+        "lib/stores/base/use-data-parts.ts",
         "lib/stores/custom-store-provider.tsx",
         "lib/stores/with-message-parts.ts",
         "lib/stores/with-thread-state.ts",
@@ -251,8 +249,6 @@
     {
       "files": [
         "components/part/tool-part.test.tsx",
-        "lib/file-content-response.test.ts",
-        "lib/file-storage.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
       ],
       "rules": {
@@ -381,11 +377,7 @@
       }
     },
     {
-      "files": [
-        "lib/ai/text-splitter.ts",
-        "lib/env-schema.ts",
-        "providers/session-provider.tsx"
-      ],
+      "files": ["lib/ai/text-splitter.ts", "providers/session-provider.tsx"],
       "rules": {
         "no-eq-null": "off"
       }
@@ -402,7 +394,7 @@
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
-        "lib/types/anonymous.ts",
+        "lib/stores/base/hooks.ts",
         "providers/chat-input-provider.tsx",
         "trpc/server.tsx"
       ],
@@ -1161,7 +1153,6 @@
         "lib/ai/markdown-joiner-transform.ts",
         "lib/ai/text-splitter.ts",
         "lib/anonymous-session-client.ts",
-        "lib/anonymous-session-server.ts",
         "lib/artifacts/code/client.tsx",
         "lib/artifacts/sheet/client.tsx",
         "lib/artifacts/text/client.tsx",
@@ -1169,25 +1160,20 @@
         "lib/chat-tree-actions.test.ts",
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
-        "lib/create-anonymous-session.ts",
         "lib/credits/cost-accumulator.test.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/mcp-queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
-        "lib/env-schema.ts",
         "lib/env.ts",
         "lib/files/upload-prep.ts",
         "lib/features-config.ts",
-        "lib/logger.ts",
         "lib/message-conversion.ts",
         "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-data-stream.test.ts",
         "lib/stores/with-message-parts.ts",
         "lib/thread-utils.test.ts",
-        "lib/types/anonymous.ts",
         "lib/utils.ts",
         "lib/utils/message-mapping.ts",
         "providers/chat-input-provider.tsx",
@@ -1212,9 +1198,16 @@
       }
     },
     {
+      "files": ["lib/env-schema.ts"],
+      "rules": {
+        "sort-keys": "off"
+      }
+    },
+    {
       "files": [
         "components/parallel-response-cards.tsx",
         "components/sheet-editor.tsx",
+        "lib/stores/base/hooks.ts",
         "lib/stores/with-message-parts.ts"
       ],
       "rules": {
@@ -1240,6 +1233,7 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "lib/credits/cost-accumulator.test.ts",
+        "lib/stores/base/debug.ts",
         "lib/stores/base/hooks.ts"
       ],
       "rules": {
@@ -1256,12 +1250,6 @@
       "files": ["lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/catch-error-name": "off"
-      }
-    },
-    {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/consistent-assert": "off"
       }
     },
     {
@@ -1304,12 +1292,6 @@
       ],
       "rules": {
         "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": ["lib/file-storage.test.ts"],
-      "rules": {
-        "unicorn/no-await-expression-member": "off"
       }
     },
     {
