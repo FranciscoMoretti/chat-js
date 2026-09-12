@@ -8,16 +8,18 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import type { ChatMessage, StreamWriter, ToolName } from "@/lib/ai/types";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { generateUUID } from "@/lib/utils";
+
 // No-op StreamWriter for evals - tools can write but nothing happens
-const createNoOpStreamWriter = (): StreamWriter =>
-  ({
-    merge: () => {
-      // Intentional no-op for evaluation context
-    },
-    write: () => {
-      // Intentional no-op for evaluation context
-    },
-  }) as unknown as StreamWriter;
+const createNoOpStreamWriter = (): StreamWriter => ({
+  merge: () => {
+    // Intentional no-op for evaluation context
+  },
+  onError: undefined,
+  write: () => {
+    // Intentional no-op for evaluation context
+  },
+});
+
 export interface EvalAgentResult {
   assistantMessage: ChatMessage;
   finalText: string;
