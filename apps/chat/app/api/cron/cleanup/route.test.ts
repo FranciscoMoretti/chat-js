@@ -2,16 +2,17 @@ import { NextRequest } from "next/server";
 import { beforeEach, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  env: {
+    CRON_SECRET: "fixture-secret" as string | undefined,
+    WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
+    EVE_ENABLED: "false",
+  },
   references: vi.fn(),
   list: vi.fn(),
   remove: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
-  env: {
-    CRON_SECRET: "fixture-secret",
-    WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
-    EVE_ENABLED: "false",
-  },
+  env: mocks.env,
 }));
 vi.mock("@/lib/config", () => ({
   config: {
@@ -27,7 +28,27 @@ vi.mock("@/lib/file-storage", () => ({
 
 import { GET } from "./route";
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.env.CRON_SECRET = "fixture-secret";
+});
+
+test.each([
+  undefined,
+  "",
+  "   ",
+])("unconfigured cleanup rejects a matching interpolated credential: %j", async (secret) => {
+  mocks.env.CRON_SECRET = secret;
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: `Bearer ${secret}` },
+    })
+  );
+  expect(response.status).toBe(401);
+  expect(mocks.references).not.toHaveBeenCalled();
+  expect(mocks.list).not.toHaveBeenCalled();
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
 
 test("legacy cleanup cannot erase EVE files even while new EVE admission is disabled", async () => {
   const response = await GET(
