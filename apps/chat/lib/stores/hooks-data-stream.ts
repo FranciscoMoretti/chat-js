@@ -5,12 +5,10 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 
 import type { ChatMessage } from "@/lib/ai/types";
 
-import {
-  type CustomChatStoreState,
-  useCustomChatStoreApi,
-} from "./custom-store-provider";
+import { useCustomChatStoreApi } from "./custom-store-provider";
+import type { CustomChatStoreState } from "./custom-store-provider";
 
-export function useDataStream() {
+export const useDataStream = () => {
   const store = useCustomChatStoreApi<ChatMessage>();
   if (!store) {
     throw new Error("useDataStream must be used within CustomStoreProvider");
@@ -24,4 +22,4 @@ export function useDataStream() {
     }),
     shallow
   );
-}
+};
