@@ -10,6 +10,9 @@ import { config } from "@/lib/config";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
+  basic: `
+    # Basic output capture setup
+  `,
   matplotlib: `
     import io
     import base64
@@ -39,9 +42,6 @@ const OUTPUT_HANDLERS = {
             plt.close('all')
 
         plt.show = custom_show
-  `,
-  basic: `
-    # Basic output capture setup
   `,
 };
 
@@ -85,50 +85,18 @@ export function getCodeArtifactMetadata(
 }
 
 export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
-  kind: "code",
-  description:
-    "Useful for code generation; Code execution is only available for Python code.",
-  initialize: ({ setMetadata }) => {
-    setMetadata({
-      outputs: [],
-      language: "python",
-    });
-  },
-  content: ({ isReadonly, content, title, ...props }) => {
-    const language = getLanguageFromFileName(title) || "python";
-
-    return (
-      <CodeEditor
-        {...props}
-        content={content}
-        isReadonly={isReadonly}
-        language={language}
-      />
-    );
-  },
-  footer: ({ metadata, setMetadata }) => {
-    if (!metadata?.outputs?.length) {
-      return null;
-    }
-
-    return (
-      <Console
-        className="min-h-[200px]"
-        consoleOutputs={metadata.outputs}
-        setConsoleOutputs={() => {
-          setMetadata({
-            ...metadata,
-            outputs: [],
-          });
-        }}
-      />
-    );
-  },
   actions: [
     {
-      icon: <Play size={18} />,
-      label: "Run",
       description: "Execute code",
+      icon: <Play size={18} />,
+      isDisabled: ({ isReadonly, content: _content, metadata }) => {
+        if (isReadonly) {
+          return true;
+        }
+        const language = metadata?.language || "python";
+        return language !== "python";
+      },
+      label: "Run",
       onClick: async ({ content, setMetadata, metadata: _metadata }) => {
         const runId = generateUUID();
         const outputContent: ConsoleOutputContent[] = [];
@@ -138,8 +106,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
           outputs: [
             ...metadata.outputs,
             {
-              id: runId,
               contents: [],
+              id: runId,
               status: "in_progress",
             },
           ],
@@ -170,8 +138,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
                 outputs: [
                   ...metadata.outputs.filter((output) => output.id !== runId),
                   {
-                    id: runId,
                     contents: [{ type: "text", value: message }],
+                    id: runId,
                     status: "loading_packages",
                   },
                 ],
@@ -201,8 +169,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
             outputs: [
               ...metadata.outputs.filter((output) => output.id !== runId),
               {
-                id: runId,
                 contents: outputContent,
+                id: runId,
                 status: "completed",
               },
             ],
@@ -213,7 +181,6 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
             outputs: [
               ...metadata.outputs.filter((output) => output.id !== runId),
               {
-                id: runId,
                 contents: [
                   {
                     type: "text",
@@ -221,26 +188,17 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
                       error instanceof Error ? error.message : String(error),
                   },
                 ],
+                id: runId,
                 status: "failed",
               },
             ],
           }));
         }
       },
-      isDisabled: ({ isReadonly, content: _content, metadata }) => {
-        if (isReadonly) {
-          return true;
-        }
-        const language = metadata?.language || "python";
-        return language !== "python";
-      },
     },
     {
-      icon: <Undo2 size={18} />,
       description: "View Previous version",
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange("prev");
-      },
+      icon: <Undo2 size={18} />,
       isDisabled: ({ currentVersionIndex }) => {
         if (currentVersionIndex === 0) {
           return true;
@@ -248,13 +206,13 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
 
         return false;
       },
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("prev");
+      },
     },
     {
-      icon: <Redo2 size={18} />,
       description: "View Next version",
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange("next");
-      },
+      icon: <Redo2 size={18} />,
       isDisabled: ({ isCurrentVersion }) => {
         if (isCurrentVersion) {
           return true;
@@ -262,56 +220,106 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
 
         return false;
       },
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("next");
+      },
     },
     {
-      icon: <Copy size={18} />,
       description: "Copy code to clipboard",
+      icon: <Copy size={18} />,
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
         toast.success("Copied to clipboard!");
       },
     },
   ],
+  content: ({ isReadonly, content, title, ...props }) => {
+    const language = getLanguageFromFileName(title) || "python";
+
+    return (
+      <CodeEditor
+        {...props}
+        content={content}
+        isReadonly={isReadonly}
+        language={language}
+      />
+    );
+  },
+  description:
+    "Useful for code generation; Code execution is only available for Python code.",
+  footer: ({ metadata, setMetadata }) => {
+    if (!metadata?.outputs?.length) {
+      return null;
+    }
+
+    return (
+      <Console
+        className="min-h-[200px]"
+        consoleOutputs={metadata.outputs}
+        setConsoleOutputs={() => {
+          setMetadata({
+            ...metadata,
+            outputs: [],
+          });
+        }}
+      />
+    );
+  },
+  initialize: ({ setMetadata }) => {
+    setMetadata({
+      language: "python",
+      outputs: [],
+    });
+  },
+  kind: "code",
   toolbar: [
     {
-      icon: <MessageSquare size={16} />,
       description: "Add comments",
+      icon: <MessageSquare size={16} />,
       onClick: ({ sendMessage, storeApi }) => {
+        const selectedModel = config.ai.tools.code.edits;
+        const createdAt = new Date();
+        const parentMessageId = storeApi.getState().getLastMessageId();
+
         sendMessage({
-          role: "user",
+          metadata: {
+            activeStreamId: null,
+            createdAt,
+            parentMessageId,
+            selectedModel,
+          },
           parts: [
             {
-              type: "text",
               text: "Add comments to the code snippet for understanding",
+              type: "text",
             },
           ],
-          metadata: {
-            selectedModel: config.ai.tools.code.edits,
-            createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
-            activeStreamId: null,
-          },
+          role: "user",
         });
       },
     },
     {
-      icon: <List size={16} />,
       description: "Add logs",
+      icon: <List size={16} />,
       onClick: ({ sendMessage, storeApi }) => {
+        const selectedModel = config.ai.tools.code.edits;
+        const createdAt = new Date();
+        const parentMessageId = storeApi.getState().getLastMessageId();
+
         sendMessage({
-          role: "user",
+          metadata: {
+            activeStreamId: null,
+            createdAt,
+            parentMessageId,
+            selectedModel,
+          },
           parts: [
             {
-              type: "text",
               text: "Add logs to the code snippet for debugging",
+              type: "text",
             },
           ],
-          metadata: {
-            selectedModel: config.ai.tools.code.edits,
-            createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
-            activeStreamId: null,
-          },
+          role: "user",
         });
       },
     },
