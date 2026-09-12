@@ -181,17 +181,27 @@ index c1f7ad81..f88422c1 100644
          runOnSession: async (callback) => await contextStorage.run(ctx, callback),
          sessionId: sandboxSessionId,
 diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
-index e5b41ab9..f4401051 100644
+index e5b41ab9..1107a107 100644
 --- a/packages/eve/src/eve-channel/index.ts
 +++ b/packages/eve/src/eve-channel/index.ts
-@@ -1,3 +1,6 @@
+@@ -1,3 +1,7 @@
++import { parseSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import { handleSandboxIdentityRead } from "#execution/sandbox-identity-read.js";
 +import { handleCheckpointReadiness } from "#execution/checkpoint-readiness.js";
 +import { readSessionCheckpoint, SessionCheckpointNotFoundError, SessionCheckpointRejectedError } from "#execution/read-session-checkpoint.js";
  import type { SessionAuthContext, SessionTraceContext } from "#channel/types.js";
  import type { Session } from "#channel/session.js";
  import { resolveForwardedPrincipal } from "#channel/forwarded-principal.js";
-@@ -104,6 +107,19 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -79,7 +83,7 @@ import {
+   normalizeEveCors,
+   resolveOnMessage,
+ } from "#eve-channel/support.js";
+-import type { EveChannel, EveChannelInput, EveEventContext } from "#eve-channel/types.js";
++import type { EveChannel, EveChannelInput, EveEventContext, EveMessageResult } from "#eve-channel/types.js";
+
+ export * from "#eve-channel/types.js";
+
+@@ -104,6 +108,21 @@ export function eveChannel(input: EveChannelInput): EveChannel {
        GET(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
        HEAD(EVE_HEALTH_ROUTE_PATH, async () => healthResponse()),
 
@@ -201,7 +211,9 @@ index e5b41ab9..f4401051 100644
 +        if (authResult.principalType === "anonymous" || !params.operationId) {
 +          return Response.json({ error: "Operation lookup requires an authenticated principal and operation id.", ok: false }, { status: 400 });
 +        }
-+        const token = await deriveOperationContinuationToken({ auth: authResult, operationId: params.operationId });
++        const kind = new URL(req.url).searchParams.get("kind");
++        if (kind !== null && kind !== "seed") return Response.json({ error: "Unknown operation kind.", ok: false }, { status: 400 });
++        const token = await deriveOperationContinuationToken({ auth: authResult, operationId: params.operationId, kind: kind === "seed" ? "seed" : undefined });
 +        const owner = await resolveSession(token);
 +        return owner
 +          ? Response.json({ sessionId: owner.id }, { headers: { "cache-control": "no-store" } })
@@ -211,10 +223,13 @@ index e5b41ab9..f4401051 100644
        GET(EVE_INFO_ROUTE_PATH, async (req, args) => {
          const authResult = await routeAuth(req, input.auth);
          if (authResult instanceof Response) return authResult;
-@@ -150,6 +166,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -150,6 +169,25 @@ export function eveChannel(input: EveChannelInput): EveChannel {
 
          const body = parseCreateBody(payload);
          if (body instanceof Response) return body;
++        if (body.seed && (forwarded.auth.principalType === "anonymous" || !input.resolveSeed)) {
++          return Response.json({ error: "Session seed access denied.", ok: false }, { status: 403 });
++        }
 +        if (body.fork) {
 +          if (
 +            forwarded.auth.principalType === "anonymous" ||
@@ -234,7 +249,42 @@ index e5b41ab9..f4401051 100644
          // Top-level sessions own their trace. Callback sessions are delegated
          // remote agents and intentionally continue the dispatching agent trace.
          const parsedParentTraceContext =
-@@ -236,6 +268,22 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -172,6 +210,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+             : await deriveOperationContinuationToken({
+                 auth: forwarded.auth,
+                 operationId: body.operationId,
++                kind: body.seed ? "seed" : undefined,
+               });
+         if (operationToken !== undefined) {
+           const owner = await args.resolveSession(operationToken);
+@@ -189,6 +228,18 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+           }
+         }
+
++        let seed: SessionTranscriptSeed | undefined;
++        if (body.seed) {
++          try {
++            const resolved = await input.resolveSeed?.({ auth: forwarded.auth, operationId: body.operationId! });
++            if (!resolved) return Response.json({ error: "Session seed access denied.", ok: false }, { status: 403 });
++            seed = parseSessionTranscriptSeed(resolved);
++          } catch (error) {
++            const errorId = logError(log, "session-seed preparation failed", error);
++            return Response.json({ error: "Failed to prepare the session copy.", errorId, ok: false }, { status: 500, headers: { "cache-control": "no-store" } });
++          }
++        }
++
+         const forwardedTraceAssertion =
+           parsedParentTraceContext === undefined
+             ? "absent"
+@@ -229,13 +280,29 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+           }
+         }
+
+-        const messageResult = await resolveOnMessage({
++        const messageResult: EveMessageResult | Response = body.seed ? { auth: forwarded.auth } : await resolveOnMessage({
+           auth: forwarded.auth,
+           config: input,
+           message: body.message,
            request: req,
          });
          if (messageResult instanceof Response) return messageResult;
@@ -257,15 +307,16 @@ index e5b41ab9..f4401051 100644
          const createSession = readRouteSessionCreator(args);
          if (createSession === undefined) {
            return Response.json(
-@@ -247,6 +295,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -247,6 +314,8 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          let handle: Awaited<ReturnType<typeof createSession>>;
          try {
            handle = await createSession({
 +            fork: body.fork,
++            seed,
              activityObserver: body.activityObserver,
              auth: messageResult.auth,
              capabilities:
-@@ -274,12 +323,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -274,12 +343,32 @@ export function eveChannel(input: EveChannelInput): EveChannel {
            );
          }
 
@@ -300,7 +351,7 @@ index e5b41ab9..f4401051 100644
              },
              status: 202,
            },
-@@ -405,6 +474,50 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+@@ -405,6 +494,50 @@ export function eveChannel(input: EveChannelInput): EveChannel {
          );
        }),
 
@@ -353,10 +404,10 @@ index e5b41ab9..f4401051 100644
          if (authResult instanceof Response) return authResult;
 diff --git a/packages/eve/src/eve-channel/request.test.ts b/packages/eve/src/eve-channel/request.test.ts
 new file mode 100644
-index 00000000..488075f4
+index 00000000..bab4c17c
 --- /dev/null
 +++ b/packages/eve/src/eve-channel/request.test.ts
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,31 @@
 +import { expect, it } from "vitest";
 +import { parseCreateBody } from "#eve-channel/request.js";
 +it("accepts a named fork while preserving its exact coordinates", () => {
@@ -371,8 +422,25 @@ index 00000000..488075f4
 +  if (!(result instanceof Response)) throw new Error("Expected rejection");
 +  expect(result.status).toBe(400);
 +});
++
++it("accepts only an opaque operation for a server-authorized idle seed", () => {
++  expect(parseCreateBody({ seed: true, operationId: "copy-1" })).toEqual({ seed: true, operationId: "copy-1", message: "", mode: "conversation" });
++});
++it.each([
++  { seed: false, operationId: "copy-1", message: "ordinary" },
++  { seed: { messages: [] }, operationId: "copy-1" },
++  { seed: true },
++  { seed: true, operationId: "" },
++  { seed: true, operationId: "x".repeat(257) },
++  ...["message", "messages", "fork", "callback", "mode", "capabilities", "clientContext", "outputSchema", "activityObserver", "sourceSessionId", "forwardedPrincipal"].map((field) => ({ seed: true, operationId: "copy-1", [field]: {} })),
++])("rejects seed payload data or execution options: %j", (payload) => {
++  const result = parseCreateBody(payload);
++  expect(result).toBeInstanceOf(Response);
++  if (!(result instanceof Response)) throw new Error("Expected rejection");
++  expect(result.status).toBe(400);
++});
 diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
-index 6a525949..10bb0c3d 100644
+index 6a525949..114c65a7 100644
 --- a/packages/eve/src/eve-channel/request.ts
 +++ b/packages/eve/src/eve-channel/request.ts
 @@ -1,3 +1,4 @@
@@ -380,15 +448,41 @@ index 6a525949..10bb0c3d 100644
  import type { FilePart, TextPart, UserContent } from "ai";
 
  import type {
-@@ -33,6 +34,7 @@ import { parseJsonObject, type JsonObject } from "#shared/json.js";
+@@ -33,6 +34,8 @@ import { parseJsonObject, type JsonObject } from "#shared/json.js";
  import type { RunMode } from "#shared/run-mode.js";
 
  interface ParsedCreateBody {
++  seed?: true;
 +  fork?: SessionForkReference;
    activityObserver?: ActivityObserverConfig;
    callback?: SessionCallback;
    capabilities?: SessionCapabilities;
-@@ -110,7 +112,35 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
+@@ -47,9 +50,10 @@ interface ParsedCreateBody {
+ export async function deriveOperationContinuationToken(input: {
+   readonly auth: SessionAuthContext;
+   readonly operationId: string;
++  readonly kind?: "seed";
+ }): Promise<string> {
+   const identity = JSON.stringify([
+-    "eve:create-session:v1",
++    input.kind === "seed" ? "eve:seed-session:v1" : "eve:create-session:v1",
+     input.auth.authenticator,
+     input.auth.issuer ?? null,
+     input.auth.principalType,
+@@ -64,6 +68,12 @@ export async function deriveOperationContinuationToken(input: {
+ }
+
+ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateBody | Response {
++  if (payload.seed !== undefined) {
++    if (payload.seed !== true || typeof payload.operationId !== "string" || !payload.operationId.length || payload.operationId.length > 256 || Object.keys(payload).some((key) => !["seed", "operationId"].includes(key))) {
++      return Response.json({ error: "A seed request accepts only seed: true and an operationId.", ok: false }, { status: 400 });
++    }
++    return { seed: true, operationId: payload.operationId, message: "", mode: "conversation" };
++  }
+   if (payload.inputResponses !== undefined) {
+     return Response.json(
+       { error: "'inputResponses' is only accepted for an existing session.", ok: false },
+@@ -110,7 +120,35 @@ export function parseCreateBody(payload: Record<string, unknown>): ParsedCreateB
      );
    }
 
@@ -425,13 +519,27 @@ index 6a525949..10bb0c3d 100644
      callback,
      capabilities,
 diff --git a/packages/eve/src/eve-channel/types.ts b/packages/eve/src/eve-channel/types.ts
-index 7d6e8f7f..8913d337 100644
+index 7d6e8f7f..c42975bb 100644
 --- a/packages/eve/src/eve-channel/types.ts
 +++ b/packages/eve/src/eve-channel/types.ts
-@@ -88,6 +88,16 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
+@@ -88,6 +88,30 @@ export function defaultEveAuth(ctx: EveMessageContext): SessionAuthContext | nul
   * `uploadPolicy`, `onMessage`, and `events` refine the default HTTP behavior.
   */
  export interface EveChannelInput {
++  /**
++   * Authorizes an immutable copy operation for this principal and supplies its completed
++   * public transcript. Omit to deny seed creation; return null to deny an operation.
++   * The caller must bind operationId to one source revision/projection and destination-owned
++   * resources before returning. No browser-provided history or checkpoint is accepted.
++   * Runs only when the operation has no durable session yet. Accepted retries recover
++   * that session without consulting the source. Seed requests do not invoke onMessage.
++   * Uses the directly authenticated principal; forwardedPrincipal is not accepted.
++   */
++  readonly resolveSeed?: (input: {
++    readonly auth: SessionAuthContext;
++    readonly operationId: string;
++  }) => import("#execution/session-transcript-seed.js").SessionTranscriptSeed | null | Promise<import("#execution/session-transcript-seed.js").SessionTranscriptSeed | null>;
++
 +  /**
 +   * Explicit source-session access policy for native forks. Omit to deny forks.
 +   * Runs before operation lookup and again if onMessage replaces the principal.
@@ -4378,10 +4486,10 @@ index 00000000..df6d4916
 +});
 diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
 new file mode 100644
-index 00000000..ac1c3f25
+index 00000000..28e83ec3
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.ts
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,151 @@
 +import type { AssistantContent, ModelMessage, ToolContent, UserContent } from "ai";
 +import { z } from "#compiled/zod/index.js";
 +import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
@@ -4408,7 +4516,7 @@ index 00000000..ac1c3f25
 +]);
 +
 +/** Trusted server input, never a browser request body or a runtime checkpoint. */
-+export const sessionTranscriptSeed = z.strictObject({
++const sessionTranscriptSeed = z.strictObject({
 +  messages: z
 +    .array(
 +      z.discriminatedUnion("role", [
@@ -4434,14 +4542,19 @@ index 00000000..ac1c3f25
 +});
 +export type SessionTranscriptSeed = z.infer<typeof sessionTranscriptSeed>;
 +
++/** Validates and detaches trusted callback data before crossing a durable boundary. */
++export function parseSessionTranscriptSeed(value: unknown): SessionTranscriptSeed {
++  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > 8 * 1024 * 1024)
++    throw new Error("Session transcript seed byte limit exceeded.");
++  return sessionTranscriptSeed.parse(value);
++}
++
 +/** Derives both native model history and display from one capability-free transcript. */
 +export function prepareSessionTranscriptSeed(value: unknown): {
 +  readonly history: ModelMessage[];
 +  readonly messages: EveMessage[];
 +} {
-+  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > 8 * 1024 * 1024)
-+    throw new Error("Session transcript seed byte limit exceeded.");
-+  const seed = sessionTranscriptSeed.parse(value);
++  const seed = parseSessionTranscriptSeed(value);
 +  const history: ModelMessage[] = [];
 +  const messages: EveMessage[] = [];
 +  let toolSequence = 0;
@@ -5302,10 +5415,28 @@ index fc45f348..d8916092 100644
    | ApprovalCandidateStreamEvent
    | ApprovalSettledStreamEvent
 diff --git a/packages/eve/src/public/channels/eve.test.ts b/packages/eve/src/public/channels/eve.test.ts
-index 35cfa0f3..d6f522e3 100644
+index 35cfa0f3..e49210f3 100644
 --- a/packages/eve/src/public/channels/eve.test.ts
 +++ b/packages/eve/src/public/channels/eve.test.ts
-@@ -2277,3 +2277,93 @@ describe("eveChannel — forwarded principal", () => {
+@@ -20,6 +20,7 @@ import {
+   SessionKey,
+   type Session as RuntimeSession,
+ } from "#context/keys.js";
++import { deriveOperationContinuationToken } from "#eve-channel/request.js";
+ import { createMessageCompletedEvent } from "#protocol/message.js";
+
+ /**
+@@ -140,6 +141,9 @@ function createEveCreateHandler(
+       mode: runInput.mode,
+       title: runInput.title,
+     } satisfies MockSendOptions);
++    if (runInput.continuationToken !== undefined) {
++      resolveSession.mockResolvedValue(createMockSession());
++    }
+     return {
+       events: new ReadableStream(),
+       sessionId: "test-session-id",
+@@ -2277,3 +2281,192 @@ describe("eveChannel — forwarded principal", () => {
      expect(handler.send).not.toHaveBeenCalled();
    });
  });
@@ -5398,6 +5529,105 @@ index 35cfa0f3..d6f522e3 100644
 +    expect(authorizeFork).not.toHaveBeenCalled();
 +    expect(handler.createSession).not.toHaveBeenCalled();
 +  });
++});
++
++describe("eveChannel — server-authorized transcript seeds", () => {
++  const seed = { messages: [{ role: "user" as const, parts: [{ type: "text" as const, text: "Published content" }] }] };
++  const payload = { seed: true, operationId: "copy-1" };
++
++  it("uses only the resolver transcript and authenticated principal without invoking the message hook", async () => {
++    const resolveSeed = vi.fn(() => seed);
++    const onMessage = vi.fn(() => ({ auth: OVERRIDE_AUTH, context: ["Must not seed this"] }));
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed, onMessage });
++    const response = await handler.fetch(createJsonMessageRequest(payload));
++    expect(response.status).toBe(202);
++    expect(resolveSeed).toHaveBeenCalledExactlyOnceWith({ auth: ACCEPTED_AUTH, operationId: "copy-1" });
++    expect(onMessage).not.toHaveBeenCalled();
++    expect(handler.createSession).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
++      seed, auth: ACCEPTED_AUTH, input: { message: "", context: undefined, outputSchema: undefined }, mode: "conversation", fork: undefined, callback: undefined,
++    }));
++    expect(handler.createSession.mock.calls[0]?.[0].seed).not.toBe(seed);
++    expect(handler.createSession.mock.calls[0]?.[0].seed?.messages).not.toBe(seed.messages);
++  });
++
++  it("recovers an accepted seed without consulting a revoked source or dispatching again", async () => {
++    const resolveSeed = vi.fn(() => null);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed }, { activeSessionId: "independent-copy" });
++    const response = await handler.fetch(createJsonMessageRequest(payload));
++    expect(response.status).toBe(202);
++    await expect(response.json()).resolves.toMatchObject({ sessionId: "independent-copy" });
++    expect(resolveSeed).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("separates seed operation ownership from ordinary sends and other principals", async () => {
++    const ordinary = createEveCreateHandler({ auth: () => ACCEPTED_AUTH });
++    const first = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed: () => seed });
++    const other = createEveCreateHandler({ auth: () => OVERRIDE_AUTH, resolveSeed: () => seed });
++    for (const [handler, body] of [[ordinary, { operationId: payload.operationId, message: "hi" }], [first, payload], [other, payload]] as const) {
++      expect((await handler.fetch(createJsonMessageRequest(body))).status).toBe(202);
++    }
++    const tokens = [ordinary, first, other].map((handler) => handler.createSession.mock.calls[0]?.[0].continuationToken);
++    expect(tokens.every((token) => typeof token === "string")).toBe(true);
++    expect(new Set(tokens).size).toBe(3);
++  });
++
++  it("rejects anonymous, unconfigured and unauthorized seed operations before native allocation", async () => {
++    const resolveSeed = vi.fn(() => seed);
++    const anonymous = createEveCreateHandler({ auth: none(), resolveSeed });
++    const disabled = createEveCreateHandler({ auth: () => ACCEPTED_AUTH });
++    const denied = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed: () => null });
++    for (const handler of [anonymous, disabled, denied]) {
++      expect((await handler.fetch(createJsonMessageRequest(payload))).status).toBe(403);
++      expect(handler.createSession).not.toHaveBeenCalled();
++    }
++    expect(resolveSeed).not.toHaveBeenCalled();
++    expect(anonymous.resolveSession).not.toHaveBeenCalled();
++    expect(disabled.resolveSession).not.toHaveBeenCalled();
++  });
++
++  it("does not expose resolver errors to the caller", async () => {
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed: () => { throw new Error("private-source-internal-detail"); } });
++    const response = await handler.fetch(createJsonMessageRequest(payload));
++    expect(response.status).toBe(500);
++    expect(await response.text()).not.toContain("private-source-internal-detail");
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("rejects private runtime metadata returned by a resolver before allocation", async () => {
++    const privateSeed = { messages: [{ role: "user" as const, parts: [{ type: "text" as const, text: "Visible" }], metadata: { turnId: "owner-turn" } }] };
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed: () => privateSeed });
++    expect((await handler.fetch(createJsonMessageRequest(payload))).status).toBe(500);
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++
++  it("does not resolve or allocate a browser-supplied transcript", async () => {
++    const resolveSeed = vi.fn(() => seed);
++    const handler = createEveCreateHandler({ auth: () => ACCEPTED_AUTH, resolveSeed });
++    expect((await handler.fetch(createJsonMessageRequest({ ...payload, messages: seed.messages }))).status).toBe(400);
++    expect(resolveSeed).not.toHaveBeenCalled();
++    expect(handler.resolveSession).not.toHaveBeenCalled();
++    expect(handler.createSession).not.toHaveBeenCalled();
++  });
++});
++
++it("looks up a seeded operation only in its explicit authenticated namespace", async () => {
++  const channel = eveChannel({ auth: () => ACCEPTED_AUTH });
++  const route = channel.routes.find((item) => item.method === "GET" && item.path === "/eve/v1/operation/:operationId");
++  if (!route) throw new Error("Missing operation lookup route");
++  const seedToken = await deriveOperationContinuationToken({ auth: ACCEPTED_AUTH, operationId: "copy-1", kind: "seed" });
++  const resolveSession = vi.fn(async (token: string) => token === seedToken ? createMockSession({ id: "saved-copy" }) : undefined);
++  const args = { ...createRouteArgs(), params: { operationId: "copy-1" }, resolveSession };
++  const seeded = await route.handler(new Request("https://example.com/eve/v1/operation/copy-1?kind=seed"), args);
++  expect(seeded.status).toBe(200);
++  await expect(seeded.json()).resolves.toEqual({ sessionId: "saved-copy" });
++  expect(seeded.headers.get("cache-control")).toBe("no-store");
++  const ordinary = await route.handler(new Request("https://example.com/eve/v1/operation/copy-1"), args);
++  expect(ordinary.status).toBe(404);
++  resolveSession.mockClear();
++  const invalid = await route.handler(new Request("https://example.com/eve/v1/operation/copy-1?kind=unknown"), args);
++  expect(invalid.status).toBe(400);
++  expect(resolveSession).not.toHaveBeenCalled();
 +});
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
 index 48e2bc3b..27e414e4 100644
