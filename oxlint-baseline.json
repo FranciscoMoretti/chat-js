@@ -32,7 +32,6 @@
         "apps/site/components/thread-showcase.tsx",
         "apps/site/tests/thread-playground.visual.ts",
         "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/shared/presentation.tsx",
         "packages/cli/src/utils/run-command.ts"
       ],
       "rules": {
@@ -68,10 +67,7 @@
       }
     },
     {
-      "files": [
-        "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/story.ts"
-      ],
+      "files": ["apps/videos/src/ThreadsLaunch.tsx"],
       "rules": {
         "no-nested-ternary": "off"
       }
@@ -156,8 +152,7 @@
         "apps/site/components/hero.tsx",
         "apps/site/components/logo-cloud.tsx",
         "apps/site/components/thread-showcase.tsx",
-        "apps/videos/src/ThreadsLaunch.tsx",
-        "apps/videos/src/shared/presentation.tsx"
+        "apps/videos/src/ThreadsLaunch.tsx"
       ],
       "rules": {
         "react/function-component-definition": "off"
