@@ -4,46 +4,45 @@ import { GATEWAYS } from "../types";
 import type { BuiltInToolKey, Gateway } from "../types";
 import { buildConfigTs } from "./config-builder";
 
-function buildConfigFor(
+const buildConfigFor = (
   gateway: Gateway,
   builtInTools: Record<BuiltInToolKey, boolean>
-) {
-  return buildConfigTs({
+): string =>
+  buildConfigTs({
     appName: "Contract Test",
     appPrefix: "contract-test",
     appUrl: "http://localhost:3000",
-    withElectron: false,
-    gateway,
-    coreFeatures: {
-      attachments: true,
-      parallelResponses: true,
-      documents: true,
-      mcp: true,
-      followupSuggestions: true,
-    },
-    documentTypes: {
-      text: true,
-      code: true,
-      sheet: true,
-    },
-    builtInTools,
     auth: {
-      google: true,
       github: true,
+      google: true,
       vercel: true,
     },
+    builtInTools,
+    coreFeatures: {
+      attachments: true,
+      documents: true,
+      followupSuggestions: true,
+      mcp: true,
+      parallelResponses: true,
+    },
+    documentTypes: {
+      code: true,
+      sheet: true,
+      text: true,
+    },
+    gateway,
+    withElectron: false,
   });
-}
 
 describe("scaffold contracts", () => {
   it("builds valid configs for the high-risk built-in tool matrix", () => {
     const allBuiltIns = {
-      webSearch: true,
-      urlRetrieval: true,
-      deepResearch: true,
       codeExecution: true,
+      deepResearch: true,
       imageGeneration: true,
+      urlRetrieval: true,
       videoGeneration: true,
+      webSearch: true,
     } satisfies Record<BuiltInToolKey, boolean>;
 
     for (const gateway of GATEWAYS) {
