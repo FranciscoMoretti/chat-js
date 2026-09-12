@@ -20,6 +20,9 @@ test("compiled idle capture preserves native history and exact document revision
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const origin = new URL(page.url()).origin;
+  await page.request.post("/api/chat-model", {
+    data: { model: "google/gemini-2.5-flash-lite" },
+  });
   const token = crypto.randomUUID().slice(0, 8).toUpperCase();
   const message = `Remember the token ${token}. Reply with exactly that token. Do not use tools.`;
   const created = await page.request.post("/api/agent-conversations", {
@@ -53,48 +56,88 @@ test("compiled idle capture preserves native history and exact document revision
     kind: "text" as const,
   };
   const original = await saveEveDocumentRevision(document);
-  const checkpointId = crypto.randomUUID();
-  const capture = await page.request.post(
-    `/api/agent-conversations/${source.id}/checkpoint`,
-    {
-      headers: { origin },
-      data: { checkpointId, beforeTurnId: "turn_1" },
+  const captureRequests: { checkpointId: string; beforeTurnId: string }[] = [];
+  let groupRequests = 0;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname === "/api/agent-response-groups"
+    ) {
+      groupRequests += 1;
+    }
+  });
+  await page.route(
+    `**/api/agent-conversations/${source.id}/checkpoint`,
+    async (route) => {
+      captureRequests.push(route.request().postDataJSON());
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      if (captureRequests.length === 1) {
+        await saveEveDocumentRevision(
+          {
+            ...document,
+            operationId: crypto.randomUUID(),
+            expectedRevisionId: original.id,
+            turnIndex: null,
+            content: "Later source edit",
+          },
+          undefined,
+          [0]
+        );
+        // The server committed the snapshot, but the browser loses the reply.
+        await route.abort("failed");
+      } else {
+        await route.fulfill({ response });
+      }
     }
   );
-  expect(capture.status()).toBe(200);
-  expect(await capture.json()).toEqual({
-    ready: true,
-    conversationId: source.id,
-    checkpointId,
-    beforeTurnId: "turn_1",
+  await page.getByRole("combobox").click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await page.getByRole("button", { name: "1×", exact: true }).click();
+  await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await page.keyboard.press("Escape");
+  const followUp =
+    "What token did I ask you to remember? Reply with exactly the token. Do not use tools.";
+  await page.locator('[contenteditable="true"]').fill(followUp);
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const recover = page.getByRole("button", {
+    name: "Recover comparison",
+    exact: true,
   });
-  await saveEveDocumentRevision(
-    {
-      ...document,
-      operationId: crypto.randomUUID(),
-      expectedRevisionId: original.id,
-      turnIndex: null,
-      content: "Later source edit",
-    },
-    undefined,
-    [0]
+  await expect(recover).toBeEnabled();
+  expect(groupRequests).toBe(0);
+  const storageKey = `chatjs.eve.pending:${binding.ownerId}:fork:${source.id}`;
+  const saved = await page.evaluate(
+    (key) => sessionStorage.getItem(key),
+    storageKey
   );
-  const forked = await page.request.post("/api/agent-response-groups", {
-    headers: { origin },
-    timeout: 90_000,
-    data: {
-      operationId: crypto.randomUUID(),
-      modelIds: [
-        "google/gemini-2.5-flash-lite",
-        "google/gemini-2.5-flash-lite",
-      ],
-      message:
-        "What token did I ask you to remember? Reply with exactly the token. Do not use tools.",
-      fork: { conversationId: source.id, beforeTurnId: "turn_1", checkpointId },
-    },
+  expect(JSON.parse(saved ?? "null")).toMatchObject({
+    message: followUp,
+    modelIds: ["google/gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite"],
+    fork: { conversationId: source.id, ...captureRequests[0] },
   });
-  expect(forked.status()).toBe(200);
-  const group = eveResponseGroupResult.parse(await forked.json());
+  await page.reload();
+  await expect(recover).toBeEnabled();
+  expect(groupRequests).toBe(0);
+  await expect(
+    page.getByRole("button", { name: "Send", exact: true })
+  ).toBeDisabled();
+  await page.screenshot({
+    path: testInfo.outputPath("follow-up-recovery.png"),
+    animations: "disabled",
+  });
+  let groupPayload: unknown;
+  await page.route("**/api/agent-response-groups", async (route) => {
+    const response = await route.fetch({ timeout: 90_000 });
+    expect(response.status()).toBe(200);
+    groupPayload = await response.json();
+    await route.fulfill({ response });
+  });
+  await recover.click();
+  await expect.poll(() => groupPayload, { timeout: 90_000 }).toBeTruthy();
+  const group = eveResponseGroupResult.parse(groupPayload);
+  expect(captureRequests).toHaveLength(2);
+  expect(captureRequests[1]).toEqual(captureRequests[0]);
   expect(group.candidates.map((candidate) => candidate.state)).toEqual([
     "bound",
     "bound",
@@ -130,4 +173,52 @@ test("compiled idle capture preserves native history and exact document revision
     path: testInfo.outputPath("idle-follow-up.png"),
     animations: "disabled",
   });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: testInfo.outputPath("follow-up-mobile.png"),
+    animations: "disabled",
+  });
+  expect(
+    await page.evaluate(
+      () => window.document.documentElement.scrollWidth <= innerWidth
+    )
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.unroute("**/api/agent-response-groups");
+  await page.route("**/api/agent-response-groups", (route) => {
+    const input = route.request().postDataJSON();
+    return route.fulfill({
+      json: {
+        id: crypto.randomUUID(),
+        candidates: input.modelIds.map((modelId: string) => ({
+          modelId,
+          operationId: crypto.randomUUID(),
+          state: "rejected",
+          error: "Fixture model unavailable",
+        })),
+      },
+    });
+  });
+  await page
+    .getByRole("group", { name: "Message composer", exact: true })
+    .getByRole("combobox")
+    .click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await page.getByRole("button", { name: "1×", exact: true }).click();
+  await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await page
+    .locator('[contenteditable="true"]')
+    .fill("Retain this rejected follow-up");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Fixture model unavailable" })
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator('[contenteditable="true"]')).toHaveText(
+    "Retain this rejected follow-up"
+  );
+  await expect(
+    page.getByRole("button", { name: "Send", exact: true })
+  ).toBeEnabled();
 });

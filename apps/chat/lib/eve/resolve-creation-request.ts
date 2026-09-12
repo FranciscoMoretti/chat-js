@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { requestConversation } from "./create-conversation";
 import {
   requestResponseGroup,
@@ -17,6 +18,29 @@ export async function resolveCreationRequest(
   scope?: CreationScope
 ) {
   if ("modelIds" in operation) {
+    if (operation.fork?.checkpointId) {
+      const { conversationId, checkpointId, beforeTurnId } = operation.fork;
+      const response = await fetch(
+        `/api/agent-conversations/${conversationId}/checkpoint`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ checkpointId, beforeTurnId }),
+          signal: AbortSignal.timeout(35_000),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(
+          "The comparison's saved conversation state is unconfirmed. Retry the saved request."
+        );
+      }
+      z.object({
+        ready: z.literal(true),
+        conversationId: z.literal(conversationId),
+        checkpointId: z.literal(checkpointId),
+        beforeTurnId: z.literal(beforeTurnId),
+      }).parse(await response.json());
+    }
     const result = await requestResponseGroup(operation);
     const bound = result.candidates.find(
       (candidate) => candidate.state === "bound"

@@ -177,3 +177,89 @@ test("moving a definitively rejected project comparison preserves all repeated m
     readCreationRequest(storage, "project-owner", { projectId })
   ).toBeUndefined();
 });
+
+test("follow-up retries recover the saved checkpoint before dispatch", async () => {
+  const { storage, result } = fixture();
+  const conversationId = crypto.randomUUID();
+  const scope = { conversationId };
+  const fork = {
+    conversationId,
+    beforeTurnId: "turn_3",
+    checkpointId: crypto.randomUUID(),
+  };
+  const operation = prepareResponseGroupCreation(
+    storage,
+    "owner",
+    "Follow up",
+    ["model-a", "model-b"],
+    { ...scope, fork }
+  );
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("Lost capture reply", { status: 409 }));
+  vi.stubGlobal("fetch", fetcher);
+  await expect(
+    resolveCreationRequest(storage, "owner", operation, scope)
+  ).rejects.toThrow("saved conversation state is unconfirmed");
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
+  expect(() =>
+    prepareCreation(storage, "owner", "Edit instead", "model-a", scope)
+  ).toThrow("saved comparison");
+  const recovered = prepareResponseGroupCreation(
+    storage,
+    "owner",
+    "Changed draft",
+    ["model-b", "model-b"],
+    {
+      ...scope,
+      fork: {
+        ...fork,
+        beforeTurnId: "turn_4",
+        checkpointId: crypto.randomUUID(),
+      },
+    }
+  );
+  expect(recovered).toEqual(operation);
+  fetcher
+    .mockResolvedValueOnce(Response.json({ ready: true, ...fork }))
+    .mockResolvedValueOnce(Response.json(result));
+  await resolveCreationRequest(storage, "owner", recovered, scope);
+  expect(fetcher.mock.calls[1][0]).toEqual(fetcher.mock.calls[0][0]);
+  expect(fetcher.mock.calls[1][1].body).toEqual(fetcher.mock.calls[0][1].body);
+  expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual(operation);
+  expect(readCreationRequest(storage, "owner", scope)).toBeUndefined();
+  expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
+    operation
+  );
+});
+
+test("a checkpoint receipt for different history cannot dispatch a comparison", async () => {
+  const { storage } = fixture();
+  const conversationId = crypto.randomUUID();
+  const fork = {
+    conversationId,
+    beforeTurnId: "turn_1",
+    checkpointId: crypto.randomUUID(),
+  };
+  const operation = prepareResponseGroupCreation(
+    storage,
+    "owner",
+    "Follow up",
+    ["a", "b"],
+    { conversationId, fork }
+  );
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(
+      Response.json({ ready: true, ...fork, checkpointId: crypto.randomUUID() })
+    );
+  vi.stubGlobal("fetch", fetcher);
+  await expect(
+    resolveCreationRequest(storage, "owner", operation, { conversationId })
+  ).rejects.toThrow();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(readCreationRequest(storage, "owner", { conversationId })).toEqual(
+    operation
+  );
+});

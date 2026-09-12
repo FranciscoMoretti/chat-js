@@ -11,11 +11,24 @@ import {
 } from "@/components/ai-elements/conversation";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+import {
+  expandSelectedModelValue,
+  getPrimarySelectedModelId,
+  type SelectedModelValue,
+} from "@/lib/ai/types";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
-import { draftAttachment, draftMessage, matchesDraft } from "@/lib/eve/draft";
+import {
+  draftAttachment,
+  draftMessage,
+  matchesDraft,
+  restoreDraft,
+} from "@/lib/eve/draft";
 import { sendCommand } from "@/lib/eve/send-command";
-import { useDefaultModel } from "@/providers/default-model-provider";
+import {
+  useDefaultModel,
+  useModelChange,
+} from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
@@ -52,13 +65,16 @@ export function EveConversation({
   draftScopeId?: string;
   onNavigationBlockedChange?: (blocked: boolean) => void;
 }) {
-  const fork = useEveFork(ownerId, conversationId);
-  const selectedModel = useDefaultModel();
-  const composerDraft = useEveComposerDraft(
-    ownerId,
-    draftScopeId ?? conversationId
-  );
-  const files = useEveAttachments(composerDraft);
+  const {
+    fork,
+    composerDraft,
+    files,
+    composerFiles,
+    retainedDraft,
+    comparison,
+    modelSelection,
+    modelIds,
+  } = useConversationInput(ownerId, conversationId, draftScopeId);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const storageKey = `chatjs.eve.pending-message:${sessionId}`;
@@ -77,12 +93,14 @@ export function EveConversation({
     onNavigationBlockedChange?.(
       !composerDraft.loaded ||
         !!composerDraft.error ||
-        files.uploadQueue.length > 0
+        files.uploadQueue.length > 0 ||
+        fork.locked
     );
   }, [
     composerDraft.loaded,
     composerDraft.error,
     files.uploadQueue.length,
+    fork.locked,
     onNavigationBlockedChange,
   ]);
   const agent = useEveAgent({
@@ -430,16 +448,32 @@ export function EveConversation({
                 !!pendingMessage ||
                 fork.locked
               }
-              draft={draft}
-              files={files}
+              draft={retainedDraft?.text ?? draft}
+              files={composerFiles}
+              modelSelection={modelSelection}
               onDraftChange={setDraft}
               onStop={cancel}
               onSubmit={() =>
-                run(() =>
-                  submitMessage(draft, files.attachments, selectedModel, true)
-                )
+                run(async () => {
+                  if (modelIds.length > 1) {
+                    await fork.compare(
+                      draftMessage(draft, files.attachments),
+                      modelIds,
+                      nextTurnBoundary(latestTurn)
+                    );
+                  } else {
+                    await submitMessage(
+                      draft,
+                      files.attachments,
+                      modelIds[0],
+                      true
+                    );
+                  }
+                })
               }
+              readOnly={!!comparison}
               retainedModelId={pendingMessage?.modelId}
+              retainedModelIds={comparison?.modelIds}
               stopDisabled={cancelPending || agent.status === "resuming"}
             />
             {displayedError &&
@@ -460,4 +494,84 @@ export function EveConversation({
       </section>
     </EveArtifactLayout>
   );
+}
+
+function sameComposerDraft(
+  draft: ReturnType<typeof restoreDraft>,
+  sent: ReturnType<typeof restoreDraft>
+) {
+  return (
+    draft.text.trim() === sent.text.trim() &&
+    draft.attachments.length === sent.attachments.length &&
+    draft.attachments.every(
+      (file, index) => file.url === sent.attachments[index]?.url
+    )
+  );
+}
+
+function nextTurnBoundary(
+  event: ReturnType<typeof useEveAgent>["events"][number] | undefined
+) {
+  if (
+    !(
+      event &&
+      (event.type === "turn.completed" ||
+        event.type === "turn.failed" ||
+        event.type === "turn.cancelled")
+    )
+  ) {
+    throw new Error(
+      "Wait for the conversation to finish restoring before comparing responses."
+    );
+  }
+  return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
+}
+
+function useConversationInput(
+  ownerId: string,
+  conversationId: string,
+  draftScopeId?: string
+) {
+  const changeModel = useModelChange();
+  const [selection, setSelection] = useState<SelectedModelValue>();
+  const selectedModel = useDefaultModel();
+  const composerDraft = useEveComposerDraft(
+    ownerId,
+    draftScopeId ?? conversationId
+  );
+  const files = useEveAttachments(composerDraft);
+  const fork = useEveFork(ownerId, conversationId, (message) => {
+    const sent = restoreDraft(message);
+    if (sameComposerDraft(composerDraft, sent)) {
+      composerDraft.setText("");
+      files.setAttachments([]);
+    }
+  });
+  const comparison =
+    fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
+  const retainedDraft = comparison
+    ? restoreDraft(comparison.message)
+    : undefined;
+
+  return {
+    fork,
+    composerDraft,
+    files,
+    retainedDraft,
+    comparison,
+    composerFiles: retainedDraft
+      ? { ...files, attachments: retainedDraft.attachments }
+      : files,
+    modelIds: expandSelectedModelValue(selection ?? selectedModel),
+    modelSelection: {
+      value: selection ?? selectedModel,
+      onChange: async (value: SelectedModelValue) => {
+        setSelection(value);
+        const primary = getPrimarySelectedModelId(value);
+        if (primary) {
+          await changeModel(primary);
+        }
+      },
+    },
+  };
 }

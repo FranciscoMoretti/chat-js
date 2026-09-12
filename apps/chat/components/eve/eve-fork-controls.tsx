@@ -81,14 +81,16 @@ export function EveForkControls({
             <>
               <p role="status">
                 {fork.busy
-                  ? "Creating version…"
-                  : "Version creation is unconfirmed. Retry the saved request to recover it."}
+                  ? "Creating responses…"
+                  : "Response creation is unconfirmed. Retry the saved request to recover it."}
               </p>
               <p className="whitespace-pre-wrap">
                 {eveMessageTitle(fork.pending.message)}
               </p>
               <Button disabled={fork.busy} onClick={fork.retry} size="sm">
-                Recover version
+                {fork.pending && "modelIds" in fork.pending
+                  ? "Recover comparison"
+                  : "Recover version"}
               </Button>
             </>
           )}
@@ -118,7 +120,11 @@ export function EveForkControls({
             files={fork.files}
             onDraftChange={fork.setDraft}
             onSubmit={fork.submit}
-            retainedModelId={fork.pending?.modelId}
+            retainedModelId={
+              fork.pending && !("modelIds" in fork.pending)
+                ? fork.pending.modelId
+                : undefined
+            }
           />
           {fork.error && <p role="alert">{fork.error}</p>}
           <Button
