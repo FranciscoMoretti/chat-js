@@ -597,7 +597,7 @@ const PureMultimodalInput = ({
         }
         const { error } = (await response.json()) as { error?: string };
         toast.error(error);
-      } catch (_error) {
+      } catch {
         toast.error("Failed to upload file, please try again!");
       }
     },
@@ -646,7 +646,7 @@ const PureMultimodalInput = ({
         return;
       }
 
-      const clipboardData = event.clipboardData;
+      const { clipboardData } = event;
       if (!clipboardData) {
         return;
       }
@@ -749,7 +749,8 @@ const PureMultimodalInput = ({
         setUploadQueue([]);
       }
     },
-    noClick: true, // Prevent click to open file dialog since we have the button
+    // Prevent click to open file dialog since we have the button
+    noClick: true,
     disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
     noDrag: !attachmentsEnabled,
     accept: acceptedTypes,

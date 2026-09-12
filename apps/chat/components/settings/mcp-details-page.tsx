@@ -31,7 +31,7 @@ const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
 const formatMcpError = (message: string): string => {
   const httpMatch = message.match(HTTP_STATUS_REGEX);
   if (httpMatch) {
-    const status = httpMatch[1];
+    const [, status] = httpMatch;
     if (status === "502") {
       return "MCP server is temporarily unavailable (502 Bad Gateway)";
     }
@@ -53,6 +53,143 @@ const formatMcpError = (message: string): string => {
     return `${message.slice(0, 200)}...`;
   }
   return message;
+};
+
+const DetailsSection = ({
+  title,
+  icon,
+  items,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+}) => {
+  const count = items.length;
+
+  return (
+    <div className="bg-card rounded-lg border p-3">
+      <div className="flex items-center gap-2">
+        <div className="text-muted-foreground">{icon}</div>
+        <span className="text-sm font-medium">{title}</span>
+        <span className="text-muted-foreground text-xs">({count})</span>
+      </div>
+      <Separator className="my-3" />
+      {count === 0 ? (
+        <p className="text-muted-foreground text-xs italic">None available</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((name) => (
+            <span
+              className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
+              key={name}
+              title={name}
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DiscoveryContent = ({
+  isLoading,
+  showConnectButton,
+  onConnect,
+  isIncompatible,
+  connectionError,
+  discoveryError,
+  needsOAuth,
+  showDiscovery,
+  discovery,
+}: {
+  isLoading: boolean;
+  showConnectButton: boolean;
+  onConnect: () => void;
+  isIncompatible: boolean;
+  connectionError?: string;
+  discoveryError: { message: string } | null;
+  needsOAuth: boolean;
+  showDiscovery: boolean;
+  discovery: {
+    tools: { name: string }[];
+    resources: { name: string }[];
+    prompts: { name: string }[];
+  } | null;
+}) => {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (showConnectButton) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-12 text-center">
+        <p className="text-sm font-medium">Authorization required</p>
+        <p className="text-muted-foreground max-w-xs text-xs">
+          Connect this connector to access its tools and resources.
+        </p>
+        <Button onClick={onConnect}>Connect</Button>
+      </div>
+    );
+  }
+
+  if (isIncompatible) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-center">
+        <AlertCircle className="text-destructive size-6" />
+        <p className="text-sm font-medium">Incompatible server</p>
+        <p className="text-muted-foreground max-w-xs text-xs">
+          {connectionError ??
+            "This server requires pre-configured OAuth credentials."}
+        </p>
+      </div>
+    );
+  }
+
+  if (discoveryError && !needsOAuth) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-center">
+        <AlertCircle className="text-destructive size-6" />
+        <p className="text-muted-foreground text-sm">
+          Failed to connect to MCP server
+        </p>
+        <p className="text-muted-foreground max-w-xs text-xs">
+          {formatMcpError(discoveryError.message)}
+        </p>
+      </div>
+    );
+  }
+
+  if (showDiscovery && discovery) {
+    return (
+      <ScrollArea className="max-h-[60vh]">
+        <div className="space-y-4">
+          <DetailsSection
+            icon={<Wrench className="size-4" />}
+            items={discovery.tools.map((t) => t.name)}
+            title="Tools"
+          />
+          <DetailsSection
+            icon={<FileText className="size-4" />}
+            items={discovery.resources.map((r) => r.name)}
+            title="Resources"
+          />
+          <DetailsSection
+            icon={<BookText className="size-4" />}
+            items={discovery.prompts.map((p) => p.name)}
+            title="Prompts"
+          />
+        </div>
+      </ScrollArea>
+    );
+  }
+
+  return null;
 };
 
 export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
@@ -323,142 +460,5 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         open={connectOpen}
       />
     </SettingsPageContent>
-  );
-};
-
-const DiscoveryContent = ({
-  isLoading,
-  showConnectButton,
-  onConnect,
-  isIncompatible,
-  connectionError,
-  discoveryError,
-  needsOAuth,
-  showDiscovery,
-  discovery,
-}: {
-  isLoading: boolean;
-  showConnectButton: boolean;
-  onConnect: () => void;
-  isIncompatible: boolean;
-  connectionError?: string;
-  discoveryError: { message: string } | null;
-  needsOAuth: boolean;
-  showDiscovery: boolean;
-  discovery: {
-    tools: { name: string }[];
-    resources: { name: string }[];
-    prompts: { name: string }[];
-  } | null;
-}) => {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
-      </div>
-    );
-  }
-
-  if (showConnectButton) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <p className="text-sm font-medium">Authorization required</p>
-        <p className="text-muted-foreground max-w-xs text-xs">
-          Connect this connector to access its tools and resources.
-        </p>
-        <Button onClick={onConnect}>Connect</Button>
-      </div>
-    );
-  }
-
-  if (isIncompatible) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="text-destructive size-6" />
-        <p className="text-sm font-medium">Incompatible server</p>
-        <p className="text-muted-foreground max-w-xs text-xs">
-          {connectionError ??
-            "This server requires pre-configured OAuth credentials."}
-        </p>
-      </div>
-    );
-  }
-
-  if (discoveryError && !needsOAuth) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="text-destructive size-6" />
-        <p className="text-muted-foreground text-sm">
-          Failed to connect to MCP server
-        </p>
-        <p className="text-muted-foreground max-w-xs text-xs">
-          {formatMcpError(discoveryError.message)}
-        </p>
-      </div>
-    );
-  }
-
-  if (showDiscovery && discovery) {
-    return (
-      <ScrollArea className="max-h-[60vh]">
-        <div className="space-y-4">
-          <DetailsSection
-            icon={<Wrench className="size-4" />}
-            items={discovery.tools.map((t) => t.name)}
-            title="Tools"
-          />
-          <DetailsSection
-            icon={<FileText className="size-4" />}
-            items={discovery.resources.map((r) => r.name)}
-            title="Resources"
-          />
-          <DetailsSection
-            icon={<BookText className="size-4" />}
-            items={discovery.prompts.map((p) => p.name)}
-            title="Prompts"
-          />
-        </div>
-      </ScrollArea>
-    );
-  }
-
-  return null;
-};
-
-const DetailsSection = ({
-  title,
-  icon,
-  items,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  items: string[];
-}) => {
-  const count = items.length;
-
-  return (
-    <div className="bg-card rounded-lg border p-3">
-      <div className="flex items-center gap-2">
-        <div className="text-muted-foreground">{icon}</div>
-        <span className="text-sm font-medium">{title}</span>
-        <span className="text-muted-foreground text-xs">({count})</span>
-      </div>
-      <Separator className="my-3" />
-      {count === 0 ? (
-        <p className="text-muted-foreground text-xs italic">None available</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map((name) => (
-            <span
-              className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
-              key={name}
-              title={name}
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
   );
 };

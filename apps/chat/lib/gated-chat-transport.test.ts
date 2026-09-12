@@ -8,19 +8,17 @@ import {
   gateChatRequest,
 } from "./gated-chat-transport";
 
-function requestOptions(
+const requestOptions = (
   metadata: unknown,
   abortSignal?: AbortSignal
-): Parameters<ChatTransport<UIMessage>["sendMessages"]>[0] {
-  return {
-    abortSignal,
-    chatId: "chat-1",
-    messageId: undefined,
-    messages: [],
-    metadata,
-    trigger: "submit-message",
-  };
-}
+): Parameters<ChatTransport<UIMessage>["sendMessages"]>[0] => ({
+  abortSignal,
+  chatId: "chat-1",
+  messageId: undefined,
+  messages: [],
+  metadata,
+  trigger: "submit-message",
+});
 
 describe("createGatedChatTransport", () => {
   it("waits before forwarding a request and restores its metadata", async () => {

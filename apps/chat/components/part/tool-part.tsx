@@ -46,7 +46,7 @@ const renderInstalledTool = ({
 };
 
 export const ToolPart = ({ part, messageId, isReadonly }: ToolPartProps) => {
-  const type = part.type;
+  const { type } = part;
 
   if (
     type === "tool-createTextDocument" ||

@@ -82,6 +82,81 @@ const LoadingSkeleton = ({
   </div>
 );
 
+const DocumentContent = ({ document }: { document: Document }) => {
+  const { artifact } = useArtifact();
+
+  const containerClassName = cn(
+    "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
+    {
+      "p-4 sm:px-14 sm:py-16": document.kind === "text",
+      "p-0": document.kind === "code",
+    }
+  );
+
+  const commonProps = {
+    content: document.content ?? "",
+    currentVersionIndex: 0,
+    isCurrentVersion: true,
+    saveContent: () => {
+      // No-op for preview mode
+    },
+    status: artifact.status,
+  };
+
+  return (
+    <div className={containerClassName}>
+      {(() => {
+        if (document.kind === "text") {
+          return (
+            <Editor
+              {...commonProps}
+              onSaveContent={() => {
+                // No-op for preview mode
+              }}
+            />
+          );
+        }
+        if (document.kind === "code") {
+          return (
+            <div className="relative flex w-full flex-1">
+              <div className="absolute inset-0">
+                <CodeEditor
+                  {...commonProps}
+                  onSaveContent={() => {
+                    // No-op for preview mode
+                  }}
+                />
+              </div>
+            </div>
+          );
+        }
+        if (document.kind === "sheet") {
+          return (
+            <div className="relative flex size-full flex-1 p-4">
+              <div className="absolute inset-0">
+                <SpreadsheetEditor {...commonProps} />
+              </div>
+            </div>
+          );
+        }
+        if (document.kind === "image") {
+          return (
+            <ImageEditor
+              content={document.content ?? ""}
+              currentVersionIndex={0}
+              isCurrentVersion={true}
+              isInline={true}
+              status={artifact.status}
+              title={document.title}
+            />
+          );
+        }
+        return null;
+      })()}
+    </div>
+  );
+};
+
 const PureHitboxLayer = ({
   hitboxRef,
   output,
@@ -297,81 +372,6 @@ export const DocumentPreview = ({
         type={type}
       />
       <DocumentContent document={document} />
-    </div>
-  );
-};
-
-const DocumentContent = ({ document }: { document: Document }) => {
-  const { artifact } = useArtifact();
-
-  const containerClassName = cn(
-    "bg-muted h-[257px] overflow-y-scroll rounded-b-2xl border border-t-0",
-    {
-      "p-4 sm:px-14 sm:py-16": document.kind === "text",
-      "p-0": document.kind === "code",
-    }
-  );
-
-  const commonProps = {
-    content: document.content ?? "",
-    currentVersionIndex: 0,
-    isCurrentVersion: true,
-    saveContent: () => {
-      // No-op for preview mode
-    },
-    status: artifact.status,
-  };
-
-  return (
-    <div className={containerClassName}>
-      {(() => {
-        if (document.kind === "text") {
-          return (
-            <Editor
-              {...commonProps}
-              onSaveContent={() => {
-                // No-op for preview mode
-              }}
-            />
-          );
-        }
-        if (document.kind === "code") {
-          return (
-            <div className="relative flex w-full flex-1">
-              <div className="absolute inset-0">
-                <CodeEditor
-                  {...commonProps}
-                  onSaveContent={() => {
-                    // No-op for preview mode
-                  }}
-                />
-              </div>
-            </div>
-          );
-        }
-        if (document.kind === "sheet") {
-          return (
-            <div className="relative flex size-full flex-1 p-4">
-              <div className="absolute inset-0">
-                <SpreadsheetEditor {...commonProps} />
-              </div>
-            </div>
-          );
-        }
-        if (document.kind === "image") {
-          return (
-            <ImageEditor
-              content={document.content ?? ""}
-              currentVersionIndex={0}
-              isCurrentVersion={true}
-              isInline={true}
-              status={artifact.status}
-              title={document.title}
-            />
-          );
-        }
-        return null;
-      })()}
     </div>
   );
 };

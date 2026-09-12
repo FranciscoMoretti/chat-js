@@ -20,6 +20,70 @@ type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
 
+const DeviceAuthScreen = ({
+  state,
+  onRetry,
+}: {
+  state: "checking-session" | "transferring" | "waiting-for-app";
+  onRetry: () => void;
+}) => {
+  const isLoading = state === "checking-session" || state === "transferring";
+  let title = "You're signed in";
+
+  if (isLoading) {
+    title =
+      state === "checking-session"
+        ? "Checking your session..."
+        : "Opening the desktop app...";
+  }
+
+  return (
+    <div className="bg-background flex min-h-dvh w-screen items-center justify-center">
+      <div className="w-full max-w-sm px-6">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mb-2 flex justify-center">
+              {isLoading ? (
+                <LoaderCircle className="text-muted-foreground size-8 animate-spin" />
+              ) : (
+                <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
+                  <CheckCircle2 className="size-7" />
+                </div>
+              )}
+            </div>
+            <CardTitle className="text-xl">{title}</CardTitle>
+            {!isLoading && (
+              <CardDescription>
+                You can close this tab and return to {config.appName}.
+              </CardDescription>
+            )}
+          </CardHeader>
+          {!isLoading && (
+            <CardContent className="text-center">
+              <div className="mb-4">
+                <Button asChild className="w-full" variant="outline">
+                  <a href="/">Continue on web</a>
+                </Button>
+              </div>
+              <p className="text-muted-foreground/60 text-xs">
+                Didn&apos;t open?{" "}
+                <Button
+                  className="text-muted-foreground/60 hover:text-muted-foreground h-auto p-0 text-xs underline underline-offset-2 hover:no-underline"
+                  onClick={onRetry}
+                  type="button"
+                  variant="link"
+                >
+                  Try again
+                </Button>
+              </p>
+            </CardContent>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
 export const DeviceLoginPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -124,69 +188,5 @@ export const DeviceLoginPage = () => {
       }}
       state={state}
     />
-  );
-};
-
-const DeviceAuthScreen = ({
-  state,
-  onRetry,
-}: {
-  state: "checking-session" | "transferring" | "waiting-for-app";
-  onRetry: () => void;
-}) => {
-  const isLoading = state === "checking-session" || state === "transferring";
-  let title = "You're signed in";
-
-  if (isLoading) {
-    title =
-      state === "checking-session"
-        ? "Checking your session..."
-        : "Opening the desktop app...";
-  }
-
-  return (
-    <div className="bg-background flex min-h-dvh w-screen items-center justify-center">
-      <div className="w-full max-w-sm px-6">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mb-2 flex justify-center">
-              {isLoading ? (
-                <LoaderCircle className="text-muted-foreground size-8 animate-spin" />
-              ) : (
-                <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
-                  <CheckCircle2 className="size-7" />
-                </div>
-              )}
-            </div>
-            <CardTitle className="text-xl">{title}</CardTitle>
-            {!isLoading && (
-              <CardDescription>
-                You can close this tab and return to {config.appName}.
-              </CardDescription>
-            )}
-          </CardHeader>
-          {!isLoading && (
-            <CardContent className="text-center">
-              <div className="mb-4">
-                <Button asChild className="w-full" variant="outline">
-                  <a href="/">Continue on web</a>
-                </Button>
-              </div>
-              <p className="text-muted-foreground/60 text-xs">
-                Didn&apos;t open?{" "}
-                <Button
-                  className="text-muted-foreground/60 hover:text-muted-foreground h-auto p-0 text-xs underline underline-offset-2 hover:no-underline"
-                  onClick={onRetry}
-                  type="button"
-                  variant="link"
-                >
-                  Try again
-                </Button>
-              </p>
-            </CardContent>
-          )}
-        </Card>
-      </div>
-    </div>
   );
 };
