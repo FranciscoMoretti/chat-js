@@ -25,7 +25,8 @@ export const serverEnvSchema = {
   DATABASE_URL: z
     .preprocess(
       (value) =>
-        isPlaywrightTestEnvironmentEnabled && (value == null || value === "")
+        isPlaywrightTestEnvironmentEnabled &&
+        (value === null || value === undefined || value === "")
           ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
           : value,
       z.string().min(1)
@@ -34,7 +35,8 @@ export const serverEnvSchema = {
   AUTH_SECRET: z
     .preprocess(
       (value) =>
-        isPlaywrightTestEnvironmentEnabled && (value == null || value === "")
+        isPlaywrightTestEnvironmentEnabled &&
+        (value === null || value === undefined || value === "")
           ? "playwright-test-auth-secret"
           : value,
       z.string().min(1)
