@@ -54,6 +54,8 @@ export class MemoryThreadState<
 
   update: ThreadState<TMessage>["update"] = (updater) => {
     this.#snapshot = updater(this.#snapshot);
-    for (const listener of this.#listeners) listener();
+    for (const listener of this.#listeners) {
+      listener();
+    }
   };
 }

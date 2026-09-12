@@ -1,4 +1,5 @@
-import { type ChatStatus, isToolUIPart, type UIMessage } from "ai";
+import { isToolUIPart } from "ai";
+import type { ChatStatus, UIMessage } from "ai";
 
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
 import type { ThreadConcurrency, ThreadRun } from "./types";
@@ -69,7 +70,7 @@ export class RunRegistry<TMessage extends UIMessage> {
   }
 
   getForMessage(messageId: string) {
-    const runs = this.values().reverse();
+    const runs = this.values().toReversed();
     return (
       runs.find((candidate) => candidate.spec.messageId === messageId) ??
       runs.find(
@@ -88,7 +89,7 @@ export class RunRegistry<TMessage extends UIMessage> {
 
   getForResponseMessage(messageId: string) {
     return this.values()
-      .reverse()
+      .toReversed()
       .find((candidate) => candidate.spec.messageId === messageId);
   }
 
@@ -142,16 +143,22 @@ export class RunRegistry<TMessage extends UIMessage> {
   }) {
     if (this.#selectedRunId) {
       const selectedRun = this.#runsById.get(this.#selectedRunId);
-      if (selectedRun) return selectedRun;
+      if (selectedRun) {
+        return selectedRun;
+      }
     }
 
-    const runs = this.values().reverse();
+    const runs = this.values().toReversed();
     const responseRun = runs.find(
       (run) =>
         run.spec.messageId !== undefined && pathIds.has(run.spec.messageId)
     );
-    if (responseRun) return responseRun;
-    if (!cursorId) return undefined;
+    if (responseRun) {
+      return responseRun;
+    }
+    if (!cursorId) {
+      return;
+    }
 
     return (
       runs.find(
@@ -166,9 +173,13 @@ export class RunRegistry<TMessage extends UIMessage> {
     const toolCallIds: string[] = [];
     const approvalIds: string[] = [];
     for (const part of message.parts) {
-      if (!isToolUIPart(part)) continue;
+      if (!isToolUIPart(part)) {
+        continue;
+      }
       toolCallIds.push(part.toolCallId);
-      if (part.approval) approvalIds.push(part.approval.id);
+      if (part.approval) {
+        approvalIds.push(part.approval.id);
+      }
     }
 
     for (const toolCallId of toolCallIds) {
@@ -211,7 +222,9 @@ export class RunRegistry<TMessage extends UIMessage> {
 
   require(runId: string) {
     const run = this.#runsById.get(runId);
-    if (!run) throw new Error(`Unknown run ${runId}`);
+    if (!run) {
+      throw new Error(`Unknown run ${runId}`);
+    }
     return run;
   }
 
@@ -240,13 +253,17 @@ export class RunRegistry<TMessage extends UIMessage> {
 
   setError(runId: string, error: Error | undefined) {
     const run = this.#runsById.get(runId);
-    if (!run) return;
+    if (!run) {
+      return;
+    }
     run.error = error;
   }
 
   setStatus(runId: string, status: ChatStatus) {
     const run = this.#runsById.get(runId);
-    if (run) run.status = status;
+    if (run) {
+      run.status = status;
+    }
   }
 
   snapshots() {
@@ -262,7 +279,7 @@ export class RunRegistry<TMessage extends UIMessage> {
   }
 
   values() {
-    return Array.from(this.#runsById.values());
+    return [...this.#runsById.values()];
   }
 
   private assertOwnershipAvailable(

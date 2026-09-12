@@ -1,12 +1,12 @@
-import {
-  AbstractChat,
-  type ChatInit,
-  type ChatRequestOptions,
-  type ChatState,
-  type ChatStatus,
-  type ChatTransport,
-  type UIMessage,
-  type UIMessageChunk,
+import { AbstractChat } from "ai";
+import type {
+  ChatInit,
+  ChatRequestOptions,
+  ChatState,
+  ChatStatus,
+  ChatTransport,
+  UIMessage,
+  UIMessageChunk,
 } from "ai";
 
 export type ThreadRunSpec = {
@@ -89,7 +89,9 @@ class ThreadRunState<
 
   popMessage = () => {
     const lastMessage = this.#messages.pop();
-    if (lastMessage) this.#host.removeMessage(lastMessage.id);
+    if (lastMessage) {
+      this.#host.removeMessage(lastMessage.id);
+    }
   };
 
   pushMessage = (message: TMessage) => {
@@ -139,7 +141,9 @@ export class ThreadRunChat<
         const stream = await host.transport.reconnectToStream(options);
         state.preserveReconnectError =
           stream === null && state.status === "error";
-        if (!stream) return null;
+        if (!stream) {
+          return null;
+        }
         const lastMessage = state.messages.at(-1);
         let first = true;
         return stream.pipeThrough(
@@ -166,9 +170,9 @@ export class ThreadRunChat<
               ) {
                 state.resumePrefix = structuredClone(lastMessage);
                 controller.enqueue({
-                  type: "start",
                   messageId: lastMessage.id,
                   messageMetadata: lastMessage.metadata,
+                  type: "start",
                 });
               }
               first = false;

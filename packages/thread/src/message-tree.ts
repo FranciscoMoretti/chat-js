@@ -123,7 +123,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
   getIndexes() {
     return {
       childrenByParentId: Object.fromEntries(
-        Array.from(this.#childrenByParentId.entries())
+        [...this.#childrenByParentId.entries()]
           .filter((entry): entry is [string, string[]] => entry[0] !== null)
           .map(([id, children]) => [id, [...children]])
       ),
