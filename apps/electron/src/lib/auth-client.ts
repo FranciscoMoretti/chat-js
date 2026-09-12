@@ -39,15 +39,15 @@ export const authClient = createAuthClient({
       callbackPath: ELECTRON_AUTH_CALLBACK_PATH,
       clientID: ELECTRON_AUTH_CLIENT_ID,
       cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
-      signInURL: `${APP_URL}/device-login`,
       protocol: {
         scheme: APP_SCHEME,
       },
+      signInURL: `${APP_URL}/device-login`,
       storage: electronAuthStorage,
       // `as any`: @better-auth/electron does not export a typed Storage union
       // compatible with both `storage()` and our in-memory shim, and the
       // plugin's inferred return type leaks through to createAuthClient.
-    }) as any,
+    }) as unknown as Parameters<typeof createAuthClient>[0]["plugins"][number],
   ],
 });
 

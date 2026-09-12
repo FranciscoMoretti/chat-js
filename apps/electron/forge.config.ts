@@ -17,7 +17,7 @@ type Branding = {
   orgEmail?: string;
 };
 
-const appRoot = __dirname;
+const appRoot = import.meta.dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
@@ -72,13 +72,13 @@ const createForgeConfig = (): ForgeConfig => {
 
   return {
     hooks: {
-      generateAssets: async () => {
+      generateAssets: () => {
         ensurePrebuild();
       },
-      prePackage: async () => {
+      prePackage: () => {
         runBunScript("build", { NODE_ENV: "production" });
       },
-      preStart: async () => {
+      preStart: () => {
         runBunScript("build", { NODE_ENV: "development" });
       },
     },
