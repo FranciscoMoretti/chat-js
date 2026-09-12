@@ -65,8 +65,16 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
   }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
-  const selected: PathId =
-    t >= 33 ? "food" : t >= 19 ? "city" : t >= 12.2 ? "food" : "city";
+  let selected: PathId = "city";
+  if (t >= 12.2 && t < 19) {
+    selected = "food";
+  }
+  if (t >= 19 && t < 33) {
+    selected = "city";
+  }
+  if (t >= 33) {
+    selected = "food";
+  }
   const editing = t >= 42.2 && t < 44.8;
   const edited = t >= 44.8;
   const following = t >= 24 && t < 41.5;
@@ -82,6 +90,14 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
     city: t < 6.5 ? "streaming" : "complete",
     food: t < 22.2 ? "streaming" : "complete",
   };
+  let note = "";
+  if (t >= 22) {
+    note = "Both paths are yours to keep.";
+  } else if (t >= 12 && t < 18) {
+    note = "One prompt. Two answers.";
+  } else if (t >= 19 && t < 22) {
+    note = "Your original is here. The other reply keeps going.";
+  }
   return {
     answer: texts[selected],
     budget,
@@ -99,14 +115,7 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
       text: textAt(followup.reply, progress),
     },
     foodVisible: t >= 12.2,
-    note:
-      t >= 19 && t < 22
-        ? "Your original is here. The other reply keeps going."
-        : t >= 12 && t < 18
-          ? "One prompt. Two answers."
-          : t >= 22
-            ? "Both paths are yours to keep."
-            : "",
+    note,
     portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
     portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
     reveal: ease((t - 11.5) / 0.3),
