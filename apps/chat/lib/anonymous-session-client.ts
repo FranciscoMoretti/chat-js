@@ -29,11 +29,11 @@ const setCookie = (name: string, value: string, maxAge: number): void => {
   if ("cookieStore" in window) {
     window.cookieStore
       .set({
-        name,
-        value: encodedValue,
-        path: "/",
         expires: Date.now() + maxAge * 1000,
+        name,
+        path: "/",
         sameSite: "lax",
+        value: encodedValue,
       })
       .catch(() => {
         // Fail silently if Cookie Store API fails

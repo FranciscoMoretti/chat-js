@@ -13,14 +13,14 @@ import type { UIArtifact } from "@/components/artifact-panel";
 import type { ArtifactMetadata } from "@/components/create-artifact";
 
 const initialArtifactData: UIArtifact = {
-  documentId: "init",
   content: "",
+  date: undefined,
+  documentId: "init",
+  isVisible: false,
   kind: "text",
-  title: "",
   messageId: "",
   status: "idle",
-  isVisible: false,
-  date: undefined,
+  title: "",
 };
 
 type Selector<T> = (state: UIArtifact) => T;
@@ -46,7 +46,7 @@ const ArtifactContext = createContext<ArtifactContextType | undefined>(
 );
 
 export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
-  const [artifact, setArtifactState] =
+  const [artifactState, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
   const [metadataStore, setMetadataStore] = useState<MetadataStore>({});
 
@@ -77,12 +77,12 @@ export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
 
   const contextValue = useMemo(
     () => ({
-      artifact,
-      setArtifact,
+      artifact: artifactState,
       metadata: metadataStore,
+      setArtifact,
       setMetadata,
     }),
-    [artifact, setArtifact, metadataStore, setMetadata]
+    [artifactState, setArtifact, metadataStore, setMetadata]
   );
 
   return (
@@ -151,10 +151,10 @@ export const useArtifact = () => {
   return useMemo(
     () => ({
       artifact,
-      setArtifact,
-      resetArtifact,
       closeArtifact,
       metadata,
+      resetArtifact,
+      setArtifact,
       setMetadata,
     }),
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
