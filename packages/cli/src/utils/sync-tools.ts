@@ -62,6 +62,197 @@ const selectionFiles = Object.values(selections).flatMap(({ file }) => [
 const registrationKey = (item: ToolDefinition): string =>
   item.slot ?? item.toolExport;
 
+const readToolDefinition = async (
+  cwd: string,
+  directory: string,
+  entryName: string
+): Promise<ToolDefinition | null> => {
+  const descriptor = `${directory}/${entryName}/chatjs.json`;
+  await preflight(cwd, [descriptor]);
+  const content = await readOptional(join(cwd, descriptor));
+  if (!content) {
+    return null;
+  }
+  const definition = toolDefinitionSchema.parse(JSON.parse(content));
+  if (definition.id !== entryName) {
+    throw new Error(
+      `Tool descriptor id must match its directory: ${entryName}`
+    );
+  }
+  await preflight(cwd, [
+    `${directory}/${entryName}/tool.ts`,
+    ...(definition.rendererExport
+      ? [`${directory}/${entryName}/renderer.tsx`]
+      : []),
+  ]);
+  await Promise.all([
+    readFile(join(cwd, directory, entryName, "tool.ts")),
+    ...(definition.rendererExport
+      ? [readFile(join(cwd, directory, entryName, "renderer.tsx"))]
+      : []),
+  ]);
+  return definition;
+};
+
+const collectDefinitions = async (
+  cwd: string,
+  directory: string,
+  entries: Awaited<ReturnType<typeof readdir>>,
+  definitions: ToolDefinition[],
+  index = 0
+): Promise<void> => {
+  const entry = entries[index];
+  if (!entry) {
+    return;
+  }
+  if (entry.isSymbolicLink()) {
+    throw new Error(`Tool directories must not be symlinks: ${entry.name}`);
+  }
+  if (entry.isDirectory() && !entry.name.startsWith("_")) {
+    const definition = await readToolDefinition(cwd, directory, entry.name);
+    if (definition) {
+      const existing = definitions.findIndex((item) => item.id === definition.id);
+      if (existing !== -1) {
+        definitions.splice(existing, 1);
+      }
+      definitions.push(definition);
+    }
+  }
+  await collectDefinitions(cwd, directory, entries, definitions, index + 1);
+};
+
+const validateGeneratedSelections = async (dir: string): Promise<void> => {
+  const contents = await Promise.all(
+    selectionFiles.map(async (filename) => ({
+      content: await readOptional(join(dir, filename)),
+      filename,
+    }))
+  );
+  for (const { content, filename } of contents) {
+    checkGenerated(content, filename);
+  }
+};
+
+const missingPreviousRegistration = (
+  previousTools: string | null,
+  ids: Set<string>,
+  entries: Awaited<ReturnType<typeof readdir>>
+): string | null => {
+  for (const match of previousTools?.matchAll(
+    /from "\.\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
+  ) ?? []) {
+    const id = match.groups?.id;
+    const importLine = previousTools
+      ?.split("\n")
+      .find((line) => line.includes(`from "./${id}/tool"`));
+    const alias = importLine?.match(/ as (?<alias>tool[0-9]+) \}/u)?.groups
+      ?.alias;
+    const wasSelection =
+      alias &&
+      Object.keys(selections).some((slot) =>
+        previousTools?.includes(`  ${slot}: ${alias},`)
+      );
+    if (
+      !ids.has(id ?? "") &&
+      (!wasSelection || entries.some((entry) => entry.name === id))
+    ) {
+      return id ?? "";
+    }
+  }
+  return null;
+};
+
+const validateExpected = (
+  definitions: ToolDefinition[],
+  expected: ToolDefinition[]
+): void => {
+  for (const requested of expected) {
+    const installed = definitions.find((item) => item.id === requested.id);
+    if (
+      !installed ||
+      JSON.stringify(installed) !== JSON.stringify(requested)
+    ) {
+      throw new Error(
+        `Installed descriptor does not match requested tool ${requested.id}. Check the registry item's files and overwrite choices.`
+      );
+    }
+  }
+};
+
+const validateSelections = (definitions: ToolDefinition[]): void => {
+  for (const slot of Object.keys(selections)) {
+    if (definitions.filter((item) => item.slot === slot).length > 1) {
+      throw new Error(
+        `Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`
+      );
+    }
+  }
+};
+
+const buildEnvironmentOptions = (selected: ToolDefinition | undefined): string[][] => {
+  if (!selected) {
+    return [];
+  }
+  let combinations: string[][] = [[]];
+  for (const requirement of selected.envRequirements) {
+    const next: string[][] = [];
+    for (const credentialSet of combinations) {
+      for (const option of requirement.options) {
+        next.push([...credentialSet, ...option]);
+      }
+    }
+    combinations = next;
+  }
+  return combinations;
+};
+
+const writeLegacyDescriptors = async (
+  dir: string,
+  legacy: ToolDefinition[],
+  index = 0
+): Promise<void> => {
+  const definition = legacy[index];
+  if (!definition) {
+    return;
+  }
+  const descriptor = join(dir, definition.id, "chatjs.json");
+  if ((await readOptional(descriptor)) === null) {
+    await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
+  }
+  await writeLegacyDescriptors(dir, legacy, index + 1);
+};
+
+const writeSelectionConfigs = async (
+  dir: string,
+  definitions: ToolDefinition[],
+  entries = Object.entries(selections),
+  index = 0
+): Promise<void> => {
+  const entry = entries[index];
+  if (!entry) {
+    return;
+  }
+  const [slot, spec] = entry;
+  const selected = definitions.find((item) => item.slot === slot);
+  const envOptions = buildEnvironmentOptions(selected);
+  await rm(join(dir, `${spec.file}.ts`), { force: true });
+  await writeFile(
+    join(dir, `${spec.file}-config.ts`),
+    generatedSource(
+      `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
+    )
+  );
+  await writeSelectionConfigs(dir, definitions, entries, index + 1);
+};
+
+const sourceFor = (registrations: ToolDefinition[]): { toolBody: string; uiBody: string } => {
+  const renderers = registrations.filter((item) => item.rendererExport);
+  return {
+    toolBody: `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${registrationKey(item)}: tool${i},`).join("\n")}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${registrationKey(item)}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
+  };
+};
+
 export const syncTools = async (
   cwd: string,
   options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {}
@@ -90,91 +281,24 @@ export const syncTools = async (
     previousTools && previousUi && !previousTools.startsWith(generated)
       ? await legacyTools(cwd, previousTools, previousUi)
       : null;
-  for (const filename of selectionFiles) {
-    checkGenerated(await readOptional(join(dir, filename)), filename);
-  }
+  await validateGeneratedSelections(dir);
   if (!legacy) {
     checkGenerated(previousTools, toolsPath);
     checkGenerated(previousUi, uiPath);
   }
   const definitions = [...(legacy ?? [])];
-  for (const entry of entries) {
-    if (entry.isSymbolicLink()) {
-      throw new Error(`Tool directories must not be symlinks: ${entry.name}`);
-    }
-    if (!entry.isDirectory() || entry.name.startsWith("_")) {
-      continue;
-    }
-    const descriptor = `${directory}/${entry.name}/chatjs.json`;
-    await preflight(cwd, [descriptor]);
-    const content = await readOptional(join(cwd, descriptor));
-    if (!content) {
-      continue;
-    }
-    const definition = toolDefinitionSchema.parse(JSON.parse(content));
-    if (definition.id !== entry.name) {
-      throw new Error(
-        `Tool descriptor id must match its directory: ${entry.name}`
-      );
-    }
-    await preflight(cwd, [
-      `${directory}/${entry.name}/tool.ts`,
-      ...(definition.rendererExport
-        ? [`${directory}/${entry.name}/renderer.tsx`]
-        : []),
-    ]);
-    await readFile(join(dir, entry.name, "tool.ts"));
-    if (definition.rendererExport) {
-      await readFile(join(dir, entry.name, "renderer.tsx"));
-    }
-    const existing = definitions.findIndex((item) => item.id === definition.id);
-    if (existing !== -1) {
-      definitions.splice(existing, 1);
-    }
-    definitions.push(definition);
-  }
+  await collectDefinitions(cwd, directory, entries, definitions);
   const ids = new Set(definitions.map((item) => item.id));
-  for (const match of previousTools?.matchAll(
-    /from "\.\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
-  ) ?? []) {
-    const importLine = previousTools
-      ?.split("\n")
-      .find((line) => line.includes(`from "./${match.groups?.id}/tool"`));
-    const alias = importLine?.match(/ as (?<alias>tool[0-9]+) \}/u)?.groups
-      ?.alias;
-    const wasSelection =
-      alias &&
-      Object.keys(selections).some((slot) =>
-        previousTools?.includes(`  ${slot}: ${alias},`)
-      );
-    if (
-      !ids.has(match.groups?.id ?? "") &&
-      (!wasSelection ||
-        entries.some((entry) => entry.name === match.groups?.id))
-    ) {
-      throw new Error(
-        `Missing descriptor for previously registered tool: ${match.groups?.id}. Restore chatjs.json before syncing.`
-      );
-    }
+  const missing = missingPreviousRegistration(previousTools, ids, entries);
+  if (missing) {
+    throw new Error(
+      `Missing descriptor for previously registered tool: ${missing}. Restore chatjs.json before syncing.`
+    );
   }
-  for (const expected of options.expected ?? []) {
-    const installed = definitions.find((item) => item.id === expected.id);
-    if (!installed || JSON.stringify(installed) !== JSON.stringify(expected)) {
-      throw new Error(
-        `Installed descriptor does not match requested tool ${expected.id}. Check the registry item's files and overwrite choices.`
-      );
-    }
-  }
+  validateExpected(definitions, options.expected ?? []);
   definitions.sort((a, b) => a.id.localeCompare(b.id));
-  for (const slot of Object.keys(selections)) {
-    if (definitions.filter((item) => item.slot === slot).length > 1) {
-      throw new Error(
-        `Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`
-      );
-    }
-  }
+  validateSelections(definitions);
   const registrations = definitions;
-  const renderers = registrations.filter((item) => item.rendererExport);
   const keys = registrations.map(registrationKey);
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
@@ -182,46 +306,32 @@ export const syncTools = async (
   if (options.checkOnly) {
     return definitions;
   }
-  const toolBody = `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${registrations.map((item, i) => `  ${registrationKey(item)}: tool${i},`).join("\n")}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`;
-  const uiBody = `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${renderers.map((item, i) => `  ${JSON.stringify(`tool-${registrationKey(item)}`)}: renderer${i},`).join("\n")}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`;
+  const { toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
-  if ((await readOptional(join(dir, "custom-tools.ts"))) === null) {
-    await writeFile(
-      join(dir, "custom-tools.ts"),
-      'import type { ToolSet } from "ai";\n\nexport const customTools = {} satisfies ToolSet;\n'
-    );
-  }
-  if ((await readOptional(join(dir, "custom-ui.ts"))) === null) {
-    await writeFile(
-      join(dir, "custom-ui.ts"),
-      'import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n\nexport const customUi = {} satisfies Partial<ToolRendererRegistry>;\n'
-    );
-  }
-  for (const definition of legacy ?? []) {
-    const descriptor = join(dir, definition.id, "chatjs.json");
-    if ((await readOptional(descriptor)) === null) {
-      await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
-    }
-  }
-  for (const [slot, spec] of Object.entries(selections)) {
-    const selected = definitions.find((item) => item.slot === slot);
-    await rm(join(dir, `${spec.file}.ts`), { force: true });
-    const envOptions = selected
-      ? selected.envRequirements.reduce<string[][]>(
-          (all, requirement) =>
-            all.flatMap((credentialSet) =>
-              requirement.options.map((option) => [...credentialSet, ...option])
-            ),
-          [[]]
-        )
-      : [];
-    await writeFile(
-      join(dir, `${spec.file}-config.ts`),
-      generatedSource(
-        `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
-      )
-    );
-  }
+  const [customTools, customUi] = await Promise.all([
+    readOptional(join(dir, "custom-tools.ts")),
+    readOptional(join(dir, "custom-ui.ts")),
+  ]);
+  await Promise.all([
+    ...(customTools === null
+      ? [
+          writeFile(
+            join(dir, "custom-tools.ts"),
+            'import type { ToolSet } from "ai";\n\nexport const customTools = {} satisfies ToolSet;\n'
+          ),
+        ]
+      : []),
+    ...(customUi === null
+      ? [
+          writeFile(
+            join(dir, "custom-ui.ts"),
+            'import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n\nexport const customUi = {} satisfies Partial<ToolRendererRegistry>;\n'
+          ),
+        ]
+      : []),
+  ]);
+  await writeLegacyDescriptors(dir, legacy ?? []);
+  await writeSelectionConfigs(dir, definitions);
   await writeFile(toolsPath, generatedSource(toolBody));
   await writeFile(uiPath, generatedSource(uiBody));
   return definitions;

@@ -8,27 +8,29 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 
 import { syncTools } from "./sync-tools";
 
 const roots: string[] = [];
+const { join } = path;
+
 afterEach(async () => {
-  for (const root of roots.splice(0)) {
-    await rm(root, { recursive: true, force: true });
-  }
+  await Promise.all(
+    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+  );
 });
-async function project() {
+const project = async (): Promise<string> => {
   const root = await mkdtemp(join(tmpdir(), "chatjs-sync-"));
   roots.push(root);
   await syncTools(root);
   return root;
-}
-async function install(
+};
+const install = async (
   root: string,
   id = "word-count",
   toolExport = "wordCount"
-) {
+): Promise<void> => {
   const dir = join(root, "tools/chatjs", id);
   await mkdir(dir, { recursive: true });
   const definition = {
@@ -45,7 +47,7 @@ async function install(
     join(dir, "renderer.tsx"),
     "export const WordCountRenderer = () => null;"
   );
-}
+};
 test("sync registers direct installs deterministically and preserves custom modules", async () => {
   const root = await project();
   await install(root);
@@ -138,9 +140,11 @@ test("legacy CLI empty and reverse-order indexes migrate", async () => {
   await syncTools(root);
   await install(root);
   await install(root, "get-weather", "getWeather");
-  for (const id of ["word-count", "get-weather"]) {
-    await rm(join(root, "tools/chatjs", id, "chatjs.json"));
-  }
+  await Promise.all(
+    ["word-count", "get-weather"].map((id) =>
+      rm(join(root, "tools/chatjs", id, "chatjs.json"))
+    )
+  );
   await writeFile(
     server,
     'import { wordCount } from "@/tools/chatjs/word-count/tool";\nimport { getWeather } from "@/tools/chatjs/get-weather/tool";\nexport const tools = { wordCount, getWeather, } as const;'
@@ -149,13 +153,18 @@ test("legacy CLI empty and reverse-order indexes migrate", async () => {
     client,
     'import { WordCountRenderer } from "@/tools/chatjs/word-count/renderer";\nimport { GetWeatherRenderer } from "@/tools/chatjs/get-weather/renderer";\nexport const ui = { "tool-wordCount": WordCountRenderer, "tool-getWeather": GetWeatherRenderer, };'
   );
-  expect((await syncTools(root)).map((item) => item.id)).toEqual([
+  const definitions = await syncTools(root);
+  expect(definitions.map((item) => item.id)).toEqual([
     "get-weather",
     "word-count",
   ]);
 });
 
-async function installSearch(root: string, id: string, key: string) {
+const installSearch = async (
+  root: string,
+  id: string,
+  key: string
+): Promise<void> => {
   const dir = join(root, "tools/chatjs", id);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, "tool.ts"), "export const webSearch = {};");
@@ -170,7 +179,7 @@ async function installSearch(root: string, id: string, key: string) {
       toolExport: "webSearch",
     })
   );
-}
+};
 test("search selections register standard tools without requiring a renderer", async () => {
   const root = await project();
   await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
@@ -201,7 +210,7 @@ test("sync protects an edited search selection", async () => {
   await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
 
-async function installExecution(root: string, id: string) {
+const installExecution = async (root: string, id: string): Promise<void> => {
   const dir = join(root, "tools/chatjs", id);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, "tool.ts"), "export const runCode = {};");
@@ -219,7 +228,7 @@ async function installExecution(root: string, id: string) {
       toolExport: "runCode",
     })
   );
-}
+};
 test("external execution tools compose with search and preserve credential alternatives", async () => {
   const root = await project();
   await installSearch(root, "external-search", "SEARCH_KEY");
@@ -255,7 +264,7 @@ test("external execution tools compose with search and preserve credential alter
 
 test("URL retrieval uses the selected export and credentials and rejects duplicate providers", async () => {
   const root = await project();
-  const install = async (id: string) => {
+  const installRetrieval = async (id: string): Promise<void> => {
     const dir = join(root, "tools/chatjs", id);
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "tool.ts"), "export const readPage = {};");
@@ -271,7 +280,7 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
       })
     );
   };
-  await install("custom-retrieval");
+  await installRetrieval("custom-retrieval");
   await syncTools(root);
   const server = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
   expect(server).toContain("readPage as tool");
@@ -282,7 +291,7 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
   );
   expect(requirements).toContain("PAGE_TOKEN");
   expect(requirements).not.toContain("FIRECRAWL");
-  await install("second-retrieval");
+  await installRetrieval("second-retrieval");
   await expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
   expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")).toBe(
     server
