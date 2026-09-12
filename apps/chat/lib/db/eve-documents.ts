@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { artifactKinds } from "../artifacts/artifact-kind";
 import { db } from "./client";
@@ -410,13 +410,23 @@ export async function initializeEveForkDocuments(
           eq(eveConversation.ownerId, ownerId)
         )
       );
-    if (!(target?.parentConversationId && target.forkTurnId)) {
+    if (!target?.parentConversationId) {
       throw new Error("Fork conversation not found.");
     }
-    const beforeTurn = parseForkTurnIndex(target.forkTurnId);
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${target.parentConversationId}`}, 0))`
     );
+    if (target.forkMessageId) {
+      await initializeImportedForkDocuments(
+        tx,
+        ownerId,
+        target.parentConversationId,
+        conversationId,
+        Number(target.forkMessageId.slice(13))
+      );
+      return;
+    }
+    const beforeTurn = parseForkTurnIndex(z.string().parse(target.forkTurnId));
     // Native and named forks retain the complete imported transcript prefix.
     await inheritImportedDocumentCheckpoints(
       tx,
@@ -770,11 +780,65 @@ function orderRevisionHistory<
   return history.reverse();
 }
 
+async function initializeImportedForkDocuments(
+  tx: DocumentTransaction,
+  ownerId: string,
+  sourceId: string,
+  conversationId: string,
+  messageIndex: number
+) {
+  const [checkpoint] = await tx
+    .select()
+    .from(eveImportedDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveImportedDocumentCheckpoint.conversationId, sourceId),
+        eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+        eq(eveImportedDocumentCheckpoint.messageIndex, messageIndex)
+      )
+    );
+  if (!checkpoint) {
+    throw new Error("Imported document boundary is unavailable.");
+  }
+  const entries = await tx
+    .select()
+    .from(eveImportedDocumentCheckpointEntry)
+    .where(
+      and(
+        eq(eveImportedDocumentCheckpointEntry.conversationId, sourceId),
+        eq(eveImportedDocumentCheckpointEntry.ownerId, ownerId),
+        eq(eveImportedDocumentCheckpointEntry.messageIndex, messageIndex)
+      )
+    );
+  if (entries.length) {
+    await tx
+      .insert(eveDocumentHead)
+      .values(
+        entries.map(({ documentId, revisionId }) => ({
+          conversationId,
+          ownerId,
+          documentId,
+          revisionId,
+        }))
+      )
+      .onConflictDoNothing();
+  }
+  // The selected message and its suffix are excluded from the native prefix.
+  await inheritImportedDocumentCheckpoints(
+    tx,
+    ownerId,
+    sourceId,
+    conversationId,
+    messageIndex
+  );
+}
+
 async function inheritImportedDocumentCheckpoints(
   tx: DocumentTransaction,
   ownerId: string,
   sourceId: string,
-  conversationId: string
+  conversationId: string,
+  beforeMessageIndex?: number
 ) {
   const headers = await tx
     .select()
@@ -782,7 +846,10 @@ async function inheritImportedDocumentCheckpoints(
     .where(
       and(
         eq(eveImportedDocumentCheckpoint.conversationId, sourceId),
-        eq(eveImportedDocumentCheckpoint.ownerId, ownerId)
+        eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+        beforeMessageIndex === undefined
+          ? undefined
+          : lt(eveImportedDocumentCheckpoint.messageIndex, beforeMessageIndex)
       )
     );
   if (!headers.length) {

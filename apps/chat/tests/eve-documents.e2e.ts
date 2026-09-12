@@ -1042,3 +1042,73 @@ test.each([
     },
   ]);
 });
+
+test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
+  const root = await conversation();
+  const input = draft(root.id);
+  const original = await saveEveDocumentRevision(input);
+  const later = await saveEveDocumentRevision({
+    ...input,
+    operationId: crypto.randomUUID(),
+    expectedRevisionId: original.id,
+    content: "Later edit",
+    turnIndex: 1,
+  });
+  await db.insert(eveImportedDocumentCheckpoint).values(
+    [0, 2, 4].map((messageIndex) => ({
+      ownerId: owner,
+      conversationId: root.id,
+      messageIndex,
+    }))
+  );
+  await db.insert(eveImportedDocumentCheckpointEntry).values([
+    {
+      ownerId: owner,
+      conversationId: root.id,
+      messageIndex: 2,
+      documentId: input.documentId,
+      revisionId: original.id,
+    },
+    {
+      ownerId: owner,
+      conversationId: root.id,
+      messageIndex: 4,
+      documentId: input.documentId,
+      revisionId: later.id,
+    },
+  ]);
+  for (const index of [0, 2, 6]) {
+    const [child] = await db
+      .insert(eveConversation)
+      .values({
+        ownerId: owner,
+        operationId: crypto.randomUUID(),
+        firstMessage: "Imported edit",
+        parentConversationId: root.id,
+        rootConversationId: root.id,
+        forkMessageId: `seed_message_${index}`,
+      })
+      .returning();
+    await expect(
+      initializeEveForkDocuments(stranger, child.id)
+    ).rejects.toThrow("Fork conversation not found");
+    if (index === 6) {
+      await expect(initializeEveForkDocuments(owner, child.id)).rejects.toThrow(
+        "Imported document boundary is unavailable"
+      );
+    } else {
+      await initializeEveForkDocuments(owner, child.id);
+      await initializeEveForkDocuments(owner, child.id);
+    }
+    const heads = await db
+      .select({ revisionId: eveDocumentHead.revisionId })
+      .from(eveDocumentHead)
+      .where(eq(eveDocumentHead.conversationId, child.id));
+    expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
+    const headers = await db
+      .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
+      .from(eveImportedDocumentCheckpoint)
+      .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
+    expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
+  }
+});
