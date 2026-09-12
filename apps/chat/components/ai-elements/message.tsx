@@ -11,7 +11,15 @@ import {
   XIcon,
 } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Streamdown } from "streamdown";
 
 import { Button } from "@/components/ui/button";
@@ -150,31 +158,37 @@ export const MessageBranch = ({
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
   const [branches, setBranches] = useState<ReactElement[]>([]);
 
-  const handleBranchChange = (newBranch: number) => {
-    setCurrentBranch(newBranch);
-    onBranchChange?.(newBranch);
-  };
+  const handleBranchChange = useCallback(
+    (newBranch: number) => {
+      setCurrentBranch(newBranch);
+      onBranchChange?.(newBranch);
+    },
+    [onBranchChange]
+  );
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     const newBranch =
       currentBranch > 0 ? currentBranch - 1 : branches.length - 1;
     handleBranchChange(newBranch);
-  };
+  }, [branches.length, currentBranch, handleBranchChange]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     const newBranch =
       currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
     handleBranchChange(newBranch);
-  };
+  }, [branches.length, currentBranch, handleBranchChange]);
 
-  const contextValue: MessageBranchContextType = {
-    branches,
-    currentBranch,
-    goToNext,
-    goToPrevious,
-    setBranches,
-    totalBranches: branches.length,
-  };
+  const contextValue = useMemo<MessageBranchContextType>(
+    () => ({
+      branches,
+      currentBranch,
+      goToNext,
+      goToPrevious,
+      setBranches,
+      totalBranches: branches.length,
+    }),
+    [branches, currentBranch, goToNext, goToPrevious]
+  );
 
   return (
     <MessageBranchContext.Provider value={contextValue}>

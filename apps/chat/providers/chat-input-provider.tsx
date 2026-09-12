@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -235,27 +236,42 @@ export const ChatInputProvider = ({
     },
     [clearAttachments, clearInput, selectedTool, resetData]
   );
+  const contextValue = useMemo<ChatInputContextType>(
+    () => ({
+      attachments,
+      editorRef,
+      getInitialInput,
+      getInputValue,
+      handleInputChange,
+      handleSubmit,
+      handleModelChange,
+      handleModelSelectionChange,
+      isEmpty,
+      isProjectContext,
+      selectedModelId,
+      selectedModelSelection,
+      selectedTool,
+      setAttachments,
+      setSelectedTool,
+    }),
+    [
+      attachments,
+      getInitialInput,
+      getInputValue,
+      handleInputChange,
+      handleModelChange,
+      handleModelSelectionChange,
+      handleSubmit,
+      isEmpty,
+      isProjectContext,
+      selectedModelId,
+      selectedModelSelection,
+      selectedTool,
+    ]
+  );
 
   return (
-    <ChatInputContext.Provider
-      value={{
-        attachments,
-        editorRef,
-        getInitialInput,
-        getInputValue,
-        handleInputChange,
-        handleSubmit,
-        handleModelChange,
-        handleModelSelectionChange,
-        isProjectContext,
-        isEmpty,
-        selectedModelId,
-        selectedModelSelection,
-        selectedTool,
-        setAttachments,
-        setSelectedTool,
-      }}
-    >
+    <ChatInputContext.Provider value={contextValue}>
       {children}
     </ChatInputContext.Provider>
   );

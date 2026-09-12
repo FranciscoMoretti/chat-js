@@ -217,22 +217,6 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/code-block.tsx",
-        "components/ai-elements/context.tsx",
-        "components/ai-elements/message.tsx",
-        "components/ai-elements/reasoning.tsx",
-        "components/chat/chat-layout.tsx",
-        "components/multimodal-input.tsx",
-        "components/ui/form.tsx",
-        "providers/chat-input-provider.tsx",
-        "providers/chat-models-provider.tsx"
-      ],
-      "rules": {
-        "react/jsx-no-constructed-context-values": "off"
-      }
-    },
-    {
       "files": ["components/settings/models-table.tsx"],
       "rules": {
         "react/memo-dependencies": "off"

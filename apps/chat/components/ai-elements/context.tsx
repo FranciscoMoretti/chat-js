@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { ComponentProps } from "react";
 import { getUsage } from "tokenlens";
 
@@ -50,11 +50,18 @@ export const Context = ({
   usage,
   modelId,
   ...props
-}: ContextProps) => (
-  <ContextContext.Provider value={{ maxTokens, modelId, usage, usedTokens }}>
-    <HoverCard closeDelay={0} openDelay={0} {...props} />
-  </ContextContext.Provider>
-);
+}: ContextProps) => {
+  const contextValue = useMemo(
+    () => ({ maxTokens, modelId, usage, usedTokens }),
+    [maxTokens, modelId, usage, usedTokens]
+  );
+
+  return (
+    <ContextContext.Provider value={contextValue}>
+      <HoverCard closeDelay={0} openDelay={0} {...props} />
+    </ContextContext.Provider>
+  );
+};
 
 const ContextIcon = () => {
   const { usedTokens, maxTokens } = useContextValue();
