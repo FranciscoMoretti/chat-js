@@ -45,7 +45,7 @@ test("internal retirement settles usage after access revocation and is retryable
     headers: { origin: new URL(page.url()).origin },
     data: {
       operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini-fast",
+      modelId: "google/gemini-2.5-flash-lite",
       message: "Reply exactly retire-fixture-ok. Do not call tools.",
     },
   });
@@ -150,6 +150,7 @@ test("internal retirement settles usage after access revocation and is retryable
         Promise.reject(new Error("Retired session must not reset again"))
       )
     ).toEqual(receipt);
+    expect(await purgeResources()).toEqual(prepared);
     const [settled] = await db
       .select()
       .from(userCredit)

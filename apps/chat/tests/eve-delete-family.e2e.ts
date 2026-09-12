@@ -13,6 +13,11 @@ import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conver
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
+// This suite exercises app-family state with synthetic native runs. Real native
+// birth receipts and filesystem proof are covered by eve-deletion-retire.
+vi.mock("../lib/eve/verify-local-coverage", () => ({
+  verifyLocalEveFamilyCoverage: vi.fn(),
+}));
 // Fixtures below allocate no filesystem or blob resources; keep the test local.
 vi.mock("../lib/eve/local-sandbox-fence", () => ({
   fenceLocalEveSandboxMutations: vi.fn(),

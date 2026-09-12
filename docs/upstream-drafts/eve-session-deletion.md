@@ -327,3 +327,22 @@ resolves through known workflow types to such a session. Missing ancestry,
 cycles, unknown versions, collectors, and authored workflow wrappers remain
 unresolved. Graph traversal visits each ancestry edge once and does not authorize
 erasure; the coordinator still needs receipt validation and persistent proof.
+
+The internal local coordinator now enforces coverage before sandbox, document,
+or file erasure. Under the same advisory lock as native payload deletion, it
+requires a complete classified run inventory and fences for every run and stream,
+then verifies each session's native v2 birth receipt against its canonical local
+microsandbox identity file. Identity files cannot be symlinks. Descendant reads
+require an owner-matched deleting root plus fenced native ancestry, including
+queue-retained associations.
+
+A provider-side `eve_sandbox_coverage` row records the verified worker root, run
+IDs and sandbox-owning session IDs before native erasure. Retries require the
+same scope and can proceed after native payloads are gone without rereading lost
+birth streams. The table is installed explicitly with the local provider fence
+migration; no request creates it. Local database tests cover missing fences,
+failed verification, unknown workflows, foreign descendants, and changed retry
+scope. The browser retirement test now uses Gemini Flash Lite and verifies
+composed cleanup again after native erasure with settled credits unchanged.
+Unknown authored workflow coverage and uncertain external allocations remain
+unresolved; this is still an internal coordinator, not the public deletion UI.

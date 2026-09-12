@@ -18,6 +18,13 @@ create table if not exists workflow.eve_payload_purges (
   completed_at timestamptz not null default now(),
   primary key (session_id, task_identifier)
 );
+create table if not exists workflow.eve_sandbox_coverage (
+  session_id text primary key,
+  app_root text not null,
+  run_ids text[] not null,
+  sandbox_session_ids text[] not null,
+  completed_at timestamptz not null default now()
+);
 create or replace function workflow.eve_assert_writable(resources text[])
 returns void language plpgsql set search_path = pg_catalog as $$
 declare resource_id text; is_fenced boolean;

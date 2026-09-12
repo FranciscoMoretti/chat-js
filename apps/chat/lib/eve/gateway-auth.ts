@@ -3,6 +3,7 @@ import {
   getDeletingEveConversationForSession,
   ownsEveSession,
 } from "../db/eve-queries";
+import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
 import { env } from "../env";
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
@@ -31,13 +32,7 @@ export async function authenticateEveGateway(request: Request) {
   }
   const path = new URL(request.url).pathname;
   if (request.headers.get("x-chatjs-deletion") === "1") {
-    const sessionId = parseDeletionSessionRequest(path, request.method);
-    if (
-      !(
-        sessionId &&
-        (await getDeletingEveConversationForSession(owner, sessionId))
-      )
-    ) {
+    if (!(await authorizeDeletionRequest(request, owner, path))) {
       return null;
     }
   } else if (
@@ -79,4 +74,36 @@ function gatewaySessionPolicy(path: string, method: string) {
   return checkpointSession
     ? { sessionId: checkpointSession }
     : parseSessionRequest(path, method);
+}
+
+async function authorizeDeletionRequest(
+  request: Request,
+  owner: string,
+  path: string
+) {
+  const sessionId = parseDeletionSessionRequest(path, request.method);
+  if (!sessionId) {
+    return false;
+  }
+  const rootSessionId = request.headers.get("x-chatjs-deletion-root");
+  if (!rootSessionId) {
+    return Boolean(
+      await getDeletingEveConversationForSession(owner, sessionId)
+    );
+  }
+  if (
+    !(
+      path.endsWith("/sandbox-identity") &&
+      request.method === "GET" &&
+      env.WORKFLOW_POSTGRES_URL &&
+      (await getDeletingEveConversationForSession(owner, rootSessionId))
+    )
+  ) {
+    return false;
+  }
+  return await isFencedEveDescendant(
+    env.WORKFLOW_POSTGRES_URL,
+    rootSessionId,
+    sessionId
+  );
 }

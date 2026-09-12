@@ -9,6 +9,10 @@ import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
 import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
 import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
 import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
+import {
+  isFencedEveDescendant,
+  verifyEveSandboxCoverage,
+} from "../lib/db/eve-sandbox-coverage-proof";
 import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
 import { env } from "../lib/env";
 
@@ -33,6 +37,7 @@ afterAll(async () => {
     await query`delete from ${query(`workflow.${table}`)} where run_id in ${query(runIds)}`;
   }
   await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
+  await query`delete from workflow.eve_sandbox_coverage where session_id in ${query(runIds)}`;
   await query`delete from workflow.eve_session_retirements where session_id in ${query(runIds)}`;
   await query`delete from workflow.eve_payload_purges where task_identifier = ${task}`;
   await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
@@ -309,4 +314,75 @@ test("missing queue-discovered runs stop preparation before payload erasure", as
       Promise.resolve()
     )
   ).rejects.toThrow("Resolve missing runs");
+});
+
+test("sandbox coverage requires fences and receipts, then survives native payload erasure", async () => {
+  const root = await fixture();
+  const child = await fixture(root);
+  await query`update workflow.workflow_runs set name = 'workflow//eve//workflowEntry' where id in ${query([root, child])}`;
+  const input = { sessionId: root, runIds: [root, child], appRoot: "/fixture" };
+  let reads = 0;
+  const verify = () => {
+    reads++;
+    return Promise.resolve();
+  };
+  await expect(verifyEveSandboxCoverage(query, input, verify)).rejects.toThrow(
+    "Fence native writers"
+  );
+  expect(await isFencedEveDescendant(env.DATABASE_URL, root, child)).toBe(
+    false
+  );
+  const inventory = await fenceEvePostgresSession(query, root);
+  expect(await isFencedEveDescendant(env.DATABASE_URL, root, child)).toBe(true);
+  expect(
+    await isFencedEveDescendant(env.DATABASE_URL, root, crypto.randomUUID())
+  ).toBe(false);
+  await expect(
+    verifyEveSandboxCoverage(query, input, () => {
+      throw new Error("receipt absent");
+    })
+  ).rejects.toThrow("receipt absent");
+  expect(
+    await query`select session_id from workflow.eve_sandbox_coverage where session_id = ${root}`
+  ).toHaveLength(0);
+  expect(await verifyEveSandboxCoverage(query, input, verify)).toEqual(
+    [root, child].sort()
+  );
+  expect(reads).toBe(2);
+  await purgeEvePostgresQueue(query, {
+    sessionId: root,
+    taskIdentifier: task,
+    runIds: inventory.runIds,
+  });
+  await purgeEvePostgresSessionPayloads(query, {
+    sessionId: root,
+    taskIdentifier: task,
+  });
+  expect(
+    await verifyEveSandboxCoverage(query, input, () => {
+      throw new Error("must use saved proof");
+    })
+  ).toEqual([root, child].sort());
+  await expect(
+    verifyEveSandboxCoverage(query, { ...input, appRoot: "/other" }, verify)
+  ).rejects.toThrow("scope changed");
+  await expect(
+    verifyEveSandboxCoverage(query, { ...input, runIds: [root] }, verify)
+  ).rejects.toThrow("scope changed");
+});
+test("unknown workflow coverage never calls the ownership verifier", async () => {
+  const root = await fixture();
+  await fenceEvePostgresSession(query, root);
+  let called = false;
+  await expect(
+    verifyEveSandboxCoverage(
+      query,
+      { sessionId: root, runIds: [root], appRoot: "/fixture" },
+      () => {
+        called = true;
+        return Promise.resolve();
+      }
+    )
+  ).rejects.toThrow("incomplete sandbox workflow coverage");
+  expect(called).toBe(false);
 });

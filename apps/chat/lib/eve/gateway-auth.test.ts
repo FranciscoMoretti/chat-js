@@ -5,17 +5,26 @@ const mocks = vi.hoisted(() => ({
   owns: vi.fn(),
   deleting: vi.fn(),
   model: vi.fn(),
+  descendant: vi.fn(),
 }));
 vi.mock("../env", () => ({
-  env: { EVE_ENABLED: "true", EVE_GATEWAY_SECRET: "fixture-secret" },
+  env: {
+    EVE_ENABLED: "true",
+    EVE_GATEWAY_SECRET: "fixture-secret",
+    WORKFLOW_POSTGRES_URL: "postgresql://local",
+  },
 }));
 vi.mock("../db/eve-queries", () => ({
   ownsEveSession: mocks.owns,
   getDeletingEveConversationForSession: mocks.deleting,
 }));
+vi.mock("../db/eve-sandbox-coverage-proof", () => ({
+  isFencedEveDescendant: mocks.descendant,
+}));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.descendant.mockResolvedValue(false);
   mocks.owns.mockResolvedValue(false);
   mocks.deleting.mockResolvedValue({ id: "conversation" });
 });
@@ -115,4 +124,34 @@ it("ordinary owner access cannot read internal sandbox birth evidence", async ()
   mocks.owns.mockResolvedValue(true);
   expect(await authenticateEveGateway(read)).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
+});
+
+it("only allows fenced descendants of an owner-matched deleting root", async () => {
+  const read = request("/eve/v1/session/child/sandbox-identity", "GET");
+  read.headers.set("x-chatjs-deletion-root", "root");
+  expect(await authenticateEveGateway(read)).toBeNull();
+  mocks.descendant.mockResolvedValue(true);
+  expect(await authenticateEveGateway(read)).toMatchObject({
+    principalId: "owner",
+  });
+  expect(mocks.deleting).toHaveBeenCalledWith("owner", "root");
+  expect(mocks.descendant).toHaveBeenCalledWith(
+    "postgresql://local",
+    "root",
+    "child"
+  );
+  mocks.deleting.mockResolvedValue(undefined);
+  expect(await authenticateEveGateway(read)).toBeNull();
+});
+it("root proof headers cannot authorize descendant mutations or transcript reads", async () => {
+  mocks.descendant.mockResolvedValue(true);
+  for (const [path, method] of [
+    ["reset", "POST"],
+    ["stream", "GET"],
+  ]) {
+    const read = request(`/eve/v1/session/child/${path}`, method);
+    read.headers.set("x-chatjs-deletion-root", "root");
+    expect(await authenticateEveGateway(read)).toBeNull();
+  }
+  expect(mocks.descendant).not.toHaveBeenCalled();
 });

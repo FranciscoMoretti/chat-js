@@ -18,6 +18,11 @@ export async function prepareEveFamilyDeletion(
   if (!databaseUrl) {
     throw new Error("EVE Postgres is not configured.");
   }
+  const nativeInventories: Array<{
+    sessionId: string;
+    runIds: string[];
+    streamIds: string[];
+  }> = [];
   const runIds = new Set<string>();
   const streamIds = new Set<string>();
   for (const conversation of family.conversations) {
@@ -32,6 +37,7 @@ export async function prepareEveFamilyDeletion(
         await retireEveSessionForDeletion(ownerId, sessionId);
       }
     );
+    nativeInventories.push({ sessionId, ...inventory });
     for (const id of inventory.runIds) {
       runIds.add(id);
     }
@@ -41,6 +47,7 @@ export async function prepareEveFamilyDeletion(
   }
   return {
     ...family,
+    nativeInventories,
     runIds: [...runIds].sort(),
     streamIds: [...streamIds].sort(),
   };

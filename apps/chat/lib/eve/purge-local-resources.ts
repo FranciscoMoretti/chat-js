@@ -5,6 +5,7 @@ import { prepareEveFamilyDeletion } from "./prepare-deletion";
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
+import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 
 /**
  * Internal local-provider coordinator. Native history and deleting bindings remain
@@ -21,6 +22,11 @@ export async function purgeLocalEveFamilyResources(
     return family;
   }
   await fenceLocalEveSandboxMutations(appRoot, family.runIds);
+  await verifyLocalEveFamilyCoverage(
+    ownerId,
+    appRoot,
+    family.nativeInventories
+  );
   const inventory = await readLocalEveSandboxInventory(appRoot, family.runIds);
   if (inventory.unattributedDirectories.length) {
     throw new Error(
