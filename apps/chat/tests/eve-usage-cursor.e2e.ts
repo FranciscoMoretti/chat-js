@@ -178,3 +178,34 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
     "Conversation not found"
   );
 });
+
+test("unpriced auxiliary usage retains the unread cursor until its exact attempt is reconciled", async () => {
+  const id = await session();
+  const event = {
+    type: "hook.result",
+    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
+    data: {
+      hookId: "followup-suggestions",
+      turnId: "turn_0",
+      modelCalls: [{ modelId: "model" }],
+    },
+  };
+  transport.stream.mockImplementation(function* ({ startIndex }) {
+    if (startIndex === 0) {
+      yield event;
+    }
+  });
+  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
+    "provider cost reconciliation"
+  );
+  expect(await getEveUsageCursor(owner, id)).toBe(0);
+  await recordEveUsage({
+    ownerId: owner,
+    sessionId: id,
+    eventId: `${event.meta.id}:model-call:0`,
+    turnId: "turn_0",
+    costUsd: 0.001,
+  });
+  await reconcileEveUsage(owner, id);
+  expect(await getEveUsageCursor(owner, id)).toBe(1);
+});

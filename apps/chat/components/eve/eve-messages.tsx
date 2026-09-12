@@ -16,13 +16,16 @@ import {
   MessageContent,
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
+import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
+import { config } from "@/lib/config";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { isEvePlatformTool } from "@/lib/eve/platform-result";
 import { EveAttachment } from "./eve-attachment";
@@ -225,6 +228,7 @@ export function EveMessages({
   respond,
   onEdit,
   onRegenerate,
+  onSuggestion,
   actionsDisabled = disabled,
 }: {
   conversationId?: string;
@@ -232,6 +236,7 @@ export function EveMessages({
   isReadonly: boolean;
   actionsDisabled?: boolean;
   onEdit?: (message: EveMessage) => void;
+  onSuggestion?: (suggestion: string) => void;
   onRegenerate?: (message: EveMessage, response: EveMessage) => void;
   disabled: boolean;
   respond: (response: InputResponse) => void;
@@ -315,6 +320,17 @@ export function EveMessages({
             <Copy size={14} />
           </MessageAction>
         </MessageActions>
+        {message.role === "assistant" &&
+          message.id === messages.at(-1)?.id &&
+          !isReadonly &&
+          !actionsDisabled &&
+          onSuggestion &&
+          config.ai.tools.followupSuggestions.enabled && (
+            <FollowUpSuggestionsView
+              onSelect={onSuggestion}
+              suggestions={messageFollowupSuggestions(message)}
+            />
+          )}
       </Message>
     );
   });

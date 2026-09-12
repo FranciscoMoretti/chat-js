@@ -7,6 +7,23 @@ export async function ingestEveUsage(
   sessionId: string,
   event: MessageStreamEvent
 ) {
+  if (event.type === "hook.result") {
+    let completedCallsPriced = true;
+    for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
+      const priced = await recordEveUsage({
+        ownerId,
+        sessionId,
+        eventId: `${event.meta.id}:model-call:${index}`,
+        turnId: event.data.turnId,
+        costUsd: call.usage?.costUsd,
+        generationId: call.providerMetadata?.gateway?.generationId,
+      });
+      if (!call.failed && priced === false) {
+        completedCallsPriced = false;
+      }
+    }
+    return completedCallsPriced;
+  }
   if (
     event.type === "action.result" &&
     event.data.result.kind === "tool-result" &&

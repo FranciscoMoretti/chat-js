@@ -36,6 +36,7 @@ export async function reconcileEveUsage(ownerId: string, sessionId: string) {
     if (
       (event.type === "step.completed" ||
         event.type === "compaction.usage" ||
+        event.type === "hook.result" ||
         event.type === "action.result") &&
       priced === false
     ) {

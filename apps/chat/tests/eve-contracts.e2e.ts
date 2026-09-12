@@ -695,3 +695,31 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     creationKind: "message",
   });
 });
+
+test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
+  const sessionId = crypto.randomUUID();
+  const event: MessageStreamEvent = {
+    type: "hook.result",
+    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
+    data: {
+      hookId: "followup-suggestions",
+      turnId: "turn_0",
+      modelCalls: [
+        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.002 } },
+        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.003 } },
+      ],
+    },
+  };
+  await Promise.all(
+    Array.from({ length: 4 }, () => ingestEveUsage(owner, sessionId, event))
+  );
+  const entries = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, sessionId));
+  expect(entries).toHaveLength(2);
+  expect(entries.reduce((sum, entry) => sum + Number(entry.costUsd), 0)).toBe(
+    0.005
+  );
+  expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
+});

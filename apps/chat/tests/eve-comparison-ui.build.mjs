@@ -16,7 +16,7 @@ const replacements = {
   "connectors-dropdown.tsx": "ConnectorsDropdown",
 };
 const result = await build({
-  entrypoints: ["tests/eve-comparison-ui.fixture.tsx"],
+  entrypoints: [process.argv[2] ?? "tests/eve-comparison-ui.fixture.tsx"],
   target: "browser",
   define: {
     "process.env.NODE_ENV": JSON.stringify("development"),

@@ -5,6 +5,10 @@ import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState } from "react";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
+import {
+  consumeComparisonDraftIntent,
+  saveComparisonDraftIntent,
+} from "@/lib/eve/comparison-draft-intent";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
@@ -31,7 +35,8 @@ export function useEveFork(
   conversationId: string,
   onComparisonCreated?: (
     message: EveMessageInput,
-    selectedTool?: UiToolName
+    selectedTool: UiToolName | undefined,
+    clearComposer: boolean
   ) => void
 ) {
   const trpc = useTRPC();
@@ -105,7 +110,16 @@ export function useEveFork(
       }
     );
     if ("modelIds" in operation) {
-      onComparisonCreated?.(operation.message, operation.selectedTool);
+      onComparisonCreated?.(
+        operation.message,
+        operation.selectedTool,
+        consumeComparisonDraftIntent(
+          sessionStorage,
+          ownerId,
+          conversationId,
+          operation.operationId
+        )
+      );
     }
     window.location.assign(`/chat/${id}`);
   }
@@ -215,7 +229,8 @@ export function useEveFork(
       message: EveMessageInput,
       modelIds: string[],
       beforeTurnId: string,
-      requestedTool?: UiToolName
+      requestedTool?: UiToolName,
+      clearComposer = true
     ) =>
       run(async () => {
         if (!loaded || restoreFailed || pending || open) {
@@ -235,6 +250,13 @@ export function useEveFork(
             },
           },
           requestedTool
+        );
+        saveComparisonDraftIntent(
+          sessionStorage,
+          ownerId,
+          conversationId,
+          operation.operationId,
+          clearComposer
         );
         setPending(operation);
         await execute(operation);

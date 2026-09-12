@@ -1,3 +1,14 @@
+diff --git a/.changeset/completion-hook-results.md b/.changeset/completion-hook-results.md
+new file mode 100644
+index 0000000..854cc9f
+--- /dev/null
++++ b/.changeset/completion-hook-results.md
+@@ -0,0 +1,5 @@
++---
++"eve": patch
++---
++
++Allow completion hooks to return durable response annotations and auxiliary model-call usage. Clients receive hook results before the session becomes idle and can replay per-hook assistant annotations without adding them to model prompts.
 diff --git a/.changeset/durable-message-metadata.md b/.changeset/durable-message-metadata.md
 new file mode 100644
 index 0000000..8edfbcc
@@ -89,6 +100,132 @@ index 95d2cbf..dfa1dc7 100644
 +
 +Metadata requires inbox wire v8 and appears in stream v27. A metadata-bearing send
 +to an older inbox consumer fails explicitly instead of silently dropping data.
+diff --git a/docs/guides/hooks.md b/docs/guides/hooks.md
+index c169d92..95a166d 100644
+--- a/docs/guides/hooks.md
++++ b/docs/guides/hooks.md
+@@ -26,7 +26,7 @@ The slug is the path-relative basename. `agent/hooks/audit.ts` becomes `"audit"`
+
+ `defineHook`, `HookDefinition`, and `HookContext` live on `eve/hooks`.
+
+-A hook file declares stream-event subscribers under the `events` map, keyed by event type, with `*` matching every event. Subscribe to any event in the runtime stream vocabulary documented in [Sessions, runs and streaming](../concepts/sessions-runs-and-streaming), including the lifecycle events `session.started`, `turn.completed`, `message.completed`, `action.partial`, and `action.result`. Handlers are observe-only. They cannot inject model context. To contribute runtime model messages, use `defineDynamic` and `defineInstructions` in `agent/instructions/`.
++A hook file declares stream-event subscribers under the `events` map, keyed by event type, with `*` matching every event. Subscribe to any event in the runtime stream vocabulary documented in [Sessions, runs and streaming](../concepts/sessions-runs-and-streaming), including the lifecycle events `session.started`, `turn.completed`, `message.completed`, `action.partial`, and `action.result`. Only `turn.completed` handlers may return durable response annotations and auxiliary model usage. Handlers cannot inject model context. To contribute runtime model messages, use `defineDynamic` and `defineInstructions` in `agent/instructions/`.
+
+ ## Scope side effects to a channel
+
+@@ -169,7 +169,7 @@ See [the event envelope](../concepts/sessions-runs-and-streaming#the-event-envel
+ When a stream event fires, three things happen in order:
+
+ 1. Emit. The channel adapter handler runs, the event is stamped with its `meta` envelope, then it is written to the durable stream.
+-2. Hooks. Stream-event hooks fire (typed handlers first, then the `*` wildcard). Return values are ignored.
++2. Hooks. Stream-event hooks fire (typed handlers first, then the `*` wildcard). A `turn.completed` result emits `hook.result` through the same durable pipeline before the session becomes idle. Other events must return void.
+ 3. Dynamic tool resolvers. Resolvers subscribed to the event type run and update the tool set.
+
+ Hooks always run after the event is durably recorded, so if a hook throws, the stream stays consistent. The persisted event and every hook observe the same `meta.id`.
+@@ -191,7 +191,7 @@ Subagents may carry their own `agent/hooks/` directory. Subagent hooks fire only
+ | Make a value available across the entire step     | a context provider                             |
+ | Subscribe to platform-specific events             | a channel adapter handler                      |
+
+-Stream-event hooks and channel adapter event handlers are structurally identical. Choose the channel adapter handler when you are authoring adapter-specific behavior, and choose `events.*` when you are authoring agent-level behavior that should fire across every channel. Both fire when both are registered.
++Completion results are specific to authored hooks; channel adapter return contracts are unchanged. Choose the channel adapter handler when you are authoring adapter-specific behavior, and choose `events.*` when you are authoring agent-level behavior that should fire across every channel. Both fire when both are registered.
+
+ ## What to read next
+
+@@ -199,3 +199,31 @@ Stream-event hooks and channel adapter event handlers are structurally identical
+ - [Context control](../concepts/context-control)
+ - [Session context](../reference/typescript-api)
+ - [Sessions, runs and streaming](../concepts/sessions-runs-and-streaming)
++
++## Completion results
++
++A completion hook may return `TurnCompletedHookResult` from `eve/hooks`. This is useful for suggestions generated with a separate model after the main answer:
++
++```ts title="agent/hooks/suggestions.ts"
++import { defineHook } from "eve/hooks";
++
++export default defineHook({
++  events: {
++    "turn.completed"() {
++      return { responseMetadata: { suggestions: ["Explain the next step"] } };
++    },
++  },
++});
++```
++
++The durable `hook.result` event contains the hook's path-relative `hookId`, the completed `turnId`, and its `responseMetadata`. The default reducer stores this object at the matching assistant message's `metadata.annotations[hookId]`. Each hook owns its namespace; a later result replaces that namespace while retaining other hooks' annotations. Annotations are separate from `metadata.custom`, lifecycle fields, authentication, and model history. A usage-only result never creates an assistant message.
++
++Return `modelCalls` to record auxiliary model attempts alongside optional display metadata. Each entry accepts `modelId`, optional `usage` (`LanguageModelUsage`), optional `providerMetadata`, and optional `failed: true` when a request failed before completing. eve publishes sanitized token counts, gateway cost and generation ID; unrelated provider metadata is discarded. The list is limited to 100 attempts per result. Unknown usage stays unknown, including failed requests; it is never invented as zero.
++
++Capture completed model attempts before validating their output. If validation fails, return the captured `modelCalls` without `responseMetadata`. If the request failed before completion, record an entry with `failed: true`. Catch optional annotation-generation errors inside the hook so an absent suggestion does not fail the main answer. eve does not infer model attempts from thrown errors. Usage observers can subscribe to `hook.result`; deduplicate re-reading by event ID and attempt index, without collapsing separately billed retries into one turn charge.
++
++Completion hooks may return void as before. Returning a result for another event is rejected, including from a wildcard handler. A wildcard can return a result only after narrowing its event to `turn.completed`. Emitting `hook.result` does not re-invoke completion handlers. Result processing is awaited before `session.waiting` or terminal completion, and stream version 28 advertises the event.
++
++Annotations survive replay and native history forks. Inherited display prefixes omit auxiliary usage evidence so a fork does not bill old attempts again. Trusted transcript seeds may carry `annotations` as a map of hook IDs to JSON objects; prefix forks preserve that map without inserting it into model prompts. Applications exporting public copies should explicitly allowlist which annotations they publish. There is no client annotation-write endpoint.
++
++Invalid display metadata is omitted independently of valid model-call evidence. Malformed call entries or unknown result fields still reject the authored result.
+diff --git a/e2e/fixtures/agent-basic-runtime/agent/hooks/result-fixture.ts b/e2e/fixtures/agent-basic-runtime/agent/hooks/result-fixture.ts
+new file mode 100644
+index 0000000..9da7b4d
+--- /dev/null
++++ b/e2e/fixtures/agent-basic-runtime/agent/hooks/result-fixture.ts
+@@ -0,0 +1,18 @@
++import { defineHook } from "eve/hooks";
++import { defineState } from "eve/context";
++
++const requested = defineState("fixture.hook-result", () => false);
++export default defineHook({
++  events: {
++    "message.received": (event) => {
++      requested.update(() => event.data.metadata?.hookResultFixture === true);
++    },
++    "turn.completed": () => {
++      if (!requested.get()) return;
++      return {
++        responseMetadata: { suggestions: ["Fixture next step"] },
++        modelCalls: [{ modelId: "fixture-uncompleted", failed: true }],
++      };
++    },
++  },
++});
+diff --git a/e2e/fixtures/agent-basic-runtime/evals/runtime/hook-result.eval.ts b/e2e/fixtures/agent-basic-runtime/evals/runtime/hook-result.eval.ts
+new file mode 100644
+index 0000000..ec2a465
+--- /dev/null
++++ b/e2e/fixtures/agent-basic-runtime/evals/runtime/hook-result.eval.ts
+@@ -0,0 +1,33 @@
++import { defineEval } from "eve/evals";
++import { equals } from "eve/evals/expect";
++
++export default defineEval({
++  description:
++    "Completion hook annotations and attempt evidence persist before idle and replay over the wire.",
++  async test(t) {
++    const turn = await t.send("Reply briefly.", { messageMetadata: { hookResultFixture: true } });
++    turn.notEvent("turn.failed");
++    const result = turn.events.find((event) => event.type === "hook.result");
++    await t.require(
++      result?.type === "hook.result" ? result.data.responseMetadata : undefined,
++      equals({ suggestions: ["Fixture next step"] }),
++    );
++    await t.require(
++      result?.type === "hook.result" ? result.data.modelCalls : undefined,
++      equals([{ modelId: "fixture-uncompleted", failed: true }]),
++    );
++    const types = turn.events.map((event) => event.type);
++    await t.require(
++      types.indexOf("hook.result") > types.indexOf("turn.completed") &&
++        types.indexOf("hook.result") < types.indexOf("session.waiting"),
++      equals(true),
++    );
++    const replay = await t.target.watchTurn(turn.sessionId, { startIndex: 0 }).result();
++    await t.require(
++      replay.events.find((event) => event.type === "hook.result"),
++      equals(result),
++    );
++    const next = await t.send("Reply briefly again.");
++    next.notEvent("hook.result");
++  },
++});
 diff --git a/e2e/fixtures/agent-basic-runtime/evals/runtime/message-metadata.eval.ts b/e2e/fixtures/agent-basic-runtime/evals/runtime/message-metadata.eval.ts
 new file mode 100644
 index 0000000..4a3e278
@@ -388,10 +525,10 @@ index 7ffd4ff..1e99f76 100644
          },
          type: "client.message.failed",
 diff --git a/packages/eve/src/client/index.ts b/packages/eve/src/client/index.ts
-index 894fc63..89c719b 100644
+index 894fc63..1c98d6a 100644
 --- a/packages/eve/src/client/index.ts
 +++ b/packages/eve/src/client/index.ts
-@@ -100,6 +100,7 @@ export type {
+@@ -100,11 +100,13 @@ export type {
    AssistantStepFinishReason,
    AuthorizationOutcome,
    CompactionCompletedStreamEvent,
@@ -399,8 +536,14 @@ index 894fc63..89c719b 100644
    CompactionRequestedStreamEvent,
    AuthorizationCompletedStreamEvent,
    ConnectionAuthorizationOutcome,
+   AuthorizationRequiredStreamEvent,
+   HandleMessageStreamEvent,
++  HookResultStreamEvent,
+   MessageStreamEventMeta,
+   InputResolution,
+   InputResolutionOutcome,
 diff --git a/packages/eve/src/client/message-reducer-types.ts b/packages/eve/src/client/message-reducer-types.ts
-index b742698..c5dbb2d 100644
+index b742698..436a863 100644
 --- a/packages/eve/src/client/message-reducer-types.ts
 +++ b/packages/eve/src/client/message-reducer-types.ts
 @@ -1,3 +1,4 @@
@@ -408,19 +551,21 @@ index b742698..c5dbb2d 100644
  import type { InputRequest, InputResponse } from "#shared/input.js";
  import type { AuthorizationOutcome } from "#protocol/message.js";
 
-@@ -29,6 +30,10 @@ export interface EveMessage {
+@@ -29,6 +30,12 @@ export interface EveMessage {
   * once the turn finalizes.
   */
  export interface EveMessageMetadata {
 +  /** Durable application data, separate from framework lifecycle and authorization. */
 +  readonly custom?: JsonObject;
++  /** Framework-owned result namespaces keyed by authored hook slug. */
++  readonly annotations?: Readonly<Record<string, JsonObject>>;
 +  /** Informational provider/model reference retained by imported assistant history. */
 +  readonly modelId?: string;
    readonly optimistic?: true;
    readonly result?: unknown;
    readonly status?: "complete" | "failed" | "streaming" | "submitted";
 diff --git a/packages/eve/src/client/message-reducer.test.ts b/packages/eve/src/client/message-reducer.test.ts
-index 64208b5..2863b56 100644
+index 64208b5..c8791bf 100644
 --- a/packages/eve/src/client/message-reducer.test.ts
 +++ b/packages/eve/src/client/message-reducer.test.ts
 @@ -12,6 +12,7 @@ import {
@@ -431,7 +576,7 @@ index 64208b5..2863b56 100644
    createMessageCompletedEvent,
    createReasoningAppendedEvent,
    createReasoningCompletedEvent,
-@@ -1323,3 +1324,25 @@ function findToolPart(
+@@ -1323,3 +1324,73 @@ function findToolPart(
      .flatMap((message) => message.parts)
      .find((part) => part.type === "dynamic-tool" && part.toolCallId === toolCallId);
  }
@@ -457,8 +602,56 @@ index 64208b5..2863b56 100644
 +  });
 +  expect(reloaded.messages[1]?.metadata).toEqual({ status: "complete", turnId: "turn_1" });
 +});
++
++it("merges hook namespaces only into the matching assistant turn and replays deterministically", () => {
++  const reducer = defaultMessageReducer();
++  const events: UnstampedMessageStreamEvent[] = [
++    createMessageCompletedEvent({
++      message: "first",
++      sequence: 0,
++      stepIndex: 0,
++      turnId: "turn_0",
++      finishReason: "stop",
++    }),
++    createMessageCompletedEvent({
++      message: "second",
++      sequence: 1,
++      stepIndex: 0,
++      turnId: "turn_1",
++      finishReason: "stop",
++    }),
++    {
++      type: "hook.result",
++      data: { hookId: "suggestions", turnId: "turn_0", responseMetadata: { items: ["Next?"] } },
++    },
++    {
++      type: "hook.result",
++      data: { hookId: "audit", turnId: "turn_0", responseMetadata: { checked: true } },
++    },
++    {
++      type: "hook.result",
++      data: {
++        hookId: "usage",
++        turnId: "turn_missing",
++        modelCalls: [{ modelId: "a", failed: true }],
++      },
++    },
++  ];
++  const result = reduceServerEvents(reducer, reducer.initial(), events);
++  expect(result.messages).toHaveLength(2);
++  expect(result.messages[0]?.metadata?.annotations).toEqual({
++    suggestions: { items: ["Next?"] },
++    audit: { checked: true },
++  });
++  expect(result.messages[1]?.metadata?.annotations).toBeUndefined();
++  expect(result.messages[0]?.metadata?.custom).toBeUndefined();
++  expect(
++    reduceServerEvents(reducer, reducer.initial(), JSON.parse(JSON.stringify(events))),
++  ).toEqual(result);
++  expect(reduceServerEvents(reducer, result, events.slice(2))).toEqual(result);
++});
 diff --git a/packages/eve/src/client/message-reducer.ts b/packages/eve/src/client/message-reducer.ts
-index 43979d6..d323cdb 100644
+index 43979d6..1cd4d0b 100644
 --- a/packages/eve/src/client/message-reducer.ts
 +++ b/packages/eve/src/client/message-reducer.ts
 @@ -67,10 +67,35 @@ export function defaultMessageReducer(): EveAgentReducer<EveMessageData> {
@@ -513,6 +706,29 @@ index 43979d6..d323cdb 100644
            status: "complete",
            turnId: event.data.turnId,
          },
+@@ -116,6 +143,22 @@ function reduceMessageData(data: EveMessageData, event: EveAgentReducerEvent): E
+         role: "user",
+       });
+
++    case "hook.result": {
++      const annotation = event.data.responseMetadata;
++      if (annotation === undefined) return data;
++      const target = data.messages.findLast(
++        (message) => message.role === "assistant" && message.metadata?.turnId === event.data.turnId,
++      );
++      if (target === undefined) return data;
++      return upsertMessage(data, {
++        ...target,
++        metadata: {
++          ...target.metadata,
++          annotations: { ...target.metadata?.annotations, [event.data.hookId]: annotation },
++        },
++      });
++    }
++
+     case "step.started":
+       return updateAssistantMessage(data, event.data.turnId, (message) =>
+         ensureStepStartPart(message, event.data.stepIndex),
 diff --git a/packages/eve/src/client/reducer.ts b/packages/eve/src/client/reducer.ts
 index 5293686..a7ac498 100644
 --- a/packages/eve/src/client/reducer.ts
@@ -583,7 +799,7 @@ index b67960c..83eafd9 100644
      body.inputResponses = input.inputResponses;
    }
 diff --git a/packages/eve/src/client/stream-version.test.ts b/packages/eve/src/client/stream-version.test.ts
-index 201e48a..b5483d3 100644
+index 201e48a..5bdfce7 100644
 --- a/packages/eve/src/client/stream-version.test.ts
 +++ b/packages/eve/src/client/stream-version.test.ts
 @@ -4,11 +4,14 @@ import { readMessageStreamVersion } from "#client/stream-version.js";
@@ -595,7 +811,7 @@ index 201e48a..b5483d3 100644
 -      version,
 -    );
 -  });
-+  it.each(["21", "22", "23", "24", "25", "26", "27"] as const)(
++  it.each(["21", "22", "23", "24", "25", "26", "27", "28"] as const)(
 +    "accepts stream version %s",
 +    (version) => {
 +      expect(readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: version }))).toBe(
@@ -612,20 +828,21 @@ index 201e48a..b5483d3 100644
      expect(() =>
 -      readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: "26" })),
 -    ).toThrow("Unsupported message stream version: 26.");
-+      readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: "28" })),
-+    ).toThrow("Unsupported message stream version: 28.");
++      readMessageStreamVersion(new Headers({ [EVE_STREAM_VERSION_HEADER]: "29" })),
++    ).toThrow("Unsupported message stream version: 29.");
    });
  });
 diff --git a/packages/eve/src/client/stream-version.ts b/packages/eve/src/client/stream-version.ts
-index 0cb4fcc..7d1848f 100644
+index 0cb4fcc..19fca53 100644
 --- a/packages/eve/src/client/stream-version.ts
 +++ b/packages/eve/src/client/stream-version.ts
-@@ -7,6 +7,8 @@ const supportedMessageStreamVersions = {
+@@ -7,6 +7,9 @@ const supportedMessageStreamVersions = {
    "23": true,
    "24": true,
    "25": true,
 +  "26": true,
 +  "27": true,
++  "28": true,
  } as const satisfies Record<MessageStreamVersion, true>;
 
  /** Reads and validates the schema version declared by a message stream response. */
@@ -662,6 +879,237 @@ index df8ffb8..c5b3c2a 100644
      });
 
  /** Retry and backoff settings for one kind of stream reconnection. */
+diff --git a/packages/eve/src/context/hook-lifecycle.integration.test.ts b/packages/eve/src/context/hook-lifecycle.integration.test.ts
+index cea9985..26259b7 100644
+--- a/packages/eve/src/context/hook-lifecycle.integration.test.ts
++++ b/packages/eve/src/context/hook-lifecycle.integration.test.ts
+@@ -142,3 +142,52 @@ describe("dispatchStreamEventHooks", () => {
+     expect(deletions).toBe(1);
+   });
+ });
++
++it("emits completion results through the durable callback and lets observers see them without completion recursion", async () => {
++  const calls: string[] = [];
++  const registry = createRuntimeHookRegistry([
++    hook("suggestions", {
++      events: {
++        "turn.completed": () => {
++          calls.push("completed");
++          return { responseMetadata: { suggestions: ["Next?"] } };
++        },
++      },
++    }),
++    hook("billing", {
++      events: {
++        "*": (event) => {
++          calls.push(event.type);
++        },
++      },
++    }),
++  ]);
++  const ctx = buildCtx();
++  await contextStorage.run(ctx, () =>
++    dispatchStreamEventHooks({
++      ctx,
++      registry,
++      event: stampTestEvent({ type: "turn.completed", data: { turnId: "turn_0", sequence: 0 } }),
++      emitResult: async (event) => {
++        expect(event.data.hookId).toBe("suggestions");
++        await dispatchStreamEventHooks({ ctx, registry, event: stampTestEvent(event) });
++      },
++    }),
++  );
++  expect(calls).toEqual(["completed", "hook.result", "turn.completed"]);
++});
++it("rejects values returned on noncompletion events", async () => {
++  const registry = createRuntimeHookRegistry([
++    hook("wrong", { events: { "*": () => ({ responseMetadata: {} }) } }),
++  ]);
++  const ctx = buildCtx();
++  await expect(
++    contextStorage.run(ctx, () =>
++      dispatchStreamEventHooks({
++        ctx,
++        registry,
++        event: stampTestEvent({ type: "session.completed" }),
++      }),
++    ),
++  ).rejects.toThrow("only for turn.completed");
++});
+diff --git a/packages/eve/src/context/hook-lifecycle.ts b/packages/eve/src/context/hook-lifecycle.ts
+index 8f99bdd..2f21e5b 100644
+--- a/packages/eve/src/context/hook-lifecycle.ts
++++ b/packages/eve/src/context/hook-lifecycle.ts
+@@ -1,5 +1,6 @@
+ import { getAdapterKind } from "#channel/adapter.js";
+-import type { MessageStreamEvent } from "#protocol/message.js";
++import { createHookResultEvent } from "#context/hook-result.js";
++import type { HookResultStreamEvent, MessageStreamEvent } from "#protocol/message.js";
+ import type { HookContext } from "#public/definitions/hook.js";
+ import type { RuntimeHookRegistry } from "#runtime/hooks/registry.js";
+ import { buildCallbackContext } from "#context/build-callback-context.js";
+@@ -17,6 +18,7 @@ export async function dispatchStreamEventHooks(input: {
+   readonly ctx: ContextContainer;
+   readonly registry: RuntimeHookRegistry;
+   readonly event: MessageStreamEvent;
++  readonly emitResult?: (event: HookResultStreamEvent) => Promise<void>;
+ }): Promise<void> {
+   const typed = input.registry.streamEventsByType.get(input.event.type) ?? [];
+   const wildcard = input.registry.streamEventsWildcard;
+@@ -26,11 +28,17 @@ export async function dispatchStreamEventHooks(input: {
+   }
+
+   const hookCtx = buildHookContext(input.ctx);
+-  for (const entry of typed) {
+-    await entry.handler(input.event, hookCtx);
+-  }
+-  for (const entry of wildcard) {
+-    await entry.handler(input.event, hookCtx);
++  for (const entry of [...typed, ...wildcard]) {
++    const result = await entry.handler(input.event, hookCtx);
++    if (result === undefined) continue;
++    if (input.event.type !== "turn.completed") {
++      throw new Error(`Hook "${entry.slug}" may return a result only for turn.completed.`);
++    }
++    const event = createHookResultEvent(entry.slug, input.event.data.turnId, result);
++    if (event === undefined) continue;
++    if (input.emitResult === undefined)
++      throw new Error("Hook results require a durable event emitter.");
++    await input.emitResult(event);
+   }
+ }
+
+diff --git a/packages/eve/src/context/hook-result.test.ts b/packages/eve/src/context/hook-result.test.ts
+new file mode 100644
+index 0000000..8561d97
+--- /dev/null
++++ b/packages/eve/src/context/hook-result.test.ts
+@@ -0,0 +1,66 @@
++import { expect, it } from "vitest";
++import { createHookResultEvent } from "#context/hook-result.js";
++
++it("retains every attempt while stripping provider secrets and invalid usage", () => {
++  const event = createHookResultEvent("suggestions", "turn_2", {
++    modelCalls: [
++      {
++        modelId: "model-a",
++        usage: {
++          inputTokens: 10,
++          outputTokens: -1,
++          inputTokenDetails: { cacheReadTokens: 2, cacheWriteTokens: Infinity },
++        },
++        providerMetadata: {
++          gateway: { cost: "0.002", generationId: "generation-1", secret: "hidden" },
++          provider: { secret: "hidden" },
++        },
++      },
++      { modelId: "model-b", failed: true },
++      { modelId: "model-c", providerMetadata: { gateway: { cost: " " } } },
++    ],
++  });
++  expect(event).toEqual({
++    type: "hook.result",
++    data: {
++      hookId: "suggestions",
++      turnId: "turn_2",
++      modelCalls: [
++        {
++          modelId: "model-a",
++          usage: { inputTokens: 10, cacheReadTokens: 2, costUsd: 0.002 },
++          providerMetadata: { gateway: { generationId: "generation-1" } },
++        },
++        { modelId: "model-b", failed: true, usage: undefined, providerMetadata: undefined },
++        { modelId: "model-c", usage: undefined, providerMetadata: undefined },
++      ],
++    },
++  });
++  expect(JSON.stringify(event)).not.toContain("hidden");
++});
++it("preserves explicit null annotation values and detaches authored objects", () => {
++  const value = { suggestions: null };
++  const event = createHookResultEvent("a", "turn_0", { responseMetadata: value });
++  expect(event?.data.responseMetadata).toEqual(value);
++  expect(event?.data.responseMetadata).not.toBe(value);
++  expect(createHookResultEvent("a", "turn_0", {})).toBeUndefined();
++});
++it.each([
++  { custom: {} },
++  { modelCalls: [{ modelId: "" }] },
++  { modelCalls: [{ modelId: "a", failed: "yes" }] },
++  { modelCalls: Array.from({ length: 101 }, () => ({ modelId: "a" })) },
++])("rejects malformed or oversized authored results", (value) => {
++  expect(() => createHookResultEvent("a", "turn_0", value)).toThrow();
++});
++
++it.each([[], null, { invalid: Infinity }])(
++  "omits invalid display metadata while retaining paid model evidence",
++  (responseMetadata) => {
++    const modelCalls = [{ modelId: "paid-model", providerMetadata: { gateway: { cost: "0.01" } } }];
++    const event = createHookResultEvent("suggestions", "turn_0", { responseMetadata, modelCalls });
++    expect(event?.data.responseMetadata).toBeUndefined();
++    expect(event?.data.modelCalls?.[0]?.usage?.costUsd).toBe(0.01);
++    expect(createHookResultEvent("suggestions", "turn_0", { responseMetadata })).toBeUndefined();
++  },
++);
+diff --git a/packages/eve/src/context/hook-result.ts b/packages/eve/src/context/hook-result.ts
+new file mode 100644
+index 0000000..5a94b37
+--- /dev/null
++++ b/packages/eve/src/context/hook-result.ts
+@@ -0,0 +1,53 @@
++import { z } from "#compiled/zod/index.js";
++import { jsonObjectSchema } from "#shared/json-schemas.js";
++import { modelUsageEvidence } from "#harness/model-usage.js";
++import type { HookResultStreamEvent } from "#protocol/message.js";
++import type { HookModelCall } from "#public/definitions/hook.js";
++
++const resultSchema = z.strictObject({
++  responseMetadata: z.unknown().optional(),
++  modelCalls: z
++    .array(
++      z.strictObject({
++        modelId: z.string().min(1).max(512),
++        failed: z.boolean().optional(),
++        usage: z
++          .custom<HookModelCall["usage"]>(
++            (value) => value !== null && typeof value === "object" && !Array.isArray(value),
++          )
++          .optional(),
++        providerMetadata: z.record(z.string(), jsonObjectSchema).optional(),
++      }),
++    )
++    .max(100)
++    .optional(),
++});
++
++/** Retain billing attempts independently of the optional display annotation. */
++export function createHookResultEvent(
++  hookId: string,
++  turnId: string,
++  value: unknown,
++): HookResultStreamEvent | undefined {
++  const result = resultSchema.parse(value);
++  const annotation = jsonObjectSchema.safeParse(result.responseMetadata);
++  const responseMetadata = annotation.success ? annotation.data : undefined;
++  if (responseMetadata === undefined && !result.modelCalls?.length) return undefined;
++  return {
++    type: "hook.result",
++    data: {
++      hookId,
++      turnId,
++      ...(responseMetadata === undefined ? {} : { responseMetadata }),
++      ...(result.modelCalls?.length
++        ? {
++            modelCalls: result.modelCalls.map((call) => ({
++              modelId: call.modelId,
++              ...(call.failed === undefined ? {} : { failed: call.failed }),
++              ...modelUsageEvidence(call),
++            })),
++          }
++        : {}),
++    },
++  };
++}
 diff --git a/packages/eve/src/context/keys.ts b/packages/eve/src/context/keys.ts
 index e757d05..2e98bca 100644
 --- a/packages/eve/src/context/keys.ts
@@ -1996,6 +2444,110 @@ index 00a4158..4be3d7a 100644
    readonly taskId?: string;
    readonly workflowMaxSubagents?: number;
    readonly agent: {
+diff --git a/packages/eve/src/execution/hook-results.integration.test.ts b/packages/eve/src/execution/hook-results.integration.test.ts
+new file mode 100644
+index 0000000..d5ef4c7
+--- /dev/null
++++ b/packages/eve/src/execution/hook-results.integration.test.ts
+@@ -0,0 +1,98 @@
++import { expect, it } from "vitest";
++import { start } from "#internal/workflow/runtime.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { captureTurnEvents } from "#internal/testing/events.js";
++import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import { createWorkflowRuntime } from "#execution/workflow-runtime.js";
++import { workflowEntry } from "#execution/workflow-entry.js";
++import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
++import { defaultMessageReducer } from "#client/message-reducer.js";
++import { defineHook } from "#public/definitions/hook.js";
++
++it("persists completion annotations before waiting and preserves them through native fork replay without model context", async () => {
++  const fixture = await createTestRuntime({
++    modules: [
++      {
++        logicalPath: "hooks/suggestions.ts",
++        loadNamespace: async () => ({
++          default: defineHook({
++            events: {
++              "turn.completed": () => ({
++                responseMetadata: { items: ["annotation-only-marker"] },
++                modelCalls: [
++                  {
++                    modelId: "auxiliary",
++                    providerMetadata: {
++                      gateway: { cost: "0.001", generationId: "aux-1", secret: "hidden" },
++                    },
++                  },
++                ],
++              }),
++            },
++          }),
++        }),
++      },
++    ],
++  });
++  const context = {
++    "eve.auth": null,
++    "eve.bundle": { source: createBundledRuntimeCompiledArtifactsSource() },
++    "eve.channel": { kind: "http", state: {} },
++    "eve.mode": "conversation",
++  };
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const source = await start(workflowEntry, [
++      { input: { message: "Hello" }, serializedContext: context },
++    ]);
++    const stream = captureTurnEvents(source);
++    try {
++      const events = await stream.nextTurn();
++      const types = events.map((event) => event.type);
++      expect(types.indexOf("hook.result")).toBeGreaterThan(types.indexOf("turn.completed"));
++      expect(types.indexOf("session.waiting")).toBeGreaterThan(types.indexOf("hook.result"));
++      const reducer = defaultMessageReducer();
++      const display = events.reduce(reducer.reduce, reducer.initial());
++      expect(
++        display.messages.find((message) => message.role === "assistant")?.metadata?.annotations
++          ?.suggestions,
++      ).toEqual({ items: ["annotation-only-marker"] });
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "Again" } },
++      });
++      await stream.nextTurn();
++      const checkpoint = await readSessionCheckpoint({
++        sessionId: source.runId,
++        beforeTurnId: "turn_1",
++      });
++      expect(JSON.stringify(checkpoint.snapshot.session.history)).not.toContain(
++        "annotation-only-marker",
++      );
++      const branch = await start(workflowEntry, [
++        {
++          input: { message: "Replacement" },
++          fork: { sessionId: source.runId, beforeTurnId: "turn_1" },
++          serializedContext: context,
++        },
++      ]);
++      const branchStream = captureTurnEvents(branch);
++      try {
++        const inherited = await branchStream.nextTurn();
++        const restored = inherited.find((event) => event.type === "history.restored");
++        expect(JSON.stringify(restored)).toContain("annotation-only-marker");
++        expect(JSON.stringify(restored)).not.toContain("modelCalls");
++      } finally {
++        await runtime.dispatchSession({ sessionId: branch.runId, command: { kind: "reset" } });
++        await branch.returnValue;
++        branchStream.dispose();
++      }
++    } finally {
++      await runtime.dispatchSession({ sessionId: source.runId, command: { kind: "reset" } });
++      await source.returnValue;
++      stream.dispose();
++    }
++  });
++});
 diff --git a/packages/eve/src/execution/inline-turn.ts b/packages/eve/src/execution/inline-turn.ts
 index ecdbd28..61bd460 100644
 --- a/packages/eve/src/execution/inline-turn.ts
@@ -2512,10 +3064,10 @@ index 0000000..0a5ede6
 +}
 diff --git a/packages/eve/src/execution/read-session-transcript-prefix.test.ts b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
 new file mode 100644
-index 0000000..2e33bcb
+index 0000000..ec52249
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-transcript-prefix.test.ts
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,180 @@
 +import { afterEach, expect, it, vi } from "vitest";
 +import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import {
@@ -2678,12 +3230,30 @@ index 0000000..2e33bcb
 +  expect(prefix.messages[0]?.metadata?.custom).toEqual(custom);
 +  expect(JSON.stringify(prefix.history)).not.toContain("selectedTool");
 +});
++
++it("preserves hook annotation namespaces in imported-prefix forks", () => {
++  const annotations = { suggestions: { items: ["Next?"] } };
++  const result = prepareSessionTranscriptPrefix(
++    [
++      {
++        id: "seed_message_0",
++        role: "assistant",
++        metadata: { annotations },
++        parts: [{ type: "text", text: "answer" }],
++      },
++      { id: "seed_message_1", role: "user", parts: [{ type: "text", text: "edit" }] },
++    ],
++    "seed_message_1",
++  );
++  expect(result.messages[0]?.metadata?.annotations).toEqual(annotations);
++  expect(JSON.stringify(result.history)).not.toContain("Next?");
++});
 diff --git a/packages/eve/src/execution/read-session-transcript-prefix.ts b/packages/eve/src/execution/read-session-transcript-prefix.ts
 new file mode 100644
-index 0000000..528bd9d
+index 0000000..0cc4b54
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-transcript-prefix.ts
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,108 @@
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { readNdjsonStream } from "#client/ndjson.js";
 +import type { EveMessage, EveMessagePart } from "#client/message-reducer-types.js";
@@ -2739,6 +3309,9 @@ index 0000000..528bd9d
 +      role: message.role,
 +      parts: message.parts.map(seedPart),
 +      ...(message.metadata?.custom === undefined ? {} : { metadata: message.metadata.custom }),
++      ...(message.metadata?.annotations === undefined
++        ? {}
++        : { annotations: message.metadata.annotations }),
 +      ...(message.role === "assistant" && message.metadata?.modelId !== undefined
 +        ? { modelId: message.metadata.modelId }
 +        : {}),
@@ -2971,10 +3544,10 @@ index 0000000..298b470
 +}
 diff --git a/packages/eve/src/execution/restore-session-history-step.test.ts b/packages/eve/src/execution/restore-session-history-step.test.ts
 new file mode 100644
-index 0000000..22a3012
+index 0000000..7477c43
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.test.ts
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,156 @@
 +import { afterEach, expect, it, vi } from "vitest";
 +import { restoreSessionHistory } from "#execution/restore-session-history-step.js";
 +import {
@@ -3076,15 +3649,28 @@ index 0000000..22a3012
 +  expect(writable.locked).toBe(false);
 +});
 +
-+
 +it("restores an idle prefix at the exact named marker before any future user turn", async () => {
 +  const checkpointId = crypto.randomUUID();
 +  const waiting = createSessionWaitingEvent("private-continuation");
-+  const { writable, output } = setup([
-+    createMessageReceivedEvent({ message: "included idle history", sequence: 0, turnId: "turn_0" }),
-+    { ...waiting, data: { ...waiting.data, checkpoint: { checkpointId, beforeTurnId: "turn_1" } } },
-+    createMessageReceivedEvent({ message: "excluded later history", sequence: 1, turnId: "turn_1" }),
-+  ], false);
++  const { writable, output } = setup(
++    [
++      createMessageReceivedEvent({
++        message: "included idle history",
++        sequence: 0,
++        turnId: "turn_0",
++      }),
++      {
++        ...waiting,
++        data: { ...waiting.data, checkpoint: { checkpointId, beforeTurnId: "turn_1" } },
++      },
++      createMessageReceivedEvent({
++        message: "excluded later history",
++        sequence: 1,
++        turnId: "turn_1",
++      }),
++    ],
++    false,
++  );
 +  await restoreSessionHistory({ fork: { ...fork, checkpointId }, writable });
 +  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
 +  expect(text).toContain("included idle history");
@@ -3093,15 +3679,37 @@ index 0000000..22a3012
 +});
 +it("never substitutes an ordinary turn boundary for a named checkpoint", async () => {
 +  const { writable, output } = setup([createTurnStartedEvent({ sequence: 1, turnId: "turn_1" })]);
-+  await expect(restoreSessionHistory({ fork: { ...fork, checkpointId: crypto.randomUUID() }, writable })).rejects.toThrow("named checkpoint boundary");
++  await expect(
++    restoreSessionHistory({ fork: { ...fork, checkpointId: crypto.randomUUID() }, writable }),
++  ).rejects.toThrow("named checkpoint boundary");
 +  expect(output).toEqual([]);
++});
++
++it("inherits hook annotations without copying auxiliary usage evidence", async () => {
++  const { writable, output } = setup([
++    {
++      type: "hook.result",
++      data: {
++        hookId: "suggestions",
++        turnId: "turn_0",
++        responseMetadata: { items: ["Next?"] },
++        modelCalls: [{ modelId: "billed-model", usage: { costUsd: 1 } }],
++      },
++    },
++    createTurnStartedEvent({ sequence: 1, turnId: "turn_1" }),
++  ]);
++  await restoreSessionHistory({ fork, writable });
++  const text = output.map((chunk) => new TextDecoder().decode(chunk)).join("");
++  expect(text).toContain("Next?");
++  expect(text).not.toContain("modelCalls");
++  expect(text).not.toContain("billed-model");
 +});
 diff --git a/packages/eve/src/execution/restore-session-history-step.ts b/packages/eve/src/execution/restore-session-history-step.ts
 new file mode 100644
-index 0000000..0ed65cb
+index 0000000..6790dc6
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-history-step.ts
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,161 @@
 +import { readSessionTranscriptPrefix } from "#execution/read-session-transcript-prefix.js";
 +import { getRun } from "#internal/workflow/runtime.js";
 +import { readNdjsonStream } from "#client/ndjson.js";
@@ -3216,6 +3824,16 @@ index 0000000..0ed65cb
 +      }
 +      if (event.type === "history.restored") {
 +        for (const historical of event.data.events) append(historical);
++      } else if (event.type === "hook.result") {
++        if (event.data.responseMetadata !== undefined)
++          append({
++            ...event,
++            data: {
++              hookId: event.data.hookId,
++              turnId: event.data.turnId,
++              responseMetadata: event.data.responseMetadata,
++            },
++          });
 +      } else if (isHistoryProjectionEvent(event)) {
 +        append(event);
 +      }
@@ -5862,10 +6480,10 @@ index 0000000..34d1425
 +});
 diff --git a/packages/eve/src/execution/session-transcript-seed.test.ts b/packages/eve/src/execution/session-transcript-seed.test.ts
 new file mode 100644
-index 0000000..5a2de76
+index 0000000..ae31cd3
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.test.ts
-@@ -0,0 +1,245 @@
+@@ -0,0 +1,265 @@
 +import { expect, it } from "vitest";
 +import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
 +import { defaultMessageReducer } from "#client/message-reducer.js";
@@ -6111,12 +6729,32 @@ index 0000000..5a2de76
 +  expect(prepared.messages[1]?.metadata).toEqual({ custom: metadata, modelId: "real-model" });
 +  expect(JSON.stringify(prepared.history)).not.toContain("never-a-prompt");
 +});
++
++it("preserves validated per-hook annotations in seed display only", () => {
++  const annotations = { suggestions: { items: ["annotation-only-marker"] } };
++  const prepared = prepareSessionTranscriptSeed({
++    messages: [{ role: "assistant", annotations, parts: [{ type: "text", text: "answer" }] }],
++  });
++  expect(prepared.messages[0]?.metadata?.annotations).toEqual(annotations);
++  expect(JSON.stringify(prepared.history)).not.toContain("annotation-only-marker");
++  expect(() =>
++    prepareSessionTranscriptSeed({
++      messages: [
++        {
++          role: "assistant",
++          annotations: { suggestions: [] },
++          parts: [{ type: "text", text: "answer" }],
++        },
++      ],
++    }),
++  ).toThrow();
++});
 diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
 new file mode 100644
-index 0000000..ad7cb19
+index 0000000..55b062a
 --- /dev/null
 +++ b/packages/eve/src/execution/session-transcript-seed.ts
-@@ -0,0 +1,175 @@
+@@ -0,0 +1,179 @@
 +import { jsonObjectSchema } from "#shared/json-schemas.js";
 +import type { AssistantContent, ModelMessage, ToolContent, UserContent } from "ai";
 +import { z } from "#compiled/zod/index.js";
@@ -6153,11 +6791,13 @@ index 0000000..ad7cb19
 +        z.strictObject({
 +          role: z.literal("user"),
 +          metadata: jsonObjectSchema.optional(),
++          annotations: z.record(z.string().min(1).max(512), jsonObjectSchema).optional(),
 +          parts: z.array(z.union([text, file])).min(1),
 +        }),
 +        z.strictObject({
 +          role: z.literal("assistant"),
 +          metadata: jsonObjectSchema.optional(),
++          annotations: z.record(z.string().min(1).max(512), jsonObjectSchema).optional(),
 +          modelId: z.string().min(1).max(512).optional(),
 +          parts: z
 +            .array(
@@ -6278,13 +6918,15 @@ index 0000000..ad7cb19
 +      role: message.role,
 +      parts,
 +      ...((message.role === "assistant" && message.modelId !== undefined) ||
-+      message.metadata !== undefined
++      message.metadata !== undefined ||
++      message.annotations !== undefined
 +        ? {
 +            metadata: {
 +              ...(message.role === "assistant" && message.modelId !== undefined
 +                ? { modelId: message.modelId }
 +                : {}),
 +              ...(message.metadata === undefined ? {} : { custom: message.metadata }),
++              ...(message.annotations === undefined ? {} : { annotations: message.annotations }),
 +            },
 +          }
 +        : {}),
@@ -7111,7 +7753,7 @@ index 493017d..968e9b8 100644
            ? {}
            : buildInvocationAttributes(input.externalInvocation)),
 diff --git a/packages/eve/src/execution/workflow-steps.ts b/packages/eve/src/execution/workflow-steps.ts
-index da9ac49..4dd6535 100644
+index da9ac49..147504d 100644
 --- a/packages/eve/src/execution/workflow-steps.ts
 +++ b/packages/eve/src/execution/workflow-steps.ts
 @@ -1,3 +1,6 @@
@@ -7121,7 +7763,21 @@ index da9ac49..4dd6535 100644
  import { buildAdapterContext } from "#channel/adapter-context.js";
  import { callAdapterEventHandler, defaultDeliverResult } from "#channel/adapter.js";
  import type { DeliverHookPayload } from "#channel/types.js";
-@@ -539,6 +542,23 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
+@@ -396,7 +399,12 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
+       nodeId: bundle.nodeId ?? "__root__",
+     });
+     void observeSessionActivity({ ctx, event: emitted, sessionId: initialSession.sessionId });
+-    await dispatchStreamEventHooks({ ctx, registry: hookRegistry, event: emitted });
++    await dispatchStreamEventHooks({
++      ctx,
++      registry: hookRegistry,
++      event: emitted,
++      emitResult: (result) => handleEvent(result, lifecycleMessages),
++    });
+     if (emitted.type !== "step.started") {
+       await dispatchDynamicModelEvent({
+         ctx,
+@@ -539,6 +547,34 @@ export async function turnStep(rawInput: TurnStepInput): Promise<DurableStepResu
          return step(modelSession, stepInput);
        };
 
@@ -7132,7 +7788,18 @@ index da9ac49..4dd6535 100644
 +          session: schemaSession,
 +          target: ctx.get(SessionCheckpointWriterKey),
 +          sandbox: ctx.get(SandboxKey),
-+          prepare: () => handleEvent({ type: "session.waiting", data: { continuationToken: schemaSession.continuationToken, wait: "next-user-message", checkpoint: { checkpointId: request.checkpointId, beforeTurnId: request.beforeTurnId } } }),
++          prepare: () =>
++            handleEvent({
++              type: "session.waiting",
++              data: {
++                continuationToken: schemaSession.continuationToken,
++                wait: "next-user-message",
++                checkpoint: {
++                  checkpointId: request.checkpointId,
++                  beforeTurnId: request.beforeTurnId,
++                },
++              },
++            }),
 +        });
 +        return { next: null, session: schemaSession };
 +      }
@@ -7438,16 +8105,16 @@ index f154d03..d61a22c 100644
    if (context !== undefined) {
 diff --git a/packages/eve/src/harness/model-usage.ts b/packages/eve/src/harness/model-usage.ts
 new file mode 100644
-index 0000000..12c3480
+index 0000000..e17dd62
 --- /dev/null
 +++ b/packages/eve/src/harness/model-usage.ts
-@@ -0,0 +1,92 @@
-+import type { LanguageModelUsage, ProviderMetadata } from "ai";
+@@ -0,0 +1,100 @@
++import type { LanguageModelUsage } from "ai";
 +import type { StepCompletedProviderMetadata } from "#protocol/message.js";
 +
 +export function modelUsageEvidence(input: {
 +  readonly usage?: LanguageModelUsage;
-+  readonly providerMetadata?: ProviderMetadata;
++  readonly providerMetadata?: Readonly<Record<string, unknown>>;
 +}) {
 +  return {
 +    providerMetadata: extractStepProviderMetadata(input.providerMetadata),
@@ -7489,12 +8156,12 @@ index 0000000..12c3480
 +    return Object.keys(result).length > 0 ? result : undefined;
 +  }
 +
-+  if (usage.inputTokens !== undefined) result.inputTokens = usage.inputTokens;
-+  if (usage.outputTokens !== undefined) result.outputTokens = usage.outputTokens;
-+  if (usage.inputTokenDetails?.cacheReadTokens !== undefined) {
++  if (isTokenCount(usage.inputTokens)) result.inputTokens = usage.inputTokens;
++  if (isTokenCount(usage.outputTokens)) result.outputTokens = usage.outputTokens;
++  if (isTokenCount(usage.inputTokenDetails?.cacheReadTokens)) {
 +    result.cacheReadTokens = usage.inputTokenDetails.cacheReadTokens;
 +  }
-+  if (usage.inputTokenDetails?.cacheWriteTokens !== undefined) {
++  if (isTokenCount(usage.inputTokenDetails?.cacheWriteTokens)) {
 +    result.cacheWriteTokens = usage.inputTokenDetails.cacheWriteTokens;
 +  }
 +
@@ -7502,37 +8169,45 @@ index 0000000..12c3480
 +}
 +
 +function extractStepProviderMetadata(
-+  providerMetadata: ProviderMetadata | undefined,
++  providerMetadata: Readonly<Record<string, unknown>> | undefined,
 +): StepCompletedProviderMetadata | undefined {
 +  const generationId = readGatewayGenerationId(providerMetadata);
 +  return generationId === undefined ? undefined : { gateway: { generationId } };
 +}
 +
-+function extractGatewayCostUsd(providerMetadata: ProviderMetadata | undefined): number | undefined {
++function extractGatewayCostUsd(
++  providerMetadata: Readonly<Record<string, unknown>> | undefined,
++): number | undefined {
 +  const gateway = readGatewayMetadata(providerMetadata);
 +  const cost = gateway?.cost;
-+  if (typeof cost === "number" && Number.isFinite(cost)) {
++  if (typeof cost === "number" && Number.isFinite(cost) && cost >= 0) {
 +    return cost;
 +  }
-+  if (typeof cost === "string") {
++  if (typeof cost === "string" && cost.trim().length > 0) {
 +    const parsed = Number(cost);
-+    return Number.isFinite(parsed) ? parsed : undefined;
++    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 +  }
 +  return undefined;
 +}
 +
 +function readGatewayGenerationId(
-+  providerMetadata: ProviderMetadata | undefined,
++  providerMetadata: Readonly<Record<string, unknown>> | undefined,
 +): string | undefined {
 +  const generationId = readGatewayMetadata(providerMetadata)?.generationId;
 +  return typeof generationId === "string" && generationId.length > 0 ? generationId : undefined;
 +}
 +
 +function readGatewayMetadata(
-+  providerMetadata: ProviderMetadata | undefined,
-+): ProviderMetadata[string] | undefined {
++  providerMetadata: Readonly<Record<string, unknown>> | undefined,
++): Readonly<Record<string, unknown>> | undefined {
 +  const gateway = providerMetadata?.gateway;
-+  return gateway && typeof gateway === "object" && !Array.isArray(gateway) ? gateway : undefined;
++  return gateway && typeof gateway === "object" && !Array.isArray(gateway)
++    ? (gateway as Readonly<Record<string, unknown>>)
++    : undefined;
++}
++
++function isTokenCount(value: unknown): value is number {
++  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 +}
 diff --git a/packages/eve/src/harness/seed-attachments.integration.test.ts b/packages/eve/src/harness/seed-attachments.integration.test.ts
 new file mode 100644
@@ -8185,34 +8860,36 @@ index 6db0c47..ea55b33 100644
 +  await sessionCheckpointFixtureStep({ sessionId, serializedContext: restored });
 +}
 diff --git a/packages/eve/src/protocol/message-version.ts b/packages/eve/src/protocol/message-version.ts
-index 5ff6cba..8053506 100644
+index 5ff6cba..3817c3e 100644
 --- a/packages/eve/src/protocol/message-version.ts
 +++ b/packages/eve/src/protocol/message-version.ts
-@@ -52,10 +52,12 @@ interface MessageStreamAppendEventsByVersion {
+@@ -52,10 +52,13 @@ interface MessageStreamAppendEventsByVersion {
      | MessageAppendedStreamEventV24
      | ReasoningAppendedStreamEventV24;
    "25": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
 +  "26": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
 +  "27": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
++  "28": ActionInputAppendedStreamEvent | MessageAppendedStreamEvent | ReasoningAppendedStreamEvent;
  }
 
  export type MessageStreamVersion = keyof MessageStreamAppendEventsByVersion;
 -type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25">;
-+type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25" | "26" | "27">;
++type LegacyMessageStreamVersion = Exclude<MessageStreamVersion, "25" | "26" | "27" | "28">;
 
  type VersionIndependentMessageStreamEvent = Exclude<
    UnstampedMessageStreamEvent,
-@@ -93,6 +95,8 @@ export function normalizeMessageStreamEvent(
+@@ -93,6 +96,9 @@ export function normalizeMessageStreamEvent(
          version,
          event as MessageStreamEventForVersion<LegacyMessageStreamVersion>,
        );
++    case "28":
 +    case "27":
 +    case "26":
      case "25":
        return validateCurrentMessageStreamEvent(event as MessageStreamEventForVersion<"25">);
      default:
 diff --git a/packages/eve/src/protocol/message.test.ts b/packages/eve/src/protocol/message.test.ts
-index 99ab68d..7ea391b 100644
+index 99ab68d..944d99d 100644
 --- a/packages/eve/src/protocol/message.test.ts
 +++ b/packages/eve/src/protocol/message.test.ts
 @@ -32,7 +32,7 @@ import { createEveConnectionCallbackRoutePath } from "#protocol/routes.js";
@@ -8220,12 +8897,12 @@ index 99ab68d..7ea391b 100644
  describe("message stream protocol", () => {
    it("pins the stream version for timed session events", () => {
 -    expect(EVE_MESSAGE_STREAM_VERSION).toBe("25");
-+    expect(EVE_MESSAGE_STREAM_VERSION).toBe("27");
++    expect(EVE_MESSAGE_STREAM_VERSION).toBe("28");
    });
 
    it.each(["21", "22", "23", "24"] as const)(
 diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
-index fc45f34..07cabfe 100644
+index fc45f34..158f153 100644
 --- a/packages/eve/src/protocol/message.ts
 +++ b/packages/eve/src/protocol/message.ts
 @@ -1,3 +1,4 @@
@@ -8238,7 +8915,7 @@ index fc45f34..07cabfe 100644
  export const EVE_MESSAGE_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
  export const EVE_MESSAGE_STREAM_FORMAT = "ndjson";
 -export const EVE_MESSAGE_STREAM_VERSION = "25";
-+export const EVE_MESSAGE_STREAM_VERSION = "27";
++export const EVE_MESSAGE_STREAM_VERSION = "28";
 
  /**
   * eve-owned finish reason for one completed assistant step.
@@ -8292,11 +8969,26 @@ index fc45f34..07cabfe 100644
      wait: "next-user-message";
    };
    type: "session.waiting";
-@@ -724,6 +741,44 @@ export interface SessionCompletedStreamEvent {
+@@ -724,6 +741,60 @@ export interface SessionCompletedStreamEvent {
    type: "session.completed";
  }
 
 +/** Historical display events, excluding session controls, usage, and authorization capabilities. */
++export interface HookResultStreamEvent {
++  readonly type: "hook.result";
++  readonly data: {
++    readonly hookId: string;
++    readonly turnId: string;
++    readonly responseMetadata?: JsonObject;
++    readonly modelCalls?: readonly {
++      readonly failed?: boolean;
++      readonly modelId: string;
++      readonly usage?: StepCompletedStreamEvent["data"]["usage"];
++      readonly providerMetadata?: StepCompletedProviderMetadata;
++    }[];
++  };
++}
++
 +export interface HistorySeededStreamEvent {
 +  readonly type: "history.seeded";
 +  readonly data: { readonly messages: readonly EveMessage[] };
@@ -8304,6 +8996,7 @@ index fc45f34..07cabfe 100644
 +
 +export type HistoryProjectionEvent = (
 +  | HistorySeededStreamEvent
++  | HookResultStreamEvent
 +  | MessageReceivedStreamEvent
 +  | StepStartedStreamEvent
 +  | MessageAppendedStreamEvent
@@ -8337,11 +9030,12 @@ index fc45f34..07cabfe 100644
  /**
   * Serializable event before eve stamps the durable stream envelope.
   *
-@@ -731,11 +786,14 @@ export interface SessionCompletedStreamEvent {
+@@ -731,11 +802,15 @@ export interface SessionCompletedStreamEvent {
   * consumers receive {@link MessageStreamEvent}.
   */
  export type UnstampedMessageStreamEvent =
 +  | HistorySeededStreamEvent
++  | HookResultStreamEvent
 +  | HistoryRestoredStreamEvent
    | ActionInputAppendedStreamEvent
    | ApprovalCandidateStreamEvent
@@ -8352,7 +9046,7 @@ index fc45f34..07cabfe 100644
    | CompactionRequestedStreamEvent
    | AuthorizationCompletedStreamEvent
    | AuthorizationRequiredStreamEvent
-@@ -877,6 +935,7 @@ export function createTurnStartedEvent(input: {
+@@ -877,6 +952,7 @@ export function createTurnStartedEvent(input: {
   * consumers while preserving the authored turn content upstream.
   */
  export function createMessageReceivedEvent(input: {
@@ -8360,7 +9054,7 @@ index fc45f34..07cabfe 100644
    readonly message: string | UserContent;
    readonly sequence: number;
    readonly turnId: string;
-@@ -884,6 +943,7 @@ export function createMessageReceivedEvent(input: {
+@@ -884,6 +960,7 @@ export function createMessageReceivedEvent(input: {
    return {
      data: {
        message: summarizeUserContent(input.message),
@@ -8368,7 +9062,7 @@ index fc45f34..07cabfe 100644
        parts: projectUserContentParts(input.message),
        sequence: input.sequence,
        turnId: input.turnId,
-@@ -1804,3 +1864,10 @@ function formatActionResultOutput(output: unknown): string {
+@@ -1804,3 +1881,10 @@ function formatActionResultOutput(output: unknown): string {
 
    return "Action failed.";
  }
@@ -8654,10 +9348,24 @@ index 35cfa0f..10f9ad7 100644
 +  expect(resolveSession).not.toHaveBeenCalled();
 +});
 diff --git a/packages/eve/src/public/definitions/hook.ts b/packages/eve/src/public/definitions/hook.ts
-index 48e2bc3..54caad2 100644
+index 48e2bc3..6af6d89 100644
 --- a/packages/eve/src/public/definitions/hook.ts
 +++ b/packages/eve/src/public/definitions/hook.ts
-@@ -23,6 +23,7 @@ export interface HookEventMap {
+@@ -1,3 +1,5 @@
++import type { LanguageModelUsage, ProviderMetadata } from "ai";
++import type { JsonObject } from "#shared/json.js";
+ import type { HandleMessageStreamEvent } from "../../protocol/message.js";
+ import type { SessionContext } from "./callback-context.js";
+ import type { ExactDefinition } from "./exact.js";
+@@ -15,6 +17,7 @@ type ProtocolEvent<TType extends HandleMessageStreamEvent["type"]> = Extract<
+  * until eve exposes them here.
+  */
+ export interface HookEventMap {
++  readonly "hook.result": ProtocolEvent<"hook.result">;
+   readonly "action.input.appended": ProtocolEvent<"action.input.appended">;
+   readonly "action.partial": ProtocolEvent<"action.partial">;
+   readonly "action.result": ProtocolEvent<"action.result">;
+@@ -23,6 +26,7 @@ export interface HookEventMap {
    readonly "actions.requested": ProtocolEvent<"actions.requested">;
    readonly "authorization.completed": ProtocolEvent<"authorization.completed">;
    readonly "authorization.required": ProtocolEvent<"authorization.required">;
@@ -8665,7 +9373,7 @@ index 48e2bc3..54caad2 100644
    readonly "compaction.completed": ProtocolEvent<"compaction.completed">;
    readonly "compaction.requested": ProtocolEvent<"compaction.requested">;
    readonly "context.cleared": ProtocolEvent<"context.cleared">;
-@@ -30,6 +31,7 @@ export interface HookEventMap {
+@@ -30,6 +34,7 @@ export interface HookEventMap {
    readonly "input.resolved": ProtocolEvent<"input.resolved">;
    readonly "message.appended": ProtocolEvent<"message.appended">;
    readonly "message.completed": ProtocolEvent<"message.completed">;
@@ -8673,6 +9381,65 @@ index 48e2bc3..54caad2 100644
    readonly "message.received": ProtocolEvent<"message.received">;
    readonly "reasoning.appended": ProtocolEvent<"reasoning.appended">;
    readonly "reasoning.completed": ProtocolEvent<"reasoning.completed">;
+@@ -80,13 +85,34 @@ export interface HookContext extends SessionContext {
+ }
+
+ /**
+- * Side-effect-only handler for one accepted runtime stream event.
++ * Handler for one accepted runtime stream event. Only turn.completed may return a result.
+  *
+  * `TEvent` is one variant of {@link HookEvent}. {@link StreamEventHooks}
+  * infers it from the event key. The typed event is the first argument, `ctx`
+  * is the last.
+  */
+-export type StreamEventHook<TEvent> = (event: TEvent, ctx: HookContext) => void | Promise<void>;
++export interface HookModelCall {
++  /** Request failed before completed usage was available. */
++  readonly failed?: boolean;
++  readonly modelId: string;
++  readonly usage?: LanguageModelUsage;
++  readonly providerMetadata?: ProviderMetadata;
++}
++
++/** Durable display annotations and auxiliary model costs; never model context. */
++export interface TurnCompletedHookResult {
++  readonly responseMetadata?: JsonObject;
++  readonly modelCalls?: readonly HookModelCall[];
++}
++
++type HookReturn<TEvent> = TEvent extends { readonly type: "turn.completed" }
++  ? void | TurnCompletedHookResult
++  : void;
++
++export type StreamEventHook<TEvent> = (
++  event: TEvent,
++  ctx: HookContext,
++) => HookReturn<TEvent> | Promise<HookReturn<TEvent>>;
+
+ /**
+  * Map of stream-event subscribers an authored hook file may declare.
+@@ -103,7 +129,7 @@ export type StreamEventHooks<TKey extends HookEventKey = HookEventKey> = {
+  *
+  * Hook files declare stream-event subscribers (under `events:`) that
+  * fire after eve has accepted and durably recorded each event.
+- * Handlers are observe-only: they cannot inject model context. To
++ * Handlers cannot inject model context. A turn.completed handler may return display metadata and auxiliary model usage. To
+  * contribute runtime model messages, use `defineDynamic` +
+  * `defineInstructions` in `agent/instructions/`.
+  */
+diff --git a/packages/eve/src/public/hooks/index.ts b/packages/eve/src/public/hooks/index.ts
+index aeeb55d..b7ea6ba 100644
+--- a/packages/eve/src/public/hooks/index.ts
++++ b/packages/eve/src/public/hooks/index.ts
+@@ -8,6 +8,8 @@
+
+ export {
+   type HookContext,
++  type HookModelCall,
++  type TurnCompletedHookResult,
+   type HookDefinition,
+   type HookEvent,
+   type HookEventKey,
 diff --git a/packages/eve/src/public/transcript.ts b/packages/eve/src/public/transcript.ts
 new file mode 100644
 index 0000000..509876b
@@ -8765,6 +9532,33 @@ index 0000000..c09bc4f
 +A missing provider cost remains unknown; it must not be inferred as zero. A transport failure that returns no provider result still needs separate provider reconciliation. This change does not reconstruct usage for historical compactions that emitted no evidence.
 +
 +Local tests cover empty summaries, repeated paid attempts, manual compaction event ordering, and application ledger replay/rounding. No issue or proposal has been published.
+diff --git a/research/hook-completion-results.md b/research/hook-completion-results.md
+new file mode 100644
+index 0000000..3ac6378
+--- /dev/null
++++ b/research/hook-completion-results.md
+@@ -0,0 +1,21 @@
++---
++issue: null
++status: local-draft
++last_updated: 2026-09-12
++---
++
++# Completion hook results
++
++Optional response annotations, such as follow-up suggestions, need their own configured model while remaining part of the native durable response. Changing the main answer's schema or asking it to call a suggestion tool changes that behavior.
++
++Allow only `turn.completed` authored hooks to return `{ responseMetadata?: JsonObject, modelCalls?: HookModelCall[] }`. Each call carries `modelId`, optional native SDK usage/provider metadata, and `failed?: boolean` for a request that failed before completion. Void remains valid. A strict result parser rejects unknown fields and bounds the attempt list at 100.
++
++The dispatcher emits `hook.result` with its own stamped ID, originating hook slug and exact turn ID, optional annotation, and sanitized model-call evidence. It reuses the existing durable event emitter before session waiting. Observers receive the event; the completion hook does not recursively run. Default projection stores annotations in `assistant.metadata.annotations[hookId]`, separate from user custom data and framework fields. Repeated results replace only their own namespace. No annotation enters model history and no client mutation API is introduced.
++
++Applications capture completed call evidence before output validation. They can return usage without display metadata when output is invalid, or `failed: true` without invented usage on an uncompleted request. A thrown hook has existing failure semantics and cannot return its evidence, so optional annotation generators must catch their own failures. Distinct actual attempts remain distinct; replay deduplication uses event ID and attempt index.
++
++Trusted seed messages accept validated hook-ID/JSON-object annotations. Internal imported-prefix forks preserve them. Execution-history forks copy only annotation payloads, stripping historical call evidence. Public exports choose their own allowlist. Stream version 28 advertises the new event while preserving supported prior stream normalization.
++
++Unit/in-memory integration tests cover misuse, sanitization, usage-only results, exact turn targeting, namespace isolation, deterministic replay, seed and native fork preservation, prompt isolation, and event order before idle. A deterministic basic-runtime fixture exercises the wire in CI. This proposal is unpublished; no issue or release has been created.
++
++Invalid display metadata is omitted independently of valid model-call evidence. Malformed call entries or unknown result fields still reject the authored result.
 diff --git a/research/imported-message-forks.md b/research/imported-message-forks.md
 new file mode 100644
 index 0000000..7c14750

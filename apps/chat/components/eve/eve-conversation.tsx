@@ -397,6 +397,27 @@ export function EveConversation({
                 onRegenerate={(message, response) =>
                   fork.begin(message, { response, events: agent.events })
                 }
+                onSuggestion={(suggestion) =>
+                  run(async () => {
+                    if (modelIds.length > 1) {
+                      await fork.compare(
+                        draftMessage(suggestion, []),
+                        modelIds,
+                        nextTurnBoundary(latestTurn),
+                        composerDraft.selectedTool ?? undefined,
+                        false
+                      );
+                    } else {
+                      await submitMessage(
+                        suggestion,
+                        [],
+                        modelIds[0],
+                        false,
+                        composerDraft.selectedTool ?? undefined
+                      );
+                    }
+                  })
+                }
                 respond={(response) =>
                   run(() => send(() => agent.respond([response])))
                 }
@@ -566,17 +587,22 @@ function useConversationInput(
     draftScopeId ?? conversationId
   );
   const files = useEveAttachments(composerDraft);
-  const fork = useEveFork(ownerId, conversationId, (message, selectedTool) => {
-    const sent = restoreDraft(message);
-    if (
-      sameComposerDraft(composerDraft, sent) &&
-      composerDraft.selectedTool === (selectedTool ?? null)
-    ) {
-      composerDraft.setText("");
-      files.setAttachments([]);
-      composerDraft.setSelectedTool(null);
+  const fork = useEveFork(
+    ownerId,
+    conversationId,
+    (message, selectedTool, clearComposer) => {
+      const sent = restoreDraft(message);
+      if (
+        clearComposer &&
+        sameComposerDraft(composerDraft, sent) &&
+        composerDraft.selectedTool === (selectedTool ?? null)
+      ) {
+        composerDraft.setText("");
+        files.setAttachments([]);
+        composerDraft.setSelectedTool(null);
+      }
     }
-  });
+  );
   const comparison =
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
   const retainedDraft = comparison
