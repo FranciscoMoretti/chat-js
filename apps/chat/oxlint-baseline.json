@@ -15,11 +15,13 @@
       }
     },
     {
-      "files": [
-        "lib/ai/gateway.ts",
-        "lib/ai/text-splitter.ts",
-        "lib/parallel-chat-requests.test.ts"
-      ],
+      "files": ["lib/ai/gateway.ts", "lib/ai/text-splitter.ts"],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["lib/parallel-chat-requests.test.ts"],
       "rules": {
         "class-methods-use-this": "off"
       }
@@ -212,7 +214,6 @@
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/eval-agent.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
@@ -229,7 +230,6 @@
         "lib/files/upload-prep.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/message-conversion.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/runtime-registry/runtime-api.ts",
         "lib/runtime-registry/runtime-registry-provider.tsx",
         "lib/start-provisional-chat.ts",
@@ -635,7 +635,6 @@
         "lib/draft-chat-submission.ts",
         "lib/files/upload-prep.ts",
         "lib/message-conversion.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "lib/stores/with-tracing.ts"
       ],
@@ -661,11 +660,16 @@
         "lib/cancellation-aware-chat-transport.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/redis/client.ts",
         "scripts/check-redis.ts"
       ],
+      "rules": {
+        "promise/avoid-new": "off"
+      }
+    },
+    {
+      "files": ["lib/parallel-chat-requests.ts"],
       "rules": {
         "promise/avoid-new": "off"
       }
@@ -720,7 +724,6 @@
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
@@ -1231,7 +1234,6 @@
         "hooks/use-artifact.tsx",
         "lib/ai/active-gateway.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/eval-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
@@ -1260,8 +1262,6 @@
         "lib/features-config.ts",
         "lib/logger.ts",
         "lib/message-conversion.ts",
-        "lib/parallel-chat-requests.test.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/stores/base/hooks.ts",
         "lib/stores/with-data-stream.test.ts",
@@ -1356,8 +1356,7 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/sheet-editor.tsx",
-        "lib/gated-chat-transport.test.ts",
-        "lib/parallel-chat-requests.ts"
+        "lib/gated-chat-transport.test.ts"
       ],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
@@ -1418,7 +1417,6 @@
         "components/data-stream-handler.tsx",
         "lib/cancellation-aware-chat-transport.ts",
         "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
         "lib/redis/client.test.ts",
         "lib/social-auth.test.ts",
         "providers/session-provider.tsx"
