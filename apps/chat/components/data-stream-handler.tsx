@@ -93,9 +93,9 @@ const processArtifactStreamPart = ({
     }
     case "text": {
       textArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata,
+        streamPart: delta,
       });
       break;
     }
@@ -142,8 +142,8 @@ export const DataStreamHandler = () => {
       handleResearchUpdate({ delta, setSelectedTool });
 
       processArtifactStreamPart({
-        delta,
         artifact,
+        delta,
         setArtifact,
         setMetadata,
       });

@@ -43,9 +43,9 @@ export const SidebarProjectItem = ({
     await renameProject({
       id: project.id,
       updates: {
-        name: data.name,
         icon: data.icon,
         iconColor: data.color,
+        name: data.name,
       },
     });
   };

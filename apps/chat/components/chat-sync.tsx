@@ -97,7 +97,10 @@ export const ChatSync = ({
     thread,
     onFinish: ({ message }) => {
       return completionQueueRef.current.waitForIdle().then(() => {
-        saveChatMessage({ message, chatId: id });
+        saveChatMessage({
+          chatId: id,
+          message,
+        });
       });
     },
     transport,

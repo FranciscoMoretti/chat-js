@@ -160,7 +160,7 @@ export const PromptInputProvider = ({
   const openRef = useRef<() => void>(() => {});
 
   const add = useCallback((files: File[] | FileList) => {
-    const incoming = Array.from(files);
+    const incoming = [...files];
     if (incoming.length === 0) {
       return;
     }
@@ -205,12 +205,12 @@ export const PromptInputProvider = ({
 
   const attachments = useMemo<AttachmentsContext>(
     () => ({
-      files: attachements,
       add,
-      remove,
       clear,
-      openFileDialog,
       fileInputRef,
+      files: attachements,
+      openFileDialog,
+      remove,
     }),
     [attachements, add, remove, clear, openFileDialog]
   );
@@ -225,13 +225,13 @@ export const PromptInputProvider = ({
 
   const controller = useMemo<PromptInputControllerProps>(
     () => ({
-      textInput: {
-        value: textInput,
-        setInput: setTextInput,
-        clear: clearInput,
-      },
-      attachments,
       __registerFileInput,
+      attachments,
+      textInput: {
+        clear: clearInput,
+        setInput: setTextInput,
+        value: textInput,
+      },
     }),
     [textInput, clearInput, attachments, __registerFileInput]
   );
@@ -516,7 +516,7 @@ export const PromptInput = ({
 
   const addLocal = useCallback(
     (fileList: File[] | FileList) => {
-      const incoming = Array.from(fileList);
+      const incoming = [...fileList];
       const accepted = incoming.filter((f) => matchesAccept(f));
       if (incoming.length && accepted.length === 0) {
         onError?.({
@@ -698,12 +698,12 @@ export const PromptInput = ({
 
   const ctx = useMemo<AttachmentsContext>(
     () => ({
-      files: files.map((item) => ({ ...item, id: item.id })),
       add,
-      remove,
       clear,
-      openFileDialog,
       fileInputRef: inputRef,
+      files: files.map((item) => ({ ...item, id: item.id })),
+      openFileDialog,
+      remove,
     }),
     [files, add, remove, clear, openFileDialog]
   );
@@ -738,7 +738,13 @@ export const PromptInput = ({
       })
     ).then((convertedFiles: FileUIPart[]) => {
       try {
-        const result = onSubmit({ text, files: convertedFiles }, event);
+        const result = onSubmit(
+          {
+            files: convertedFiles,
+            text,
+          },
+          event
+        );
 
         // Handle both sync and async onSubmit
         if (result instanceof Promise) {
@@ -885,11 +891,11 @@ export const PromptInputTextarea = ({
 
   const controlledProps = controller
     ? {
-        value: controller.textInput.value,
         onChange: (e: ChangeEvent<HTMLTextAreaElement>) => {
           controller.textInput.setInput(e.currentTarget.value);
           onChange?.(e);
         },
+        value: controller.textInput.value,
       }
     : {
         onChange,

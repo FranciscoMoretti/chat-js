@@ -61,8 +61,8 @@ const PureCodeEditor = ({
       });
 
       editorRef.current = new EditorView({
-        state: startState,
         parent: containerRef.current,
+        state: startState,
       });
     }
 
@@ -116,8 +116,8 @@ const PureCodeEditor = ({
         const transaction = editorRef.current.state.update({
           changes: {
             from: 0,
-            to: currentContent.length,
             insert: content,
+            to: currentContent.length,
           },
           annotations: [Transaction.remote.of(true)],
         });

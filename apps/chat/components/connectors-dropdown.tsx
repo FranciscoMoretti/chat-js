@@ -115,7 +115,10 @@ const PureConnectorsDropdown = () => {
                 checked={connector.enabled}
                 className="scale-75"
                 onCheckedChange={(enabled) =>
-                  toggleEnabled({ id: connector.id, enabled })
+                  toggleEnabled({
+                    enabled,
+                    id: connector.id,
+                  })
                 }
                 onClick={(e) => e.stopPropagation()}
               />

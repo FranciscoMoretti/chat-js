@@ -78,7 +78,11 @@ const PureDocumentTool = ({
   ) {
     return (
       <DocumentPreview
-        input={{ title: inputTitle, kind, content: inputContent }}
+        input={{
+          content: inputContent,
+          kind,
+          title: inputTitle,
+        }}
         isLastArtifact={isLastArtifact}
         isReadonly={isReadonly}
         messageId={messageId}
@@ -86,8 +90,8 @@ const PureDocumentTool = ({
           tool.output
             ? {
                 documentId: tool.output.documentId,
-                title: inputTitle,
                 kind,
+                title: inputTitle,
               }
             : undefined
         }

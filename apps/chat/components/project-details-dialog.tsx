@@ -67,7 +67,11 @@ export const ProjectDetailsDialog = ({
 
     if (mode === "create") {
       if (trimmedName) {
-        onSubmit({ name: trimmedName, icon: finalIcon, color: finalColor });
+        onSubmit({
+          color: finalColor,
+          icon: finalIcon,
+          name: trimmedName,
+        });
         setName("");
         setIcon(null);
         setColor(null);
@@ -79,9 +83,9 @@ export const ProjectDetailsDialog = ({
         finalColor !== (initialColor ?? DEFAULT_PROJECT_COLOR);
       if (hasChanges) {
         await onSubmit({
-          name: trimmedName,
-          icon: finalIcon,
           color: finalColor,
+          icon: finalIcon,
+          name: trimmedName,
         });
       }
       onOpenChange(false);

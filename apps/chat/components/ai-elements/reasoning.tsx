@@ -55,13 +55,13 @@ export const Reasoning = memo(
     ...props
   }: ReasoningProps) => {
     const [isOpen, setIsOpen] = useControllableState({
-      prop: open,
       defaultProp: defaultOpen,
       onChange: onOpenChange,
+      prop: open,
     });
     const [duration, setDuration] = useControllableState({
-      prop: durationProp,
       defaultProp: 0,
+      prop: durationProp,
     });
 
     const [hasAutoClosed, setHasAutoClosed] = useState(false);
@@ -98,7 +98,12 @@ export const Reasoning = memo(
 
     return (
       <ReasoningContext.Provider
-        value={{ isStreaming, isOpen, setIsOpen, duration }}
+        value={{
+          duration,
+          isOpen,
+          isStreaming,
+          setIsOpen,
+        }}
       >
         <Collapsible
           className={cn("not-prose mb-4", className)}

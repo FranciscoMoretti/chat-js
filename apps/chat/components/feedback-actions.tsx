@@ -75,9 +75,9 @@ export const FeedbackActions = ({
                   type: "down" as const,
                 }),
                 {
+                  error: "Failed to downvote response.",
                   loading: "Downvoting Response...",
                   success: "Downvoted Response!",
-                  error: "Failed to downvote response.",
                 }
               );
             }}
@@ -98,9 +98,9 @@ export const FeedbackActions = ({
                   type: "up" as const,
                 }),
                 {
+                  error: "Failed to upvote response.",
                   loading: "Upvoting Response...",
                   success: "Upvoted Response!",
-                  error: "Failed to upvote response.",
                 }
               );
             }}

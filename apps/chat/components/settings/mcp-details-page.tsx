@@ -348,7 +348,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       if (!connector) {
         return;
       }
-      toggleEnabled({ id: connector.id, enabled });
+      toggleEnabled({
+        enabled,
+        id: connector.id,
+      });
     },
     [connector, toggleEnabled]
   );

@@ -32,7 +32,8 @@ const PureSpreadsheetEditor = ({
 
   const parseData = useMemo(() => {
     if (!content) {
-      return new Array(MIN_ROWS).fill(new Array(MIN_COLS).fill(""));
+      const emptyRow = Array.from({ length: MIN_COLS }, () => "");
+      return Array.from({ length: MIN_ROWS }, () => emptyRow);
     }
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
@@ -45,7 +46,7 @@ const PureSpreadsheetEditor = ({
     });
 
     while (paddedData.length < MIN_ROWS) {
-      paddedData.push(new Array(MIN_COLS).fill(""));
+      paddedData.push(Array.from({ length: MIN_COLS }, () => ""));
     }
 
     return paddedData;
@@ -53,18 +54,18 @@ const PureSpreadsheetEditor = ({
 
   const columns = useMemo(() => {
     const rowNumberColumn = {
+      cellClass: "border-t border-r bg-background text-foreground",
+      frozen: true,
+      headerCellClass: "border-t border-r bg-muted text-foreground",
       key: "rowNumber",
       name: "",
-      frozen: true,
-      width: 50,
       renderCell: ({ rowIdx }: { rowIdx: number }) => rowIdx + 1,
-      cellClass: "border-t border-r bg-background text-foreground",
-      headerCellClass: "border-t border-r bg-muted text-foreground",
+      width: 50,
     };
 
     const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
       key: i.toString(),
-      name: String.fromCharCode(65 + i),
+      name: String.fromCodePoint(65 + i),
       renderEditCell: isReadonly ? undefined : textEditor,
       width: 120,
       cellClass: cn("bg-background text-foreground border-t", {
@@ -86,9 +87,9 @@ const PureSpreadsheetEditor = ({
           rowNumber: rowIndex + 1,
         };
 
-        columns.slice(1).forEach((col, colIndex) => {
+        for (const [colIndex, col] of columns.slice(1).entries()) {
           rowData[col.key] = row[colIndex] || "";
-        });
+        }
 
         return rowData;
       }),
