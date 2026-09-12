@@ -101,13 +101,13 @@ export const createMcpConnector = async ({
     const [connector] = await db
       .insert(mcpConnector)
       .values({
-        userId,
         name,
         nameId,
-        url,
-        type,
         oauthClientId: oauthClientId ?? null,
         oauthClientSecret: oauthClientSecret ?? null,
+        type,
+        url,
+        userId,
       })
       .returning();
     return connector;
@@ -211,11 +211,11 @@ export const createOAuthSession = async ({
   const [session] = await db
     .insert(mcpOAuthSession)
     .values({
+      clientInfo,
+      codeVerifier,
       mcpConnectorId,
       serverUrl,
       state,
-      codeVerifier,
-      clientInfo,
     })
     .returning();
   return session;
