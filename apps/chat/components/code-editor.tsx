@@ -20,16 +20,21 @@ interface EditorProps {
 
 function getLanguageExtension(language: string) {
   switch (language) {
-    case "typescript":
+    case "typescript": {
       return javascript({ jsx: false, typescript: true });
-    case "javascript":
+    }
+    case "javascript": {
       return javascript({ jsx: false, typescript: false });
-    case "jsx":
+    }
+    case "jsx": {
       return javascript({ jsx: true, typescript: false });
-    case "tsx":
+    }
+    case "tsx": {
       return javascript({ jsx: true, typescript: true });
-    default:
+    }
+    default: {
       return python();
+    }
   }
 }
 
