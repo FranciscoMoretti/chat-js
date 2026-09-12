@@ -6,16 +6,17 @@ import type { LanguageModelMiddleware } from "ai";
 import { getActiveGateway } from "./active-gateway";
 import type { AppModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
-import type {
-  GatewayImageModelIdMap,
-  GatewayModelIdMap,
-  GatewayType,
-  GatewayVideoModelIdMap,
-} from "./gateways/registry";
+import type { InstalledGateway } from "./gateways/registry";
 
-type ActiveGatewayModelId = GatewayModelIdMap[GatewayType];
-type ActiveGatewayImageModelId = GatewayImageModelIdMap[GatewayType];
-type ActiveGatewayVideoModelId = GatewayVideoModelIdMap[GatewayType];
+type ActiveGatewayModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[0];
+type ActiveGatewayImageModelId = Parameters<
+  InstalledGateway["createImageModel"]
+>[0];
+type ActiveGatewayVideoModelId = Parameters<
+  InstalledGateway["createVideoModel"]
+>[0];
 
 export const getLanguageModel = async (modelId: AppModelId) => {
   const model = await getAppModelDefinition(modelId);

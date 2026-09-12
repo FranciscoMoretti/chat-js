@@ -4,11 +4,7 @@ import { z } from "zod";
 
 import { getAppModelDefinition } from "@/lib/ai/app-models";
 import type { AppModelId } from "@/lib/ai/app-models";
-import type {
-  GatewayImageModelIdMap,
-  GatewayModelIdMap,
-  GatewayType,
-} from "@/lib/ai/gateways/registry";
+import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
@@ -21,8 +17,12 @@ import { getBaseUrl } from "@/lib/url";
 const log = createModuleLogger("ai.tools.generate-image");
 
 type ImageMode = "edit" | "generate";
-type ActiveGatewayModelId = GatewayModelIdMap[GatewayType];
-type ActiveGatewayImageModelId = GatewayImageModelIdMap[GatewayType];
+type ActiveGatewayModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[0];
+type ActiveGatewayImageModelId = Parameters<
+  InstalledGateway["createImageModel"]
+>[0];
 
 /**
  * Resolve which model to use for image generation and whether it's a
