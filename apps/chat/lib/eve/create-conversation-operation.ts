@@ -20,6 +20,7 @@ import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import { eveCreationContentHash } from "./creation-content-hash";
+import { eveToolMetadata } from "./message-tool-selection";
 
 export async function createEveConversationOperation(
   ownerId: string,
@@ -142,6 +143,7 @@ export async function createEveConversationOperation(
             signal: AbortSignal.timeout(30_000),
             body: JSON.stringify({
               message: preparedMessage,
+              messageMetadata: eveToolMetadata(input.selectedTool),
               operationId,
               fork,
             }),

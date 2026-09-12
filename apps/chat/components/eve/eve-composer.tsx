@@ -1,12 +1,18 @@
 "use client";
 
-import { type ComponentProps, useRef } from "react";
+import {
+  type ComponentProps,
+  type Dispatch,
+  type SetStateAction,
+  useRef,
+} from "react";
 import { useDropzone } from "react-dropzone";
 import { ControlledChatComposer } from "@/components/chat-composer";
 import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
 import { AttachmentsButton } from "@/components/multimodal-input";
-import { expandSelectedModelValue } from "@/lib/ai/types";
+import { ResponsiveTools } from "@/components/responsive-tools";
+import { expandSelectedModelValue, type UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -18,12 +24,16 @@ export function EveComposer({
   retainedModelId,
   retainedModelIds,
   modelSelection,
+  selectedTool,
+  onToolChange,
   ...props
 }: Omit<
   ComponentProps<typeof ControlledChatComposer>,
   "tools" | "attachments" | "hasAttachments" | "onPaste"
 > & {
   files: ReturnType<typeof useEveAttachments>;
+  selectedTool: UiToolName | null;
+  onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
   retainedModelId?: string;
   retainedModelIds?: string[];
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
@@ -98,7 +108,7 @@ export function EveComposer({
           }
         }}
         tools={
-          <>
+          <div className="flex min-w-0 flex-wrap items-center @[500px]:gap-2 gap-1">
             {config.features.attachments && (
               <AttachmentsButton
                 acceptAll="image/jpeg,image/png,application/pdf"
@@ -115,7 +125,13 @@ export function EveComposer({
               retainedModelIds={retainedModelIds}
             />
             <ConnectorsDropdown />
-          </>
+            <ResponsiveTools
+              disabled={locked || props.readOnly}
+              selectedModelId={models[0]?.id ?? ""}
+              setTools={onToolChange}
+              tools={selectedTool}
+            />
+          </div>
         }
       />
       {unsupported && (

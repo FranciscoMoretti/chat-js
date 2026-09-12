@@ -75,6 +75,8 @@ test("multi-model creation retains exact partial operation across navigation and
     .catch((cause) => {
       throw new Error(JSON.stringify(errors), { cause });
     });
+  await page.getByTitle("Select Tools", { exact: true }).click();
+  await page.getByRole("menuitem", { name: "Canvas", exact: true }).click();
   await page.getByRole("combobox").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   await page.getByRole("option", { name: secondModelLabel }).click();
@@ -93,6 +95,7 @@ test("multi-model creation retains exact partial operation across navigation and
   expect(submissions).toHaveLength(1);
   expect(submissions[0]).toMatchObject({
     message: "Compare a short greeting",
+    selectedTool: "createTextDocument",
     modelIds: expect.arrayContaining([firstModel, secondModel]),
   });
   const pending = await page.evaluate(
@@ -101,12 +104,15 @@ test("multi-model creation retains exact partial operation across navigation and
   );
   expect(JSON.parse(pending ?? "null")).toEqual(submissions[0]);
   await page.getByLabel("Follow-up draft").fill("Keep this unsent follow-up");
+  await page.getByTitle("Select Tools", { exact: true }).click();
+  await page.getByRole("menuitem", { name: "Canvas", exact: true }).click();
   await page
     .getByRole("button", { name: "Attach fixture PDF", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Simulate pending send", exact: true })
     .click();
+  await expect(page.getByTitle("Select Tools", { exact: true })).toBeDisabled();
   await expect(
     page.getByRole("button", {
       name: "Gemini 2.5 Flash Needs retry",
@@ -121,6 +127,9 @@ test("multi-model creation retains exact partial operation across navigation and
     "Keep this unsent follow-up"
   );
   await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Clear Canvas tool", exact: true })
+  ).toBeVisible();
   await expect(
     page.getByText("Selected native session: first-native")
   ).toBeVisible();
@@ -157,6 +166,9 @@ test("multi-model creation retains exact partial operation across navigation and
     "Keep this unsent follow-up"
   );
   await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Clear Canvas tool", exact: true })
+  ).toBeVisible();
   expect(preferences.at(-1)).toBe(secondModel);
   await expect(
     page.getByText(`Follow-up model: ${secondModel}`, { exact: true })

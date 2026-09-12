@@ -120,10 +120,16 @@ export function EveForkControls({
             files={fork.files}
             onDraftChange={fork.setDraft}
             onSubmit={fork.submit}
+            onToolChange={fork.setSelectedTool}
             retainedModelId={
               fork.pending && !("modelIds" in fork.pending)
                 ? fork.pending.modelId
                 : undefined
+            }
+            selectedTool={
+              fork.pending
+                ? (fork.pending.selectedTool ?? null)
+                : fork.selectedTool
             }
           />
           {fork.error && <p role="alert">{fork.error}</p>}

@@ -8,18 +8,24 @@ import {
   useState,
 } from "react";
 import { z } from "zod";
+import { frontendToolsSchema, type UiToolName } from "@/lib/ai/types";
 import { type DraftAttachment, draftAttachment } from "@/lib/eve/draft";
 
 const composerDraft = z.object({
   text: z.string(),
   attachments: z.array(draftAttachment),
+  selectedTool: frontendToolsSchema.nullable().default(null),
 });
 type Draft = z.infer<typeof composerDraft>;
 
 /** Persist unsent input synchronously, before a response-card navigation can unmount it. */
 export function useEveComposerDraft(ownerId: string, scopeId: string) {
   const key = `chatjs.eve.composer:${ownerId}:${scopeId}`;
-  const current = useRef<Draft>({ text: "", attachments: [] });
+  const current = useRef<Draft>({
+    text: "",
+    attachments: [],
+    selectedTool: null,
+  });
   const [value, setValue] = useState(current.current);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string>();
@@ -28,7 +34,7 @@ export function useEveComposerDraft(ownerId: string, scopeId: string) {
       const saved = sessionStorage.getItem(key);
       const restored = saved
         ? composerDraft.parse(JSON.parse(saved))
-        : { text: "", attachments: [] };
+        : { text: "", attachments: [], selectedTool: null };
       current.current = restored;
       setValue(restored);
       setError(undefined);
@@ -45,7 +51,7 @@ export function useEveComposerDraft(ownerId: string, scopeId: string) {
       current.current = next;
       setValue(next);
       try {
-        if (next.text || next.attachments.length) {
+        if (next.text || next.attachments.length || next.selectedTool) {
           sessionStorage.setItem(key, JSON.stringify(next));
         } else {
           sessionStorage.removeItem(key);
@@ -78,5 +84,14 @@ export function useEveComposerDraft(ownerId: string, scopeId: string) {
       })),
     [update]
   );
-  return { ...value, setText, setAttachments, loaded, error };
+  const setSelectedTool = useCallback(
+    (tool: SetStateAction<UiToolName | null>) =>
+      update((draft) => ({
+        ...draft,
+        selectedTool:
+          typeof tool === "function" ? tool(draft.selectedTool) : tool,
+      })),
+    [update]
+  );
+  return { ...value, setText, setAttachments, setSelectedTool, loaded, error };
 }

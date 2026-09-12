@@ -571,3 +571,29 @@ it("retains model provenance in copies of copies without carrying private metada
   });
   expect(JSON.stringify(copy.seed)).not.toContain("private-result");
 });
+
+it("preserves selected tools in copies without publishing unrelated custom metadata", () => {
+  const result = prepareEveCopyTranscript(
+    history([
+      {
+        id: "source-user",
+        role: "user",
+        metadata: {
+          custom: {
+            chatjs: {
+              selectedTool: "createTextDocument",
+              privateToken: "owner-only",
+            },
+            integration: { token: "integration-secret" },
+          },
+        },
+        parts: [{ type: "text", text: "Create a document" }],
+      },
+    ])
+  );
+  expect(result.seed.messages[0]).toEqual({
+    role: "user",
+    metadata: { chatjs: { selectedTool: "createTextDocument" } },
+    parts: [{ type: "text", text: "Create a document" }],
+  });
+});

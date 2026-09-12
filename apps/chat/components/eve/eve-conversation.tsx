@@ -13,8 +13,10 @@ import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import {
   expandSelectedModelValue,
+  frontendToolsSchema,
   getPrimarySelectedModelId,
   type SelectedModelValue,
+  type UiToolName,
 } from "@/lib/ai/types";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
@@ -24,6 +26,7 @@ import {
   matchesDraft,
   restoreDraft,
 } from "@/lib/eve/draft";
+import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
   useDefaultModel,
@@ -43,6 +46,7 @@ const pendingMessageSchema = z.object({
   message: z.string(),
   attachments: z.array(draftAttachment).default([]),
   modelId: z.string().optional(),
+  selectedTool: frontendToolsSchema.optional(),
   afterSequence: z.number(),
   checkUntil: z.number(),
   rejection: z.string().optional(),
@@ -180,6 +184,8 @@ export function EveConversation({
         if (
           event.type === "message.received" &&
           event.data.sequence > pending.afterSequence &&
+          eveMessageTool({ metadata: { custom: event.data.metadata } }) ===
+            (pending.selectedTool ?? null) &&
           (await matchesDraft(
             event.data.parts ?? event.data.message,
             pending.message,
@@ -271,12 +277,14 @@ export function EveConversation({
     message: string,
     attachments: z.infer<typeof draftAttachment>[],
     modelId: string,
-    clearComposer: boolean
+    clearComposer: boolean,
+    selectedTool?: UiToolName
   ) {
     const pending = {
       message: message.trim(),
       attachments,
       modelId,
+      selectedTool,
       checkUntil: Date.now() + 60_000,
       afterSequence: Math.max(
         -1,
@@ -291,12 +299,18 @@ export function EveConversation({
     if (clearComposer) {
       setDraft("");
       files.setAttachments([]);
+      composerDraft.setSelectedTool(null);
     }
     try {
       await send(
         () =>
           agent.send(draftMessage(message, attachments), {
-            headers: { "x-chatjs-selected-model": modelId },
+            headers: {
+              "x-chatjs-selected-model": modelId,
+              ...(selectedTool
+                ? { "x-chatjs-selected-tool": selectedTool }
+                : {}),
+            },
           }),
         true
       );
@@ -322,6 +336,11 @@ export function EveConversation({
       setCancelPending(false);
     }
   }
+  const displayedTool = retainedToolSelection(
+    comparison,
+    pendingMessage,
+    composerDraft.selectedTool
+  );
   let statusLabel = "Ready";
   if (busy) {
     statusLabel = "Responding…";
@@ -419,6 +438,9 @@ export function EveConversation({
                           !current.some((existing) => existing.url === file.url)
                       ),
                     ]);
+                    composerDraft.setSelectedTool(
+                      pendingMessage.selectedTool ?? null
+                    );
                     sessionStorage.removeItem(storageKey);
                     setPendingMessage(null);
                     setError(
@@ -459,21 +481,25 @@ export function EveConversation({
                     await fork.compare(
                       draftMessage(draft, files.attachments),
                       modelIds,
-                      nextTurnBoundary(latestTurn)
+                      nextTurnBoundary(latestTurn),
+                      composerDraft.selectedTool ?? undefined
                     );
                   } else {
                     await submitMessage(
                       draft,
                       files.attachments,
                       modelIds[0],
-                      true
+                      true,
+                      composerDraft.selectedTool ?? undefined
                     );
                   }
                 })
               }
+              onToolChange={composerDraft.setSelectedTool}
               readOnly={!!comparison}
               retainedModelId={pendingMessage?.modelId}
               retainedModelIds={comparison?.modelIds}
+              selectedTool={displayedTool}
               stopDisabled={cancelPending || agent.status === "resuming"}
             />
             {displayedError &&
@@ -540,11 +566,15 @@ function useConversationInput(
     draftScopeId ?? conversationId
   );
   const files = useEveAttachments(composerDraft);
-  const fork = useEveFork(ownerId, conversationId, (message) => {
+  const fork = useEveFork(ownerId, conversationId, (message, selectedTool) => {
     const sent = restoreDraft(message);
-    if (sameComposerDraft(composerDraft, sent)) {
+    if (
+      sameComposerDraft(composerDraft, sent) &&
+      composerDraft.selectedTool === (selectedTool ?? null)
+    ) {
       composerDraft.setText("");
       files.setAttachments([]);
+      composerDraft.setSelectedTool(null);
     }
   });
   const comparison =
@@ -574,4 +604,13 @@ function useConversationInput(
       },
     },
   };
+}
+
+function retainedToolSelection(
+  comparison: { selectedTool?: UiToolName } | undefined,
+  pending: { selectedTool?: UiToolName } | null,
+  draft: UiToolName | null
+) {
+  const retained = comparison ?? pending;
+  return retained ? (retained.selectedTool ?? null) : draft;
 }

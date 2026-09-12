@@ -1,4 +1,4 @@
-import type { UiToolName } from "@/lib/ai/types";
+import { frontendToolsSchema, type UiToolName } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
@@ -7,6 +7,7 @@ import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
+import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
@@ -34,6 +35,20 @@ async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
   }
 }
 
+function selectionsConflict(header: string | null, body: string | undefined) {
+  return header !== null && body !== undefined && header !== body;
+}
+
+function parseToolSelection(
+  header: string | null,
+  body: UiToolName | undefined
+) {
+  return frontendToolsSchema
+    .optional()
+    .refine(() => header === null || body === undefined || header === body)
+    .safeParse(header ?? body);
+}
+
 async function readCommand(
   request: Request,
   policy: NonNullable<ReturnType<typeof parseSessionRequest>>,
@@ -52,13 +67,14 @@ async function readCommand(
       return rejectEveCommand("Invalid command.", 400);
     }
     if ("message" in input.data) {
-      selectedTool = input.data.selectedTool;
+      const suppliedTool = request.headers.get("x-chatjs-selected-tool");
+      const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
+      if (!tool.success) {
+        return rejectEveCommand("Invalid or conflicting tool selection.", 400);
+      }
+      selectedTool = tool.data;
       const selectedModel = request.headers.get("x-chatjs-selected-model");
-      if (
-        selectedModel &&
-        input.data.modelId &&
-        selectedModel !== input.data.modelId
-      ) {
+      if (selectionsConflict(selectedModel, input.data.modelId)) {
         return rejectEveCommand("Conflicting model selection.", 400);
       }
       modelId = selectedModel ?? input.data.modelId;
@@ -71,6 +87,7 @@ async function readCommand(
         );
         body = JSON.stringify({
           message: await prepareEveMessage(input.data.message, modelId),
+          messageMetadata: eveToolMetadata(selectedTool),
         });
       } catch (cause) {
         return rejectEveCommand(

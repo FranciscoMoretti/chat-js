@@ -24,10 +24,12 @@ export function ResponsiveTools({
   tools,
   setTools,
   selectedModelId,
+  disabled = false,
 }: {
   tools: UiToolName | null;
   setTools: Dispatch<SetStateAction<UiToolName | null>>;
   selectedModelId: string;
+  disabled?: boolean;
 }) {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
@@ -40,6 +42,9 @@ export function ResponsiveTools({
   const activeTool = tools;
 
   const setTool = (tool: UiToolName | null) => {
+    if (disabled) {
+      return;
+    }
     if (hasUnspecifiedFeatures && tool !== null) {
       return;
     }
@@ -59,6 +64,7 @@ export function ResponsiveTools({
           <PopoverTrigger asChild>
             <Button
               className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5"
+              disabled={disabled}
               title="Select Tools"
               variant="ghost"
             >
@@ -78,6 +84,7 @@ export function ResponsiveTools({
           <DropdownMenuTrigger asChild>
             <Button
               className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
+              disabled={disabled}
               size="sm"
               title="Select Tools"
               variant="ghost"
@@ -98,7 +105,7 @@ export function ResponsiveTools({
               return (
                 <DropdownMenuItem
                   className="flex items-center gap-2"
-                  disabled={hasUnspecifiedFeatures}
+                  disabled={disabled || hasUnspecifiedFeatures}
                   key={key}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -127,7 +134,9 @@ export function ResponsiveTools({
             orientation="vertical"
           />
           <Button
+            aria-label={`Clear ${toolDefinitions[activeTool].shortName} tool`}
             className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 rounded-full text-primary hover:text-primary/80"
+            disabled={disabled}
             onClick={() => setTool(null)}
             size="sm"
             variant="ghost"

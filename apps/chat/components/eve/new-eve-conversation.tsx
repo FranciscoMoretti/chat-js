@@ -6,6 +6,7 @@ import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
   type SelectedModelValue,
+  type UiToolName,
 } from "@/lib/ai/types";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
@@ -40,6 +41,7 @@ export function NewEveConversation({
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
+  const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   const [projectRejected, setProjectRejected] = useState(false);
   const [retained, setRetained] = useState(false);
   const [retainedModelId, setRetainedModelId] = useState<string>();
@@ -52,6 +54,7 @@ export function NewEveConversation({
       const pending = readCreationRequest(sessionStorage, ownerId, scope);
       if (pending) {
         setRetained(true);
+        setSelectedTool(pending.selectedTool ?? null);
         const restored = restoreDraft(pending.message);
         setDraft(restored.text);
         setAttachments(restored.attachments);
@@ -64,6 +67,17 @@ export function NewEveConversation({
       setError("The saved draft could not be restored.");
     }
   }, [ownerId, scope, setAttachments]);
+  function retainOperation(
+    operation: ReturnType<typeof prepareSelectedCreation>
+  ) {
+    setDraft(restoreDraft(operation.message).text);
+    setSelectedTool(operation.selectedTool ?? null);
+    setRetainedModelId("modelIds" in operation ? undefined : operation.modelId);
+    setRetainedModelIds(
+      "modelIds" in operation ? operation.modelIds : undefined
+    );
+    setRetained(true);
+  }
   async function submit() {
     if (lock.current) {
       return;
@@ -78,16 +92,10 @@ export function NewEveConversation({
         ownerId,
         draftMessage(draft, files.attachments),
         modelIds,
-        scope
+        scope,
+        selectedTool ?? undefined
       );
-      setDraft(restoreDraft(operation.message).text);
-      setRetainedModelId(
-        "modelIds" in operation ? undefined : operation.modelId
-      );
-      setRetainedModelIds(
-        "modelIds" in operation ? operation.modelIds : undefined
-      );
-      setRetained(true);
+      retainOperation(operation);
       const id = await resolveCreationRequest(
         sessionStorage,
         ownerId,
@@ -148,9 +156,11 @@ export function NewEveConversation({
         }}
         onDraftChange={setDraft}
         onSubmit={submit}
+        onToolChange={setSelectedTool}
         readOnly={retained}
         retainedModelId={retainedModelId}
         retainedModelIds={retainedModelIds}
+        selectedTool={selectedTool}
       />
       {error && <p role="alert">{error}</p>}
     </>

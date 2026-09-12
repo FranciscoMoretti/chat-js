@@ -8,6 +8,7 @@ import {
   keyFromFileUrl,
 } from "../file-url";
 import { eveDocumentOperations } from "./document-contracts";
+import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { sharedEveMessages } from "./shared-messages";
 
 type Seed = NonNullable<
@@ -111,8 +112,10 @@ export function prepareEveCopyTranscript(
   const messages: Seed["messages"] = sharedEveMessages(events).map(
     (message) => {
       if (message.role === "user") {
+        const selectedTool = eveMessageTool(message);
         return {
           role: "user",
+          ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
           parts: message.parts.map((part) => {
             if (part.type === "text") {
               return { type: "text", text: part.text };

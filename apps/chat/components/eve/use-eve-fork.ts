@@ -3,12 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState } from "react";
+import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
+import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import {
   finishCreation,
   prepareCreation,
@@ -27,7 +29,10 @@ type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 export function useEveFork(
   ownerId: string,
   conversationId: string,
-  onComparisonCreated?: (message: EveMessageInput) => void
+  onComparisonCreated?: (
+    message: EveMessageInput,
+    selectedTool?: UiToolName
+  ) => void
 ) {
   const trpc = useTRPC();
   const family = useQuery(
@@ -37,6 +42,7 @@ export function useEveFork(
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
+  const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   const [source, setSource] = useState<EveForkInput>();
   const [pending, setPending] = useState<Operation>();
   const [open, setOpen] = useState(false);
@@ -56,6 +62,7 @@ export function useEveFork(
           throw new Error("Missing saved fork source.");
         }
         setPending(operation);
+        setSelectedTool(operation.selectedTool ?? null);
         setSource(operation.fork);
         setDraft(
           typeof operation.message === "string"
@@ -98,7 +105,7 @@ export function useEveFork(
       }
     );
     if ("modelIds" in operation) {
-      onComparisonCreated?.(operation.message);
+      onComparisonCreated?.(operation.message, operation.selectedTool);
     }
     window.location.assign(`/chat/${id}`);
   }
@@ -155,6 +162,7 @@ export function useEveFork(
         .filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("\n");
+      const originalTool = eveMessageTool(message);
       // Re-upload the exact native bytes; never silently drop a file on an edit.
       const attachments = await Promise.all(
         message.parts
@@ -168,6 +176,7 @@ export function useEveFork(
             return uploadAttachment(file);
           })
       );
+      setSelectedTool(originalTool);
       setDraft(text);
       files.setAttachments(attachments);
       setSource(fork);
@@ -177,7 +186,8 @@ export function useEveFork(
           ownerId,
           draftMessage(text, attachments),
           modelId,
-          { conversationId, fork }
+          { conversationId, fork },
+          originalTool ?? undefined
         );
         setPending(operation);
         await execute(operation);
@@ -191,6 +201,8 @@ export function useEveFork(
     family,
     draft,
     setDraft,
+    selectedTool,
+    setSelectedTool,
     files,
     open,
     setOpen,
@@ -202,7 +214,8 @@ export function useEveFork(
     compare: (
       message: EveMessageInput,
       modelIds: string[],
-      beforeTurnId: string
+      beforeTurnId: string,
+      requestedTool?: UiToolName
     ) =>
       run(async () => {
         if (!loaded || restoreFailed || pending || open) {
@@ -220,7 +233,8 @@ export function useEveFork(
               beforeTurnId,
               checkpointId: crypto.randomUUID(),
             },
-          }
+          },
+          requestedTool
         );
         setPending(operation);
         await execute(operation);
@@ -235,7 +249,8 @@ export function useEveFork(
           ownerId,
           draftMessage(draft, files.attachments),
           selectedModel,
-          { conversationId, fork: source }
+          { conversationId, fork: source },
+          selectedTool ?? undefined
         );
         setPending(operation);
         setOpen(false);

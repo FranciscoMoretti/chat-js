@@ -1,12 +1,17 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
+import { ResponsiveTools } from "../components/responsive-tools";
 import { models } from "../lib/ai/models.generated";
 import { useDefaultModel } from "../providers/default-model-provider";
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
 
 const fixtureModels = models
   .filter((model) => model.id === firstModel || model.id === secondModel)
-  .map((model) => ({ ...model, apiModelId: model.id }));
+  .map((model) => ({
+    ...model,
+    apiModelId: model.id,
+    input: { text: true, image: true, pdf: true },
+  }));
 const modelContext = {
   models: fixtureModels,
   allModels: fixtureModels,
@@ -64,6 +69,12 @@ export function EveConversation({
       <section className="mx-auto max-w-3xl space-y-4 p-4">
         <p>Selected native session: {sessionId}</p>
         <p>Follow-up model: {model}</p>
+        <ResponsiveTools
+          disabled={pending}
+          selectedModelId={model}
+          setTools={draft.setSelectedTool}
+          tools={draft.selectedTool}
+        />
         <label>
           Follow-up draft
           <textarea

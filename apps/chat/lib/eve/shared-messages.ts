@@ -3,6 +3,7 @@ import {
   type EveMessagePart,
   type MessageStreamEvent,
 } from "eve/client";
+import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { evePlatformOutput, isEvePlatformTool } from "./platform-result";
 import { responseModelReferences } from "./response-model";
 
@@ -136,7 +137,12 @@ export function sharedEveMessages(events: readonly MessageStreamEvent[]) {
         ? models.get(message.metadata.turnId)
         : message.metadata?.modelId;
     }
+    const selectedTool =
+      message.role === "user" ? eveMessageTool(message) : null;
     return {
+      ...(selectedTool
+        ? { metadata: { custom: eveToolMetadata(selectedTool) } }
+        : {}),
       ...(modelId ? { metadata: { modelId } } : {}),
       id: message.id,
       role: message.role,
