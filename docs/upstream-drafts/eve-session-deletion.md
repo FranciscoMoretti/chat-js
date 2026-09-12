@@ -224,18 +224,15 @@ remote resources never existed. API wiring must establish the actual provider
 and worker storage root for the sessions being erased before using this local
 coordinator.
 
-### Explicit local backend configuration
+### Native provider identity
 
-An internal ChatJS backend factory now validates an opt-in
-`CHATJS_EVE_LOCAL_SANDBOX_ROOT` absolute path. When invoked with that configuration, it pins
-microsandbox, requires a loopback Workflow Postgres URL, rejects hosted Vercel,
-and checks the canonical EVE-provided `runtimeContext.appRoot` before both
-prewarming and allocating/reattaching a sandbox. Without the opt-in it preserves
-EVE's default backend selection. Tests exercise the backend boundary without
-allocating resources. The factory is not wired to an authored sandbox or the running worker. Configuration is registered in the app environment schema and checked by the environment validator; setting it alone does not change the current provider.
+The unused application backend wrapper and its opt-in configuration were removed.
+The maintained native creation path records the actual selected provider and
+worker root before provider access. The deletion coordinator validates those
+receipts and matching local records rather than introducing another provider
+selection layer.
 
-This preparatory configuration is not an ownership certificate and does not enable the
-deletion API. Introducing an authored sandbox can change EVE's source-derived
+Introducing an authored sandbox can change EVE's source-derived
 sandbox keys; earlier versions and their ownership records must remain in the
 deletion inventory. Before exposing cleanup, every native family member needs
 an immutable provider and worker-root identity recorded at its creation, before
