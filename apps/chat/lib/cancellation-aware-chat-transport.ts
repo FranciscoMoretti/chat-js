@@ -21,9 +21,9 @@ interface PreparedRequest {
   target: GenerationCancellationTarget;
 }
 
-function prepareRequest(
+const prepareRequest = (
   options: Parameters<ChatTransport<ChatMessage>["sendMessages"]>[0]
-): PreparedRequest | null {
+): PreparedRequest | null => {
   const message = options.messages.at(-1);
   if (message?.role !== "user") {
     return null;
@@ -57,12 +57,12 @@ function prepareRequest(
     },
     target: { chatId: options.chatId, messageId, type: "request" },
   };
-}
+};
 
-function cleanupStream<T>(
+const cleanupStream = <T>(
   stream: ReadableStream<T>,
   cleanup: () => void
-): ReadableStream<T> {
+): ReadableStream<T> => {
   const reader = stream.getReader();
 
   return new ReadableStream({
@@ -85,9 +85,9 @@ function cleanupStream<T>(
       }
     },
   });
-}
+};
 
-function observeCancellation({
+const observeCancellation = ({
   onCancel,
   signal,
   target,
@@ -95,7 +95,7 @@ function observeCancellation({
   onCancel: (target: GenerationCancellationTarget) => Promise<unknown>;
   signal: AbortSignal | undefined;
   target: GenerationCancellationTarget;
-}) {
+}) => {
   if (!signal || signal.aborted) {
     return () => undefined;
   }
@@ -106,36 +106,34 @@ function observeCancellation({
   signal.addEventListener("abort", cancel, { once: true });
 
   return () => signal.removeEventListener("abort", cancel);
-}
+};
 
-export function createCancellationAwareChatTransport({
+export const createCancellationAwareChatTransport = ({
   onCancel,
   transport,
 }: {
   onCancel: (target: GenerationCancellationTarget) => Promise<unknown>;
   transport: ChatTransport<ChatMessage>;
-}): ChatTransport<ChatMessage> {
-  return {
-    reconnectToStream: (options) => transport.reconnectToStream(options),
-    async sendMessages(options) {
-      const request = prepareRequest(options);
-      if (!request) {
-        return transport.sendMessages(options);
-      }
+}): ChatTransport<ChatMessage> => ({
+  reconnectToStream: (options) => transport.reconnectToStream(options),
+  async sendMessages(options) {
+    const request = prepareRequest(options);
+    if (!request) {
+      return transport.sendMessages(options);
+    }
 
-      const cleanup = observeCancellation({
-        onCancel,
-        signal: request.options.abortSignal,
-        target: request.target,
-      });
+    const cleanup = observeCancellation({
+      onCancel,
+      signal: request.options.abortSignal,
+      target: request.target,
+    });
 
-      try {
-        const stream = await transport.sendMessages(request.options);
-        return cleanupStream(stream, cleanup);
-      } catch (error) {
-        cleanup();
-        throw error;
-      }
-    },
-  };
-}
+    try {
+      const stream = await transport.sendMessages(request.options);
+      return cleanupStream(stream, cleanup);
+    } catch (error) {
+      cleanup();
+      throw error;
+    }
+  },
+});
