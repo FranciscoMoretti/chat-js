@@ -31,7 +31,7 @@ beforeAll(async () => {
   fixture = await mkdtemp(join(tmpdir(), "chatjs-turbo-affected-"));
   // Use the real task graph, workspace manifests, and lockfile without
   // installing dependencies or copying generated artifacts into the fixture.
-  for (const path of [
+  const files = [
     "turbo.json",
     "bun.lock",
     "package.json",
@@ -45,10 +45,16 @@ beforeAll(async () => {
       "packages/registry",
       "packages/gateways",
     ].map((workspace) => `${workspace}/package.json`),
-  ]) {
-    await mkdir(dirname(join(fixture, path)), { recursive: true });
-    await writeFile(join(fixture, path), await readFile(join(repoRoot, path)));
-  }
+  ];
+  await Promise.all(
+    files.map(async (path) => {
+      await mkdir(dirname(join(fixture, path)), { recursive: true });
+      await writeFile(
+        join(fixture, path),
+        await readFile(join(repoRoot, path))
+      );
+    })
+  );
   git("init", "-b", "main");
   git("config", "user.name", "Turbo CI test");
   git("config", "user.email", "turbo-test@example.invalid");
