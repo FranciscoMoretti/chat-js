@@ -35,7 +35,7 @@ import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params"
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
-export function ConnectorsSettings() {
+export const ConnectorsSettings = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -228,9 +228,9 @@ export function ConnectorsSettings() {
       />
     </SettingsPageContent>
   );
-}
+};
 
-function CustomConnectorRow({
+const CustomConnectorRow = ({
   connector,
   onConnect,
   onUninstall,
@@ -242,7 +242,7 @@ function CustomConnectorRow({
   onUninstall: () => void;
   onDisconnect: () => void;
   isDisconnecting: boolean;
-}) {
+}) => {
   const trpc = useTRPC();
 
   const { data: authStatus } = useQuery({
@@ -391,9 +391,9 @@ function CustomConnectorRow({
       </div>
     </div>
   );
-}
+};
 
-function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
+const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
     <div className="flex w-full items-center gap-3 py-3 text-left">
@@ -408,4 +408,4 @@ function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
       </Button>
     </div>
   );
-}
+};

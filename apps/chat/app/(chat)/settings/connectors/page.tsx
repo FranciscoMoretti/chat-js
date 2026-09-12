@@ -18,24 +18,24 @@ const ConnectorsSettingsHeader = () => (
   </SettingsPageHeader>
 );
 
-export default function ConnectorsSettingsPage() {
-  return (
-    <Suspense
-      fallback={
-        <SettingsPage>
-          <ConnectorsSettingsHeader />
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-5/6" />
-          </div>
-        </SettingsPage>
-      }
-    >
-      <ConnectorsSettingsContent />
-    </Suspense>
-  );
-}
+const ConnectorsSettingsPage = () => (
+  <Suspense
+    fallback={
+      <SettingsPage>
+        <ConnectorsSettingsHeader />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-5/6" />
+        </div>
+      </SettingsPage>
+    }
+  >
+    <ConnectorsSettingsContent />
+  </Suspense>
+);
+
+export default ConnectorsSettingsPage;
 
 const ConnectorsSettingsContent = async () => {
   const queryClient = getQueryClient();

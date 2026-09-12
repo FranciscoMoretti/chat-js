@@ -22,11 +22,7 @@ import { ChatRouteHost } from "./chat-route-host";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
-export default async function ChatLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
@@ -44,7 +40,9 @@ export default async function ChatLayout({
       </SessionProvider>
     </TRPCReactProvider>
   );
-}
+};
+
+export default ChatLayout;
 
 const ChatLayoutDynamic = async ({
   children,

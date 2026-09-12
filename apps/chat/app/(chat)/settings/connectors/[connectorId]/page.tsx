@@ -26,24 +26,24 @@ const ConnectorDetailsBodyFallback = () => (
   </div>
 );
 
-export default function ConnectorDetailsPage({
+const ConnectorDetailsPage = ({
   params,
 }: {
   params: Promise<{ connectorId: string }>;
-}) {
-  return (
-    <Suspense
-      fallback={
-        <SettingsPage>
-          <ConnectorDetailsHeader />
-          <ConnectorDetailsBodyFallback />
-        </SettingsPage>
-      }
-    >
-      <ConnectorDetailsContent params={params} />
-    </Suspense>
-  );
-}
+}) => (
+  <Suspense
+    fallback={
+      <SettingsPage>
+        <ConnectorDetailsHeader />
+        <ConnectorDetailsBodyFallback />
+      </SettingsPage>
+    }
+  >
+    <ConnectorDetailsContent params={params} />
+  </Suspense>
+);
+
+export default ConnectorDetailsPage;
 
 const ConnectorDetailsContent = async ({
   params,

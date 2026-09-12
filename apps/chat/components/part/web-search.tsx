@@ -4,13 +4,13 @@ import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-mes
 
 import { ResearchUpdates } from "./message-annotations";
 
-export function WebSearch({
+export const WebSearch = ({
   messageId,
   part,
 }: {
   messageId: string;
   part: { toolCallId: string; state: string };
-}) {
+}) => {
   const { toolCallId, state } = part;
   const researchUpdates = useMessageResearchUpdatePartByToolCallId(
     messageId,
@@ -25,4 +25,4 @@ export function WebSearch({
     );
   }
   return null;
-}
+};

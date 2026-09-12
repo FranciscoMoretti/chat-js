@@ -17,13 +17,13 @@ interface ChatLayoutContextValue {
 
 const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
 
-function useChatLayoutContext() {
+const useChatLayoutContext = () => {
   const context = useContext(ChatLayoutContext);
   if (!context) {
     throw new Error("ChatLayout components must be used within <ChatLayout />");
   }
   return context;
-}
+};
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,

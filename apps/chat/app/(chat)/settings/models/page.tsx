@@ -44,24 +44,24 @@ const ModelsSettingsHeader = ({
   </SettingsPageHeader>
 );
 
-export default function ModelsSettingsPage() {
-  return (
-    <Suspense
-      fallback={
-        <SettingsPage>
-          <ModelsSettingsHeader />
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-5/6" />
-          </div>
-        </SettingsPage>
-      }
-    >
-      <ModelsSettingsContent />
-    </Suspense>
-  );
-}
+const ModelsSettingsPage = () => (
+  <Suspense
+    fallback={
+      <SettingsPage>
+        <ModelsSettingsHeader />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-5/6" />
+        </div>
+      </SettingsPage>
+    }
+  >
+    <ModelsSettingsContent />
+  </Suspense>
+);
+
+export default ModelsSettingsPage;
 
 const ModelsSettingsContent = async () => {
   const queryClient = getQueryClient();

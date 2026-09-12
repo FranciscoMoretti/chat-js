@@ -60,12 +60,12 @@ interface DocumentToolResultProps {
   type: "create" | "update";
 }
 
-function PureDocumentToolResult({
+const PureDocumentToolResult = ({
   type,
   result,
   isReadonly: _isReadonly,
   messageId,
-}: DocumentToolResultProps) {
+}: DocumentToolResultProps) => {
   const { setArtifact } = useArtifact();
 
   return (
@@ -100,7 +100,7 @@ function PureDocumentToolResult({
       </div>
     </button>
   );
-}
+};
 
 export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
 
@@ -110,11 +110,11 @@ interface DocumentToolCallProps {
   type: "create" | "update";
 }
 
-function PureDocumentToolCall({
+const PureDocumentToolCall = ({
   type,
   args,
   isReadonly: _isReadonly,
-}: DocumentToolCallProps) {
+}: DocumentToolCallProps) => {
   const { setArtifact } = useArtifact();
 
   return (
@@ -149,6 +149,6 @@ function PureDocumentToolCall({
       <div className="mt-1 animate-spin">{<Loader2 size={16} />}</div>
     </button>
   );
-}
+};
 
 export const DocumentToolCall = memo(PureDocumentToolCall, () => true);

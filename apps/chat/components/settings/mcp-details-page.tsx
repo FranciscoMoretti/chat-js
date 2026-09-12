@@ -28,7 +28,7 @@ import { SettingsPageContent } from "./settings-page";
 
 const HTTP_STATUS_REGEX = /HTTP (\d{3})/;
 
-function formatMcpError(message: string): string {
+const formatMcpError = (message: string): string => {
   const httpMatch = message.match(HTTP_STATUS_REGEX);
   if (httpMatch) {
     const status = httpMatch[1];
@@ -53,9 +53,9 @@ function formatMcpError(message: string): string {
     return `${message.slice(0, 200)}...`;
   }
   return message;
-}
+};
 
-export function McpDetailsPage({ connectorId }: { connectorId: string }) {
+export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -321,9 +321,9 @@ export function McpDetailsPage({ connectorId }: { connectorId: string }) {
       />
     </SettingsPageContent>
   );
-}
+};
 
-function DiscoveryContent({
+const DiscoveryContent = ({
   isLoading,
   showConnectButton,
   onConnect,
@@ -347,7 +347,7 @@ function DiscoveryContent({
     resources: { name: string }[];
     prompts: { name: string }[];
   } | null;
-}) {
+}) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -420,9 +420,9 @@ function DiscoveryContent({
   }
 
   return null;
-}
+};
 
-function DetailsSection({
+const DetailsSection = ({
   title,
   icon,
   items,
@@ -430,7 +430,7 @@ function DetailsSection({
   title: string;
   icon: React.ReactNode;
   items: string[];
-}) {
+}) => {
   const count = items.length;
 
   return (
@@ -458,4 +458,4 @@ function DetailsSection({
       )}
     </div>
   );
-}
+};

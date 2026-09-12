@@ -1,3 +1,3 @@
-export default function ProjectPageRoute() {
-  return null;
-}
+const ProjectPageRoute = () => null;
+
+export default ProjectPageRoute;

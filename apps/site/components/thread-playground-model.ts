@@ -23,7 +23,7 @@ export interface LayoutNode {
   y: number;
 }
 
-function createMessage({
+const createMessage = ({
   id,
   role,
   text,
@@ -33,18 +33,16 @@ function createMessage({
   role: "assistant" | "user";
   text: string;
   title: string;
-}): PlaygroundMessage {
-  return {
-    id,
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date().toISOString(),
-      title,
-    },
-    parts: [{ text, type: "text" }],
-    role,
-  };
-}
+}): PlaygroundMessage => ({
+  id,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date().toISOString(),
+    title,
+  },
+  parts: [{ text, type: "text" }],
+  role,
+});
 
 const initialNodes = [
   {
@@ -118,8 +116,8 @@ export const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   version: 1,
 };
 
-function delay(ms: number, signal?: AbortSignal) {
-  return new Promise<void>((resolve, reject) => {
+const delay = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
       reject(new DOMException("Aborted", "AbortError"));
       return;
@@ -135,7 +133,6 @@ function delay(ms: number, signal?: AbortSignal) {
     }, ms);
     signal?.addEventListener("abort", onAbort, { once: true });
   });
-}
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
@@ -218,18 +215,18 @@ export class PlaygroundTransport implements ChatTransport<PlaygroundMessage> {
   }
 }
 
-export function buildTreeLayout({
+export const buildTreeLayout = ({
   childrenByParentId,
   rootIds,
 }: {
   childrenByParentId: Record<string, string[]>;
   rootIds: string[];
-}) {
+}) => {
   const positions = new Map<string, LayoutNode>();
   let nextLeaf = 0;
   let maxDepth = 0;
 
-  function visit(id: string, depth: number): number {
+  const visit = (id: string, depth: number): number => {
     maxDepth = Math.max(maxDepth, depth);
     const children = childrenByParentId[id] ?? [];
     let column: number;
@@ -246,7 +243,7 @@ export function buildTreeLayout({
 
     positions.set(id, { depth, id, x: column * 164 + 92, y: depth * 122 + 64 });
     return column;
-  }
+  };
 
   for (const rootId of rootIds) {
     visit(rootId, 0);
@@ -259,4 +256,4 @@ export function buildTreeLayout({
     positions,
     width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
-}
+};

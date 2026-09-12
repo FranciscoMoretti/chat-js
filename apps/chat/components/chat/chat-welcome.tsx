@@ -10,17 +10,15 @@ import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-function WelcomeMessage() {
-  return (
-    <div className="pointer-events-none text-center">
-      <h1 className="text-foreground text-2xl font-normal sm:text-3xl">
-        How can I help you today?
-      </h1>
-    </div>
-  );
-}
+const WelcomeMessage = () => (
+  <div className="pointer-events-none text-center">
+    <h1 className="text-foreground text-2xl font-normal sm:text-3xl">
+      How can I help you today?
+    </h1>
+  </div>
+);
 
-function PureChatWelcome({
+const PureChatWelcome = ({
   chatId,
   status,
   className,
@@ -28,7 +26,7 @@ function PureChatWelcome({
   chatId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   className?: string;
-}) {
+}) => {
   const parentMessageId = useLastMessageId();
   const { selectedModelId } = useChatInput();
 
@@ -57,6 +55,6 @@ function PureChatWelcome({
       </div>
     </div>
   );
-}
+};
 
 export const ChatWelcome = memo(PureChatWelcome);
