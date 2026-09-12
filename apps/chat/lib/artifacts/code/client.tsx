@@ -10,6 +10,9 @@ import { config } from "@/lib/config";
 import { generateUUID, getLanguageFromFileName } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
+  basic: `
+    # Basic output capture setup
+  `,
   matplotlib: `
     import io
     import base64
@@ -39,9 +42,6 @@ const OUTPUT_HANDLERS = {
             plt.close('all')
 
         plt.show = custom_show
-  `,
-  basic: `
-    # Basic output capture setup
   `,
 };
 
@@ -86,8 +86,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
     "Useful for code generation; Code execution is only available for Python code.",
   initialize: ({ setMetadata }) => {
     setMetadata({
-      outputs: [],
       language: "python",
+      outputs: [],
     });
   },
   content: ({ isReadonly, content, title, ...props }) => {
@@ -134,8 +134,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
           outputs: [
             ...metadata.outputs,
             {
-              id: runId,
               contents: [],
+              id: runId,
               status: "in_progress",
             },
           ],
@@ -166,8 +166,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
                 outputs: [
                   ...metadata.outputs.filter((output) => output.id !== runId),
                   {
-                    id: runId,
                     contents: [{ type: "text", value: message }],
+                    id: runId,
                     status: "loading_packages",
                   },
                 ],
@@ -197,8 +197,8 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
             outputs: [
               ...metadata.outputs.filter((output) => output.id !== runId),
               {
-                id: runId,
                 contents: outputContent,
+                id: runId,
                 status: "completed",
               },
             ],
@@ -209,7 +209,6 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
             outputs: [
               ...metadata.outputs.filter((output) => output.id !== runId),
               {
-                id: runId,
                 contents: [
                   {
                     type: "text",
@@ -217,6 +216,7 @@ export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
                       error instanceof Error ? error.message : String(error),
                   },
                 ],
+                id: runId,
                 status: "failed",
               },
             ],
