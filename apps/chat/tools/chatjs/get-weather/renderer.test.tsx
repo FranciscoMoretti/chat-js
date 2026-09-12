@@ -5,21 +5,21 @@ import { GetWeatherRenderer } from "./renderer";
 import type { WeatherAtLocation } from "./tool";
 
 const weather: WeatherAtLocation = {
-  current: { time: "2026-09-08T20:00", interval: 900, temperature_2m: 20 },
-  current_units: { time: "iso8601", interval: "seconds", temperature_2m: "°C" },
+  current: { interval: 900, temperature_2m: 20, time: "2026-09-08T20:00" },
+  current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
   daily: {
-    time: ["2026-09-08"],
     sunrise: ["2026-09-08T06:00"],
     sunset: ["2026-09-08T19:00"],
+    time: ["2026-09-08"],
   },
-  daily_units: { time: "iso8601", sunrise: "iso8601", sunset: "iso8601" },
-  hourly: {
-    time: Array.from({ length: 8 }, (_, i) => `2026-09-08T${10 + i}:00`),
-    temperature_2m: [10, 11, 12, 13, 14, 15, 16, 17],
-  },
-  hourly_units: { time: "iso8601", temperature_2m: "°C" },
+  daily_units: { sunrise: "iso8601", sunset: "iso8601", time: "iso8601" },
   elevation: 0,
   generationtime_ms: 0,
+  hourly: {
+    temperature_2m: [10, 11, 12, 13, 14, 15, 16, 17],
+    time: Array.from({ length: 8 }, (_, i) => `2026-09-08T${10 + i}:00`),
+  },
+  hourly_units: { temperature_2m: "°C", time: "iso8601" },
   latitude: 0,
   longitude: 0,
   timezone: "UTC",
@@ -36,10 +36,10 @@ test.each([
       isReadonly
       messageId="weather-test"
       tool={{
-        toolCallId: "weather-test",
-        state: "output-available",
         input: { latitude: 0, longitude: 0 },
         output: { ...weather, current: { ...weather.current, time } },
+        state: "output-available",
+        toolCallId: "weather-test",
       }}
     />
   );
