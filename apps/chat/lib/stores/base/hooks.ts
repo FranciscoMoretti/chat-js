@@ -348,8 +348,9 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
 
           currentState._messageIndex.update(messages);
           set({
-            _memoizedSelectors: new Map(), // Clear memoized selectors
             messages,
+            // Clear memoized selectors
+            _memoizedSelectors: new Map(),
           });
 
           // During streaming, update immediately for smooth text rendering
