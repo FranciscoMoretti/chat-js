@@ -20,7 +20,7 @@ import {
 
 export const UiPrimitivesVisualFixture = () => (
   <main className="space-y-8 p-8" data-testid="ui-primitives-fixture">
-    <section className="space-y-3">
+    <section className="max-w-3xl space-y-3">
       <h1>Button variants</h1>
       <div className="flex flex-wrap gap-3">
         <Button>Default</Button>
@@ -34,7 +34,7 @@ export const UiPrimitivesVisualFixture = () => (
       </div>
     </section>
 
-    <section className="space-y-3">
+    <section className="max-w-3xl space-y-3">
       <h2>Button groups</h2>
       <ButtonGroup>
         <Button>Previous</Button>
@@ -50,11 +50,11 @@ export const UiPrimitivesVisualFixture = () => (
       </ButtonGroup>
     </section>
 
-    <section className="flex items-center gap-3">
+    <section className="grid max-w-3xl grid-cols-[auto_6rem_auto_auto_auto_auto] items-center gap-3">
       <span>Horizontal</span>
-      <Separator className="w-24" />
+      <Separator className="!w-24 shrink-0" />
       <span>Vertical</span>
-      <Separator className="h-8" orientation="vertical" />
+      <Separator className="!h-8 shrink-0" orientation="vertical" />
       <Popover>
         <PopoverTrigger asChild>
           <Button>Open popover</Button>
