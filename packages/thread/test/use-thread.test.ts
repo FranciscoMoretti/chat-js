@@ -247,6 +247,24 @@ describe("useThread", () => {
     hook.unmount();
   });
 
+  test("forwards a retained setter to the replacement supplied thread", () => {
+    const first = new Thread({ messages: [user("user-a")] });
+    const second = new Thread({ messages: [user("user-b")] });
+    const hook = renderUseThread({ thread: first });
+    const { setMessages } = hook.current;
+
+    hook.update({ thread: second });
+    act(() => {
+      setMessages([user("user-c")]);
+    });
+
+    expect(first.getSnapshot().messages.map(({ id }) => id)).toEqual([
+      "user-a",
+    ]);
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-c"]);
+    hook.unmount();
+  });
+
   test("automatically resumes the supplied thread", async () => {
     const transport = new ResumeTransport();
     const thread = new Thread({

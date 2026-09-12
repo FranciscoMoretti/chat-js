@@ -32,14 +32,19 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
   "onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
 >;
 
-class LatestThreadCallbacks<TMessage extends UIMessage> {
+class LatestThreadDispatchers<TMessage extends UIMessage> {
   #callbacks: ThreadCallbacks<TMessage>;
+  #thread: AbstractThread<TMessage> | undefined;
 
   constructor(callbacks: ThreadCallbacks<TMessage>) {
     this.#callbacks = callbacks;
   }
 
-  update(callbacks: ThreadCallbacks<TMessage>) {
+  update(
+    thread: AbstractThread<TMessage>,
+    callbacks: ThreadCallbacks<TMessage>
+  ) {
+    this.#thread = thread;
     this.#callbacks = callbacks;
   }
 
@@ -62,6 +67,9 @@ class LatestThreadCallbacks<TMessage extends UIMessage> {
       NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
     >[0]
   ) => this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
+
+  readonly setMessages: UseChatHelpers<TMessage>["setMessages"] = (messages) =>
+    this.#thread?.setMessages(messages);
 }
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
@@ -164,9 +172,9 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
   const onFinish = ownOptions?.onFinish;
   const onToolCall = ownOptions?.onToolCall;
   const sendAutomaticallyWhen = ownOptions?.sendAutomaticallyWhen;
-  const [callbacks, setCallbacks] = useState(
+  const [dispatchers, setDispatchers] = useState(
     () =>
-      new LatestThreadCallbacks({
+      new LatestThreadDispatchers({
         onData,
         onError,
         onFinish,
@@ -174,17 +182,17 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
         sendAutomaticallyWhen,
       })
   );
-  void setCallbacks;
+  void setDispatchers;
   const [thread, setThread] = useState<AbstractThread<TMessage>>(
     () =>
       externalThread ??
       new Thread({
         ...ownOptions,
-        onData: callbacks.onData,
-        onError: callbacks.onError,
-        onFinish: callbacks.onFinish,
-        onToolCall: callbacks.onToolCall,
-        sendAutomaticallyWhen: callbacks.sendAutomaticallyWhen,
+        onData: dispatchers.onData,
+        onError: dispatchers.onError,
+        onFinish: dispatchers.onFinish,
+        onToolCall: dispatchers.onToolCall,
+        sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
       })
   );
   const [previousExternalThread, setPreviousExternalThread] =
@@ -201,24 +209,32 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
       externalThread ??
         new Thread({
           ...ownOptions,
-          onData: callbacks.onData,
-          onError: callbacks.onError,
-          onFinish: callbacks.onFinish,
-          onToolCall: callbacks.onToolCall,
-          sendAutomaticallyWhen: callbacks.sendAutomaticallyWhen,
+          onData: dispatchers.onData,
+          onError: dispatchers.onError,
+          onFinish: dispatchers.onFinish,
+          onToolCall: dispatchers.onToolCall,
+          sendAutomaticallyWhen: dispatchers.sendAutomaticallyWhen,
         })
     );
   }
 
   useLayoutEffect(() => {
-    callbacks.update({
+    dispatchers.update(thread, {
       onData,
       onError,
       onFinish,
       onToolCall,
       sendAutomaticallyWhen,
     });
-  }, [callbacks, onData, onError, onFinish, onToolCall, sendAutomaticallyWhen]);
+  }, [
+    dispatchers,
+    onData,
+    onError,
+    onFinish,
+    onToolCall,
+    sendAutomaticallyWhen,
+    thread,
+  ]);
 
   const snapshot = useThreadSnapshot(thread, options.experimental_throttle);
   const status = useThreadField(thread, "status");
@@ -231,11 +247,6 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
     }
   }, [options.resume, thread]);
 
-  const setMessages = useCallback<UseChatHelpers<TMessage>["setMessages"]>(
-    (messages) => thread.setMessages(messages),
-    [thread]
-  );
-
   return {
     addToolApprovalResponse: thread.addToolApprovalResponse,
     addToolOutput: thread.addToolOutput,
@@ -247,7 +258,7 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
     regenerate: thread.regenerate,
     resumeStream: thread.resumeStream,
     sendMessage: thread.sendMessage,
-    setMessages,
+    setMessages: dispatchers.setMessages,
     status,
     stop: thread.stop,
     tree: {
