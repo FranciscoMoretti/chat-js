@@ -1,6 +1,10 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import { z } from "zod";
 
-import { applyDefaults } from "../../../../apps/chat/lib/config-schema";
+import {
+  applyDefaults,
+  configDescriptionSchema,
+} from "../../../../apps/chat/lib/config-schema";
 import { builtInGateways } from "../registry/gateways";
 import type {
   AuthProvider,
@@ -23,6 +27,36 @@ const defaultsFor = (input: {
   }
   return defaults;
 };
+
+const extractDescriptions = (
+  schema: z.ZodType,
+  prefix = "",
+  result = new Map<string, string>()
+): Map<string, string> => {
+  if (schema.description && prefix) {
+    result.set(prefix, schema.description);
+  }
+
+  if (schema instanceof z.ZodObject) {
+    const { shape } = schema;
+    for (const [key, propSchema] of Object.entries(shape)) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      extractDescriptions(propSchema as z.ZodType, path, result);
+    }
+  }
+
+  if (schema instanceof z.ZodDiscriminatedUnion) {
+    for (const option of schema.options.values()) {
+      if (option instanceof z.ZodType) {
+        extractDescriptions(option, prefix, result);
+      }
+    }
+  }
+
+  return result;
+};
+
+const descriptions = extractDescriptions(configDescriptionSchema);
 
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
@@ -88,6 +122,8 @@ const generateConfig = (
     .toSorted(([left], [right]) => left.localeCompare(right))
     .map(([key, value]) => {
       const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+      const desc = descriptions.get(path);
+      const comment = desc ? `${spaces}// ${desc}\n` : "";
 
       if (
         typeof value === "object" &&
@@ -99,10 +135,10 @@ const generateConfig = (
           indent + 1,
           path
         );
-        return `${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
+        return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
 
-      return `${spaces}${formatKey(key)}: ${formatValue(value, indent)},`;
+      return `${comment}${spaces}${formatKey(key)}: ${formatValue(value, indent)},`;
     })
     .join("\n");
 };

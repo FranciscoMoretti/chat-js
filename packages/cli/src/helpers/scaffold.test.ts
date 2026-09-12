@@ -74,7 +74,9 @@ describe("buildConfigTs", () => {
       withElectron: false,
     });
 
-    expect(output).toMatch(/desktopApp:\s*\{\s*enabled:\s*false,/mu);
+    expect(output).toMatch(
+      /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
+    );
     expect(output).toContain("parallelResponses: true");
     expect(output).toContain("documents: {");
     expect(output).toContain("text: true");
@@ -82,6 +84,9 @@ describe("buildConfigTs", () => {
     expect(output).toContain("sheet: true");
     expect(output).toContain("codeExecution: {");
     expect(output).toContain("enabled: false");
+    expect(output).toContain(
+      "// File attachments (requires configured file storage)\n    attachments: false,"
+    );
   });
   it("writes desktopApp.enabled=true for Electron scaffolds", () => {
     const output = buildConfigTs({
@@ -117,7 +122,9 @@ describe("buildConfigTs", () => {
       withElectron: true,
     });
 
-    expect(output).toMatch(/desktopApp:\s*\{\s*enabled:\s*true,/mu);
+    expect(output).toMatch(
+      /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
+    );
     expect(output).toContain("parallelResponses: true");
     expect(output).toContain("documents: {");
     expect(output).toContain("text: true");
