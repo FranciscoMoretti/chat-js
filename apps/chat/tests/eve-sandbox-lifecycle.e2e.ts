@@ -24,6 +24,7 @@ import {
   createSandbox,
   getTokenAuth,
 } from "../tools/platform/code-execution.shared";
+import { resolveSandboxAuth } from "../tools/platform/sandbox-auth";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 for (const language of ["javascript", "python"] as const) {
@@ -33,6 +34,7 @@ for (const language of ["javascript", "python"] as const) {
       ownerId: "local-sdk-fixture",
       sessionId: crypto.randomUUID(),
       callId: language,
+      provider: await resolveSandboxAuth(),
     });
     const sandbox = await createSandbox(
       language === "javascript" ? "node22" : "python3.13",
@@ -143,7 +145,8 @@ test("native sandbox ownership is durably released after real provider cleanup",
     const orphanName = await reserveEveCodeSandbox(
       ownerId,
       row.id,
-      "orphan-fixture"
+      "orphan-fixture",
+      await resolveSandboxAuth()
     );
     const orphan = await createSandbox(
       "node22",

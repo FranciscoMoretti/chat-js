@@ -37,6 +37,7 @@ if (!env.WORKFLOW_POSTGRES_URL) {
 }
 assertEveTestDatabase(env.WORKFLOW_POSTGRES_URL);
 const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
+const provider = { teamId: "fixture-team", projectId: "fixture-project" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
 await db.insert(user).values({
@@ -84,7 +85,8 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
   const name = await reserveEveCodeSandbox(
     owner,
     target.id,
-    "unallocated-fixture"
+    "unallocated-fixture",
+    provider
   );
   await expect(
     deleteLocalEveConversationFamily(owner, child.id, "/fixture")

@@ -11,6 +11,7 @@ import {
   getSandboxRuntime,
 } from "./code-execution.shared";
 import type { SupportedExecutionLanguage } from "./code-execution.types";
+import { resolveSandboxAuth, type SandboxAuth } from "./sandbox-auth";
 
 const COST_CENTS = 5; // Vercel Sandbox execution
 
@@ -19,7 +20,10 @@ export const codeExecution = ({
   sandboxOwnership,
 }: {
   sandboxOwnership?: {
-    reserve(signal?: AbortSignal): Promise<string>;
+    reserve(
+      provider: Pick<SandboxAuth, "teamId" | "projectId">,
+      signal?: AbortSignal
+    ): Promise<string>;
     created(name: string): Promise<void>;
     release(): Promise<void>;
   };
@@ -102,8 +106,10 @@ Output rules:
       try {
         abortSignal?.throwIfAborted();
         log.info({ requestId, title, runtime, language }, "creating sandbox");
-        const name = await sandboxOwnership?.reserve(abortSignal);
-        sandbox = await createSandbox(runtime, abortSignal, name);
+        const auth = await resolveSandboxAuth();
+        abortSignal?.throwIfAborted();
+        const name = await sandboxOwnership?.reserve(auth, abortSignal);
+        sandbox = await createSandbox(runtime, abortSignal, name, auth);
         await sandboxOwnership?.created(sandbox.name);
         abortSignal?.addEventListener("abort", stop, { once: true });
         abortSignal?.throwIfAborted();

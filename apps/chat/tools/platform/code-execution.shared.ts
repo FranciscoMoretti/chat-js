@@ -2,6 +2,7 @@ import { Sandbox } from "@vercel/sandbox";
 import { env } from "@/lib/env";
 import type { createModuleLogger } from "@/lib/logger";
 import type { SupportedExecutionLanguage } from "./code-execution.types";
+import type { SandboxAuth } from "./sandbox-auth";
 
 export function getTokenAuth(): Record<string, string> {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
@@ -32,7 +33,8 @@ export function getSandboxRuntime(
 export function createSandbox(
   runtime: string,
   signal?: AbortSignal,
-  name?: string
+  name?: string,
+  auth?: SandboxAuth
 ): Promise<Sandbox> {
   return Sandbox.create({
     runtime,
@@ -41,7 +43,7 @@ export function createSandbox(
     signal,
     timeout: 5 * 60 * 1000,
     resources: { vcpus: 2 },
-    ...getTokenAuth(),
+    ...(auth ?? getTokenAuth()),
   });
 }
 

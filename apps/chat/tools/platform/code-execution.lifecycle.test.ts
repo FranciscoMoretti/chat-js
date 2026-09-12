@@ -17,6 +17,10 @@ const execution = vi.hoisted(() => {
     }),
   };
 });
+vi.mock("./sandbox-auth", () => ({
+  resolveSandboxAuth: () =>
+    Promise.resolve({ teamId: "team", projectId: "project", token: "token" }),
+}));
 vi.mock("./code-execution.javascript", () => ({
   executeJavaScriptInSandbox: execution.run,
 }));
@@ -67,7 +71,8 @@ test("cancelling code execution stops its sandbox and settles cleanup once", asy
   expect(execution.create).toHaveBeenCalledWith(
     "node22",
     controller.signal,
-    "named-fixture"
+    "named-fixture",
+    { teamId: "team", projectId: "project", token: "token" }
   );
   expect(execution.cleanup).toHaveBeenCalledOnce();
 });
@@ -152,7 +157,8 @@ test("allocation intent precedes creation and release waits for completed cleanu
   expect(execution.create).toHaveBeenLastCalledWith(
     "node22",
     undefined,
-    "owned-name"
+    "owned-name",
+    { teamId: "team", projectId: "project", token: "token" }
   );
   cleanup.resolve();
   await result;

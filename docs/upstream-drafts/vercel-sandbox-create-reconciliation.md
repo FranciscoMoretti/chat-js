@@ -52,6 +52,8 @@ looked up by exact name without resuming, deleted with orphan snapshots, and
 checked for absence. Already-cancelled tool invocations are rejected before
 reserving an intent or calling the provider.
 
-Separately, resource ownership should retain provider project/team scope rather
-than relying on whichever credentials happen to be configured during cleanup.
-This is an application follow-up; it is not presented as an SDK defect.
+ChatJS now includes the resolved provider team/project in each new hashed
+allocation name. The same resolved credentials are passed to SDK creation;
+cleanup recomputes and checks the identity before lookup or deletion. Changed
+scope and older unscoped names remain unresolved. This application fix does not
+resolve ambiguous create outcomes and is not presented as an SDK defect.

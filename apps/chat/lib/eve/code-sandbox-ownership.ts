@@ -17,7 +17,10 @@ export function eveCodeSandboxOwnership(context: {
     | { ownerId: string; conversationId: string; name: string }
     | undefined;
   return {
-    async reserve(signal?: AbortSignal) {
+    async reserve(
+      provider: { teamId: string; projectId: string },
+      signal?: AbortSignal
+    ) {
       if (!context.session) {
         throw new Error("Code execution requires a native session.");
       }
@@ -29,7 +32,8 @@ export function eveCodeSandboxOwnership(context: {
       const name = await reserveEveCodeSandbox(
         scope.ownerId,
         scope.conversationId,
-        context.callId
+        context.callId,
+        provider
       );
       reservation = { ...scope, name };
       return name;

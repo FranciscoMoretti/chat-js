@@ -1,21 +1,23 @@
 import { APIError, Sandbox } from "@vercel/sandbox";
+import { cleanupSandbox } from "../../tools/platform/code-execution.shared";
 import {
-  cleanupSandbox,
-  getTokenAuth,
-} from "../../tools/platform/code-execution.shared";
+  resolveSandboxAuth,
+  type SandboxAuth,
+} from "../../tools/platform/sandbox-auth";
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
 import { createModuleLogger } from "../logger";
+import { eveCodeSandboxName } from "./code-sandbox-name";
 
-async function findCodeSandbox(name: string) {
+async function findCodeSandbox(name: string, auth: SandboxAuth) {
   try {
     return await Sandbox.get({
       name,
       resume: false,
       signal: AbortSignal.timeout(15_000),
-      ...getTokenAuth(),
+      ...auth,
     });
   } catch (error) {
     if (error instanceof APIError && error.response.status === 404) {
@@ -36,7 +38,20 @@ export async function purgeEveFamilyCodeSandboxes(
     if (!resource.creationConfirmed) {
       continue;
     }
-    const sandbox = await findCodeSandbox(resource.name);
+    const auth = await resolveSandboxAuth();
+    if (
+      eveCodeSandboxName({
+        ownerId,
+        sessionId: resource.sessionId ?? undefined,
+        callId: resource.callId,
+        provider: auth,
+      }) !== resource.name
+    ) {
+      throw new Error(
+        "Code sandbox provider scope does not match its allocation intent."
+      );
+    }
+    const sandbox = await findCodeSandbox(resource.name, auth);
     if (sandbox) {
       if (sandbox.name !== resource.name || sandbox.persistent) {
         throw new Error(
@@ -44,7 +59,7 @@ export async function purgeEveFamilyCodeSandboxes(
         );
       }
       await cleanupSandbox(sandbox, log, resource.name);
-      if (await findCodeSandbox(resource.name)) {
+      if (await findCodeSandbox(resource.name, auth)) {
         throw new Error("Code sandbox remains available after deletion.");
       }
     }

@@ -18,6 +18,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
+const provider = { teamId: "fixture-team", projectId: "fixture-project" };
 const owner = crypto.randomUUID();
 await db.insert(user).values({
   id: owner,
@@ -40,10 +41,16 @@ async function conversation() {
 
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();
-  const name = await reserveEveCodeSandbox(owner, row.id, "call-1");
-  await expect(reserveEveCodeSandbox(owner, row.id, "call-1")).rejects.toThrow(
-    "Reconcile"
-  );
+  const name = await reserveEveCodeSandbox(owner, row.id, "call-1", provider);
+  await expect(
+    reserveEveCodeSandbox(owner, row.id, "call-1", provider)
+  ).rejects.toThrow("Reconcile");
+  await expect(
+    reserveEveCodeSandbox(owner, row.id, "call-1", {
+      ...provider,
+      projectId: "other-project",
+    })
+  ).rejects.toThrow("Reconcile");
   await beginEveConversationDeletion(owner, row.id);
   await expect(completeEveConversationDeletion(owner, row.id)).rejects.toThrow(
     "Code sandbox cleanup is incomplete"
@@ -56,30 +63,30 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
     .from(eveCodeSandbox)
     .where(eq(eveCodeSandbox.name, name));
   expect(resource.state).toBe("deleted");
-  await expect(reserveEveCodeSandbox(owner, row.id, "call-2")).rejects.toThrow(
-    "unavailable"
-  );
+  await expect(
+    reserveEveCodeSandbox(owner, row.id, "call-2", provider)
+  ).rejects.toThrow("unavailable");
 });
 
 test("foreign owners cannot reserve or resolve resources, and completed calls cannot reallocate", async () => {
   const row = await conversation();
   await expect(
-    reserveEveCodeSandbox("stranger", row.id, "call")
+    reserveEveCodeSandbox("stranger", row.id, "call", provider)
   ).rejects.toThrow("unavailable");
-  const name = await reserveEveCodeSandbox(owner, row.id, "call");
+  const name = await reserveEveCodeSandbox(owner, row.id, "call", provider);
   await expect(
     recordEveCodeSandboxDeletion("stranger", row.id, name)
   ).rejects.toThrow("ownership");
   await recordEveCodeSandboxDeletion(owner, row.id, name);
-  await expect(reserveEveCodeSandbox(owner, row.id, "call")).rejects.toThrow(
-    "Reconcile"
-  );
+  await expect(
+    reserveEveCodeSandbox(owner, row.id, "call", provider)
+  ).rejects.toThrow("Reconcile");
 });
 
 test("concurrent allocation and deletion cannot leave an untracked admitted resource", async () => {
   const row = await conversation();
   const [allocation] = await Promise.allSettled([
-    reserveEveCodeSandbox(owner, row.id, "racing-call"),
+    reserveEveCodeSandbox(owner, row.id, "racing-call", provider),
     beginEveConversationDeletion(owner, row.id),
   ]);
   if (allocation.status === "fulfilled") {
@@ -99,7 +106,12 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
 
 test("only a retired owned family can inventory confirmed creation", async () => {
   const row = await conversation();
-  const name = await reserveEveCodeSandbox(owner, row.id, "confirmed");
+  const name = await reserveEveCodeSandbox(
+    owner,
+    row.id,
+    "confirmed",
+    provider
+  );
   await expect(listEveCodeSandboxesForDeletion(owner, row.id)).rejects.toThrow(
     "Retire"
   );
@@ -109,7 +121,13 @@ test("only a retired owned family can inventory confirmed creation", async () =>
   await confirmEveCodeSandboxCreation(owner, row.id, name);
   await beginEveConversationDeletion(owner, row.id);
   expect(await listEveCodeSandboxesForDeletion(owner, row.id)).toEqual([
-    { name, conversationId: row.id, creationConfirmed: true },
+    {
+      name,
+      conversationId: row.id,
+      creationConfirmed: true,
+      callId: "confirmed",
+      sessionId: row.sessionId,
+    },
   ]);
   await expect(
     listEveCodeSandboxesForDeletion("stranger", row.id)

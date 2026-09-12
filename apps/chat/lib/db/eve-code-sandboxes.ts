@@ -7,7 +7,8 @@ import { eveCodeSandbox, eveConversation } from "./schema";
 export async function reserveEveCodeSandbox(
   ownerId: string,
   conversationId: string,
-  callId: string
+  callId: string,
+  provider: { teamId: string; projectId: string }
 ) {
   return await db.transaction(async (tx) => {
     await tx.execute(
@@ -26,10 +27,26 @@ export async function reserveEveCodeSandbox(
     if (!conversation?.sessionId) {
       throw new Error("Conversation is unavailable for code execution.");
     }
+    const [existing] = await tx
+      .select({ name: eveCodeSandbox.name })
+      .from(eveCodeSandbox)
+      .where(
+        and(
+          eq(eveCodeSandbox.ownerId, ownerId),
+          eq(eveCodeSandbox.conversationId, conversationId),
+          eq(eveCodeSandbox.callId, callId)
+        )
+      );
+    if (existing) {
+      throw new Error(
+        "Reconcile the existing code sandbox before retrying allocation."
+      );
+    }
     const name = eveCodeSandboxName({
       ownerId,
       sessionId: conversation.sessionId,
       callId,
+      provider,
     });
     const [inserted] = await tx
       .insert(eveCodeSandbox)
@@ -123,6 +140,8 @@ export async function listEveCodeSandboxesForDeletion(
   return await db
     .select({
       name: eveCodeSandbox.name,
+      callId: eveCodeSandbox.callId,
+      sessionId: eveConversation.sessionId,
       conversationId: eveCodeSandbox.conversationId,
       creationConfirmed: eveCodeSandbox.creationConfirmed,
     })
