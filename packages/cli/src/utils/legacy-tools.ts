@@ -1,13 +1,17 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import pathModule from "node:path";
 
 import { toolItems } from "../../../registry/registry";
 
+const { join } = pathModule;
+const compact = (source: string): string =>
+  source.replaceAll(/\/\/[^\n]*/gu, "").replaceAll(/\s+/gu, "");
+const entries = (body: string): string =>
+  body.split(",").filter(Boolean).toSorted().join(",");
+
 // Recognize only known legacy declarations, in any installation order. Never
 // evaluate source or discard unknown registrations during migration.
-export async function legacyTools(cwd: string, tools: string, ui: string) {
-  const compact = (source: string) =>
-    source.replaceAll(/\/\/[^\n]*/g, "").replaceAll(/\s+/g, "");
+export const legacyTools = async (cwd: string, tools: string, ui: string) => {
   let server = compact(tools);
   let client = compact(ui).replace(
     'importtype{ToolRendererRegistry}from"@/lib/ai/tool-renderer-registry";',
@@ -34,16 +38,14 @@ export async function legacyTools(cwd: string, tools: string, ui: string) {
     definitions.push(item);
   }
   const serverEntries = server.match(
-    /^exportconsttools=\{([^{}]*)\}asconst;$/
-  )?.[1];
+    /^exportconsttools=\{(?<entries>[^{}]*)\}asconst;$/u
+  )?.groups?.entries;
   const clientEntries = client.match(
-    /^exportconstui=\{([^{}]*)\}(?:satisfiesToolRendererRegistry)?;$/
-  )?.[1];
+    /^exportconstui=\{(?<entries>[^{}]*)\}(?:satisfiesToolRendererRegistry)?;$/u
+  )?.groups?.entries;
   if (serverEntries === undefined || clientEntries === undefined) {
     return null;
   }
-  const entries = (body: string) =>
-    body.split(",").filter(Boolean).sort().join(",");
   if (
     entries(serverEntries) !==
     entries(definitions.map((item) => item.toolExport).join(","))
@@ -60,9 +62,11 @@ export async function legacyTools(cwd: string, tools: string, ui: string) {
   ) {
     return null;
   }
-  for (const item of definitions) {
-    await readFile(join(cwd, "tools/chatjs", item.id, "tool.ts"));
-    await readFile(join(cwd, "tools/chatjs", item.id, "renderer.tsx"));
-  }
+  await Promise.all(
+    definitions.flatMap((item) => [
+      readFile(join(cwd, "tools/chatjs", item.id, "tool.ts")),
+      readFile(join(cwd, "tools/chatjs", item.id, "renderer.tsx")),
+    ])
+  );
   return definitions;
-}
+};

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join, relative, resolve, sep } from "node:path";
+import pathModule from "node:path";
 
 import { registryUrl } from "../registry/shadcn";
 import type { PackageManager } from "../types";
@@ -8,6 +8,8 @@ import { runCommand } from "../utils/run-command";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { vendorThreadPackage } from "./vendor-thread-package";
+
+const { join, relative, resolve, sep } = pathModule;
 
 const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
   "node_modules",
@@ -53,33 +55,31 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "sharp",
 ] as const;
 
-function getCliPackageRoot(): string {
+const getCliPackageRoot = (): string => {
   const __dir = import.meta.dirname;
 
-  for (const relative of ["..", "../.."]) {
-    const candidate = resolve(__dir, relative);
+  for (const relativePath of ["..", "../.."]) {
+    const candidate = resolve(__dir, relativePath);
     if (existsSync(join(candidate, "package.json"))) {
       return candidate;
     }
   }
 
   throw new Error("Could not locate the @chat-js/cli package root.");
-}
+};
 
-function getRepoRoot(): string {
-  return resolve(getCliPackageRoot(), "../..");
-}
+const getRepoRoot = (): string => resolve(getCliPackageRoot(), "../..");
 
-function findTemplateDir(name: string): string | null {
+const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
   const candidate = join(cliRoot, "templates", name);
   return existsSync(candidate) ? candidate : null;
-}
+};
 
-function shouldCopyChatAppFilePath(
+const shouldCopyChatAppFilePath = (
   sourceDir: string,
   filePath: string
-): boolean {
+): boolean => {
   const relativePath = relative(sourceDir, filePath);
   const segments = relativePath.split(sep);
   if (segments.some((segment) => CHAT_APP_EXCLUDED_SEGMENTS.has(segment))) {
@@ -87,12 +87,12 @@ function shouldCopyChatAppFilePath(
   }
   const fileName = segments.at(-1);
   return !(fileName && CHAT_APP_EXCLUDED_FILES.has(fileName));
-}
+};
 
-function shouldCopyElectronFilePath(
+const shouldCopyElectronFilePath = (
   sourceDir: string,
   filePath: string
-): boolean {
+): boolean => {
   const relativePath = relative(sourceDir, filePath);
   const segments = relativePath.split(sep);
   if (segments.some((segment) => ELECTRON_EXCLUDED_SEGMENTS.has(segment))) {
@@ -100,13 +100,12 @@ function shouldCopyElectronFilePath(
   }
   const fileName = segments.at(-1);
   return !(fileName && ELECTRON_EXCLUDED_FILES.has(fileName));
-}
+};
 
-function runScript(packageManager: PackageManager, script: string): string {
-  return `${packageManager} run ${script}`;
-}
+const runScript = (packageManager: PackageManager, script: string): string =>
+  `${packageManager} run ${script}`;
 
-function execCommand(packageManager: PackageManager): string {
+const execCommand = (packageManager: PackageManager): string => {
   switch (packageManager) {
     case "bun": {
       return "bunx";
@@ -120,13 +119,16 @@ function execCommand(packageManager: PackageManager): string {
     case "npm": {
       return "npx";
     }
+    default: {
+      return packageManager;
+    }
   }
-}
+};
 
-async function replaceInFile(
+const replaceInFile = async (
   filePath: string,
   replacements: [string, string][]
-): Promise<void> {
+): Promise<void> => {
   if (!existsSync(filePath)) {
     return;
   }
@@ -135,19 +137,19 @@ async function replaceInFile(
     content = content.replaceAll(search, replacement);
   }
   await writeFile(filePath, content);
-}
+};
 
-async function resetInstallableTools(destination: string): Promise<void> {
+const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = join(destination, "tools", "chatjs");
-  await rm(toolsDir, { recursive: true, force: true });
+  await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await syncTools(destination);
-}
+};
 
-async function writePnpmWorkspaceConfig(
+const writePnpmWorkspaceConfig = async (
   destination: string,
   options?: { blockExoticSubdeps?: boolean }
-): Promise<void> {
+): Promise<void> => {
   const packageLines = ["packages:", "  - ."];
   const pnpm10Lines = [
     "onlyBuiltDependencies:",
@@ -171,11 +173,11 @@ async function writePnpmWorkspaceConfig(
       ...supplyChainLines,
     ].join("\n")}\n`
   );
-}
+};
 
-async function applyChatTemplateSourceTransforms(
+const applyChatTemplateSourceTransforms = async (
   destination: string
-): Promise<void> {
+): Promise<void> => {
   await Promise.all(
     ["components/github-link.tsx", "components/docs-link.tsx"].map((file) =>
       rm(join(destination, file), { force: true })
@@ -213,11 +215,11 @@ async function applyChatTemplateSourceTransforms(
     destination,
     threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
   });
-}
+};
 
-async function applyElectronTemplateSourceTransforms(
+const applyElectronTemplateSourceTransforms = async (
   destination: string
-): Promise<void> {
+): Promise<void> => {
   const tsconfigPath = join(destination, "tsconfig.json");
   await replaceInFile(tsconfigPath, [['"../chat/*"', '"../*"']]);
 
@@ -229,34 +231,34 @@ async function applyElectronTemplateSourceTransforms(
       '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"',
     ],
   ]);
-}
+};
 
-async function copyChatTemplateFromRepoSource(
+const copyChatTemplateFromRepoSource = async (
   destination: string
-): Promise<void> {
+): Promise<void> => {
   const sourceDir = join(getRepoRoot(), "apps", "chat");
   await cp(sourceDir, destination, {
-    recursive: true,
     filter: (filePath) => shouldCopyChatAppFilePath(sourceDir, filePath),
+    recursive: true,
   });
   await applyChatTemplateSourceTransforms(destination);
-}
+};
 
-async function copyElectronTemplateFromRepoSource(
+const copyElectronTemplateFromRepoSource = async (
   destination: string
-): Promise<void> {
+): Promise<void> => {
   const sourceDir = join(getRepoRoot(), "apps", "electron");
   await cp(sourceDir, destination, {
-    recursive: true,
     filter: (filePath) => shouldCopyElectronFilePath(sourceDir, filePath),
+    recursive: true,
   });
   await applyElectronTemplateSourceTransforms(destination);
-}
+};
 
-async function normalizeChatAppFiles(
+const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
-): Promise<void> {
+): Promise<void> => {
   await replaceInFile(join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],
   ]);
@@ -336,13 +338,13 @@ async function normalizeChatAppFiles(
   }
 
   await resetInstallableTools(destination);
-}
+};
 
-async function normalizeElectronFiles(
+const normalizeElectronFiles = async (
   destination: string,
   packageManager: PackageManager
-): Promise<void> {
-  const scriptPlaceholder = "$" + "{script}";
+): Promise<void> => {
+  const scriptPlaceholder = `\${script}`;
 
   await replaceInFile(join(destination, "forge.config.ts"), [
     [
@@ -381,11 +383,11 @@ async function normalizeElectronFiles(
   if (packageManager === "pnpm") {
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }
-}
+};
 
-async function excludeElectronFromRootTypecheck(
+const excludeElectronFromRootTypecheck = async (
   projectDir: string
-): Promise<void> {
+): Promise<void> => {
   const tsconfigPath = join(projectDir, "tsconfig.json");
   const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8")) as {
     exclude?: string[];
@@ -393,22 +395,20 @@ async function excludeElectronFromRootTypecheck(
 
   tsconfig.exclude = [...new Set([...(tsconfig.exclude ?? []), "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
-}
+};
 
-export async function scaffoldFromTemplate(
+export const scaffoldFromTemplate = async (
   destination: string,
   options?: {
     packageManager?: PackageManager;
   }
-): Promise<void> {
+): Promise<void> => {
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
 
-  if (templateDir) {
-    await cp(templateDir, destination, { recursive: true });
-  } else {
-    await copyChatTemplateFromRepoSource(destination);
-  }
+  await (templateDir
+    ? cp(templateDir, destination, { recursive: true })
+    : copyChatTemplateFromRepoSource(destination));
 
   // npm packing omits nested .gitignore files, so materialize the app's rules.
   await writeFile(
@@ -435,13 +435,13 @@ export async function scaffoldFromTemplate(
   delete manifest.dependencies["@tavily/core"];
   delete manifest.dependencies["@mendable/firecrawl-js"];
   await rm(join(destination, "tools/chatjs/retrieve-url"), {
-    recursive: true,
     force: true,
+    recursive: true,
   });
   delete manifest.dependencies["@vercel/sandbox"];
   await rm(join(destination, "tools/chatjs/tavily-search"), {
-    recursive: true,
     force: true,
+    recursive: true,
   });
   await rm(join(destination, "tools/chatjs/search.ts"), { force: true });
   await rm(join(destination, "lib/storage-provider.ts"));
@@ -454,12 +454,12 @@ export async function scaffoldFromTemplate(
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
   await normalizeChatAppFiles(destination, packageManager);
-}
+};
 
-export async function scaffoldElectron(
+export const scaffoldElectron = async (
   projectDir: string,
   opts: { projectName: string; packageManager?: PackageManager }
-): Promise<void> {
+): Promise<void> => {
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = join(projectDir, "package.json");
   const rootPackageJson = JSON.parse(
@@ -470,16 +470,15 @@ export async function scaffoldElectron(
   const destination = join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
-  if (templateDir) {
-    await cp(templateDir, destination, { recursive: true });
-  } else {
-    await copyElectronTemplateFromRepoSource(destination);
-  }
+  await (templateDir
+    ? cp(templateDir, destination, { recursive: true })
+    : copyElectronTemplateFromRepoSource(destination));
 
   const packageJsonPath = join(destination, "package.json");
+  const packageJsonSource = await readFile(packageJsonPath, "utf-8");
   const packageJson = normalizeScaffoldedPackageJson(
     JSON.parse(
-      (await readFile(packageJsonPath, "utf-8"))
+      packageJsonSource
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
         .replace("__GITHUB_OWNER__", "your-github-username")
         .replace("__GITHUB_REPO__", opts.projectName)
@@ -493,16 +492,16 @@ export async function scaffoldElectron(
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
-}
+};
 
-export async function scaffoldFromGit(
+export const scaffoldFromGit = async (
   url: string,
   destination: string
-): Promise<void> {
+): Promise<void> => {
   await runCommand(
     "git",
     ["clone", "--depth", "1", url, destination],
     process.cwd()
   );
-  await rm(join(destination, ".git"), { recursive: true, force: true });
-}
+  await rm(join(destination, ".git"), { force: true, recursive: true });
+};
