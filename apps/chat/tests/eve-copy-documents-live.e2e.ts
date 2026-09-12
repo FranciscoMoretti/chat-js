@@ -11,7 +11,10 @@ import {
   eveUsage,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { conversationBinding } from "../lib/eve/contracts";
+import {
+  conversationBinding,
+  createConversationInput,
+} from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -20,7 +23,7 @@ const boundaryReply = /^boundary-ready\.?$/;
 
 test("copied document history survives source deletion and supports native editing", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(60_000);
@@ -33,9 +36,9 @@ test("copied document history survives source deletion and supports native editi
     });
   });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.goto("/api/dev-login");
+  await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
-  const origin = new URL(page.url()).origin;
+  const origin = new URL(z.url().parse(testInfo.project.use.baseURL)).origin;
   const created = await page.request.post("/api/agent-conversations", {
     headers: { origin },
     data: {
@@ -232,18 +235,44 @@ test("copied document history survives source deletion and supports native editi
         event.data.result.toolName === "readDocument"
     )
   ).toBe(true);
-  const forkInput = {
-    operationId: crypto.randomUUID(),
-    modelId,
-    fork: { conversationId: destination.id, beforeMessageId: "seed_message_2" },
-    message: `Use readDocument with documentId "${head.documentId}" once, then reply briefly. Do not edit the document.`,
-  };
-  const forkResponse = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
-    data: forkInput,
+  await page
+    .getByRole("button", { name: "Edit message", exact: true })
+    .nth(1)
+    .click();
+  const editor = page.getByRole("dialog");
+  await editor
+    .getByRole("textbox", { name: "Message", exact: true })
+    .fill(
+      `Use readDocument with documentId "${head.documentId}" once, then reply briefly. Do not edit the document.`
+    );
+  await editor.screenshot({
+    path: testInfo.outputPath("imported-edit.png"),
+    animations: "disabled",
   });
-  expect(forkResponse.ok(), await forkResponse.text()).toBe(true);
-  const forked = conversationBinding.parse(await forkResponse.json());
+  const forkReply = Promise.withResolvers<{
+    input: z.infer<typeof createConversationInput>;
+    binding: z.infer<typeof conversationBinding>;
+  }>();
+  await page.route(
+    "**/api/agent-conversations",
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.ok(), await response.text()).toBe(true);
+      forkReply.resolve({
+        input: createConversationInput.parse(route.request().postDataJSON()),
+        binding: conversationBinding.parse(await response.json()),
+      });
+      await route.fulfill({ response });
+    },
+    { times: 1 }
+  );
+  await editor.getByRole("button", { name: "Send", exact: true }).click();
+  const { input: forkInput, binding: forked } = await forkReply.promise;
+  expect(forkInput.fork).toEqual({
+    conversationId: destination.id,
+    beforeMessageId: "seed_message_2",
+  });
+  await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`));
   const [forkHead] = await db
     .select()
     .from(eveDocumentHead)

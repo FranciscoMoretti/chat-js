@@ -23,6 +23,7 @@ import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { isEvePlatformTool } from "@/lib/eve/platform-result";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
@@ -257,11 +258,7 @@ export function EveMessages({
       <MessageActions className={message.role === "user" ? "justify-end" : ""}>
         {message.role === "user" && onEdit && (
           <MessageAction
-            disabled={
-              actionsDisabled ||
-              !message.metadata?.turnId ||
-              !!message.metadata.optimistic
-            }
+            disabled={actionsDisabled || !eveUserForkBoundary(message)}
             onClick={() => onEdit(message)}
             tooltip="Edit message"
           >

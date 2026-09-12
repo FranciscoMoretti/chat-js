@@ -7,7 +7,7 @@ import { config } from "@/lib/config";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
-import { resolveForkSource } from "@/lib/eve/fork-source";
+import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import {
   finishCreation,
@@ -135,7 +135,8 @@ export function useEveFork(
     }
   ) {
     return run(async () => {
-      if (pending || !family.data || !message.metadata?.turnId) {
+      const boundary = eveUserForkBoundary(message);
+      if (pending || !family.data || !boundary) {
         return;
       }
       const modelId = regeneration
@@ -146,7 +147,7 @@ export function useEveFork(
         : selectedModel;
       const fork = resolveForkSource(
         conversationId,
-        message.metadata.turnId,
+        boundary,
         family.data.branches
       );
       const text = message.parts

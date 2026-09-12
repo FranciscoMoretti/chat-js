@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveForkSource } from "./fork-source";
+import { eveUserForkBoundary, resolveForkSource } from "./fork-source";
 import {
   finishCreation,
   prepareCreation,
@@ -96,4 +96,51 @@ it("isolates project creation recovery from ordinary chats, other projects, and 
   finishCreation(storage, "owner", scope);
   expect(readCreation(storage, "owner", scope)).toBeUndefined();
   expect(readCreation(storage, "owner")).toEqual(ordinary);
+});
+
+it("keeps imported boundaries local to the retained seed in every descendant", () => {
+  const branches = [
+    { id: "copy", parentConversationId: null, forkTurnId: null },
+    { id: "child", parentConversationId: "copy", forkTurnId: "turn_1" },
+  ];
+  expect(resolveForkSource("child", "seed_message_2", branches)).toEqual({
+    conversationId: "child",
+    beforeMessageId: "seed_message_2",
+  });
+  for (const boundary of [
+    "seed_message_02",
+    "seed_message_10000",
+    "message_2",
+  ]) {
+    expect(() => resolveForkSource("child", boundary, branches)).toThrow(
+      "unavailable"
+    );
+  }
+  expect(() =>
+    resolveForkSource("missing", "seed_message_2", branches)
+  ).toThrow("unavailable");
+});
+
+it("enables only durable user-message boundaries", () => {
+  expect(eveUserForkBoundary({ id: "seed_message_2", role: "user" })).toBe(
+    "seed_message_2"
+  );
+  expect(
+    eveUserForkBoundary({
+      id: "native",
+      role: "user",
+      metadata: { turnId: "turn_0" },
+    })
+  ).toBe("turn_0");
+  expect(
+    eveUserForkBoundary({ id: "seed_message_2", role: "assistant" })
+  ).toBeUndefined();
+  expect(
+    eveUserForkBoundary({
+      id: "seed_message_2",
+      role: "user",
+      metadata: { optimistic: true },
+    })
+  ).toBeUndefined();
+  expect(eveUserForkBoundary({ id: "pending", role: "user" })).toBeUndefined();
 });
