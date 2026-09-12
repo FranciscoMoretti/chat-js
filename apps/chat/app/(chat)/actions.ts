@@ -7,11 +7,11 @@ import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 
-export async function generateTitleFromUserMessage({
+export const generateTitleFromUserMessage = async ({
   message,
 }: {
   message: ChatMessage;
-}) {
+}) => {
   const { text: title } = await generateText({
     instructions: `Generate a concise title for a chat conversation based on the user's first message.
 
@@ -28,4 +28,4 @@ Rules (strictly follow all):
   });
 
   return title;
-}
+};
