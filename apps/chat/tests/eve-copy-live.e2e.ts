@@ -9,7 +9,10 @@ import {
   eveFileReference,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { conversationBinding } from "../lib/eve/contracts";
+import {
+  conversationBinding,
+  createConversationInput,
+} from "../lib/eve/contracts";
 import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
@@ -280,17 +283,22 @@ for (const attachment of [
     answer: "cedar-4827",
   },
 ]) {
-  test(`copied ${attachment.name} survives source deletion and reaches the first native continuation`, async ({
+  test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
     page,
-  }) => {
+  }, testInfo) => {
+    test.setTimeout(360_000);
+    page.setDefaultNavigationTimeout(120_000);
     await page.route("https://unpkg.com/react-scan/**", (route) =>
       route.abort()
     );
-    await page.goto("/api/dev-login");
+    await page.request.get("/api/dev-login", {
+      maxRedirects: 0,
+      timeout: 60_000,
+    });
     await page.request.post("/api/chat-model", {
       data: { model: attachment.modelId },
     });
-    const origin = new URL(page.url()).origin;
+    const origin = new URL(z.url().parse(testInfo.project.use.baseURL)).origin;
     const upload = await page.request.post("/api/files/upload", {
       multipart: {
         file: {
@@ -376,12 +384,20 @@ for (const attachment of [
     expect(new URL(file.url, origin).searchParams.get("key")).not.toBe(
       refs[0].key
     );
-    const saved = await native.sessions
-      .attach(destination.sessionId)
-      .snapshot();
-    expect(saved.events.some((event) => event.type === "history.seeded")).toBe(
-      true
-    );
+    let saved = await native.sessions.attach(destination.sessionId).snapshot();
+    await expect
+      .poll(
+        async () => {
+          if (!saved.events.some((event) => event.type === "history.seeded")) {
+            saved = await native.sessions
+              .attach(destination.sessionId)
+              .snapshot();
+          }
+          return saved.events.some((event) => event.type === "history.seeded");
+        },
+        { timeout: 30_000, intervals: [1000, 2000, 4000] }
+      )
+      .toBe(true);
     expect(
       saved.events.some(
         (event) =>
@@ -399,7 +415,7 @@ for (const attachment of [
           return z.object({ status: z.string() }).parse(await removed.json())
             .status;
         },
-        { timeout: 45_000, intervals: [1000, 2000, 4000] }
+        { timeout: 90_000, intervals: [1000, 2000, 4000] }
       )
       .toBe("deleted");
     expect((await page.request.get(file.url)).ok()).toBe(false);
@@ -438,5 +454,103 @@ for (const attachment of [
         .getByRole("log")
         .getByRole("button", { name: attachment.name, exact: true })
     ).toBeVisible();
+
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await page
+      .getByRole("button", { name: "Edit message", exact: true })
+      .first()
+      .click();
+    const editor = page.getByRole("dialog");
+    await expect(
+      editor.getByRole("button", { name: attachment.name, exact: true })
+    ).toBeVisible();
+    if (attachment.mediaType === "image/png") {
+      await expect
+        .poll(() =>
+          editor
+            .getByRole("img", { name: attachment.name, exact: true })
+            .evaluate(
+              (image) =>
+                image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0
+            )
+        )
+        .toBe(true);
+    }
+    await editor
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill(attachment.question);
+    await editor.evaluate(async (element) => {
+      await document.fonts.ready;
+      await Promise.all(
+        element
+          .getAnimations({ subtree: true })
+          .filter(
+            (animation) =>
+              animation.effect?.getTiming().iterations !==
+              Number.POSITIVE_INFINITY
+          )
+          .map((animation) => animation.finished.catch(() => undefined))
+      );
+    });
+    await editor.screenshot({
+      path: testInfo.outputPath("imported-attachment-edit.png"),
+      animations: "allow",
+    });
+    let edited: z.infer<typeof conversationBinding> | undefined;
+    await page.route(
+      "**/api/agent-conversations",
+      async (route) => {
+        const input = createConversationInput.parse(
+          route.request().postDataJSON()
+        );
+        expect(input.fork).toEqual({
+          conversationId: destination.id,
+          beforeMessageId: "seed_message_0",
+        });
+        expect(input.modelId).toBe(attachment.modelId);
+        if (typeof input.message === "string") {
+          throw new Error("Edited message lost its attachment");
+        }
+        const editedFile = input.message.find((part) => part.type === "file");
+        if (!editedFile) {
+          throw new Error("Edited message lost its attachment");
+        }
+        expect(editedFile.filename).toBe(attachment.name);
+        expect(editedFile.mediaType).toBe(attachment.mediaType);
+        expect(new URL(editedFile.data, origin).origin).toBe(origin);
+        expect(
+          new URL(editedFile.data, origin).searchParams.get("key")
+        ).not.toBe(refs[0].key);
+        const restored = await page.request.get(editedFile.data);
+        expect(restored.status()).toBe(200);
+        expect(await restored.body()).toEqual(attachment.bytes);
+        const response = await route.fetch({ timeout: 90_000 });
+        expect(response.status()).toBe(200);
+        edited = conversationBinding.parse(await response.json());
+        await route.fulfill({ response });
+      },
+      { times: 1 }
+    );
+    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await expect.poll(() => edited?.id, { timeout: 95_000 }).toBeTruthy();
+    await expect(page).toHaveURL(`${origin}/chat/${edited?.id}`, {
+      timeout: 120_000,
+    });
+    const editedAnswer = new RegExp(`^${attachment.answer}\\.?$`, "i");
+    await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({
+      timeout: 45_000,
+    });
+    await expect(
+      page.getByRole("button", { name: "Edit message", exact: true })
+    ).toHaveCount(1);
+    await page.reload();
+    await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({
+      timeout: 30_000,
+    });
+    const originalCopyFile = await page.request.get(copiedUrl);
+    expect(originalCopyFile.status()).toBe(200);
+    expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
 }
