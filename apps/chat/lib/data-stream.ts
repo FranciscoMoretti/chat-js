@@ -4,11 +4,11 @@ import equal from "fast-deep-equal";
 
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 
-export function isDataPartOnMessagePath(
+export const isDataPartOnMessagePath = (
   dataPart: DataUIPart<CustomUIDataTypes>,
   messages: ChatMessage[]
-): boolean {
-  return messages.some((message) =>
+): boolean =>
+  messages.some((message) =>
     message.parts.some((part) => {
       if (!(isDataUIPart(part) && part.type === dataPart.type)) {
         return false;
@@ -21,4 +21,3 @@ export function isDataPartOnMessagePath(
       return equal(part.data, dataPart.data);
     })
   );
-}

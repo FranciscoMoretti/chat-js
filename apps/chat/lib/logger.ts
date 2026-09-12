@@ -39,6 +39,5 @@ const logger: Logger =
         },
       });
 
-export function createModuleLogger(moduleName: string): Logger {
-  return logger.child({ module: moduleName });
-}
+export const createModuleLogger = (moduleName: string): Logger =>
+  logger.child({ module: moduleName });

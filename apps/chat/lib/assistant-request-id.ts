@@ -5,7 +5,7 @@ const ASSISTANT_REQUEST_NAMESPACE = uuidv5(
   uuidv5.URL
 );
 
-export function createAssistantRequestMessageId({
+export const createAssistantRequestMessageId = ({
   chatId,
   parallelGroupId,
   parallelIndex,
@@ -19,8 +19,8 @@ export function createAssistantRequestMessageId({
   requestId: string;
   selectedModelId: string;
   userMessageId: string;
-}) {
-  return uuidv5(
+}) =>
+  uuidv5(
     JSON.stringify([
       chatId,
       userMessageId,
@@ -31,4 +31,3 @@ export function createAssistantRequestMessageId({
     ]),
     ASSISTANT_REQUEST_NAMESPACE
   );
-}
