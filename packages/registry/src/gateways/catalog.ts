@@ -30,22 +30,22 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       files: [
         {
           path: `src/gateways/${id}/gateway.ts`,
-          type: "registry:file" as const,
           target: "~/lib/ai/gateway.ts",
+          type: "registry:file" as const,
         },
       ],
       meta: {
         chatjs: gatewayDefinitionSchema.parse({
-          kind: "gateway",
-          contractVersion: 1,
-          id,
           capabilities: {
             image: id !== "openrouter",
             video: metadata.supportsVideo,
           },
-          envRequirements: [{ options: environment[name] }],
-          optionalEnv,
+          contractVersion: 1,
           defaults: GATEWAY_MODEL_DEFAULTS[name],
+          envRequirements: [{ options: environment[name] }],
+          id,
+          kind: "gateway",
+          optionalEnv,
         }),
       },
       name: `${id}-gateway`,

@@ -15,26 +15,27 @@ export type StorageEnvironmentRequirement = {
 
 const STORAGE_OPTION_HINT = /(?:or )?pass `(?<option>[^`]+)`/u;
 
-export function getStorageEnvironmentRequirements(
+const toVariable = (variable: {
+  aliases?: readonly string[];
+  description: string;
+  key: string;
+  secret: boolean;
+}): StorageEnvironmentVariable => ({
+  aliases: variable.aliases ?? [],
+  description: variable.description,
+  key: variable.key,
+  secret: variable.secret,
+});
+
+export const getStorageEnvironmentRequirements = (
   provider: ProviderSlug,
   adapterOptions: Record<string, unknown> = {}
-): StorageEnvironmentRequirement[] {
+): StorageEnvironmentRequirement[] => {
   const metadata = getProvider(provider);
   if (!metadata) {
     return [];
   }
 
-  const toVariable = (variable: {
-    aliases?: readonly string[];
-    description: string;
-    key: string;
-    secret: boolean;
-  }): StorageEnvironmentVariable => ({
-    aliases: variable.aliases ?? [],
-    description: variable.description,
-    key: variable.key,
-    secret: variable.secret,
-  });
   const requirements: StorageEnvironmentRequirement[] = [];
   const required = metadata.env.required?.filter((variable) => {
     const optionName = STORAGE_OPTION_HINT.exec(variable.description)?.[1];
@@ -77,4 +78,4 @@ export function getStorageEnvironmentRequirements(
   }
 
   return requirements;
-}
+};
