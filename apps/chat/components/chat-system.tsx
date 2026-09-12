@@ -13,32 +13,32 @@ import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import type { CustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
 
-export const ChatSystem = memo(function PureChatSystem({
-  children,
-  id,
-  initialMessages,
-  initialTree,
-  isReadonly,
-  initialTool = null,
-  overrideModelId,
-  projectId,
-  runtimeKey,
-  store,
-  thread,
-}: {
-  children: ReactNode;
-  id: string;
-  initialMessages: ChatMessage[];
-  initialTree?: MessageTreeSnapshot<ChatMessage>;
-  isReadonly: boolean;
-  initialTool?: UiToolName | null;
-  overrideModelId?: AppModelId;
-  projectId?: string;
-  runtimeKey: string;
-  store?: CustomChatStoreApi<ChatMessage>;
-  thread?: ApplicationThread;
-}) {
-  return (
+export const ChatSystem = memo(
+  ({
+    children,
+    id,
+    initialMessages,
+    initialTree,
+    isReadonly,
+    initialTool = null,
+    overrideModelId,
+    projectId,
+    runtimeKey,
+    store,
+    thread,
+  }: {
+    children: ReactNode;
+    id: string;
+    initialMessages: ChatMessage[];
+    initialTree?: MessageTreeSnapshot<ChatMessage>;
+    isReadonly: boolean;
+    initialTool?: UiToolName | null;
+    overrideModelId?: AppModelId;
+    projectId?: string;
+    runtimeKey: string;
+    store?: CustomChatStoreApi<ChatMessage>;
+    thread?: ApplicationThread;
+  }) => (
     <ArtifactProvider key={runtimeKey}>
       <CustomStoreProvider
         initialMessages={initialMessages}
@@ -63,5 +63,7 @@ export const ChatSystem = memo(function PureChatSystem({
         )}
       </CustomStoreProvider>
     </ArtifactProvider>
-  );
-});
+  )
+);
+
+ChatSystem.displayName = "PureChatSystem";

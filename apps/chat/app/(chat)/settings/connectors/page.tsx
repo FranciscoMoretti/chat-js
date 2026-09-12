@@ -8,17 +8,29 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
-function ConnectorsSettingsHeader() {
+const ConnectorsSettingsHeader = () => (
+  <SettingsPageHeader>
+    <h2 className="text-lg font-semibold">Connectors & MCP</h2>
+    <p className="text-muted-foreground text-sm">
+      Connect to Model Context Protocol servers to extend AI capabilities with
+      external tools.
+    </p>
+  </SettingsPageHeader>
+);
+
+const ConnectorsSettingsContent = async () => {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
+
   return (
-    <SettingsPageHeader>
-      <h2 className="text-lg font-semibold">Connectors & MCP</h2>
-      <p className="text-muted-foreground text-sm">
-        Connect to Model Context Protocol servers to extend AI capabilities with
-        external tools.
-      </p>
-    </SettingsPageHeader>
+    <HydrateClient>
+      <SettingsPage>
+        <ConnectorsSettingsHeader />
+        <ConnectorsSettings />
+      </SettingsPage>
+    </HydrateClient>
   );
-}
+};
 
 const ConnectorsSettingsPage = () => (
   <Suspense
@@ -38,17 +50,3 @@ const ConnectorsSettingsPage = () => (
 );
 
 export default ConnectorsSettingsPage;
-
-async function ConnectorsSettingsContent() {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
-
-  return (
-    <HydrateClient>
-      <SettingsPage>
-        <ConnectorsSettingsHeader />
-        <ConnectorsSettings />
-      </SettingsPage>
-    </HydrateClient>
-  );
-}

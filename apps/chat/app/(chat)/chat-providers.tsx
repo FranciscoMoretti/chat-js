@@ -21,7 +21,7 @@ interface ChatProvidersProps {
   children: React.ReactNode;
 }
 
-function getProvisionalRuntimeScopeKey(pathname: string | null) {
+const getProvisionalRuntimeScopeKey = (pathname: string | null) => {
   const route = parseChatIdFromPathname(pathname);
 
   if (route.type === "home") {
@@ -33,9 +33,9 @@ function getProvisionalRuntimeScopeKey(pathname: string | null) {
   }
 
   return null;
-}
+};
 
-export function ChatProviders({ children }: ChatProvidersProps) {
+export const ChatProviders = ({ children }: ChatProvidersProps) => {
   const pathname = usePathname();
   const provisionalRuntime = useProvisionalAppRuntimeIdentity(
     getProvisionalRuntimeScopeKey(pathname)
@@ -66,4 +66,4 @@ export function ChatProviders({ children }: ChatProvidersProps) {
       </RuntimeRegistryProvider>
     </>
   );
-}
+};

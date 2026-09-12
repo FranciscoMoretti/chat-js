@@ -69,7 +69,7 @@ const processArtifactStreamPart = ({
   setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
 }): void => {
   switch (artifact.kind) {
-    case "code":
+    case "code": {
       codeArtifact.onStreamPart?.({
         streamPart: delta,
         setArtifact,
@@ -79,7 +79,8 @@ const processArtifactStreamPart = ({
         ),
       });
       break;
-    case "sheet":
+    }
+    case "sheet": {
       sheetArtifact.onStreamPart?.({
         streamPart: delta,
         setArtifact,
@@ -89,15 +90,18 @@ const processArtifactStreamPart = ({
         ),
       });
       break;
-    case "text":
+    }
+    case "text": {
       textArtifact.onStreamPart?.({
         streamPart: delta,
         setArtifact,
         setMetadata,
       });
       break;
-    default:
+    }
+    default: {
       break;
+    }
   }
 };
 

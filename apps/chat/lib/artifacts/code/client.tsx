@@ -45,7 +45,7 @@ const OUTPUT_HANDLERS = {
   `,
 };
 
-function detectRequiredHandlers(code: string): string[] {
+const detectRequiredHandlers = (code: string): string[] => {
   const handlers: string[] = ["basic"];
 
   if (code.includes("matplotlib") || code.includes("plt.")) {
@@ -53,36 +53,32 @@ function detectRequiredHandlers(code: string): string[] {
   }
 
   return handlers;
-}
+};
 
 export interface CodeArtifactMetadata {
   language: string;
   outputs: ConsoleOutput[];
 }
 
-export function isCodeArtifactMetadata(
+export const isCodeArtifactMetadata = (
   metadata: ArtifactMetadata
-): metadata is CodeArtifactMetadata {
-  return (
-    metadata !== null &&
-    typeof metadata === "object" &&
-    "language" in metadata &&
-    typeof metadata.language === "string" &&
-    "outputs" in metadata &&
-    Array.isArray(metadata.outputs)
-  );
-}
+): metadata is CodeArtifactMetadata =>
+  metadata !== null &&
+  typeof metadata === "object" &&
+  "language" in metadata &&
+  typeof metadata.language === "string" &&
+  "outputs" in metadata &&
+  Array.isArray(metadata.outputs);
 
-export function getCodeArtifactMetadata(
+export const getCodeArtifactMetadata = (
   metadata: ArtifactMetadata
-): CodeArtifactMetadata {
-  return isCodeArtifactMetadata(metadata)
+): CodeArtifactMetadata =>
+  isCodeArtifactMetadata(metadata)
     ? metadata
     : {
         language: "python",
         outputs: [],
       };
-}
 
 export const codeArtifact = new Artifact<"code", CodeArtifactMetadata>({
   actions: [

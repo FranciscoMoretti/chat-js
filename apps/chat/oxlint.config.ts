@@ -15,6 +15,14 @@ export default defineConfig({
     rules: Object.fromEntries(Object.keys(rules).map((rule) => [rule, "off"])),
   })),
   rules: {
+    // Keep anonymous React callbacks consistent with prefer-arrow-callback.
+    "react/function-component-definition": [
+      "error",
+      {
+        namedComponents: "arrow-function",
+        unnamedComponents: "arrow-function",
+      },
+    ],
     // The codebase uses interfaces alongside intersection and mapped types.
     "typescript/consistent-type-definitions": "off",
   },

@@ -8,27 +8,43 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
-function ConnectorDetailsHeader() {
-  return (
-    <SettingsPageHeader>
-      <h2 className="text-lg font-semibold">Connector details</h2>
-      <p className="text-muted-foreground text-sm">
-        Tools, resources, and authorization status.
-      </p>
-    </SettingsPageHeader>
-  );
-}
+const ConnectorDetailsHeader = () => (
+  <SettingsPageHeader>
+    <h2 className="text-lg font-semibold">Connector details</h2>
+    <p className="text-muted-foreground text-sm">
+      Tools, resources, and authorization status.
+    </p>
+  </SettingsPageHeader>
+);
 
-function ConnectorDetailsBodyFallback() {
+const ConnectorDetailsBodyFallback = () => (
+  <div className="flex flex-col gap-3">
+    <Skeleton className="h-10 w-48" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-16 w-5/6" />
+  </div>
+);
+
+const ConnectorDetailsContent = async ({
+  params,
+}: {
+  params: Promise<{ connectorId: string }>;
+}) => {
+  const { connectorId } = await params;
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
   return (
-    <div className="flex flex-col gap-3">
-      <Skeleton className="h-10 w-48" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-16 w-5/6" />
-    </div>
+    <HydrateClient>
+      <SettingsPage>
+        <ConnectorDetailsHeader />
+        <Suspense fallback={<ConnectorDetailsBodyFallback />}>
+          <McpDetailsPage connectorId={connectorId} />
+        </Suspense>
+      </SettingsPage>
+    </HydrateClient>
   );
-}
+};
 
 const ConnectorDetailsPage = ({
   params,
@@ -48,23 +64,3 @@ const ConnectorDetailsPage = ({
 );
 
 export default ConnectorDetailsPage;
-
-async function ConnectorDetailsContent({
-  params,
-}: {
-  params: Promise<{ connectorId: string }>;
-}) {
-  const { connectorId } = await params;
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
-  return (
-    <HydrateClient>
-      <SettingsPage>
-        <ConnectorDetailsHeader />
-        <Suspense fallback={<ConnectorDetailsBodyFallback />}>
-          <McpDetailsPage connectorId={connectorId} />
-        </Suspense>
-      </SettingsPage>
-    </HydrateClient>
-  );
-}

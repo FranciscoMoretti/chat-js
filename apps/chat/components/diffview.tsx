@@ -72,16 +72,19 @@ class DiffTextNode extends TextNode {
     if (diffType) {
       let className = "";
       switch (diffType) {
-        case DiffType.Inserted:
+        case DiffType.Inserted: {
           className =
             "bg-green-100 text-green-700 dark:bg-green-500/70 dark:text-green-300";
           break;
-        case DiffType.Deleted:
+        }
+        case DiffType.Deleted: {
           className =
             "bg-red-100 line-through text-red-600 dark:bg-red-500/70 dark:text-red-300";
           break;
-        default:
+        }
+        default: {
           className = "";
+        }
       }
       element.className = className;
     }

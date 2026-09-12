@@ -85,7 +85,7 @@ export const processFilesForUpload = async (
   const pdfFiles: File[] = [];
   const stillOversized: File[] = [];
   const unsupportedFiles: File[] = [];
-  const maxBytes = options.maxBytes;
+  const { maxBytes } = options;
 
   for (const file of files) {
     if (file.type.startsWith("image/")) {

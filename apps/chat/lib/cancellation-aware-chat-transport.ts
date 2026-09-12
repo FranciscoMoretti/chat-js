@@ -97,11 +97,15 @@ const observeCancellation = ({
   target: GenerationCancellationTarget;
 }) => {
   if (!signal || signal.aborted) {
-    return () => undefined;
+    return () => {
+      // No listener was registered, so cleanup has no work.
+    };
   }
 
   const cancel = () => {
-    onCancel(target).catch(() => undefined);
+    onCancel(target).catch(() => {
+      // Cancellation is best effort; transport termination still proceeds.
+    });
   };
   signal.addEventListener("abort", cancel, { once: true });
 
