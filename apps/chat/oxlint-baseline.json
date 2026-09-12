@@ -225,7 +225,6 @@
         "lib/clone-messages.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/files/upload-prep.ts",
         "lib/gated-chat-transport.test.ts",
@@ -506,7 +505,6 @@
         "components/ui/form.tsx",
         "components/ui/scroll-area.tsx",
         "lib/app-chat-runtime.ts",
-        "lib/db/queries.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/thread-utils.ts"
       ],
@@ -1190,7 +1188,6 @@
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
         "lib/db/mcp-queries.ts",
-        "lib/db/queries.ts",
         "lib/db/schema.ts",
         "lib/draft-chat-submission.ts",
         "lib/env-schema.ts",
