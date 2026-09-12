@@ -6,21 +6,6 @@ import {
   configDescriptionSchema,
 } from "../../../../apps/chat/lib/config-schema";
 import { builtInGateways } from "../registry/gateways";
-
-function defaultsFor(input: {
-  gateway: string;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-}) {
-  const defaults =
-    input.gatewayDefaults ??
-    builtInGateways.find((item) => item.meta.chatjs.id === input.gateway)?.meta
-      .chatjs.defaults;
-  if (!defaults) {
-    throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
-  }
-  return defaults;
-}
-
 import type {
   AuthProvider,
   BuiltInToolKey,
@@ -29,11 +14,25 @@ import type {
   Gateway,
 } from "../types";
 
-function extractDescriptions(
+const defaultsFor = (input: {
+  gateway: string;
+  gatewayDefaults?: GatewayDefinition["defaults"];
+}) => {
+  const defaults =
+    input.gatewayDefaults ??
+    builtInGateways.find((item) => item.meta.chatjs.id === input.gateway)?.meta
+      .chatjs.defaults;
+  if (!defaults) {
+    throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
+  }
+  return defaults;
+};
+
+const extractDescriptions = (
   schema: z.ZodType,
   prefix = "",
   result = new Map<string, string>()
-): Map<string, string> {
+): Map<string, string> => {
   if (schema.description && prefix) {
     result.set(prefix, schema.description);
   }
@@ -55,16 +54,16 @@ function extractDescriptions(
   }
 
   return result;
-}
+};
 
 const descriptions = extractDescriptions(configDescriptionSchema);
 
-const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
 const formatKey = (key: string) =>
   VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
 
-function formatValue(value: unknown, indent: number): string {
+const formatValue = (value: unknown, indent: number): string => {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
 
@@ -79,7 +78,7 @@ function formatValue(value: unknown, indent: number): string {
     Number.isSafeInteger(value) &&
     Math.abs(value) >= 10_000
   ) {
-    return String(value).replaceAll(/(\d)(?=(\d{3})+$)/g, "$1_");
+    return String(value).replaceAll(/\d(?=(?:\d{3})+$)/gu, "$&_");
   }
   if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
@@ -108,13 +107,13 @@ function formatValue(value: unknown, indent: number): string {
   }
 
   return String(value);
-}
+};
 
-function generateConfig(
+const generateConfig = (
   obj: Record<string, unknown>,
   indent: number,
   pathPrefix: string
-): string {
+): string => {
   const spaces = "  ".repeat(indent);
 
   return Object.entries(obj)
@@ -142,9 +141,9 @@ function generateConfig(
       )},${comment}`;
     })
     .join("\n");
-}
+};
 
-function toConfigInput(input: {
+const toConfigInput = (input: {
   appName: string;
   appPrefix: string;
   appUrl: string;
@@ -155,7 +154,7 @@ function toConfigInput(input: {
   documentTypes: Record<DocumentTypeKey, boolean>;
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
-}) {
+}) => {
   const gatewayToolDefaults = defaultsFor(input).tools;
   const hasImageDefault =
     typeof (gatewayToolDefaults.image as { default?: unknown }).default ===
@@ -165,44 +164,44 @@ function toConfigInput(input: {
     "string";
 
   return {
-    appName: input.appName,
-    appPrefix: input.appPrefix,
-    appUrl: input.appUrl,
-    features: {
-      attachments: input.coreFeatures.attachments,
-      parallelResponses: input.coreFeatures.parallelResponses,
-    },
-    authentication: input.auth,
-    desktopApp: {
-      enabled: input.withElectron,
-    },
     ai: {
       gateway: input.gateway,
       tools: {
-        mcp: { enabled: input.coreFeatures.mcp },
-        followupSuggestions: {
-          enabled: input.coreFeatures.followupSuggestions,
-        },
+        codeExecution: { enabled: input.builtInTools.codeExecution },
+        deepResearch: { enabled: input.builtInTools.deepResearch },
         documents: {
           enabled: input.coreFeatures.documents,
           types: input.documentTypes,
         },
-        webSearch: { enabled: input.builtInTools.webSearch },
-        urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
-        deepResearch: { enabled: input.builtInTools.deepResearch },
-        codeExecution: { enabled: input.builtInTools.codeExecution },
+        followupSuggestions: {
+          enabled: input.coreFeatures.followupSuggestions,
+        },
         image: {
           enabled: input.builtInTools.imageGeneration && hasImageDefault,
         },
+        mcp: { enabled: input.coreFeatures.mcp },
+        urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
         video: {
           enabled: input.builtInTools.videoGeneration && hasVideoDefault,
         },
+        webSearch: { enabled: input.builtInTools.webSearch },
       },
     },
+    appName: input.appName,
+    appPrefix: input.appPrefix,
+    appUrl: input.appUrl,
+    authentication: input.auth,
+    desktopApp: {
+      enabled: input.withElectron,
+    },
+    features: {
+      attachments: input.coreFeatures.attachments,
+      parallelResponses: input.coreFeatures.parallelResponses,
+    },
   };
-}
+};
 
-export function buildConfigTs(input: {
+export const buildConfigTs = (input: {
   appName: string;
   appPrefix: string;
   appUrl: string;
@@ -213,7 +212,7 @@ export function buildConfigTs(input: {
   documentTypes: Record<DocumentTypeKey, boolean>;
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
-}): string {
+}): string => {
   const partial = toConfigInput(input);
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
@@ -243,4 +242,4 @@ ${generateConfig(fullConfig, 1, "")}
 
 export default config;
 `;
-}
+};
