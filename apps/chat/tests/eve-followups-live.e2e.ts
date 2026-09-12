@@ -6,6 +6,8 @@ import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+const RAINBOW_EXPLANATION =
+  /light.*(?:refract|reflect|bend|color)|(?:refract|reflect|bend|color).*light/is;
 
 test("native follow-ups survive reload, submit normally and preserve unsent composer content", async ({
   page,
@@ -14,13 +16,13 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await page.goto("/api/dev-login");
   const origin = new URL(page.url()).origin;
   await page.request.post("/api/chat-model", {
-    data: { model: "google/gemini-2.5-flash-lite" },
+    data: { model: "openai/gpt-5-nano" },
   });
   const response = await page.request.post("/api/agent-conversations", {
     headers: { origin },
     data: {
       operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
+      modelId: "openai/gpt-5-nano",
       message: "Explain in one sentence why rainbows appear.",
     },
   });
@@ -32,6 +34,14 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     exact: true,
   });
   await expect(related).toBeVisible({ timeout: 60_000 });
+  await expect(
+    page
+      .getByRole("log")
+      .locator(".is-assistant")
+      .first()
+      .locator(":scope > div")
+      .first()
+  ).toContainText(RAINBOW_EXPLANATION);
   const questions = await related.getByRole("button").allTextContents();
   expect(questions.length).toBeGreaterThanOrEqual(3);
   expect(questions.length).toBeLessThanOrEqual(5);
