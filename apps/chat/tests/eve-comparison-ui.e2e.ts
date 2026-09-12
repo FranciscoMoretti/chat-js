@@ -19,6 +19,7 @@ test("multi-model creation retains exact partial operation across navigation and
   page.setDefaultTimeout(10_000);
   const errors: string[] = [];
   const submissions: unknown[] = [];
+  const preferences: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const script = execFileSync("bun", ["tests/eve-comparison-ui.build.mjs"], {
     encoding: "utf8",
@@ -38,7 +39,14 @@ test("multi-model creation retains exact partial operation across navigation and
       return route.fulfill({ contentType: "text/javascript", body: script });
     }
     if (url.pathname === "/api/chat-model") {
-      return route.fulfill({ json: {} });
+      const model = route.request().postDataJSON().model;
+      preferences.push(model);
+      return route.fulfill({
+        json: {},
+        headers: {
+          "set-cookie": `chat-model=${model}; Path=/; Secure; SameSite=Lax`,
+        },
+      });
     }
     if (
       url.pathname === "/api/agent-response-groups" &&
@@ -149,6 +157,10 @@ test("multi-model creation retains exact partial operation across navigation and
     "Keep this unsent follow-up"
   );
   await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
+  expect(preferences.at(-1)).toBe(secondModel);
+  await expect(
+    page.getByText(`Follow-up model: ${secondModel}`, { exact: true })
+  ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({
     path: testInfo.outputPath("comparison-mobile.png"),
@@ -159,5 +171,21 @@ test("multi-model creation retains exact partial operation across navigation and
       () => document.documentElement.scrollWidth <= innerWidth
     )
   ).toBe(true);
+  await page
+    .getByRole("button", {
+      name: "Gemini 2.5 Flash Lite Open response",
+      exact: true,
+    })
+    .click();
+  await expect(page).toHaveURL(
+    `https://eve-comparison.test/chat/${firstConversation}`
+  );
+  expect(preferences.at(-1)).toBe(firstModel);
+  await expect(
+    page.getByText(`Follow-up model: ${firstModel}`, { exact: true })
+  ).toBeVisible();
+  await expect(page.getByLabel("Follow-up draft")).toHaveValue(
+    "Keep this unsent follow-up"
+  );
   expect(errors).toEqual([]);
 });

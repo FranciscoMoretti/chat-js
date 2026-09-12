@@ -12,6 +12,7 @@ import {
   eveResponseGroupResult,
 } from "@/lib/eve/response-group-contracts";
 import { useChatModels } from "@/providers/chat-models-provider";
+import { useModelChange } from "@/providers/default-model-provider";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveConversation } from "./eve-conversation";
 import {
@@ -31,6 +32,7 @@ export function EveComparisonConversation({
   header: ReactNode;
 }) {
   const { getModelById } = useChatModels();
+  const changeModel = useModelChange();
   const [group, setGroup] = useState(initialGroup);
   const [selectedOperationId, setSelectedOperationId] = useState(
     () =>
@@ -47,6 +49,23 @@ export function EveComparisonConversation({
   const selected = group.candidates.find(
     (candidate) => candidate.operationId === selectedOperationId
   );
+
+  async function openResponse(
+    candidate: Extract<
+      EveResponseGroupResult["candidates"][number],
+      { state: "bound" }
+    >
+  ) {
+    const model = getModelById(candidate.modelId);
+    if (model) {
+      await changeModel(model.id);
+    }
+    if (candidate.conversationId === conversationId) {
+      setSelectedOperationId(candidate.operationId);
+    } else {
+      window.location.assign(`/chat/${candidate.conversationId}`);
+    }
+  }
 
   async function recover(dispatch: boolean) {
     if (busy) {
@@ -81,7 +100,7 @@ export function EveComparisonConversation({
         (candidate) => candidate.operationId === selectedOperationId
       );
       if (recovered?.state === "bound") {
-        window.location.assign(`/chat/${recovered.conversationId}`);
+        await openResponse(recovered);
       }
     } catch (cause) {
       setError(
@@ -103,15 +122,16 @@ export function EveComparisonConversation({
           status:
             candidate.operationId === selectedOperationId ? status : undefined,
         }))}
-        onSelect={(operationId) => {
+        onSelect={async (operationId) => {
           const candidate = group.candidates.find(
             (value) => value.operationId === operationId
           );
           if (candidate?.state === "bound") {
-            if (candidate.conversationId === conversationId) {
-              setSelectedOperationId(operationId);
-            } else {
-              window.location.assign(`/chat/${candidate.conversationId}`);
+            setBusy(true);
+            try {
+              await openResponse(candidate);
+            } finally {
+              setBusy(false);
             }
           } else {
             setSelectedOperationId(operationId);

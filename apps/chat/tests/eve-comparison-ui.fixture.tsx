@@ -10,6 +10,7 @@ import {
   ownerId,
   partialGroup,
   secondConversation,
+  secondModel,
 } from "./eve-comparison-data.fixture";
 
 const root = document.getElementById("root");
@@ -20,7 +21,13 @@ const comparison = location.pathname.startsWith("/chat/");
 const second = location.pathname.endsWith(secondConversation);
 createRoot(root).render(
   <TooltipProvider>
-    <DefaultModelProvider defaultModel={firstModel}>
+    <DefaultModelProvider
+      defaultModel={
+        document.cookie.split("; ").includes(`chat-model=${secondModel}`)
+          ? secondModel
+          : firstModel
+      }
+    >
       {comparison ? (
         <EveComparisonConversation
           conversationId={second ? secondConversation : firstConversation}

@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
 import { models } from "../lib/ai/models.generated";
+import { useDefaultModel } from "../providers/default-model-provider";
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
 
 const fixtureModels = models
@@ -46,6 +47,7 @@ export function EveConversation({
   onStatusChange?: (status: "ready") => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
 }) {
+  const model = useDefaultModel();
   const draft = useEveComposerDraft(ownerId, draftScopeId);
   const [pending, setPending] = useState(false);
   useEffect(() => onStatusChange?.("ready"), [onStatusChange]);
@@ -59,6 +61,7 @@ export function EveConversation({
       {header}
       <section className="mx-auto max-w-3xl space-y-4 p-4">
         <p>Selected native session: {sessionId}</p>
+        <p>Follow-up model: {model}</p>
         <label>
           Follow-up draft
           <textarea

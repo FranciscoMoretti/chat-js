@@ -36,7 +36,15 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     throw new Error("Native comparison did not bind both candidates.");
   }
   expect(first.sessionId).not.toBe(second.sessionId);
+  await page.context().addCookies([
+    {
+      name: "chat-model",
+      value: "openai/gpt-5-mini",
+      url: new URL(page.url()).origin,
+    },
+  ]);
   await page.goto(`/chat/${first.conversationId}`);
+  await expect(page.getByTestId("model-selector")).toContainText("GPT-5 mini");
   await expect(page.getByText(marker, { exact: true })).toBeVisible({
     timeout: 60_000,
   });
@@ -64,7 +72,13 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
   await expect(page.getByLabel("Message", { exact: true })).toHaveText(
     "Keep this unsent comparison follow-up"
   );
+  await expect(page.getByTestId("model-selector")).toContainText(
+    "Gemini 2.5 Flash Lite"
+  );
   await page.reload();
+  await expect(page.getByTestId("model-selector")).toContainText(
+    "Gemini 2.5 Flash Lite"
+  );
   await expect(page.getByText(marker, { exact: true })).toBeVisible();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Message", { exact: true })).toHaveText(
