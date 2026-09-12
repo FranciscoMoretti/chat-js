@@ -1,4 +1,5 @@
 import { convertToModelMessages, isStepCount, streamText } from "ai";
+import type { StopCondition } from "ai";
 
 import { addExplicitToolRequestToMessages } from "@/app/(chat)/api/chat/add-explicit-tool-request-to-messages";
 import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
@@ -15,7 +16,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { replaceFilePartUrlByBinaryDataInMessages } from "@/lib/utils/download-assets";
 import { getMcpTools, getTools } from "@/tools/platform/tools";
 
-export async function createCoreChatAgent({
+export const createCoreChatAgent = async ({
   system,
   userMessage,
   previousMessages,
@@ -45,52 +46,42 @@ export async function createCoreChatAgent({
   onChunk?: () => void;
   mcpConnectors?: McpConnector[];
   costAccumulator: CostAccumulator;
-}) {
+}) => {
   const modelDefinition = await getAppModelDefinition(selectedModelId);
-
   // Build message thread
   const messages = [...previousMessages, userMessage].slice(-5);
-
   // Process conversation history
   const lastGeneratedImage = getRecentGeneratedImage(messages);
-
   addExplicitToolRequestToMessages(messages, explicitlyRequestedTools);
-
   // Filter reasoning parts (cross-model compatibility)
   const filteredMessages = filterPartsForLLM(messages.slice(-5));
-
   // Convert to model messages, ignoring data-* parts (drop them)
   const modelMessages = await convertToModelMessages(filteredMessages, {
     convertDataPart: (_part): undefined => undefined,
   });
-
   // Replace file URLs with binary data
   const contextForLLM =
     await replaceFilePartUrlByBinaryDataInMessages(modelMessages);
-
   // Get MCP tools if connectors are configured
   const { tools: mcpTools, cleanup: mcpCleanup } = await getMcpTools({
     connectors: mcpConnectors,
   });
-
   // Get base tools
   const baseTools = getTools({
+    contextForLLM,
+    costAccumulator,
     dataStream,
+    messageId,
+    selectedModel: modelDefinition.apiModelId,
     session: {
       user: userId ? { id: userId } : undefined,
     },
-    contextForLLM,
-    messageId,
-    selectedModel: modelDefinition.apiModelId,
-    costAccumulator,
   });
-
   // Merge base tools with MCP tools
   const allTools = {
     ...baseTools,
     ...mcpTools,
   };
-
   // Compute final activeTools for streamText
   let activeBaseTools = Object.keys(baseTools) as ToolName[];
   let activeMcpTools = Object.keys(mcpTools) as ToolName[];
@@ -114,7 +105,6 @@ export async function createCoreChatAgent({
   const activeTools = [
     ...new Set([...activeBaseTools, ...activeMcpTools]),
   ] as (keyof typeof allTools)[];
-
   // Resolve async model config before streamText to ensure cleanup on failure
   let model: Awaited<ReturnType<typeof getLanguageModel>>;
   let providerOptions: Awaited<ReturnType<typeof getModelProviderOptions>>;
@@ -127,67 +117,70 @@ export async function createCoreChatAgent({
     await mcpCleanup();
     throw error;
   }
-
+  const stopWhen: StopCondition<typeof allTools>[] = [
+    isStepCount(5),
+    ({ steps }) =>
+      steps.some((step) => {
+        const toolResults = step.content;
+        // Don't stop if the tool result is a clarifying question
+        return toolResults.some(
+          (toolResult) =>
+            toolResult.type === "tool-result" &&
+            toolResult.toolName === "deepResearch" &&
+            (
+              toolResult.output as {
+                format?: string;
+              }
+            ).format === "report"
+        );
+      }),
+  ];
+  const transform = markdownJoinerTransform<typeof allTools>();
   const result = streamText({
-    model,
+    abortSignal,
+    activeTools,
+    experimental_transform: transform,
     instructions: system,
     messages: contextForLLM,
-    stopWhen: [
-      isStepCount(5),
-      ({ steps }) => {
-        return steps.some((step) => {
-          const toolResults = step.content;
-          // Don't stop if the tool result is a clarifying question
-          return toolResults.some(
-            (toolResult) =>
-              toolResult.type === "tool-result" &&
-              toolResult.toolName === "deepResearch" &&
-              (toolResult.output as { format?: string }).format === "report"
-          );
-        });
-      },
-    ],
-    activeTools,
-    experimental_transform: markdownJoinerTransform(),
-    telemetry: {
-      integrations: chatTelemetry,
-      isEnabled: true,
-      functionId: "chat-response",
+    model,
+    onChunk,
+    onEnd: async () => {
+      // Release MCP clients after generation completes.
+      await mcpCleanup();
     },
-    tools: allTools,
+    onError: (error) => {
+      onError?.(error);
+    },
     prepareStep: () => ({
       toolsContext: Object.fromEntries(
         Object.keys(allTools).map((name) => [
           name,
           {
-            dataStream,
-            costAccumulator,
-            writeTopLevelUpdates: true,
             attachments: userMessage.parts.filter(
               (part) => part.type === "file"
             ),
+            costAccumulator,
+            dataStream,
             lastGeneratedImage,
             selectedModel: selectedModelId,
+            writeTopLevelUpdates: true,
           },
         ])
       ),
     }),
-    onError: (error) => {
-      onError?.(error);
-    },
-    onChunk,
-    abortSignal,
     providerOptions,
-    onEnd: async () => {
-      // Release MCP clients after generation completes.
-      await mcpCleanup();
+    stopWhen,
+    telemetry: {
+      functionId: "chat-response",
+      integrations: chatTelemetry,
+      isEnabled: true,
     },
+    tools: allTools,
   });
-
   return {
-    result,
     contextForLLM,
-    modelDefinition,
     mcpCleanup,
+    modelDefinition,
+    result,
   };
-}
+};
