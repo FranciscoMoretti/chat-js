@@ -35,11 +35,10 @@ export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
         thread?: never;
       });
 
-function hasSuppliedThread<TMessage extends UIMessage>(
+const hasSuppliedThread = <TMessage extends UIMessage>(
   options: UseThreadOptions<TMessage>
-): options is ExternalThreadOptions<TMessage> {
-  return "thread" in options && options.thread !== undefined;
-}
+): options is ExternalThreadOptions<TMessage> =>
+  "thread" in options && options.thread !== undefined;
 
 export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
   activeRuns: ThreadRun[];
@@ -80,10 +79,13 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
     tree: TreeHelpers<TMessage>;
   };
 
-function useThreadSnapshot<TMessage extends UIMessage>(
+// The snapshot cache must be updated synchronously when its thread changes so
+// useSyncExternalStore subscribes to, and reads from, the same thread in a render.
+// oxlint-disable react/refs
+const useThreadSnapshot = <TMessage extends UIMessage>(
   thread: AbstractThread<TMessage>,
   throttleWaitMs?: number
-) {
+) => {
   const stateRef = useRef({
     snapshot: thread.getSnapshot(),
     thread,
@@ -102,7 +104,9 @@ function useThreadSnapshot<TMessage extends UIMessage>(
         stateRef.current.snapshot = thread.getSnapshot();
         listener();
       };
-      if (!throttleWaitMs) return thread.subscribe(publish);
+      if (!throttleWaitMs) {
+        return thread.subscribe(publish);
+      }
 
       let lastCall = 0;
       let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -113,7 +117,9 @@ function useThreadSnapshot<TMessage extends UIMessage>(
           publish();
           return;
         }
-        if (timeout) return;
+        if (timeout) {
+          return;
+        }
         timeout = setTimeout(() => {
           timeout = undefined;
           lastCall = Date.now();
@@ -124,7 +130,9 @@ function useThreadSnapshot<TMessage extends UIMessage>(
       const unsubscribe = thread.subscribe(notify);
       return () => {
         unsubscribe();
-        if (timeout) clearTimeout(timeout);
+        if (timeout) {
+          clearTimeout(timeout);
+        }
       };
     },
     [thread, throttleWaitMs]
@@ -132,12 +140,16 @@ function useThreadSnapshot<TMessage extends UIMessage>(
   const getSnapshot = useCallback(() => stateRef.current.snapshot, []);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+};
+// oxlint-enable react/refs
 
-function useThreadField<
+const useThreadField = <
   TMessage extends UIMessage,
   TKey extends keyof ThreadStateSnapshot<TMessage>,
->(thread: AbstractThread<TMessage>, key: TKey) {
+>(
+  thread: AbstractThread<TMessage>,
+  key: TKey
+) => {
   const subscribe = useCallback(
     (listener: () => void) => thread.subscribe(listener),
     [thread]
@@ -147,11 +159,14 @@ function useThreadField<
     [thread, key]
   );
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
+};
 
-export function useThread<TMessage extends UIMessage = UIMessage>(
+// The hook deliberately keeps the current thread and callback handlers in refs:
+// changing an external thread or id must take effect during the same render.
+// oxlint-disable react/refs
+export const useThread = <TMessage extends UIMessage = UIMessage>(
   options: UseThreadOptions<TMessage> = {}
-): UseThreadHelpers<TMessage> {
+): UseThreadHelpers<TMessage> => {
   const hasExternalThread = hasSuppliedThread(options);
   const callbacksRef = useRef<ThreadCallbacks<TMessage>>(
     hasExternalThread
@@ -204,7 +219,9 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
   const treeStatus = useThreadField(thread, "treeStatus");
 
   useEffect(() => {
-    if (options.resume) threadRef.current?.resumeStream();
+    if (options.resume) {
+      threadRef.current?.resumeStream();
+    }
   }, [options.resume]);
 
   const setMessages = useCallback<UseChatHelpers<TMessage>["setMessages"]>(
@@ -255,4 +272,5 @@ export function useThread<TMessage extends UIMessage = UIMessage>(
       stopRunForMessage: (messageId) => thread.stopRunForMessage(messageId),
     },
   };
-}
+};
+// oxlint-enable react/refs
