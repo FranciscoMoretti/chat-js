@@ -36,10 +36,11 @@ type MultimodalImageModel =
       : never
     : never;
 
-export type GatewayImageModelIdMap = Record<
-  GatewayType,
-  Parameters<InstalledGateway["createImageModel"]>[0] | MultimodalImageModel
->;
+export type GatewayImageModelIdMap = {
+  [K in GatewayType]:
+    | Parameters<InstalledGateway["createImageModel"]>[0]
+    | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
+};
 
 export type GatewayVideoModelIdMap = Record<
   GatewayType,
