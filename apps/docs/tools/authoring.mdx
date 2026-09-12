@@ -51,7 +51,7 @@ Every outer requirement must be satisfied. Within one requirement, `options` con
 
 ## Selecting tools for app features
 
-Search, code-execution, URL retrieval, and image generation items are standard AI SDK tools. Their metadata can use `slot: "webSearch"`, `slot: "codeExecution"`, `slot: "retrieveUrl"`, or `slot: "generateImage"` to select the model-facing name and feature toggle. This does not impose an input schema, output schema, or renderer. Only one item per selection can be installed at a time.
+Search, code-execution, URL retrieval, image generation, and video generation items are standard AI SDK tools. Their metadata can use `slot: "webSearch"`, `slot: "codeExecution"`, `slot: "retrieveUrl"`, `slot: "generateImage"`, or `slot: "generateVideo"` to select the model-facing name and feature toggle. This does not impose an input schema, output schema, or renderer. Only one item per selection can be installed at a time.
 
 The following example is the complete installed `tools/chatjs/my-sandbox/chatjs.json` descriptor. In the published shadcn registry item, put this same object under `meta.chatjs`, including `slot`. Do not put these fields at the registry item root.
 

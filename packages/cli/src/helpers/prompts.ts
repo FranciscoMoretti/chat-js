@@ -81,22 +81,6 @@ const BUILT_IN_TOOL_HINTS: Record<BuiltInToolKey, string> = {
   videoGeneration: "Generate videos inside chat",
 };
 
-function isSupportedBuiltInTool(
-  gateway: GatewayDefinition,
-  key: BuiltInToolKey
-): boolean {
-  const gatewayToolDefaults = gateway.defaults.tools;
-
-  if (key === "videoGeneration") {
-    return (
-      gateway.capabilities.video &&
-      typeof gatewayToolDefaults.video.default === "string"
-    );
-  }
-
-  return true;
-}
-
 const AUTH_LABELS: Record<AuthProvider, string> = {
   google: "Google OAuth",
   github: "GitHub OAuth",
@@ -361,9 +345,7 @@ export async function promptAssistantTools(
   const installableItems = registryItems.filter(
     (item) => !item.hidden && !item.meta?.chatjs?.slot
   );
-  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS.filter((key) =>
-    isSupportedBuiltInTool(gateway, key)
-  );
+  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
 
   if (skipPrompt) {
     return {
@@ -562,6 +544,31 @@ export async function promptImageGenerationTool(
   if (choice !== "external") return choice;
   const address = await text({
     message: "image generation tool registry address:",
+    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+  });
+  handleCancel(address);
+  return String(address).trim();
+}
+
+export async function promptVideoGenerationTool(
+  skipPrompt: boolean
+): Promise<string> {
+  if (skipPrompt) return "generate-video";
+  const choice = await select({
+    message: "Which video generation tool should chat use?",
+    options: [
+      {
+        value: "generate-video",
+        label: "Selected AI gateway",
+        hint: "Uses your gateway and file storage",
+      },
+      { value: "external", label: "External registry item" },
+    ],
+  });
+  handleCancel(choice);
+  if (choice !== "external") return choice;
+  const address = await text({
+    message: "video generation tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);

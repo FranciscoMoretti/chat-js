@@ -11,7 +11,6 @@ import type { ChatTools } from "@/lib/ai/types";
 
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
-import { GenerateVideo } from "./generate-video";
 import { ReadDocument } from "./read-document";
 
 interface ToolPartProps {
@@ -64,10 +63,6 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
 
   if (type === "tool-readDocument") {
     return <ReadDocument tool={part} />;
-  }
-
-  if (type === "tool-generateVideo") {
-    return <GenerateVideo tool={part} />;
   }
 
   if (type === "tool-deepResearch") {

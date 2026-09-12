@@ -39,6 +39,10 @@ function checkGenerated(content: string | null, path: string) {
 }
 
 const selections = {
+  generateVideo: {
+    file: "video-generation",
+    requirement: "videoGenerationEnvRequirement",
+  },
   generateImage: {
     file: "image-generation",
     requirement: "imageGenerationEnvRequirement",

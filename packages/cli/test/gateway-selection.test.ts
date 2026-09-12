@@ -185,6 +185,37 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
         ],
       });
     }
+    if (path === "/external-video.json") {
+      const definition = {
+        contractVersion: 1,
+        kind: "tool",
+        id: "acme-video",
+        slot: "generateVideo",
+        toolExport: "animate",
+        envRequirements: [{ options: [["ACME_VIDEO_KEY"]] }],
+      };
+      return Response.json({
+        name: "acme-video",
+        type: "registry:item",
+        dependencies: ["ai", "zod"],
+        meta: { chatjs: definition },
+        files: [
+          {
+            path: "tool.ts",
+            target: "~/tools/chatjs/acme-video/tool.ts",
+            type: "registry:file",
+            content:
+              'import { tool } from "ai"; import { z } from "zod"; export const animate = tool({ inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
+          },
+          {
+            path: "chatjs.json",
+            target: "~/tools/chatjs/acme-video/chatjs.json",
+            type: "registry:file",
+            content: JSON.stringify(definition),
+          },
+        ],
+      });
+    }
     if (path === "/external-image.json") {
       const definition = {
         contractVersion: 1,
@@ -338,6 +369,8 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--no-electron",
       ...(gateway === "vercel"
         ? [
+            "--video-generation-tool",
+            "generate-video",
             "--image-generation-tool",
             "generate-image",
             "--search-tool",
@@ -349,6 +382,8 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           ]
         : gateway === "acme"
           ? [
+              "--video-generation-tool",
+              `http://127.0.0.1:${registryServer.port}/external-video.json`,
               "--image-generation-tool",
               `http://127.0.0.1:${registryServer.port}/external-image.json`,
               "--url-retrieval-tool",
@@ -381,6 +416,19 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         /image:\s*{\s*enabled:\s*true/
       );
     }
+    expect(
+      await Bun.file(join(cwd, "tools/platform/generate-video.ts")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "components/part/generate-video.tsx")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "tools/chatjs/generate-video/tool.ts")).exists()
+    ).toBe(gateway === "vercel");
+    if (gateway === "vercel" || gateway === "acme")
+      expect(await readFile(join(cwd, "chat.config.ts"), "utf8")).toMatch(
+        /video:\s*{\s*enabled:\s*true/
+      );
     const manifestPath = join(cwd, "package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
     if (gateway === "vercel") {
@@ -443,6 +491,15 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
       expect(
         await readFile(
+          join(cwd, "tools/chatjs/video-generation-config.ts"),
+          "utf8"
+        )
+      ).toContain("ACME_VIDEO_KEY");
+      expect(
+        await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf8")
+      ).not.toContain("tool-generateVideo");
+      expect(
+        await readFile(
           join(cwd, "tools/chatjs/image-generation-config.ts"),
           "utf8"
         )
@@ -482,6 +539,8 @@ assert.ok(tools.webSearch.execute);
 const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
 assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
 assert.ok(tools.retrieveUrl.execute);
+assert.ok(tools.generateVideo.execute);
+assert.deepEqual(await tools.generateVideo.execute({subject: "ocean"}, {toolCallId: "video", messages: [], context: {}}), {asset: "ocean"});
 assert.ok(tools.generateImage.execute);
 assert.deepEqual(await tools.generateImage.execute({subject: "mountains"}, {toolCallId: "image", messages: [], context: {}}), {asset: "mountains"});
 const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: {}});
@@ -608,7 +667,7 @@ ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true, default: "video" } } }).success, false);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true } } }).success, true);`
 }
 
 `

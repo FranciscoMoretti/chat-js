@@ -157,7 +157,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain('gateway: "openai-compatible"');
     expect(output).toContain("image: {");
     expect(output).toContain('default: "gpt-image-1"');
-    expect(output).toMatch(/video:\s*{\s*enabled:\s*false,/m);
+    expect(output).toMatch(/video:\s*{\s*enabled:\s*true,/m);
   });
 });
 

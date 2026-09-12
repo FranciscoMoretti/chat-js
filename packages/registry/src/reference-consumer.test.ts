@@ -14,6 +14,7 @@ const referenceItems = new Set([
   "get-weather",
   "retrieve-url",
   "generate-image",
+  "generate-video",
   "toolkit-renderer",
 ]);
 const packageRoot = resolve(import.meta.dir, "..");

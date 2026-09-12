@@ -26,6 +26,7 @@ import {
   promptSearchTool,
   promptUrlRetrievalTool,
   promptImageGenerationTool,
+  promptVideoGenerationTool,
   promptCodeExecutionTool,
 } from "../helpers/prompts";
 import {
@@ -113,6 +114,7 @@ const createOptionsSchema = z.object({
   searchTool: z.string().optional(),
   urlRetrievalTool: z.string().optional(),
   imageGenerationTool: z.string().optional(),
+  videoGenerationTool: z.string().optional(),
   codeExecutionTool: z.string().optional(),
 });
 
@@ -130,6 +132,10 @@ export const create = new Command()
   .option(
     "--image-generation-tool <item>",
     "image generation tool name or registry address"
+  )
+  .option(
+    "--video-generation-tool <item>",
+    "video generation tool name or registry address"
   )
   .description("scaffold a new ChatJS chat application")
   .argument("[directory]", "target directory for the project")
@@ -229,6 +235,12 @@ export const create = new Command()
         assistantTools.builtInTools.webSearch = true;
       const selections = [
         {
+          source: options.videoGenerationTool,
+          feature: "videoGeneration",
+          slot: "generateVideo",
+          prompt: promptVideoGenerationTool,
+        },
+        {
           source: options.imageGenerationTool,
           feature: "imageGeneration",
           slot: "generateImage",
@@ -311,9 +323,12 @@ export const create = new Command()
               "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
             );
           }
-          if (existsSync(join(targetDir, "tools/platform/generate-image.ts"))) {
+          if (
+            existsSync(join(targetDir, "tools/platform/generate-image.ts")) ||
+            existsSync(join(targetDir, "tools/platform/generate-video.ts"))
+          ) {
             throw new Error(
-              "This ChatJS clone uses the legacy image tool factory. Update its image registry integration before using create --from-git."
+              "This ChatJS clone uses legacy media tool factories. Update its image/video registry integration before using create --from-git."
             );
           }
           // create owns the new clone's selected gateway. Remove this one slot
@@ -348,6 +363,7 @@ export const create = new Command()
               metadata.slot === "codeExecution" ||
               metadata.slot === "retrieveUrl" ||
               metadata.slot === "generateImage" ||
+              metadata.slot === "generateVideo" ||
               (metadata.id === "retrieve-url" &&
                 metadata.toolExport === "retrieveUrl")
             )

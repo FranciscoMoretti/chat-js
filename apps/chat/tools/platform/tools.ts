@@ -17,7 +17,6 @@ import { createTextDocumentTool } from "./documents/create-text-document";
 import { editCodeDocumentTool } from "./documents/edit-code-document";
 import { editSheetDocumentTool } from "./documents/edit-sheet-document";
 import { editTextDocumentTool } from "./documents/edit-text-document";
-import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
 
@@ -47,6 +46,7 @@ export function getTools({
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
       ([name]) =>
+        (name !== "generateVideo" || config.ai.tools.video.enabled) &&
         (name !== "generateImage" || config.ai.tools.image.enabled) &&
         (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
         (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
@@ -98,11 +98,6 @@ export function getTools({
             messages: contextForLLM,
             costAccumulator,
           }),
-        }
-      : {}),
-    ...(config.ai.tools.video.enabled
-      ? {
-          generateVideo: generateVideoTool({ selectedModel, costAccumulator }),
         }
       : {}),
     ...enabledInstalledTools,

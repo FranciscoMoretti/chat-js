@@ -17,7 +17,13 @@ export const toolDefinitionSchema = z.object({
   toolExport: identifier,
   rendererExport: identifier.optional(),
   slot: z
-    .enum(["webSearch", "codeExecution", "retrieveUrl", "generateImage"])
+    .enum([
+      "webSearch",
+      "codeExecution",
+      "retrieveUrl",
+      "generateImage",
+      "generateVideo",
+    ])
     .optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
 });

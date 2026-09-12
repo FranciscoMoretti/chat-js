@@ -9,11 +9,7 @@ import type {
 
 export type { GatewayType } from "@/lib/ai/gateways/registry";
 
-import {
-  gatewayCapabilities,
-  gatewayModelDefaults,
-  gatewayType,
-} from "./ai/gateway-model-defaults";
+import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
 
 // Helper to create typed model ID schemas
@@ -130,16 +126,10 @@ function createAiSchema<G extends GatewayType>(g: G) {
           enabled: z.boolean().describe("Enable the installed image tool"),
           default: gatewayImageModelId<G>().optional(),
         }),
-        video: z.discriminatedUnion("enabled", [
-          z.object({
-            enabled: z.literal(true),
-            default: gatewayVideoModelId<G>(),
-          }),
-          z.object({
-            enabled: z.literal(false),
-            default: gatewayVideoModelId<G>().optional(),
-          }),
-        ]),
+        video: z.object({
+          enabled: z.boolean().describe("Enable the installed video tool"),
+          default: gatewayVideoModelId<G>().optional(),
+        }),
         deepResearch: deepResearchToolConfigSchema.extend({
           enabled: z.boolean().describe("Requires web search access"),
           defaultModel: gatewayModelId<G>(),
@@ -152,22 +142,10 @@ function createAiSchema<G extends GatewayType>(g: G) {
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
-export const aiConfigSchema = installedGatewaySchema
-  .superRefine((ai, ctx) => {
-    for (const kind of ["video"] as const) {
-      if (ai.tools[kind].enabled && !gatewayCapabilities[kind]) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["tools", kind, "enabled"],
-          message: `The installed gateway does not support ${kind} generation.`,
-        });
-      }
-    }
-  })
-  .default({
-    gateway: gatewayType,
-    ...gatewayModelDefaults,
-  });
+export const aiConfigSchema = installedGatewaySchema.default({
+  gateway: gatewayType,
+  ...gatewayModelDefaults,
+});
 
 export const pricingConfigSchema = z.object({
   currency: z.string().optional(),
@@ -443,13 +421,10 @@ type ImageToolInputFor<G extends GatewayType> = {
   enabled?: boolean;
   default?: GatewayImageModelIdMap[G];
 };
-type VideoToolInputFor<G extends GatewayType> = [
-  GatewayVideoModelIdMap[G],
-] extends [never]
-  ? { enabled?: false }
-  :
-      | { enabled: true; default: GatewayVideoModelIdMap[G] }
-      | { enabled?: false; default?: GatewayVideoModelIdMap[G] };
+type VideoToolInputFor<G extends GatewayType> = {
+  enabled?: boolean;
+  default?: GatewayVideoModelIdMap[G];
+};
 type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
   enabled: boolean;
   default: GatewayModelIdMap[G];

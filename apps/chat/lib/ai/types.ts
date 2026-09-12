@@ -13,7 +13,6 @@ import type { createTextDocumentTool } from "@/tools/platform/documents/create-t
 import type { editCodeDocumentTool } from "@/tools/platform/documents/edit-code-document";
 import type { editSheetDocumentTool } from "@/tools/platform/documents/edit-sheet-document";
 import type { editTextDocumentTool } from "@/tools/platform/documents/edit-text-document";
-import type { generateVideoTool as generateVideoToolFactory } from "@/tools/platform/generate-video";
 import type { readDocument } from "@/tools/platform/read-document";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
@@ -159,9 +158,6 @@ type editSheetDocumentToolType = InferUITool<
 >;
 type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-type generateVideoTool = InferUITool<
-  ReturnType<typeof generateVideoToolFactory>
->;
 
 export type ChatTools = {
   createCodeDocument: createCodeDocumentToolType;
@@ -171,7 +167,6 @@ export type ChatTools = {
   editCodeDocument: editCodeDocumentToolType;
   editSheetDocument: editSheetDocumentToolType;
   editTextDocument: editTextDocumentToolType;
-  generateVideo: generateVideoTool;
   readDocument: readDocumentTool;
 } & InstalledTools;
 
