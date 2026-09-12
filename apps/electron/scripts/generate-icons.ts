@@ -1,12 +1,12 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import path from "node:path";
 
 import * as png2icons from "png2icons";
 
-const root = resolve(__dirname, "..");
-const src = join(root, "icon.png");
-const buildDir = join(root, "build");
-const outputBase = join(buildDir, "icon");
+const root = path.resolve(__dirname, "..");
+const src = path.join(root, "icon.png");
+const buildDir = path.join(root, "build");
+const outputBase = path.join(buildDir, "icon");
 
 mkdirSync(buildDir, { recursive: true });
 

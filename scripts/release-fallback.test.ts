@@ -11,7 +11,8 @@ const workflow = Bun.YAML.parse(
   ).text()
 );
 const step = workflow.jobs.release.steps.find(
-  (step: { name?: string }) => step.name === "Publish first-time packages"
+  (candidate: { name?: string }) =>
+    candidate.name === "Publish first-time packages"
 );
 const fallback = step.run.slice(step.run.indexOf("publish_if_missing()"));
 
@@ -75,11 +76,11 @@ test("retry repairs release metadata without republishing after verification fai
     expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
     expect(run().exitCode).toBe(0);
     const calls = await Bun.file(join(directory, "calls")).text();
-    expect(calls.match(/^npm publish /gm)).toHaveLength(1);
-    expect(calls.match(/^git tag /gm)).toHaveLength(1);
-    expect(calls.match(/^gh release create /gm)).toHaveLength(1);
+    expect(calls.match(/^npm publish /gmu)).toHaveLength(1);
+    expect(calls.match(/^git tag /gmu)).toHaveLength(1);
+    expect(calls.match(/^gh release create /gmu)).toHaveLength(1);
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, { force: true, recursive: true });
   }
 });
 
@@ -100,9 +101,9 @@ test("retry pushes an existing local tag after the first push fails", async () =
     expect(await Bun.file(join(directory, "released")).exists()).toBe(true);
     const calls = await Bun.file(join(directory, "calls")).text();
     expect(calls).not.toContain("npm publish");
-    expect(calls.match(/^git push /gm)).toHaveLength(2);
+    expect(calls.match(/^git push /gmu)).toHaveLength(2);
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, { force: true, recursive: true });
   }
 });
 
@@ -114,7 +115,9 @@ for (const lookupFails of [false, true]) {
     async () => {
       const directory = await mkdtemp(join(tmpdir(), "chatjs-release-test-"));
       try {
-        if (lookupFails) await Bun.write(join(directory, "fail-lookup"), "");
+        if (lookupFails) {
+          await Bun.write(join(directory, "fail-lookup"), "");
+        }
         const result = Bun.spawnSync(
           ["bash", "-euo", "pipefail", "-c", services + fallback],
           { cwd: directory }
@@ -127,7 +130,7 @@ for (const lookupFails of [false, true]) {
           !lookupFails
         );
       } finally {
-        await rm(directory, { recursive: true, force: true });
+        await rm(directory, { force: true, recursive: true });
       }
     }
   );

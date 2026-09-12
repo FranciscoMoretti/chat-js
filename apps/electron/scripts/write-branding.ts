@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
 
 import { config } from "@/lib/config";
 
@@ -8,9 +8,9 @@ const orgEmail =
   organization.contact?.privacyEmail || organization.contact?.legalEmail;
 
 writeFileSync(
-  resolve(__dirname, "..", "branding.json"),
+  path.resolve(__dirname, "..", "branding.json"),
   JSON.stringify(
-    { appName, appPrefix, appUrl, orgName: organization.name, orgEmail },
+    { appName, appPrefix, appUrl, orgEmail, orgName: organization.name },
     null,
     2
   )

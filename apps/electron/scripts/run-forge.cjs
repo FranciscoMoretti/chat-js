@@ -42,8 +42,8 @@ const result = spawnSync(
   process.execPath,
   [forgeEntrypoint, ...process.argv.slice(2)],
   {
-    stdio: "inherit",
     env: process.env,
+    stdio: "inherit",
   }
 );
 

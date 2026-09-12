@@ -52,7 +52,7 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      [...document.images].map((image) => image.decode().catch(() => undefined))
+      [...document.images].map((image) => image.decode().catch(() => {}))
     );
     await document.fonts.ready;
     await takeSnapshot(page.name);

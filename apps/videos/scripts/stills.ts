@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import path from "node:path";
 
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
@@ -8,10 +8,10 @@ import { renderStill, selectComposition } from "@remotion/renderer";
 import { webpackOverride } from "../webpack";
 
 const serveUrl = await bundle({
-  entryPoint: resolve("src/index.tsx"),
+  entryPoint: path.resolve("src/index.tsx"),
   webpackOverride,
 });
-const composition = await selectComposition({ serveUrl, id: "ThreadsLaunch" });
+const composition = await selectComposition({ id: "ThreadsLaunch", serveUrl });
 await mkdir("out/stills", { recursive: true });
 // One representative capture per meaningful state, plus an out-of-order seek.
 const seen = new Set<number>();
@@ -21,10 +21,10 @@ for (const second of [
 ]) {
   const output = `out/stills/${second}${seen.has(second) ? "-seek" : ""}.png`;
   await renderStill({
-    serveUrl,
     composition,
     frame: Math.round(second * composition.fps),
     output,
+    serveUrl,
   });
   if (seen.has(second)) {
     assert.deepEqual(
