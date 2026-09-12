@@ -18,7 +18,10 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { createEveGuestCredential } from "../lib/eve/guest-credential";
+import {
+  createEveGuestCredential,
+  eveGuestOwnerId,
+} from "../lib/eve/guest-credential";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -270,4 +273,97 @@ test("guest provider accounting survives expiry and replay without creating mone
   expect(
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
+});
+
+test("first admission creates one guest and reserves once across different IPs", async () => {
+  const credential = createEveGuestCredential();
+  const ownerId = eveGuestOwnerId(credential.tokenHash);
+  owners.push(ownerId);
+  const input = request(ownerId);
+  const bootstrap = {
+    tokenHash: credential.tokenHash,
+    messageLimit: 2,
+    expiresAt: new Date(Date.now() + 60_000),
+  };
+  const attempts = await Promise.all(
+    Array.from({ length: 6 }, () => {
+      const other = request(ownerId);
+      return reserveEveGuestMessage(
+        { ...input, ipHash: other.ipHash },
+        bootstrap
+      );
+    })
+  );
+  expect(
+    attempts.filter((result) => result.status === "reserved")
+  ).toHaveLength(1);
+  expect(attempts.filter((result) => result.status === "replay")).toHaveLength(
+    5
+  );
+  expect((await findEveGuest(credential.tokenHash))?.remainingMessages).toBe(1);
+  expect(await db.select().from(user).where(eq(user.id, ownerId))).toHaveLength(
+    1
+  );
+  expect(
+    await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
+  ).toEqual([]);
+});
+
+test("denied first admission creates no account or quota rows", async () => {
+  for (const denial of ["rate", "balance"] as const) {
+    const credential = createEveGuestCredential();
+    const ownerId = eveGuestOwnerId(credential.tokenHash);
+    owners.push(ownerId);
+    const input = request(ownerId);
+    const result = await reserveEveGuestMessage(
+      {
+        ...input,
+        requestsPerMinute: denial === "rate" ? 0 : 100,
+      },
+      {
+        tokenHash: credential.tokenHash,
+        messageLimit: denial === "balance" ? 0 : 2,
+        expiresAt: new Date(Date.now() + 60_000),
+      }
+    );
+    expect(result.status).toBe(
+      denial === "rate" ? "rate-limited" : "exhausted"
+    );
+    expect(await readEveGuestCredential(credential.tokenHash)).toEqual({
+      status: "missing",
+    });
+    expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual(
+      []
+    );
+    expect(
+      await db
+        .select()
+        .from(eveGuestRate)
+        .where(eq(eveGuestRate.ipHash, input.ipHash))
+    ).toEqual([]);
+  }
+});
+
+test("bootstrap cannot replace an expired identity or reset its balance", async () => {
+  const row = await guest(1);
+  const input = request(row.ownerId);
+  await reserveEveGuestMessage(input);
+  const bootstrap = {
+    tokenHash: row.tokenHash,
+    messageLimit: 50,
+    expiresAt: new Date(Date.now() + 60_000),
+  };
+  expect(
+    (await reserveEveGuestMessage(request(row.ownerId), bootstrap)).status
+  ).toBe("exhausted");
+  await db
+    .update(eveGuest)
+    .set({ expiresAt: new Date(0) })
+    .where(eq(eveGuest.ownerId, row.ownerId));
+  expect(
+    (await reserveEveGuestMessage(request(row.ownerId), bootstrap)).status
+  ).toBe("unavailable");
+  await expect(
+    reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
+  ).rejects.toThrow("Invalid guest admission");
 });

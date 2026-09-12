@@ -72,22 +72,35 @@ export async function readEveGuestCredential(tokenHash: string) {
 
 /** Reserve before native admission. Ambiguous admission keeps its reservation. */
 export async function reserveEveGuestMessage(
-  input: z.infer<typeof reservation>
+  input: z.infer<typeof reservation>,
+  bootstrap?: { tokenHash: string; messageLimit: number; expiresAt: Date }
 ) {
   reservation.parse(input);
+  if (bootstrap) {
+    hash.parse(bootstrap.tokenHash);
+    z.number().int().nonnegative().parse(bootstrap.messageLimit);
+    if (
+      eveGuestOwnerId(bootstrap.tokenHash) !== input.ownerId ||
+      !Number.isFinite(bootstrap.expiresAt.getTime()) ||
+      bootstrap.expiresAt <= new Date()
+    ) {
+      throw new Error("Invalid guest admission identity or expiry.");
+    }
+  }
   return await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
     );
-    const [guest] = await tx
-      .select()
-      .from(eveGuest)
-      .where(eq(eveGuest.ownerId, input.ownerId))
-      .for("update");
+    // Serialize first admission even when the same credential arrives from two IPs.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-owner:${input.ownerId}`}))`
+    );
     const now = new Date();
-    if (!guest || guest.expiresAt <= now) {
-      return { status: "unavailable" } as const;
+    const admission = await admissionGuest(tx, input, bootstrap, now);
+    if (admission.status !== "ready") {
+      return admission;
     }
+    const { guest } = admission;
     const identity = and(
       eq(eveGuestMessage.ownerId, input.ownerId),
       eq(eveGuestMessage.operationId, input.operationId)
@@ -262,4 +275,47 @@ async function rateAvailable(
     }
   }
   return true;
+}
+
+async function admissionGuest(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: z.infer<typeof reservation>,
+  bootstrap:
+    | { tokenHash: string; messageLimit: number; expiresAt: Date }
+    | undefined,
+  now: Date
+) {
+  let [guest] = await tx
+    .select()
+    .from(eveGuest)
+    .where(eq(eveGuest.ownerId, input.ownerId))
+    .for("update");
+  if (!guest && bootstrap) {
+    if (bootstrap.expiresAt <= now) {
+      return { status: "unavailable" } as const;
+    }
+    if (bootstrap.messageLimit === 0) {
+      return { status: "exhausted" } as const;
+    }
+    if (!(await rateAvailable(tx, input, windows(now)))) {
+      return { status: "rate-limited" } as const;
+    }
+    await tx.insert(user).values({
+      id: input.ownerId,
+      name: "Guest",
+      email: `${input.ownerId}@guest.invalid`,
+    });
+    [guest] = await tx
+      .insert(eveGuest)
+      .values({
+        ...bootstrap,
+        ownerId: input.ownerId,
+        remainingMessages: bootstrap.messageLimit,
+      })
+      .returning();
+  }
+  if (!guest || guest.expiresAt <= now) {
+    return { status: "unavailable" } as const;
+  }
+  return { status: "ready", guest } as const;
 }
