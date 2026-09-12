@@ -92,9 +92,9 @@ const createForgeConfig = (): ForgeConfig => {
       ),
       new MakerSquirrel(
         {
-          name: appPrefix,
           authors: orgName ?? appName,
           description: `${appName} desktop application`,
+          name: appPrefix,
           setupExe: `${appName}-windows.exe`,
         },
         ["win32"]
@@ -103,13 +103,13 @@ const createForgeConfig = (): ForgeConfig => {
         {
           options: {
             bin: appPrefix,
+            categories: ["Utility"],
+            homepage: branding.appUrl,
+            icon: "./build/icon.png",
             maintainer:
               orgName && orgEmail
                 ? `${orgName} <${orgEmail}>`
                 : (orgName ?? orgEmail ?? appName),
-            homepage: branding.appUrl,
-            icon: "./build/icon.png",
-            categories: ["Utility"],
           },
         },
         ["linux"]
@@ -133,11 +133,11 @@ const createForgeConfig = (): ForgeConfig => {
       executableName: appPrefix,
       icon: "./build/icon",
       ignore: [
-        /^\/out($|\/)/u,
-        /^\/release($|\/)/u,
-        /^\/src($|\/)/u,
-        /^\/node_modules($|\/)/u,
-        /^\/scripts($|\/)/u,
+        /^\/out(?:$|\/)/u,
+        /^\/release(?:$|\/)/u,
+        /^\/src(?:$|\/)/u,
+        /^\/node_modules(?:$|\/)/u,
+        /^\/scripts(?:$|\/)/u,
         /^\/README\.md$/u,
         /^\/tsconfig\.json$/u,
       ],
