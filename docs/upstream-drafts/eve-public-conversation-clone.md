@@ -69,12 +69,11 @@ The channel authenticates seed operations directly and isolates their continuati
 
 Resource discovery includes nested tool values and document content. Native document identities are interpreted only inside known ChatJS document/artifact tools, so arbitrary MCP `documentId` fields remain application data. Completed failed/denied document arguments are preserved as history without requiring nonexistent artifacts. Successful native references require explicit replacement allocations. UUID references are canonicalized consistently, including document assistant instructions embedded in prose.
 
-Copied file links are parsed as whole URL tokens and rewritten to canonical local paths, including protocol-relative and mixed-case HTTP URLs. A local-looking path inside a foreign URL query is not a file reference and must never receive a destination key. Allocation maps must contain fresh, distinct destination identities. Actual native attachment parts are materialized through an owner-authorized destination-key loader, not by fetching a source-supplied URL. The resulting seed has been checked against the installed native parser and model-history conversion.
+Copied file links are parsed as whole URL tokens and rewritten to canonical local paths, including protocol-relative and mixed-case HTTP URLs. A local-looking path inside a foreign URL query is not a file reference and must never receive a destination key. Allocation maps must contain fresh, distinct destination identities. Actual native attachment parts are materialized through an owner-authorized destination-key metadata loader, not by fetching a source-supplied URL. The resulting seed has been checked against the installed native parser and model-history conversion.
 
-### Remaining seed size gap
+### Transcript size boundary
 
-The current native seed schema caps serialized input at 8 MiB. Six supported 1 MiB attachments exceed that cap after base64 encoding. Preparation now reports this limitation before dispatch rather than dropping attachments, but this is **not full attachment-copy parity**. The remaining design must support durable destination-owned resource resolution without requiring all attachment bytes to live in the seed input. Increasing a fixed cap alone does not solve long conversation histories. Keep Save unexposed until this gap, durable resource/document allocation, source revocation ordering, uncertain acceptance recovery, and application integration are resolved.
-
+The native seed schema caps serialized input at 8 MiB. Attachment bytes no longer count against this cap: application materialization emits compact destination URLs with `attachments: "channel"`. The remaining limit applies to transcript JSON itself; very long histories still need an explicit product/storage design rather than silently dropping messages.
 
 ### Native destination file resolution
 
@@ -84,4 +83,18 @@ The first real turn stages these files through the standard sandbox attachment p
 
 Local native workflow tests cover six 1 MiB files, zero work on Save, reuse on later turns, and failed storage followed by successful continuation. The application resolver tests cover owner authorization, rejected access, absent authentication, and malformed/foreign URL handling. These fixtures require neither a database nor a model provider.
 
-This resolves the native attachment byte-size mechanism, but application preparation still uses its earlier data-URL materializer. Integrating compact destination references, externalizing inline files, allocating durable file/document copies, and binding the immutable copy journal remain required before exposing Save. The 8 MiB transcript JSON cap remains; long-history behavior still needs an explicit product and storage design.
+Application materialization now uses the compact channel path. Inline attachment IDs bind their MIME type and exact bytes, so the upcoming journal can allocate and write each distinct inline payload once before constructing the seed. Materialization requires destination allocations and matching stored MIME/size metadata; it performs no byte reads. Six distinct 1 MiB inline images produce a seed smaller than 2 KiB instead of exceeding 8 MiB. The installed native parser accepts the resulting channel URLs.
+
+### Document resource preparation
+
+The application snapshots only document identities discovered in the sanitized public transcript. It rechecks the exact source session as bound/public, acquires the existing family/document locks, and takes a shared source-row lock to serialize with revocation. A single ancestry query captures the selected heads and all their accessible revisions, excluding private sibling branches and unrelated documents. Explicit revision references outside that ancestry fail closed. The snapshot omits source ownership, operation IDs, and execution turn indices.
+
+Preparation inventories files across all captured revision contents and titles, requires complete fresh document/revision/file allocations, rewrites head and parent references as well as content, and gives imported revisions stable destination operation IDs with null turn indices. Local PostgreSQL tests verify complete ancestry, private-history exclusion, missing resources, exact session identity, and revocation while the source row is locked.
+
+### Durable application acceptance still required
+
+The next integration needs an explicit creation kind on the conversation reservation and a copy journal containing immutable source/projection/resource identities, stable allocations, temporary seed data, and resource-completion receipts. Normal message creation and copy creation must reject reuse of an operation across kinds. Native identity remains the destination reservation ID, and copy lookup uses `kind=seed`.
+
+Accept the copy only after destination resources are complete. Acquire source/destination family locks in deterministic order, recheck publication under a source-row lock, and commit acceptance in a short transaction. Thereafter the destination is independent of source revocation/deletion, and native dispatch/recovery reads the accepted journal without reopening source access. Bind the native session and clear the temporary seed atomically; it must not become a permanent second transcript.
+
+Pre-acceptance rejection needs a provably never-dispatched resource-cleanup path. After acceptance, a native lookup 404 is not proof that creation never happened: retain the seed/resources for recovery. Deletion must purge copy preparation content while retaining operation/kind tombstones. The Save UI remains unexposed until this journal, resource writes, acceptance ordering, and browser recovery flow are implemented.

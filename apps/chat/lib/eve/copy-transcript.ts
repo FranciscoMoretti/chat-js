@@ -15,6 +15,7 @@ type Seed = NonNullable<
 >;
 type SeedPart = Seed["messages"][number]["parts"][number];
 
+const INLINE_FILE_ID = /^[a-f0-9]{64}$/;
 const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/g;
 const SENTENCE_END = /[.,;:!?]+$/;
 const UUID_REFERENCE =
@@ -175,6 +176,7 @@ type CopyAllocations = {
   files: ReadonlyMap<string, string>;
   documents: ReadonlyMap<string, string>;
   revisions: ReadonlyMap<string, string>;
+  inlineFiles?: ReadonlyMap<string, string>;
 };
 
 /** Maps come from durable, ownership-checked allocations, never from browser input. */
@@ -297,21 +299,71 @@ function transcriptResources(seed: Seed) {
   };
 }
 
-/** The loader must authorize the destination key; never fetch a source-provided URL. */
+/** Decode only published attachment parts; IDs bind their MIME type and exact bytes. */
+export function eveCopyInlineAttachments(seed: Seed) {
+  const files = new Map<
+    string,
+    { id: string; mediaType: string; bytes: Buffer }
+  >();
+  for (const message of seed.messages) {
+    for (const part of message.parts) {
+      if (part.type !== "file" || !part.url.startsWith("data:")) {
+        continue;
+      }
+      const file = decodeInlineAttachment(part);
+      files.set(file.id, file);
+    }
+  }
+  return [...files.values()];
+}
+
+function decodeInlineAttachment(part: Extract<SeedPart, { type: "file" }>) {
+  const prefix = `data:${part.mediaType};base64,`;
+  if (!part.url.startsWith(prefix)) {
+    throw new Error("Invalid inline attachment content type.");
+  }
+  const encoded = part.url.slice(prefix.length);
+  const bytes = Buffer.from(encoded, "base64");
+  if (!bytes.length || bytes.toString("base64") !== encoded) {
+    throw new Error("Invalid inline attachment encoding.");
+  }
+  return {
+    id: createHash("sha256")
+      .update(part.mediaType)
+      .update("\0")
+      .update(bytes)
+      .digest("hex"),
+    mediaType: part.mediaType,
+    bytes,
+  };
+}
+
+/** Metadata must describe committed, destination-owned files; no attachment bytes enter the seed. */
 export async function materializeEveCopyTranscript(
   seed: Seed,
   allocations: CopyAllocations,
-  loadDestinationFile: (key: string) => Promise<Blob>
+  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
+  origin: string
 ): Promise<Seed> {
+  const base = new URL(origin);
+  if (
+    !["http:", "https:"].includes(base.protocol) ||
+    base.username ||
+    base.password
+  ) {
+    throw new Error("Invalid copy attachment origin.");
+  }
   const copied = rewriteEveCopyResources(seed, allocations);
-  const materializeFile = createCopyAttachmentLoader(
-    allocations.files,
-    loadDestinationFile
+  copied.attachments = "channel";
+  const materializeFile = copyAttachmentResolver(
+    allocations,
+    loadDestinationFile,
+    base.origin
   );
   for (const message of copied.messages) {
     for (const part of message.parts) {
       if (part.type === "file") {
-        part.url = await materializeFile(part);
+        await materializeFile(part);
       } else if (
         part.type === "text" ||
         part.type === "reasoning" ||
@@ -329,38 +381,50 @@ export async function materializeEveCopyTranscript(
   return copied;
 }
 
-function createCopyAttachmentLoader(
-  allocations: ReadonlyMap<string, string>,
-  load: (key: string) => Promise<Blob>
+function copyAttachmentResolver(
+  allocations: CopyAllocations,
+  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
+  origin: string
 ) {
-  const destinationKeys = new Set(allocations.values());
-  const files = new Map<string, Promise<{ url: string; mediaType: string }>>();
-  return async (part: Extract<SeedPart, { type: "file" }>) => {
-    const key = keyFromFileUrl(part.url);
-    if (!key) {
-      if (!part.url.startsWith(`data:${part.mediaType};base64,`)) {
-        throw new Error(
-          "Copy attachments require owned storage or inline content."
-        );
-      }
-      return part.url;
+  const destinationKeys = new Set(allocations.files.values());
+  for (const [id, key] of allocations.inlineFiles ?? []) {
+    if (
+      !(INLINE_FILE_ID.test(id) && isFileStorageKey(key)) ||
+      allocations.files.has(key) ||
+      destinationKeys.has(key)
+    ) {
+      throw new Error("Invalid inline attachment allocation.");
     }
-    if (!destinationKeys.has(key)) {
+    destinationKeys.add(key);
+  }
+  const metadata = new Map<string, Promise<Pick<Blob, "type" | "size">>>();
+  return async (part: Extract<SeedPart, { type: "file" }>) => {
+    const inline = part.url.startsWith("data:")
+      ? decodeInlineAttachment(part)
+      : undefined;
+    const key = inline
+      ? allocations.inlineFiles?.get(inline.id)
+      : keyFromFileUrl(part.url);
+    if (!(key && destinationKeys.has(key))) {
       throw new Error("Missing copied attachment allocation.");
     }
-    let content = files.get(key);
-    if (!content) {
-      content = load(key).then(async (blob) => ({
-        mediaType: blob.type,
-        url: `data:${blob.type};base64,${Buffer.from(await blob.arrayBuffer()).toString("base64")}`,
-      }));
-      files.set(key, content);
+    let file = metadata.get(key);
+    if (!file) {
+      file = loadDestinationFile(key);
+      metadata.set(key, file);
     }
-    const file = await content;
-    if (file.mediaType !== part.mediaType) {
-      throw new Error("Copied attachment content type changed.");
+    const stored = await file;
+    if (
+      stored.type !== part.mediaType ||
+      !Number.isSafeInteger(stored.size) ||
+      stored.size <= 0 ||
+      (part.size !== undefined && part.size !== stored.size) ||
+      (inline !== undefined && inline.bytes.length !== stored.size)
+    ) {
+      throw new Error("Copied attachment content metadata changed.");
     }
-    return file.url;
+    part.url = new URL(`${FILE_CONTENT_PATH}?key=${key}`, origin).href;
+    part.size = stored.size;
   };
 }
 

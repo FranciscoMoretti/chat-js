@@ -2,6 +2,7 @@ import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 import {
   EveCopyNotReady,
+  eveCopyInlineAttachments,
   eveCopyResources,
   materializeEveCopyTranscript,
   prepareEveCopyTranscript,
@@ -276,9 +277,10 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
     allocations,
     () => {
       throw new Error("Unexpected file read");
-    }
+    },
+    "https://chatjs.example"
   );
-  expect(result).toEqual(prepared.seed);
+  expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
 
 it("materializes only allocated destination attachments and remaps case-insensitive native document references", async () => {
@@ -316,12 +318,13 @@ it("materializes only allocated destination attachments and remaps case-insensit
     allocations,
     (key) => {
       reads.push(key);
-      return Promise.resolve(new Blob(["image bytes"], { type: "image/png" }));
-    }
+      return Promise.resolve({ type: "image/png", size: 11 });
+    },
+    "https://chatjs.example"
   );
   expect(reads).toEqual([copiedFile]);
   expect(JSON.stringify(result)).toContain(
-    "data:image/png;base64,aW1hZ2UgYnl0ZXM="
+    `https://chatjs.example/api/files/content?key=${copiedFile}`
   );
   expect(JSON.stringify(result)).toContain(copiedDocument);
   expect(JSON.stringify(result)).not.toContain(documentId);
@@ -334,7 +337,7 @@ it("does not mutate frozen inputs while collecting copy resources", () => {
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
-it("reports the native size limit before dispatch rather than silently dropping supported attachments", async () => {
+it("keeps attachment bytes out of the seed and reads destination metadata once per file", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
       {
@@ -348,13 +351,119 @@ it("reports the native size limit before dispatch rather than silently dropping 
       },
     ])
   );
+  let reads = 0;
+  const result = await materializeEveCopyTranscript(
+    prepared.seed,
+    allocations,
+    () => {
+      reads++;
+      return Promise.resolve({ type: "image/png", size: 1024 * 1024 });
+    },
+    "https://chatjs.example"
+  );
+  expect(reads).toBe(1);
+  expect(result.attachments).toBe("channel");
+  expect(result.messages[0].parts).toHaveLength(6);
+  expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
+});
+
+it("externalizes six distinct inline images through durable destination allocations", async () => {
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: Array.from({ length: 6 }, (_, index) => ({
+          type: "file",
+          mediaType: "image/png",
+          url: `data:image/png;base64,${Buffer.alloc(1024 * 1024, index).toString("base64")}`,
+        })),
+      },
+    ])
+  );
+  expect(Buffer.byteLength(JSON.stringify(prepared.seed))).toBeGreaterThan(
+    8 * 1024 * 1024
+  );
+  const files = eveCopyInlineAttachments(prepared.seed);
+  expect(files).toHaveLength(6);
+  const inlineFiles = new Map(
+    files.map((file, index) => [
+      file.id,
+      `${String(index).padStart(24, "a")}.png`,
+    ])
+  );
+  const result = await materializeEveCopyTranscript(
+    prepared.seed,
+    { ...allocations, inlineFiles },
+    async () => ({
+      type: "image/png",
+      size: 1024 * 1024,
+    }),
+    "https://chatjs.example"
+  );
+  expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
+  expect(JSON.stringify(result)).not.toContain("base64");
+  for (const [index, file] of files.entries()) {
+    expect(file.bytes[0]).toBe(index);
+  }
+});
+
+it("refuses missing inline allocations and metadata changes before dispatch", async () => {
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: [
+          {
+            type: "file",
+            mediaType: "image/png",
+            url: "data:image/png;base64,aGk=",
+          },
+        ],
+      },
+    ])
+  );
+  const [file] = eveCopyInlineAttachments(prepared.seed);
+  const metadata = async () => ({ type: "image/png", size: 2 });
   await expect(
-    materializeEveCopyTranscript(prepared.seed, allocations, () =>
-      Promise.resolve(
-        new Blob([new Uint8Array(1024 * 1024)], { type: "image/png" })
-      )
+    materializeEveCopyTranscript(
+      prepared.seed,
+      allocations,
+      metadata,
+      "https://chatjs.example"
     )
-  ).rejects.toThrow("copy size limit");
+  ).rejects.toThrow("allocation");
+  await expect(
+    materializeEveCopyTranscript(
+      prepared.seed,
+      {
+        ...allocations,
+        inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
+      },
+      async () => ({ type: "image/png", size: 3 }),
+      "https://chatjs.example"
+    )
+  ).rejects.toThrow("metadata changed");
+});
+
+it.each([
+  "data:image/png;base64,aGk",
+  "data:image/png;base64,aGk=!!!",
+  "data:application/pdf;base64,aGk=",
+])("rejects noncanonical inline file %s", (url) => {
+  const prepared = prepareEveCopyTranscript(
+    history([
+      {
+        id: "user",
+        role: "user",
+        parts: [{ type: "file", mediaType: "image/png", url }],
+      },
+    ])
+  );
+  expect(() => eveCopyInlineAttachments(prepared.seed)).toThrow(
+    "inline attachment"
+  );
 });
 
 it("rejects resource allocations that reuse source identities or collide", () => {
@@ -431,7 +540,8 @@ it.each([
     },
     () => {
       throw new Error("Unexpected file read");
-    }
+    },
+    "https://chatjs.example"
   );
-  expect(seed).toEqual(prepared.seed);
+  expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
 });
