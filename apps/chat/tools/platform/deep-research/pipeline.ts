@@ -29,83 +29,8 @@ import type {
 } from "./types";
 import { getModelContextWindow, getTodayStr } from "./utils";
 
-// Main deep research pipeline
-export const runDeepResearchPipeline = async (
-  input: DeepResearchInput,
-  config: DeepResearchRuntimeConfig,
-  dataStream: AgentOptions["dataStream"],
-  options: {
-    session: ToolSession;
-    costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
-    abortSignal?: AbortSignal;
-  }
-): Promise<DeepResearchResult> => {
-  const { session, costAccumulator, abortSignal } = options;
-  console.log("runDeepResearchPipeline invoked", {
-    messageId: input.messageId,
-    requestId: input.requestId,
-  });
-
-  const ctx: AgentOptions = {
-    abortSignal,
-    config,
-    costAccumulator,
-    dataStream,
-    messageId: input.messageId,
-    requestId: input.requestId,
-    toolCallId: input.toolCallId,
-  };
-
-  // Step 1: Clarify with user
-  const clarification = await clarifyWithUser(input.messages, ctx);
-
-  if (clarification.needsClarification) {
-    return {
-      data: clarification.clarificationMessage,
-      type: "clarifying_question",
-    };
-  }
-
-  dataStream.write({
-    data: {
-      timestamp: Date.now(),
-      title: "Starting research",
-      toolCallId: input.toolCallId,
-      type: "started",
-    },
-    type: "data-researchUpdate",
-  });
-
-  // Step 2: Write research brief
-  const brief = await writeResearchBrief(input.messages, ctx);
-
-  // Step 3: Supervisor research loop
-  const notes = await runSupervisor(brief.research_brief, ctx);
-
-  // Step 4: Final report generation
-  const reportResult = await generateFinalReport({
-    ...ctx,
-    notes,
-    reportTitle: brief.title,
-    researchBrief: brief.research_brief,
-    session,
-  });
-
-  dataStream.write({
-    data: {
-      timestamp: Date.now(),
-      title: "Research complete",
-      toolCallId: input.toolCallId,
-      type: "completed",
-    },
-    type: "data-researchUpdate",
-  });
-
-  return {
-    data: reportResult,
-    type: "report",
-  };
-};
+const messagesToString = (messages: ModelMessage[]): string =>
+  messages.map((m) => `${m.role}: ${JSON.stringify(m.content)}`).join("\n");
 
 // Step 1: Clarification
 
@@ -386,7 +311,64 @@ To write the report, call the createTextDocument tool with:
   };
 };
 
-// Helpers
-
-const messagesToString = (messages: ModelMessage[]): string =>
-  messages.map((m) => `${m.role}: ${JSON.stringify(m.content)}`).join("\n");
+// Main deep research pipeline
+export const runDeepResearchPipeline = async (
+  input: DeepResearchInput,
+  config: DeepResearchRuntimeConfig,
+  dataStream: AgentOptions["dataStream"],
+  options: {
+    session: ToolSession;
+    costAccumulator: NonNullable<AgentOptions["costAccumulator"]>;
+    abortSignal?: AbortSignal;
+  }
+): Promise<DeepResearchResult> => {
+  const { session, costAccumulator, abortSignal } = options;
+  console.log("runDeepResearchPipeline invoked", {
+    messageId: input.messageId,
+    requestId: input.requestId,
+  });
+  const ctx: AgentOptions = {
+    abortSignal,
+    config,
+    costAccumulator,
+    dataStream,
+    messageId: input.messageId,
+    requestId: input.requestId,
+    toolCallId: input.toolCallId,
+  };
+  const clarification = await clarifyWithUser(input.messages, ctx);
+  if (clarification.needsClarification) {
+    return {
+      data: clarification.clarificationMessage,
+      type: "clarifying_question",
+    };
+  }
+  dataStream.write({
+    data: {
+      timestamp: Date.now(),
+      title: "Starting research",
+      toolCallId: input.toolCallId,
+      type: "started",
+    },
+    type: "data-researchUpdate",
+  });
+  const brief = await writeResearchBrief(input.messages, ctx);
+  const notes = await runSupervisor(brief.research_brief, ctx);
+  const reportResult = await generateFinalReport({
+    ...ctx,
+    notes,
+    reportTitle: brief.title,
+    researchBrief: brief.research_brief,
+    session,
+  });
+  dataStream.write({
+    data: {
+      timestamp: Date.now(),
+      title: "Research complete",
+      toolCallId: input.toolCallId,
+      type: "completed",
+    },
+    type: "data-researchUpdate",
+  });
+  return { data: reportResult, type: "report" };
+};
