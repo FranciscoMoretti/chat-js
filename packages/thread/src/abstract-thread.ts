@@ -46,11 +46,10 @@ const getInputMessageId = <TMessage extends UIMessage>(
   input: NonNullable<SendMessageInput<TMessage>>
 ) => ("id" in input ? (input.id ?? input.messageId) : input.messageId);
 
-const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) => {
-  // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
-  // TMessage may narrow metadata or parts beyond the base UIMessage shape.
-  return message as TMessage;
-};
+// Like AI SDK's AbstractChat, construction crosses a generic boundary here:
+// TMessage may narrow metadata or parts beyond the base UIMessage shape.
+const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) =>
+  message as TMessage;
 
 const createMessageFromInput = async <TMessage extends UIMessage>({
   fallbackId,

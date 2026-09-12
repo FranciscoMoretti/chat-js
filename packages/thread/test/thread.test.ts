@@ -139,22 +139,20 @@ const user = (id: string): UIMessage => ({
   role: "user",
 });
 
-const assistantWithTool = (id: string): UIMessage => {
-  return {
-    id,
-    parts: [
-      {
-        approval: { id: "shared-approval" },
-        input: { value: id },
-        state: "approval-requested",
-        toolCallId: "shared-tool",
-        toolName: "test-tool",
-        type: "dynamic-tool",
-      },
-    ],
-    role: "assistant",
-  };
-};
+const assistantWithTool = (id: string): UIMessage => ({
+  id,
+  parts: [
+    {
+      approval: { id: "shared-approval" },
+      input: { value: id },
+      state: "approval-requested",
+      toolCallId: "shared-tool",
+      toolName: "test-tool",
+      type: "dynamic-tool",
+    },
+  ],
+  role: "assistant",
+});
 
 const requireMessage = (message: UIMessage | undefined) => {
   if (!message) {
