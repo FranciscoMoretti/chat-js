@@ -7,7 +7,8 @@ export default defineConfig({
   projects: [
     {
       name: "visual",
-      snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
+      snapshotPathTemplate:
+        "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
       testMatch: /\.visual\.e2e\.ts$/u,
       use: { ...devices["Desktop Chrome"] },
     },
