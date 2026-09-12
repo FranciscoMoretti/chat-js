@@ -5,6 +5,10 @@ import { describe, it, vi } from "vitest";
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 
 import type { ChatMessage } from "./ai/types";
+import {
+  cloneAttachmentsInMessages,
+  cloneMessagesWithDocuments,
+} from "./clone-messages";
 
 const fileStorage = vi.hoisted(() => ({
   downloadFile: vi.fn(),
@@ -17,11 +21,6 @@ vi.mock("@/lib/config", () => ({
 
 vi.mock("./file-storage", () => fileStorage);
 
-import {
-  cloneAttachmentsInMessages,
-  cloneMessagesWithDocuments,
-} from "./clone-messages";
-
 function createMessage({
   id,
   parentMessageId = null,
@@ -32,16 +31,16 @@ function createMessage({
   chatId: string;
 }): ChatMessage & { chatId: string } {
   return {
+    chatId,
     id,
-    role: "user",
-    parts: [],
     metadata: {
+      activeStreamId: null,
       createdAt: new Date("2024-01-01T00:00:00.000Z"),
       parentMessageId,
       selectedModel: gatewayModelDefaults.workflows.chat,
-      activeStreamId: null,
     },
-    chatId,
+    parts: [],
+    role: "user",
   };
 }
 
@@ -52,19 +51,19 @@ describe("cloneMessagesWithDocuments", () => {
     const userId = "user-1";
 
     const m1 = createMessage({
+      chatId: sourceChatId,
       id: "m1",
       parentMessageId: null,
-      chatId: sourceChatId,
     });
     const m2 = createMessage({
+      chatId: sourceChatId,
       id: "m2",
       parentMessageId: "m1",
-      chatId: sourceChatId,
     });
     const m3 = createMessage({
+      chatId: sourceChatId,
       id: "m3",
       parentMessageId: "m2",
-      chatId: sourceChatId,
     });
 
     const { clonedMessages, messageIdMap } = cloneMessagesWithDocuments(
@@ -79,9 +78,9 @@ describe("cloneMessagesWithDocuments", () => {
     // IDs should all be new and unique
     const newIds = clonedMessages.map((m) => m.id);
     assert.equal(new Set(newIds).size, 3);
-    assert(!newIds.includes("m1"));
-    assert(!newIds.includes("m2"));
-    assert(!newIds.includes("m3"));
+    assert.ok(!newIds.includes("m1"));
+    assert.ok(!newIds.includes("m2"));
+    assert.ok(!newIds.includes("m3"));
 
     // All messages should belong to the new chat
     for (const msg of clonedMessages) {
@@ -92,17 +91,17 @@ describe("cloneMessagesWithDocuments", () => {
     const newM2Id = messageIdMap.get("m2");
     const newM3Id = messageIdMap.get("m3");
 
-    assert(newM1Id);
-    assert(newM2Id);
-    assert(newM3Id);
+    assert.ok(newM1Id);
+    assert.ok(newM2Id);
+    assert.ok(newM3Id);
 
     const clonedM1 = clonedMessages.find((m) => m.id === newM1Id);
     const clonedM2 = clonedMessages.find((m) => m.id === newM2Id);
     const clonedM3 = clonedMessages.find((m) => m.id === newM3Id);
 
-    assert(clonedM1);
-    assert(clonedM2);
-    assert(clonedM3);
+    assert.ok(clonedM1);
+    assert.ok(clonedM2);
+    assert.ok(clonedM3);
 
     // Root has no parent
     assert.equal(clonedM1.metadata.parentMessageId, null);
@@ -120,69 +119,69 @@ describe("cloneMessagesWithDocuments", () => {
     const userId = "user-1";
 
     const messageWithDoc = createMessage({
+      chatId: sourceChatId,
       id: "m-doc",
       parentMessageId: null,
-      chatId: sourceChatId,
     });
 
     // Minimal tool parts that reference a document id.
     // Shapes match the actual tool output types so the test type-checks.
     messageWithDoc.parts = [
       {
-        type: "tool-createTextDocument",
-        toolCallId: "call-create",
-        state: "output-available",
         input: {
-          title: "Doc title",
           content: "The document content",
+          title: "Doc title",
         },
         output: {
-          status: "success",
+          date: "2024-01-01T00:00:00.000Z",
           documentId: "doc-1",
           result: "A document was created and is now visible to the user.",
-          date: "2024-01-01T00:00:00.000Z",
+          status: "success",
         },
+        state: "output-available",
+        toolCallId: "call-create",
+        type: "tool-createTextDocument",
       },
       {
-        type: "tool-editTextDocument",
-        toolCallId: "call-update",
-        state: "output-available",
         input: {
+          content: "Updated content",
           documentId: "doc-1",
           title: "Doc title",
-          content: "Updated content",
         },
         output: {
-          status: "success",
+          date: "2024-01-01T00:00:00.000Z",
           documentId: "doc-1",
           result: "The document was updated and is now visible to the user.",
-          date: "2024-01-01T00:00:00.000Z",
+          status: "success",
         },
+        state: "output-available",
+        toolCallId: "call-update",
+        type: "tool-editTextDocument",
       },
       {
-        type: "tool-deepResearch",
-        toolCallId: "call-deep",
-        state: "output-available",
         input: {},
         output: {
-          format: "report",
-          status: "success",
-          documentId: "doc-1",
-          result: "Deep research report content",
           date: "2024-01-01T00:00:00.000Z",
+          documentId: "doc-1",
+          format: "report",
+          result: "Deep research report content",
+          status: "success",
         },
+        state: "output-available",
+        toolCallId: "call-deep",
+        type: "tool-deepResearch",
       },
     ];
 
     const sourceDocuments = [
       {
-        id: "doc-1",
-        messageId: "m-doc",
-        userId: "source-user",
-        title: "Doc title",
-        kind: "text",
         content: "hello",
         createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        id: "doc-1",
+        kind: "text",
+        messageId: "m-doc",
+        title: "Doc title",
+        userId: "source-user",
       },
     ];
 
@@ -200,11 +199,11 @@ describe("cloneMessagesWithDocuments", () => {
     const newMessageId = messageIdMap.get("m-doc");
     const newDocumentId = documentIdMap.get("doc-1");
 
-    assert(newMessageId);
-    assert(newDocumentId);
+    assert.ok(newMessageId);
+    assert.ok(newDocumentId);
 
-    const clonedMessage = clonedMessages[0];
-    const clonedDocument = clonedDocuments[0];
+    const [clonedMessage] = clonedMessages;
+    const [clonedDocument] = clonedDocuments;
 
     // Document should point to cloned message and new user
     assert.equal(clonedDocument.messageId, newMessageId);
@@ -234,7 +233,8 @@ describe("cloneMessagesWithDocuments", () => {
 describe("cloneAttachmentsInMessages", () => {
   it("copies managed files through the configured storage provider", async () => {
     fileStorage.downloadFile.mockResolvedValue({
-      arrayBuffer: async () => new TextEncoder().encode("contents").buffer,
+      arrayBuffer: () =>
+        Promise.resolve(new TextEncoder().encode("contents").buffer),
       type: "text/plain",
     });
     fileStorage.uploadFile.mockResolvedValue({
@@ -245,9 +245,9 @@ describe("cloneAttachmentsInMessages", () => {
       {
         parts: [
           {
-            type: "file",
             filename: "attachment.txt",
             mediaType: "text/plain",
+            type: "file",
             url: "https://old-chat.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
           },
         ],

@@ -322,7 +322,6 @@
     {
       "files": [
         "components/part/tool-part.test.tsx",
-        "lib/clone-messages.test.ts",
         "lib/file-content-response.test.ts",
         "lib/file-storage.test.ts",
         "tools/chatjs/vercel-code-execution/tool.test.ts"
@@ -498,10 +497,7 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/clone-messages.ts"
-      ],
+      "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "no-plusplus": "off"
       }
@@ -637,8 +633,6 @@
         "components/settings/mcp-details-page.tsx",
         "components/share-button.tsx",
         "components/suggested-actions.tsx",
-        "lib/clone-messages.test.ts",
-        "lib/clone-messages.ts",
         "lib/draft-chat-submission.ts",
         "lib/files/upload-prep.ts",
         "lib/message-conversion.ts",
@@ -1139,7 +1133,6 @@
       "files": [
         "app/layout.tsx",
         "components/create-artifact.tsx",
-        "lib/clone-messages.test.ts",
         "lib/gated-chat-transport.test.ts",
         "lib/stores/base/hooks.ts"
       ],
@@ -1251,8 +1244,6 @@
         "lib/artifacts/text/client.tsx",
         "lib/auth.ts",
         "lib/chat-tree-actions.test.ts",
-        "lib/clone-messages.test.ts",
-        "lib/clone-messages.ts",
         "lib/config-requirements.ts",
         "lib/config-schema.ts",
         "lib/create-anonymous-session.ts",
@@ -1279,7 +1270,6 @@
         "lib/thread-utils.test.ts",
         "lib/types/anonymous.ts",
         "lib/utils.ts",
-        "lib/utils/download-assets.test.ts",
         "lib/utils/message-mapping.ts",
         "providers/chat-input-provider.tsx",
         "providers/chat-models-provider.tsx",
@@ -1352,7 +1342,7 @@
       }
     },
     {
-      "files": ["lib/clone-messages.test.ts", "lib/file-storage.test.ts"],
+      "files": ["lib/file-storage.test.ts"],
       "rules": {
         "unicorn/consistent-assert": "off"
       }
