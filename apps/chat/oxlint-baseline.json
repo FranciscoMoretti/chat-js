@@ -457,8 +457,6 @@
         "lib/clone-messages.ts",
         "lib/db/backfill-parts.ts",
         "lib/files/upload-prep.ts",
-        "scripts/check-db.ts",
-        "scripts/check-env.ts",
         "tools/platform/tools.ts"
       ],
       "rules": {
@@ -766,7 +764,6 @@
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
-        "scripts/check-db.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
       "rules": {

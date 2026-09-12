@@ -26,17 +26,19 @@ const checkDatabase = async () => {
     return;
   }
 
-  for (const purpose of ["runtime", "migration"] as const) {
+  const checkPurpose = async (purpose: "runtime" | "migration") => {
     const settings = databaseConnection(parsed.data, purpose);
     const sql = postgres(settings.url, {
       ...settings.options,
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,
     });
-    const deadline = setTimeout(() => {
-      sql.end({ timeout: 0 }).catch(() => {
+    const deadline = setTimeout(async () => {
+      try {
+        await sql.end({ timeout: 0 });
+      } catch {
         // The timeout closes the client before the query result is relevant.
-      });
+      }
     }, CHECK_DEADLINE_MS);
     try {
       await sql`select 1`;
@@ -54,7 +56,10 @@ const checkDatabase = async () => {
       clearTimeout(deadline);
       await sql.end({ timeout: CLOSE_TIMEOUT_SECONDS });
     }
-  }
+  };
+
+  await checkPurpose("runtime");
+  await checkPurpose("migration");
 };
 
 void (async () => {
