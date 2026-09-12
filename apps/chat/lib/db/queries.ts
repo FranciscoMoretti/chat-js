@@ -958,26 +958,30 @@ export const getChatMessageWithPartsById = async ({
       .where(eq(part.messageId, id))
       .orderBy(asc(part.order));
 
+    const role = dbMessage.role as ChatMessage["role"];
+    const parts = dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [];
+    const metadata = {
+      activeStreamId: dbMessage.activeStreamId,
+      createdAt: dbMessage.createdAt,
+      isPrimaryParallel: dbMessage.isPrimaryParallel,
+      parallelGroupId: dbMessage.parallelGroupId,
+      parallelIndex: dbMessage.parallelIndex,
+      parentMessageId: dbMessage.parentMessageId,
+      selectedModel: isSelectedModelValue(dbMessage.selectedModel)
+        ? dbMessage.selectedModel
+        : ("" as ChatMessage["metadata"]["selectedModel"]),
+      selectedTool: (dbMessage.selectedTool ||
+        undefined) as ChatMessage["metadata"]["selectedTool"],
+      usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
+    };
+
     return {
       chatId: dbMessage.chatId,
       message: {
         id: dbMessage.id,
-        metadata: {
-          activeStreamId: dbMessage.activeStreamId,
-          createdAt: dbMessage.createdAt,
-          isPrimaryParallel: dbMessage.isPrimaryParallel,
-          parallelGroupId: dbMessage.parallelGroupId,
-          parallelIndex: dbMessage.parallelIndex,
-          parentMessageId: dbMessage.parentMessageId,
-          selectedModel: isSelectedModelValue(dbMessage.selectedModel)
-            ? dbMessage.selectedModel
-            : ("" as ChatMessage["metadata"]["selectedModel"]),
-          selectedTool: (dbMessage.selectedTool ||
-            undefined) as ChatMessage["metadata"]["selectedTool"],
-          usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
-        },
-        parts: dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [],
-        role: dbMessage.role as ChatMessage["role"],
+        metadata,
+        parts,
+        role,
       },
     };
   } catch (error) {
