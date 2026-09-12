@@ -17,7 +17,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     headers: { origin: new URL(page.url()).origin },
     data: {
       operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-5-mini",
+      modelId: "google/gemini-2.5-flash-lite",
       message: "Reply exactly share-fixture-ok",
     },
   });

@@ -227,3 +227,48 @@ test("native MCP renderer covers pending, result, denial and errors", async ({
     });
   }
 });
+
+test("public tool projection preserves readable results without approval controls or private envelopes", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/api/dev-login");
+  await page.goto("/");
+  const styles = await page
+    .locator('link[rel="stylesheet"]')
+    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+  const content = execFileSync("bun", ["tests/eve-public-tools.fixture.ts"], {
+    encoding: "utf8",
+  });
+  expect(content).not.toContain("owner-approval-secret");
+  expect(content).not.toContain("runtime-private");
+  expect(content).not.toContain("costUsd");
+  await page.setContent(
+    `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
+  );
+  await expect(page.getByText("Published note", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Waiting for input.", { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("Request declined.", { exact: true })
+  ).toBeVisible();
+  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      "This tool result is unavailable in the shared conversation.",
+      { exact: true }
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve", exact: true })
+  ).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth)
+  ).toBeLessThanOrEqual(390);
+  await page.screenshot({
+    path: testInfo.outputPath("public-tool-states.png"),
+    animations: "disabled",
+    fullPage: true,
+  });
+});

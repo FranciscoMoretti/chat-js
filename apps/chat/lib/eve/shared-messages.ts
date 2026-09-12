@@ -5,6 +5,81 @@ import {
 } from "eve/client";
 import { evePlatformOutput, isEvePlatformTool } from "./platform-result";
 
+/** Keep visible tool content, never the owner's approval or runtime identities. */
+function sharedTool(
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>
+): EveMessagePart {
+  const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
+    {
+      type: "dynamic-tool",
+      toolCallId: part.toolCallId,
+      toolName: part.toolName,
+      input: part.input,
+    };
+  switch (part.state) {
+    case "input-streaming":
+      return { ...base, state: part.state, inputText: part.inputText };
+    case "input-available":
+      return { ...base, state: part.state };
+    // The read-only UI union requires an ID; this placeholder is not an approval receipt.
+    case "approval-requested":
+      return { ...base, state: part.state, approval: { id: "public" } };
+    case "approval-responded":
+      return {
+        ...base,
+        state: part.state,
+        approval: {
+          id: "public",
+          approved: part.approval.approved,
+          reason: part.approval.reason,
+        },
+      };
+    case "output-denied":
+      return {
+        ...base,
+        state: part.state,
+        approval: {
+          id: "public",
+          approved: false,
+          reason: part.approval.reason,
+        },
+      };
+    case "output-error":
+      return { ...base, state: part.state, errorText: part.errorText };
+    case "output-available": {
+      if (isEvePlatformTool(part.toolName)) {
+        const result = evePlatformOutput.safeParse(part.output);
+        if (!result.success) {
+          return {
+            ...base,
+            state: "output-error",
+            errorText:
+              "This tool result is unavailable in the shared conversation.",
+          };
+        }
+        return {
+          ...base,
+          state: part.state,
+          output: result.data,
+          partial: part.partial,
+        };
+      }
+      return {
+        ...base,
+        state: part.state,
+        output: part.output,
+        partial: part.partial,
+      };
+    }
+    default:
+      return {
+        ...base,
+        state: "output-error",
+        errorText: "This tool state is unavailable in the shared conversation.",
+      };
+  }
+}
+
 export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ type: part.type, text: part.text, state: part.state }];
@@ -21,21 +96,9 @@ export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
     ];
   }
   if (part.type === "dynamic-tool") {
-    // Tool inputs/results are conversation content; runtime metadata is not.
-    const { toolMetadata, ...content } = part;
-    let publicPart: EveMessagePart = content;
-    if (
-      content.state === "output-available" &&
-      isEvePlatformTool(content.toolName)
-    ) {
-      const result = evePlatformOutput.safeParse(content.output);
-      if (result.success) {
-        publicPart = { ...content, output: result.data };
-      }
-    }
-    const parts: EveMessagePart[] = [publicPart];
-    const request = toolMetadata?.eve?.inputRequest;
-    const response = toolMetadata?.eve?.inputResponse;
+    const parts: EveMessagePart[] = [sharedTool(part)];
+    const request = part.toolMetadata?.eve?.inputRequest;
+    const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ type: "text", text: request.prompt });
       if (request.options?.length) {
@@ -55,7 +118,7 @@ export function sharedEvePart(part: EveMessagePart): EveMessagePart[] {
     return parts;
   }
   if (part.type === "step-start") {
-    return [part];
+    return [{ type: "step-start" }];
   }
   // Connection challenges can contain owner-only authorization URLs and codes.
   return [{ type: "text", text: "An account connection was requested." }];

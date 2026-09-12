@@ -1,3 +1,4 @@
+import type { EveMessagePart } from "eve/client";
 import { expect, it } from "vitest";
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 
@@ -88,4 +89,129 @@ it.each([
   expect(JSON.stringify(part)).toContain('"message":"42"');
   expect(JSON.stringify(part)).not.toContain("costUsd");
   expect(JSON.stringify(part)).not.toContain("usage");
+});
+
+it("removes owner approval and execution fields while preserving every tool status", () => {
+  const base = {
+    toolCallId: "display-call",
+    toolName: "example",
+    input: { question: "Published input" },
+    stepIndex: 8,
+    futureRuntimeToken: "runtime-private",
+    approval: { id: "owner-approval-secret", isAutomatic: true },
+  };
+  const cases: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "output-available",
+      output: { answer: "Published result" },
+      approval: { ...base.approval, approved: true },
+    },
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "output-error",
+      errorText: "Published failure",
+      approval: { ...base.approval, approved: true },
+    },
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "output-denied",
+      approval: {
+        ...base.approval,
+        approved: false,
+        reason: "Published reason",
+      },
+    },
+    { ...base, type: "dynamic-tool", state: "approval-requested" },
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "approval-responded",
+      approval: { ...base.approval, approved: true },
+    },
+  ];
+  for (const part of cases) {
+    const parts = sharedEvePart(part);
+    const json = JSON.stringify(parts);
+    expect(json).toContain("Published input");
+    expect(parts[0]).toMatchObject({ state: part.state });
+    expect(json).not.toContain("owner-approval-secret");
+    expect(json).not.toContain("isAutomatic");
+    expect(json).not.toContain("stepIndex");
+    expect(json).not.toContain("runtime-private");
+    if (part.state === "output-available") {
+      expect(parts[0]).toMatchObject({ output: part.output });
+    }
+    if (part.state === "output-error") {
+      expect(parts[0]).toMatchObject({ errorText: part.errorText });
+    }
+    if (part.state === "output-denied") {
+      expect(parts[0]).toMatchObject({
+        approval: { reason: part.approval.reason },
+      });
+    }
+  }
+});
+
+it.each([
+  {
+    kind: "chatjs.platform-result",
+    version: 2,
+    output: { message: "Unsupported version" },
+    usage: { costUsd: 99 },
+  },
+  { kind: "chatjs.platform-result", version: 1, usage: { costUsd: 99 } },
+  {
+    output: "Unrecognized envelope",
+    privateRuntimeToken: "secret",
+    usage: { costUsd: 99 },
+  },
+])("does not expose malformed platform result envelopes", (output) => {
+  const parts = sharedEvePart({
+    type: "dynamic-tool",
+    toolCallId: "call",
+    toolName: "codeExecution",
+    state: "output-available",
+    input: { code: "1 + 1" },
+    output,
+  });
+  expect(parts[0]).toMatchObject({
+    state: "output-error",
+    input: { code: "1 + 1" },
+  });
+  expect(JSON.stringify(parts)).not.toContain("usage");
+  expect(JSON.stringify(parts)).not.toContain("secret");
+  expect(JSON.stringify(parts)).not.toContain("99");
+});
+
+it("preserves streaming and partial published tool content without runtime fields", () => {
+  const base = {
+    toolName: "example",
+    toolCallId: "call",
+    input: { text: "partial" },
+    stepIndex: 2,
+  };
+  const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "input-streaming",
+      inputText: "partial input",
+    },
+    { ...base, type: "dynamic-tool", state: "input-available" },
+    {
+      ...base,
+      type: "dynamic-tool",
+      state: "output-available",
+      output: "partial result",
+      partial: true,
+    },
+  ];
+  for (const part of parts) {
+    const { stepIndex: _stepIndex, ...expected } = part;
+    expect(sharedEvePart(part)).toEqual([expected]);
+  }
 });
