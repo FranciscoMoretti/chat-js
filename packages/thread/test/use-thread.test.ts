@@ -222,14 +222,16 @@ describe("useThread", () => {
 
     hook.update({
       id: "thread-2",
+      messages: [user("user-2")],
       onError: secondError,
       transport: secondTransport,
     });
+    expect(hook.current.id).toBe("thread-2");
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-2"]);
     await act(async () => {
       await hook.current.sendMessage({ text: "second request" });
     });
 
-    expect(hook.current.id).toBe("thread-2");
     expect(secondTransport.requests).toBe(1);
     hook.unmount();
   });
@@ -258,6 +260,36 @@ describe("useThread", () => {
     });
 
     expect(transport.reconnects).toBe(1);
+    hook.unmount();
+  });
+
+  test("resumes a replacement supplied thread while resume remains enabled", async () => {
+    const firstTransport = new ResumeTransport();
+    const secondTransport = new ResumeTransport();
+    const first = new Thread({
+      messages: [user("user-1"), assistant("assistant-1")],
+      transport: firstTransport,
+    });
+    const second = new Thread({
+      messages: [user("user-2"), assistant("assistant-2")],
+      transport: secondTransport,
+    });
+    const hook = renderUseThread({ resume: true, thread: first });
+
+    await act(async () => {
+      await Bun.sleep(0);
+    });
+    hook.update({ resume: true, thread: second });
+    await act(async () => {
+      await Bun.sleep(0);
+    });
+
+    expect(firstTransport.reconnects).toBe(1);
+    expect(secondTransport.reconnects).toBe(1);
+    expect(hook.current.messages.map(({ id }) => id)).toEqual([
+      "user-2",
+      "assistant-2",
+    ]);
     hook.unmount();
   });
 
