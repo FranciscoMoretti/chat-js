@@ -24,5 +24,7 @@ test("model selector and artifact toolbar visual fixture", async ({ page }) => {
 
   await toolbarControl.hover();
   await expect(toolbarControl.locator("svg")).toHaveCount(2);
+  await toolbarControl.locator("svg").last().hover();
+  await expect(page.getByRole("tooltip", { name: "Add comments" })).toBeVisible();
   await expect(fixture).toHaveScreenshot("artifact-toolbar-expanded.png");
 });
