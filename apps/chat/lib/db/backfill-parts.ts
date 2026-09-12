@@ -12,20 +12,20 @@ config({
   path: ".env.local",
 });
 
-async function processMessage(
+const processMessage = async (
   msg: {
     id: string;
     parts?: unknown;
   },
   db: ReturnType<typeof drizzle>
-): Promise<{ success: boolean; hasParts: boolean }> {
+): Promise<{ success: boolean; hasParts: boolean }> => {
   const parts = (msg as { parts?: unknown }).parts as
     | ChatMessage["parts"]
     | null
     | undefined;
 
   if (!Array.isArray(parts) || parts.length === 0) {
-    return { success: true, hasParts: false };
+    return { hasParts: false, success: true };
   }
 
   const dbParts = mapUIMessagePartsToDBParts(parts, msg.id);
@@ -34,18 +34,18 @@ async function processMessage(
     await db.transaction(async (tx) => {
       await tx.insert(part).values(dbParts);
     });
-    return { success: true, hasParts: true };
+    return { hasParts: true, success: true };
   }
 
-  return { success: true, hasParts: false };
-}
+  return { hasParts: false, success: true };
+};
 
-async function processBatch(
+const processBatch = async (
   batch: { id: string; parts?: unknown }[],
   db: ReturnType<typeof drizzle>,
   batchNumber: number,
   totalBatches: number
-): Promise<{ successCount: number; errorCount: number }> {
+): Promise<{ successCount: number; errorCount: number }> => {
   let successCount = 0;
   let errorCount = 0;
   let processed = 0;
@@ -77,8 +77,8 @@ async function processBatch(
     }
   }
 
-  return { successCount, errorCount };
-}
+  return { errorCount, successCount };
+};
 
 const runBackfill = async () => {
   if (!process.env.DATABASE_URL) {
@@ -167,8 +167,12 @@ const runBackfill = async () => {
   }
 };
 
-runBackfill().catch((err) => {
-  console.error("❌ Backfill failed");
-  console.error(err);
-  process.exit(1);
-});
+void (async () => {
+  try {
+    await runBackfill();
+  } catch (error) {
+    console.error("❌ Backfill failed");
+    console.error(error);
+    process.exit(1);
+  }
+})();

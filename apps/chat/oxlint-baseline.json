@@ -223,7 +223,6 @@
         "lib/ai/core-chat-agent.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
-        "lib/ai/mcp/mcp-client.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
@@ -235,7 +234,6 @@
         "lib/clone-messages.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/files/upload-prep.ts",
@@ -423,7 +421,7 @@
       }
     },
     {
-      "files": ["lib/ai/mcp/mcp-oauth-provider.ts", "lib/ai/text-splitter.ts"],
+      "files": ["lib/ai/text-splitter.ts"],
       "rules": {
         "max-classes-per-file": "off"
       }
@@ -454,8 +452,6 @@
         "lib/clone-messages.ts",
         "lib/db/backfill-parts.ts",
         "lib/files/upload-prep.ts",
-        "scripts/check-db.ts",
-        "scripts/check-env.ts",
         "tools/platform/tools.ts"
       ],
       "rules": {
@@ -488,12 +484,9 @@
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
         "lib/ai/eval-agent.ts",
-        "lib/ai/mcp/mcp-client.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/ai/token-utils.test.ts",
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
-        "lib/db/schema.ts",
         "lib/editor/config.ts",
         "lib/features-config.ts",
         "lib/message-conversion.ts",
@@ -599,7 +592,6 @@
         "lib/ai/errors.ts",
         "lib/app-chat-runtime.ts",
         "lib/db/queries.ts",
-        "lib/db/schema.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/thread-utils.ts"
       ],
@@ -608,11 +600,7 @@
       }
     },
     {
-      "files": [
-        "components/anonymous-session-init.tsx",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
-        "lib/db/queries.ts"
-      ],
+      "files": ["components/anonymous-session-init.tsx", "lib/db/queries.ts"],
       "rules": {
         "no-useless-return": "off"
       }
@@ -734,7 +722,6 @@
         "components/chat-sync.tsx",
         "components/electron-auth-handler.tsx",
         "components/electron-auth-ui.tsx",
-        "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/stores/base/hooks.ts"
@@ -759,16 +746,13 @@
         "components/retry-button.tsx",
         "components/suggested-actions.tsx",
         "lib/ai/completion-queue.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
-        "scripts/check-db.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
       "rules": {
@@ -1292,8 +1276,6 @@
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/mcp/mcp-client.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/ai/text-splitter.ts",
         "lib/ai/token-utils.test.ts",
         "lib/ai/usage-token-details.test.ts",
@@ -1312,7 +1294,6 @@
         "lib/credits/cost-accumulator.test.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/mcp-queries.ts",
         "lib/db/migrate.ts",
         "lib/db/queries.ts",
@@ -1401,11 +1382,7 @@
       }
     },
     {
-      "files": [
-        "lib/db/backfill-parts.ts",
-        "lib/db/migrate.ts",
-        "lib/stores/base/hooks.ts"
-      ],
+      "files": ["lib/db/migrate.ts", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/catch-error-name": "off"
       }
@@ -1585,7 +1562,6 @@
     },
     {
       "files": [
-        "components/ai-elements/parseIncompleteMarkdown.tsx",
         "components/ai-elements/prompt-input.tsx",
         "components/multimodal-input.tsx",
         "lib/ai/text-splitter.ts"
