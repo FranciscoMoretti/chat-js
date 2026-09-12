@@ -462,6 +462,17 @@ export type PromptInputProps = Omit<
   inputGroupClassName?: string;
 };
 
+const convertBlobUrlToDataUrl = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
 export const PromptInput = ({
   className,
   inputGroupClassName,
@@ -685,17 +696,6 @@ export const PromptInput = ({
     if (event.currentTarget.files) {
       add(event.currentTarget.files);
     }
-  };
-
-  const convertBlobUrlToDataUrl = async (url: string): Promise<string> => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   };
 
   const ctx = useMemo<AttachmentsContext>(

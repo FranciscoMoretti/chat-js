@@ -91,7 +91,7 @@ const PureParallelResponseCards = ({ messageId }: { messageId: string }) => {
 
   const sortedCardSlots = useMemo(
     () =>
-      [...cardSlots].sort((left, right) => {
+      cardSlots.toSorted((left, right) => {
         const leftOrder = getModelOrderIndex(
           getEffectiveModelId(left.message, left.modelId),
           models

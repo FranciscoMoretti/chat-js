@@ -73,17 +73,17 @@ export const SidebarChatsList = () => {
         return acc;
       },
       {
+        lastMonth: [],
+        lastWeek: [],
+        older: [],
         pinned: [],
         today: [],
         yesterday: [],
-        lastWeek: [],
-        lastMonth: [],
-        older: [],
       } as GroupedChats
     );
 
     // Add pinned chats (sorted by most recently updated first)
-    groups.pinned = pinnedChats.sort(
+    groups.pinned = pinnedChats.toSorted(
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
