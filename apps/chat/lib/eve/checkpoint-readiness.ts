@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  CheckpointRejected,
+  checkpointRejectionReason,
+} from "./checkpoint-rejection";
 import { eveRequest } from "./server";
 
 /** A missing checkpoint is pending; every other lookup failure stays unresolved. */
@@ -25,6 +29,15 @@ export async function readEveCheckpoint(
       throw new Error("Invalid source checkpoint receipt.");
     }
     return true;
+  }
+  const rejection = z
+    .object({
+      checkpointRejected: z.literal(true),
+      error: checkpointRejectionReason,
+    })
+    .safeParse(body);
+  if (checkpointId && result.status === 409 && rejection.success) {
+    throw new CheckpointRejected(rejection.data.error);
   }
   if (
     result.status === 404 &&

@@ -102,3 +102,25 @@ it("recovers an existing receipt without sending another native command", async 
   expect(mocks.capture).not.toHaveBeenCalled();
   expect(mocks.ready).not.toHaveBeenCalled();
 });
+
+it.each([
+  { stage: "read", target: () => mocks.read },
+  { stage: "ready", target: () => mocks.ready },
+])("returns exact durable rejection coordinates from $stage", async ({
+  stage,
+  target,
+}) => {
+  const { CheckpointRejected } = await import("@/lib/eve/checkpoint-rejection");
+  target().mockRejectedValueOnce(new CheckpointRejected("source_advanced"));
+  const response = await POST(request(), context);
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({
+    checkpointRejected: true,
+    reason: "source_advanced",
+    conversationId: id,
+    ...input,
+  });
+  if (stage === "read") {
+    expect(mocks.capture).not.toHaveBeenCalled();
+  }
+});

@@ -249,3 +249,139 @@ test("compiled idle capture preserves native history and exact document revision
     page.getByRole("button", { name: "Send", exact: true })
   ).toBeEnabled();
 });
+
+test("an advanced source rejects the exact comparison checkpoint and keeps the editable draft", async ({
+  page,
+  context,
+}, testInfo) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const origin = new URL(page.url()).origin;
+  await page.request.post("/api/chat-model", {
+    data: { model: "google/gemini-2.5-flash-lite" },
+  });
+  const created = await page.request.post("/api/agent-conversations", {
+    headers: { origin },
+    data: {
+      operationId: crypto.randomUUID(),
+      modelId: "google/gemini-2.5-flash-lite",
+      message: "Reply exactly checkpoint-source-ready. Do not call tools.",
+    },
+  });
+  expect(created.ok(), await created.text()).toBe(true);
+  const source = conversationBinding.parse(await created.json());
+  await page.goto(`/chat/${source.id}`);
+  await expect(page.locator(".is-assistant")).toContainText(
+    "checkpoint-source-ready",
+    { timeout: 60_000 }
+  );
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  const [binding] = await db
+    .select({ ownerId: eveConversation.ownerId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, source.id));
+  const other = await context.newPage();
+  await other.route("https://unpkg.com/react-scan/**", (route) =>
+    route.abort()
+  );
+  await other.goto(`/chat/${source.id}`);
+  await expect(other.getByText("Ready", { exact: true })).toBeVisible();
+  let groups = 0;
+  let checkpoint: { checkpointId: string; beforeTurnId: string } | undefined;
+  page.on("request", (request) => {
+    if (
+      new URL(request.url()).pathname === "/api/agent-response-groups" &&
+      request.method() === "POST"
+    ) {
+      groups += 1;
+    }
+  });
+  await page.route(
+    `**/api/agent-conversations/${source.id}/checkpoint`,
+    async (route) => {
+      checkpoint = route.request().postDataJSON();
+      // Another tab wins the next turn before the saved checkpoint reaches the worker.
+      await other
+        .getByRole("textbox", { name: "Message", exact: true })
+        .fill("Reply exactly checkpoint-source-advanced. Do not call tools.");
+      await other.getByRole("button", { name: "Send", exact: true }).click();
+      await expect(other.locator(".is-assistant").last()).toContainText(
+        "checkpoint-source-advanced",
+        { timeout: 20_000 }
+      );
+      await expect(other.getByText("Ready", { exact: true })).toBeVisible();
+      const rejected = await route.fetch();
+      expect(rejected.status()).toBe(409);
+      expect(await rejected.json()).toMatchObject({
+        checkpointRejected: true,
+        reason: "source_advanced",
+        conversationId: source.id,
+        ...checkpoint,
+      });
+      await route.fulfill({ response: rejected });
+    }
+  );
+  try {
+    await page.getByTestId("model-selector").click();
+    await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+    await page.getByRole("button", { name: "1×", exact: true }).click();
+    await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+    await page.keyboard.press("Escape");
+    const draft = "Keep this comparison draft after the source advances.";
+    await page
+      .getByRole("textbox", { name: "Message", exact: true })
+      .fill(draft);
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(
+      page.getByText(
+        "The conversation changed before the comparison could start.",
+        { exact: false }
+      )
+    ).toBeVisible({ timeout: 40_000 });
+    expect(groups).toBe(0);
+    expect(checkpoint?.beforeTurnId).toBe("turn_1");
+    await expect(
+      page.getByRole("textbox", { name: "Message", exact: true })
+    ).toHaveText(draft);
+    await expect(
+      page.getByRole("button", { name: "Send", exact: true })
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "Recover comparison", exact: true })
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        (key) => sessionStorage.getItem(key),
+        `chatjs.eve.pending:${binding.ownerId}:fork:${source.id}`
+      )
+    ).toBeNull();
+    // The durable rejection remains terminal when its exact identity is retried.
+    const repeated = await page.request.post(
+      `/api/agent-conversations/${source.id}/checkpoint`,
+      { headers: { origin }, data: checkpoint }
+    );
+    expect(repeated.status()).toBe(409);
+    expect(await repeated.json()).toMatchObject({
+      checkpointRejected: true,
+      reason: "source_advanced",
+      ...checkpoint,
+    });
+    await page
+      .getByRole("alert")
+      .filter({ hasText: "The conversation changed" })
+      .screenshot({
+        path: testInfo.outputPath("checkpoint-rejected.png"),
+        animations: "disabled",
+      });
+    await page.reload();
+    await expect(
+      page.getByRole("textbox", { name: "Message", exact: true })
+    ).toHaveText(draft);
+    await expect(
+      page.getByRole("button", { name: "Send", exact: true })
+    ).toBeEnabled();
+    expect(groups).toBe(0);
+  } finally {
+    await other.close();
+  }
+});

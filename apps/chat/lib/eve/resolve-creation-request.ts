@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { requestConversation } from "./create-conversation";
+import {
+  CheckpointRejected,
+  checkpointRejectionReason,
+} from "./checkpoint-rejection";
+import { CreationRejected, requestConversation } from "./create-conversation";
 import {
   requestResponseGroup,
   retainResponseGroupDraft,
@@ -30,6 +34,20 @@ export async function resolveCreationRequest(
         }
       );
       if (!response.ok) {
+        const rejection = z
+          .object({
+            checkpointRejected: z.literal(true),
+            reason: checkpointRejectionReason,
+            conversationId: z.literal(conversationId),
+            checkpointId: z.literal(checkpointId),
+            beforeTurnId: z.literal(beforeTurnId),
+          })
+          .safeParse(await response.json().catch(() => null));
+        if (response.status === 409 && rejection.success) {
+          throw new CreationRejected(
+            new CheckpointRejected(rejection.data.reason).message
+          );
+        }
         throw new Error(
           "The comparison's saved conversation state is unconfirmed. Retry the saved request."
         );

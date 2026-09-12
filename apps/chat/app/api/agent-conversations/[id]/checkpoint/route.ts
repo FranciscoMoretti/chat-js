@@ -7,6 +7,7 @@ import {
   readEveCheckpoint,
   waitForEveCheckpoint,
 } from "@/lib/eve/checkpoint-readiness";
+import { CheckpointRejected } from "@/lib/eve/checkpoint-rejection";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
 
@@ -82,7 +83,19 @@ export async function POST(
       { ready: true, conversationId: id, ...input.data },
       { headers: { "cache-control": "no-store" } }
     );
-  } catch {
+  } catch (cause) {
+    if (cause instanceof CheckpointRejected) {
+      return Response.json(
+        {
+          checkpointRejected: true,
+          reason: cause.reason,
+          error: cause.message,
+          conversationId: id,
+          ...input.data,
+        },
+        { status: 409, headers: { "cache-control": "no-store" } }
+      );
+    }
     return Response.json(
       {
         error:

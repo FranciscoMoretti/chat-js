@@ -263,3 +263,49 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
     operation
   );
 });
+
+test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
+  const { storage } = fixture();
+  const conversationId = crypto.randomUUID();
+  const fork = {
+    conversationId,
+    beforeTurnId: "turn_1",
+    checkpointId: crypto.randomUUID(),
+  };
+  const scope = { conversationId };
+  const operation = prepareResponseGroupCreation(
+    storage,
+    "owner",
+    "Keep this draft",
+    ["a", "b"],
+    { ...scope, fork }
+  );
+  const rejection = {
+    checkpointRejected: true,
+    reason: "source_advanced",
+    ...fork,
+  };
+  const fetcher = vi.fn();
+  vi.stubGlobal("fetch", fetcher);
+  for (const body of [
+    { ...rejection, checkpointId: crypto.randomUUID() },
+    { ...rejection, beforeTurnId: "turn_2" },
+    { ...rejection, conversationId: crypto.randomUUID() },
+    { ...rejection, reason: "unknown" },
+  ]) {
+    fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
+    await expect(
+      resolveCreationRequest(storage, "owner", operation, scope)
+    ).rejects.not.toBeInstanceOf(CreationRejected);
+    expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
+  }
+  fetcher.mockResolvedValueOnce(Response.json(rejection, { status: 409 }));
+  await expect(
+    resolveCreationRequest(storage, "owner", operation, scope)
+  ).rejects.toBeInstanceOf(CreationRejected);
+  expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
+    true
+  );
+  // The UI owns releasing the matching pending request; the original draft is never erased here.
+  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
+});

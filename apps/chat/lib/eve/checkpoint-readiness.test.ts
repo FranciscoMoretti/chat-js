@@ -89,3 +89,27 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     ).rejects.toThrow("Invalid source checkpoint");
   }
 });
+
+it.each([
+  "source_not_idle",
+  "source_advanced",
+])("recognizes durable named checkpoint rejection %s without polling", async (reason) => {
+  request.mockResolvedValue(
+    Response.json({ checkpointRejected: true, error: reason }, { status: 409 })
+  );
+  await expect(
+    waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
+  ).rejects.toMatchObject({ reason });
+  expect(request).toHaveBeenCalledTimes(1);
+});
+
+it.each([
+  { checkpointRejected: true, error: "Identity conflict" },
+  { checkpointRejected: false, error: "source_advanced" },
+  { error: "source_advanced" },
+])("keeps generic checkpoint failures ambiguous", async (body) => {
+  request.mockResolvedValue(Response.json(body, { status: 409 }));
+  await expect(
+    waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
+  ).rejects.toThrow("lookup is unavailable");
+});
