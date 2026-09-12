@@ -70,7 +70,7 @@ afterAll(async () => {
   try {
     await Promise.race([
       rm(root, { force: true, recursive: true }),
-      new Promise<never>((_, reject) => {
+      new Promise<never>((_resolve, reject) => {
         timeout = setTimeout(
           () => reject(new Error("Gateway test cleanup timed out")),
           180_000
