@@ -70,3 +70,36 @@ it.each([
     CreationRejected
   );
 });
+
+it("identifies a missing project only on a definitive rejection", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          error: "Project not found",
+          creationRejected: true,
+          code: "project_not_found",
+        },
+        { status: 404 }
+      )
+    )
+  );
+  await expect(requestConversation(operation)).rejects.toMatchObject({
+    projectUnavailable: true,
+  });
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          { error: "Invalid model", creationRejected: true },
+          { status: 400 }
+        )
+      )
+  );
+  await expect(requestConversation(operation)).rejects.toMatchObject({
+    projectUnavailable: false,
+  });
+});

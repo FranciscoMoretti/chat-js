@@ -187,7 +187,11 @@ export async function POST(request: Request) {
 function creationFailure(cause: unknown) {
   if (cause instanceof CreationProjectNotFound) {
     return Response.json(
-      { error: cause.message, creationRejected: true },
+      {
+        error: cause.message,
+        creationRejected: true,
+        code: "project_not_found",
+      },
       { status: 404 }
     );
   }

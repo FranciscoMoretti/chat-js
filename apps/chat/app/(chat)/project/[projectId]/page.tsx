@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
+import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
 import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
@@ -25,7 +26,16 @@ export default async function ProjectPageRoute({
   }
   const project = await getProjectById({ id: projectId });
   if (!project || project.userId !== session.user.id) {
-    notFound();
+    return (
+      <div className="p-4">
+        <h1 className="font-semibold text-xl">Project unavailable</h1>
+        <EveCreationRecovery
+          firstMessage=""
+          ownerId={session.user.id}
+          scope={{ projectId }}
+        />
+      </div>
+    );
   }
   const initialPage = await listEveConversations(session.user.id, {
     search: "",

@@ -56,3 +56,30 @@ export function readCreation(
   const stored = storage.getItem(keyFor(ownerId, scope));
   return stored ? createConversationInput.parse(JSON.parse(stored)) : undefined;
 }
+
+/** Only call after the server definitively rejected the original operation. */
+export function moveRejectedProjectCreation(
+  storage: StorageAccess,
+  ownerId: string,
+  projectId: string,
+  operationId: string
+) {
+  const scope = { projectId };
+  const pending = readCreation(storage, ownerId, scope);
+  if (pending?.operationId !== operationId || pending.projectId !== projectId) {
+    throw new Error("The saved request changed. Reload before continuing.");
+  }
+  if (readCreation(storage, ownerId)) {
+    throw new Error(
+      "Finish the saved request in New Chat before recovering this draft."
+    );
+  }
+  const next = prepareCreation(
+    storage,
+    ownerId,
+    pending.message,
+    pending.modelId
+  );
+  finishCreation(storage, ownerId, scope);
+  return next;
+}

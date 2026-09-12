@@ -14,6 +14,7 @@ import {
 } from "@/lib/eve/pending-create";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { EveComposer } from "./eve-composer";
+import { EveCreationRecovery } from "./eve-creation-recovery";
 import { useEveAttachments } from "./use-eve-attachments";
 
 export function NewEveConversation({
@@ -31,6 +32,7 @@ export function NewEveConversation({
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
+  const [projectRejected, setProjectRejected] = useState(false);
   const [retained, setRetained] = useState(false);
   const [retainedModelId, setRetainedModelId] = useState<string>();
   const [error, setError] = useState("");
@@ -90,7 +92,13 @@ export function NewEveConversation({
       finishCreation(sessionStorage, ownerId, scope);
       window.location.assign(`/chat/${binding.id}`);
     } catch (cause) {
-      if (cause instanceof CreationRejected) {
+      if (
+        cause instanceof CreationRejected &&
+        cause.projectUnavailable &&
+        projectId
+      ) {
+        setProjectRejected(true);
+      } else if (cause instanceof CreationRejected) {
         finishCreation(sessionStorage, ownerId, scope);
         setRetainedModelId(undefined);
         setRetained(false);
@@ -104,6 +112,16 @@ export function NewEveConversation({
       lock.current = false;
       setBusy(false);
     }
+  }
+  if (projectRejected) {
+    return (
+      <EveCreationRecovery
+        firstMessage={draft}
+        initiallyRejected
+        ownerId={ownerId}
+        scope={scope}
+      />
+    );
   }
   const composer = (
     <>

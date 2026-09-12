@@ -252,3 +252,157 @@ test("an unresolved project conversation recovers after its project is deleted",
     "project-recovery-ok"
   );
 });
+
+test("a missing project preserves an unreserved request until definitive rejection", async ({
+  page,
+}, testInfo) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const session = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  const projectId = crypto.randomUUID();
+  const operation = {
+    operationId: crypto.randomUUID(),
+    projectId,
+    message: "Preserve my missing project draft",
+    modelId: "openai/gpt-4.1-mini-fast",
+  };
+  const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
+  await page.evaluate(
+    ({ key, operation }) =>
+      sessionStorage.setItem(key, JSON.stringify(operation)),
+    { key, operation }
+  );
+  await page.goto(`/project/${projectId}`);
+  const recovery = page.getByRole("region", { name: "Conversation recovery" });
+  await expect(recovery).toContainText(operation.message);
+  await page.route(
+    "**/api/agent-conversations",
+    async (route) => {
+      expect(route.request().postDataJSON()).toEqual(operation);
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Temporary failure" }),
+      });
+    },
+    { times: 1 }
+  );
+  await recovery.getByRole("button", { name: "Retry creation" }).click();
+  await expect(recovery.getByRole("alert")).toHaveText("Temporary failure");
+  await expect(
+    recovery.getByRole("button", { name: "Continue without project" })
+  ).toHaveCount(0);
+  await page.reload();
+  await expect(recovery).toContainText(operation.message);
+  await recovery.screenshot({
+    path: testInfo.outputPath("missing-project-retained.png"),
+  });
+  await page.route(
+    "**/api/agent-conversations",
+    async (route) => {
+      expect(route.request().postDataJSON()).toEqual(operation);
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: "Project not found",
+          creationRejected: true,
+          code: "project_not_found",
+        }),
+      });
+    },
+    { times: 1 }
+  );
+  await recovery.getByRole("button", { name: "Retry creation" }).click();
+  await expect(
+    recovery.getByRole("button", { name: "Continue without project" })
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 850 });
+  await recovery.screenshot({
+    path: testInfo.outputPath("missing-project-rejected-mobile.png"),
+  });
+  await recovery
+    .getByRole("button", { name: "Continue without project" })
+    .click();
+  await expect(page).toHaveURL(new URL("/", page.url()).href);
+  await expect(page.locator('[aria-label="Message"]')).toHaveText(
+    operation.message
+  );
+  const saved = await page.evaluate(
+    ({ key, ownerId }) => ({
+      old: sessionStorage.getItem(key),
+      next: JSON.parse(
+        sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
+      ),
+    }),
+    { key, ownerId: session.user.id }
+  );
+  expect(saved.old).toBeNull();
+  expect(saved.next).toMatchObject({
+    message: operation.message,
+    modelId: operation.modelId,
+  });
+  expect(saved.next.operationId).not.toBe(operation.operationId);
+  expect(saved.next.projectId).toBeUndefined();
+});
+
+test("a rejected project composer retains its request across project deletion", async ({
+  page,
+}, testInfo) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const session = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  const created = await page.request.post("/api/trpc/project.create", {
+    data: { json: { name: "Rejected creation fixture" } },
+  });
+  expect(created.ok()).toBe(true);
+  const projectId = z
+    .object({
+      result: z.object({
+        data: z.object({ json: z.object({ id: z.uuid() }) }),
+      }),
+    })
+    .parse(await created.json()).result.data.json.id;
+  await page.goto(`/project/${projectId}`);
+  await page
+    .locator('[aria-label="Message"]')
+    .fill("Preserve rejected composer");
+  await page.route("**/api/agent-conversations", (route) =>
+    route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Project not found",
+        creationRejected: true,
+        code: "project_not_found",
+      }),
+    })
+  );
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const recovery = page.getByRole("region", { name: "Conversation recovery" });
+  await expect(
+    recovery.getByRole("button", { name: "Continue without project" })
+  ).toBeVisible();
+  const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
+  const retained = await page.evaluate(
+    (key) => sessionStorage.getItem(key),
+    key
+  );
+  expect(retained).not.toBeNull();
+  await recovery.screenshot({
+    path: testInfo.outputPath("project-composer-rejected.png"),
+  });
+  const removed = await page.request.post("/api/trpc/project.remove", {
+    data: { json: { id: projectId } },
+  });
+  expect(removed.ok()).toBe(true);
+  await page.reload();
+  await expect(recovery).toContainText("Preserve rejected composer");
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), key)).toBe(
+    retained
+  );
+});
