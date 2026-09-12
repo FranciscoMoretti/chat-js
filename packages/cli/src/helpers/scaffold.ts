@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, join, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, relative, resolve, sep } from "node:path";
 
 import { registryUrl } from "../registry/shadcn";
 import type { PackageManager } from "../types";
