@@ -5,21 +5,21 @@ import type { createModuleLogger } from "@/lib/logger";
 
 import type { SupportedExecutionLanguage } from "./types";
 
-export function getTokenAuth(): Record<string, string> {
+export const getTokenAuth = (): Record<string, string> => {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
   if (VERCEL_TEAM_ID && VERCEL_PROJECT_ID && VERCEL_TOKEN) {
     return {
-      teamId: VERCEL_TEAM_ID,
       projectId: VERCEL_PROJECT_ID,
+      teamId: VERCEL_TEAM_ID,
       token: VERCEL_TOKEN,
     };
   }
   return {};
-}
+};
 
-export function getSandboxRuntime(
+export const getSandboxRuntime = (
   language: SupportedExecutionLanguage
-): string {
+): string => {
   if (language === "javascript") {
     return env.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT ?? "node22";
   }
@@ -29,22 +29,21 @@ export function getSandboxRuntime(
     env.VERCEL_SANDBOX_RUNTIME ??
     "python3.13"
   );
-}
+};
 
-export function createSandbox(runtime: string): Promise<Sandbox> {
-  return Sandbox.create({
+export const createSandbox = (runtime: string): Promise<Sandbox> =>
+  Sandbox.create({
+    resources: { vcpus: 2 },
     runtime,
     timeout: 5 * 60 * 1000,
-    resources: { vcpus: 2 },
     ...getTokenAuth(),
   });
-}
 
-export async function cleanupSandbox(
+export const cleanupSandbox = async (
   sandbox: Sandbox | undefined,
   log: ReturnType<typeof createModuleLogger>,
   requestId: string
-): Promise<void> {
+): Promise<void> => {
   if (!sandbox) {
     return;
   }
@@ -52,10 +51,9 @@ export async function cleanupSandbox(
     await sandbox.stop();
     log.info({ requestId }, "sandbox closed");
   } catch (error) {
-    log.warn({ requestId, closeErr: error }, "failed to close sandbox");
+    log.warn({ closeErr: error, requestId }, "failed to close sandbox");
   }
-}
+};
 
-export function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : "Unknown error";
-}
+export const getErrorMessage = (err: unknown): string =>
+  err instanceof Error ? err.message : "Unknown error";
