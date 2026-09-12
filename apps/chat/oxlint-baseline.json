@@ -467,7 +467,6 @@
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/editor/config.ts",
-        "lib/message-conversion.ts",
         "lib/stores/base/hooks.ts",
         "lib/types/anonymous.ts",
         "providers/chat-input-provider.tsx",
@@ -1134,10 +1133,7 @@
       }
     },
     {
-      "files": [
-        "components/settings/mcp-details-page.tsx",
-        "lib/files/upload-prep.ts"
-      ],
+      "files": ["components/settings/mcp-details-page.tsx"],
       "rules": {
         "require-unicode-regexp": "off"
       }

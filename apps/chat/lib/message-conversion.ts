@@ -21,9 +21,10 @@ const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
   // Note: This function should not be used directly for messages with parts
   // Use getAllMessagesByChatId which reconstructs parts from Part table
   // Parts are now stored in Part table, not in Message.parts
+  // Parts are stored in Part table - use getAllMessagesByChatId instead.
   ({
     id: message.id,
-    parts: [], // Parts are stored in Part table - use getAllMessagesByChatId instead
+    parts: [],
     role: message.role as ChatMessage["role"],
     metadata: {
       createdAt: message.createdAt,

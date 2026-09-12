@@ -2,7 +2,7 @@
 
 import imageCompression from "browser-image-compression";
 
-const FILE_EXTENSION_REGEX = /\.[^.]+$/;
+const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
 const compressImageIfNeeded = async (
   file: File,
