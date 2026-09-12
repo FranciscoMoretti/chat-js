@@ -7,14 +7,14 @@ import type {
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
 
-export type { GatewayType } from "@/lib/ai/gateways/registry";
-
 import {
   gatewayCapabilities,
   gatewayModelDefaults,
   gatewayType,
 } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
+
+export type { GatewayType } from "@/lib/ai/gateways/registry";
 
 // Helper to create typed model ID schemas
 const toolName = () => z.custom<ToolName>();

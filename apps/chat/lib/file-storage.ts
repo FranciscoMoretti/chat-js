@@ -7,8 +7,8 @@ import { FILE_CONTENT_PATH, keyFromFileUrl } from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
-const SAFE_EXTENSION = /^\.[a-z0-9]{1,10}$/;
-const PATH_SEPARATOR = /[\\/]/;
+const SAFE_EXTENSION = /^\.[a-z0-9]{1,10}$/u;
+const PATH_SEPARATOR = /[\\/]/u;
 
 let files: Files | undefined;
 
@@ -25,7 +25,7 @@ const sanitizeFilename = (filename: string): string => {
   const basename = filename.split(PATH_SEPARATOR).at(-1) ?? "";
   const withoutControlCharacters = [...basename]
     .filter((character) => {
-      const code = character.charCodeAt(0);
+      const code = character.codePointAt(0) ?? 0;
       return code > 31 && code !== 127;
     })
     .join("");
@@ -63,19 +63,19 @@ export const uploadFile = async (
 };
 
 export const listFiles = async () => {
-  const files: {
+  const storedFiles: {
     pathname: string;
     uploadedAt: Date;
     url: string;
   }[] = [];
   for await (const file of getFiles().listAll()) {
-    files.push({
+    storedFiles.push({
       pathname: file.key,
       uploadedAt: new Date(file.lastModified ?? Date.now()),
       url: createFileUrl(file.key),
     });
   }
-  return { files };
+  return { files: storedFiles };
 };
 
 export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
