@@ -15,9 +15,10 @@ function calculateLLMCost(
   usage: UsageInfo,
   pricing: { input: string; output: string }
 ): number {
-  const inputCost = (usage.inputTokens ?? 0) * Number(pricing.input);
+  const inputCost =
+    (usage.inputTokens ?? 0) * Number.parseFloat(pricing.input);
   const outputCost =
-    (usage.outputTokens ?? 0) * Number(pricing.output);
+    (usage.outputTokens ?? 0) * Number.parseFloat(pricing.output);
   return (inputCost + outputCost) * 100;
 }
 
