@@ -96,15 +96,11 @@ export const DeviceLoginPage = () => {
   );
   const isCompletedView =
     searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
+  const shouldWaitForApp = isCompletedView || !isElectronTransferQuery(query);
+  const displayState = shouldWaitForApp ? "waiting-for-app" : state;
 
   useEffect(() => {
-    if (isCompletedView) {
-      setState("waiting-for-app");
-      return;
-    }
-
-    if (!isElectronTransferQuery(query)) {
-      setState("waiting-for-app");
+    if (shouldWaitForApp) {
       return;
     }
 
@@ -161,7 +157,7 @@ export const DeviceLoginPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [isCompletedView, pathname, query]);
+  }, [pathname, query, shouldWaitForApp]);
 
   return (
     <DeviceAuthScreen
@@ -194,7 +190,7 @@ export const DeviceLoginPage = () => {
           }
         })();
       }}
-      state={state}
+      state={displayState}
     />
   );
 };

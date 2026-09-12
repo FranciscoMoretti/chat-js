@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { getNewChatShortcutText } from "@/components/keyboard-shortcuts";
@@ -9,11 +9,11 @@ import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 
 export const NewChatButton = () => {
   const { setOpenMobile } = useSidebar();
-  const [shortcutText, setShortcutText] = useState("Ctrl+Shift+O");
-
-  useEffect(() => {
-    setShortcutText(getNewChatShortcutText());
-  }, []);
+  const shortcutText = useSyncExternalStore(
+    () => () => null,
+    getNewChatShortcutText,
+    () => "Ctrl+Shift+O"
+  );
 
   return (
     <SidebarMenuButton asChild className="mt-4" tooltip="New Chat">
