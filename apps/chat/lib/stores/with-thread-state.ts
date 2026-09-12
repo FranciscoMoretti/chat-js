@@ -15,10 +15,10 @@ export type ThreadStateStore<TMessage extends UIMessage> =
     ) => void;
   };
 
-function haveSelectedPathIdsChanged<TMessage extends { id: string }>(
+const haveSelectedPathIdsChanged = <TMessage extends { id: string }>(
   previous: TMessage[] | null | undefined,
   next: TMessage[]
-): boolean {
+): boolean => {
   const previousMessages = previous ?? [];
   if (previousMessages.length !== next.length) {
     return true;
@@ -26,7 +26,7 @@ function haveSelectedPathIdsChanged<TMessage extends { id: string }>(
   return previousMessages.some(
     (message, index) => message.id !== next[index]?.id
   );
-}
+};
 
 export const withThreadState =
   <TMessage extends UIMessage, TState extends BaseChatStoreState<TMessage>>(
