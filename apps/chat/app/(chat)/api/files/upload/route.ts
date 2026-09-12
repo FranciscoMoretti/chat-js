@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
-import { registerEveStoredFile } from "@/lib/db/eve-files";
+import { reserveEveUpload } from "@/lib/db/eve-files";
 import { env } from "@/lib/env";
-import { uploadFile } from "@/lib/file-storage";
-import { keyFromFileUrl } from "@/lib/file-url";
+import { createFileStorageKey, uploadFileAtKey } from "@/lib/file-storage";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -65,14 +64,12 @@ export async function POST(request: Request) {
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await uploadFile(filename, fileBuffer, file.type);
+      const key = createFileStorageKey(filename);
       if (env.WORKFLOW_POSTGRES_URL) {
-        const key = keyFromFileUrl(data.url);
-        if (!key) {
-          throw new Error("Storage returned an invalid file key.");
-        }
-        await registerEveStoredFile(session.user.id, key);
+        await reserveEveUpload(session.user.id, key);
       }
+      // Keep the reservation if storage fails: an uncertain write can still finish.
+      const data = await uploadFileAtKey(key, filename, fileBuffer, file.type);
       return NextResponse.json(data);
     } catch (_error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });

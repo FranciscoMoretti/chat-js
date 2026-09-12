@@ -12,9 +12,12 @@ vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
 }));
 vi.mock("@/lib/db/eve-files", () => ({
-  registerEveStoredFile: mocks.register,
+  reserveEveUpload: mocks.register,
 }));
-vi.mock("@/lib/file-storage", () => ({ uploadFile: mocks.upload }));
+vi.mock("@/lib/file-storage", () => ({
+  createFileStorageKey: () => "abcdefghijklmnopqrstuvwx.png",
+  uploadFileAtKey: mocks.upload,
+}));
 
 import { POST } from "./route";
 
@@ -52,4 +55,41 @@ test("does not return a usable upload when ownership registration fails", async 
   const response = await POST(request());
   expect(response.status).toBe(500);
   expect(await response.json()).toEqual({ error: "Upload failed" });
+  expect(mocks.upload).not.toHaveBeenCalled();
+});
+
+test("waits for durable ownership before starting storage I/O", async () => {
+  let release: () => void = () => undefined;
+  mocks.register.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      })
+  );
+  const response = POST(request());
+  await vi.waitFor(() =>
+    expect(mocks.register).toHaveBeenCalledWith("owner", key)
+  );
+  expect(mocks.upload).not.toHaveBeenCalled();
+  release();
+  expect((await response).status).toBe(200);
+  expect(mocks.upload).toHaveBeenCalledWith(
+    key,
+    "fixture.png",
+    expect.any(ArrayBuffer),
+    "image/png"
+  );
+});
+
+test("retains the reserved identity after an uncertain storage failure", async () => {
+  mocks.upload.mockRejectedValue(new Error("storage response lost"));
+  const response = await POST(request());
+  expect(response.status).toBe(500);
+  expect(mocks.register).toHaveBeenCalledExactlyOnceWith("owner", key);
+  expect(mocks.upload).toHaveBeenCalledExactlyOnceWith(
+    key,
+    "fixture.png",
+    expect.any(ArrayBuffer),
+    "image/png"
+  );
 });

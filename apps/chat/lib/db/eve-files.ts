@@ -8,6 +8,14 @@ const DOCUMENT_FILE_URL = new RegExp(
   "g"
 );
 
+/** Reserve a fresh upload before storage I/O; never overwrite an existing key. */
+export async function reserveEveUpload(ownerId: string, key: string) {
+  if (!(ownerId && isFileStorageKey(key))) {
+    throw new Error("Invalid upload ownership reservation.");
+  }
+  await db.insert(eveStoredFile).values({ ownerId, key });
+}
+
 /** Register server-created keys only; a caller-supplied URL is not ownership proof. */
 export async function registerEveStoredFile(ownerId: string, key: string) {
   if (!(ownerId && isFileStorageKey(key))) {

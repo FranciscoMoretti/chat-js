@@ -12,6 +12,7 @@ import {
   referenceEveFiles,
   registerEveStoredFile,
   reserveEveGeneratedFile,
+  reserveEveUpload,
   writeEveGeneratedFile,
 } from "../lib/db/eve-files";
 import {
@@ -360,4 +361,23 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
       .from(eveFileReference)
       .where(eq(eveFileReference.key, key))
   ).toEqual([]);
+});
+
+test("upload reservations are durable and reject existing identities even for the same owner", async () => {
+  const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
+  await reserveEveUpload(owner, key);
+  await expect(reserveEveUpload(owner, key)).rejects.toThrow();
+  await expect(reserveEveUpload(stranger, key)).rejects.toThrow();
+  expect(
+    await db
+      .select({ ownerId: eveStoredFile.ownerId, state: eveStoredFile.state })
+      .from(eveStoredFile)
+      .where(eq(eveStoredFile.key, key))
+  ).toEqual([{ ownerId: owner, state: "active" }]);
+  await expect(reserveEveUpload(owner, "../file")).rejects.toThrow(
+    "Invalid upload ownership"
+  );
+  await expect(reserveEveUpload("", key)).rejects.toThrow(
+    "Invalid upload ownership"
+  );
 });
