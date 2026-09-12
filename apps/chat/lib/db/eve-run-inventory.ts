@@ -1,5 +1,6 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
+import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
 
 const runRow = z.object({
   id: z.string(),
@@ -107,6 +108,7 @@ export async function readEvePostgresRunInventoryInTransaction(
   );
   return {
     runs,
+    sandboxCoverage: classifyEveSandboxRuns(runs),
     streamIds: streams.map((stream) => stream.id),
     activeRunIds: runs
       .filter((run) => run.status === "running" || run.status === "pending")

@@ -71,6 +71,17 @@ test("inventories native descendants and collectors without returning payloads o
   expect(
     inventory.runs.every((row) => row.workflowName === "inventory-fixture")
   ).toBe(true);
+  expect(inventory.sandboxCoverage).toEqual({
+    sessionIds: [],
+    unresolvedRunIds: [
+      root,
+      turn,
+      timer,
+      task,
+      collector,
+      collectorChild,
+    ].sort(),
+  });
   expect(inventory.activeRunIds).toEqual([]);
   expect(inventory.missingRunIds).toEqual([]);
   expect(inventory.ambiguousStreamIds).toEqual([]);

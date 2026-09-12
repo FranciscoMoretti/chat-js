@@ -319,3 +319,11 @@ reported as incomplete ownership, rather than silently omitted: a missing row
 cannot prove the run never allocated external resources. Local database tests
 verify preparation and retries remain blocked without erasing payloads, while
 ordinary cleanup and retries after a completed purge still succeed.
+
+Sandbox coverage now classifies the pinned workflow identities in the native
+inventory. Each `workflowEntry` is a session requiring its own birth receipt;
+turn, timeout, and pinned sleep runs are covered only when every parent path
+resolves through known workflow types to such a session. Missing ancestry,
+cycles, unknown versions, collectors, and authored workflow wrappers remain
+unresolved. Graph traversal visits each ancestry edge once and does not authorize
+erasure; the coordinator still needs receipt validation and persistent proof.
