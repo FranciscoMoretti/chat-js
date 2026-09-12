@@ -2,37 +2,33 @@ import type { ReactNode } from "react";
 
 import "./presentation.css";
 
-export function Caption({
+export const Caption = ({
   children,
   opacity,
 }: {
   children: ReactNode;
   opacity: number;
-}) {
-  return (
-    <div className="captionPause" style={{ opacity }}>
-      <span>{children}</span>
-    </div>
-  );
-}
-export function Pointer({ x, y }: { x: number; y: number }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="cursor"
-      viewBox="0 0 26 32"
-      style={{ left: x, top: y }}
-    >
-      <path
-        d="M3 2 L3 25 L9 20 L14 30 L19 27 L14 17 L23 16 Z"
-        fill="#17283e"
-        stroke="white"
-        strokeWidth={2}
-      />
-    </svg>
-  );
-}
-export function ClickPulse({
+}) => (
+  <div className="captionPause" style={{ opacity }}>
+    <span>{children}</span>
+  </div>
+);
+export const Pointer = ({ x, y }: { x: number; y: number }) => (
+  <svg
+    aria-hidden="true"
+    className="cursor"
+    viewBox="0 0 26 32"
+    style={{ left: x, top: y }}
+  >
+    <path
+      d="M3 2 L3 25 L9 20 L14 30 L19 27 L14 17 L23 16 Z"
+      fill="#17283e"
+      stroke="white"
+      strokeWidth={2}
+    />
+  </svg>
+);
+export const ClickPulse = ({
   age,
   x,
   y,
@@ -40,8 +36,8 @@ export function ClickPulse({
   age: number;
   x: number;
   y: number;
-}) {
-  return age >= 0 && age < 0.5 ? (
+}) =>
+  age >= 0 && age < 0.5 ? (
     <div
       className="clickPulse"
       style={{
@@ -52,4 +48,3 @@ export function ClickPulse({
       }}
     />
   ) : null;
-}
