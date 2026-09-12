@@ -46,6 +46,8 @@ const nextConfig: NextConfig = {
 export default process.env.EVE_ENABLED === "true"
   ? (phase: string) =>
       phase === "phase-development-server"
-        ? withEve(nextConfig)(phase, { defaultConfig: nextConfig })
+        ? withEve(nextConfig, { devServerTimeoutMs: 600_000 })(phase, {
+            defaultConfig: nextConfig,
+          })
         : nextConfig
   : nextConfig;

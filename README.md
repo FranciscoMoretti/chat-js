@@ -197,9 +197,14 @@ bun dev:service stop   # stop this checkout and remove its login startup entry
 ```
 
 Stop a manually running `bun dev` before starting the service. Each checkout has
-its own service identity and worktree port. The supervisor allows three minutes
-for startup, checks every ten seconds, and restarts the process group after three
-failed checks. Restarts back off to sixty seconds. Node heaps are capped at 4 GiB
+its own service identity and worktree port. The supervisor checks readiness every
+ten seconds. Startup gets three minutes initially, then six and at most ten
+minutes after consecutive unsuccessful launches, so slow compilation can finish.
+Eve's development startup timeout is also ten minutes. Once healthy, the runtime
+must remain unavailable for two minutes across at least three failed checks
+before it is replaced. A successful readiness check resets the startup allowance;
+process exits still trigger recovery immediately. Restarts back off to sixty
+seconds. Node heaps are capped at 4 GiB
 per process; this is not a total system memory cap. Logs are retained under
 `~/Library/Logs/ChatJS/` (the status command prints the checkout's directory).
 The Mac must be awake and the database/network available; supervision cannot

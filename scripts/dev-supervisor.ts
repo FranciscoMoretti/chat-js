@@ -66,6 +66,7 @@ for (const signal of signals) {
 	});
 }
 let backoff = 5000;
+let failedStartups = 0;
 while (!stopping) {
 	console.info("Starting ChatJS and managed Eve runtime");
 	child = spawn(process.execPath, ["run", "dev"], {
@@ -90,6 +91,7 @@ while (!stopping) {
 			await checkHealth(origin);
 			if (!wasReady) console.info("ChatJS, Eve and database are ready");
 			wasReady = true;
+			failedStartups = 0;
 			lastReadyAt = Date.now();
 			failures = 0;
 			backoff = 5000;
@@ -100,6 +102,7 @@ while (!stopping) {
 					failures,
 					Date.now() - lastReadyAt,
 					wasReady,
+					failedStartups,
 				)
 			) {
 				console.error(
@@ -110,6 +113,7 @@ while (!stopping) {
 		}
 		await sleep(10_000);
 	}
+	if (!wasReady) failedStartups++;
 	terminate("SIGTERM");
 	await sleep(2000);
 	terminate("SIGKILL");
