@@ -58,100 +58,6 @@ interface DocumentPreviewProps {
   type?: "create" | "update";
 }
 
-export const DocumentPreview = ({
-  isReadonly,
-  output,
-  input,
-  messageId,
-  type = "create",
-  isLastArtifact = true,
-}: DocumentPreviewProps) => {
-  const { artifact, setArtifact } = useArtifact();
-  const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
-    output?.documentId || "",
-    output?.documentId === "init" || artifact.status === "streaming"
-  );
-
-  const previewDocument = useMemo(() => documents?.[0], [documents]);
-  const hitboxRef = useRef<HTMLDivElement | null>(null);
-
-  // Show collapsed view if artifact panel is visible OR this is not the last artifact
-  if (artifact.isVisible || !isLastArtifact) {
-    if (output) {
-      return (
-        <DocumentToolResult
-          isReadonly={isReadonly}
-          messageId={messageId}
-          result={{
-            id: output.documentId,
-            title: output.title || artifact.title,
-            kind: output.kind,
-          }}
-          type={type}
-        />
-      );
-    }
-
-    if (input) {
-      return (
-        <DocumentToolCall
-          args={{ title: input.title }}
-          isReadonly={isReadonly}
-          type={type}
-        />
-      );
-    }
-  }
-
-  if (isDocumentsFetching) {
-    return (
-      <LoadingSkeleton
-        artifactKind={output?.kind ?? input?.kind ?? artifact.kind}
-      />
-    );
-  }
-
-  const document: Document | null = (() => {
-    if (previewDocument) {
-      return previewDocument;
-    }
-    if (artifact.status === "streaming") {
-      return {
-        title: artifact.title,
-        kind: artifact.kind,
-        content: artifact.content,
-        id: artifact.documentId,
-        createdAt: new Date(),
-        userId: "noop",
-        messageId: "noop",
-      };
-    }
-    return null;
-  })();
-
-  if (!document) {
-    return <LoadingSkeleton artifactKind={artifact.kind} />;
-  }
-
-  return (
-    <div className="relative w-full cursor-pointer">
-      <HitboxLayer
-        hitboxRef={hitboxRef}
-        messageId={messageId}
-        output={output}
-        setArtifact={setArtifact}
-      />
-      <DocumentHeader
-        isStreaming={artifact.status === "streaming"}
-        kind={document.kind}
-        title={document.title}
-        type={type}
-      />
-      <DocumentContent document={document} />
-    </div>
-  );
-};
-
 const LoadingSkeleton = ({
   artifactKind: _artifactKind,
 }: {
@@ -301,6 +207,100 @@ const DocumentHeader = memo(PureDocumentHeader, (prevProps, nextProps) => {
   return true;
 });
 
+export const DocumentPreview = ({
+  isReadonly,
+  output,
+  input,
+  messageId,
+  type = "create",
+  isLastArtifact = true,
+}: DocumentPreviewProps) => {
+  const { artifact, setArtifact } = useArtifact();
+  const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
+    output?.documentId || "",
+    output?.documentId === "init" || artifact.status === "streaming"
+  );
+
+  const previewDocument = useMemo(() => documents?.[0], [documents]);
+  const hitboxRef = useRef<HTMLDivElement | null>(null);
+
+  // Show collapsed view if artifact panel is visible OR this is not the last artifact
+  if (artifact.isVisible || !isLastArtifact) {
+    if (output) {
+      return (
+        <DocumentToolResult
+          isReadonly={isReadonly}
+          messageId={messageId}
+          result={{
+            id: output.documentId,
+            kind: output.kind,
+            title: output.title || artifact.title,
+          }}
+          type={type}
+        />
+      );
+    }
+
+    if (input) {
+      return (
+        <DocumentToolCall
+          args={{ title: input.title }}
+          isReadonly={isReadonly}
+          type={type}
+        />
+      );
+    }
+  }
+
+  if (isDocumentsFetching) {
+    return (
+      <LoadingSkeleton
+        artifactKind={output?.kind ?? input?.kind ?? artifact.kind}
+      />
+    );
+  }
+
+  const document: Document | null = (() => {
+    if (previewDocument) {
+      return previewDocument;
+    }
+    if (artifact.status === "streaming") {
+      return {
+        content: artifact.content,
+        createdAt: new Date(),
+        id: artifact.documentId,
+        kind: artifact.kind,
+        messageId: "noop",
+        title: artifact.title,
+        userId: "noop",
+      };
+    }
+    return null;
+  })();
+
+  if (!document) {
+    return <LoadingSkeleton artifactKind={artifact.kind} />;
+  }
+
+  return (
+    <div className="relative w-full cursor-pointer">
+      <HitboxLayer
+        hitboxRef={hitboxRef}
+        messageId={messageId}
+        output={output}
+        setArtifact={setArtifact}
+      />
+      <DocumentHeader
+        isStreaming={artifact.status === "streaming"}
+        kind={document.kind}
+        title={document.title}
+        type={type}
+      />
+      <DocumentContent document={document} />
+    </div>
+  );
+};
+
 const DocumentContent = ({ document }: { document: Document }) => {
   const { artifact } = useArtifact();
 
@@ -314,12 +314,12 @@ const DocumentContent = ({ document }: { document: Document }) => {
 
   const commonProps = {
     content: document.content ?? "",
-    isCurrentVersion: true,
     currentVersionIndex: 0,
-    status: artifact.status,
+    isCurrentVersion: true,
     saveContent: () => {
       // No-op for preview mode
     },
+    status: artifact.status,
   };
 
   return (

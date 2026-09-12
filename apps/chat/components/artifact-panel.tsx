@@ -151,10 +151,10 @@ const PureArtifactPanel = ({
       ) {
         setIsContentDirty(true);
         saveDocumentMutation.mutate({
-          id: lastDocument.id,
-          title: lastDocument.title,
           content: updatedContent,
+          id: lastDocument.id,
           kind: lastDocument.kind,
+          title: lastDocument.title,
         });
       }
     },
@@ -267,10 +267,10 @@ const PureArtifactPanel = ({
         case "text": {
           textArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata,
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
         }

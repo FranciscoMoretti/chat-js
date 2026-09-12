@@ -63,7 +63,10 @@ export const DeviceLoginPage = () => {
 
       await authClient.electron.transferUser({
         fetchOptions: {
-          query,
+          onError: () => {
+            transferStartedRef.current = false;
+            setState("waiting-for-app");
+          },
           onSuccess: () => {
             window.history.replaceState(
               {},
@@ -72,10 +75,7 @@ export const DeviceLoginPage = () => {
             );
             setState("waiting-for-app");
           },
-          onError: () => {
-            transferStartedRef.current = false;
-            setState("waiting-for-app");
-          },
+          query,
         },
       });
     };
@@ -102,7 +102,10 @@ export const DeviceLoginPage = () => {
         authClient.electron
           .transferUser({
             fetchOptions: {
-              query,
+              onError: () => {
+                transferStartedRef.current = false;
+                setState("waiting-for-app");
+              },
               onSuccess: () => {
                 window.history.replaceState(
                   {},
@@ -111,10 +114,7 @@ export const DeviceLoginPage = () => {
                 );
                 setState("waiting-for-app");
               },
-              onError: () => {
-                transferStartedRef.current = false;
-                setState("waiting-for-app");
-              },
+              query,
             },
           })
           .catch(() => {

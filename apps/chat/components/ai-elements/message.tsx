@@ -168,12 +168,12 @@ export const MessageBranch = ({
   };
 
   const contextValue: MessageBranchContextType = {
-    currentBranch,
-    totalBranches: branches.length,
-    goToPrevious,
-    goToNext,
     branches,
+    currentBranch,
+    goToNext,
+    goToPrevious,
     setBranches,
+    totalBranches: branches.length,
   };
 
   return (

@@ -30,24 +30,24 @@ export const LoginCtaBanner = ({
   }
 
   const variantStyles = {
-    default:
-      "bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800",
     amber:
       "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800",
+    default:
+      "bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800",
     red: "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800",
   };
 
   const textStyles = {
-    default: "text-blue-800 dark:text-blue-200",
     amber: "text-amber-800 dark:text-amber-200",
+    default: "text-blue-800 dark:text-blue-200",
     red: "text-red-800 dark:text-red-200",
   };
 
   const linkStyles = {
-    default:
-      "text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100",
     amber:
       "text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100",
+    default:
+      "text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100",
     red: "text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100",
   };
 

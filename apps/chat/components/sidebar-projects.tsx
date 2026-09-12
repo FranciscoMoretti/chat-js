@@ -48,9 +48,9 @@ export const SidebarProjects = () => {
 
   const handleCreateProject = (data: ProjectDetailsData) => {
     createProjectMutation.mutate({
-      name: data.name,
       icon: data.icon,
       iconColor: data.color,
+      name: data.name,
     });
   };
 

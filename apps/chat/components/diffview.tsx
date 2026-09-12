@@ -11,9 +11,9 @@ import { useEffect } from "react";
 import { createEditorConfig } from "@/lib/editor/config";
 
 const DiffType = {
-  Unchanged: 0,
   Deleted: -1,
   Inserted: 1,
+  Unchanged: 0,
 };
 
 // Define diff types

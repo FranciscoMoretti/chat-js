@@ -56,10 +56,10 @@ export const VersionFooter = ({
             const versionToRestore = documents[currentVersionIndex];
 
             saveDocumentMutation.mutate({
-              id: artifact.documentId,
               content: versionToRestore.content ?? "",
-              title: versionToRestore.title,
+              id: artifact.documentId,
               kind: versionToRestore.kind,
+              title: versionToRestore.title,
             });
           }}
         >

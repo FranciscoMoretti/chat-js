@@ -97,6 +97,157 @@ const getAcceptFiles = (acceptedTypes: Record<string, string[]>): string =>
 const getAcceptAll = (acceptedTypes: Record<string, string[]>): string =>
   Object.values(acceptedTypes).flat().join(",");
 
+const PureAttachmentsButton = ({
+  fileInputRef,
+  status,
+  acceptAll,
+  acceptImages,
+  acceptFiles,
+}: {
+  fileInputRef: MutableRefObject<HTMLInputElement | null>;
+  status: UseChatHelpers<ChatMessage>["status"];
+  acceptAll: string;
+  acceptImages: string;
+  acceptFiles: string;
+}) => {
+  const { data: session } = useSession();
+  const isMobile = useIsMobile();
+  const isAnonymous = !session?.user;
+  const [showLoginPopover, setShowLoginPopover] = useState(false);
+
+  const triggerFileInput = useCallback(
+    (accept: string, capture?: "environment" | "user") => {
+      const input = fileInputRef.current;
+      if (!input) {
+        return;
+      }
+      input.accept = accept;
+      if (capture) {
+        input.capture = capture;
+      } else {
+        input.removeAttribute("capture");
+      }
+      input.click();
+    },
+    [fileInputRef]
+  );
+
+  const handleDesktopClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (isAnonymous) {
+      setShowLoginPopover(true);
+      return;
+    }
+    triggerFileInput(acceptAll);
+  };
+
+  // Mobile: dropdown with separate options
+  if (isMobile) {
+    if (isAnonymous) {
+      return (
+        <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
+          <PopoverTrigger asChild>
+            <PromptInputButton
+              className="size-8"
+              data-testid="attachments-button"
+              disabled={status !== "ready"}
+              onClick={() => setShowLoginPopover(true)}
+              variant="ghost"
+            >
+              <PlusIcon className="size-4" />
+            </PromptInputButton>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-80 p-0">
+            <LoginPrompt
+              description="You can attach images and PDFs to your messages for the AI to analyze."
+              title="Sign in to attach files"
+            />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <PromptInputButton
+            className="size-8"
+            data-testid="attachments-button"
+            disabled={status !== "ready"}
+            variant="ghost"
+          >
+            <PlusIcon className="size-4" />
+          </PromptInputButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => triggerFileInput(acceptImages)}>
+            <ImageIcon />
+            Add photos
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => triggerFileInput(acceptImages, "environment")}
+          >
+            <CameraIcon />
+            Take photo
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => triggerFileInput(acceptFiles)}>
+            <FileIcon />
+            Add files
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Desktop: single button with tooltip
+  return (
+    <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <PromptInputButton
+              className="size-8 @[500px]:size-10"
+              data-testid="attachments-button"
+              disabled={status !== "ready"}
+              onClick={handleDesktopClick}
+              variant="ghost"
+            >
+              <PlusIcon className="size-4" />
+            </PromptInputButton>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Add Files</TooltipContent>
+      </Tooltip>
+      <PopoverContent align="end" className="w-80 p-0">
+        <LoginPrompt
+          description="You can attach images and PDFs to your messages for the AI to analyze."
+          title="Sign in to attach files"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const AttachmentsButton = memo(PureAttachmentsButton);
+
+const ComposerContext = createContext<{
+  autoFocus: boolean;
+  isEditMode: boolean;
+  isModelDisallowedForAnonymous: boolean;
+  parentMessageId: string | null;
+  status: UseChatHelpers<ChatMessage>["status"];
+  submission: { enabled: boolean; message?: string };
+  submitForm: () => void;
+  onStop: () => void;
+  onPaste: (event: ClipboardEvent) => Promise<void>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  acceptAll: string;
+  acceptFiles: string;
+  acceptImages: string;
+  uploadQueue: string[];
+  removeAttachment: (attachment: Attachment) => void;
+} | null>(null);
+
 const PureMultimodalInput = ({
   children,
   chatId,
@@ -429,8 +580,8 @@ const PureMultimodalInput = ({
 
       try {
         const response = await fetch("/api/files/upload", {
-          method: "POST",
           body: formData,
+          method: "POST",
         });
 
         if (response.ok) {
@@ -439,9 +590,9 @@ const PureMultimodalInput = ({
           const { url, pathname, contentType } = data;
 
           return {
-            url,
-            name: pathname,
             contentType,
+            name: pathname,
+            url,
           };
         }
         const { error } = (await response.json()) as { error?: string };
@@ -455,7 +606,7 @@ const PureMultimodalInput = ({
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+      const files = [...(event.target.files || [])];
       const validFiles = await processFiles(files);
 
       if (validFiles.length === 0) {
@@ -500,7 +651,7 @@ const PureMultimodalInput = ({
         return;
       }
 
-      const files = Array.from(clipboardData.files);
+      const files = [...clipboardData.files];
       if (files.length === 0) {
         return;
       }
@@ -689,21 +840,21 @@ const PureMultimodalInput = ({
 
           <ComposerContext.Provider
             value={{
-              autoFocus,
-              isEditMode,
-              isModelDisallowedForAnonymous,
-              parentMessageId,
-              status: responseAwareStatus,
-              submission,
-              submitForm,
-              onStop: handleStop,
-              onPaste: handlePaste,
-              fileInputRef,
               acceptAll,
               acceptFiles,
               acceptImages,
-              uploadQueue,
+              autoFocus,
+              fileInputRef,
+              isEditMode,
+              isModelDisallowedForAnonymous,
+              onPaste: handlePaste,
+              onStop: handleStop,
+              parentMessageId,
               removeAttachment,
+              status: responseAwareStatus,
+              submission,
+              submitForm,
+              uploadQueue,
             }}
           >
             {children}
@@ -713,157 +864,6 @@ const PureMultimodalInput = ({
     </div>
   );
 };
-
-const PureAttachmentsButton = ({
-  fileInputRef,
-  status,
-  acceptAll,
-  acceptImages,
-  acceptFiles,
-}: {
-  fileInputRef: MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  acceptAll: string;
-  acceptImages: string;
-  acceptFiles: string;
-}) => {
-  const { data: session } = useSession();
-  const isMobile = useIsMobile();
-  const isAnonymous = !session?.user;
-  const [showLoginPopover, setShowLoginPopover] = useState(false);
-
-  const triggerFileInput = useCallback(
-    (accept: string, capture?: "environment" | "user") => {
-      const input = fileInputRef.current;
-      if (!input) {
-        return;
-      }
-      input.accept = accept;
-      if (capture) {
-        input.capture = capture;
-      } else {
-        input.removeAttribute("capture");
-      }
-      input.click();
-    },
-    [fileInputRef]
-  );
-
-  const handleDesktopClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (isAnonymous) {
-      setShowLoginPopover(true);
-      return;
-    }
-    triggerFileInput(acceptAll);
-  };
-
-  // Mobile: dropdown with separate options
-  if (isMobile) {
-    if (isAnonymous) {
-      return (
-        <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
-          <PopoverTrigger asChild>
-            <PromptInputButton
-              className="size-8"
-              data-testid="attachments-button"
-              disabled={status !== "ready"}
-              onClick={() => setShowLoginPopover(true)}
-              variant="ghost"
-            >
-              <PlusIcon className="size-4" />
-            </PromptInputButton>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-80 p-0">
-            <LoginPrompt
-              description="You can attach images and PDFs to your messages for the AI to analyze."
-              title="Sign in to attach files"
-            />
-          </PopoverContent>
-        </Popover>
-      );
-    }
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <PromptInputButton
-            className="size-8"
-            data-testid="attachments-button"
-            disabled={status !== "ready"}
-            variant="ghost"
-          >
-            <PlusIcon className="size-4" />
-          </PromptInputButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => triggerFileInput(acceptImages)}>
-            <ImageIcon />
-            Add photos
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => triggerFileInput(acceptImages, "environment")}
-          >
-            <CameraIcon />
-            Take photo
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => triggerFileInput(acceptFiles)}>
-            <FileIcon />
-            Add files
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  // Desktop: single button with tooltip
-  return (
-    <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <PromptInputButton
-              className="size-8 @[500px]:size-10"
-              data-testid="attachments-button"
-              disabled={status !== "ready"}
-              onClick={handleDesktopClick}
-              variant="ghost"
-            >
-              <PlusIcon className="size-4" />
-            </PromptInputButton>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Add Files</TooltipContent>
-      </Tooltip>
-      <PopoverContent align="end" className="w-80 p-0">
-        <LoginPrompt
-          description="You can attach images and PDFs to your messages for the AI to analyze."
-          title="Sign in to attach files"
-        />
-      </PopoverContent>
-    </Popover>
-  );
-};
-
-const AttachmentsButton = memo(PureAttachmentsButton);
-
-const ComposerContext = createContext<{
-  autoFocus: boolean;
-  isEditMode: boolean;
-  isModelDisallowedForAnonymous: boolean;
-  parentMessageId: string | null;
-  status: UseChatHelpers<ChatMessage>["status"];
-  submission: { enabled: boolean; message?: string };
-  submitForm: () => void;
-  onStop: () => void;
-  onPaste: (event: ClipboardEvent) => Promise<void>;
-  fileInputRef: RefObject<HTMLInputElement | null>;
-  acceptAll: string;
-  acceptFiles: string;
-  acceptImages: string;
-  uploadQueue: string[];
-  removeAttachment: (attachment: Attachment) => void;
-} | null>(null);
 
 const useComposer = () => {
   const context = useContext(ComposerContext);

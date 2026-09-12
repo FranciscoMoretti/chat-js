@@ -32,10 +32,17 @@ const PureUserMessage = ({
     isOpen: boolean;
     imageUrl: string;
     imageName?: string;
-  }>({ isOpen: false, imageUrl: "" });
+  }>({
+    imageUrl: "",
+    isOpen: false,
+  });
 
   const handleImageClick = (imageUrl: string, imageName?: string) => {
-    setImageModal({ isOpen: true, imageUrl, imageName });
+    setImageModal({
+      imageName,
+      imageUrl,
+      isOpen: true,
+    });
   };
 
   if (!message) {
@@ -140,7 +147,12 @@ const PureUserMessage = ({
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}
         isOpen={imageModal.isOpen}
-        onClose={() => setImageModal({ isOpen: false, imageUrl: "" })}
+        onClose={() =>
+          setImageModal({
+            imageUrl: "",
+            isOpen: false,
+          })
+        }
       />
     </>
   );

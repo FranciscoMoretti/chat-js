@@ -122,8 +122,8 @@ const ShowSourcesButton = ({
       className="mr-1.5"
       maxVisible={3}
       sources={sources.map((s) => ({
-        url: s.url,
         title: s.title,
+        url: s.url,
       }))}
     />
     <span className="text-muted-foreground group-hover:text-foreground text-xs">

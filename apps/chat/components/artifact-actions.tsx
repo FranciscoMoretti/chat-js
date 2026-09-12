@@ -70,13 +70,13 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
 
   const actionContext: ArtifactActionContext<M> = {
     content: artifact.content,
-    handleVersionChange,
     currentVersionIndex,
+    handleVersionChange,
     isCurrentVersion,
-    mode,
-    metadata,
-    setMetadata,
     isReadonly,
+    metadata,
+    mode,
+    setMetadata,
   };
 
   function isActionDisabled(action: {
@@ -122,7 +122,7 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
 
                       try {
                         await Promise.resolve(action.onClick(actionContext));
-                      } catch (_error) {
+                      } catch {
                         toast.error("Failed to execute action");
                       } finally {
                         setIsLoading(false);
@@ -146,7 +146,7 @@ const TypedArtifactActions = <M extends ArtifactMetadata>({
 
                     try {
                       await Promise.resolve(action.onClick(actionContext));
-                    } catch (_error) {
+                    } catch {
                       toast.error("Failed to execute action");
                     } finally {
                       setIsLoading(false);

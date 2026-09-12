@@ -81,10 +81,10 @@ export const McpCreateDialog = ({
     resolver: zodResolver(mcpConnectorFormSchema),
     defaultValues: {
       name: "",
-      url: "",
-      type: "http",
       oauthClientId: "",
       oauthClientSecret: "",
+      type: "http",
+      url: "",
     },
   });
 
@@ -95,10 +95,10 @@ export const McpCreateDialog = ({
 
     form.reset({
       name: "",
-      url: "",
-      type: "http",
       oauthClientId: "",
       oauthClientSecret: "",
+      type: "http",
+      url: "",
     });
 
     setAdvancedOpen(false);
@@ -123,10 +123,10 @@ export const McpCreateDialog = ({
 
     await createConnector({
       name: trimmed.name,
-      url: trimmed.url,
-      type: trimmed.type,
       oauthClientId: trimmed.oauthClientId,
       oauthClientSecret: trimmed.oauthClientSecret,
+      type: trimmed.type,
+      url: trimmed.url,
     });
     toast.success("Connector added");
     queryClient.invalidateQueries({ queryKey });

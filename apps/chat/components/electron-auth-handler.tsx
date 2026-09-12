@@ -21,8 +21,8 @@ export const ElectronAuthHandler = () => {
   const isDesktopAppEnabled = config.desktopApp.enabled;
   const router = useRouter();
   const [authState, setAuthState] = useState<ElectronRendererAuthState>({
-    status: "idle",
     message: null,
+    status: "idle",
   });
 
   useEffect(() => {

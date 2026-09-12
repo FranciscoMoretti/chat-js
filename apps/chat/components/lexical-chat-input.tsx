@@ -30,26 +30,28 @@ const EnterKeySubmitPlugin = ({
 }) => {
   const [editor] = useLexicalComposerContext();
 
-  useEffect(() => {
-    return editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      (event: KeyboardEvent) => {
-        // Call the custom handler if provided
-        if (onEnterSubmit) {
-          const handled = onEnterSubmit(event);
-          if (handled) {
-            // Prevent the default Enter behavior immediately
-            event.preventDefault();
-            // Prevent default Enter behavior (adding newline)
-            return true;
+  useEffect(
+    () =>
+      editor.registerCommand(
+        KEY_ENTER_COMMAND,
+        (event: KeyboardEvent) => {
+          // Call the custom handler if provided
+          if (onEnterSubmit) {
+            const handled = onEnterSubmit(event);
+            if (handled) {
+              // Prevent the default Enter behavior immediately
+              event.preventDefault();
+              // Prevent default Enter behavior (adding newline)
+              return true;
+            }
           }
-        }
-        // Allow default behavior for non-submit cases (Shift+Enter, etc.)
-        return false;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor, onEnterSubmit]);
+          // Allow default behavior for non-submit cases (Shift+Enter, etc.)
+          return false;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor, onEnterSubmit]
+  );
 
   return null;
 };
@@ -89,11 +91,11 @@ interface LexicalChatInputProps {
 }
 
 const theme = {
-  root: "lexical-root",
   ltr: "ltr",
-  rtl: "rtl",
-  placeholder: "editor-placeholder",
   paragraph: "editor-paragraph",
+  placeholder: "editor-placeholder",
+  root: "lexical-root",
+  rtl: "rtl",
 };
 
 const onError = (error: Error) => {
@@ -121,9 +123,9 @@ export const LexicalChatInput = ({
 
   const initialConfig: InitialConfigType = {
     namespace: "LexicalChatInput",
-    theme,
-    onError,
     nodes: [],
+    onError,
+    theme,
   };
 
   const handleChange = useCallback(
@@ -142,17 +144,17 @@ export const LexicalChatInput = ({
   useImperativeHandle(
     ref,
     () => ({
-      focus: () => {
-        if (editor) {
-          editor.focus();
-        }
-      },
       clear: () => {
         if (editor) {
           editor.update(() => {
             const root = $getRoot();
             root.clear();
           });
+        }
+      },
+      focus: () => {
+        if (editor) {
+          editor.focus();
         }
       },
       getValue: () => {

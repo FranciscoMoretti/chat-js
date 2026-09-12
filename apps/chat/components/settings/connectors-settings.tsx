@@ -116,8 +116,8 @@ export const ConnectorsSettings = () => {
       connectorId?: string | null;
     }) => {
       setQs({
-        dialog,
         connectorId: connectorId ?? null,
+        dialog,
       });
     },
     [setQs]
@@ -133,7 +133,10 @@ export const ConnectorsSettings = () => {
 
   const handleOpenConnectDialog = useCallback(
     (connectorId: string) => {
-      setDialogState({ dialog: "connect", connectorId });
+      setDialogState({
+        connectorId,
+        dialog: "connect",
+      });
     },
     [setDialogState]
   );

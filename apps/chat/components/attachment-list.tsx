@@ -283,9 +283,9 @@ export const AttachmentList = ({
       {uploadQueue.map((filename) => (
         <AttachmentItem
           attachment={{
-            url: "",
-            name: filename,
             contentType: "",
+            name: filename,
+            url: "",
           }}
           isUploading={true}
           key={filename}

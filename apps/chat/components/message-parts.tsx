@@ -78,17 +78,15 @@ const PureMessageParts = ({
 }: MessagePartsProps) => {
   const types = useMessagePartTypesById(messageId);
 
-  return types.map((t, i) => {
-    return (
-      <MessagePart
-        isLoading={isLoading && i === types.length - 1}
-        isReadonly={isReadonly}
-        key={`message-${messageId}-${t}-${i}`}
-        messageId={messageId}
-        partIdx={i}
-      />
-    );
-  });
+  return types.map((t, i) => (
+    <MessagePart
+      isLoading={isLoading && i === types.length - 1}
+      isReadonly={isReadonly}
+      key={`message-${messageId}-${t}-${i}`}
+      messageId={messageId}
+      partIdx={i}
+    />
+  ));
 };
 
 export const MessageParts = memo(PureMessageParts);

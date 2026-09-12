@@ -76,13 +76,13 @@ const PureDocumentToolResult = ({
       className="bg-background flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border px-3 py-2"
       onClick={() => {
         setArtifact({
-          documentId: result.id,
-          kind: result.kind,
           content: "",
-          title: result.title,
-          messageId,
+          documentId: result.id,
           isVisible: true,
+          kind: result.kind,
+          messageId,
           status: "idle",
+          title: result.title,
         });
       }}
       type="button"
