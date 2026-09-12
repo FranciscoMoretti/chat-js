@@ -35,20 +35,17 @@ const Status = ({
   state: ReplyState;
   t: number;
   background?: boolean;
-}) => (
-  <>
-    {state === "streaming" ? (
+}) => {
+  if (state === "streaming") {
+    return (
       <>
         <span className="ring" style={{ transform: `rotate(${t * 300}deg)` }} />{" "}
         {background ? "Still streaming" : "Streaming"}
       </>
-    ) : state === "stopped" ? (
-      "■ Stopped"
-    ) : (
-      "✓ Complete"
-    )}
-  </>
-);
+    );
+  }
+  return state === "stopped" ? "■ Stopped" : "✓ Complete";
+};
 const ActionIcon = ({
   name,
 }: {
@@ -140,6 +137,23 @@ const MessageActions = ({
     )}
   </div>
 );
+const getPromptText = (s: StoryState, content: LaunchScript) => {
+  if (s.editing) {
+    return s.editText;
+  }
+  if (s.edited) {
+    return content.porto.prompt;
+  }
+  return content.prompt;
+};
+
+const getReplyDescription = (s: StoryState, id: "city" | "food") => {
+  if (s.states[id] === "streaming") {
+    return `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`;
+  }
+  return id === "city" ? "Original answer" : "Alternative answer";
+};
+
 const Chat = ({
   s,
   t,
@@ -163,11 +177,7 @@ const Chat = ({
       <div className="user">
         <div className="role">You</div>
         <div className={`bubble ${s.editing ? "editingBubble" : ""}`}>
-          {s.editing
-            ? s.editText
-            : s.edited
-              ? content.porto.prompt
-              : content.prompt}
+          {getPromptText(s, content)}
           {s.editing && <span className="editCaret">|</span>}
         </div>
         {s.editing && (
@@ -332,13 +342,7 @@ const ConversationTree = ({
                   background={s.selected !== id}
                 />
               </div>
-              <div className="count">
-                {s.states[id] === "streaming"
-                  ? `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`
-                  : id === "city"
-                    ? "Original answer"
-                    : "Alternative answer"}
-              </div>
+              <div className="count">{getReplyDescription(s, id)}</div>
               {s.states[id] === "streaming" && (
                 <div className="streamProgress">
                   <i

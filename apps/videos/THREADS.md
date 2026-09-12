@@ -18,7 +18,7 @@ Studio provides named timeline sections and frame scrubbing. The MP4 is written 
 ## Editing the next film
 
 - `src/story.ts`: typed content, captions, chapter times, branch states, and cursor actions. Change the `script` object to tell another story with the same structure.
-- `src/ThreadsLaunch.tsx`: React chat, tree, status, brand, and title-card components. Every animated value derives from the current frame. Do not introduce timers or CSS animation.
+- `src/threads-launch.tsx`: React chat, tree, status, brand, and title-card components. Every animated value derives from the current frame. Do not introduce timers or CSS animation.
 - `src/index.tsx`: composition registration, dimensions, fps, and default props. Register another composition here for a separate film.
 - `src/styles.css`: the approved visual design, ported from the illustrated walkthrough.
 - `public/brand`: ChatJS logo and Geist/Geist Mono font assets copied from the site. The SVG uses the navbar logo paths with transparent cutouts.

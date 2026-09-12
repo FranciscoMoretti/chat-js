@@ -1,8 +1,8 @@
 import { Composition, registerRoot } from "remotion";
 
-import { BrandExample } from "./BrandExample";
+import { BrandExample } from "./brand-example";
 import { DURATION, FPS, script } from "./story";
-import { ThreadsLaunch } from "./ThreadsLaunch";
+import { ThreadsLaunch } from "./threads-launch";
 
 const Root = () => (
   <>
