@@ -22,24 +22,24 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
-            mediaType: "application/pdf",
             data: { openai: "file-123" },
-          },
-          {
-            type: "file",
             mediaType: "application/pdf",
-            data: { type: "reference", reference: { openai: "file-456" } },
+            type: "file",
           },
           {
+            data: { reference: { openai: "file-456" }, type: "reference" },
+            mediaType: "application/pdf",
             type: "file",
+          },
+          {
+            data: { text: "document", type: "text" },
             mediaType: "text/plain",
-            data: { type: "text", text: "document" },
+            type: "file",
           },
           {
-            type: "file",
+            data: { data: new Uint8Array([1, 2]), type: "data" },
             mediaType: "application/pdf",
-            data: { type: "data", data: new Uint8Array([1, 2]) },
+            type: "file",
           },
         ],
         role: "user",
@@ -64,9 +64,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
         {
           content: [
             {
-              type: "file",
-              mediaType: "application/pdf",
               data: { type: "url", url },
+              mediaType: "application/pdf",
+              type: "file",
             },
           ],
           role: "user",
@@ -79,9 +79,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
-            mediaType: "application/pdf",
             data: new Uint8Array([7]),
+            mediaType: "application/pdf",
+            type: "file",
           },
         ],
         role: "user",
@@ -106,9 +106,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
@@ -135,11 +135,11 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
         content: [
-          { type: "text", text: "Describe the earlier context" },
+          { text: "Describe the earlier context", type: "text" },
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
@@ -148,7 +148,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.deepEqual(result, [
       {
-        content: [{ type: "text", text: "Describe the earlier context" }],
+        content: [{ text: "Describe the earlier context", type: "text" }],
         role: "user",
       },
     ]);
@@ -163,11 +163,11 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
         content: [
-          { type: "text", text: "Continue this conversation" },
+          { text: "Continue this conversation", type: "text" },
           {
-            type: "file",
             data: "https://legacy.public.blob.vercel-storage.com/missing.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
@@ -176,7 +176,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.deepEqual(result, [
       {
-        content: [{ type: "text", text: "Continue this conversation" }],
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
       },
     ]);
@@ -191,9 +191,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
@@ -212,26 +212,26 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
       },
       {
-        content: [{ type: "text", text: "Earlier response" }],
+        content: [{ text: "Earlier response", type: "text" }],
         role: "assistant",
       },
       {
-        content: [{ type: "text", text: "Continue this conversation" }],
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
       },
     ]);
 
     assert.deepEqual(result, [
       {
-        content: [{ type: "text", text: "Continue this conversation" }],
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
       },
     ]);
@@ -246,12 +246,12 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
         content: [
-          { type: "text", text: "Continue this conversation" },
+          { text: "Continue this conversation", type: "text" },
           {
-            type: "image",
             image: new URL(
               "https://legacy.public.blob.vercel-storage.com/missing.png"
             ),
+            type: "image",
           },
         ],
         role: "user",
@@ -260,7 +260,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.deepEqual(result, [
       {
-        content: [{ type: "text", text: "Continue this conversation" }],
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
       },
     ]);
@@ -278,9 +278,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
         {
           content: [
             {
-              type: "file",
               data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
               mediaType: "image/png",
+              type: "file",
             },
           ],
           role: "user",
@@ -301,9 +301,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
         {
           content: [
             {
-              type: "file",
               data: "https://files.example/unavailable.png",
               mediaType: "image/png",
+              type: "file",
             },
           ],
           role: "user",
@@ -329,9 +329,9 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
             data: "https://files.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
         role: "user",
@@ -353,14 +353,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
           {
-            type: "file",
             data: "aGVsbG8=",
             mediaType: "text/plain",
+            type: "file",
           },
         ],
         role: "user",
