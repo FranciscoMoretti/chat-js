@@ -27,11 +27,11 @@ export interface DiscoveryResult {
   prompts: {
     name: string;
     description: string | null;
-    arguments: Array<{
+    arguments: {
       name: string;
       description: string | null;
       required: boolean;
-    }>;
+    }[];
   }[];
   resources: {
     name: string;
