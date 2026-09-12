@@ -107,4 +107,31 @@ describe("collectEnvChecklist", () => {
       "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
     ]);
   });
+
+  it("keeps installable requirements with an empty description", () => {
+    const entries = collectEnvChecklist({
+      auth: { github: false, google: false, vercel: false },
+      builtInTools: {
+        codeExecution: false,
+        deepResearch: false,
+        imageGeneration: false,
+        urlRetrieval: false,
+        videoGeneration: false,
+        webSearch: false,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: false,
+        followupSuggestions: false,
+        mcp: false,
+        parallelResponses: false,
+      },
+      gateway: "vercel",
+      installableToolEnvRequirements: [
+        { description: "", options: [["CUSTOM_TOKEN"]] },
+      ],
+    });
+
+    expect(entries.some((entry) => entry.vars === "CUSTOM_TOKEN")).toBe(true);
+  });
 });

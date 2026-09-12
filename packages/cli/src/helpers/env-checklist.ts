@@ -77,7 +77,7 @@ const addRequirementEntries = (
   seen: Set<string>,
   dedupeKey: string | undefined = requirement?.description
 ): void => {
-  if (!requirement || !dedupeKey || seen.has(dedupeKey)) {
+  if (!requirement || dedupeKey === undefined || seen.has(dedupeKey)) {
     return;
   }
 
