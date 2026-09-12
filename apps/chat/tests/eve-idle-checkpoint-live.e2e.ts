@@ -7,10 +7,8 @@ import {
 } from "../lib/db/eve-documents";
 import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { waitForEveCheckpoint } from "../lib/eve/checkpoint-readiness";
 import { conversationBinding } from "../lib/eve/contracts";
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
-import { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -56,21 +54,20 @@ test("compiled idle capture preserves native history and exact document revision
   };
   const original = await saveEveDocumentRevision(document);
   const checkpointId = crypto.randomUUID();
-  const capture = await eveRequest(
-    binding.ownerId,
-    `/eve/v1/session/${source.sessionId}/checkpoint`,
+  const capture = await page.request.post(
+    `/api/agent-conversations/${source.id}/checkpoint`,
     {
-      method: "POST",
-      body: JSON.stringify({ checkpointId, beforeTurnId: "turn_1" }),
+      headers: { origin },
+      data: { checkpointId, beforeTurnId: "turn_1" },
     }
   );
-  expect(capture.status).toBe(202);
-  await waitForEveCheckpoint(
-    binding.ownerId,
-    source.sessionId,
-    "turn_1",
-    checkpointId
-  );
+  expect(capture.status()).toBe(200);
+  expect(await capture.json()).toEqual({
+    ready: true,
+    conversationId: source.id,
+    checkpointId,
+    beforeTurnId: "turn_1",
+  });
   await saveEveDocumentRevision(
     {
       ...document,
