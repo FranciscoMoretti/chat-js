@@ -1303,7 +1303,6 @@ export const PromptInputTab = ({
 export type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
 export const PromptInputTabLabel = ({
-  children,
   className,
   ...props
 }: PromptInputTabLabelProps) => (
@@ -1313,9 +1312,7 @@ export const PromptInputTabLabel = ({
       className
     )}
     {...props}
-  >
-    {children}
-  </h3>
+  />
 );
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
