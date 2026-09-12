@@ -152,38 +152,31 @@ const validateInstalledTools = async (
       }
       throw error;
     });
-  const errors: ValidationError[] = [];
-
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith("_")) {
-      continue;
-    }
-
-    const toolPath = path.join(toolsDir, entry.name, "chatjs.json");
-    const exists = await fs
-      .access(toolPath)
-      .then(() => true)
-      .catch(() => false);
-
-    if (!exists) {
-      continue;
-    }
-
-    const toolSource = await fs.readFile(toolPath, "utf-8");
-    const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
-
-    for (const toolEnvVar of mod.envRequirements) {
-      const missing = getMissingRequirement(toolEnvVar, env);
-      if (missing) {
-        errors.push({
-          feature: `tools.${entry.name}`,
-          missing: [missing],
-        });
+  const toolErrors = await Promise.all(
+    entries.map(async (entry): Promise<ValidationError[]> => {
+      if (!entry.isDirectory() || entry.name.startsWith("_")) {
+        return [];
       }
-    }
-  }
 
-  return errors;
+      const toolPath = path.join(toolsDir, entry.name, "chatjs.json");
+      try {
+        await fs.access(toolPath);
+      } catch {
+        return [];
+      }
+
+      const toolSource = await fs.readFile(toolPath, "utf-8");
+      const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
+      return mod.envRequirements.flatMap((toolEnvVar) => {
+        const missing = getMissingRequirement(toolEnvVar, env);
+        return missing
+          ? [{ feature: `tools.${entry.name}`, missing: [missing] }]
+          : [];
+      });
+    })
+  );
+
+  return toolErrors.flat();
 };
 
 const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {

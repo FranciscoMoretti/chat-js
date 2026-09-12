@@ -223,7 +223,6 @@
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/completion-queue.test.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
@@ -236,7 +235,6 @@
         "lib/clone-messages.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/queries.ts",
         "lib/editor/config.ts",
         "lib/files/upload-prep.ts",
@@ -457,8 +455,6 @@
         "lib/clone-messages.ts",
         "lib/db/backfill-parts.ts",
         "lib/files/upload-prep.ts",
-        "scripts/check-db.ts",
-        "scripts/check-env.ts",
         "tools/platform/tools.ts"
       ],
       "rules": {
@@ -490,11 +486,9 @@
         "components/keyboard-shortcuts.tsx",
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
-        "lib/ai/eval-agent.ts",
         "lib/ai/token-utils.test.ts",
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
-        "lib/db/schema.ts",
         "lib/editor/config.ts",
         "lib/features-config.ts",
         "lib/message-conversion.ts",
@@ -598,10 +592,8 @@
         "components/settings/mcp-details-page.tsx",
         "components/ui/form.tsx",
         "components/ui/scroll-area.tsx",
-        "lib/ai/errors.ts",
         "lib/app-chat-runtime.ts",
         "lib/db/queries.ts",
-        "lib/db/schema.ts",
         "lib/stores/base/use-data-parts.ts",
         "lib/thread-utils.ts"
       ],
@@ -733,7 +725,6 @@
         "components/chat-sync.tsx",
         "components/electron-auth-handler.tsx",
         "components/electron-auth-ui.tsx",
-        "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/stores/base/hooks.ts"
@@ -761,12 +752,10 @@
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/migrate.ts",
         "lib/gated-chat-transport.ts",
         "lib/parallel-chat-requests.ts",
         "lib/start-provisional-chat.ts",
-        "scripts/check-db.ts",
         "tools/platform/deep-research/supervisor-agent.ts"
       ],
       "rules": {
@@ -1292,7 +1281,6 @@
         "lib/ai/active-gateway.ts",
         "lib/ai/complete-data-part.test.ts",
         "lib/ai/core-chat-agent.ts",
-        "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
@@ -1315,7 +1303,6 @@
         "lib/credits/cost-accumulator.test.ts",
         "lib/credits/cost-accumulator.ts",
         "lib/data-stream.test.ts",
-        "lib/db/backfill-parts.ts",
         "lib/db/mcp-queries.ts",
         "lib/db/migrate.ts",
         "lib/db/queries.ts",
@@ -1404,11 +1391,7 @@
       }
     },
     {
-      "files": [
-        "lib/db/backfill-parts.ts",
-        "lib/db/migrate.ts",
-        "lib/stores/base/hooks.ts"
-      ],
+      "files": ["lib/db/migrate.ts", "lib/stores/base/hooks.ts"],
       "rules": {
         "unicorn/catch-error-name": "off"
       }
@@ -1420,7 +1403,7 @@
       }
     },
     {
-      "files": ["components/settings/models-table.tsx", "lib/ai/eval-agent.ts"],
+      "files": ["components/settings/models-table.tsx"],
       "rules": {
         "unicorn/consistent-existence-index-check": "off"
       }
@@ -1435,12 +1418,6 @@
       ],
       "rules": {
         "unicorn/consistent-function-scoping": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/errors.ts"],
-      "rules": {
-        "unicorn/custom-error-definition": "off"
       }
     },
     {
@@ -1628,8 +1605,7 @@
         "components/diffview.tsx",
         "components/model-selector.tsx",
         "components/part/document-common.tsx",
-        "components/part/document-preview.tsx",
-        "lib/ai/errors.ts"
+        "components/part/document-preview.tsx"
       ],
       "rules": {
         "unicorn/switch-case-braces": "off"
