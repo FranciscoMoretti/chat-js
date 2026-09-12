@@ -1,5 +1,6 @@
 import { jsonSchema, tool } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
+import mcp from "../../agent/tools/mcp";
 import { discoverEveMcpTools, executeEveMcpTool } from "./mcp-tools";
 
 const mocks = vi.hoisted(() => ({
@@ -246,4 +247,98 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
   await expect(
     executeEveMcpTool("connector", "echo", { pair: ["hello", 1] }, context, [])
   ).resolves.toMatchObject({ output: "Echo output" });
+});
+
+it("refuses a policy that escalates after a definition was discovered without approval", async () => {
+  const [description] = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(description.requiresApproval).toBe(false);
+  mocks.tools.mockResolvedValue({
+    echo: { ...definition, needsApproval: true },
+  });
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      context,
+      [],
+      description.requiresApproval
+    )
+  ).rejects.toThrow("approval policy changed");
+  expect(execute).not.toHaveBeenCalled();
+});
+
+it.each([
+  true,
+  () => false,
+  async () => true,
+])("keeps policy-bearing MCP tools available with a durable approval requirement", async (needsApproval) => {
+  mocks.tools.mockResolvedValue({ echo: { ...definition, needsApproval } });
+  const [description] = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(description.requiresApproval).toBe(true);
+  expect(JSON.stringify(description)).not.toContain("needsApproval");
+  expect(
+    await executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      context,
+      [],
+      description.requiresApproval
+    )
+  ).toMatchObject({ output: "Echo output" });
+});
+
+it("registers native per-call approval restricted to the session owner", async () => {
+  mocks.tools.mockResolvedValue({
+    echo: { ...definition, needsApproval: true },
+  });
+  const resolve = mcp.events["step.started"];
+  if (!resolve) {
+    throw new Error("Missing MCP resolver.");
+  }
+  const tools = await resolve(
+    {},
+    { session: context.session, channel: {}, messages: [] }
+  );
+  const approval = tools.server__echo.approval;
+  if (!approval || typeof approval === "function" || !approval.response) {
+    throw new Error("Missing native owner approval policy.");
+  }
+  expect(
+    await approval.request({
+      session: context.session,
+      callId: "call",
+      toolName: "server__echo",
+      toolInput: { text: "write" },
+      approvedTools: new Set(),
+      getSandbox: () => {
+        throw new Error("Unexpected sandbox");
+      },
+      getSkill: () => {
+        throw new Error("Unexpected skill");
+      },
+    })
+  ).toBe("user-approval");
+  const initiator = context.session.auth.initiator;
+  const response = {
+    auth: {
+      getToken: vi.fn(),
+      requireAuth: () => {
+        throw new Error("Unexpected auth");
+      },
+    },
+    request: { callId: "call", requestId: "request", toolName: "server__echo" },
+    response: { decision: "approve" as const },
+    responder: initiator,
+    session: { id: "session", initiator, turn: context.session.turn },
+  };
+  expect(await approval.response(response)).toEqual({ status: "allowed" });
+  expect(
+    await approval.response({
+      ...response,
+      responder: { ...initiator, principalId: "other" },
+    })
+  ).toMatchObject({ status: "rejected" });
+  expect(execute).not.toHaveBeenCalled();
 });

@@ -26,16 +26,33 @@ export default defineDynamic({
       );
       const messages = superjson.stringify(context.messages);
       const definitions: Record<string, ReturnType<typeof defineTool>> = {};
-      for (const { name, connectorId, remoteName, ...description } of tools) {
+      for (const {
+        name,
+        connectorId,
+        remoteName,
+        requiresApproval,
+        ...description
+      } of tools) {
         definitions[name] = defineTool<unknown, unknown>({
           ...description,
+          approval: {
+            // Callback policies also require approval on every call: native
+            // execution has no per-call receipt to safely skip a changing policy.
+            request: () =>
+              requiresApproval ? "user-approval" : "not-applicable",
+            response: ({ responder, session }) =>
+              responder.principalId === session.initiator?.principalId
+                ? { status: "allowed" }
+                : { status: "rejected", reason: "Only the owner may respond" },
+          },
           execute: (input, toolContext) =>
             executeEveMcpTool(
               connectorId,
               remoteName,
               input,
               toolContext,
-              superjson.parse(messages)
+              superjson.parse(messages),
+              requiresApproval
             ),
           toModelOutput: (output) => eveMcpResult.parse(output).modelOutput,
         });

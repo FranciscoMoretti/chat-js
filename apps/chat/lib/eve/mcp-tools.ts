@@ -84,6 +84,7 @@ export async function discoverEveMcpTools(
       name: string;
       connectorId: string;
       remoteName: string;
+      requiresApproval: boolean;
     }
   > = [];
   for (const connector of connectors) {
@@ -97,12 +98,17 @@ export async function discoverEveMcpTools(
         signal,
         async (tools) => {
           for (const [remoteName, tool] of Object.entries(tools)) {
-            // MCP has an explicit output adapter below; keep ordinary approval checks.
-            const { toModelOutput: _outputAdapter, ...definition } = tool;
+            // MCP output and approval policies are adapted explicitly below.
+            const {
+              toModelOutput: _outputAdapter,
+              needsApproval: _approval,
+              ...definition
+            } = tool;
             descriptions.push({
               ...(await describeEveTool(definition)),
               connectorId: connector.id,
               remoteName,
+              requiresApproval: Boolean(tool.needsApproval),
               name: createToolId(
                 connector.nameId,
                 remoteName,
@@ -125,7 +131,8 @@ export async function executeEveMcpTool(
   remoteName: string,
   input: unknown,
   context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
-  messages: readonly ModelMessage[]
+  messages: readonly ModelMessage[],
+  nativeApprovalRequired = false
 ) {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!ownerId) {
@@ -141,28 +148,12 @@ export async function executeEveMcpTool(
       throw new Error("MCP tool is no longer available.");
     }
     const tool = tools[remoteName];
-    if (tool.needsApproval) {
-      throw new Error("MCP approval requires an explicit native policy.");
+    // The durable definition guarantees an owner-approved native gate only when
+    // discovered with this flag. A newly required policy must be rediscovered.
+    if (tool.needsApproval && !nativeApprovalRequired) {
+      throw new Error("MCP approval policy changed; retry after rediscovery.");
     }
-    const schema = await asSchema(tool.inputSchema).jsonSchema;
-    // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
-    const Validator =
-      schema.$schema === "http://json-schema.org/draft-07/schema#"
-        ? Ajv
-        : Ajv2020;
-    const validate = new Validator({
-      strict: false,
-      validateFormats: false,
-    }).compile(schema);
-    const validatedTool = {
-      ...tool,
-      inputSchema: jsonSchema(schema, {
-        validate: (value) =>
-          validate(value)
-            ? { success: true, value }
-            : { success: false, error: new Error("Invalid tool input.") },
-      }),
-    };
+    const validatedTool = await validateMcpTool(tool);
     let result: unknown;
     for await (const output of executeEveTool(
       validatedTool,
@@ -185,4 +176,26 @@ export async function executeEveMcpTool(
       modelOutput: converted,
     });
   });
+}
+
+async function validateMcpTool(tool: Tool) {
+  const schema = await asSchema(tool.inputSchema).jsonSchema;
+  // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
+  const Validator =
+    schema.$schema === "http://json-schema.org/draft-07/schema#"
+      ? Ajv
+      : Ajv2020;
+  const validate = new Validator({
+    strict: false,
+    validateFormats: false,
+  }).compile(schema);
+  return {
+    ...tool,
+    inputSchema: jsonSchema(schema, {
+      validate: (value) =>
+        validate(value)
+          ? { success: true, value }
+          : { success: false, error: new Error("Invalid tool input.") },
+    }),
+  };
 }
