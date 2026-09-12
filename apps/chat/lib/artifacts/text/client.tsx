@@ -22,8 +22,58 @@ const Editor = dynamic(
   }
 );
 export const textArtifact = new Artifact<"text">({
-  kind: "text",
-  description: "Useful for text content, like drafting essays and emails.",
+  actions: [
+    {
+      description: "View changes",
+      icon: <History size={18} />,
+      isDisabled: ({ currentVersionIndex }) => {
+        if (currentVersionIndex === 0) {
+          return true;
+        }
+
+        return false;
+      },
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("toggle");
+      },
+    },
+    {
+      description: "View Previous version",
+      icon: <Undo2 size={18} />,
+      isDisabled: ({ currentVersionIndex }) => {
+        if (currentVersionIndex === 0) {
+          return true;
+        }
+
+        return false;
+      },
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("prev");
+      },
+    },
+    {
+      description: "View Next version",
+      icon: <Redo2 size={18} />,
+      isDisabled: ({ isCurrentVersion }) => {
+        if (isCurrentVersion) {
+          return true;
+        }
+
+        return false;
+      },
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("next");
+      },
+    },
+    {
+      description: "Copy to clipboard",
+      icon: <Copy size={18} />,
+      onClick: ({ content }) => {
+        navigator.clipboard.writeText(content);
+        toast.success("Copied to clipboard!");
+      },
+    },
+  ],
   content: ({
     mode,
     status,
@@ -63,77 +113,31 @@ export const textArtifact = new Artifact<"text">({
       </div>
     );
   },
-  actions: [
-    {
-      icon: <History size={18} />,
-      description: "View changes",
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange("toggle");
-      },
-      isDisabled: ({ currentVersionIndex }) => {
-        if (currentVersionIndex === 0) {
-          return true;
-        }
-
-        return false;
-      },
-    },
-    {
-      icon: <Undo2 size={18} />,
-      description: "View Previous version",
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange("prev");
-      },
-      isDisabled: ({ currentVersionIndex }) => {
-        if (currentVersionIndex === 0) {
-          return true;
-        }
-
-        return false;
-      },
-    },
-    {
-      icon: <Redo2 size={18} />,
-      description: "View Next version",
-      onClick: ({ handleVersionChange }) => {
-        handleVersionChange("next");
-      },
-      isDisabled: ({ isCurrentVersion }) => {
-        if (isCurrentVersion) {
-          return true;
-        }
-
-        return false;
-      },
-    },
-    {
-      icon: <Copy size={18} />,
-      description: "Copy to clipboard",
-      onClick: ({ content }) => {
-        navigator.clipboard.writeText(content);
-        toast.success("Copied to clipboard!");
-      },
-    },
-  ],
+  description: "Useful for text content, like drafting essays and emails.",
+  kind: "text",
   toolbar: [
     {
-      icon: <Pen size={16} />,
       description: "Add final polish",
+      icon: <Pen size={16} />,
       onClick: ({ sendMessage, storeApi }) => {
+        const selectedModel = config.ai.tools.text.polish;
+        const createdAt = new Date();
+        const parentMessageId = storeApi.getState().getLastMessageId();
+
         sendMessage({
-          role: "user",
+          metadata: {
+            activeStreamId: null,
+            createdAt,
+            parentMessageId,
+            selectedModel,
+          },
           parts: [
             {
               text: "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
               type: "text",
             },
           ],
-          metadata: {
-            selectedModel: config.ai.tools.text.polish,
-            createdAt: new Date(),
-            parentMessageId: storeApi.getState().getLastMessageId(),
-            activeStreamId: null,
-          },
+          role: "user",
         });
       },
     },
