@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { getDocumentById, saveDocument } from "@/lib/db/queries";
+import { updateDocument } from "@/lib/db/queries";
 import { codeGuidelines } from "./code-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 
@@ -33,32 +33,26 @@ Avoid:
     }),
 
     async execute({ documentId, title, content }): Promise<DocumentToolResult> {
-      const document = await getDocumentById({ id: documentId });
-
-      if (!document) {
+      if (!session.user?.id) {
+        return { status: "error", error: "Authentication required" };
+      }
+      const saved = await updateDocument({
+        id: documentId,
+        title,
+        content,
+        kind: "code",
+        userId: session.user.id,
+        messageId,
+      });
+      if (!saved) {
         return { status: "error", error: "Document not found" };
-      }
-
-      if (document.kind !== "code") {
-        return { status: "error", error: "Document is not a code document" };
-      }
-
-      if (session.user?.id) {
-        await saveDocument({
-          id: documentId,
-          title,
-          content,
-          kind: "code",
-          userId: session.user.id,
-          messageId,
-        });
       }
 
       return {
         status: "success",
         documentId,
         result: "The document was updated and is now visible to the user.",
-        date: new Date().toISOString(),
+        date: saved.createdAt.toISOString(),
       };
     },
   });

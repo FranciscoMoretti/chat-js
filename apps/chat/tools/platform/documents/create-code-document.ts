@@ -27,24 +27,25 @@ ${codeGuidelines}`,
     }),
 
     async execute({ title, content }): Promise<DocumentToolResult> {
+      if (!session.user?.id) {
+        return { status: "error", error: "Authentication required" };
+      }
       const id = generateUUID();
 
-      if (session.user?.id) {
-        await saveDocument({
-          id,
-          title,
-          content,
-          kind: "code",
-          userId: session.user.id,
-          messageId,
-        });
-      }
+      const saved = await saveDocument({
+        id,
+        title,
+        content,
+        kind: "code",
+        userId: session.user.id,
+        messageId,
+      });
 
       return {
         status: "success",
         documentId: id,
         result: "A document was created and is now visible to the user.",
-        date: new Date().toISOString(),
+        date: saved.createdAt.toISOString(),
       };
     },
   });

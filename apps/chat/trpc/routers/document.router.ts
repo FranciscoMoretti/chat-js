@@ -1,11 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+import { artifactKinds } from "@/lib/artifacts/artifact-kind";
 import {
-  getDocumentById,
   getDocumentsById,
   getPublicDocumentsById,
-  saveDocument,
+  updateDocument,
 } from "@/lib/db/queries";
 import {
   createTRPCRouter,
@@ -53,24 +52,23 @@ export const documentRouter = createTRPCRouter({
         id: z.string(),
         content: z.string(),
         title: z.string(),
-        kind: z.custom<ArtifactKind>(),
+        kind: z.enum(artifactKinds),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const lastDocument = await getDocumentById({ id: input.id });
-
-      if (!lastDocument) {
-        throw new Error("Document not found");
-      }
-
-      const _document = await saveDocument({
+      const saved = await updateDocument({
         id: input.id,
         content: input.content,
         title: input.title,
         kind: input.kind,
         userId: ctx.user.id,
-        messageId: lastDocument.messageId,
       });
+      if (!saved) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found",
+        });
+      }
 
       return { success: true };
     }),

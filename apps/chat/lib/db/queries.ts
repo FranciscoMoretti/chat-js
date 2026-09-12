@@ -653,19 +653,84 @@ export async function saveDocument({
   messageId: string;
 }) {
   try {
-    return await db.insert(document).values({
-      id,
-      title,
-      kind,
-      content,
-      userId,
-      messageId,
-      createdAt: new Date(),
-    });
+    if (!userId) {
+      throw new Error("Document owner required");
+    }
+    const [saved] = await db
+      .insert(document)
+      .values({
+        id,
+        title,
+        kind,
+        content,
+        userId,
+        messageId,
+        createdAt: new Date(),
+      })
+      .returning();
+    if (!saved) {
+      throw new Error("Document was not saved");
+    }
+    return saved;
   } catch (error) {
     console.error("Failed to save document in database", error);
     throw error;
   }
+}
+
+// Write permission is owner-only, even when some revisions are publicly readable.
+// Refuse inconsistent historical ownership rather than adopting the newest owner.
+export async function updateDocument({
+  id,
+  title,
+  kind,
+  content,
+  userId,
+  messageId,
+}: {
+  id: string;
+  title: string;
+  kind: ArtifactKind;
+  content: string;
+  userId: string;
+  messageId?: string;
+}) {
+  if (!userId) {
+    return null;
+  }
+  return await db.transaction(async (tx) => {
+    const revisions = await tx
+      .select()
+      .from(document)
+      .where(eq(document.id, id))
+      .orderBy(desc(document.createdAt))
+      .for("update");
+    const latest = revisions[0];
+    if (
+      !latest ||
+      revisions.some(
+        (revision) => revision.userId !== userId || revision.kind !== kind
+      )
+    ) {
+      return null;
+    }
+    const [saved] = await tx
+      .insert(document)
+      .values({
+        id,
+        title,
+        kind,
+        content,
+        userId: latest.userId,
+        messageId: messageId ?? latest.messageId,
+        createdAt: new Date(),
+      })
+      .returning();
+    if (!saved) {
+      throw new Error("Document was not saved");
+    }
+    return saved;
+  });
 }
 
 async function _getDocumentsById({ id }: { id: string }) {
