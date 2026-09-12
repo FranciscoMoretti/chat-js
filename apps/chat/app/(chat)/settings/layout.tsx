@@ -18,30 +18,26 @@ export default function SettingsLayout({
   );
 }
 
-function SettingsLayoutShell({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-2 py-2 md:px-4">
-      <SettingsHeader />
-      <div className="mb-4 md:hidden">
-        <SettingsNav orientation="horizontal" />
-      </div>
-      <div className="flex min-h-0 flex-1 gap-4">
-        <div className="hidden md:block">
-          <SettingsNav orientation="vertical" />
-        </div>
-        <div className="flex min-h-0 w-full flex-1 flex-col px-4">
-          {children}
-        </div>
-      </div>
+const SettingsLayoutShell = ({ children }: { children?: React.ReactNode }) => (
+  <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-2 py-2 md:px-4">
+    <SettingsHeader />
+    <div className="mb-4 md:hidden">
+      <SettingsNav orientation="horizontal" />
     </div>
-  );
-}
+    <div className="flex min-h-0 flex-1 gap-4">
+      <div className="hidden md:block">
+        <SettingsNav orientation="vertical" />
+      </div>
+      <div className="flex min-h-0 w-full flex-1 flex-col px-4">{children}</div>
+    </div>
+  </div>
+);
 
-async function SettingsLayoutContent({
+const SettingsLayoutContent = async ({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}) => {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
@@ -49,4 +45,4 @@ async function SettingsLayoutContent({
   }
 
   return <SettingsLayoutShell>{children}</SettingsLayoutShell>;
-}
+};

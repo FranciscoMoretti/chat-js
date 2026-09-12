@@ -1,12 +1,12 @@
 import { config } from "@/lib/config";
 
-function getPlanTypesLabel({
+const getPlanTypesLabel = ({
   hasFree,
   hasPro,
 }: {
   hasFree: boolean;
   hasPro: boolean;
-}): string {
+}): string => {
   if (hasFree && hasPro) {
     return "free and paid";
   }
@@ -14,9 +14,9 @@ function getPlanTypesLabel({
     return "paid";
   }
   return "free";
-}
+};
 
-function PricingSection({
+const PricingSection = ({
   hasAnyPlan,
   planTypesLabel,
   hasFree,
@@ -30,7 +30,7 @@ function PricingSection({
   hasPro: boolean;
   currencySymbol: string;
   paymentProcessors: string[];
-}) {
+}) => {
   if (!hasAnyPlan) {
     return (
       <>
@@ -90,7 +90,7 @@ function PricingSection({
       )}
     </>
   );
-}
+};
 
 export default function TermsPage() {
   const currencySymbolMap: Record<string, string> = {

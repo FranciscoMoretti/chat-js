@@ -46,7 +46,11 @@ export default async function ChatLayout({
   );
 }
 
-async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
+const ChatLayoutDynamic = async ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -108,4 +112,4 @@ async function ChatLayoutDynamic({ children }: { children: React.ReactNode }) {
       </ChatProviders>
     </HydrateClient>
   );
-}
+};

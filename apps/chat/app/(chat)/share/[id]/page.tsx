@@ -17,11 +17,11 @@ export default function SharedChatPageRoute({
   );
 }
 
-async function SharedChatPageContent({
+const SharedChatPageContent = async ({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}) => {
   const { id } = await params;
 
   // Prefetch the queries used in shared-chat-page.tsx
@@ -33,4 +33,4 @@ async function SharedChatPageContent({
       <SharedChatPage id={id} />
     </HydrateClient>
   );
-}
+};

@@ -56,11 +56,11 @@ export default function LoginPage({
   );
 }
 
-async function LoginPageContent({
+const LoginPageContent = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+}) => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isElectronTransfer =
@@ -85,4 +85,4 @@ async function LoginPageContent({
       <LoginForm className="w-full" />
     </Suspense>
   );
-}
+};
