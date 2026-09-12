@@ -1,4 +1,5 @@
-import { createGateway, type gateway } from "@ai-sdk/gateway";
+import { createGateway } from "@ai-sdk/gateway";
+import type { gateway } from "@ai-sdk/gateway";
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
@@ -31,7 +32,7 @@ export class VercelGateway
       VercelVideoModelId
     >
 {
-  readonly type = "vercel";
+  readonly type = "vercel" as const;
 
   createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
     return this.getProvider()(modelId);
@@ -105,9 +106,9 @@ export class VercelGateway
       if (unsupportedTypes.size > 0) {
         this.log.warn(
           {
-            unsupportedTypes: [...unsupportedTypes],
-            skippedModelCount: body.data.length - models.length,
             modelCount: body.data.length,
+            skippedModelCount: body.data.length - models.length,
+            unsupportedTypes: [...unsupportedTypes],
           },
           "Skipping models with unsupported types from Vercel AI Gateway"
         );

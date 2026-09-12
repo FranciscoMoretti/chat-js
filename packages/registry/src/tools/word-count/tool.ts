@@ -6,9 +6,6 @@ const SENTENCE_SPLIT_REGEX = /[.!?]+/u;
 
 export const wordCount = tool({
   description: "Count the words, characters, and sentences in a given text",
-  inputSchema: z.object({
-    text: z.string().describe("The text to analyze"),
-  }),
   execute: ({ text }: { text: string }) => {
     const words =
       text.trim() === "" ? 0 : text.trim().split(WORD_SPLIT_REGEX).length;
@@ -20,11 +17,14 @@ export const wordCount = tool({
 
     return { characters, charactersNoSpaces, sentences, words };
   },
+  inputSchema: z.object({
+    text: z.string().describe("The text to analyze"),
+  }),
 });
 
-export type WordCountOutput = {
+export interface WordCountOutput {
   words: number;
   characters: number;
   charactersNoSpaces: number;
   sentences: number;
-};
+}
