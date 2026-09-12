@@ -3,7 +3,7 @@ import path from "node:path";
 
 import * as png2icons from "png2icons";
 
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(import.meta.dir, "..");
 const src = path.join(root, "icon.png");
 const buildDir = path.join(root, "build");
 const outputBase = path.join(buildDir, "icon");

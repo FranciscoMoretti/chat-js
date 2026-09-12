@@ -8,7 +8,7 @@ const orgEmail =
   organization.contact?.privacyEmail || organization.contact?.legalEmail;
 
 writeFileSync(
-  path.resolve(__dirname, "..", "branding.json"),
+  path.resolve(import.meta.dir, "..", "branding.json"),
   JSON.stringify(
     { appName, appPrefix, appUrl, orgEmail, orgName: organization.name },
     null,
