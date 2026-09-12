@@ -332,13 +332,6 @@ async function normalizeChatAppFiles(
     await writePnpmWorkspaceConfig(destination);
   }
 
-  // Vendored package source keeps its own upstream lint rules.
-  await replaceInFile(join(destination, "biome.jsonc"), [
-    [
-      '"!lib/utils.ts",',
-      '"!lib/utils.ts",\n      "!lib/thread",\n      "!electron",',
-    ],
-  ]);
   await resetInstallableTools(destination);
 }
 
