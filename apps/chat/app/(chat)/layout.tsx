@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
+import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
@@ -28,16 +29,25 @@ export default async function ChatLayout({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
+  const content = (
+    <>
+      <AppSidebar />
+      <SidebarInset className={sidebarInsetClassName}>
+        <Suspense fallback={<ChatLoadingShell />}>
+          <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
+        </Suspense>
+      </SidebarInset>
+    </>
+  );
   return (
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <SidebarInset className={sidebarInsetClassName}>
-            <Suspense fallback={<ChatLoadingShell />}>
-              <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
-            </Suspense>
-          </SidebarInset>
+          {isEveEnabled() ? (
+            <EveDeletionProvider>{content}</EveDeletionProvider>
+          ) : (
+            content
+          )}
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>

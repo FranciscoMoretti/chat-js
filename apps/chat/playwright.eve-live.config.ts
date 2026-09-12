@@ -7,6 +7,8 @@ export default defineConfig({
     "eve-comparison-live.e2e.ts",
     "eve-idle-checkpoint-live.e2e.ts",
     "eve-deletion-retire.e2e.ts",
+    "eve-delete-dialog.e2e.ts",
+    "eve-delete-ui.e2e.ts",
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
     "eve-image.e2e.ts",

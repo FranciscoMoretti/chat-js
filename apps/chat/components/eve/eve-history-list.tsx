@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
 import { useTRPC } from "@/trpc/react";
+import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
 
@@ -31,6 +32,7 @@ export function EveHistoryList({
   initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }) {
   const trpc = useTRPC();
+  const openDeletion = useEveDeletion();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [moving, setMoving] = useState<{
@@ -93,27 +95,46 @@ export function EveHistoryList({
         value={query}
       />
       <SidebarMenu>
-        {filtered.map((item) =>
-          projectId ? (
-            <li key={item.id}>
-              <ProjectChatItem
-                chat={item}
-                onMoveProject={
-                  item.state === "bound" ? () => setMoving(item) : undefined
-                }
-                onRename={async (id, title) => {
-                  await rename.mutateAsync({ id, title });
-                }}
-                renderShareContent={(chatId, onClose) => (
-                  <EveShareDialogContent chatId={chatId} onClose={onClose} />
-                )}
-              />
-            </li>
-          ) : (
+        {filtered.map((item) => {
+          if (item.state === "deleting") {
+            return (
+              <li className="p-2 text-sm" key={item.id}>
+                <p className="truncate">{item.title}</p>
+                <Button
+                  onClick={() => openDeletion(item)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  Resume deletion
+                </Button>
+              </li>
+            );
+          }
+          if (projectId) {
+            return (
+              <li key={item.id}>
+                <ProjectChatItem
+                  chat={item}
+                  onDelete={() => openDeletion(item)}
+                  onMoveProject={
+                    item.state === "bound" ? () => setMoving(item) : undefined
+                  }
+                  onRename={async (id, title) => {
+                    await rename.mutateAsync({ id, title });
+                  }}
+                  renderShareContent={(chatId, onClose) => (
+                    <EveShareDialogContent chatId={chatId} onClose={onClose} />
+                  )}
+                />
+              </li>
+            );
+          }
+          return (
             <SidebarChatItem
               chat={item}
               isActive={pathname === `/chat/${item.id}`}
               key={item.id}
+              onDelete={() => openDeletion(item)}
               onMoveProject={
                 item.state === "bound" ? () => setMoving(item) : undefined
               }
@@ -126,8 +147,8 @@ export function EveHistoryList({
               )}
               setOpenMobile={setOpenMobile}
             />
-          )
-        )}
+          );
+        })}
       </SidebarMenu>
       {history.isPending && (
         <p className="p-2 text-muted-foreground text-sm" role="status">

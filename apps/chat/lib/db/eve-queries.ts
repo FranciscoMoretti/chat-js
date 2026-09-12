@@ -24,7 +24,7 @@ import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 
-// Creation reservations remain visible for recovery; deletion records never do.
+// Creation reservations remain readable for recovery; deleting transcripts do not.
 const visibleConversation = inArray(eveConversation.state, [
   "creating",
   "bound",
@@ -96,7 +96,7 @@ export async function listEveConversations(
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        visibleConversation,
+        or(visibleConversation, eq(eveConversation.state, "deleting")),
         projectId === undefined ? undefined : matchesProject,
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor

@@ -191,7 +191,7 @@ test("internal retirement settles usage after access revocation and is retryable
   });
 });
 
-test("deletion API retires a fresh conversation and reports its durable tombstone", async ({
+test("sidebar deletion retires a fresh conversation and reports its durable tombstone", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
@@ -230,8 +230,36 @@ test("deletion API retires a fresh conversation and reports its durable tombston
     status: "active",
     rootId: binding.id,
   });
-  const deleted = await page.request.delete(url, { headers: { origin } });
+  const expand = page.getByRole("button", {
+    name: "Expand sidebar",
+    exact: true,
+  });
+  if (await expand.isVisible()) {
+    await expand.click();
+  }
+  const row = page
+    .locator("li")
+    .filter({ has: page.locator(`a[href="/chat/${binding.id}"]`) });
+  await row.hover();
+  await row.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+  const result = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(url) && response.request().method() === "DELETE"
+  );
+  await page
+    .getByRole("dialog", { name: "Delete conversation and branches?" })
+    .getByRole("button", {
+      name: "Delete conversation and branches",
+      exact: true,
+    })
+    .click();
+  const deleted = await result;
   expect(deleted.status(), await deleted.text()).toBe(200);
+  await expect(page).toHaveURL(`${origin}/`);
+  await expect(
+    page.getByRole("dialog", { name: "Delete conversation and branches?" })
+  ).toHaveCount(0);
   expect(await deleted.json()).toEqual({
     status: "deleted",
     rootId: binding.id,
