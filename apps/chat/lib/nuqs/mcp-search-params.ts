@@ -11,6 +11,6 @@ export type McpConnectorsDialog = (typeof mcpConnectorsDialogValues)[number];
  * - dialog=connect: open connect dialog (connectorId required)
  */
 export const mcpConnectorsSettingsSearchParams = {
-  dialog: parseAsString,
   connectorId: parseAsString,
+  dialog: parseAsString,
 };
