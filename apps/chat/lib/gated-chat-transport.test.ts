@@ -33,7 +33,7 @@ describe("createGatedChatTransport", () => {
       }
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
     const originalMetadata = { source: "secondary" };
@@ -58,7 +58,7 @@ describe("createGatedChatTransport", () => {
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
     const abortController = new AbortController();
@@ -78,7 +78,7 @@ describe("createGatedChatTransport", () => {
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
     const abortController = new AbortController();
@@ -110,7 +110,7 @@ describe("createGatedChatTransport", () => {
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );
     const transport = createGatedChatTransport<UIMessage>({
-      reconnectToStream: async () => null,
+      reconnectToStream: () => Promise.resolve(null),
       sendMessages,
     });
 

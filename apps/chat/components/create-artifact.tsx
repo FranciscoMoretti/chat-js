@@ -126,7 +126,7 @@ export class Artifact<
     this.footer = config.footer;
     this.actions = config.actions || [];
     this.toolbar = config.toolbar || [];
-    this.initialize = config.initialize || (async () => ({}));
+    this.initialize = config.initialize || (() => Promise.resolve({}));
     this.onStreamPart = config.onStreamPart;
   }
 }

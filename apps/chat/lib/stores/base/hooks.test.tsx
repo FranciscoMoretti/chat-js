@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   createChatStore,
   Provider,
+  useChatActions,
   useChatStatus,
   useChatStore,
 } from "./hooks";
@@ -29,6 +30,15 @@ const FullState = () => {
 };
 
 const Status = () => <output>{useChatStatus()}</output>;
+
+const ChatActionsProbe = ({
+  onActions,
+}: {
+  onActions: (actions: ReturnType<typeof useChatActions>) => void;
+}) => {
+  onActions(useChatActions());
+  return null;
+};
 
 const message: LabeledMessage = {
   id: "message-1",
@@ -57,6 +67,32 @@ describe("chat store hooks", () => {
     expect(
       store.getState().getTransientDataPart("data-status")
     ).toBeUndefined();
+  });
+
+  it("keeps the unconfigured startRun fallback asynchronous", async () => {
+    const store = createChatStore<LabeledMessage>([]);
+    let actions: ReturnType<typeof useChatActions> | undefined;
+    let renderer: ReturnType<typeof create> | undefined;
+
+    act(() => {
+      renderer = create(
+        <Provider store={store}>
+          <ChatActionsProbe onActions={(value) => (actions = value)} />
+        </Provider>
+      );
+    });
+
+    const rendered = renderer;
+    if (!rendered || !actions) {
+      throw new Error("Expected chat actions to be available");
+    }
+
+    try {
+      const startRun = actions.startRun();
+      await expect(startRun).rejects.toThrow("startRun not configured");
+    } finally {
+      act(() => rendered.unmount());
+    }
   });
 
   it("subscribes to selected typed message data and the full store", () => {

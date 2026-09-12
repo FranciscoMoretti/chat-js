@@ -779,35 +779,41 @@ export const useMessageCount = () => useChatStore(messageCountSelector);
 // Reset hook for convenience
 export const useChatReset = () => useChatStore((state) => state.reset);
 // Stable fallback functions to prevent infinite loops
-const fallbackSendMessage = async () => {
+const fallbackSendMessage = () => {
   debug.warn(
     "sendMessage not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackStartRun = async () => {
-  throw new Error(
-    "startRun not configured - make sure useChat is called with transport"
+const fallbackStartRun = () =>
+  Promise.reject(
+    new Error(
+      "startRun not configured - make sure useChat is called with transport"
+    )
   );
-};
-const fallbackRegenerate = async () => {
+const fallbackRegenerate = () => {
   debug.warn(
     "regenerate not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackStop = async () => {
+const fallbackStop = () => {
   debug.warn(
     "stop not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackResumeStream = async () => {
+const fallbackResumeStream = () => {
   debug.warn(
     "resumeStream not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackAddToolResult = async () => {
+const fallbackAddToolResult = () => {
   debug.warn(
     "addToolResult not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
 const fallbackClearError = () => {
   debug.warn(

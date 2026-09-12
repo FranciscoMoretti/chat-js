@@ -15,8 +15,7 @@
     {
       "files": [
         "app/(chat)/chat-route-host.tsx",
-        "components/header-breadcrumb.tsx",
-        "lib/stores/base/use-data-parts.ts"
+        "components/header-breadcrumb.tsx"
       ],
       "rules": {
         "complexity": "off"
@@ -325,17 +324,6 @@
       ],
       "rules": {
         "react/todo": "off"
-      }
-    },
-    {
-      "files": [
-        "app/layout.tsx",
-        "components/create-artifact.tsx",
-        "lib/gated-chat-transport.test.ts",
-        "lib/stores/base/hooks.ts"
-      ],
-      "rules": {
-        "require-await": "off"
       }
     },
     {
