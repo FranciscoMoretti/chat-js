@@ -20,7 +20,7 @@ export const getFallbackModels = (
 ): readonly AiGatewayModel[] => {
   if (generatedForGateway !== gateway) {
     log.warn(
-      { expected: gateway, actual: generatedForGateway },
+      { actual: generatedForGateway, expected: gateway },
       "Fallback snapshot was generated for a different gateway, skipping. Run `bun fetch:models` to regenerate."
     );
     return [];

@@ -578,8 +578,9 @@ const setupApplicationMenu = (): void => {
     {
       role: "editMenu",
     },
-    ...(!app.isPackaged
-      ? ([
+    ...(app.isPackaged
+      ? []
+      : ([
           {
             role: "viewMenu",
             submenu: [
@@ -589,8 +590,7 @@ const setupApplicationMenu = (): void => {
               { role: "toggleDevTools" },
             ],
           },
-        ] satisfies MenuItemConstructorOptions[])
-      : []),
+        ] satisfies MenuItemConstructorOptions[])),
     {
       role: "windowMenu",
     },
