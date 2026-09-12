@@ -1,19 +1,11 @@
 #!/usr/bin/env bun
-import { createHash } from "node:crypto";
-import {
-  cp,
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import rootLintBaseline from "../oxlint-baseline.json";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
+import { collectSnapshot } from "./sync-template-snapshot";
 
 const { join, relative, resolve, sep } = path;
 const rootDir = resolve(import.meta.dir, "..");
@@ -227,32 +219,6 @@ const copyTemplate = async (destination: string): Promise<void> => {
     recursive: true,
   });
   await applyTemplateTransforms(destination);
-};
-
-const collectSnapshot = async (
-  dir: string,
-  prefix = ""
-): Promise<Map<string, string>> => {
-  const entries = await readdir(dir, { withFileTypes: true });
-  const output = new Map<string, string>();
-  for (const entry of entries) {
-    const absolute = join(dir, entry.name);
-    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-    if (entry.isDirectory()) {
-      const nested = await collectSnapshot(absolute, rel);
-      for (const [nestedPath, hash] of nested) {
-        output.set(nestedPath, hash);
-      }
-      continue;
-    }
-    if (!entry.isFile()) {
-      continue;
-    }
-    const bytes = await readFile(absolute);
-    const hash = createHash("sha256").update(bytes).digest("hex");
-    output.set(rel, hash);
-  }
-  return output;
 };
 
 const assertSynced = async (
