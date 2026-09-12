@@ -225,7 +225,6 @@
         "lib/ai/core-chat-agent.ts",
         "lib/ai/errors.ts",
         "lib/ai/eval-agent.ts",
-        "lib/ai/mcp/mcp-client.ts",
         "lib/anonymous-session-client.ts",
         "lib/app-chat-runtime.ts",
         "lib/artifacts/code/client.tsx",
@@ -427,7 +426,7 @@
       }
     },
     {
-      "files": ["lib/ai/mcp/mcp-oauth-provider.ts", "lib/ai/text-splitter.ts"],
+      "files": ["lib/ai/text-splitter.ts"],
       "rules": {
         "max-classes-per-file": "off"
       }
@@ -492,8 +491,6 @@
         "components/multimodal-input.tsx",
         "components/part/text-message-part.tsx",
         "lib/ai/eval-agent.ts",
-        "lib/ai/mcp/mcp-client.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/ai/token-utils.test.ts",
         "lib/auth.ts",
         "lib/credits/cost-accumulator.ts",
@@ -613,11 +610,7 @@
       }
     },
     {
-      "files": [
-        "components/anonymous-session-init.tsx",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
-        "lib/db/queries.ts"
-      ],
+      "files": ["components/anonymous-session-init.tsx", "lib/db/queries.ts"],
       "rules": {
         "no-useless-return": "off"
       }
@@ -765,7 +758,6 @@
         "components/retry-button.tsx",
         "components/suggested-actions.tsx",
         "lib/ai/completion-queue.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/anonymous-session-client.ts",
         "lib/artifacts/text/client.tsx",
         "lib/cancellation-aware-chat-transport.ts",
@@ -1305,8 +1297,6 @@
         "lib/ai/gateway-model-defaults.ts",
         "lib/ai/gateways/fallback-models.ts",
         "lib/ai/markdown-joiner-transform.ts",
-        "lib/ai/mcp/mcp-client.ts",
-        "lib/ai/mcp/mcp-oauth-provider.ts",
         "lib/ai/text-splitter.ts",
         "lib/ai/token-utils.test.ts",
         "lib/ai/usage-token-details.test.ts",

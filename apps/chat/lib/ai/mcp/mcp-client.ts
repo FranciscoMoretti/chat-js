@@ -13,10 +13,8 @@ import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
 
 import { invalidateAllMcpCaches } from "./cache";
-import {
-  McpOAuthClientProvider,
-  OAuthAuthorizationRequiredError,
-} from "./mcp-oauth-provider";
+import { McpOAuthClientProvider } from "./mcp-oauth-provider";
+import { OAuthAuthorizationRequiredError } from "./oauth-authorization-required-error";
 
 const log = createModuleLogger("mcp-client");
 
@@ -62,22 +60,23 @@ export class MCPClient {
     const baseUrl = getBaseUrl();
 
     this.oauthProvider = new McpOAuthClientProvider({
-      mcpConnectorId: this.id,
-      serverUrl: this.serverConfig.url,
       clientMetadata: {
         client_name: `${config.appPrefix}-${this.name}`,
         grant_types: ["authorization_code", "refresh_token"],
-        response_types: ["code"],
-        token_endpoint_auth_method: "none", // PKCE
-        scope: "mcp:tools",
         redirect_uris: [`${baseUrl}/api/mcp/oauth/callback`],
+        response_types: ["code"],
+        scope: "mcp:tools",
         software_id: config.appPrefix,
         software_version: "1.0.0",
+        // PKCE
+        token_endpoint_auth_method: "none",
       },
+      mcpConnectorId: this.id,
       onRedirectToAuthorization: (authorizationUrl: URL) => {
         this.authorizationUrl = authorizationUrl;
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
       },
+      serverUrl: this.serverConfig.url,
     });
   }
 
@@ -115,10 +114,10 @@ export class MCPClient {
       // AI SDK handles 401 internally and calls auth() with the provider
       this.client = await createMCPClient({
         transport: {
+          authProvider: this.oauthProvider,
+          headers: this.serverConfig.headers,
           type: this.serverConfig.type,
           url: this.serverConfig.url,
-          headers: this.serverConfig.headers,
-          authProvider: this.oauthProvider,
         },
       });
 
@@ -129,7 +128,7 @@ export class MCPClient {
       if (error instanceof OAuthAuthorizationRequiredError) {
         this._status = "authorizing";
         log.info(
-          { connectorId: this.id, authUrl: error.authorizationUrl.toString() },
+          { authUrl: error.authorizationUrl.toString(), connectorId: this.id },
           "OAuth authorization required"
         );
         return;
@@ -151,23 +150,23 @@ export class MCPClient {
   }> {
     // If already connected, return current status
     if (this.status === "connected" && this.client) {
-      return { status: "connected", needsAuth: false };
+      return { needsAuth: false, status: "connected" };
     }
 
     // If already in authorizing state, return that
     if (this.authorizationUrl) {
-      return { status: "authorizing", needsAuth: true };
+      return { needsAuth: true, status: "authorizing" };
     }
 
     try {
       await this.connect();
       // Check if OAuth is required (authorizationUrl gets set during connect)
       if (this.authorizationUrl) {
-        return { status: "authorizing", needsAuth: true };
+        return { needsAuth: true, status: "authorizing" };
       }
       return {
-        status: this.client ? "connected" : "disconnected",
         needsAuth: false,
+        status: this.client ? "connected" : "disconnected",
       };
     } catch (error) {
       const errorMessage =
@@ -187,14 +186,14 @@ export class MCPClient {
       ) {
         this._status = "incompatible";
         return {
-          status: "incompatible",
-          needsAuth: false,
           error:
             "Server requires pre-configured OAuth credentials (does not support dynamic client registration)",
+          needsAuth: false,
+          status: "incompatible",
         };
       }
 
-      return { status: "disconnected", needsAuth: false, error: errorMessage };
+      return { error: errorMessage, needsAuth: false, status: "disconnected" };
     }
   }
 
@@ -207,8 +206,8 @@ export class MCPClient {
 
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(this.oauthProvider, {
-      serverUrl: this.serverConfig.url,
       authorizationCode: code,
+      serverUrl: this.serverConfig.url,
     });
 
     this.authorizationUrl = undefined;
@@ -272,7 +271,7 @@ export class MCPClient {
     try {
       await this.client?.close();
     } catch (error) {
-      log.error({ error, connectorId: this.id }, "Error closing MCP client");
+      log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
     this.client = undefined;
     this._status = "disconnected";
@@ -308,7 +307,7 @@ const clientsMap = new Map<string, MCPClient>();
 /**
  * Get or create an MCP client for a connector.
  */
-export function getOrCreateMcpClient({
+export const getOrCreateMcpClient = ({
   id,
   name,
   url,
@@ -320,40 +319,38 @@ export function getOrCreateMcpClient({
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
-}): MCPClient {
+}): MCPClient => {
   let client = clientsMap.get(id);
 
   if (!client) {
-    client = new MCPClient(id, name, { url, type, headers });
+    client = new MCPClient(id, name, { headers, type, url });
     clientsMap.set(id, client);
   }
 
   return client;
-}
+};
 
 /**
  * Remove an MCP client from the cache and close it.
  */
-export async function removeMcpClient(id: string): Promise<void> {
+export const removeMcpClient = async (id: string): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
     await client.close();
     clientsMap.delete(id);
   }
-}
+};
 
 /**
  * Get an existing MCP client by ID.
  */
-function _getMcpClient(id: string): MCPClient | undefined {
-  return clientsMap.get(id);
-}
+const _getMcpClient = (id: string): MCPClient | undefined => clientsMap.get(id);
 
 /**
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.
  */
-export function createMcpClientForCallback({
+export const createMcpClientForCallback = ({
   id,
   name,
   url,
@@ -365,6 +362,4 @@ export function createMcpClientForCallback({
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
-}): MCPClient {
-  return new MCPClient(id, name, { url, type, headers });
-}
+}): MCPClient => new MCPClient(id, name, { headers, type, url });
