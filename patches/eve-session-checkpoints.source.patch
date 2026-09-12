@@ -579,7 +579,7 @@ index 00000000..5ffdab98
 +  }
 +}
 diff --git a/packages/eve/src/execution/create-session-step.test.ts b/packages/eve/src/execution/create-session-step.test.ts
-index 51bd8688..2bf27c66 100644
+index 51bd8688..e2bdf73d 100644
 --- a/packages/eve/src/execution/create-session-step.test.ts
 +++ b/packages/eve/src/execution/create-session-step.test.ts
 @@ -10,6 +10,13 @@ vi.mock("#runtime/sessions/compiled-agent-cache.js", () => ({
@@ -684,11 +684,32 @@ index 51bd8688..2bf27c66 100644
        resolvedAgent: {
          config: {},
          workflowTool: { maxSubagents: 5 },
+@@ -261,3 +279,19 @@ describe("createSessionStep", () => {
+     expect(state.snapshot?.session.workflowMaxSubagents).toBe(5);
+   });
+ });
++
++it("does not complete creation when publishing its native birth receipt fails", async () => {
++  vi.mocked(getCompiledRuntimeAgentBundle).mockResolvedValue({
++    compiledArtifactsSource: { kind: "bundled" },
++    resolvedAgent: { config: {} },
++    turnAgent: TestTurnAgent,
++  } as never);
++  const identityWritable = new WritableStream({
++    write() { throw new Error("identity receipt unavailable"); },
++  });
++  await expect(createSessionStep({
++    compiledArtifactsSource: { kind: "bundled" }, continuationToken: "fixture",
++    sessionId: "receipt-failure", identityWritable,
++  })).rejects.toThrow("identity receipt unavailable");
++  expect(identityWritable.locked).toBe(false);
++});
 diff --git a/packages/eve/src/execution/create-session-step.ts b/packages/eve/src/execution/create-session-step.ts
-index 2aae3078..ff692a06 100644
+index 2aae3078..e3f55367 100644
 --- a/packages/eve/src/execution/create-session-step.ts
 +++ b/packages/eve/src/execution/create-session-step.ts
-@@ -1,3 +1,10 @@
+@@ -1,3 +1,11 @@
++import type { SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
 +import { recordLocalSessionSandboxIdentity } from "#execution/sandbox/local-session-identity.js";
 +import { getRuntimeCompiledArtifactsSandboxAppRoot } from "#runtime/compiled-artifacts-source.js";
 +import { getResolvedRuntimeAgentNode } from "#runtime/graph.js";
@@ -699,15 +720,24 @@ index 2aae3078..ff692a06 100644
  import { getCompiledRuntimeAgentBundle } from "#runtime/sessions/compiled-agent-cache.js";
  import {
    type DurableCompiledArtifactsSource,
-@@ -33,6 +40,7 @@ export interface CreateSessionStepResult {
+@@ -5,6 +13,7 @@ import {
+ } from "#runtime/durable-compiled-artifacts-source.js";
+ import {
+   createDurableSessionState,
++  DURABLE_SESSION_VERSION,
+   type DurableSessionState,
+ } from "#execution/durable-session-store.js";
+ import { createSession } from "#execution/session.js";
+@@ -33,6 +42,8 @@ export interface CreateSessionStepResult {
   */
  export async function createSessionStep(input: {
    readonly compiledArtifactsSource: DurableCompiledArtifactsSource;
++  readonly identityWritable?: WritableStream<SessionSandboxIdentityReceipt>;
 +  readonly fork?: SessionForkReference;
    readonly continuationToken: string;
    readonly dynamicSubagentAgentConfig?: DynamicSubagentAgentConfig;
    readonly inheritedLimits?: RunSessionLimits;
-@@ -95,5 +103,28 @@ export async function createSessionStep(input: {
+@@ -95,5 +106,36 @@ export async function createSessionStep(input: {
      workflowMaxSubagents: bundle.resolvedAgent.workflowTool?.maxSubagents,
    });
 
@@ -725,6 +755,14 @@ index 2aae3078..ff692a06 100644
 +    backendName: definition.backend.name,
 +    sessionId: input.sessionId,
 +  });
++  if (input.identityWritable) {
++    const writer = input.identityWritable.getWriter();
++    try {
++      await writer.write({ version: 1, snapshotVersion: DURABLE_SESSION_VERSION, sessionId: input.sessionId, local: localSandboxIdentity ?? null });
++    } finally {
++      writer.releaseLock();
++    }
++  }
 +  return { state: createDurableSessionState({ session: { ...initialSession, localSandboxIdentity } }) };
 +}
 +
@@ -737,11 +775,125 @@ index 2aae3078..ff692a06 100644
 +
 +  await restoreSessionHistory(input);
  }
+diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
+new file mode 100644
+index 00000000..d16a9db4
+--- /dev/null
++++ b/packages/eve/src/execution/durable-session-migrations/snapshot-v1-to-v2.ts
+@@ -0,0 +1,16 @@
++import type { VersionMigration } from "./chain.js";
++
++/** v1 writers could drop birth identity, so migration must not certify their history. */
++export const snapshotV1ToV2: VersionMigration = {
++  from: 1,
++  to: 2,
++  migrate(prior: unknown) {
++    if (typeof prior !== "object" || prior === null || !("session" in prior) ||
++        typeof prior.session !== "object" || prior.session === null || Array.isArray(prior.session)) {
++      throw new Error("durable session snapshot: invalid version 1 session.");
++    }
++    const session = { ...prior.session } as Record<string, unknown>;
++    delete session.localSandboxIdentity;
++    return { ...prior, version: 2, session };
++  },
++};
+diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts b/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
+index 51907be4..04972190 100644
+--- a/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
++++ b/packages/eve/src/execution/durable-session-migrations/snapshot.test.ts
+@@ -8,13 +8,14 @@ import { projectToDurableSession } from "#execution/session.js";
+ import type { HarnessSession } from "#harness/types.js";
+
+ import { migrateDurableSessionSnapshot } from "./snapshot.js";
++import { runMigrationChain } from "./chain.js";
+
+ /**
+  * Pins the no-op path and failure modes for the snapshot migrator.
+  * Generic chain behavior is covered in `chain.test.ts`.
+  */
+ describe("migrateDurableSessionSnapshot", () => {
+-  it("returns a v1 snapshot unchanged", () => {
++  it("returns a current snapshot unchanged", () => {
+     const snapshot: DurableSessionSnapshot = {
+       session: projectToDurableSession(buildSession()),
+       version: DURABLE_SESSION_VERSION,
+@@ -57,19 +58,25 @@ describe("migrateDurableSessionSnapshot", () => {
+     );
+   });
+
+-  it("throws when no migration is registered for an older version", () => {
+-    // Unreachable until `DURABLE_SESSION_VERSION` moves past 1.
+-    // Guards the "bumped version but forgot a migration" failure mode.
+-    if (DURABLE_SESSION_VERSION === 1) {
+-      return;
+-    }
+-    expect(() =>
+-      migrateDurableSessionSnapshot({
+-        session: {},
+-        version: 1,
+-      }),
+-    ).toThrow(/no migration registered for version 1 → 2/);
++  it("migrates old history without claiming birth identity or mutating the input", () => {
++    const session = { ...projectToDurableSession(buildSession()), localSandboxIdentity: { version: 1, backendName: "microsandbox", appRoot: "/old/root", sessionId: "wrun_test" } };
++    const prior = { version: 1, session };
++    const migrated = migrateDurableSessionSnapshot(prior);
++    expect(migrated.version).toBe(2);
++    expect(migrated.session.localSandboxIdentity).toBeUndefined();
++    expect(migrated.session.history).toEqual(session.history);
++    expect(prior.session.localSandboxIdentity).toBeDefined();
+   });
++
++  it("does not let a v1-only worker accept new identity-bearing snapshots", () => {
++    const snapshot = { version: DURABLE_SESSION_VERSION, session: projectToDurableSession(buildSession()) };
++    expect(() => runMigrationChain({ label: "old worker", value: snapshot, migrations: [], targetVersion: 1 })).toThrow("newer than the supported version 1");
++  });
++
++  it.each([null, [], "invalid"])("refuses a malformed legacy session: %j", session => {
++    expect(() => migrateDurableSessionSnapshot({ version: 1, session })).toThrow("invalid version 1 session");
++  });
++
+ });
+
+ function buildSession(): HarnessSession {
+diff --git a/packages/eve/src/execution/durable-session-migrations/snapshot.ts b/packages/eve/src/execution/durable-session-migrations/snapshot.ts
+index 64313e99..64f991ff 100644
+--- a/packages/eve/src/execution/durable-session-migrations/snapshot.ts
++++ b/packages/eve/src/execution/durable-session-migrations/snapshot.ts
+@@ -18,12 +18,9 @@ import type { DurableSessionSnapshot } from "#execution/durable-session-store.js
+ import { DURABLE_SESSION_VERSION } from "#execution/durable-session-store.js";
+
+ import { runMigrationChain, type VersionMigration } from "./chain.js";
++import { snapshotV1ToV2 } from "./snapshot-v1-to-v2.js";
+
+-/**
+- * Ordered list of registered snapshot migrations. Empty today since
+- * only v1 exists; new migrations append to the tail.
+- */
+-const snapshotMigrations: readonly VersionMigration[] = [];
++const snapshotMigrations: readonly VersionMigration[] = [snapshotV1ToV2];
+
+ /**
+  * Migrates a {@link DurableSessionSnapshot} up to
 diff --git a/packages/eve/src/execution/durable-session-store.ts b/packages/eve/src/execution/durable-session-store.ts
-index 00a4158e..aa50a3e1 100644
+index 00a4158e..4be3d7af 100644
 --- a/packages/eve/src/execution/durable-session-store.ts
 +++ b/packages/eve/src/execution/durable-session-store.ts
-@@ -85,6 +85,7 @@ export interface DurableSession {
+@@ -1,3 +1,4 @@
++import { SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION } from "#execution/session-sandbox-identity-contract.js";
+ /**
+  * Durable session storage.
+  *
+@@ -29,7 +30,8 @@ import { getRun } from "#internal/workflow/runtime.js";
+ const EVE_SESSION_STREAM_NAMESPACE = "eve.session";
+
+ /** Current wire version for {@link DurableSessionState} and {@link DurableSessionSnapshot}. */
+-export const DURABLE_SESSION_VERSION = 1;
++// v2 consumers preserve local sandbox birth identity. Older consumers must reject it.
++export const DURABLE_SESSION_VERSION = SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION;
+
+ const DURABLE_SESSION_READ_TIMEOUT_MS = 10_000;
+
+@@ -85,6 +87,7 @@ export interface DurableSession {
    readonly outputSchema?: JsonObject;
    readonly state?: SessionStateMap;
    readonly sandboxState?: SandboxState;
@@ -873,10 +1025,11 @@ index 6389215f..9fdf8add 100644
      }
 diff --git a/packages/eve/src/execution/read-session-checkpoint.test.ts b/packages/eve/src/execution/read-session-checkpoint.test.ts
 new file mode 100644
-index 00000000..c54972bc
+index 00000000..71778c98
 --- /dev/null
 +++ b/packages/eve/src/execution/read-session-checkpoint.test.ts
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,112 @@
++import { DURABLE_SESSION_VERSION } from "#execution/durable-session-store.js";
 +import { afterEach, expect, it, vi } from "vitest";
 +import { readSessionCheckpoint } from "#execution/read-session-checkpoint.js";
 +import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
@@ -894,7 +1047,7 @@ index 00000000..c54972bc
 +    sessionId: "source",
 +    beforeTurnId: "turn_0",
 +    snapshot: {
-+      version: 1,
++      version: DURABLE_SESSION_VERSION,
 +      session: {
 +        sessionId: "source",
 +        continuationToken: "",
@@ -904,11 +1057,11 @@ index 00000000..c54972bc
 +    },
 +  };
 +}
-+function install(values: SessionCheckpoint[], tail = values.length - 1) {
++function install(values: unknown[], tail = values.length - 1) {
 +  const cancel = vi.fn();
 +  let index = 0;
 +  const stream = Object.assign(
-+    new ReadableStream<SessionCheckpoint>({
++    new ReadableStream<unknown>({
 +      pull(controller) {
 +        const value = values[index++];
 +        if (value) controller.enqueue(value);
@@ -966,7 +1119,7 @@ index 00000000..c54972bc
 +it("times out stalled reads even when stream cancellation never settles", async () => {
 +  vi.useFakeTimers();
 +  const cancel = vi.fn(() => new Promise<void>(() => {}));
-+  const stream = Object.assign(new ReadableStream<SessionCheckpoint>({ cancel }), {
++  const stream = Object.assign(new ReadableStream<unknown>({ cancel }), {
 +    getTailIndex: async () => 0,
 +  });
 +  mocks.getRun.mockReturnValue({ getReadable: () => stream });
@@ -977,6 +1130,16 @@ index 00000000..c54972bc
 +  await result;
 +  expect(cancel).toHaveBeenCalledOnce();
 +  expect(stream.locked).toBe(false);
++});
++
++it("reads historical checkpoints without certifying their optional birth identity", async () => {
++  const current = checkpoint();
++  const historical = { ...current, snapshot: { ...current.snapshot, version: 1, session: { ...current.snapshot.session, localSandboxIdentity: { version: 1, backendName: "microsandbox", appRoot: "/old", sessionId: "source" } } } };
++  install([historical]);
++  const restored = await readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" });
++  expect(restored.snapshot.version).toBe(DURABLE_SESSION_VERSION);
++  expect(restored.snapshot.session.localSandboxIdentity).toBeUndefined();
++  expect(restored.snapshot.session.history).toEqual(historical.snapshot.session.history);
 +});
 diff --git a/packages/eve/src/execution/read-session-checkpoint.ts b/packages/eve/src/execution/read-session-checkpoint.ts
 new file mode 100644
@@ -1157,10 +1320,11 @@ index 00000000..0279a173
 +});
 diff --git a/packages/eve/src/execution/restore-session-checkpoint.ts b/packages/eve/src/execution/restore-session-checkpoint.ts
 new file mode 100644
-index 00000000..dd42dbda
+index 00000000..6f6f4f71
 --- /dev/null
 +++ b/packages/eve/src/execution/restore-session-checkpoint.ts
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,67 @@
++import { DURABLE_SESSION_VERSION } from "#execution/durable-session-store.js";
 +import type { HarnessSession } from "#harness/types.js";
 +import { getHarnessEmissionState, setHarnessEmissionState } from "#harness/emission-state.js";
 +import type { SessionCheckpoint } from "#execution/session-checkpoint-contract.js";
@@ -1175,7 +1339,7 @@ index 00000000..dd42dbda
 +  const emission = getHarnessEmissionState(source.state);
 +  if (
 +    checkpoint.version !== 1 ||
-+    checkpoint.snapshot.version !== 1 ||
++    checkpoint.snapshot.version !== DURABLE_SESSION_VERSION ||
 +    source.sessionId !== checkpoint.sessionId ||
 +    target.sessionId === source.sessionId ||
 +    checkpoint.beforeTurnId !== `turn_${emission.sequence}` ||
@@ -3100,13 +3264,14 @@ index 00000000..9133d4fc
 +}
 diff --git a/packages/eve/src/execution/session-fork.integration.test.ts b/packages/eve/src/execution/session-fork.integration.test.ts
 new file mode 100644
-index 00000000..db32131f
+index 00000000..5bfdc462
 --- /dev/null
 +++ b/packages/eve/src/execution/session-fork.integration.test.ts
-@@ -0,0 +1,164 @@
+@@ -0,0 +1,173 @@
++import { SESSION_SANDBOX_IDENTITY_NAMESPACE, type SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
 +import { defaultMessageReducer } from "#client/message-reducer.js";
 +import { expect, it } from "vitest";
-+import { start } from "#internal/workflow/runtime.js";
++import { start, getRun } from "#internal/workflow/runtime.js";
 +import { createTestRuntime } from "#internal/testing/app-harness.js";
 +import { captureTurnEvents } from "#internal/testing/events.js";
 +import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
@@ -3191,6 +3356,14 @@ index 00000000..db32131f
 +        });
 +        expect(restored.snapshot.session.history).toEqual(checkpoint.snapshot.session.history);
 +        expect(restored.snapshot.session.sessionId).toBe(branch.runId);
++        expect(restored.snapshot.version).toBe(2);
++        for (const sessionId of [source.runId, branch.runId]) {
++          const reader = getRun(sessionId).getReadable<SessionSandboxIdentityReceipt>({ namespace: SESSION_SANDBOX_IDENTITY_NAMESPACE }).getReader();
++          try {
++            const birth = await reader.read();
++            expect(birth.value).toMatchObject({ version: 1, snapshotVersion: 2, sessionId, local: { sessionId } });
++          } finally { await reader.cancel(); reader.releaseLock(); }
++        }
 +        expect(checkpoint.snapshot.session.localSandboxIdentity?.sessionId).toBe(source.runId);
 +        expect(restored.snapshot.session.localSandboxIdentity?.sessionId).toBe(branch.runId);
 +        expect(restored.snapshot.session.localSandboxIdentity?.backendName).toBe(checkpoint.snapshot.session.localSandboxIdentity?.backendName);
@@ -3396,6 +3569,54 @@ index 00000000..a8b0f943
 +    }
 +  });
 +});
+diff --git a/packages/eve/src/execution/session-sandbox-identity-contract.test.ts b/packages/eve/src/execution/session-sandbox-identity-contract.test.ts
+new file mode 100644
+index 00000000..050ad7b2
+--- /dev/null
++++ b/packages/eve/src/execution/session-sandbox-identity-contract.test.ts
+@@ -0,0 +1,15 @@
++import { expect, it } from "vitest";
++import { assertSessionCreationSnapshotVersion } from "./session-sandbox-identity-contract.js";
++
++it.each([
++  { version: 1, snapshot: { version: 1 } },
++  { version: 2, snapshot: { version: 1 } },
++  { version: 1, snapshot: { version: 2 } },
++  { version: 2 },
++  { version: 3, snapshot: { version: 3 } },
++])("rejects an uncertified creation result before the driver starts a turn: %j", state => {
++  expect(() => assertSessionCreationSnapshotVersion(state)).toThrow("unsupported snapshot contract");
++});
++it("accepts the matching driver and snapshot contract", () => {
++  expect(() => assertSessionCreationSnapshotVersion({ version: 2, snapshot: { version: 2 } })).not.toThrow();
++});
+diff --git a/packages/eve/src/execution/session-sandbox-identity-contract.ts b/packages/eve/src/execution/session-sandbox-identity-contract.ts
+new file mode 100644
+index 00000000..7681e350
+--- /dev/null
++++ b/packages/eve/src/execution/session-sandbox-identity-contract.ts
+@@ -0,0 +1,21 @@
++import type { HarnessSession } from "#harness/types.js";
++
++export const SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION = 2;
++
++export const SESSION_SANDBOX_IDENTITY_NAMESPACE = "eve.sandbox-identity";
++
++/** Emitted by session creation, including hosted attempts, before any session tool work. */
++export interface SessionSandboxIdentityReceipt {
++  readonly version: 1;
++  readonly sessionId: string;
++  readonly snapshotVersion: 2;
++  readonly local: HarnessSession["localSandboxIdentity"] | null;
++}
++
++/** New drivers cannot accept a creation result from a pre-identity worker. */
++export function assertSessionCreationSnapshotVersion(state: { version: number; snapshot?: { version: number } }): void {
++  if (state.version !== SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION ||
++      state.snapshot?.version !== SESSION_SANDBOX_IDENTITY_SNAPSHOT_VERSION) {
++    throw new Error("Session creation used an unsupported snapshot contract. Upgrade the worker before continuing.");
++  }
++}
 diff --git a/packages/eve/src/execution/session.test.ts b/packages/eve/src/execution/session.test.ts
 index 2a67320b..67b1942d 100644
 --- a/packages/eve/src/execution/session.test.ts
@@ -3751,10 +3972,11 @@ index 00000000..fb251405
 +  return sessionInboxWireV7Schema.parse(command.kind === "checkpoint" ? { ...command, version: 7 } : { ...encodeSessionCommandV6(command), version: 7 });
 +}
 diff --git a/packages/eve/src/execution/workflow-entry.ts b/packages/eve/src/execution/workflow-entry.ts
-index d3cfb0bd..d91cf7ef 100644
+index d3cfb0bd..c7c67f94 100644
 --- a/packages/eve/src/execution/workflow-entry.ts
 +++ b/packages/eve/src/execution/workflow-entry.ts
-@@ -1,3 +1,9 @@
+@@ -1,3 +1,10 @@
++import { SESSION_SANDBOX_IDENTITY_NAMESPACE, assertSessionCreationSnapshotVersion, type SessionSandboxIdentityReceipt } from "#execution/session-sandbox-identity-contract.js";
 +import type { CheckpointSessionHookPayload } from "#channel/types.js";
 +import {
 +  SESSION_CHECKPOINT_NAMESPACE,
@@ -3764,7 +3986,7 @@ index d3cfb0bd..d91cf7ef 100644
  import { getWorkflowMetadata, getWritable } from "#compiled/@workflow/core/index.js";
 
  import type {
-@@ -28,7 +34,7 @@ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-st
+@@ -28,7 +35,7 @@ import { cancelDescendantTurnsStep } from "#execution/cancel-descendant-turns-st
  import { dispatchAndAwaitTurn } from "#execution/turn-dispatch.js";
  import type { TurnDriverAction } from "#execution/turn-control-receiver.js";
  import { normalizeSerializableError } from "#execution/workflow-errors.js";
@@ -3773,7 +3995,7 @@ index d3cfb0bd..d91cf7ef 100644
  import { settleCancelledTurnStep } from "#execution/settle-cancelled-turn-step.js";
  import { emitTerminalSessionFailureStep } from "#execution/terminal-session-failure-step.js";
  import { fireSessionCallbackStep } from "#subagents/callback-step.js";
-@@ -63,6 +69,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
+@@ -63,6 +70,7 @@ const SAFE_OUTER_WORKFLOW_FAILURE_MESSAGE =
   * and deserialized at each `"use step"` boundary.
   */
  export interface WorkflowEntryInput {
@@ -3781,7 +4003,7 @@ index d3cfb0bd..d91cf7ef 100644
    readonly activityCollectorRunId?: string;
    readonly continuationConflictCommand?: Extract<SessionCommand, { readonly kind: "send" }>;
    readonly input: RunInput["input"];
-@@ -171,6 +178,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -171,6 +179,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
    };
 
    const driverWritable = getWritable<Uint8Array>();
@@ -3792,7 +4014,11 @@ index d3cfb0bd..d91cf7ef 100644
    const crashCleanupState: CrashCleanupState = {
      caller: undefined,
      callerResolved: false,
-@@ -200,6 +211,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -197,9 +209,11 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+         await Promise.allSettled([
+           createSessionStep({
+             compiledArtifactsSource: serializedBundle.source,
++            identityWritable: getWritable<SessionSandboxIdentityReceipt>({ namespace: SESSION_SANDBOX_IDENTITY_NAMESPACE }),
              continuationToken,
              dynamicSubagentAgentConfig,
              inheritedLimits: input.limits,
@@ -3800,7 +4026,15 @@ index d3cfb0bd..d91cf7ef 100644
              nodeId: serializedBundle.nodeId,
              outputSchema: input.input.outputSchema,
              rootSessionId: rootSessionIdFromParent,
-@@ -246,6 +258,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+@@ -212,6 +226,7 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
+         ]);
+
+       if (sessionCreation.status === "rejected") throw sessionCreation.reason;
++      assertSessionCreationSnapshotVersion(sessionCreation.value.state);
+       if (stableClaim.status === "rejected") throw stableClaim.reason;
+       if (authorizationClaim.status === "rejected") throw authorizationClaim.reason;
+       if (continuationClaim.status === "rejected") {
+@@ -246,6 +261,10 @@ export async function workflowEntry(input: WorkflowEntryInput): Promise<Workflow
          : undefined;
        crashCleanupState.callerResolved = true;
 
@@ -3811,7 +4045,7 @@ index d3cfb0bd..d91cf7ef 100644
        outcome = await runDriverLoop({
          capabilities,
          commandInbox,
-@@ -473,7 +489,7 @@ async function runDriverLoop(input: {
+@@ -473,7 +492,7 @@ async function runDriverLoop(input: {
      `${input.sessionState.sessionId}:turn-control:${String(turnDispatchIndex++)}`;
 
    const bufferedDeliveries: DeliverHookPayload[] = [];
@@ -3820,7 +4054,7 @@ index d3cfb0bd..d91cf7ef 100644
    const cancelledTaskIds = new Set<string>();
    const seenTaskDeliveries = new Set<string>();
    const stateCursor = new SessionStateCursor({
-@@ -644,6 +660,7 @@ async function runDriverLoop(input: {
+@@ -644,6 +663,7 @@ async function runDriverLoop(input: {
          };
        }
 

@@ -269,8 +269,30 @@ source's. Hosted and historical sessions are not retroactively certified.
 Native tests cover concurrent publication, conflicting retry, canonical aliases,
 provider/root drift, durable round trips, and independent fork identities. The
 record is not yet a deletion authorization: the coordinator must verify native
-birth evidence and descendant coverage, and prevent older workers from dropping
-the new optional snapshot field. Cross-host attempts whose creation step never
+birth evidence and descendant coverage. The version 2 contract described below
+now prevents older snapshot consumers from silently discarding the identity. Cross-host attempts whose creation step never
 committed also need authoritative reconciliation; a local sidecar alone cannot
 prove that the eventual session ran on that host. The user-facing deletion API
 remains disabled until these requirements and allocation recovery are handled.
+
+### Versioned native birth evidence
+
+Durable snapshots now use version 2 so older consumers reject a shape whose
+identity they would otherwise discard. The v1 migration preserves conversation
+history but removes the unverified local identity; it cannot establish a new
+provider-history guarantee retroactively. New session creation emits a receipt
+into `eve.sandbox-identity`, with its native session ID, snapshot version, and
+local identity (or null for a hosted attempt), before any session tool work.
+A failed receipt write fails creation. Retries may emit duplicates, so a deletion
+reader must require matching receipts and reject conflicting local/hosted attempts.
+The native fork regression verifies independent source and child receipts.
+
+The remaining coordinator work is to read this evidence under retirement/write
+fences, validate every owning descendant and its local sidecar, and retain that
+proof across partial purge retries. This is not yet a user-facing deletion API.
+
+New drivers validate both the creation handle and embedded snapshot version before
+starting a turn. An older creation worker cannot bypass the contract by ignoring
+the receipt-writer input and returning a v1 result. Focused tests cover mismatched
+handle/snapshot versions, missing snapshots, future versions, failed receipt
+publication, and historical checkpoint restoration without retroactive identity.

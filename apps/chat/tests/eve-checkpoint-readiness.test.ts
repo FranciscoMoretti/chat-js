@@ -38,6 +38,15 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
     assert.equal(ready.status, 200);
     assert.deepEqual(await ready.json(), { ready: true, sessionId: "source", beforeTurnId: "turn_0" });
     assert.equal(ready.headers.get("cache-control"), "no-store");
+    const { readSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "read-session-checkpoint.js");
+    const { restoreSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "restore-session-checkpoint.js");
+    const { createSession } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/session.js");
+    const checkpoint = await readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" });
+    assert.equal(checkpoint.snapshot.version, 2);
+    const target = createSession({ sessionId: "branch", continuationToken: "", turnAgent: {
+      id: "test", instructions: ["test"], model: { id: "test-model" }, tools: [], workspaceSpec: { rootEntries: [] },
+    } });
+    assert.equal(restoreSessionCheckpoint({ target, checkpoint }).sessionId, "branch");
     const before = readCount;
     assert.equal((await handleCheckpointReadiness(new Request("http://eve/checkpoint?beforeTurnId=turn_0&beforeTurnId=turn_1"), "source")).status, 400);
     assert.equal(readCount, before);

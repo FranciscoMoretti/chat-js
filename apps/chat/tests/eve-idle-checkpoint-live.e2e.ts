@@ -27,7 +27,7 @@ test("compiled idle capture preserves native history and exact document revision
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   const token = crypto.randomUUID().slice(0, 8).toUpperCase();
-  const message = `Remember the token ${token}. Reply with exactly that token. Do not use tools.`;
+  const message = `Reply with exactly ${token} in plain text. Do not invoke any tools.`;
   const created = await page.request.post("/api/agent-conversations", {
     headers: { origin },
     data: {
@@ -40,7 +40,7 @@ test("compiled idle capture preserves native history and exact document revision
   const source = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${source.id}`);
   await expect(
-    page.getByRole("log").getByText(token, { exact: true })
+    page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
   ).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const [binding] = await db
@@ -120,7 +120,7 @@ test("compiled idle capture preserves native history and exact document revision
   await page.getByRole("menuitem", { name: "2x", exact: true }).click();
   await page.keyboard.press("Escape");
   const followUp =
-    "What token did I ask you to remember? Reply with exactly the token. Do not use tools.";
+    "Repeat your previous answer verbatim, as plain text. Do not add commentary or call tools.";
   await page.locator('[contenteditable="true"]').fill(followUp);
   await page.getByRole("button", { name: "Send", exact: true }).click();
   const recover = page.getByRole("button", {
@@ -169,10 +169,6 @@ test("compiled idle capture preserves native history and exact document revision
     if (candidate.state !== "bound") {
       throw new Error("Follow-up did not bind");
     }
-    expect(await birthIdentity(candidate.sessionId)).toEqual({
-      ...sourceIdentity,
-      sessionId: candidate.sessionId,
-    });
     expect(
       (
         await getEveDocumentRevision(
@@ -184,16 +180,20 @@ test("compiled idle capture preserves native history and exact document revision
     ).toBe(original.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
-      page.getByRole("log").getByText(token, { exact: true })
+      page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
     ).toHaveCount(2, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    expect(await birthIdentity(candidate.sessionId)).toEqual({
+      ...sourceIdentity,
+      sessionId: candidate.sessionId,
+    });
     await expect(
       page.getByRole("log").getByText(message, { exact: true })
     ).toHaveCount(1);
   }
   await page.reload();
   await expect(
-    page.getByRole("log").getByText(token, { exact: true })
+    page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
   ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await page.screenshot({

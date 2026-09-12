@@ -189,5 +189,14 @@ conversation deletion is being completed.
 
 This is not a portable erasure receipt. Hosted sessions omit the local record.
 Deletion must still verify native birth evidence and descendants, handle provider
-allocation uncertainty, and exclude older workers that do not preserve this new
-optional snapshot field before it can rely on the record.
+allocation uncertainty, and validate native birth receipts before it can rely on the record.
+
+Durable session snapshots now use version 2. Version 1 consumers reject the new
+contract; version 1 snapshots migrate without a certified local identity. A
+new `eve.sandbox-identity` stream records session-creation attempts, including a
+null local identity for hosted attempts. Deletion must reject conflicting attempts
+and historical sessions without this evidence; the local file alone is insufficient.
+
+New workflow drivers also reject creation results with an older handle or snapshot
+version before starting any turn. This covers a creation retry dispatched to an
+older worker, including one that ignores the new receipt writer input.
