@@ -382,18 +382,20 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       }
     }
     // The shared npm archive must not carry any other adapter implementations.
-    for (const name of GATEWAYS) {
-      expect(
-        await Bun.file(
-          join(cwd, "node_modules/@chat-js/gateways/src", `${name}.ts`)
-        ).exists()
-      ).toBe(false);
-      expect(
-        await Bun.file(
-          join(cwd, "node_modules/@chat-js/gateways/dist", `${name}.js`)
-        ).exists()
-      ).toBe(false);
-    }
+    await Promise.all(
+      GATEWAYS.map(async (name) => {
+        expect(
+          await Bun.file(
+            join(cwd, "node_modules/@chat-js/gateways/src", `${name}.ts`)
+          ).exists()
+        ).toBe(false);
+        expect(
+          await Bun.file(
+            join(cwd, "node_modules/@chat-js/gateways/dist", `${name}.js`)
+          ).exists()
+        ).toBe(false);
+      })
+    );
 
     if (gateway === "acme") {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
@@ -562,13 +564,11 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
     );
     await run(cwd, ["bunx", "--no-install", "tsx", "probe-config.ts"]);
     if (gateway === "vercel") {
-      for (const name of [
-        "gateway-type-check.ts",
-        "probe.ts",
-        "probe-config.ts",
-      ]) {
-        await rm(join(cwd, name));
-      }
+      await Promise.all(
+        ["gateway-type-check.ts", "probe.ts", "probe-config.ts"].map((name) =>
+          rm(join(cwd, name))
+        )
+      );
       await run(cwd, ["bun", "run", "lint"]);
       const longDirectory = join(cwd, "tools/chatjs/long-renderer");
       await mkdir(longDirectory);
