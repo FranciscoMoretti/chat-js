@@ -1,13 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
 it("reports failed endpoint names without exposing connection credentials", () => {
-  const cwd = mkdtempSync(join(tmpdir(), "chatjs-check-db-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "chatjs-check-db-"));
   try {
     let failed = false;
     try {

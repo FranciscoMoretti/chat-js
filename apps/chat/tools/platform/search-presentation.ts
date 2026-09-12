@@ -7,7 +7,8 @@ import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
 
 export const DEFAULT_MAX_RESULTS = 5;
 
-const MAX_SEARCH_QUERIES = 2; // Bound the number of parallel searches per tool call
+// Bound the number of parallel searches per tool call.
+const MAX_SEARCH_QUERIES = 2;
 // Strict tool schemas require every property; null requests the default.
 export const searchQueriesSchema = z
   .array(
@@ -27,7 +28,7 @@ export const searchQueriesSchema = z
   .describe(`Array of search queries. Maximum ${MAX_SEARCH_QUERIES} queries.`);
 
 // Common search execution logic
-export async function executeMultiQuerySearch({
+export const executeMultiQuerySearch = async ({
   search_queries,
   search,
   dataStream,
@@ -46,7 +47,7 @@ export async function executeMultiQuerySearch({
   writeTopLevelUpdates: boolean;
   title: string;
   completeTitle: string;
-}) {
+}) => {
   const log = createModuleLogger("tools/web-search");
   log.debug(
     { queriesCount: search_queries.length },
@@ -97,4 +98,4 @@ export async function executeMultiQuerySearch({
     "executeMultiQuerySearch complete"
   );
   return { searches: searchResults, ...(error ? { error } : {}) };
-}
+};

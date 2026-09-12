@@ -44,7 +44,7 @@ const toolEnvironmentSchema = z.object({
     .default([]),
 });
 
-function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const gateway: string = config.ai.gateway;
   const missing = gatewayEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
@@ -56,9 +56,9 @@ function validateGatewayKey(env: NodeJS.ProcessEnv): ValidationError | null {
     feature: `aiGateway (${gateway})`,
     missing,
   };
-}
+};
 
-function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   if (
     !(
       config.features.attachments ||
@@ -74,9 +74,9 @@ function validateStorage(env: NodeJS.ProcessEnv): ValidationError | null {
   return missing.length
     ? { feature: `fileStorage (${storageId})`, missing }
     : null;
-}
+};
 
-function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
+const validateAiTools = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   const toolEntries = Object.entries(aiToolEnvRequirements) as [
@@ -101,9 +101,9 @@ function validateAiTools(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   return errors;
-}
+};
 
-function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
+const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   const authKeys = Object.keys(
@@ -138,11 +138,11 @@ function validateAuthentication(env: NodeJS.ProcessEnv): ValidationError[] {
   }
 
   return errors;
-}
+};
 
-async function validateInstalledTools(
+const validateInstalledTools = async (
   env: NodeJS.ProcessEnv
-): Promise<ValidationError[]> {
+): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, "tools/chatjs");
   const entries = await fs
     .readdir(toolsDir, { withFileTypes: true })
@@ -184,9 +184,9 @@ async function validateInstalledTools(
   }
 
   return errors;
-}
+};
 
-function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
+const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
   if (!isProduction) {
     return null;
@@ -203,16 +203,16 @@ function validateBaseUrl(env: NodeJS.ProcessEnv): ValidationError | null {
       "APP_URL (for non-Vercel deployments) or VERCEL_URL (auto on Vercel)",
     ],
   };
-}
+};
 
-function checkGatewaySnapshot(): string | null {
+const checkGatewaySnapshot = (): string | null => {
   if (config.ai.gateway === generatedForGateway) {
     return null;
   }
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
-}
+};
 
-async function checkEnv(): Promise<void> {
+const checkEnv = async (): Promise<void> => {
   const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
     console.log(
@@ -276,7 +276,7 @@ async function checkEnv(): Promise<void> {
   }
 
   console.log("✅ Environment validation passed");
-}
+};
 
 checkEnv().catch((error) => {
   console.error(error);

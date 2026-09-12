@@ -9,7 +9,8 @@ import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 
-const COST_CENTS = 50; // Fixed estimate — not yet available from provider API
+// Fixed estimate — not yet available from provider API.
+const COST_CENTS = 50;
 
 interface GenerateVideoProps {
   costAccumulator?: CostAccumulator;

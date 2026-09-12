@@ -28,20 +28,20 @@ import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 const log = createModuleLogger("mcp.router");
 
-function assertMcpEnabled() {
+const assertMcpEnabled = () => {
   if (!config.ai.tools.mcp.enabled) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "MCP integration disabled",
     });
   }
-}
+};
 
 /**
  * Validates and generates a nameId from a connector name.
  * Throws TRPCError if the name is invalid or the namespace already exists.
  */
-async function validateAndGenerateNameId({
+const validateAndGenerateNameId = async ({
   name,
   userId,
   excludeId,
@@ -49,7 +49,7 @@ async function validateAndGenerateNameId({
   name: string;
   userId: string | null;
   excludeId?: string;
-}): Promise<string> {
+}): Promise<string> => {
   assertMcpEnabled();
   const result = generateMcpNameId(name);
   if (!result.ok) {
@@ -76,7 +76,7 @@ async function validateAndGenerateNameId({
   }
 
   return result.nameId;
-}
+};
 
 type Permission = "own" | "own-or-global";
 
@@ -85,7 +85,7 @@ type Permission = "own" | "own-or-global";
  * - "own": user must own the connector (userId === ctx.user.id)
  * - "own-or-global": user must own OR connector is global (userId === null)
  */
-async function getConnectorWithPermission({
+const getConnectorWithPermission = async ({
   id,
   userId,
   permission,
@@ -93,7 +93,7 @@ async function getConnectorWithPermission({
   id: string;
   userId: string;
   permission: Permission;
-}) {
+}) => {
   const connector = await getMcpConnectorById({ id });
   if (!connector) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Connector not found" });
@@ -112,7 +112,7 @@ async function getConnectorWithPermission({
   }
 
   return connector;
-}
+};
 
 export const mcpRouter = createTRPCRouter({
   /**
@@ -344,8 +344,8 @@ export const mcpRouter = createTRPCRouter({
                   r.prompts.map((p) => ({
                     arguments:
                       p.arguments?.map((arg) => ({
-                        name: arg.name,
                         description: arg.description ?? null,
+                        name: arg.name,
                         required: arg.required ?? false,
                       })) ?? [],
                     description: p.description ?? null,

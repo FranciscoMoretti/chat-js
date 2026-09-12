@@ -1,13 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
 it("skips an absent optional Redis and rejects REST credentials without exposing them", () => {
-  const cwd = mkdtempSync(join(tmpdir(), "chatjs-redis-check-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "chatjs-redis-check-"));
   try {
     for (const url of [
       "",

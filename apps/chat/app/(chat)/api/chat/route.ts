@@ -306,7 +306,84 @@ const getSystemPrompt = async ({
   return system;
 };
 
-async function createChatStream({
+const finalizeMessageAndCredits = async ({
+  messages,
+  userId,
+  isAnonymous,
+  chatId,
+  costAccumulator,
+  selectedModelId,
+  parallelGroupId,
+  parallelIndex,
+  isPrimaryParallel,
+}: {
+  messages: ChatMessage[];
+  userId: string | null;
+  isAnonymous: boolean;
+  chatId: string;
+  costAccumulator: CostAccumulator;
+  selectedModelId: AppModelId;
+  parallelGroupId: string | null;
+  parallelIndex: number | null;
+  isPrimaryParallel: boolean | null;
+}): Promise<void> => {
+  const log = createModuleLogger("api:chat:finalize");
+  let messageSaved = true;
+
+  try {
+    const assistantMessage = messages.at(-1);
+
+    if (!assistantMessage) {
+      throw new Error("No assistant message found!");
+    }
+
+    if (!isAnonymous) {
+      messageSaved = await updateMessage({
+        chatId,
+        id: assistantMessage.id,
+        message: {
+          ...assistantMessage,
+          metadata: {
+            ...assistantMessage.metadata,
+            activeStreamId: null,
+            isPrimaryParallel:
+              isPrimaryParallel ??
+              assistantMessage.metadata.isPrimaryParallel ??
+              null,
+            parallelGroupId:
+              parallelGroupId ??
+              assistantMessage.metadata.parallelGroupId ??
+              null,
+            parallelIndex:
+              parallelIndex ?? assistantMessage.metadata.parallelIndex ?? null,
+            selectedModel: selectedModelId,
+          },
+        },
+      });
+      if (!messageSaved) {
+        log.info(
+          { messageId: assistantMessage.id },
+          "Skipped finalizing canceled message"
+        );
+        return;
+      }
+    }
+
+    const totalCost = await costAccumulator.getTotalCost();
+    const entries = costAccumulator.getEntries();
+
+    log.info({ entries }, "Cost accumulator entries");
+    log.info({ totalCost }, "Cost accumulator total cost");
+
+    if (userId && !isAnonymous && messageSaved) {
+      await deductCredits(userId, totalCost);
+    }
+  } catch (error) {
+    log.error({ error }, "Failed to save chat or finalize credits");
+  }
+};
+
+const createChatStream = async ({
   messageId,
   chatId,
   userMessage,
@@ -340,7 +417,7 @@ async function createChatStream({
   mcpConnectors: McpConnector[];
   streamId: string;
   onChunk?: () => void;
-}) {
+}) => {
   const log = createModuleLogger("api:chat:stream");
   const system = await getSystemPrompt({ chatId, isAnonymous });
 
@@ -495,7 +572,7 @@ async function createChatStream({
   });
 
   return stream;
-}
+};
 
 const emptyChatStreamResponse = () => {
   const stream = createUIMessageStream<ChatMessage>({
@@ -787,87 +864,6 @@ const prepareRequestContext = async ({
 
   return { error: null, previousMessages };
 };
-
-async function finalizeMessageAndCredits({
-  messages,
-  userId,
-  isAnonymous,
-  chatId,
-  costAccumulator,
-  selectedModelId,
-  parallelGroupId,
-  parallelIndex,
-  isPrimaryParallel,
-}: {
-  messages: ChatMessage[];
-  userId: string | null;
-  isAnonymous: boolean;
-  chatId: string;
-  costAccumulator: CostAccumulator;
-  selectedModelId: AppModelId;
-  parallelGroupId: string | null;
-  parallelIndex: number | null;
-  isPrimaryParallel: boolean | null;
-}): Promise<void> {
-  const log = createModuleLogger("api:chat:finalize");
-  let messageSaved = true;
-
-  try {
-    const assistantMessage = messages.at(-1);
-
-    if (!assistantMessage) {
-      throw new Error("No assistant message found!");
-    }
-
-    if (!isAnonymous) {
-      messageSaved = await updateMessage({
-        chatId,
-        id: assistantMessage.id,
-        message: {
-          ...assistantMessage,
-          metadata: {
-            ...assistantMessage.metadata,
-            activeStreamId: null,
-            isPrimaryParallel:
-              isPrimaryParallel ??
-              assistantMessage.metadata.isPrimaryParallel ??
-              null,
-            parallelGroupId:
-              parallelGroupId ??
-              assistantMessage.metadata.parallelGroupId ??
-              null,
-            parallelIndex:
-              parallelIndex ?? assistantMessage.metadata.parallelIndex ?? null,
-            selectedModel: selectedModelId,
-          },
-        },
-      });
-      if (!messageSaved) {
-        log.info(
-          { messageId: assistantMessage.id },
-          "Skipped finalizing canceled message"
-        );
-        return;
-      }
-    }
-
-    // Get total cost from accumulator (includes all LLM calls + external API costs)
-    const totalCost = await costAccumulator.getTotalCost();
-    const entries = costAccumulator.getEntries();
-
-    log.info({ entries }, "Cost accumulator entries");
-    log.info({ totalCost }, "Cost accumulator total cost");
-
-    // Deduct credits for authenticated users
-    if (userId && !isAnonymous && messageSaved) {
-      await deductCredits(userId, totalCost);
-    }
-
-    // Note: Anonymous credits are pre-deducted before streaming starts (cookies can't be set after response begins)
-  } catch (error) {
-    log.error({ error }, "Failed to save chat or finalize credits");
-  }
-}
 
 interface ChatPostBody {
   id: string;

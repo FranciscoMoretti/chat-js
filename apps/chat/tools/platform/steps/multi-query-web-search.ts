@@ -22,7 +22,7 @@ export interface MultiQuerySearchResponse {
   searches: MultiQuerySearchResult[];
 }
 
-export async function multiQueryWebSearchStep({
+export const multiQueryWebSearchStep = async ({
   queries,
   search,
   dataStream,
@@ -35,7 +35,7 @@ export async function multiQueryWebSearchStep({
   ) => Promise<{ title: string; url: string; content: string }[]>;
   dataStream?: StreamWriter;
   toolCallId: string;
-}): Promise<MultiQuerySearchResponse> {
+}): Promise<MultiQuerySearchResponse> => {
   const updateId = generateUUID();
   try {
     // Send initial annotation showing all queries being executed
@@ -69,7 +69,7 @@ export async function multiQueryWebSearchStep({
 
     // Send completion annotation with all results
     const allResults = deduplicateByDomainAndUrl(
-      searchResults.flatMap((search) => search.results)
+      searchResults.flatMap((searchResult) => searchResult.results)
     );
     dataStream?.write({
       data: {
@@ -112,4 +112,4 @@ export async function multiQueryWebSearchStep({
       searches: [],
     };
   }
-}
+};

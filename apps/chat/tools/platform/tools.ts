@@ -25,7 +25,7 @@ import type { ToolSession } from "./types";
 
 const log = createModuleLogger("tools:mcp");
 
-export function getTools({
+export const getTools = ({
   dataStream,
   session,
   messageId,
@@ -43,7 +43,7 @@ export function getTools({
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
-}) {
+}) => {
   const documentToolProps = {
     costAccumulator,
     messageId,
@@ -122,24 +122,24 @@ export function getTools({
       : {}),
     ...enabledInstalledTools,
   };
-}
+};
 
 /**
  * Creates MCP clients for the given connectors and returns their tools.
  * Uses OAuth-aware MCP clients that can authenticate with OAuth 2.1 + PKCE.
  * Returns both the tools and a cleanup function to close all clients.
  */
-export async function getMcpTools({
+export const getMcpTools = async ({
   connectors,
 }: {
   connectors: McpConnector[];
 }): Promise<{
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
-}> {
+}> => {
   if (!config.ai.tools.mcp.enabled) {
     return {
-      cleanup: async () => Promise.resolve(),
+      cleanup: () => Promise.resolve(),
       tools: {},
     };
   }
@@ -148,7 +148,7 @@ export async function getMcpTools({
 
   if (enabledConnectors.length === 0) {
     return {
-      cleanup: async () => Promise.resolve(),
+      cleanup: () => Promise.resolve(),
       tools: {},
     };
   }
@@ -231,4 +231,4 @@ export async function getMcpTools({
   };
 
   return { cleanup, tools: allTools };
-}
+};
