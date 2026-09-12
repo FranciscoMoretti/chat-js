@@ -94,9 +94,9 @@ const PricingSection = ({
 
 const TermsPage = () => {
   const currencySymbolMap: Record<string, string> = {
-    USD: "$",
     EUR: "€",
     GBP: "£",
+    USD: "$",
   };
 
   const currencyCode = config.pricing?.currency;

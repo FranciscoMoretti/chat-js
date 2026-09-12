@@ -302,8 +302,8 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
           for (const cb of throttledEffects) {
             try {
               cb();
-            } catch (err) {
-              debug.warn("[chat-store-base] throttled effect error", err);
+            } catch (error) {
+              debug.warn("[chat-store-base] throttled effect error", error);
             }
           }
         });
@@ -630,11 +630,12 @@ export const createChatStoreCreator = <TMessage extends UIMessage>(
       setTransientDataPart: (type, data) => {
         markLastAction("chat:setTransientDataPart");
         batchUpdates(() => {
-          set((state) => {
-            const newTransientDataParts = new Map(state._transientDataParts);
-            newTransientDataParts.set(type, data);
-            return { _transientDataParts: newTransientDataParts };
-          });
+          set((state) => ({
+            _transientDataParts: new Map(state._transientDataParts).set(
+              type,
+              data
+            ),
+          }));
         });
       },
 

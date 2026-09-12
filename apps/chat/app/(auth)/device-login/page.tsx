@@ -10,8 +10,8 @@ import { config } from "@/lib/config";
 import { toSearchParamRecord } from "@/lib/electron-auth";
 
 export const metadata: Metadata = {
-  title: "Device Login",
   description: "Sign in for the desktop app",
+  title: "Device Login",
 };
 
 const DeviceLoginFallback = () => (
