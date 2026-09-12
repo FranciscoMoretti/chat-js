@@ -4,6 +4,7 @@ import { reconcileEveOwnerUsage } from "./reconcile-usage";
 const mocks = vi.hoisted(() => ({
   bindings: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
+  positions: vi.fn(),
 }));
 vi.mock("../db/eve-queries", () => ({
   listEveOwnerBindings: mocks.bindings,
@@ -13,6 +14,9 @@ vi.mock("../db/eve-billing", () => ({
   advanceEveUsageCursor: vi.fn(),
 }));
 vi.mock("../env", () => ({ env: {} }));
+vi.mock("../db/eve-stream-positions", () => ({
+  getEvePostgresStreamPositions: mocks.positions,
+}));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
 vi.mock("./usage", () => ({ ingestEveUsage: vi.fn() }));
@@ -31,10 +35,12 @@ vi.mock("eve/client", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
     Array.from({ length: 8 }, (_, index) => ({
       sessionId: String(index),
       state: "bound",
+      usageStreamIndex: 0,
     }))
   );
 });
@@ -96,6 +102,45 @@ it("rejects uncertain ownership bindings before reading any stream", async () =>
   ]);
   await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
     "Resolve uncertain session creation"
+  );
+  expect(mocks.read).not.toHaveBeenCalled();
+  expect(mocks.positions).not.toHaveBeenCalled();
+});
+
+it("skips only streams whose exact position matches the durable billing cursor", async () => {
+  mocks.bindings.mockResolvedValue([
+    { state: "bound", sessionId: "settled", usageStreamIndex: 10 },
+    { state: "bound", sessionId: "appended", usageStreamIndex: 10 },
+    { state: "bound", sessionId: "missing", usageStreamIndex: 0 },
+  ]);
+  mocks.positions.mockResolvedValue(
+    new Map([
+      ["settled", 10],
+      ["appended", 11],
+    ])
+  );
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual([
+    "appended",
+    "missing",
+  ]);
+});
+
+it("refuses a stream shorter than its durable billing cursor", async () => {
+  mocks.bindings.mockResolvedValue([
+    { state: "bound", sessionId: "rewound", usageStreamIndex: 10 },
+  ]);
+  mocks.positions.mockResolvedValue(new Map([["rewound", 9]]));
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "shorter than its durable billing cursor"
+  );
+  expect(mocks.read).not.toHaveBeenCalled();
+});
+
+it("fails closed when authoritative stream positions cannot be read", async () => {
+  mocks.positions.mockRejectedValue(new Error("world unavailable"));
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "world unavailable"
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });

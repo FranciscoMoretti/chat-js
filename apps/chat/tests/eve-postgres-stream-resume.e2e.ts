@@ -1,14 +1,17 @@
 import { Pool } from "pg";
+import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 import { Schema } from "../../../node_modules/@workflow/world-postgres/dist/drizzle/index.js";
 import { createStreamer } from "../../../node_modules/@workflow/world-postgres/dist/streamer.js";
 import { eq } from "../../../node_modules/drizzle-orm/index.js";
 import { drizzle } from "../../../node_modules/drizzle-orm/node-postgres/index.js";
+import { readEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const pool = new Pool({ connectionString: env.DATABASE_URL, max: 3 });
+const positionConnection = postgres(env.DATABASE_URL, { max: 1 });
 const queries: string[] = [];
 const database = drizzle(pool, {
   schema: Schema,
@@ -24,10 +27,14 @@ afterAll(async () => {
   await streamer.close();
   await database.delete(Schema.streams).where(eq(Schema.streams.runId, runId));
   await pool.end();
+  await positionConnection.end();
 });
 const encoder = new TextEncoder();
-async function fixture(values: string[], closed = true) {
-  const name = crypto.randomUUID();
+async function fixture(
+  values: string[],
+  closed = true,
+  name: string = crypto.randomUUID()
+) {
   for (const value of values) {
     await streamer.streams.write(runId, name, encoder.encode(value));
   }
@@ -36,6 +43,38 @@ async function fixture(values: string[], closed = true) {
   }
   return name;
 }
+
+test("batched default-stream positions match the provider without counting EOF or other namespaces", async () => {
+  const sessionId = `wrun_${crypto.randomUUID()}`;
+  const emptySessionId = `wrun_${crypto.randomUUID()}`;
+  const missingSessionId = `wrun_${crypto.randomUUID()}`;
+  const name = `strm_${sessionId.slice(5)}_user`;
+  const emptyName = `strm_${emptySessionId.slice(5)}_user`;
+  await fixture(["x".repeat(100_000), "suffix"], false, name);
+  await fixture(["checkpoint"], true, `${name}_checkpoint`);
+  await fixture([], true, emptyName);
+  const ids = [sessionId, emptySessionId, missingSessionId];
+  const positions = await readEvePostgresStreamPositions(
+    positionConnection,
+    ids
+  );
+  const info = await streamer.streams.getInfo(runId, name);
+  expect(positions.get(sessionId)).toBe(info.tailIndex + 1);
+  expect(positions.get(sessionId)).toBe(2);
+  expect(positions.get(emptySessionId)).toBe(0);
+  expect(positions.has(missingSessionId)).toBe(false);
+
+  await streamer.streams.write(runId, name, encoder.encode("appended"));
+  await streamer.streams.close(runId, name);
+  const updated = await readEvePostgresStreamPositions(positionConnection, ids);
+  expect(updated.get(sessionId)).toBe(3);
+  expect(updated.get(sessionId)).toBe(
+    (await streamer.streams.getInfo(runId, name)).tailIndex + 1
+  );
+  expect(await readEvePostgresStreamPositions(positionConnection, [])).toEqual(
+    new Map()
+  );
+});
 async function read(name: string, index: number) {
   const stream = await streamer.streams.get(runId, name, index);
   const reader = stream.getReader();

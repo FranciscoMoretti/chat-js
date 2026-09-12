@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
 import { db } from "../lib/db/client";
+import { getEveUsageCursor } from "../lib/db/eve-billing";
+import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
@@ -15,8 +17,13 @@ const conversationUrl = /\/chat\/[^/]+$/;
 test("real provider, native application tool and replay-safe usage ledger", async ({
   page,
 }) => {
+  test.setTimeout(180_000);
+  page.setDefaultNavigationTimeout(120_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  await page.request.post("/api/chat-model", {
+    data: { model: "google/gemini-2.5-flash" },
+  });
   await page.goto("/");
   await page
     .getByRole("textbox", { name: "Message", exact: true })
@@ -51,19 +58,36 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
+  const { ownerId, sessionId } = conversation;
   const usage = await db
     .select()
     .from(eveUsage)
-    .where(eq(eveUsage.sessionId, conversation.sessionId));
+    .where(eq(eveUsage.sessionId, sessionId));
   expect(usage.length).toBeGreaterThan(0);
   expect(usage.every((row) => row.costUsd !== null)).toBe(true);
   const charged = usage.reduce((total, row) => total + row.chargedCents, 0);
   expect(charged).toBeGreaterThan(0);
-  await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
+  await reconcileEveUsage(ownerId, sessionId);
+  // Exercise the actual Eve-created default stream, not a fixture that shares
+  // the adapter's naming assumption. This catches SDK mapping changes on upgrade.
+  await expect
+    .poll(
+      async () => {
+        await reconcileEveUsage(ownerId, sessionId);
+        const positions = await getEvePostgresStreamPositions(
+          env.WORKFLOW_POSTGRES_URL ?? "",
+          [sessionId]
+        );
+        const cursor = await getEveUsageCursor(ownerId, sessionId);
+        return cursor > 0 && positions.get(sessionId) === cursor;
+      },
+      { timeout: 10_000, intervals: [1000] }
+    )
+    .toBe(true);
   const replayed = await db
     .select()
     .from(eveUsage)
-    .where(eq(eveUsage.sessionId, conversation.sessionId));
+    .where(eq(eveUsage.sessionId, sessionId));
   expect(replayed.reduce((total, row) => total + row.chargedCents, 0)).toBe(
     charged
   );

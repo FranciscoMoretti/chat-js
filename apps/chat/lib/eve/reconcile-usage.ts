@@ -1,6 +1,7 @@
 import { Client, type MessageStreamEvent } from "eve/client";
 import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
+import { getEvePostgresStreamPositions } from "../db/eve-stream-positions";
 import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { assertEveConfigured } from "./server";
@@ -59,7 +60,25 @@ export async function reconcileEveOwnerUsage(ownerId: string) {
       "Resolve uncertain session creation before starting more work."
     );
   }
-  const pending = bindings.values();
+  assertEveConfigured();
+  const positions = await getEvePostgresStreamPositions(
+    env.WORKFLOW_POSTGRES_URL ?? "",
+    bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : []))
+  );
+  for (const row of bindings) {
+    const length = row.sessionId ? positions.get(row.sessionId) : undefined;
+    if (length !== undefined && length < row.usageStreamIndex) {
+      throw new Error("Eve stream is shorter than its durable billing cursor.");
+    }
+  }
+  // Compare exact durable positions, not activity timestamps or terminal events:
+  // old deployments and parked tools may append usage after a completed turn.
+  const pending = bindings
+    .filter(
+      (row) =>
+        !row.sessionId || positions.get(row.sessionId) !== row.usageStreamIndex
+    )
+    .values();
   let failure: { cause: unknown } | undefined;
   // A slow stream occupies only its own slot. On failure, drain existing reads
   // before returning so a retry cannot overlap billing work left by this call.

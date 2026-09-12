@@ -543,6 +543,7 @@ export async function listEveOwnerBindings(ownerId: string) {
     .select({
       sessionId: eveConversation.sessionId,
       state: eveConversation.state,
+      usageStreamIndex: eveConversation.usageStreamIndex,
     })
     .from(eveConversation)
     .where(
