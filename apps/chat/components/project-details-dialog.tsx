@@ -25,7 +25,7 @@ export interface ProjectDetailsData {
   name: string;
 }
 
-export function ProjectDetailsDialog({
+export const ProjectDetailsDialog = ({
   open,
   onOpenChange,
   mode,
@@ -43,7 +43,7 @@ export function ProjectDetailsDialog({
   initialColor?: ProjectColorName;
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
-}) {
+}) => {
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
   const [color, setColor] = useState<ProjectColorName | null>(
@@ -155,4 +155,4 @@ export function ProjectDetailsDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

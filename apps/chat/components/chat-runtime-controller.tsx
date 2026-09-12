@@ -15,7 +15,7 @@ import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useTRPC } from "@/trpc/react";
 
-function ChatConfirmationEffects({ chatId }: { chatId: string }) {
+const ChatConfirmationEffects = ({ chatId }: { chatId: string }) => {
   const isChatPersisted = useIsChatPersisted(chatId);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -61,9 +61,9 @@ function ChatConfirmationEffects({ chatId }: { chatId: string }) {
   }, [chatId, isChatPersisted, queryClient, trpc]);
 
   return null;
-}
+};
 
-export function AppRuntimeSlot({ runtime }: { runtime: AppRuntime }) {
+export const AppRuntimeSlot = ({ runtime }: { runtime: AppRuntime }) => {
   const store = getAppRuntimeStore(runtime);
   const thread = getAppRuntimeThread(runtime);
 
@@ -73,4 +73,4 @@ export function AppRuntimeSlot({ runtime }: { runtime: AppRuntime }) {
       <ChatSync id={runtime.data.chatId} thread={thread} />
     </CustomStoreProvider>
   );
-}
+};

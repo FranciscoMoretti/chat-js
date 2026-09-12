@@ -7,7 +7,7 @@ import { InternalLink } from "@/components/internal-link";
 import { getNewChatShortcutText } from "@/components/keyboard-shortcuts";
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 
-export function NewChatButton() {
+export const NewChatButton = () => {
   const { setOpenMobile } = useSidebar();
   const [shortcutText, setShortcutText] = useState("Ctrl+Shift+O");
 
@@ -32,4 +32,4 @@ export function NewChatButton() {
       </InternalLink>
     </SidebarMenuButton>
   );
-}
+};

@@ -18,7 +18,7 @@ export interface ConsoleOutput {
   status: "in_progress" | "loading_packages" | "completed" | "failed";
 }
 
-function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
+const getConsoleStatusText = (consoleOutput: ConsoleOutput): string | null => {
   if (consoleOutput.status === "in_progress") {
     return "Initializing...";
   }
@@ -30,9 +30,9 @@ function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
     return textContents;
   }
   return null;
-}
+};
 
-export function Console({
+export const Console = ({
   consoleOutputs,
   setConsoleOutputs,
   className,
@@ -40,7 +40,7 @@ export function Console({
   consoleOutputs: ConsoleOutput[];
   setConsoleOutputs: Dispatch<SetStateAction<ConsoleOutput[]>>;
   className?: string;
-}) {
+}) => {
   const consoleEndRef = useRef<HTMLDivElement>(null);
 
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
@@ -135,4 +135,4 @@ export function Console({
       </div>
     </div>
   ) : null;
-}
+};

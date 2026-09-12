@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils";
 
 import { Skeleton } from "./ui/skeleton";
 
-export function WithSkeleton({
+export const WithSkeleton = ({
   children,
   className,
   isLoading,
   ...props
 }: React.ComponentProps<"div"> & {
   isLoading?: boolean;
-}) {
+}) => {
   const mounted = useMounted();
 
   return (
@@ -27,4 +27,4 @@ export function WithSkeleton({
       )}
     </div>
   );
-}
+};

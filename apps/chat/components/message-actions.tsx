@@ -15,7 +15,7 @@ import { useChatVotes } from "./chat/use-chat-votes";
 import { FeedbackActions } from "./feedback-actions";
 import { MessageSiblings } from "./message-siblings";
 
-function PureMessageActions({
+const PureMessageActions = ({
   chatId,
   messageId,
   isLoading,
@@ -31,7 +31,7 @@ function PureMessageActions({
   isEditing?: boolean;
   onStartEdit?: () => void;
   onCancelEdit?: () => void;
-}) {
+}) => {
   const storeApi = useChatStoreApi();
   const [_, copyToClipboard] = useCopyToClipboard();
   const role = useMessageRoleById(messageId);
@@ -117,7 +117,7 @@ function PureMessageActions({
       )}
     </Actions>
   );
-}
+};
 
 export const MessageActions = memo(
   PureMessageActions,

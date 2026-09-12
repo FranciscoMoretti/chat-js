@@ -24,7 +24,7 @@ import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
-function AttachmentIcon({
+const AttachmentIcon = ({
   isImage,
   isPdf,
   url,
@@ -34,7 +34,7 @@ function AttachmentIcon({
   isPdf: boolean;
   url: string;
   name: string;
-}) {
+}) => {
   const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (isImage) {
     if (imageUnavailable) {
@@ -64,9 +64,9 @@ function AttachmentIcon({
   }
 
   return <PaperclipIcon className="text-muted-foreground size-3" />;
-}
+};
 
-function AttachmentPill({
+const AttachmentPill = ({
   attachment,
   isUploading,
   onRemove,
@@ -74,7 +74,7 @@ function AttachmentPill({
   attachment: Attachment;
   isUploading: boolean;
   onRemove?: () => void;
-}) {
+}) => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
@@ -129,9 +129,9 @@ function AttachmentPill({
       <span className="max-w-24 flex-1 truncate">{attachmentLabel}</span>
     </div>
   );
-}
+};
 
-function AttachmentItem({
+const AttachmentItem = ({
   attachment,
   isUploading = false,
   onRemove,
@@ -143,7 +143,7 @@ function AttachmentItem({
   onRemove?: () => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
-}) {
+}) => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
@@ -240,9 +240,9 @@ function AttachmentItem({
       </PromptInputHoverCardContent>
     </PromptInputHoverCard>
   );
-}
+};
 
-export function AttachmentList({
+export const AttachmentList = ({
   attachments,
   uploadQueue = [],
   onRemoveAction,
@@ -258,7 +258,7 @@ export function AttachmentList({
   variant?: "card" | "pill";
   testId?: string;
   className?: string;
-}) {
+}) => {
   if (attachments.length === 0 && uploadQueue.length === 0) {
     return null;
   }
@@ -294,4 +294,4 @@ export function AttachmentList({
       ))}
     </div>
   );
-}
+};

@@ -107,7 +107,7 @@ class DiffTextNode extends TextNode {
 }
 
 // Proper diff computation using the diff library
-function computeProperDiff(oldText: string, newText: string) {
+const computeProperDiff = (oldText: string, newText: string) => {
   const changes = diffWords(oldText, newText);
 
   return changes.map((change) => {
@@ -125,15 +125,15 @@ function computeProperDiff(oldText: string, newText: string) {
       type,
     };
   });
-}
+};
 
-function DiffContentPlugin({
+const DiffContentPlugin = ({
   oldContent,
   newContent,
 }: {
   oldContent: string;
   newContent: string;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -165,7 +165,7 @@ function DiffContentPlugin({
   }, [oldContent, newContent, editor]);
 
   return null;
-}
+};
 
 interface DiffEditorProps {
   newContent: string;

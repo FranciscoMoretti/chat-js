@@ -23,7 +23,7 @@ import { useRenameProject } from "@/hooks/chat-sync-hooks";
 import type { Project } from "@/lib/db/schema";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
-export function SidebarProjectItem({
+export const SidebarProjectItem = ({
   project,
   isActive,
   setOpenMobile,
@@ -31,7 +31,7 @@ export function SidebarProjectItem({
   project: Project;
   isActive: boolean;
   setOpenMobile: (open: boolean) => void;
-}) {
+}) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -105,4 +105,4 @@ export function SidebarProjectItem({
       />
     </SidebarMenuItem>
   );
-}
+};

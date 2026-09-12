@@ -20,7 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/providers/session-provider";
 
-export function AppSidebarHistoryConditional() {
+export const AppSidebarHistoryConditional = () => {
   const { open, openMobile } = useSidebar();
   const { data: session, isPending } = useSession();
 
@@ -67,4 +67,4 @@ export function AppSidebarHistoryConditional() {
   }
 
   return <SidebarHistory />;
-}
+};

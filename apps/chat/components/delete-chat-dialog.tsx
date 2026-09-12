@@ -23,11 +23,11 @@ interface DeleteChatDialogProps {
   showDeleteDialog: boolean;
 }
 
-export function DeleteChatDialog({
+export const DeleteChatDialog = ({
   deleteId,
   showDeleteDialog,
   setShowDeleteDialog,
-}: DeleteChatDialogProps) {
+}: DeleteChatDialogProps) => {
   const currentRoute = useCurrentChatRoute();
   const router = useRouter();
   const { deleteChat } = useDeleteChat();
@@ -86,4 +86,4 @@ export function DeleteChatDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

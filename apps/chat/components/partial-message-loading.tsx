@@ -5,7 +5,7 @@ import { useMessageMetadataById } from "@/lib/stores/hooks-base";
 
 import { Skeleton } from "./ui/skeleton";
 
-export function PartialMessageLoading({ messageId }: { messageId: string }) {
+export const PartialMessageLoading = ({ messageId }: { messageId: string }) => {
   const metadata = useMessageMetadataById(messageId);
   const status = useChatStatus();
   const isLoading =
@@ -23,4 +23,4 @@ export function PartialMessageLoading({ messageId }: { messageId: string }) {
       <Skeleton className="h-4 w-2/5 rounded-full" />
     </div>
   );
-}
+};

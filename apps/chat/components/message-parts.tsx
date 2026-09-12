@@ -26,7 +26,7 @@ interface MessagePartsProps {
 }
 
 // Render a single part by index with minimal subscriptions
-function PureMessagePart({
+const PureMessagePart = ({
   messageId,
   partIdx,
   isReadonly,
@@ -36,7 +36,7 @@ function PureMessagePart({
   partIdx: number;
   isReadonly: boolean;
   isLoading: boolean;
-}) {
+}) => {
   const part = useMessagePartByPartIdx(messageId, partIdx);
 
   if (isTextUIPart(part)) {
@@ -67,15 +67,15 @@ function PureMessagePart({
   }
 
   return null;
-}
+};
 
 const MessagePart = memo(PureMessagePart);
 
-function PureMessageParts({
+const PureMessageParts = ({
   messageId,
   isLoading,
   isReadonly,
-}: MessagePartsProps) {
+}: MessagePartsProps) => {
   const types = useMessagePartTypesById(messageId);
 
   return types.map((t, i) => {
@@ -89,6 +89,6 @@ function PureMessageParts({
       />
     );
   });
-}
+};
 
 export const MessageParts = memo(PureMessageParts);

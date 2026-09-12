@@ -24,7 +24,7 @@ interface GroupedChats {
   yesterday: UIChat[];
 }
 
-export function SidebarChatsList() {
+export const SidebarChatsList = () => {
   const pathname = usePathname();
   const { data: allChats, isLoading } = useGetAllChats({ limit: 50 });
   const { setOpenMobile } = useSidebar();
@@ -294,4 +294,4 @@ export function SidebarChatsList() {
       />
     </>
   );
-}
+};

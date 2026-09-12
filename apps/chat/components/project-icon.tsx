@@ -65,12 +65,12 @@ interface ProjectIconProps {
   size?: number;
 }
 
-export function ProjectIcon({
+export const ProjectIcon = ({
   icon,
   color,
   size = 16,
   className,
-}: ProjectIconProps) {
+}: ProjectIconProps) => {
   const IconComponent = ICON_MAP[icon] ?? Folder;
   const colorValue = getColorValue(color);
 
@@ -81,4 +81,4 @@ export function ProjectIcon({
       style={{ color: colorValue }}
     />
   );
-}
+};

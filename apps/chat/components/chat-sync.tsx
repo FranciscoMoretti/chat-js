@@ -21,17 +21,16 @@ import { fetchWithErrorHandlers } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPCClient } from "@/trpc/react";
 
-function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
-  return !!(activeStreamId && !activeStreamId.startsWith("pending:"));
-}
+const isResumableActiveStreamId = (activeStreamId: string | null | undefined) =>
+  !!(activeStreamId && !activeStreamId.startsWith("pending:"));
 
-export function ChatSync({
+export const ChatSync = ({
   id,
   thread,
 }: {
   id: string;
   thread: ApplicationThread;
-}) {
+}) => {
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setChatPersisted } = useChatPersistenceActions();
@@ -145,4 +144,4 @@ export function ChatSync({
   }, [partialMessageId, resumeStream, thread]);
 
   return null;
-}
+};

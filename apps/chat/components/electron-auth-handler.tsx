@@ -17,7 +17,7 @@ import { config } from "@/lib/config";
  *
  * Mount this in the root layout so it runs on every page.
  */
-export function ElectronAuthHandler() {
+export const ElectronAuthHandler = () => {
   const isDesktopAppEnabled = config.desktopApp.enabled;
   const router = useRouter();
   const [authState, setAuthState] = useState<ElectronRendererAuthState>({
@@ -109,9 +109,13 @@ export function ElectronAuthHandler() {
   }`;
 
   return <ElectronAuthOverlay key={overlayKey} state={authState} />;
-}
+};
 
-function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
+const ElectronAuthOverlay = ({
+  state,
+}: {
+  state: ElectronRendererAuthState;
+}) => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (state.status === "idle" || !state.message) {
@@ -182,4 +186,4 @@ function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
       </div>
     </div>
   );
-}
+};

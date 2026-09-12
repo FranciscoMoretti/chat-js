@@ -106,34 +106,32 @@ const AllSourcesView = ({
   );
 };
 
-function ShowSourcesButton({
+const ShowSourcesButton = ({
   sources,
   dialogId,
 }: {
   sources: SearchResultItem[];
   dialogId: string;
-}) {
-  return (
-    <button
-      className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
-      onClick={() => document.getElementById(dialogId)?.click()}
-      type="button"
-    >
-      <FaviconGroup
-        className="mr-1.5"
-        maxVisible={3}
-        sources={sources.map((s) => ({
-          url: s.url,
-          title: s.title,
-        }))}
-      />
-      <span className="text-muted-foreground group-hover:text-foreground text-xs">
-        {sources.length} Sources
-      </span>
-      <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
-    </button>
-  );
-}
+}) => (
+  <button
+    className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
+    onClick={() => document.getElementById(dialogId)?.click()}
+    type="button"
+  >
+    <FaviconGroup
+      className="mr-1.5"
+      maxVisible={3}
+      sources={sources.map((s) => ({
+        url: s.url,
+        title: s.title,
+      }))}
+    />
+    <span className="text-muted-foreground group-hover:text-foreground text-xs">
+      {sources.length} Sources
+    </span>
+    <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
+  </button>
+);
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
   if (sources.length === 0) {

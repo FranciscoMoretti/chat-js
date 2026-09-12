@@ -18,7 +18,7 @@ import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
-export function ResponsiveTools({
+export const ResponsiveTools = ({
   tools,
   setTools,
   selectedModelId,
@@ -26,7 +26,7 @@ export function ResponsiveTools({
   tools: UiToolName | null;
   setTools: Dispatch<SetStateAction<UiToolName | null>>;
   selectedModelId: string;
-}) {
+}) => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const [showLoginPopover, setShowLoginPopover] = useState(false);
@@ -142,4 +142,4 @@ export function ResponsiveTools({
       )}
     </div>
   );
-}
+};

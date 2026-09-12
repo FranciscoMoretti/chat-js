@@ -14,7 +14,7 @@ import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 // Schema validation function
-function isValidAnonymousSession(obj: unknown): obj is AnonymousSession {
+const isValidAnonymousSession = (obj: unknown): obj is AnonymousSession => {
   if (!obj || typeof obj !== "object") {
     return false;
   }
@@ -26,9 +26,9 @@ function isValidAnonymousSession(obj: unknown): obj is AnonymousSession {
     typeof session.remainingCredits === "number" &&
     (session.createdAt instanceof Date || typeof session.createdAt === "string")
   );
-}
+};
 
-export function AnonymousSessionInit() {
+export const AnonymousSessionInit = () => {
   const { data: session, isPending } = useSession();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -64,4 +64,4 @@ export function AnonymousSessionInit() {
   }, [isPending, queryClient, trpc, session?.user]);
 
   return null;
-}
+};
