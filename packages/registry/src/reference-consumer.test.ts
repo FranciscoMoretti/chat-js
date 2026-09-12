@@ -13,6 +13,7 @@ const referenceItems = new Set([
   "word-count",
   "get-weather",
   "retrieve-url",
+  "generate-image",
   "toolkit-renderer",
 ]);
 const packageRoot = resolve(import.meta.dir, "..");

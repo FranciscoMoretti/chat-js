@@ -12,12 +12,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 
-import type {
-  Attachment,
-  ChatMessage,
-  ToolName,
-  ToolOutput,
-} from "@/lib/ai/types";
+import type { Attachment, ChatMessage, ToolName } from "@/lib/ai/types";
 import { isSelectedModelValue } from "@/lib/ai/types";
 import { deleteFilesByUrls } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
@@ -1270,8 +1265,14 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
 
     // Collect URLs from generated images in tool outputs
     for (const p of generatedImageParts) {
-      const output = p.tool_output as ToolOutput<"generateImage"> | null;
-      if (output?.imageUrl) {
+      const output: unknown = p.tool_output;
+      if (
+        output &&
+        typeof output === "object" &&
+        "imageUrl" in output &&
+        typeof output.imageUrl === "string" &&
+        output.imageUrl
+      ) {
         attachmentUrls.push(output.imageUrl);
       }
     }

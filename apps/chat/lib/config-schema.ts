@@ -126,20 +126,10 @@ function createAiSchema<G extends GatewayType>(g: G) {
         code: z.object({
           edits: gatewayModelId<G>(),
         }),
-        image: z.discriminatedUnion("enabled", [
-          z.object({
-            enabled: z
-              .literal(true)
-              .describe("Requires configured file storage"),
-            default: gatewayImageModelId<G>(),
-          }),
-          z.object({
-            enabled: z
-              .literal(false)
-              .describe("Requires configured file storage"),
-            default: gatewayImageModelId<G>().optional(),
-          }),
-        ]),
+        image: z.object({
+          enabled: z.boolean().describe("Enable the installed image tool"),
+          default: gatewayImageModelId<G>().optional(),
+        }),
         video: z.discriminatedUnion("enabled", [
           z.object({
             enabled: z.literal(true),
@@ -164,7 +154,7 @@ const installedGatewaySchema = createAiSchema(gatewayType);
 
 export const aiConfigSchema = installedGatewaySchema
   .superRefine((ai, ctx) => {
-    for (const kind of ["image", "video"] as const) {
+    for (const kind of ["video"] as const) {
       if (ai.tools[kind].enabled && !gatewayCapabilities[kind]) {
         ctx.addIssue({
           code: "custom",
@@ -449,13 +439,10 @@ type DeepResearchToolInputFor<G extends GatewayType> = Partial<
     finalReportModel: GatewayModelIdMap[G];
   }
 >;
-type ImageToolInputFor<G extends GatewayType> = [
-  GatewayImageModelIdMap[G],
-] extends [never]
-  ? { enabled?: false }
-  :
-      | { enabled: true; default: GatewayImageModelIdMap[G] }
-      | { enabled?: false; default?: GatewayImageModelIdMap[G] };
+type ImageToolInputFor<G extends GatewayType> = {
+  enabled?: boolean;
+  default?: GatewayImageModelIdMap[G];
+};
 type VideoToolInputFor<G extends GatewayType> = [
   GatewayVideoModelIdMap[G],
 ] extends [never]

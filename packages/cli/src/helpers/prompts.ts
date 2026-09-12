@@ -87,13 +87,6 @@ function isSupportedBuiltInTool(
 ): boolean {
   const gatewayToolDefaults = gateway.defaults.tools;
 
-  if (key === "imageGeneration") {
-    return (
-      gateway.capabilities.image &&
-      typeof gatewayToolDefaults.image.default === "string"
-    );
-  }
-
   if (key === "videoGeneration") {
     return (
       gateway.capabilities.video &&
@@ -544,6 +537,31 @@ export async function promptUrlRetrievalTool(
   if (choice !== "external") return choice;
   const address = await text({
     message: "URL retrieval tool registry address:",
+    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+  });
+  handleCancel(address);
+  return String(address).trim();
+}
+
+export async function promptImageGenerationTool(
+  skipPrompt: boolean
+): Promise<string> {
+  if (skipPrompt) return "generate-image";
+  const choice = await select({
+    message: "Which image generation tool should chat use?",
+    options: [
+      {
+        value: "generate-image",
+        label: "Selected AI gateway",
+        hint: "Uses your gateway and file storage",
+      },
+      { value: "external", label: "External registry item" },
+    ],
+  });
+  handleCancel(choice);
+  if (choice !== "external") return choice;
+  const address = await text({
+    message: "image generation tool registry address:",
     validate: (v) => (v?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);

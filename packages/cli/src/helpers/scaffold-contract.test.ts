@@ -83,7 +83,7 @@ describe("scaffold contracts", () => {
 
     const litellm = buildConfigFor("litellm", allBuiltIns);
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
-    expect(litellm).toMatch(/image:\s*{\s*enabled:\s*false,/m);
+    expect(litellm).toMatch(/image:\s*{\s*enabled:\s*true,/m);
     expect(litellm).toMatch(/video:\s*{\s*enabled:\s*false,/m);
   });
 });

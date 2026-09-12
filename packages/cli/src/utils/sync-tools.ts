@@ -39,6 +39,10 @@ function checkGenerated(content: string | null, path: string) {
 }
 
 const selections = {
+  generateImage: {
+    file: "image-generation",
+    requirement: "imageGenerationEnvRequirement",
+  },
   retrieveUrl: {
     file: "url-retrieval",
     requirement: "urlRetrievalEnvRequirement",
@@ -189,7 +193,7 @@ export async function syncTools(
     await writeFile(
       join(dir, `${spec.file}-config.ts`),
       generatedSource(
-        `export const ${spec.requirement} = ${JSON.stringify({ options: envOptions, description: selected ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : `Install a ${slot} tool` })};\n`
+        `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((keys) => keys.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
       )
     );
   }
