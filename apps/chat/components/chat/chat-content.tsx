@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { ChatWelcome } from "./chat-welcome";
 
-function PureChatContent({
+const PureChatContent = ({
   chatId,
   className,
   projectId,
@@ -20,7 +20,7 @@ function PureChatContent({
   className?: string;
   projectId?: string;
   isReadonly: boolean;
-}) {
+}) => {
   const status = useChatStatus();
   const messageIds = useMessageIds() as string[];
   const hasMessages = messageIds.length > 0;
@@ -60,6 +60,6 @@ function PureChatContent({
       />
     </>
   );
-}
+};
 
 export const ChatContent = memo(PureChatContent);

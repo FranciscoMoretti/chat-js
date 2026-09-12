@@ -12,13 +12,13 @@ import { useTRPC } from "@/trpc/react";
 
 import { ModelRow } from "./model-row";
 
-export function ModelsTable({
+export const ModelsTable = ({
   search,
   className,
 }: {
   search: string;
   className?: string;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { allModels, models: enabledModels } = useChatModels();
@@ -154,4 +154,4 @@ export function ModelsTable({
       )}
     </>
   );
-}
+};

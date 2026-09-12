@@ -58,14 +58,14 @@ interface DocumentPreviewProps {
   type?: "create" | "update";
 }
 
-export function DocumentPreview({
+export const DocumentPreview = ({
   isReadonly,
   output,
   input,
   messageId,
   type = "create",
   isLastArtifact = true,
-}: DocumentPreviewProps) {
+}: DocumentPreviewProps) => {
   const { artifact, setArtifact } = useArtifact();
   const { data: documents, isLoading: isDocumentsFetching } = useDocuments(
     output?.documentId || "",
@@ -150,7 +150,7 @@ export function DocumentPreview({
       <DocumentContent document={document} />
     </div>
   );
-}
+};
 
 const LoadingSkeleton = ({
   artifactKind: _artifactKind,

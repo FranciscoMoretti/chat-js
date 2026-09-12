@@ -10,7 +10,7 @@ type ReadDocumentTool = Extract<
   { type: "tool-readDocument" }
 >;
 
-function PureReadDocument({ tool }: { tool: ReadDocumentTool }) {
+const PureReadDocument = ({ tool }: { tool: ReadDocumentTool }) => {
   if (tool.state === "input-available") {
     return null;
   }
@@ -28,6 +28,6 @@ function PureReadDocument({ tool }: { tool: ReadDocumentTool }) {
       </div>
     </div>
   );
-}
+};
 
 export const ReadDocument = memo(PureReadDocument, () => true);
