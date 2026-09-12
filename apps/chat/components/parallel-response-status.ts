@@ -13,10 +13,10 @@ interface ParallelResponseStatusMessage {
   };
 }
 
-export function getParallelResponseLifecycle(
+export const getParallelResponseLifecycle = (
   message: ParallelResponseStatusMessage | null,
   runStatus?: ChatStatus
-): ParallelResponseLifecycle {
+): ParallelResponseLifecycle => {
   if (!message) {
     if (runStatus === "error") {
       return "error";
@@ -33,12 +33,12 @@ export function getParallelResponseLifecycle(
     return "generating";
   }
   return "complete";
-}
+};
 
-export function getStatusLabel(
+export const getStatusLabel = (
   isSelected: boolean,
   lifecycle: ParallelResponseLifecycle
-): string {
+): string => {
   if (lifecycle !== "complete") {
     if (lifecycle === "stopped") {
       return "Stopped";
@@ -49,16 +49,16 @@ export function getStatusLabel(
     return "Generating...";
   }
   return isSelected ? "Selected" : "Task completed";
-}
+};
 
-export function getResponseAwareStatus(
+export const getResponseAwareStatus = (
   status: ChatStatus,
   message: ParallelResponseStatusMessage | null
-): ChatStatus {
+): ChatStatus => {
   const activeStreamId = message?.metadata.activeStreamId;
   if (!activeStreamId || status !== "ready") {
     return status;
   }
 
   return activeStreamId.startsWith("pending:") ? "submitted" : "streaming";
-}
+};

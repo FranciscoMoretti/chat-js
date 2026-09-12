@@ -101,9 +101,9 @@ export const markdownJoinerTransform =
           const remaining = parts.get(chunk.id)?.flush();
           if (remaining) {
             controller.enqueue({
-              type: "text-delta",
               id: chunk.id,
               text: remaining,
+              type: "text-delta",
             });
           }
           parts.delete(chunk.id);

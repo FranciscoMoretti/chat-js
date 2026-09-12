@@ -111,7 +111,7 @@ export const SocialAuthProviders = ({
     return <ElectronBrowserSignIn buttonLabel={electronBrowserLabel} />;
   }
 
-  async function signIn(provider: SocialAuthProvider) {
+  const signIn = async (provider: SocialAuthProvider) => {
     try {
       const result = await authClient.signIn.social({
         provider,
@@ -130,7 +130,7 @@ export const SocialAuthProviders = ({
       console.error(`Failed to start ${provider} sign-in`, error);
       toast.error("Couldn't start sign-in. Please try again.");
     }
-  }
+  };
 
   return (
     <div className="space-y-2">

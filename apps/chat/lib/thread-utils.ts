@@ -120,6 +120,43 @@ export const getDefaultThread = <T extends MessageNode>(
   return buildThreadFromLeaf(allMessages, defaultLeaf.id);
 };
 
+// Build parent->children mapping sorted by createdAt
+export const buildChildrenMap = <T extends MessageNode>(
+  allMessages: T[]
+): Map<string | null, T[]> => {
+  const map = new Map<string | null, T[]>();
+  for (const message of allMessages) {
+    const parentId = message.metadata?.parentMessageId || null;
+    if (!map.has(parentId)) {
+      map.set(parentId, []);
+    }
+    map.get(parentId)?.push(message);
+  }
+  for (const siblings of map.values()) {
+    siblings.sort((a, b) => {
+      const aParallelIndex = a.metadata?.parallelIndex;
+      const bParallelIndex = b.metadata?.parallelIndex;
+      const sameParallelGroup =
+        a.metadata?.parallelGroupId &&
+        a.metadata?.parallelGroupId === b.metadata?.parallelGroupId;
+
+      if (
+        sameParallelGroup &&
+        typeof aParallelIndex === "number" &&
+        typeof bParallelIndex === "number" &&
+        aParallelIndex !== bParallelIndex
+      ) {
+        return aParallelIndex - bParallelIndex;
+      }
+
+      return (
+        toTimestamp(a.metadata?.createdAt) - toTimestamp(b.metadata?.createdAt)
+      );
+    });
+  }
+  return map;
+};
+
 export const buildTreeSnapshotFromMessages = <
   TMessage extends UIMessage & MessageNode,
 >(
@@ -181,43 +218,6 @@ export const buildTreeSnapshotFromMessages = <
   }
 
   return { cursorId, nodes, version: 1 };
-};
-
-// Build parent->children mapping sorted by createdAt
-export const buildChildrenMap = <T extends MessageNode>(
-  allMessages: T[]
-): Map<string | null, T[]> => {
-  const map = new Map<string | null, T[]>();
-  for (const message of allMessages) {
-    const parentId = message.metadata?.parentMessageId || null;
-    if (!map.has(parentId)) {
-      map.set(parentId, []);
-    }
-    map.get(parentId)?.push(message);
-  }
-  for (const siblings of map.values()) {
-    siblings.sort((a, b) => {
-      const aParallelIndex = a.metadata?.parallelIndex;
-      const bParallelIndex = b.metadata?.parallelIndex;
-      const sameParallelGroup =
-        a.metadata?.parallelGroupId &&
-        a.metadata?.parallelGroupId === b.metadata?.parallelGroupId;
-
-      if (
-        sameParallelGroup &&
-        typeof aParallelIndex === "number" &&
-        typeof bParallelIndex === "number" &&
-        aParallelIndex !== bParallelIndex
-      ) {
-        return aParallelIndex - bParallelIndex;
-      }
-
-      return (
-        toTimestamp(a.metadata?.createdAt) - toTimestamp(b.metadata?.createdAt)
-      );
-    });
-  }
-  return map;
 };
 
 export const findLeafDfsToRightFromMessageId = <T extends MessageNode>(

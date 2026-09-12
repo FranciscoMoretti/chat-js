@@ -35,6 +35,186 @@ import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params"
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
+const CustomConnectorRow = ({
+  connector,
+  onConnect,
+  onUninstall,
+  onDisconnect,
+  isDisconnecting,
+}: {
+  connector: McpConnector;
+  onConnect: () => void;
+  onUninstall: () => void;
+  onDisconnect: () => void;
+  isDisconnecting: boolean;
+}) => {
+  const trpc = useTRPC();
+
+  const { data: authStatus } = useQuery({
+    ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
+    staleTime: 30_000,
+  });
+
+  const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
+    ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
+    staleTime: 30_000,
+    retry: false,
+  });
+
+  const needsOAuth = connectionStatus?.needsAuth ?? false;
+  const isConnected = connectionStatus?.status === "connected";
+  const isIncompatible = connectionStatus?.status === "incompatible";
+
+  const statusText = (() => {
+    if (isTestingConnection) {
+      return "Checking connection…";
+    }
+    if (isIncompatible) {
+      return "Incompatible server";
+    }
+    if (needsOAuth) {
+      return "Authorization required";
+    }
+    if (isConnected) {
+      return "Connected";
+    }
+    return connectionStatus?.error ?? "Unable to reach server";
+  })();
+
+  const actionLabel = (() => {
+    if (isTestingConnection) {
+      return "Loading";
+    }
+    if (needsOAuth) {
+      return "Connect";
+    }
+    return "Configure";
+  })();
+
+  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
+
+  const showOAuthButton = needsOAuth && !isIncompatible;
+  const showDetailsButton = !(needsOAuth || isIncompatible);
+
+  return (
+    <div className="flex items-center gap-4 py-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left">
+        <ConnectorHeader
+          isCustom
+          name={connector.name}
+          statusText={statusText}
+          type={connector.type}
+          url={connector.url}
+        />
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {isIncompatible ? (
+          <Badge className="gap-1" variant="destructive">
+            <AlertTriangle className="size-3" />
+            Error
+          </Badge>
+        ) : null}
+
+        {showOAuthButton ? (
+          <Button disabled={isTestingConnection} onClick={onConnect} size="sm">
+            {isTestingConnection ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                Loading
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                Connect
+                <ArrowUpRight className="-mr-1 size-4" />
+              </span>
+            )}
+          </Button>
+        ) : null}
+
+        {showDetailsButton ? (
+          <Button
+            asChild
+            disabled={isTestingConnection}
+            size="sm"
+            variant="outline"
+          >
+            <InternalLink href={href}>
+              {isTestingConnection ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  {actionLabel}
+                </span>
+              )}
+            </InternalLink>
+          </Button>
+        ) : null}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {authStatus?.isAuthenticated ? (
+              <>
+                <DropdownMenuItem
+                  disabled={isDisconnecting}
+                  onClick={onDisconnect}
+                >
+                  Disconnect
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+            {needsOAuth ? (
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onConnect();
+                  }}
+                >
+                  Connect
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={onUninstall}
+            >
+              <Trash2 className="size-4" />
+              Uninstall
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+};
+
+const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
+  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
+  return (
+    <div className="flex w-full items-center gap-3 py-3 text-left">
+      <ConnectorHeader
+        isCustom={false}
+        name={connector.name}
+        type={connector.type}
+        url={connector.url}
+      />
+      <Button asChild size="sm" variant="outline">
+        <InternalLink href={href}>View</InternalLink>
+      </Button>
+    </div>
+  );
+};
+
 export const ConnectorsSettings = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -227,185 +407,5 @@ export const ConnectorsSettings = () => {
         open={connectOpen}
       />
     </SettingsPageContent>
-  );
-};
-
-const CustomConnectorRow = ({
-  connector,
-  onConnect,
-  onUninstall,
-  onDisconnect,
-  isDisconnecting,
-}: {
-  connector: McpConnector;
-  onConnect: () => void;
-  onUninstall: () => void;
-  onDisconnect: () => void;
-  isDisconnecting: boolean;
-}) => {
-  const trpc = useTRPC();
-
-  const { data: authStatus } = useQuery({
-    ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
-    staleTime: 30_000,
-  });
-
-  const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
-    ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
-    staleTime: 30_000,
-    retry: false,
-  });
-
-  const needsOAuth = connectionStatus?.needsAuth ?? false;
-  const isConnected = connectionStatus?.status === "connected";
-  const isIncompatible = connectionStatus?.status === "incompatible";
-
-  const statusText = (() => {
-    if (isTestingConnection) {
-      return "Checking connection…";
-    }
-    if (isIncompatible) {
-      return "Incompatible server";
-    }
-    if (needsOAuth) {
-      return "Authorization required";
-    }
-    if (isConnected) {
-      return "Connected";
-    }
-    return connectionStatus?.error ?? "Unable to reach server";
-  })();
-
-  const actionLabel = (() => {
-    if (isTestingConnection) {
-      return "Loading";
-    }
-    if (needsOAuth) {
-      return "Connect";
-    }
-    return "Configure";
-  })();
-
-  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
-
-  const showOAuthButton = needsOAuth && !isIncompatible;
-  const showDetailsButton = !(needsOAuth || isIncompatible);
-
-  return (
-    <div className="flex items-center gap-4 py-3">
-      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left">
-        <ConnectorHeader
-          isCustom
-          name={connector.name}
-          statusText={statusText}
-          type={connector.type}
-          url={connector.url}
-        />
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        {isIncompatible ? (
-          <Badge className="gap-1" variant="destructive">
-            <AlertTriangle className="size-3" />
-            Error
-          </Badge>
-        ) : null}
-
-        {showOAuthButton ? (
-          <Button disabled={isTestingConnection} onClick={onConnect} size="sm">
-            {isTestingConnection ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="size-4 animate-spin" />
-                Loading
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                Connect
-                <ArrowUpRight className="-mr-1 size-4" />
-              </span>
-            )}
-          </Button>
-        ) : null}
-
-        {showDetailsButton ? (
-          <Button
-            asChild
-            disabled={isTestingConnection}
-            size="sm"
-            variant="outline"
-          >
-            <InternalLink href={href}>
-              {isTestingConnection ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="size-4 animate-spin" />
-                  Loading
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2">
-                  {actionLabel}
-                </span>
-              )}
-            </InternalLink>
-          </Button>
-        ) : null}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {authStatus?.isAuthenticated ? (
-              <>
-                <DropdownMenuItem
-                  disabled={isDisconnecting}
-                  onClick={onDisconnect}
-                >
-                  Disconnect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-            {needsOAuth ? (
-              <>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onConnect();
-                  }}
-                >
-                  Connect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={onUninstall}
-            >
-              <Trash2 className="size-4" />
-              Uninstall
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  );
-};
-
-const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
-  const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
-  return (
-    <div className="flex w-full items-center gap-3 py-3 text-left">
-      <ConnectorHeader
-        isCustom={false}
-        name={connector.name}
-        type={connector.type}
-        url={connector.url}
-      />
-      <Button asChild size="sm" variant="outline">
-        <InternalLink href={href}>View</InternalLink>
-      </Button>
-    </div>
   );
 };

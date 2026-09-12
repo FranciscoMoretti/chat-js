@@ -14,6 +14,19 @@ import { MessageAction as Action } from "./ai-elements/message";
 import { RetryButton } from "./retry-button";
 import { Tag } from "./tag";
 
+const SelectedModelId = ({ messageId }: { messageId: string }) => {
+  const message = useMessageById<ChatMessage>(messageId);
+  const selectedModelId = getPrimarySelectedModelId(
+    message?.metadata?.selectedModel
+  );
+
+  return selectedModelId ? (
+    <div className="ml-2 flex items-center">
+      <Tag>{selectedModelId}</Tag>
+    </div>
+  ) : null;
+};
+
 export const FeedbackActions = ({
   chatId,
   messageId,
@@ -102,17 +115,4 @@ export const FeedbackActions = ({
       <SelectedModelId messageId={messageId} />
     </>
   );
-};
-
-const SelectedModelId = ({ messageId }: { messageId: string }) => {
-  const message = useMessageById<ChatMessage>(messageId);
-  const selectedModelId = getPrimarySelectedModelId(
-    message?.metadata?.selectedModel
-  );
-
-  return selectedModelId ? (
-    <div className="ml-2 flex items-center">
-      <Tag>{selectedModelId}</Tag>
-    </div>
-  ) : null;
 };
