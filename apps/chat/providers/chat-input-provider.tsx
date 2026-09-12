@@ -55,7 +55,7 @@ interface ChatInputProviderProps {
   overrideModelSelection?: SelectedModelValue; // For message editing with multi-model selection
 }
 
-export function ChatInputProvider({
+export const ChatInputProvider = ({
   children,
   initialInput = "",
   initialTool = null,
@@ -64,7 +64,7 @@ export function ChatInputProvider({
   overrideModelSelection,
   localStorageEnabled = true,
   isProjectContext = false,
-}: ChatInputProviderProps) {
+}: ChatInputProviderProps) => {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
@@ -257,12 +257,12 @@ export function ChatInputProvider({
       {children}
     </ChatInputContext.Provider>
   );
-}
+};
 
-export function useChatInput() {
+export const useChatInput = () => {
   const context = useContext(ChatInputContext);
   if (context === undefined) {
     throw new Error("useChatInput must be used within a ChatInputProvider");
   }
   return context;
-}
+};

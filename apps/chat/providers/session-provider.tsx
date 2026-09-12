@@ -28,7 +28,11 @@ const SessionSeedContext = createContext<
   ((session: Session | null) => void) | null
 >(null);
 
-export function SessionProvider({ children }: { children: React.ReactNode }) {
+export const SessionProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const {
     data: clientSession,
     isPending: isClientPending,
@@ -73,9 +77,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       </SessionContext.Provider>
     </SessionSeedContext.Provider>
   );
-}
+};
 
-export function SessionSeed({ session }: { session: Session | null }) {
+export const SessionSeed = ({ session }: { session: Session | null }) => {
   const setServerSession = useContext(SessionSeedContext);
 
   if (!setServerSession) {
@@ -87,12 +91,12 @@ export function SessionSeed({ session }: { session: Session | null }) {
   }, [session, setServerSession]);
 
   return null;
-}
+};
 
-export function useSession(): SessionContextValue {
+export const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);
   if (!ctx) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return ctx;
-}
+};

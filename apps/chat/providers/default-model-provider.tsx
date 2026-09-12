@@ -26,10 +26,10 @@ interface DefaultModelClientProviderProps {
   defaultModel: AppModelId;
 }
 
-export function DefaultModelProvider({
+export const DefaultModelProvider = ({
   children,
   defaultModel: initialModel,
-}: DefaultModelClientProviderProps) {
+}: DefaultModelClientProviderProps) => {
   const [currentModel, setCurrentModel] = useState<AppModelId>(initialModel);
 
   const changeModel = useCallback(
@@ -69,9 +69,9 @@ export function DefaultModelProvider({
       {children}
     </DefaultModelContext.Provider>
   );
-}
+};
 
-export function useDefaultModel() {
+export const useDefaultModel = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -79,9 +79,9 @@ export function useDefaultModel() {
     );
   }
   return context.defaultModel;
-}
+};
 
-export function useModelChange() {
+export const useModelChange = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -89,4 +89,4 @@ export function useModelChange() {
     );
   }
   return context.changeModel;
-}
+};

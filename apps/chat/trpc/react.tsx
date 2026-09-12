@@ -18,7 +18,7 @@ export const { TRPCProvider, useTRPC, useTRPCClient } =
 
 let browserQueryClient: QueryClient | undefined;
 
-function getQueryClient() {
+const getQueryClient = () => {
   if (isServer) {
     // Server: always make a new query client
     return makeQueryClient();
@@ -31,9 +31,9 @@ function getQueryClient() {
     browserQueryClient = makeQueryClient();
   }
   return browserQueryClient;
-}
+};
 
-function getUrl() {
+const getUrl = () => {
   const base = (() => {
     if (typeof window !== "undefined") {
       return "";
@@ -41,8 +41,8 @@ function getUrl() {
     return getBaseUrl();
   })();
   return `${base}/api/trpc`;
-}
-export function TRPCReactProvider(props: { children: React.ReactNode }) {
+};
+export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
@@ -74,4 +74,4 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
-}
+};
