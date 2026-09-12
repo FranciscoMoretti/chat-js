@@ -1,4 +1,5 @@
-import { type DataUIPart, isDataUIPart } from "ai";
+import { isDataUIPart } from "ai";
+import type { DataUIPart } from "ai";
 import equal from "fast-deep-equal";
 
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";

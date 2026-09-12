@@ -1,7 +1,5 @@
-import {
-  AUTHENTICATION_DEFAULTS,
-  type AuthenticationConfig,
-} from "./config-schema";
+import { AUTHENTICATION_DEFAULTS } from "./config-schema";
+import type { AuthenticationConfig } from "./config-schema";
 
 export type SocialAuthSignInOptions = {
   disableRedirect?: boolean;

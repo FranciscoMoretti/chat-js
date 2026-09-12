@@ -24,7 +24,7 @@ function requestOptions(
 
 describe("createGatedChatTransport", () => {
   it("waits before forwarding a request and restores its metadata", async () => {
-    let release: () => void = () => undefined;
+    let release: () => void = () => {};
     const ready = new Promise<void>((resolve) => {
       release = resolve;
     });
@@ -56,7 +56,7 @@ describe("createGatedChatTransport", () => {
   });
 
   it("does not forward a request stopped while waiting", async () => {
-    const ready = new Promise<void>(() => undefined);
+    const ready = new Promise<void>(() => {});
     const sendMessages = vi.fn(() =>
       Promise.resolve(new ReadableStream<UIMessageChunk>())
     );

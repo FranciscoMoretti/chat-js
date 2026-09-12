@@ -1,5 +1,6 @@
 import type { AppModelId } from "@/lib/ai/app-models";
-import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type { ChatMessage } from "@/lib/ai/types";
 
 export type RetryMessageResult =
   | {

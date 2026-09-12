@@ -16,10 +16,10 @@ import {
 } from "./parallel-chat-requests";
 
 class ControlledTransport implements ChatTransport<ChatMessage> {
-  readonly requests: Array<{
+  readonly requests: {
     body: object | undefined;
     controller: ReadableStreamDefaultController<UIMessageChunk>;
-  }> = [];
+  }[] = [];
 
   reconnectToStream() {
     return Promise.resolve(null);
@@ -85,11 +85,11 @@ afterEach(() => {
 describe("runParallelThreadRequestSpecs", () => {
   it("creates every run immediately and gates only secondary transport", async () => {
     const underlyingTransport = new ControlledTransport();
-    const startedRuns: Array<{
+    const startedRuns: {
       parallelGroupId: string;
       parallelIndex: number;
       runId: string;
-    }> = [];
+    }[] = [];
     const chat = new Thread<ChatMessage>({
       transport: createGatedChatTransport(underlyingTransport),
     });

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createCompletionQueue } from "./completion-queue";
 
 function deferred() {
-  let resolve: () => void = () => undefined;
+  let resolve: () => void = () => {};
   const promise = new Promise<void>((resolvePromise) => {
     resolve = resolvePromise;
   });

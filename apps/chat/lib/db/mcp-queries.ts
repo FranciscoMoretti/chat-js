@@ -8,12 +8,8 @@ import type {
 import { and, desc, eq, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
-import {
-  type McpConnector,
-  type McpOAuthSession,
-  mcpConnector,
-  mcpOAuthSession,
-} from "./schema";
+import { mcpConnector, mcpOAuthSession } from "./schema";
+import type { McpConnector, McpOAuthSession } from "./schema";
 
 // Full client information includes both metadata and registration response
 export type OAuthClientInformationFull = OAuthClientMetadata &

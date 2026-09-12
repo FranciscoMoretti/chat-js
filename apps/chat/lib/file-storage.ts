@@ -1,4 +1,5 @@
-import { type Body, Files } from "files-sdk";
+import { Files } from "files-sdk";
+import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
 import { FILE_STORAGE_PREFIX } from "./constants";
@@ -62,11 +63,11 @@ export async function uploadFile(
 }
 
 export async function listFiles() {
-  const files: Array<{
+  const files: {
     pathname: string;
     uploadedAt: Date;
     url: string;
-  }> = [];
+  }[] = [];
   for await (const file of getFiles().listAll()) {
     files.push({
       pathname: file.key,

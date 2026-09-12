@@ -1,4 +1,5 @@
-import { ANONYMOUS_LIMITS, type AnonymousSession } from "./types/anonymous";
+import { ANONYMOUS_LIMITS } from "./types/anonymous";
+import type { AnonymousSession } from "./types/anonymous";
 import { generateUUID } from "./utils";
 
 export function createAnonymousSession(): AnonymousSession {

@@ -24,7 +24,7 @@ export interface ConnectionStatusResult {
 }
 
 export interface DiscoveryResult {
-  prompts: Array<{
+  prompts: {
     name: string;
     description: string | null;
     arguments: Array<{
@@ -32,14 +32,14 @@ export interface DiscoveryResult {
       description: string | null;
       required: boolean;
     }>;
-  }>;
-  resources: Array<{
+  }[];
+  resources: {
     name: string;
     uri: string;
     description: string | null;
     mimeType: string | null;
-  }>;
-  tools: Array<{ name: string; description: string | null }>;
+  }[];
+  tools: { name: string; description: string | null }[];
 }
 
 /**

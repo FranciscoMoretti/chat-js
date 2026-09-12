@@ -9,8 +9,8 @@ import {
   inArray,
   isNotNull,
   isNull,
-  type SQL,
 } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import type {
   Attachment,
@@ -34,20 +34,17 @@ import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
   chat,
-  type DBMessage,
   document,
   generationCancellation,
   message,
-  type Part,
   part,
   project,
   suggestion,
-  type User,
-  type UserModelPreference,
   user,
   userModelPreference,
   vote,
 } from "./schema";
+import type { DBMessage, Part, User, UserModelPreference } from "./schema";
 
 async function _getUserByEmail(email: string): Promise<User[]> {
   try {
@@ -416,11 +413,11 @@ export async function saveMessageIfNotExists({
 export async function saveChatMessages({
   messages,
 }: {
-  messages: Array<{
+  messages: {
     id: string;
     chatId: string;
     message: ChatMessage;
-  }>;
+  }[];
 }) {
   try {
     if (messages.length === 0) {
@@ -825,7 +822,7 @@ export async function getDocumentsByMessageIds({
 export async function saveDocuments({
   documents,
 }: {
-  documents: Array<{
+  documents: {
     id: string;
     title: string;
     kind: ArtifactKind;
@@ -833,7 +830,7 @@ export async function saveDocuments({
     userId: string;
     messageId: string;
     createdAt: Date;
-  }>;
+  }[];
 }) {
   if (documents.length === 0) {
     return;

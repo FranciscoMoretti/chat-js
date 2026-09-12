@@ -1,11 +1,13 @@
 import type { FileUIPart, ModelMessage, TextPart } from "ai";
-import { type ClassValue, clsx } from "clsx";
+import { clsx } from "clsx";
+import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 
 import type { Document } from "@/lib/db/schema";
 
-import { ChatSDKError, type ErrorCode } from "./ai/errors";
+import { ChatSDKError } from "./ai/errors";
+import type { ErrorCode } from "./ai/errors";
 import type { Attachment, ChatMessage } from "./ai/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -39,9 +41,9 @@ export const fetchWithErrorHandlers = async (
 };
 
 function findLastArtifact(
-  messages: Array<ChatMessage>
+  messages: ChatMessage[]
 ): { messageIndex: number; toolCallId: string } | null {
-  const allArtifacts: Array<{ messageIndex: number; toolCallId: string }> = [];
+  const allArtifacts: { messageIndex: number; toolCallId: string }[] = [];
 
   messages.forEach((msg, messageIndex) => {
     msg.parts?.forEach((part) => {
@@ -94,17 +96,18 @@ export function generateUUID(): string {
   return uuidv7();
 }
 
-function getMostRecentUserMessage(messages: Array<ChatMessage>) {
+function getMostRecentUserMessage(messages: ChatMessage[]) {
   const userMessages = messages.filter((message) => message.role === "user");
   return userMessages.at(-1);
 }
 
-function getDocumentTimestampByIndex(
-  documents: Array<Document>,
-  index: number
-) {
-  if (!documents) return new Date();
-  if (index > documents.length) return new Date();
+function getDocumentTimestampByIndex(documents: Document[], index: number) {
+  if (!documents) {
+    return new Date();
+  }
+  if (index > documents.length) {
+    return new Date();
+  }
 
   return documents[index].createdAt;
 }
@@ -112,11 +115,13 @@ function getDocumentTimestampByIndex(
 function getTrailingMessageId({
   messages,
 }: {
-  messages: Array<ChatMessage>;
+  messages: ChatMessage[];
 }): string | null {
   const trailingMessage = messages.at(-1);
 
-  if (!trailingMessage) return null;
+  if (!trailingMessage) {
+    return null;
+  }
 
   return trailingMessage.id;
 }

@@ -1,4 +1,5 @@
-import pino, { type Logger, stdTimeFunctions } from "pino";
+import pino, { stdTimeFunctions } from "pino";
+import type { Logger } from "pino";
 
 import userConfig from "@/chat.config";
 

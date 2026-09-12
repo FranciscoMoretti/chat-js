@@ -25,11 +25,11 @@ export interface EvalAgentResult {
   assistantMessage: ChatMessage;
   finalText: string;
   followupSuggestions: string[];
-  toolResults: Array<{
+  toolResults: {
     toolName: string;
     type: string;
     state?: string;
-  }>;
+  }[];
   usage: LanguageModelUsage | undefined;
 }
 
@@ -89,7 +89,7 @@ async function executeAgentAndGetOutput({
 function processToolCall(
   content: { toolCallId?: string; toolName: string; input: unknown },
   parts: ChatMessage["parts"],
-  toolResults: Array<{ toolName: string; type: string; state?: string }>
+  toolResults: { toolName: string; type: string; state?: string }[]
 ): void {
   const toolCallId = content.toolCallId || generateUUID();
   const toolPartType = `tool-${content.toolName}` as const;
@@ -147,7 +147,7 @@ function addToolResultPart(
 }
 
 function updateToolResults(
-  toolResults: Array<{ toolName: string; type: string; state?: string }>,
+  toolResults: { toolName: string; type: string; state?: string }[],
   toolName: string
 ): void {
   const existingIndex = toolResults.findIndex((tr) => tr.toolName === toolName);
@@ -168,7 +168,7 @@ function updateToolResults(
 function processToolResult(
   content: { toolCallId?: string; toolName: string; output: unknown },
   parts: ChatMessage["parts"],
-  toolResults: Array<{ toolName: string; type: string; state?: string }>
+  toolResults: { toolName: string; type: string; state?: string }[]
 ): void {
   const updated = updateExistingToolPart(
     parts,
@@ -187,13 +187,13 @@ function extractToolCallsAndResults(
   >
 ): {
   parts: ChatMessage["parts"];
-  toolResults: Array<{ toolName: string; type: string; state?: string }>;
+  toolResults: { toolName: string; type: string; state?: string }[];
 } {
-  const toolResults: Array<{
+  const toolResults: {
     toolName: string;
     type: string;
     state?: string;
-  }> = [];
+  }[] = [];
   const parts: ChatMessage["parts"] = [];
 
   for (const step of steps ?? []) {
