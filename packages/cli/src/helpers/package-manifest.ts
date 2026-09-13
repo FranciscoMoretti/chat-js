@@ -72,6 +72,7 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   scripts.lint = "ultracite check";
   scripts.format = "ultracite fix";
   scripts["check-env"] = "tsx scripts/check-env.ts";
+  scripts["eve:db:setup:local"] = "tsx scripts/install-eve-local-postgres.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
   scripts["redis:connect"] = "tsx scripts/check-redis.ts";
   scripts["db:migrate"] =

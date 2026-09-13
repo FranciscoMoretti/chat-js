@@ -40,6 +40,7 @@
 		"dist:electron": "turbo run electron:make --filter=@chat-js/electron",
 		"dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
 		"build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",
+		"eve:db:setup:local": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:db:setup:local",
 		"dev:supervise": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-supervisor.ts",
 		"dev:service": "bun scripts/dev-service.ts",
 		"dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts"

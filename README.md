@@ -93,34 +93,34 @@ With `EVE_ENABLED=true` in development, `/` and `/chat/[id]` use
 the durable transcript, approvals and execution. ChatJS authenticates requests
 and stores conversation ownership, creation intent, the Eve session ID, and a
 usage ledger keyed by durable event ID.
-The worker uses the selected ChatJS gateway/model. The sidebar lists and searches Eve conversations alongside archived ChatJS
-history. Archived chats and projects remain readable; legacy model execution is
-disabled in this mode. Historical imports and project-aware new chats remain
-migration gates. The production runtime is unchanged until review and cutover.
+The worker uses the selected ChatJS gateway/model. The sidebar lists and searches
+Eve conversations only. Legacy ChatJS conversations remain untouched and are not
+shown or imported in this mode. Registered users retain project organization;
+guests use their own isolated conversation history.
 
 Use Node 24+ for Eve and Bun for package scripts. Set `EVE_ENABLED=true`, a random
-`EVE_GATEWAY_SECRET` of at least 32 characters, and `WORKFLOW_POSTGRES_URL` in
-`.env.worktree.local`. Use a separate local database for the Workflow World;
-`DATABASE_URL` continues to hold ChatJS data. Apply ChatJS migrations with
-`bunx dotenv -e .env.worktree.local -e .env.local -- bun db:migrate`, then initialize the World with:
+`EVE_GATEWAY_SECRET` of at least 32 characters, and isolated local Postgres URLs
+for `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` in `.env.worktree.local`.
+Apply ChatJS migrations, initialize the Workflow World, and install the local
+provider's deletion fences and retirement receipts before starting the app:
 
 ```sh
-bunx dotenv -e .env.worktree.local -- node node_modules/@workflow/world-postgres/bin/setup.js
-bun build:eve
-bun dev:eve
+bunx dotenv -e .env.worktree.local -e .env.local -- bun db:migrate
+bunx dotenv -e .env.worktree.local -e .env.local -- node node_modules/@workflow/world-postgres/bin/setup.js
+bun eve:db:setup:local
+bun dev
 ```
 
-Run `bun dev` in another terminal. Worktree tooling assigns the worker offset `4`
-and supplies the app's internal worker URL. Rebuild and restart the worker after
-editing `apps/chat/agent`. The worker listens on loopback and requires the shared
-secret; browsers use only authenticated same-origin ChatJS routes.
+The provider setup command is idempotent and refuses remote database URLs.
+It is an explicit migration; request handlers never install provider tables.
+Normal development starts ChatJS and Eve together with `withEve`; no separate
+worker command is needed. Browsers use authenticated same-origin ChatJS routes.
 
-This development milestone supports linear text conversations, persistent
-human input, reconnect, cancellation, and a confirmation tool without external
-effects. Installed word-count and weather tools run natively; URL retrieval is
-included when enabled in ChatJS configuration. Ordinary tools use validated
-schemas and native call identity. Approval-dependent tools require explicit Eve
-policies.
+Local acceptance covers guest and registered conversations, model comparisons,
+editing/regeneration with version navigation, reload, cancellation, and family
+deletion. Guest generations reserve message quota before native admission;
+retries reuse operation identities and do not debit quota twice. Incomplete
+creation or deletion retains recovery state rather than claiming success.
 
 Model costs are recorded by the worker hook and repaired from authoritative
 session snapshots before new work. Replaying an event does not charge twice;
@@ -131,35 +131,22 @@ it is not a hard budget reservation. Approval responses and cancellation remain
 available at zero credits.
 
 Eve is disabled in production even when the flag is set. Production cutover
-requires review. Full platform tools, provider invoice reconciliation, branch/
-import support, and automatic uncertain-creation recovery remain later stages. An uncertain creation is retained and
-blocked from redispatch; a connection error is not proof that a send failed.
-Reconnect before deciding to resend.
+requires review. Full feature parity and lifecycle recovery remain under active
+validation; the local acceptance checks are not a production-readiness claim.
+Historical conversation import is intentionally deferred.
 
-The deterministic acceptance fixture uses the real channel, tool and durable
-worker with Eve's mock model. With isolated local databases and the app running,
-stop the normal worker, build/start the fixture from
-`apps/chat/tests/eve-fixture` using `eve build` and `NODE_ENV=production eve start
---host 127.0.0.1 --port <assigned Eve port>`. Supply the same environment as the
-normal worker. Then run from `apps/chat`:
+Use isolated local databases for acceptance testing. Browser tests use development
+login or guest credentials and save sanitized captures under
+`apps/chat/tests/eve-results`. For example, with the app running and valid model
+credentials, run the guest lifecycle check from the repository root:
 
 ```sh
-PORT=<assigned chat port> bunx playwright test --config playwright.eve.config.ts
-bunx vitest run --config vitest.eve.config.ts
+bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts eve-guest-lifecycle.e2e.ts'
 ```
 
-Acceptance tests require a local `DATABASE_URL` or an exact match with the
-explicitly provisioned `EVE_TEST_DATABASE_URL`; the browser suite
-uses development login. Sanitized screenshots go to `tests/eve-results`.
-Restart the normal worker after fixture testing. To verify real model execution, an installed tool, usage charging and reload,
-run against the normal worker with valid model credentials:
-
-```sh
-bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts'
-```
-
-Use fresh isolated databases for acceptance testing; earlier fixture runs
-without explicit zero-cost evidence will correctly block new admission.
+Database contracts use `apps/chat/vitest.eve.config.ts`. Each suite checks its
+configured database before writing fixtures. Prefer local Postgres and cheap
+models for repeated acceptance runs.
 
 ## Releases
 

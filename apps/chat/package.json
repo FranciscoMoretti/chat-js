@@ -37,6 +37,7 @@
     "ai:devtools": "bunx @ai-sdk/devtools",
     "fetch:models": "bun scripts/fetch-models.ts && bun format",
     "eve:build": "eve build",
+    "eve:db:setup:local": "bun scripts/install-eve-local-postgres.ts",
     "eve:start": "NODE_ENV=production eve start --host 127.0.0.1",
     "dev:neon": "bash scripts/with-db.sh bun dev",
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",

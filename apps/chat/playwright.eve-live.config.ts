@@ -7,6 +7,7 @@ export default defineConfig({
     "eve-guest-cookie.e2e.ts",
     "eve-guest-ui.e2e.ts",
     "eve-guest-comparison.e2e.ts",
+    "eve-guest-lifecycle.e2e.ts",
     "eve-copy-live.e2e.ts",
     "eve-copy-regeneration-live.e2e.ts",
     "eve-copy-documents-live.e2e.ts",
