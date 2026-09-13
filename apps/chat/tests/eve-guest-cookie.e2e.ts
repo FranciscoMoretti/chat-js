@@ -75,7 +75,7 @@ test("guest bootstrap is private, stable and cannot impersonate a registered ses
   ).toEqual([]);
 });
 
-test("guest creation reaches eve once, debits one message and grants no monetary credits", async ({
+test("guest creation and duplicate follow-ups debit once per native turn without monetary credits", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
@@ -138,11 +138,76 @@ test("guest creation reaches eve once, debits one message and grants no monetary
       .join("")
       .toLowerCase()
   ).toContain("hello");
+  const operationId = crypto.randomUUID();
+  const command = {
+    message: "Reply with the single word goodbye.",
+    modelId: "openai/gpt-5-nano",
+  };
+  const send = () =>
+    page.request.post(`/api/eve/v1/session/${binding.sessionId}`, {
+      headers: { origin, "x-chatjs-message-operation": operationId },
+      data: command,
+    });
+  const duplicate = await Promise.all([send(), send()]);
+  expect(duplicate.map((response) => response.status()).sort()).toEqual([
+    202, 409,
+  ]);
+  const guestCookie = (await page.context().cookies()).find(
+    (cookie) => cookie.name === "chatjs-eve-guest"
+  );
+  if (!guestCookie) {
+    throw new Error("Guest credential is missing");
+  }
+  const publicClient = new Client({
+    host: `${origin}/api`,
+    headers: { origin, cookie: `${guestCookie.name}=${guestCookie.value}` },
+  });
+  const publicSession = publicClient.sessions.attach(binding.sessionId);
+  await expect
+    .poll(
+      async () =>
+        (await publicSession.snapshot()).events.filter(
+          (event) => event.type === "turn.completed"
+        ).length,
+      { timeout: 60_000, intervals: [1000] }
+    )
+    .toBe(2);
+  const followed = await publicSession.snapshot();
+  expect(
+    followed.events
+      .flatMap((event) =>
+        event.type === "message.appended" ? [event.data.messageDelta] : []
+      )
+      .join("")
+      .toLowerCase()
+  ).toContain("goodbye");
+  expect((await send()).status()).toBe(409);
+  const outsider = await page.context().browser()?.newContext();
+  if (!outsider) {
+    throw new Error("Missing browser context");
+  }
+  try {
+    await outsider.request.post(`${origin}/api/eve-guest`, {
+      headers: { origin },
+    });
+    const hidden = await outsider.request.get(
+      `${origin}/api/eve/v1/session/${binding.sessionId}/stream`,
+      { headers: { origin } }
+    );
+    expect(hidden.status()).toBe(404);
+    const forbidden = await outsider.request.post(
+      `${origin}/api/eve/v1/session/${binding.sessionId}/cancel`,
+      { headers: { origin }, data: {} }
+    );
+    expect(forbidden.status()).toBe(404);
+  } finally {
+    await outsider.close();
+  }
   const [guest] = await db
     .select()
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, principal.ownerId));
-  expect(guest.remainingMessages).toBe(ANONYMOUS_LIMITS.CREDITS - 1);
+  expect(guest.remainingMessages).toBe(ANONYMOUS_LIMITS.CREDITS - 2);
   expect(
     await db
       .select()

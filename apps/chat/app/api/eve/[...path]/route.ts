@@ -1,5 +1,4 @@
 import { frontendToolsSchema, type UiToolName } from "@/lib/ai/types";
-import { auth } from "@/lib/auth";
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
@@ -7,9 +6,15 @@ import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
+import {
+  admitGuestMessage,
+  settleGuestMessage,
+} from "@/lib/eve/guest-message-admission";
+import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
+import { type EvePrincipal, resolveEvePrincipal } from "@/lib/eve/principal";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
@@ -25,12 +30,24 @@ function rejectRequest(request: Request, message: string, status: number) {
     : Response.json({ error: message }, { status });
 }
 
-async function checkTurnAdmission(isNewMessage: boolean, ownerId: string) {
-  if (!isNewMessage) {
+async function checkTurnAdmission(
+  request: Request,
+  principal: EvePrincipal,
+  sessionId: string,
+  command: Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
+) {
+  if (!command.isNewMessage || command.message === undefined) {
     return;
   }
-  await reconcileEveOwnerUsage(ownerId);
-  if (!(await canSpend(ownerId))) {
+  if (principal.kind === "guest") {
+    return await admitGuestMessage(request, principal.ownerId, sessionId, {
+      message: command.message,
+      modelId: command.modelId,
+      selectedTool: command.selectedTool,
+    });
+  }
+  await reconcileEveOwnerUsage(principal.ownerId);
+  if (!(await canSpend(principal.ownerId))) {
     return rejectEveCommand("Insufficient credits", 402);
   }
 }
@@ -57,6 +74,7 @@ async function readCommand(
 ) {
   let body: string | undefined;
   let isNewMessage = false;
+  let message: EveMessageInput | undefined;
   let modelId: string | undefined;
   let selectedTool: UiToolName | undefined;
   if (request.method === "POST") {
@@ -67,6 +85,7 @@ async function readCommand(
       return rejectEveCommand("Invalid command.", 400);
     }
     if ("message" in input.data) {
+      message = input.data.message;
       const suppliedTool = request.headers.get("x-chatjs-selected-tool");
       const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
       if (!tool.success) {
@@ -100,7 +119,7 @@ async function readCommand(
     }
     isNewMessage = "message" in input.data;
   }
-  return { body, isNewMessage, modelId, selectedTool };
+  return { body, isNewMessage, message, modelId, selectedTool };
 }
 
 async function handle(
@@ -110,8 +129,8 @@ async function handle(
   if (!isEveEnabled()) {
     return rejectRequest(request, "Agent conversations are unavailable.", 404);
   }
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
+  const principal = await resolveEvePrincipal(request.headers);
+  if (!principal) {
     return rejectRequest(request, "Sign in to continue.", 401);
   }
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
@@ -121,7 +140,10 @@ async function handle(
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
   const conversation = policy
-    ? await getBoundEveConversationForSession(session.user.id, policy.sessionId)
+    ? await getBoundEveConversationForSession(
+        principal.ownerId,
+        policy.sessionId
+      )
     : undefined;
   if (!(policy && conversation)) {
     return rejectRequest(request, "Conversation not found.", 404);
@@ -133,20 +155,25 @@ async function handle(
   const command = await readCommand(
     request,
     policy,
-    session.user.id,
+    principal.ownerId,
     conversation.id
   );
   if (command instanceof Response) {
     return command;
   }
-  const { body, isNewMessage, modelId, selectedTool } = command;
+  const { body, modelId, selectedTool } = command;
   try {
-    const admission = await checkTurnAdmission(isNewMessage, session.user.id);
-    if (admission) {
+    const admission = await checkTurnAdmission(
+      request,
+      principal,
+      policy.sessionId,
+      command
+    );
+    if (admission instanceof Response) {
       return admission;
     }
     const result = await eveRequest(
-      session.user.id,
+      principal.ownerId,
       upstreamPath + (query.size ? `?${query}` : ""),
       {
         method: request.method,
@@ -161,6 +188,9 @@ async function handle(
       modelId,
       selectedTool
     );
+    if (admission) {
+      await settleGuestMessage(result, principal.ownerId, admission);
+    }
     const headers = new Headers({ "cache-control": "no-store" });
     for (const key of [
       "content-type",
