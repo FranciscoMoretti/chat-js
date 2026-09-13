@@ -6,6 +6,7 @@ test.use({ actionTimeout: 20_000 });
 
 const projectUrl = /\/project\/[a-f\d-]+$/;
 const conversationUrl = /\/chat\/[a-f\d-]+$/;
+const modelId = "openai/gpt-5-nano";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
@@ -15,8 +16,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
   test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const origin = new URL(page.url()).origin;
   await page.request.post("/api/chat-model", {
-    data: { model: "openai/gpt-4.1-mini-fast" },
+    data: { model: modelId },
   });
   await page.getByRole("button", { name: "New project", exact: true }).click();
   const createDialog = page.getByRole("dialog");
@@ -52,6 +54,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
   await expect(page).toHaveURL(projectUrl);
   const projectId = z.uuid().parse(page.url().split("/").at(-1));
   let deletedInUI = false;
+  let conversationId: string | undefined;
+  let bodyFailed = false;
+  let cleanupFailure: { error: unknown } | undefined;
   try {
     await page.goto(`/project/${projectId}`);
     await expect(
@@ -140,7 +145,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .fill("Follow the project instruction.");
     await page.getByRole("button", { name: "Send", exact: true }).click();
     await expect(page).toHaveURL(conversationUrl);
-    const conversationId = page.url().split("/").at(-1);
+    conversationId = page.url().split("/").at(-1);
     await expect(page.locator(".is-assistant")).toContainText(
       "PROJECT_UI_7238",
       { timeout: 90_000 }
@@ -222,12 +227,46 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await expect(page.locator(".is-assistant")).toContainText(
       "PROJECT_UI_7238"
     );
+  } catch (error) {
+    bodyFailed = true;
+    throw error;
   } finally {
-    if (!deletedInUI) {
-      const removed = await page.request.post("/api/trpc/project.remove", {
-        data: { json: { id: projectId } },
+    testInfo.setTimeout(testInfo.timeout + 150_000);
+    try {
+      try {
+        if (!deletedInUI) {
+          const removed = await page.request.post("/api/trpc/project.remove", {
+            data: { json: { id: projectId } },
+          });
+          expect(removed.ok(), await removed.text()).toBe(true);
+        }
+      } finally {
+        if (conversationId) {
+          const url = `/api/agent-conversations/${conversationId}`;
+          await expect
+            .poll(
+              async () => {
+                const response = await page.request
+                  .delete(url, { headers: { origin }, timeout: 30_000 })
+                  .catch(() => null);
+                return response?.status() === 200 ? response.json() : null;
+              },
+              { timeout: 90_000, intervals: [1000, 2000, 5000] }
+            )
+            .toEqual({ status: "deleted", rootId: conversationId });
+        }
+      }
+    } catch (error) {
+      if (!bodyFailed) {
+        cleanupFailure = { error };
+      }
+      testInfo.annotations.push({
+        type: "cleanup",
+        description: "Project or native conversation cleanup also failed.",
       });
-      expect(removed.ok(), await removed.text()).toBe(true);
     }
+  }
+  if (cleanupFailure) {
+    throw cleanupFailure.error;
   }
 });
