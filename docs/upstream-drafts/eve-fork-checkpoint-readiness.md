@@ -1,6 +1,6 @@
 # Draft: expose immutable checkpoint capture and readiness for forks
 
-Unpublished integration note for EVE 0.52.2.
+Unpublished integration note for EVE 0.52.2. The local implementation and its ChatJS operation/recovery path are covered by the maintained-fork matrix; this draft records the generic upstream capability, not a remaining product backlog.
 
 ChatJS comparison requests create a primary native session, then fork additional responses before `turn_0`. Returning a session identity does not guarantee that the workflow has written that initial checkpoint. A child can otherwise be allocated before its source snapshot exists.
 
@@ -14,6 +14,4 @@ ChatJS verifies bound source ownership before native access. Its native checkpoi
 
 Validation includes source unit tests, a real serialized workflow integration, local PostgreSQL ownership/retry/nested-fork/deletion tests, and the compiled ChatJS browser flow. The live regression creates a short Gemini Flash Lite answer, captures it while idle, edits the source document, and forks two Gemini follow-ups. Both retain the captured revision, render inherited and new native messages, and restore correctly on reload. The same browser test exposed the HTTP parser rejection before the fix. App lint, types, and unit checks also pass.
 
-The checkpoint lookup still reads snapshot payloads from the workflow stream. This is not an inexpensive metadata-only readiness index. An upstream API should expose durable readiness without reading history twice, or safely wait for the source checkpoint as part of creation. All database validation here used local PostgreSQL, not Neon.
-
-Remaining ChatJS work includes connecting the multi-model follow-up composer and its retained operation/recovery UI to this path. The native/browser validation does not prove that UI integration, crash recovery at every resource boundary, or full application feature parity. No upstream publication or production cutover has occurred.
+The checkpoint lookup still reads snapshot payloads from the workflow stream. This is not an inexpensive metadata-only readiness index. An upstream API should expose durable readiness without reading history twice, or safely wait for the source checkpoint as part of creation. All database validation here used local PostgreSQL, not Neon. Native/browser coverage does not prove every backend's retention or crash behavior; those are capability limits, not a claim that ChatJS's operation path is absent. No upstream publication or production cutover has occurred.

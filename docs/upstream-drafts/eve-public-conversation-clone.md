@@ -1,6 +1,6 @@
 # Draft: create a private session from a public transcript
 
-Unpublished implementation proposal. The local native seed primitive is implemented and tested; the ChatJS save/copy operation is not integrated yet.
+Unpublished implementation proposal. The local native seed primitive and the ChatJS save/copy operation are implemented and tested. This document retains the upstream contract and evidence; it is not a statement that the product path is unintegrated.
 
 ## Problem
 
@@ -10,7 +10,7 @@ The current native checkpoint fork is an owner-only editing primitive. `restoreS
 
 Allowing public source IDs in the existing `authorizeFork` callback would therefore grant more than access to the published transcript. Do not widen that callback to implement this feature.
 
-## Reproduction to add before implementation
+## Security contract exercised by the implementation
 
 1. Create an owner session with a visible answer and a private file in its native sandbox that was never attached to a message.
 2. Include a connection challenge containing an owner-only URL/code and tool runtime metadata in the source events.
