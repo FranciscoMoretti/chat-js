@@ -6,21 +6,21 @@ import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
     {
-      type: "message.received",
-      meta: { id: "one", at: "2026-09-10T00:00:00Z" },
       data: { message: "Public question", sequence: 0, turnId: "turn" },
+      meta: { at: "2026-09-10T00:00:00Z", id: "one" },
+      type: "message.received",
     },
     {
-      type: "authorization.required",
-      meta: { id: "two", at: "2026-09-10T00:00:01Z" },
       data: {
         description: "Connect",
+        name: "connection",
         sequence: 1,
         stepIndex: 0,
         turnId: "turn",
-        name: "connection",
         webhookUrl: "https://private.example/secret-code",
       },
+      meta: { at: "2026-09-10T00:00:01Z", id: "two" },
+      type: "authorization.required",
     },
   ]);
   const json = JSON.stringify(messages);
@@ -35,29 +35,29 @@ it("shares transcript content without authorization challenges or runtime metada
 
 it("retains clarification prompts and answers without their response identifiers", () => {
   const parts = sharedEvePart({
-    type: "dynamic-tool",
-    toolCallId: "call",
-    toolName: "ask_question",
-    state: "output-available",
     input: {},
     output: {},
+    state: "output-available",
+    toolCallId: "call",
     toolMetadata: {
       eve: {
-        kind: "tool-call",
-        name: "ask_question",
         inputRequest: {
-          requestId: "secret-request",
           kind: "question",
-          prompt: "Which format?",
           options: [{ id: "option-private", label: "Markdown" }],
+          prompt: "Which format?",
+          requestId: "secret-request",
         },
         inputResponse: {
-          requestId: "secret-request",
           optionId: "option-private",
+          requestId: "secret-request",
           text: "Use Markdown with examples",
         },
+        kind: "tool-call",
+        name: "ask_question",
       },
     },
+    toolName: "ask_question",
+    type: "dynamic-tool",
   });
   const json = JSON.stringify(parts);
   expect(json).toContain("Which format?");
@@ -77,17 +77,17 @@ it.each([
   "shared %s results retain the output without billing metadata",
   (toolName) => {
     const [part] = sharedEvePart({
-      type: "dynamic-tool",
-      toolName,
-      toolCallId: "call",
-      state: "output-available",
-      input: { title: "Test", language: "javascript", code: "console.log(42)" },
+      input: { code: "console.log(42)", language: "javascript", title: "Test" },
       output: {
         kind: "chatjs.platform-result",
-        version: 1,
-        output: { message: "42", chart: "" },
+        output: { chart: "", message: "42" },
         usage: { costUsd: 0.05 },
+        version: 1,
       },
+      state: "output-available",
+      toolCallId: "call",
+      toolName,
+      type: "dynamic-tool",
     });
     expect(JSON.stringify(part)).toContain('"message":"42"');
     expect(JSON.stringify(part)).not.toContain("costUsd");
@@ -97,44 +97,44 @@ it.each([
 
 it("removes owner approval and execution fields while preserving every tool status", () => {
   const base = {
-    toolCallId: "display-call",
-    toolName: "example",
+    approval: { id: "owner-approval-secret", isAutomatic: true },
+    futureRuntimeToken: "runtime-private",
     input: { question: "Published input" },
     stepIndex: 8,
-    futureRuntimeToken: "runtime-private",
-    approval: { id: "owner-approval-secret", isAutomatic: true },
+    toolCallId: "display-call",
+    toolName: "example",
   };
   const cases: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     {
       ...base,
-      type: "dynamic-tool",
-      state: "output-available",
+      approval: { ...base.approval, approved: true },
       output: { answer: "Published result" },
-      approval: { ...base.approval, approved: true },
+      state: "output-available",
+      type: "dynamic-tool",
     },
     {
       ...base,
-      type: "dynamic-tool",
-      state: "output-error",
+      approval: { ...base.approval, approved: true },
       errorText: "Published failure",
-      approval: { ...base.approval, approved: true },
+      state: "output-error",
+      type: "dynamic-tool",
     },
     {
       ...base,
-      type: "dynamic-tool",
-      state: "output-denied",
       approval: {
         ...base.approval,
         approved: false,
         reason: "Published reason",
       },
+      state: "output-denied",
+      type: "dynamic-tool",
     },
-    { ...base, type: "dynamic-tool", state: "approval-requested" },
+    { ...base, state: "approval-requested", type: "dynamic-tool" },
     {
       ...base,
-      type: "dynamic-tool",
-      state: "approval-responded",
       approval: { ...base.approval, approved: true },
+      state: "approval-responded",
+      type: "dynamic-tool",
     },
   ];
   for (const part of cases) {
@@ -163,11 +163,11 @@ it("removes owner approval and execution fields while preserving every tool stat
 it.each([
   {
     kind: "chatjs.platform-result",
-    version: 2,
     output: { message: "Unsupported version" },
     usage: { costUsd: 99 },
+    version: 2,
   },
-  { kind: "chatjs.platform-result", version: 1, usage: { costUsd: 99 } },
+  { kind: "chatjs.platform-result", usage: { costUsd: 99 }, version: 1 },
   {
     output: "Unrecognized envelope",
     privateRuntimeToken: "secret",
@@ -175,16 +175,16 @@ it.each([
   },
 ])("does not expose malformed platform result envelopes", (output) => {
   const parts = sharedEvePart({
-    type: "dynamic-tool",
-    toolCallId: "call",
-    toolName: "codeExecution",
-    state: "output-available",
     input: { code: "1 + 1" },
     output,
+    state: "output-available",
+    toolCallId: "call",
+    toolName: "codeExecution",
+    type: "dynamic-tool",
   });
   expect(parts[0]).toMatchObject({
-    state: "output-error",
     input: { code: "1 + 1" },
+    state: "output-error",
   });
   expect(JSON.stringify(parts)).not.toContain("usage");
   expect(JSON.stringify(parts)).not.toContain("secret");
@@ -193,25 +193,25 @@ it.each([
 
 it("preserves streaming and partial published tool content without runtime fields", () => {
   const base = {
-    toolName: "example",
-    toolCallId: "call",
     input: { text: "partial" },
     stepIndex: 2,
+    toolCallId: "call",
+    toolName: "example",
   };
   const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     {
       ...base,
-      type: "dynamic-tool",
-      state: "input-streaming",
       inputText: "partial input",
+      state: "input-streaming",
+      type: "dynamic-tool",
     },
-    { ...base, type: "dynamic-tool", state: "input-available" },
+    { ...base, state: "input-available", type: "dynamic-tool" },
     {
       ...base,
-      type: "dynamic-tool",
-      state: "output-available",
       output: "partial result",
       partial: true,
+      state: "output-available",
+      type: "dynamic-tool",
     },
   ];
   for (const part of parts) {
@@ -223,19 +223,19 @@ it("preserves streaming and partial published tool content without runtime field
 it("projects the original native model without private turn identities", () => {
   const messages = sharedEveMessages([
     {
-      type: "message.received",
-      meta: { id: "q", at: "2026-09-12T00:00:00Z" },
       data: { message: "Question", sequence: 0, turnId: "turn_0" },
+      meta: { at: "2026-09-12T00:00:00Z", id: "q" },
+      type: "message.received",
     },
     {
-      type: "step.started",
-      meta: { id: "s", at: "2026-09-12T00:00:00Z" },
       data: {
+        modelId: "gateway/google/gemini-2.5-flash-lite",
         sequence: 1,
         stepIndex: 0,
         turnId: "turn_0",
-        modelId: "gateway/google/gemini-2.5-flash-lite",
       },
+      meta: { at: "2026-09-12T00:00:00Z", id: "s" },
+      type: "step.started",
     },
   ]);
   expect(

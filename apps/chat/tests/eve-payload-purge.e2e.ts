@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -71,8 +74,8 @@ test("purge requires fences, removes every native payload table, isolates other 
   const inventory = await fenceEvePostgresSession(query, root);
   await purgeEvePostgresQueue(query, { ...input, runIds: inventory.runIds });
   const receipt = await purgeEvePostgresSessionPayloads(query, input);
-  expect(receipt.runIds).toEqual([root, child].sort());
-  expect(receipt.streamIds).toEqual([root, child].sort());
+  expect(receipt.runIds).toEqual([root, child].toSorted());
+  expect(receipt.streamIds).toEqual([root, child].toSorted());
   for (const table of tables) {
     expect(
       await query`select run_id from ${query(`workflow.${table}`)} where run_id in ${query([root, child])}`
@@ -94,9 +97,9 @@ test("queued payloads prevent removal until queue cleanup completes", async () =
   const root = await fixture();
   const envelope = {
     attempt: 1,
-    messageId: crypto.randomUUID(),
-    id: "fixture",
     data: Buffer.from(JSON.stringify({ runId: root })).toString("base64"),
+    id: "fixture",
+    messageId: crypto.randomUUID(),
   };
   await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
   const inventory = await fenceEvePostgresSession(query, root);
@@ -119,14 +122,14 @@ test("queue-discovered native runs remain in the payload inventory after queue r
   const detached = await fixture();
   const envelope = {
     attempt: 1,
-    messageId: crypto.randomUUID(),
-    id: "fixture",
     data: Buffer.from(
       JSON.stringify({
         runId: detached,
         runInput: { attributes: { $parentRunId: root } },
       })
     ).toString("base64"),
+    id: "fixture",
+    messageId: crypto.randomUUID(),
   };
   await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
   const inventory = await fenceEvePostgresSession(query, root);
@@ -139,8 +142,8 @@ test("queue-discovered native runs remain in the payload inventory after queue r
   const receipt = await purgeEveNativeSession(env.DATABASE_URL, input, () =>
     Promise.resolve()
   );
-  expect(receipt.runIds).toEqual([root, detached].sort());
-  expect(receipt.streamIds).toEqual([root, detached].sort());
+  expect(receipt.runIds).toEqual([root, detached].toSorted());
+  expect(receipt.streamIds).toEqual([root, detached].toSorted());
   expect(
     await query`select id from workflow.workflow_runs where id = ${detached}`
   ).toEqual([]);
@@ -152,7 +155,7 @@ test("native coordinator retains retirement across failure and retries after pay
   let retirements = 0;
   await expect(
     purgeEveNativeSession(env.DATABASE_URL, scope, () => {
-      retirements++;
+      retirements += 1;
       return Promise.reject(new Error("unsettled usage"));
     })
   ).rejects.toThrow("unsettled usage");
@@ -164,7 +167,7 @@ test("native coordinator retains retirement across failure and retries after pay
   await query`update workflow.workflow_runs set status = 'running' where id = ${child}`;
   await expect(
     purgeEveNativeSession(env.DATABASE_URL, scope, () => {
-      retirements++;
+      retirements += 1;
       return Promise.resolve();
     })
   ).rejects.toThrow();
@@ -179,7 +182,7 @@ test("native coordinator retains retirement across failure and retries after pay
     scope,
     shouldNotRetire
   );
-  expect(receipt.runIds).toEqual([root, child].sort());
+  expect(receipt.runIds).toEqual([root, child].toSorted());
   expect(
     await purgeEveNativeSession(env.DATABASE_URL, scope, shouldNotRetire)
   ).toEqual(receipt);
@@ -191,7 +194,7 @@ test("concurrent native cleanup attempts retire once and share the completed rec
   const scope = { sessionId: root, taskIdentifier: task };
   let retirements = 0;
   const retire = () => {
-    retirements++;
+    retirements += 1;
     return Promise.resolve();
   };
   const receipts = await Promise.all([
@@ -252,7 +255,7 @@ test("preparation keeps native payloads for inventory and recovers the same iden
   const scope = { sessionId: root, taskIdentifier: task };
   let retirements = 0;
   const retire = () => {
-    retirements++;
+    retirements += 1;
     return Promise.resolve();
   };
   const inventory = await prepareEveNativeSessionPurge(
@@ -260,8 +263,8 @@ test("preparation keeps native payloads for inventory and recovers the same iden
     scope,
     retire
   );
-  expect(inventory.runIds).toEqual([root, child, queued].sort());
-  expect(inventory.streamIds).toEqual([root, child, queued].sort());
+  expect(inventory.runIds).toEqual([root, child, queued].toSorted());
+  expect(inventory.streamIds).toEqual([root, child, queued].toSorted());
   for (const table of tables) {
     expect(
       await query`select run_id from ${query(`workflow.${table}`)} where run_id in ${query([root, child])}`
@@ -321,10 +324,10 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   const root = await fixture();
   const child = await fixture(root);
   await query`update workflow.workflow_runs set name = 'workflow//eve//workflowEntry' where id in ${query([root, child])}`;
-  const input = { sessionId: root, runIds: [root, child], appRoot: "/fixture" };
+  const input = { appRoot: "/fixture", runIds: [root, child], sessionId: root };
   let reads = 0;
   const verify = () => {
-    reads++;
+    reads += 1;
     return Promise.resolve();
   };
   await expect(verifyEveSandboxCoverage(query, input, verify)).rejects.toThrow(
@@ -347,13 +350,13 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
     await query`select session_id from workflow.eve_sandbox_coverage where session_id = ${root}`
   ).toHaveLength(0);
   expect(await verifyEveSandboxCoverage(query, input, verify)).toEqual(
-    [root, child].sort()
+    [root, child].toSorted()
   );
   expect(reads).toBe(2);
   await purgeEvePostgresQueue(query, {
+    runIds: inventory.runIds,
     sessionId: root,
     taskIdentifier: task,
-    runIds: inventory.runIds,
   });
   await purgeEvePostgresSessionPayloads(query, {
     sessionId: root,
@@ -363,7 +366,7 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
     await verifyEveSandboxCoverage(query, input, () => {
       throw new Error("must use saved proof");
     })
-  ).toEqual([root, child].sort());
+  ).toEqual([root, child].toSorted());
   await expect(
     verifyEveSandboxCoverage(query, { ...input, appRoot: "/other" }, verify)
   ).rejects.toThrow("scope changed");
@@ -378,7 +381,7 @@ test("unknown workflow coverage never calls the ownership verifier", async () =>
   await expect(
     verifyEveSandboxCoverage(
       query,
-      { sessionId: root, runIds: [root], appRoot: "/fixture" },
+      { appRoot: "/fixture", runIds: [root], sessionId: root },
       () => {
         called = true;
         return Promise.resolve();

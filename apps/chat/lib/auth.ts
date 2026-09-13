@@ -33,19 +33,18 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  trustedOrigins: [
-    baseUrl,
-    // Vercel URL for preview branches
-    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
-    config.appUrl,
-    ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
+  plugins: [
+    lastLoginMethod(),
+    nextCookies(),
+    ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
   ],
   secret: env.AUTH_SECRET,
 
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes - reduces database queries for session validation
+      // 5 minutes - reduces database queries for session validation
+      maxAge: 60 * 5,
     },
   },
 
@@ -81,12 +80,14 @@ export const auth = betterAuth({
         ? { clientId: vercelId, clientSecret: vercelSecret }
         : undefined;
 
-    return { google, github, vercel } as const;
+    return { github, google, vercel } as const;
   })(),
-  plugins: [
-    lastLoginMethod(),
-    nextCookies(),
-    ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
+  trustedOrigins: [
+    baseUrl,
+    // Vercel URL for preview branches
+    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+    config.appUrl,
+    ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
   ],
 });
 

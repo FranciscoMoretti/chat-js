@@ -1,10 +1,6 @@
 import { Settings2, X } from "lucide-react";
-import {
-  createElement,
-  type Dispatch,
-  type SetStateAction,
-  useState,
-} from "react";
+import { createElement, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import {
   DropdownMenu,
@@ -22,7 +18,7 @@ import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
-export function ResponsiveTools({
+export const ResponsiveTools = ({
   tools,
   setTools,
   selectedModelId,
@@ -32,7 +28,7 @@ export function ResponsiveTools({
   setTools: Dispatch<SetStateAction<UiToolName | null>>;
   selectedModelId: string;
   disabled?: boolean;
-}) {
+}) => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const [showLoginPopover, setShowLoginPopover] = useState(false);
@@ -155,4 +151,4 @@ export function ResponsiveTools({
       )}
     </div>
   );
-}
+};

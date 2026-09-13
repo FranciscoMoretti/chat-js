@@ -1,6 +1,10 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -24,19 +28,19 @@ test("compiled idle capture preserves native history and exact document revision
   test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   const token = crypto.randomUUID().slice(0, 8).toUpperCase();
   const message = `Reply with exactly ${token} in plain text. Do not invoke any tools.`;
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message,
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.status()).toBe(200);
   const source = conversationBinding.parse(await created.json());
@@ -50,36 +54,36 @@ test("compiled idle capture preserves native history and exact document revision
     .from(eveConversation)
     .where(eq(eveConversation.id, source.id));
   const document = {
-    ownerId: binding.ownerId,
+    content: "Captured document",
     conversationId: source.id,
     documentId: crypto.randomUUID(),
-    operationId: crypto.randomUUID(),
     expectedRevisionId: null,
-    turnIndex: 0,
-    title: "Idle checkpoint fixture",
-    content: "Captured document",
     kind: "text" as const,
+    operationId: crypto.randomUUID(),
+    ownerId: binding.ownerId,
+    title: "Idle checkpoint fixture",
+    turnIndex: 0,
   };
   const original = await saveEveDocumentRevision(document);
   const workerRoot = await realpath(process.cwd());
   async function birthIdentity(sessionId: string) {
     return JSON.parse(
       await readFile(
-        join(
+        path.join(
           workerRoot,
           ".eve",
           "sandbox-identities",
           `${createHash("sha256").update(sessionId).digest("hex")}.json`
         ),
-        "utf8"
+        "utf-8"
       )
     );
   }
   const sourceIdentity = await birthIdentity(source.sessionId);
   expect(sourceIdentity).toMatchObject({
-    version: 1,
     appRoot: workerRoot,
     sessionId: source.sessionId,
+    version: 1,
   });
   const captureRequests: { checkpointId: string; beforeTurnId: string }[] = [];
   let groupRequests = 0;
@@ -101,10 +105,10 @@ test("compiled idle capture preserves native history and exact document revision
         await saveEveDocumentRevision(
           {
             ...document,
-            operationId: crypto.randomUUID(),
-            expectedRevisionId: original.id,
-            turnIndex: null,
             content: "Later source edit",
+            expectedRevisionId: original.id,
+            operationId: crypto.randomUUID(),
+            turnIndex: null,
           },
           undefined,
           [0]
@@ -118,16 +122,16 @@ test("compiled idle capture preserves native history and exact document revision
   );
   await page.getByRole("combobox").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-  await page.getByRole("button", { name: "1×", exact: true }).click();
-  await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
   await page.keyboard.press("Escape");
   const followUp =
     "Repeat your previous answer verbatim, as plain text. Do not add commentary or call tools.";
   await page.locator('[contenteditable="true"]').fill(followUp);
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const recover = page.getByRole("button", {
-    name: "Recover comparison",
     exact: true,
+    name: "Recover comparison",
   });
   await expect(recover).toBeEnabled();
   expect(groupRequests).toBe(0);
@@ -137,19 +141,19 @@ test("compiled idle capture preserves native history and exact document revision
     storageKey
   );
   expect(JSON.parse(saved ?? "null")).toMatchObject({
+    fork: { conversationId: source.id, ...captureRequests[0] },
     message: followUp,
     modelIds: ["google/gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite"],
-    fork: { conversationId: source.id, ...captureRequests[0] },
   });
   await page.reload();
   await expect(recover).toBeEnabled();
   expect(groupRequests).toBe(0);
   await expect(
-    page.getByRole("button", { name: "Send", exact: true })
+    page.getByRole("button", { exact: true, name: "Send" })
   ).toBeDisabled();
   await page.screenshot({
-    path: testInfo.outputPath("follow-up-recovery.png"),
     animations: "disabled",
+    path: testInfo.outputPath("follow-up-recovery.png"),
   });
   let groupPayload: unknown;
   await page.route("**/api/agent-response-groups", async (route) => {
@@ -199,47 +203,47 @@ test("compiled idle capture preserves native history and exact document revision
   ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await page.screenshot({
+    animations: "disabled",
     path: testInfo.outputPath("idle-follow-up.png"),
-    animations: "disabled",
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await page.screenshot({
-    path: testInfo.outputPath("follow-up-mobile.png"),
     animations: "disabled",
+    path: testInfo.outputPath("follow-up-mobile.png"),
   });
   expect(
     await page.evaluate(
       () => window.document.documentElement.scrollWidth <= innerWidth
     )
   ).toBe(true);
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ height: 720, width: 1280 });
   await page.unroute("**/api/agent-response-groups");
   await page.route("**/api/agent-response-groups", (route) => {
     const input = route.request().postDataJSON();
     return route.fulfill({
       json: {
-        id: crypto.randomUUID(),
         candidates: input.modelIds.map((modelId: string) => ({
           modelId,
           operationId: crypto.randomUUID(),
           state: "rejected",
           error: "Fixture model unavailable",
         })),
+        id: crypto.randomUUID(),
       },
     });
   });
   await page
-    .getByRole("group", { name: "Message composer", exact: true })
+    .getByRole("group", { exact: true, name: "Message composer" })
     .getByRole("combobox")
     .click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-  await page.getByRole("button", { name: "1×", exact: true }).click();
-  await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
   await page.keyboard.press("Escape");
   await page
     .locator('[contenteditable="true"]')
     .fill("Retain this rejected follow-up");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Fixture model unavailable" })
   ).toBeVisible();
@@ -248,7 +252,7 @@ test("compiled idle capture preserves native history and exact document revision
     "Retain this rejected follow-up"
   );
   await expect(
-    page.getByRole("button", { name: "Send", exact: true })
+    page.getByRole("button", { exact: true, name: "Send" })
   ).toBeEnabled();
 });
 
@@ -258,17 +262,17 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
 }, testInfo) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash-lite" },
   });
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message: "Reply exactly checkpoint-source-ready. Do not call tools.",
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const source = conversationBinding.parse(await created.json());
@@ -304,9 +308,9 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
       checkpoint = route.request().postDataJSON();
       // Another tab wins the next turn before the saved checkpoint reaches the worker.
       await other
-        .getByRole("textbox", { name: "Message", exact: true })
+        .getByRole("textbox", { exact: true, name: "Message" })
         .fill("Reply exactly checkpoint-source-advanced. Do not call tools.");
-      await other.getByRole("button", { name: "Send", exact: true }).click();
+      await other.getByRole("button", { exact: true, name: "Send" }).click();
       await expect(other.locator(".is-assistant").last()).toContainText(
         "checkpoint-source-advanced",
         { timeout: 20_000 }
@@ -316,8 +320,8 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
       expect(rejected.status()).toBe(409);
       expect(await rejected.json()).toMatchObject({
         checkpointRejected: true,
-        reason: "source_advanced",
         conversationId: source.id,
+        reason: "source_advanced",
         ...checkpoint,
       });
       await route.fulfill({ response: rejected });
@@ -326,14 +330,14 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
   try {
     await page.getByTestId("model-selector").click();
     await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-    await page.getByRole("button", { name: "1×", exact: true }).click();
-    await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "1×" }).click();
+    await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
     await page.keyboard.press("Escape");
     const draft = "Keep this comparison draft after the source advances.";
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill(draft);
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByText(
         "The conversation changed before the comparison could start.",
@@ -343,13 +347,13 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     expect(groups).toBe(0);
     expect(checkpoint?.beforeTurnId).toBe("turn_1");
     await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
+      page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText(draft);
     await expect(
-      page.getByRole("button", { name: "Send", exact: true })
+      page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();
     await expect(
-      page.getByRole("button", { name: "Recover comparison", exact: true })
+      page.getByRole("button", { exact: true, name: "Recover comparison" })
     ).toHaveCount(0);
     expect(
       await page.evaluate(
@@ -360,7 +364,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     // The durable rejection remains terminal when its exact identity is retried.
     const repeated = await page.request.post(
       `/api/agent-conversations/${source.id}/checkpoint`,
-      { headers: { origin }, data: checkpoint }
+      { data: checkpoint, headers: { origin } }
     );
     expect(repeated.status()).toBe(409);
     expect(await repeated.json()).toMatchObject({
@@ -372,15 +376,15 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
       .getByRole("alert")
       .filter({ hasText: "The conversation changed" })
       .screenshot({
-        path: testInfo.outputPath("checkpoint-rejected.png"),
         animations: "disabled",
+        path: testInfo.outputPath("checkpoint-rejected.png"),
       });
     await page.reload();
     await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
+      page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText(draft);
     await expect(
-      page.getByRole("button", { name: "Send", exact: true })
+      page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();
     expect(groups).toBe(0);
   } finally {

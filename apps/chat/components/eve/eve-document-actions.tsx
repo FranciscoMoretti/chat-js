@@ -9,7 +9,7 @@ import {
   ArtifactActions,
 } from "@/components/ai-elements/artifact";
 
-export function EveDocumentActions({
+export const EveDocumentActions = ({
   kind,
   content,
   canCompare,
@@ -21,8 +21,8 @@ export function EveDocumentActions({
   canCompare: boolean;
   comparing: boolean;
   onCompare: () => void;
-}) {
-  async function copy() {
+}) => {
+  const copy = async () => {
     try {
       let copied = content;
       if (kind === "sheet") {
@@ -38,7 +38,7 @@ export function EveDocumentActions({
         "Could not copy. Check your browser's clipboard permissions."
       );
     }
-  }
+  };
   return (
     <ArtifactActions className="shrink-0">
       {kind === "text" && (
@@ -57,4 +57,4 @@ export function EveDocumentActions({
       />
     </ArtifactActions>
   );
-}
+};

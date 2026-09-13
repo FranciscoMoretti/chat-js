@@ -11,7 +11,7 @@ import { useTRPC } from "@/trpc/react";
 import { ModelsTable } from "./models-table";
 import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
 
-export function ModelsSettings() {
+export const ModelsSettings = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -45,4 +45,4 @@ export function ModelsSettings() {
       </SettingsPageScrollArea>
     </SettingsPageContent>
   );
-}
+};

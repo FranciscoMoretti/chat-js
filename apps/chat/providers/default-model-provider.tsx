@@ -2,12 +2,12 @@
 
 import {
   createContext,
-  type ReactNode,
   useCallback,
   useContext,
   useMemo,
   useState,
 } from "react";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import type { AppModelId } from "@/lib/ai/app-models";
@@ -26,10 +26,10 @@ interface DefaultModelClientProviderProps {
   defaultModel: AppModelId;
 }
 
-export function DefaultModelProvider({
+export const DefaultModelProvider = ({
   children,
   defaultModel: initialModel,
-}: DefaultModelClientProviderProps) {
+}: DefaultModelClientProviderProps) => {
   const [currentModel, setCurrentModel] = useState<AppModelId>(initialModel);
 
   const changeModel = useCallback(
@@ -40,11 +40,11 @@ export function DefaultModelProvider({
       try {
         // Update cookies for persistence
         await fetch("/api/chat-model", {
-          method: "POST",
+          body: JSON.stringify({ model: modelId }),
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ model: modelId }),
+          method: "POST",
         });
       } catch (error) {
         console.error("Failed to save chat model:", error);
@@ -58,8 +58,8 @@ export function DefaultModelProvider({
 
   const value = useMemo(
     () => ({
-      defaultModel: currentModel,
       changeModel,
+      defaultModel: currentModel,
     }),
     [currentModel, changeModel]
   );
@@ -69,9 +69,9 @@ export function DefaultModelProvider({
       {children}
     </DefaultModelContext.Provider>
   );
-}
+};
 
-export function useDefaultModel() {
+export const useDefaultModel = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -79,9 +79,9 @@ export function useDefaultModel() {
     );
   }
   return context.defaultModel;
-}
+};
 
-export function useModelChange() {
+export const useModelChange = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -89,4 +89,4 @@ export function useModelChange() {
     );
   }
   return context.changeModel;
-}
+};

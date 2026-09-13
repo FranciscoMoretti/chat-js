@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 
-import postgres, { type Sql } from "postgres";
+import postgres from "postgres";
+import type { Sql } from "postgres";
 import { z } from "zod";
 
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
@@ -12,12 +13,16 @@ const savedSchema = z.object({
 });
 
 /** Internal: caller authorizes the deleting family and canonical worker root. */
-export async function verifyEveSandboxCoverage(
+export const verifyEveSandboxCoverage = async (
   connection: Sql,
-  input: { sessionId: string; runIds: string[]; appRoot: string },
+  input: {
+    sessionId: string;
+    runIds: string[];
+    appRoot: string;
+  },
   verifyIdentity: (sessionId: string) => Promise<void>
-) {
-  const runIds = [...new Set(input.runIds)].sort();
+) => {
+  const runIds = [...new Set(input.runIds)].toSorted();
   if (!runIds.includes(input.sessionId)) {
     throw new Error("Sandbox coverage is missing its root session.");
   }
@@ -45,7 +50,7 @@ export async function verifyEveSandboxCoverage(
         input.sessionId,
         runIds
       );
-      const actual = inventory.runs.map((run) => run.id).sort();
+      const actual = inventory.runs.map((run) => run.id).toSorted();
       if (
         !isDeepStrictEqual(actual, runIds) ||
         inventory.activeRunIds.length ||
@@ -68,27 +73,28 @@ export async function verifyEveSandboxCoverage(
           "Fence native writers before verifying sandbox ownership."
         );
       }
-      const sessionIds = inventory.sandboxCoverage.sessionIds;
+      const { sessionIds } = inventory.sandboxCoverage;
       if (!sessionIds.includes(input.sessionId)) {
         throw new Error(
           "The deletion root is not a known sandbox-owning session."
         );
       }
       for (const sessionId of sessionIds) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         await verifyIdentity(sessionId);
       }
       await query`insert into workflow.eve_sandbox_coverage(session_id, app_root, run_ids, sandbox_session_ids) values (${input.sessionId}, ${input.appRoot}, ${query.array(runIds)}::text[], ${query.array(sessionIds)}::text[])`;
       return sessionIds;
     }
   );
-}
+};
 
 /** Only call after authorizing the owner of rootSessionId's deleting binding. */
-export async function isFencedEveDescendant(
+export const isFencedEveDescendant = async (
   databaseUrl: string,
   rootSessionId: string,
   sessionId: string
-) {
+) => {
   const connection = postgres(databaseUrl, { max: 1 });
   try {
     return await connection.begin(
@@ -121,4 +127,4 @@ export async function isFencedEveDescendant(
   } finally {
     await connection.end();
   }
-}
+};

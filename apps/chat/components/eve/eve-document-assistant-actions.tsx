@@ -10,12 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  type DocumentAssistantRequest,
   documentAssistantActions,
   documentAssistantRequest,
 } from "@/lib/eve/document-assistant-actions";
+import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
 
-export function EveDocumentAssistantActions({
+export const EveDocumentAssistantActions = ({
   kind,
   documentId,
   revisionId,
@@ -27,7 +27,7 @@ export function EveDocumentAssistantActions({
   revisionId: string;
   disabled: boolean;
   onAction: (request: DocumentAssistantRequest) => Promise<void>;
-}) {
+}) => {
   const actions = documentAssistantActions(kind);
   if (actions.length === 0) {
     return null;
@@ -57,4 +57,4 @@ export function EveDocumentAssistantActions({
       </DropdownMenu>
     </div>
   );
-}
+};

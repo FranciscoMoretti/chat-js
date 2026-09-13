@@ -1,0 +1,98 @@
+{
+  "overrides": [
+    {
+      "files": [
+        "apps/site/components/thread-playground-model.ts",
+        "packages/registry/src/gateways/litellm/gateway.ts",
+        "packages/registry/src/gateways/openai-compatible/gateway.ts",
+        "packages/registry/src/gateways/openai/gateway.ts",
+        "packages/registry/src/gateways/openrouter/gateway.ts",
+        "packages/registry/src/gateways/vercel/gateway.ts"
+      ],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/videos/src/story.ts",
+        "apps/videos/src/threads-launch.tsx"
+      ],
+      "rules": {
+        "complexity": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/src/ai-sdk-run-chat.ts"],
+      "rules": {
+        "max-classes-per-file": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/main.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "apps/site/tests/thread-playground.visual.ts",
+        "apps/videos/scripts/stills.ts",
+        "packages/cli/src/helpers/gateway-provider.test.ts",
+        "packages/cli/src/helpers/prompts.ts",
+        "packages/cli/src/utils/preflight.ts",
+        "packages/registry/src/storage/ftp/storage-provider.test.ts"
+      ],
+      "rules": {
+        "no-await-in-loop": "off"
+      }
+    },
+    {
+      "files": ["apps/site/components/thread-playground-model.ts"],
+      "rules": {
+        "no-use-before-define": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/docs/e2e/docs-visual.browser.test.ts",
+        "apps/site/components/thread-playground-model.ts",
+        "packages/cli/src/utils/run-command.ts",
+        "packages/cli/test/gateway-selection.test.ts",
+        "packages/cli/test/run-command.ts"
+      ],
+      "rules": {
+        "promise/avoid-new": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/electron/src/preload.ts",
+        "packages/thread/src/abstract-thread.ts"
+      ],
+      "rules": {
+        "promise/prefer-await-to-callbacks": "off"
+      }
+    },
+    {
+      "files": ["packages/thread/test/use-thread-types.ts"],
+      "rules": {
+        "react/invariant": "off"
+      }
+    },
+    {
+      "files": ["apps/site/components/thread-showcase.tsx"],
+      "rules": {
+        "react/todo": "off"
+      }
+    },
+    {
+      "files": ["apps/site/components/thread-showcase.tsx"],
+      "rules": {
+        "unicorn/consistent-function-scoping": "off"
+      }
+    },
+    {
+      "files": ["apps/electron/forge.config.ts"],
+      "rules": {
+        "unicorn/prefer-module": "off"
+      }
+    }
+  ]
+}

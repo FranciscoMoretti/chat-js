@@ -3,7 +3,7 @@ import { LangfuseExporter } from "langfuse-vercel";
 
 import { config } from "@/lib/config";
 
-export async function register() {
+export const register = async () => {
   registerOTel({
     serviceName: config.appPrefix,
     traceExporter: new LangfuseExporter(),
@@ -13,4 +13,4 @@ export async function register() {
       await import("./lib/eve/local-guest-cleanup-scheduler");
     startLocalEveGuestCleanup();
   }
-}
+};

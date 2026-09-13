@@ -29,7 +29,9 @@
     "electron:build": "bun run build",
     "electron:dev": "bun run dev",
     "electron:make": "bun run make",
-    "electron:publish": "bun run publish"
+    "electron:publish": "bun run publish",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write ."
   },
   "dependencies": {},
   "devDependencies": {

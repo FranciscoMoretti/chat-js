@@ -24,7 +24,7 @@ test("a guest recovers one native creation after its browser loses the reply", a
   await page.goto("/");
   const composer = page.getByLabel("Message", { exact: true });
   await expect(composer).toBeVisible();
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const principal = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
@@ -54,12 +54,12 @@ test("a guest recovers one native creation after its browser loses the reply", a
   let binding: ReturnType<typeof conversationBinding.parse> | undefined;
   try {
     await composer.fill(message);
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     binding = await accepted.promise;
     await expect(page.getByRole("alert")).toBeVisible();
     await page.reload();
     await expect(composer).toHaveText(message);
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(new URL(`/chat/${binding.id}`, origin).href, {
       timeout: 90_000,
     });
@@ -80,11 +80,11 @@ test("a guest recovers one native creation after its browser loses the reply", a
     ).toBeNull();
 
     const client = new Client({
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
       auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
       headers: {
         "x-chatjs-owner": ownerId,
       },
+      host: env.EVE_INTERNAL_ORIGIN ?? "",
     });
     const native = client.sessions.attach(binding.sessionId);
     const snapshot = await native.snapshot({
@@ -126,9 +126,9 @@ test("a guest recovers one native creation after its browser loses the reply", a
             return [200, 404].includes(response.status());
           },
           {
+            intervals: [1000, 2000, 5000],
             message: "Guest recovery fixture family cleanup must complete",
             timeout: 90_000,
-            intervals: [1000, 2000, 5000],
           }
         )
         .toBe(true);

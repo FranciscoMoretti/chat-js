@@ -22,7 +22,7 @@ import { ReasoningPart } from "@/components/part/message-reasoning";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
-import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
+import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
 import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
@@ -37,7 +37,7 @@ import { EveMcpResult } from "./eve-mcp-result";
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 import { EveToolResult } from "./eve-tool-result";
 
-function PendingInput({
+const PendingInput = ({
   request,
   disabled,
   respond,
@@ -47,7 +47,7 @@ function PendingInput({
   disabled: boolean;
   respond: (response: InputResponse) => void;
   prompt?: string;
-}) {
+}) => {
   const [text, setText] = useState("");
   return (
     <div className="space-y-3">
@@ -58,7 +58,7 @@ function PendingInput({
             disabled={disabled}
             key={option.id}
             onClick={() =>
-              respond({ requestId: request.requestId, optionId: option.id })
+              respond({ optionId: option.id, requestId: request.requestId })
             }
             type="button"
             variant={option.style === "danger" ? "outline" : "default"}
@@ -91,12 +91,12 @@ function PendingInput({
       )}
     </div>
   );
-}
+};
 
-function toolStatus(
+const toolStatus = (
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>,
   confirmed: boolean
-) {
+) => {
   if (confirmed) {
     return "Note confirmed.";
   }
@@ -113,9 +113,11 @@ function toolStatus(
     return "Tool completed.";
   }
   return "Working…";
-}
+};
 
-function Part({
+// This renderer handles all streamed EVE part variants and their recovery states.
+// oxlint-disable-next-line eslint/complexity
+const Part = ({
   messageId,
   isReadonly,
   part,
@@ -127,7 +129,7 @@ function Part({
   part: EveMessagePart;
   disabled: boolean;
   respond: (response: InputResponse) => void;
-}) {
+}) => {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
   }
@@ -148,6 +150,19 @@ function Part({
   if (part.type !== "dynamic-tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
+  if (
+    getEveInstalledToolRenderer(`tool-${part.toolName}`) &&
+    part.state !== "approval-requested" &&
+    part.state !== "approval-responded"
+  ) {
+    return (
+      <EveToolResult
+        isReadonly={isReadonly}
+        messageId={messageId}
+        part={part}
+      />
+    );
+  }
   if (isEvePlatformTool(part.toolName)) {
     return (
       <EvePlatformToolResult
@@ -163,19 +178,6 @@ function Part({
   ) {
     return (
       <EveDocumentTool
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
-    );
-  }
-  if (
-    getInstalledToolRenderer(`tool-${part.toolName}`) &&
-    part.state !== "approval-requested" &&
-    part.state !== "approval-responded"
-  ) {
-    return (
-      <EveToolResult
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}
@@ -221,8 +223,10 @@ function Part({
       )}
     </section>
   );
-}
-export function EveMessages({
+};
+// This renderer coordinates transcript grouping, actions, and streamed tool states.
+// oxlint-disable-next-line eslint/complexity
+export const EveMessages = ({
   conversationId,
   messages,
   isReadonly,
@@ -242,8 +246,9 @@ export function EveMessages({
   onRegenerate?: (message: EveMessage, response: EveMessage) => void;
   disabled: boolean;
   respond: (response: InputResponse) => void;
-}) {
+}) => {
   let precedingUser: EveMessage | undefined;
+  // oxlint-disable-next-line eslint/complexity -- A transcript row renders all message actions and streamed content states together.
   return messages.map((message) => {
     const userMessage = precedingUser;
     if (message.role === "user") {
@@ -336,4 +341,4 @@ export function EveMessages({
       </Message>
     );
   });
-}
+};

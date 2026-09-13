@@ -1,3 +1,1 @@
-import { tencent } from "files-sdk/tencent";
-
-export const createStorageAdapter = tencent;
+export { tencent as createStorageAdapter } from "files-sdk/tencent";

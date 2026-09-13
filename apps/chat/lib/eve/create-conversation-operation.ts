@@ -4,8 +4,8 @@ import { canSpend } from "@/lib/db/credits";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import {
-  CreationConflict,
-  CreationProjectNotFound,
+  CreationConflictError,
+  CreationProjectNotFoundError,
   createEveConversation,
   getEveConversation,
   getEveCreation,
@@ -25,11 +25,60 @@ import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import { eveCreationContentHash } from "./creation-content-hash";
 import { eveToolMetadata } from "./message-tool-selection";
 
-export async function createEveConversationOperation(
+const resolveFork = async (
+  ownerId: string,
+  input: EveForkInput | undefined
+) => {
+  if (!input) {
+    return;
+  }
+  const source = await getEveConversation(ownerId, input.conversationId);
+  if (!source?.sessionId || source.state !== "bound") {
+    return Response.json(
+      { creationRejected: true, error: "Source conversation not found." },
+      { status: 404 }
+    );
+  }
+  if (input.beforeMessageId) {
+    return {
+      beforeMessageId: input.beforeMessageId,
+      sessionId: source.sessionId,
+    };
+  }
+  return {
+    beforeTurnId: input.beforeTurnId,
+    sessionId: source.sessionId,
+    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
+  };
+};
+
+const creationFailure = (cause: unknown) => {
+  if (cause instanceof CreationProjectNotFoundError) {
+    return Response.json(
+      {
+        code: "project_not_found",
+        creationRejected: true,
+        error: cause.message,
+      },
+      { status: 404 }
+    );
+  }
+  return Response.json(
+    {
+      error:
+        cause instanceof CreationConflictError
+          ? cause.message
+          : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
+    },
+    { status: 409 }
+  );
+};
+
+export const createEveConversationOperation = async (
   ownerId: string,
   input: z.infer<typeof createConversationInput>,
   guestReservationId?: string
-) {
+) => {
   try {
     assertEveConfigured();
   } catch {
@@ -42,7 +91,6 @@ export async function createEveConversationOperation(
   if (fork instanceof Response) {
     return fork;
   }
-
   let preparedMessage:
     | Awaited<ReturnType<typeof prepareEveMessage>>
     | undefined;
@@ -51,9 +99,9 @@ export async function createEveConversationOperation(
     if (existing?.creationKind === "copy") {
       return Response.json(
         {
+          creationRejected: true,
           error:
             "This operation belongs to a saved copy. Resume the copy operation instead.",
-          creationRejected: true,
         },
         { status: 409 }
       );
@@ -61,9 +109,9 @@ export async function createEveConversationOperation(
     if (existing?.state === "deleting" || existing?.state === "deleted") {
       return Response.json(
         {
-          error: "This conversation has been deleted.",
-          creationRejected: true,
           code: "conversation_deleted",
+          creationRejected: true,
+          error: "This conversation has been deleted.",
         },
         { status: 404 }
       );
@@ -76,8 +124,8 @@ export async function createEveConversationOperation(
       } catch {
         return Response.json(
           {
-            error: "This model or attachment is not available for chat.",
             creationRejected: true,
+            error: "This model or attachment is not available for chat.",
           },
           { status: 400 }
         );
@@ -146,14 +194,14 @@ export async function createEveConversationOperation(
           ownerId,
           "/eve/v1/session",
           {
-            method: "POST",
-            signal: AbortSignal.timeout(30_000),
             body: JSON.stringify({
+              fork,
               message: preparedMessage,
               messageMetadata: eveToolMetadata(input.selectedTool),
               operationId,
-              fork,
             }),
+            method: "POST",
+            signal: AbortSignal.timeout(30_000),
           },
           input.modelId,
           input.selectedTool
@@ -166,65 +214,19 @@ export async function createEveConversationOperation(
           .parse(await result.json()).sessionId;
       },
       {
+        fileKeys: eveMessageFileKeys(input.message),
+        fork: input.fork,
         guestReservationId,
-        initialModelId: input.modelId,
         initialContentHash: eveCreationContentHash(
           input.message,
           input.selectedTool
         ),
-        fork: input.fork,
-        fileKeys: eveMessageFileKeys(input.message),
+        initialModelId: input.modelId,
         initialProjectId: input.projectId,
       }
     );
     return Response.json(binding);
-  } catch (cause) {
-    return creationFailure(cause);
+  } catch (error) {
+    return creationFailure(error);
   }
-}
-
-function creationFailure(cause: unknown) {
-  if (cause instanceof CreationProjectNotFound) {
-    return Response.json(
-      {
-        error: cause.message,
-        creationRejected: true,
-        code: "project_not_found",
-      },
-      { status: 404 }
-    );
-  }
-  return Response.json(
-    {
-      error:
-        cause instanceof CreationConflict
-          ? cause.message
-          : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
-    },
-    { status: 409 }
-  );
-}
-
-async function resolveFork(ownerId: string, input: EveForkInput | undefined) {
-  if (!input) {
-    return undefined;
-  }
-  const source = await getEveConversation(ownerId, input.conversationId);
-  if (!source?.sessionId || source.state !== "bound") {
-    return Response.json(
-      { error: "Source conversation not found.", creationRejected: true },
-      { status: 404 }
-    );
-  }
-  if (input.beforeMessageId) {
-    return {
-      sessionId: source.sessionId,
-      beforeMessageId: input.beforeMessageId,
-    };
-  }
-  return {
-    sessionId: source.sessionId,
-    beforeTurnId: input.beforeTurnId,
-    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
-  };
-}
+};

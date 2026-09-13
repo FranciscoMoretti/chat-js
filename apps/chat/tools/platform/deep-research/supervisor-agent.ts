@@ -5,23 +5,33 @@ import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 
 import { leadResearcherPrompt } from "./prompts";
 import { runResearcher } from "./researcher-agent";
-import { type AgentOptions, createTelemetry } from "./types";
+import { createTelemetry } from "./types";
+import type { AgentOptions } from "./types";
 import { getTodayStr } from "./utils";
 
-export async function runSupervisor(
+export const runSupervisor = async (
   researchBrief: string,
   options: AgentOptions
-): Promise<string[]> {
-  const { config, dataStream, toolCallId, abortSignal } = options;
+): Promise<string[]> => {
+  const { abortSignal, config, dataStream, toolCallId } = options;
   const model = await options.getLanguageModel(
     config.research_model as ModelId
   );
 
   // Sequential execution queue to avoid streaming race conditions and rate limits
-  let researchQueue = Promise.resolve<unknown>(undefined);
+  let researchQueue: Promise<unknown> = Promise.resolve();
 
   const conductResearchTool = tool({
     description: "Call this tool to conduct research on a specific topic.",
+    execute: ({ research_topic }) => {
+      const previousResearch = researchQueue;
+      const currentResearch = (async () => {
+        await previousResearch;
+        return runResearcher(research_topic, options);
+      })();
+      researchQueue = currentResearch;
+      return currentResearch;
+    },
     inputSchema: z.object({
       research_topic: z
         .string()
@@ -29,36 +39,25 @@ export async function runSupervisor(
           "The topic to research. Should be a single topic, and should be described in high detail (at least a paragraph)."
         ),
     }),
-    execute: ({ research_topic }) => {
-      researchQueue = researchQueue.then(() =>
-        runResearcher(research_topic, options)
-      );
-      return researchQueue as Promise<string>;
-    },
   });
 
   const researchCompleteTool = tool({
     description: "Call this tool to indicate that the research is complete.",
+    execute: () => "Research marked as complete.",
     inputSchema: z.object({}),
-    execute: async () => "Research marked as complete.",
   });
 
   // max_researcher_iterations + 1 to account for the final researchComplete step
   const maxSteps = config.max_researcher_iterations + 1;
 
   const supervisorAgent = new ToolLoopAgent({
-    model,
+    ...createTelemetry("supervisor", options),
     instructions: leadResearcherPrompt({
       date: getTodayStr(),
       max_concurrent_research_units: config.max_concurrent_research_units,
     }),
-    tools: {
-      conductResearch: conductResearchTool,
-      researchComplete: researchCompleteTool,
-    },
     maxOutputTokens: config.research_model_max_tokens,
-    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
-    ...createTelemetry("supervisor", options),
+    model,
     onStepEnd: ({ usage, toolCalls }) => {
       if (usage) {
         options.costAccumulator?.addLLMCost(
@@ -77,22 +76,27 @@ export async function runSupervisor(
 
       if (topicsResearched.length > 0) {
         dataStream.write({
-          type: "data-researchUpdate",
           data: {
-            toolCallId,
-            title: "Research tasks completed",
             message: `Researched: ${topicsResearched.join(", ")}`,
-            type: "thoughts",
             status: "completed",
+            title: "Research tasks completed",
+            toolCallId,
+            type: "thoughts",
           },
+          type: "data-researchUpdate",
         });
       }
+    },
+    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
+    tools: {
+      conductResearch: conductResearchTool,
+      researchComplete: researchCompleteTool,
     },
   });
 
   const { steps } = await supervisorAgent.generate({
-    prompt: researchBrief,
     abortSignal,
+    prompt: researchBrief,
   });
 
   return steps.flatMap((step) =>
@@ -100,4 +104,4 @@ export async function runSupervisor(
       .filter((tr) => tr.toolName === "conductResearch")
       .map((tr) => String(tr.output))
   );
-}
+};

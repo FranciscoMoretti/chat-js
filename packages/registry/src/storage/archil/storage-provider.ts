@@ -1,3 +1,1 @@
-import { archil } from "files-sdk/archil";
-
-export const createStorageAdapter = archil;
+export { archil as createStorageAdapter } from "files-sdk/archil";

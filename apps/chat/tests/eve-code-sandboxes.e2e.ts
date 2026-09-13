@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -19,12 +21,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
-const provider = { teamId: "fixture-team", projectId: "fixture-project" };
+const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 await db.insert(user).values({
+  email: `${owner}@test.invalid`,
   id: owner,
   name: "Sandbox ownership",
-  email: `${owner}@test.invalid`,
 });
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
@@ -123,10 +125,10 @@ test("only a retired owned family can inventory confirmed creation", async () =>
   await beginEveConversationDeletion(owner, row.id);
   expect(await listEveCodeSandboxesForDeletion(owner, row.id)).toEqual([
     {
-      name,
+      callId: "confirmed",
       conversationId: row.id,
       creationConfirmed: true,
-      callId: "confirmed",
+      name,
       sessionId: row.sessionId,
     },
   ]);

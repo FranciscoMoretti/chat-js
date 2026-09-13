@@ -9,7 +9,7 @@ import { sameOrigin } from "@/lib/eve/request-policy";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 /** Bootstrap only: no account row, message admission, or monetary credit is created. */
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
@@ -34,4 +34,4 @@ export async function POST(request: Request) {
     { kind: "guest", ownerId: eveGuestOwnerId(credential.tokenHash) },
     { headers }
   );
-}
+};

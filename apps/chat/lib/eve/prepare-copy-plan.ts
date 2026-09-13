@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import { parseSessionTranscriptSeed } from "eve/transcript";
@@ -12,16 +13,15 @@ import type { EveCopyPlan } from "./copy-journal-contract";
 import {
   eveCopyInlineAttachments,
   materializeEveCopyTranscript,
-  type prepareEveCopyTranscript,
 } from "./copy-transcript";
-
+import type { prepareEveCopyTranscript } from "./copy-transcript";
 /** Input is an authorized public projection and ancestry, never browser-supplied content. */
-export async function prepareEveCopyPlan(
+export const prepareEveCopyPlan = async (
   projection: ReturnType<typeof prepareEveCopyTranscript>,
   snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>,
   readPublicFile: (key: string) => Promise<Blob>,
   origin: string
-): Promise<EveCopyPlan> {
+): Promise<EveCopyPlan> => {
   const { documents, checkpoints } = snapshot;
   const resources = eveCopyDocumentResources(documents);
   const allocations = {
@@ -39,7 +39,9 @@ export async function prepareEveCopyPlan(
     ...projection.resources.fileKeys,
     ...resources.fileKeys,
   ])) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
     const source = await readPublicFile(key);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
     const bytes = Buffer.from(await source.arrayBuffer());
     const destination = createFileStorageKey(key);
     allocations.files.set(key, destination);
@@ -110,4 +112,4 @@ export async function prepareEveCopyPlan(
       })
     ),
   };
-}
+};

@@ -24,33 +24,33 @@ export interface ConnectionStatusResult {
 }
 
 export interface DiscoveryResult {
-  prompts: Array<{
+  prompts: {
     name: string;
     description: string | null;
-    arguments: Array<{
+    arguments: {
       name: string;
       description: string | null;
       required: boolean;
-    }>;
-  }>;
-  resources: Array<{
+    }[];
+  }[];
+  resources: {
     name: string;
     uri: string;
     description: string | null;
     mimeType: string | null;
-  }>;
-  tools: Array<{ name: string; description: string | null }>;
+  }[];
+  tools: { name: string; description: string | null }[];
 }
 
 /**
  * Create a cached connection status fetcher for a specific connector.
  * Cache duration: 5 minutes
  */
-export function createCachedConnectionStatus(
+export const createCachedConnectionStatus = (
   connectorId: string,
   fetcher: () => Promise<ConnectionStatusResult>
-) {
-  return unstable_cache(
+) =>
+  unstable_cache(
     () => {
       log.debug({ connectorId }, "Fetching connection status (cache miss)");
       return fetcher();
@@ -61,17 +61,16 @@ export function createCachedConnectionStatus(
       tags: [mcpCacheTags.connectionStatus(connectorId)],
     }
   );
-}
 
 /**
  * Create a cached discovery fetcher for a specific connector.
  * Cache duration: 5 minutes (tools/resources/prompts rarely change)
  */
-export function createCachedDiscovery(
+export const createCachedDiscovery = (
   connectorId: string,
   fetcher: () => Promise<DiscoveryResult>
-) {
-  return unstable_cache(
+) =>
+  unstable_cache(
     () => {
       log.debug({ connectorId }, "Fetching discovery (cache miss)");
       return fetcher();
@@ -82,30 +81,29 @@ export function createCachedDiscovery(
       tags: [mcpCacheTags.discovery(connectorId)],
     }
   );
-}
 
 /**
  * Invalidate connection status cache for a connector.
  * Call this on: auth errors, disconnect, OAuth completion
  */
-function invalidateConnectionStatus(connectorId: string) {
+const invalidateConnectionStatus = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating connection status cache");
   revalidateTag(mcpCacheTags.connectionStatus(connectorId), "max");
-}
+};
 
 /**
  * Invalidate discovery cache for a connector.
  * Call this on: disconnect, OAuth completion, refreshClient
  */
-function invalidateDiscovery(connectorId: string) {
+const invalidateDiscovery = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating discovery cache");
   revalidateTag(mcpCacheTags.discovery(connectorId), "max");
-}
+};
 
 /**
  * Invalidate all MCP caches for a connector.
  */
-export function invalidateAllMcpCaches(connectorId: string) {
+export const invalidateAllMcpCaches = (connectorId: string) => {
   invalidateConnectionStatus(connectorId);
   invalidateDiscovery(connectorId);
-}
+};

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 
-export function KeyboardShortcuts() {
+export const KeyboardShortcuts = () => {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
 
@@ -23,15 +23,16 @@ export function KeyboardShortcuts() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setOpenMobile, router]);
 
-  return null; // This component only handles keyboard events
-}
+  // This component only handles keyboard events
+  return null;
+};
 
 // Helper function to get platform-specific shortcut text
-export function getNewChatShortcutText() {
+export const getNewChatShortcutText = () => {
   if (typeof window === "undefined") {
     return "Ctrl+Shift+O";
   }
 
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
   return isMac ? "Cmd+Shift+O" : "Ctrl+Shift+O";
-}
+};

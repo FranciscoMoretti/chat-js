@@ -17,12 +17,12 @@ interface MessagesPaneProps {
   status: UseChatHelpers<ChatMessage>["status"];
 }
 
-function PureMessagesPane({
+const PureMessagesPane = ({
   chatId,
   status,
   isReadonly,
   className,
-}: MessagesPaneProps) {
+}: MessagesPaneProps) => {
   const parentMessageId = useLastMessageId();
 
   return (
@@ -46,6 +46,6 @@ function PureMessagesPane({
       </div>
     </div>
   );
-}
+};
 
 export const MessagesPane = memo(PureMessagesPane);

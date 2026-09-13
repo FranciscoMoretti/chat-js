@@ -6,8 +6,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     host: siteLinks.home,
     rules: {
-      userAgent: "*",
       allow: "/",
+      userAgent: "*",
     },
     sitemap: [siteLinks.sitemap, siteLinks.docsSitemap],
   };

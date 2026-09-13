@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -31,31 +35,31 @@ const foreignProject = crypto.randomUUID();
 const legacyId = crypto.randomUUID();
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
-    id,
     email: `${id}@test.invalid`,
+    id,
     name: "Project test",
   }))
 );
 await db.insert(project).values([
   {
     id: ownProject,
-    userId: owner,
-    name: "Owner project",
     instructions: "Owner-only instructions",
+    name: "Owner project",
+    userId: owner,
   },
   {
     id: foreignProject,
-    userId: stranger,
-    name: "Foreign project",
     instructions: "Foreign instructions",
+    name: "Foreign project",
+    userId: stranger,
   },
 ]);
 await db.insert(chat).values({
+  createdAt: new Date(),
   id: legacyId,
-  userId: owner,
   projectId: ownProject,
   title: "Legacy fixture",
-  createdAt: new Date(),
+  userId: owner,
 });
 afterAll(async () => {
   await db
@@ -81,16 +85,16 @@ test("assignment, filtered history and removal retain native identity and exclud
   );
   expect(await getEveConversationProject(owner, row.id)).toEqual({
     id: ownProject,
-    name: "Owner project",
     instructions: "Owner-only instructions",
+    name: "Owner project",
   });
   expect(
-    (await listEveConversations(owner, { search: "", projectId: ownProject }))
+    (await listEveConversations(owner, { projectId: ownProject, search: "" }))
       .items
   ).toEqual([expect.objectContaining({ id: row.id, projectId: ownProject })]);
   expect(
     (
-      await listEveConversations(owner, { search: "", projectId: null })
+      await listEveConversations(owner, { projectId: null, search: "" })
     ).items.some((item) => item.id === row.id)
   ).toBe(false);
   expect(
@@ -119,8 +123,8 @@ test("both application checks and database constraints reject cross-owner assign
   expect(
     (
       await listEveConversations(stranger, {
-        search: "",
         projectId: ownProject,
+        search: "",
       })
     ).items
   ).toEqual([]);
@@ -137,7 +141,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   const projectId = crypto.randomUUID();
   await db
     .insert(project)
-    .values({ id: projectId, userId: owner, name: "Disposable project" });
+    .values({ id: projectId, name: "Disposable project", userId: owner });
   const row = await conversation();
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
@@ -147,7 +151,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   );
   expect(
     (
-      await listEveConversations(owner, { search: "", projectId: null })
+      await listEveConversations(owner, { projectId: null, search: "" })
     ).items.some((item) => item.id === row.id)
   ).toBe(true);
   expect(
@@ -193,7 +197,7 @@ test("forks inherit their source project once and retry cannot silently move the
       operationId,
       "Fork fixture",
       async () => crypto.randomUUID(),
-      { fork: { conversationId: source.id, beforeTurnId: "turn_0" } }
+      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
   expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
@@ -224,7 +228,7 @@ test("an unresolved fork retains its project route for creation recovery", async
       operationId,
       "Uncertain fork",
       () => Promise.reject(new Error("Lost creation reply")),
-      { fork: { conversationId: source.id, beforeTurnId: "turn_0" } }
+      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
@@ -244,9 +248,9 @@ test("project creation binds before dispatch and preserves its initial intent th
   const projectId = crypto.randomUUID();
   await db.insert(project).values({
     id: projectId,
-    userId: owner,
-    name: "Creation project",
     instructions: "First turn instructions",
+    name: "Creation project",
+    userId: owner,
   });
   const operationId = crypto.randomUUID();
   const dispatch = vi.fn(async (id: string) => {

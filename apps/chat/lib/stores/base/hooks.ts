@@ -1,5 +1,3 @@
-// biome-ignore-all lint: vendored chat store base.
-
 "use client";
 
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
@@ -10,7 +8,8 @@ import { createContext, useCallback, useContext, useRef } from "react";
 import { useStore } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 import { useShallow } from "zustand/shallow";
-import { createStore, type StateCreator } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla";
+import type { StateCreator, StoreApi } from "zustand/vanilla";
 
 import { debug } from "./debug";
 
@@ -22,10 +21,10 @@ let __lastActionLabel: string | undefined;
 let __clearLastActionTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Batched updates queue with priority
-const __updateQueue: Array<{ callback: () => void; priority: number }> = [];
+const __updateQueue: { callback: () => void; priority: number }[] = [];
 let __batchedUpdateScheduled = false;
 
-function markLastAction(label: string) {
+const markLastAction = (label: string) => {
   __lastActionLabel = label;
   if (typeof window !== "undefined") {
     if (__clearLastActionTimer) {
@@ -37,9 +36,9 @@ function markLastAction(label: string) {
       }
     }, 250);
   }
-}
+};
 
-function batchUpdates(callback: () => void, priority = 0) {
+const batchUpdates = (callback: () => void, priority = 0) => {
   if (typeof window === "undefined") {
     callback();
     return;
@@ -51,7 +50,9 @@ function batchUpdates(callback: () => void, priority = 0) {
     __batchedUpdateScheduled = true;
 
     // Use scheduler if available, otherwise fallback to rAF
-    const scheduler = (window as any).scheduler;
+    const { scheduler } = window as Window & {
+      scheduler?: { postTask?: (callback: () => void) => void };
+    };
     const schedule = scheduler?.postTask
       ? scheduler.postTask.bind(scheduler)
       : window.requestAnimationFrame?.bind(window) ||
@@ -63,18 +64,18 @@ function batchUpdates(callback: () => void, priority = 0) {
 
       // Sort by priority (higher priority first) and execute
       updates.sort((a, b) => b.priority - a.priority);
-      updates.forEach((update) => {
+      for (const update of updates) {
         update.callback();
-      });
+      }
     });
   }
-}
+};
 
-function startFreezeDetector({
+const startFreezeDetector = ({
   thresholdMs = 80,
 }: {
   thresholdMs?: number;
-} = {}): void {
+} = {}): void => {
   if (typeof window === "undefined" || __freezeDetectorStarted) {
     return;
   }
@@ -118,24 +119,24 @@ function startFreezeDetector({
       }
     });
   }
-}
+};
 
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
   startFreezeDetector({ thresholdMs: 80 });
 }
 
 // Enhanced throttle with requestIdleCallback support
-function enhancedThrottle<T extends (...args: any[]) => void>(
+const enhancedThrottle = <T extends (...args: never[]) => void>(
   func: T,
   wait: number
-): T {
+): T => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let previous = 0;
   let pendingArgs: Parameters<T> | null = null;
 
   const execute = () => {
     if (pendingArgs) {
-      func.apply(null, pendingArgs);
+      func(...pendingArgs);
       pendingArgs = null;
     }
   };
@@ -158,18 +159,15 @@ function enhancedThrottle<T extends (...args: any[]) => void>(
         previous = Date.now();
         timeout = null;
 
-        if (
-          typeof window !== "undefined" &&
-          (window as any).requestIdleCallback
-        ) {
-          (window as any).requestIdleCallback(execute, { timeout: 50 });
+        if (typeof window !== "undefined" && window.requestIdleCallback) {
+          window.requestIdleCallback(execute, { timeout: 50 });
         } else {
           execute();
         }
       }, remaining);
     }
   }) as T;
-}
+};
 
 // Message indexing for O(1) lookups
 class MessageIndex<TMessage extends UIMessage> {
@@ -180,10 +178,10 @@ class MessageIndex<TMessage extends UIMessage> {
     this.idToMessage.clear();
     this.idToIndex.clear();
 
-    messages.forEach((message, index) => {
+    for (const [index, message] of messages.entries()) {
       this.idToMessage.set(message.id, message);
       this.idToIndex.set(message.id, index);
-    });
+    }
   }
 
   getById(id: string): TMessage | undefined {
@@ -215,7 +213,6 @@ type SyncedChatState<TMessage extends UIMessage> = Partial<
 >;
 
 export interface StoreState<TMessage extends UIMessage = UIMessage> {
-  _memoizedSelectors: Map<string, { result: any; deps: any[] }>;
   _messageIndex: MessageIndex<TMessage>;
 
   // Performance optimizations
@@ -226,7 +223,7 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   _throttledMessages: TMessage[] | null;
 
   // Transient data parts (not persisted in messages)
-  _transientDataParts: Map<string, any>;
+  _transientDataParts: Map<string, unknown>;
   addToolResult?: UseChatHelpers<TMessage>["addToolResult"];
   clearError?: UseChatHelpers<TMessage>["clearError"];
   clearTransientDataParts: () => void;
@@ -236,15 +233,13 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   // Optimized getters
   getLastMessageId: () => string | null;
 
-  // Memoized complex selectors
-  getMemoizedSelector: <T>(key: string, selector: () => T, deps: any[]) => T;
   getMessageById: (id: string) => TMessage | undefined;
   getMessageCount: () => number;
   getMessageIds: () => string[];
   getMessageIndexById: (id: string) => number | undefined;
   getMessagesSlice: (start: number, end?: number) => TMessage[];
   getThrottledMessages: () => TMessage[];
-  getTransientDataPart: (type: string) => any;
+  getTransientDataPart: (type: string) => unknown;
   id: string | undefined;
   messages: TMessage[];
   popMessage: () => void;
@@ -272,17 +267,18 @@ export interface StoreState<TMessage extends UIMessage = UIMessage> {
   setStatus: (status: ChatStatus) => void;
 
   // Transient data methods
-  setTransientDataPart: (type: string, data: any) => void;
+  setTransientDataPart: (type: string, data: unknown) => void;
   startRun?: UseThreadHelpers<TMessage>["tree"]["startRun"];
   status: ChatStatus;
   stop?: UseChatHelpers<TMessage>["stop"];
 }
 
-const MESSAGES_THROTTLE_MS = 16; // ~60fps for smooth streaming
+// ~60fps for smooth streaming
+const MESSAGES_THROTTLE_MS = 16;
 
-export function createChatStoreCreator<TMessage extends UIMessage>(
+export const createChatStoreCreator = <TMessage extends UIMessage>(
   initialMessages: TMessage[] = []
-): StateCreator<StoreState<TMessage>, [], []> {
+): StateCreator<StoreState<TMessage>, [], []> => {
   let throttledMessagesUpdater: (() => void) | null = null;
   const messageIndex = new MessageIndex<TMessage>();
   const throttledEffects = new Set<() => void>();
@@ -300,101 +296,100 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             _throttledMessages: newThrottledMessages,
           });
 
-          throttledEffects.forEach((cb) => {
+          for (const cb of throttledEffects) {
             try {
               cb();
-            } catch (err) {
-              debug.warn("[chat-store-base] throttled effect error", err);
+            } catch (error) {
+              debug.warn("[chat-store-base] throttled effect error", error);
             }
-          });
+          }
         });
       }, MESSAGES_THROTTLE_MS);
     }
 
     return {
-      id: undefined,
-      messages: initialMessages,
-      status: "ready" as const,
-      error: undefined,
-      _throttledMessages: [...initialMessages],
       _messageIndex: messageIndex,
-      _memoizedSelectors: new Map(),
-      _transientDataParts: new Map(),
       _scheduleThrottledMessagesUpdate: () => {
         throttledMessagesUpdater?.();
       },
-
-      // Chat helpers
-      sendMessage: undefined,
-      startRun: undefined,
-      regenerate: undefined,
-      stop: undefined,
-      resumeStream: undefined,
-      addToolResult: undefined,
-      clearError: undefined,
-
-      setId: (id) => {
-        markLastAction("chat:setId");
-        batchUpdates(() => set({ id }));
-      },
-
-      setMessages: (messages) => {
-        markLastAction("chat:setMessages");
+      _syncState: (newState) => {
+        markLastAction("chat:_syncState");
         batchUpdates(() => {
-          // Avoid unnecessary work if messages haven't changed
-          const currentState = get();
-          if (messages === currentState.messages) {
-            return;
-          }
-
-          currentState._messageIndex.update(messages);
-          set({
-            messages,
-            _memoizedSelectors: new Map(), // Clear memoized selectors
-          });
-
-          // During streaming, update immediately for smooth text rendering
-          if (currentState.status === "streaming") {
-            batchUpdates(() => {
-              const state = get();
-              const newThrottledMessages = [...state.messages];
-              state._messageIndex.update(newThrottledMessages);
-
-              set({
-                _throttledMessages: newThrottledMessages,
-              });
-            }, 1); // High priority for streaming updates
-          } else {
-            throttledMessagesUpdater?.();
-          }
+          set(
+            {
+              ...newState,
+              // Clear memoized selectors on sync
+            },
+            false
+            // 'syncFromUseChat',
+          );
         });
       },
-
-      setStatus: (status) => {
-        markLastAction("chat:setStatus");
-        batchUpdates(() => set({ status }));
+      _throttledMessages: [...initialMessages],
+      _transientDataParts: new Map(),
+      addToolResult: undefined,
+      clearError: undefined,
+      clearTransientDataParts: () => {
+        markLastAction("chat:clearTransientDataParts");
+        batchUpdates(() => set({ _transientDataParts: new Map() }));
       },
-
-      setError: (error) => {
-        markLastAction("chat:setError");
-        batchUpdates(() => set({ error }));
+      error: undefined,
+      getInternalMessages: () => {
+        const state = get();
+        return state.messages;
       },
-
-      setNewChat: (id, messages) => {
-        markLastAction("chat:setNewChat");
+      // Optimized getters
+      getLastMessageId: () => {
+        const state = get();
+        return state.messages.length > 0
+          ? state.messages[state.messages.length - 1].id
+          : null;
+      },
+      getMessageById: (id) => {
+        const state = get();
+        return state._messageIndex.getById(id);
+      },
+      getMessageCount: () => {
+        const state = get();
+        const messages = state._throttledMessages || state.messages;
+        return messages.length;
+      },
+      getMessageIds: () => {
+        const state = get();
+        return (state._throttledMessages || state.messages).map((m) => m.id);
+      },
+      getMessageIndexById: (id) => {
+        const state = get();
+        return state._messageIndex.getIndexById(id);
+      },
+      getMessagesSlice: (start, end) => {
+        const state = get();
+        const messages = state._throttledMessages || state.messages;
+        return messages.slice(start, end);
+      },
+      getThrottledMessages: () => {
+        const state = get();
+        return state._throttledMessages || state.messages;
+      },
+      getTransientDataPart: (type) => {
+        const state = get();
+        return state._transientDataParts.get(type);
+      },
+      id: undefined,
+      messages: initialMessages,
+      popMessage: () => {
+        markLastAction("chat:popMessage");
         batchUpdates(() => {
-          get()._messageIndex.update(messages);
-          set({
-            messages,
-            status: "ready",
-            error: undefined,
-            id,
-            _memoizedSelectors: new Map(),
+          set((state) => {
+            const messages = state.messages.slice(0, -1);
+            state._messageIndex.update(messages);
+            return {
+              messages,
+            };
           });
           throttledMessagesUpdater?.();
         });
       },
-
       pushMessage: (message) => {
         markLastAction("chat:pushMessage");
         batchUpdates(() => {
@@ -404,12 +399,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             state._messageIndex.update(messages);
             return {
               messages,
-              _memoizedSelectors: new Map(),
             };
           });
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -418,28 +413,30 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
         });
       },
-
-      popMessage: () => {
-        markLastAction("chat:popMessage");
+      regenerate: undefined,
+      // Effects
+      registerThrottledMessagesEffect: (effect: () => void) => {
+        throttledEffects.add(effect);
+        return () => {
+          throttledEffects.delete(effect);
+        };
+      },
+      removeTransientDataPart: (type) => {
+        markLastAction("chat:removeTransientDataPart");
         batchUpdates(() => {
           set((state) => {
-            const messages = state.messages.slice(0, -1);
-            state._messageIndex.update(messages);
-            return {
-              messages,
-              _memoizedSelectors: new Map(),
-            };
+            const newTransientDataParts = new Map(state._transientDataParts);
+            newTransientDataParts.delete(type);
+            return { _transientDataParts: newTransientDataParts };
           });
-          throttledMessagesUpdater?.();
         });
       },
-
       replaceMessage: (index, message) => {
         markLastAction("chat:replaceMessage");
         batchUpdates(() => {
@@ -450,12 +447,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             state._messageIndex.update(newMessages);
             return {
               messages: newMessages,
-              _memoizedSelectors: new Map(),
             };
           });
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -464,13 +461,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
         });
       },
-
       replaceMessageById: (id, message) => {
         markLastAction("chat:replaceMessageById");
         batchUpdates(() => {
@@ -486,12 +482,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
             state._messageIndex.update(newMessages);
             return {
               messages: newMessages,
-              _memoizedSelectors: new Map(),
             };
           });
 
           // During streaming, update immediately for smooth text rendering
           if (currentState.status === "streaming") {
+            // High priority for streaming updates
             batchUpdates(() => {
               const state = get();
               const newThrottledMessages = [...state.messages];
@@ -500,27 +496,12 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
               set({
                 _throttledMessages: newThrottledMessages,
               });
-            }, 1); // High priority for streaming updates
+            }, 1);
           } else {
             throttledMessagesUpdater?.();
           }
         });
       },
-
-      _syncState: (newState) => {
-        markLastAction("chat:_syncState");
-        batchUpdates(() => {
-          set(
-            {
-              ...newState,
-              _memoizedSelectors: new Map(), // Clear memoized selectors on sync
-            },
-            false
-            // 'syncFromUseChat',
-          );
-        });
-      },
-
       reset: () => {
         markLastAction("chat:reset");
         batchUpdates(() => {
@@ -534,145 +515,116 @@ export function createChatStoreCreator<TMessage extends UIMessage>(
           }
 
           set({
+            _messageIndex: newMessageIndex,
+            _throttledMessages: [],
+            _transientDataParts: new Map(),
+            error: undefined,
             id: undefined,
             messages: [],
             status: "ready" as const,
-            error: undefined,
-            _throttledMessages: [],
-            _messageIndex: newMessageIndex,
-            _memoizedSelectors: new Map(),
-            _transientDataParts: new Map(),
           });
         });
       },
-
-      // Optimized getters
-      getLastMessageId: () => {
-        const state = get();
-        return state.messages.length > 0
-          ? state.messages[state.messages.length - 1].id
-          : null;
+      resumeStream: undefined,
+      // Chat helpers
+      sendMessage: undefined,
+      setError: (error) => {
+        markLastAction("chat:setError");
+        batchUpdates(() => set({ error }));
       },
-
-      getMessageIds: () => {
-        const state = get();
-        return (state._throttledMessages || state.messages).map((m) => m.id);
+      setId: (id) => {
+        markLastAction("chat:setId");
+        batchUpdates(() => set({ id }));
       },
+      setMessages: (messages) => {
+        markLastAction("chat:setMessages");
+        batchUpdates(() => {
+          // Avoid unnecessary work if messages haven't changed
+          const currentState = get();
+          if (messages === currentState.messages) {
+            return;
+          }
 
-      getThrottledMessages: () => {
-        const state = get();
-        return state._throttledMessages || state.messages;
+          currentState._messageIndex.update(messages);
+          set({
+            messages,
+            // Clear memoized selectors
+          });
+
+          // During streaming, update immediately for smooth text rendering
+          if (currentState.status === "streaming") {
+            // High priority for streaming updates
+            batchUpdates(() => {
+              const state = get();
+              const newThrottledMessages = [...state.messages];
+              state._messageIndex.update(newThrottledMessages);
+
+              set({
+                _throttledMessages: newThrottledMessages,
+              });
+            }, 1);
+          } else {
+            throttledMessagesUpdater?.();
+          }
+        });
       },
-
-      getInternalMessages: () => {
-        const state = get();
-        return state.messages;
+      setNewChat: (id, messages) => {
+        markLastAction("chat:setNewChat");
+        batchUpdates(() => {
+          get()._messageIndex.update(messages);
+          set({
+            error: undefined,
+            id,
+            messages,
+            status: "ready",
+          });
+          throttledMessagesUpdater?.();
+        });
       },
-
-      getMessageById: (id) => {
-        const state = get();
-        return state._messageIndex.getById(id);
+      setStatus: (status) => {
+        markLastAction("chat:setStatus");
+        batchUpdates(() => set({ status }));
       },
-
-      getMessageIndexById: (id) => {
-        const state = get();
-        return state._messageIndex.getIndexById(id);
-      },
-
-      getMessagesSlice: (start, end) => {
-        const state = get();
-        const messages = state._throttledMessages || state.messages;
-        return messages.slice(start, end);
-      },
-
-      getMessageCount: () => {
-        const state = get();
-        const messages = state._throttledMessages || state.messages;
-        return messages.length;
-      },
-
-      getMemoizedSelector: <T>(
-        key: string,
-        selector: () => T,
-        deps: any[]
-      ): T => {
-        const state = get();
-        const cached = state._memoizedSelectors.get(key);
-
-        // Reference-equality dep check, matching React dependency semantics.
-        if (
-          cached &&
-          cached.deps.length === deps.length &&
-          cached.deps.every((dep, index) => Object.is(dep, deps[index]))
-        ) {
-          return cached.result;
-        }
-
-        const result = selector();
-        state._memoizedSelectors.set(key, { result, deps: [...deps] });
-        return result;
-      },
-
-      // Effects
-      registerThrottledMessagesEffect: (effect: () => void) => {
-        throttledEffects.add(effect);
-        return () => {
-          throttledEffects.delete(effect);
-        };
-      },
-
       // Transient data methods
       setTransientDataPart: (type, data) => {
         markLastAction("chat:setTransientDataPart");
         batchUpdates(() => {
-          set((state) => {
-            const newTransientDataParts = new Map(state._transientDataParts);
-            newTransientDataParts.set(type, data);
-            return { _transientDataParts: newTransientDataParts };
-          });
+          set((state) => ({
+            _transientDataParts: new Map(state._transientDataParts).set(
+              type,
+              data
+            ),
+          }));
         });
       },
-
-      getTransientDataPart: (type) => {
-        const state = get();
-        return state._transientDataParts.get(type);
-      },
-
-      removeTransientDataPart: (type) => {
-        markLastAction("chat:removeTransientDataPart");
-        batchUpdates(() => {
-          set((state) => {
-            const newTransientDataParts = new Map(state._transientDataParts);
-            newTransientDataParts.delete(type);
-            return { _transientDataParts: newTransientDataParts };
-          });
-        });
-      },
-
-      clearTransientDataParts: () => {
-        markLastAction("chat:clearTransientDataParts");
-        batchUpdates(() => set({ _transientDataParts: new Map() }));
-      },
+      startRun: undefined,
+      status: "ready" as const,
+      stop: undefined,
     };
   };
-}
+};
 
-export function createChatStore<TMessage extends UIMessage = UIMessage>(
+export const createChatStore = <TMessage extends UIMessage = UIMessage>(
   initialMessages: TMessage[] = []
-) {
-  return createStore<StoreState<TMessage>>()(
+) =>
+  createStore<StoreState<TMessage>>()(
     devtools(
       subscribeWithSelector(createChatStoreCreator<TMessage>(initialMessages)),
       { name: "chat-store" }
     )
   );
-}
 
 type ChatStoreApi<TMessage extends UIMessage = UIMessage> = ReturnType<
   typeof createChatStore<TMessage>
 >;
 
-export const ChatStoreContext = createContext<ChatStoreApi<any> | undefined>(
+// The provider can carry any message specialization; typed hooks select it at the boundary.
+type ChatStoreHandle = Pick<
+  StoreApi<unknown>,
+  "getInitialState" | "getState" | "subscribe"
+>;
+
+export const ChatStoreContext = createContext<ChatStoreHandle | undefined>(
   undefined
 );
 
@@ -702,7 +654,7 @@ type CompatibleChatStoreApi<TMessage extends UIMessage = UIMessage> = Omit<
   ): void;
 };
 
-export function Provider<TMessage extends UIMessage = UIMessage>({
+export const Provider = <TMessage extends UIMessage = UIMessage>({
   children,
   initialMessages,
   store,
@@ -710,7 +662,7 @@ export function Provider<TMessage extends UIMessage = UIMessage>({
   children: React.ReactNode;
   initialMessages?: TMessage[];
   store?: CompatibleChatStoreApi<TMessage>;
-}) {
+}) => {
   const storeRef = useRef<CompatibleChatStoreApi<TMessage> | null>(null);
 
   if (storeRef.current === null) {
@@ -723,7 +675,15 @@ export function Provider<TMessage extends UIMessage = UIMessage>({
     { value: storeRef.current },
     children
   );
-}
+};
+
+export const useChatStoreApi = <TMessage extends UIMessage = UIMessage>() => {
+  const store = useContext(ChatStoreContext);
+  if (!store) {
+    throw new Error("useChatStoreApi must be used within Provider");
+  }
+  return store as ChatStoreApi<TMessage>;
+};
 
 // Standard Zustand v5 store hook
 export function useChatStore<T, TMessage extends UIMessage = UIMessage>(
@@ -736,39 +696,27 @@ export function useChatStore<
   T = StoreState<UIMessage>,
   TMessage extends UIMessage = UIMessage,
 >(selector?: (store: StoreState<TMessage>) => T) {
-  const store = useContext(ChatStoreContext);
-  if (!store) {
-    throw new Error("useChatStore must be used within Provider");
-  }
-
+  const store = useChatStoreApi<TMessage>();
   const selectorOrIdentity =
-    selector || ((s: StoreState<TMessage>) => s as unknown as T);
+    selector ?? ((state: StoreState<TMessage>) => state);
 
-  // Use Zustand's built-in useStore
-  return useStore(store, selectorOrIdentity as (state: any) => T);
-}
-
-export function useChatStoreApi<TMessage extends UIMessage = UIMessage>() {
-  const store = useContext(ChatStoreContext);
-  if (!store) {
-    throw new Error("useChatStoreApi must be used within Provider");
-  }
-  return store as ChatStoreApi<TMessage>;
+  return useStore<ChatStoreApi<TMessage>, T | StoreState<TMessage>>(
+    store,
+    selectorOrIdentity
+  );
 }
 
 // Optimized selector hooks with memoization
-export const useChatMessages = <TMessage extends UIMessage = UIMessage>() => {
-  return useChatStore(
+export const useChatMessages = <TMessage extends UIMessage = UIMessage>() =>
+  useChatStore(
     useShallow((state: StoreState<TMessage>) => state.getThrottledMessages())
   );
-};
 
 // Stable selector functions to avoid recreation
-const statusSelector = (state: StoreState<any>) => state.status;
-const errorSelector = (state: StoreState<any>) => state.error;
-const idSelector = (state: StoreState<any>) => state.id;
-const messageCountSelector = (state: StoreState<any>) =>
-  state.getMessageCount();
+const statusSelector = (state: StoreState) => state.status;
+const errorSelector = (state: StoreState) => state.error;
+const idSelector = (state: StoreState) => state.id;
+const messageCountSelector = (state: StoreState) => state.getMessageCount();
 
 export const useChatStatus = () => useChatStore(statusSelector);
 export const useChatError = () => useChatStore(errorSelector);
@@ -781,62 +729,66 @@ export const useMessageIds = <TMessage extends UIMessage = UIMessage>() =>
 // Optimized message selector with O(1) lookup
 export const useMessageById = <TMessage extends UIMessage = UIMessage>(
   messageId: string
-) => {
-  return useChatStore(
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => state.getMessageById(messageId),
       [messageId]
     )
   );
-};
 
 // Virtualization helper for large message lists
 export const useVirtualMessages = <TMessage extends UIMessage = UIMessage>(
   start: number,
   end?: number
-) => {
-  return useChatStore(
+) =>
+  useChatStore(
     useCallback(
       (state: StoreState<TMessage>) => state.getMessagesSlice(start, end),
       [start, end]
     )
   );
-};
 
 export const useMessageCount = () => useChatStore(messageCountSelector);
 
 // Reset hook for convenience
 export const useChatReset = () => useChatStore((state) => state.reset);
 // Stable fallback functions to prevent infinite loops
-const fallbackSendMessage = async () => {
+const fallbackSendMessage = () => {
   debug.warn(
     "sendMessage not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackStartRun = async () => {
-  throw new Error(
-    "startRun not configured - make sure useChat is called with transport"
+const fallbackStartRun = () =>
+  Promise.reject(
+    new Error(
+      "startRun not configured - make sure useChat is called with transport"
+    )
   );
-};
-const fallbackRegenerate = async () => {
+const fallbackRegenerate = () => {
   debug.warn(
     "regenerate not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackStop = async () => {
+const fallbackStop = () => {
   debug.warn(
     "stop not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackResumeStream = async () => {
+const fallbackResumeStream = () => {
   debug.warn(
     "resumeStream not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
-const fallbackAddToolResult = async () => {
+const fallbackAddToolResult = () => {
   debug.warn(
     "addToolResult not configured - make sure useChat is called with transport"
   );
+  return Promise.resolve();
 };
 const fallbackClearError = () => {
   debug.warn(
@@ -859,31 +811,12 @@ export const useChatActions = <
 >(): ChatActions<TMessage> =>
   useChatStore(
     useShallow((state: StoreState<TMessage>) => ({
-      sendMessage: state.sendMessage || fallbackSendMessage,
-      startRun: state.startRun || fallbackStartRun,
-      regenerate: state.regenerate || fallbackRegenerate,
-      stop: state.stop || fallbackStop,
-      resumeStream: state.resumeStream || fallbackResumeStream,
       addToolResult: state.addToolResult || fallbackAddToolResult,
       clearError: state.clearError || fallbackClearError,
+      regenerate: state.regenerate || fallbackRegenerate,
+      resumeStream: state.resumeStream || fallbackResumeStream,
+      sendMessage: state.sendMessage || fallbackSendMessage,
+      startRun: state.startRun || fallbackStartRun,
+      stop: state.stop || fallbackStop,
     }))
   );
-
-// Memoized complex selector hook
-export const useSelector = <TMessage extends UIMessage = UIMessage, T = any>(
-  key: string,
-  selector: (messages: TMessage[]) => T,
-  deps: any[] = []
-) => {
-  return useChatStore(
-    useCallback(
-      (state: StoreState<TMessage>) =>
-        state.getMemoizedSelector(
-          key,
-          () => selector(state.getThrottledMessages()),
-          [state.getMessageCount(), ...deps]
-        ),
-      [key, selector, ...deps]
-    )
-  );
-};

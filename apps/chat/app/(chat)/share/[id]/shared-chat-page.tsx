@@ -7,7 +7,7 @@ import { WithSkeleton } from "@/components/with-skeleton";
 import { useChatSystemInitialState } from "@/hooks/use-chat-system-initial-state";
 import { usePublicChat, usePublicChatMessages } from "@/hooks/use-shared-chat";
 
-export function SharedChatPage({ id }: { id: string }) {
+export const SharedChatPage = ({ id }: { id: string }) => {
   const {
     data: chat,
     isLoading: isChatLoading,
@@ -71,4 +71,4 @@ export function SharedChatPage({ id }: { id: string }) {
       </ChatSystem>
     </WithSkeleton>
   );
-}
+};

@@ -8,10 +8,8 @@ import { toast } from "sonner";
 import { ChatComposer } from "@/components/chat-composer";
 import { ProjectChats } from "@/components/project-chats";
 import { ProjectConfig } from "@/components/project-config";
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { ProjectInstructionsDialog } from "@/components/project-instructions-dialog";
 import {
   useDeleteChat,
@@ -25,7 +23,7 @@ import { useLastMessageId } from "@/lib/stores/hooks-base";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
-export function ProjectHome({
+export const ProjectHome = ({
   chatId,
   projectId,
   status,
@@ -35,7 +33,7 @@ export function ProjectHome({
   projectId: string;
   status: UseChatHelpers<ChatMessage>["status"];
   className?: string;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const parentMessageId = useLastMessageId();
@@ -86,9 +84,9 @@ export function ProjectHome({
     await renameProjectMutation.mutateAsync({
       id: projectId,
       updates: {
-        name: data.name,
         icon: data.icon,
         iconColor: data.color,
+        name: data.name,
       },
     });
     queryClient.invalidateQueries({
@@ -174,4 +172,4 @@ export function ProjectHome({
       </div>
     </div>
   );
-}
+};

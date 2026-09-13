@@ -6,11 +6,11 @@ it("retains the original operation and model across reload, isolates owners, and
   const values = new Map<string, string>();
   const storage = {
     getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      values.set(key, value);
-    },
     removeItem: (key: string) => {
       values.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
     },
   };
   const source = crypto.randomUUID();

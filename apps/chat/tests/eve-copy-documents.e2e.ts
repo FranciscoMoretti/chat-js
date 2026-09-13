@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -28,82 +29,82 @@ const visibleRevision = crypto.randomUUID();
 const privateRevision = crypto.randomUUID();
 const hiddenRevision = crypto.randomUUID();
 await db.insert(user).values({
-  id: ownerId,
   email: `${ownerId}@test.invalid`,
+  id: ownerId,
   name: "Copy documents fixture",
 });
 await db.insert(eveConversation).values([
   {
-    id: conversationId,
-    ownerId,
-    operationId: crypto.randomUUID(),
     firstMessage: "Published",
+    id: conversationId,
+    operationId: crypto.randomUUID(),
+    ownerId,
     sessionId,
     state: "bound",
     visibility: "public",
   },
   {
-    id: branchId,
-    ownerId,
-    operationId: crypto.randomUUID(),
     firstMessage: "Private branch",
-    sessionId: crypto.randomUUID(),
-    state: "bound",
+    forkTurnId: "turn_1",
+    id: branchId,
+    operationId: crypto.randomUUID(),
+    ownerId,
     parentConversationId: conversationId,
     rootConversationId: conversationId,
-    forkTurnId: "turn_1",
+    sessionId: crypto.randomUUID(),
+    state: "bound",
   },
 ]);
 const revision = {
-  ownerId,
-  documentId,
   conversationId,
-  title: "Published artifact",
+  documentId,
   kind: "text",
+  ownerId,
+  title: "Published artifact",
   turnIndex: 3,
 } satisfies Partial<typeof eveDocumentRevision.$inferInsert>;
 await db.insert(eveDocumentRevision).values({
   ...revision,
+  content: "First published version",
   id: rootRevision,
   operationId: "root",
-  content: "First published version",
 });
 await db.insert(eveDocumentRevision).values([
   {
     ...revision,
+    content: "Second published version",
     id: visibleRevision,
     operationId: "visible",
     parentRevisionId: rootRevision,
-    content: "Second published version",
   },
   {
     ...revision,
+    content: "Private branch secret",
     conversationId: branchId,
     id: privateRevision,
     operationId: "private",
     parentRevisionId: rootRevision,
-    content: "Private branch secret",
   },
   {
     ...revision,
+    content: "Unpublished document secret",
     documentId: hiddenDocumentId,
     id: hiddenRevision,
     operationId: "hidden",
-    content: "Unpublished document secret",
   },
 ]);
 await db.insert(eveDocumentHead).values([
-  { ownerId, conversationId, documentId, revisionId: visibleRevision },
+  { conversationId, documentId, ownerId, revisionId: visibleRevision },
   {
-    ownerId,
     conversationId: branchId,
     documentId,
+    ownerId,
     revisionId: privateRevision,
   },
   {
-    ownerId,
     conversationId,
     documentId: hiddenDocumentId,
+    ownerId,
     revisionId: hiddenRevision,
   },
 ]);
@@ -214,18 +215,18 @@ test("requires publication even for an empty resource manifest", async () => {
       },
       []
     )
-  ).toEqual({ documents: [], checkpoints: [] });
+  ).toEqual({ checkpoints: [], documents: [] });
 });
 
 test("observes revocation committed while preparation is waiting on the source row", async () => {
-  const updated = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const updated = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const revocation = db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
       .set({ visibility: "private" })
       .where(eq(eveConversation.id, conversationId));
-    updated.resolve();
+    updated.resolve(undefined);
     await release.promise;
   });
   await updated.promise;
@@ -236,7 +237,7 @@ test("observes revocation committed while preparation is waiting on the source r
     []
   );
   const rejected = expect(snapshot).rejects.toThrow("unavailable");
-  release.resolve();
+  release.resolve(undefined);
   await revocation;
   await rejected;
   await db
@@ -247,24 +248,24 @@ test("observes revocation committed while preparation is waiting on the source r
 
 test("snapshots native and imported boundaries independently of later document heads", async () => {
   await db.insert(eveDocumentCheckpoint).values([
-    { ownerId, conversationId, turnIndex: 0 },
-    { ownerId, conversationId, turnIndex: 1 },
+    { conversationId, ownerId, turnIndex: 0 },
+    { conversationId, ownerId, turnIndex: 1 },
   ]);
   await db.insert(eveDocumentCheckpointEntry).values({
-    ownerId,
     conversationId,
-    turnIndex: 1,
     documentId,
+    ownerId,
     revisionId: rootRevision,
+    turnIndex: 1,
   });
   await db
     .insert(eveImportedDocumentCheckpoint)
-    .values({ ownerId, conversationId, messageIndex: 2 });
+    .values({ conversationId, messageIndex: 2, ownerId });
   await db.insert(eveImportedDocumentCheckpointEntry).values({
-    ownerId,
     conversationId,
-    messageIndex: 2,
     documentId,
+    messageIndex: 2,
+    ownerId,
     revisionId: rootRevision,
   });
   const result = await snapshotPublicEveCopyDocuments(
@@ -272,20 +273,20 @@ test("snapshots native and imported boundaries independently of later document h
     sessionId,
     resources,
     [
-      { messageIndex: 0, sourceKind: "turn", sourceIndex: 0 },
-      { messageIndex: 2, sourceKind: "turn", sourceIndex: 1 },
-      { messageIndex: 4, sourceKind: "imported", sourceIndex: 2 },
+      { messageIndex: 0, sourceIndex: 0, sourceKind: "turn" },
+      { messageIndex: 2, sourceIndex: 1, sourceKind: "turn" },
+      { messageIndex: 4, sourceIndex: 2, sourceKind: "imported" },
     ]
   );
   expect(result.documents[0].headRevisionId).toBe(visibleRevision);
   expect(result.checkpoints).toEqual([
-    { messageIndex: 0, heads: [] },
-    { messageIndex: 2, heads: [{ documentId, revisionId: rootRevision }] },
-    { messageIndex: 4, heads: [{ documentId, revisionId: rootRevision }] },
+    { heads: [], messageIndex: 0 },
+    { heads: [{ documentId, revisionId: rootRevision }], messageIndex: 2 },
+    { heads: [{ documentId, revisionId: rootRevision }], messageIndex: 4 },
   ]);
   await expect(
     snapshotPublicEveCopyDocuments(conversationId, sessionId, resources, [
-      { messageIndex: 6, sourceKind: "turn", sourceIndex: 99 },
+      { messageIndex: 6, sourceIndex: 99, sourceKind: "turn" },
     ])
   ).rejects.toThrow("boundary is unavailable");
 });

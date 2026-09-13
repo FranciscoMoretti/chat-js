@@ -34,12 +34,12 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
   const pendingId = crypto.randomUUID();
   try {
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-5-mini",
         message: "Reply exactly project-route-fixture-ok",
+        modelId: "openai/gpt-5-mini",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
@@ -53,18 +53,18 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     );
     expect(forbidden.status()).toBe(401);
     await page.goto(`/project/${projectId}/chat/${binding.id}`);
-    await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
     await expect(page.locator(".is-assistant")).toContainText(
       "project-route-fixture-ok",
       { timeout: 90_000 }
     );
     await page.locator('[role="log"]').screenshot({
-      path: testInfo.outputPath("project-conversation.png"),
       animations: "disabled",
+      path: testInfo.outputPath("project-conversation.png"),
     });
     await page.goto(`/project/${crypto.randomUUID()}/chat/${binding.id}`);
     await expect(
-      page.getByRole("heading", { name: "404", exact: true })
+      page.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     const [root] = await db
       .select()
@@ -74,27 +74,27 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       throw new Error("Missing project conversation");
     }
     await db.insert(eveConversation).values({
-      id: pendingId,
-      ownerId: root.ownerId,
-      operationId: crypto.randomUUID(),
       firstMessage: "Uncertain fork fixture",
-      state: "uncertain",
+      forkTurnId: "turn_0",
+      id: pendingId,
+      operationId: crypto.randomUUID(),
+      ownerId: root.ownerId,
       parentConversationId: root.id,
       rootConversationId: root.id,
-      forkTurnId: "turn_0",
+      state: "uncertain",
     });
     await db
       .insert(eveConversationProject)
       .values({ conversationId: pendingId, ownerId: root.ownerId, projectId });
     await page.goto(`/project/${projectId}/chat/${pendingId}`);
-    await expect(page).toHaveURL(new RegExp(`/chat/${pendingId}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${pendingId}$`, "u"));
     const recovery = page
       .getByRole("alert")
       .filter({ hasText: "Creation is unresolved." });
     await expect(recovery).toBeVisible();
     await recovery.screenshot({
-      path: testInfo.outputPath("project-creation-recovery.png"),
       animations: "disabled",
+      path: testInfo.outputPath("project-creation-recovery.png"),
     });
     const removed = await page.request.post("/api/trpc/project.remove", {
       data: { json: { id: projectId } },

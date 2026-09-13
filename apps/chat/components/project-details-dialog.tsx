@@ -25,7 +25,7 @@ export interface ProjectDetailsData {
   name: string;
 }
 
-export function ProjectDetailsDialog({
+export const ProjectDetailsDialog = ({
   open,
   onOpenChange,
   mode,
@@ -43,7 +43,7 @@ export function ProjectDetailsDialog({
   initialColor?: ProjectColorName;
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
-}) {
+}) => {
   const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
@@ -53,6 +53,7 @@ export function ProjectDetailsDialog({
 
   useEffect(() => {
     if (open) {
+      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with its latest server values.
       setSubmitError("");
       setName(initialName ?? "");
       setIcon(initialIcon ?? null);
@@ -70,9 +71,9 @@ export function ProjectDetailsDialog({
     if (mode === "create") {
       if (trimmedName) {
         await onSubmit({
-          name: trimmedName,
-          icon: finalIcon,
           color: finalColor,
+          icon: finalIcon,
+          name: trimmedName,
         });
         setName("");
         setIcon(null);
@@ -85,9 +86,9 @@ export function ProjectDetailsDialog({
         finalColor !== (initialColor ?? DEFAULT_PROJECT_COLOR);
       if (hasChanges) {
         await onSubmit({
-          name: trimmedName,
-          icon: finalIcon,
           color: finalColor,
+          icon: finalIcon,
+          name: trimmedName,
         });
       }
       onOpenChange(false);
@@ -171,4 +172,4 @@ export function ProjectDetailsDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

@@ -2,38 +2,42 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
-import { CreationConflict } from "./eve-queries";
+import { CreationConflictError } from "./eve-queries";
 import { eveConversation, eveConversationCopy } from "./schema";
 
 /** Used only by the authenticated native seed resolver; accepted copies no longer depend on their source. */
-export async function resolveAcceptedEveCopySeed(
+export const resolveAcceptedEveCopySeed = async (
   ownerId: string,
   operationId: string
-) {
+) => {
   const { copy, conversation } = await readEveCopy(db, ownerId, operationId);
   if (
     copy.phase !== "accepted" ||
     !copy.seed ||
     !["creating", "uncertain"].includes(conversation.state)
   ) {
-    throw new CreationConflict("This copy is not awaiting native creation.");
+    throw new CreationConflictError(
+      "This copy is not awaiting native creation."
+    );
   }
   return copy.seed;
-}
+};
 
 /** The callback must use the seed operation namespace with this destination reservation ID. */
-export async function dispatchEveCopy(
+export const dispatchEveCopy = async (
   ownerId: string,
   conversationId: string,
   create: (operationId: string) => Promise<string>
-) {
+) => {
   try {
     return await db.transaction(async (tx) => {
-      const [lock] = await tx.execute<{ locked: boolean }>(
+      const [lock] = await tx.execute<{
+        locked: boolean;
+      }>(
         sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
       );
       if (!lock?.locked) {
-        throw new CreationConflict(
+        throw new CreationConflictError(
           "Copy creation is still in progress. Retry the same operation."
         );
       }
@@ -54,7 +58,9 @@ export async function dispatchEveCopy(
         !copy.seed ||
         !["creating", "uncertain"].includes(conversation.state)
       ) {
-        throw new CreationConflict("This saved copy cannot be dispatched.");
+        throw new CreationConflictError(
+          "This saved copy cannot be dispatched."
+        );
       }
       const sessionId = await create(conversation.id);
       if (!sessionId) {
@@ -62,7 +68,7 @@ export async function dispatchEveCopy(
       }
       await tx
         .update(eveConversation)
-        .set({ state: "bound", sessionId })
+        .set({ sessionId, state: "bound" })
         .where(eq(eveConversation.id, conversation.id));
       await tx
         .update(eveConversationCopy)
@@ -71,7 +77,7 @@ export async function dispatchEveCopy(
       return { id: conversation.id, sessionId };
     });
   } catch (error) {
-    if (!(error instanceof CreationConflict)) {
+    if (!(error instanceof CreationConflictError)) {
       await db
         .update(eveConversation)
         .set({ state: "uncertain" })
@@ -86,14 +92,14 @@ export async function dispatchEveCopy(
     }
     throw error;
   }
-}
+};
 
 /** Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement. */
-export async function rejectUnacceptedEveCopy(
+export const rejectUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const { copy, conversation } = await readEveCopy(
       tx,
@@ -105,7 +111,7 @@ export async function rejectUnacceptedEveCopy(
       copy.phase === "bound" ||
       conversation.sessionId
     ) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "Accepted copies require normal native recovery or deletion."
       );
     }
@@ -121,4 +127,3 @@ export async function rejectUnacceptedEveCopy(
     }
     return { id: conversationId, neverDispatched: true };
   });
-}

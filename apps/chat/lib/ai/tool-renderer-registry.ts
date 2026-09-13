@@ -1,24 +1,52 @@
+import type { ToolUIPart } from "ai";
+import { createElement } from "react";
 import type { ComponentType } from "react";
 
 import { ui } from "@/tools/chatjs/ui";
 
-import type { installedTools } from "./installed-tools";
+import { isValidatedToolRenderer } from "./define-tool-renderer";
+import type { InstalledTools, installedTools } from "./installed-tools";
 
-type InstalledToolRenderer = ComponentType<{
-  tool: unknown;
+export type InstalledToolName = keyof typeof installedTools;
+export type InstalledToolType = `tool-${InstalledToolName & string}`;
+export type InstalledToolUIPart = ToolUIPart<InstalledTools>;
+
+export type InstalledToolPart<T extends InstalledToolType> = Extract<
+  InstalledToolUIPart,
+  { type: T }
+>;
+
+export type ToolRendererProps<T extends InstalledToolType> = {
+  tool: InstalledToolPart<T>;
   messageId: string;
   isReadonly: boolean;
-}>;
-
-type InstalledToolType = `tool-${keyof typeof installedTools & string}`;
-export type ToolRendererRegistry = {
-  [K in InstalledToolType]: InstalledToolRenderer;
 };
 
-// The core also supports fresh apps with no optional tools installed.
-const renderers: Readonly<Partial<Record<string, InstalledToolRenderer>>> =
-  ui satisfies ToolRendererRegistry;
+export type ToolRendererRegistry = {
+  [K in InstalledToolType]?: ComponentType<ToolRendererProps<K>>;
+};
 
-export function getInstalledToolRenderer(type: string) {
-  return Object.hasOwn(renderers, type) ? renderers[type] : undefined;
-}
+export const toolRendererRegistry = ui satisfies ToolRendererRegistry;
+
+export const isInstalledToolType = (
+  type: string
+): type is keyof typeof toolRendererRegistry =>
+  Object.hasOwn(toolRendererRegistry, type);
+
+/** EVE only invokes renderers that validate persisted input and output themselves. */
+export const getEveInstalledToolRenderer = (type: string) => {
+  if (!isInstalledToolType(type)) {
+    return;
+  }
+  const renderer = toolRendererRegistry[type];
+  return isValidatedToolRenderer(renderer) ? renderer : undefined;
+};
+
+/** Keep the installed part discriminator correlated with its renderer props. */
+export const renderInstalledTool = <T extends InstalledToolType>(
+  type: T,
+  props: ToolRendererProps<T>
+) => {
+  const Renderer = toolRendererRegistry[type];
+  return Renderer ? createElement(Renderer, props) : null;
+};

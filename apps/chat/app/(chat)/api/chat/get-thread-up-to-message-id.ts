@@ -1,10 +1,10 @@
 import { getAllMessagesByChatId } from "@/lib/db/queries";
 import { buildThreadFromLeaf } from "@/lib/thread-utils";
 
-export async function getThreadUpToMessageId(
+export const getThreadUpToMessageId = async (
   chatId: string,
   messageId: string | null
-) {
+) => {
   if (!messageId) {
     return [];
   }
@@ -12,4 +12,4 @@ export async function getThreadUpToMessageId(
   const messages = await getAllMessagesByChatId({ chatId });
 
   return buildThreadFromLeaf(messages, messageId);
-}
+};

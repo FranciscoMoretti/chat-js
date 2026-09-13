@@ -5,8 +5,8 @@ import mcp from "../../agent/tools/mcp";
 const mocks = vi.hoisted(() => ({
   discover: vi.fn(),
   execute: vi.fn(),
-  selected: false,
   guest: false,
+  selected: false,
 }));
 vi.mock("eve/tools", () => ({
   defineDynamic: <T>(value: T) => value,
@@ -20,30 +20,30 @@ vi.mock("./mcp-tools", () => ({
 it("discovers for the session owner and preserves namespaced tool definitions", async () => {
   mocks.discover.mockResolvedValue([
     {
-      name: "server__echo",
       connectorId: "connector",
-      remoteName: "echo",
       description: "Echo",
-      inputSchema: { type: "object", properties: {} },
+      inputSchema: { properties: {}, type: "object" },
+      name: "server__echo",
+      remoteName: "echo",
     },
   ]);
   const definitions = await mcp.events["step.started"]?.(
     {},
     {
+      channel: {},
+      messages: [],
       session: {
-        id: "session",
         auth: {
           current: null,
           initiator: {
+            attributes: {},
+            authenticator: "test",
             principalId: "owner",
             principalType: "user",
-            authenticator: "test",
-            attributes: {},
           },
         },
+        id: "session",
       },
-      channel: {},
-      messages: [],
     }
   );
   expect(mocks.discover).toHaveBeenCalledWith("owner", expect.any(AbortSignal));
@@ -65,9 +65,9 @@ it("continues ordinary chat when MCP discovery times out", async () => {
     mcp.events["step.started"]?.(
       {},
       {
-        session: { id: "session", auth: { current: null, initiator: null } },
         channel: {},
         messages: [],
+        session: { auth: { current: null, initiator: null }, id: "session" },
       }
     )
   ).resolves.toEqual({});
@@ -86,9 +86,9 @@ it("does not discover remote tools for an explicitly selected local capability",
       await mcp.events["step.started"]?.(
         {},
         {
-          session: { id: "session", auth: { current: null, initiator: null } },
           channel: {},
           messages: [],
+          session: { auth: { current: null, initiator: null }, id: "session" },
         }
       )
     ).toEqual({});
@@ -106,12 +106,12 @@ it("never discovers registered account connectors for a guest", async () => {
       await mcp.events["step.started"]?.(
         {},
         {
-          session: {
-            id: "guest-session",
-            auth: { current: null, initiator: null },
-          },
           channel: {},
           messages: [],
+          session: {
+            auth: { current: null, initiator: null },
+            id: "guest-session",
+          },
         }
       )
     ).toEqual({});

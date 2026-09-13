@@ -9,7 +9,7 @@ import {
   getParallelResponseForSlot,
 } from "./thread-utils";
 
-function message({
+const message = ({
   id,
   parentMessageId,
   parallelIndex = null,
@@ -19,21 +19,19 @@ function message({
   parentMessageId: string | null;
   parallelIndex?: number | null;
   role: "assistant" | "user";
-}): ChatMessage {
-  return {
-    id,
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date(parallelIndex ?? 0),
-      parentMessageId,
-      parallelGroupId: parallelIndex === null ? null : "group-1",
-      parallelIndex,
-      selectedModel: gatewayModelDefaults.workflows.title,
-    },
-    parts: [{ text: id, type: "text" }],
-    role,
-  };
-}
+}): ChatMessage => ({
+  id,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date(parallelIndex ?? 0),
+    parallelGroupId: parallelIndex === null ? null : "group-1",
+    parallelIndex,
+    parentMessageId,
+    selectedModel: gatewayModelDefaults.workflows.title,
+  },
+  parts: [{ text: id, type: "text" }],
+  role,
+});
 
 describe("buildTreeSnapshotFromMessages", () => {
   it("initializes the selected path without dropping sibling branches", () => {
@@ -44,14 +42,14 @@ describe("buildTreeSnapshotFromMessages", () => {
     });
     const first = message({
       id: "first",
-      parentMessageId: root.id,
       parallelIndex: 0,
+      parentMessageId: root.id,
       role: "assistant",
     });
     const second = message({
       id: "second",
-      parentMessageId: root.id,
       parallelIndex: 1,
+      parentMessageId: root.id,
       role: "assistant",
     });
 

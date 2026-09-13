@@ -1,7 +1,8 @@
 import { PanelLeft } from "lucide-react";
 import type { ComponentProps } from "react";
 
-import { type SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
+import type { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -10,11 +11,11 @@ import {
 
 import { Button } from "./ui/button";
 
-export function SidebarToggle({
+export const SidebarToggle = ({
   className,
   onClick,
   ...props
-}: ComponentProps<typeof SidebarTrigger>) {
+}: ComponentProps<typeof SidebarTrigger>) => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -38,4 +39,4 @@ export function SidebarToggle({
       <TooltipContent align="start">Toggle Sidebar</TooltipContent>
     </Tooltip>
   );
-}
+};

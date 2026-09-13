@@ -11,7 +11,7 @@ import { latestDocumentRun } from "@/lib/eve/document-runs";
 
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 
-export function EveDocumentRun({
+export const EveDocumentRun = ({
   documentId,
   revisionId,
   title,
@@ -27,7 +27,7 @@ export function EveDocumentRun({
   messages: readonly EveMessage[];
   disabled: boolean;
   onAction?: (request: DocumentAssistantRequest) => Promise<void>;
-}) {
+}) => {
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
     onAction &&
@@ -45,8 +45,8 @@ export function EveDocumentRun({
           disabled={disabled}
           onClick={() =>
             onAction({
-              modelId: config.ai.tools.code.edits,
               message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
+              modelId: config.ai.tools.code.edits,
             })
           }
           size="sm"
@@ -68,4 +68,4 @@ export function EveDocumentRun({
       )}
     </div>
   );
-}
+};

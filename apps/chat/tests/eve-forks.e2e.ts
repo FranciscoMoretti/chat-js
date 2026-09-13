@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -32,21 +33,21 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     // The guarded test database uses virtual application credits for paid-tool tests.
     await db
       .insert(userCredit)
-      .values({ userId: session.user.id, credits: 1000 })
+      .values({ credits: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        target: userCredit.userId,
         set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        target: userCredit.userId,
       });
 
     const headers = { origin: new URL(page.url()).origin };
     const created = await page.request.post("/api/agent-conversations", {
-      headers,
       data: {
-        operationId: crypto.randomUUID(),
-        modelId,
         message:
           "Remember the token CEDAR-PINE. Reply briefly. Do not call tools.",
+        modelId,
+        operationId: crypto.randomUUID(),
       },
+      headers,
     });
     expect(created.ok(), await created.text()).toBe(true);
     const source = conversationBinding.parse(await created.json());
@@ -56,9 +57,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       timeout: 90_000,
     });
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Reply with original-second-response. Do not call tools.");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("log").locator(".is-user").last()
     ).toContainText("Reply with original-second-response. Do not call tools.");
@@ -71,15 +72,15 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
     const operation = {
-      operationId: crypto.randomUUID(),
-      modelId,
+      fork: { beforeTurnId: "turn_1", conversationId: source.id },
       message:
         "What token did I ask you to remember? Reply only with the token. Do not call tools.",
-      fork: { conversationId: source.id, beforeTurnId: "turn_1" },
+      modelId,
+      operationId: crypto.randomUUID(),
     };
     const forked = await page.request.post("/api/agent-conversations", {
-      headers,
       data: operation,
+      headers,
     });
     expect(forked.ok(), await forked.text()).toBe(true);
     const branch = conversationBinding.parse(await forked.json());
@@ -105,17 +106,17 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       page.getByRole("log").locator(".is-assistant").last()
     ).toContainText("CEDAR-PINE");
     const replay = await page.request.post("/api/agent-conversations", {
-      headers,
       data: operation,
+      headers,
     });
     expect(replay.ok(), await replay.text()).toBe(true);
     expect(conversationBinding.parse(await replay.json())).toEqual(branch);
     const changed = await page.request.post("/api/agent-conversations", {
-      headers,
       data: {
         ...operation,
         fork: { ...operation.fork, beforeTurnId: "turn_0" },
       },
+      headers,
     });
     expect(changed.status()).toBe(409);
     const usage = await db
@@ -145,34 +146,34 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     const foreignOwner = crypto.randomUUID();
     const foreignId = crypto.randomUUID();
     await db.insert(user).values({
-      id: foreignOwner,
       email: `${foreignOwner}@test.invalid`,
+      id: foreignOwner,
       name: "Foreign fork fixture",
     });
     await db.insert(eveConversation).values({
-      id: foreignId,
-      ownerId: foreignOwner,
-      operationId: crypto.randomUUID(),
       firstMessage: "Private source",
+      id: foreignId,
+      operationId: crypto.randomUUID(),
+      ownerId: foreignOwner,
       sessionId: crypto.randomUUID(),
       state: "bound",
     });
     try {
       const forbidden = await page.request.post("/api/agent-conversations", {
-        headers,
         data: {
           ...operation,
-          operationId: crypto.randomUUID(),
           fork: { ...operation.fork, conversationId: foreignId },
+          operationId: crypto.randomUUID(),
         },
+        headers,
       });
       expect(forbidden.status()).toBe(404);
       const raw = await page.request.post("/api/agent-conversations", {
-        headers,
         data: {
           ...operation,
-          fork: { sessionId: source.sessionId, beforeTurnId: "turn_1" },
+          fork: { beforeTurnId: "turn_1", sessionId: source.sessionId },
         },
+        headers,
       });
       expect(raw.status()).toBe(400);
     } finally {
@@ -196,16 +197,16 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
                 .catch(() => null);
               return response?.status() === 200 ? response.json() : null;
             },
-            { timeout: 90_000, intervals: [1000, 2000, 5000] }
+            { intervals: [1000, 2000, 5000], timeout: 90_000 }
           )
-          .toEqual({ status: "deleted", rootId: cleanup.id });
+          .toEqual({ rootId: cleanup.id, status: "deleted" });
       } catch (error) {
         if (!bodyFailed) {
           cleanupFailure = { error };
         }
         testInfo.annotations.push({
-          type: "cleanup",
           description: "Native conversation family cleanup also failed.",
+          type: "cleanup",
         });
       }
     }

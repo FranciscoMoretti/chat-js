@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 
@@ -18,9 +21,9 @@ import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-const redAnswer = /red/i;
-const blobUrl = /^blob:/;
-const chatUrl = /\/chat\/[a-f0-9-]+$/;
+const redAnswer = /red/iu;
+const blobUrl = /^blob:/u;
+const chatUrl = /\/chat\/[a-f0-9-]+$/u;
 const redPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAb0lEQVR4nO3PAQkAAAyEwO9feoshgnABdLep8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3IPanc8OLDQitxAAAAAElFTkSuQmCC",
   "base64"
@@ -38,7 +41,7 @@ test("ChatJS upload remains durable through creation retries and message editing
   });
   const upload = await page.request.post("/api/files/upload", {
     multipart: {
-      file: { name: "eve-square.png", mimeType: "image/png", buffer: redPng },
+      file: { buffer: redPng, mimeType: "image/png", name: "eve-square.png" },
     },
   });
   expect(upload.ok(), await upload.text()).toBe(true);
@@ -46,8 +49,6 @@ test("ChatJS upload remains durable through creation retries and message editing
   const cleanupUrls = [file.url];
   try {
     const input = {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message: [
         {
           type: "text",
@@ -60,10 +61,12 @@ test("ChatJS upload remains durable through creation retries and message editing
           filename: "eve-square.png",
         },
       ],
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     };
     const options = {
-      headers: { origin: new URL(page.url()).origin },
       data: input,
+      headers: { origin: new URL(page.url()).origin },
     };
     const created = await page.request.post(
       "/api/agent-conversations",
@@ -87,13 +90,13 @@ test("ChatJS upload remains durable through creation retries and message editing
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: "eve-square.png", exact: true })
+        .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await page.reload();
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: "eve-square.png", exact: true })
+        .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await page
       .getByRole("log")
@@ -107,8 +110,8 @@ test("ChatJS upload remains durable through creation retries and message editing
     await preview.close();
     await mkdir("tests/eve-results/screenshots", { recursive: true });
     await page.getByTestId("attachments").screenshot({
-      path: "tests/eve-results/screenshots/eve-image.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-image.png",
     });
     const retry = await page.request.post("/api/agent-conversations", options);
     expect(await retry.json()).toEqual(binding);
@@ -127,7 +130,6 @@ test("ChatJS upload remains durable through creation retries and message editing
       ...options,
       data: {
         ...input,
-        operationId: crypto.randomUUID(),
         message: [
           {
             type: "file",
@@ -136,20 +138,21 @@ test("ChatJS upload remains durable through creation retries and message editing
             filename: "bad.png",
           },
         ],
+        operationId: crypto.randomUUID(),
       },
     });
     expect(external.status()).toBe(400);
     await page
-      .getByRole("button", { name: "Edit message", exact: true })
+      .getByRole("button", { exact: true, name: "Edit message" })
       .click();
     const editor = page.getByRole("dialog");
     await expect(
-      editor.getByRole("button", { name: "eve-square.png", exact: true })
+      editor.getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await expect
       .poll(() =>
         editor
-          .getByRole("img", { name: "eve-square.png", exact: true })
+          .getByRole("img", { exact: true, name: "eve-square.png" })
           .evaluate(
             (image) =>
               image instanceof HTMLImageElement &&
@@ -159,11 +162,11 @@ test("ChatJS upload remains durable through creation retries and message editing
       )
       .toBe(true);
     await editor.screenshot({
-      path: "tests/eve-results/screenshots/eve-edit-restored-attachment.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-edit-restored-attachment.png",
     });
     await editor
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill(
         "Look at the attached square again. Reply with only its dominant color."
       );
@@ -178,33 +181,33 @@ test("ChatJS upload remains durable through creation retries and message editing
       async (route) => {
         const response = await route.fetch();
         forkReply.resolve({
-          status: response.status(),
           body: await response.json(),
           input: route.request().postDataJSON(),
+          status: response.status(),
         });
         await route.fulfill({ response });
       },
       { times: 1 }
     );
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     const forkResponse = await forkReply.promise;
     expect(forkResponse.status).toBe(200);
     const forkInput = z
       .object({
         message: z.array(
           z.object({
-            type: z.string(),
             data: z.string().optional(),
-            mediaType: z.string().optional(),
             filename: z.string().optional(),
+            mediaType: z.string().optional(),
+            type: z.string(),
           })
         ),
       })
       .parse(forkResponse.input);
     const retained = forkInput.message.find((part) => part.type === "file");
     expect(retained).toMatchObject({
-      mediaType: "image/png",
       filename: "eve-square.png",
+      mediaType: "image/png",
     });
     if (!retained?.data) {
       throw new Error("Edited message lost its image");
@@ -214,7 +217,7 @@ test("ChatJS upload remains durable through creation retries and message editing
     expect(retainedFile.ok()).toBe(true);
     expect(await retainedFile.body()).toEqual(redPng);
     const edited = z.object({ id: z.uuid() }).parse(forkResponse.body);
-    await expect(page).toHaveURL(new RegExp(`/chat/${edited.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${edited.id}$`, "u"));
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
@@ -223,7 +226,7 @@ test("ChatJS upload remains durable through creation retries and message editing
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: "eve-square.png", exact: true })
+        .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await expect(page.locator(".is-user")).toContainText(
       "Look at the attached square again"
@@ -255,12 +258,12 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
         response.request().method() === "POST"
     );
     await page
-      .getByRole("group", { name: "Message composer", exact: true })
+      .getByRole("group", { exact: true, name: "Message composer" })
       .getByLabel("Attach files", { exact: true })
       .setInputFiles({
-        name: "eve-square.png",
-        mimeType: "image/png",
         buffer: redPng,
+        mimeType: "image/png",
+        name: "eve-square.png",
       });
     const response = await uploaded;
     expect(response.ok()).toBe(true);
@@ -268,10 +271,10 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     await expect(
       page
         .getByTestId("attachments-preview")
-        .getByRole("img", { name: "eve-square.png", exact: true })
+        .getByRole("img", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Send", exact: true })
+      page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();
   }
   try {
@@ -282,17 +285,17 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       .click();
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: "Send", exact: true })
+      page.getByRole("button", { exact: true, name: "Send" })
     ).toBeDisabled();
     await attach();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("What color is the attached image? Answer with just the color.");
     await expect
       .poll(() =>
         page
           .getByTestId("attachments-preview")
-          .getByRole("img", { name: "eve-square.png", exact: true })
+          .getByRole("img", { exact: true, name: "eve-square.png" })
           .evaluate(
             (image) =>
               image instanceof HTMLImageElement &&
@@ -303,12 +306,12 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       .toBe(true);
     await page.mouse.move(0, 0);
     await page
-      .getByRole("group", { name: "Message composer", exact: true })
+      .getByRole("group", { exact: true, name: "Message composer" })
       .screenshot({
-        path: "tests/eve-results/screenshots/eve-composer-attachment.png",
         animations: "disabled",
+        path: "tests/eve-results/screenshots/eve-composer-attachment.png",
       });
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(chatUrl);
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
@@ -316,17 +319,17 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     await expect(page.locator(".is-assistant")).toContainText(redAnswer);
     await attach();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Describe the attached image in two sentences.");
     const accepted = page.waitForRequest(
       (request) =>
         request.method() === "POST" &&
         request.url().includes("/api/eve/v1/session/")
     );
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await accepted;
     await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
+      page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("");
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
     const conversationId = new URL(page.url()).pathname.split("/").at(-1);
@@ -339,29 +342,29 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
           .where(eq(eveFileReference.conversationId, conversationId));
-        return rows.map((row) => row.key).sort();
+        return rows.map((row) => row.key).toSorted();
       })
-      .toEqual(urls.slice(1).map(keyFromFileUrl).sort());
+      .toEqual(urls.slice(1).map(keyFromFileUrl).toSorted());
     // Reload after durable acceptance, while the response is still in progress.
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: "eve-square.png", exact: true })
+        .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toHaveCount(2, { timeout: 90_000 });
     await page.reload();
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: "eve-square.png", exact: true })
+        .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toHaveCount(2, { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
     await expect(
-      page.getByRole("button", { name: "Restore draft", exact: true })
+      page.getByRole("button", { exact: true, name: "Restore draft" })
     ).toHaveCount(0);
     await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
+      page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("");
   } finally {
     execFileSync("bun", [
@@ -388,7 +391,7 @@ test("an uncertain creation retains the same visible attachment and immutable re
   );
   await page.route(
     "**/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-    (route) => route.fulfill({ contentType: "image/png", body: redPng })
+    (route) => route.fulfill({ body: redPng, contentType: "image/png" })
   );
   const requests: string[] = [];
   await page.route("**/api/agent-conversations", (route) => {
@@ -396,17 +399,17 @@ test("an uncertain creation retains the same visible attachment and immutable re
     return route.abort("failed");
   });
   await page
-    .getByRole("group", { name: "Message composer", exact: true })
+    .getByRole("group", { exact: true, name: "Message composer" })
     .getByLabel("Attach files", { exact: true })
     .setInputFiles({
-      name: "eve-square.png",
-      mimeType: "image/png",
       buffer: redPng,
+      mimeType: "image/png",
+      name: "eve-square.png",
     });
   await expect(
-    page.getByRole("button", { name: "Send", exact: true })
+    page.getByRole("button", { exact: true, name: "Send" })
   ).toBeEnabled();
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Failed to fetch" })
   ).toBeVisible();
@@ -416,7 +419,7 @@ test("an uncertain creation retains the same visible attachment and immutable re
   );
   await expect(
     page
-      .getByRole("group", { name: "Message composer", exact: true })
+      .getByRole("group", { exact: true, name: "Message composer" })
       .getByLabel("Attach files", { exact: true })
   ).toBeDisabled();
   await expect(
@@ -425,29 +428,29 @@ test("an uncertain creation retains the same visible attachment and immutable re
   await expect(
     page
       .getByTestId("attachments-preview")
-      .getByRole("img", { name: "eve-square.png", exact: true })
+      .getByRole("img", { exact: true, name: "eve-square.png" })
   ).toBeVisible();
   await page.reload();
   await expect(
     page
       .getByTestId("attachments-preview")
-      .getByRole("img", { name: "eve-square.png", exact: true })
+      .getByRole("img", { exact: true, name: "eve-square.png" })
   ).toBeVisible();
   await expect(page.getByTestId("multimodal-input")).toHaveAttribute(
     "contenteditable",
     "false"
   );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Failed to fetch" })
   ).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(requests[1]).toBe(requests[0]);
   await page
-    .getByRole("group", { name: "Message composer", exact: true })
+    .getByRole("group", { exact: true, name: "Message composer" })
     .screenshot({
-      path: "tests/eve-results/screenshots/eve-composer-retained.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-composer-retained.png",
     });
 });
 
@@ -462,9 +465,9 @@ test("uploaded attachment has durable authenticated ownership", async ({
   const uploaded = await page.request.post("/api/files/upload", {
     multipart: {
       file: {
-        name: "ownership-fixture.png",
-        mimeType: "image/png",
         buffer: redPng,
+        mimeType: "image/png",
+        name: "ownership-fixture.png",
       },
     },
   });
@@ -487,8 +490,8 @@ test("uploaded attachment has durable authenticated ownership", async ({
     // This test-owned upload becomes a foreign file before any conversation uses it.
     const stranger = crypto.randomUUID();
     await db.insert(user).values({
-      id: stranger,
       email: `${stranger}@test.invalid`,
+      id: stranger,
       name: "Foreign file fixture",
     });
     try {
@@ -498,10 +501,7 @@ test("uploaded attachment has durable authenticated ownership", async ({
         .where(eq(eveStoredFile.key, key));
       const operationId = crypto.randomUUID();
       const rejected = await page.request.post("/api/agent-conversations", {
-        headers: { origin: new URL(page.url()).origin },
         data: {
-          operationId,
-          modelId: "google/gemini-2.5-flash-lite",
           message: [
             {
               type: "file",
@@ -510,7 +510,10 @@ test("uploaded attachment has durable authenticated ownership", async ({
               filename: "foreign.png",
             },
           ],
+          modelId: "google/gemini-2.5-flash-lite",
+          operationId,
         },
+        headers: { origin: new URL(page.url()).origin },
       });
       expect(rejected.status()).toBe(400);
       expect(await rejected.json()).toMatchObject({ creationRejected: true });
@@ -544,7 +547,7 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
   await page.goto("/api/dev-login");
   const upload = await page.request.post("/api/files/upload", {
     multipart: {
-      file: { name: "orphan-fence.png", mimeType: "image/png", buffer: redPng },
+      file: { buffer: redPng, mimeType: "image/png", name: "orphan-fence.png" },
     },
   });
   expect(upload.ok()).toBe(true);

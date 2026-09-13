@@ -1,27 +1,27 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { build } from "bun";
 
-const imageImport = /^next\/image$/;
-const fixtureModule = /.*/;
+const imageImport = /^next\/image$/u;
+const fixtureModule = /.*/u;
 const replacedModule =
-  /\/(chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link|connectors-dropdown)\.tsx$/;
+  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link|connectors-dropdown)\.tsx$/u;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
 const replacements = {
   "chat-models-provider.tsx": "useChatModels",
-  "session-provider.tsx": "useSession",
+  "chat-welcome.tsx": "ChatWelcomeView",
+  "connectors-dropdown.tsx": "ConnectorsDropdown",
   "eve-artifact-layout.tsx": "EveArtifactLayout",
   "eve-conversation.tsx": "EveConversation",
-  "chat-welcome.tsx": "ChatWelcomeView",
   "internal-link.tsx": "InternalLink",
-  "connectors-dropdown.tsx": "ConnectorsDropdown",
+  "session-provider.tsx": "useSession",
 };
 const result = await build({
-  entrypoints: [process.argv[2] ?? "tests/eve-comparison-ui.fixture.tsx"],
-  target: "browser",
   define: {
-    "process.env.NODE_ENV": JSON.stringify("development"),
     "process.env": "{}",
+    "process.env.NODE_ENV": JSON.stringify("development"),
   },
+  entrypoints: [process.argv[2] ?? "tests/eve-comparison-ui.fixture.tsx"],
   plugins: [
     {
       name: "strict-comparison-fixture-boundaries",
@@ -53,6 +53,7 @@ const result = await build({
       },
     },
   ],
+  target: "browser",
 });
 if (!result.success) {
   throw new Error(String(result.logs));

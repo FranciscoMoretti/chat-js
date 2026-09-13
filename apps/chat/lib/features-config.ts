@@ -8,67 +8,77 @@ interface FeatureConfig {
   icon: LucideIcon;
   key: string;
   name: string;
+  order: number;
 }
 
 export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
-  reasoning: {
-    key: "reasoning",
-    name: "Reasoning",
-    description: "Advanced reasoning capabilities",
-    icon: Brain,
-    enabled: true,
-    category: "capability",
-  },
-  functionCalling: {
-    key: "functionCalling",
-    name: "Tools",
-    description: "Tool calling support",
-    icon: Zap,
-    enabled: true,
-    category: "capability",
-  },
-  imageInput: {
-    key: "imageInput",
-    name: "Vision",
-    description: "Supports image input",
-    icon: Eye,
-    enabled: true,
-    category: "input",
-  },
-  pdfInput: {
-    key: "pdfInput",
-    name: "PDF",
-    description: "Supports PDF input",
-    icon: FileText,
-    enabled: true,
-    category: "input",
-  },
   audioInput: {
+    category: "input",
+    description: "Supports audio input",
+    enabled: false,
+    icon: Mic,
     key: "audioInput",
     name: "Audio Input",
-    description: "Supports audio input",
-    icon: Mic,
-    enabled: false, // Not available yet
-    category: "input",
-  },
-  imageOutput: {
-    key: "imageOutput",
-    name: "Image Output",
-    description: "Supports image generation",
-    icon: Image,
-    enabled: false, // Not available yet
-    category: "output",
+    order: 4,
   },
   audioOutput: {
+    category: "output",
+    description: "Supports audio generation",
+    enabled: false,
+    icon: Mic,
     key: "audioOutput",
     name: "Audio Output",
-    description: "Supports audio generation",
-    icon: Mic,
-    enabled: false, // Not available yet
+    order: 6,
+  },
+  functionCalling: {
+    category: "capability",
+    description: "Tool calling support",
+    enabled: true,
+    icon: Zap,
+    key: "functionCalling",
+    name: "Tools",
+    order: 1,
+  },
+  imageInput: {
+    category: "input",
+    description: "Supports image input",
+    enabled: true,
+    icon: Eye,
+    key: "imageInput",
+    name: "Vision",
+    order: 2,
+  },
+  imageOutput: {
     category: "output",
+    description: "Supports image generation",
+    enabled: false,
+    icon: Image,
+    key: "imageOutput",
+    name: "Image Output",
+    order: 5,
+  },
+  pdfInput: {
+    category: "input",
+    description: "Supports PDF input",
+    enabled: true,
+    icon: FileText,
+    key: "pdfInput",
+    name: "PDF",
+    order: 3,
+  },
+  reasoning: {
+    category: "capability",
+    description: "Advanced reasoning capabilities",
+    enabled: true,
+    icon: Brain,
+    key: "reasoning",
+    name: "Reasoning",
+    order: 0,
   },
 } as const;
 
 // Get only enabled features
 export const getEnabledFeatures = () =>
-  Object.values(AVAILABLE_FEATURES).filter((feature) => feature.enabled);
+  Object.values(AVAILABLE_FEATURES)
+    .filter((feature) => feature.enabled)
+    .toSorted((left, right) => left.order - right.order);

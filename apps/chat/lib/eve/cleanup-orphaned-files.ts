@@ -4,11 +4,11 @@ import { deleteFilesByUrls, iterateStoredFiles } from "../file-storage";
 import { FILE_CONTENT_PATH, isFileStorageKey } from "../file-url";
 
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched. */
-export async function cleanupEveOrphanedFiles(cutoff: Date) {
+export const cleanupEveOrphanedFiles = async (cutoff: Date) => {
   let deletedCount = 0;
   let batch: string[] = [];
   const errors: unknown[] = [];
-  async function purge(keys: string[]) {
+  const purge = async (keys: string[]) => {
     try {
       const files = await prepareEveOrphanedFilePurge(keys, cutoff);
       if (!files.length) {
@@ -19,7 +19,8 @@ export async function cleanupEveOrphanedFiles(cutoff: Date) {
           ({ key }) => `${FILE_CONTENT_PATH}?${new URLSearchParams({ key })}`
         )
       );
-      for (const ownerId of [...new Set(files.map((file) => file.ownerId))]) {
+      for (const ownerId of new Set(files.map((file) => file.ownerId))) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         await completeEveFilePurge(
           ownerId,
           files
@@ -33,7 +34,7 @@ export async function cleanupEveOrphanedFiles(cutoff: Date) {
       // Continue the sweep so one failing object cannot starve later batches.
       errors.push(error);
     }
-  }
+  };
   for await (const file of iterateStoredFiles()) {
     if (!(isFileStorageKey(file.pathname) && file.uploadedAt < cutoff)) {
       continue;
@@ -54,4 +55,4 @@ export async function cleanupEveOrphanedFiles(cutoff: Date) {
     );
   }
   return { deletedCount, skipped: false };
-}
+};

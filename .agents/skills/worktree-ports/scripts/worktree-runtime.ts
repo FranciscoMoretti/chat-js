@@ -1,9 +1,10 @@
 import { file } from "bun";
 
-const SLOT_PATTERN = /^\d+$/;
-const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const TEMPLATE_PATTERN = /\{([^}]+)\}/g;
-const APP_TEMPLATE_PATTERN = /^apps\.([a-zA-Z0-9_-]+)\.(port|url)$/;
+const SLOT_PATTERN = /^\d+$/u;
+const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
+const TEMPLATE_PATTERN = /\{(?<token>[^}]+)\}/gu;
+const APP_TEMPLATE_PATTERN =
+  /^apps\.(?<app>[a-zA-Z0-9_-]+)\.(?<property>port|url)$/u;
 const MIN_PORT = 1024;
 const MAX_PORT = 65_535;
 
@@ -43,14 +44,14 @@ interface TemplateContext {
   url?: string;
 }
 
-function assertNonNegativeInteger(value: number, label: string) {
+const assertNonNegativeInteger = (value: number, label: string) => {
   if (!(Number.isSafeInteger(value) && value >= 0)) {
     throw new Error(`${label} must be a non-negative integer`);
   }
-}
+};
 
-function renderTemplate(template: string, context: TemplateContext): string {
-  return template.replace(TEMPLATE_PATTERN, (_, token: string) => {
+const renderTemplate = (template: string, context: TemplateContext): string =>
+  template.replace(TEMPLATE_PATTERN, (_, token: string) => {
     if (token === "slot") {
       return String(context.slot);
     }
@@ -72,12 +73,11 @@ function renderTemplate(template: string, context: TemplateContext): string {
 
     throw new Error(`Unknown worktree template variable "${token}"`);
   });
-}
 
-function resolveSlot(
+const resolveSlot = (
   config: WorktreeEnvConfig,
   environment: Record<string, string | undefined>
-): number {
+): number => {
   if (!ENV_NAME_PATTERN.test(config.slot.env)) {
     throw new Error(`Invalid slot.env "${config.slot.env}"`);
   }
@@ -93,12 +93,12 @@ function resolveSlot(
   const slot = Number(rawSlot);
   assertNonNegativeInteger(slot, config.slot.env);
   return slot;
-}
+};
 
-export function resolveWorktreeRuntime(
+export const resolveWorktreeRuntime = (
   config: WorktreeEnvConfig,
   environment: Record<string, string | undefined>
-): WorktreeRuntime {
+): WorktreeRuntime => {
   assertNonNegativeInteger(config.range.base, "range.base");
   assertNonNegativeInteger(config.range.stride, "range.stride");
   if (config.range.stride === 0) {
@@ -168,14 +168,14 @@ export function resolveWorktreeRuntime(
   }
 
   return { apps: resolvedApps, slot };
-}
+};
 
-export async function loadWorktreeConfig(
+export const loadWorktreeConfig = async (
   path = ".worktree-env.json"
-): Promise<WorktreeEnvConfig> {
+): Promise<WorktreeEnvConfig> => {
   const configFile = file(path);
   if (!(await configFile.exists())) {
     throw new Error(`Missing worktree environment config: ${path}`);
   }
   return configFile.json();
-}
+};

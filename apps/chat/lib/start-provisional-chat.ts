@@ -16,7 +16,7 @@ import { useCustomChatStoreApi } from "@/lib/stores/custom-store-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
 
-function getProvisionalChatHref({
+const getProvisionalChatHref = ({
   chatId,
   projectId,
   source,
@@ -24,24 +24,22 @@ function getProvisionalChatHref({
   chatId: string;
   projectId: string | null;
   source: "home" | "project";
-}) {
+}) => {
   if (source === "project") {
     return projectId ? (`/project/${projectId}/chat/${chatId}` as Route) : null;
   }
 
   return `/chat/${chatId}` as Route;
-}
+};
 
-function isInitialRoute(
+const isInitialRoute = (
   route: ReturnType<typeof useCurrentChatRoute>
 ): route is Extract<
   ReturnType<typeof useCurrentChatRoute>,
   { type: "home" | "projectHome" }
-> {
-  return route.type === "home" || route.type === "projectHome";
-}
+> => route.type === "home" || route.type === "projectHome";
 
-export function useStartProvisionalChat(chatId: string) {
+export const useStartProvisionalChat = (chatId: string) => {
   const currentRoute = useCurrentChatRoute();
   const changeModel = useModelChange();
   const { data: session } = useSession();
@@ -73,7 +71,7 @@ export function useStartProvisionalChat(chatId: string) {
 
       const primaryRequest = requestSpecs[0] ?? null;
       const storeState = storeApi.getState();
-      const startRun = storeState.startRun;
+      const { startRun } = storeState;
 
       if (!startRun) {
         return false;
@@ -88,7 +86,7 @@ export function useStartProvisionalChat(chatId: string) {
         changeModel(primaryRequest.modelId);
       }
 
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: true,
         message,
@@ -96,18 +94,33 @@ export function useStartProvisionalChat(chatId: string) {
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,
-      })
-        .finally(() => {
+      });
+      const completeRequests = async () => {
+        let shouldDiscardConfirmation = true;
+        try {
+          const failedRequestSpecs = await runRequests;
+          shouldDiscardConfirmation = false;
           discardUnacknowledgedProvisionalChatConfirmation(chatId, message.id);
-        })
-        .then((failedRequestSpecs) => {
+
           if (failedRequestSpecs.length > 0) {
             toast.error("Failed to complete all parallel responses");
           }
-        })
-        .catch(() => {
+        } catch {
+          if (shouldDiscardConfirmation) {
+            try {
+              discardUnacknowledgedProvisionalChatConfirmation(
+                chatId,
+                message.id
+              );
+            } catch {
+              toast.error("Failed to complete all parallel responses");
+              return;
+            }
+          }
           toast.error("Failed to complete all parallel responses");
-        });
+        }
+      };
+      void completeRequests();
 
       window.history.pushState(null, "", href);
       onStarted?.();
@@ -116,4 +129,4 @@ export function useStartProvisionalChat(chatId: string) {
     },
     [changeModel, chatId, currentRoute, session?.user, storeApi]
   );
-}
+};

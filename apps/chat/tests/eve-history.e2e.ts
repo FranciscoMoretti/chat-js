@@ -1,3 +1,6 @@
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -26,8 +29,8 @@ test("history pages and searches older conversations without exposing other owne
   const foreignOwner = crypto.randomUUID();
   const ids = Array.from({ length: 56 }, () => crypto.randomUUID());
   await db.insert(user).values({
-    id: foreignOwner,
     email: `${foreignOwner}@test.invalid`,
+    id: foreignOwner,
     name: "History test",
   });
   await db.insert(eveConversation).values(
@@ -47,8 +50,8 @@ test("history pages and searches older conversations without exposing other owne
     expect(first.items.slice(0, 2).every((row) => row.isPinned)).toBe(true);
     expect(first.nextCursor?.updatedAt).toBe("2099-01-01T00:00:00.123456Z");
     const second = await listEveConversations(owner.id, {
-      search: prefix,
       cursor: first.nextCursor,
+      search: prefix,
     });
     expect(second.items).toHaveLength(5);
     expect(second.nextCursor).toBeNull();
@@ -65,8 +68,8 @@ test("history pages and searches older conversations without exposing other owne
     }
     await page.goto("/");
     const expand = page.getByRole("button", {
-      name: "Expand sidebar",
       exact: true,
+      name: "Expand sidebar",
     });
     if (await expand.isVisible()) {
       await expand.click();
@@ -89,8 +92,8 @@ test("history pages and searches older conversations without exposing other owne
       ).toBeVisible();
       await mkdir("tests/eve-results/screenshots", { recursive: true });
       await page.screenshot({
-        path: "tests/eve-results/screenshots/eve-history-loading.png",
         animations: "disabled",
+        path: "tests/eve-results/screenshots/eve-history-loading.png",
       });
     } finally {
       releaseSearch();
@@ -100,40 +103,40 @@ test("history pages and searches older conversations without exposing other owne
       page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
     ).toHaveCount(50);
     const loadMore = page.getByRole("button", {
-      name: "Load more conversations",
       exact: true,
+      name: "Load more conversations",
     });
     await loadMore.scrollIntoViewIfNeeded();
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-history-pagination.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-history-pagination.png",
     });
     await loadMore.click();
     await expect(
       page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
     ).toHaveCount(55);
     await expect(
-      page.getByRole("button", { name: "Load more conversations", exact: true })
+      page.getByRole("button", { exact: true, name: "Load more conversations" })
     ).toHaveCount(0);
     await search.fill(last.title);
     await expect(
-      page.getByRole("link", { name: last.title, exact: true })
+      page.getByRole("link", { exact: true, name: last.title })
     ).toBeVisible();
     await expect(
       page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
     ).toHaveCount(1);
     await mkdir("tests/eve-results/screenshots", { recursive: true });
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-history-search.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-history-search.png",
     });
     await search.fill(`${prefix} absent`);
     await expect(
       page.getByText("No matching conversations.", { exact: true })
     ).toBeVisible();
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-history-empty.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-history-empty.png",
     });
     await page.route("**/api/trpc/eve.list**", (route) => route.abort());
     await search.fill(`${prefix} failed`);
@@ -141,17 +144,17 @@ test("history pages and searches older conversations without exposing other owne
       page.getByText("Could not load conversations.", { exact: true })
     ).toBeVisible();
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-history-error.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-history-error.png",
     });
     await page.unroute("**/api/trpc/eve.list**");
-    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Retry" }).click();
     await expect(
       page.getByText("No matching conversations.", { exact: true })
     ).toBeVisible();
     await search.fill("");
     await expect(
-      page.getByRole("button", { name: "Load more conversations", exact: true })
+      page.getByRole("button", { exact: true, name: "Load more conversations" })
     ).toBeVisible();
   } finally {
     await db.delete(eveConversation).where(inArray(eveConversation.id, ids));

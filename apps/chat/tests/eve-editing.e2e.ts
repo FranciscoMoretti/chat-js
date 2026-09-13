@@ -19,17 +19,17 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       route.abort()
     );
     await page.goto("/api/dev-login");
-    const origin = new URL(page.url()).origin;
+    const { origin } = new URL(page.url());
     await page.request.post("/api/chat-model", {
       data: { model: sourceModelId },
     });
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: sourceModelId,
         message: "Reply briefly with amber.",
+        modelId: sourceModelId,
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const source = conversationBinding.parse(await created.json());
@@ -39,23 +39,23 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       timeout: 90_000,
     });
     await page
-      .getByRole("button", { name: "Edit message", exact: true })
+      .getByRole("button", { exact: true, name: "Edit message" })
       .click();
     const editor = page.getByRole("dialog");
     await expect(editor).toContainText("original conversation stays available");
     await editor
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Reply briefly with cobalt.");
     await editor.screenshot({
-      path: testInfo.outputPath("edit-dialog.png"),
       animations: "disabled",
+      path: testInfo.outputPath("edit-dialog.png"),
     });
 
     const desktopViewport = page.viewportSize();
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ height: 844, width: 390 });
     await editor.screenshot({
-      path: testInfo.outputPath("edit-dialog-mobile.png"),
       animations: "disabled",
+      path: testInfo.outputPath("edit-dialog-mobile.png"),
     });
     if (desktopViewport) {
       await page.setViewportSize(desktopViewport);
@@ -71,7 +71,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       },
       { times: 1 }
     );
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("button", { name: "Recover version" })
     ).toBeEnabled({ timeout: 60_000 });
@@ -83,7 +83,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`), {
+    await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`, "u"), {
       timeout: 60_000,
     });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -97,13 +97,13 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       page.getByRole("combobox", { name: "Conversation version" })
     ).toContainText("Version 2");
     await page.getByRole("log").screenshot({
-      path: testInfo.outputPath("edited-messages.png"),
       animations: "disabled",
+      path: testInfo.outputPath("edited-messages.png"),
     });
     await page.getByTestId("model-selector").filter({ visible: true }).click();
     await page.getByPlaceholder("Search models...").fill("GPT-5 mini");
     await page
-      .getByRole("option", { name: "openai logo GPT-5 mini", exact: true })
+      .getByRole("option", { exact: true, name: "openai logo GPT-5 mini" })
       .filter({
         hasNot: page.getByTitle("Advanced reasoning capabilities", {
           exact: true,
@@ -121,14 +121,17 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
         response.request().method() === "POST"
     );
     await page
-      .getByRole("button", { name: "Regenerate response", exact: true })
+      .getByRole("button", { exact: true, name: "Regenerate response" })
       .click();
     const regeneration = await regenerated;
     expect(regeneration.ok()).toBe(true);
     expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
-    await expect(page).not.toHaveURL(new RegExp(`/chat/${accepted?.id}$`), {
-      timeout: 60_000,
-    });
+    await expect(page).not.toHaveURL(
+      new RegExp(`/chat/${accepted?.id}$`, "u"),
+      {
+        timeout: 60_000,
+      }
+    );
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
@@ -142,33 +145,33 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     await page
       .getByRole("navigation", { name: "Conversation versions" })
       .screenshot({
-        path: testInfo.outputPath("version-navigation.png"),
         animations: "disabled",
+        path: testInfo.outputPath("version-navigation.png"),
       });
     await page
-      .getByRole("link", { name: "Original conversation", exact: true })
+      .getByRole("link", { exact: true, name: "Original conversation" })
       .click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"));
     await expect(page.getByRole("log").locator(".is-user")).toContainText(
       "amber"
     );
     await expect(page.getByRole("log")).not.toContainText("cobalt");
     await page
-      .getByRole("button", { name: "Edit message", exact: true })
+      .getByRole("button", { exact: true, name: "Edit message" })
       .click();
     await editor
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Keep this edited violet draft.");
     await page.route(
       "**/api/agent-conversations",
       (route) =>
         route.fulfill({
-          status: 503,
           json: { error: "Temporary test outage" },
+          status: 503,
         }),
       { times: 1 }
     );
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("button", { name: "Recover version" })
     ).toBeEnabled();
@@ -180,21 +183,21 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       page.getByRole("button", { name: "Recover version" })
     ).toBeVisible();
     await page.getByRole("region", { name: "Version recovery" }).screenshot({
-      path: testInfo.outputPath("retained-edit.png"),
       animations: "disabled",
+      path: testInfo.outputPath("retained-edit.png"),
     });
     await page.route(
       "**/api/agent-conversations",
       (route) =>
         route.fulfill({
+          json: { creationRejected: true, error: "Test model rejection" },
           status: 400,
-          json: { error: "Test model rejection", creationRejected: true },
         }),
       { times: 1 }
     );
     await page.getByRole("button", { name: "Recover version" }).click();
     await expect(
-      editor.getByRole("textbox", { name: "Message", exact: true })
+      editor.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("Keep this edited violet draft.");
     await expect(editor).toContainText("Test model rejection");
     let replacement: unknown;
@@ -203,17 +206,17 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       async (route) => {
         replacement = route.request().postDataJSON();
         await route.fulfill({
+          json: { creationRejected: true, error: "End of test" },
           status: 400,
-          json: { error: "End of test", creationRejected: true },
         });
       },
       { times: 1 }
     );
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(editor).toContainText("End of test");
     expect(replacement).toMatchObject({
+      fork: { beforeTurnId: "turn_0", conversationId: source.id },
       message: "Keep this edited violet draft.",
-      fork: { conversationId: source.id, beforeTurnId: "turn_0" },
     });
   } catch (error) {
     bodyFailed = true;
@@ -232,16 +235,16 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
                 .catch(() => null);
               return response?.status() === 200 ? response.json() : null;
             },
-            { timeout: 90_000, intervals: [1000, 2000, 5000] }
+            { intervals: [1000, 2000, 5000], timeout: 90_000 }
           )
-          .toEqual({ status: "deleted", rootId: cleanup.id });
+          .toEqual({ rootId: cleanup.id, status: "deleted" });
       } catch (error) {
         if (!bodyFailed) {
           cleanupFailure = { error };
         }
         testInfo.annotations.push({
-          type: "cleanup",
           description: "Native conversation family cleanup also failed.",
+          type: "cleanup",
         });
       }
     }

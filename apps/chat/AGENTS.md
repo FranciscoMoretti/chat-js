@@ -53,7 +53,7 @@ These instructions apply to this application directory.
 - Avoid `dangerouslySetInnerHTML`, `eval`, and direct `document.cookie` assignments unless the task explicitly requires and secures them.
 - Use Next.js `Image` instead of raw `img` elements.
 - Keep test assertions inside test cases. Do not commit `.only` or `.skip`.
-- Run `bunx ultracite@7.4.3 check` to inspect formatting and lint failures, or `bunx ultracite@7.4.3 fix` when formatting changes are in scope.
+- Run `bun lint` to inspect formatting and lint failures, or `bun format` when formatting changes are in scope.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

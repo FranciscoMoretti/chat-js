@@ -55,7 +55,7 @@ export type BarChart = BaseChartCommon & {
 
 export type BaseChart = LineChart | ScatterChart | BarChart;
 
-function InteractiveChart({ chart }: { chart: BaseChart }) {
+const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const textColor = isDark ? "#e5e5e5" : "#262626";
@@ -65,102 +65,103 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
   const sharedOptions: EChartsOption = {
     backgroundColor: "transparent",
     grid: {
-      top: 50,
-      right: 32,
       bottom: 32,
-      left: 32,
       containLabel: true,
+      left: 32,
+      right: 32,
+      top: 50,
     },
     legend: {
+      icon: "circle",
+      itemGap: 16,
+      itemHeight: 8,
+      itemWidth: 8,
       textStyle: { color: textColor },
       top: 8,
-      icon: "circle",
-      itemWidth: 8,
-      itemHeight: 8,
-      itemGap: 16,
     },
     tooltip: {
-      trigger: "axis",
       backgroundColor: tooltipBg,
       borderWidth: 0,
-      padding: [6, 10],
       className: "echarts-tooltip rounded-lg! border! border-border!",
+      padding: [6, 10],
       textStyle: {
         color: textColor,
-        fontSize: 13,
         fontFamily: "system-ui, -apple-system, sans-serif",
+        fontSize: 13,
       },
+      trigger: "axis",
     },
   };
 
   const getChartOptions = (): EChartsOption => {
     const defaultAxisOptions = {
-      axisLine: { show: true, lineStyle: { color: gridColor } },
-      axisTick: { show: false },
       axisLabel: {
         color: textColor,
-        margin: 8,
         fontSize: 11,
         hideOverlap: true,
+        margin: 8,
       },
+      axisLine: { lineStyle: { color: gridColor }, show: true },
+      axisTick: { show: false },
       nameTextStyle: {
         color: textColor,
         fontSize: 13,
         padding: [0, 0, 0, 0],
       },
       splitLine: {
-        show: true,
         lineStyle: { color: gridColor, type: "dashed" },
+        show: true,
       },
     };
 
     if (chart.type === "line" || chart.type === "scatter") {
       const series = chart.elements.map((e, index) => ({
-        name: e.label,
-        type: chart.type,
+        areaStyle:
+          chart.type === "line"
+            ? {
+                color: {
+                  colorStops: [
+                    {
+                      color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
+                      offset: 0,
+                    },
+                    { color: "rgba(23, 23, 23, 0)", offset: 1 },
+                  ],
+                  type: "linear",
+                  x: 0,
+                  x2: 0,
+                  y: 0,
+                  y2: 1,
+                },
+              }
+            : undefined,
         data: e.points.map((p: [number | string, number]) => {
           const x =
             chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
           return [x, p[1]];
         }),
-        smooth: true,
-        symbolSize: chart.type === "scatter" ? 10 : 0,
-        lineStyle: {
-          width: 2,
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
         itemStyle: {
           color: CHART_COLORS[index % CHART_COLORS.length],
         },
-        areaStyle:
-          chart.type === "line"
-            ? {
-                color: {
-                  type: "linear",
-                  x: 0,
-                  y: 0,
-                  x2: 0,
-                  y2: 1,
-                  colorStops: [
-                    {
-                      offset: 0,
-                      color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
-                    },
-                    { offset: 1, color: "rgba(23, 23, 23, 0)" },
-                  ],
-                },
-              }
-            : undefined,
+        lineStyle: {
+          color: CHART_COLORS[index % CHART_COLORS.length],
+          width: 2,
+        },
+        name: e.label,
+        smooth: true,
+        symbolSize: chart.type === "scatter" ? 10 : 0,
+        type: chart.type,
       }));
 
       return {
         ...sharedOptions,
+        series,
         xAxis: {
-          type: chart.x_scale === "datetime" ? "time" : "value",
           name: chart.x_label,
-          nameLocation: "middle",
           nameGap: 40,
+          nameLocation: "middle",
           scale: true,
+          type: chart.x_scale === "datetime" ? "time" : "value",
           ...defaultAxisOptions,
           axisLabel: {
             ...defaultAxisOptions.axisLabel,
@@ -177,15 +178,14 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
           },
         },
         yAxis: {
-          type: "value",
           name: chart.y_label,
-          nameLocation: "middle",
           nameGap: 50,
+          nameLocation: "middle",
           position: "right",
           scale: true,
+          type: "value",
           ...defaultAxisOptions,
         },
-        series,
       };
     }
 
@@ -203,39 +203,39 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
       );
 
       const series = Object.entries(data).map(([group, elements], index) => ({
-        name: group,
-        type: "bar",
-        stack: "total",
         data: elements?.map((e) => [e.label, e.value]),
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: "rgba(0,0,0,0.3)",
           },
         },
+        itemStyle: {
+          color: CHART_COLORS[index % CHART_COLORS.length],
+        },
+        name: group,
+        stack: "total",
+        type: "bar",
       }));
 
       return {
         ...sharedOptions,
+        series,
         xAxis: {
-          type: "category",
           name: chart.x_label,
-          nameLocation: "middle",
           nameGap: 40,
+          nameLocation: "middle",
+          type: "category",
           ...defaultAxisOptions,
         },
         yAxis: {
-          type: "value",
           name: chart.y_label,
-          nameLocation: "middle",
           nameGap: 50,
+          nameLocation: "middle",
           position: "right",
+          type: "value",
           ...defaultAxisOptions,
         },
-        series,
       };
     }
 
@@ -265,6 +265,6 @@ function InteractiveChart({ chart }: { chart: BaseChart }) {
       </Card>
     </motion.div>
   );
-}
+};
 
 export default InteractiveChart;

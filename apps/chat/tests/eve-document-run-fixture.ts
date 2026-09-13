@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -9,10 +10,10 @@ const input = {
   revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
 };
 const base = {
-  type: "dynamic-tool" as const,
-  toolName: "runCodeDocument",
-  toolCallId: "run",
   input,
+  toolCallId: "run",
+  toolName: "runCodeDocument",
+  type: "dynamic-tool" as const,
 };
 const states: {
   title: string;
@@ -21,32 +22,32 @@ const states: {
   readOnly?: boolean;
 }[] = [
   { title: "Ready" },
-  { title: "Unsaved changes", disabled: true },
+  { disabled: true, title: "Unsaved changes" },
   {
-    title: "Running",
     disabled: true,
     part: { ...base, state: "input-available" },
+    title: "Running",
   },
   {
-    title: "Execution error",
     part: {
       ...base,
-      state: "output-error",
       errorText: "Code document not found.",
+      state: "output-error",
     },
+    title: "Execution error",
   },
   {
-    title: "Declined",
     part: {
       ...base,
+      approval: { approved: false, id: "declined" },
       state: "output-denied",
-      approval: { id: "declined", approved: false },
     },
+    title: "Declined",
   },
   {
-    title: "Malformed result",
+    part: { ...base, output: {}, state: "output-available" },
     readOnly: true,
-    part: { ...base, state: "output-available", output: {} },
+    title: "Malformed result",
   },
 ];
 
@@ -58,17 +59,17 @@ process.stdout.write(
       states.map(({ title, part, disabled, readOnly }) =>
         createElement(
           "section",
-          { key: title, className: "rounded border p-3" },
+          { className: "rounded border p-3", key: title },
           createElement("h2", null, title),
           createElement(EveDocumentRun, {
             ...input,
-            title: "saved.js",
-            kind: "code",
             disabled: disabled ?? false,
-            onAction: readOnly ? undefined : () => Promise.resolve(),
+            kind: "code",
             messages: part
               ? [{ id: title, role: "assistant", parts: [part] }]
               : [],
+            onAction: readOnly ? undefined : () => Promise.resolve(),
+            title: "saved.js",
           })
         )
       )

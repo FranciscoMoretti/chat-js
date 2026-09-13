@@ -17,21 +17,21 @@ import {
 
 type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
 const completed: Part = {
-  type: "dynamic-tool",
-  toolName: "createTextDocument",
-  toolCallId: "write-1",
-  state: "output-available",
   input: {},
   output: {
-    status: "success",
-    documentId: "00000000-0000-4000-8000-000000000001",
-    revisionId: "00000000-0000-4000-8000-000000000002",
-    title: "Orchard notes",
-    kind: "text",
     date: "2026-01-01T00:00:00.000Z",
+    documentId: "00000000-0000-4000-8000-000000000001",
+    kind: "text",
+    revisionId: "00000000-0000-4000-8000-000000000002",
+    status: "success",
+    title: "Orchard notes",
   },
+  state: "output-available",
+  toolCallId: "write-1",
+  toolName: "createTextDocument",
+  type: "dynamic-tool",
 };
-function Fixture() {
+const Fixture = () => {
   const { artifact, setArtifact } = useArtifact();
   const [part, setPart] = useState<Part>(completed);
   const [readOnly, setReadOnly] = useState(false);
@@ -42,11 +42,11 @@ function Fixture() {
         <button
           onClick={() =>
             setPart({
-              type: "dynamic-tool",
-              toolName: "createTextDocument",
-              toolCallId: "write-1",
-              state: "input-available",
               input: {},
+              state: "input-available",
+              toolCallId: "write-1",
+              toolName: "createTextDocument",
+              type: "dynamic-tool",
             })
           }
           type="button"
@@ -69,10 +69,10 @@ function Fixture() {
           onClick={() =>
             setArtifact({
               ...artifact,
-              title: "Existing draft",
               documentId: existingId,
-              revisionId: undefined,
               isVisible: true,
+              revisionId: undefined,
+              title: "Existing draft",
             })
           }
           type="button"
@@ -84,8 +84,8 @@ function Fixture() {
       <EveDocumentTool isReadonly={readOnly} messageId="message" part={part} />
     </main>
   );
-}
-const root = document.getElementById("root");
+};
+const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }

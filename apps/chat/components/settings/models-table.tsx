@@ -12,13 +12,13 @@ import { useTRPC } from "@/trpc/react";
 
 import { ModelRow } from "./model-row";
 
-export function ModelsTable({
+export const ModelsTable = ({
   search,
   className,
 }: {
   search: string;
   className?: string;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { allModels, models: enabledModels } = useChatModels();
@@ -31,6 +31,14 @@ export function ModelsTable({
 
   const { mutate: setModelEnabled } = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
+      onError: (
+        _err,
+        _newData,
+        context: { prev: typeof preferences } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update model preference");
+      },
       onMutate: (newData) => {
         const prev = queryClient.getQueryData(queryKey);
         queryClient.setQueryData(queryKey, (old: typeof preferences) => {
@@ -38,25 +46,21 @@ export function ModelsTable({
             return old;
           }
           const idx = old.findIndex((p) => p.modelId === newData.modelId);
-          if (idx >= 0) {
+          if (idx !== -1) {
             return old.with(idx, { ...old[idx], enabled: newData.enabled });
           }
           return [
             ...old,
             {
-              modelId: newData.modelId,
-              enabled: newData.enabled,
-              userId: "",
               createdAt: new Date(),
+              enabled: newData.enabled,
+              modelId: newData.modelId,
               updatedAt: new Date(),
+              userId: "",
             },
           ];
         });
         return { prev };
-      },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update model preference");
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey });
@@ -79,6 +83,7 @@ export function ModelsTable({
   // Stable sort order: computed once on initial load, never changes
   const initialSortRef = useRef<AppModelId[] | null>(null);
   const sortedModels = useMemo(() => {
+    // oxlint-disable-next-line react/refs -- Keep the user's initial model ordering stable across query updates.
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest
       const enabledSet = new Set(enabledModels.map((m) => m.id));
@@ -91,10 +96,11 @@ export function ModelsTable({
     }
     // Subsequent renders: maintain original order
     const modelMap = new Map(allModels.map((m) => [m.id, m]));
+    // oxlint-disable-next-line react/refs -- Read the stable ordering captured on first render.
     return initialSortRef.current
       .map((id) => modelMap.get(id))
       .filter((m) => m !== undefined);
-  }, [allModels, enabledModels]);
+  }, [allModels, enabledModels, initialSortRef]);
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
@@ -112,8 +118,8 @@ export function ModelsTable({
   const handleToggle = useCallback(
     (modelId: string, currentlyEnabled: boolean) => {
       setModelEnabled({
-        modelId,
         enabled: !currentlyEnabled,
+        modelId,
       });
     },
     [setModelEnabled]
@@ -154,4 +160,4 @@ export function ModelsTable({
       )}
     </>
   );
-}
+};

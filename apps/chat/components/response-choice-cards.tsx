@@ -12,15 +12,15 @@ export type ResponseChoiceSlot = {
   loading: boolean;
   statusLabel: string;
   disabled?: boolean;
-  onSelect: () => void;
+  handleSelect: () => void;
 };
 
 /** Layout only: controllers own ordering, lifecycle, and selection. */
-export function ResponseChoiceCards({
+export const ResponseChoiceCards = ({
   slots,
 }: {
   slots: readonly ResponseChoiceSlot[];
-}) {
+}) => {
   if (slots.length === 0) {
     return null;
   }
@@ -35,7 +35,7 @@ export function ResponseChoiceCards({
           )}
           disabled={slot.disabled}
           key={slot.id}
-          onClick={slot.onSelect}
+          onClick={slot.handleSelect}
           type="button"
           variant="outline"
         >
@@ -50,4 +50,4 @@ export function ResponseChoiceCards({
       ))}
     </div>
   );
-}
+};

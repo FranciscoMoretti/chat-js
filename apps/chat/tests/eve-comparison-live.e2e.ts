@@ -15,16 +15,16 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
   const marker = `comparison-${crypto.randomUUID().slice(0, 8)}`;
   const message = `Reply with exactly ${marker}. Do not call tools.`;
   const response = await page.request.post("/api/agent-response-groups", {
-    headers: { origin: new URL(page.url()).origin },
-    timeout: 90_000,
     data: {
-      operationId: crypto.randomUUID(),
+      message,
       modelIds: [
         "google/gemini-2.5-flash-lite",
         "google/gemini-2.5-flash-lite",
       ],
-      message,
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
+    timeout: 90_000,
   });
   expect(response.status()).toBe(200);
   const group = eveResponseGroupResult.parse(await response.json());
@@ -40,8 +40,8 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
   await page.context().addCookies([
     {
       name: "chat-model",
-      value: "openai/gpt-5-mini",
       url: new URL(page.url()).origin,
+      value: "openai/gpt-5-mini",
     },
   ]);
   await page.goto(`/chat/${first.conversationId}`);
@@ -57,8 +57,8 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     .fill("Keep this unsent comparison follow-up");
   await page
     .getByRole("button", {
-      name: "Gemini 2.5 Flash Lite Open response",
       exact: true,
+      name: "Gemini 2.5 Flash Lite Open response",
     })
     .click();
   await expect(page).toHaveURL(
@@ -86,8 +86,8 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     "Keep this unsent comparison follow-up"
   );
   await page.screenshot({
-    path: testInfo.outputPath("native-comparison.png"),
     animations: "disabled",
+    path: testInfo.outputPath("native-comparison.png"),
   });
   await page.getByLabel("Message", { exact: true }).fill("");
 });

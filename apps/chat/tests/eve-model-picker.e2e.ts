@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -12,7 +13,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 
 test.use({ trace: "retain-on-failure" });
 
-const conversationUrl = /\/chat\/[0-9a-f-]+$/;
+const conversationUrl = /\/chat\/[0-9a-f-]+$/u;
 const modelId = "openai/gpt-5-nano";
 const modelName = "GPT-5 nano";
 
@@ -27,16 +28,16 @@ test("the single-model picker dispatches and retains the selected native model",
       route.abort()
     );
     await page.goto("/api/dev-login");
-    origin = new URL(page.url()).origin;
+    ({ origin } = new URL(page.url()));
     const { user } = z
       .object({ user: z.object({ id: z.string() }) })
       .parse(await (await page.request.get("/api/auth/get-session")).json());
     await db
       .insert(userCredit)
-      .values({ userId: user.id, credits: 1000 })
+      .values({ credits: 1000, userId: user.id })
       .onConflictDoUpdate({
-        target: userCredit.userId,
         set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        target: userCredit.userId,
       });
     await page.goto("/");
 
@@ -44,7 +45,7 @@ test("the single-model picker dispatches and retains the selected native model",
     await picker.click();
     await page.getByPlaceholder("Search models...").fill(modelName);
     await page
-      .getByRole("option", { name: "openai logo GPT-5 nano", exact: true })
+      .getByRole("option", { exact: true, name: "openai logo GPT-5 nano" })
       .filter({
         hasNot: page.getByTitle("Advanced reasoning capabilities", {
           exact: true,
@@ -55,15 +56,15 @@ test("the single-model picker dispatches and retains the selected native model",
 
     const marker = `picker-${crypto.randomUUID().slice(0, 8)}`;
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill(`Reply with exactly ${marker}. Do not call tools.`);
     const creation = page.waitForResponse("**/api/agent-conversations");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     const created = await creation;
     expect(created.status()).toBe(200);
     await page.waitForURL(conversationUrl, {
-      waitUntil: "commit",
       timeout: 60_000,
+      waitUntil: "commit",
     });
     conversationId = z
       .uuid()
@@ -82,15 +83,15 @@ test("the single-model picker dispatches and retains the selected native model",
       throw new Error("Missing native session binding.");
     }
 
-    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
     await expect(
       page.getByRole("log").locator(".is-assistant").last()
     ).toContainText(marker, { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const client = new Client({
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
       auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
       headers: { "x-chatjs-owner": user.id },
+      host: env.EVE_INTERNAL_ORIGIN ?? "",
     });
     const snapshot = await client.sessions
       .attach(conversation.sessionId)
@@ -120,7 +121,7 @@ test("the single-model picker dispatches and retains the selected native model",
                 })
               ).status()
             ),
-          { timeout: 60_000, intervals: [1000, 2000, 5000] }
+          { intervals: [1000, 2000, 5000], timeout: 60_000 }
         )
         .toBe(true);
     }

@@ -1,3 +1,1 @@
-import { akamai } from "files-sdk/akamai";
-
-export const createStorageAdapter = akamai;
+export { akamai as createStorageAdapter } from "files-sdk/akamai";

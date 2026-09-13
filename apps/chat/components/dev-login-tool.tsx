@@ -3,7 +3,7 @@ import { LogIn } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function DevLoginTool() {
+export const DevLoginTool = () => {
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
@@ -24,4 +24,4 @@ export function DevLoginTool() {
       <span>Dev login</span>
     </a>
   );
-}
+};

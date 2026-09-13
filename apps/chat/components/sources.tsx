@@ -31,6 +31,7 @@ const SourcesList = ({
   <div className="space-y-3">
     {sources?.map((source: SearchResultItem) => (
       <a
+        aria-label={source.title}
         className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
         href={source.url}
         key={source.url}
@@ -107,34 +108,33 @@ const AllSourcesView = ({
   );
 };
 
-function ShowSourcesButton({
+const ShowSourcesButton = ({
   sources,
   dialogId,
 }: {
   sources: SearchResultItem[];
   dialogId: string;
-}) {
-  return (
-    <button
-      className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
-      onClick={() => document.getElementById(dialogId)?.click()}
-      type="button"
-    >
-      <FaviconGroup
-        className="mr-1.5"
-        maxVisible={3}
-        sources={sources.map((s) => ({
-          url: s.url,
-          title: s.title,
-        }))}
-      />
-      <span className="text-muted-foreground group-hover:text-foreground text-xs">
-        {sources.length} Sources
-      </span>
-      <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
-    </button>
-  );
-}
+}) => (
+  <button
+    aria-label="Show all sources"
+    className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
+    onClick={() => document.querySelector<HTMLElement>(`#${dialogId}`)?.click()}
+    type="button"
+  >
+    <FaviconGroup
+      className="mr-1.5"
+      maxVisible={3}
+      sources={sources.map((s) => ({
+        title: s.title,
+        url: s.url,
+      }))}
+    />
+    <span className="text-muted-foreground group-hover:text-foreground text-xs">
+      {sources.length} Sources
+    </span>
+    <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
+  </button>
+);
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
   const sourcesDialogId = useId();

@@ -29,7 +29,7 @@ import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
 
-export function McpConnectDialog({
+export const McpConnectDialog = ({
   open,
   onClose,
   connector,
@@ -37,7 +37,7 @@ export function McpConnectDialog({
   open: boolean;
   onClose: () => void;
   connector: McpConnector | null;
-}) {
+}) => {
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -164,4 +164,4 @@ export function McpConnectDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

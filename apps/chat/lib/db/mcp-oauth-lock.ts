@@ -6,10 +6,10 @@ import { databaseConnection } from "./connection";
 const OAUTH_REFRESH_LOCK_TIMEOUT = "15s";
 
 /** Serialize one connector's rotating-token refresh without occupying the app pool. */
-export async function withMcpOAuthRefreshLock<T>(
+export const withMcpOAuthRefreshLock = async <T>(
   connectorId: string,
   run: () => Promise<T>
-): Promise<T> {
+): Promise<T> => {
   const connectionConfig = databaseConnection(env);
   const connection = postgres(connectionConfig.url, {
     ...connectionConfig.options,
@@ -26,4 +26,4 @@ export async function withMcpOAuthRefreshLock<T>(
   } finally {
     await connection.end();
   }
-}
+};

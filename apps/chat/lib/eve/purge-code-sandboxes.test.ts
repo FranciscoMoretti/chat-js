@@ -1,51 +1,51 @@
 import { APIError } from "@vercel/sandbox";
+import type * as VercelSandbox from "@vercel/sandbox";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { eveCodeSandboxName } from "./code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 
 const mocks = vi.hoisted(() => ({
+  auth: vi.fn(),
+  cleanup: vi.fn(),
+  get: vi.fn(),
   list: vi.fn(),
   record: vi.fn(),
-  get: vi.fn(),
-  cleanup: vi.fn(),
-  auth: vi.fn(),
 }));
 vi.mock("@vercel/sandbox", async (original) => ({
-  ...(await original<typeof import("@vercel/sandbox")>()),
+  ...(await original<typeof VercelSandbox>()),
   Sandbox: { get: mocks.get },
 }));
 vi.mock("../db/eve-code-sandboxes", () => ({
   listEveCodeSandboxesForDeletion: mocks.list,
   recordEveCodeSandboxDeletion: mocks.record,
 }));
-vi.mock("../../tools/platform/code-execution.shared", () => ({
+vi.mock("../../tools/chatjs/vercel-code-execution/sandbox", () => ({
   cleanupSandbox: mocks.cleanup,
-  getTokenAuth: () => ({}),
-}));
-vi.mock("../../tools/platform/sandbox-auth", () => ({
   resolveSandboxAuth: mocks.auth,
 }));
 vi.mock("../logger", () => ({ createModuleLogger: () => ({}) }));
-const auth = { teamId: "team", projectId: "project", token: "token" };
+const auth = { projectId: "project", teamId: "team", token: "token" };
 const name = eveCodeSandboxName({
-  ownerId: "owner",
-  sessionId: "session",
   callId: "call",
+  ownerId: "owner",
   provider: auth,
+  sessionId: "session",
 });
 const resource = {
-  name,
-  sessionId: "session",
   callId: "call",
   conversationId: "conversation",
   creationConfirmed: true,
+  name,
+  sessionId: "session",
 };
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.auth.mockResolvedValue(auth);
+  mocks.auth.mockReturnValue(auth);
   mocks.list.mockResolvedValue([resource]);
+  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
   mocks.record.mockResolvedValue(undefined);
+  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
   mocks.cleanup.mockResolvedValue(undefined);
 });
 const missing = () => new APIError(new Response(null, { status: 404 }));
@@ -96,6 +96,8 @@ test("mismatched identity, persistence, and cleanup failure cannot release a rec
     { name, persistent: true },
   ]) {
     mocks.get.mockResolvedValueOnce(sandbox);
+    // Provider identity cases intentionally share and mutate the same mock sequence.
+    // eslint-disable-next-line no-await-in-loop
     await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
       "needs reconciliation"
     );
@@ -113,7 +115,7 @@ test("mismatched identity, persistence, and cleanup failure cannot release a rec
 });
 
 test("changed provider scope cannot use absence to release a resource", async () => {
-  mocks.auth.mockResolvedValue({ ...auth, projectId: "another-project" });
+  mocks.auth.mockReturnValue({ ...auth, projectId: "another-project" });
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
     "provider scope"
   );

@@ -1,4 +1,6 @@
-import { generateText, type ModelMessage, Output, streamText, tool } from "ai";
+/* eslint-disable func-style, no-use-before-define, sort-keys -- Pipeline declarations and event fields follow execution-stage order. */
+import { generateText, Output, streamText, tool } from "ai";
+import type { ModelMessage } from "ai";
 import { z } from "zod";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
@@ -15,12 +17,14 @@ import {
 } from "./prompts";
 import { runSupervisor } from "./supervisor-agent";
 import {
-  type AgentOptions,
   ClarifyWithUserSchema,
   createTelemetry,
-  type DeepResearchInput,
-  type DeepResearchResult,
   ResearchQuestionSchema,
+} from "./types";
+import type {
+  AgentOptions,
+  DeepResearchInput,
+  DeepResearchResult,
 } from "./types";
 import { getTodayStr } from "./utils";
 
@@ -43,15 +47,15 @@ export async function runDeepResearchPipeline(
 ): Promise<DeepResearchResult> {
   const { costAccumulator, abortSignal } = options;
   const ctx: AgentOptions = {
+    abortSignal,
     config,
+    costAccumulator,
     dataStream,
     getLanguageModel: options.getLanguageModel,
     getModelContextWindow: options.getModelContextWindow,
-    requestId: input.requestId,
     messageId: input.messageId,
+    requestId: input.requestId,
     toolCallId: input.toolCallId,
-    costAccumulator,
-    abortSignal,
   };
 
   // Step 1: Clarify with user
@@ -59,19 +63,19 @@ export async function runDeepResearchPipeline(
 
   if (clarification.needsClarification) {
     return {
-      type: "clarifying_question",
       data: clarification.clarificationMessage,
+      type: "clarifying_question",
     };
   }
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId: input.toolCallId,
-      title: "Starting research",
-      type: "started",
       timestamp: Date.now(),
+      title: "Starting research",
+      toolCallId: input.toolCallId,
+      type: "started",
     },
+    type: "data-researchUpdate",
   });
 
   // Step 2: Write research brief
@@ -84,25 +88,25 @@ export async function runDeepResearchPipeline(
   const reportResult = await generateFinalReport({
     ...ctx,
     notes,
-    researchBrief: brief.research_brief,
-    reportTitle: brief.title,
-    saveReport: options.saveReport,
     publishReportStream: options.publishReportStream,
+    reportTitle: brief.title,
+    researchBrief: brief.research_brief,
+    saveReport: options.saveReport,
   });
 
   dataStream.write({
-    type: "data-researchUpdate",
     data: {
-      toolCallId: input.toolCallId,
-      title: "Research complete",
-      type: "completed",
       timestamp: Date.now(),
+      title: "Research complete",
+      toolCallId: input.toolCallId,
+      type: "completed",
     },
+    type: "data-researchUpdate",
   });
 
   return {
-    type: "report",
     data: reportResult,
+    type: "report",
   };
 }
 
@@ -129,11 +133,11 @@ async function clarifyWithUser(
 
   const clarifyMessages = [
     {
-      role: "user" as const,
       content: clarifyWithUserInstructions({
         messages: messagesToString(messages),
         date: getTodayStr(),
       }),
+      role: "user" as const,
     },
   ];
   const truncatedMessages = truncateMessages(clarifyMessages, contextWindow);
@@ -158,8 +162,8 @@ async function clarifyWithUser(
   const output = response.output as z.infer<typeof ClarifyWithUserSchema>;
   if (output.need_clarification) {
     return {
-      needsClarification: true,
       clarificationMessage: output.question,
+      needsClarification: true,
     };
   }
   return { needsClarification: false };
@@ -181,14 +185,14 @@ async function writeResearchBrief(
   const dataPartId = generateUUID();
 
   dataStream.write({
+    data: {
+      status: "running",
+      title: "Writing research brief",
+      toolCallId,
+      type: "writing",
+    },
     id: dataPartId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing research brief",
-      type: "writing",
-      status: "running",
-    },
   });
 
   const contextWindow = await ctx.getModelContextWindow(
@@ -197,11 +201,11 @@ async function writeResearchBrief(
 
   const briefMessages = [
     {
-      role: "user" as const,
       content: transformMessagesIntoResearchTopicPrompt({
         messages: messagesToString(messages),
         date: getTodayStr(),
       }),
+      role: "user" as const,
     },
   ];
   const truncatedMessages = truncateMessages(briefMessages, contextWindow);
@@ -226,15 +230,15 @@ async function writeResearchBrief(
   const output = result.output as z.infer<typeof ResearchQuestionSchema>;
 
   dataStream.write({
+    data: {
+      message: output.research_brief,
+      status: "completed",
+      title: "Writing research brief",
+      toolCallId,
+      type: "writing",
+    },
     id: dataPartId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing research brief",
-      message: output.research_brief,
-      type: "writing",
-      status: "completed",
-    },
   });
 
   return {
@@ -275,21 +279,21 @@ async function generateFinalReport(
   const findings = notes.join("\n");
 
   const finalReportPromptText = finalReportGenerationPrompt({
-    research_brief: researchBrief,
-    findings,
     date: getTodayStr(),
+    findings,
+    research_brief: researchBrief,
   });
 
   const finalReportUpdateId = generateUUID();
   dataStream.write({
+    data: {
+      status: "running",
+      title: "Writing final report",
+      toolCallId,
+      type: "writing",
+    },
     id: finalReportUpdateId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing final report",
-      type: "writing",
-      status: "running",
-    },
   });
 
   const contextWindow = await input.getModelContextWindow(
@@ -297,7 +301,7 @@ async function generateFinalReport(
   );
 
   const finalReportMessages = [
-    { role: "user" as const, content: finalReportPromptText },
+    { content: finalReportPromptText, role: "user" as const },
   ];
   const truncatedMessages = truncateMessages(
     finalReportMessages,
@@ -314,11 +318,11 @@ async function generateFinalReport(
   let savedReport: DocumentToolResult | undefined;
   const reportTool = tool({
     description: "Save the completed research report as a Markdown document.",
-    inputSchema: z.object({ title: z.string(), content: z.string() }),
     execute: async (content) => {
       savedReport = await saveReport(content);
       return savedReport;
     },
+    inputSchema: z.object({ title: z.string(), content: z.string() }),
   });
 
   const systemPrompt = `You are a research report writer. Your task is to write the final research report and save it using the createTextDocument tool.
@@ -359,35 +363,35 @@ To write the report, call the createTextDocument tool with:
   await result.toolResults;
 
   dataStream.write({
+    data: {
+      status: "completed",
+      title: "Writing final report",
+      toolCallId,
+      type: "writing",
+    },
     id: finalReportUpdateId,
     type: "data-researchUpdate",
-    data: {
-      toolCallId,
-      title: "Writing final report",
-      type: "writing",
-      status: "completed",
-    },
   });
 
   if (!savedReport) {
     return {
-      status: "error",
       error: "createTextDocument tool was not called",
+      status: "error",
     };
   }
 
   const output = savedReport;
   if (output.status === "error") {
     return {
-      status: "error",
       error: output.error,
+      status: "error",
     };
   }
 
   return {
     ...output,
-    result: "A document was created and is now visible to the user.",
     date: output.date,
+    result: "A document was created and is now visible to the user.",
   };
 }
 

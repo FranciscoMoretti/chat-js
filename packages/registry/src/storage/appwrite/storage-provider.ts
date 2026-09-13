@@ -1,3 +1,1 @@
-import { appwrite } from "files-sdk/appwrite";
-
-export const createStorageAdapter = appwrite;
+export { appwrite as createStorageAdapter } from "files-sdk/appwrite";

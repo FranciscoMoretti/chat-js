@@ -1,32 +1,44 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, realpath } from "node:fs/promises";
-import { join } from "node:path";
+import nodePath from "node:path";
 
 import { z } from "zod";
 
 // Pinned EVE 0.52.2 keys retain the complete native ULID before the node suffix.
 // Use this only to exclude unrelated old directories, never to authorize erasure.
 const legacyKeyPattern =
-  /^eve-sbx-ses-microsandbox-([a-f0-9]{16})-[a-f0-9]{12}-(wrun_[0-7][0-9A-HJKMNP-TV-Z]{25})-[a-zA-Z0-9._-]+$/;
+  /^eve-sbx-ses-microsandbox-(?<sessionHash>[a-f0-9]{16})-[a-f0-9]{12}-(?<runId>wrun_[0-7][0-9A-HJKMNP-TV-Z]{25})-[a-zA-Z0-9._-]+$/u;
 
 export const localEveSandboxOwnerSchema = z.strictObject({
+  backendName: z.literal("microsandbox"),
+  sessionId: z.string().min(1),
+  sessionKey: z.string().min(1),
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
-  backendName: z.literal("microsandbox"),
-  sessionKey: z.string().min(1),
-  sessionId: z.string().min(1),
 });
+
+const isUnrelatedLegacyKey = (
+  key: string,
+  appScope: string,
+  family: Set<string>
+) => {
+  if (key.length > 120) {
+    return false;
+  }
+  const match = legacyKeyPattern.exec(key);
+  return Boolean(match && match[1] === appScope && !family.has(match[2]));
+};
 
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
  * coverage. Canonical keys may exclude unrelated older sessions, but never authorize erasure.
  */
-export async function readLocalEveSandboxInventory(
+export const readLocalEveSandboxInventory = async (
   appRoot: string,
   sessionIds: string[]
-) {
-  const cacheRoot = join(appRoot, ".eve", "sandbox-cache");
+) => {
+  const cacheRoot = nodePath.join(appRoot, ".eve", "sandbox-cache");
   const backends = await readdir(cacheRoot, { withFileTypes: true }).catch(
     (error: unknown) => {
       if (
@@ -48,11 +60,11 @@ export async function readLocalEveSandboxInventory(
     return {
       owned: [],
       unattributedDirectories: unsupported
-        .map((entry) => join(cacheRoot, entry.name))
-        .sort(),
+        .map((entry) => nodePath.join(cacheRoot, entry.name))
+        .toSorted(),
     };
   }
-  const directory = join(cacheRoot, "microsandbox", "sessions");
+  const directory = nodePath.join(cacheRoot, "microsandbox", "sessions");
   const entries = await readdir(directory, { withFileTypes: true }).catch(
     (error: unknown) => {
       if (
@@ -70,25 +82,31 @@ export async function readLocalEveSandboxInventory(
     .digest("hex")
     .slice(0, 16);
   const family = new Set(sessionIds);
-  const owned: Array<{ sessionDirectory: string; sessionKey: string }> = [];
+  const owned: {
+    sessionDirectory: string;
+    sessionKey: string;
+  }[] = [];
   const unattributedDirectories: string[] = [];
-  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-    const sessionDirectory = join(directory, entry.name);
+  for (const entry of entries.toSorted((a, b) =>
+    a.name.localeCompare(b.name)
+  )) {
+    const sessionDirectory = nodePath.join(directory, entry.name);
     // Do not traverse symlinks or unexpected files in the provider cache.
     if (!entry.isDirectory()) {
       unattributedDirectories.push(sessionDirectory);
       continue;
     }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     const raw = await readFile(
-      join(sessionDirectory, "owner.json"),
-      "utf8"
+      nodePath.join(sessionDirectory, "owner.json"),
+      "utf-8"
     ).catch((error: unknown) => {
       if (
         error instanceof Error &&
         "code" in error &&
         error.code === "ENOENT"
       ) {
-        return undefined;
+        return;
       }
       throw error;
     });
@@ -114,16 +132,4 @@ export async function readLocalEveSandboxInventory(
     }
   }
   return { owned, unattributedDirectories };
-}
-
-function isUnrelatedLegacyKey(
-  key: string,
-  appScope: string,
-  family: Set<string>
-) {
-  if (key.length > 120) {
-    return false;
-  }
-  const match = legacyKeyPattern.exec(key);
-  return Boolean(match && match[1] === appScope && !family.has(match[2]));
-}
+};

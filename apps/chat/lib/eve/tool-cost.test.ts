@@ -4,9 +4,11 @@ import { createEveToolCost } from "./tool-cost";
 
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
-    fetchModels: async () => [
-      { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
-    ],
+    fetchModels: () =>
+      Promise.resolve([
+        { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
+        { id: "priced-image", pricing: { image: "0.04" } },
+      ]),
   }),
 }));
 vi.mock("../ai/to-model-data", () => ({
@@ -19,6 +21,11 @@ test("combines API and nested model usage without rounding each call", async () 
   cost.addLLMCost("priced", { inputTokens: 100, outputTokens: 200 }, "image");
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
+});
+test("includes dedicated image pricing in the durable total", async () => {
+  const cost = createEveToolCost();
+  cost.addImageCost("priced-image", 2, {}, "image");
+  expect(await cost.totalUsd()).toBeCloseTo(0.08);
 });
 test("missing pricing and missing usage remain unknown rather than free", async () => {
   const missing = createEveToolCost();

@@ -9,14 +9,14 @@ import {
 } from "./guest-admission";
 
 const mocks = vi.hoisted(() => ({
-  source: vi.fn(),
-  existing: vi.fn(),
-  reserve: vi.fn(),
   commit: vi.fn(),
-  release: vi.fn(),
+  env: { AUTH_SECRET: "fixture", NODE_ENV: "development", VERCEL_URL: "" },
+  existing: vi.fn(),
   files: vi.fn(),
   model: vi.fn(),
-  env: { NODE_ENV: "development", VERCEL_URL: "", AUTH_SECRET: "fixture" },
+  release: vi.fn(),
+  reserve: vi.fn(),
+  source: vi.fn(),
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("../types/anonymous", () => ({
@@ -24,15 +24,15 @@ vi.mock("../types/anonymous", () => ({
     AVAILABLE_MODELS: ["cheap"],
     AVAILABLE_TOOLS: [],
     CREDITS: 10,
-    SESSION_DURATION: 60_000,
     RATE_LIMIT: { REQUESTS_PER_MINUTE: 5, REQUESTS_PER_MONTH: 10 },
+    SESSION_DURATION: 60_000,
   },
 }));
 vi.mock("../db/eve-guests", () => ({
-  readExistingEveGuestMessage: mocks.existing,
-  reserveEveGuestMessage: mocks.reserve,
   commitEveGuestMessage: mocks.commit,
+  readExistingEveGuestMessage: mocks.existing,
   releaseEveGuestCreation: mocks.release,
+  reserveEveGuestMessage: mocks.reserve,
 }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.source,
@@ -41,17 +41,17 @@ vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.files }));
 vi.mock("./model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
-const HASH = /^[0-9a-f]{64}$/;
+const HASH = /^[0-9a-f]{64}$/u;
 const principal = {
   kind: "guest",
   ownerId: "guest",
-  tokenHash: "a".repeat(64),
   state: "pending",
+  tokenHash: "a".repeat(64),
 } as const;
 const input = {
+  message: "hello",
   modelId: "cheap",
   operationId: crypto.randomUUID(),
-  message: "hello",
 };
 const request = new Request("http://localhost/api/agent-conversations");
 beforeEach(() => {
@@ -63,14 +63,13 @@ beforeEach(() => {
   mocks.files.mockResolvedValue(undefined);
   mocks.model.mockResolvedValue(undefined);
   mocks.reserve.mockResolvedValue({
-    status: "reserved",
     reservationId: "attempt",
+    status: "reserved",
   });
 });
 
-function requestHash(value: typeof input) {
-  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
-}
+const requestHash = (value: typeof input) =>
+  createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
 it("does not trust arbitrary forwarded headers or alternate IP spellings for quota", () => {
   const forged = new Request(request, {
@@ -100,7 +99,7 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   expect(
     await admitGuestCreation(request, principal, {
       ...input,
-      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_0" },
+      fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     })
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
@@ -113,42 +112,42 @@ it("checks guest policy and ownership before reserving account/quota", async () 
 
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({
-    status: "reserved",
     reservationId: "attempt",
+    status: "reserved",
   });
   expect(mocks.reserve).toHaveBeenCalledWith(
     expect.objectContaining({
-      ownerId: "guest",
       operationId: input.operationId,
+      ownerId: "guest",
       requestHash: expect.stringMatching(HASH),
       requestsPerMinute: 5,
     }),
     expect.objectContaining({
-      tokenHash: principal.tokenHash,
       messageLimit: 10,
+      tokenHash: principal.tokenHash,
     })
   );
   mocks.reserve.mockResolvedValue({
-    status: "replay",
     reservationId: "attempt",
+    status: "replay",
   });
   expect(await admitGuestCreation(request, principal, input)).toEqual({
-    status: "replay",
     reservationId: "attempt",
+    status: "replay",
   });
 });
 
 it("recovers an active durable reservation without repeating volatile validation", async () => {
   mocks.existing.mockResolvedValue({
-    state: "committed",
     requestHash: requestHash(input),
     reservationId: "durable",
+    state: "committed",
   });
   mocks.model.mockRejectedValue(new Error("catalog unavailable"));
   mocks.files.mockRejectedValue(new Error("files unavailable"));
   expect(await admitGuestCreation(request, principal, input)).toEqual({
-    status: "replay",
     reservationId: "durable",
+    status: "replay",
   });
   expect(mocks.model).not.toHaveBeenCalled();
   expect(mocks.files).not.toHaveBeenCalled();
@@ -157,9 +156,9 @@ it("recovers an active durable reservation without repeating volatile validation
 
 it("rejects changed replay content before volatile validation", async () => {
   mocks.existing.mockResolvedValue({
-    state: "reserved",
     requestHash: requestHash(input),
     reservationId: "durable",
+    state: "reserved",
   });
   const response = await admitGuestCreation(request, principal, {
     ...input,
@@ -177,13 +176,13 @@ it("rejects changed replay content before volatile validation", async () => {
 
 it("runs full validation before reusing a released operation", async () => {
   mocks.existing.mockResolvedValue({
-    state: "released",
     requestHash: requestHash(input),
     reservationId: "released",
+    state: "released",
   });
   expect(await admitGuestCreation(request, principal, input)).toEqual({
-    status: "reserved",
     reservationId: "attempt",
+    status: "reserved",
   });
   expect(mocks.model).toHaveBeenCalledWith(input.modelId);
   expect(mocks.files).toHaveBeenCalled();
@@ -195,6 +194,7 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
     new Response(null, { status: 502 }),
     Response.json({ error: "unresolved" }, { status: 409 }),
   ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await settleGuestCreation(response, "guest", input.operationId, "attempt");
   }
   expect(mocks.release).not.toHaveBeenCalled();

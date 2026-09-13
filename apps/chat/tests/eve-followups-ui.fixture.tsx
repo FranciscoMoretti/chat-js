@@ -8,7 +8,7 @@ const suggestions = [
   "What are the alternatives?",
   "How would I test this?",
 ];
-function Fixture() {
+const Fixture = () => {
   const [selected, setSelected] = useState("");
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
@@ -34,8 +34,8 @@ function Fixture() {
       <output aria-label="Selected suggestion">{selected}</output>
     </main>
   );
-}
-const root = document.getElementById("root");
+};
+const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }

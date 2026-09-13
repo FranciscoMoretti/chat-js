@@ -1,12 +1,13 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { inputResponseSchema } from "eve/client";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
 
-const streamIndex = /^\d{1,12}$/;
+const streamIndex = /^\d{1,12}$/u;
 const sessionPath =
-  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)(?:\/(stream|cancel))?$/;
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)(?:\/(?<operation>stream|cancel))?$/u;
 const message = z
   .object({
     message: eveMessageInput,
@@ -35,13 +36,12 @@ const respond = z
 const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
-
-export function parseSessionRequest(path: string, method: string) {
+export const parseSessionRequest = (path: string, method: string) => {
   const match = sessionPath.exec(path);
   if (!match?.[1]) {
     return null;
   }
-  const action = match[2];
+  const { 2: action } = match;
   if (
     !(
       (method === "GET" && action === "stream") ||
@@ -54,8 +54,8 @@ export function parseSessionRequest(path: string, method: string) {
     sessionId: match[1],
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
-}
-export function safeStreamQuery(params: URLSearchParams) {
+};
+export const safeStreamQuery = (params: URLSearchParams) => {
   const result = new URLSearchParams();
   for (const [key, value] of params) {
     if (result.has(key)) {
@@ -71,11 +71,11 @@ export function safeStreamQuery(params: URLSearchParams) {
     result.set(key, value);
   }
   return result;
-}
-export function sameOrigin(request: Request, origin: string) {
+};
+export const sameOrigin = (request: Request, origin: string) => {
   const supplied = request.headers.get("origin");
   return supplied
     ? supplied === origin
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
-}
+};

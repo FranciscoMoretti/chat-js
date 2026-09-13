@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
  * Returns the base URL for the application.
  * Priority: APP_URL > VERCEL_URL > localhost
  */
-export function getBaseUrl(): string {
+export const getBaseUrl = (): string => {
   if (env.APP_URL) {
     return env.APP_URL;
   }
@@ -12,4 +12,4 @@ export function getBaseUrl(): string {
     return `https://${env.VERCEL_URL}`;
   }
   return "http://localhost:3000";
-}
+};

@@ -26,7 +26,7 @@ interface MessagePartsProps {
 }
 
 // Render a single part by index with minimal subscriptions
-function PureMessagePart({
+const PureMessagePart = ({
   messageId,
   partIdx,
   isReadonly,
@@ -36,7 +36,7 @@ function PureMessagePart({
   partIdx: number;
   isReadonly: boolean;
   isLoading: boolean;
-}) {
+}) => {
   const part = useMessagePartByPartIdx(messageId, partIdx);
 
   if (isTextUIPart(part)) {
@@ -67,29 +67,26 @@ function PureMessagePart({
   }
 
   return null;
-}
+};
 
 const MessagePart = memo(PureMessagePart);
 
-function PureMessageParts({
+const PureMessageParts = ({
   messageId,
   isLoading,
   isReadonly,
-}: MessagePartsProps) {
+}: MessagePartsProps) => {
   const types = useMessagePartTypesById(messageId);
 
-  return types.map((t, i) => {
-    return (
-      <MessagePart
-        isLoading={isLoading && i === types.length - 1}
-        isReadonly={isReadonly}
-        // biome-ignore lint/suspicious/noArrayIndexKey: we only have index at this point
-        key={`message-${messageId}-${t}-${i}`}
-        messageId={messageId}
-        partIdx={i}
-      />
-    );
-  });
-}
+  return types.map((t, i) => (
+    <MessagePart
+      isLoading={isLoading && i === types.length - 1}
+      isReadonly={isReadonly}
+      key={`message-${messageId}-${t}-${i}`}
+      messageId={messageId}
+      partIdx={i}
+    />
+  ));
+};
 
 export const MessageParts = memo(PureMessageParts);

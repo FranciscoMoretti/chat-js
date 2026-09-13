@@ -1,6 +1,7 @@
 "use client";
 
-import { type ComponentProps, memo, type ReactNode } from "react";
+import { memo } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import {
   PromptInput,
@@ -24,10 +25,24 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /** The reference app's composer. Add, remove or reorder controls here. */
-export const ChatComposer = memo(function ChatComposer(
-  props: Omit<ComponentProps<typeof MultimodalInput>, "children">
-) {
-  return (
+/** Shared composer chrome; runtime controllers supply only supported actions. */
+const ChatComposerFooter = ({
+  tools,
+  actions,
+}: {
+  tools?: ReactNode;
+  actions: ReactNode;
+}) => (
+  <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
+    <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
+      {tools}
+    </PromptInputTools>
+    <div className="flex items-center gap-1">{actions}</div>
+  </PromptInputFooter>
+);
+
+export const ChatComposer = memo(
+  (props: Omit<ComponentProps<typeof MultimodalInput>, "children">) => (
     <MultimodalInput {...props}>
       <ComposerLimits />
       <ComposerAttachments />
@@ -49,29 +64,12 @@ export const ChatComposer = memo(function ChatComposer(
         }
       />
     </MultimodalInput>
-  );
-});
-
-/** Shared composer chrome; runtime controllers supply only supported actions. */
-function ChatComposerFooter({
-  tools,
-  actions,
-}: {
-  tools?: ReactNode;
-  actions: ReactNode;
-}) {
-  return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
-      <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
-        {tools}
-      </PromptInputTools>
-      <div className="flex items-center gap-1">{actions}</div>
-    </PromptInputFooter>
-  );
-}
+  )
+);
+ChatComposer.displayName = "ChatComposer";
 
 /** A controlled composer for runtimes that own their own submission lifecycle. */
-export function ControlledChatComposer({
+export const ControlledChatComposer = ({
   draft,
   onDraftChange,
   onSubmit,
@@ -99,18 +97,18 @@ export function ControlledChatComposer({
   stopDisabled?: boolean;
   autoFocus?: boolean;
   tools?: ReactNode;
-}) {
+}) => {
   const isMobile = useIsMobile();
   const activeStatus = onStop ? "streaming" : "submitted";
   const canSend =
     !disabled &&
     (Boolean(draft.trim()) || hasAttachments) &&
     draft.length <= 16_000;
-  function submit() {
+  const submit = () => {
     if (canSend) {
       onSubmit();
     }
-  }
+  };
   return (
     <PromptInput
       className="@container relative transition-colors"
@@ -172,4 +170,4 @@ export function ControlledChatComposer({
       )}
     </PromptInput>
   );
-}
+};

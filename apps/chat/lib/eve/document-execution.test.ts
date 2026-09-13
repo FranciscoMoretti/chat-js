@@ -3,16 +3,16 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { executeEveCodeDocument } from "./document-execution";
 
 const mocks = vi.hoisted(() => ({
+  documents: { enabled: true, types: { code: true } },
+  execute: vi.fn(),
+  execution: { enabled: true },
   read: vi.fn(),
   resolve: vi.fn(),
-  execute: vi.fn(),
-  documents: { enabled: true, types: { code: true } },
-  execution: { enabled: true },
 }));
 vi.mock("../config", () => ({
   config: {
     ai: {
-      tools: { documents: mocks.documents, codeExecution: mocks.execution },
+      tools: { codeExecution: mocks.execution, documents: mocks.documents },
     },
   },
 }));
@@ -27,26 +27,26 @@ const input = {
   revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
 };
 const revision = {
-  id: input.revisionId,
+  content: "print(42)",
   documentId: input.documentId,
+  id: input.revisionId,
   kind: "code",
   title: "saved.py",
-  content: "print(42)",
 };
 const context = {
-  callId: "run-code",
   abortSignal: new AbortController().signal,
+  callId: "run-code",
   session: {
-    id: "native-session",
     auth: {
       current: null,
       initiator: {
+        attributes: {},
+        authenticator: "test",
         principalId: "owner",
         principalType: "user",
-        authenticator: "test",
-        attributes: {},
       },
     },
+    id: "native-session",
     turn: { id: "turn", sequence: 1 },
   },
 };
@@ -57,16 +57,16 @@ beforeEach(() => {
   mocks.documents.types.code = true;
   mocks.execution.enabled = true;
   mocks.resolve.mockResolvedValue({
-    ownerId: "owner",
     conversationId: "conversation",
+    ownerId: "owner",
   });
   mocks.read.mockResolvedValue(revision);
-  mocks.execute.mockImplementation(function* () {
+  mocks.execute.mockImplementation(function* fixtureOutput() {
     yield {
       kind: "chatjs.platform-result",
-      version: 1,
-      output: { message: "42", chart: "" },
+      output: { chart: "", message: "42" },
       usage: { costUsd: 0.05 },
+      version: 1,
     };
   });
 });
@@ -89,7 +89,7 @@ it("executes only the owned saved revision and preserves its billing receipt", a
   );
   expect(mocks.execute).toHaveBeenCalledWith(
     "codeExecution",
-    { title: "saved.py", code: "print(42)", language: "python" },
+    { code: "print(42)", language: "python", title: "saved.py" },
     context,
     []
   );
@@ -130,22 +130,22 @@ it("does not execute when cancelled during revision lookup", async () => {
 });
 
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
-  mocks.execute.mockImplementation(function* () {
+  mocks.execute.mockImplementation(function* fixtureOutput() {
     yield {
       kind: "chatjs.platform-result",
-      version: 1,
-      output: { message: "Executed", chart: { type: "pie", elements: [] } },
+      output: { chart: { elements: [], type: "pie" }, message: "Executed" },
       usage: { costUsd: 0.05 },
+      version: 1,
     };
   });
   const result = await executeEveCodeDocument(input, context).next();
   expect(result.value).toMatchObject({
-    usage: { costUsd: 0.05 },
     output: {
       ...input,
-      message: "Execution finished, but its output has an unsupported format.",
       chart: "",
+      message: "Execution finished, but its output has an unsupported format.",
     },
+    usage: { costUsd: 0.05 },
   });
 });
 

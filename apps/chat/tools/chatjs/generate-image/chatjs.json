@@ -1,0 +1,9 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "generate-image",
+  "slot": "generateImage",
+  "toolExport": "generateImageTool",
+  "rendererExport": "GenerateImageRenderer",
+  "envRequirements": []
+}

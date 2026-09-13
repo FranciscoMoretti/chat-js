@@ -2,7 +2,7 @@
 
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
-export function SettingsHeader() {
+export const SettingsHeader = () => {
   const { isMobile } = useSidebar();
 
   return (
@@ -16,4 +16,4 @@ export function SettingsHeader() {
       </div>
     </div>
   );
-}
+};

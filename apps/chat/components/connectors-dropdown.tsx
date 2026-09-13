@@ -23,7 +23,7 @@ import {
 import { Switch } from "./ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-function PureConnectorsDropdown() {
+const PureConnectorsDropdown = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -39,6 +39,14 @@ function PureConnectorsDropdown() {
 
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
+      onError: (
+        _err,
+        _newData,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to update connector");
+      },
       onMutate: async (newData) => {
         await queryClient.cancelQueries({ queryKey });
         const prev = queryClient.getQueryData(queryKey);
@@ -51,10 +59,6 @@ function PureConnectorsDropdown() {
           );
         });
         return { prev };
-      },
-      onError: (_err, _newData, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to update connector");
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
@@ -117,7 +121,10 @@ function PureConnectorsDropdown() {
                 checked={connector.enabled}
                 className="scale-75"
                 onCheckedChange={(enabled) =>
-                  toggleEnabled({ id: connector.id, enabled })
+                  toggleEnabled({
+                    enabled,
+                    id: connector.id,
+                  })
                 }
                 onClick={(e) => e.stopPropagation()}
               />
@@ -137,6 +144,6 @@ function PureConnectorsDropdown() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
 export const ConnectorsDropdown = memo(PureConnectorsDropdown);

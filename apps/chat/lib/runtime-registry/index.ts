@@ -26,7 +26,6 @@
  * App-facing convenience API.
  * Prefer these hooks over using the registry context directly from feature code.
  */
-// biome-ignore lint/performance/noBarrelFile: This file is the documented runtime package boundary.
 export {
   type RuntimeActions,
   useRuntime,

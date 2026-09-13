@@ -1,3 +1,1 @@
-import { vercelBlob } from "files-sdk/vercel-blob";
-
-export const createStorageAdapter = vercelBlob;
+export { vercelBlob as createStorageAdapter } from "files-sdk/vercel-blob";

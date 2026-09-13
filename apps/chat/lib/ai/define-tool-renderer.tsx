@@ -3,6 +3,19 @@
 import type { ComponentType } from "react";
 import { z } from "zod";
 
+export type ValidatedToolRenderer = ComponentType<{
+  isReadonly: boolean;
+  messageId: string;
+  tool: unknown;
+}> & { validatedToolRenderer: true };
+
+export const isValidatedToolRenderer = (
+  renderer: unknown
+): renderer is ValidatedToolRenderer =>
+  typeof renderer === "function" &&
+  "validatedToolRenderer" in renderer &&
+  renderer.validatedToolRenderer === true;
+
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "input-streaming"; input?: undefined }
   | { state: "input-available"; input: TInput }
@@ -10,7 +23,9 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
 );
 
 const envelope = z.object({
-  toolCallId: z.string(),
+  errorText: z.string().optional(),
+  input: z.unknown().optional(),
+  output: z.unknown().optional(),
   state: z.enum([
     "input-streaming",
     "input-available",
@@ -20,17 +35,15 @@ const envelope = z.object({
     "output-error",
     "output-denied",
   ]),
-  input: z.unknown().optional(),
-  output: z.unknown().optional(),
-  errorText: z.string().optional(),
+  toolCallId: z.string(),
 });
 
-function InvalidResult() {
-  return <p role="alert">This tool result could not be displayed.</p>;
-}
+const InvalidResult = () => (
+  <p role="alert">This tool result could not be displayed.</p>
+);
 
 /** Keep executable tools on the server and validate their persisted data at the UI boundary. */
-export function defineToolRenderer<TInput, TOutput>({
+export const defineToolRenderer = <TInput, TOutput>({
   inputSchema,
   outputSchema,
   render: Renderer,
@@ -42,8 +55,8 @@ export function defineToolRenderer<TInput, TOutput>({
     messageId: string;
     isReadonly: boolean;
   }>;
-}) {
-  return function ValidatedToolRenderer({
+}) => {
+  const ValidatedToolRenderer = ({
     tool,
     messageId,
     isReadonly,
@@ -51,13 +64,13 @@ export function defineToolRenderer<TInput, TOutput>({
     tool: unknown;
     messageId: string;
     isReadonly: boolean;
-  }) {
+  }) => {
     const parsed = envelope.safeParse(tool);
     if (!parsed.success) {
       return <InvalidResult />;
     }
     const value = parsed.data;
-    const common = { messageId, isReadonly };
+    const common = { isReadonly, messageId };
     const identity = { toolCallId: value.toolCallId };
     if (value.state === "output-error") {
       return <p role="alert">{value.errorText ?? "The tool failed."}</p>;
@@ -84,7 +97,7 @@ export function defineToolRenderer<TInput, TOutput>({
       return (
         <Renderer
           {...common}
-          tool={{ ...identity, state: value.state, input: input.data }}
+          tool={{ ...identity, input: input.data, state: value.state }}
         />
       );
     }
@@ -97,11 +110,14 @@ export function defineToolRenderer<TInput, TOutput>({
         {...common}
         tool={{
           ...identity,
-          state: value.state,
           input: input.data,
           output: output.data,
+          state: value.state,
         }}
       />
     );
   };
-}
+  return Object.assign(ValidatedToolRenderer, {
+    validatedToolRenderer: true as const,
+  });
+};

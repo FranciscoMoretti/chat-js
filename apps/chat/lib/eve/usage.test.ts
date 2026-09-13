@@ -9,16 +9,16 @@ beforeEach(() => record.mockReset());
 it("records each auxiliary model attempt with replay-stable independent identities", async () => {
   record.mockResolvedValue(true);
   const event: MessageStreamEvent = {
-    type: "hook.result",
-    meta: { id: "hook-event", at: "2026-09-12T00:00:00Z" },
     data: {
       hookId: "followup-suggestions",
-      turnId: "turn_0",
       modelCalls: [
         { modelId: "model", usage: { costUsd: 0.001 } },
         { modelId: "model", usage: { costUsd: 0.002 } },
       ],
+      turnId: "turn_0",
     },
+    meta: { at: "2026-09-12T00:00:00Z", id: "hook-event" },
+    type: "hook.result",
   };
   expect(await ingestEveUsage("owner", "session", event)).toBe(true);
   expect(
@@ -34,19 +34,19 @@ it("records each auxiliary model attempt with replay-stable independent identiti
 it("requires reconciliation for unpriced completed calls and preserves failed-attempt evidence", async () => {
   record.mockResolvedValue(false);
   const event: MessageStreamEvent = {
-    type: "hook.result",
-    meta: { id: "hook-event", at: "2026-09-12T00:00:00Z" },
     data: {
       hookId: "followup-suggestions",
-      turnId: "turn_0",
       modelCalls: [{ modelId: "model" }],
+      turnId: "turn_0",
     },
+    meta: { at: "2026-09-12T00:00:00Z", id: "hook-event" },
+    type: "hook.result",
   };
   expect(await ingestEveUsage("owner", "session", event)).toBe(false);
   expect(
     await ingestEveUsage("owner", "session", {
       ...event,
-      data: { ...event.data, modelCalls: [{ modelId: "model", failed: true }] },
+      data: { ...event.data, modelCalls: [{ failed: true, modelId: "model" }] },
     })
   ).toBe(true);
   expect(record).toHaveBeenCalledTimes(2);

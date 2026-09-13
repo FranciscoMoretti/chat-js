@@ -10,7 +10,7 @@ const eveHealth = z.object({
   workflowId: z.string().min(1),
 });
 
-export async function GET() {
+export const GET = async () => {
   // A bounded local readiness probe, not a public infrastructure inventory.
   if (env.NODE_ENV !== "development") {
     return new Response(null, { status: 404 });
@@ -22,9 +22,9 @@ export async function GET() {
         checkDatabase(),
         isEveEnabled()
           ? fetch(new URL("/eve/v1/health", env.EVE_INTERNAL_ORIGIN), {
-              signal: AbortSignal.timeout(4000),
               cache: "no-store",
               redirect: "error",
+              signal: AbortSignal.timeout(4000),
             }).then(async (response) => {
               if (!response.ok) {
                 throw new Error("Eve unavailable");
@@ -33,7 +33,8 @@ export async function GET() {
             })
           : Promise.resolve(),
       ]),
-      new Promise<never>((_, reject) => {
+      // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
+      new Promise<never>((_resolve, reject) => {
         timeout = setTimeout(
           () => reject(new Error("Readiness timed out")),
           4500
@@ -47,9 +48,9 @@ export async function GET() {
   } catch {
     return Response.json(
       { status: "unavailable" },
-      { status: 503, headers: { "cache-control": "no-store" } }
+      { headers: { "cache-control": "no-store" }, status: 503 }
     );
   } finally {
     clearTimeout(timeout);
   }
-}
+};

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 
 import {
   ResizableHandle,
@@ -17,13 +17,13 @@ interface ChatLayoutContextValue {
 
 const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
 
-function useChatLayoutContext() {
+const useChatLayoutContext = () => {
   const context = useContext(ChatLayoutContext);
   if (!context) {
     throw new Error("ChatLayout components must be used within <ChatLayout />");
   }
   return context;
-}
+};
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,
@@ -39,9 +39,13 @@ export const ChatLayout = ({
   ...props
 }: ChatLayoutProps) => {
   const { state: sidebarState } = useSidebar();
+  const contextValue = useMemo(
+    () => ({ isSecondaryPanelVisible }),
+    [isSecondaryPanelVisible]
+  );
 
   return (
-    <ChatLayoutContext.Provider value={{ isSecondaryPanelVisible }}>
+    <ChatLayoutContext.Provider value={contextValue}>
       <ResizablePanelGroup
         className={cn(
           "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",

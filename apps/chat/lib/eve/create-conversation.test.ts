@@ -1,10 +1,13 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { CreationRejected, requestConversation } from "./create-conversation";
+import {
+  CreationRejectedError,
+  requestConversation,
+} from "./create-conversation";
 
 const operation = {
-  operationId: "00000000-0000-4000-8000-000000000001",
   message: "yo",
+  operationId: "00000000-0000-4000-8000-000000000001",
 };
 
 afterEach(() => {
@@ -16,6 +19,7 @@ it("aborts a stalled creation without resending or changing its operation", asyn
   vi.useFakeTimers();
   const fetchMock = vi.fn(
     (_url: string, init: RequestInit) =>
+      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
       new Promise<Response>((_resolve, reject) => {
         init.signal?.addEventListener(
           "abort",
@@ -51,13 +55,13 @@ it.each([400, 404])(
         .fn()
         .mockResolvedValue(
           Response.json(
-            { error: "Unavailable", creationRejected: true },
+            { creationRejected: true, error: "Unavailable" },
             { status }
           )
         )
     );
     await expect(requestConversation(operation)).rejects.toBeInstanceOf(
-      CreationRejected
+      CreationRejectedError
     );
     vi.stubGlobal(
       "fetch",
@@ -68,7 +72,7 @@ it.each([400, 404])(
         )
     );
     await expect(requestConversation(operation)).rejects.not.toBeInstanceOf(
-      CreationRejected
+      CreationRejectedError
     );
   }
 );
@@ -79,9 +83,9 @@ it("identifies a missing project only on a definitive rejection", async () => {
     vi.fn().mockResolvedValue(
       Response.json(
         {
-          error: "Project not found",
-          creationRejected: true,
           code: "project_not_found",
+          creationRejected: true,
+          error: "Project not found",
         },
         { status: 404 }
       )
@@ -96,7 +100,7 @@ it("identifies a missing project only on a definitive rejection", async () => {
       .fn()
       .mockResolvedValue(
         Response.json(
-          { error: "Invalid model", creationRejected: true },
+          { creationRejected: true, error: "Invalid model" },
           { status: 400 }
         )
       )

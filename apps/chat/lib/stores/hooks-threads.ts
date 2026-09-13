@@ -4,10 +4,10 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 
 import type { ChatMessage } from "../ai/types";
 import {
-  type CustomChatStoreState,
   useApplicationThread,
   useCustomChatStoreApi,
 } from "./custom-store-provider";
+import type { CustomChatStoreState } from "./custom-store-provider";
 
 export interface MessageSiblingInfo {
   siblingIndex: number;
@@ -21,18 +21,18 @@ export interface ParallelGroupInfo {
   selectedMessageId: string | null;
 }
 
-function useThreadStore<T>(
+const useThreadStore = <T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
-): T {
+): T => {
   const store = useCustomChatStoreApi<ChatMessage>();
   return useStoreWithEqualityFn(store, selector, equalityFn);
-}
+};
 
-function getSiblingInfo(
+const getSiblingInfo = (
   state: CustomChatStoreState<ChatMessage>,
   messageId: string
-): MessageSiblingInfo | null {
+): MessageSiblingInfo | null => {
   const { childrenByParentId, messagesById, parentById, rootIds } =
     state.threadSnapshot;
   if (!messagesById[messageId]) {
@@ -51,12 +51,12 @@ function getSiblingInfo(
     siblingIndex: siblingIds.indexOf(messageId),
     siblings,
   };
-}
+};
 
-export function useMessageSiblingInfo(
+export const useMessageSiblingInfo = (
   messageId: string
-): MessageSiblingInfo | null {
-  return useThreadStore(
+): MessageSiblingInfo | null =>
+  useThreadStore(
     (state) => getSiblingInfo(state, messageId),
     (a, b) =>
       a === b ||
@@ -68,7 +68,6 @@ export function useMessageSiblingInfo(
           (sibling, index) => sibling.id === b.siblings[index]?.id
         ))
   );
-}
 
 export const useSwitchToSibling = () => {
   const thread = useApplicationThread();
@@ -98,10 +97,10 @@ export const useSwitchToSibling = () => {
   );
 };
 
-export function useParallelGroupInfo(
+export const useParallelGroupInfo = (
   messageId: string
-): ParallelGroupInfo | null {
-  return useThreadStore(
+): ParallelGroupInfo | null =>
+  useThreadStore(
     (state) => {
       const snapshot = state.threadSnapshot;
       const message = snapshot.messagesById[messageId];
@@ -124,7 +123,7 @@ export function useParallelGroupInfo(
         .filter(
           (candidate) => candidate.metadata.parallelGroupId === parallelGroupId
         )
-        .sort(
+        .toSorted(
           (a, b) =>
             (a.metadata.parallelIndex ?? Number.MAX_SAFE_INTEGER) -
             (b.metadata.parallelIndex ?? Number.MAX_SAFE_INTEGER)
@@ -175,7 +174,6 @@ export function useParallelGroupInfo(
               b.messages[index]?.metadata.activeStreamId
         ))
   );
-}
 
 export const useSwitchToMessage = () => {
   const thread = useApplicationThread();

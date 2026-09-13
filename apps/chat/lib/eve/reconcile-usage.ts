@@ -1,4 +1,5 @@
-import { Client, type MessageStreamEvent } from "eve/client";
+import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 
 import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
@@ -9,22 +10,22 @@ import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
-export async function reconcileEveUsage(ownerId: string, sessionId: string) {
+export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
   assertEveConfigured();
   const startIndex = await getEveUsageCursor(ownerId, sessionId);
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const session = client.sessions.attach(sessionId);
   let streamIndex = startIndex;
   let unresolved = false;
   let latestActivity: MessageStreamEvent | undefined;
   for await (const event of session.stream({
-    startIndex,
     follow: false,
     signal: AbortSignal.timeout(15_000),
+    startIndex,
   })) {
     streamIndex += 1;
     if (
@@ -55,9 +56,9 @@ export async function reconcileEveUsage(ownerId: string, sessionId: string) {
   if (streamIndex > startIndex) {
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
-}
+};
 
-export async function reconcileEveOwnerUsage(ownerId: string) {
+export const reconcileEveOwnerUsage = async (ownerId: string) => {
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
     throw new Error(
@@ -83,7 +84,11 @@ export async function reconcileEveOwnerUsage(ownerId: string) {
         !row.sessionId || positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();
-  let failure: { cause: unknown } | undefined;
+  let failure:
+    | {
+        cause: unknown;
+      }
+    | undefined;
   // A slow stream occupies only its own slot. On failure, drain existing reads
   // before returning so a retry cannot overlap billing work left by this call.
   const worker = async () => {
@@ -94,10 +99,11 @@ export async function reconcileEveOwnerUsage(ownerId: string) {
       }
       try {
         if (next.value.sessionId) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
           await reconcileEveUsage(ownerId, next.value.sessionId);
         }
-      } catch (cause) {
-        failure ??= { cause };
+      } catch (error) {
+        failure ??= { cause: error };
       }
     }
   };
@@ -107,4 +113,4 @@ export async function reconcileEveOwnerUsage(ownerId: string) {
   if (failure) {
     throw failure.cause;
   }
-}
+};

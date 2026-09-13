@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
@@ -38,8 +40,8 @@ const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
-    id,
     email: `${id}@test.invalid`,
+    id,
     name: "File ownership fixture",
   }))
 );
@@ -87,10 +89,10 @@ test("registration rejects URLs and invalid storage keys", async () => {
 test("references reject foreign files and become immutable behind the deletion fence", async () => {
   const id = crypto.randomUUID();
   await db.insert(eveConversation).values({
-    id,
-    ownerId: owner,
-    operationId: crypto.randomUUID(),
     firstMessage: "fixture",
+    id,
+    operationId: crypto.randomUUID(),
+    ownerId: owner,
     state: "bound",
   });
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
@@ -148,7 +150,7 @@ test("fork reservation retains the source file references before dispatch", asyn
       dispatched = true;
       return crypto.randomUUID();
     },
-    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   expect(dispatched).toBe(true);
   expect(
@@ -175,7 +177,7 @@ test("attachment creation commits references before dispatch with a single appli
         expect(references.map((row) => row.key)).toEqual([key]);
         return crypto.randomUUID();
       },
-      { initialContentHash: "attachment-fixture", fileKeys: [key] }
+      { fileKeys: [key], initialContentHash: "attachment-fixture" }
     );
     expect(binding.sessionId).toBeTruthy();
   } finally {
@@ -226,14 +228,14 @@ test("deletion waits for an admitted generated-file write before fencing the fam
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const writing = writeEveGeneratedFile(
     owner,
     conversation.id,
     key,
     async () => {
-      entered.resolve();
+      entered.resolve(undefined);
       await release.promise;
       return "stored";
     }
@@ -250,7 +252,7 @@ test("deletion waits for an admitted generated-file write before fencing the fam
       })
       .toBe(true);
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     await writing;
     await deletion;
   }
@@ -410,8 +412,8 @@ test("orphan cleanup retains references and young uploads and retries reappearin
   await referenceEveFiles(owner, conversation.id, [referenced]);
   const cutoff = new Date("2026-01-01");
   const fenced = await prepareEveOrphanedFilePurge(keys, cutoff);
-  expect(fenced.map((file) => file.key).sort()).toEqual(
-    [orphan, foreign].sort()
+  expect(fenced.map((file) => file.key).toSorted()).toEqual(
+    [orphan, foreign].toSorted()
   );
   expect(fenced.find((file) => file.key === foreign)?.ownerId).toBe(stranger);
   expect(fenced.some((file) => file.key === legacy)).toBe(false);
@@ -443,10 +445,10 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .update(eveStoredFile)
     .set({ createdAt: new Date("2025-01-01") })
     .where(eq(eveStoredFile.key, key));
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const writing = writeEveUpload(owner, key, async () => {
-    entered.resolve();
+    entered.resolve(undefined);
     await release.promise;
     return "stored";
   });
@@ -462,7 +464,7 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
       })
       .toBe(true);
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     await writing;
     await cleanup;
   }

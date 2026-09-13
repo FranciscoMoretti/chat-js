@@ -20,6 +20,7 @@ interface SheetEditorProps {
 
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
+const generateCsv = (data: (string | number)[][]) => unparse(data);
 
 const PureSpreadsheetEditor = ({
   content,
@@ -32,7 +33,9 @@ const PureSpreadsheetEditor = ({
 
   const parseData = useMemo(() => {
     if (!content) {
-      return new Array(MIN_ROWS).fill(new Array(MIN_COLS).fill(""));
+      return Array.from({ length: MIN_ROWS }, () =>
+        Array.from({ length: MIN_COLS }, () => "")
+      );
     }
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
@@ -45,7 +48,7 @@ const PureSpreadsheetEditor = ({
     });
 
     while (paddedData.length < MIN_ROWS) {
-      paddedData.push(new Array(MIN_COLS).fill(""));
+      paddedData.push(Array.from({ length: MIN_COLS }, () => ""));
     }
 
     return paddedData;
@@ -53,26 +56,26 @@ const PureSpreadsheetEditor = ({
 
   const columns = useMemo(() => {
     const rowNumberColumn = {
+      cellClass: "border-t border-r bg-background text-foreground",
+      frozen: true,
+      headerCellClass: "border-t border-r bg-muted text-foreground",
       key: "rowNumber",
       name: "",
-      frozen: true,
-      width: 50,
       renderCell: ({ rowIdx }: { rowIdx: number }) => rowIdx + 1,
-      cellClass: "border-t border-r bg-background text-foreground",
-      headerCellClass: "border-t border-r bg-muted text-foreground",
+      width: 50,
     };
 
     const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
-      key: i.toString(),
-      name: String.fromCharCode(65 + i),
-      renderEditCell: isReadonly ? undefined : textEditor,
-      width: 120,
       cellClass: cn("bg-background text-foreground border-t", {
         "border-l": i !== 0,
       }),
       headerCellClass: cn("bg-muted text-foreground border-t", {
         "border-l": i !== 0,
       }),
+      key: i.toString(),
+      name: String.fromCodePoint(65 + i),
+      renderEditCell: isReadonly ? undefined : textEditor,
+      width: 120,
     }));
 
     return [rowNumberColumn, ...dataColumns];
@@ -86,9 +89,9 @@ const PureSpreadsheetEditor = ({
           rowNumber: rowIndex + 1,
         };
 
-        columns.slice(1).forEach((col, colIndex) => {
+        for (const [colIndex, col] of columns.slice(1).entries()) {
           rowData[col.key] = row[colIndex] || "";
-        });
+        }
 
         return rowData;
       }),
@@ -98,10 +101,9 @@ const PureSpreadsheetEditor = ({
   const [localRows, setLocalRows] = useState(initialRows);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the controlled spreadsheet rows when the document changes.
     setLocalRows(initialRows);
   }, [initialRows]);
-
-  const generateCsv = (data: Array<Array<string | number>>) => unparse(data);
 
   const handleRowsChange = (newRows: Record<string, string | number>[]) => {
     if (isReadonly) {
@@ -140,15 +142,12 @@ const PureSpreadsheetEditor = ({
   );
 };
 
-function areEqual(prevProps: SheetEditorProps, nextProps: SheetEditorProps) {
-  return (
-    prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
-    prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
-    prevProps.content === nextProps.content &&
-    prevProps.saveContent === nextProps.saveContent &&
-    prevProps.isReadonly === nextProps.isReadonly
-  );
-}
+const areEqual = (prevProps: SheetEditorProps, nextProps: SheetEditorProps) =>
+  prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
+  prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
+  !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
+  prevProps.content === nextProps.content &&
+  prevProps.saveContent === nextProps.saveContent &&
+  prevProps.isReadonly === nextProps.isReadonly;
 
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);

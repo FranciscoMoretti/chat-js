@@ -1,12 +1,12 @@
 # ChatJS → EVE migration report
 
-Report date: 13 September 2026. Implementation reviewed at `d9cb2c84` on `codex/eve-app-runtime`. This report accompanies consolidated draft [PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444). GitHub reports merge conflicts with current `main`; this is not a merge-ready branch.
+Report date: 13 September 2026. This report accompanies consolidated draft [PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444), on `codex/eve-app-runtime`. The branch integrates main through `4584f093`; final merge validation is recorded below.
 
 ## Status and scope
 
-The migration is implemented and exercised locally inside the existing ChatJS application. EVE owns conversation execution and the durable transcript; the normal ChatJS routes, composer, sidebar and artifact UI integrate with it. This is **ready for code review, not production cutover**. The reporting audit found a concrete generated-app release blocker: the patched Postgres Workflow World is not vendored alongside EVE and MCP. This narrows the earlier local completion statement: the worktree is validated, but generated-app runtime equivalence is not complete.
+The migration is implemented and exercised locally inside the existing ChatJS application. EVE owns conversation execution and the durable transcript; the normal ChatJS routes, composer, sidebar and artifact UI integrate with it. This is **ready for code review, not production cutover**. The reporting audit previously found a generated-app release blocker: the patched Postgres Workflow World was not vendored alongside EVE and MCP. The main integration fixes this by verifying and packaging all three patched dependencies in generated apps.
 
-At report time, the branch has 199 commits not in current `origin/main`, and current `main` has 87 commits not in this branch. The migration diff against the merge base is 589 files, +132,571 / −1,302 lines, before this report. Approximately 65,283 added lines are Drizzle snapshots, 29,877 are tests/fixtures, 13,037 are patches and their documentation, and 24,374 are other source/configuration/docs. These figures describe review size, not product complexity or test coverage. The last integration with main was earlier in the work; current-main integration and its regression checks remain outstanding.
+The integration incorporates main’s Oxfmt/Oxlint migration and optional shadcn registry architecture. Formatting was normalized before merging. Installed AI SDK tools provide their own schemas and renderers; the EVE adapter supplies execution context, cancellation, owned file storage, sandbox identity and usage accounting. The old platform factory implementations are removed. Final checks must cover both the reference app and generated apps with optional capabilities absent.
 
 The runtime gate explicitly requires `NODE_ENV === "development"` and `EVE_ENABLED === "true"`. Merely setting the flag in production does not activate EVE. The Next.js wrapper also only enables EVE for the development-server phase. No production database cutover, merge, release, or upstream issue publication is included. The consolidated PR can be split into a review stack later.
 
@@ -62,7 +62,7 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](
 | Deletion | Owner-visible pending/deleted state, immediate access fence, family-wide inventory, retryable native retirement, files/documents/sandboxes/queue payload cleanup and durable tombstones | Complete erasure is implemented for the explicitly supported local provider configuration, not arbitrary hosted worlds |
 | Expiry and orphan cleanup | Guest-family expiry, bounded fair retries, retained billing identity, orphan upload ownership/fences | Automatic scheduler is development/loopback-only |
 | Developer operation | Single app/EVE startup, bounded health checks, macOS supervision, restart backoff and heap limits | Laptop sleep, database failure and remote provider outages remain real availability limits |
-| Generated apps | Patched runtime vendoring, helper inclusion and validation during scaffold/template generation; shared registry tool schemas/renderers | EVE/MCP are vendored, but the patched Postgres world is missing: release blocker |
+| Generated apps | Patched runtime vendoring, helper inclusion and validation during scaffold/template generation; shared registry tool schemas/renderers | EVE, MCP and the Postgres world are vendored; hosted/generated-app deployment still needs rehearsal |
 
 ## Complications encountered and resolutions
 
@@ -73,7 +73,7 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](
 5. **Pending work could block cancellation in Postgres workflows.** The world patch removes serialization between distinct deliveries while retaining exact delivery deduplication.
 6. **Deletion spans much more than app rows.** Native sessions, child/collector runs, streams, queued work, documents, shared file references and provider resources require fences and retry receipts. Unknown resource ownership or uncertain allocation leaves deletion pending rather than reporting erasure.
 7. **Repeated billing reads consumed excessive database transfer.** Reconciliation now tracks durable cursors and skips unchanged streams; the Postgres reader patch resumes after the consumed boundary. After the Neon quota warning, verification moved to isolated local Postgres. This report performs no Neon reads. It does not claim a measured production bandwidth budget.
-8. **Generated apps must receive the exact maintained runtime.** Bun patch/cache behavior required relocated helper files, installed-byte verification and vendored tarballs, rather than assuming a successful install proved the patch. The reporting audit found that this is incomplete for the Postgres world package; see the confirmed generated-app blocker below.
+8. **Generated apps must receive the exact maintained runtime.** Bun patch/cache behavior required relocated helper files, installed-byte verification and vendored tarballs, rather than assuming a successful install proved the patch. The main integration closes the missing Postgres world archive gap; all three patches are verified and vendored.
 9. **MCP OAuth refreshes raced.** Connector-scoped serialization and token reuse protect rotation across fresh clients. A separate SDK SSE patch coalesces refresh and handles late 401 responses. Tokens/credentials are not persisted inside workflow closures or copied into public transcripts.
 10. **Browser tests exposed fixture drift.** Old model aliases, changed recovery text, an unintended model-selected approval tool, too-short deletion cleanup, and an obsolete one-row billing assumption were corrected in the latest parity tests. The extra billing row was an independently recorded follow-up suggestion call. These were not all product failures, and failures were not simply rerun until green without examining them.
 
@@ -84,11 +84,11 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](
 | `eve@0.52.2` compiled dependency and readable source patches | Approval continuation, native checkpoints/forks/restored history, idle seeds, approval receipts, resource/birth/inventory support | Upstream or a published maintained fork must replace them with equivalent contracts and migration tests. Browser and worker must use matching patched wire versions |
 | `@workflow/world-postgres@5.0.0-beta.40` patch | Cancellation delivery and efficient resumed-stream reads | Re-evaluate on upstream upgrade; concurrency/deduplication and transfer regressions need explicit tests |
 | `@ai-sdk/mcp@2.0.45` patch | Single-flight SSE auth recovery and late-401 handling | Replace after upstream equivalent lands; test rotating credentials across fresh and established clients |
-| Missing world patch in generated apps **(known defect)** | Root installs a patched world; scaffold and template sync vendor only EVE/MCP, leaving the registry world dependency | Vendor/verify the patched world too, or exclude EVE from generated apps until an equivalent upstream release; cancellation and efficient stream reads otherwise differ from this worktree |
+| Patched runtime distribution | Scaffold and template sync now verify and vendor EVE, MCP and Postgres Workflow World together | Keep clean-install and archive-presence checks when upgrading any patched package |
 | Direct Postgres stream-position reads | Efficient billing reconciliation currently uses pinned World schema/stream naming | Replace with a supported authorized batch-position API; schema upgrades need adapter/regression review |
 | Local SQL resource fences/inventories/retirement | Safe erasure is not a single upstream delete call | Hosted/provider-portable deletion needs separate design and certification; setup is an explicit local migration |
 | Checkpoint snapshots and copy journals | Restore history/resources without a second execution authority | Full snapshots can grow quadratically; retention/compaction/garbage-collection policy needs production-scale work |
-| Patch helper relocation and vendored tarballs | Bun nested patch-file creation/cache behavior and cross-package-manager distribution | Remove only when supported tooling installs equivalent files reliably; repeat clean-cache installation checks on upgrades |
+| Patch helper relocation and vendored tarballs | Bun fails to create nested additions while applying the EVE patch. All 35 new nested modules now live at package root with exact import aliases | Fresh-cache Bun install, runtime imports and TypeScript resolution pass. Remove only when supported tooling installs equivalent files reliably |
 | Legacy runtime retained behind gate | Production has not cut over | Remove after cutover and rollback policy are settled; shared component regressions remain possible in either mode |
 | Acceptance suite/model drift | Work progressed in many validated slices; some older tests still reference GPT-4.1 aliases | Normalize obsolete fixtures and maintain a runnable low-cost acceptance manifest; a historical pass does not guarantee an old script runs unchanged today |
 | Documentation drift | Some upstream drafts and patch notes were written before later implementation | Reconcile stale “remaining work” sections before using them as release notes; e.g. comparisons/OAuth now have later passing evidence |
@@ -164,10 +164,10 @@ Selected UI tests include desktop/mobile captures, error/pending/empty states an
 
 ## Where gaps could remain
 
-1. **Generated-app runtime mismatch (confirmed blocker).** `scripts/sync-template.ts` and `packages/cli/src/helpers/scaffold.ts` vendor EVE and MCP, while the app manifest retains the registry Postgres world. The root patch registration does not travel with that generated dependency. Add world vendoring and fresh-install/archive assertions before an EVE scaffold release. Existing packaging passes cover EVE/MCP, not all three.
-2. **Integration with latest main.** The 87 missing commits need merge/rebase, conflict review and regression testing. This draft does not certify the merge result or current-main feature parity. Splitting the 199-commit migration will make review safer and expose accidental coupling.
+1. **Generated-app deployment breadth.** All three maintained patches now travel with scaffolds. Local archive/install checks do not certify every package manager, target OS or hosted runtime.
+2. **Main integration review.** The merge incorporates the 87 previously missing main commits. PR splitting and human review remain separate; final validation results below define what was actually rechecked.
 3. **Hosted deployment and production data.** The development gate remains in place. Hosted worker topology, migrations, auth callbacks, secrets, database pools, rollback, provider setup and deletion support need deployment-specific rehearsal. Local Postgres success is not evidence of Neon production behavior.
-4. **CI/runtime mismatch.** Existing Playwright workflow still selects Node 22, while EVE requires Node 24+. No dedicated hosted EVE acceptance pipeline was established by the local runs. A green legacy pipeline alone cannot certify this migration; fresh PR CI results must be reviewed separately.
+4. **CI/runtime mismatch.** Workflows now select Node 24, matching the EVE runtime requirement. Playwright uses an ephemeral Postgres service instead of the shared database secret. No dedicated hosted EVE acceptance pipeline was established by the local runs. A green legacy pipeline alone cannot certify this migration; fresh PR CI results must be reviewed separately.
 5. **Coverage provenance and fixture drift.** Evidence spans different commits, providers and controlled fixtures. Some old test model IDs and draft notes are stale. Maintain a reproducible acceptance manifest and run the chosen suite after main integration; do not advertise a numerical “100% coverage” claim.
 6. **Scale and storage.** Large/long conversations, many concurrent sessions, checkpoint growth, comparison fan-out, database transfer, queue backpressure and long-duration recovery have not been load/soak-certified. Existing bounds reject unsupported work but do not prove acceptable production capacity.
 7. **Provider uncertainty.** Lost sandbox-create replies, changed credential scope, unavailable cleanup APIs and incomplete birth evidence can leave deletion pending. A provider 404 or timeout is not automatically proof of non-allocation. This is documented behavior requiring operational handling.
@@ -187,3 +187,33 @@ Recommended review sequence:
 3. Auth/admission/guest quotas/billing and the deletion/resource-fence protocol.
 4. Native UI, branches/comparisons/copies, files/documents and tool adapters.
 5. Main integration, CI/Node alignment, acceptance manifest and staged deployment rehearsal before considering production cutover.
+
+## Integration with main: review notes
+
+- Main remains pinned to `4584f093` (re-fetched during validation). The branch uses main’s formatting, typed gateway boundary, installed standard AI SDK tools, optional capability configuration and third-party registry extension points.
+- EVE installs each selected tool set once. Its context adapter carries cancellation, progress, costs, owned attachment writes and sandbox ownership to installed tools. Public renderers come from the installed registry.
+- Tavily/Firecrawl SDK calls do not expose an abort option. Cancelling EVE work stops consumption, but may not terminate an already-issued provider request.
+- Lint sorting exposed a persisted-data hazard: changing object/schema key order changes admission and copy hashes. Serialization modules retain their original order, with explicit exceptions and regression fixtures for creation/comparison replay bytes. Sequential lock acquisition, bounded cleanup and stream reads also retain documented local exceptions.
+- Explicit `undefined` arguments remain permitted by lint because React refs, promise resolvers and typed mocks require them. Removing them produced real type failures.
+- Fresh Bun dependency installation succeeds after relocating nested EVE patch modules. Existing workspace links from the previous isolated dependency layout had to be refreshed; no runtime state or databases were deleted.
+- No Neon calls, production activation or upstream issue publication is part of this integration. Existing historical evidence above remains historical; the final integration check results below supersede earlier merge/readiness claims.
+
+The isolated database initially inherited `Europe/London`; it is now configured for UTC, matching the UTC timestamp convention used by the app. The database contract suite then passed 75 tests across six files. The same suite caught an in-place sort accidentally changed to an unused `toSorted` return; deletion now returns the sorted family explicitly.
+
+The actual worker startup check caught a framework dependency that unit tests did not: installed tools imported Next.js model-cache code while EVE evaluated them outside Next.js. The integration provides optional model services through tool context, while the web app retains its normal provider defaults. Standalone comparison/response-card browser galleries pass at desktop and mobile sizes, including keyboard selection, recovery and retained composer state.
+
+## Main integration verification
+
+The integration was checked against main `4584f093`, using Node 24 and isolated local Postgres. These checks supplement the earlier feature evidence; they do not imply every historical provider scenario was rerun.
+
+- App unit suite: 131 files, 608 tests passed.
+- Workspace `bun lint` passed, including the 83-page documentation check. Workspace `bun test:types` passed all seven tasks without a production build.
+- CLI unit suite: 81 tests passed, including scaffold selection and patched-package vendoring.
+- Final template sync/check passed for chat and Electron. Fresh empty-tool scaffold and built-in selection contracts passed; the empty scaffold type-checks the renderer boundary. Registry build/reference-consumer checks passed.
+- Database contracts: 75 tests across six files passed against local Postgres, covering admission, guests, response groups, copy journals, files and Postgres stream resume.
+- Runtime supervisor/health tests: 17 passed. Gateway tests: 14 passed. Thread tests: 68 passed.
+- Fresh-cache EVE patch installation passed with Bun 1.3.11 and CI's Bun 1.3.1. Installed files match the expected patched tree; forward/reverse application and runtime helper imports passed.
+- A real Gemini 2.5 Flash Lite conversation executed the installed word-count tool, rendered its result, cleared the composer and retained the transcript/tool result after reload. Next.js reported no compilation, configuration or browser-session errors at that checkpoint.
+- CI uses Node 24. Playwright owns an ephemeral Postgres service instead of the shared Neon database. These workflow changes still require a hosted CI run.
+
+The live browser check also identified media renderer precedence: the generic EVE platform renderer could hide the installed image/video renderer. Validated installed renderers now take precedence, with the durable EVE envelope unwrapped at that boundary. The image renderer also has a meaningful input-streaming state in both the app and canonical registry. All eight optimistic-send and tool-renderer browser tests pass, including attachment recovery, desktop/mobile results, image/video progress and failures, research, MCP and public projections. The separate comparison/response-card browser suite passed both tests.

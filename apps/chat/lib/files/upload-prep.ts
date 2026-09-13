@@ -2,9 +2,9 @@
 
 import imageCompression from "browser-image-compression";
 
-const FILE_EXTENSION_REGEX = /\.[^.]+$/;
+const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
-async function compressImageIfNeeded(
+const compressImageIfNeeded = async (
   file: File,
   {
     maxBytes,
@@ -15,7 +15,7 @@ async function compressImageIfNeeded(
     maxDimension: number;
     minQuality?: number;
   }
-): Promise<File> {
+): Promise<File> => {
   if (!file.type.startsWith("image/")) {
     return file;
   }
@@ -31,11 +31,11 @@ async function compressImageIfNeeded(
   const outputMime = file.type;
 
   const options = {
+    fileType: outputMime,
+    initialQuality: Math.min(0.9, Math.max(minQuality, 0.1)),
     maxSizeMB: maxBytes / (1024 * 1024),
     maxWidthOrHeight: maxDimension,
     useWebWorker: true,
-    fileType: outputMime,
-    initialQuality: Math.min(0.9, Math.max(minQuality, 0.1)),
   } as const;
 
   try {
@@ -44,8 +44,8 @@ async function compressImageIfNeeded(
       maybeResult instanceof File
         ? maybeResult
         : new File([maybeResult], file.name, {
-            type: outputMime,
             lastModified: Date.now(),
+            type: outputMime,
           });
     if (resultBlob.size >= file.size) {
       return file;
@@ -61,15 +61,15 @@ async function compressImageIfNeeded(
       ext = outputMime.split("/")[1] ?? "jpg";
     }
     return new File([resultBlob], `${base}.${ext}`, {
-      type: outputMime,
       lastModified: Date.now(),
+      type: outputMime,
     });
   } catch {
     return file;
   }
-}
+};
 
-export async function processFilesForUpload(
+export const processFilesForUpload = async (
   files: File[],
   options: {
     maxBytes: number;
@@ -80,12 +80,12 @@ export async function processFilesForUpload(
   pdfFiles: File[];
   stillOversized: File[];
   unsupportedFiles: File[];
-}> {
+}> => {
   const processedImages: File[] = [];
   const pdfFiles: File[] = [];
   const stillOversized: File[] = [];
   const unsupportedFiles: File[] = [];
-  const maxBytes = options.maxBytes;
+  const { maxBytes } = options;
 
   for (const file of files) {
     if (file.type.startsWith("image/")) {
@@ -106,5 +106,5 @@ export async function processFilesForUpload(
     }
   }
 
-  return { processedImages, pdfFiles, stillOversized, unsupportedFiles };
-}
+  return { pdfFiles, processedImages, stillOversized, unsupportedFiles };
+};

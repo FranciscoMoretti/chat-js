@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -26,25 +27,25 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       route.abort()
     );
     await page.goto("/api/dev-login");
-    origin = new URL(page.url()).origin;
+    ({ origin } = new URL(page.url()));
     const { user: owner } = z
       .object({ user: z.object({ id: z.string() }) })
       .parse(await (await page.request.get("/api/auth/get-session")).json());
     await db
       .insert(userCredit)
-      .values({ userId: owner.id, credits: 1000 })
+      .values({ credits: 1000, userId: owner.id })
       .onConflictDoUpdate({
-        target: userCredit.userId,
         set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({
+      enabled: true,
       id: connectorId,
-      userId: owner.id,
       name: "Local OAuth fixture",
       nameId,
-      url: fixture.mcpUrl,
       type: "http",
-      enabled: true,
+      url: fixture.mcpUrl,
+      userId: owner.id,
     });
     const authorize = await page.request.post("/api/trpc/mcp.authorize", {
       data: { json: { id: connectorId } },
@@ -88,8 +89,8 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     const clients = [0, 1].map(
       () =>
         new MCPClient(connectorId, "OAuth concurrency fixture", {
-          url: fixture.mcpUrl,
           type: "http",
+          url: fixture.mcpUrl,
         })
     );
     try {
@@ -117,12 +118,12 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     );
 
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-5-nano",
         message: `Call ${nameId}__read_token exactly once and repeat the returned token verbatim. Do not use other tools.`,
+        modelId: "openai/gpt-5-nano",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin },
     });
     expect(created.status(), await created.text()).toBe(200);
     const binding = conversationBinding.parse(await created.json());
@@ -154,7 +155,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
                   })
                 ).status()
               ),
-            { timeout: 60_000, intervals: [1000, 2000, 5000] }
+            { intervals: [1000, 2000, 5000], timeout: 60_000 }
           )
           .toBe(true);
       }

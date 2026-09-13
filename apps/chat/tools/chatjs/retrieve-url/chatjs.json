@@ -8,5 +8,6 @@
     {
       "options": [["FIRECRAWL_API_KEY"]]
     }
-  ]
+  ],
+  "slot": "retrieveUrl"
 }

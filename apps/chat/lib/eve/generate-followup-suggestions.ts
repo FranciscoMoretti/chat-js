@@ -7,9 +7,9 @@ import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
 
 /** Auxiliary generation belongs to the native turn and never fails its answer. */
-export async function generateEveFollowupSuggestions(
+export const generateEveFollowupSuggestions = async (
   context: FollowupContext
-): Promise<TurnCompletedHookResult | undefined> {
+): Promise<TurnCompletedHookResult | undefined> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
   ) {
@@ -24,37 +24,37 @@ export async function generateEveFollowupSuggestions(
     const result = await generateText({
       model: resolved.model,
       ...resolved.modelOptions,
+      abortSignal: AbortSignal.timeout(15_000),
+      maxOutputTokens: 512,
       // Hidden provider retries would lose per-attempt usage evidence.
       maxRetries: 0,
-      maxOutputTokens: 512,
-      abortSignal: AbortSignal.timeout(15_000),
       messages: [
-        { role: "user", content: context.user },
-        { role: "assistant", content: context.assistant },
+        { content: context.user, role: "user" },
+        { content: context.assistant, role: "assistant" },
         {
-          role: "user",
           content:
             "What question should I ask next? Return 3 to 5 distinct suggested questions, each at most 80 characters. Use the conversation's language.",
+          role: "user",
         },
       ],
-      output: Output.object({ schema: eveFollowupSuggestions }),
       onStepFinish(step) {
         modelCalls.push({
           modelId,
-          usage: step.usage,
           providerMetadata: step.providerMetadata,
+          usage: step.usage,
         });
       },
+      output: Output.object({ schema: eveFollowupSuggestions }),
     });
     // Usage is captured before reading output: malformed JSON can still cost money.
     return {
-      responseMetadata: eveFollowupSuggestions.parse(result.output),
       modelCalls,
+      responseMetadata: eveFollowupSuggestions.parse(result.output),
     };
   } catch {
     if (attempted && modelCalls.length === 0) {
-      modelCalls.push({ modelId, failed: true });
+      modelCalls.push({ failed: true, modelId });
     }
     return { modelCalls };
   }
-}
+};

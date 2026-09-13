@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
@@ -14,9 +15,8 @@ import { guestRequestIpHash } from "./guest-admission";
 import type { EveMessageInput } from "./message-input";
 
 export const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
-
 /** Only the first reservation may dispatch: eve's session POST has no replay key. */
-export async function admitGuestMessage(
+export const admitGuestMessage = async (
   request: Request,
   ownerId: string,
   sessionId: string,
@@ -25,7 +25,7 @@ export async function admitGuestMessage(
     modelId?: string;
     selectedTool?: UiToolName;
   }
-) {
+) => {
   const operationId = z
     .uuid()
     .safeParse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
@@ -80,13 +80,15 @@ export async function admitGuestMessage(
     "Guest message limit reached. Sign in to continue.",
     429
   );
-}
-
-export async function settleGuestMessage(
+};
+export const settleGuestMessage = async (
   response: Response,
   ownerId: string,
-  admission: { operationId: string; reservationId: string }
-) {
+  admission: {
+    operationId: string;
+    reservationId: string;
+  }
+) => {
   if (response.ok) {
     await commitEveGuestMessage(
       ownerId,
@@ -111,4 +113,4 @@ export async function settleGuestMessage(
       admission.reservationId
     );
   }
-}
+};

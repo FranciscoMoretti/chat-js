@@ -1,8 +1,8 @@
 const deletionSessionPath =
-  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/(reset|stream|sandbox-identity)$/;
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/(?<operation>reset|stream|sandbox-identity)$/u;
 
 /** Internal deletion may retire and inspect; it must never start new work. */
-export function parseDeletionSessionRequest(path: string, method: string) {
+export const parseDeletionSessionRequest = (path: string, method: string) => {
   const match = deletionSessionPath.exec(path);
   return match &&
     ((match[2] === "reset" && method === "POST") ||
@@ -10,4 +10,4 @@ export function parseDeletionSessionRequest(path: string, method: string) {
         method === "GET"))
     ? match[1]
     : null;
-}
+};

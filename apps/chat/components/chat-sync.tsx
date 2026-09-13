@@ -21,17 +21,16 @@ import { fetchWithErrorHandlers } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 import { useTRPCClient } from "@/trpc/react";
 
-function isResumableActiveStreamId(activeStreamId: string | null | undefined) {
-  return !!(activeStreamId && !activeStreamId.startsWith("pending:"));
-}
+const isResumableActiveStreamId = (activeStreamId: string | null | undefined) =>
+  !!(activeStreamId && !activeStreamId.startsWith("pending:"));
 
-export function ChatSync({
+export const ChatSync = ({
   id,
   thread,
 }: {
   id: string;
   thread: ApplicationThread;
-}) {
+}) => {
   const { data: session } = useSession();
   const { mutate: saveChatMessage } = useSaveMessageMutation();
   const { setChatPersisted } = useChatPersistenceActions();
@@ -66,6 +65,19 @@ export function ChatSync({
           transport: new DefaultChatTransport({
             api: "/api/chat",
             fetch: fetchWithErrorHandlers,
+            prepareReconnectToStreamRequest({ id: chatId }) {
+              const current = thread.getSnapshot().messages.at(-1);
+              const activeStreamId = current?.metadata?.activeStreamId ?? null;
+              const resumableMessageId = isResumableActiveStreamId(
+                activeStreamId
+              )
+                ? (current?.id ?? null)
+                : null;
+
+              return {
+                api: `/api/chat/${chatId}/stream${resumableMessageId ? `?messageId=${encodeURIComponent(resumableMessageId)}` : ""}`,
+              };
+            },
             prepareSendMessagesRequest({ messages, id: chatId, body }) {
               return {
                 body: {
@@ -76,17 +88,6 @@ export function ChatSync({
                 },
               };
             },
-            prepareReconnectToStreamRequest({ id: chatId }) {
-              const current = thread.getSnapshot().messages.at(-1);
-              const activeStreamId = current?.metadata?.activeStreamId ?? null;
-              const partialMessageId = isResumableActiveStreamId(activeStreamId)
-                ? (current?.id ?? null)
-                : null;
-
-              return {
-                api: `/api/chat/${chatId}/stream${partialMessageId ? `?messageId=${encodeURIComponent(partialMessageId)}` : ""}`,
-              };
-            },
           }),
         })
       ),
@@ -95,13 +96,6 @@ export function ChatSync({
 
   const { resumeStream } = useChat<ChatMessage>({
     experimental_throttle: 100,
-    thread,
-    onFinish: ({ message }) => {
-      return completionQueueRef.current.waitForIdle().then(() => {
-        saveChatMessage({ message, chatId: id });
-      });
-    },
-    transport,
     onData: (dataPart) => {
       completionQueueRef.current.enqueue(() =>
         completeDataPart({ dataPart, thread })
@@ -122,6 +116,15 @@ export function ChatSync({
       const { message, description } = getStreamErrorToastContent(error);
       toast.error(message, description ? { description } : undefined);
     },
+    onFinish: async ({ message }) => {
+      await completionQueueRef.current.waitForIdle();
+      saveChatMessage({
+        chatId: id,
+        message,
+      });
+    },
+    thread,
+    transport,
   });
 
   useEffect(() => {
@@ -145,4 +148,4 @@ export function ChatSync({
   }, [partialMessageId, resumeStream, thread]);
 
   return null;
-}
+};

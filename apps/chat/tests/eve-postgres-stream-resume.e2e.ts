@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { Pool } from "pg";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
@@ -15,12 +18,12 @@ const pool = new Pool({ connectionString: env.DATABASE_URL, max: 3 });
 const positionConnection = postgres(env.DATABASE_URL, { max: 1 });
 const queries: string[] = [];
 const database = drizzle(pool, {
-  schema: Schema,
   logger: {
     logQuery(query) {
       queries.push(query);
     },
   },
+  schema: Schema,
 });
 const streamer = createStreamer(pool, database);
 const runId = `resume-fixture-${crypto.randomUUID()}`;

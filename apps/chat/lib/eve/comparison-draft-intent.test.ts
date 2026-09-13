@@ -9,11 +9,11 @@ it("retains explicit composer intent through recovery and never infers it from m
   const entries = new Map<string, string>();
   const storage = {
     getItem: (key: string) => entries.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      entries.set(key, value);
-    },
     removeItem: (key: string) => {
       entries.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      entries.set(key, value);
     },
   };
   saveComparisonDraftIntent(

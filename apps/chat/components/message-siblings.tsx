@@ -10,13 +10,13 @@ import {
 } from "@/lib/stores/hooks-threads";
 import { useSession } from "@/providers/session-provider";
 
-function PureMessageSiblings({
+const PureMessageSiblings = ({
   messageId,
   isReadOnly: _isReadOnly,
 }: {
   messageId: string;
   isReadOnly: boolean;
-}) {
+}) => {
   const { data: session } = useSession();
   const _isAuthenticated = !!session?.user;
 
@@ -64,6 +64,6 @@ function PureMessageSiblings({
       )}
     </div>
   );
-}
+};
 
 export const MessageSiblings = memo(PureMessageSiblings);

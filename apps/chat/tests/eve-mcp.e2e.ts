@@ -1,4 +1,10 @@
-import { createServer, type ServerResponse } from "node:http";
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { createServer } from "node:http";
+import type { ServerResponse } from "node:http";
 
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
@@ -40,14 +46,15 @@ async function localMcpServer(
       }
       let result: unknown;
       switch (rpc.method) {
-        case "initialize":
+        case "initialize": {
           result = {
             protocolVersion: "2025-03-26",
             capabilities: { tools: {} },
             serverInfo: { name: "ChatJS local fixture", version: "1.0.0" },
           };
           break;
-        case "tools/list":
+        }
+        case "tools/list": {
           result = {
             tools: [
               {
@@ -63,13 +70,15 @@ async function localMcpServer(
             ],
           };
           break;
-        case "tools/call":
+        }
+        case "tools/call": {
           if (rpc.params?.name !== "read_token") {
             throw new Error("Unknown fixture tool");
           }
           result = await invoke(response);
           break;
-        default:
+        }
+        default: {
           response.writeHead(200, { "content-type": "application/json" }).end(
             JSON.stringify({
               jsonrpc: "2.0",
@@ -78,10 +87,11 @@ async function localMcpServer(
             })
           );
           return;
+        }
       }
       response
         .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify({ jsonrpc: "2.0", id: rpc.id, result }));
+        .end(JSON.stringify({ id: rpc.id, jsonrpc: "2.0", result }));
     } catch {
       response.writeHead(400).end();
     }
@@ -91,7 +101,7 @@ async function localMcpServer(
   if (!address || typeof address === "string") {
     throw new Error("Missing local MCP address");
   }
-  return { server, address };
+  return { address, server };
 }
 
 test("composer connector controls persist and fence native tool execution", async ({
@@ -100,7 +110,7 @@ test("composer connector controls persist and fence native tool execution", asyn
   let calls = 0;
   const { server, address } = await localMcpServer(() => {
     calls += 1;
-    return { content: [{ type: "text", text: "connector fixture" }] };
+    return { content: [{ text: "connector fixture", type: "text" }] };
   });
   const id = crypto.randomUUID();
   const nameId = `test_${id.slice(0, 8)}`;
@@ -113,18 +123,18 @@ test("composer connector controls persist and fence native tool execution", asyn
       .object({ user: z.object({ id: z.string() }) })
       .parse(await (await page.request.get("/api/auth/get-session")).json());
     await db.insert(mcpConnector).values({
+      enabled: true,
       id,
-      userId: owner.id,
       name: "Local connector fixture",
       nameId,
-      url: `http://127.0.0.1:${address.port}/mcp`,
       type: "http",
-      enabled: true,
+      url: `http://127.0.0.1:${address.port}/mcp`,
+      userId: owner.id,
     });
     await page.goto("/");
     const control = page.getByRole("button", {
-      name: "Connectors",
       exact: true,
+      name: "Connectors",
     });
     const toggle = page.getByRole("switch", {
       name: "Enable Local connector fixture",
@@ -136,10 +146,10 @@ test("composer connector controls persist and fence native tool execution", asyn
     );
     await expect(control).toBeVisible();
     await page
-      .getByRole("group", { name: "Message composer", exact: true })
+      .getByRole("group", { exact: true, name: "Message composer" })
       .screenshot({
-        path: testInfo.outputPath("connectors-enabled.png"),
         animations: "disabled",
+        path: testInfo.outputPath("connectors-enabled.png"),
       });
     await control.click();
     await expect(toggle).toBeChecked();
@@ -163,33 +173,33 @@ test("composer connector controls persist and fence native tool execution", asyn
         "read_token",
         {},
         {
+          abortSignal: AbortSignal.timeout(10_000),
+          callId: "stale-tool-selection",
           session: {
-            id: "connector-ui-fixture",
-            turn: { id: "turn_0", sequence: 0 },
             auth: {
               current: null,
               initiator: {
+                attributes: {},
+                authenticator: "fixture",
                 principalId: owner.id,
                 principalType: "user",
-                authenticator: "fixture",
-                attributes: {},
               },
             },
+            id: "connector-ui-fixture",
+            turn: { id: "turn_0", sequence: 0 },
           },
-          callId: "stale-tool-selection",
-          abortSignal: AbortSignal.timeout(10_000),
         },
         []
       )
     ).rejects.toThrow("MCP connector is unavailable");
     expect(calls).toBe(0);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ height: 844, width: 390 });
     await page.reload();
     await control.click();
     await expect(toggle).not.toBeChecked();
     await page.getByRole("menu").screenshot({
-      path: testInfo.outputPath("connectors-disabled-mobile.png"),
       animations: "disabled",
+      path: testInfo.outputPath("connectors-disabled-mobile.png"),
     });
     await toggle.click();
     await expect
@@ -219,7 +229,7 @@ test("native MCP executes and its saved result survives connector removal and re
   let calls = 0;
   const { server, address } = await localMcpServer(() => {
     calls += 1;
-    return { content: [{ type: "text", text: token }] };
+    return { content: [{ text: token, type: "text" }] };
   });
   const connectorId = crypto.randomUUID();
   const nameId = `test_${connectorId.slice(0, 8)}`;
@@ -233,27 +243,27 @@ test("native MCP executes and its saved result survives connector removal and re
       .parse(await (await page.request.get("/api/auth/get-session")).json());
     await db
       .insert(userCredit)
-      .values({ userId: session.user.id, credits: 1000 })
+      .values({ credits: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        target: userCredit.userId,
         set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({
+      enabled: true,
       id: connectorId,
-      userId: session.user.id,
       name: "Local MCP acceptance",
       nameId,
-      url: `http://127.0.0.1:${address.port}/mcp`,
       type: "http",
-      enabled: true,
+      url: `http://127.0.0.1:${address.port}/mcp`,
+      userId: session.user.id,
     });
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-4.1-mini-fast",
         message: `Call ${nameId}__read_token exactly once and repeat its returned token verbatim. Do not call other tools.`,
+        modelId: "openai/gpt-4.1-mini-fast",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
@@ -262,14 +272,14 @@ test("native MCP executes and its saved result survives connector removal and re
       timeout: 90_000,
     });
     await expect(
-      page.getByRole("button", { name: "read_token Completed", exact: true })
+      page.getByRole("button", { exact: true, name: "read_token Completed" })
     ).toBeVisible();
     await expect(
       page.locator(".is-assistant p").filter({ hasText: token })
     ).toBeVisible();
     expect(calls).toBe(1);
     await page
-      .getByRole("button", { name: "read_token Completed", exact: true })
+      .getByRole("button", { exact: true, name: "read_token Completed" })
       .click();
     await expect(
       page.locator("pre:visible").filter({ hasText: token })
@@ -277,16 +287,16 @@ test("native MCP executes and its saved result survives connector removal and re
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     await page.reload();
     await page
-      .getByRole("button", { name: "read_token Completed", exact: true })
+      .getByRole("button", { exact: true, name: "read_token Completed" })
       .click();
     await expect(
       page.locator("pre:visible").filter({ hasText: token })
     ).toBeVisible();
     expect(calls).toBe(1);
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-native-mcp.png",
-      fullPage: true,
       animations: "disabled",
+      fullPage: true,
+      path: "tests/eve-results/screenshots/eve-native-mcp.png",
     });
     const shared = await page.request.post("/api/trpc/eve.setVisibility", {
       data: { json: { id: binding.id, visibility: "public" } },
@@ -312,7 +322,7 @@ test("native MCP executes and its saved result survives connector removal and re
         `${new URL(page.url()).origin}/share/${binding.id}`
       );
       await publicPage
-        .getByRole("button", { name: "read_token Completed", exact: true })
+        .getByRole("button", { exact: true, name: "read_token Completed" })
         .click();
       await expect(
         publicPage.locator("pre:visible").filter({ hasText: token })
@@ -349,7 +359,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
     response.on("close", () => {
       disconnected = !response.writableEnded;
       completion.resolve({
-        content: [{ type: "text", text: "cancelled-fixture" }],
+        content: [{ text: "cancelled-fixture", type: "text" }],
       });
     });
     return completion.promise;
@@ -366,27 +376,27 @@ test("stopping a pending MCP call closes its transport and permits another messa
       .parse(await (await page.request.get("/api/auth/get-session")).json());
     await db
       .insert(userCredit)
-      .values({ userId: session.user.id, credits: 1000 })
+      .values({ credits: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        target: userCredit.userId,
         set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({
+      enabled: true,
       id: connectorId,
-      userId: session.user.id,
       name: "Local MCP cancellation",
       nameId,
-      url: `http://127.0.0.1:${address.port}/mcp`,
       type: "http",
-      enabled: true,
+      url: `http://127.0.0.1:${address.port}/mcp`,
+      userId: session.user.id,
     });
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-4.1-mini-fast",
         message: `Call ${nameId}__read_token exactly once and await its result. Do not call other tools.`,
+        modelId: "openai/gpt-4.1-mini-fast",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
@@ -395,18 +405,18 @@ test("stopping a pending MCP call closes its transport and permits another messa
     const cancelled = page.waitForResponse((response) =>
       new URL(response.url()).pathname.endsWith("/cancel")
     );
-    await page.getByRole("button", { name: "Stop", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Stop" }).click();
     const cancellation = await cancelled;
     expect(cancellation.request().postDataJSON()).toEqual({});
     expect(cancellation.ok(), await cancellation.text()).toBe(true);
     await expect.poll(() => disconnected, { timeout: 20_000 }).toBe(true);
     await expect(
-      page.getByRole("button", { name: "Stop", exact: true })
+      page.getByRole("button", { exact: true, name: "Stop" })
     ).toHaveCount(0);
     const token = `RECOVERED_${crypto.randomUUID()}`;
     const composer = page.getByRole("textbox", {
-      name: "Message",
       exact: true,
+      name: "Message",
     });
     await composer.fill(`Do not call tools. Reply exactly ${token}.`);
     await composer.press("Enter");
@@ -421,7 +431,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
     expect(calls).toBe(1);
   } finally {
     completion.resolve({
-      content: [{ type: "text", text: "fixture-cleanup" }],
+      content: [{ text: "fixture-cleanup", type: "text" }],
     });
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
@@ -432,7 +442,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
 });
 
 test("the real MCP client aborts an in-flight HTTP tool request", async () => {
-  const started = Promise.withResolvers<void>();
+  const started = Promise.withResolvers<undefined>();
   const finished = Promise.withResolvers<unknown>();
   let disconnected = false;
   const { server, address } = await localMcpServer((response) => {
@@ -440,27 +450,27 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
       disconnected = !response.writableEnded;
       finished.resolve({ content: [] });
     });
-    started.resolve();
+    started.resolve(undefined);
     return finished.promise;
   });
   const connectorId = crypto.randomUUID();
   await db.insert(mcpConnector).values({
+    enabled: false,
     id: connectorId,
-    userId: null,
     name: "Direct MCP cancellation fixture",
     nameId: `test_${connectorId.slice(0, 8)}`,
-    url: `http://127.0.0.1:${address.port}/mcp`,
     type: "http",
-    enabled: false,
+    url: `http://127.0.0.1:${address.port}/mcp`,
+    userId: null,
   });
   const client = new MCPClient(connectorId, "Local fixture", {
-    url: `http://127.0.0.1:${address.port}/mcp`,
     type: "http",
+    url: `http://127.0.0.1:${address.port}/mcp`,
   });
   try {
     await client.connect();
     const tools = await client.tools();
-    const execute = tools.read_token.execute;
+    const { execute } = tools.read_token;
     if (!execute) {
       throw new Error("Missing fixture executor");
     }
@@ -468,10 +478,10 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     const result = execute(
       {},
       {
-        toolCallId: "isolated",
-        messages: [],
-        context: {},
         abortSignal: controller.signal,
+        context: {},
+        messages: [],
+        toolCallId: "isolated",
       }
     );
     const rejected = expect(Promise.resolve(result)).rejects.toThrow();

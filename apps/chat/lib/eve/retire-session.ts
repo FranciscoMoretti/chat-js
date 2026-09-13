@@ -10,18 +10,18 @@ import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 
 /** Retirement and cost settlement precede erasure; this never marks deletion complete. */
-export async function retireEveSessionForDeletion(
+export const retireEveSessionForDeletion = async (
   ownerId: string,
   sessionId: string
-) {
+) => {
   assertEveConfigured();
   if (!(await getDeletingEveConversationForSession(ownerId, sessionId))) {
     throw new Error("Conversation is not pending deletion.");
   }
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": ownerId, "x-chatjs-deletion": "1" },
+    headers: { "x-chatjs-deletion": "1", "x-chatjs-owner": ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const session = client.sessions.attach(sessionId);
   await session.reset({
@@ -41,6 +41,7 @@ export async function retireEveSessionForDeletion(
   }
   let unresolved = false;
   for (const event of snapshot.events) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
     if ((await ingestEveUsage(ownerId, sessionId, event)) === false) {
       unresolved = true;
     }
@@ -51,13 +52,13 @@ export async function retireEveSessionForDeletion(
     );
   }
   return snapshot;
-}
+};
 
 /** Revoke family access and settle every bound member before resource erasure starts. */
-export async function retireEveFamilyForDeletion(
+export const retireEveFamilyForDeletion = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   assertEveConfigured();
   const databaseUrl = env.WORKFLOW_POSTGRES_URL;
   if (!databaseUrl) {
@@ -65,7 +66,7 @@ export async function retireEveFamilyForDeletion(
   }
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {
-    return undefined;
+    return;
   }
   const sessionIds = family.conversations.map((conversation) => {
     if (!conversation.sessionId) {
@@ -77,4 +78,4 @@ export async function retireEveFamilyForDeletion(
     await retireEveSessionForDeletion(ownerId, sessionId);
   });
   return family;
-}
+};

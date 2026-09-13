@@ -8,16 +8,16 @@ import { useTRPC } from "@/trpc/react";
 
 const draftSchema = z.object({
   baseRevisionId: z.uuid(),
-  title: z.string(),
   content: z.string(),
   operationId: z.uuid(),
   submittedContent: z.string().optional(),
+  title: z.string(),
 });
 type Draft = z.infer<typeof draftSchema>;
 type Revision = { id: string; title: string; content: string };
 
 /** One immutable request at a time; newer edits remain queued behind it. */
-export function useDocumentDraft({
+export const useDocumentDraft = ({
   conversationId,
   documentId,
   enabled,
@@ -31,15 +31,15 @@ export function useDocumentDraft({
   revision: Revision | undefined;
   onSaved: (revisionId: string) => Promise<void>;
   onRestore: (revisionId: string) => void;
-}) {
+}) => {
   const trpc = useTRPC();
   const { mutateAsync, isPending } = useMutation(
     trpc.eve.saveDocument.mutationOptions()
   );
   const [draft, setDraft] = useState<Draft>();
-  const latest = useRef<Draft>(undefined);
+  const latest = useRef<Draft | undefined>(undefined);
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string>();
+  const [failure, setFailure] = useState<string>();
   const [storageError, setStorageError] = useState(false);
   const busy = useRef(false);
   const active = useRef(true);
@@ -78,6 +78,7 @@ export function useDocumentDraft({
       if (stored) {
         const restored = draftSchema.parse(JSON.parse(stored));
         latest.current = restored;
+        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the controlled editor from browser storage.
         setDraft(restored);
         onRestore(restored.baseRevisionId);
       }
@@ -92,7 +93,7 @@ export function useDocumentDraft({
       if (!(enabled && ready && revision)) {
         return;
       }
-      const current = latest.current;
+      const { current } = latest;
       if (current?.content === content) {
         return;
       }
@@ -104,9 +105,9 @@ export function useDocumentDraft({
           ? { ...current, content }
           : {
               baseRevisionId: revision.id,
-              title: revision.title,
               content,
               operationId: crypto.randomUUID(),
+              title: revision.title,
             }
       );
     },
@@ -114,25 +115,26 @@ export function useDocumentDraft({
   );
 
   const save = useCallback(async () => {
-    const current = latest.current;
+    const { current } = latest;
     if (!(enabled && ready && current) || busy.current) {
       return;
     }
     busy.current = true;
-    setError(undefined);
+    setFailure(undefined);
     const submitted = {
       ...current,
       submittedContent: current.submittedContent ?? current.content,
     };
     update(submitted);
+    /* oxlint-disable react/todo -- Preserve save lock cleanup in finally. */
     try {
       const saved = await mutateAsync({
+        content: submitted.submittedContent,
         conversationId,
         documentId,
         expectedRevisionId: submitted.baseRevisionId,
         operationId: submitted.operationId,
         title: submitted.title,
-        content: submitted.submittedContent,
       });
       if (!active.current) {
         return;
@@ -146,19 +148,21 @@ export function useDocumentDraft({
         newest && newest.content !== submitted.submittedContent
           ? {
               baseRevisionId: saved.id,
-              title: saved.title,
               content: newest.content,
               operationId: crypto.randomUUID(),
+              title: saved.title,
             }
           : undefined
       );
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Document could not be saved."
+    } catch (error) {
+      setFailure(
+        error instanceof Error ? error.message : "Document could not be saved."
       );
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required save lock cleanup in finally.
     } finally {
       busy.current = false;
     }
+    /* oxlint-enable react/todo */
   }, [
     enabled,
     ready,
@@ -170,26 +174,26 @@ export function useDocumentDraft({
   ]);
 
   useEffect(() => {
-    if (!(enabled && ready && draft) || error || isPending) {
+    if (!(enabled && ready && draft) || failure || isPending) {
       return;
     }
     const timer = setTimeout(() => save(), 2000);
     return () => clearTimeout(timer);
-  }, [enabled, ready, draft, error, isPending, save]);
+  }, [enabled, ready, draft, failure, isPending, save]);
 
   return {
-    draft,
-    ready,
-    edit,
-    error,
-    storageError,
-    saving: isPending,
-    retry: () => save(),
     discard: () => {
       if (!busy.current) {
         update(undefined);
-        setError(undefined);
+        setFailure(undefined);
       }
     },
+    draft,
+    edit,
+    error: failure,
+    ready,
+    retry: () => save(),
+    saving: isPending,
+    storageError,
   };
-}
+};

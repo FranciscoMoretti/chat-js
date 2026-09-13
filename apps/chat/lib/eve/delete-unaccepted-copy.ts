@@ -7,13 +7,12 @@ import { purgeEveFamilyDocuments } from "../db/eve-documents";
 import { purgeEveFamilyFiles } from "./purge-files";
 
 /** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path. */
-export async function deleteUnacceptedEveCopy(
+export const deleteUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
-) {
-  if (
-    (await getEveDeletionState(ownerId, conversationId))?.state === "deleted"
-  ) {
+) => {
+  const resolvedResult1 = await getEveDeletionState(ownerId, conversationId);
+  if (resolvedResult1?.state === "deleted") {
     return;
   }
   try {
@@ -23,10 +22,9 @@ export async function deleteUnacceptedEveCopy(
     await completeEveConversationDeletion(ownerId, conversationId);
   } catch (error) {
     // A concurrent cleanup may have completed while this caller waited on the family lock.
-    if (
-      (await getEveDeletionState(ownerId, conversationId))?.state !== "deleted"
-    ) {
+    const resolvedResult2 = await getEveDeletionState(ownerId, conversationId);
+    if (resolvedResult2?.state !== "deleted") {
       throw error;
     }
   }
-}
+};

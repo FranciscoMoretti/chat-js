@@ -1,64 +1,63 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- The fixture preserves the production-compatible role markup used by its visual contract. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import {
-  type EveResponseCardCandidate,
-  EveResponseGroupCards,
-} from "../components/eve/eve-response-group-cards";
+import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
+import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 
 const candidates: EveResponseCardCandidate[] = [
-  { operationId: "ready", modelName: "GPT-5", state: "bound", status: "ready" },
+  { modelName: "GPT-5", operationId: "ready", state: "bound", status: "ready" },
   {
-    operationId: "streaming",
     modelName: "Claude Sonnet 4.5",
+    operationId: "streaming",
     state: "bound",
     status: "streaming",
   },
   {
-    operationId: "submitted",
     modelName: "Gemini 2.5 Pro",
+    operationId: "submitted",
     state: "bound",
     status: "submitted",
   },
   {
-    operationId: "resuming",
     modelName: "Grok",
+    operationId: "resuming",
     state: "bound",
     status: "resuming",
   },
-  { operationId: "unknown", modelName: "Unknown status", state: "bound" },
+  { modelName: "Unknown status", operationId: "unknown", state: "bound" },
   {
-    operationId: "unresolved",
     modelName: "Retry candidate",
+    operationId: "unresolved",
     state: "unresolved",
   },
-  { operationId: "waiting", modelName: "Waiting candidate", state: "waiting" },
+  { modelName: "Waiting candidate", operationId: "waiting", state: "waiting" },
   {
-    operationId: "rejected",
     modelName: "Rejected candidate",
+    operationId: "rejected",
     state: "rejected",
   },
   {
-    operationId: "error",
     modelName: "Failed response",
+    operationId: "error",
     state: "bound",
     status: "error",
   },
   {
-    operationId: "disabled",
-    modelName: "Disabled candidate",
-    state: "waiting",
     disabled: true,
+    modelName: "Disabled candidate",
+    operationId: "disabled",
+    state: "waiting",
   },
   {
-    operationId: "approval",
     modelName: "Approval candidate",
+    operationId: "approval",
     state: "bound",
     status: "awaiting-input",
   },
 ];
-function Fixture() {
+const Fixture = () => {
   const [selected, setSelected] = useState<string | null>("ready");
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
@@ -68,20 +67,20 @@ function Fixture() {
         <ResponseChoiceCards
           slots={[
             {
+              handleSelect: () => setSelected("legacy1"),
               id: "legacy1",
+              loading: false,
               modelName: "GPT-5",
               selected: true,
-              loading: false,
               statusLabel: "Selected",
-              onSelect: () => setSelected("legacy1"),
             },
             {
+              handleSelect: () => setSelected("legacy2"),
               id: "legacy2",
+              loading: true,
               modelName: "Claude Sonnet 4.5",
               selected: false,
-              loading: true,
               statusLabel: "Generating...",
-              onSelect: () => setSelected("legacy2"),
             },
           ]}
         />
@@ -107,8 +106,8 @@ function Fixture() {
       </section>
     </main>
   );
-}
-const root = document.getElementById("root");
+};
+const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }

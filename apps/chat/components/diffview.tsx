@@ -4,22 +4,16 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { diffWords } from "diff";
-import {
-  $createParagraphNode,
-  $getRoot,
-  type EditorConfig,
-  type LexicalEditor,
-  type SerializedTextNode,
-  TextNode,
-} from "lexical";
+import { $createParagraphNode, $getRoot, TextNode } from "lexical";
+import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import { useEffect } from "react";
 
 import { createEditorConfig } from "@/lib/editor/config";
 
 const DiffType = {
-  Unchanged: 0,
   Deleted: -1,
   Inserted: 1,
+  Unchanged: 0,
 };
 
 // Define diff types
@@ -78,16 +72,19 @@ class DiffTextNode extends TextNode {
     if (diffType) {
       let className = "";
       switch (diffType) {
-        case DiffType.Inserted:
+        case DiffType.Inserted: {
           className =
             "bg-green-100 text-green-700 dark:bg-green-500/70 dark:text-green-300";
           break;
-        case DiffType.Deleted:
+        }
+        case DiffType.Deleted: {
           className =
             "bg-red-100 line-through text-red-600 dark:bg-red-500/70 dark:text-red-300";
           break;
-        default:
+        }
+        default: {
           className = "";
+        }
       }
       element.className = className;
     }
@@ -105,7 +102,8 @@ class DiffTextNode extends TextNode {
 
     if (prevDiffType !== currentDiffType) {
       // Update classes if diff type changed
-      return true; // Recreate the span when its diff styling changes.
+      // Recreate the span when its diff styling changes.
+      return true;
     }
 
     return super.updateDOM(prevNode as this, dom, config);
@@ -113,7 +111,7 @@ class DiffTextNode extends TextNode {
 }
 
 // Proper diff computation using the diff library
-function computeProperDiff(oldText: string, newText: string) {
+const computeProperDiff = (oldText: string, newText: string) => {
   const changes = diffWords(oldText, newText);
 
   return changes.map((change) => {
@@ -131,15 +129,15 @@ function computeProperDiff(oldText: string, newText: string) {
       type,
     };
   });
-}
+};
 
-function DiffContentPlugin({
+const DiffContentPlugin = ({
   oldContent,
   newContent,
 }: {
   oldContent: string;
   newContent: string;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -169,7 +167,7 @@ function DiffContentPlugin({
   }, [oldContent, newContent, editor]);
 
   return null;
-}
+};
 
 interface DiffEditorProps {
   newContent: string;
@@ -179,8 +177,8 @@ interface DiffEditorProps {
 export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
   const initialConfig = {
     ...createEditorConfig(),
-    nodes: [DiffTextNode],
     editable: false,
+    nodes: [DiffTextNode],
   };
 
   return (

@@ -4,7 +4,7 @@ import type { StateCreator } from "zustand";
 
 type AnyFn = (...args: unknown[]) => unknown;
 
-function safeStringifyArgs(args: unknown[]) {
+const safeStringifyArgs = (args: unknown[]) => {
   try {
     return args.map((a) => {
       if (typeof a === "string") {
@@ -12,10 +12,10 @@ function safeStringifyArgs(args: unknown[]) {
       }
       return JSON.stringify(a);
     });
-  } catch (_err) {
+  } catch {
     return ["<unstringifiable args>"];
   }
-}
+};
 
 /**
  * Middleware that wraps all function fields on the store state and logs a stack
@@ -58,7 +58,7 @@ export const withTracing =
 
         try {
           groupCollapsed?.(header);
-          const stack = new Error("stack").stack;
+          const { stack } = new Error("stack");
           if (stack) {
             // Avoid printing "Error: ..." so it doesn't look like an exception in the console.
             const lines = stack.split("\n");

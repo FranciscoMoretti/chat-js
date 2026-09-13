@@ -1,17 +1,19 @@
 import { NextRequest } from "next/server";
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { GET } from "./route";
+
 const mocks = vi.hoisted(() => ({
-  env: {
-    CRON_SECRET: "fixture-secret" as string | undefined,
-    WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
-    EVE_ENABLED: "false",
-  },
-  references: vi.fn(),
-  list: vi.fn(),
-  remove: vi.fn(),
   cleanupEve: vi.fn(),
   cleanupGuests: vi.fn(),
+  env: {
+    CRON_SECRET: "fixture-secret" as string | undefined,
+    EVE_ENABLED: "false",
+    WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
+  },
+  list: vi.fn(),
+  references: vi.fn(),
+  remove: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
   env: mocks.env,
@@ -34,8 +36,6 @@ vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
 vi.mock("@/lib/eve/cleanup-expired-guests", () => ({
   cleanupExpiredEveGuests: mocks.cleanupGuests,
 }));
-
-import { GET } from "./route";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -110,16 +110,16 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
   expect(response.status).toBe(503);
   expect(mocks.cleanupGuests).toHaveBeenCalledWith(process.cwd());
   expect(await response.json()).toMatchObject({
-    success: false,
     results: { expiredGuests: { pendingCount: 0 } },
+    success: false,
   });
 });
 
 test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
   mocks.cleanupGuests.mockResolvedValueOnce({
-    skipped: false,
     deletedCount: 1,
     pendingCount: 1,
+    skipped: false,
   });
   const response = await GET(
     new NextRequest("http://localhost/api/cron/cleanup", {

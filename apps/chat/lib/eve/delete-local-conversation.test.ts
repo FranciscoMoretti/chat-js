@@ -3,9 +3,9 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 
 const mocks = vi.hoisted(() => ({
-  resources: vi.fn(),
-  native: vi.fn(),
   complete: vi.fn(),
+  native: vi.fn(),
+  resources: vi.fn(),
   retire: vi.fn(),
 }));
 vi.mock("../env", () => ({
@@ -24,11 +24,11 @@ vi.mock("./retire-session", () => ({
   retireEveSessionForDeletion: mocks.retire,
 }));
 const family = {
-  rootId: "root",
   conversations: [
     { id: "root", sessionId: "session-root" },
     { id: "branch", sessionId: "session-branch" },
   ],
+  rootId: "root",
 };
 beforeEach(() => {
   vi.resetAllMocks();
@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 test("all resources and native family payloads finish before the application tombstone", async () => {
-  const gate = Promise.withResolvers<void>();
+  const gate = Promise.withResolvers<undefined>();
   mocks.native.mockImplementationOnce(async (_url, _scope, retire) => {
     await retire();
   });
@@ -60,7 +60,7 @@ test("all resources and native family payloads finish before the application tom
     "session-branch",
   ]);
   expect(mocks.complete).not.toHaveBeenCalled();
-  gate.resolve();
+  gate.resolve(undefined);
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
 });
@@ -104,7 +104,7 @@ test("foreign or missing families cannot erase native or application data", asyn
 });
 
 test("an already deleted family is idempotent without resetting native sessions", async () => {
-  mocks.resources.mockResolvedValue({ rootId: "root", conversations: [] });
+  mocks.resources.mockResolvedValue({ conversations: [], rootId: "root" });
   expect(
     await deleteLocalEveConversationFamily("owner", "root", "/app")
   ).toEqual({ rootId: "root" });

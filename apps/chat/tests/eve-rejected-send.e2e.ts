@@ -16,12 +16,12 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini-fast",
       message: "Reply only with ready.",
+      modelId: "openai/gpt-4.1-mini-fast",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = conversationBinding.parse(await created.json());
@@ -38,7 +38,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     .from(userCredit)
     .where(eq(userCredit.userId, conversation.ownerId));
   expect(balance).toBeDefined();
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   const unsent = "Reply only with recovered-message-73.";
   try {
     await db
@@ -51,7 +51,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
         response.request().method() === "POST" &&
         response.url().includes(`/api/eve/v1/session/${binding.sessionId}`)
     );
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     const response = await rejected;
     expect(response.status()).toBe(402);
     expect(await response.json()).toMatchObject({
@@ -64,12 +64,12 @@ test("rejected send survives reload as an unsent draft and can be restored and s
       page.getByText("Message delivery is unconfirmed.", { exact: false })
     ).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: "Reconnect", exact: true })
+      page.getByRole("button", { exact: true, name: "Reconnect" })
     ).toHaveCount(0);
     await expect(page.getByRole("log")).not.toContainText(unsent);
     await page.screenshot({
-      path: testInfo.outputPath("rejected-send.png"),
       animations: "disabled",
+      path: testInfo.outputPath("rejected-send.png"),
       style: "nextjs-portal { display: none !important; }",
     });
     await page.reload();
@@ -78,14 +78,14 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     ).toBeVisible();
     await expect(page.getByRole("log")).not.toContainText(unsent);
     await expect(
-      page.getByRole("button", { name: "Reconnect", exact: true })
+      page.getByRole("button", { exact: true, name: "Reconnect" })
     ).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Restore draft", exact: true })
+      .getByRole("button", { exact: true, name: "Restore draft" })
       .click();
     await expect(composer).toHaveText(unsent);
     await expect(
-      page.getByRole("button", { name: "Send", exact: true })
+      page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();
   } finally {
     await db
@@ -93,7 +93,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
       .set({ credits: balance.credits })
       .where(eq(userCredit.userId, conversation.ownerId));
   }
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page.getByRole("log")).toContainText("recovered-message-73", {
     timeout: 90_000,
   });
@@ -104,7 +104,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.getByRole("log").getByText(unsent, { exact: true })
   ).toHaveCount(1);
   await expect(
-    page.getByRole("button", { name: "Restore draft", exact: true })
+    page.getByRole("button", { exact: true, name: "Restore draft" })
   ).toHaveCount(0);
 
   // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
@@ -114,22 +114,22 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   ).href;
   await page.route(commandUrl, (route) =>
     route.fulfill({
-      status: 400,
-      contentType: "application/json",
       body: JSON.stringify({ error: "Upstream response failed" }),
+      contentType: "application/json",
+      status: 400,
     })
   );
   await composer.fill("Retain ambiguous delivery");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByText("Message delivery is unconfirmed.", { exact: false })
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Reconnect", exact: true })
+    page.getByRole("button", { exact: true, name: "Reconnect" })
   ).toBeVisible();
   await page.screenshot({
-    path: testInfo.outputPath("uncertain-send.png"),
     animations: "disabled",
+    path: testInfo.outputPath("uncertain-send.png"),
     style: "nextjs-portal { display: none !important; }",
   });
 

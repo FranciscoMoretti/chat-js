@@ -1,8 +1,10 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
 export default defineAgent({
-  modelContextWindowTokens: 128_000,
   experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
     if (lastUserMessage?.startsWith("slow")) {
@@ -42,4 +44,5 @@ export default defineAgent({
     }
     return `Verified: ${lastUserMessage}`;
   }),
+  modelContextWindowTokens: 128_000,
 });

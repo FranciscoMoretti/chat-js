@@ -4,6 +4,8 @@ import type { ModelMessage } from "ai";
 import { FilesError } from "files-sdk";
 import { afterEach, describe, it, vi } from "vitest";
 
+import { replaceFilePartUrlByBinaryDataInMessages } from "./download-assets";
+
 const { downloadFile } = vi.hoisted(() => ({
   downloadFile: vi.fn(),
 }));
@@ -14,35 +16,33 @@ vi.mock("@/lib/url", () => ({
 
 vi.mock("@/lib/file-storage", () => ({ downloadFile }));
 
-import { replaceFilePartUrlByBinaryDataInMessages } from "./download-assets";
-
 describe("replaceFilePartUrlByBinaryDataInMessages", () => {
   it("preserves SDK 7 inline data and provider references without downloading", async () => {
     const messages: ModelMessage[] = [
       {
-        role: "user",
         content: [
           {
-            type: "file",
-            mediaType: "application/pdf",
             data: { openai: "file-123" },
-          },
-          {
-            type: "file",
             mediaType: "application/pdf",
-            data: { type: "reference", reference: { openai: "file-456" } },
+            type: "file",
           },
           {
+            data: { reference: { openai: "file-456" }, type: "reference" },
+            mediaType: "application/pdf",
             type: "file",
+          },
+          {
+            data: { text: "document", type: "text" },
             mediaType: "text/plain",
-            data: { type: "text", text: "document" },
+            type: "file",
           },
           {
-            type: "file",
+            data: { data: new Uint8Array([1, 2]), type: "data" },
             mediaType: "application/pdf",
-            data: { type: "data", data: new Uint8Array([1, 2]) },
+            type: "file",
           },
         ],
+        role: "user",
       },
     ];
     const download = vi.fn();
@@ -62,14 +62,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     const result = await replaceFilePartUrlByBinaryDataInMessages(
       [
         {
-          role: "user",
           content: [
             {
-              type: "file",
-              mediaType: "application/pdf",
               data: { type: "url", url },
+              mediaType: "application/pdf",
+              type: "file",
             },
           ],
+          role: "user",
         },
       ],
       download
@@ -77,14 +77,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     assert.deepEqual(download.mock.calls, [[{ url }]]);
     assert.deepEqual(result, [
       {
-        role: "user",
         content: [
           {
-            type: "file",
-            mediaType: "application/pdf",
             data: new Uint8Array([7]),
+            mediaType: "application/pdf",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
   });
@@ -104,14 +104,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
 
@@ -119,11 +119,11 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       ["l_u0a2bkphKLFKsBI4q5Tue9.png"],
     ]);
     assert.equal(fetchImplementation.mock.calls.length, 0);
-    const message = result[0];
-    assert(message && Array.isArray(message.content));
-    const file = message.content[0];
-    assert(file?.type === "file");
-    assert(file.data instanceof Uint8Array);
+    const [message] = result;
+    assert.ok(message && Array.isArray(message.content));
+    const [file] = message.content;
+    assert.ok(file?.type === "file");
+    assert.ok(file.data instanceof Uint8Array);
     assert.deepEqual([...file.data], [1, 2, 3]);
   });
 
@@ -134,22 +134,22 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
-          { type: "text", text: "Describe the earlier context" },
+          { text: "Describe the earlier context", type: "text" },
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
 
     assert.deepEqual(result, [
       {
+        content: [{ text: "Describe the earlier context", type: "text" }],
         role: "user",
-        content: [{ type: "text", text: "Describe the earlier context" }],
       },
     ]);
   });
@@ -162,22 +162,22 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
-          { type: "text", text: "Continue this conversation" },
+          { text: "Continue this conversation", type: "text" },
           {
-            type: "file",
             data: "https://legacy.public.blob.vercel-storage.com/missing.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
 
     assert.deepEqual(result, [
       {
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
-        content: [{ type: "text", text: "Continue this conversation" }],
       },
     ]);
   });
@@ -189,14 +189,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
 
@@ -210,29 +210,29 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
-      },
-      {
-        role: "assistant",
-        content: [{ type: "text", text: "Earlier response" }],
-      },
-      {
         role: "user",
-        content: [{ type: "text", text: "Continue this conversation" }],
+      },
+      {
+        content: [{ text: "Earlier response", type: "text" }],
+        role: "assistant",
+      },
+      {
+        content: [{ text: "Continue this conversation", type: "text" }],
+        role: "user",
       },
     ]);
 
     assert.deepEqual(result, [
       {
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
-        content: [{ type: "text", text: "Continue this conversation" }],
       },
     ]);
   });
@@ -245,23 +245,23 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     const result = await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
-          { type: "text", text: "Continue this conversation" },
+          { text: "Continue this conversation", type: "text" },
           {
-            type: "image",
             image: new URL(
               "https://legacy.public.blob.vercel-storage.com/missing.png"
             ),
+            type: "image",
           },
         ],
+        role: "user",
       },
     ]);
 
     assert.deepEqual(result, [
       {
+        content: [{ text: "Continue this conversation", type: "text" }],
         role: "user",
-        content: [{ type: "text", text: "Continue this conversation" }],
       },
     ]);
   });
@@ -276,14 +276,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     await assert.rejects(
       replaceFilePartUrlByBinaryDataInMessages([
         {
-          role: "user",
           content: [
             {
-              type: "file",
               data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
               mediaType: "image/png",
+              type: "file",
             },
           ],
+          role: "user",
         },
       ]),
       providerError
@@ -299,14 +299,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     await assert.rejects(
       replaceFilePartUrlByBinaryDataInMessages([
         {
-          role: "user",
           content: [
             {
-              type: "file",
               data: "https://files.example/unavailable.png",
               mediaType: "image/png",
+              type: "file",
             },
           ],
+          role: "user",
         },
       ]),
       new Error(
@@ -327,14 +327,14 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     await replaceFilePartUrlByBinaryDataInMessages([
       {
-        role: "user",
         content: [
           {
-            type: "file",
             data: "https://files.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ]);
 
@@ -351,19 +351,19 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
   it("resolves stable application file paths against the current app URL", async () => {
     const messages: ModelMessage[] = [
       {
-        role: "user",
         content: [
           {
-            type: "file",
             data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
+            type: "file",
           },
           {
-            type: "file",
             data: "aGVsbG8=",
             mediaType: "text/plain",
+            type: "file",
           },
         ],
+        role: "user",
       },
     ];
     let downloadedUrl: URL | undefined;
@@ -383,14 +383,13 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       downloadedUrl?.toString(),
       "https://chat.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png"
     );
-    const message = result[0];
-    assert(message && Array.isArray(message.content));
-    const file = message.content[0];
-    assert(file?.type === "file");
-    assert(file.data instanceof Uint8Array);
+    const [message] = result;
+    assert.ok(message && Array.isArray(message.content));
+    const [file, inlineFile] = message.content;
+    assert.ok(file?.type === "file");
+    assert.ok(file.data instanceof Uint8Array);
     assert.deepEqual([...file.data], [1, 2, 3]);
-    const inlineFile = message.content[1];
-    assert(inlineFile?.type === "file");
+    assert.ok(inlineFile?.type === "file");
     assert.equal(inlineFile.data, "aGVsbG8=");
   });
 });

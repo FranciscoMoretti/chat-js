@@ -1,7 +1,7 @@
 import { keyFromFileUrl } from "../file-url";
 import type { EveMessageInput } from "./message-input";
 
-export function eveMessageFileKeys(message: EveMessageInput) {
+export const eveMessageFileKeys = (message: EveMessageInput) => {
   if (typeof message === "string") {
     return [];
   }
@@ -15,4 +15,4 @@ export function eveMessageFileKeys(message: EveMessageInput) {
     }
     return [key];
   });
-}
+};

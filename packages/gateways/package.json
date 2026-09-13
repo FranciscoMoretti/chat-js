@@ -67,8 +67,8 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "test:types": "bun run build && tsc --noEmit",
     "test:unit": "vitest run",
-    "lint": "bunx @biomejs/biome@2.4.10 check src package.json tsconfig.json tsconfig.build.json",
-    "format": "bunx @biomejs/biome@2.4.10 check --write src package.json tsconfig.json tsconfig.build.json",
+    "lint": "oxlint . && oxfmt --check .",
+    "format": "oxfmt --write .",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {

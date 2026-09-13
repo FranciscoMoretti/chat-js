@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /** Remote acceptance tests require both an explicit opt-in and an isolated target. */
 export function assertEveTestDatabase(databaseUrl: string) {
   const url = new URL(databaseUrl);

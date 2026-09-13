@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -6,17 +7,16 @@ import { ArtifactProvider } from "../hooks/use-artifact";
 import { createEvePlatformResult } from "../lib/eve/platform-result";
 
 const common = {
-  type: "dynamic-tool",
-  toolName: "deepResearch",
-  toolCallId: "research",
   input: {},
+  toolCallId: "research",
+  toolName: "deepResearch",
+  type: "dynamic-tool",
 } as const;
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, state: "input-streaming", inputText: "" },
+  { ...common, inputText: "", state: "input-streaming" },
   { ...common, state: "input-available" },
   {
     ...common,
-    state: "output-available",
     output: createEvePlatformResult({ searches: [] }, 0, [
       {
         type: "started",
@@ -25,10 +25,10 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
         toolCallId: "research",
       },
     ]),
+    state: "output-available",
   },
   {
     ...common,
-    state: "output-available",
     output: createEvePlatformResult(
       {
         format: "clarifying_questions",
@@ -36,10 +36,10 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0
     ),
+    state: "output-available",
   },
   {
     ...common,
-    state: "output-available",
     output: createEvePlatformResult(
       {
         format: "report",
@@ -52,26 +52,27 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.5
     ),
-  },
-  {
-    ...common,
-    state: "output-error",
-    errorText: "Research provider unavailable",
-  },
-  {
-    ...common,
-    state: "output-denied",
-    approval: { id: "fixture", approved: false },
-  },
-  {
-    ...common,
     state: "output-available",
+  },
+  {
+    ...common,
+    errorText: "Research provider unavailable",
+    state: "output-error",
+  },
+  {
+    ...common,
+    approval: { approved: false, id: "fixture" },
+    state: "output-denied",
+  },
+  {
+    ...common,
     output: createEvePlatformResult(
       { error: "Report could not be saved." },
       0.5
     ),
+    state: "output-available",
   },
-  { ...common, state: "output-available", output: { invalid: true } },
+  { ...common, output: { invalid: true }, state: "output-available" },
 ];
 process.stdout.write(
   renderToStaticMarkup(

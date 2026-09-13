@@ -1,13 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
 it("reports failed endpoint names without exposing connection credentials", () => {
-  const cwd = mkdtempSync(join(tmpdir(), "chatjs-check-db-"));
+  const cwd = mkdtempSync(path.join(tmpdir(), "chatjs-check-db-"));
   try {
     let failed = false;
     try {
@@ -15,15 +15,15 @@ it("reports failed endpoint names without exposing connection credentials", () =
         process.execPath,
         [
           fileURLToPath(import.meta.resolve("tsx/cli")),
-          fileURLToPath(new URL("./check-db.ts", import.meta.url)),
+          fileURLToPath(new URL("check-db.ts", import.meta.url)),
         ],
         {
           cwd,
           env: {
-            NODE_ENV: "test",
-            DATABASE_URL: "postgres://user:secret-runtime@127.0.0.1:1/app",
             DATABASE_MIGRATION_URL:
               "postgres://user:secret-migration@127.0.0.1:1/app",
+            DATABASE_URL: "postgres://user:secret-runtime@127.0.0.1:1/app",
+            NODE_ENV: "test",
           },
           stdio: "pipe",
           timeout: 10_000,
@@ -43,6 +43,6 @@ it("reports failed endpoint names without exposing connection credentials", () =
     }
     expect(failed).toBe(true);
   } finally {
-    rmSync(cwd, { recursive: true, force: true });
+    rmSync(cwd, { force: true, recursive: true });
   }
 });

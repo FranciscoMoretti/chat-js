@@ -38,45 +38,45 @@ export type ParsedChatIdFromPathname =
       projectId: null;
     };
 
-const SHARE_ROUTE_PATTERN = /^\/share\/([^/]+)$/;
-const PROJECT_ROUTE_PATTERN = /^\/project\/([^/]+)(?:\/chat\/([^/]+))?$/;
-const CHAT_ROUTE_PATTERN = /^\/chat\/([^/]+)$/;
+const SHARE_ROUTE_PATTERN = /^\/share\/(?<shareId>[^/]+)$/u;
+const PROJECT_ROUTE_PATTERN =
+  /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
+const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 
 /**
  * Parse a Next.js pathname into the chat route shape.
  * Unknown paths are passthrough routes and must not become draft chats.
  */
-export function parseChatIdFromPathname(
+export const parseChatIdFromPathname = (
   pathname: string | null
-): ParsedChatIdFromPathname {
-  const shareMatch = pathname?.match(SHARE_ROUTE_PATTERN);
-  if (shareMatch) {
+): ParsedChatIdFromPathname => {
+  const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
+  if (shareId) {
     return {
-      type: "share",
-      id: shareMatch[1],
-      source: "share",
+      id: shareId,
       projectId: null,
+      source: "share",
+      type: "share",
     };
   }
 
-  const projectMatch = pathname?.match(PROJECT_ROUTE_PATTERN);
-  if (projectMatch) {
-    const projectId = projectMatch[1];
-    const chatId = projectMatch[2];
+  const projectGroups = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
+  if (projectGroups?.projectId) {
+    const { chatId, projectId } = projectGroups;
     if (chatId) {
-      return { type: "projectChat", id: chatId, source: "project", projectId };
+      return { id: chatId, projectId, source: "project", type: "projectChat" };
     }
-    return { type: "projectHome", id: null, source: "project", projectId };
+    return { id: null, projectId, source: "project", type: "projectHome" };
   }
 
-  const chatMatch = pathname?.match(CHAT_ROUTE_PATTERN);
-  if (chatMatch) {
-    return { type: "chat", id: chatMatch[1], source: "chat", projectId: null };
+  const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.chatId;
+  if (chatId) {
+    return { id: chatId, projectId: null, source: "chat", type: "chat" };
   }
 
   if (pathname === "/") {
-    return { type: "home", id: null, source: "home", projectId: null };
+    return { id: null, projectId: null, source: "home", type: "home" };
   }
 
-  return { type: "passthrough", id: null, source: null, projectId: null };
-}
+  return { id: null, projectId: null, source: null, type: "passthrough" };
+};

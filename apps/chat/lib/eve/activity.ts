@@ -3,11 +3,11 @@ import type { MessageStreamEvent } from "eve/client";
 import { recordEveConversationActivity } from "../db/eve-queries";
 
 /** Project only activity metadata from Eve; replay must never move a chat backwards. */
-export async function ingestEveActivity(
+export const ingestEveActivity = async (
   ownerId: string,
   sessionId: string,
   event: MessageStreamEvent
-) {
+) => {
   if (event.type === "message.received" || event.type === "message.completed") {
     await recordEveConversationActivity(
       ownerId,
@@ -15,4 +15,4 @@ export async function ingestEveActivity(
       new Date(event.meta.at)
     );
   }
-}
+};

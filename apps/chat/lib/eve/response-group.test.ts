@@ -5,27 +5,27 @@ import { eveResponseGroupCandidates } from "./response-group-candidates";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
-  settle: vi.fn(),
   refund: vi.fn(),
   reserve: vi.fn(),
+  settle: vi.fn(),
 }));
 vi.mock("../db/eve-guests", () => ({ releaseEveGuestCreation: mocks.refund }));
 vi.mock("../db/eve-response-groups", () => ({
-  reserveEveResponseGroup: mocks.reserve,
   recordEveResponseGroupRejection: vi.fn(),
+  reserveEveResponseGroup: mocks.reserve,
 }));
 vi.mock("./create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
 vi.mock("./guest-admission", () => ({ settleGuestCreation: mocks.settle }));
 const input = {
-  operationId: crypto.randomUUID(),
-  modelIds: ["cheap", "cheap"],
   message: "hello",
+  modelIds: ["cheap", "cheap"],
+  operationId: crypto.randomUUID(),
 };
 const group = {
-  id: crypto.randomUUID(),
   candidates: eveResponseGroupCandidates(input.operationId, input.modelIds),
+  id: crypto.randomUUID(),
 };
 const admission = {
   group,

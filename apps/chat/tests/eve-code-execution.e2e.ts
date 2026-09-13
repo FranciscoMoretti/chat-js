@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -18,13 +19,13 @@ test("native code execution renders real output and reconciles its fixed charge 
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini",
       message:
         'Use the codeExecution tool exactly once with language javascript, title "JavaScript check", and code "console.log(6 * 7)". Use no other tool. Report its output.',
+      modelId: "openai/gpt-4.1-mini",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z
@@ -32,9 +33,9 @@ test("native code execution renders real output and reconciles its fixed charge 
     .parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
   await expect(
-    page.getByRole("tab", { name: "Output", exact: true })
+    page.getByRole("tab", { exact: true, name: "Output" })
   ).toBeVisible({ timeout: 90_000 });
-  await page.getByRole("tab", { name: "Output", exact: true }).click();
+  await page.getByRole("tab", { exact: true, name: "Output" }).click();
   await expect(page.getByRole("tabpanel")).toContainText("42", {
     timeout: 90_000,
   });
@@ -43,9 +44,9 @@ test("native code execution renders real output and reconciles its fixed charge 
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": conversation.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(binding.sessionId)
@@ -78,11 +79,11 @@ test("native code execution renders real output and reconciles its fixed charge 
     await db.select().from(eveUsage).where(eq(eveUsage.eventId, evidenceId))
   ).toEqual(before);
   await page.reload();
-  await page.getByRole("tab", { name: "Output", exact: true }).click();
+  await page.getByRole("tab", { exact: true, name: "Output" }).click();
   await expect(page.getByRole("tabpanel")).toContainText("42");
   await page.getByRole("log").screenshot({
-    path: "tests/eve-results/screenshots/eve-code-output.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-code-output.png",
   });
 });
 
@@ -95,26 +96,26 @@ test("Python results render an interactive chart and survive reload", async ({
   const code =
     'chart = {"type": "bar", "title": "Counts", "elements": [{"label": "A", "group": "Series", "value": 2}, {"label": "B", "group": "Series", "value": 3}]}\nprint("chart-ready")';
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini",
       message: `Use the codeExecution tool exactly once with language python and title "Python chart". Execute this exact code, then report its output. Use no other tool:\n${code}`,
+      modelId: "openai/gpt-4.1-mini",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z.object({ id: z.uuid() }).parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 150_000 });
-  await page.getByRole("tab", { name: "Output", exact: true }).click();
+  await page.getByRole("tab", { exact: true, name: "Output" }).click();
   await expect(page.getByRole("tabpanel")).toContainText("chart-ready");
   await page.reload();
   await expect(page.locator("canvas")).toBeVisible();
   await page.locator("canvas").screenshot({
-    path: "tests/eve-results/screenshots/eve-python-chart-desktop.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-python-chart-desktop.png",
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect
     .poll(async () => (await page.locator("canvas").boundingBox())?.width)
@@ -123,7 +124,7 @@ test("Python results render an interactive chart and survive reload", async ({
     .poll(async () => (await page.locator("canvas").boundingBox())?.x)
     .toBeGreaterThanOrEqual(0);
   await page.locator("canvas").screenshot({
-    path: "tests/eve-results/screenshots/eve-python-chart-mobile.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-python-chart-mobile.png",
   });
 });

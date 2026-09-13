@@ -7,10 +7,8 @@
  */
 
 import type { ComponentProps } from "react";
-import {
-  type StickToBottom,
-  useStickToBottomContext,
-} from "use-stick-to-bottom";
+import { useStickToBottomContext } from "use-stick-to-bottom";
+import type { StickToBottom } from "use-stick-to-bottom";
 
 import { ScrollArea } from "@/components/ui/extra/scroll-area-viewport-ref";
 import { cn } from "@/lib/utils";
@@ -43,6 +41,7 @@ export const ConversationContent = ({
         className={cn("flex flex-col gap-8 p-4", className)}
         ref={context.contentRef}
       >
+        {/* oxlint-disable-next-line react/refs -- StickToBottom render props require passing its context through unchanged. */}
         {typeof children === "function" ? children(context) : children}
       </div>
     </ScrollArea>

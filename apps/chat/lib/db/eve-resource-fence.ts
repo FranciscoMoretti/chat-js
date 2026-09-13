@@ -93,31 +93,20 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
-export async function installEvePostgresResourceFence(connection: Sql) {
+export const installEvePostgresResourceFence = async (connection: Sql) => {
   await connection.begin("isolation level read committed", async (query) => {
     await query.unsafe(installSql);
   });
-}
-
-/**
- * Internal provider primitive: caller authorizes and inventories these resources.
- * Blocks future payload writes, including run recreation and linked descendants.
- * Does not fence queues or erase data, and is not a complete deletion receipt.
- */
-export async function fenceEvePostgresResources(
-  connection: Sql,
-  input: { runIds: string[]; streamIds: string[] }
-) {
-  await connection.begin("isolation level read committed", async (query) => {
-    await fenceEvePostgresResourcesInTransaction(query, input);
-  });
-}
+};
 
 /** Shares the caller's READ COMMITTED transaction with inventory coordination. */
-export async function fenceEvePostgresResourcesInTransaction(
+export const fenceEvePostgresResourcesInTransaction = async (
   query: TransactionSql,
-  input: { runIds: string[]; streamIds: string[] }
-) {
+  input: {
+    runIds: string[];
+    streamIds: string[];
+  }
+) => {
   const { runIds, streamIds } = z
     .object({
       runIds: z.array(z.string().min(1)).min(1).max(10_000),
@@ -129,10 +118,11 @@ export async function fenceEvePostgresResourcesInTransaction(
       ...runIds.map((id) => `run:${id}`),
       ...streamIds.map((id) => `stream:${id}`),
     ]),
-  ].sort();
+  ].toSorted();
   // Writers retain shared row locks through commit. This update waits for
   // admitted writes and prevents later writes from crossing the fence.
   for (const resource of resources) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     await query`
       insert into workflow.eve_resource_fences(resource, fenced)
       values (${resource}, true)
@@ -157,4 +147,21 @@ export async function fenceEvePostgresResourcesInTransaction(
       throw new Error("Stream ownership must be resolved before fencing.");
     }
   }
-}
+};
+
+/**
+ * Internal provider primitive: caller authorizes and inventories these resources.
+ * Blocks future payload writes, including run recreation and linked descendants.
+ * Does not fence queues or erase data, and is not a complete deletion receipt.
+ */
+export const fenceEvePostgresResources = async (
+  connection: Sql,
+  input: {
+    runIds: string[];
+    streamIds: string[];
+  }
+) => {
+  await connection.begin("isolation level read committed", async (query) => {
+    await fenceEvePostgresResourcesInTransaction(query, input);
+  });
+};

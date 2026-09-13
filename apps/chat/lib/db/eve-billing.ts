@@ -3,21 +3,54 @@ import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveGuest, eveUsage, userCredit } from "./schema";
 
-function hasConflictingCost(stored: string | null, incoming: string | null) {
-  return (
-    stored !== null && incoming !== null && Number(stored) !== Number(incoming)
-  );
-}
+const hasConflictingCost = (stored: string | null, incoming: string | null) =>
+  stored !== null && incoming !== null && Number(stored) !== Number(incoming);
+
+const debitTurnUsage = async (
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: {
+    ownerId: string;
+    sessionId: string;
+    turnId: string;
+    eventId: string;
+  }
+) => {
+  // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
+  const [totals] = await tx
+    .select({
+      due: sql<number>`ceil(coalesce(sum(${eveUsage.costUsd}), 0) * 100)::integer`,
+      paid: sql<number>`coalesce(sum(${eveUsage.chargedCents}), 0)::integer`,
+    })
+    .from(eveUsage)
+    .where(
+      and(
+        eq(eveUsage.sessionId, input.sessionId),
+        eq(eveUsage.turnId, input.turnId),
+        eq(eveUsage.ownerId, input.ownerId)
+      )
+    );
+  const delta = (totals?.due ?? 0) - (totals?.paid ?? 0);
+  if (delta > 0) {
+    await tx
+      .update(userCredit)
+      .set({ credits: sql`${userCredit.credits} - ${delta}` })
+      .where(eq(userCredit.userId, input.ownerId));
+    await tx
+      .update(eveUsage)
+      .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
+      .where(eq(eveUsage.eventId, input.eventId));
+  }
+};
 
 /** A replay can arrive concurrently with the hook. Both use the same durable event ID. */
-export async function recordEveUsage(input: {
+export const recordEveUsage = async (input: {
   eventId: string;
   sessionId: string;
   turnId: string;
   ownerId: string;
   costUsd?: number;
   generationId?: string;
-}) {
+}) => {
   if (
     !input.eventId ||
     (input.costUsd !== undefined &&
@@ -97,43 +130,13 @@ export async function recordEveUsage(input: {
     if (!guest) {
       await debitTurnUsage(tx, input);
     }
-    return (costUsd ?? existing?.costUsd) != null;
+    const recordedCost = costUsd ?? existing?.costUsd;
+    return recordedCost !== null && recordedCost !== undefined;
   });
-}
-
-async function debitTurnUsage(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  input: { ownerId: string; sessionId: string; turnId: string; eventId: string }
-) {
-  // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
-  const [totals] = await tx
-    .select({
-      due: sql<number>`ceil(coalesce(sum(${eveUsage.costUsd}), 0) * 100)::integer`,
-      paid: sql<number>`coalesce(sum(${eveUsage.chargedCents}), 0)::integer`,
-    })
-    .from(eveUsage)
-    .where(
-      and(
-        eq(eveUsage.sessionId, input.sessionId),
-        eq(eveUsage.turnId, input.turnId),
-        eq(eveUsage.ownerId, input.ownerId)
-      )
-    );
-  const delta = (totals?.due ?? 0) - (totals?.paid ?? 0);
-  if (delta > 0) {
-    await tx
-      .update(userCredit)
-      .set({ credits: sql`${userCredit.credits} - ${delta}` })
-      .where(eq(userCredit.userId, input.ownerId));
-    await tx
-      .update(eveUsage)
-      .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
-      .where(eq(eveUsage.eventId, input.eventId));
-  }
-}
+};
 
 /** This cursor is billing progress, never a second copy of the transcript. */
-export async function getEveUsageCursor(ownerId: string, sessionId: string) {
+export const getEveUsageCursor = async (ownerId: string, sessionId: string) => {
   const [row] = await db
     .select({ streamIndex: eveConversation.usageStreamIndex })
     .from(eveConversation)
@@ -148,14 +151,14 @@ export async function getEveUsageCursor(ownerId: string, sessionId: string) {
     throw new Error("Conversation not found.");
   }
   return row.streamIndex;
-}
+};
 
 /** Advance only after durable ingestion; concurrent older readers cannot rewind it. */
-export async function advanceEveUsageCursor(
+export const advanceEveUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
-) {
+) => {
   if (!Number.isSafeInteger(streamIndex) || streamIndex < 0) {
     throw new Error("Invalid Eve usage cursor.");
   }
@@ -175,4 +178,4 @@ export async function advanceEveUsageCursor(
   if (!row) {
     throw new Error("Conversation not found.");
   }
-}
+};

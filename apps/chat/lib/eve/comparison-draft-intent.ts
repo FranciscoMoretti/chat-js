@@ -3,27 +3,27 @@ const key = (ownerId: string, conversationId: string) =>
   `chatjs.eve.comparison-draft:${ownerId}:${conversationId}`;
 
 /** UI intent is separate from the exact replayable server request. */
-export function saveComparisonDraftIntent(
+export const saveComparisonDraftIntent = (
   storage: StorageAccess,
   ownerId: string,
   conversationId: string,
   operationId: string,
   clearComposer: boolean
-) {
+) => {
   if (clearComposer) {
     storage.setItem(key(ownerId, conversationId), operationId);
   } else {
     storage.removeItem(key(ownerId, conversationId));
   }
-}
+};
 
-export function consumeComparisonDraftIntent(
+export const consumeComparisonDraftIntent = (
   storage: StorageAccess,
   ownerId: string,
   conversationId: string,
   operationId: string
-): boolean {
+): boolean => {
   const clear = storage.getItem(key(ownerId, conversationId)) === operationId;
   storage.removeItem(key(ownerId, conversationId));
   return clear;
-}
+};

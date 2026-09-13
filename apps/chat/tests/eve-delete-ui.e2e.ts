@@ -1,4 +1,8 @@
-import { expect, type Page, test } from "@playwright/test";
+/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
@@ -19,14 +23,14 @@ async function openSidebar(page: Page) {
     return;
   }
   const expand = page.getByRole("button", {
-    name: "Expand sidebar",
     exact: true,
+    name: "Expand sidebar",
   });
   if (await expand.isVisible()) {
     await expand.click();
   } else {
     await page
-      .getByRole("button", { name: "Toggle Sidebar", exact: true })
+      .getByRole("button", { exact: true, name: "Toggle Sidebar" })
       .click();
   }
 }
@@ -35,7 +39,7 @@ for (const width of [1280, 390]) {
   test(`sidebar deletion at ${width}px survives reload and checks uncertain results`, async ({
     page,
   }, testInfo) => {
-    await page.setViewportSize({ width, height: 844 });
+    await page.setViewportSize({ height: 844, width });
     await page.route("https://unpkg.com/react-scan/**", (route) =>
       route.abort()
     );
@@ -50,10 +54,10 @@ for (const width of [1280, 390]) {
     const id = crypto.randomUUID();
     const title = "Deletion UI fixture";
     await db.insert(eveConversation).values({
-      id,
-      ownerId: owner.id,
-      operationId: crypto.randomUUID(),
       firstMessage: title,
+      id,
+      operationId: crypto.randomUUID(),
+      ownerId: owner.id,
     });
     let deletes = 0;
     let failCheck = true;
@@ -73,8 +77,8 @@ for (const width of [1280, 390]) {
         .set({ state: deletes === 1 ? "deleting" : "deleted" })
         .where(eq(eveConversation.id, id));
       await route.fulfill({
-        status: deletes === 1 ? 202 : 200,
         json: { rootId: id, status: deletes === 1 ? "pending" : "deleted" },
+        status: deletes === 1 ? 202 : 200,
       });
     });
     try {
@@ -85,19 +89,19 @@ for (const width of [1280, 390]) {
         .fill(title);
       const row = page
         .locator("li")
-        .filter({ has: page.getByRole("link", { name: title, exact: true }) });
+        .filter({ has: page.getByRole("link", { exact: true, name: title }) });
       await row.hover();
-      await row.getByRole("button", { name: "More", exact: true }).click();
-      await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+      await row.getByRole("button", { exact: true, name: "More" }).click();
+      await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
       const dialog = page.getByRole("dialog", {
-        name: "Delete conversation and branches?",
         exact: true,
+        name: "Delete conversation and branches?",
       });
       await expect(dialog).toContainText("all its branches");
       await dialog
         .getByRole("button", {
-          name: "Delete conversation and branches",
           exact: true,
+          name: "Delete conversation and branches",
         })
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
@@ -108,7 +112,7 @@ for (const width of [1280, 390]) {
         )
       ).toContain(id);
       await dialog
-        .getByRole("button", { name: "Close", exact: true })
+        .getByRole("button", { exact: true, name: "Close" })
         .first()
         .click();
       await page.reload();
@@ -117,24 +121,24 @@ for (const width of [1280, 390]) {
         .getByRole("textbox", { name: "Search conversations" })
         .fill(title);
       await expect(
-        page.getByRole("link", { name: title, exact: true })
+        page.getByRole("link", { exact: true, name: title })
       ).toHaveCount(0);
       expect(deletes).toBe(1);
       await page
-        .getByRole("button", { name: "Resume deletion", exact: true })
+        .getByRole("button", { exact: true, name: "Resume deletion" })
         .click();
       await dialog
-        .getByRole("button", { name: "Check status", exact: true })
+        .getByRole("button", { exact: true, name: "Check status" })
         .click();
       await expect(dialog).toContainText("could not be confirmed");
       await expect(
-        dialog.getByRole("button", { name: "Retry deletion", exact: true })
+        dialog.getByRole("button", { exact: true, name: "Retry deletion" })
       ).toHaveCount(0);
       await dialog
-        .getByRole("button", { name: "Check status", exact: true })
+        .getByRole("button", { exact: true, name: "Check status" })
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
-      await page.setViewportSize({ width: 390, height: 844 });
+      await page.setViewportSize({ height: 844, width: 390 });
       await expect(dialog).toContainText("cleanup is not complete");
       const heading = await dialog.getByRole("heading").boundingBox();
       const closeIcon = await dialog
@@ -145,11 +149,11 @@ for (const width of [1280, 390]) {
       }
       expect(heading.x + heading.width).toBeLessThanOrEqual(closeIcon.x);
       await dialog.screenshot({
-        path: testInfo.outputPath("deletion-dialog.png"),
         animations: "disabled",
+        path: testInfo.outputPath("deletion-dialog.png"),
       });
       await dialog
-        .getByRole("button", { name: "Retry deletion", exact: true })
+        .getByRole("button", { exact: true, name: "Retry deletion" })
         .click();
       await expect(dialog).toHaveCount(0);
       expect(deletes).toBe(2);

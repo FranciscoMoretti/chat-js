@@ -23,56 +23,55 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 
-function startTurn(selectedTool?: string, principalType = "user") {
-  return selectionHook.events?.["turn.started"]?.(
+const startTurn = (selectedTool?: string, principalType = "user") =>
+  selectionHook.events?.["turn.started"]?.(
     {
-      type: "turn.started",
       data: { sequence: 1, turnId: "turn_1" },
       meta: { at: "2026-09-12T12:00:00Z", id: "event_1" },
+      type: "turn.started",
     },
     {
       agent: { name: "chatjs" },
       channel: {},
-      session: {
-        id: "session",
-        turn: { id: "turn_1", sequence: 1 },
-        auth: {
-          current: {
-            principalId: "owner",
-            principalType: "user",
-            authenticator: "gateway",
-            attributes: {
-              ...(selectedTool ? { selectedTool } : {}),
-              ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
-            },
-          },
-          initiator: {
-            principalId: "owner",
-            principalType: "user",
-            authenticator: "gateway",
-            attributes: { selectedTool: "webSearch" },
-          },
-        },
-      },
       getSandbox: () => {
         throw new Error("Unexpected sandbox access");
       },
       getSkill: () => {
         throw new Error("Unexpected skill access");
       },
+      session: {
+        auth: {
+          current: {
+            attributes: {
+              ...(selectedTool ? { selectedTool } : {}),
+              ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
+            },
+            authenticator: "gateway",
+            principalId: "owner",
+            principalType: "user",
+          },
+          initiator: {
+            attributes: { selectedTool: "webSearch" },
+            authenticator: "gateway",
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
+        id: "session",
+        turn: { id: "turn_1", sequence: 1 },
+      },
     }
   );
-}
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     await startTurn("webSearch");
     const tools = {
-      webSearch: {},
+      confirm_note: {},
       deepResearch: {},
       server__echo: {},
+      webSearch: {},
       wordCount: {},
-      confirm_note: {},
     };
     expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
     expect(eveTurnTool.get()).toBe("webSearch");
@@ -116,11 +115,11 @@ it.each([["model-a"], ["model-a", "model-b"]])(
     const entries = new Map<string, string>();
     const storage = {
       getItem: (key: string) => entries.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        entries.set(key, value);
-      },
       removeItem: (key: string) => {
         entries.delete(key);
+      },
+      setItem: (key: string, value: string) => {
+        entries.set(key, value);
       },
     };
     const projectId = crypto.randomUUID();
@@ -163,17 +162,18 @@ it("restores the selected capability from Eve serialized context before a resume
     return serializeContext(original);
   });
   expect(saved["chatjs.turn-tool"]).toBe("createTextDocument");
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- Exercise the JSON wire representation; structuredClone preserves values JSON drops.
   const resumed = await deserializeContext(JSON.parse(JSON.stringify(saved)));
   await contextStorage.run(resumed, async () => {
     expect(
       Object.keys(
         filterEveTools({
+          createTextDocument: {},
           readDocument: {},
           wordCount: {},
-          createTextDocument: {},
         })
       )
-    ).toEqual(["readDocument", "createTextDocument"]);
+    ).toEqual(["createTextDocument", "readDocument"]);
     await startTurn();
     expect(eveTurnTool.get()).toBeNull();
   });
@@ -182,10 +182,10 @@ it("restores the selected capability from Eve serialized context before a resume
 it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     const tools = {
-      webSearch: {},
-      deepResearch: {},
       confirm_note: {},
+      deepResearch: {},
       server__echo: {},
+      webSearch: {},
     };
     await startTurn(undefined, "guest");
     expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);

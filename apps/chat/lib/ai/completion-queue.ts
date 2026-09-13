@@ -3,17 +3,30 @@ export type CompletionQueue = {
   waitForIdle: () => Promise<void>;
 };
 
-export function createCompletionQueue(
+const runCompletion = async (
+  previous: Promise<void>,
+  completion: () => Promise<void>,
   onError: (error: unknown) => void
-): CompletionQueue {
+) => {
+  try {
+    await previous;
+    return await completion();
+  } catch (error) {
+    return onError(error);
+  }
+};
+
+export const createCompletionQueue = (
+  onError: (error: unknown) => void
+): CompletionQueue => {
   let pending = Promise.resolve();
 
   return {
     enqueue(completion) {
-      pending = pending.then(completion).catch(onError);
+      pending = runCompletion(pending, completion, onError);
     },
     waitForIdle() {
       return pending;
     },
   };
-}
+};

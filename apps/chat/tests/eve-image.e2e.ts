@@ -23,13 +23,13 @@ test("native image generation, editing and sharing preserve stored results", asy
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini-fast",
       message:
         'Use generateImage exactly once with prompt "A solid blue square on a white background". No other tools.',
+      modelId: "openai/gpt-4.1-mini-fast",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z
@@ -63,9 +63,9 @@ test("native image generation, editing and sharing preserve stored results", asy
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": conversation.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(binding.sessionId)
@@ -77,7 +77,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       event.data.result.toolName === "generateImage"
   );
   expect(results).toHaveLength(1);
-  const result = results[0];
+  const [result] = results;
   if (
     result.type !== "action.result" ||
     result.data.result.kind !== "tool-result"
@@ -88,8 +88,8 @@ test("native image generation, editing and sharing preserve stored results", asy
   expect(receipt.output).toMatchObject({ imageUrl: src });
   expect(receipt.usage.costUsd).toBeGreaterThan(0);
   await image.screenshot({
-    path: "tests/eve-results/screenshots/eve-native-image.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-native-image.png",
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await page
@@ -97,7 +97,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .fill(
       "Use generateImage exactly once to edit the image you just generated: change the blue square to green and keep the white background."
     );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const images = page.locator('img[src*="/api/files/content?"]');
   await expect(images).toHaveCount(2, { timeout: 150_000 });
   const edited = images.nth(1);
@@ -127,8 +127,8 @@ test("native image generation, editing and sharing preserve stored results", asy
     )
     .toBe(true);
   await edited.screenshot({
-    path: "tests/eve-results/screenshots/eve-native-image-edited.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-native-image-edited.png",
   });
   const afterEdit = await client.sessions
     .attach(binding.sessionId)
@@ -145,8 +145,8 @@ test("native image generation, editing and sharing preserve stored results", asy
     .from(eveFileReference)
     .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
     .where(eq(eveFileReference.conversationId, binding.id));
-  expect(registered.map((file) => file.key).sort()).toEqual(
-    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].sort()
+  expect(registered.map((file) => file.key).toSorted()).toEqual(
+    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].toSorted()
   );
   expect(
     registered.every((file) => file.ownerId === conversation.ownerId)
@@ -162,10 +162,10 @@ test("native image generation, editing and sharing preserve stored results", asy
       evePlatformResult.parse(event.data.result.output).usage.costUsd
     ).toBeGreaterThan(0);
   }
-  await page.getByRole("button", { name: "Share chat", exact: true }).click();
-  await page.getByRole("button", { name: "Share Chat", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Share chat" }).click();
+  await page.getByRole("button", { exact: true, name: "Share Chat" }).click();
   await expect(
-    page.getByRole("button", { name: "Make Private", exact: true })
+    page.getByRole("button", { exact: true, name: "Make Private" })
   ).toBeEnabled();
   const anonymous = await browser.newContext();
   try {
@@ -189,12 +189,12 @@ test("native image generation, editing and sharing preserve stored results", asy
     await expect(shared.getByTestId("multimodal-input")).toHaveCount(0);
     await expect(sharedImages.nth(1)).toHaveAttribute("src", editedSrc ?? "");
     await page
-      .getByRole("button", { name: "Make Private", exact: true })
+      .getByRole("button", { exact: true, name: "Make Private" })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await shared.reload();
     await expect(
-      shared.getByRole("heading", { name: "404", exact: true })
+      shared.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
   } finally {
     await db

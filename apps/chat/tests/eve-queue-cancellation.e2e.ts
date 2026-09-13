@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 import { createServer } from "node:http";
 
 import { createWorld } from "@workflow/world-postgres";
@@ -11,7 +13,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
 }
 
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
-  const release = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<undefined>();
   const calls: string[] = [];
   const server = createServer(async (request, response) => {
     const id = request.headers["x-vqs-message-id"];
@@ -30,10 +32,10 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
   const pool = new Pool({ connectionString: env.DATABASE_URL, max: 4 });
   const jobPrefix = `eve_cancel_${crypto.randomUUID()}_`;
   const queue = createWorld({
-    pool,
-    jobPrefix,
-    queueConcurrency: 4,
     applicationManagedShutdown: true,
+    jobPrefix,
+    pool,
+    queueConcurrency: 4,
   });
   const runId = `wrun_${crypto.randomUUID()}`;
   const pendingJobs = async () => {
@@ -49,7 +51,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await queue.queue("__wkf_workflow_fixture", { runId });
     await expect.poll(() => calls.length).toBe(2);
     expect(calls).toHaveLength(2);
-    release.resolve();
+    release.resolve(undefined);
     await expect.poll(pendingJobs).toBe(0);
     const idempotencyKey = crypto.randomUUID();
     await Promise.all([
@@ -62,7 +64,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     await expect.poll(pendingJobs).toBe(0);
     expect(calls).toHaveLength(3);
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     server.closeAllConnections();
     await queue.close?.();
     await pool.query(

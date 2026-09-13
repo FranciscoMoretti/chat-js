@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -5,8 +6,8 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 test.use({ actionTimeout: 20_000 });
 
-const projectUrl = /\/project\/[a-f\d-]+$/;
-const conversationUrl = /\/chat\/[a-f\d-]+$/;
+const projectUrl = /\/project\/[a-f\d-]+$/u;
+const conversationUrl = /\/chat\/[a-f\d-]+$/u;
 const modelId = "openai/gpt-5-nano";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -17,11 +18,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
   test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
     data: { model: modelId },
   });
-  await page.getByRole("button", { name: "New project", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "New project" }).click();
   const createDialog = page.getByRole("dialog");
   await createDialog
     .getByPlaceholder("Project name")
@@ -30,27 +31,27 @@ test("project UI edits instructions, creates a native conversation and lists it 
     (url) => url.pathname.includes("project.create"),
     (route) =>
       route.fulfill({
-        status: 500,
-        contentType: "application/json",
         body: "{}",
+        contentType: "application/json",
+        status: 500,
       }),
     { times: 1 }
   );
   await createDialog
-    .getByRole("button", { name: "Create", exact: true })
+    .getByRole("button", { exact: true, name: "Create" })
     .click();
   await expect(createDialog.getByRole("alert")).toBeVisible();
   await expect(createDialog.getByPlaceholder("Project name")).toHaveValue(
     "Project UI fixture"
   );
   await createDialog.screenshot({
-    path: testInfo.outputPath("create-error.png"),
     animations: "disabled",
+    path: testInfo.outputPath("create-error.png"),
     style:
       'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
   });
   await createDialog
-    .getByRole("button", { name: "Create", exact: true })
+    .getByRole("button", { exact: true, name: "Create" })
     .click();
   await expect(page).toHaveURL(projectUrl);
   const projectId = z.uuid().parse(page.url().split("/").at(-1));
@@ -61,25 +62,25 @@ test("project UI edits instructions, creates a native conversation and lists it 
   try {
     await page.goto(`/project/${projectId}`);
     await expect(
-      page.getByRole("heading", { name: "Project UI fixture", exact: true })
+      page.getByRole("heading", { exact: true, name: "Project UI fixture" })
     ).toBeVisible();
     for (const width of [1100, 390]) {
-      await page.setViewportSize({ width, height: 850 });
+      await page.setViewportSize({ height: 850, width });
       await page
         .locator("section")
         .filter({
-          has: page.getByRole("textbox", { name: "Message", exact: true }),
+          has: page.getByRole("textbox", { exact: true, name: "Message" }),
         })
         .screenshot({
-          path: testInfo.outputPath(`project-empty-${width}.png`),
           animations: "disabled",
+          path: testInfo.outputPath(`project-empty-${width}.png`),
           style:
             'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
         });
     }
-    await page.setViewportSize({ width: 1100, height: 850 });
+    await page.setViewportSize({ height: 850, width: 1100 });
     await page
-      .getByRole("button", { name: "Instructions", exact: true })
+      .getByRole("button", { exact: true, name: "Instructions" })
       .click();
     const instructionDialog = page.getByRole("dialog");
     await instructionDialog
@@ -89,9 +90,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       (url) => url.pathname.includes("project.setInstructions"),
       (route) =>
         route.fulfill({
-          status: 500,
-          contentType: "application/json",
           body: "{}",
+          contentType: "application/json",
+          status: 500,
         }),
       { times: 1 }
     );
@@ -100,8 +101,8 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .click();
     await expect(instructionDialog.getByRole("alert")).toBeVisible();
     await instructionDialog.screenshot({
-      path: testInfo.outputPath("instructions-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("instructions-error.png"),
       style:
         'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
     });
@@ -118,33 +119,33 @@ test("project UI edits instructions, creates a native conversation and lists it 
       (url) => url.pathname.includes("project.update"),
       (route) =>
         route.fulfill({
-          status: 500,
-          contentType: "application/json",
           body: "{}",
+          contentType: "application/json",
+          status: 500,
         }),
       { times: 1 }
     );
     await renameDialog
-      .getByRole("button", { name: "Save", exact: true })
+      .getByRole("button", { exact: true, name: "Save" })
       .click();
     await expect(renameDialog.getByRole("alert")).toBeVisible();
     await renameDialog.screenshot({
-      path: testInfo.outputPath("rename-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("rename-error.png"),
       style:
         'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
     });
     await renameDialog
-      .getByRole("button", { name: "Save", exact: true })
+      .getByRole("button", { exact: true, name: "Save" })
       .click();
     await expect(renameDialog).not.toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Renamed project fixture" })
     ).toBeVisible();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Follow the project instruction.");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(conversationUrl);
     conversationId = page.url().split("/").at(-1);
     await expect(page.locator(".is-assistant")).toContainText(
@@ -153,16 +154,16 @@ test("project UI edits instructions, creates a native conversation and lists it 
     );
     await page.goto(`/project/${projectId}`);
     await expect(
-      page.getByRole("textbox", { name: "Message", exact: true })
+      page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("");
     const row = page
       .locator("section")
       .filter({
-        has: page.getByRole("textbox", { name: "Message", exact: true }),
+        has: page.getByRole("textbox", { exact: true, name: "Message" }),
       })
       .getByRole("link", {
-        name: "Follow the project instruction.",
         exact: true,
+        name: "Follow the project instruction.",
       });
     await expect(row).toBeVisible();
     await expect(row).toHaveAttribute(
@@ -172,16 +173,16 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page
       .locator("section")
       .filter({
-        has: page.getByRole("textbox", { name: "Message", exact: true }),
+        has: page.getByRole("textbox", { exact: true, name: "Message" }),
       })
       .screenshot({
-        path: testInfo.outputPath("project-populated.png"),
         animations: "disabled",
+        path: testInfo.outputPath("project-populated.png"),
         style:
           'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
       });
     await row.click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`));
+    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
     await page.goto(`/project/${projectId}`);
     if (
       await page
@@ -189,36 +190,36 @@ test("project UI edits instructions, creates a native conversation and lists it 
         .count()
     ) {
       await page
-        .getByRole("button", { name: "Toggle Sidebar", exact: true })
+        .getByRole("button", { exact: true, name: "Toggle Sidebar" })
         .first()
         .click();
     }
     const projectRow = page.locator('[data-sidebar="menu-item"]').filter({
       has: page.locator(`a[href="/project/${projectId}"]`),
     });
-    await projectRow.getByRole("button", { name: "More", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+    await projectRow.getByRole("button", { exact: true, name: "More" }).click();
+    await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
     const deleteDialog = page.getByRole("alertdialog");
     await page.route(
       (url) => url.pathname.includes("project.remove"),
       (route) =>
         route.fulfill({
-          status: 500,
-          contentType: "application/json",
           body: "{}",
+          contentType: "application/json",
+          status: 500,
         }),
       { times: 1 }
     );
     await deleteDialog
-      .getByRole("button", { name: "Delete", exact: true })
+      .getByRole("button", { exact: true, name: "Delete" })
       .click();
     await expect(deleteDialog.getByRole("alert")).toBeVisible();
     await deleteDialog.screenshot({
-      path: testInfo.outputPath("delete-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("delete-error.png"),
     });
     await deleteDialog
-      .getByRole("button", { name: "Delete", exact: true })
+      .getByRole("button", { exact: true, name: "Delete" })
       .click();
     await expect(page).toHaveURL(new URL("/", page.url()).href);
     deletedInUI = true;
@@ -252,9 +253,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
                   .catch(() => null);
                 return response?.status() === 200 ? response.json() : null;
               },
-              { timeout: 90_000, intervals: [1000, 2000, 5000] }
+              { intervals: [1000, 2000, 5000], timeout: 90_000 }
             )
-            .toEqual({ status: "deleted", rootId: conversationId });
+            .toEqual({ rootId: conversationId, status: "deleted" });
         }
       }
     } catch (error) {
@@ -262,8 +263,8 @@ test("project UI edits instructions, creates a native conversation and lists it 
         cleanupFailure = { error };
       }
       testInfo.annotations.push({
-        type: "cleanup",
         description: "Project or native conversation cleanup also failed.",
+        type: "cleanup",
       });
     }
   }

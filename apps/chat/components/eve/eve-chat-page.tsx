@@ -19,11 +19,13 @@ import { EveGuestBootstrap } from "./eve-guest-bootstrap";
 import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
-export async function EveChatPage({
+// This server boundary selects the authenticated, recovery, comparison, and chat states.
+// oxlint-disable-next-line eslint/complexity
+export const EveChatPage = async ({
   conversationId,
 }: {
   conversationId?: string;
-}) {
+}) => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
     return <EveGuestBootstrap />;
@@ -110,9 +112,9 @@ export async function EveChatPage({
     content = (
       <EveCopyButton
         recovery={{
-          sourceConversationId: copy.copy.sourceConversationId,
-          operationId: selected.operationId,
           modelId: selected.initialModelId,
+          operationId: selected.operationId,
+          sourceConversationId: copy.copy.sourceConversationId,
         }}
         sourceConversationId={copy.copy.sourceConversationId}
       />
@@ -126,4 +128,4 @@ export async function EveChatPage({
       </section>
     </EveArtifactLayout>
   );
-}
+};

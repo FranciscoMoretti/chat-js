@@ -13,15 +13,17 @@ export interface GatewayProvider<
   TVideoModelId extends string = string,
 > {
   /** Create a dedicated image model instance, or null if unsupported */
-  createImageModel(modelId: TImageModelId): ImageModel | null;
+  createImageModel: (modelId: TImageModelId) => ImageModel | null;
 
   /** Create a language model instance from a model ID like "openai/gpt-5-nano" */
-  createLanguageModel(modelId: TModelId): LanguageModelV4;
+  createLanguageModel: (modelId: TModelId) => LanguageModelV4;
 
   /** Create a video model instance, or null if unsupported */
-  createVideoModel(modelId: TVideoModelId): Experimental_VideoModelV4 | null;
+  createVideoModel: (
+    modelId: TVideoModelId
+  ) => Experimental_VideoModelV4 | null;
 
   /** Fetch the list of available models from the gateway's API */
-  fetchModels(): Promise<AiGatewayModel[]>;
+  fetchModels: () => Promise<AiGatewayModel[]>;
   readonly type: TGateway;
 }

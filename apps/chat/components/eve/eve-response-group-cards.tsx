@@ -17,7 +17,7 @@ export type EveResponseCardCandidate = {
 };
 
 /** Controllers supply native status and handle navigation or recovery. */
-export function EveResponseGroupCards({
+export const EveResponseGroupCards = ({
   candidates,
   selectedOperationId,
   onSelect,
@@ -25,7 +25,7 @@ export function EveResponseGroupCards({
   candidates: readonly EveResponseCardCandidate[];
   selectedOperationId: string | null;
   onSelect: (operationId: string) => void;
-}) {
+}) => {
   if (candidates.length <= 1) {
     return null;
   }
@@ -56,15 +56,15 @@ export function EveResponseGroupCards({
           statusLabel = selected ? "Selected" : "Task completed";
         }
         return {
+          disabled: candidate.disabled,
+          handleSelect: () => onSelect(candidate.operationId),
           id: candidate.operationId,
+          loading,
           modelName: candidate.modelName,
           selected,
-          loading,
           statusLabel,
-          disabled: candidate.disabled,
-          onSelect: () => onSelect(candidate.operationId),
         };
       })}
     />
   );
-}
+};

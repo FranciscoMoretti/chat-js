@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { type ModelMessage, wrapLanguageModel } from "ai";
+import { wrapLanguageModel } from "ai";
+import type { ModelMessage } from "ai";
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
 
@@ -14,7 +15,7 @@ import { executeEvePlatformOperation } from "./platform-operation";
 
 export const eveResearchInput = z.object({});
 
-export async function* executeEveResearch(
+export const executeEveResearch = async function* executeEveResearch(
   input: unknown,
   context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
   messages: ModelMessage[]
@@ -31,12 +32,12 @@ export async function* executeEveResearch(
   }
   yield* executeEvePlatformOperation(
     context.abortSignal,
-    async function* (options) {
+    async function* runResearchOperation(options) {
       const result = await runDeepResearchPipeline(
         {
+          messageId: context.callId,
           messages,
           requestId: randomUUID(),
-          messageId: context.callId,
           toolCallId: context.callId,
         },
         getDeepResearchConfig(),
@@ -46,21 +47,24 @@ export async function* executeEveResearch(
           getLanguageModel: async (id) => {
             const resolved = await resolveEveModel(id);
             return wrapLanguageModel({
-              model: resolved.model,
               middleware: {
                 specificationVersion: "v4",
-                transformParams: async ({ params }) => ({
-                  ...params,
-                  providerOptions: {
-                    ...resolved.modelOptions.providerOptions,
-                    ...params.providerOptions,
-                  },
-                }),
+                transformParams: ({ params }) =>
+                  Promise.resolve({
+                    ...params,
+                    providerOptions: {
+                      ...resolved.modelOptions.providerOptions,
+                      ...params.providerOptions,
+                    },
+                  }),
               },
+              model: resolved.model,
             });
           },
-          getModelContextWindow: async (id) =>
-            (await loadEveModelDefinition(id)).context_window,
+          getModelContextWindow: async (id) => {
+            const model = await loadEveModelDefinition(id);
+            return model.context_window;
+          },
           saveReport: async (content) => {
             options.abortSignal.throwIfAborted();
             const document = eveDocumentResult.parse(
@@ -78,4 +82,4 @@ export async function* executeEveResearch(
         : { answer: result.data, format: "clarifying_questions" };
     }
   );
-}
+};

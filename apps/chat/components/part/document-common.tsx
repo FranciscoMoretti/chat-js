@@ -40,14 +40,18 @@ const getActionText = (
   tense: "present" | "past"
 ) => {
   switch (type) {
-    case "read":
+    case "read": {
       return tense === "present" ? "Reading" : "Read";
-    case "create":
+    }
+    case "create": {
       return tense === "present" ? "Creating" : "Created";
-    case "update":
+    }
+    case "update": {
       return tense === "present" ? "Updating" : "Updated";
-    default:
+    }
+    default: {
       return null;
+    }
   }
 };
 
@@ -64,13 +68,13 @@ interface DocumentToolResultProps {
   type: "create" | "update" | "read";
 }
 
-function PureDocumentToolResult({
+const PureDocumentToolResult = ({
   disabled = false,
   type,
   result,
   isReadonly: _isReadonly,
   messageId,
-}: DocumentToolResultProps) {
+}: DocumentToolResultProps) => {
   const { setArtifact } = useArtifact();
 
   return (
@@ -79,14 +83,14 @@ function PureDocumentToolResult({
       disabled={disabled}
       onClick={() => {
         setArtifact({
-          documentId: result.id,
-          kind: result.kind,
           content: "",
-          title: result.title,
+          documentId: result.id,
+          isVisible: true,
+          kind: result.kind,
           messageId,
           revisionId: result.revisionId,
-          isVisible: true,
           status: "idle",
+          title: result.title,
         });
       }}
       type="button"
@@ -107,7 +111,7 @@ function PureDocumentToolResult({
       </div>
     </button>
   );
-}
+};
 
 export const DocumentToolResult = memo(PureDocumentToolResult);
 
@@ -117,11 +121,11 @@ interface DocumentToolCallProps {
   type: "create" | "update" | "read";
 }
 
-function PureDocumentToolCall({
+const PureDocumentToolCall = ({
   type,
   args,
   isReadonly: _isReadonly,
-}: DocumentToolCallProps) {
+}: DocumentToolCallProps) => {
   const { setArtifact } = useArtifact();
 
   return (
@@ -153,9 +157,11 @@ function PureDocumentToolCall({
         </div>
       </div>
 
-      <div className="mt-1 animate-spin">{<Loader2 size={16} />}</div>
+      <div className="mt-1 animate-spin">
+        <Loader2 size={16} />
+      </div>
     </button>
   );
-}
+};
 
 export const DocumentToolCall = memo(PureDocumentToolCall, () => true);

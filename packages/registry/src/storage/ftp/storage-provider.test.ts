@@ -14,9 +14,12 @@ it("uses TLS for default FTP connections and preserves implicit TLS selection", 
   try {
     for (const secure of [undefined, "implicit"] as const) {
       const adapter = createStorageAdapter({ host: "storage.example", secure });
-      const raw = adapter.raw;
-      if (raw instanceof Client)
-        throw new Error("Expected a connection factory");
+      const { raw } = adapter;
+      if (raw instanceof Client) {
+        throw new TypeError("Expected a connection factory");
+      }
+      // Each connection mutates the same environment-backed adapter configuration.
+      // eslint-disable-next-line no-await-in-loop
       const client = await raw.connect();
       expect(access).toHaveBeenLastCalledWith(
         expect.objectContaining({ secure: secure ?? true })
@@ -25,7 +28,10 @@ it("uses TLS for default FTP connections and preserves implicit TLS selection", 
     }
   } finally {
     access.mockRestore();
-    if (previousSecure === undefined) delete process.env.FTP_SECURE;
-    else process.env.FTP_SECURE = previousSecure;
+    if (previousSecure === undefined) {
+      delete process.env.FTP_SECURE;
+    } else {
+      process.env.FTP_SECURE = previousSecure;
+    }
   }
 });

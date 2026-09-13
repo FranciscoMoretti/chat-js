@@ -22,7 +22,9 @@ import { eveMessageTitle } from "@/lib/eve/message-input";
 import { EveComposer } from "./eve-composer";
 import type { useEveFork } from "./use-eve-fork";
 
-export function EveForkControls({
+// This controller renders branch navigation and the recovery composer.
+// oxlint-disable-next-line eslint/complexity
+export const EveForkControls = ({
   fork,
   conversationId,
   disabled,
@@ -30,7 +32,11 @@ export function EveForkControls({
   fork: ReturnType<typeof useEveFork>;
   conversationId: string;
   disabled: boolean;
-}) {
+}) => {
+  const handleRetry = fork.retry;
+  const handleSetDraft = fork.setDraft;
+  const handleSubmit = fork.submit;
+  const handleSetSelectedTool = fork.setSelectedTool;
   const branches = fork.family.data?.branches ?? [];
   return (
     <>
@@ -81,15 +87,15 @@ export function EveForkControls({
           {fork.error && <p role="alert">{fork.error}</p>}
           {fork.pending && (
             <>
-              <p role="status">
+              <output>
                 {fork.busy
                   ? "Creating responses…"
                   : "Response creation is unconfirmed. Retry the saved request to recover it."}
-              </p>
+              </output>
               <p className="whitespace-pre-wrap">
                 {eveMessageTitle(fork.pending.message)}
               </p>
-              <Button disabled={fork.busy} onClick={fork.retry} size="sm">
+              <Button disabled={fork.busy} onClick={handleRetry} size="sm">
                 {fork.pending && "modelIds" in fork.pending
                   ? "Recover comparison"
                   : "Recover version"}
@@ -120,9 +126,9 @@ export function EveForkControls({
             disabled={disabled || fork.locked}
             draft={fork.draft}
             files={fork.files}
-            onDraftChange={fork.setDraft}
-            onSubmit={fork.submit}
-            onToolChange={fork.setSelectedTool}
+            onDraftChange={handleSetDraft}
+            onSubmit={handleSubmit}
+            onToolChange={handleSetSelectedTool}
             retainedModelId={
               fork.pending && !("modelIds" in fork.pending)
                 ? fork.pending.modelId
@@ -146,4 +152,4 @@ export function EveForkControls({
       </Dialog>
     </>
   );
-}
+};

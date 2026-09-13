@@ -20,8 +20,8 @@ export type AppModelDefinition = Omit<ModelData, "id"> & {
 const DISABLED_MODELS = new Set(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
-function buildAppModels(models: ModelData[]): AppModelDefinition[] {
-  return models
+const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
+  models
     .flatMap((model) => {
       const modelId = model.id as ModelId;
       // If the model supports reasoning, return two variants:
@@ -33,15 +33,15 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
         return [
           {
             ...model,
-            id: reasoningId,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
+            id: reasoningId,
           },
           {
             ...model,
-            reasoning: false,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
+            reasoning: false,
           },
         ];
       }
@@ -58,14 +58,13 @@ function buildAppModels(models: ModelData[]): AppModelDefinition[] {
     .filter(
       (model) => model.type === "language" && !model.disabled
     ) as AppModelDefinition[];
-}
 
-function buildChatModels(
+const buildChatModels = (
   appModels: AppModelDefinition[]
-): AppModelDefinition[] {
-  return appModels
+): AppModelDefinition[] =>
+  appModels
     .filter((model) => model.output.text === true)
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const aProviderIndex = PROVIDER_ORDER.indexOf(a.owned_by);
       const bProviderIndex = PROVIDER_ORDER.indexOf(b.owned_by);
 
@@ -80,7 +79,6 @@ function buildChatModels(
 
       return 0;
     });
-}
 
 const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
@@ -100,16 +98,16 @@ export const fetchChatModels = cache(
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
 
-export async function getAppModelDefinition(
+export const getAppModelDefinition = async (
   modelId: AppModelId
-): Promise<AppModelDefinition> {
+): Promise<AppModelDefinition> => {
   const models = await fetchAllAppModels();
   const model = models.find((m) => m.id === modelId);
   if (!model) {
     throw new Error(`Model ${modelId} not found`);
   }
   return model;
-}
+};
 
 /**
  * Set of model IDs from the generated models file.
@@ -117,9 +115,8 @@ export async function getAppModelDefinition(
  * When the snapshot was generated for a different gateway the IDs won't match,
  * so we fall back to an empty set (which auto-enables all models).
  */
-function snapshotMatchesGateway(gateway: string): boolean {
-  return generatedForGateway === gateway;
-}
+const snapshotMatchesGateway = (gateway: string): boolean =>
+  generatedForGateway === gateway;
 
 const KNOWN_MODEL_IDS = new Set<string>(
   snapshotMatchesGateway(config.ai.gateway)
@@ -131,9 +128,9 @@ const KNOWN_MODEL_IDS = new Set<string>(
  * Returns the default enabled models for a given list of app models.
  * Includes curated defaults + any new models from the API not in models.generated.ts
  */
-export function getDefaultEnabledModels(
+export const getDefaultEnabledModels = (
   appModels: AppModelDefinition[]
-): Set<AppModelId> {
+): Set<AppModelId> => {
   const enabled = new Set<AppModelId>(config.ai.curatedDefaults);
 
   // If a curated default has a -reasoning variant, enable it too
@@ -151,4 +148,4 @@ export function getDefaultEnabledModels(
   }
 
   return enabled;
-}
+};

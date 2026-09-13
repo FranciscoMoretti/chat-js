@@ -9,23 +9,21 @@ interface ProjectMenuItemsProps {
   onRename: () => void;
 }
 
-export function ProjectMenuItems({
+export const ProjectMenuItems = ({
   onRename,
   onDelete,
-}: ProjectMenuItemsProps) {
-  return (
-    <>
-      <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
-        <Pencil size={16} />
-        <span>Rename</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-        onSelect={onDelete}
-      >
-        <Trash2 size={16} />
-        <span>Delete</span>
-      </DropdownMenuItem>
-    </>
-  );
-}
+}: ProjectMenuItemsProps) => (
+  <>
+    <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+      <Pencil size={16} />
+      <span>Rename</span>
+    </DropdownMenuItem>
+    <DropdownMenuItem
+      className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
+      onSelect={onDelete}
+    >
+      <Trash2 size={16} />
+      <span>Delete</span>
+    </DropdownMenuItem>
+  </>
+);

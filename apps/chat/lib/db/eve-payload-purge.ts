@@ -9,15 +9,49 @@ const receiptSchema = z.object({
   streamIds: z.array(z.string()),
 });
 
+const assertPayloadPurgeReady = async (
+  query: TransactionSql,
+  taskIdentifier: string,
+  inventory: {
+    runIds: string[];
+    streamIds: string[];
+  }
+) => {
+  const resources = [
+    ...inventory.runIds.map((id) => `run:${id}`),
+    ...inventory.streamIds.map((id) => `stream:${id}`),
+  ];
+  const guards = await query`select resource from workflow.eve_resource_fences
+    where resource in ${query(resources)} and fenced = true for share`;
+  if (guards.length !== resources.length) {
+    throw new Error("Fence every run and stream before purging payloads.");
+  }
+  const configured =
+    await query`select identifier from workflow.eve_queue_tasks where identifier = ${taskIdentifier}`;
+  if (!configured.length) {
+    throw new Error("Install the queue fence before purging payloads.");
+  }
+  const queue = await readEvePostgresQueueInventory(query, {
+    runIds: inventory.runIds,
+    taskIdentifier,
+  });
+  if (queue.jobs.length || queue.unsupportedJobIds.length) {
+    throw new Error("Clear queued payloads before purging native runs.");
+  }
+};
+
 /**
  * Erase the pinned provider's fenced payload tables for an authorized session.
  * Retains only resource identities as an atomic retry receipt. Accounting and
  * application tables are untouched. This is not sandbox/blob or full app deletion.
  */
-export async function purgeEvePostgresSessionPayloads(
+export const purgeEvePostgresSessionPayloads = async (
   connection: Sql,
-  input: { sessionId: string; taskIdentifier: string }
-) {
+  input: {
+    sessionId: string;
+    taskIdentifier: string;
+  }
+) => {
   const scope = z
     .object({ sessionId: z.string().min(1), taskIdentifier: z.string().min(1) })
     .parse(input);
@@ -56,7 +90,7 @@ export async function purgeEvePostgresSessionPayloads(
           ...inventory.runs.map((run) => run.id),
           ...retained.map((run) => run.id),
         ]),
-      ].sort();
+      ].toSorted();
       const receipt = { runIds, streamIds: inventory.streamIds };
       await assertPayloadPurgeReady(query, scope.taskIdentifier, receipt);
       await query`delete from workflow.workflow_stream_chunks where run_id in ${query(runIds)}`;
@@ -71,32 +105,4 @@ export async function purgeEvePostgresSessionPayloads(
       return receipt;
     }
   );
-}
-
-async function assertPayloadPurgeReady(
-  query: TransactionSql,
-  taskIdentifier: string,
-  inventory: { runIds: string[]; streamIds: string[] }
-) {
-  const resources = [
-    ...inventory.runIds.map((id) => `run:${id}`),
-    ...inventory.streamIds.map((id) => `stream:${id}`),
-  ];
-  const guards = await query`select resource from workflow.eve_resource_fences
-    where resource in ${query(resources)} and fenced = true for share`;
-  if (guards.length !== resources.length) {
-    throw new Error("Fence every run and stream before purging payloads.");
-  }
-  const configured =
-    await query`select identifier from workflow.eve_queue_tasks where identifier = ${taskIdentifier}`;
-  if (!configured.length) {
-    throw new Error("Install the queue fence before purging payloads.");
-  }
-  const queue = await readEvePostgresQueueInventory(query, {
-    runIds: inventory.runIds,
-    taskIdentifier,
-  });
-  if (queue.jobs.length || queue.unsupportedJobIds.length) {
-    throw new Error("Clear queued payloads before purging native runs.");
-  }
-}
+};

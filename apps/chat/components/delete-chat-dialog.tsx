@@ -23,11 +23,11 @@ interface DeleteChatDialogProps {
   showDeleteDialog: boolean;
 }
 
-export function DeleteChatDialog({
+export const DeleteChatDialog = ({
   deleteId,
   showDeleteDialog,
   setShowDeleteDialog,
-}: DeleteChatDialogProps) {
+}: DeleteChatDialogProps) => {
   const currentRoute = useCurrentChatRoute();
   const router = useRouter();
   const { deleteChat } = useDeleteChat();
@@ -39,10 +39,10 @@ export function DeleteChatDialog({
 
     try {
       await deleteChat(deleteId, {
-        onSuccess: () => toast.success("Chat deleted successfully"),
         onError: () => toast.error("Failed to delete chat"),
+        onSuccess: () => toast.success("Chat deleted successfully"),
       });
-    } catch (_error) {
+    } catch {
       // Error already handled by onError callback
     }
 
@@ -86,4 +86,4 @@ export function DeleteChatDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

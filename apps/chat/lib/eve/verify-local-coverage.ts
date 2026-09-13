@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { constants } from "node:fs";
 import { open, realpath } from "node:fs/promises";
-import { join } from "node:path";
+import nodePath from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import postgres from "postgres";
@@ -12,29 +12,33 @@ import { env } from "../env";
 import { assertEveConfigured } from "./server";
 
 const identitySchema = z.strictObject({
-  version: z.literal(1),
-  sessionId: z.string().min(1),
   appRoot: z.string().min(1),
   backendName: z.literal("microsandbox"),
+  sessionId: z.string().min(1),
+  version: z.literal(1),
 });
 const receiptSchema = z.strictObject({
-  version: z.literal(1),
-  snapshotVersion: z.literal(2),
-  sessionId: z.string().min(1),
   local: identitySchema,
+  sessionId: z.string().min(1),
+  snapshotVersion: z.literal(2),
+  version: z.literal(1),
 });
 
 /** Called only after family authorization, retirement and native/local fences. */
-export async function verifyLocalEveFamilyCoverage(
+export const verifyLocalEveFamilyCoverage = async (
   ownerId: string,
   appRoot: string,
-  inventories: Array<{ sessionId: string; runIds: string[] }>
-) {
+  inventories: {
+    sessionId: string;
+    runIds: string[];
+  }[]
+) => {
   assertEveConfigured();
   const canonicalRoot = await realpath(appRoot);
   const connection = postgres(env.WORKFLOW_POSTGRES_URL ?? "", { max: 1 });
   try {
     for (const inventory of inventories) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
       await verifyEveSandboxCoverage(
         connection,
         { ...inventory, appRoot: canonicalRoot },
@@ -45,14 +49,14 @@ export async function verifyLocalEveFamilyCoverage(
               env.EVE_INTERNAL_ORIGIN
             ),
             {
+              cache: "no-store",
               headers: {
                 authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
-                "x-chatjs-owner": ownerId,
                 "x-chatjs-deletion": "1",
                 "x-chatjs-deletion-root": inventory.sessionId,
+                "x-chatjs-owner": ownerId,
               },
               redirect: "error",
-              cache: "no-store",
               signal: AbortSignal.timeout(15_000),
             }
           );
@@ -63,10 +67,10 @@ export async function verifyLocalEveFamilyCoverage(
           }
           const receipt = receiptSchema.parse(await response.json());
           const expected = {
-            version: 1,
-            sessionId,
             appRoot: canonicalRoot,
             backendName: "microsandbox",
+            sessionId,
+            version: 1,
           };
           if (
             receipt.sessionId !== sessionId ||
@@ -76,14 +80,18 @@ export async function verifyLocalEveFamilyCoverage(
               "Native sandbox ownership does not match this worker."
             );
           }
-          const directory = join(canonicalRoot, ".eve", "sandbox-identities");
+          const directory = nodePath.join(
+            canonicalRoot,
+            ".eve",
+            "sandbox-identities"
+          );
           if ((await realpath(directory)) !== directory) {
             throw new Error(
               "Sandbox identity directory must not be redirected."
             );
           }
           const file = await open(
-            join(
+            nodePath.join(
               directory,
               `${createHash("sha256").update(sessionId).digest("hex")}.json`
             ),
@@ -95,7 +103,7 @@ export async function verifyLocalEveFamilyCoverage(
               throw new Error("Invalid sandbox identity file.");
             }
             const local = identitySchema.parse(
-              JSON.parse(await file.readFile("utf8"))
+              JSON.parse(await file.readFile("utf-8"))
             );
             if (!isDeepStrictEqual(local, expected)) {
               throw new Error(
@@ -111,4 +119,4 @@ export async function verifyLocalEveFamilyCoverage(
   } finally {
     await connection.end();
   }
-}
+};

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useSession } from "@/providers/session-provider";
 
-function PureHeaderActions() {
+const PureHeaderActions = () => {
   const { data: session } = useSession();
   const user = session?.user;
   const router = useRouter();
@@ -44,6 +44,6 @@ function PureHeaderActions() {
       <GitHubLink />
     </div>
   );
-}
+};
 
 export const HeaderActions = memo(PureHeaderActions);

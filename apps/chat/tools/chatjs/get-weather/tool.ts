@@ -4,7 +4,6 @@ import { weatherInput } from "./schemas";
 
 export const getWeather = tool({
   description: "Get the current weather at a location",
-  inputSchema: weatherInput,
   execute: async ({
     latitude,
     longitude,
@@ -19,6 +18,7 @@ export const getWeather = tool({
     const weatherData = await response.json();
     return weatherData as WeatherAtLocation;
   },
+  inputSchema: weatherInput,
 });
 
 export interface WeatherAtLocation {

@@ -18,49 +18,15 @@ import {
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Login",
   description: "Login to your account",
+  title: "Login",
 };
 
-export default function LoginPage({
+const LoginPageContent = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  return (
-    <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
-      <InternalLink
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "absolute top-4 left-4 md:top-8 md:left-8"
-        )}
-        href="/"
-      >
-        <ChevronLeft className="mr-2 h-4 w-4" />
-        Back
-      </InternalLink>
-      <DevLoginTool />
-      <div className="mx-auto flex w-full flex-col items-center justify-center sm:w-[420px]">
-        <Suspense
-          fallback={
-            <AuthCardSkeleton
-              description="Sign in to your account"
-              title="Welcome back"
-            />
-          }
-        >
-          <LoginPageContent searchParams={searchParams} />
-        </Suspense>
-      </div>
-    </div>
-  );
-}
-
-async function LoginPageContent({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+}) => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isElectronTransfer =
@@ -85,4 +51,38 @@ async function LoginPageContent({
       <LoginForm className="w-full" />
     </Suspense>
   );
-}
+};
+
+const LoginPage = ({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) => (
+  <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
+    <InternalLink
+      className={cn(
+        buttonVariants({ variant: "ghost" }),
+        "absolute top-4 left-4 md:top-8 md:left-8"
+      )}
+      href="/"
+    >
+      <ChevronLeft className="mr-2 h-4 w-4" />
+      Back
+    </InternalLink>
+    <DevLoginTool />
+    <div className="mx-auto flex w-full flex-col items-center justify-center sm:w-[420px]">
+      <Suspense
+        fallback={
+          <AuthCardSkeleton
+            description="Sign in to your account"
+            title="Welcome back"
+          />
+        }
+      >
+        <LoginPageContent searchParams={searchParams} />
+      </Suspense>
+    </div>
+  </div>
+);
+
+export default LoginPage;

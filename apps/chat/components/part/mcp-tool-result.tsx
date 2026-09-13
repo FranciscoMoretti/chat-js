@@ -11,7 +11,7 @@ import {
 } from "@/components/ai-elements/tool";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 
-export function McpToolResult({
+export const McpToolResult = ({
   part,
   icon,
   defaultOpen = false,
@@ -22,7 +22,7 @@ export function McpToolResult({
   };
   icon?: ReactNode;
   defaultOpen?: boolean;
-}) {
+}) => {
   const parsed = parseToolId(part.toolName);
   return (
     <Tool defaultOpen={defaultOpen}>
@@ -41,4 +41,4 @@ export function McpToolResult({
       </ToolContent>
     </Tool>
   );
-}
+};

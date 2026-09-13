@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import type { z } from "zod";
@@ -10,17 +11,23 @@ import type { EvePrincipal } from "./principal";
 import { eveResponseGroupCandidates } from "./response-group-candidates";
 import type { eveResponseGroupInput } from "./response-group-input";
 
-export async function admitGuestResponseGroup(
+export const admitGuestResponseGroup = async (
   request: Request,
-  principal: Extract<EvePrincipal, { kind: "guest" }>,
+  principal: Extract<
+    EvePrincipal,
+    {
+      kind: "guest";
+    }
+  >,
   input: z.infer<typeof eveResponseGroupInput>
-) {
+) => {
   const candidates = eveResponseGroupCandidates(
     input.operationId,
     input.modelIds
   );
   const inputs: Parameters<typeof reserveEveGuestMessages>[0] = [];
   for (const candidate of candidates) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
     const ipHash = await validateGuestCreation(request, principal, {
       ...candidate,
       message: input.message,
@@ -68,4 +75,4 @@ export async function admitGuestResponseGroup(
     },
     { status: result.status === "conflict" ? 409 : 429 }
   );
-}
+};

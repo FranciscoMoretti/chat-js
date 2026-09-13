@@ -5,43 +5,43 @@ import { EveMcpResult } from "../components/eve/eve-mcp-result";
 import { McpToolResult } from "../components/part/mcp-tool-result";
 
 const common = {
-  type: "dynamic-tool",
-  toolName: "local__echo",
-  toolCallId: "echo",
   input: { text: "Hello MCP" },
+  toolCallId: "echo",
+  toolName: "local__echo",
+  type: "dynamic-tool",
 } as const;
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, state: "input-streaming", inputText: "" },
+  { ...common, inputText: "", state: "input-streaming" },
   { ...common, state: "input-available" },
   {
     ...common,
-    state: "output-available",
     output: {
       kind: "chatjs.mcp-result",
-      output: { text: "Hello MCP" },
       modelOutput: { type: "text", value: "Hello MCP" },
+      output: { text: "Hello MCP" },
     },
+    state: "output-available",
   },
   ...[false, 0, true, null, ""].map((output, index) => ({
     ...common,
-    toolName: `local__value_${index}`,
-    toolCallId: `value-${index}`,
-    state: "output-available" as const,
     output: {
       kind: "chatjs.mcp-result",
-      output,
       modelOutput: { type: "json", value: output },
+      output,
     },
+    state: "output-available" as const,
+    toolCallId: `value-${index}`,
+    toolName: `local__value_${index}`,
   })),
-  { ...common, state: "output-error", errorText: "private connector URL" },
+  { ...common, errorText: "private connector URL", state: "output-error" },
   {
     ...common,
+    approval: { approved: false, id: "fixture" },
     state: "output-denied",
-    approval: { id: "fixture", approved: false },
   },
-  { ...common, state: "output-available", output: { invalid: true } },
+  { ...common, output: { invalid: true }, state: "output-available" },
 ];
-const root = document.getElementById("fixture");
+const root = document.querySelector("#fixture");
 if (!root) {
   throw new Error("Missing fixture root");
 }
@@ -58,10 +58,10 @@ createRoot(root).render(
           defaultOpen
           key={JSON.stringify(output)}
           part={{
-            toolName: `local__value_${index}`,
             input: {},
-            state: "output-available",
             output,
+            state: "output-available",
+            toolName: `local__value_${index}`,
           }}
         />
       ))}

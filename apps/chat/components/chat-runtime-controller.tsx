@@ -6,16 +6,16 @@ import { toast } from "sonner";
 
 import { ChatSync } from "@/components/chat-sync";
 import {
-  type AppRuntime,
   getAppRuntimeStore,
   getAppRuntimeThread,
 } from "@/lib/app-chat-runtime";
+import type { AppRuntime } from "@/lib/app-chat-runtime";
 import { claimConfirmedProvisionalChat } from "@/lib/provisional-chat-confirmations";
 import { CustomStoreProvider } from "@/lib/stores/custom-store-provider";
 import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useTRPC } from "@/trpc/react";
 
-function ChatConfirmationEffects({ chatId }: { chatId: string }) {
+const ChatConfirmationEffects = ({ chatId }: { chatId: string }) => {
   const isChatPersisted = useIsChatPersisted(chatId);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -49,21 +49,26 @@ function ChatConfirmationEffects({ chatId }: { chatId: string }) {
           }),
         }),
         queryClient.invalidateQueries({
-          queryKey: trpc.chat.getAllChats.queryKey(),
           exact: false,
+          queryKey: trpc.chat.getAllChats.queryKey(),
         }),
       ]);
     };
 
-    invalidatePersistedChatQueries().catch(() => {
-      toast.error("Failed to refresh chat history");
-    });
+    const invalidation = invalidatePersistedChatQueries();
+    void (async () => {
+      try {
+        await invalidation;
+      } catch {
+        toast.error("Failed to refresh chat history");
+      }
+    })();
   }, [chatId, isChatPersisted, queryClient, trpc]);
 
   return null;
-}
+};
 
-export function AppRuntimeSlot({ runtime }: { runtime: AppRuntime }) {
+export const AppRuntimeSlot = ({ runtime }: { runtime: AppRuntime }) => {
   const store = getAppRuntimeStore(runtime);
   const thread = getAppRuntimeThread(runtime);
 
@@ -73,4 +78,4 @@ export function AppRuntimeSlot({ runtime }: { runtime: AppRuntime }) {
       <ChatSync id={runtime.data.chatId} thread={thread} />
     </CustomStoreProvider>
   );
-}
+};

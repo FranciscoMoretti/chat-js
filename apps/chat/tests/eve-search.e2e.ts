@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
@@ -13,7 +14,7 @@ import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const SOURCES = /\d+ Sources/;
+const SOURCES = /\d+ Sources/u;
 
 test("native search retains sources, progress and billing across reload", async ({
   page,
@@ -21,14 +22,14 @@ test("native search retains sources, progress and billing across reload", async 
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
-      selectedTool: "webSearch",
       message:
         'Use webSearch exactly twice, separately: first query "IANA example domains", then query "MDN JavaScript Array". Each call should have one query, maximum 2 results, basic depth. Use no other tool. Summarize the sources in one sentence.',
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
+      selectedTool: "webSearch",
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z
@@ -38,7 +39,7 @@ test("native search retains sources, progress and billing across reload", async 
   const sources = page.getByRole("button", { name: SOURCES });
   await expect(sources).toHaveCount(2, { timeout: 90_000 });
   const firstLinks: (string | null)[] = [];
-  for (let index = 0; index < 2; index++) {
+  for (let index = 0; index < 2; index += 1) {
     await sources.nth(index).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(
@@ -59,9 +60,9 @@ test("native search retains sources, progress and billing across reload", async 
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": conversation.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(binding.sessionId)
@@ -109,15 +110,15 @@ test("native search retains sources, progress and billing across reload", async 
   await page.reload();
   await expect(sources).toHaveCount(2);
   await page.getByRole("log").screenshot({
-    path: "tests/eve-results/screenshots/eve-search-desktop.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-search-desktop.png",
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await sources.last().click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.screenshot({
-    path: "tests/eve-results/screenshots/eve-search-mobile.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-search-mobile.png",
   });
 });
 
@@ -131,7 +132,7 @@ test("search loading and failure states remain readable", async ({ page }) => {
   const content = execFileSync(
     "bun",
     ["tests/eve-search-renderer-fixture.ts"],
-    { encoding: "utf8" }
+    { encoding: "utf-8" }
   );
   await page.setContent(
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
@@ -140,14 +141,14 @@ test("search loading and failure states remain readable", async ({ page }) => {
   await expect(page.getByRole("alert")).toHaveCount(3);
   await expect(page.getByText("Search declined.")).toBeVisible();
   for (const width of [1100, 390]) {
-    await page.setViewportSize({ width, height: 850 });
+    await page.setViewportSize({ height: 850, width });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);
     await page.screenshot({
-      path: `tests/eve-results/screenshots/eve-search-states-${width}.png`,
-      fullPage: true,
       animations: "disabled",
+      fullPage: true,
+      path: `tests/eve-results/screenshots/eve-search-states-${width}.png`,
     });
   }
 });

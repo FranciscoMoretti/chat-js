@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
 import { ResponsiveTools } from "../components/responsive-tools";
@@ -11,12 +12,12 @@ const fixtureModels = models
   .map((model) => ({
     ...model,
     apiModelId: model.id,
-    input: { text: true, image: true, pdf: true },
+    input: { image: true, pdf: true, text: true },
   }));
 const modelContext = {
-  models: fixtureModels,
   allModels: fixtureModels,
   getModelById: (id: string) => fixtureModels.find((model) => model.id === id),
+  models: fixtureModels,
 };
 export const useChatModels = () => modelContext;
 export const useSession = () => ({
@@ -25,22 +26,19 @@ export const useSession = () => ({
 });
 // Comparisons use no connected MCP servers; the real control is covered by eve-mcp.e2e.ts.
 export const ConnectorsDropdown = () => null;
-export function EveArtifactLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
-}
-export function ChatWelcomeView({ children }: { children: ReactNode }) {
-  return <main className="mx-auto max-w-3xl p-4">{children}</main>;
-}
-export function InternalLink({
+export const EveArtifactLayout = ({ children }: { children: ReactNode }) =>
+  children;
+export const ChatWelcomeView = ({ children }: { children: ReactNode }) => (
+  <main className="mx-auto max-w-3xl p-4">{children}</main>
+);
+export const InternalLink = ({
   children,
   href,
 }: {
   children: ReactNode;
   href: string;
-}) {
-  return <a href={href}>{children}</a>;
-}
-export function EveConversation({
+}) => <a href={href}>{children}</a>;
+export const EveConversation = ({
   header,
   sessionId,
   ownerId,
@@ -54,7 +52,7 @@ export function EveConversation({
   draftScopeId: string;
   onStatusChange?: (status: "ready") => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
-}) {
+}) => {
   const model = useDefaultModel();
   const draft = useEveComposerDraft(ownerId, draftScopeId);
   const [pending, setPending] = useState(false);
@@ -88,10 +86,10 @@ export function EveConversation({
           onClick={() =>
             draft.setAttachments([
               {
-                url: "https://files.test/owned.pdf",
-                name: "notes.pdf",
                 contentType: "application/pdf",
                 digest: "fixture-digest",
+                name: "notes.pdf",
+                url: "https://files.test/owned.pdf",
               },
             ])
           }
@@ -108,4 +106,4 @@ export function EveConversation({
       </section>
     </main>
   );
-}
+};

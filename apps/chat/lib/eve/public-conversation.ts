@@ -5,16 +5,16 @@ import { env } from "../env";
 import { assertEveConfigured } from "./server";
 import { sharedEveMessages } from "./shared-messages";
 
-export async function getPublicEveTranscript(id: string) {
+export const getPublicEveTranscript = async (id: string) => {
   const row = await getPublicEveConversation(id);
   if (!row?.sessionId) {
     return null;
   }
   assertEveConfigured();
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": row.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(row.sessionId)
@@ -25,7 +25,7 @@ export async function getPublicEveTranscript(id: string) {
   }
   return {
     id: row.id,
-    title: row.title ?? row.firstMessage.slice(0, 100),
     messages: sharedEveMessages(snapshot.events),
+    title: row.title ?? row.firstMessage.slice(0, 100),
   };
-}
+};

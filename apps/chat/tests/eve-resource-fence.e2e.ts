@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -12,7 +14,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Resource fence acceptance requires local Postgres.");
 }
 const query = postgres(env.DATABASE_URL, { max: 4 });
-const rejectedWriteCode = /^(40001|55000)$/;
+const rejectedWriteCode = /^(?<code>40001|55000)$/u;
 const runIds: string[] = [];
 const streamIds: string[] = [];
 await installEvePostgresResourceFence(query);
@@ -115,11 +117,11 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
 
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
   const id = await run();
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const writer = query.begin(async (tx) => {
     await tx`update workflow.workflow_runs set output = '{"admitted":true}'::jsonb where id = ${id}`;
-    entered.resolve();
+    entered.resolve(undefined);
     await release.promise;
   });
   await entered.promise;
@@ -138,7 +140,7 @@ test("fencing waits for admitted writers to commit before rejecting later writes
       })
       .toBe(true);
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     await writer;
     await fencing;
     await fencer.end();
@@ -153,11 +155,11 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
   const id = await run();
   const streamId = crypto.randomUUID();
   streamIds.push(streamId);
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const writer = query.begin("isolation level repeatable read", async (tx) => {
     await tx`select resource from workflow.eve_resource_fences where resource = ${`run:${id}`}`;
-    entered.resolve();
+    entered.resolve(undefined);
     await release.promise;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${streamId}, ${id}, ${Buffer.from("late")}, false)`;
@@ -169,7 +171,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
     await entered.promise;
     await fenceEvePostgresResources(query, { runIds: [id], streamIds: [] });
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     await rejected;
   }
   expect(
@@ -187,7 +189,7 @@ test("session fencing rolls back for an active child and succeeds after retireme
   const rootStream = await stream(root);
   await query`update workflow.workflow_runs set status = 'completed' where id = ${child}`;
   const result = await fenceEvePostgresSession(query, root);
-  expect(result.runIds.sort()).toEqual([root, child].sort());
+  expect(result.runIds.toSorted()).toEqual([root, child].toSorted());
   expect(result.streamIds).toEqual([rootStream]);
   expect(await fenceEvePostgresSession(query, root)).toEqual(result);
   await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
@@ -201,14 +203,14 @@ test("session fencing re-inventories a collector child committed while its fence
   const childStream = crypto.randomUUID();
   runIds.push(child);
   streamIds.push(childStream);
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const writer = query.begin(async (tx) => {
     await tx`insert into workflow.workflow_runs (id, name, deployment_id, status, attributes)
       values (${child}, 'admitted-child', 'fixture', 'completed', ${tx.json({ $parentRunId: collector })})`;
     await tx`insert into workflow.workflow_stream_chunks (id, stream_id, run_id, data, eof)
       values (${crypto.randomUUID()}, ${childStream}, ${child}, ${Buffer.from("admitted")}, false)`;
-    entered.resolve();
+    entered.resolve(undefined);
     await release.promise;
   });
   await entered.promise;
@@ -225,11 +227,13 @@ test("session fencing re-inventories a collector child committed while its fence
         })
         .toBe(true);
     } finally {
-      release.resolve();
+      release.resolve(undefined);
       await writer;
     }
     const result = await fencing;
-    expect(result.runIds.sort()).toEqual([root, collector, child].sort());
+    expect(result.runIds.toSorted()).toEqual(
+      [root, collector, child].toSorted()
+    );
     expect(result.streamIds).toEqual([childStream]);
     await expect(stream(child)).rejects.toMatchObject({ code: "55000" });
   } finally {

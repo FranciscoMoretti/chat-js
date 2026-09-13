@@ -27,6 +27,10 @@ const VARIANT_CONFIG: Record<
 > = {
   credits: {
     dismissible: true,
+    getClasses: ({ isAtLimit }) =>
+      isAtLimit
+        ? "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200"
+        : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
     getMessage: ({ remaining, isAtLimit }) =>
       isAtLimit ? (
         <span>
@@ -53,13 +57,17 @@ const VARIANT_CONFIG: Record<
           </InternalLink>
         </span>
       ),
-    getClasses: ({ isAtLimit }) =>
-      isAtLimit
-        ? "bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200"
-        : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
+  },
+  image: {
+    dismissible: false,
+    getClasses: () =>
+      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
+    getMessage: () => <span>Image models are not supported here yet.</span>,
   },
   model: {
     dismissible: false,
+    getClasses: () =>
+      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
     getMessage: () => (
       <span>
         This model isn&apos;t available for anonymous users.{" "}
@@ -71,24 +79,16 @@ const VARIANT_CONFIG: Record<
         </InternalLink>
       </span>
     ),
-    getClasses: () =>
-      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
-  },
-  image: {
-    dismissible: false,
-    getMessage: () => <span>Image models are not supported here yet.</span>,
-    getClasses: () =>
-      "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200",
   },
 };
 
-export function LimitDisplay({
+export const LimitDisplay = ({
   className,
   forceVariant,
 }: {
   className?: string;
   forceVariant?: "credits" | "model" | "image";
-}) {
+}) => {
   const { credits, isLoadingCredits } = useGetCredits();
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -120,10 +120,10 @@ export function LimitDisplay({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ opacity: 1, height: "auto" }}
+        animate={{ height: "auto", opacity: 1 }}
         className={cn("w-full", className)}
-        exit={{ opacity: 0, height: 0 }}
-        initial={{ opacity: 0, height: 0 }}
+        exit={{ height: 0, opacity: 0 }}
+        initial={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
         <div
@@ -133,7 +133,10 @@ export function LimitDisplay({
           )}
         >
           <div className="flex-1">
-            {config.getMessage({ remaining, isAtLimit })}
+            {config.getMessage({
+              isAtLimit,
+              remaining,
+            })}
           </div>
           {config.dismissible ? (
             <Button
@@ -149,4 +152,4 @@ export function LimitDisplay({
       </motion.div>
     </AnimatePresence>
   );
-}
+};

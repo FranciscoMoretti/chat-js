@@ -6,10 +6,10 @@ import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipe
 import { executeEveResearch } from "./research-tool";
 
 const mocks = vi.hoisted(() => ({
-  save: vi.fn(),
-  resolveModel: vi.fn(),
-  enabled: { enabled: true },
   documents: { enabled: true, types: { text: true } },
+  enabled: { enabled: true },
+  resolveModel: vi.fn(),
+  save: vi.fn(),
 }));
 vi.mock("../config", () => ({
   config: {
@@ -42,29 +42,29 @@ vi.mock("../ai/to-model-data", () => ({
   toModelData: (value: unknown) => value,
 }));
 const context = {
-  callId: "research-call",
   abortSignal: new AbortController().signal,
+  callId: "research-call",
   session: {
-    id: "session",
     auth: {
       current: null,
       initiator: {
+        attributes: {},
+        authenticator: "test",
         principalId: "owner",
         principalType: "user",
-        authenticator: "test",
-        attributes: {},
       },
     },
+    id: "session",
     turn: { id: "turn", sequence: 1 },
   },
 };
 const document = {
-  status: "success",
-  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
-  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
-  title: "Report",
-  kind: "text",
   date: "2026-09-10",
+  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+  kind: "text",
+  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+  status: "success",
+  title: "Report",
 };
 
 beforeEach(() => {
@@ -78,16 +78,16 @@ it("persists through the owning native call and includes research progress and a
   vi.mocked(runDeepResearchPipeline).mockImplementation(
     async (input, _config, stream, options) => {
       expect(input.messages).toEqual([
-        { role: "user", content: "Research this" },
+        { content: "Research this", role: "user" },
       ]);
       stream.write({
-        type: "data-researchUpdate",
         data: {
-          toolCallId: input.toolCallId,
-          type: "started",
           timestamp: 0,
           title: "Researching",
+          toolCallId: input.toolCallId,
+          type: "started",
         },
+        type: "data-researchUpdate",
       });
       options.costAccumulator.addAPICost("search", 5);
       options.costAccumulator.addLLMCost(
@@ -96,17 +96,17 @@ it("persists through the owning native call and includes research progress and a
         "research"
       );
       return {
-        type: "report",
         data: await options.saveReport({
-          title: "Report",
           content: "# Research",
+          title: "Report",
         }),
+        type: "report",
       };
     }
   );
   const outputs = await Array.fromAsync(
     executeEveResearch({}, context, [
-      { role: "user", content: "Research this" },
+      { content: "Research this", role: "user" },
     ])
   );
   expect(outputs[0].updates).toHaveLength(1);
@@ -116,23 +116,23 @@ it("persists through the owning native call and includes research progress and a
   });
   expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
     "createTextDocument",
-    { title: "Report", content: "# Research" },
+    { content: "# Research", title: "Report" },
     expect.objectContaining({
-      session: context.session,
       callId: context.callId,
+      session: context.session,
     })
   );
 });
 
 it("returns clarification without creating a document", async () => {
   vi.mocked(runDeepResearchPipeline).mockResolvedValue({
-    type: "clarifying_question",
     data: "Which topic?",
+    type: "clarifying_question",
   });
   const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
   expect(outputs.at(-1)?.output).toEqual({
-    format: "clarifying_questions",
     answer: "Which topic?",
+    format: "clarifying_questions",
   });
   expect(mocks.save).not.toHaveBeenCalled();
 });
@@ -143,8 +143,8 @@ it("retains incurred cost if saving the report fails", async () => {
     async (_input, _config, _stream, options) => {
       options.costAccumulator.addAPICost("search", 5);
       return {
+        data: await options.saveReport({ content: "Content", title: "Report" }),
         type: "report",
-        data: await options.saveReport({ title: "Report", content: "Content" }),
       };
     }
   );
@@ -176,12 +176,12 @@ it("forwards configured reasoning options into the research provider request", a
     async (_input, _config, _stream, options) => {
       await expect(
         generateText({
+          maxRetries: 0,
           model: await options.getLanguageModel("openai/gpt-4.1"),
           prompt: "Research",
-          maxRetries: 0,
         })
       ).rejects.toThrow("provider reached");
-      return { type: "clarifying_question", data: "Scope?" };
+      return { data: "Scope?", type: "clarifying_question" };
     }
   );
   await Array.fromAsync(executeEveResearch({}, context, []));

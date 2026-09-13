@@ -4,19 +4,52 @@ import { z } from "zod";
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 
+const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
+  if (!jobIds.length) {
+    return [];
+  }
+  const locked = z
+    .array(z.object({ active: z.boolean(), id: z.string() }))
+    .parse(
+      await query`select id::text, (locked_at is not null or locked_by is not null) as active
+          from graphile_worker._private_jobs
+          where id::text in ${query(jobIds)}
+          order by id for update`
+    );
+  // A worker may have claimed a job between inventory and row locking.
+  if (locked.some((job) => job.active)) {
+    throw new Error("Wait for active queue workers before cleanup.");
+  }
+  const removed = locked.length
+    ? z
+        .array(z.object({ id: z.string() }))
+        .parse(
+          await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
+        )
+    : [];
+  if (removed.length !== locked.length) {
+    throw new Error("Queue cleanup did not remove every locked job.");
+  }
+  return removed.map((job) => job.id).toSorted();
+};
+
 /**
  * Remove queued payloads for an authorized resource set already fenced by the
  * session coordinator. Returns newly discovered queued run IDs for the caller's
  * deletion inventory. Never force-unlocks workers or claims full session purge.
  */
-export async function purgeEvePostgresQueue(
+export const purgeEvePostgresQueue = async (
   connection: Sql,
-  input: { sessionId: string; runIds: string[]; taskIdentifier: string }
-) {
+  input: {
+    sessionId: string;
+    runIds: string[];
+    taskIdentifier: string;
+  }
+) => {
   const parsed = z
     .object({
-      sessionId: z.string().min(1),
       runIds: z.array(z.string().min(1)).min(1).max(10_000),
+      sessionId: z.string().min(1),
       taskIdentifier: z.string().min(1),
     })
     .parse(input);
@@ -47,8 +80,8 @@ export async function purgeEvePostgresQueue(
       if (guards.length !== known.size) {
         throw new Error("Fence all runs before removing queued payloads.");
       }
-
-      for (let pass = 0; pass < 100; pass++) {
+      for (let pass = 0; pass < 100; pass += 1) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         const inventory = await readEvePostgresQueueInventory(query, {
           runIds: [...known],
           taskIdentifier: parsed.taskIdentifier,
@@ -66,6 +99,7 @@ export async function purgeEvePostgresQueue(
           for (const id of newIds) {
             known.add(id);
           }
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
           await fenceEvePostgresResourcesInTransaction(query, {
             runIds: [...known],
             streamIds: [],
@@ -74,47 +108,20 @@ export async function purgeEvePostgresQueue(
         }
         // Keep discovered identities durably before dropping their last queued
         // association. A lost response can then retry without losing child IDs.
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         await query`insert into workflow.eve_queue_purge_runs (session_id, task_identifier, run_id)
           select ${parsed.sessionId}, ${parsed.taskIdentifier}, id
           from unnest(${query.array([...known])}::text[]) id on conflict do nothing`;
         return {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
           removedJobIds: await removeUnlockedJobs(
             query,
             inventory.jobs.map((job) => job.id)
           ),
-          runIds: [...known].sort(),
+          runIds: [...known].toSorted(),
         };
       }
       throw new Error("Queue inventory did not stabilize; retry cleanup.");
     }
   );
-}
-
-async function removeUnlockedJobs(query: TransactionSql, jobIds: string[]) {
-  if (!jobIds.length) {
-    return [];
-  }
-  const locked = z
-    .array(z.object({ id: z.string(), active: z.boolean() }))
-    .parse(
-      await query`select id::text, (locked_at is not null or locked_by is not null) as active
-          from graphile_worker._private_jobs
-          where id::text in ${query(jobIds)}
-          order by id for update`
-    );
-  // A worker may have claimed a job between inventory and row locking.
-  if (locked.some((job) => job.active)) {
-    throw new Error("Wait for active queue workers before cleanup.");
-  }
-  const removed = locked.length
-    ? z
-        .array(z.object({ id: z.string() }))
-        .parse(
-          await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
-        )
-    : [];
-  if (removed.length !== locked.length) {
-    throw new Error("Queue cleanup did not remove every locked job.");
-  }
-  return removed.map((job) => job.id).sort();
-}
+};

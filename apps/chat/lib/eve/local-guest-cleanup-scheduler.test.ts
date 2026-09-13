@@ -3,14 +3,14 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { startLocalEveGuestCleanup } from "./local-guest-cleanup-scheduler";
 
 const mocks = vi.hoisted(() => ({
-  env: {
-    NODE_ENV: "development",
-    EVE_ENABLED: "true",
-    EVE_GATEWAY_SECRET: "local-fixture-secret",
-    DATABASE_URL: "postgresql://localhost/fixture",
-  },
   available: vi.fn(),
   cleanup: vi.fn(),
+  env: {
+    DATABASE_URL: "postgresql://localhost/fixture",
+    EVE_ENABLED: "true",
+    EVE_GATEWAY_SECRET: "local-fixture-secret",
+    NODE_ENV: "development",
+  },
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("./local-deletion-available", () => ({
@@ -29,9 +29,9 @@ beforeEach(() => {
   mocks.env.DATABASE_URL = "postgresql://localhost/fixture";
   mocks.available.mockReturnValue(true);
   mocks.cleanup.mockResolvedValue({
-    skipped: false,
     deletedCount: 0,
     pendingCount: 0,
+    skipped: false,
   });
 });
 afterEach(() => {
@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 test("startup is singleton and sweeps never overlap", async () => {
-  const gate = Promise.withResolvers<void>();
+  const gate = Promise.withResolvers<undefined>();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
@@ -57,7 +57,7 @@ test("startup is singleton and sweeps never overlap", async () => {
   expect(startLocalEveGuestCleanup()).toBe(stop);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
-  gate.resolve();
+  gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   stop?.();
@@ -93,20 +93,20 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
 });
 
 test("a failed sweep retries later and stopping in flight prevents rescheduling", async () => {
-  const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
   mocks.cleanup.mockRejectedValueOnce(new Error("database unavailable"));
   stop = startLocalEveGuestCleanup();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   expect(error).toHaveBeenCalledOnce();
-  const gate = Promise.withResolvers<void>();
+  const gate = Promise.withResolvers<undefined>();
   mocks.cleanup.mockImplementationOnce(async () => {
     await gate.promise;
     return { deletedCount: 0, pendingCount: 0 };
   });
   await vi.advanceTimersByTimeAsync(60_000);
   stop?.();
-  gate.resolve();
+  gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();

@@ -5,11 +5,10 @@
  *
  * Note: data-* parts are handled by convertToModelMessages({ convertDataPart: () => undefined })
  */
-export function filterPartsForLLM<T extends { parts: Array<{ type: string }> }>(
+export const filterPartsForLLM = <T extends { parts: { type: string }[] }>(
   messages: T[]
-): T[] {
-  return messages.map((message) => ({
+): T[] =>
+  messages.map((message) => ({
     ...message,
     parts: message.parts.filter((part) => part.type !== "reasoning"),
   }));
-}

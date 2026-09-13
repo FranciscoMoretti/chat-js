@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import type { EveChannelInput } from "eve/channels/eve";
@@ -17,12 +18,11 @@ type Seed = NonNullable<
   Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
 >;
 type SeedPart = Seed["messages"][number]["parts"][number];
-
-const INLINE_FILE_ID = /^[a-f0-9]{64}$/;
-const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/g;
-const SENTENCE_END = /[.,;:!?]+$/;
+const INLINE_FILE_ID = /^[a-f0-9]{64}$/u;
+const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/gu;
+const SENTENCE_END = /[.,;:!?]+$/u;
 const UUID_REFERENCE =
-  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/giu;
 const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
   "session.waiting",
   "session.completed",
@@ -47,17 +47,16 @@ const REVISION_FIELDS = new Set([
   "expectedRevisionId",
   "parentRevisionId",
 ]);
-
-export class EveCopyNotReady extends Error {
+export class EveCopyNotReadyError extends Error {
   constructor() {
     super("Wait for the shared conversation to finish before saving a copy.");
+    this.name = "EveCopyNotReadyError";
   }
 }
-
-function completedPart(part: EveMessagePart): SeedPart {
+const completedPart = (part: EveMessagePart): SeedPart => {
   if (part.type === "text" || part.type === "reasoning") {
     if (part.state === "streaming") {
-      throw new EveCopyNotReady();
+      throw new EveCopyNotReadyError();
     }
     return { type: part.type, text: part.text };
   }
@@ -74,7 +73,7 @@ function completedPart(part: EveMessagePart): SeedPart {
     return { type: "step-start" };
   }
   if (part.type !== "dynamic-tool") {
-    throw new EveCopyNotReady();
+    throw new EveCopyNotReadyError();
   }
   const base = {
     type: part.type,
@@ -82,34 +81,133 @@ function completedPart(part: EveMessagePart): SeedPart {
     input: z.json().parse(part.input),
   };
   switch (part.state) {
-    case "output-available":
+    case "output-available": {
       if (part.partial) {
-        throw new EveCopyNotReady();
+        throw new EveCopyNotReadyError();
       }
       return {
         ...base,
         state: part.state,
         output: z.json().parse(part.output),
       };
-    case "output-error":
+    }
+    case "output-error": {
       return { ...base, state: part.state, errorText: part.errorText };
-    case "output-denied":
+    }
+    case "output-denied": {
       return { ...base, state: part.state, reason: part.approval.reason };
-    default:
-      throw new EveCopyNotReady();
+    }
+    default: {
+      throw new EveCopyNotReadyError();
+    }
   }
-}
-
+};
+const visitStrings = (
+  value: unknown,
+  rewrite: (text: string, field?: string) => string,
+  mutate = false
+) => {
+  if (!value || typeof value !== "object") {
+    return;
+  }
+  for (const key of Object.keys(value)) {
+    const item: unknown = Reflect.get(value, key);
+    if (typeof item === "string") {
+      const replacement = rewrite(item, key);
+      if (mutate) {
+        Reflect.set(value, key, replacement);
+      }
+    } else {
+      visitStrings(item, rewrite, mutate);
+    }
+  }
+};
+const transformFileReferences = (
+  text: string,
+  replace: (key: string) => string
+) =>
+  text.replace(RESOURCE_TOKEN, (token) => {
+    const candidate = token.replace(SENTENCE_END, "");
+    if (!candidate.includes(FILE_CONTENT_PATH)) {
+      return token;
+    }
+    let url: URL;
+    try {
+      url = new URL(candidate, "https://chatjs.local");
+    } catch {
+      return token;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return token;
+    }
+    const key = keyFromFileUrl(url.href);
+    return key ? replace(key) + token.slice(candidate.length) : token;
+  });
+/** Also use for every authorized document revision's content before reserving keys. */
+export const eveCopyResources = (
+  value: unknown,
+  documentReferences = false
+) => {
+  const files = new Set<string>();
+  const documents = new Set<string>();
+  const revisions = new Set<string>();
+  visitStrings({ value }, (text, field) => {
+    transformFileReferences(text, (key) => {
+      files.add(key);
+      return key;
+    });
+    if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
+      documents.add(z.uuid().parse(text).toLowerCase());
+    }
+    if (documentReferences && field && REVISION_FIELDS.has(field)) {
+      revisions.add(z.uuid().parse(text).toLowerCase());
+    }
+    return text;
+  });
+  return {
+    fileKeys: [...files].toSorted(),
+    documentIds: [...documents].toSorted(),
+    revisionIds: [...revisions].toSorted(),
+  };
+};
+const transcriptResources = (seed: Seed) => {
+  const resources = eveCopyResources(seed);
+  const documents = new Set<string>();
+  const revisions = new Set<string>();
+  for (const message of seed.messages) {
+    for (const part of message.parts) {
+      if (
+        part.type !== "dynamic-tool" ||
+        part.state !== "output-available" ||
+        !DOCUMENT_TOOLS.has(part.toolName)
+      ) {
+        continue;
+      }
+      const documentResources = eveCopyResources(part, true);
+      for (const id of documentResources.documentIds) {
+        documents.add(id);
+      }
+      for (const id of documentResources.revisionIds) {
+        revisions.add(id);
+      }
+    }
+  }
+  return {
+    ...resources,
+    documentIds: [...documents].toSorted(),
+    revisionIds: [...revisions].toSorted(),
+  };
+};
 /** Pure preparation: no model calls, storage access, or source runtime identities. */
-export function prepareEveCopyTranscript(
+export const prepareEveCopyTranscript = (
   events: readonly MessageStreamEvent[]
-) {
+) => {
   const boundary = events.findLast((event) => COPY_BOUNDARIES.has(event.type));
   if (
     boundary?.type !== "session.waiting" &&
     boundary?.type !== "session.completed"
   ) {
-    throw new EveCopyNotReady();
+    throw new EveCopyNotReadyError();
   }
   const messages: Seed["messages"] = sharedEveMessages(events).map(
     (message) => {
@@ -145,7 +243,7 @@ export function prepareEveCopyTranscript(
     }
   );
   if (!messages.length || messages.some((message) => !message.parts.length)) {
-    throw new EveCopyNotReady();
+    throw new EveCopyNotReadyError();
   }
   const seed: Seed = { messages };
   return {
@@ -156,46 +254,19 @@ export function prepareEveCopyTranscript(
       .digest("hex"),
     resources: transcriptResources(seed),
   };
-}
-
-/** Also use for every authorized document revision's content before reserving keys. */
-export function eveCopyResources(value: unknown, documentReferences = false) {
-  const files = new Set<string>();
-  const documents = new Set<string>();
-  const revisions = new Set<string>();
-  visitStrings({ value }, (text, field) => {
-    transformFileReferences(text, (key) => {
-      files.add(key);
-      return key;
-    });
-    if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
-      documents.add(z.uuid().parse(text).toLowerCase());
-    }
-    if (documentReferences && field && REVISION_FIELDS.has(field)) {
-      revisions.add(z.uuid().parse(text).toLowerCase());
-    }
-    return text;
-  });
-  return {
-    fileKeys: [...files].sort(),
-    documentIds: [...documents].sort(),
-    revisionIds: [...revisions].sort(),
-  };
-}
-
+};
 type CopyAllocations = {
   files: ReadonlyMap<string, string>;
   documents: ReadonlyMap<string, string>;
   revisions: ReadonlyMap<string, string>;
   inlineFiles?: ReadonlyMap<string, string>;
 };
-
 /** Maps come from durable, ownership-checked allocations, never from browser input. */
-export function rewriteEveCopyResources<T>(
+export const rewriteEveCopyResources = <T>(
   value: T,
   allocations: CopyAllocations,
   documentReferences = false
-): T {
+): T => {
   const fileDestinations = new Set<string>();
   for (const [source, destination] of allocations.files) {
     if (
@@ -279,56 +350,15 @@ export function rewriteEveCopyResources<T>(
     true
   );
   return root.value;
-}
-
-function transcriptResources(seed: Seed) {
-  const resources = eveCopyResources(seed);
-  const documents = new Set<string>();
-  const revisions = new Set<string>();
-  for (const message of seed.messages) {
-    for (const part of message.parts) {
-      if (
-        part.type !== "dynamic-tool" ||
-        part.state !== "output-available" ||
-        !DOCUMENT_TOOLS.has(part.toolName)
-      ) {
-        continue;
-      }
-      const documentResources = eveCopyResources(part, true);
-      for (const id of documentResources.documentIds) {
-        documents.add(id);
-      }
-      for (const id of documentResources.revisionIds) {
-        revisions.add(id);
-      }
+};
+const decodeInlineAttachment = (
+  part: Extract<
+    SeedPart,
+    {
+      type: "file";
     }
-  }
-  return {
-    ...resources,
-    documentIds: [...documents].sort(),
-    revisionIds: [...revisions].sort(),
-  };
-}
-
-/** Decode only published attachment parts; IDs bind their MIME type and exact bytes. */
-export function eveCopyInlineAttachments(seed: Seed) {
-  const files = new Map<
-    string,
-    { id: string; mediaType: string; bytes: Buffer }
-  >();
-  for (const message of seed.messages) {
-    for (const part of message.parts) {
-      if (part.type !== "file" || !part.url.startsWith("data:")) {
-        continue;
-      }
-      const file = decodeInlineAttachment(part);
-      files.set(file.id, file);
-    }
-  }
-  return [...files.values()];
-}
-
-function decodeInlineAttachment(part: Extract<SeedPart, { type: "file" }>) {
+  >
+) => {
   const prefix = `data:${part.mediaType};base64,`;
   if (!part.url.startsWith(prefix)) {
     throw new Error("Invalid inline attachment content type.");
@@ -347,56 +377,33 @@ function decodeInlineAttachment(part: Extract<SeedPart, { type: "file" }>) {
     mediaType: part.mediaType,
     bytes,
   };
-}
-
-/** Metadata binds planned destination bytes; acceptance requires matching committed receipts. */
-export async function materializeEveCopyTranscript(
-  seed: Seed,
-  allocations: CopyAllocations,
-  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
-  origin: string
-): Promise<Seed> {
-  const base = new URL(origin);
-  if (
-    !["http:", "https:"].includes(base.protocol) ||
-    base.username ||
-    base.password
-  ) {
-    throw new Error("Invalid copy attachment origin.");
-  }
-  const copied = rewriteEveCopyResources(seed, allocations);
-  copied.attachments = "channel";
-  const materializeFile = copyAttachmentResolver(
-    allocations,
-    loadDestinationFile,
-    base.origin
-  );
-  for (const message of copied.messages) {
+};
+/** Decode only published attachment parts; IDs bind their MIME type and exact bytes. */
+export const eveCopyInlineAttachments = (seed: Seed) => {
+  const files = new Map<
+    string,
+    {
+      id: string;
+      mediaType: string;
+      bytes: Buffer;
+    }
+  >();
+  for (const message of seed.messages) {
     for (const part of message.parts) {
-      if (part.type === "file") {
-        await materializeFile(part);
-      } else if (
-        part.type === "text" ||
-        part.type === "reasoning" ||
-        (part.type === "dynamic-tool" && DOCUMENT_TOOLS.has(part.toolName))
-      ) {
-        rewriteDocumentPart(part, allocations);
+      if (part.type !== "file" || !part.url.startsWith("data:")) {
+        continue;
       }
+      const file = decodeInlineAttachment(part);
+      files.set(file.id, file);
     }
   }
-  if (Buffer.byteLength(JSON.stringify(copied)) > 8 * 1024 * 1024) {
-    throw new Error(
-      "This conversation exceeds Eve's transcript copy size limit."
-    );
-  }
-  return copied;
-}
-
-function copyAttachmentResolver(
+  return [...files.values()];
+};
+const copyAttachmentResolver = (
   allocations: CopyAllocations,
   loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
   origin: string
-) {
+) => {
   const destinationKeys = new Set(allocations.files.values());
   for (const [id, key] of allocations.inlineFiles ?? []) {
     if (
@@ -409,7 +416,14 @@ function copyAttachmentResolver(
     destinationKeys.add(key);
   }
   const metadata = new Map<string, Promise<Pick<Blob, "type" | "size">>>();
-  return async (part: Extract<SeedPart, { type: "file" }>) => {
+  return async (
+    part: Extract<
+      SeedPart,
+      {
+        type: "file";
+      }
+    >
+  ) => {
     const inline = part.url.startsWith("data:")
       ? decodeInlineAttachment(part)
       : undefined;
@@ -437,9 +451,8 @@ function copyAttachmentResolver(
     part.url = new URL(`${FILE_CONTENT_PATH}?key=${key}`, origin).href;
     part.size = stored.size;
   };
-}
-
-function rewriteDocumentPart(part: SeedPart, allocations: CopyAllocations) {
+};
+const rewriteDocumentPart = (part: SeedPart, allocations: CopyAllocations) => {
   const identities = new Map(
     [...allocations.documents, ...allocations.revisions].map(([from, to]) => [
       from.toLowerCase(),
@@ -465,48 +478,47 @@ function rewriteDocumentPart(part: SeedPart, allocations: CopyAllocations) {
     },
     true
   );
-}
-
-function transformFileReferences(
-  text: string,
-  replace: (key: string) => string
-) {
-  return text.replace(RESOURCE_TOKEN, (token) => {
-    const candidate = token.replace(SENTENCE_END, "");
-    if (!candidate.includes(FILE_CONTENT_PATH)) {
-      return token;
-    }
-    let url: URL;
-    try {
-      url = new URL(candidate, "https://chatjs.local");
-    } catch {
-      return token;
-    }
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return token;
-    }
-    const key = keyFromFileUrl(url.href);
-    return key ? replace(key) + token.slice(candidate.length) : token;
-  });
-}
-
-function visitStrings(
-  value: unknown,
-  rewrite: (text: string, field?: string) => string,
-  mutate = false
-) {
-  if (!value || typeof value !== "object") {
-    return;
+};
+/** Metadata binds planned destination bytes; acceptance requires matching committed receipts. */
+export const materializeEveCopyTranscript = async (
+  seed: Seed,
+  allocations: CopyAllocations,
+  loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
+  origin: string
+): Promise<Seed> => {
+  const base = new URL(origin);
+  if (
+    !["http:", "https:"].includes(base.protocol) ||
+    base.username ||
+    base.password
+  ) {
+    throw new Error("Invalid copy attachment origin.");
   }
-  for (const key of Object.keys(value)) {
-    const item: unknown = Reflect.get(value, key);
-    if (typeof item === "string") {
-      const replacement = rewrite(item, key);
-      if (mutate) {
-        Reflect.set(value, key, replacement);
+  const copied = rewriteEveCopyResources(seed, allocations);
+  copied.attachments = "channel";
+  const materializeFile = copyAttachmentResolver(
+    allocations,
+    loadDestinationFile,
+    base.origin
+  );
+  for (const message of copied.messages) {
+    for (const part of message.parts) {
+      if (part.type === "file") {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+        await materializeFile(part);
+      } else if (
+        part.type === "text" ||
+        part.type === "reasoning" ||
+        (part.type === "dynamic-tool" && DOCUMENT_TOOLS.has(part.toolName))
+      ) {
+        rewriteDocumentPart(part, allocations);
       }
-    } else {
-      visitStrings(item, rewrite, mutate);
     }
   }
-}
+  if (Buffer.byteLength(JSON.stringify(copied)) > 8 * 1024 * 1024) {
+    throw new Error(
+      "This conversation exceeds Eve's transcript copy size limit."
+    );
+  }
+  return copied;
+};

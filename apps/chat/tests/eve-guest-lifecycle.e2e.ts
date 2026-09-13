@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
@@ -20,20 +22,20 @@ test("guest edits, regenerates and deletes its complete conversation family", as
   });
   await page.goto("/");
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeVisible();
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const principal = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
   const { ownerId } = await principal.json();
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-5-nano",
       message: "Reply with the single word amber.",
+      modelId: "openai/gpt-5-nano",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.status(), await created.text()).toBe(200);
   const source = conversationBinding.parse(await created.json());
@@ -46,13 +48,13 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       "amber"
     );
     await page
-      .getByRole("button", { name: "Edit message", exact: true })
+      .getByRole("button", { exact: true, name: "Edit message" })
       .click();
     const editor = page.getByRole("dialog");
     await editor
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Reply with the single word cobalt.");
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).not.toHaveURL(
       new URL(`/chat/${source.id}`, origin).href,
       {
@@ -74,7 +76,7 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       timeout: 60_000,
     });
     await page
-      .getByRole("button", { name: "Regenerate response", exact: true })
+      .getByRole("button", { exact: true, name: "Regenerate response" })
       .click();
     await expect(page).not.toHaveURL(editedUrl, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -113,7 +115,7 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       await outsider.close();
     }
     await page
-      .getByRole("link", { name: "Original conversation", exact: true })
+      .getByRole("link", { exact: true, name: "Original conversation" })
       .click();
     await expect(page.getByRole("log")).toContainText("amber");
     await expect(page.getByRole("log")).not.toContainText("cobalt");
@@ -122,23 +124,23 @@ test("guest edits, regenerates and deletes its complete conversation family", as
     });
     await page.reload();
     const expand = page.getByRole("button", {
-      name: "Expand sidebar",
       exact: true,
+      name: "Expand sidebar",
     });
     if (await expand.isVisible()) {
       await expand.click();
     }
     const row = page.locator("li").filter({
-      has: page.getByRole("link", { name: "Guest lifecycle", exact: true }),
+      has: page.getByRole("link", { exact: true, name: "Guest lifecycle" }),
     });
     await row.hover();
-    await row.getByRole("button", { name: "More", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+    await row.getByRole("button", { exact: true, name: "More" }).click();
+    await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toContainText("all its branches");
     await dialog.screenshot({
-      path: testInfo.outputPath("guest-family-delete.png"),
       animations: "disabled",
+      path: testInfo.outputPath("guest-family-delete.png"),
     });
     const deleted = page.waitForResponse(
       (response) =>
@@ -148,15 +150,15 @@ test("guest edits, regenerates and deletes its complete conversation family", as
     );
     await dialog
       .getByRole("button", {
-        name: "Delete conversation and branches",
         exact: true,
+        name: "Delete conversation and branches",
       })
       .click();
     expect((await deleted).status()).toBe(200);
     await expect(dialog).toHaveCount(0);
     await page.reload();
     await expect(
-      page.getByRole("link", { name: "Guest lifecycle", exact: true })
+      page.getByRole("link", { exact: true, name: "Guest lifecycle" })
     ).toHaveCount(0);
     const removed = await db
       .select()
@@ -185,9 +187,9 @@ test("guest edits, regenerates and deletes its complete conversation family", as
           return [200, 404].includes(response.status());
         },
         {
+          intervals: [1000, 2000, 5000],
           message: "Guest fixture family cleanup must complete",
           timeout: 90_000,
-          intervals: [1000, 2000, 5000],
         }
       )
       .toBe(true);

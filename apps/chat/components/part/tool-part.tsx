@@ -2,16 +2,15 @@
 
 import type { ToolUIPart } from "ai";
 
-import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
+import {
+  isInstalledToolType,
+  renderInstalledTool,
+} from "@/lib/ai/tool-renderer-registry";
 import type { ChatTools } from "@/lib/ai/types";
 
-import { CodeExecution } from "./code-execution";
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";
-import { GenerateImage } from "./generate-image";
-import { GenerateVideo } from "./generate-video";
 import { ReadDocument } from "./read-document";
-import { WebSearch } from "./web-search";
 
 interface ToolPartProps {
   isReadonly: boolean;
@@ -19,8 +18,8 @@ interface ToolPartProps {
   part: ToolUIPart<ChatTools>;
 }
 
-export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
-  const type = part.type;
+export const ToolPart = ({ part, messageId, isReadonly }: ToolPartProps) => {
+  const { type } = part;
 
   if (
     type === "tool-createTextDocument" ||
@@ -39,32 +38,13 @@ export function ToolPart({ part, messageId, isReadonly }: ToolPartProps) {
     return <ReadDocument tool={part} />;
   }
 
-  if (type === "tool-codeExecution") {
-    return <CodeExecution tool={part} />;
-  }
-
-  if (type === "tool-generateImage") {
-    return <GenerateImage tool={part} />;
-  }
-
-  if (type === "tool-generateVideo") {
-    return <GenerateVideo tool={part} />;
-  }
-
   if (type === "tool-deepResearch") {
     return <DeepResearch messageId={messageId} part={part} />;
   }
 
-  if (type === "tool-webSearch") {
-    return <WebSearch messageId={messageId} part={part} />;
-  }
-
-  const Renderer = getInstalledToolRenderer(type);
-  if (Renderer) {
-    return (
-      <Renderer isReadonly={isReadonly} messageId={messageId} tool={part} />
-    );
+  if (isInstalledToolType(type)) {
+    return renderInstalledTool(type, { isReadonly, messageId, tool: part });
   }
 
   return null;
-}
+};

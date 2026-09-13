@@ -8,38 +8,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
-function ConnectorsSettingsHeader() {
-  return (
-    <SettingsPageHeader>
-      <h2 className="text-lg font-semibold">Connectors & MCP</h2>
-      <p className="text-muted-foreground text-sm">
-        Connect to Model Context Protocol servers to extend AI capabilities with
-        external tools.
-      </p>
-    </SettingsPageHeader>
-  );
-}
+const ConnectorsSettingsHeader = () => (
+  <SettingsPageHeader>
+    <h2 className="text-lg font-semibold">Connectors & MCP</h2>
+    <p className="text-muted-foreground text-sm">
+      Connect to Model Context Protocol servers to extend AI capabilities with
+      external tools.
+    </p>
+  </SettingsPageHeader>
+);
 
-export default function ConnectorsSettingsPage() {
-  return (
-    <Suspense
-      fallback={
-        <SettingsPage>
-          <ConnectorsSettingsHeader />
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-5/6" />
-          </div>
-        </SettingsPage>
-      }
-    >
-      <ConnectorsSettingsContent />
-    </Suspense>
-  );
-}
-
-async function ConnectorsSettingsContent() {
+const ConnectorsSettingsContent = async () => {
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
 
@@ -51,4 +30,23 @@ async function ConnectorsSettingsContent() {
       </SettingsPage>
     </HydrateClient>
   );
-}
+};
+
+const ConnectorsSettingsPage = () => (
+  <Suspense
+    fallback={
+      <SettingsPage>
+        <ConnectorsSettingsHeader />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-5/6" />
+        </div>
+      </SettingsPage>
+    }
+  >
+    <ConnectorsSettingsContent />
+  </Suspense>
+);
+
+export default ConnectorsSettingsPage;

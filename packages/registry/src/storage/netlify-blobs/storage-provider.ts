@@ -1,3 +1,1 @@
-import { netlifyBlobs } from "files-sdk/netlify-blobs";
-
-export const createStorageAdapter = netlifyBlobs;
+export { netlifyBlobs as createStorageAdapter } from "files-sdk/netlify-blobs";

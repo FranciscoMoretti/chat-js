@@ -1,10 +1,14 @@
 import type { ChatMessage } from "@/lib/ai/types";
 
-export function clearResponseActiveStream(
+export const isPendingResponseStream = (
+  activeStreamId: string | null | undefined
+): boolean => activeStreamId?.startsWith("pending:") ?? false;
+
+export const clearResponseActiveStream = (
   messages: ChatMessage[],
   messageId: string
-) {
-  return messages.map((message) =>
+) =>
+  messages.map((message) =>
     message.id === messageId &&
     message.metadata.activeStreamId !== null &&
     !isPendingResponseStream(message.metadata.activeStreamId)
@@ -17,10 +21,3 @@ export function clearResponseActiveStream(
         }
       : message
   );
-}
-
-export function isPendingResponseStream(
-  activeStreamId: string | null | undefined
-) {
-  return activeStreamId?.startsWith("pending:") ?? false;
-}

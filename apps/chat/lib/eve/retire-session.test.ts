@@ -6,25 +6,25 @@ import {
 } from "./retire-session";
 
 const mocks = vi.hoisted(() => ({
-  deleting: vi.fn(),
   begin: vi.fn(),
-  retireMany: vi.fn(),
+  client: vi.fn(),
+  deleting: vi.fn(),
   reset: vi.fn(),
+  retireMany: vi.fn(),
   snapshot: vi.fn(),
   usage: vi.fn(),
-  client: vi.fn(),
 }));
 vi.mock("../env", () => ({
   env: {
-    EVE_INTERNAL_ORIGIN: "http://localhost",
     EVE_GATEWAY_SECRET: "fixture",
+    EVE_INTERNAL_ORIGIN: "http://localhost",
     WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
   },
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("../db/eve-queries", () => ({
-  getDeletingEveConversationForSession: mocks.deleting,
   beginEveConversationDeletion: mocks.begin,
+  getDeletingEveConversationForSession: mocks.deleting,
 }));
 vi.mock("../db/eve-native-purge", () => ({
   retireEveNativeSessions: mocks.retireMany,
@@ -52,7 +52,7 @@ it("retires before reading and settling the final snapshot, including retries", 
   await retireEveSessionForDeletion("owner", "session");
   expect(mocks.client).toHaveBeenCalledWith(
     expect.objectContaining({
-      headers: { "x-chatjs-owner": "owner", "x-chatjs-deletion": "1" },
+      headers: { "x-chatjs-deletion": "1", "x-chatjs-owner": "owner" },
     })
   );
   expect(mocks.reset.mock.invocationCallOrder[0]).toBeLessThan(
@@ -96,8 +96,8 @@ it("does not enter native family cleanup for an inaccessible family or a missing
   ).toBeUndefined();
   expect(mocks.retireMany).not.toHaveBeenCalled();
   mocks.begin.mockResolvedValueOnce({
-    rootId: "root",
     conversations: [{ id: "root", sessionId: null }],
+    rootId: "root",
   });
   await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
     "missing session binding"

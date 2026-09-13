@@ -14,7 +14,7 @@ import {
   secondModel,
 } from "./eve-comparison-data.fixture";
 
-const root = document.getElementById("root");
+const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }

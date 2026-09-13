@@ -9,15 +9,12 @@ import {
   getStatusLabel,
 } from "./parallel-response-status";
 
-function createAssistantMessage(activeStreamId: string | null) {
-  return {
-    metadata: { activeStreamId },
-  };
-}
+const createAssistantMessage = (activeStreamId: string | null) => ({
+  metadata: { activeStreamId },
+});
 
-function pendingLifecycle(runStatus: ChatStatus) {
-  return getParallelResponseLifecycle(null, runStatus);
-}
+const pendingLifecycle = (runStatus: ChatStatus) =>
+  getParallelResponseLifecycle(null, runStatus);
 
 describe("parallel response card status", () => {
   it("keeps queued and streaming responses in a loading state", () => {

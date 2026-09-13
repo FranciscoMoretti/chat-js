@@ -2,7 +2,7 @@ import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
 import {
-  EveCopyNotReady,
+  EveCopyNotReadyError,
   eveCopyInlineAttachments,
   eveCopyResources,
   materializeEveCopyTranscript,
@@ -19,54 +19,52 @@ const copiedRevision = "1b5b66b4-41bf-4e0b-893f-c5b05a7931fb";
 const sourceUrl = `/api/files/content?key=${sourceFile}`;
 const copiedUrl = `/api/files/content?key=${copiedFile}`;
 const allocations = {
-  files: new Map([[sourceFile, copiedFile]]),
   documents: new Map([[documentId, copiedDocument]]),
+  files: new Map([[sourceFile, copiedFile]]),
   revisions: new Map([[revisionId, copiedRevision]]),
 };
 
-function history(messages: EveMessage[]): MessageStreamEvent[] {
-  return [
-    {
-      type: "history.seeded",
-      meta: { id: "seed-event", at: "2026-09-12T00:00:00Z" },
-      data: { messages },
-    },
-    {
-      type: "session.waiting",
-      meta: { id: "idle-event", at: "2026-09-12T00:00:01Z" },
-      data: { continuationToken: "source-token", wait: "next-user-message" },
-    },
-  ];
-}
+const history = (messages: EveMessage[]): MessageStreamEvent[] => [
+  {
+    data: { messages },
+    meta: { at: "2026-09-12T00:00:00Z", id: "seed-event" },
+    type: "history.seeded",
+  },
+  {
+    data: { continuationToken: "source-token", wait: "next-user-message" },
+    meta: { at: "2026-09-12T00:00:01Z", id: "idle-event" },
+    type: "session.waiting",
+  },
+];
 
 it("prepares exactly the public content without execution, approval or billing identities", () => {
   const events = history([
     {
       id: "source-user",
+      parts: [{ text: "Question", type: "text" }],
       role: "user",
-      parts: [{ type: "text", text: "Question" }],
     },
     {
       id: "source-assistant",
-      role: "assistant",
       metadata: { turnId: "private-turn" },
       parts: [
-        { type: "reasoning", text: "Visible reasoning", state: "done" },
+        { state: "done", text: "Visible reasoning", type: "reasoning" },
         {
-          type: "dynamic-tool",
-          toolName: "generateImage",
-          toolCallId: "private-call",
-          state: "output-available",
           input: { prompt: "Image" },
           output: {
             kind: "chatjs.platform-result",
-            version: 1,
             output: { url: sourceUrl },
             usage: { costUsd: 3 },
+            version: 1,
           },
+          state: "output-available",
+          toolCallId: "private-call",
+          toolName: "generateImage",
+          type: "dynamic-tool",
         },
-        { type: "text", text: "Answer", state: "done" },
+        { state: "done", text: "Answer", type: "text" },
       ],
+      role: "assistant",
     },
   ]);
   const result = prepareEveCopyTranscript(events);
@@ -90,22 +88,22 @@ it("prepares exactly the public content without execution, approval or billing i
 
 it("rewrites nested tool inputs, results, document identities and prose using one detached copy", () => {
   const value = {
-    input: { documentId, expectedRevisionId: revisionId },
-    output: { versions: [{ revisionId, image: sourceUrl }] },
     content: `![image](${sourceUrl}) Target document: ${documentId}. Selected revision: ${revisionId}.`,
+    input: { documentId, expectedRevisionId: revisionId },
+    output: { versions: [{ image: sourceUrl, revisionId }] },
   };
   const before = JSON.stringify(value);
   const resources = eveCopyResources(value, true);
   expect(resources).toEqual({
-    fileKeys: [sourceFile],
     documentIds: [documentId],
+    fileKeys: [sourceFile],
     revisionIds: [revisionId],
   });
   const copied = rewriteEveCopyResources(value, allocations, true);
   expect(copied).toEqual({
-    input: { documentId: copiedDocument, expectedRevisionId: copiedRevision },
-    output: { versions: [{ revisionId: copiedRevision, image: copiedUrl }] },
     content: `![image](${copiedUrl}) Target document: ${copiedDocument}. Selected revision: ${copiedRevision}.`,
+    input: { documentId: copiedDocument, expectedRevisionId: copiedRevision },
+    output: { versions: [{ image: copiedUrl, revisionId: copiedRevision }] },
   });
   expect(JSON.stringify(value)).toBe(before);
   expect(eveCopyResources(value.content).fileKeys).toEqual([sourceFile]);
@@ -116,18 +114,18 @@ it("rewrites nested tool inputs, results, document identities and prose using on
 
 it.each([
   {
+    documents: allocations.documents,
     files: new Map<string, string>(),
-    documents: allocations.documents,
     revisions: allocations.revisions,
   },
   {
-    files: allocations.files,
     documents: new Map<string, string>(),
+    files: allocations.files,
     revisions: allocations.revisions,
   },
   {
-    files: allocations.files,
     documents: allocations.documents,
+    files: allocations.files,
     revisions: new Map<string, string>(),
   },
 ])(
@@ -135,7 +133,7 @@ it.each([
   (mapping) => {
     expect(() =>
       rewriteEveCopyResources(
-        { url: sourceUrl, documentId, revisionId },
+        { documentId, revisionId, url: sourceUrl },
         mapping,
         true
       )
@@ -148,41 +146,41 @@ it("preserves inline attachments and tool error or denial content without approv
     history([
       {
         id: "user",
-        role: "user",
         parts: [
           {
-            type: "file",
-            mediaType: "application/pdf",
-            url: "data:application/pdf;base64,JVBERg==",
             filename: "note.pdf",
+            mediaType: "application/pdf",
+            type: "file",
+            url: "data:application/pdf;base64,JVBERg==",
           },
         ],
+        role: "user",
       },
       {
         id: "answer",
-        role: "assistant",
         parts: [
           {
-            type: "dynamic-tool",
-            toolCallId: "denied-call",
-            toolName: "confirm_note",
-            input: {},
-            state: "output-denied",
             approval: {
-              id: "private-receipt",
               approved: false,
+              id: "private-receipt",
               reason: "Declined",
             },
+            input: {},
+            state: "output-denied",
+            toolCallId: "denied-call",
+            toolName: "confirm_note",
+            type: "dynamic-tool",
           },
           {
-            type: "dynamic-tool",
-            toolCallId: "error-call",
-            toolName: "readDocument",
+            errorText: "Unavailable",
             input: {},
             state: "output-error",
-            errorText: "Unavailable",
+            toolCallId: "error-call",
+            toolName: "readDocument",
+            type: "dynamic-tool",
           },
         ],
+        role: "assistant",
       },
     ])
   );
@@ -194,57 +192,57 @@ it("preserves inline attachments and tool error or denial content without approv
 });
 
 it.each<EveMessage["parts"][number]>([
-  { type: "text", text: "Partial", state: "streaming" },
+  { state: "streaming", text: "Partial", type: "text" },
   {
-    type: "dynamic-tool",
-    toolCallId: "call",
-    toolName: "tool",
     input: {},
     state: "input-available",
-  },
-  {
-    type: "dynamic-tool",
     toolCallId: "call",
     toolName: "tool",
+    type: "dynamic-tool",
+  },
+  {
     input: {},
     output: {},
-    state: "output-available",
     partial: true,
-  },
-  {
-    type: "dynamic-tool",
+    state: "output-available",
     toolCallId: "call",
     toolName: "tool",
+    type: "dynamic-tool",
+  },
+  {
+    approval: { id: "private" },
     input: {},
     state: "approval-requested",
-    approval: { id: "private" },
+    toolCallId: "call",
+    toolName: "tool",
+    type: "dynamic-tool",
   },
 ])("refuses incomplete visible parts rather than dropping them", (part) => {
   expect(() =>
     prepareEveCopyTranscript(
-      history([{ id: "answer", role: "assistant", parts: [part] }])
+      history([{ id: "answer", parts: [part], role: "assistant" }])
     )
-  ).toThrow(EveCopyNotReady);
+  ).toThrow(EveCopyNotReadyError);
 });
 
 it("requires a durable idle boundary, including when a new turn has no assistant text yet", () => {
   const events = history([
     {
       id: "question",
+      parts: [{ text: "Question", type: "text" }],
       role: "user",
-      parts: [{ type: "text", text: "Question" }],
     },
   ]);
   expect(() => prepareEveCopyTranscript(events.slice(0, 1))).toThrow(
-    EveCopyNotReady
+    EveCopyNotReadyError
   );
   const received: MessageStreamEvent = {
-    type: "message.received",
-    meta: { id: "new", at: "2026-09-12T00:00:02Z" },
     data: { message: "Next question", sequence: 1, turnId: "turn_1" },
+    meta: { at: "2026-09-12T00:00:02Z", id: "new" },
+    type: "message.received",
   };
   expect(() => prepareEveCopyTranscript([...events, received])).toThrow(
-    EveCopyNotReady
+    EveCopyNotReadyError
   );
 });
 
@@ -260,17 +258,17 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
     history([
       {
         id: "answer",
-        role: "assistant",
         parts: [
           {
-            type: "dynamic-tool",
-            toolName: "mcp_google_docs",
-            toolCallId: "call",
-            state: "output-available",
             input: { documentId: "GoogleDocId" },
             output: { documentId, revisionId: "GoogleRevisionId" },
+            state: "output-available",
+            toolCallId: "call",
+            toolName: "mcp_google_docs",
+            type: "dynamic-tool",
           },
         ],
+        role: "assistant",
       },
     ])
   );
@@ -292,26 +290,26 @@ it("materializes only allocated destination attachments and remaps case-insensit
     history([
       {
         id: "user",
+        parts: [{ mediaType: "image/png", type: "file", url: sourceUrl }],
         role: "user",
-        parts: [{ type: "file", mediaType: "image/png", url: sourceUrl }],
       },
       {
         id: "answer",
-        role: "assistant",
         parts: [
           {
-            type: "dynamic-tool",
-            toolName: "readDocument",
-            toolCallId: "call",
             input: { documentId: documentId.toUpperCase() },
-            state: "output-available",
             output: { documentId, revisionId },
+            state: "output-available",
+            toolCallId: "call",
+            toolName: "readDocument",
+            type: "dynamic-tool",
           },
           {
-            type: "text",
             text: `Target document: ${documentId.toUpperCase()}`,
+            type: "text",
           },
         ],
+        role: "assistant",
       },
     ])
   );
@@ -322,7 +320,7 @@ it("materializes only allocated destination attachments and remaps case-insensit
     allocations,
     (key) => {
       reads.push(key);
-      return Promise.resolve({ type: "image/png", size: 11 });
+      return Promise.resolve({ size: 11, type: "image/png" });
     },
     "https://chatjs.example"
   );
@@ -346,12 +344,12 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
     history([
       {
         id: "user",
-        role: "user",
         parts: Array.from({ length: 6 }, () => ({
-          type: "file",
           mediaType: "image/png",
+          type: "file",
           url: sourceUrl,
         })),
+        role: "user",
       },
     ])
   );
@@ -360,8 +358,8 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
     prepared.seed,
     allocations,
     () => {
-      reads++;
-      return Promise.resolve({ type: "image/png", size: 1024 * 1024 });
+      reads += 1;
+      return Promise.resolve({ size: 1024 * 1024, type: "image/png" });
     },
     "https://chatjs.example"
   );
@@ -376,12 +374,12 @@ it("externalizes six distinct inline images through durable destination allocati
     history([
       {
         id: "user",
-        role: "user",
         parts: Array.from({ length: 6 }, (_, index) => ({
-          type: "file",
           mediaType: "image/png",
+          type: "file",
           url: `data:image/png;base64,${Buffer.alloc(1024 * 1024, index).toString("base64")}`,
         })),
+        role: "user",
       },
     ])
   );
@@ -399,10 +397,11 @@ it("externalizes six distinct inline images through durable destination allocati
   const result = await materializeEveCopyTranscript(
     prepared.seed,
     { ...allocations, inlineFiles },
-    async () => ({
-      type: "image/png",
-      size: 1024 * 1024,
-    }),
+    () =>
+      Promise.resolve({
+        size: 1024 * 1024,
+        type: "image/png",
+      }),
     "https://chatjs.example"
   );
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
@@ -417,24 +416,23 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     history([
       {
         id: "user",
-        role: "user",
         parts: [
           {
-            type: "file",
             mediaType: "image/png",
+            type: "file",
             url: "data:image/png;base64,aGk=",
           },
         ],
+        role: "user",
       },
     ])
   );
   const [file] = eveCopyInlineAttachments(prepared.seed);
-  const metadata = async () => ({ type: "image/png", size: 2 });
   await expect(
     materializeEveCopyTranscript(
       prepared.seed,
       allocations,
-      metadata,
+      () => Promise.resolve({ size: 2, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("allocation");
@@ -445,7 +443,7 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
-      async () => ({ type: "image/png", size: 3 }),
+      () => Promise.resolve({ size: 3, type: "image/png" }),
       "https://chatjs.example"
     )
   ).rejects.toThrow("metadata changed");
@@ -460,8 +458,8 @@ it.each([
     history([
       {
         id: "user",
+        parts: [{ mediaType: "image/png", type: "file", url }],
         role: "user",
-        parts: [{ type: "file", mediaType: "image/png", url }],
       },
     ])
   );
@@ -519,17 +517,17 @@ it.each(["not-a-valid-document-id", documentId])(
       history([
         {
           id: "answer",
-          role: "assistant",
           parts: [
             {
-              type: "dynamic-tool",
-              toolName: "readDocument",
-              toolCallId: "call",
-              state: "output-error",
-              input: { documentId: id },
               errorText: "Document not found",
+              input: { documentId: id },
+              state: "output-error",
+              toolCallId: "call",
+              toolName: "readDocument",
+              type: "dynamic-tool",
             },
           ],
+          role: "assistant",
         },
       ])
     );
@@ -537,8 +535,8 @@ it.each(["not-a-valid-document-id", documentId])(
     const seed = await materializeEveCopyTranscript(
       prepared.seed,
       {
-        files: new Map(),
         documents: new Map(),
+        files: new Map(),
         revisions: new Map(),
       },
       () => {
@@ -554,24 +552,24 @@ it("retains model provenance in copies of copies without carrying private metada
   const events = history([
     {
       id: "seed_message_0",
+      parts: [{ text: "Question", type: "text" }],
       role: "user",
-      parts: [{ type: "text", text: "Question" }],
     },
     {
       id: "seed_message_1",
-      role: "assistant",
       metadata: {
         modelId: "gateway/google/gemini-2.5-flash-lite",
         result: "private-result",
       },
-      parts: [{ type: "text", text: "Answer" }],
+      parts: [{ text: "Answer", type: "text" }],
+      role: "assistant",
     },
   ]);
   const copy = prepareEveCopyTranscript(events);
   expect(copy.seed.messages[1]).toEqual({
-    role: "assistant",
     modelId: "gateway/google/gemini-2.5-flash-lite",
-    parts: [{ type: "text", text: "Answer" }],
+    parts: [{ text: "Answer", type: "text" }],
+    role: "assistant",
   });
   expect(JSON.stringify(copy.seed)).not.toContain("private-result");
 });
@@ -581,23 +579,23 @@ it("preserves selected tools in copies without publishing unrelated custom metad
     history([
       {
         id: "source-user",
-        role: "user",
         metadata: {
           custom: {
             chatjs: {
-              selectedTool: "createTextDocument",
               privateToken: "owner-only",
+              selectedTool: "createTextDocument",
             },
             integration: { token: "integration-secret" },
           },
         },
-        parts: [{ type: "text", text: "Create a document" }],
+        parts: [{ text: "Create a document", type: "text" }],
+        role: "user",
       },
     ])
   );
   expect(result.seed.messages[0]).toEqual({
-    role: "user",
     metadata: { chatjs: { selectedTool: "createTextDocument" } },
-    parts: [{ type: "text", text: "Create a document" }],
+    parts: [{ text: "Create a document", type: "text" }],
+    role: "user",
   });
 });

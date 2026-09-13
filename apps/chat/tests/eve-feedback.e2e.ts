@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
@@ -18,12 +22,12 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-5-mini",
       message: "Reply exactly feedback-fixture-ok",
+      modelId: "openai/gpt-5-mini",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z.object({ id: z.uuid() }).parse(await created.json());
@@ -47,10 +51,10 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await page.reload();
     await expect(up).toHaveAttribute("aria-pressed", "true");
     for (const width of [1100, 390]) {
-      await page.setViewportSize({ width, height: 850 });
+      await page.setViewportSize({ height: 850, width });
       await page.locator(".is-assistant").screenshot({
-        path: testInfo.outputPath(`feedback-${width}.png`),
         animations: "disabled",
+        path: testInfo.outputPath(`feedback-${width}.png`),
       });
     }
     await page.route(
@@ -59,9 +63,9 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         !url.pathname.includes("eve.votes"),
       (route) =>
         route.fulfill({
-          status: 500,
-          contentType: "application/json",
           body: "{}",
+          contentType: "application/json",
+          status: 500,
         }),
       { times: 1 }
     );
@@ -77,34 +81,34 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     const votesRoute = (url: URL) => url.pathname.includes("eve.votes");
     await page.route(votesRoute, (route) =>
       route.fulfill({
-        status: 500,
-        contentType: "application/json",
         body: "{}",
+        contentType: "application/json",
+        status: 500,
       })
     );
     await page.reload();
     const retry = page.getByRole("button", { name: "Retry loading feedback" });
     await expect(retry).toBeVisible();
     await page.locator(".is-assistant").screenshot({
-      path: testInfo.outputPath("feedback-load-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("feedback-load-error.png"),
     });
     await page.unroute(votesRoute);
     await retry.click();
     await expect(down).toHaveAttribute("aria-pressed", "true");
 
     // A focus refetch starts during a save and returns the previous vote last.
-    const mutationStarted = Promise.withResolvers<void>();
-    const resumeMutation = Promise.withResolvers<void>();
-    const staleReadStarted = Promise.withResolvers<void>();
-    const releaseStaleRead = Promise.withResolvers<void>();
-    const staleReadFinished = Promise.withResolvers<void>();
+    const mutationStarted = Promise.withResolvers<undefined>();
+    const resumeMutation = Promise.withResolvers<undefined>();
+    const staleReadStarted = Promise.withResolvers<undefined>();
+    const releaseStaleRead = Promise.withResolvers<undefined>();
+    const staleReadFinished = Promise.withResolvers<undefined>();
     const mutationRoute = (url: URL) =>
       url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
     await page.route(
       mutationRoute,
       async (route) => {
-        mutationStarted.resolve();
+        mutationStarted.resolve(undefined);
         await resumeMutation.promise;
         await route.continue();
       },
@@ -114,12 +118,12 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       votesRoute,
       async (route) => {
         const response = await route.fetch();
-        staleReadStarted.resolve();
+        staleReadStarted.resolve(undefined);
         await releaseStaleRead.promise;
         try {
           await route.fulfill({ response });
         } finally {
-          staleReadFinished.resolve();
+          staleReadFinished.resolve(undefined);
         }
       },
       { times: 1 }
@@ -132,9 +136,9 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
         window.dispatchEvent(new Event("visibilitychange"))
       );
       await staleReadStarted.promise;
-      resumeMutation.resolve();
+      resumeMutation.resolve(undefined);
       await expect(up).toHaveAttribute("aria-pressed", "true");
-      releaseStaleRead.resolve();
+      releaseStaleRead.resolve(undefined);
       await staleReadFinished.promise;
       // A following browser task runs after the completed response is processed.
       await page.evaluate(
@@ -146,8 +150,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       await expect(up).toHaveAttribute("aria-pressed", "true");
       await expect(down).toBeEnabled();
     } finally {
-      resumeMutation.resolve();
-      releaseStaleRead.resolve();
+      resumeMutation.resolve(undefined);
+      releaseStaleRead.resolve(undefined);
     }
 
     const shared = await page.request.post("/api/trpc/eve.setVisibility", {
@@ -172,8 +176,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await expect(publicPage.getByTestId("message-downvote")).toHaveCount(0);
     expect(feedbackRequests).toEqual([]);
     await publicPage.locator("main").screenshot({
-      path: testInfo.outputPath("feedback-shared.png"),
       animations: "disabled",
+      path: testInfo.outputPath("feedback-shared.png"),
     });
   } finally {
     await anonymous.close();
@@ -206,7 +210,7 @@ test("shared feedback controls render unrated, selected and pending states", asy
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground"><div id="fixture"></div></body></html>`
   );
   await page.addScriptTag({
-    content: readFileSync(bundle, "utf8"),
+    content: readFileSync(bundle, "utf-8"),
     type: "module",
   });
   await expect(page.getByTestId("message-upvote")).toHaveCount(4);
@@ -217,14 +221,14 @@ test("shared feedback controls render unrated, selected and pending states", asy
   await expect(page.getByTestId("message-upvote").nth(3)).toBeDisabled();
   await expect(page.getByTestId("message-downvote").nth(3)).toBeDisabled();
   for (const width of [1100, 390]) {
-    await page.setViewportSize({ width, height: 850 });
+    await page.setViewportSize({ height: 850, width });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);
     await page.screenshot({
-      path: testInfo.outputPath(`feedback-states-${width}.png`),
       animations: "disabled",
       fullPage: true,
+      path: testInfo.outputPath(`feedback-states-${width}.png`),
     });
   }
 });

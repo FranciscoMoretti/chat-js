@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -26,9 +28,9 @@ async function job(body: unknown) {
     ${taskIdentifier},
     ${query.json({
       attempt: 1,
-      messageId: `msg_${crypto.randomUUID()}`,
-      id: "fixture",
       data: Buffer.from(JSON.stringify(body)).toString("base64"),
+      id: "fixture",
+      messageId: `msg_${crypto.randomUUID()}`,
     })}::json,
     run_at := now() + interval '1 day'
   )`;
@@ -39,16 +41,16 @@ async function job(body: unknown) {
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
   const retry = await job({
+    input: "private-marker",
     runId: root,
     stepId: "step",
-    input: "private-marker",
   });
   const child = crypto.randomUUID();
   const childJob = await job({
     runId: child,
     runInput: {
-      input: "private-marker",
       attributes: { $rootRunId: root },
+      input: "private-marker",
     },
   });
   await job({ runId: crypto.randomUUID(), runInput: { input: "unrelated" } });
@@ -58,9 +60,9 @@ test("finds retries and queued child creation without returning input payloads",
   });
   expect(result.jobs).toEqual(
     [
-      { id: retry, runId: root, locked: false },
-      { id: childJob, runId: child, locked: false },
-    ].sort((a, b) => a.id.localeCompare(b.id))
+      { id: retry, locked: false, runId: root },
+      { id: childJob, locked: false, runId: child },
+    ].toSorted((a, b) => a.id.localeCompare(b.id))
   );
   expect(result.unsupportedJobIds).toEqual([]);
   expect(JSON.stringify(result)).not.toContain("private-marker");
@@ -85,7 +87,7 @@ test("reports worker locks and unsupported messages; ignores ordinary health pro
     runIds: [runId],
     taskIdentifier,
   });
-  expect(result.jobs).toEqual([{ id: locked, runId, locked: true }]);
+  expect(result.jobs).toEqual([{ id: locked, locked: true, runId }]);
   expect(result.unsupportedJobIds).toEqual([unsupported]);
 });
 

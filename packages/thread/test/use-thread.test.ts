@@ -1,19 +1,19 @@
 import { describe, expect, mock, test } from "bun:test";
 
-import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import type { UIMessage } from "ai";
 import { createElement } from "react";
-import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { act, create } from "react-test-renderer";
+import type { ReactTestRenderer } from "react-test-renderer";
 
-import { AbstractThread } from "../src/abstract-thread";
 import { getMessageText } from "../src/message-utils";
 import { Thread } from "../src/thread";
 import { MemoryThreadState } from "../src/thread-state";
-import type { ThreadState } from "../src/types";
-import {
-  type UseThreadHelpers,
-  type UseThreadOptions,
-  useThread,
-} from "../src/use-thread";
+import { useThread } from "../src/use-thread";
+import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
+import { ControlledTransport } from "./support/hook-controlled-transport";
+import { RejectingTransport } from "./support/rejecting-transport";
+import { ResumeTransport } from "./support/resume-transport";
+import { StateBackedThread } from "./support/state-backed-thread";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -21,90 +21,43 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-class RejectingTransport implements ChatTransport<UIMessage> {
-  requests = 0;
+const user = (id: string): UIMessage => ({
+  id,
+  parts: [{ text: id, type: "text" }],
+  role: "user",
+});
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () => {
-    this.requests += 1;
-    return Promise.reject(new Error("transport failed"));
-  };
+const assistant = (id: string): UIMessage => ({
+  id,
+  parts: [],
+  role: "assistant",
+});
 
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
-}
-
-class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: Array<ReadableStreamDefaultController<UIMessageChunk>> =
-    [];
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-    Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push(controller);
-        },
-      })
-    );
-
-  reconnectToStream() {
-    return Promise.resolve(null);
-  }
-
-  emit(requestIndex: number, chunk: UIMessageChunk) {
-    this.requests[requestIndex]?.enqueue(chunk);
-  }
-
-  finish(requestIndex: number) {
-    this.requests[requestIndex]?.close();
-  }
-}
-
-class ResumeTransport implements ChatTransport<UIMessage> {
-  reconnects = 0;
-
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-    Promise.reject(new Error("Unexpected send"));
-
-  reconnectToStream() {
-    this.reconnects += 1;
-    return Promise.resolve(null);
-  }
-}
-
-class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(
-    state: ThreadState<UIMessage>,
-    transport?: ChatTransport<UIMessage>
-  ) {
-    super({ state, transport });
-  }
-}
-
-function user(id: string): UIMessage {
-  return { id, parts: [{ text: id, type: "text" }], role: "user" };
-}
-
-function assistant(id: string): UIMessage {
-  return { id, parts: [], role: "assistant" };
-}
-
-function HookHarness({
+const HookHarness = ({
+  onCommit,
   onRender,
   options,
 }: {
+  onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void;
   onRender: (helpers: UseThreadHelpers) => void;
   options: UseThreadOptions;
-}) {
-  onRender(useThread(options));
-  return null;
-}
+}) => {
+  const helpers = useThread(options);
+  onRender(helpers);
+  return createElement("div", {
+    ref: () => onCommit?.(helpers.setMessages),
+  });
+};
 
-function renderUseThread(initialOptions: UseThreadOptions) {
+const renderUseThread = (
+  initialOptions: UseThreadOptions,
+  onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
+) => {
   let current: UseThreadHelpers | undefined;
   let renderer: ReactTestRenderer | undefined;
   const render = (options: UseThreadOptions) =>
     createElement(HookHarness, {
+      onCommit,
       onRender: (helpers) => {
         current = helpers;
       },
@@ -117,7 +70,9 @@ function renderUseThread(initialOptions: UseThreadOptions) {
 
   return {
     get current() {
-      if (!current) throw new Error("Expected useThread to render");
+      if (!current) {
+        throw new Error("Expected useThread to render");
+      }
       return current;
     },
     unmount() {
@@ -127,15 +82,18 @@ function renderUseThread(initialOptions: UseThreadOptions) {
       act(() => renderer?.update(render(options)));
     },
   };
-}
+};
 
-async function waitFor(predicate: () => boolean) {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (predicate()) return;
-    await Bun.sleep(1);
+const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+  if (predicate()) {
+    return;
   }
-  throw new Error("Timed out waiting for condition");
-}
+  if (attemptsRemaining === 0) {
+    throw new Error("Timed out waiting for condition");
+  }
+  await Bun.sleep(1);
+  return waitFor(predicate, attemptsRemaining - 1);
+};
 
 describe("useThread", () => {
   test("observes messages sent through a custom state-backed AbstractThread", async () => {
@@ -183,8 +141,26 @@ describe("useThread", () => {
       "assistant-1",
     ]);
     const response = hook.current.messages.at(-1);
-    if (!response) throw new Error("Expected a response message");
+    if (!response) {
+      throw new Error("Expected a response message");
+    }
     expect(getMessageText(response)).toBe("reply");
+    hook.unmount();
+  });
+
+  test("forwards setters called by an initial commit ref", () => {
+    let isFirstCommit = true;
+    const hook = renderUseThread(
+      { messages: [user("user-a")] },
+      (setMessages) => {
+        if (isFirstCommit) {
+          isFirstCommit = false;
+          setMessages([user("user-b")]);
+        }
+      }
+    );
+
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
     hook.unmount();
   });
   test("uses current callbacks without replacing the chat transport", async () => {
@@ -214,14 +190,16 @@ describe("useThread", () => {
 
     hook.update({
       id: "thread-2",
+      messages: [user("user-2")],
       onError: secondError,
       transport: secondTransport,
     });
+    expect(hook.current.id).toBe("thread-2");
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-2"]);
     await act(async () => {
       await hook.current.sendMessage({ text: "second request" });
     });
 
-    expect(hook.current.id).toBe("thread-2");
     expect(secondTransport.requests).toBe(1);
     hook.unmount();
   });
@@ -234,6 +212,24 @@ describe("useThread", () => {
     expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-a"]);
     hook.update({ thread: second });
     expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
+    hook.unmount();
+  });
+
+  test("forwards a retained setter to the replacement supplied thread", () => {
+    const first = new Thread({ messages: [user("user-a")] });
+    const second = new Thread({ messages: [user("user-b")] });
+    const hook = renderUseThread({ thread: first });
+    const { setMessages } = hook.current;
+
+    hook.update({ thread: second });
+    act(() => {
+      setMessages([user("user-c")]);
+    });
+
+    expect(first.getSnapshot().messages.map(({ id }) => id)).toEqual([
+      "user-a",
+    ]);
+    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-c"]);
     hook.unmount();
   });
 
@@ -250,6 +246,36 @@ describe("useThread", () => {
     });
 
     expect(transport.reconnects).toBe(1);
+    hook.unmount();
+  });
+
+  test("resumes a replacement supplied thread while resume remains enabled", async () => {
+    const firstTransport = new ResumeTransport();
+    const secondTransport = new ResumeTransport();
+    const first = new Thread({
+      messages: [user("user-1"), assistant("assistant-1")],
+      transport: firstTransport,
+    });
+    const second = new Thread({
+      messages: [user("user-2"), assistant("assistant-2")],
+      transport: secondTransport,
+    });
+    const hook = renderUseThread({ resume: true, thread: first });
+
+    await act(async () => {
+      await Bun.sleep(0);
+    });
+    hook.update({ resume: true, thread: second });
+    await act(async () => {
+      await Bun.sleep(0);
+    });
+
+    expect(firstTransport.reconnects).toBe(1);
+    expect(secondTransport.reconnects).toBe(1);
+    expect(hook.current.messages.map(({ id }) => id)).toEqual([
+      "user-2",
+      "assistant-2",
+    ]);
     hook.unmount();
   });
 

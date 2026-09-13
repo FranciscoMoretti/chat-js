@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
@@ -8,57 +9,10 @@ import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 import { deleteFilesByUrls, listFiles } from "@/lib/file-storage";
 import { isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
 
-const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000; // 4 hours
+// Four hours.
+const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000;
 
-export async function GET(request: NextRequest) {
-  try {
-    // Verify this is being called by Vercel cron
-    const authHeader = request.headers.get("authorization");
-    if (
-      !env.CRON_SECRET?.trim() ||
-      authHeader !== `Bearer ${env.CRON_SECRET}`
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const [attachments, guests] = await Promise.allSettled([
-      cleanupOrphanedAttachments(),
-      cleanupExpiredEveGuests(process.cwd()),
-    ]);
-    const success =
-      attachments.status === "fulfilled" &&
-      guests.status === "fulfilled" &&
-      guests.value.pendingCount === 0;
-    return NextResponse.json(
-      {
-        success,
-        timestamp: new Date().toISOString(),
-        results: {
-          orphanedAttachments:
-            attachments.status === "fulfilled"
-              ? attachments.value
-              : { error: "Attachment cleanup failed; retry required." },
-          expiredGuests:
-            guests.status === "fulfilled"
-              ? guests.value
-              : { error: "Guest cleanup failed; retry required." },
-        },
-      },
-      { status: success ? 200 : 503 }
-    );
-  } catch (error) {
-    console.error("Cleanup cron job failed:", error);
-    return NextResponse.json(
-      {
-        error: "Cleanup failed",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-async function cleanupOrphanedAttachments() {
+const cleanupOrphanedAttachments = async () => {
   // Use EVE ownership even when admission is disabled; never infer its
   // references from legacy message rows or delete uninventoried legacy files.
   if (env.WORKFLOW_POSTGRES_URL) {
@@ -117,4 +71,52 @@ async function cleanupOrphanedAttachments() {
     console.error("Failed to cleanup orphaned attachments:", error);
     throw error;
   }
-}
+};
+
+export const GET = async (request: NextRequest) => {
+  try {
+    // Verify this is being called by Vercel cron
+    const authHeader = request.headers.get("authorization");
+    if (
+      !env.CRON_SECRET?.trim() ||
+      authHeader !== `Bearer ${env.CRON_SECRET}`
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const [attachments, guests] = await Promise.allSettled([
+      cleanupOrphanedAttachments(),
+      cleanupExpiredEveGuests(process.cwd()),
+    ]);
+    const success =
+      attachments.status === "fulfilled" &&
+      guests.status === "fulfilled" &&
+      guests.value.pendingCount === 0;
+    return NextResponse.json(
+      {
+        results: {
+          expiredGuests:
+            guests.status === "fulfilled"
+              ? guests.value
+              : { error: "Guest cleanup failed; retry required." },
+          orphanedAttachments:
+            attachments.status === "fulfilled"
+              ? attachments.value
+              : { error: "Attachment cleanup failed; retry required." },
+        },
+        success,
+        timestamp: new Date().toISOString(),
+      },
+      { status: success ? 200 : 503 }
+    );
+  } catch (error) {
+    console.error("Cleanup cron job failed:", error);
+    return NextResponse.json(
+      {
+        details: error instanceof Error ? error.message : "Unknown error",
+        error: "Cleanup failed",
+      },
+      { status: 500 }
+    );
+  }
+};

@@ -3,11 +3,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { authenticateEveGateway } from "./gateway-auth";
 
 const mocks = vi.hoisted(() => ({
-  guest: vi.fn(),
-  owns: vi.fn(),
   deleting: vi.fn(),
-  model: vi.fn(),
   descendant: vi.fn(),
+  guest: vi.fn(),
+  model: vi.fn(),
+  owns: vi.fn(),
 }));
 vi.mock("../db/eve-guests", () => ({ readEveGuestOwner: mocks.guest }));
 vi.mock("../types/anonymous", () => ({
@@ -24,8 +24,8 @@ vi.mock("../env", () => ({
   },
 }));
 vi.mock("../db/eve-queries", () => ({
-  ownsEveSession: mocks.owns,
   getDeletingEveConversationForSession: mocks.deleting,
+  ownsEveSession: mocks.owns,
 }));
 vi.mock("../db/eve-sandbox-coverage-proof", () => ({
   isFencedEveDescendant: mocks.descendant,
@@ -39,16 +39,15 @@ beforeEach(() => {
   mocks.deleting.mockResolvedValue({ id: "conversation" });
 });
 
-function request(path: string, method: string, secret = "fixture-secret") {
-  return new Request(`http://localhost${path}`, {
-    method,
+const request = (path: string, method: string, secret = "fixture-secret") =>
+  new Request(`http://localhost${path}`, {
     headers: {
       authorization: `Bearer ${secret}`,
-      "x-chatjs-owner": "owner",
       "x-chatjs-deletion": "1",
+      "x-chatjs-owner": "owner",
     },
+    method,
   });
-}
 
 it.each([
   ["/eve/v1/session/session/reset", "POST"],
@@ -188,6 +187,7 @@ it("root proof headers cannot authorize descendant mutations or transcript reads
   ]) {
     const read = request(`/eve/v1/session/child/${path}`, method);
     read.headers.set("x-chatjs-deletion-root", "root");
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     expect(await authenticateEveGateway(read)).toBeNull();
   }
   expect(mocks.descendant).not.toHaveBeenCalled();

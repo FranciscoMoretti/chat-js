@@ -1,4 +1,5 @@
-import { generateText, type ModelMessage, ToolLoopAgent } from "ai";
+import { generateText, ToolLoopAgent } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { truncateMessages } from "@/lib/ai/token-utils";
@@ -8,9 +9,11 @@ import {
   compressResearchSystemPrompt,
   researchSystemPrompt,
 } from "./prompts";
-import { type AgentOptions, createTelemetry } from "./types";
+import { createTelemetry } from "./types";
+import type { AgentOptions } from "./types";
 import { getTodayStr, withResearchTools } from "./utils";
 
+/* eslint-disable func-style, sort-keys -- Keep the upstream research pipeline structure readable. */
 export async function runResearcher(
   topic: string,
   options: AgentOptions
@@ -20,71 +23,79 @@ export async function runResearcher(
   const model = await options.getLanguageModel(
     config.research_model as ModelId
   );
-  return withResearchTools(
-    config,
-    dataStream,
-    async (tools) => {
-      if (Object.keys(tools).length === 0) {
-        throw new Error(
-          "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
-        );
-      }
+  return withResearchTools(config, async (tools) => {
+    if (Object.keys(tools).length === 0) {
+      throw new Error(
+        "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
+      );
+    }
 
-      dataStream.write({
-        type: "data-researchUpdate",
-        data: {
-          toolCallId,
-          title: "Starting research on topic",
-          message: topic,
-          type: "thoughts",
-          status: "running",
-        },
-      });
+    dataStream.write({
+      data: {
+        message: topic,
+        status: "running",
+        title: "Starting research on topic",
+        toolCallId,
+        type: "thoughts",
+      },
+      type: "data-researchUpdate",
+    });
 
-      const researcherAgent = new ToolLoopAgent({
-        model,
-        instructions: researchSystemPrompt({
-          mcp_prompt: config.mcp_prompt || "",
-          date: getTodayStr(),
-          max_search_queries: config.search_api_max_queries,
-        }),
-        tools,
-        maxOutputTokens: config.research_model_max_tokens,
-        ...createTelemetry("researcher", options),
-        onStepEnd: ({ usage }) => {
-          if (usage) {
-            options.costAccumulator?.addLLMCost(
-              config.research_model as AppModelId,
-              usage,
-              "deep-research-researcher"
-            );
-          }
-        },
-      });
+    const researcherAgent = new ToolLoopAgent({
+      model,
+      instructions: researchSystemPrompt({
+        date: getTodayStr(),
+        max_search_queries: config.search_api_max_queries,
+        mcp_prompt: config.mcp_prompt || "",
+      }),
+      tools,
+      maxOutputTokens: config.research_model_max_tokens,
+      prepareStep: () => ({
+        toolsContext: Object.fromEntries(
+          Object.keys(tools).map((name) => [
+            name,
+            {
+              costAccumulator: options.costAccumulator,
+              dataStream,
+              toolCallIdOverride: toolCallId,
+              writeTopLevelUpdates: false,
+            },
+          ])
+        ),
+      }),
+      ...createTelemetry("researcher", options),
+      onStepEnd: ({ usage }) => {
+        if (usage) {
+          options.costAccumulator?.addLLMCost(
+            config.research_model as AppModelId,
+            usage,
+            "deep-research-researcher"
+          );
+        }
+      },
+    });
 
-      const { responseMessages } = await researcherAgent.generate({
-        prompt: topic,
-        abortSignal,
-      });
+    const { responseMessages } = await researcherAgent.generate({
+      abortSignal,
+      prompt: topic,
+    });
 
-      const compressed = await compressResearch(responseMessages, options);
+    // eslint-disable-next-line no-use-before-define -- Compression is the second phase of this pipeline.
+    const compressed = await compressResearch(responseMessages, options);
 
-      dataStream.write({
-        type: "data-researchUpdate",
-        data: {
-          toolCallId,
-          title: "Research topic completed",
-          message: topic,
-          type: "thoughts",
-          status: "completed",
-        },
-      });
+    dataStream.write({
+      data: {
+        message: topic,
+        status: "completed",
+        title: "Research topic completed",
+        toolCallId,
+        type: "thoughts",
+      },
+      type: "data-researchUpdate",
+    });
 
-      return compressed;
-    },
-    toolCallId,
-    options.costAccumulator
-  );
+    return compressed;
+  });
 }
 
 async function compressResearch(
@@ -98,13 +109,13 @@ async function compressResearch(
 
   const messages: ModelMessage[] = [
     {
-      role: "system" as const,
       content: compressResearchSystemPrompt({ date: getTodayStr() }),
+      role: "system" as const,
     },
     ...researchMessages,
     {
-      role: "user" as const,
       content: compressResearchSimpleHumanMessage,
+      role: "user" as const,
     },
   ];
 

@@ -5,8 +5,8 @@ export const wordCountInput = z.object({
 });
 
 export const wordCountResult = z.object({
-  words: z.number(),
   characters: z.number(),
   charactersNoSpaces: z.number(),
   sentences: z.number(),
+  words: z.number(),
 });

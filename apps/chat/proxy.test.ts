@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { proxy } from "./proxy";
 
-const mocks = vi.hoisted(() => ({ session: vi.fn(), eveEnabled: true }));
+const mocks = vi.hoisted(() => ({ eveEnabled: true, session: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock("@/lib/config", () => ({ config: { desktopApp: { enabled: false } } }));
 vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));
@@ -24,16 +24,19 @@ it("lets guest EVE conversations reach page-level ownership checks", async () =>
 
 it("keeps registered-only pages and disabled EVE routes behind login", async () => {
   for (const path of ["/project/private", "/chat/private/settings"]) {
-    expect(
-      (await proxy(new NextRequest(`http://localhost${path}`)))?.headers.get(
-        "location"
-      )
-    ).toBe("http://localhost/login");
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    const resolvedResult1 = await proxy(
+      new NextRequest(`http://localhost${path}`)
+    );
+    expect(resolvedResult1?.headers.get("location")).toBe(
+      "http://localhost/login"
+    );
   }
   mocks.eveEnabled = false;
-  expect(
-    (
-      await proxy(new NextRequest("http://localhost/chat/guest-conversation"))
-    )?.headers.get("location")
-  ).toBe("http://localhost/login");
+  const resolvedResult2 = await proxy(
+    new NextRequest("http://localhost/chat/guest-conversation")
+  );
+  expect(resolvedResult2?.headers.get("location")).toBe(
+    "http://localhost/login"
+  );
 });

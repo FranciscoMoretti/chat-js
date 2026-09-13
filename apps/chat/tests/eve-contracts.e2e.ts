@@ -1,3 +1,10 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
@@ -29,7 +36,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db
   .insert(user)
-  .values({ id: owner, email: `${owner}@test.invalid`, name: "Eve test" });
+  .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
@@ -39,16 +46,16 @@ afterAll(async () => {
 test("billing replay is atomic, rounds per turn and preserves unknown costs", async () => {
   await db
     .insert(userCredit)
-    .values({ userId: owner, credits: 50 })
+    .values({ credits: 50, userId: owner })
     .onConflictDoNothing();
   const sessionId = crypto.randomUUID();
   const eventId = crypto.randomUUID();
   const entry = {
-    sessionId,
+    costUsd: 0.001,
     eventId,
     ownerId: owner,
+    sessionId,
     turnId: "turn_0",
-    costUsd: 0.001,
   };
   await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
@@ -59,9 +66,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   expect(balance?.credits).toBe(49);
   const unknown = {
     ...entry,
+    costUsd: undefined,
     eventId: crypto.randomUUID(),
     turnId: "turn_1",
-    costUsd: undefined,
   };
   expect(await recordEveUsage(unknown)).toBe(false);
   const [row] = await db
@@ -82,9 +89,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   );
   const precise = {
     ...entry,
+    costUsd: 0.0010000000000000002,
     eventId: crypto.randomUUID(),
     turnId: "precision",
-    costUsd: 0.001_000_000_000_000_000_2,
   };
   await recordEveUsage(precise);
   await recordEveUsage(precise);
@@ -93,7 +100,7 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
   const operation = crypto.randomUUID();
   let starts = 0;
   const start = async () => {
-    starts++;
+    starts += 1;
     await new Promise((resolve) => setTimeout(resolve, 50));
     return `test-${crypto.randomUUID()}`;
   };
@@ -151,9 +158,9 @@ test("a stopped creator's reservation can be resumed without changing its identi
   const [reservation] = await db
     .insert(eveConversation)
     .values({
-      ownerId: owner,
-      operationId: operation,
       firstMessage: "process stopped",
+      operationId: operation,
+      ownerId: owner,
     })
     .returning();
   const bound = await createEveConversation(
@@ -188,8 +195,8 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     new Date(activityAt.getTime() - 30_000)
   );
   await updateEveConversationMetadata(owner, bound.id, {
-    title: "renamed",
     isPinned: true,
+    title: "renamed",
   });
   expect((await getEveConversation(owner, bound.id))?.updatedAt).toEqual(
     activityAt
@@ -217,7 +224,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     start
   );
   const operation = crypto.randomUUID();
-  const fork = { conversationId: root.id, beforeTurnId: "turn_1" };
+  const fork = { beforeTurnId: "turn_1", conversationId: root.id };
   const branch = await createEveConversation(
     owner,
     operation,
@@ -246,7 +253,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     crypto.randomUUID(),
     "nested replacement",
     start,
-    { fork: { conversationId: branch.id, beforeTurnId: "turn_2" } }
+    { fork: { beforeTurnId: "turn_2", conversationId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
   expect(row?.rootConversationId).toBe(root.id);
@@ -280,27 +287,27 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
   );
   await expect(
     db.insert(eveConversation).values({
-      ownerId: owner,
-      operationId: crypto.randomUUID(),
       firstMessage: "partial branch",
+      operationId: crypto.randomUUID(),
+      ownerId: owner,
       parentConversationId: root.id,
     })
   ).rejects.toThrow();
   const foreignOwner = crypto.randomUUID();
   await db.insert(user).values({
-    id: foreignOwner,
     email: `${foreignOwner}@test.invalid`,
+    id: foreignOwner,
     name: "Ancestry constraint fixture",
   });
   try {
     await expect(
       db.insert(eveConversation).values({
-        ownerId: foreignOwner,
-        operationId: crypto.randomUUID(),
         firstMessage: "foreign branch",
+        forkTurnId: "turn_0",
+        operationId: crypto.randomUUID(),
+        ownerId: foreignOwner,
         parentConversationId: root.id,
         rootConversationId: root.id,
-        forkTurnId: "turn_0",
       })
     ).rejects.toThrow();
   } finally {
@@ -317,20 +324,20 @@ test.each(["codeExecution", "webSearch"])(
     const sessionId = crypto.randomUUID();
     const callId = crypto.randomUUID();
     const event: MessageStreamEvent = {
-      type: "action.result",
-      meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
       data: {
-        turnId: "tool-receipt",
-        stepIndex: 0,
+        result: {
+          callId,
+          kind: "tool-result",
+          output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
+          toolName,
+        },
         sequence: 0,
         status: "completed",
-        result: {
-          kind: "tool-result",
-          toolName,
-          callId,
-          output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
-        },
+        stepIndex: 0,
+        turnId: "tool-receipt",
       },
+      meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
+      type: "action.result",
     };
     await Promise.all(
       Array.from({ length: 8 }, () =>
@@ -418,8 +425,8 @@ test.each(["deleting", "deleted"] as const)(
     expect(await listEveConversationBranches(owner, bound.id)).toBeUndefined();
     expect(
       await updateEveConversationMetadata(owner, bound.id, {
-        visibility: "public",
         title: "resurrected",
+        visibility: "public",
       })
     ).toBeUndefined();
     await recordEveConversationActivity(
@@ -435,7 +442,7 @@ test.each(["deleting", "deleted"] as const)(
     ).rejects.toThrow("can no longer be created");
     await expect(
       createEveConversation(owner, crypto.randomUUID(), "fork", start, {
-        fork: { conversationId: bound.id, beforeTurnId: "turn_0" },
+        fork: { beforeTurnId: "turn_0", conversationId: bound.id },
       })
     ).rejects.toThrow("not available");
     expect(starts).toBe(1);
@@ -460,7 +467,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     crypto.randomUUID(),
     "child",
     start,
-    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
   expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
@@ -468,7 +475,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
   const deletion = await beginEveConversationDeletion(owner, child.id);
   expect(deletion?.rootId).toBe(root.id);
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
-    [root.id, child.id].sort()
+    [root.id, child.id].toSorted()
   );
   expect(await getPublicEveConversation(root.id)).toBeUndefined();
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
@@ -482,13 +489,13 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     "concurrent deletion",
     () => Promise.resolve(crypto.randomUUID())
   );
-  const locked = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const locked = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const documentWrite = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
     );
-    locked.resolve();
+    locked.resolve(undefined);
     await release.promise;
   });
   await locked.promise;
@@ -510,16 +517,16 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       crypto.randomUUID(),
       "late fork",
       start,
-      { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
-    release.resolve();
+    release.resolve(undefined);
     await documentWrite;
     await deletion;
     await rejected;
     expect(start).not.toHaveBeenCalled();
   } finally {
-    release.resolve();
+    release.resolve(undefined);
     await documentWrite;
     await deletion;
   }
@@ -538,7 +545,7 @@ test("unresolved creation prevents a partial family deletion", async () => {
       crypto.randomUUID(),
       "uncertain child",
       () => Promise.reject(new Error("offline")),
-      { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
   await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
@@ -555,14 +562,14 @@ test("final application deletion erases family content, preserves accounting and
     operation,
     "Private initial text",
     start,
-    { initialModelId: "model", initialContentHash: "hash" }
+    { initialContentHash: "hash", initialModelId: "model" }
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Child text",
     start,
-    { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
   );
   const unrelated = await createEveConversation(
     owner,
@@ -571,17 +578,17 @@ test("final application deletion erases family content, preserves accounting and
     start
   );
   await updateEveConversationMetadata(owner, root.id, {
-    title: "Private title",
     isPinned: true,
+    title: "Private title",
     visibility: "public",
   });
   await db.insert(eveUsage).values({
+    chargedCents: 1,
+    costUsd: "0.01",
     eventId: crypto.randomUUID(),
+    ownerId: owner,
     sessionId: root.sessionId,
     turnId: "turn_0",
-    ownerId: owner,
-    costUsd: "0.01",
-    chargedCents: 1,
   });
   const accounting = await db
     .select()
@@ -605,13 +612,13 @@ test("final application deletion erases family content, preserves accounting and
       .from(eveConversation)
       .where(eq(eveConversation.id, id));
     expect(row).toMatchObject({
-      state: "deleted",
       firstMessage: "",
-      title: null,
-      initialModelId: null,
       initialContentHash: null,
-      visibility: "private",
+      initialModelId: null,
       isPinned: false,
+      state: "deleted",
+      title: null,
+      visibility: "private",
     });
     expect(row.sessionId).toBe(
       id === root.id ? root.sessionId : child.sessionId
@@ -630,8 +637,8 @@ test("final application deletion erases family content, preserves accounting and
   ).toEqual(accounting);
   await expect(
     createEveConversation(owner, operation, "Private initial text", start, {
-      initialModelId: "model",
       initialContentHash: "hash",
+      initialModelId: "model",
     })
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
@@ -650,12 +657,12 @@ test.each(copyReservationStates)(
     const [copy] = await db
       .insert(eveConversation)
       .values({
-        ownerId: owner,
-        operationId,
-        firstMessage: "Same visible title",
         creationKind: "copy",
-        state,
+        firstMessage: "Same visible title",
+        operationId,
+        ownerId: owner,
         sessionId,
+        state,
       })
       .returning();
     const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
@@ -664,10 +671,10 @@ test.each(copyReservationStates)(
     ).rejects.toThrow("different");
     expect(create).not.toHaveBeenCalled();
     expect(await getEveCreation(owner, operationId)).toMatchObject({
-      id: copy.id,
       creationKind: "copy",
-      state,
+      id: copy.id,
       sessionId,
+      state,
     });
   }
 );
@@ -682,13 +689,13 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
   );
   await expect(
     db.insert(eveConversation).values({
-      ownerId: owner,
-      operationId: crypto.randomUUID(),
-      firstMessage: "Invalid copy fork",
       creationKind: "copy",
+      firstMessage: "Invalid copy fork",
+      forkTurnId: "turn_0",
+      operationId: crypto.randomUUID(),
+      ownerId: owner,
       parentConversationId: source.id,
       rootConversationId: source.id,
-      forkTurnId: "turn_0",
     })
   ).rejects.toThrow();
   await expect(
@@ -703,16 +710,16 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
 test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
   const sessionId = crypto.randomUUID();
   const event: MessageStreamEvent = {
-    type: "hook.result",
-    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
     data: {
       hookId: "followup-suggestions",
-      turnId: "turn_0",
       modelCalls: [
         { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.002 } },
         { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.003 } },
       ],
+      turnId: "turn_0",
     },
+    meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
+    type: "hook.result",
   };
   await Promise.all(
     Array.from({ length: 4 }, () => ingestEveUsage(owner, sessionId, event))

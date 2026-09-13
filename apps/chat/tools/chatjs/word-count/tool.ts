@@ -2,28 +2,28 @@ import { tool } from "ai";
 
 import { wordCountInput } from "./schemas";
 
-const WORD_SPLIT_REGEX = /\s+/;
-const SENTENCE_SPLIT_REGEX = /[.!?]+/;
+const WORD_SPLIT_REGEX = /\s+/u;
+const SENTENCE_SPLIT_REGEX = /[.!?]+/u;
 
 export const wordCount = tool({
   description: "Count the words, characters, and sentences in a given text",
-  inputSchema: wordCountInput,
   execute: ({ text }: { text: string }) => {
     const words =
       text.trim() === "" ? 0 : text.trim().split(WORD_SPLIT_REGEX).length;
     const characters = text.length;
-    const charactersNoSpaces = text.replace(/\s/g, "").length;
+    const charactersNoSpaces = text.replaceAll(/\s/gu, "").length;
     const sentences = text
       .split(SENTENCE_SPLIT_REGEX)
       .filter((s) => s.trim().length > 0).length;
 
-    return { words, characters, charactersNoSpaces, sentences };
+    return { characters, charactersNoSpaces, sentences, words };
   },
+  inputSchema: wordCountInput,
 });
 
-export type WordCountOutput = {
+export interface WordCountOutput {
   words: number;
   characters: number;
   charactersNoSpaces: number;
   sentences: number;
-};
+}

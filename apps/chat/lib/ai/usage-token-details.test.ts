@@ -16,15 +16,15 @@ describe("persisted token usage", () => {
       createElement(
         Context,
         {
-          usedTokens: 100,
           maxTokens: 1000,
           usage: {
+            cachedInputTokens: 30,
             inputTokens: 100,
             outputTokens: 20,
-            totalTokens: 120,
-            cachedInputTokens: 30,
             reasoningTokens: 7,
+            totalTokens: 120,
           },
+          usedTokens: 100,
         },
         createElement(ContextCacheUsage),
         createElement(ContextReasoningUsage)
@@ -37,28 +37,28 @@ describe("persisted token usage", () => {
   it("preserves SDK 6 cache and reasoning counts without nested details", () => {
     expect(
       getUsageTokenDetails({
+        cachedInputTokens: 30,
         inputTokens: 100,
         outputTokens: 20,
-        totalTokens: 120,
-        cachedInputTokens: 30,
         reasoningTokens: 7,
+        totalTokens: 120,
       })
     ).toEqual({ cachedInputTokens: 30, reasoningTokens: 7 });
   });
   it("prefers SDK 7 details including zero over legacy counts", () => {
     expect(
       getUsageTokenDetails({
-        inputTokens: 100,
-        outputTokens: 20,
-        totalTokens: 120,
         cachedInputTokens: 30,
-        reasoningTokens: 7,
         inputTokenDetails: {
-          noCacheTokens: 100,
           cacheReadTokens: 0,
           cacheWriteTokens: 0,
+          noCacheTokens: 100,
         },
-        outputTokenDetails: { textTokens: 20, reasoningTokens: 0 },
+        inputTokens: 100,
+        outputTokenDetails: { reasoningTokens: 0, textTokens: 20 },
+        outputTokens: 20,
+        reasoningTokens: 7,
+        totalTokens: 120,
       })
     ).toEqual({ cachedInputTokens: 0, reasoningTokens: 0 });
   });

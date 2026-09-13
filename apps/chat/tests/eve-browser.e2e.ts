@@ -1,6 +1,14 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
@@ -19,15 +27,15 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-const conversationUrl = /\/chat\/[^/]+$/;
-const failureMessage = /failure|failed/i;
-const connectionFailure = /fetch|failed/i;
+const conversationUrl = /\/chat\/[^/]+$/u;
+const failureMessage = /failure|failed/iu;
+const connectionFailure = /fetch|failed/iu;
 
 async function capture(page: Page, name: string) {
   await mkdir("tests/eve-results/screenshots", { recursive: true });
   await page.screenshot({
-    path: `tests/eve-results/screenshots/${name}.png`,
     animations: "disabled",
+    path: `tests/eve-results/screenshots/${name}.png`,
     style:
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
@@ -38,15 +46,15 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/api/dev-login");
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Chat", exact: true })
+    page.getByRole("heading", { exact: true, name: "Chat" })
   ).toBeVisible();
 });
 
 async function create(page: Page, message: string) {
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(message);
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
 }
 
@@ -64,9 +72,9 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await expect(
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("slow response");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page.getByText("Responding…", { exact: true })).toBeVisible();
   await expect(composer).toHaveText("", { timeout: 1000 });
   await composer.fill("my next draft");
@@ -76,28 +84,28 @@ test("native transcript survives reload; streaming preserves the next draft; can
   ).toBeVisible();
   await expect(composer).toHaveText("my next draft");
   await composer.fill("slow cancel");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByRole("button", { name: "Stop", exact: true })
+    page.getByRole("button", { exact: true, name: "Stop" })
   ).toBeEnabled();
   const cancellation = page.waitForResponse((response) =>
     response.url().endsWith("/cancel")
   );
-  await page.getByRole("button", { name: "Stop", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Stop" }).click();
   expect(await (await cancellation).json()).toMatchObject({
     ok: true,
     status: "accepted",
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await composer.fill("after cancellation");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByText("Verified: after cancellation", { exact: true })
   ).toBeVisible();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(composer).toHaveText("");
   await capture(page, "conversation-desktop");
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await capture(page, "conversation-mobile");
   expect(
     await page.evaluate(
@@ -137,7 +145,7 @@ for (const decision of ["Approve", "Cancel"]) {
       page.getByText("Waiting for your input", { exact: true })
     ).toBeVisible();
     await capture(page, `approval-${decision.toLowerCase()}`);
-    await page.getByRole("button", { name: decision, exact: true }).click();
+    await page.getByRole("button", { exact: true, name: decision }).click();
     await expect(
       page.getByText("Approval handled.", { exact: true })
     ).toBeVisible();
@@ -158,9 +166,9 @@ test("failed turn is visible and the conversation can continue", async ({
   await expect(
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("fail");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: failureMessage })
   ).toBeVisible();
@@ -171,7 +179,7 @@ test("failed turn is visible and the conversation can continue", async ({
     page.getByRole("alert").filter({ hasText: failureMessage })
   ).toBeVisible();
   await composer.fill("recovered");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByText("Verified: recovered", { exact: true })
   ).toBeVisible();
@@ -198,23 +206,23 @@ test("lost creation reply retries the same conversation and access checks reject
     await page.unroute("**/api/agent-conversations");
   });
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("retained intent");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: connectionFailure })
   ).toBeVisible();
   await capture(page, "creation-interrupted");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(`${baseURL}/chat/${acceptedId}`);
   await expect(
     page.getByText("Verified: retained intent", { exact: true })
   ).toBeVisible();
 
-  const origin = new URL(baseURL ?? "http://localhost").origin;
+  const { origin } = new URL(baseURL ?? "http://localhost");
   const rawCreate = await page.request.post("/api/eve/v1/session", {
-    headers: { origin },
     data: { message: "bypass" },
+    headers: { origin },
   });
   expect(rawCreate.status()).toBe(404);
   const foreign = await page.request.get(
@@ -222,20 +230,20 @@ test("lost creation reply retries the same conversation and access checks reject
   );
   expect(foreign.status()).toBe(404);
   const crossOrigin = await page.request.post("/api/agent-conversations", {
+    data: { message: "bypass", operationId: crypto.randomUUID() },
     headers: { origin: "https://evil.test" },
-    data: { operationId: crypto.randomUUID(), message: "bypass" },
   });
   expect(crossOrigin.status()).toBe(403);
   const invalid = await page.request.post("/api/agent-conversations", {
+    data: { message: " ", operationId: crypto.randomUUID() },
     headers: { origin },
-    data: { operationId: crypto.randomUUID(), message: " " },
   });
   expect(invalid.status()).toBe(400);
   const anonymous = await browser.newContext({ baseURL });
   try {
     const denied = await anonymous.request.post("/api/agent-conversations", {
+      data: { message: "bypass", operationId: crypto.randomUUID() },
       headers: { origin },
-      data: { operationId: crypto.randomUUID(), message: "bypass" },
     });
     expect(denied.status()).toBe(401);
   } finally {
@@ -270,20 +278,20 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .set({ credits: 0 })
       .where(eq(userCredit.userId, owner.id));
     await page.reload();
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Cancel" }).click();
     await expect(
       page.getByText("Request declined.", { exact: true })
     ).toBeVisible();
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill("cannot start");
     const rejected = page.waitForResponse(
       (response) =>
         response.url().includes("/api/eve/v1/session/") &&
         response.request().method() === "POST"
     );
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     expect((await rejected).status()).toBe(402);
   } finally {
     await db
@@ -325,11 +333,11 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .set({ costUsd: null })
       .where(eq(eveUsage.eventId, usage.eventId));
     const response = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(baseURL ?? "http://localhost").origin },
       data: {
-        operationId: crypto.randomUUID(),
         message: "blocked until reconciled",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(baseURL ?? "http://localhost").origin },
     });
     expect(response.status()).toBe(503);
     expect(await response.json()).toMatchObject({
@@ -362,27 +370,27 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   ).toBeVisible();
   const conversation = page.url();
   await page
-    .getByRole("link", { name: "New conversation", exact: true })
+    .getByRole("link", { exact: true, name: "New conversation" })
     .click();
   await expect(page).toHaveURL(new URL("/", conversation).href);
   const search = page.getByRole("textbox", { name: "Search conversations" });
   if (!(await search.isVisible())) {
     const expand = page.getByRole("button", {
-      name: "Expand sidebar",
       exact: true,
+      name: "Expand sidebar",
     });
     if (await expand.isVisible()) {
       await expand.click();
     } else {
       await page
-        .getByRole("button", { name: "Toggle Sidebar", exact: true })
+        .getByRole("button", { exact: true, name: "Toggle Sidebar" })
         .click();
     }
   }
   await search.fill("sidebar migration check");
   await capture(page, "sidebar-search");
   await page
-    .getByRole("link", { name: "sidebar migration check", exact: true })
+    .getByRole("link", { exact: true, name: "sidebar migration check" })
     .and(page.locator(`[href="${new URL(conversation).pathname}"]`))
     .click();
   await expect(page).toHaveURL(conversation);
@@ -407,27 +415,27 @@ test("legacy conversations are hidden without deleting their data", async ({
   const projectId = crypto.randomUUID();
   await db.insert(project).values({
     id: projectId,
-    userId: owner.id,
     name: "Archived project fixture",
+    userId: owner.id,
   });
   await db.insert(chat).values({
-    id,
-    userId: owner.id,
-    title: "Archived migration fixture",
-    projectId,
     createdAt: new Date(),
+    id,
+    projectId,
+    title: "Archived migration fixture",
+    userId: owner.id,
   });
   await db.insert(message).values({
-    id: messageId,
-    chatId: id,
-    role: "user",
     attachments: [],
+    chatId: id,
     createdAt: new Date(),
+    id: messageId,
+    role: "user",
   });
   await db.insert(part).values({
     messageId,
-    type: "text",
     text_text: "Preserved historical message",
+    type: "text",
   });
   try {
     await page.goto("/");
@@ -479,17 +487,17 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("keyboard");
   await composer.press("Shift+Enter");
   await composer.press("x");
   await expect(composer).toHaveText("keyboard\nx", { useInnerText: true });
   await composer.dispatchEvent("keydown", {
-    key: "Enter",
-    code: "Enter",
-    keyCode: 13,
-    isComposing: true,
     bubbles: true,
+    code: "Enter",
+    isComposing: true,
+    key: "Enter",
+    keyCode: 13,
   });
   await expect(page).not.toHaveURL(conversationUrl);
   await composer.fill("keyboard send");
@@ -517,18 +525,18 @@ test("stalled creation releases the composer and retries the retained operation"
       });
     } else {
       await route.fulfill({
-        status: 503,
         json: { error: "Worker is unavailable. Please retry." },
+        status: 503,
       });
     }
   });
   try {
     const composer = page.getByRole("textbox", {
-      name: "Message",
       exact: true,
+      name: "Message",
     });
     await composer.fill("retained timeout message");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("alert").filter({ hasText: "The request timed out" })
     ).toContainText("The request timed out", { timeout: 35_000 });
@@ -536,7 +544,7 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
     release?.();
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("alert").filter({ hasText: "Worker is unavailable" })
     ).toContainText("Worker is unavailable");
@@ -560,9 +568,9 @@ test("reload during an accepted turn restores the user message and follows the r
       response.url().includes("/api/eve/v1/session/")
   );
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("slow reload recovery");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   expect((await accepted).ok()).toBe(true);
   await page.reload();
   await expect(page.getByRole("log")).toContainText("slow reload recovery");
@@ -584,9 +592,9 @@ test("reload before acceptance recovers a late message without resending", async
       request.url().includes("/api/eve/v1/session/")
   );
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("slow early reload");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await dispatched;
   // Let the request body reach the server while admission is still pending.
   await page.waitForTimeout(500);
@@ -598,7 +606,7 @@ test("reload before acceptance recovers a late message without resending", async
     page.getByRole("log").getByText("slow early reload", { exact: true })
   ).toHaveCount(1);
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveText("");
   await capture(page, "reload-recovered");
 });
@@ -613,15 +621,17 @@ test("reload retains text when the send never reaches the server", async ({
   await page.route("**/api/eve/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
       await new Promise((resolve) => setTimeout(resolve, 5000));
-      await route.abort().catch(() => undefined);
+      await route.abort().catch(() => {
+        /* empty */
+      });
     } else {
       await route.continue();
     }
   });
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("retained before delivery");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await page.reload();
   await expect(
     page.getByText(
@@ -636,10 +646,10 @@ test("reload retains text when the send never reaches the server", async ({
   ).toBeVisible();
   await capture(page, "reload-unconfirmed");
   await page
-    .getByRole("button", { name: "Restore draft", exact: true })
+    .getByRole("button", { exact: true, name: "Restore draft" })
     .click();
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveText("retained before delivery");
   await expect(
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })

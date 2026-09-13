@@ -1,33 +1,27 @@
 "use client";
 
-import {
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { SetStateAction } from "react";
 import { z } from "zod";
 
-import { frontendToolsSchema, type UiToolName } from "@/lib/ai/types";
-import { type DraftAttachment, draftAttachment } from "@/lib/eve/draft";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+import { draftAttachment } from "@/lib/eve/draft";
+import type { DraftAttachment } from "@/lib/eve/draft";
 
 const composerDraft = z.object({
-  text: z.string(),
   attachments: z.array(draftAttachment),
   selectedTool: frontendToolsSchema.nullable().default(null),
+  text: z.string(),
 });
 type Draft = z.infer<typeof composerDraft>;
+const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
 
 /** Persist unsent input synchronously, before a response-card navigation can unmount it. */
-export function useEveComposerDraft(ownerId: string, scopeId: string) {
+export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
   const key = `chatjs.eve.composer:${ownerId}:${scopeId}`;
-  const current = useRef<Draft>({
-    text: "",
-    attachments: [],
-    selectedTool: null,
-  });
-  const [value, setValue] = useState(current.current);
+  const current = useRef<Draft>(emptyDraft);
+  const [value, setValue] = useState(emptyDraft);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string>();
   useEffect(() => {
@@ -35,8 +29,9 @@ export function useEveComposerDraft(ownerId: string, scopeId: string) {
       const saved = sessionStorage.getItem(key);
       const restored = saved
         ? composerDraft.parse(JSON.parse(saved))
-        : { text: "", attachments: [], selectedTool: null };
+        : { attachments: [], selectedTool: null, text: "" };
       current.current = restored;
+      // oxlint-disable-next-line react/set-state-in-effect -- Hydrate controlled editor state from session storage on mount.
       setValue(restored);
       setError(undefined);
     } catch {
@@ -94,5 +89,5 @@ export function useEveComposerDraft(ownerId: string, scopeId: string) {
       })),
     [update]
   );
-  return { ...value, setText, setAttachments, setSelectedTool, loaded, error };
-}
+  return { ...value, error, loaded, setAttachments, setSelectedTool, setText };
+};

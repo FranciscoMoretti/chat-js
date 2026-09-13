@@ -11,7 +11,10 @@ interface CloneChatButtonProps {
   className?: string;
 }
 
-export function CloneChatButton({ chatId, className }: CloneChatButtonProps) {
+export const CloneChatButton = ({
+  chatId,
+  className,
+}: CloneChatButtonProps) => {
   const router = useRouter();
   const copyChat = useCloneChat();
 
@@ -35,4 +38,4 @@ export function CloneChatButton({ chatId, className }: CloneChatButtonProps) {
       onClick={handleCloneChat}
     />
   );
-}
+};

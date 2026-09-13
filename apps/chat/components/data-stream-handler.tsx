@@ -1,6 +1,7 @@
 "use client";
 import type { DataUIPart } from "ai";
-import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import type { ArtifactMetadata } from "@/components/create-artifact";
 import { useArtifact } from "@/hooks/use-artifact";
@@ -23,25 +24,25 @@ import { useChatStoreApi } from "@/lib/stores/base";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
-function handleResearchUpdate({
+const handleResearchUpdate = ({
   delta,
   setSelectedTool,
 }: {
   delta: DataUIPart<CustomUIDataTypes>;
   setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
-}): void {
+}): void => {
   if (delta.type === "data-researchUpdate") {
     const update = delta.data;
     if (update?.type === "completed") {
@@ -50,13 +51,13 @@ function handleResearchUpdate({
       );
     }
   }
-}
+};
 
 /**
  * Process artifact stream parts (e.g., data-suggestion for text artifacts).
  * Dispatches to artifact-specific onStreamPart handlers.
  */
-function processArtifactStreamPart({
+const processArtifactStreamPart = ({
   delta,
   artifact,
   setArtifact,
@@ -66,41 +67,45 @@ function processArtifactStreamPart({
   artifact: ReturnType<typeof useArtifact>["artifact"];
   setArtifact: ReturnType<typeof useArtifact>["setArtifact"];
   setMetadata: ReturnType<typeof useArtifact>["setMetadata"];
-}): void {
+}): void => {
   switch (artifact.kind) {
-    case "code":
+    case "code": {
       codeArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata: createTypedMetadataSetter(
           setMetadata,
           getCodeArtifactMetadata
         ),
+        streamPart: delta,
       });
       break;
-    case "sheet":
+    }
+    case "sheet": {
       sheetArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata: createTypedMetadataSetter(
           setMetadata,
           getSheetArtifactMetadata
         ),
+        streamPart: delta,
       });
       break;
-    case "text":
+    }
+    case "text": {
       textArtifact.onStreamPart?.({
-        streamPart: delta,
         setArtifact,
         setMetadata,
+        streamPart: delta,
       });
       break;
-    default:
+    }
+    default: {
       break;
+    }
   }
-}
+};
 
-export function DataStreamHandler() {
+export const DataStreamHandler = () => {
   const { dataStream } = useDataStream();
   const chatStore = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, setMetadata } = useArtifact();
@@ -127,7 +132,7 @@ export function DataStreamHandler() {
     const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
     lastProcessedIndex.current = dataStream.length - 1;
     lastProcessedPart.current = dataStream.at(-1);
-    const messages = chatStore.getState().messages;
+    const { messages } = chatStore.getState();
 
     for (const delta of newDeltas) {
       if (!isDataPartOnMessagePath(delta, messages)) {
@@ -137,8 +142,8 @@ export function DataStreamHandler() {
       handleResearchUpdate({ delta, setSelectedTool });
 
       processArtifactStreamPart({
-        delta,
         artifact,
+        delta,
         setArtifact,
         setMetadata,
       });
@@ -153,4 +158,4 @@ export function DataStreamHandler() {
   ]);
 
   return null;
-}
+};

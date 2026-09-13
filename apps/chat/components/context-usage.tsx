@@ -18,10 +18,8 @@ import {
 } from "@/components/ai-elements/context";
 import { Button } from "@/components/ui/button";
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import {
-  getUsageTokenDetails,
-  type StoredLanguageModelUsage,
-} from "@/lib/ai/usage-token-details";
+import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
+import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
 import { useLastUsageUntilMessageId } from "@/lib/stores/hooks-base";
 import { useChatModels } from "@/providers/chat-models-provider";
 
@@ -30,13 +28,13 @@ const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
 const ICON_STROKE_WIDTH = 2;
 
-function ContextIconStandalone({
+const ContextIconStandalone = ({
   usedTokens,
   maxTokens,
 }: {
   usedTokens: number;
   maxTokens: number;
-}) {
+}) => {
   const circumference = 2 * Math.PI * ICON_RADIUS;
   const usedPercent = usedTokens / maxTokens;
   const dashOffset = circumference * (1 - usedPercent);
@@ -45,7 +43,6 @@ function ContextIconStandalone({
     <svg
       aria-label="Model context usage"
       height="20"
-      role="img"
       style={{ color: "currentcolor" }}
       viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
       width="20"
@@ -70,13 +67,13 @@ function ContextIconStandalone({
         strokeDashoffset={dashOffset}
         strokeLinecap="round"
         strokeWidth={ICON_STROKE_WIDTH}
-        style={{ transformOrigin: "center", transform: "rotate(-90deg)" }}
+        style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
       />
     </svg>
   );
-}
+};
 
-function ContextUsage({
+const ContextUsage = ({
   usage,
   selectedModelId,
   iconOnly = false,
@@ -84,7 +81,7 @@ function ContextUsage({
   usage: StoredLanguageModelUsage;
   selectedModelId: ModelId;
   iconOnly?: boolean;
-}) {
+}) => {
   const contextMax = useMemo(() => {
     try {
       const cw = getContextWindow(selectedModelId as unknown as string);
@@ -132,9 +129,9 @@ function ContextUsage({
       </ContextContent>
     </Context>
   );
-}
+};
 
-export function ContextUsageFromParent({
+export const ContextUsageFromParent = ({
   parentMessageId,
   selectedModelId,
   iconOnly = false,
@@ -144,7 +141,7 @@ export function ContextUsageFromParent({
   selectedModelId: AppModelId;
   iconOnly?: boolean;
   className?: string;
-}) {
+}) => {
   const usage = useLastUsageUntilMessageId(parentMessageId);
   const { getModelById } = useChatModels();
   const modelDefinition = getModelById(selectedModelId);
@@ -162,4 +159,4 @@ export function ContextUsageFromParent({
       />
     </div>
   );
-}
+};

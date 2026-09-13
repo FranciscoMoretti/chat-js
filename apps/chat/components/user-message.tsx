@@ -32,10 +32,17 @@ const PureUserMessage = ({
     isOpen: boolean;
     imageUrl: string;
     imageName?: string;
-  }>({ isOpen: false, imageUrl: "" });
+  }>({
+    imageUrl: "",
+    isOpen: false,
+  });
 
   const handleImageClick = (imageUrl: string, imageName?: string) => {
-    setImageModal({ isOpen: true, imageUrl, imageName });
+    setImageModal({
+      imageName,
+      imageUrl,
+      isOpen: true,
+    });
   };
 
   if (!message) {
@@ -50,7 +57,7 @@ const PureUserMessage = ({
     <>
       <Message
         className={cn(
-          // TODO: Consider not using this max-w class override when editing is cohesive with displaying the message
+          // Editing uses the full available width so the editor matches the displayed message.
           mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
           "py-1"
         )}
@@ -145,7 +152,12 @@ const PureUserMessage = ({
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}
         isOpen={imageModal.isOpen}
-        onClose={() => setImageModal({ isOpen: false, imageUrl: "" })}
+        onClose={() =>
+          setImageModal({
+            imageUrl: "",
+            isOpen: false,
+          })
+        }
       />
     </>
   );

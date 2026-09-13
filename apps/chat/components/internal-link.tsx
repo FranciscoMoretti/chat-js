@@ -12,13 +12,13 @@ type InternalLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
   onNavigate?: () => void;
 };
 
-export function InternalLink({
+export const InternalLink = ({
   onAuxClick,
   onClick,
   onNavigate,
   href,
   ...props
-}: InternalLinkProps) {
+}: InternalLinkProps) => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
@@ -71,4 +71,4 @@ export function InternalLink({
       onClick={handleClick}
     />
   );
-}
+};

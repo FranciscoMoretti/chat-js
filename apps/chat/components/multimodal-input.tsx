@@ -2,12 +2,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, FileIcon, ImageIcon, PlusIcon } from "lucide-react";
-import type React from "react";
+import type { ChangeEvent, ClipboardEvent, ReactNode } from "react";
 import {
-  type ChangeEvent,
   createContext,
   memo,
-  type ReactNode,
   useCallback,
   useContext,
   useMemo,
@@ -27,11 +25,11 @@ import { ContextUsageFromParent } from "@/components/context-usage";
 import { useArtifact } from "@/hooks/use-artifact";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import {
-  type Attachment,
-  type ChatMessage,
-  expandSelectedModelValue,
-  type SelectedModelValue,
+import { expandSelectedModelValue } from "@/lib/ai/types";
+import type {
+  Attachment,
+  ChatMessage,
+  SelectedModelValue,
 } from "@/lib/ai/types";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { config } from "@/lib/config";
@@ -75,27 +73,42 @@ import { LimitDisplay } from "./upgrade-cta/limit-display";
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 /** Derive accept string for images only */
-function getAcceptImages(acceptedTypes: Record<string, string[]>): string {
-  return Object.entries(acceptedTypes)
+const getAcceptImages = (acceptedTypes: Record<string, string[]>): string =>
+  Object.entries(acceptedTypes)
     .filter(([mime]) => mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
     .join(",");
-}
 
 /** Derive accept string for non-image files only */
-function getAcceptFiles(acceptedTypes: Record<string, string[]>): string {
-  return Object.entries(acceptedTypes)
+const getAcceptFiles = (acceptedTypes: Record<string, string[]>): string =>
+  Object.entries(acceptedTypes)
     .filter(([mime]) => !mime.startsWith("image/"))
     .flatMap(([, exts]) => exts)
     .join(",");
-}
 
 /** Derive accept string for all file types */
-function getAcceptAll(acceptedTypes: Record<string, string[]>): string {
-  return Object.values(acceptedTypes).flat().join(",");
-}
+const getAcceptAll = (acceptedTypes: Record<string, string[]>): string =>
+  Object.values(acceptedTypes).flat().join(",");
 
-function PureMultimodalInput({
+const ComposerContext = createContext<{
+  autoFocus: boolean;
+  isEditMode: boolean;
+  isModelDisallowedForAnonymous: boolean;
+  parentMessageId: string | null;
+  status: UseChatHelpers<ChatMessage>["status"];
+  submission: { enabled: boolean; message?: string };
+  submitForm: () => void;
+  onStop: () => void;
+  onPaste: (event: React.ClipboardEvent) => Promise<void>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  acceptAll: string;
+  acceptFiles: string;
+  acceptImages: string;
+  uploadQueue: string[];
+  removeAttachment: (attachment: Attachment) => void;
+} | null>(null);
+
+const PureMultimodalInput = ({
   children,
   chatId,
   status,
@@ -113,7 +126,7 @@ function PureMultimodalInput({
   isEditMode?: boolean;
   parentMessageId: string | null;
   onSendMessage?: (message: ChatMessage) => void | Promise<void>;
-}) {
+}) => {
   const thread = useApplicationThread();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
   const { artifact, closeArtifact } = useArtifact();
@@ -362,7 +375,7 @@ function PureMultimodalInput({
     if (primaryRequest) {
       handleModelChange(primaryRequest.modelId);
 
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: !!session?.user,
         message,
@@ -370,17 +383,20 @@ function PureMultimodalInput({
         projectId: currentRoute.projectId,
         requestSpecs,
         startRun,
-      })
-        .then(async (failedRequestSpecs) => {
+      });
+      const completeRequests = async () => {
+        try {
+          const failedRequestSpecs = await runRequests;
           if (failedRequestSpecs.length > 0) {
             toast.error("Failed to complete all parallel responses");
           }
 
           await invalidatePersistedMessages();
-        })
-        .catch(() => {
+        } catch {
           toast.error("Failed to complete all parallel responses");
-        });
+        }
+      };
+      void completeRequests();
     } else {
       toast.error("No model selected");
     }
@@ -427,8 +443,8 @@ function PureMultimodalInput({
 
       try {
         const response = await fetch("/api/files/upload", {
-          method: "POST",
           body: formData,
+          method: "POST",
         });
 
         if (response.ok) {
@@ -437,14 +453,14 @@ function PureMultimodalInput({
           const { url, pathname, contentType } = data;
 
           return {
-            url,
-            name: pathname,
             contentType,
+            name: pathname,
+            url,
           };
         }
         const { error } = (await response.json()) as { error?: string };
         toast.error(error);
-      } catch (_error) {
+      } catch {
         toast.error("Failed to upload file, please try again!");
       }
     },
@@ -453,7 +469,7 @@ function PureMultimodalInput({
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+      const files = [...(event.target.files || [])];
       const validFiles = await processFiles(files);
 
       if (validFiles.length === 0) {
@@ -475,6 +491,7 @@ function PureMultimodalInput({
         ]);
       } catch (error) {
         console.error("Error uploading files!", error);
+        // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required upload queue cleanup in finally.
       } finally {
         setUploadQueue([]);
       }
@@ -483,7 +500,7 @@ function PureMultimodalInput({
   );
 
   const handlePaste = useCallback(
-    async (event: React.ClipboardEvent) => {
+    async (event: ClipboardEvent) => {
       if (responseAwareStatus !== "ready") {
         return;
       }
@@ -493,12 +510,12 @@ function PureMultimodalInput({
         return;
       }
 
-      const clipboardData = event.clipboardData;
+      const { clipboardData } = event;
       if (!clipboardData) {
         return;
       }
 
-      const files = Array.from(clipboardData.files);
+      const files = [...clipboardData.files];
       if (files.length === 0) {
         return;
       }
@@ -535,6 +552,7 @@ function PureMultimodalInput({
         );
       } catch (error) {
         console.error("Error uploading pasted files!", error);
+        // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required paste queue cleanup in finally.
       } finally {
         setUploadQueue([]);
       }
@@ -561,6 +579,11 @@ function PureMultimodalInput({
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: acceptedTypes,
+    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
+    // Prevent click to open file dialog since we have the button
+    noClick: true,
+    noDrag: !attachmentsEnabled,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) {
         return;
@@ -592,14 +615,11 @@ function PureMultimodalInput({
         ]);
       } catch (error) {
         console.error("Error uploading files!", error);
+        // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required upload queue cleanup in finally.
       } finally {
         setUploadQueue([]);
       }
     },
-    noClick: true, // Prevent click to open file dialog since we have the button
-    disabled: responseAwareStatus !== "ready" || !attachmentsEnabled,
-    noDrag: !attachmentsEnabled,
-    accept: acceptedTypes,
   });
 
   const handleStop = useCallback(() => {
@@ -640,6 +660,41 @@ function PureMultimodalInput({
     stopStreamMutation,
     thread,
   ]);
+  const composerContextValue = useMemo(
+    () => ({
+      acceptAll,
+      acceptFiles,
+      acceptImages,
+      autoFocus,
+      fileInputRef,
+      isEditMode,
+      isModelDisallowedForAnonymous,
+      onPaste: handlePaste,
+      onStop: handleStop,
+      parentMessageId,
+      removeAttachment,
+      status: responseAwareStatus,
+      submission,
+      submitForm,
+      uploadQueue,
+    }),
+    [
+      acceptAll,
+      acceptFiles,
+      acceptImages,
+      autoFocus,
+      handlePaste,
+      handleStop,
+      isEditMode,
+      isModelDisallowedForAnonymous,
+      parentMessageId,
+      removeAttachment,
+      responseAwareStatus,
+      submission,
+      submitForm,
+      uploadQueue,
+    ]
+  );
 
   return (
     <div className="relative">
@@ -685,34 +740,16 @@ function PureMultimodalInput({
             </div>
           )}
 
-          <ComposerContext.Provider
-            value={{
-              autoFocus,
-              isEditMode,
-              isModelDisallowedForAnonymous,
-              parentMessageId,
-              status: responseAwareStatus,
-              submission,
-              submitForm,
-              onStop: handleStop,
-              onPaste: handlePaste,
-              fileInputRef,
-              acceptAll,
-              acceptFiles,
-              acceptImages,
-              uploadQueue,
-              removeAttachment,
-            }}
-          >
+          <ComposerContext.Provider value={composerContextValue}>
             {children}
           </ComposerContext.Provider>
         </PromptInput>
       </div>
     </div>
   );
-}
+};
 
-function PureAttachmentsButton({
+const PureAttachmentsButton = ({
   fileInputRef,
   status,
   acceptAll,
@@ -724,7 +761,7 @@ function PureAttachmentsButton({
   acceptAll: string;
   acceptImages: string;
   acceptFiles: string;
-}) {
+}) => {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const isAnonymous = !session?.user;
@@ -841,37 +878,19 @@ function PureAttachmentsButton({
       </PopoverContent>
     </Popover>
   );
-}
+};
 
 export const AttachmentsButton = memo(PureAttachmentsButton);
 
-const ComposerContext = createContext<{
-  autoFocus: boolean;
-  isEditMode: boolean;
-  isModelDisallowedForAnonymous: boolean;
-  parentMessageId: string | null;
-  status: UseChatHelpers<ChatMessage>["status"];
-  submission: { enabled: boolean; message?: string };
-  submitForm: () => void;
-  onStop: () => void;
-  onPaste: (event: React.ClipboardEvent) => Promise<void>;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  acceptAll: string;
-  acceptFiles: string;
-  acceptImages: string;
-  uploadQueue: string[];
-  removeAttachment: (attachment: Attachment) => void;
-} | null>(null);
-
-function useComposer() {
+const useComposer = () => {
   const context = useContext(ComposerContext);
   if (!context) {
     throw new Error("Place composer parts inside MultimodalInput");
   }
   return context;
-}
+};
 
-export function ComposerLimits() {
+export const ComposerLimits = () => {
   const { isEditMode, isModelDisallowedForAnonymous } = useComposer();
   return isEditMode ? null : (
     <LimitDisplay
@@ -879,9 +898,9 @@ export function ComposerLimits() {
       forceVariant={isModelDisallowedForAnonymous ? "model" : "credits"}
     />
   );
-}
+};
 
-export function ComposerAttachments() {
+export const ComposerAttachments = () => {
   const { uploadQueue, removeAttachment } = useComposer();
   const { attachments } = useChatInput();
   return (
@@ -892,9 +911,9 @@ export function ComposerAttachments() {
       uploadQueue={uploadQueue}
     />
   );
-}
+};
 
-export function ComposerInput() {
+export const ComposerInput = () => {
   const { autoFocus, submission, submitForm, onPaste } = useComposer();
   const { editorRef, getInitialInput, handleInputChange } = useChatInput();
   const isMobile = useIsMobile();
@@ -928,9 +947,9 @@ export function ComposerInput() {
       ref={editorRef}
     />
   );
-}
+};
 
-export function ComposerAttachButton() {
+export const ComposerAttachButton = () => {
   const { fileInputRef, status, acceptAll, acceptImages, acceptFiles } =
     useComposer();
   return config.features.attachments ? (
@@ -942,9 +961,9 @@ export function ComposerAttachButton() {
       status={status}
     />
   ) : null;
-}
+};
 
-export function ComposerModelPicker() {
+export const ComposerModelPicker = () => {
   const {
     selectedModelId,
     selectedModelSelection,
@@ -958,9 +977,9 @@ export function ComposerModelPicker() {
       selectedModelSelection={selectedModelSelection}
     />
   );
-}
+};
 
-export function ComposerTools() {
+export const ComposerTools = () => {
   const { selectedModelId, selectedTool, setSelectedTool } = useChatInput();
   return (
     <ResponsiveTools
@@ -969,9 +988,9 @@ export function ComposerTools() {
       tools={selectedTool}
     />
   );
-}
+};
 
-export function ComposerContextUsage() {
+export const ComposerContextUsage = () => {
   const { parentMessageId } = useComposer();
   const { selectedModelId } = useChatInput();
   return (
@@ -982,9 +1001,9 @@ export function ComposerContextUsage() {
       selectedModelId={selectedModelId}
     />
   );
-}
+};
 
-export function ComposerSubmit() {
+export const ComposerSubmit = () => {
   const { status, submission, submitForm, onStop } = useComposer();
   return (
     <PromptInputSubmit
@@ -1007,7 +1026,7 @@ export function ComposerSubmit() {
       status={status}
     />
   );
-}
+};
 
 export const MultimodalInput = memo(
   PureMultimodalInput,

@@ -1,27 +1,28 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import nodePath from "node:path";
 
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ remove: vi.fn(), destroySandbox: vi.fn() }));
-const remove = mocks.remove;
-vi.mock("microsandbox", () => ({
-  Snapshot: { remove: mocks.remove },
-  Sandbox: {
-    get: async () => ({
-      remove: () =>
-        Promise.reject(
-          Object.assign(new Error("sandbox still running"), {
-            code: "sandboxStillRunning",
-          })
-        ),
-      destroy: mocks.destroySandbox,
-    }),
-  },
-}));
-
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
+
+const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));
+const { remove } = mocks;
+vi.mock("microsandbox", () => ({
+  Sandbox: {
+    get: () =>
+      Promise.resolve({
+        destroy: mocks.destroySandbox,
+        remove: () =>
+          Promise.reject(
+            Object.assign(new Error("sandbox still running"), {
+              code: "sandboxStillRunning",
+            })
+          ),
+      }),
+  },
+  Snapshot: { remove: mocks.remove },
+}));
 
 const directories: string[] = [];
 beforeEach(() => {
@@ -30,43 +31,44 @@ beforeEach(() => {
 });
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
-    await rm(directory, { recursive: true, force: true });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    await rm(directory, { force: true, recursive: true });
   }
 });
-async function fixture(letter = "a") {
-  const root = await mkdtemp(join(tmpdir(), "eve-snapshot-purge-"));
+const fixture = async (letter = "a") => {
+  const root = await mkdtemp(nodePath.join(tmpdir(), "eve-snapshot-purge-"));
   directories.push(root);
   const sessionKey = `fixture-session-${letter}`;
   const sandboxName = `eve-sbx-ses-${letter.repeat(32)}`;
-  const sessionDirectory = join(root, sessionKey);
-  const directory = join(sessionDirectory, "fork-checkpoints");
+  const sessionDirectory = nodePath.join(root, sessionKey);
+  const directory = nodePath.join(sessionDirectory, "fork-checkpoints");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    join(sessionDirectory, "metadata.json"),
+    nodePath.join(sessionDirectory, "metadata.json"),
     JSON.stringify({
-      version: 2,
       optionsHash: "options",
       sandboxName,
+      version: 2,
     })
   );
   const snapshotName = `eve-sbx-fork-${letter.repeat(32)}`;
   const record = {
-    version: 1,
+    optionsHash: "options",
     sessionKey,
     snapshotName,
-    optionsHash: "options",
+    version: 1,
   };
-  const path = join(directory, `${snapshotName}.json`);
+  const path = nodePath.join(directory, `${snapshotName}.json`);
   await writeFile(path, JSON.stringify(record));
   return {
-    sessionKey,
-    sessionDirectory,
-    sandboxName,
-    snapshotName,
     path,
     record,
+    sandboxName,
+    sessionDirectory,
+    sessionKey,
+    snapshotName,
   };
-}
+};
 
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
   const input = await fixture();
@@ -74,7 +76,7 @@ test("retains identities through provider failure and treats only explicit missi
   await expect(purgeLocalEveSandboxes([input])).rejects.toMatchObject({
     errors: [expect.objectContaining({ message: "provider unavailable" })],
   });
-  expect(JSON.parse(await readFile(input.path, "utf8"))).toEqual(input.record);
+  expect(JSON.parse(await readFile(input.path, "utf-8"))).toEqual(input.record);
   mocks.destroySandbox.mockRejectedValueOnce(
     Object.assign(new Error("sandbox not found"), { code: "sandboxNotFound" })
   );
@@ -101,14 +103,16 @@ test("validates all records before deletion and rejects another session or share
     { ...input.record, optionsHash: 42 },
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await writeFile(input.path, JSON.stringify(record));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
     expect(remove).not.toHaveBeenCalled();
     expect(mocks.destroySandbox).not.toHaveBeenCalled();
   }
   await writeFile(input.path, JSON.stringify(input.record));
   await writeFile(
-    join(input.sessionDirectory, "fork-checkpoints", "z-invalid.json"),
+    nodePath.join(input.sessionDirectory, "fork-checkpoints", "z-invalid.json"),
     "{}"
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
@@ -150,8 +154,8 @@ test("validates the whole family and removes all VMs before resolving snapshot d
 
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
-  await rm(join(input.sessionDirectory, "metadata.json"));
-  const directory = join(input.sessionDirectory, "resources");
+  await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
+  const directory = nodePath.join(input.sessionDirectory, "resources");
   await mkdir(directory);
   const names = [
     `eve-sbx-ses-${"b".repeat(32)}`,
@@ -159,13 +163,14 @@ test("retains resources created before metadata and across replacements", async 
   ];
   const snapshot = `eve-sbx-state-${"d".repeat(32)}`;
   for (const name of [...names, snapshot]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await writeFile(
-      join(directory, `${name}.json`),
+      nodePath.join(directory, `${name}.json`),
       JSON.stringify({
-        version: 1,
-        sessionKey: input.sessionKey,
         kind: name === snapshot ? "snapshot" : "sandbox",
         name,
+        sessionKey: input.sessionKey,
+        version: 1,
       })
     );
   }
@@ -177,12 +182,12 @@ test("retains resources created before metadata and across replacements", async 
   ]);
   expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
   await writeFile(
-    join(directory, `${snapshot}.json`),
+    nodePath.join(directory, `${snapshot}.json`),
     JSON.stringify({
-      version: 1,
-      sessionKey: "another-session",
       kind: "snapshot",
       name: snapshot,
+      sessionKey: "another-session",
+      version: 1,
     })
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow(
@@ -193,15 +198,15 @@ test("retains resources created before metadata and across replacements", async 
 
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
   const input = await fixture();
-  await rm(join(input.sessionDirectory, "metadata.json"));
+  await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
   await rm(input.path);
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow();
-  const ownerPath = join(input.sessionDirectory, "owner.json");
+  const ownerPath = nodePath.join(input.sessionDirectory, "owner.json");
   const owner = {
-    version: 1,
     backendName: "microsandbox",
-    sessionKey: input.sessionKey,
     sessionId: "native-session",
+    sessionKey: input.sessionKey,
+    version: 1,
     writeAheadResources: true,
   };
   await writeFile(
@@ -210,12 +215,13 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
   await writeFile(ownerPath, JSON.stringify(owner));
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     expect(await purgeLocalEveSandboxes([input])).toEqual([
       { sandboxNames: [], snapshotNames: [] },
     ]);
   }
-  expect(JSON.parse(await readFile(ownerPath, "utf8"))).toEqual(owner);
+  expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,
     JSON.stringify({ ...owner, sessionKey: "foreign" })

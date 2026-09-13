@@ -9,23 +9,15 @@ import {
   inArray,
   isNotNull,
   isNull,
-  type SQL,
   sql,
 } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
-import type {
-  Attachment,
-  ChatMessage,
-  ToolName,
-  ToolOutput,
-} from "@/lib/ai/types";
+import type { Attachment, ChatMessage, ToolName } from "@/lib/ai/types";
 import { isSelectedModelValue } from "@/lib/ai/types";
 import { deleteFilesByUrls } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 import { chatMessageToDbMessage } from "@/lib/message-conversion";
-
-const logger = createModuleLogger("db:queries");
-
 import {
   mapDBPartsToUIParts,
   mapUIMessagePartsToDBParts,
@@ -35,34 +27,127 @@ import type { ArtifactKind } from "../artifacts/artifact-kind";
 import { db } from "./client";
 import {
   chat,
-  type DBMessage,
   document,
   eveConversation,
   eveConversationProject,
   eveVote,
   generationCancellation,
   message,
-  type Part,
   part,
   project,
   suggestion,
-  type User,
-  type UserModelPreference,
   user,
   userModelPreference,
   vote,
 } from "./schema";
+import type { DBMessage, Part, User, UserModelPreference } from "./schema";
 
-async function _getUserByEmail(email: string): Promise<User[]> {
+const logger = createModuleLogger("db:queries");
+
+const getMessagesWithAttachments = async () => {
+  try {
+    return await db.select({ attachments: message.attachments }).from(message);
+  } catch (error) {
+    console.error(
+      "Failed to get messages with attachments from database",
+      error
+    );
+    throw error;
+  }
+};
+
+const getGeneratedImageParts = () => {
+  const toolName: ToolName = "generateImage";
+  return db
+    .select({ tool_output: part.tool_output })
+    .from(part)
+    .where(eq(part.tool_name, toolName));
+};
+
+const getFilePartUrls = (args: { messageIds?: string[] } = {}) => {
+  const { messageIds } = args;
+  let conditions: SQL<unknown> | undefined = eq(part.type, "file");
+  if (messageIds && messageIds.length > 0) {
+    conditions = and(conditions, inArray(part.messageId, messageIds));
+  }
+  return db.select({ file_url: part.file_url }).from(part).where(conditions);
+};
+
+const collectMessageAttachmentUrls = (
+  messages: { attachments: unknown }[]
+): string[] => {
+  const urls: string[] = [];
+  for (const msg of messages) {
+    if (msg.attachments && Array.isArray(msg.attachments)) {
+      for (const attachment of msg.attachments as Attachment[]) {
+        if (attachment.url) {
+          urls.push(attachment.url);
+        }
+      }
+    }
+  }
+  return urls;
+};
+
+const collectFilePartUrls = (
+  fileParts: { file_url: string | null }[]
+): string[] => {
+  const urls: string[] = [];
+  for (const p of fileParts) {
+    if (p.file_url) {
+      urls.push(p.file_url);
+    }
+  }
+  return urls;
+};
+
+const deleteAttachmentsFromMessages = async (messages: DBMessage[]) => {
+  try {
+    const attachmentUrls = collectMessageAttachmentUrls(messages);
+
+    // Collect file URLs from Part table for these messages via shared helper
+    const messageIds = messages.map((msg) => msg.id);
+    if (messageIds.length > 0) {
+      const fileParts = await getFilePartUrls({ messageIds });
+      attachmentUrls.push(...collectFilePartUrls(fileParts));
+    }
+
+    // Deduplicate in case the same file URL is referenced multiple times
+    const uniqueUrls = [...new Set(attachmentUrls)];
+    if (uniqueUrls.length > 0) {
+      await deleteFilesByUrls(uniqueUrls);
+    }
+  } catch (error) {
+    console.error("Failed to delete stored attachments:", error);
+    // Don't throw here - we still want to proceed with message deletion
+    // even if blob cleanup fails
+  }
+};
+
+const updateChatUpdatedAt = async ({ chatId }: { chatId: string }) => {
+  try {
+    return await db
+      .update(chat)
+      .set({
+        updatedAt: new Date(),
+      })
+      .where(eq(chat.id, chatId));
+  } catch (error) {
+    console.error("Failed to update chat updatedAt by id from database");
+    throw error;
+  }
+};
+
+const _getUserByEmail = async (email: string): Promise<User[]> => {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
     console.error("Failed to get user from database");
     throw error;
   }
-}
+};
 
-export async function saveChat({
+export const saveChat = async ({
   id,
   userId,
   title,
@@ -72,23 +157,23 @@ export async function saveChat({
   userId: string;
   title: string;
   projectId?: string;
-}) {
+}) => {
   try {
     return await db.insert(chat).values({
-      id,
       createdAt: new Date(),
+      id,
+      projectId: projectId ?? null,
+      title,
       updatedAt: new Date(),
       userId,
-      title,
-      projectId: projectId ?? null,
     });
   } catch (error) {
     console.error("Failed to save chat in database");
     throw error;
   }
-}
+};
 
-export async function saveChatIfNotExists({
+export const saveChatIfNotExists = async ({
   id,
   userId,
   title,
@@ -98,26 +183,26 @@ export async function saveChatIfNotExists({
   userId: string;
   title: string;
   projectId?: string;
-}) {
+}) => {
   try {
     return await db
       .insert(chat)
       .values({
-        id,
         createdAt: new Date(),
+        id,
+        projectId: projectId ?? null,
+        title,
         updatedAt: new Date(),
         userId,
-        title,
-        projectId: projectId ?? null,
       })
       .onConflictDoNothing();
   } catch (error) {
     console.error("Failed to save chat in database");
     throw error;
   }
-}
+};
 
-export async function deleteChatById({ id }: { id: string }) {
+export const deleteChatById = async ({ id }: { id: string }) => {
   try {
     // Get all messages for this chat to clean up their attachments
     const messagesToDelete = await db
@@ -135,21 +220,21 @@ export async function deleteChatById({ id }: { id: string }) {
     console.error("Failed to delete chat by id from database");
     throw error;
   }
-}
+};
 
-export async function getChatsByUserId({
+export const getChatsByUserId = async ({
   id,
   projectId,
 }: {
   id: string;
   projectId?: string | null;
-}) {
+}) => {
   console.log("[getChatsByUserId] Starting", {
-    userId: id,
     projectId,
-    projectIdType: typeof projectId,
     projectIdIsNull: projectId === null,
     projectIdIsUndefined: projectId === undefined,
+    projectIdType: typeof projectId,
+    userId: id,
   });
 
   try {
@@ -196,15 +281,15 @@ export async function getChatsByUserId({
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
-        userId: id,
         projectId,
+        userId: id,
       }
     );
     throw error;
   }
-}
+};
 
-export async function createProject({
+export const createProject = async ({
   id,
   userId,
   name,
@@ -218,25 +303,25 @@ export async function createProject({
   instructions?: string;
   icon?: string;
   iconColor?: string;
-}) {
+}) => {
   try {
     return await db.insert(project).values({
-      id,
-      userId,
-      name,
-      instructions,
+      createdAt: new Date(),
       ...(icon && { icon }),
       ...(iconColor && { iconColor }),
-      createdAt: new Date(),
+      id,
+      instructions,
+      name,
       updatedAt: new Date(),
+      userId,
     });
   } catch (error) {
     console.error("Failed to create project in database");
     throw error;
   }
-}
+};
 
-export async function getProjectsByUserId({ userId }: { userId: string }) {
+export const getProjectsByUserId = async ({ userId }: { userId: string }) => {
   try {
     return await db
       .select()
@@ -247,9 +332,9 @@ export async function getProjectsByUserId({ userId }: { userId: string }) {
     console.error("Failed to get projects by user from database");
     throw error;
   }
-}
+};
 
-export async function getProjectById({ id }: { id: string }) {
+export const getProjectById = async ({ id }: { id: string }) => {
   try {
     const [selectedProject] = await db
       .select()
@@ -260,9 +345,9 @@ export async function getProjectById({ id }: { id: string }) {
     console.error("Failed to get project by id from database");
     throw error;
   }
-}
+};
 
-export async function updateProject({
+export const updateProject = async ({
   id,
   updates,
 }: {
@@ -273,7 +358,7 @@ export async function updateProject({
     icon: string;
     iconColor: string;
   }>;
-}) {
+}) => {
   try {
     return await db
       .update(project)
@@ -286,18 +371,18 @@ export async function updateProject({
     console.error("Failed to update project in database");
     throw error;
   }
-}
+};
 
-export async function deleteProject({ id }: { id: string }) {
+export const deleteProject = async ({ id }: { id: string }) => {
   try {
     return await db.delete(project).where(eq(project.id, id));
   } catch (error) {
     console.error("Failed to delete project from database");
     throw error;
   }
-}
+};
 
-async function _getChatsByProjectId({ projectId }: { projectId: string }) {
+const _getChatsByProjectId = async ({ projectId }: { projectId: string }) => {
   try {
     return await db
       .select()
@@ -308,33 +393,33 @@ async function _getChatsByProjectId({ projectId }: { projectId: string }) {
     console.error("Failed to get chats by project id from database");
     throw error;
   }
-}
+};
 
-async function _moveChatToProject({
+const _moveChatToProject = async ({
   chatId,
   projectId,
 }: {
   chatId: string;
   projectId: string | null;
-}) {
+}) => {
   try {
     return await db.update(chat).set({ projectId }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error("Failed to move chat to project in database");
     throw error;
   }
-}
+};
 
-async function _tryGetChatById({ id }: { id: string }) {
+const _tryGetChatById = async ({ id }: { id: string }) => {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
-  } catch (_error) {
+  } catch {
     return null;
   }
-}
+};
 
-export async function getChatById({ id }: { id: string }) {
+export const getChatById = async ({ id }: { id: string }) => {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
@@ -342,9 +427,9 @@ export async function getChatById({ id }: { id: string }) {
     console.error("Failed to get chat by id from database");
     throw error;
   }
-}
+};
 
-export async function saveMessage({
+export const saveMessage = async ({
   id,
   chatId,
   message: chatMessage,
@@ -352,7 +437,7 @@ export async function saveMessage({
   id: string;
   chatId: string;
   message: ChatMessage;
-}) {
+}) => {
   try {
     return await db.transaction(async (tx) => {
       // Convert ChatMessage to DBMessage (without parts)
@@ -370,16 +455,14 @@ export async function saveMessage({
 
       // Update chat's updatedAt timestamp
       await updateChatUpdatedAt({ chatId });
-
-      return;
     });
   } catch (error) {
-    logger.error({ error, chatId, id }, "saveMessage failed");
+    logger.error({ chatId, error, id }, "saveMessage failed");
     throw error;
   }
-}
+};
 
-export async function saveMessageIfNotExists({
+export const saveMessageIfNotExists = async ({
   id,
   chatId,
   message: chatMessage,
@@ -387,7 +470,7 @@ export async function saveMessageIfNotExists({
   id: string;
   chatId: string;
   message: ChatMessage;
-}) {
+}) => {
   try {
     return await db.transaction(async (tx) => {
       const dbMessage = chatMessageToDbMessage(chatMessage, chatId);
@@ -412,20 +495,20 @@ export async function saveMessageIfNotExists({
       return true;
     });
   } catch (error) {
-    logger.error({ error, chatId, id }, "saveMessageIfNotExists failed");
+    logger.error({ chatId, error, id }, "saveMessageIfNotExists failed");
     throw error;
   }
-}
+};
 
-export async function saveChatMessages({
+export const saveChatMessages = async ({
   messages,
 }: {
-  messages: Array<{
+  messages: {
     id: string;
     chatId: string;
     message: ChatMessage;
-  }>;
-}) {
+  }[];
+}) => {
   try {
     if (messages.length === 0) {
       return;
@@ -454,8 +537,6 @@ export async function saveChatMessages({
       await Promise.all(
         uniqueChatIds.map((chatId) => updateChatUpdatedAt({ chatId }))
       );
-
-      return;
     });
   } catch (error) {
     logger.error(
@@ -464,9 +545,9 @@ export async function saveChatMessages({
     );
     throw error;
   }
-}
+};
 
-export async function updateMessage({
+export const updateMessage = async ({
   id,
   chatId,
   message: chatMessage,
@@ -474,7 +555,7 @@ export async function updateMessage({
   id: string;
   chatId: string;
   message: ChatMessage;
-}) {
+}) => {
   try {
     return await db.transaction(async (tx) => {
       // Convert ChatMessage to DBMessage (without parts)
@@ -485,17 +566,17 @@ export async function updateMessage({
       const updatedMessages = await tx
         .update(message)
         .set({
+          activeStreamId: dbMessage.activeStreamId,
           annotations: dbMessage.annotations,
           attachments: dbMessage.attachments,
           createdAt: dbMessage.createdAt,
+          isPrimaryParallel: dbMessage.isPrimaryParallel,
+          lastContext: dbMessage.lastContext,
+          parallelGroupId: dbMessage.parallelGroupId,
+          parallelIndex: dbMessage.parallelIndex,
           parentMessageId: dbMessage.parentMessageId,
           selectedModel: dbMessage.selectedModel,
           selectedTool: dbMessage.selectedTool,
-          parallelGroupId: dbMessage.parallelGroupId,
-          parallelIndex: dbMessage.parallelIndex,
-          isPrimaryParallel: dbMessage.isPrimaryParallel,
-          lastContext: dbMessage.lastContext,
-          activeStreamId: dbMessage.activeStreamId,
         })
         .where(
           and(
@@ -523,26 +604,24 @@ export async function updateMessage({
       return true;
     });
   } catch (error) {
-    logger.error({ error, messageId: id, chatId }, "updateMessage failed");
+    logger.error({ chatId, error, messageId: id }, "updateMessage failed");
     throw error;
   }
-}
+};
 
-export function updateMessageActiveStreamId({
+export const updateMessageActiveStreamId = ({
   id,
   activeStreamId,
 }: {
   id: string;
   activeStreamId: string | null;
-}) {
-  return db.update(message).set({ activeStreamId }).where(eq(message.id, id));
-}
+}) => db.update(message).set({ activeStreamId }).where(eq(message.id, id));
 
-export async function getAllMessagesByChatId({
+export const getAllMessagesByChatId = async ({
   chatId,
 }: {
   chatId: string;
-}): Promise<ChatMessage[]> {
+}): Promise<ChatMessage[]> => {
   try {
     const messages = await db
       .select()
@@ -578,15 +657,13 @@ export async function getAllMessagesByChatId({
 
       return {
         id: msg.id,
-        role: msg.role as ChatMessage["role"],
-        parts,
         metadata: {
-          createdAt: msg.createdAt,
           activeStreamId: msg.activeStreamId,
-          parentMessageId: msg.parentMessageId,
+          createdAt: msg.createdAt,
+          isPrimaryParallel: msg.isPrimaryParallel,
           parallelGroupId: msg.parallelGroupId,
           parallelIndex: msg.parallelIndex,
-          isPrimaryParallel: msg.isPrimaryParallel,
+          parentMessageId: msg.parentMessageId,
           selectedModel: isSelectedModelValue(msg.selectedModel)
             ? msg.selectedModel
             : ("" as ChatMessage["metadata"]["selectedModel"]),
@@ -594,15 +671,17 @@ export async function getAllMessagesByChatId({
             undefined) as ChatMessage["metadata"]["selectedTool"],
           usage: msg.lastContext as ChatMessage["metadata"]["usage"],
         },
+        parts,
+        role: msg.role as ChatMessage["role"],
       };
     });
   } catch (error) {
     console.error("Failed to get all messages by chat ID", error);
     throw error;
   }
-}
+};
 
-export async function voteMessage({
+export const voteMessage = async ({
   chatId,
   messageId,
   type,
@@ -610,7 +689,7 @@ export async function voteMessage({
   chatId: string;
   messageId: string;
   type: "up" | "down";
-}) {
+}) => {
   try {
     const [existingVote] = await db
       .select()
@@ -625,25 +704,25 @@ export async function voteMessage({
     }
     return await db.insert(vote).values({
       chatId,
-      messageId,
       isUpvoted: type === "up",
+      messageId,
     });
   } catch (error) {
     console.error("Failed to upvote message in database", error);
     throw error;
   }
-}
+};
 
-export async function getVotesByChatId({ id }: { id: string }) {
+export const getVotesByChatId = async ({ id }: { id: string }) => {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
   } catch (error) {
     console.error("Failed to get votes by chat id from database", error);
     throw error;
   }
-}
+};
 
-export async function saveDocument({
+export const saveDocument = async ({
   id,
   title,
   kind,
@@ -657,24 +736,24 @@ export async function saveDocument({
   content: string;
   userId: string;
   messageId: string;
-}) {
+}) => {
   try {
     return await db.insert(document).values({
-      id,
-      title,
-      kind,
       content,
-      userId,
-      messageId,
       createdAt: new Date(),
+      id,
+      kind,
+      messageId,
+      title,
+      userId,
     });
   } catch (error) {
     console.error("Failed to save document in database", error);
     throw error;
   }
-}
+};
 
-async function _getDocumentsById({ id }: { id: string }) {
+const _getDocumentsById = async ({ id }: { id: string }) => {
   try {
     const documents = await db
       .select()
@@ -687,15 +766,15 @@ async function _getDocumentsById({ id }: { id: string }) {
     console.error("Failed to get document by id from database", error);
     throw error;
   }
-}
+};
 
-export async function getDocumentsById({
+export const getDocumentsById = async ({
   id,
   userId,
 }: {
   id: string;
   userId?: string;
-}) {
+}) => {
   try {
     // First, get the document and check ownership
     const documents = await _getDocumentsById({ id });
@@ -710,14 +789,14 @@ export async function getDocumentsById({
       // Need to check if chat is public
       const documentsWithVisibility = await db
         .select({
-          id: document.id,
-          createdAt: document.createdAt,
-          title: document.title,
-          content: document.content,
-          kind: document.kind,
-          userId: document.userId,
-          messageId: document.messageId,
           chatVisibility: chat.visibility,
+          content: document.content,
+          createdAt: document.createdAt,
+          id: document.id,
+          kind: document.kind,
+          messageId: document.messageId,
+          title: document.title,
+          userId: document.userId,
         })
         .from(document)
         .innerJoin(message, eq(document.messageId, message.id))
@@ -735,19 +814,19 @@ export async function getDocumentsById({
     );
     throw error;
   }
-}
+};
 
-export async function getPublicDocumentsById({ id }: { id: string }) {
+export const getPublicDocumentsById = async ({ id }: { id: string }) => {
   try {
     const documents = await db
       .select({
-        id: document.id,
-        createdAt: document.createdAt,
-        title: document.title,
         content: document.content,
+        createdAt: document.createdAt,
+        id: document.id,
         kind: document.kind,
-        userId: document.userId,
         messageId: document.messageId,
+        title: document.title,
+        userId: document.userId,
       })
       .from(document)
       .innerJoin(message, eq(document.messageId, message.id))
@@ -760,9 +839,9 @@ export async function getPublicDocumentsById({ id }: { id: string }) {
     console.error("Failed to get public documents by id from database");
     throw error;
   }
-}
+};
 
-export async function getDocumentById({ id }: { id: string }) {
+export const getDocumentById = async ({ id }: { id: string }) => {
   try {
     const [selectedDocument] = await db
       .select()
@@ -775,15 +854,15 @@ export async function getDocumentById({ id }: { id: string }) {
     console.error("Failed to get document by id from database");
     throw error;
   }
-}
+};
 
-async function _deleteDocumentsByIdAfterTimestamp({
+const _deleteDocumentsByIdAfterTimestamp = async ({
   id,
   timestamp,
 }: {
   id: string;
   timestamp: Date;
-}) {
+}) => {
   try {
     await db
       .delete(suggestion)
@@ -803,13 +882,13 @@ async function _deleteDocumentsByIdAfterTimestamp({
     );
     throw error;
   }
-}
+};
 
-export async function getDocumentsByMessageIds({
+export const getDocumentsByMessageIds = async ({
   messageIds,
 }: {
   messageIds: string[];
-}) {
+}) => {
   if (messageIds.length === 0) {
     return [];
   }
@@ -824,12 +903,12 @@ export async function getDocumentsByMessageIds({
     console.error("Failed to get documents by message IDs from database");
     throw error;
   }
-}
+};
 
-export async function saveDocuments({
+export const saveDocuments = async ({
   documents,
 }: {
-  documents: Array<{
+  documents: {
     id: string;
     title: string;
     kind: ArtifactKind;
@@ -837,8 +916,8 @@ export async function saveDocuments({
     userId: string;
     messageId: string;
     createdAt: Date;
-  }>;
-}) {
+  }[];
+}) => {
   if (documents.length === 0) {
     return;
   }
@@ -849,25 +928,25 @@ export async function saveDocuments({
     console.error("Failed to save documents in database", error);
     throw error;
   }
-}
+};
 
-export async function getMessageById({ id }: { id: string }) {
+export const getMessageById = async ({ id }: { id: string }) => {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
     logger.error({ error, messageId: id }, "getMessageById failed");
     throw error;
   }
-}
+};
 
-export async function getChatMessageWithPartsById({
+export const getChatMessageWithPartsById = async ({
   id,
 }: {
   id: string;
 }): Promise<{
   chatId: string;
   message: ChatMessage;
-} | null> {
+} | null> => {
   try {
     const [dbMessage] = await db
       .select()
@@ -883,26 +962,30 @@ export async function getChatMessageWithPartsById({
       .where(eq(part.messageId, id))
       .orderBy(asc(part.order));
 
+    const role = dbMessage.role as ChatMessage["role"];
+    const parts = dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [];
+    const metadata = {
+      activeStreamId: dbMessage.activeStreamId,
+      createdAt: dbMessage.createdAt,
+      isPrimaryParallel: dbMessage.isPrimaryParallel,
+      parallelGroupId: dbMessage.parallelGroupId,
+      parallelIndex: dbMessage.parallelIndex,
+      parentMessageId: dbMessage.parentMessageId,
+      selectedModel: isSelectedModelValue(dbMessage.selectedModel)
+        ? dbMessage.selectedModel
+        : ("" as ChatMessage["metadata"]["selectedModel"]),
+      selectedTool: (dbMessage.selectedTool ||
+        undefined) as ChatMessage["metadata"]["selectedTool"],
+      usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
+    };
+
     return {
       chatId: dbMessage.chatId,
       message: {
         id: dbMessage.id,
-        role: dbMessage.role as ChatMessage["role"],
-        parts: dbParts.length > 0 ? mapDBPartsToUIParts(dbParts) : [],
-        metadata: {
-          createdAt: dbMessage.createdAt,
-          activeStreamId: dbMessage.activeStreamId,
-          parentMessageId: dbMessage.parentMessageId,
-          parallelGroupId: dbMessage.parallelGroupId,
-          parallelIndex: dbMessage.parallelIndex,
-          isPrimaryParallel: dbMessage.isPrimaryParallel,
-          selectedModel: isSelectedModelValue(dbMessage.selectedModel)
-            ? dbMessage.selectedModel
-            : ("" as ChatMessage["metadata"]["selectedModel"]),
-          selectedTool: (dbMessage.selectedTool ||
-            undefined) as ChatMessage["metadata"]["selectedTool"],
-          usage: dbMessage.lastContext as ChatMessage["metadata"]["usage"],
-        },
+        metadata,
+        parts,
+        role,
       },
     };
   } catch (error) {
@@ -912,15 +995,15 @@ export async function getChatMessageWithPartsById({
     );
     throw error;
   }
-}
+};
 
-async function _deleteMessagesByChatIdAfterTimestamp({
+const _deleteMessagesByChatIdAfterTimestamp = async ({
   chatId,
   timestamp,
 }: {
   chatId: string;
   timestamp: Date;
-}) {
+}) => {
   try {
     const messagesToDelete = await db
       .select()
@@ -953,15 +1036,15 @@ async function _deleteMessagesByChatIdAfterTimestamp({
     );
     throw error;
   }
-}
+};
 
-export async function deleteMessagesByChatIdAfterMessageId({
+export const deleteMessagesByChatIdAfterMessageId = async ({
   chatId,
   messageId,
 }: {
   chatId: string;
   messageId: string;
-}) {
+}) => {
   try {
     // First, get the target message to find its position in the chat
     const [targetMessage] = await db
@@ -1011,30 +1094,30 @@ export async function deleteMessagesByChatIdAfterMessageId({
     );
     throw error;
   }
-}
+};
 
-export async function updateChatVisiblityById({
+export const updateChatVisiblityById = async ({
   chatId,
   visibility,
 }: {
   chatId: string;
   visibility: "private" | "public";
-}) {
+}) => {
   try {
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error("Failed to update chat visibility in database");
     throw error;
   }
-}
+};
 
-export async function updateChatTitleById({
+export const updateChatTitleById = async ({
   chatId,
   title,
 }: {
   chatId: string;
   title: string;
-}) {
+}) => {
   try {
     return await db
       .update(chat)
@@ -1046,15 +1129,15 @@ export async function updateChatTitleById({
     console.error("Failed to update chat title by id from database");
     throw error;
   }
-}
+};
 
-export async function updateChatIsPinnedById({
+export const updateChatIsPinnedById = async ({
   chatId,
   isPinned,
 }: {
   chatId: string;
   isPinned: boolean;
-}) {
+}) => {
   try {
     return await db
       .update(chat)
@@ -1066,13 +1149,13 @@ export async function updateChatIsPinnedById({
     console.error("Failed to update chat isPinned by id from database");
     throw error;
   }
-}
+};
 
-export async function getMessageCanceledAt({
+export const getMessageCanceledAt = async ({
   messageId,
 }: {
   messageId: string;
-}): Promise<Date | null> {
+}): Promise<Date | null> => {
   try {
     const [result] = await db
       .select({ canceledAt: message.canceledAt })
@@ -1083,9 +1166,9 @@ export async function getMessageCanceledAt({
     logger.error({ error, messageId }, "getMessageCanceledAt failed");
     throw error;
   }
-}
+};
 
-export async function requestGenerationCancellation({
+export const requestGenerationCancellation = async ({
   canceledAt,
   chatId,
   messageId,
@@ -1095,25 +1178,25 @@ export async function requestGenerationCancellation({
   chatId: string;
   messageId: string;
   userId: string;
-}) {
+}) => {
   try {
     await db
       .insert(generationCancellation)
       .values({ canceledAt, chatId, messageId, userId })
       .onConflictDoUpdate({
+        set: { canceledAt, chatId },
         target: [
           generationCancellation.messageId,
           generationCancellation.userId,
         ],
-        set: { canceledAt, chatId },
       });
   } catch (error) {
     logger.error({ error, messageId }, "requestGenerationCancellation failed");
     throw error;
   }
-}
+};
 
-export async function isGenerationCancellationRequested({
+export const isGenerationCancellationRequested = async ({
   chatId,
   messageId,
   userId,
@@ -1121,7 +1204,7 @@ export async function isGenerationCancellationRequested({
   chatId: string;
   messageId: string;
   userId: string;
-}) {
+}) => {
   try {
     const [cancellation] = await db
       .select({ messageId: generationCancellation.messageId })
@@ -1143,9 +1226,9 @@ export async function isGenerationCancellationRequested({
     );
     throw error;
   }
-}
+};
 
-export async function cancelActiveMessage({
+export const cancelActiveMessage = async ({
   canceledAt,
   chatId,
   messageId,
@@ -1153,7 +1236,7 @@ export async function cancelActiveMessage({
   canceledAt: Date;
   chatId: string;
   messageId: string;
-}) {
+}) => {
   try {
     const canceledMessages = await db
       .update(message)
@@ -1173,93 +1256,22 @@ export async function cancelActiveMessage({
     logger.error({ error, messageId }, "cancelActiveMessage failed");
     throw error;
   }
-}
+};
 
-async function updateChatUpdatedAt({ chatId }: { chatId: string }) {
-  try {
-    return await db
-      .update(chat)
-      .set({
-        updatedAt: new Date(),
-      })
-      .where(eq(chat.id, chatId));
-  } catch (error) {
-    console.error("Failed to update chat updatedAt by id from database");
-    throw error;
-  }
-}
-
-export async function getUserById({
+export const getUserById = async ({
   userId,
 }: {
   userId: string;
-}): Promise<User | undefined> {
+}): Promise<User | undefined> => {
   const users = await db
     .select()
     .from(user)
     .where(eq(user.id, userId))
     .limit(1);
   return users[0];
-}
+};
 
-async function getMessagesWithAttachments() {
-  try {
-    return await db.select({ attachments: message.attachments }).from(message);
-  } catch (error) {
-    console.error(
-      "Failed to get messages with attachments from database",
-      error
-    );
-    throw error;
-  }
-}
-
-function getGeneratedImageParts() {
-  const toolName: ToolName = "generateImage";
-  return db
-    .select({ tool_output: part.tool_output })
-    .from(part)
-    .where(eq(part.tool_name, toolName));
-}
-
-function getFilePartUrls(args: { messageIds?: string[] } = {}) {
-  const { messageIds } = args;
-  let conditions: SQL<unknown> | undefined = eq(part.type, "file");
-  if (messageIds && messageIds.length > 0) {
-    conditions = and(conditions, inArray(part.messageId, messageIds));
-  }
-  return db.select({ file_url: part.file_url }).from(part).where(conditions);
-}
-
-function collectMessageAttachmentUrls(
-  messages: { attachments: unknown }[]
-): string[] {
-  const urls: string[] = [];
-  for (const msg of messages) {
-    if (msg.attachments && Array.isArray(msg.attachments)) {
-      for (const attachment of msg.attachments as Attachment[]) {
-        if (attachment.url) {
-          urls.push(attachment.url);
-        }
-      }
-    }
-  }
-  return urls;
-}
-
-function collectFilePartUrls(
-  fileParts: { file_url: string | null }[]
-): string[] {
-  const urls: string[] = [];
-  for (const p of fileParts) {
-    if (p.file_url) {
-      urls.push(p.file_url);
-    }
-  }
-  return urls;
-}
-
-export async function getAllAttachmentUrls(): Promise<string[]> {
+export const getAllAttachmentUrls = async (): Promise<string[]> => {
   try {
     const [messages, generatedImageParts, fileParts] = await Promise.all([
       getMessagesWithAttachments(),
@@ -1274,8 +1286,14 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
 
     // Collect URLs from generated images in tool outputs
     for (const p of generatedImageParts) {
-      const output = p.tool_output as ToolOutput<"generateImage"> | null;
-      if (output?.imageUrl) {
+      const output: unknown = p.tool_output;
+      if (
+        output &&
+        typeof output === "object" &&
+        "imageUrl" in output &&
+        typeof output.imageUrl === "string" &&
+        output.imageUrl
+      ) {
         attachmentUrls.push(output.imageUrl);
       }
     }
@@ -1285,36 +1303,13 @@ export async function getAllAttachmentUrls(): Promise<string[]> {
     console.error("Failed to get attachment URLs from database", error);
     throw error;
   }
-}
+};
 
-async function deleteAttachmentsFromMessages(messages: DBMessage[]) {
-  try {
-    const attachmentUrls = collectMessageAttachmentUrls(messages);
-
-    // Collect file URLs from Part table for these messages via shared helper
-    const messageIds = messages.map((msg) => msg.id);
-    if (messageIds.length > 0) {
-      const fileParts = await getFilePartUrls({ messageIds });
-      attachmentUrls.push(...collectFilePartUrls(fileParts));
-    }
-
-    // Deduplicate in case the same file URL is referenced multiple times
-    const uniqueUrls = [...new Set(attachmentUrls)];
-    if (uniqueUrls.length > 0) {
-      await deleteFilesByUrls(uniqueUrls);
-    }
-  } catch (error) {
-    console.error("Failed to delete stored attachments:", error);
-    // Don't throw here - we still want to proceed with message deletion
-    // even if blob cleanup fails
-  }
-}
-
-export async function getUserModelPreferences({
+export const getUserModelPreferences = async ({
   userId,
 }: {
   userId: string;
-}): Promise<UserModelPreference[]> {
+}): Promise<UserModelPreference[]> => {
   try {
     return await db
       .select()
@@ -1324,9 +1319,9 @@ export async function getUserModelPreferences({
     console.error("Failed to get user model preferences from database", error);
     throw error;
   }
-}
+};
 
-export async function upsertUserModelPreference({
+export const upsertUserModelPreference = async ({
   userId,
   modelId,
   enabled,
@@ -1334,37 +1329,34 @@ export async function upsertUserModelPreference({
   userId: string;
   modelId: string;
   enabled: boolean;
-}): Promise<void> {
+}): Promise<void> => {
   try {
     await db
       .insert(userModelPreference)
       .values({
-        userId,
-        modelId,
-        enabled,
         createdAt: new Date(),
+        enabled,
+        modelId,
         updatedAt: new Date(),
+        userId,
       })
       .onConflictDoUpdate({
-        target: [userModelPreference.userId, userModelPreference.modelId],
         set: {
           enabled,
           updatedAt: new Date(),
         },
+        target: [userModelPreference.userId, userModelPreference.modelId],
       });
   } catch (error) {
     console.error("Failed to upsert user model preference in database", error);
     throw error;
   }
-}
+};
 
 /** Feedback is owner-only, including when a conversation is publicly shared. */
-export async function getEveMessageVotes(
-  ownerId: string,
-  conversationId: string
-) {
-  return await db
-    .select({ messageId: eveVote.messageId, isUpvoted: eveVote.isUpvoted })
+export const getEveMessageVotes = (ownerId: string, conversationId: string) =>
+  db
+    .select({ isUpvoted: eveVote.isUpvoted, messageId: eveVote.messageId })
     .from(eveVote)
     .innerJoin(eveConversation, eq(eveConversation.id, eveVote.conversationId))
     .where(
@@ -1374,16 +1366,15 @@ export async function getEveMessageVotes(
         eq(eveConversation.state, "bound")
       )
     );
-}
 
 /** Call only after validating the message against the native Eve snapshot. */
-export async function saveEveMessageVote(
+export const saveEveMessageVote = (
   ownerId: string,
   conversationId: string,
   messageId: string,
   isUpvoted: boolean
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  db.transaction(async (tx) => {
     // Serialize with the family deletion fence; a slow snapshot cannot resurrect feedback.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -1403,25 +1394,24 @@ export async function saveEveMessageVote(
     }
     const [saved] = await tx
       .insert(eveVote)
-      .values({ conversationId, messageId, isUpvoted })
+      .values({ conversationId, isUpvoted, messageId })
       .onConflictDoUpdate({
-        target: [eveVote.conversationId, eveVote.messageId],
         set: { isUpvoted },
+        target: [eveVote.conversationId, eveVote.messageId],
       })
       .returning({
-        messageId: eveVote.messageId,
         isUpvoted: eveVote.isUpvoted,
+        messageId: eveVote.messageId,
       });
     return saved;
   });
-}
 
-export async function assignEveConversationProject(
+export const assignEveConversationProject = (
   ownerId: string,
   conversationId: string,
   projectId: string | null
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -1455,8 +1445,8 @@ export async function assignEveConversationProject(
         .insert(eveConversationProject)
         .values({ conversationId, ownerId, projectId })
         .onConflictDoUpdate({
-          target: eveConversationProject.conversationId,
           set: { projectId },
+          target: eveConversationProject.conversationId,
         });
     }
     await tx
@@ -1465,4 +1455,3 @@ export async function assignEveConversationProject(
       .where(eq(eveConversation.id, conversationId));
     return { conversationId, projectId };
   });
-}

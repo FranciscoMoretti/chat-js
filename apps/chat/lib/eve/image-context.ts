@@ -8,10 +8,36 @@ const imageResult = z.object({
   prompt: z.string().optional(),
 });
 
+const latestImageAttachments = (messages: readonly ModelMessage[]) => {
+  const user = messages.findLast((message) => message.role === "user");
+  const attachments: FileUIPart[] = [];
+  if (user && Array.isArray(user.content)) {
+    for (const part of user.content) {
+      if (
+        part.type === "file" &&
+        part.mediaType.startsWith("image/") &&
+        typeof part.data === "string" &&
+        part.data.startsWith("data:image/")
+      ) {
+        attachments.push({
+          filename: part.filename,
+          mediaType: part.mediaType,
+          type: "file",
+          url: part.data,
+        });
+      }
+    }
+  }
+  return attachments;
+};
+
 /** Derive image references from the native branch, without another image-history store. */
-export function eveImageContext(messages: readonly ModelMessage[]) {
+export const eveImageContext = (messages: readonly ModelMessage[]) => {
   const attachments = latestImageAttachments(messages);
-  let lastGeneratedImage: { imageUrl: string; name: string } | null = null;
+  let lastGeneratedImage: {
+    imageUrl: string;
+    name: string;
+  } | null = null;
   for (const message of messages) {
     if (message.role !== "tool") {
       continue;
@@ -38,27 +64,4 @@ export function eveImageContext(messages: readonly ModelMessage[]) {
     }
   }
   return { attachments, lastGeneratedImage };
-}
-
-function latestImageAttachments(messages: readonly ModelMessage[]) {
-  const user = messages.findLast((message) => message.role === "user");
-  const attachments: FileUIPart[] = [];
-  if (user && Array.isArray(user.content)) {
-    for (const part of user.content) {
-      if (
-        part.type === "file" &&
-        part.mediaType.startsWith("image/") &&
-        typeof part.data === "string" &&
-        part.data.startsWith("data:image/")
-      ) {
-        attachments.push({
-          type: "file",
-          mediaType: part.mediaType,
-          url: part.data,
-          filename: part.filename,
-        });
-      }
-    }
-  }
-  return attachments;
-}
+};

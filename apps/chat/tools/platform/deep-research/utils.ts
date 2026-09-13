@@ -1,31 +1,19 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
 
-import type { StreamWriter } from "@/lib/ai/types";
+import { installedTools } from "@/lib/ai/installed-tools";
 
-import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 
 // Keep the MCP transport alive for the entire research tool loop, including errors
 // and cancellation. The callback cannot accidentally outlive its connection.
-export async function withResearchTools<T>(
+export const withResearchTools = async <T>(
   config: DeepResearchRuntimeConfig,
-  dataStream: Pick<StreamWriter, "write">,
-  run: (tools: ToolSet) => Promise<T>,
-  parentToolCallId?: string,
-  costAccumulator?: { addAPICost(name: string, cost: number): void }
-): Promise<T> {
+  run: (tools: ToolSet) => Promise<T>
+): Promise<T> => {
   const tools: ToolSet = {};
-  const searchOptions = {
-    dataStream,
-    writeTopLevelUpdates: false,
-    toolCallIdOverride: parentToolCallId,
-    costAccumulator,
-  };
-  if (config.search_api === "tavily") {
-    tools.webSearch = tavilyWebSearch(searchOptions);
-  } else if (config.search_api === "firecrawl") {
-    tools.webSearch = firecrawlWebSearch(searchOptions);
+  if (config.search_enabled && installedTools.webSearch) {
+    tools.webSearch = installedTools.webSearch;
   }
 
   if (!config.mcp_config?.url) {
@@ -34,9 +22,9 @@ export async function withResearchTools<T>(
 
   const client = await experimental_createMCPClient({
     transport: {
+      headers: config.mcp_config.headers,
       type: "sse",
       url: config.mcp_config.url,
-      headers: config.mcp_config.headers,
     },
   });
   try {
@@ -53,14 +41,13 @@ export async function withResearchTools<T>(
   } finally {
     await client.close();
   }
-}
+};
 
 // Misc Utils
-export function getTodayStr(): string {
-  return new Date().toLocaleDateString("en-US", {
+export const getTodayStr = (): string =>
+  new Date().toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
     weekday: "short",
     year: "numeric",
-    month: "short",
-    day: "numeric",
   });
-}

@@ -13,19 +13,19 @@ import {
 import { generateUUID } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 
-function FollowUpSuggestions({
+const FollowUpSuggestions = ({
   suggestions,
   className,
 }: {
   suggestions: string[];
   className?: string;
-}) {
+}) => {
   const storeApi = useChatStoreApi();
   const { selectedModelId, selectedTool } = useChatInput();
 
   const handleClick = useCallback(
     (suggestion: string) => {
-      const sendMessage = storeApi.getState().sendMessage;
+      const { sendMessage } = storeApi.getState();
       if (!sendMessage) {
         return;
       }
@@ -34,20 +34,20 @@ function FollowUpSuggestions({
 
       const message: ChatMessage = {
         id: generateUUID(),
-        role: "user",
-        parts: [
-          {
-            type: "text",
-            text: suggestion,
-          },
-        ],
         metadata: {
+          activeStreamId: null,
           createdAt: new Date(),
           parentMessageId,
           selectedModel: selectedModelId,
-          activeStreamId: null,
           selectedTool: (selectedTool as UiToolName | null) || undefined,
         },
+        parts: [
+          {
+            text: suggestion,
+            type: "text",
+          },
+        ],
+        role: "user",
       };
 
       sendMessage(message);
@@ -62,9 +62,30 @@ function FollowUpSuggestions({
       suggestions={suggestions}
     />
   );
-}
+};
 
-export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
+const FollowUpSuggestionsPart = ({
+  messageId,
+  partIdx,
+}: {
+  messageId: string;
+  partIdx: number;
+}) => {
+  const part = useMessagePartByPartIdx(
+    messageId,
+    partIdx,
+    "data-followupSuggestions"
+  );
+  const { data } = part;
+
+  return <FollowUpSuggestions suggestions={data.suggestions} />;
+};
+
+export const FollowUpSuggestionsParts = ({
+  messageId,
+}: {
+  messageId: string;
+}) => {
   const types = useMessagePartTypesById(messageId);
   const ids = useMessageIds();
   const isLastMessage = ids.at(-1) === messageId;
@@ -78,21 +99,4 @@ export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
     return null;
   }
   return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
-}
-
-function FollowUpSuggestionsPart({
-  messageId,
-  partIdx,
-}: {
-  messageId: string;
-  partIdx: number;
-}) {
-  const part = useMessagePartByPartIdx(
-    messageId,
-    partIdx,
-    "data-followupSuggestions"
-  );
-  const { data } = part;
-
-  return <FollowUpSuggestions suggestions={data.suggestions} />;
-}
+};

@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /** Minimal, valid PDF fixture with selectable text and an accurate xref table. */
 export function textPdf(text: string) {
   const stream = `BT /F1 18 Tf 50 700 Td (${text}) Tj ET`;

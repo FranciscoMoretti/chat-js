@@ -8,7 +8,8 @@ export const TextMessagePart = memo(
   ({ text, isLoading }: { text: string; isLoading: boolean }) => (
     <Response
       animated={{
-        duration: 200, // milliseconds (default: 150)
+        // milliseconds (default: 150)
+        duration: 200,
         stagger: 0,
       }}
       isAnimating={isLoading}
@@ -19,3 +20,5 @@ export const TextMessagePart = memo(
     </Response>
   )
 );
+
+TextMessagePart.displayName = "TextMessagePart";

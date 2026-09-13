@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import {
   memo,
-  type ReactNode,
   startTransition,
   useCallback,
   useEffect,
@@ -18,6 +17,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { ReactNode } from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +49,8 @@ import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
-  type SelectedModelValue,
 } from "@/lib/ai/types";
+import type { SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { getEnabledFeatures } from "@/lib/features-config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
@@ -63,41 +63,41 @@ import { ModelSelectorLogo } from "./model-selector-logo";
 type FeatureFilter = Record<string, boolean>;
 
 const enabledFeatures = getEnabledFeatures();
-const initialFilters = enabledFeatures.reduce<FeatureFilter>((acc, feature) => {
-  acc[feature.key] = false;
-  return acc;
-}, {});
+const initialFilters: FeatureFilter = {};
+for (const feature of enabledFeatures) {
+  initialFilters[feature.key] = false;
+}
 
-function getFeatureIcons(model: AppModelDefinition) {
+const getFeatureIcons = (model: AppModelDefinition) => {
   const icons: React.ReactNode[] = [];
   const enabled = getEnabledFeatures();
 
   const featureIconMap = [
     {
-      key: "functionCalling",
       condition: model.toolCall,
       config: enabled.find((f) => f.key === "functionCalling"),
+      key: "functionCalling",
     },
     {
-      key: "imageInput",
       condition: model.input?.image,
       config: enabled.find((f) => f.key === "imageInput"),
+      key: "imageInput",
     },
     {
-      key: "pdfInput",
       condition: model.input?.pdf,
       config: enabled.find((f) => f.key === "pdfInput"),
+      key: "pdfInput",
     },
   ];
 
-  for (const { condition, config } of featureIconMap) {
-    if (condition && config) {
-      const IconComponent = config.icon;
+  for (const { condition, config: featureConfig } of featureIconMap) {
+    if (condition && featureConfig) {
+      const IconComponent = featureConfig.icon;
       icons.push(
         <div
           className="flex items-center"
-          key={config.key}
-          title={config.description}
+          key={featureConfig.key}
+          title={featureConfig.description}
         >
           <IconComponent className="text-muted-foreground h-3 w-3" />
         </div>
@@ -106,21 +106,19 @@ function getFeatureIcons(model: AppModelDefinition) {
   }
 
   return icons;
-}
+};
 
-function buildMultiModelSelection(
+const buildMultiModelSelection = (
   modelIds: AppModelId[]
-): Record<AppModelId, number> {
-  return modelIds.reduce<Record<AppModelId, number>>(
-    (acc, modelId) => {
-      acc[modelId] = 1;
-      return acc;
-    },
-    {} as Record<AppModelId, number>
-  );
-}
+): Record<AppModelId, number> => {
+  const selection = {} as Record<AppModelId, number>;
+  for (const modelId of modelIds) {
+    selection[modelId] = 1;
+  }
+  return selection;
+};
 
-function getSelectionCount(selection: SelectedModelValue): number {
+const getSelectionCount = (selection: SelectedModelValue): number => {
   if (typeof selection === "string") {
     return 1;
   }
@@ -132,9 +130,9 @@ function getSelectionCount(selection: SelectedModelValue): number {
   }
 
   return count;
-}
+};
 
-function PureCommandItem({
+const PureCommandItem = ({
   model,
   disabled,
   isSelected,
@@ -150,7 +148,7 @@ function PureCommandItem({
   selectionControl?: ReactNode;
   onSelect: () => void;
   onCountChange?: (delta: number) => void;
-}) {
+}) => {
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
     () =>
@@ -228,7 +226,7 @@ function PureCommandItem({
       </div>
     </UICommandItem>
   );
-}
+};
 
 const CommandItem = memo(
   PureCommandItem,
@@ -240,7 +238,7 @@ const CommandItem = memo(
     (prev.onCountChange !== undefined) === (next.onCountChange !== undefined)
 );
 
-function PureModelSelector({
+const PureModelSelector = ({
   allowMultiple = true,
   selectedModelId,
   selectedModelSelection,
@@ -252,7 +250,7 @@ function PureModelSelector({
   selectedModelSelection: SelectedModelValue;
   onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
   className?: string;
-}) {
+}) => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
@@ -264,6 +262,7 @@ function PureModelSelector({
   );
   // Ref so callbacks don't capture stale optimisticSelection in their closure
   const optimisticSelectionRef = useRef(optimisticSelection);
+  // oxlint-disable-next-line react/refs -- Keep callbacks synchronized with the optimistic selection.
   optimisticSelectionRef.current = optimisticSelection;
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
@@ -277,6 +276,7 @@ function PureModelSelector({
   }
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Keep the multi-model toggle synchronized with the controlled selection.
     setUseMultipleModels(isSelectedModelCounts(selectedModelSelection));
   }, [selectedModelSelection]);
 
@@ -300,12 +300,12 @@ function PureModelSelector({
   const models = useMemo<ModelItem[]>(
     () =>
       chatModels.map((m) => ({
-        model: m,
         disabled:
           isAnonymous &&
           !(
             ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
           ).includes(m.id),
+        model: m,
       })),
     [isAnonymous, chatModels]
   );
@@ -327,22 +327,30 @@ function PureModelSelector({
           return true;
         }
         switch (key) {
-          case "reasoning":
+          case "reasoning": {
             return model.reasoning;
-          case "functionCalling":
+          }
+          case "functionCalling": {
             return model.toolCall;
-          case "imageInput":
+          }
+          case "imageInput": {
             return model.input?.image;
-          case "pdfInput":
+          }
+          case "pdfInput": {
             return model.input?.pdf;
-          case "audioInput":
+          }
+          case "audioInput": {
             return model.input?.audio;
-          case "imageOutput":
+          }
+          case "imageOutput": {
             return model.output?.image;
-          case "audioOutput":
+          }
+          case "audioOutput": {
             return model.output?.audio;
-          default:
+          }
+          default: {
             return true;
+          }
         }
       })
     );
@@ -360,12 +368,12 @@ function PureModelSelector({
     const fallbackModel = allModels.find((m) => m.id === optimisticModelId);
     if (fallbackModel) {
       return {
-        model: fallbackModel,
         disabled:
           isAnonymous &&
           !(
             ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
           ).includes(fallbackModel.id),
+        model: fallbackModel,
       } satisfies ModelItem;
     }
 
@@ -405,7 +413,7 @@ function PureModelSelector({
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
       startTransition(() => {
-        const current = optimisticSelectionRef.current;
+        const { current } = optimisticSelectionRef;
         const currentCounts: Record<AppModelId, number> =
           typeof current === "string"
             ? ({ [current]: 1 } as Record<AppModelId, number>)
@@ -442,7 +450,7 @@ function PureModelSelector({
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
       startTransition(() => {
-        const current = optimisticSelectionRef.current;
+        const { current } = optimisticSelectionRef;
         const currentCounts: Record<AppModelId, number> =
           typeof current === "string"
             ? ({ [current]: 1 } as Record<AppModelId, number>)
@@ -504,7 +512,6 @@ function PureModelSelector({
           aria-expanded={open}
           className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
           data-testid="model-selector"
-          role="combobox"
           variant="ghost"
         >
           <div className="flex items-center gap-2">
@@ -721,7 +728,7 @@ function PureModelSelector({
       </PopoverContent>
     </Popover>
   );
-}
+};
 
 export const ModelSelector = memo(
   PureModelSelector,

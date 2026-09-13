@@ -51,10 +51,10 @@ export const documentRouter = createTRPCRouter({
   saveDocument: protectedProcedure
     .input(
       z.object({
-        id: z.string(),
         content: z.string(),
-        title: z.string(),
+        id: z.string(),
         kind: z.custom<ArtifactKind>(),
+        title: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -65,12 +65,12 @@ export const documentRouter = createTRPCRouter({
       }
 
       const _document = await saveDocument({
-        id: input.id,
         content: input.content,
-        title: input.title,
+        id: input.id,
         kind: input.kind,
-        userId: ctx.user.id,
         messageId: lastDocument.messageId,
+        title: input.title,
+        userId: ctx.user.id,
       });
 
       return { success: true };

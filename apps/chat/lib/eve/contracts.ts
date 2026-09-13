@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
 import { z } from "zod";
 
 import { frontendToolsSchema } from "../ai/types";
@@ -11,14 +12,16 @@ export const eveForkInput = z.union([
       beforeTurnId: z
         .string()
         .max(64)
-        .regex(/^turn_(0|[1-9][0-9]*)$/),
+        .regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u),
       beforeMessageId: z.never().optional(),
     })
     .strict(),
   z
     .object({
       conversationId: z.uuid(),
-      beforeMessageId: z.string().regex(/^seed_message_(0|[1-9][0-9]{0,3})$/),
+      beforeMessageId: z
+        .string()
+        .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u),
       beforeTurnId: z.never().optional(),
       checkpointId: z.never().optional(),
     })

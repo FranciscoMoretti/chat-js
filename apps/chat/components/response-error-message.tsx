@@ -5,7 +5,7 @@ import { useChatActions } from "@/lib/stores/base";
 
 import { Button } from "./ui/button";
 
-export function ResponseErrorMessage() {
+export const ResponseErrorMessage = () => {
   const { regenerate } = useChatActions<ChatMessage>();
 
   return (
@@ -15,7 +15,6 @@ export function ResponseErrorMessage() {
           aria-label="Error icon"
           className="h-5 w-5"
           fill="currentColor"
-          role="img"
           viewBox="0 0 20 20"
         >
           <path
@@ -41,4 +40,4 @@ export function ResponseErrorMessage() {
       </Button>
     </div>
   );
-}
+};

@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -14,7 +17,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-const conversationUrl = /\/chat\/[^/]+$/;
+const conversationUrl = /\/chat\/[^/]+$/u;
 
 test("real provider, native application tool and replay-safe usage ledger", async ({
   page,
@@ -28,12 +31,12 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   });
   await page.goto("/");
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
       'Use the wordCount tool to count "one two three four". Report the result as "4 words".'
     );
   const creation = page.waitForResponse("**/api/agent-conversations");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
   expect(
     created.ok(),
@@ -83,7 +86,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
         const cursor = await getEveUsageCursor(ownerId, sessionId);
         return cursor > 0 && positions.get(sessionId) === cursor;
       },
-      { timeout: 10_000, intervals: [1000] }
+      { intervals: [1000], timeout: 10_000 }
     )
     .toBe(true);
   const replayed = await db
@@ -94,11 +97,11 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     charged
   );
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     headers: {
       authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
       "x-chatjs-owner": ownerId,
     },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
@@ -111,7 +114,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
           (event) => event.type === "compaction.completed"
         );
       },
-      { timeout: 90_000, intervals: [1000] }
+      { intervals: [1000], timeout: 90_000 }
     )
     .toBe(true);
   const compacted = await session.snapshot();
@@ -157,8 +160,8 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .locator("..")
     .locator("..");
   await toolCard.screenshot({
-    path: "tests/eve-results/screenshots/tool-word-count.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/tool-word-count.png",
   });
 });
 
@@ -176,14 +179,14 @@ test("the composer selects models for initial and subsequent durable turns", asy
   ).toContainText("GPT-4.1 mini");
   await mkdir("tests/eve-results/screenshots", { recursive: true });
   await page.screenshot({
-    path: "tests/eve-results/screenshots/eve-model-picker.png",
     animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-model-picker.png",
   });
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Reply with hello.");
   const creation = page.waitForResponse("**/api/agent-conversations");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
   expect(created.request().postDataJSON().modelId).toBe(
     "openai/gpt-4.1-mini-fast"
@@ -212,8 +215,8 @@ test("the composer selects models for initial and subsequent durable turns", asy
   }
   const endpoint = `/api/eve/v1/session/${conversation.sessionId}`;
   const rejected = await page.request.post(endpoint, {
-    headers: { origin: new URL(page.url()).origin },
     data: { message: "Do not dispatch this", modelId: "invalid-model" },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(rejected.status()).toBe(400);
   expect(conversation.initialModelId).toBe("openai/gpt-4.1-mini-fast");
@@ -225,18 +228,18 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .filter({ has: page.getByText("GPT-4.1 (Fast)", { exact: true }) })
     .click();
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Reply exactly model-switch-ok");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeEmpty();
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     headers: {
       authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
       "x-chatjs-owner": conversation.ownerId,
     },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   await expect
     .poll(
@@ -273,11 +276,11 @@ test("the composer selects models for initial and subsequent durable turns", asy
     snapshot.events.filter((event) => event.type === "message.received")
   ).toHaveLength(2);
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
       'Call confirm_note with the note "model approval check" and wait for my approval.'
     );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     page.getByText("Waiting for your input", { exact: true })
   ).toBeVisible({ timeout: 90_000 });
@@ -286,12 +289,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
     page.getByText("Waiting for your input", { exact: true })
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Edit message", exact: true }).last()
+    page.getByRole("button", { exact: true, name: "Edit message" }).last()
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Approve", exact: true })
+    page.getByRole("button", { exact: true, name: "Approve" })
   ).toBeEnabled();
-  await page.getByRole("button", { name: "Approve", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Approve" }).click();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -360,19 +363,19 @@ test("a definitive model rejection unlocks the composer and releases the operati
   await page.goto("/");
   await page.route("**/api/agent-conversations", (route) =>
     route.fulfill({
-      status: 400,
-      contentType: "application/json",
       body: JSON.stringify({
         error: "This model is not available for chat.",
         creationRejected: true,
       }),
+      contentType: "application/json",
+      status: 400,
     })
   );
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Retain my draft");
   const firstRequest = page.waitForRequest("**/api/agent-conversations");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const first = (await firstRequest).postDataJSON();
   await expect(
     page.getByRole("alert").filter({ hasText: "This model is not available" })
@@ -383,10 +386,10 @@ test("a definitive model rejection unlocks the composer and releases the operati
   await page.getByPlaceholder("Search models...").fill("GPT-4.1 mini");
   await page.getByRole("option").filter({ hasText: "GPT-4.1 mini" }).click();
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveText("Retain my draft");
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const second = (await secondRequest).postDataJSON();
   expect(second.operationId).not.toBe(first.operationId);
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");

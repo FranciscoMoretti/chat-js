@@ -1,12 +1,12 @@
 import { config } from "@/lib/config";
 
-function getPlanTypesLabel({
+const getPlanTypesLabel = ({
   hasFree,
   hasPro,
 }: {
   hasFree: boolean;
   hasPro: boolean;
-}): string {
+}): string => {
   if (hasFree && hasPro) {
     return "free and paid";
   }
@@ -14,9 +14,9 @@ function getPlanTypesLabel({
     return "paid";
   }
   return "free";
-}
+};
 
-function PricingSection({
+const PricingSection = ({
   hasAnyPlan,
   planTypesLabel,
   hasFree,
@@ -30,7 +30,7 @@ function PricingSection({
   hasPro: boolean;
   currencySymbol: string;
   paymentProcessors: string[];
-}) {
+}) => {
   if (!hasAnyPlan) {
     return (
       <>
@@ -90,13 +90,13 @@ function PricingSection({
       )}
     </>
   );
-}
+};
 
-export default function TermsPage() {
+const TermsPage = () => {
   const currencySymbolMap: Record<string, string> = {
-    USD: "$",
     EUR: "€",
     GBP: "£",
+    USD: "$",
   };
 
   const currencyCode = config.pricing?.currency;
@@ -234,8 +234,9 @@ export default function TermsPage() {
 
       <h2>11. Disclaimers</h2>
       <p>
-        {config.appName} is provided "as is" and "as available" without any
-        warranties of any kind, either express or implied.
+        {config.appName} is provided &quot;as is&quot; and &quot;as
+        available&quot; without any warranties of any kind, either express or
+        implied.
       </p>
 
       <h2>12. Termination</h2>
@@ -261,4 +262,6 @@ export default function TermsPage() {
       </p>
     </main>
   );
-}
+};
+
+export default TermsPage;

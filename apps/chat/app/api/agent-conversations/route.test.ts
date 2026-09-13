@@ -1,10 +1,12 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { POST } from "./route";
+
 const mocks = vi.hoisted(() => ({
-  enabled: vi.fn(),
-  principal: vi.fn(),
   admit: vi.fn(),
   create: vi.fn(),
+  enabled: vi.fn(),
+  principal: vi.fn(),
   settle: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
@@ -22,24 +24,21 @@ vi.mock("@/lib/eve/create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
 
-import { POST } from "./route";
-
 const input = {
-  operationId: "00000000-0000-4000-8000-000000000001",
   message: "hello",
   modelId: "cheap",
+  operationId: "00000000-0000-4000-8000-000000000001",
 };
 
-function request() {
-  return new Request("http://localhost:3790/api/agent-conversations", {
-    method: "POST",
+const request = () =>
+  new Request("http://localhost:3790/api/agent-conversations", {
+    body: JSON.stringify(input),
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:3790",
     },
-    body: JSON.stringify(input),
+    method: "POST",
   });
-}
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -50,15 +49,15 @@ beforeEach(() => {
     tokenHash: "hash",
   });
   mocks.admit.mockResolvedValue({
-    status: "replay",
     reservationId: "reservation",
+    status: "replay",
   });
 });
 
 test("keeps a terminal creation response ambiguous when its refund is refused", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
-      { error: "terminal", creationRejected: true },
+      { creationRejected: true, error: "terminal" },
       { status: 400 }
     )
   );
@@ -82,9 +81,9 @@ test("preserves authoritative deletion when its committed quota cannot be refund
   mocks.create.mockResolvedValue(
     Response.json(
       {
-        error: "This conversation has been deleted.",
-        creationRejected: true,
         code: "conversation_deleted",
+        creationRejected: true,
+        error: "This conversation has been deleted.",
       },
       { status: 404 }
     )
@@ -95,7 +94,7 @@ test("preserves authoritative deletion when its committed quota cannot be refund
 
   expect(response.status).toBe(404);
   expect(await response.json()).toMatchObject({
-    creationRejected: true,
     code: "conversation_deleted",
+    creationRejected: true,
   });
 });

@@ -22,20 +22,20 @@ test("local startup automatically erases expired guest content while retaining b
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/");
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeVisible();
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const principal = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
   const { ownerId } = await principal.json();
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-5-nano",
       message: "Reply with the single word hello.",
+      modelId: "openai/gpt-5-nano",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.status(), await created.text()).toBe(200);
   const binding = conversationBinding.parse(await created.json());
@@ -60,7 +60,7 @@ test("local startup automatically erases expired guest content while retaining b
           .where(eq(eveConversation.id, binding.id));
         return row?.state;
       },
-      { timeout: 180_000, intervals: [2000] }
+      { intervals: [2000], timeout: 180_000 }
     )
     .toBe("deleted");
   const [deleted] = await db
@@ -77,11 +77,11 @@ test("local startup automatically erases expired guest content while retaining b
   );
   const eventId = crypto.randomUUID();
   await recordEveUsage({
-    ownerId,
+    costUsd: 0.001,
     eventId,
+    ownerId,
     sessionId: binding.sessionId,
     turnId: "turn_late_fixture",
-    costUsd: 0.001,
   });
   const [usage] = await db
     .select()

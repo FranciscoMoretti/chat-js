@@ -5,11 +5,11 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./client";
 import {
   assertEveCopySourceAvailable,
-  EveCopySourceChanged,
+  EveCopySourceChangedError,
   lockEveCopyOwners,
   readEveCopy,
 } from "./eve-copy-journal";
-import { CreationConflict } from "./eve-queries";
+import { CreationConflictError } from "./eve-queries";
 import {
   eveConversationCopy,
   eveConversationCopyFile,
@@ -22,7 +22,7 @@ import {
 } from "./schema";
 
 /** The family lock fences writes against rejection/deletion, including an uncertain storage reply. */
-export async function writeEveCopyFile(
+export const writeEveCopyFile = async (
   ownerId: string,
   conversationId: string,
   key: string,
@@ -32,7 +32,7 @@ export async function writeEveCopyFile(
     ) => Promise<Pick<Blob, "type" | "arrayBuffer">>;
     writeDestinationFile: (key: string, file: Blob) => Promise<void>;
   }
-) {
+) => {
   const initial = await readEveCopy(db, ownerId, conversationId);
   return await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId, initial.copy.sourceOwnerId]);
@@ -45,7 +45,7 @@ export async function writeEveCopyFile(
       copy.phase === "rejected" ||
       ["deleting", "deleted"].includes(conversation.state)
     ) {
-      throw new CreationConflict("Saved copy is unavailable.");
+      throw new CreationConflictError("Saved copy is unavailable.");
     }
     const [receipt] = await tx
       .select()
@@ -80,7 +80,7 @@ export async function writeEveCopyFile(
       bytes.length !== receipt.size ||
       createHash("sha256").update(bytes).digest("hex") !== receipt.sha256
     ) {
-      throw new EveCopySourceChanged(
+      throw new EveCopySourceChangedError(
         "Copy source file changed after preparation."
       );
     }
@@ -100,13 +100,13 @@ export async function writeEveCopyFile(
       .returning();
     return written;
   });
-}
+};
 
 /** All ancestry and heads commit together, before any copy can be accepted. */
-export async function writeEveCopyDocuments(
+export const writeEveCopyDocuments = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const { copy, conversation } = await readEveCopy(
@@ -118,7 +118,7 @@ export async function writeEveCopyDocuments(
       copy.phase === "rejected" ||
       ["deleting", "deleted"].includes(conversation.state)
     ) {
-      throw new CreationConflict("Saved copy is unavailable.");
+      throw new CreationConflictError("Saved copy is unavailable.");
     }
     if (copy.documentsReady) {
       return;
@@ -129,12 +129,12 @@ export async function writeEveCopyDocuments(
     const revisions = copy.plan.documents.flatMap((document) =>
       document.revisions.map((revision) => ({
         ...revision,
-        ownerId,
         conversationId,
+        createdAt: new Date(revision.createdAt),
         documentId: document.documentId,
         operationId: `copy:${revision.id}`,
+        ownerId,
         turnIndex: null,
-        createdAt: new Date(revision.createdAt),
       }))
     );
     if (revisions.length) {
@@ -144,8 +144,8 @@ export async function writeEveCopyDocuments(
       await tx.insert(eveDocumentHead).values(
         copy.plan.documents.map((document) => ({
           conversationId,
-          ownerId,
           documentId: document.documentId,
+          ownerId,
           revisionId: document.headRevisionId,
         }))
       );
@@ -154,15 +154,15 @@ export async function writeEveCopyDocuments(
       await tx.insert(eveImportedDocumentCheckpoint).values(
         copy.plan.documentCheckpoints.map((checkpoint) => ({
           conversationId,
-          ownerId,
           messageIndex: checkpoint.messageIndex,
+          ownerId,
         }))
       );
       const entries = copy.plan.documentCheckpoints.flatMap((checkpoint) =>
         checkpoint.heads.map((head) => ({
           conversationId,
-          ownerId,
           messageIndex: checkpoint.messageIndex,
+          ownerId,
           ...head,
         }))
       );
@@ -175,10 +175,13 @@ export async function writeEveCopyDocuments(
       .set({ documentsReady: true })
       .where(eq(eveConversationCopy.conversationId, conversationId));
   });
-}
+};
 
 /** This short transaction is the publication boundary; no native or storage I/O runs inside it. */
-export async function acceptEveCopy(ownerId: string, conversationId: string) {
+export const acceptEveCopy = async (
+  ownerId: string,
+  conversationId: string
+) => {
   const initial = await readEveCopy(db, ownerId, conversationId);
   return await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId, initial.copy.sourceOwnerId]);
@@ -191,7 +194,7 @@ export async function acceptEveCopy(ownerId: string, conversationId: string) {
       copy.phase === "rejected" ||
       ["deleting", "deleted"].includes(conversation.state)
     ) {
-      throw new CreationConflict("Saved copy is unavailable.");
+      throw new CreationConflictError("Saved copy is unavailable.");
     }
     if (copy.phase === "accepted" || copy.phase === "bound") {
       return copy.phase;
@@ -229,7 +232,7 @@ export async function acceptEveCopy(ownerId: string, conversationId: string) {
           )
       )
     ) {
-      throw new EveCopySourceChanged(
+      throw new EveCopySourceChangedError(
         "Published document history changed before the copy was accepted."
       );
     }
@@ -270,12 +273,12 @@ export async function acceptEveCopy(ownerId: string, conversationId: string) {
     await tx
       .update(eveConversationCopy)
       .set({
-        phase: "accepted",
-        seed: copy.plan.seed,
-        plan: null,
         acceptedAt: new Date(),
+        phase: "accepted",
+        plan: null,
+        seed: copy.plan.seed,
       })
       .where(eq(eveConversationCopy.conversationId, conversationId));
     return "accepted";
   });
-}
+};

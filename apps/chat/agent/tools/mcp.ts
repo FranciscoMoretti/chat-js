@@ -1,5 +1,5 @@
 import { defineDynamic, defineTool } from "eve/tools";
-import superjson from "superjson";
+import { parse, stringify } from "superjson";
 
 import { eveMcpResult } from "../../lib/eve/mcp-result";
 import {
@@ -30,7 +30,7 @@ export default defineDynamic({
           throw error;
         }
       );
-      const messages = superjson.stringify(context.messages);
+      const messages = stringify(context.messages);
       const definitions: Record<string, ReturnType<typeof defineTool>> = {};
       for (const { name, connectorId, remoteName, ...description } of tools) {
         definitions[name] = defineTool<unknown, unknown>({
@@ -42,12 +42,12 @@ export default defineDynamic({
                 remoteName,
                 approvalContext.toolInput,
                 approvalContext,
-                superjson.parse(messages)
+                parse(messages)
               ),
             response: ({ responder, session }) =>
               responder.principalId === session.initiator?.principalId
                 ? { status: "allowed" }
-                : { status: "rejected", reason: "Only the owner may respond" },
+                : { reason: "Only the owner may respond", status: "rejected" },
           },
           execute: (input, toolContext) =>
             executeEveMcpTool(
@@ -55,7 +55,7 @@ export default defineDynamic({
               remoteName,
               input,
               toolContext,
-              superjson.parse(messages)
+              parse(messages)
             ),
           toModelOutput: (output) => eveMcpResult.parse(output).modelOutput,
         });

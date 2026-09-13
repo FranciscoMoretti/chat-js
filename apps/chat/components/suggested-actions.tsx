@@ -29,11 +29,11 @@ interface SuggestedActionsProps {
   selectedModelId: AppModelId;
 }
 
-function PureSuggestedActions({
+const PureSuggestedActions = ({
   chatId,
   selectedModelId,
   className,
-}: SuggestedActionsProps) {
+}: SuggestedActionsProps) => {
   const { startRun } = useChatActions<ChatMessage>();
   const storeApi = useCustomChatStoreApi<ChatMessage>();
   const startProvisionalChat = useStartProvisionalChat(chatId);
@@ -44,9 +44,9 @@ function PureSuggestedActions({
     () =>
       [
         {
+          icon: PenLineIcon,
           id: "write",
           label: "Write",
-          icon: PenLineIcon,
           prompts: [
             "Write a concise email to reschedule a meeting",
             "Turn these bullet points into a clear memo",
@@ -56,9 +56,9 @@ function PureSuggestedActions({
           ],
         },
         {
+          icon: GraduationCapIcon,
           id: "learn",
           label: "Learn",
-          icon: GraduationCapIcon,
           prompts: [
             "Explain this concept like I'm smart but new to it",
             "Quiz me on this topic (start easy, ramp up)",
@@ -68,9 +68,9 @@ function PureSuggestedActions({
           ],
         },
         {
+          icon: Code2Icon,
           id: "code",
           label: "Code",
-          icon: Code2Icon,
           prompts: [
             "Implement this feature and explain tradeoffs",
             "Find the bug in this snippet and fix it",
@@ -80,9 +80,9 @@ function PureSuggestedActions({
           ],
         },
         {
+          icon: SparklesIcon,
           id: "life",
           label: "Life stuff",
-          icon: SparklesIcon,
           prompts: [
             "Plan a simple healthy meal prep for the week",
             "Help me choose between these options (pros/cons)",
@@ -142,9 +142,9 @@ function PureSuggestedActions({
       return;
     }
 
-    const primaryRequest = submission.requestSpecs[0];
+    const [primaryRequest] = submission.requestSpecs;
     if (primaryRequest) {
-      runParallelThreadRequestSpecs({
+      const runRequests = runParallelThreadRequestSpecs({
         chatId,
         isAuthenticated: !!session?.user,
         message: submission.message,
@@ -152,9 +152,14 @@ function PureSuggestedActions({
         projectId: currentRoute.projectId,
         requestSpecs: submission.requestSpecs,
         startRun,
-      }).catch(() => {
-        // The chat-level error callback owns user-facing request errors.
       });
+      void (async () => {
+        try {
+          await runRequests;
+        } catch {
+          // The chat-level error callback owns user-facing request errors.
+        }
+      })();
     }
   };
 
@@ -228,6 +233,6 @@ function PureSuggestedActions({
       ) : null}
     </div>
   );
-}
+};
 
 export const SuggestedActions = memo(PureSuggestedActions);

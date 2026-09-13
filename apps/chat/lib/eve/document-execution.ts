@@ -1,17 +1,20 @@
 import type { ToolContext } from "eve/tools";
 
-import { codeExecutionResult } from "../../tools/platform/code-execution.schemas";
 import { config } from "../config";
 import { getEveDocumentRevision } from "../db/eve-documents";
 import { resolveEveConversationScope } from "./conversation-scope";
 import {
   documentExecutionInput,
   documentExecutionLanguage,
+  eveCodeExecutionResult,
 } from "./document-execution-contracts";
 import { executeEvePlatformTool } from "./platform-tools";
 
-/** Execute saved source, never model-supplied replacement code. */
-export async function* executeEveCodeDocument(
+/**
+ * Execute saved source, never model-supplied replacement code.
+ * @yields {unknown} Native EVE platform result snapshots with document identity.
+ */
+export const executeEveCodeDocument = async function* executeEveCodeDocument(
   value: unknown,
   context: Pick<ToolContext, "session" | "callId" | "abortSignal">
 ) {
@@ -44,23 +47,23 @@ export async function* executeEveCodeDocument(
     throw new Error("Only Python and JavaScript documents can be run.");
   }
   context.abortSignal.throwIfAborted();
-  const source = { title: revision.title, code: revision.content, language };
+  const source = { code: revision.content, language, title: revision.title };
   for await (const result of executeEvePlatformTool(
     "codeExecution",
     source,
     context,
     []
   )) {
-    const output = codeExecutionResult.safeParse(result.output);
+    const output = eveCodeExecutionResult.safeParse(result.output);
     yield {
       ...result,
       output: {
         ...(output.success
           ? output.data
           : {
+              chart: "",
               message:
                 "Execution finished, but its output has an unsupported format.",
-              chart: "",
             }),
         ...source,
         documentId: revision.documentId,
@@ -68,4 +71,4 @@ export async function* executeEveCodeDocument(
       },
     };
   }
-}
+};

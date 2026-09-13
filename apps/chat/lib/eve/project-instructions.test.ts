@@ -4,14 +4,12 @@ import conversation from "../../agent/hooks/conversation";
 import instructions from "../../agent/instructions/project";
 
 const mocks = vi.hoisted(() => {
-  function emptyState(): { content: string | null } {
-    return { content: null };
-  }
+  const state: { content: string | null } = { content: null };
   return {
-    resolve: vi.fn(),
-    project: vi.fn(),
     checkpoint: vi.fn(),
-    state: emptyState(),
+    project: vi.fn(),
+    resolve: vi.fn(),
+    state,
   };
 });
 vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
@@ -37,59 +35,57 @@ vi.mock("../db/eve-documents", () => ({
   captureEveDocumentCheckpoint: mocks.checkpoint,
 }));
 
-function startTurn(sequence: number) {
-  return conversation.events?.["turn.started"]?.(
+const startTurn = (sequence: number) =>
+  conversation.events?.["turn.started"]?.(
     {
-      type: "turn.started",
       data: { sequence, turnId: `turn_${sequence}` },
       meta: { at: "2026-09-11T12:00:00Z", id: `event_${sequence}` },
+      type: "turn.started",
     },
     {
       agent: { name: "chatjs" },
       channel: {},
-      session: {
-        id: "native-session",
-        turn: { id: `turn_${sequence}`, sequence },
-        auth: {
-          current: null,
-          initiator: {
-            principalId: "owner",
-            principalType: "user",
-            authenticator: "test",
-            attributes: {},
-          },
-        },
-      },
       getSandbox: () => {
         throw new Error("Unexpected sandbox access");
       },
       getSkill: () => {
         throw new Error("Unexpected skill access");
       },
+      session: {
+        auth: {
+          current: null,
+          initiator: {
+            attributes: {},
+            authenticator: "test",
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
+        id: "native-session",
+        turn: { id: `turn_${sequence}`, sequence },
+      },
     }
   );
-}
 
-function readInstructions() {
-  return instructions.events["turn.started"]?.(
+const readInstructions = () =>
+  instructions.events["turn.started"]?.(
     {},
     {
-      session: {
-        id: "native-session",
-        auth: { current: null, initiator: null },
-      },
       channel: {},
       messages: [],
+      session: {
+        auth: { current: null, initiator: null },
+        id: "native-session",
+      },
     }
   );
-}
 
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.state.content = null;
   mocks.resolve.mockResolvedValue({
-    ownerId: "owner",
     conversationId: "conversation",
+    ownerId: "owner",
   });
 });
 

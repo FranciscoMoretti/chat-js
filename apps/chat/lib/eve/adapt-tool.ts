@@ -1,22 +1,22 @@
-import { asSchema, type ModelMessage, type Tool } from "ai";
+import { asSchema } from "ai";
+import type { ModelMessage, Tool } from "ai";
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
 
-function isAsyncIterable<T>(
+import type { ChatToolContext } from "../ai/tool-context";
+
+const isAsyncIterable = <T>(
   value: T | AsyncIterable<T>
-): value is AsyncIterable<T> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    Symbol.asyncIterator in value &&
-    typeof value[Symbol.asyncIterator] === "function"
-  );
-}
+): value is AsyncIterable<T> =>
+  typeof value === "object" &&
+  value !== null &&
+  Symbol.asyncIterator in value &&
+  typeof value[Symbol.asyncIterator] === "function";
 
 /** Adapt only ordinary application tools; approval and output policies need explicit Eve definitions. */
-export async function describeEveTool<TInput, TOutput>(
+export const describeEveTool = async <TInput, TOutput>(
   definition: Tool<TInput, TOutput>
-) {
+) => {
   if (
     definition.needsApproval ||
     definition.toModelOutput ||
@@ -40,14 +40,18 @@ export async function describeEveTool<TInput, TOutput>(
     description: definition.description ?? "Application tool",
     inputSchema,
   };
-}
+};
 
-/** Resolve module-level definitions at execution time, avoiding executable captures in durable closures. */
-export async function* executeEveTool<TInput, TOutput>(
+/**
+ * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
+ * @yields {unknown} Each output emitted by the installed AI SDK tool.
+ */
+export const executeEveTool = async function* executeEveTool<TInput, TOutput>(
   definition: Tool<TInput, TOutput>,
   input: unknown,
   context: Pick<ToolContext, "callId" | "abortSignal">,
-  messages: readonly ModelMessage[]
+  messages: readonly ModelMessage[],
+  executionContext?: ChatToolContext
 ) {
   const schema = asSchema(definition.inputSchema);
   if (!(schema.validate && definition.execute)) {
@@ -58,14 +62,14 @@ export async function* executeEveTool<TInput, TOutput>(
     throw new Error("Invalid tool input.");
   }
   const output = await definition.execute(result.value, {
-    toolCallId: context.callId,
     abortSignal: context.abortSignal,
+    context: executionContext,
     messages: [...messages],
-    context: undefined,
+    toolCallId: context.callId,
   });
   if (isAsyncIterable(output)) {
     yield* output;
   } else {
     yield output;
   }
-}
+};

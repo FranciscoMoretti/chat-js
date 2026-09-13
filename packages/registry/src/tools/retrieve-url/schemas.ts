@@ -10,11 +10,11 @@ export const retrievedResult = z.union([
     results: z.array(
       z
         .object({
-          title: z.string(),
           content: z.string(),
-          url: z.string(),
           description: z.string(),
           language: z.string().optional(),
+          title: z.string(),
+          url: z.string(),
         })
         .transform((item) => ({ ...item, language: item.language }))
     ),

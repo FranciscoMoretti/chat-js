@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -63,11 +65,11 @@ test("inventories native descendants and collectors without returning payloads o
   const collectorStream = await stream(collectorChild);
   await stream(unrelated);
   const inventory = await readEvePostgresRunInventory(query, root);
-  expect(inventory.runs.map((row) => row.id).sort()).toEqual(
-    [root, turn, timer, task, collector, collectorChild].sort()
+  expect(inventory.runs.map((row) => row.id).toSorted()).toEqual(
+    [root, turn, timer, task, collector, collectorChild].toSorted()
   );
-  expect(inventory.streamIds.sort()).toEqual(
-    [ownedStream, collectorStream].sort()
+  expect(inventory.streamIds.toSorted()).toEqual(
+    [ownedStream, collectorStream].toSorted()
   );
   expect(
     inventory.runs.every((row) => row.workflowName === "inventory-fixture")
@@ -81,7 +83,7 @@ test("inventories native descendants and collectors without returning payloads o
       task,
       collector,
       collectorChild,
-    ].sort(),
+    ].toSorted(),
   });
   expect(inventory.activeRunIds).toEqual([]);
   expect(inventory.missingRunIds).toEqual([]);
@@ -98,7 +100,7 @@ test("reports active work, missing relationships, and streams without exclusive 
   const root = await run({ "$eve.activity_collector": missingCollector });
   const missingParent = crypto.randomUUID();
   const child = await run(
-    { $rootRunId: root, $parentRunId: missingParent },
+    { $parentRunId: missingParent, $rootRunId: root },
     "running"
   );
   const unrelated = await run();
@@ -109,9 +111,11 @@ test("reports active work, missing relationships, and streams without exclusive 
   const inventory = await readEvePostgresRunInventory(query, root);
   expect(inventory.activeRunIds).toEqual([child]);
   expect(inventory.missingRunIds).toEqual(
-    [missingCollector, missingParent].sort()
+    [missingCollector, missingParent].toSorted()
   );
-  expect(inventory.ambiguousStreamIds).toEqual([shared, unidentified].sort());
+  expect(inventory.ambiguousStreamIds).toEqual(
+    [shared, unidentified].toSorted()
+  );
   await expect(
     readEvePostgresRunInventory(query, missingParent)
   ).rejects.toThrow("session run is missing");
@@ -122,8 +126,8 @@ test("cyclic parent metadata terminates without duplicating records", async () =
   const child = await run({ $parentRunId: root });
   await query`update workflow.workflow_runs set attributes = ${query.json({ $parentRunId: child })} where id = ${root}`;
   const inventory = await readEvePostgresRunInventory(query, root);
-  expect(inventory.runs.map((row) => row.id).sort()).toEqual(
-    [root, child].sort()
+  expect(inventory.runs.map((row) => row.id).toSorted()).toEqual(
+    [root, child].toSorted()
   );
 });
 

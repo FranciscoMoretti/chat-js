@@ -4,14 +4,14 @@ import { expect, it } from "vitest";
 import { responseModel } from "./response-model";
 
 const step = {
-  type: "step.started",
-  meta: { id: "step", at: "2026-09-10T00:00:00Z" },
   data: {
     modelId: "gateway/anthropic/claude-sonnet-reasoning",
     sequence: 2,
     stepIndex: 0,
     turnId: "turn_0",
   },
+  meta: { at: "2026-09-10T00:00:00Z", id: "step" },
+  type: "step.started",
 } satisfies MessageStreamEvent;
 
 it("preserves the response selection across reload and restored ancestor history", () => {
@@ -22,13 +22,13 @@ it("preserves the response selection across reload and restored ancestor history
     responseModel(
       [
         {
-          type: "history.restored",
-          meta: { id: "history", at: step.meta.at },
           data: {
-            sourceSessionId: "source",
             beforeTurnId: "turn_1",
             events: [step],
+            sourceSessionId: "source",
           },
+          meta: { at: step.meta.at, id: "history" },
+          type: "history.restored",
         },
         {
           ...step,

@@ -2,16 +2,14 @@
 
 import { useMemo } from "react";
 
-import {
-  type CreateRuntimeInput,
-  useRuntimeRegistry,
-} from "./runtime-registry-provider";
+import { useRuntimeRegistry } from "./runtime-registry-provider";
+import type { CreateRuntimeInput } from "./runtime-registry-provider";
 
 export interface RuntimeActions<TData = unknown> {
   ensureRuntime: (input: CreateRuntimeInput<TData>) => void;
 }
 
-export function useRuntimeActions<TData = unknown>(): RuntimeActions<TData> {
+export const useRuntimeActions = <TData = unknown>(): RuntimeActions<TData> => {
   const { ensureRuntime } = useRuntimeRegistry<TData>();
 
   return useMemo(
@@ -20,11 +18,11 @@ export function useRuntimeActions<TData = unknown>(): RuntimeActions<TData> {
     }),
     [ensureRuntime]
   );
-}
+};
 
-export function useRuntime<TData = unknown>(
+export const useRuntime = <TData = unknown>(
   runtimeId: string | null | undefined
-) {
+) => {
   const { getRuntimeById } = useRuntimeRegistry<TData>();
   return getRuntimeById(runtimeId);
-}
+};

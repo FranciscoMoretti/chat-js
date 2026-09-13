@@ -1,13 +1,14 @@
+/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
+/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { createHash, randomUUID } from "node:crypto";
-import {
-  createServer,
-  type IncomingMessage,
-  type ServerResponse,
-} from "node:http";
+import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { z } from "zod";
 
-const BEARER_PREFIX = /^Bearer /;
+const BEARER_PREFIX = /^Bearer /u;
 const registrationInput = z.object({ redirect_uris: z.array(z.url()).min(1) });
 const rpcInput = z.object({
   id: z.union([z.string(), z.number()]).optional(),
@@ -21,8 +22,8 @@ type EveOAuthMcpServer = {
   origin: string;
   mcpUrl: string;
   tokenResult: string;
-  close(): Promise<void>;
-  invalidateAccessTokens(): void;
+  close: () => Promise<void>;
+  invalidateAccessTokens: () => void;
   counters: {
     registrations: number;
     authorizations: number;
@@ -55,7 +56,7 @@ function pkceChallenge(verifier: string) {
 function readBody(request: IncomingMessage) {
   return new Promise<string>((resolve, reject) => {
     let body = "";
-    request.setEncoding("utf8");
+    request.setEncoding("utf-8");
     request.on("data", (chunk: string) => {
       body += chunk;
     });
@@ -80,12 +81,12 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   const accessTokens = new Set<string>();
   const refreshTokens = new Map<string, RefreshGrant>();
   const counters = {
-    registrations: 0,
-    authorizations: 0,
-    tokenExchanges: 0,
-    refreshes: 0,
-    toolCalls: 0,
     authenticatedInitializations: 0,
+    authorizations: 0,
+    refreshes: 0,
+    registrations: 0,
+    tokenExchanges: 0,
+    toolCalls: 0,
   };
   let origin = "";
 
@@ -104,29 +105,29 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     refreshTokens.set(refreshToken, { clientId });
     return {
       access_token: accessToken,
+      expires_in: 60,
       refresh_token: refreshToken,
       token_type: "Bearer",
-      expires_in: 60,
     };
   }
 
   function sendProtectedResourceMetadata(response: ServerResponse) {
     sendJson(response, 200, {
-      resource: `${origin}/mcp`,
       authorization_servers: [origin],
+      resource: `${origin}/mcp`,
       scopes_supported: ["mcp:tools"],
     });
   }
 
   function sendAuthorizationServerMetadata(response: ServerResponse) {
     sendJson(response, 200, {
-      issuer: origin,
       authorization_endpoint: `${origin}/authorize`,
-      token_endpoint: `${origin}/token`,
+      code_challenge_methods_supported: ["S256"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
+      issuer: origin,
       registration_endpoint: `${origin}/register`,
       response_types_supported: ["code"],
-      grant_types_supported: ["authorization_code", "refresh_token"],
-      code_challenge_methods_supported: ["S256"],
+      token_endpoint: `${origin}/token`,
       token_endpoint_auth_methods_supported: ["none"],
     });
   }
@@ -164,7 +165,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
       return;
     }
     const code = `code_${randomUUID()}`;
-    codes.set(code, { clientId, redirectUri, codeChallenge, used: false });
+    codes.set(code, { clientId, codeChallenge, redirectUri, used: false });
     counters.authorizations += 1;
     const callback = new URL(redirectUri);
     callback.searchParams.set("code", code);
@@ -239,7 +240,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     id: string | number,
     result: unknown
   ) {
-    sendJson(response, 200, { jsonrpc: "2.0", id, result });
+    sendJson(response, 200, { id, jsonrpc: "2.0", result });
   }
 
   async function handleMcp(request: IncomingMessage, response: ServerResponse) {
@@ -256,8 +257,8 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     if (rpc.method === "initialize") {
       counters.authenticatedInitializations += 1;
       sendMcpResult(response, rpc.id, {
-        protocolVersion: "2025-03-26",
         capabilities: { tools: {} },
+        protocolVersion: "2025-03-26",
         serverInfo: { name: "Eve OAuth MCP fixture", version: "1.0.0" },
       });
       return;
@@ -266,13 +267,13 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
       sendMcpResult(response, rpc.id, {
         tools: [
           {
-            name: "read_token",
             description: "Return the fixture's public result marker.",
             inputSchema: {
-              type: "object",
-              properties: {},
               additionalProperties: false,
+              properties: {},
+              type: "object",
             },
+            name: "read_token",
           },
         ],
       });
@@ -281,14 +282,14 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     if (rpc.method === "tools/call" && rpc.params?.name === "read_token") {
       counters.toolCalls += 1;
       sendMcpResult(response, rpc.id, {
-        content: [{ type: "text", text: eveOAuthMcpTokenResultMarker }],
+        content: [{ text: eveOAuthMcpTokenResultMarker, type: "text" }],
       });
       return;
     }
     sendJson(response, 200, {
-      jsonrpc: "2.0",
-      id: rpc.id,
       error: { code: -32_601, message: "Method not found" },
+      id: rpc.id,
+      jsonrpc: "2.0",
     });
   }
 
@@ -296,26 +297,33 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     try {
       const url = new URL(request.url ?? "/", origin);
       switch (`${request.method} ${url.pathname}`) {
-        case "GET /.well-known/oauth-protected-resource/mcp":
+        case "GET /.well-known/oauth-protected-resource/mcp": {
           sendProtectedResourceMetadata(response);
           return;
-        case "GET /.well-known/oauth-authorization-server":
+        }
+        case "GET /.well-known/oauth-authorization-server": {
           sendAuthorizationServerMetadata(response);
           return;
-        case "POST /register":
+        }
+        case "POST /register": {
           await registerClient(request, response);
           return;
-        case "GET /authorize":
+        }
+        case "GET /authorize": {
           authorize(url, response);
           return;
-        case "POST /token":
+        }
+        case "POST /token": {
           await exchangeToken(request, response);
           return;
-        case "POST /mcp":
+        }
+        case "POST /mcp": {
           await handleMcp(request, response);
           return;
-        default:
+        }
+        default: {
           response.writeHead(404).end();
+        }
       }
     } catch {
       if (response.headersSent) {
@@ -335,18 +343,18 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
   origin = `http://127.0.0.1:${address.port}`;
   return {
-    origin,
-    mcpUrl: `${origin}/mcp`,
-    tokenResult: eveOAuthMcpTokenResultMarker,
-    counters,
-    invalidateAccessTokens() {
-      accessTokens.clear();
-    },
     async close() {
       server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve()))
       );
     },
+    counters,
+    invalidateAccessTokens() {
+      accessTokens.clear();
+    },
+    mcpUrl: `${origin}/mcp`,
+    origin,
+    tokenResult: eveOAuthMcpTokenResultMarker,
   };
 }

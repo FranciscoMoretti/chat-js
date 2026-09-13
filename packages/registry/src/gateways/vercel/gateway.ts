@@ -1,16 +1,17 @@
-import { createGateway, type gateway } from "@ai-sdk/gateway";
+import { createGateway } from "@ai-sdk/gateway";
+import type { gateway } from "@ai-sdk/gateway";
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import {
-  type AiGatewayModel,
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
@@ -56,6 +57,8 @@ export class VercelGateway
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
+  // The models endpoint is fixed by the provider contract.
+  // eslint-disable-next-line class-methods-use-this
   private getModelsUrl(): string {
     return "https://ai-gateway.vercel.sh/v1/models";
   }
@@ -105,9 +108,9 @@ export class VercelGateway
       if (unsupportedTypes.size > 0) {
         this.log.warn(
           {
-            unsupportedTypes: [...unsupportedTypes],
-            skippedModelCount: body.data.length - models.length,
             modelCount: body.data.length,
+            skippedModelCount: body.data.length - models.length,
+            unsupportedTypes: [...unsupportedTypes],
           },
           "Skipping models with unsupported types from Vercel AI Gateway"
         );

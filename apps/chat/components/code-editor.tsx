@@ -18,27 +18,32 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-function getLanguageExtension(language: string) {
+const getLanguageExtension = (language: string) => {
   switch (language) {
-    case "typescript":
+    case "typescript": {
       return javascript({ jsx: false, typescript: true });
-    case "javascript":
+    }
+    case "javascript": {
       return javascript({ jsx: false, typescript: false });
-    case "jsx":
+    }
+    case "jsx": {
       return javascript({ jsx: true, typescript: false });
-    case "tsx":
+    }
+    case "tsx": {
       return javascript({ jsx: true, typescript: true });
-    default:
+    }
+    default: {
       return python();
+    }
   }
-}
+};
 
-function PureCodeEditor({
+const PureCodeEditor = ({
   content,
   onSaveContent,
   isReadonly,
   language = "python",
-}: EditorProps) {
+}: EditorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
@@ -49,10 +54,10 @@ function PureCodeEditor({
       return;
     }
     const view = new EditorView({
+      parent: containerRef.current,
       state: EditorState.create({
         extensions: [basicSetup, oneDark, configuration.current.of([])],
       }),
-      parent: containerRef.current,
     });
     editorRef.current = view;
     return () => {
@@ -90,8 +95,8 @@ function PureCodeEditor({
     const currentContent = view.state.doc.toString();
     if (currentContent !== content) {
       view.dispatch({
-        changes: { from: 0, to: currentContent.length, insert: content },
         annotations: [Transaction.remote.of(true)],
+        changes: { from: 0, insert: content, to: currentContent.length },
       });
     }
   }, [content]);
@@ -99,6 +104,29 @@ function PureCodeEditor({
   return (
     <div className="not-prose relative w-full text-sm" ref={containerRef} />
   );
-}
+};
 
-export const CodeEditor = memo(PureCodeEditor);
+const areEqual = (prevProps: EditorProps, nextProps: EditorProps) => {
+  if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
+    return false;
+  }
+  if (prevProps.isCurrentVersion !== nextProps.isCurrentVersion) {
+    return false;
+  }
+  if (prevProps.status === "streaming" && nextProps.status === "streaming") {
+    return false;
+  }
+  if (prevProps.content !== nextProps.content) {
+    return false;
+  }
+  if (prevProps.isReadonly !== nextProps.isReadonly) {
+    return false;
+  }
+  if (prevProps.language !== nextProps.language) {
+    return false;
+  }
+
+  return true;
+};
+
+export const CodeEditor = memo(PureCodeEditor, areEqual);

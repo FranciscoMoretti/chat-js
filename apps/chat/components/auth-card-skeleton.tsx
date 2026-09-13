@@ -15,38 +15,36 @@ type AuthCardSkeletonProps = {
   variant?: "form" | "device";
 };
 
-export function AuthCardSkeleton({
+export const AuthCardSkeleton = ({
   title,
   description,
   className,
   cardClassName,
   variant = "form",
-}: AuthCardSkeletonProps) {
-  return (
-    <div className={cn("flex w-full flex-col gap-6", className)}>
-      <Card className={cardClassName}>
-        <CardHeader className="text-center">
-          <h1 className="text-xl leading-none font-semibold">{title}</h1>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            {variant === "device" ? (
-              <>
-                <Skeleton className="mx-auto size-10 rounded-full" />
-                <Skeleton className="mx-auto h-4 w-56" />
-                <Skeleton className="h-10 w-full" />
-              </>
-            ) : (
-              <>
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="mx-auto h-4 w-40" />
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+}: AuthCardSkeletonProps) => (
+  <div className={cn("flex w-full flex-col gap-6", className)}>
+    <Card className={cardClassName}>
+      <CardHeader className="text-center">
+        <h1 className="text-xl leading-none font-semibold">{title}</h1>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3">
+          {variant === "device" ? (
+            <>
+              <Skeleton className="mx-auto size-10 rounded-full" />
+              <Skeleton className="mx-auto h-4 w-56" />
+              <Skeleton className="h-10 w-full" />
+            </>
+          ) : (
+            <>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="mx-auto h-4 w-40" />
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);

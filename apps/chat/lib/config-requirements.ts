@@ -1,3 +1,9 @@
+import { codeExecutionEnvRequirement } from "@/tools/chatjs/code-execution-config";
+import { imageGenerationEnvRequirement } from "@/tools/chatjs/image-generation-config";
+import { searchEnvRequirement } from "@/tools/chatjs/search-config";
+import { urlRetrievalEnvRequirement } from "@/tools/chatjs/url-retrieval-config";
+import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-config";
+
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
@@ -7,72 +13,55 @@ export interface EnvRequirement {
   options: EnvVarName[][];
 }
 
-export function formatRequirementDescription(
+export const formatRequirementDescription = (
   requirement: EnvRequirement
-): string {
-  return (
-    requirement.description ??
-    requirement.options.map((option) => option.join(" + ")).join(" or ")
-  );
-}
+): string =>
+  requirement.description ??
+  requirement.options.map((option) => option.join(" + ")).join(" or ");
 
 export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
 > = {
-  webSearch: {
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
-  },
-  deepResearch: {
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
-  },
+  codeExecution: codeExecutionEnvRequirement,
+  deepResearch: searchEnvRequirement,
+  image: imageGenerationEnvRequirement,
   mcp: {
-    options: [["MCP_ENCRYPTION_KEY"]],
     description: "MCP_ENCRYPTION_KEY",
+    options: [["MCP_ENCRYPTION_KEY"]],
   },
-  codeExecution: {
-    options: [
-      ["VERCEL_OIDC_TOKEN"],
-      ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
-    ],
-    description:
-      "VERCEL_OIDC_TOKEN (auto on Vercel) or VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN",
-  },
+  urlRetrieval: urlRetrievalEnvRequirement,
+  video: videoGenerationEnvRequirement,
+  webSearch: searchEnvRequirement,
 };
 
 export const authEnvRequirements: Record<
   keyof AuthenticationConfig,
   EnvRequirement
 > = {
-  google: {
-    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
-    description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
-  },
   github: {
-    options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
     description: "AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
+    options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
+  },
+  google: {
+    description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
+    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
   },
   vercel: {
-    options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
     description: "VERCEL_APP_CLIENT_ID, VERCEL_APP_CLIENT_SECRET",
+    options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
   },
 };
 
-export function isRequirementSatisfied(
+export const isRequirementSatisfied = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
-): boolean {
-  return requirement.options.some((option) =>
-    option.every((name) => !!env[name])
-  );
-}
+): boolean =>
+  requirement.options.some((option) => option.every((name) => !!env[name]));
 
-export function getMissingRequirement(
+export const getMissingRequirement = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
-): string | null {
-  return isRequirementSatisfied(requirement, env)
+): string | null =>
+  isRequirementSatisfied(requirement, env)
     ? null
     : formatRequirementDescription(requirement);
-}

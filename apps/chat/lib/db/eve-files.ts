@@ -5,34 +5,34 @@ import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
 /** Legacy keys have no EVE row; only EVE deletion fences deny an existing URL. */
-export async function isEveFileUnavailable(key: string) {
+export const isEveFileUnavailable = async (key: string) => {
   const [file] = await db
     .select({ state: eveStoredFile.state })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
   return file !== undefined && file.state !== "active";
-}
+};
 
 const DOCUMENT_FILE_URL = new RegExp(
   `${FILE_CONTENT_PATH}\\?key=([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
-  "g"
+  "gu"
 );
 
 /** Reserve a fresh upload before storage I/O; never overwrite an existing key. */
-export async function reserveEveUpload(ownerId: string, key: string) {
+export const reserveEveUpload = async (ownerId: string, key: string) => {
   if (!(ownerId && isFileStorageKey(key))) {
     throw new Error("Invalid upload ownership reservation.");
   }
-  await db.insert(eveStoredFile).values({ ownerId, key });
-}
+  await db.insert(eveStoredFile).values({ key, ownerId });
+};
 
 /** Serialize admitted storage writes with orphan cleanup and reference creation. */
-export async function writeEveUpload<T>(
+export const writeEveUpload = async <T>(
   ownerId: string,
   key: string,
   write: () => Promise<T>
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -51,14 +51,13 @@ export async function writeEveUpload<T>(
     }
     return await write();
   });
-}
 
 /** Register server-created keys only; a caller-supplied URL is not ownership proof. */
-export async function registerEveStoredFile(ownerId: string, key: string) {
+export const registerEveStoredFile = async (ownerId: string, key: string) => {
   if (!(ownerId && isFileStorageKey(key))) {
     throw new Error("Invalid file ownership registration.");
   }
-  await db.insert(eveStoredFile).values({ ownerId, key }).onConflictDoNothing();
+  await db.insert(eveStoredFile).values({ key, ownerId }).onConflictDoNothing();
   const [saved] = await db
     .select({ ownerId: eveStoredFile.ownerId, state: eveStoredFile.state })
     .from(eveStoredFile)
@@ -66,15 +65,15 @@ export async function registerEveStoredFile(ownerId: string, key: string) {
   if (saved?.ownerId !== ownerId || saved.state !== "active") {
     throw new Error("File ownership cannot be reassigned.");
   }
-}
+};
 
 /** Claim before dispatch; failed/uncertain sends retain their references safely. */
-export async function referenceEveFiles(
+export const referenceEveFiles = async (
   ownerId: string,
   conversationId: string,
   keys: string[]
-) {
-  const uniqueKeys = [...new Set(keys)].sort();
+) => {
+  const uniqueKeys = [...new Set(keys)].toSorted();
   if (uniqueKeys.length === 0) {
     return;
   }
@@ -122,13 +121,13 @@ export async function referenceEveFiles(
     }
     await tx
       .insert(eveFileReference)
-      .values(uniqueKeys.map((key) => ({ key, ownerId, conversationId })))
+      .values(uniqueKeys.map((key) => ({ conversationId, key, ownerId })))
       .onConflictDoNothing();
   });
-}
+};
 
 /** Preflight rejects invalid initial input before a creation reservation exists. */
-export async function assertEveFilesOwned(ownerId: string, keys: string[]) {
+export const assertEveFilesOwned = async (ownerId: string, keys: string[]) => {
   const uniqueKeys = [...new Set(keys)];
   if (!uniqueKeys.length) {
     return;
@@ -152,14 +151,14 @@ export async function assertEveFilesOwned(ownerId: string, keys: string[]) {
   if (files.length !== uniqueKeys.length) {
     throw new Error("Attachment is not owned by this user.");
   }
-}
+};
 
 /** Persist the key before storage I/O so a failed upload remains discoverable. */
-export async function reserveEveGeneratedFile(
+export const reserveEveGeneratedFile = async (
   ownerId: string,
   conversationId: string,
   key: string
-) {
+) => {
   if (!isFileStorageKey(key)) {
     throw new Error("Invalid storage key.");
   }
@@ -181,18 +180,18 @@ export async function reserveEveGeneratedFile(
       throw new Error("Conversation is unavailable for generated files.");
     }
     await tx.insert(eveStoredFile).values({ key, ownerId });
-    await tx.insert(eveFileReference).values({ key, ownerId, conversationId });
+    await tx.insert(eveFileReference).values({ conversationId, key, ownerId });
   });
-}
+};
 
 /** Deletion cannot pass an admitted write; the committed reservation survives failures. */
-export async function writeEveGeneratedFile<T>(
+export const writeEveGeneratedFile = async <T>(
   ownerId: string,
   conversationId: string,
   key: string,
   write: () => Promise<T>
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -218,15 +217,14 @@ export async function writeEveGeneratedFile<T>(
     }
     return await write();
   });
-}
 
 /** Caller holds the owner family lock and has authorized the document revision. */
-export async function retainEveDocumentFiles(
+export const retainEveDocumentFiles = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   conversationId: string,
   content: string
-) {
+) => {
   // Stored URLs are canonical paths with one ASCII key. Match conservatively:
   // retaining a file mentioned as text is preferable to deleting a referenced image.
   const candidates = [
@@ -250,7 +248,7 @@ export async function retainEveDocumentFiles(
   if (files.length) {
     await tx
       .insert(eveFileReference)
-      .values(files.map(({ key }) => ({ key, ownerId, conversationId })))
+      .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
       .onConflictDoNothing();
   }
-}
+};

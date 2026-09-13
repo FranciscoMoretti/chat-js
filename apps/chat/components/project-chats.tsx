@@ -4,7 +4,7 @@ import { ProjectChatItem } from "@/components/project-chat-item";
 import { Separator } from "@/components/ui/separator";
 import type { UIChat } from "@/lib/types/ui-chat";
 
-export function ProjectChats({
+export const ProjectChats = ({
   chats,
   onDelete,
   onRename,
@@ -12,7 +12,7 @@ export function ProjectChats({
   chats: UIChat[] | undefined;
   onDelete: (chatId: string) => void;
   onRename: (chatId: string, title: string) => Promise<void>;
-}) {
+}) => {
   if (!chats) {
     return null;
   }
@@ -45,4 +45,4 @@ export function ProjectChats({
       ))}
     </div>
   );
-}
+};

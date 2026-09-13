@@ -24,7 +24,7 @@ const FileSchema = z.object({
     ),
 });
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   if (!config.features.attachments) {
     return NextResponse.json(
       { error: "File uploads are not available" },
@@ -75,13 +75,13 @@ export async function POST(request: Request) {
         ? await writeEveUpload(session.user.id, key, write)
         : await write();
       return NextResponse.json(data);
-    } catch (_error) {
+    } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to process request" },
       { status: 500 }
     );
   }
-}
+};

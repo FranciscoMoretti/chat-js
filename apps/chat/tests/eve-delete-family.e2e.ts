@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, expect, test, vi } from "vitest";
@@ -38,13 +40,13 @@ if (!env.WORKFLOW_POSTGRES_URL) {
 }
 assertEveTestDatabase(env.WORKFLOW_POSTGRES_URL);
 const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
-const provider = { teamId: "fixture-team", projectId: "fixture-project" };
+const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
 await db.insert(user).values({
+  email: `${owner}@test.invalid`,
   id: owner,
   name: "Deletion fixture",
-  email: `${owner}@test.invalid`,
 });
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
@@ -73,7 +75,7 @@ async function fixture(parentId?: string) {
     "Private fixture",
     () => Promise.resolve(sessionId),
     parentId
-      ? { fork: { conversationId: parentId, beforeTurnId: "turn_0" } }
+      ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
       : undefined
   );
   return { ...conversation, sessionId };
@@ -120,8 +122,8 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
       .from(eveConversation)
       .where(eq(eveConversation.id, member.id));
     expect(deleted).toMatchObject({
-      state: "deleted",
       firstMessage: "",
+      state: "deleted",
       title: null,
     });
   }

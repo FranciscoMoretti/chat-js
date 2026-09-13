@@ -3,21 +3,23 @@ import type { MessageStreamEvent } from "eve/client";
 import { recordEveUsage } from "../db/eve-billing";
 import { evePlatformResult, isEvePlatformTool } from "./platform-result";
 
-export async function ingestEveUsage(
+// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
   event: MessageStreamEvent
-) {
+) => {
   if (event.type === "hook.result") {
     let completedCallsPriced = true;
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
       const priced = await recordEveUsage({
+        costUsd: call.usage?.costUsd,
+        eventId: `${event.meta.id}:model-call:${index}`,
+        generationId: call.providerMetadata?.gateway?.generationId,
         ownerId,
         sessionId,
-        eventId: `${event.meta.id}:model-call:${index}`,
         turnId: event.data.turnId,
-        costUsd: call.usage?.costUsd,
-        generationId: call.providerMetadata?.gateway?.generationId,
       });
       if (!call.failed && priced === false) {
         completedCallsPriced = false;
@@ -33,11 +35,11 @@ export async function ingestEveUsage(
     const result = evePlatformResult.safeParse(event.data.result.output);
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;
     return await recordEveUsage({
+      costUsd: event.data.status === "rejected" ? 0 : recordedCost,
+      eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
       ownerId,
       sessionId,
-      eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
       turnId: event.data.turnId,
-      costUsd: event.data.status === "rejected" ? 0 : recordedCost,
     });
   }
   if (
@@ -48,15 +50,15 @@ export async function ingestEveUsage(
     return;
   }
   return await recordEveUsage({
-    ownerId,
-    sessionId,
-    eventId: event.meta.id,
-    turnId: event.data.turnId,
     costUsd:
       event.type === "step.failed" ? undefined : event.data.usage?.costUsd,
+    eventId: event.meta.id,
     generationId:
       event.type === "step.failed"
         ? undefined
         : event.data.providerMetadata?.gateway?.generationId,
+    ownerId,
+    sessionId,
+    turnId: event.data.turnId,
   });
-}
+};

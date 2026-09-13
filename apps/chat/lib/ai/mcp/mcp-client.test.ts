@@ -3,19 +3,18 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { MCPClient } from "./mcp-client";
 
 const mocks = vi.hoisted(() => ({
-  create: vi.fn(),
   close: vi.fn(),
+  create: vi.fn(),
   tools: vi.fn(),
 }));
 vi.mock("@ai-sdk/mcp", () => ({
-  experimental_createMCPClient: mocks.create,
   auth: vi.fn(),
+  experimental_createMCPClient: mocks.create,
 }));
 vi.mock("@/lib/config", () => ({ config: { appPrefix: "chatjs" } }));
 vi.mock("@/lib/url", () => ({ getBaseUrl: () => "http://localhost:3790" }));
 vi.mock("./mcp-oauth-provider", () => ({
-  McpOAuthClientProvider: class {},
-  OAuthAuthorizationRequiredError: class extends Error {},
+  McpOAuthClientProvider: vi.fn(),
 }));
 vi.mock("./cache", () => {
   throw new Error("Runtime client must not load Next.js cache APIs");
@@ -30,9 +29,9 @@ beforeEach(() => {
 
 it("connects, discovers and closes without web cache dependencies", async () => {
   const client = new MCPClient("id", "Test", {
-    url: "https://mcp.test",
-    type: "http",
     headers: { Authorization: "test" },
+    type: "http",
+    url: "https://mcp.test",
   });
   await client.connect();
   expect(client.status).toBe("connected");
@@ -43,8 +42,8 @@ it("connects, discovers and closes without web cache dependencies", async () => 
   expect(mocks.create).toHaveBeenCalledWith(
     expect.objectContaining({
       transport: expect.objectContaining({
-        type: "http",
         headers: { Authorization: "test" },
+        type: "http",
       }),
     })
   );
@@ -55,7 +54,7 @@ it("notifies the web owner after disconnect and authentication errors", async ()
   const client = new MCPClient(
     "id",
     "Test",
-    { url: "https://mcp.test", type: "sse" },
+    { type: "sse", url: "https://mcp.test" },
     invalidate
   );
   await client.connect();
@@ -67,19 +66,19 @@ it("notifies the web owner after disconnect and authentication errors", async ()
 });
 
 it("concurrent connection requests share one transport and close it once", async () => {
-  const gate = Promise.withResolvers<void>();
+  const gate = Promise.withResolvers<undefined>();
   mocks.create.mockImplementationOnce(async () => {
     await gate.promise;
     return { close: mocks.close, tools: mocks.tools };
   });
   const client = new MCPClient("id", "Test", {
-    url: "https://mcp.test",
     type: "http",
+    url: "https://mcp.test",
   });
   const first = client.connect();
   const second = client.connect();
   expect(mocks.create).toHaveBeenCalledOnce();
-  gate.resolve();
+  gate.resolve(undefined);
   await Promise.all([first, second]);
   await client.close();
   expect(mocks.close).toHaveBeenCalledOnce();
@@ -88,8 +87,8 @@ it("concurrent connection requests share one transport and close it once", async
 it("a failed connection can be retried without retaining a failed promise", async () => {
   mocks.create.mockRejectedValueOnce(new Error("temporarily unavailable"));
   const client = new MCPClient("id", "Test", {
-    url: "https://mcp.test",
     type: "http",
+    url: "https://mcp.test",
   });
   await expect(client.connect()).rejects.toThrow("temporarily unavailable");
   await client.connect();

@@ -2,7 +2,8 @@
 
 import { formatDistance } from "date-fns";
 import { FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
+import type { ReactNode } from "react";
 
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
@@ -16,7 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 import type { UIChat } from "@/lib/types/ui-chat";
-export function ProjectChatItem({
+
+export const ProjectChatItem = ({
   chat,
   onDelete,
   onRename,
@@ -30,7 +32,7 @@ export function ProjectChatItem({
   onMoveProject?: () => void;
   renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
   onRename: (chatId: string, title: string) => Promise<void>;
-}) {
+}) => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
@@ -130,4 +132,4 @@ export function ProjectChatItem({
       )}
     </>
   );
-}
+};

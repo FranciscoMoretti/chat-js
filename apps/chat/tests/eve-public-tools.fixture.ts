@@ -7,47 +7,47 @@ import { sharedEvePart } from "../lib/eve/shared-messages";
 
 const parts: EveMessagePart[] = [
   {
-    type: "dynamic-tool",
-    toolCallId: "approval",
-    toolName: "example",
+    approval: { id: "owner-approval-secret", isAutomatic: true },
     input: { note: "Published note" },
     state: "approval-requested",
-    approval: { id: "owner-approval-secret", isAutomatic: true },
+    toolCallId: "approval",
+    toolName: "example",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolCallId: "declined",
-    toolName: "example",
+    approval: { approved: false, id: "owner-approval-secret" },
     input: { note: "Declined note" },
     state: "output-denied",
-    approval: { id: "owner-approval-secret", approved: false },
+    toolCallId: "declined",
+    toolName: "example",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
+    approval: { approved: true, id: "owner-approval-secret" },
+    input: { text: "one two" },
+    output: { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 },
+    state: "output-available",
     toolCallId: "complete",
     toolName: "wordCount",
-    input: { text: "one two" },
-    state: "output-available",
-    output: { words: 2, characters: 7, charactersNoSpaces: 6, sentences: 1 },
-    approval: { id: "owner-approval-secret", approved: true },
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolCallId: "malformed",
-    toolName: "codeExecution",
     input: {
-      title: "Public code result",
-      language: "javascript",
       code: "1 + 1",
+      language: "javascript",
+      title: "Public code result",
     },
-    state: "output-available",
     output: {
       kind: "chatjs.platform-result",
-      version: 2,
       output: "Unrecognized",
-      usage: { costUsd: 99 },
       privateRuntimeToken: "runtime-private",
+      usage: { costUsd: 99 },
+      version: 2,
     },
+    state: "output-available",
+    toolCallId: "malformed",
+    toolName: "codeExecution",
+    type: "dynamic-tool",
   },
 ];
 process.stdout.write(
@@ -55,8 +55,8 @@ process.stdout.write(
     createElement(EveSharedMessages, {
       messages: parts.map((part, index): EveMessage => ({
         id: `public-${index}`,
-        role: "assistant",
         parts: sharedEvePart(part),
+        role: "assistant",
       })),
     })
   )

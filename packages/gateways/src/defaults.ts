@@ -1,6 +1,8 @@
 import type { GatewayProvider } from "./gateway-provider.ts";
 
-type VideoDefault<G extends GatewayProvider> = [
+type AnyGatewayProvider = GatewayProvider<string, never, never, never>;
+
+type VideoDefault<G extends AnyGatewayProvider> = [
   Parameters<G["createVideoModel"]>[0],
 ] extends [never]
   ? { enabled: false }
@@ -8,7 +10,7 @@ type VideoDefault<G extends GatewayProvider> = [
       | { enabled: true; default: Parameters<G["createVideoModel"]>[0] }
       | { enabled: false; default?: Parameters<G["createVideoModel"]>[0] };
 
-type ImageDefault<G extends GatewayProvider> = [
+type ImageDefault<G extends AnyGatewayProvider> = [
   Parameters<G["createImageModel"]>[0],
 ] extends [never]
   ? { enabled: false }
@@ -16,7 +18,7 @@ type ImageDefault<G extends GatewayProvider> = [
       | { enabled: true; default: Parameters<G["createImageModel"]>[0] }
       | { enabled: false; default?: Parameters<G["createImageModel"]>[0] };
 
-export interface GatewayModelDefaults<G extends GatewayProvider> {
+export interface GatewayModelDefaults<G extends AnyGatewayProvider> {
   anonymousModels: Parameters<G["createLanguageModel"]>[0][];
   curatedDefaults: Parameters<G["createLanguageModel"]>[0][];
   disabledModels: Parameters<G["createLanguageModel"]>[0][];

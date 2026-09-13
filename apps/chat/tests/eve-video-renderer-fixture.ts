@@ -2,22 +2,21 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { EvePlatformToolResult } from "../components/eve/eve-platform-tool-result";
+import { EveToolResult } from "../components/eve/eve-tool-result";
 import { createEvePlatformResult } from "../lib/eve/platform-result";
 
 const imageMode = process.argv.includes("--image");
 const common = {
-  type: "dynamic-tool",
-  toolName: imageMode ? "generateImage" : "generateVideo",
-  toolCallId: "fixture",
   input: { prompt: "A tree in the wind" },
+  toolCallId: "fixture",
+  toolName: imageMode ? "generateImage" : "generateVideo",
+  type: "dynamic-tool",
 } as const;
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, state: "input-streaming", inputText: "" },
+  { ...common, inputText: "", state: "input-streaming" },
   { ...common, state: "input-available" },
   {
     ...common,
-    state: "output-available",
     output: createEvePlatformResult(
       {
         ...(imageMode
@@ -29,28 +28,29 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.5
     ),
+    state: "output-available",
   },
   {
     ...common,
-    state: "output-error",
     errorText: imageMode
       ? "Image provider unavailable"
       : "Video provider unavailable",
+    state: "output-error",
   },
   {
     ...common,
+    approval: { approved: false, id: "fixture" },
     state: "output-denied",
-    approval: { id: "fixture", approved: false },
   },
   {
     ...common,
-    state: "output-available",
     output: createEvePlatformResult(
       { error: "Upload failed after provider work completed." },
       0.5
     ),
+    state: "output-available",
   },
-  { ...common, state: "output-available", output: { invalid: true } },
+  { ...common, output: { invalid: true }, state: "output-available" },
 ];
 process.stdout.write(
   renderToStaticMarkup(
@@ -61,10 +61,10 @@ process.stdout.write(
         createElement(
           "section",
           { key: index },
-          createElement(EvePlatformToolResult, {
-            part,
-            messageId: "fixture",
+          createElement(EveToolResult, {
             isReadonly: true,
+            messageId: "fixture",
+            part,
           })
         )
       )

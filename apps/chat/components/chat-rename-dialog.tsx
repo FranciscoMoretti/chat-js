@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-export function ChatRenameDialog({
+export const ChatRenameDialog = ({
   open,
   onOpenChange,
   currentTitle,
@@ -25,11 +25,12 @@ export function ChatRenameDialog({
   currentTitle: string;
   onSubmit: (title: string) => Promise<void>;
   isLoading: boolean;
-}) {
+}) => {
   const [chatTitle, setChatTitle] = useState(currentTitle);
 
   useEffect(() => {
     if (open) {
+      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with the latest title.
       setChatTitle(currentTitle);
     }
   }, [open, currentTitle]);
@@ -38,10 +39,8 @@ export function ChatRenameDialog({
     const trimmedValue = chatTitle.trim();
     if (trimmedValue && trimmedValue !== currentTitle) {
       await onSubmit(trimmedValue);
-      onOpenChange(false);
-    } else {
-      onOpenChange(false);
     }
+    onOpenChange(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -88,4 +87,4 @@ export function ChatRenameDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

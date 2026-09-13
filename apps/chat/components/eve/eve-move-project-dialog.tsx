@@ -16,13 +16,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/trpc/react";
 
-export function EveMoveProjectDialog({
+export const EveMoveProjectDialog = ({
   conversation,
   onClose,
 }: {
   conversation: { id: string; title: string; projectId: string | null };
   onClose: () => void;
-}) {
+}) => {
   const trpc = useTRPC();
   const cache = useQueryClient();
   const router = useRouter();
@@ -77,7 +77,7 @@ export function EveMoveProjectDialog({
             </option>
           ))}
         </select>
-        {projects.isPending && <p role="status">Loading projects…</p>}
+        {projects.isPending && <output>Loading projects…</output>}
         {projects.isError && (
           <div role="alert">
             <p>Could not load projects.</p>
@@ -114,4 +114,4 @@ export function EveMoveProjectDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

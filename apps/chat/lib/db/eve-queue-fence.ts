@@ -59,14 +59,14 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
  * Register the provider's configured task name (normally workflow_flows).
  * Fences enqueues/replacements, not worker bookkeeping or existing job removal.
  */
-export async function installEvePostgresQueueFence(
+export const installEvePostgresQueueFence = async (
   connection: Sql,
   taskIdentifier: string
-) {
+) => {
   z.string().min(1).parse(taskIdentifier);
   await connection.begin("isolation level read committed", async (query) => {
     await query`select 'workflow.eve_assert_writable(text[])'::regprocedure`;
     await query.unsafe(installSql);
     await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
   });
-}
+};

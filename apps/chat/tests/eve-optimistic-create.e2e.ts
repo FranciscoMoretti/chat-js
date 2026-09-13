@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { textPdf } from "./eve-attachment-fixtures";
 
-const projectPath = /\/project\/[a-f\d-]+$/;
+const projectPath = /\/project\/[a-f\d-]+$/u;
 
 for (const project of [false, true]) {
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
@@ -13,18 +13,18 @@ for (const project of [false, true]) {
     );
     await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
     const composer = page.getByRole("group", {
-      name: "Message composer",
       exact: true,
+      name: "Message composer",
     });
     let projectId: string | undefined;
-    const release = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<undefined>();
     let received = false;
     await page.route("**/api/agent-conversations", async (route) => {
       received = true;
       await release.promise;
       await route.fulfill({
-        status: 503,
         json: { error: "Test creation unavailable" },
+        status: 503,
       });
     });
     try {
@@ -33,42 +33,44 @@ for (const project of [false, true]) {
       ).toHaveAttribute("contenteditable", "true");
       if (project) {
         await page
-          .getByRole("button", { name: "New project", exact: true })
+          .getByRole("button", { exact: true, name: "New project" })
           .click();
         const dialog = page.getByRole("dialog");
         await dialog
           .getByPlaceholder("Project name")
           .fill("Optimistic send fixture");
         await dialog
-          .getByRole("button", { name: "Create", exact: true })
+          .getByRole("button", { exact: true, name: "Create" })
           .click();
         await expect(page).toHaveURL(projectPath);
         projectId = new URL(page.url()).pathname.split("/").at(-1);
-        await page.setViewportSize({ width: 390, height: 844 });
+        await page.setViewportSize({ height: 844, width: 390 });
         await page.route("**/api/files/upload", (route) =>
           route.fulfill({
-            status: 200,
             json: {
               url: "/api/files/content?key=012345678901234567890123.pdf",
             },
+            status: 200,
           })
         );
         await page
-          .getByRole("group", { name: "Message composer", exact: true })
+          .getByRole("group", { exact: true, name: "Message composer" })
           .getByLabel("Attach files", { exact: true })
           .setInputFiles({
-            name: "pending.pdf",
-            mimeType: "application/pdf",
             buffer: textPdf("Pending attachment"),
+            mimeType: "application/pdf",
+            name: "pending.pdf",
           });
         await expect(
-          page.getByRole("button", { name: "pending.pdf", exact: true })
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
         ).toBeVisible();
       }
       const input = composer.getByLabel("Message", { exact: true });
       await expect(input).toHaveAttribute("contenteditable", "true");
       await input.fill("Optimistic first message");
-      await page.getByRole("button", { name: "Send", exact: true }).click();
+      await composer.getByLabel("Send", { exact: true }).click();
       await expect.poll(() => received, { timeout: 5000 }).toBe(true);
 
       await expect(page.getByRole("log")).toContainText(
@@ -79,31 +81,31 @@ for (const project of [false, true]) {
         ""
       );
       await page.screenshot({
-        path: testInfo.outputPath("optimistic-first-message.png"),
         animations: "disabled",
+        path: testInfo.outputPath("optimistic-first-message.png"),
       });
       if (project) {
         await expect(
           page
             .getByRole("log")
-            .getByRole("button", { name: "pending.pdf", exact: true })
+            .getByRole("button", { exact: true, name: "pending.pdf" })
         ).toBeVisible();
         await expect(
           page
-            .getByRole("group", { name: "Message composer", exact: true })
+            .getByRole("group", { exact: true, name: "Message composer" })
             .getByTestId("input-attachment-preview")
         ).toHaveCount(0);
       }
-      release.resolve();
+      release.resolve(undefined);
       await expect(page.getByRole("alert")).toBeVisible();
       await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
         "Optimistic first message"
       );
       if (project) {
         await expect(
-          page
-            .getByRole("group", { name: "Message composer", exact: true })
-            .getByRole("button", { name: "pending.pdf", exact: true })
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
         ).toBeVisible();
       }
       await page.reload({ waitUntil: "domcontentloaded" });
@@ -112,13 +114,13 @@ for (const project of [false, true]) {
       );
       if (project) {
         await expect(
-          page
-            .getByRole("group", { name: "Message composer", exact: true })
-            .getByRole("button", { name: "pending.pdf", exact: true })
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
         ).toBeVisible();
       }
     } finally {
-      release.resolve();
+      release.resolve(undefined);
       if (projectId) {
         const removed = await page.request.post("/api/trpc/project.remove", {
           data: { json: { id: projectId } },

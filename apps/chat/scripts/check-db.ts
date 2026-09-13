@@ -11,7 +11,7 @@ const CONNECT_TIMEOUT_SECONDS = 10;
 const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
-async function checkDatabase() {
+const checkDatabase = async () => {
   const parsed = z
     .object({
       ...databaseEnvOptions,
@@ -26,15 +26,19 @@ async function checkDatabase() {
     return;
   }
 
-  for (const purpose of ["runtime", "migration"] as const) {
+  const checkPurpose = async (purpose: "runtime" | "migration") => {
     const settings = databaseConnection(parsed.data, purpose);
     const sql = postgres(settings.url, {
       ...settings.options,
-      max: 1,
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
+      max: 1,
     });
-    const deadline = setTimeout(() => {
-      sql.end({ timeout: 0 }).catch(() => undefined);
+    const deadline = setTimeout(async () => {
+      try {
+        await sql.end({ timeout: 0 });
+      } catch {
+        // The timeout closes the client before the query result is relevant.
+      }
     }, CHECK_DEADLINE_MS);
     try {
       await sql`select 1`;
@@ -52,12 +56,19 @@ async function checkDatabase() {
       clearTimeout(deadline);
       await sql.end({ timeout: CLOSE_TIMEOUT_SECONDS });
     }
-  }
-}
+  };
 
-checkDatabase().catch(() => {
-  console.error(
-    "Database check failed. Check your connection settings in .env.local."
-  );
-  process.exitCode = 1;
-});
+  await checkPurpose("runtime");
+  await checkPurpose("migration");
+};
+
+void (async () => {
+  try {
+    await checkDatabase();
+  } catch {
+    console.error(
+      "Database check failed. Check your connection settings in .env.local."
+    );
+    process.exitCode = 1;
+  }
+})();

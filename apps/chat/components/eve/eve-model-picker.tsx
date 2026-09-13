@@ -1,17 +1,15 @@
 "use client";
 
 import { ModelSelector } from "@/components/model-selector";
-import {
-  getPrimarySelectedModelId,
-  type SelectedModelValue,
-} from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type { SelectedModelValue } from "@/lib/ai/types";
 import { useChatModels } from "@/providers/chat-models-provider";
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
 
-export function EveModelPicker({
+export const EveModelPicker = ({
   disabled = false,
   retainedModelId,
   retainedModelIds,
@@ -24,7 +22,7 @@ export function EveModelPicker({
     value: SelectedModelValue;
     onChange: (value: SelectedModelValue) => Promise<void>;
   };
-}) {
+}) => {
   const defaultModel = useDefaultModel();
   const changeModel = useModelChange();
   const { getModelById } = useChatModels();
@@ -62,4 +60,4 @@ export function EveModelPicker({
       />
     </fieldset>
   );
-}
+};

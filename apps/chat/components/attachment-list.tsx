@@ -24,7 +24,9 @@ import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
-function AttachmentIcon({
+const emptyUploadQueue: string[] = [];
+
+const AttachmentIcon = ({
   isImage,
   isPdf,
   url,
@@ -34,7 +36,7 @@ function AttachmentIcon({
   isPdf: boolean;
   url: string;
   name: string;
-}) {
+}) => {
   const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (isImage) {
     if (imageUnavailable) {
@@ -64,9 +66,9 @@ function AttachmentIcon({
   }
 
   return <PaperclipIcon className="text-muted-foreground size-3" />;
-}
+};
 
-function AttachmentPill({
+const AttachmentPill = ({
   attachment,
   isUploading,
   onRemove,
@@ -74,7 +76,7 @@ function AttachmentPill({
   attachment: Attachment;
   isUploading: boolean;
   onRemove?: () => void;
-}) {
+}) => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
@@ -129,9 +131,9 @@ function AttachmentPill({
       <span className="max-w-24 flex-1 truncate">{attachmentLabel}</span>
     </div>
   );
-}
+};
 
-function AttachmentItem({
+const AttachmentItem = ({
   attachment,
   isUploading = false,
   onRemove,
@@ -143,7 +145,7 @@ function AttachmentItem({
   onRemove?: () => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
-}) {
+}) => {
   const { name, url, contentType } = attachment;
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
@@ -207,6 +209,7 @@ function AttachmentItem({
               className="size-7"
               onClick={async (e) => {
                 e.stopPropagation();
+                /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
                 try {
                   const response = await fetch(url);
                   if (response.status === 404) {
@@ -214,6 +217,7 @@ function AttachmentItem({
                     return;
                   }
                   if (!response.ok) {
+                    // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
                     throw new Error(
                       `File download failed (${response.status})`
                     );
@@ -229,6 +233,7 @@ function AttachmentItem({
                   // Fallback: open in new tab if fetch fails
                   window.open(url, "_blank");
                 }
+                /* oxlint-enable react/todo */
               }}
               size="icon"
               title="Download"
@@ -241,11 +246,11 @@ function AttachmentItem({
       </PromptInputHoverCardContent>
     </PromptInputHoverCard>
   );
-}
+};
 
-export function AttachmentList({
+export const AttachmentList = ({
   attachments,
-  uploadQueue = [],
+  uploadQueue = emptyUploadQueue,
   onRemoveAction,
   onImageClick,
   variant = "card",
@@ -259,7 +264,7 @@ export function AttachmentList({
   variant?: "card" | "pill";
   testId?: string;
   className?: string;
-}) {
+}) => {
   if (attachments.length === 0 && uploadQueue.length === 0) {
     return null;
   }
@@ -284,9 +289,9 @@ export function AttachmentList({
       {uploadQueue.map((filename) => (
         <AttachmentItem
           attachment={{
-            url: "",
-            name: filename,
             contentType: "",
+            name: filename,
+            url: "",
           }}
           isUploading={true}
           key={filename}
@@ -295,4 +300,4 @@ export function AttachmentList({
       ))}
     </div>
   );
-}
+};

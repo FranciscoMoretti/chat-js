@@ -1,3 +1,1 @@
-import { backblazeB2 } from "files-sdk/backblaze-b2";
-
-export const createStorageAdapter = backblazeB2;
+export { backblazeB2 as createStorageAdapter } from "files-sdk/backblaze-b2";

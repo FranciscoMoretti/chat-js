@@ -1,4 +1,5 @@
-import pino, { type Logger, stdTimeFunctions } from "pino";
+import pino, { stdTimeFunctions } from "pino";
+import type { Logger } from "pino";
 
 import userConfig from "@/chat.config";
 
@@ -8,9 +9,8 @@ const appBinding = userConfig.appPrefix || userConfig.appName || "chatjs";
 // Pino transports spawn a worker whose relative module path is not preserved
 // in Eve's authored-module snapshots.
 const logger: Logger = pino({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
   base: { app: appBinding },
-  timestamp: stdTimeFunctions.isoTime,
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
   redact: {
     paths: [
       "password",
@@ -21,8 +21,8 @@ const logger: Logger = pino({
     ],
     remove: false,
   },
+  timestamp: stdTimeFunctions.isoTime,
 });
 
-export function createModuleLogger(moduleName: string): Logger {
-  return logger.child({ module: moduleName });
-}
+export const createModuleLogger = (moduleName: string): Logger =>
+  logger.child({ module: moduleName });

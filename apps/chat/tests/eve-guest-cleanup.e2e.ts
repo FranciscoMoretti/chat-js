@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -21,24 +23,24 @@ afterAll(async () => {
 
 test("expired root claims are bounded, disjoint, fair and preserve owner identities", async () => {
   const guest = await createEveGuest({
-    tokenHash: createEveGuestCredential().tokenHash,
-    messageLimit: 10,
     expiresAt: new Date(Date.now() + 60_000),
+    messageLimit: 10,
+    tokenHash: createEveGuestCredential().tokenHash,
   });
   owners.push(guest.ownerId);
   const roots = Array.from({ length: 11 }, () => ({
-    id: crypto.randomUUID(),
-    ownerId: guest.ownerId,
-    operationId: crypto.randomUUID(),
     firstMessage: "cleanup fixture",
+    id: crypto.randomUUID(),
+    operationId: crypto.randomUUID(),
+    ownerId: guest.ownerId,
   }));
   await db.insert(eveConversation).values(roots);
   const registeredOwner = crypto.randomUUID();
   owners.push(registeredOwner);
   await db.insert(user).values({
+    email: `${registeredOwner}@cleanup.test`,
     id: registeredOwner,
     name: "Cleanup fixture",
-    email: `${registeredOwner}@cleanup.test`,
   });
   const excluded = [
     crypto.randomUUID(),
@@ -54,17 +56,17 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     },
     {
       ...roots[0],
+      forkTurnId: "turn_0",
       id: excluded[1],
       operationId: crypto.randomUUID(),
       parentConversationId: roots[0].id,
       rootConversationId: roots[0].id,
-      forkTurnId: "turn_0",
     },
     {
       ...roots[0],
       id: excluded[2],
-      ownerId: registeredOwner,
       operationId: crypto.randomUUID(),
+      ownerId: registeredOwner,
     },
   ]);
   expect(

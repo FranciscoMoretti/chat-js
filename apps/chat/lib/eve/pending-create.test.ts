@@ -6,18 +6,18 @@ import {
   readCreation,
 } from "./pending-create";
 
-function storageFixture() {
+const storageFixture = () => {
   const entries = new Map<string, string>();
   return {
     getItem: (key: string) => entries.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      entries.set(key, value);
-    },
     removeItem: (key: string) => {
       entries.delete(key);
     },
+    setItem: (key: string, value: string) => {
+      entries.set(key, value);
+    },
   };
-}
+};
 
 describe("rejected project draft recovery", () => {
   it("moves the exact model and message to a fresh ordinary operation", () => {
@@ -27,12 +27,12 @@ describe("rejected project draft recovery", () => {
       storage,
       "owner",
       [
-        { type: "text", text: "Keep my message" },
+        { text: "Keep my message", type: "text" },
         {
-          type: "file",
           data: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
           filename: "square.png",
           mediaType: "image/png",
+          type: "file",
         },
       ],
       "chosen-model",

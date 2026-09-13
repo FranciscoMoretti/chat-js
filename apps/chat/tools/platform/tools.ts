@@ -1,4 +1,4 @@
-import type { FileUIPart, ModelMessage, Tool } from "ai";
+import type { ModelMessage, Tool } from "ai";
 
 import type { ModelId } from "@/lib/ai/app-models";
 import { installedTools } from "@/lib/ai/installed-tools";
@@ -11,7 +11,6 @@ import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
-import { codeExecution } from "./code-execution";
 import { deepResearch } from "./deep-research/deep-research";
 import { createCodeDocumentTool } from "./documents/create-code-document";
 import { createSheetDocumentTool } from "./documents/create-sheet-document";
@@ -19,21 +18,16 @@ import { createTextDocumentTool } from "./documents/create-text-document";
 import { editCodeDocumentTool } from "./documents/edit-code-document";
 import { editSheetDocumentTool } from "./documents/edit-sheet-document";
 import { editTextDocumentTool } from "./documents/edit-text-document";
-import { generateImageTool } from "./generate-image";
-import { generateVideoTool } from "./generate-video";
 import { readDocument } from "./read-document";
 import type { ToolSession } from "./types";
-import { tavilyWebSearch } from "./web-search";
 
 const log = createModuleLogger("tools:mcp");
 
-export function getTools({
+export const getTools = ({
   dataStream,
   session,
   messageId,
   selectedModel,
-  attachments = [],
-  lastGeneratedImage = null,
   contextForLLM,
   costAccumulator,
 }: {
@@ -41,20 +35,23 @@ export function getTools({
   session: ToolSession;
   messageId: string;
   selectedModel: ModelId;
-  attachments: FileUIPart[];
-  lastGeneratedImage: { imageUrl: string; name: string } | null;
   contextForLLM: ModelMessage[];
   costAccumulator: CostAccumulator;
-}) {
+}) => {
   const documentToolProps = {
-    session,
+    costAccumulator,
     messageId,
     selectedModel,
-    costAccumulator,
+    session,
   };
   const enabledInstalledTools = Object.fromEntries(
     Object.entries(installedTools).filter(
-      ([name]) => name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled
+      ([name]) =>
+        (name !== "generateVideo" || config.ai.tools.video.enabled) &&
+        (name !== "generateImage" || config.ai.tools.image.enabled) &&
+        (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
+        (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
+        (name !== "codeExecution" || config.ai.tools.codeExecution.enabled)
     )
   );
   const documentTypes = config.ai.tools.documents.types;
@@ -86,73 +83,45 @@ export function getTools({
           ...(hasEnabledDocumentType
             ? {
                 readDocument: readDocument({
-                  session,
                   dataStream,
+                  session,
                 }),
               }
             : {}),
         }
       : {}),
-    ...(config.ai.tools.webSearch.enabled
-      ? {
-          webSearch: tavilyWebSearch({
-            dataStream,
-            writeTopLevelUpdates: true,
-            costAccumulator,
-          }),
-        }
-      : {}),
-
-    ...(config.ai.tools.codeExecution.enabled
-      ? { codeExecution: codeExecution({ costAccumulator }) }
-      : {}),
-    ...(config.ai.tools.image.enabled
-      ? {
-          generateImage: generateImageTool({
-            attachments,
-            lastGeneratedImage,
-            selectedModel,
-            costAccumulator,
-          }),
-        }
-      : {}),
     ...(config.ai.tools.deepResearch.enabled
       ? {
           deepResearch: deepResearch({
-            session,
+            costAccumulator,
             dataStream,
             messageId,
             messages: contextForLLM,
-            costAccumulator,
+            session,
           }),
-        }
-      : {}),
-    ...(config.ai.tools.video.enabled
-      ? {
-          generateVideo: generateVideoTool({ selectedModel, costAccumulator }),
         }
       : {}),
     ...enabledInstalledTools,
   };
-}
+};
 
 /**
  * Creates MCP clients for the given connectors and returns their tools.
  * Uses OAuth-aware MCP clients that can authenticate with OAuth 2.1 + PKCE.
  * Returns both the tools and a cleanup function to close all clients.
  */
-export async function getMcpTools({
+export const getMcpTools = async ({
   connectors,
 }: {
   connectors: McpConnector[];
 }): Promise<{
   tools: Record<string, Tool>;
   cleanup: () => Promise<void>;
-}> {
+}> => {
   if (!config.ai.tools.mcp.enabled) {
     return {
+      cleanup: () => Promise.resolve(),
       tools: {},
-      cleanup: async () => Promise.resolve(),
     };
   }
 
@@ -160,8 +129,8 @@ export async function getMcpTools({
 
   if (enabledConnectors.length === 0) {
     return {
+      cleanup: () => Promise.resolve(),
       tools: {},
-      cleanup: async () => Promise.resolve(),
     };
   }
 
@@ -172,10 +141,6 @@ export async function getMcpTools({
     try {
       // Get or create OAuth-aware MCP client
       const mcpClient = getOrCreateMcpClient({
-        id: connector.id,
-        name: connector.name,
-        url: connector.url,
-        type: connector.type,
         // Legacy Basic auth headers for connectors that have client credentials
         headers:
           connector.oauthClientId && connector.oauthClientSecret
@@ -183,9 +148,16 @@ export async function getMcpTools({
                 Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
               }
             : undefined,
+        id: connector.id,
+        name: connector.name,
+        type: connector.type,
+        url: connector.url,
       });
 
       // Attempt to connect
+      // Connectors mutate shared client state, so each connection is established
+      // before its tools are read and registered.
+      // eslint-disable-next-line no-await-in-loop
       await mcpClient.connect();
 
       // Skip connectors that need OAuth authorization
@@ -207,6 +179,8 @@ export async function getMcpTools({
       }
 
       clients.push(mcpClient);
+      // Tool discovery must follow the connection state check above.
+      // eslint-disable-next-line no-await-in-loop
       const tools = await mcpClient.tools();
 
       // Namespace tool names with connector nameId to avoid collisions
@@ -242,5 +216,5 @@ export async function getMcpTools({
     );
   };
 
-  return { tools: allTools, cleanup };
-}
+  return { cleanup, tools: allTools };
+};

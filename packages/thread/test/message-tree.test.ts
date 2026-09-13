@@ -4,9 +4,11 @@ import type { UIMessage } from "ai";
 
 import { MessageTree } from "../src/message-tree";
 
-function message(id: string, role: UIMessage["role"] = "user"): UIMessage {
-  return { id, parts: [{ text: id, type: "text" }], role };
-}
+const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
+  id,
+  parts: [{ text: id, type: "text" }],
+  role,
+});
 
 describe("MessageTree", () => {
   test("derives the selected path without deleting sibling branches", () => {
@@ -137,7 +139,9 @@ describe("MessageTree", () => {
 
     expect(restored.getSnapshot()).toEqual(tree.getSnapshot());
     expect(
-      restored.getSnapshot().nodes.map(({ message }) => message.id)
+      restored
+        .getSnapshot()
+        .nodes.map(({ message: nodeMessage }) => nodeMessage.id)
     ).toEqual(["u1", "a1"]);
     expect(restored.getIndexes().rootIds).toEqual(["u1"]);
   });

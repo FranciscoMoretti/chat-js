@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-import { CreationRejected } from "./create-conversation";
+import { CreationRejectedError } from "./create-conversation";
 import {
   readResponseGroupDraft,
   requestResponseGroup,
@@ -17,15 +17,15 @@ import { resolveCreationRequest } from "./resolve-creation-request";
 import type { EveResponseGroupResult } from "./response-group-contracts";
 
 afterEach(() => vi.unstubAllGlobals());
-function fixture() {
+const fixture = () => {
   const entries = new Map<string, string>();
   const storage = {
     getItem: (key: string) => entries.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      entries.set(key, value);
-    },
     removeItem: (key: string) => {
       entries.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      entries.set(key, value);
     },
   };
   const operation = prepareResponseGroupCreation(
@@ -35,21 +35,21 @@ function fixture() {
     ["model-a", "model-a", "model-b"]
   );
   const result: EveResponseGroupResult = {
-    id: crypto.randomUUID(),
     candidates: operation.modelIds.map((modelId, index) =>
       index === 0
         ? {
+            conversationId: crypto.randomUUID(),
             modelId,
             operationId: crypto.randomUUID(),
-            state: "bound",
-            conversationId: crypto.randomUUID(),
             sessionId: "native-first",
+            state: "bound",
           }
         : { modelId, operationId: crypto.randomUUID(), state: "unresolved" }
     ),
+    id: crypto.randomUUID(),
   };
-  return { storage, operation, result };
-}
+  return { operation, result, storage };
+};
 
 test("lost creation replies retain the exact ordered operation across changed composer choices", async () => {
   const { storage, operation } = fixture();
@@ -86,9 +86,9 @@ test("partial binding moves recovery before releasing the composer and preserves
     ...result,
     candidates: result.candidates.map((candidate) => ({
       ...candidate,
-      state: "bound",
       conversationId: crypto.randomUUID(),
       sessionId: `native-${candidate.operationId}`,
+      state: "bound",
     })),
   };
   retainResponseGroupDraft(storage, "owner", operation, complete);
@@ -115,15 +115,15 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
   const rejected: EveResponseGroupResult = {
     ...result,
     candidates: result.candidates.map(({ operationId, modelId }) => ({
-      operationId,
-      modelId,
-      state: "rejected",
       error: "Source unavailable",
+      modelId,
+      operationId,
+      state: "rejected",
     })),
   };
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(rejected)));
   await expect(requestResponseGroup(operation)).rejects.toBeInstanceOf(
-    CreationRejected
+    CreationRejectedError
   );
   const mixed: EveResponseGroupResult = {
     ...rejected,
@@ -143,7 +143,7 @@ test("rejected secondary candidates retain the original request for their retry"
     candidates: result.candidates.map((candidate) =>
       candidate.state === "bound"
         ? candidate
-        : { ...candidate, state: "rejected", error: "Model unavailable" }
+        : { ...candidate, error: "Model unavailable", state: "rejected" }
     ),
   };
   retainResponseGroupDraft(storage, "owner", operation, rejected);
@@ -184,9 +184,9 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
   const conversationId = crypto.randomUUID();
   const scope = { conversationId };
   const fork = {
-    conversationId,
     beforeTurnId: "turn_3",
     checkpointId: crypto.randomUUID(),
+    conversationId,
   };
   const operation = prepareResponseGroupCreation(
     storage,
@@ -239,9 +239,9 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
   const { storage } = fixture();
   const conversationId = crypto.randomUUID();
   const fork = {
-    conversationId,
     beforeTurnId: "turn_1",
     checkpointId: crypto.randomUUID(),
+    conversationId,
   };
   const operation = prepareResponseGroupCreation(
     storage,
@@ -269,9 +269,9 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   const { storage } = fixture();
   const conversationId = crypto.randomUUID();
   const fork = {
-    conversationId,
     beforeTurnId: "turn_1",
     checkpointId: crypto.randomUUID(),
+    conversationId,
   };
   const scope = { conversationId };
   const operation = prepareResponseGroupCreation(
@@ -295,15 +295,16 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
     { ...rejection, reason: "unknown" },
   ]) {
     fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await expect(
       resolveCreationRequest(storage, "owner", operation, scope)
-    ).rejects.not.toBeInstanceOf(CreationRejected);
+    ).rejects.not.toBeInstanceOf(CreationRejectedError);
     expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
   }
   fetcher.mockResolvedValueOnce(Response.json(rejection, { status: 409 }));
   await expect(
     resolveCreationRequest(storage, "owner", operation, scope)
-  ).rejects.toBeInstanceOf(CreationRejected);
+  ).rejects.toBeInstanceOf(CreationRejectedError);
   expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
     true
   );

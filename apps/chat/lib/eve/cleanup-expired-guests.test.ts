@@ -31,9 +31,9 @@ beforeEach(() => {
 test("unsupported providers do not claim or revoke expired families", async () => {
   mocks.available.mockReturnValue(false);
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
-    skipped: true,
     deletedCount: 0,
     pendingCount: 0,
+    skipped: true,
   });
   expect(mocks.claim).not.toHaveBeenCalled();
 });
@@ -45,9 +45,9 @@ test("failed deletion remains pending while the rest of the batch progresses", a
     .mockRejectedValueOnce(new Error("uncertain native creation"))
     .mockResolvedValueOnce({ rootId: "ready" });
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
-    skipped: false,
     deletedCount: 1,
     pendingCount: 1,
+    skipped: false,
   });
   expect(mocks.remove.mock.calls).toEqual([
     ["guest", "stuck", "/trusted/app"],
@@ -57,7 +57,8 @@ test("failed deletion remains pending while the rest of the batch progresses", a
 test("never-dispatched copies use their proven unaccepted deletion path", async () => {
   mocks.claim.mockResolvedValueOnce([{ id: "copy", ownerId: "guest" }]);
   mocks.copy.mockResolvedValue(true);
-  expect((await cleanupExpiredEveGuests("/trusted/app")).deletedCount).toBe(1);
+  const resolvedResult1 = await cleanupExpiredEveGuests("/trusted/app");
+  expect(resolvedResult1.deletedCount).toBe(1);
   expect(mocks.deleteCopy).toHaveBeenCalledWith("guest", "copy");
   expect(mocks.remove).not.toHaveBeenCalled();
 });

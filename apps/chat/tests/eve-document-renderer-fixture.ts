@@ -7,58 +7,58 @@ import { ArtifactProvider } from "../hooks/use-artifact";
 
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   {
-    type: "dynamic-tool",
-    toolName: "createTextDocument",
+    input: {},
+    state: "input-available",
     toolCallId: "loading",
-    state: "input-available",
-    input: {},
-  },
-  {
-    type: "dynamic-tool",
-    toolName: "readDocument",
-    toolCallId: "reading",
-    state: "input-available",
-    input: {},
-  },
-  {
-    type: "dynamic-tool",
-    toolName: "editTextDocument",
-    toolCallId: "error",
-    state: "output-error",
-    input: {},
-    errorText: "Document changed. Reload before saving.",
-  },
-  {
-    type: "dynamic-tool",
     toolName: "createTextDocument",
-    toolCallId: "malformed",
-    state: "output-available",
+    type: "dynamic-tool",
+  },
+  {
+    input: {},
+    state: "input-available",
+    toolCallId: "reading",
+    toolName: "readDocument",
+    type: "dynamic-tool",
+  },
+  {
+    errorText: "Document changed. Reload before saving.",
+    input: {},
+    state: "output-error",
+    toolCallId: "error",
+    toolName: "editTextDocument",
+    type: "dynamic-tool",
+  },
+  {
     input: {},
     output: {},
+    state: "output-available",
+    toolCallId: "malformed",
+    toolName: "createTextDocument",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolName: "editTextDocument",
-    toolCallId: "denied",
-    state: "output-denied",
+    approval: { approved: false, id: "declined" },
     input: {},
-    approval: { id: "declined", approved: false },
+    state: "output-denied",
+    toolCallId: "denied",
+    toolName: "editTextDocument",
+    type: "dynamic-tool",
   },
   ...["createTextDocument", "editCodeDocument", "readDocument"].map(
     (toolName): Extract<EveMessagePart, { type: "dynamic-tool" }> => ({
-      type: "dynamic-tool",
-      toolName,
-      toolCallId: toolName,
-      state: "output-available",
       input: {},
       output: {
-        status: "success",
-        documentId: "00000000-0000-4000-8000-000000000001",
-        revisionId: "00000000-0000-4000-8000-000000000002",
-        title: "An orchard document with a long descriptive title",
-        kind: "text",
         date: "2026-01-01T00:00:00.000Z",
+        documentId: "00000000-0000-4000-8000-000000000001",
+        kind: "text",
+        revisionId: "00000000-0000-4000-8000-000000000002",
+        status: "success",
+        title: "An orchard document with a long descriptive title",
       },
+      state: "output-available",
+      toolCallId: toolName,
+      toolName,
+      type: "dynamic-tool",
     })
   ),
 ];
@@ -73,11 +73,11 @@ process.stdout.write(
         parts.map((part) =>
           createElement(
             "section",
-            { key: part.toolCallId, className: "rounded border p-3" },
+            { className: "rounded border p-3", key: part.toolCallId },
             createElement(EveDocumentTool, {
-              part,
-              messageId: "fixture",
               isReadonly: true,
+              messageId: "fixture",
+              part,
             })
           )
         )

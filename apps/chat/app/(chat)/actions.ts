@@ -7,13 +7,12 @@ import { chatTelemetry } from "@/lib/ai/telemetry";
 import type { ChatMessage } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 
-export async function generateTitleFromUserMessage({
+export const generateTitleFromUserMessage = async ({
   message,
 }: {
   message: ChatMessage;
-}) {
+}) => {
   const { text: title } = await generateText({
-    model: await getLanguageModel(config.ai.workflows.title),
     instructions: `Generate a concise title for a chat conversation based on the user's first message.
 
 Rules (strictly follow all):
@@ -23,9 +22,10 @@ Rules (strictly follow all):
 - No filler words like "How to" or "Question about"
 - Use title case
 - Return ONLY the title, nothing else`,
+    model: await getLanguageModel(config.ai.workflows.title),
     prompt: JSON.stringify(message),
     telemetry: { integrations: chatTelemetry, isEnabled: true },
   });
 
   return title;
-}
+};

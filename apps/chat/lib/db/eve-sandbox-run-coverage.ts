@@ -8,18 +8,18 @@ const coveredWorkflows = new Set([
 ]);
 
 /** Classification only; birth receipts, writer fences and local evidence are still required. */
-export function classifyEveSandboxRuns(
-  runs: Array<{
+export const classifyEveSandboxRuns = (
+  runs: {
     id: string;
     workflowName: string;
     parentId: string | null;
     eveParentId: string | null;
-  }>
-) {
+  }[]
+) => {
   const sessionIds = runs
     .filter((run) => run.workflowName === sessionWorkflow)
     .map((run) => run.id)
-    .sort();
+    .toSorted();
   const covered = new Set(sessionIds);
   const remaining = new Map<string, number>();
   const children = new Map<string, string[]>();
@@ -58,6 +58,6 @@ export function classifyEveSandboxRuns(
     unresolvedRunIds: runs
       .filter((run) => !covered.has(run.id))
       .map((run) => run.id)
-      .sort(),
+      .toSorted(),
   };
-}
+};

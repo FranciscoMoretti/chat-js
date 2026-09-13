@@ -2,9 +2,9 @@ import { determineExplicitlyRequestedTools } from "../ai/determine-explicitly-re
 import type { UiToolName } from "../ai/types";
 
 /** Canvas editing needs Eve's read operation to obtain the current revision. */
-export function selectedEveTools(
+export const selectedEveTools = (
   selectedTool: UiToolName | null
-): string[] | null {
+): string[] | null => {
   if (!selectedTool) {
     return null;
   }
@@ -14,4 +14,4 @@ export function selectedEveTools(
   return names.some((name) => name.endsWith("Document"))
     ? [...names, "readDocument"]
     : names;
-}
+};

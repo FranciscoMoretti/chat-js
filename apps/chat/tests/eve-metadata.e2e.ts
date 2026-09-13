@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -7,7 +9,7 @@ import { db } from "../lib/db/client";
 import { eveConversation, user } from "../lib/db/schema";
 import { assertEveTestDatabase } from "./eve-test-database";
 
-const metadataTitle = /renamed|metadata newer/;
+const metadataTitle = /renamed|metadata newer/u;
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
@@ -30,32 +32,32 @@ test("rename and pin persist, preserve input, and reject another owner's changes
   const secondTitle = `metadata newer ${ids[1]}`;
   const renamed = `renamed ${ids[0]}`;
   await db.insert(user).values({
-    id: foreignOwner,
     email: `${foreignOwner}@test.invalid`,
+    id: foreignOwner,
     name: "Metadata test",
   });
   await db.insert(eveConversation).values(
     ids.map((id, index) => ({
-      id,
-      ownerId: index === 2 ? foreignOwner : owner.id,
-      operationId: crypto.randomUUID(),
       firstMessage: index === 0 ? firstTitle : secondTitle,
+      id,
+      operationId: crypto.randomUUID(),
+      ownerId: index === 2 ? foreignOwner : owner.id,
       updatedAt: new Date(Date.now() + index * 1000),
     }))
   );
   try {
     await page.goto("/");
     const expand = page.getByRole("button", {
-      name: "Expand sidebar",
       exact: true,
+      name: "Expand sidebar",
     });
     if (await expand.isVisible()) {
       await expand.click();
     }
     const row = () =>
-      page.getByRole("link", { name: firstTitle, exact: true }).locator("..");
-    await row().getByRole("button", { name: "More", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
+      page.getByRole("link", { exact: true, name: firstTitle }).locator("..");
+    await row().getByRole("button", { exact: true, name: "More" }).click();
+    await page.getByRole("menuitem", { exact: true, name: "Rename" }).click();
     await page
       .locator(
         'input[maxlength="255"]:not([aria-label="Search conversations"]):visible'
@@ -72,13 +74,13 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     const renamedResponse = await renameResponse;
     expect(renamedResponse.ok(), await renamedResponse.text()).toBe(true);
     await expect(
-      page.getByRole("link", { name: renamed, exact: true })
+      page.getByRole("link", { exact: true, name: renamed })
     ).toBeVisible();
     const renamedRow = page
-      .getByRole("link", { name: renamed, exact: true })
+      .getByRole("link", { exact: true, name: renamed })
       .locator("..");
-    await renamedRow.getByRole("button", { name: "More", exact: true }).click();
-    await page.getByRole("menuitem", { name: "Pin", exact: true }).click();
+    await renamedRow.getByRole("button", { exact: true, name: "More" }).click();
+    await page.getByRole("menuitem", { exact: true, name: "Pin" }).click();
     await expect
       .poll(
         async () =>
@@ -92,24 +94,24 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       .toBe(true);
     await page.reload();
     await expect(
-      page.getByRole("link", { name: renamed, exact: true })
+      page.getByRole("link", { exact: true, name: renamed })
     ).toBeVisible();
     const conversationLinks = page
       .locator('a[href^="/chat/"]')
       .filter({ hasText: metadataTitle });
     await expect(conversationLinks.first()).toHaveText(renamed);
-    await renamedRow.getByRole("button", { name: "More", exact: true }).click();
+    await renamedRow.getByRole("button", { exact: true, name: "More" }).click();
     await expect(
-      page.getByRole("menuitem", { name: "Unpin", exact: true })
+      page.getByRole("menuitem", { exact: true, name: "Unpin" })
     ).toBeVisible();
     await mkdir("tests/eve-results/screenshots", { recursive: true });
     await page.screenshot({
-      path: "tests/eve-results/screenshots/eve-history-menu.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-history-menu.png",
       style:
         "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }",
     });
-    await page.getByRole("menuitem", { name: "Unpin", exact: true }).click();
+    await page.getByRole("menuitem", { exact: true, name: "Unpin" }).click();
     await expect
       .poll(
         async () =>
@@ -124,8 +126,8 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     await page.reload();
     await expect(conversationLinks.first()).toHaveText(secondTitle);
     for (const { procedure, input } of [
-      { procedure: "rename", input: { id: ids[2], title: "intrusion" } },
-      { procedure: "pin", input: { id: ids[2], isPinned: true } },
+      { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
+      { input: { id: ids[2], isPinned: true }, procedure: "pin" },
     ]) {
       const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
         data: { json: input },

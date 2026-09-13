@@ -10,24 +10,24 @@ import {
 
 import { EveMessages } from "./eve-messages";
 
-export function EveSharedMessages({
+export const EveSharedMessages = ({
   messages,
   children,
 }: {
   messages: readonly EveMessage[];
   children?: ReactNode;
-}) {
-  return (
-    <Conversation>
-      <ConversationContent className="mx-auto w-full max-w-3xl">
-        <EveMessages
-          disabled
-          isReadonly
-          messages={messages}
-          respond={() => undefined}
-        />
-        {children}
-      </ConversationContent>
-    </Conversation>
-  );
-}
+}) => (
+  <Conversation>
+    <ConversationContent className="mx-auto w-full max-w-3xl">
+      <EveMessages
+        disabled
+        isReadonly
+        messages={messages}
+        respond={() => {
+          // Shared transcripts have no interactive input response.
+        }}
+      />
+      {children}
+    </ConversationContent>
+  </Conversation>
+);

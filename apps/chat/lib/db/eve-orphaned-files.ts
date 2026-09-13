@@ -4,10 +4,10 @@ import { db } from "./client";
 import { eveFileReference, eveStoredFile } from "./schema";
 
 /** Storage inventory is only a candidate list; durable ownership and references decide deletion. */
-export async function prepareEveOrphanedFilePurge(
+export const prepareEveOrphanedFilePurge = async (
   keys: string[],
   cutoff: Date
-) {
+) => {
   if (!keys.length) {
     return [];
   }
@@ -20,11 +20,16 @@ export async function prepareEveOrphanedFilePurge(
     .where(
       and(inArray(eveStoredFile.key, keys), lt(eveStoredFile.createdAt, cutoff))
     );
-  const files: Array<{ key: string; ownerId: string }> = [];
+  const files: {
+    key: string;
+    ownerId: string;
+  }[] = [];
   for (const ownerId of [
     ...new Set(candidates.map((file) => file.ownerId)),
-  ].sort()) {
+  ].toSorted()) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     files.push(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
       ...(await db.transaction(async (tx) => {
         await tx.execute(
           sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -54,4 +59,4 @@ export async function prepareEveOrphanedFilePurge(
     );
   }
   return files;
-}
+};

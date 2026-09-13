@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -28,15 +30,15 @@ test("saves without generation, recovers after source revocation and reload, and
 }, testInfo) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", { data: { model: modelId } });
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId,
       message: "Reply exactly COPY-ORCHID as plain text. Do not call tools.",
+      modelId,
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const source = conversationBinding.parse(await created.json());
@@ -45,9 +47,9 @@ test("saves without generation, recovers after source revocation and reload, and
     .from(eveConversation)
     .where(eq(eveConversation.id, source.id));
   const native = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": sourceRow.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   await expect
     .poll(
@@ -64,7 +66,7 @@ test("saves without generation, recovers after source revocation and reload, and
           )
         );
       },
-      { timeout: 30_000, intervals: [1000, 2000, 4000] }
+      { intervals: [1000, 2000, 4000], timeout: 30_000 }
     )
     .toBe(true);
   await db
@@ -83,8 +85,8 @@ test("saves without generation, recovers after source revocation and reload, and
     await publicPage
       .getByRole("link", { name: "Sign in to save this conversation" })
       .screenshot({
-        path: testInfo.outputPath("copy-anonymous.png"),
         animations: "disabled",
+        path: testInfo.outputPath("copy-anonymous.png"),
       });
   } finally {
     await anonymous.close();
@@ -95,8 +97,8 @@ test("saves without generation, recovers after source revocation and reload, and
     save.getByRole("button", { name: "Save to your chats" })
   ).toBeEnabled();
   await save.screenshot({
-    path: testInfo.outputPath("copy-ready.png"),
     animations: "disabled",
+    path: testInfo.outputPath("copy-ready.png"),
   });
   let rejectedOperation: string | undefined;
   await page.route("**/api/agent-conversation-copies", async (route) => {
@@ -104,8 +106,8 @@ test("saves without generation, recovers after source revocation and reload, and
       route.request().postDataJSON()
     ).operationId;
     await route.fulfill({
-      status: 409,
       json: { error: "This copy is no longer available.", retryable: false },
+      status: 409,
     });
   });
   await save.getByRole("button", { name: "Save to your chats" }).click();
@@ -113,18 +115,18 @@ test("saves without generation, recovers after source revocation and reload, and
     save.getByRole("button", { name: "Save another copy" })
   ).toBeEnabled();
   await save.screenshot({
-    path: testInfo.outputPath("copy-rejected.png"),
     animations: "disabled",
+    path: testInfo.outputPath("copy-rejected.png"),
   });
   await page.unroute("**/api/agent-conversation-copies");
   const copied = Promise.withResolvers<z.infer<typeof conversationBinding>>();
-  const held = Promise.withResolvers<void>();
-  const started = Promise.withResolvers<void>();
+  const held = Promise.withResolvers<undefined>();
+  const started = Promise.withResolvers<undefined>();
   await page.route("**/api/agent-conversation-copies", async (route) => {
     const input = eveCopyInput.parse(route.request().postDataJSON());
     expect(input.modelId).toBe(modelId);
     expect(input.operationId).not.toBe(rejectedOperation);
-    started.resolve();
+    started.resolve(undefined);
     await held.promise;
     try {
       const response = await route.fetch();
@@ -143,17 +145,17 @@ test("saves without generation, recovers after source revocation and reload, and
       save.getByRole("button", { name: "Saving..." })
     ).toBeDisabled();
     await save.screenshot({
-      path: testInfo.outputPath("copy-pending.png"),
       animations: "disabled",
+      path: testInfo.outputPath("copy-pending.png"),
     });
   } finally {
-    held.resolve();
+    held.resolve(undefined);
   }
   const destination = await copied.promise;
   await expect(save.getByRole("alert")).toBeVisible();
   await save.screenshot({
-    path: testInfo.outputPath("copy-lost-reply.png"),
     animations: "disabled",
+    path: testInfo.outputPath("copy-lost-reply.png"),
   });
   await page.unroute("**/api/agent-conversation-copies");
   const snapshot = await native.sessions
@@ -178,7 +180,7 @@ test("saves without generation, recovers after source revocation and reload, and
   await db.transaction(async (tx) => {
     await tx
       .update(eveConversation)
-      .set({ state: "uncertain", sessionId: null })
+      .set({ sessionId: null, state: "uncertain" })
       .where(eq(eveConversation.id, destination.id));
     await tx
       .update(eveConversationCopy)
@@ -196,18 +198,18 @@ test("saves without generation, recovers after source revocation and reload, and
     recovery.getByRole("button", { name: "Retry saving" })
   ).toBeEnabled();
   await recovery.screenshot({
+    animations: "disabled",
     path: testInfo.outputPath("copy-recovery.png"),
-    animations: "disabled",
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await recovery.screenshot({
-    path: testInfo.outputPath("copy-recovery-mobile.png"),
     animations: "disabled",
+    path: testInfo.outputPath("copy-recovery-mobile.png"),
   });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ height: 720, width: 1280 });
   await recovery.getByRole("button", { name: "Retry saving" }).click();
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeVisible();
   const [bound] = await db
     .select()
@@ -228,15 +230,15 @@ test("saves without generation, recovers after source revocation and reload, and
     await beforeHydration.close();
   }
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
       "What token was in your previous answer? Reply only with the token. Do not call tools."
     );
   await page.getByRole("group", { name: "Message composer" }).screenshot({
-    path: testInfo.outputPath("copy-composer-ready.png"),
     animations: "disabled",
+    path: testInfo.outputPath("copy-composer-ready.png"),
   });
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect
     .poll(
       async () => {
@@ -249,7 +251,7 @@ test("saves without generation, recovers after source revocation and reload, and
             event.data.message?.trim() === "COPY-ORCHID"
         );
       },
-      { timeout: 30_000, intervals: [1000, 2000, 4000] }
+      { intervals: [1000, 2000, 4000], timeout: 30_000 }
     )
     .toBe(true);
   await page.reload();
@@ -263,25 +265,25 @@ test("saves without generation, recovers after source revocation and reload, and
 
 for (const attachment of [
   {
-    name: "copy-square.png",
-    modelId,
-    mediaType: "image/png",
+    answer: "red",
     bytes: Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAb0lEQVR4nO3PAQkAAAyEwO9feoshgnABdLep8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3IPanc8OLDQitxAAAAAElFTkSuQmCC",
       "base64"
     ),
+    mediaType: "image/png",
+    modelId,
+    name: "copy-square.png",
     question:
       "What is the dominant color of the image attached earlier? Reply only with the color. Do not call tools.",
-    answer: "red",
   },
   {
-    name: "copy-code.pdf",
-    modelId: "google/gemini-2.5-flash",
-    mediaType: "application/pdf",
+    answer: "cedar-4827",
     bytes: textPdf("Verification code: CEDAR-4827"),
+    mediaType: "application/pdf",
+    modelId: "google/gemini-2.5-flash",
+    name: "copy-code.pdf",
     question:
       "What is the verification code in the document attached earlier? Reply only with the code. Do not call tools.",
-    answer: "cedar-4827",
   },
 ]) {
   test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
@@ -299,23 +301,20 @@ for (const attachment of [
     await page.request.post("/api/chat-model", {
       data: { model: attachment.modelId },
     });
-    const origin = new URL(z.url().parse(testInfo.project.use.baseURL)).origin;
+    const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
     const upload = await page.request.post("/api/files/upload", {
       multipart: {
         file: {
-          name: attachment.name,
-          mimeType: attachment.mediaType,
           buffer: attachment.bytes,
+          mimeType: attachment.mediaType,
+          name: attachment.name,
         },
       },
     });
     expect(upload.ok(), await upload.text()).toBe(true);
     const file = z.object({ url: z.string() }).parse(await upload.json());
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: attachment.modelId,
         message: [
           {
             type: "file",
@@ -331,7 +330,10 @@ for (const attachment of [
                 : "Reply exactly attachment-ready as plain text. Do not describe the attachment or call tools.",
           },
         ],
+        modelId: attachment.modelId,
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const source = conversationBinding.parse(await created.json());
@@ -340,9 +342,9 @@ for (const attachment of [
       .from(eveConversation)
       .where(eq(eveConversation.id, source.id));
     const native = new Client({
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
       auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
       headers: { "x-chatjs-owner": row.ownerId },
+      host: env.EVE_INTERNAL_ORIGIN ?? "",
     });
     await expect
       .poll(
@@ -359,7 +361,7 @@ for (const attachment of [
             )
           );
         },
-        { timeout: 45_000, intervals: [1000, 2000, 4000] }
+        { intervals: [1000, 2000, 4000], timeout: 45_000 }
       )
       .toBe(true);
     await db
@@ -367,12 +369,12 @@ for (const attachment of [
       .set({ visibility: "public" })
       .where(eq(eveConversation.id, source.id));
     const copied = await page.request.post("/api/agent-conversation-copies", {
-      headers: { origin },
       data: {
+        modelId: attachment.modelId,
         operationId: crypto.randomUUID(),
         sourceConversationId: source.id,
-        modelId: attachment.modelId,
       },
+      headers: { origin },
     });
     expect(copied.ok(), await copied.text()).toBe(true);
     const destination = conversationBinding.parse(await copied.json());
@@ -396,7 +398,7 @@ for (const attachment of [
           }
           return saved.events.some((event) => event.type === "history.seeded");
         },
-        { timeout: 30_000, intervals: [1000, 2000, 4000] }
+        { intervals: [1000, 2000, 4000], timeout: 30_000 }
       )
       .toBe(true);
     expect(
@@ -416,7 +418,7 @@ for (const attachment of [
           return z.object({ status: z.string() }).parse(await removed.json())
             .status;
         },
-        { timeout: 90_000, intervals: [1000, 2000, 4000] }
+        { intervals: [1000, 2000, 4000], timeout: 90_000 }
       )
       .toBe("deleted");
     expect((await page.request.get(file.url)).ok()).toBe(false);
@@ -427,12 +429,12 @@ for (const attachment of [
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: attachment.name, exact: true })
+        .getByRole("button", { exact: true, name: attachment.name })
     ).toBeVisible();
     await page
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill(attachment.question);
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect
       .poll(
         async () => {
@@ -446,30 +448,30 @@ for (const attachment of [
                 attachment.answer
           );
         },
-        { timeout: 45_000, intervals: [1000, 2000, 4000] }
+        { intervals: [1000, 2000, 4000], timeout: 45_000 }
       )
       .toBe(true);
     await page.reload();
     await expect(
       page
         .getByRole("log")
-        .getByRole("button", { name: attachment.name, exact: true })
+        .getByRole("button", { exact: true, name: attachment.name })
     ).toBeVisible();
 
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page
-      .getByRole("button", { name: "Edit message", exact: true })
+      .getByRole("button", { exact: true, name: "Edit message" })
       .first()
       .click();
     const editor = page.getByRole("dialog");
     await expect(
-      editor.getByRole("button", { name: attachment.name, exact: true })
+      editor.getByRole("button", { exact: true, name: attachment.name })
     ).toBeVisible();
     if (attachment.mediaType === "image/png") {
       await expect
         .poll(() =>
           editor
-            .getByRole("img", { name: attachment.name, exact: true })
+            .getByRole("img", { exact: true, name: attachment.name })
             .evaluate(
               (image) =>
                 image instanceof HTMLImageElement &&
@@ -480,7 +482,7 @@ for (const attachment of [
         .toBe(true);
     }
     await editor
-      .getByRole("textbox", { name: "Message", exact: true })
+      .getByRole("textbox", { exact: true, name: "Message" })
       .fill(attachment.question);
     await editor.evaluate(async (element) => {
       await document.fonts.ready;
@@ -492,12 +494,16 @@ for (const attachment of [
               animation.effect?.getTiming().iterations !==
               Number.POSITIVE_INFINITY
           )
-          .map((animation) => animation.finished.catch(() => undefined))
+          .map((animation) =>
+            animation.finished.catch(() => {
+              /* empty */
+            })
+          )
       );
     });
     await editor.screenshot({
-      path: testInfo.outputPath("imported-attachment-edit.png"),
       animations: "allow",
+      path: testInfo.outputPath("imported-attachment-edit.png"),
     });
     let edited: z.infer<typeof conversationBinding> | undefined;
     await page.route(
@@ -507,12 +513,12 @@ for (const attachment of [
           route.request().postDataJSON()
         );
         expect(input.fork).toEqual({
-          conversationId: destination.id,
           beforeMessageId: "seed_message_0",
+          conversationId: destination.id,
         });
         expect(input.modelId).toBe(attachment.modelId);
         if (typeof input.message === "string") {
-          throw new Error("Edited message lost its attachment");
+          throw new TypeError("Edited message lost its attachment");
         }
         const editedFile = input.message.find((part) => part.type === "file");
         if (!editedFile) {
@@ -534,17 +540,17 @@ for (const attachment of [
       },
       { times: 1 }
     );
-    await editor.getByRole("button", { name: "Send", exact: true }).click();
+    await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect.poll(() => edited?.id, { timeout: 95_000 }).toBeTruthy();
     await expect(page).toHaveURL(`${origin}/chat/${edited?.id}`, {
       timeout: 120_000,
     });
-    const editedAnswer = new RegExp(`^${attachment.answer}\\.?$`, "i");
+    const editedAnswer = new RegExp(`^${attachment.answer}\\.?$`, "iu");
     await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({
       timeout: 45_000,
     });
     await expect(
-      page.getByRole("button", { name: "Edit message", exact: true })
+      page.getByRole("button", { exact: true, name: "Edit message" })
     ).toHaveCount(1);
     await page.reload();
     await expect(page.getByRole("log").getByText(editedAnswer)).toBeVisible({

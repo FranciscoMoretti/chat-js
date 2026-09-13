@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Preserve the original serialized MCP result contract used by durable transcripts. */
 import { z } from "zod";
 
 const modelOutput = z.discriminatedUnion("type", [

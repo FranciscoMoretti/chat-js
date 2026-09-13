@@ -16,66 +16,72 @@ import {
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
 
-export function EveCopyButton({
+export const EveCopyButton = ({
   sourceConversationId,
   recovery,
 }: {
   sourceConversationId: string;
   recovery?: EveCopyInput;
-}) {
+}) => {
   const session = useSession();
   const model = useDefaultModel();
   const lock = useRef(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
   const [rejected, setRejected] = useState(false);
   const [destination, setDestination] = useState<string>();
   const ownerId = session.data?.user.id;
 
-  async function save() {
+  const save = async () => {
     if (lock.current || !ownerId) {
       return;
     }
     lock.current = true;
     setBusy(true);
     setRejected(false);
-    setError("");
+    setFailure("");
     let input = recovery;
     try {
-      input ??= preparePendingEveCopy(
-        sessionStorage,
-        ownerId,
-        sourceConversationId,
-        getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
-      );
+      if (!input) {
+        input = preparePendingEveCopy(
+          sessionStorage,
+          ownerId,
+          sourceConversationId,
+          getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
+        );
+      }
       const result = await requestEveCopy(input);
+      // oxlint-disable-next-line eslint/no-use-before-define -- Storage cleanup is kept with the successful copy transition.
       forgetConfirmedRequest(ownerId, input);
       window.location.assign(`/chat/${result.id}`);
-    } catch (cause) {
-      showFailure(cause, input, ownerId);
+    } catch (error) {
+      // oxlint-disable-next-line eslint/no-use-before-define -- Failure handling is shared by retry and initial copy.
+      showFailure(error, input, ownerId);
+      // oxlint-disable-next-line react/todo -- Preserve lock cleanup while React Compiler lacks finally support.
     } finally {
       lock.current = false;
       setBusy(false);
     }
-  }
-  function showFailure(
+  };
+  const showFailure = (
     cause: unknown,
     input: EveCopyInput | undefined,
-    ownerId: string
-  ) {
+    accountOwnerId: string
+  ) => {
     if (cause instanceof EveCopyRequestError) {
       if (!cause.retryable && input) {
-        forgetConfirmedRequest(ownerId, input);
+        // oxlint-disable-next-line eslint/no-use-before-define -- Failed copies must clear their durable request.
+        forgetConfirmedRequest(accountOwnerId, input);
       }
       setRejected(!cause.retryable);
       setDestination(cause.retryable ? cause.conversationId : undefined);
     }
-    setError(
+    setFailure(
       cause instanceof Error
         ? cause.message
         : "Saving is unconfirmed. Retry the same copy."
     );
-  }
+  };
 
   if (!(session.isPending || ownerId)) {
     return (
@@ -90,7 +96,7 @@ export function EveCopyButton({
     );
   }
   let label: string | undefined;
-  if (recovery || error) {
+  if (recovery || failure) {
     label = "Retry saving";
   }
   if (rejected) {
@@ -101,9 +107,9 @@ export function EveCopyButton({
       aria-label={recovery ? "Saved copy recovery" : "Save shared conversation"}
     >
       {recovery && (
-        <p className="px-4 pt-4 text-sm" role="status">
+        <output className="px-4 pt-4 text-sm">
           Saving is unconfirmed. Retry to finish the saved copy.
-        </p>
+        </output>
       )}
       {!(rejected && recovery) && (
         <CloneChatButtonView
@@ -113,9 +119,9 @@ export function EveCopyButton({
           onClick={save}
         />
       )}
-      {error && (
+      {failure && (
         <p className="px-4 pb-4 text-center text-sm" role="alert">
-          {error}
+          {failure}
         </p>
       )}
       {destination && (
@@ -127,12 +133,12 @@ export function EveCopyButton({
       )}
     </section>
   );
-}
+};
 
-function forgetConfirmedRequest(ownerId: string, input: EveCopyInput) {
+const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput) => {
   try {
     finishPendingEveCopy(sessionStorage, ownerId, input);
   } catch {
     // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
   }
-}
+};

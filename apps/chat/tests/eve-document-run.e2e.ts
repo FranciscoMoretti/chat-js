@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
@@ -24,7 +25,7 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
     .locator('link[rel="stylesheet"]')
     .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
   const content = execFileSync("bun", ["tests/eve-document-run-fixture.ts"], {
-    encoding: "utf8",
+    encoding: "utf-8",
   });
   await page.setContent(
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
@@ -38,14 +39,14 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
       .and(page.locator(":disabled"))
   ).toHaveCount(2);
   for (const width of [1100, 390]) {
-    await page.setViewportSize({ width, height: 850 });
+    await page.setViewportSize({ height: 850, width });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);
     await page.screenshot({
-      path: testInfo.outputPath(`run-states-${width}.png`),
-      fullPage: true,
       animations: "disabled",
+      fullPage: true,
+      path: testInfo.outputPath(`run-states-${width}.png`),
     });
   }
 });
@@ -67,37 +68,37 @@ test("artifact Run executes saved source, retains output across reload and shari
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "openai/gpt-4.1-mini-fast",
       message:
         'Call createCodeDocument once with title "saved.js" and content "console.log(42)". Do not execute it. Use no other tools.',
+      modelId: "openai/gpt-4.1-mini-fast",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
   await page
-    .getByRole("button", { name: 'Created "saved.js"', exact: true })
+    .getByRole("button", { exact: true, name: 'Created "saved.js"' })
     .click({ timeout: 90_000 });
-  const panel = page.getByRole("region", { name: "Document", exact: true });
+  const panel = page.getByRole("region", { exact: true, name: "Document" });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const code = panel.locator(".cm-content");
   await code.fill('console.log("saved-revision-73")');
   await expect(
-    panel.getByRole("button", { name: "Run code", exact: true })
+    panel.getByRole("button", { exact: true, name: "Run code" })
   ).toBeDisabled();
   await expect(panel).toContainText("Version 2 of 2");
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Preserve this draft.");
-  await panel.getByRole("button", { name: "Run code", exact: true }).click();
+  await panel.getByRole("button", { exact: true, name: "Run code" }).click();
   await expect(
-    panel.getByRole("button", { name: "Run code", exact: true })
+    panel.getByRole("button", { exact: true, name: "Run code" })
   ).toBeDisabled();
   const output = panel.getByTestId("document-run-result");
   await output
-    .getByRole("tab", { name: "Output", exact: true })
+    .getByRole("tab", { exact: true, name: "Output" })
     .click({ timeout: 90_000 });
   await expect(output.getByRole("tabpanel")).toContainText("saved-revision-73");
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -105,8 +106,8 @@ test("artifact Run executes saved source, retains output across reload and shari
   });
   await expect(composer).toHaveText("Preserve this draft.");
   await panel.screenshot({
-    path: testInfo.outputPath("saved-code-output.png"),
     animations: "disabled",
+    path: testInfo.outputPath("saved-code-output.png"),
   });
 
   const [conversation] = await db
@@ -114,9 +115,9 @@ test("artifact Run executes saved source, retains output across reload and shari
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": conversation.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(binding.sessionId)
@@ -128,7 +129,7 @@ test("artifact Run executes saved source, retains output across reload and shari
       event.data.result.toolName === "runCodeDocument"
   );
   expect(executions).toHaveLength(1);
-  const event = executions[0];
+  const [event] = executions;
   if (
     event?.type !== "action.result" ||
     event.data.result.kind !== "tool-result"
@@ -156,15 +157,15 @@ test("artifact Run executes saved source, retains output across reload and shari
 
   await page.reload();
   await page
-    .getByRole("button", { name: 'Created "saved.js"', exact: true })
+    .getByRole("button", { exact: true, name: 'Created "saved.js"' })
     .click();
-  await panel.getByRole("button", { name: "Next", exact: true }).click();
-  await output.getByRole("tab", { name: "Output", exact: true }).click();
+  await panel.getByRole("button", { exact: true, name: "Next" }).click();
+  await output.getByRole("tab", { exact: true, name: "Output" }).click();
   await expect(output.getByRole("tabpanel")).toContainText("saved-revision-73");
-  await panel.getByRole("button", { name: "Previous", exact: true }).click();
+  await panel.getByRole("button", { exact: true, name: "Previous" }).click();
   await expect(output).toHaveCount(0);
   await expect(
-    panel.getByRole("button", { name: "Run code", exact: true })
+    panel.getByRole("button", { exact: true, name: "Run code" })
   ).toBeDisabled();
 
   await db
@@ -188,27 +189,27 @@ test("artifact Run executes saved source, retains output across reload and shari
     reader.setDefaultTimeout(20_000);
     await reader.goto(new URL(`/share/${binding.id}`, page.url()).href);
     await reader
-      .getByRole("button", { name: 'Created "saved.js"', exact: true })
+      .getByRole("button", { exact: true, name: 'Created "saved.js"' })
       .click();
     const shared = reader.getByRole("region", {
-      name: "Document",
       exact: true,
+      name: "Document",
     });
-    await shared.getByRole("button", { name: "Next", exact: true }).click();
+    await shared.getByRole("button", { exact: true, name: "Next" }).click();
     await expect(
-      shared.getByRole("button", { name: "Run code", exact: true })
+      shared.getByRole("button", { exact: true, name: "Run code" })
     ).toHaveCount(0);
     const sharedOutput = shared.getByTestId("document-run-result");
     await sharedOutput
-      .getByRole("tab", { name: "Output", exact: true })
+      .getByRole("tab", { exact: true, name: "Output" })
       .click();
     await expect(sharedOutput.getByRole("tabpanel")).toContainText(
       "saved-revision-73"
     );
-    await reader.setViewportSize({ width: 390, height: 844 });
+    await reader.setViewportSize({ height: 844, width: 390 });
     await shared.screenshot({
-      path: testInfo.outputPath("shared-code-output-mobile.png"),
       animations: "disabled",
+      path: testInfo.outputPath("shared-code-output-mobile.png"),
     });
   } finally {
     await publicContext.close();

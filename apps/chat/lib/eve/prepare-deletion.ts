@@ -6,30 +6,31 @@ import {
 } from "./retire-session";
 
 /** Authorize and retire the whole family before fencing work for external-resource inventory. */
-export async function prepareEveFamilyDeletion(
+export const prepareEveFamilyDeletion = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const family = await retireEveFamilyForDeletion(ownerId, conversationId);
   if (!family) {
-    return undefined;
+    return;
   }
   const databaseUrl = env.WORKFLOW_POSTGRES_URL;
   if (!databaseUrl) {
     throw new Error("EVE Postgres is not configured.");
   }
-  const nativeInventories: Array<{
+  const nativeInventories: {
     sessionId: string;
     runIds: string[];
     streamIds: string[];
-  }> = [];
+  }[] = [];
   const runIds = new Set<string>();
   const streamIds = new Set<string>();
   for (const conversation of family.conversations) {
-    const sessionId = conversation.sessionId;
+    const { sessionId } = conversation;
     if (!sessionId) {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     const inventory = await prepareEveNativeSessionPurge(
       databaseUrl,
       { sessionId, taskIdentifier: "workflow_flows" },
@@ -48,7 +49,7 @@ export async function prepareEveFamilyDeletion(
   return {
     ...family,
     nativeInventories,
-    runIds: [...runIds].sort(),
-    streamIds: [...streamIds].sort(),
+    runIds: [...runIds].toSorted(),
+    streamIds: [...streamIds].toSorted(),
   };
-}
+};

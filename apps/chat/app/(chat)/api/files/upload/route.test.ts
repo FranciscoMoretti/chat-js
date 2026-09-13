@@ -1,5 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { POST } from "./route";
+
 const mocks = vi.hoisted(() => ({ register: vi.fn(), upload: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: () => new Headers() }));
 vi.mock("@/lib/auth", () => ({
@@ -24,18 +26,16 @@ vi.mock("@/lib/file-storage", () => ({
   uploadFileAtKey: mocks.upload,
 }));
 
-import { POST } from "./route";
-
 const key = "abcdefghijklmnopqrstuvwx.png";
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.upload.mockResolvedValue({
-    url: `/api/files/content?key=${key}`,
-    pathname: "fixture.png",
     contentType: "image/png",
+    pathname: "fixture.png",
+    url: `/api/files/content?key=${key}`,
   });
 });
-function request() {
+const request = () => {
   const form = new FormData();
   form.append(
     "file",
@@ -43,10 +43,10 @@ function request() {
     "fixture.png"
   );
   return new Request("http://localhost/api/files/upload", {
-    method: "POST",
     body: form,
+    method: "POST",
   });
-}
+};
 test("records the authenticated owner of a server-created storage key before returning it", async () => {
   const response = await POST(request());
   expect(response.status).toBe(200);
@@ -64,20 +64,16 @@ test("does not return a usable upload when ownership registration fails", async 
 });
 
 test("waits for durable ownership before starting storage I/O", async () => {
-  let release: () => void = () => undefined;
-  mocks.register.mockImplementation(
-    () =>
-      new Promise<void>((resolve) => {
-        release = resolve;
-      })
-  );
+  const gate = Promise.withResolvers<undefined>();
+  mocks.register.mockImplementation(() => gate.promise);
   const response = POST(request());
   await vi.waitFor(() =>
     expect(mocks.register).toHaveBeenCalledWith("owner", key)
   );
   expect(mocks.upload).not.toHaveBeenCalled();
-  release();
-  expect((await response).status).toBe(200);
+  gate.resolve(undefined);
+  const resolvedResult1 = await response;
+  expect(resolvedResult1.status).toBe(200);
   expect(mocks.upload).toHaveBeenCalledWith(
     key,
     "fixture.png",

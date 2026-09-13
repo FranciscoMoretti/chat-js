@@ -1,52 +1,52 @@
 import { z } from "zod";
 
 import {
-  CheckpointRejected,
+  CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
-import { CreationRejected, requestConversation } from "./create-conversation";
+import {
+  CreationRejectedError,
+  requestConversation,
+} from "./create-conversation";
 import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
-import {
-  type CreationScope,
-  finishCreation,
-  readCreationRequest,
-} from "./pending-create";
+import { finishCreation, readCreationRequest } from "./pending-create";
+import type { CreationScope } from "./pending-create";
 
 /** Resolve one saved operation; ambiguous outcomes never release its draft. */
-export async function resolveCreationRequest(
+export const resolveCreationRequest = async (
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   ownerId: string,
   operation: NonNullable<ReturnType<typeof readCreationRequest>>,
   scope?: CreationScope
-) {
+) => {
   if ("modelIds" in operation) {
     if (operation.fork?.checkpointId) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
         `/api/agent-conversations/${conversationId}/checkpoint`,
         {
-          method: "POST",
+          body: JSON.stringify({ beforeTurnId, checkpointId }),
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ checkpointId, beforeTurnId }),
+          method: "POST",
           signal: AbortSignal.timeout(35_000),
         }
       );
       if (!response.ok) {
         const rejection = z
           .object({
-            checkpointRejected: z.literal(true),
-            reason: checkpointRejectionReason,
-            conversationId: z.literal(conversationId),
-            checkpointId: z.literal(checkpointId),
             beforeTurnId: z.literal(beforeTurnId),
+            checkpointId: z.literal(checkpointId),
+            checkpointRejected: z.literal(true),
+            conversationId: z.literal(conversationId),
+            reason: checkpointRejectionReason,
           })
           .safeParse(await response.json().catch(() => null));
         if (response.status === 409 && rejection.success) {
-          throw new CreationRejected(
-            new CheckpointRejected(rejection.data.reason).message
+          throw new CreationRejectedError(
+            new CheckpointRejectedError(rejection.data.reason).message
           );
         }
         throw new Error(
@@ -54,10 +54,10 @@ export async function resolveCreationRequest(
         );
       }
       z.object({
-        ready: z.literal(true),
-        conversationId: z.literal(conversationId),
-        checkpointId: z.literal(checkpointId),
         beforeTurnId: z.literal(beforeTurnId),
+        checkpointId: z.literal(checkpointId),
+        conversationId: z.literal(conversationId),
+        ready: z.literal(true),
       }).parse(await response.json());
     }
     const result = await requestResponseGroup(operation);
@@ -80,4 +80,4 @@ export async function resolveCreationRequest(
     finishCreation(storage, ownerId, scope);
   }
   return binding.id;
-}
+};

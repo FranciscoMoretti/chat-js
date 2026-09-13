@@ -13,38 +13,24 @@ import {
   deleteSessionByState,
   getAuthenticatedSession,
   getSessionByState,
-  type OAuthClientInformationFull,
   saveTokensAndCleanup,
   setOAuthClientInfoOnceByState,
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
+import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");
 const refreshTokensSchema = z.object({
   access_token: z.string(),
-  id_token: z.string().optional(),
-  token_type: z.string(),
-  refresh_token: z.string().optional(),
   expires_in: z.number().optional(),
+  id_token: z.string().optional(),
+  refresh_token: z.string().optional(),
   scope: z.string().optional(),
+  token_type: z.string(),
 });
-
-/**
- * Custom error thrown when OAuth authorization is required.
- * The client should catch this and redirect the user to the authorization URL.
- */
-export class OAuthAuthorizationRequiredError extends Error {
-  authorizationUrl: URL;
-
-  constructor(authorizationUrl: URL) {
-    super("OAuth user authorization required");
-    this.name = "OAuthAuthorizationRequiredError";
-    this.authorizationUrl = authorizationUrl;
-  }
-}
 
 /**
  * PostgreSQL-backed OAuth client provider for MCP.
@@ -63,7 +49,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
-    state?: string; // Optional: adopt existing state (for callback reconciliation)
+    // Optional: adopt existing state (for callback reconciliation)
+    state?: string;
   };
   private saveClientInformationPromise: Promise<void> | null = null;
 
@@ -72,15 +59,17 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
-    state?: string; // Optional: adopt existing state (for callback reconciliation)
+    // Optional: adopt existing state (for callback reconciliation)
+    state?: string;
   }) {
     this.config = config;
   }
 
   private initializationPromise: Promise<void> | null = null;
 
+  // Prevent concurrent initialization - return existing promise if in progress
+
   private async initializeOAuth() {
-    // Prevent concurrent initialization - return existing promise if in progress
     if (this.initializationPromise) {
       return this.initializationPromise;
     }
@@ -97,8 +86,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
   }
 
+  // If state was provided (e.g., from callback), adopt it
+
   private async doInitializeOAuth() {
-    // If state was provided (e.g., from callback), adopt it
     if (this.config.state) {
       const session = await getSessionByState({ state: this.config.state });
       if (session && session.mcpConnectorId === this.config.mcpConnectorId) {
@@ -107,9 +97,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         this.initialized = true;
         return;
       }
+      // Check for existing authenticated session
     }
-
-    // Check for existing authenticated session
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
@@ -118,9 +107,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.cachedAuthData = authenticated;
       this.initialized = true;
       return;
+      // Create new in-progress session
     }
-
-    // Create new in-progress session
     this.currentOAuthState = randomUUID();
     this.cachedAuthData = await createOAuthSession({
       mcpConnectorId: this.config.mcpConnectorId,
@@ -167,17 +155,17 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   async clientInformation(): Promise<OAuthClientInformationFull | undefined> {
     const authData = await this.getAuthData();
     if (authData?.clientInfo) {
-      const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       // Security: if redirect URI changed and no tokens yet, invalidate
+      const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       if (
         !authData.tokens &&
         clientInfo.redirect_uris[0] !== this.redirectUrl
       ) {
         log.warn(
           {
-            state: authData.state,
-            savedRedirectUri: clientInfo.redirect_uris[0],
             currentRedirectUri: this.redirectUrl,
+            savedRedirectUri: clientInfo.redirect_uris[0],
+            state: authData.state,
           },
           "clientInformation: redirect URI mismatch, invalidating session"
         );
@@ -190,7 +178,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       }
       return clientInfo;
     }
-    return;
   }
 
   async saveClientInformation(
@@ -199,15 +186,14 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (this.saveClientInformationPromise) {
       await this.saveClientInformationPromise;
       return;
+      // If we already have a client registered for this state, keep it stable.
     }
-
-    // If we already have a client registered for this state, keep it stable.
     // Some OAuth servers treat authorization codes as bound to client_id.
+
     if (this.cachedAuthData?.clientInfo) {
       return;
+      // Optimistic set so subsequent calls in this instance skip.
     }
-
-    // Optimistic set so subsequent calls in this instance skip.
     if (this.cachedAuthData) {
       this.cachedAuthData = {
         ...this.cachedAuthData,
@@ -215,16 +201,16 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       };
     }
 
-    this.saveClientInformationPromise = setOAuthClientInfoOnceByState({
-      state: this.currentOAuthState,
-      clientInfo: clientCredentials,
-    })
-      .then((session) => {
-        this.cachedAuthData = session;
-      })
-      .finally(() => {
+    this.saveClientInformationPromise = (async () => {
+      try {
+        this.cachedAuthData = await setOAuthClientInfoOnceByState({
+          clientInfo: clientCredentials,
+          state: this.currentOAuthState,
+        });
+      } finally {
         this.saveClientInformationPromise = null;
-      });
+      }
+    })();
     await this.saveClientInformationPromise;
   }
 
@@ -269,9 +255,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         if (
           latest.tokens.refresh_token !== params.get("refresh_token") ||
           latest.tokens.access_token !== observedAccessToken
-        ) {
           // Another instance already rotated this credential. Return its result
+        ) {
           // to the SDK instead of consuming the old single-use refresh token.
+
           this.cachedAuthData = latest;
           this.committedRefreshes += 1;
           return Response.json(latest.tokens);
@@ -288,11 +275,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         const refreshed = refreshTokensSchema.parse(
           await response.clone().json()
         );
+        // Preserve pinned metadata and the refresh token when it is not rotated.
         this.cachedAuthData = await saveTokensAndCleanup({
-          state: this.currentOAuthState,
           mcpConnectorId: this.config.mcpConnectorId,
-          // Preserve the SDK's pinned authorization-server metadata and an
-          // existing refresh token when the server does not rotate it.
+          state: this.currentOAuthState,
           tokens: { ...latest.tokens, ...refreshed },
         });
         this.committedRefreshes += 1;
@@ -303,26 +289,27 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
     if (this.committedRefreshes > 0) {
-      this.committedRefreshes -= 1;
       // Refresh was saved while holding the cross-process lock. The SDK's
+      this.committedRefreshes -= 1;
       // later save must not overwrite a newer rotation from another client.
+
       this.cachedAuthData = await getSessionByState({
         state: this.currentOAuthState,
       });
       return;
     }
     this.cachedAuthData = await saveTokensAndCleanup({
-      state: this.currentOAuthState,
       mcpConnectorId: this.config.mcpConnectorId,
+      state: this.currentOAuthState,
       tokens,
     });
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
-    authorizationUrl.searchParams.set("state", this.state());
-
     // If the SDK calls redirect twice, keep the first URL stable.
+    authorizationUrl.searchParams.set("state", this.state());
     // Otherwise the UI might open URL #1 while the DB ended up with verifier #2.
+
     if (this.cachedAuthorizationUrl) {
       await this.config.onRedirectToAuthorization(this.cachedAuthorizationUrl);
       return;
@@ -336,11 +323,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
       return;
+      // Only save verifier ONCE - the AI SDK calls this multiple times
     }
-
-    // Only save verifier ONCE - the AI SDK calls this multiple times
-    // but the code_challenge is generated from the FIRST verifier.
     // If we already have a verifier for this session, keep it.
+    // but the code_challenge is generated from the FIRST verifier.
     const existingVerifier = this.cachedAuthData?.codeVerifier;
 
     if (existingVerifier) {
@@ -359,27 +345,25 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         state: this.currentOAuthState,
       },
       "saveCodeVerifier: saving first verifier"
+      // Optimistic in-memory set so a concurrent call in this instance will skip.
     );
-
-    // Optimistic in-memory set so a concurrent call in this instance will skip.
     if (this.cachedAuthData) {
       this.cachedAuthData = {
         ...this.cachedAuthData,
         codeVerifier: pkceVerifier,
       };
+      // Serialize and make the DB write immutable (DB-side also guards against overwrite).
     }
-
-    // Serialize and make the DB write immutable (DB-side also guards against overwrite).
-    this.saveCodeVerifierPromise = setOAuthCodeVerifierOnceByState({
-      state: this.currentOAuthState,
-      codeVerifier: pkceVerifier,
-    })
-      .then((session) => {
-        this.cachedAuthData = session;
-      })
-      .finally(() => {
+    this.saveCodeVerifierPromise = (async () => {
+      try {
+        this.cachedAuthData = await setOAuthCodeVerifierOnceByState({
+          codeVerifier: pkceVerifier,
+          state: this.currentOAuthState,
+        });
+      } finally {
         this.saveCodeVerifierPromise = null;
-      });
+      }
+    })();
     await this.saveCodeVerifierPromise;
   }
 
@@ -387,8 +371,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authData = await this.getAuthData();
     log.info(
       {
-        state: this.currentOAuthState,
         hasCodeVerifier: !!authData?.codeVerifier,
+        state: this.currentOAuthState,
       },
       "codeVerifier called"
     );
@@ -406,9 +390,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (!state) {
       log.warn("adoptState called with empty state");
       return;
+      // If already initialized with this exact state, skip DB lookup
     }
-
-    // If already initialized with this exact state, skip DB lookup
     if (this.initialized && this.currentOAuthState === state) {
       log.info({ state }, "adoptState: already initialized with this state");
       return;
@@ -422,9 +405,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (session.mcpConnectorId !== this.config.mcpConnectorId) {
       log.warn(
         {
-          state,
-          sessionConnectorId: session.mcpConnectorId,
           expectedConnectorId: this.config.mcpConnectorId,
+          sessionConnectorId: session.mcpConnectorId,
+          state,
         },
         "adoptState: connector ID mismatch"
       );
@@ -432,12 +415,12 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     log.info(
       {
-        state,
-        previousState: this.currentOAuthState,
-        wasInitialized: this.initialized,
-        hasCodeVerifier: !!session.codeVerifier,
         hasClientInfo: !!session.clientInfo,
+        hasCodeVerifier: !!session.codeVerifier,
         hasTokens: !!session.tokens,
+        previousState: this.currentOAuthState,
+        state,
+        wasInitialized: this.initialized,
       },
       "adoptState: adopting session (overriding previous state if any)"
     );
@@ -456,17 +439,17 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.currentOAuthState = "";
     } else if (scope === "tokens") {
       await this.updateAuthData({ tokens: null });
-    } else if (scope === "client") {
       // Clear client credentials - this forces re-registration with the OAuth server
-      await this.updateAuthData({ clientInfo: null });
+    } else if (scope === "client") {
       // Reset state since client info is foundational to the OAuth flow
+      await this.updateAuthData({ clientInfo: null });
       this.initialized = false;
       this.currentOAuthState = "";
       this.cachedAuthData = undefined;
-    } else if (scope === "verifier") {
       // Clear the PKCE verifier - this invalidates any pending authorization
-      await this.updateAuthData({ codeVerifier: null });
+    } else if (scope === "verifier") {
       // Clear cached authorization URL since it's tied to the old verifier
+      await this.updateAuthData({ codeVerifier: null });
       this.cachedAuthorizationUrl = null;
     }
   }

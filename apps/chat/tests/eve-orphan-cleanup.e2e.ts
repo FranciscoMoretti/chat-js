@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable import/first -- The mocked dependency must be registered before the module under test is loaded. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq } from "drizzle-orm";
 import { expect, test, vi } from "vitest";
 
@@ -13,15 +17,10 @@ import {
 import { assertEveTestDatabase } from "./eve-test-database";
 
 const storage = vi.hoisted(() => ({
-  objects: new Map<string, Date>(),
   fail: false,
+  objects: new Map<string, Date>(),
 }));
 vi.mock("../lib/file-storage", () => ({
-  *iterateStoredFiles() {
-    for (const [pathname, uploadedAt] of storage.objects) {
-      yield { pathname, uploadedAt };
-    }
-  },
   deleteFilesByUrls: (urls: string[]) => {
     if (storage.fail) {
       return Promise.reject(new Error("Provider unavailable"));
@@ -32,6 +31,11 @@ vi.mock("../lib/file-storage", () => ({
       );
     }
     return Promise.resolve();
+  },
+  *iterateStoredFiles() {
+    for (const [pathname, uploadedAt] of storage.objects) {
+      yield { pathname, uploadedAt };
+    }
   },
 }));
 
@@ -47,8 +51,8 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
   const old = new Date("2025-01-01");
   const cutoff = new Date("2026-01-01");
   await db.insert(user).values({
-    id: owner,
     email: `${owner}@test.invalid`,
+    id: owner,
     name: "Orphan sweep fixture",
   });
   try {
@@ -87,8 +91,8 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
       skipped: false,
     });
     expect(await state()).toBe("deleted");
-    expect([...storage.objects.keys()].sort()).toEqual(
-      [referenced, legacy, young].sort()
+    expect([...storage.objects.keys()].toSorted()).toEqual(
+      [referenced, legacy, young].toSorted()
     );
     // An uncertain upload finishes after the previous deletion acknowledgement.
     storage.objects.set(orphan, old);

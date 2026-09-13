@@ -14,28 +14,19 @@ Build branching AI SDK conversations without mounting one `useChat` hook per bra
 
 ## Install
 
-For the headless core:
-
 ```bash
-bun add @chat-js/thread ai@^7.0.93
+bun add @chat-js/thread
 ```
 
-For React:
-
-```bash
-bun add @chat-js/thread ai@^7.0.93 @ai-sdk/react@^4.0.96 react
-```
+The package installs its AI SDK dependencies. In a React app, `useThread` uses your existing React instance (React 18 or newer). React is an optional peer for the headless entry point.
 
 ## Use
 
 ```tsx
 import { useThread } from "@chat-js/thread/react";
-import { DefaultChatTransport } from "ai";
 
 function Conversation() {
-  const chat = useThread({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-  });
+  const chat = useThread();
 
   return (
     <>
@@ -53,6 +44,8 @@ function Conversation() {
   );
 }
 ```
+
+`useThread()` uses AI SDK's default transport to call `/api/chat`. Pass a `transport` option for a custom endpoint or request configuration.
 
 Existing rendering and composer code can continue using:
 

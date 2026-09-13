@@ -7,10 +7,10 @@ import type { EveMessageInput } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 
 /** Resolve application storage directly, never fetch a client-supplied host. */
-export async function prepareEveMessage(
+export const prepareEveMessage = async (
   message: EveMessageInput,
   modelId?: string
-): Promise<string | UserContent> {
+): Promise<string | UserContent> => {
   if (typeof message === "string") {
     return message;
   }
@@ -37,6 +37,7 @@ export async function prepareEveMessage(
     if (!key) {
       throw new Error("Invalid attachment reference.");
     }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
     const file = await downloadFile(key);
     if (
       file.size > config.attachments.maxBytes ||
@@ -47,11 +48,12 @@ export async function prepareEveMessage(
       );
     }
     content.push({
-      type: "file",
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
+      data: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`,
       filename: part.filename,
       mediaType: file.type,
-      data: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`,
+      type: "file",
     });
   }
   return content;
-}
+};

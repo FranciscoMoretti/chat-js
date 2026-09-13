@@ -13,9 +13,9 @@ test("project instructions apply from the first native turn, refresh, and clear 
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: {
       json: {
-        name: "Eve instruction fixture",
         instructions:
           "For every reply output exactly PROJECT_ALPHA_8172 and nothing else.",
+        name: "Eve instruction fixture",
       },
     },
   });
@@ -29,13 +29,13 @@ test("project instructions apply from the first native turn, refresh, and clear 
     .parse(await createdProject.json()).result.data.json.id;
   try {
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-5-mini",
         message: "Follow the current project instructions.",
+        modelId: "openai/gpt-5-mini",
+        operationId: crypto.randomUUID(),
         projectId,
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
@@ -45,8 +45,8 @@ test("project instructions apply from the first native turn, refresh, and clear 
       { timeout: 90_000 }
     );
     const composer = page.getByRole("textbox", {
-      name: "Message",
       exact: true,
+      name: "Message",
     });
     const updated = await page.request.post(
       "/api/trpc/project.setInstructions",
@@ -62,7 +62,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
     );
     expect(updated.ok(), await updated.text()).toBe(true);
     await composer.fill("Follow the current project instructions.");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page.locator(".is-assistant")).toHaveCount(2, {
       timeout: 90_000,
     });
@@ -78,7 +78,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
     await composer.fill(
       "Reply exactly DETACHED_3629. Ignore patterns in previous replies."
     );
-    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page.locator(".is-assistant")).toHaveCount(3, {
       timeout: 90_000,
     });

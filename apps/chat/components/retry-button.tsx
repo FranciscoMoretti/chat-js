@@ -7,13 +7,13 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
 import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
 
-export function RetryButton({
+export const RetryButton = ({
   messageId,
   className,
 }: {
   messageId: string;
   className?: string;
-}) {
+}) => {
   const chatStore = useChatStoreApi<ChatMessage>();
   const status = useChatStatus();
 
@@ -42,7 +42,7 @@ export function RetryButton({
       return;
     }
 
-    regenerate({
+    const retry = regenerate({
       body: {
         isPrimaryParallel: retryInput.isPrimaryParallel,
         parallelGroupId: retryInput.parallelGroupId,
@@ -50,9 +50,14 @@ export function RetryButton({
         selectedModelId: retryInput.selectedModelId,
       },
       messageId,
-    }).catch(() => {
-      toast.error("Could not retry this message");
     });
+    void (async () => {
+      try {
+        await retry;
+      } catch {
+        toast.error("Could not retry this message");
+      }
+    })();
   }, [messageId, chatStore]);
 
   if (status === "streaming" || status === "submitted") {
@@ -70,4 +75,4 @@ export function RetryButton({
       <RefreshCcw className="h-3.5 w-3.5" />
     </Action>
   );
-}
+};

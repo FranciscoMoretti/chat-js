@@ -3,11 +3,11 @@ import type { GoogleLanguageModelOptions } from "@ai-sdk/google";
 import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import type { SharedV4ProviderOptions } from "@ai-sdk/provider";
 
-export function getModelProviderOptions(model: {
+export const getModelProviderOptions = (model: {
   apiModelId: string;
   owned_by: string;
   reasoning: boolean;
-}): SharedV4ProviderOptions {
+}): SharedV4ProviderOptions => {
   if (model.owned_by === "openai") {
     if (model.reasoning) {
       // Strip provider prefix (e.g. "openai/gpt-5-mini" → "gpt-5-mini")
@@ -31,8 +31,8 @@ export function getModelProviderOptions(model: {
       return {
         anthropic: {
           thinking: {
-            type: "enabled",
             budgetTokens: 4096,
+            type: "enabled",
           },
         } satisfies AnthropicProviderOptions,
       };
@@ -57,4 +57,4 @@ export function getModelProviderOptions(model: {
     return { google: {} };
   }
   return {};
-}
+};

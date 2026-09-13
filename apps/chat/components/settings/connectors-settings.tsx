@@ -31,208 +31,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { config } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
-import {
-  type McpConnectorsDialog,
-  mcpConnectorsSettingsSearchParams,
-} from "@/lib/nuqs/mcp-search-params";
+import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
+import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
-export function ConnectorsSettings() {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {
-    history: "replace",
-    shallow: true,
-  });
-
-  const { data: connectors, isLoading } = useQuery(
-    trpc.mcp.list.queryOptions()
-  );
-
-  const createOpen = qs.dialog === "config";
-  const connectOpen = qs.dialog === "connect";
-
-  const connectConnector = useMemo(() => {
-    if (!(connectOpen && qs.connectorId && connectors)) {
-      return null;
-    }
-    return connectors.find((c) => c.id === qs.connectorId) ?? null;
-  }, [connectOpen, qs.connectorId, connectors]);
-
-  const queryKey = trpc.mcp.list.queryKey();
-
-  const { mutate: deleteConnector } = useMutation(
-    trpc.mcp.delete.mutationOptions({
-      onMutate: async (data) => {
-        await queryClient.cancelQueries({ queryKey });
-        const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
-          if (!old) {
-            return old;
-          }
-          return old.filter((c) => c.id !== data.id);
-        });
-        return { prev };
-      },
-      onError: (_err, _data, context) => {
-        queryClient.setQueryData(queryKey, context?.prev);
-        toast.error("Failed to uninstall connector");
-      },
-      onSuccess: () => {
-        toast.success("Connector uninstalled");
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
-      },
-    })
-  );
-
-  const { mutate: disconnectConnector, isPending: isDisconnecting } =
-    useMutation(
-      trpc.mcp.disconnect.mutationOptions({
-        onSuccess: () => {
-          toast.success("Disconnected");
-        },
-        onError: (err) => {
-          toast.error(err.message || "Failed to disconnect");
-        },
-        onSettled: (_data, _err, vars) => {
-          queryClient.invalidateQueries({ queryKey });
-          queryClient.invalidateQueries({
-            queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
-          });
-          queryClient.invalidateQueries({
-            queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
-          });
-        },
-      })
-    );
-
-  const setDialogState = useCallback(
-    ({
-      dialog,
-      connectorId,
-    }: {
-      dialog: McpConnectorsDialog | null;
-      connectorId?: string | null;
-    }) => {
-      setQs({
-        dialog,
-        connectorId: connectorId ?? null,
-      });
-    },
-    [setQs]
-  );
-
-  const handleOpenCreateDialog = useCallback(() => {
-    setDialogState({ dialog: "config" });
-  }, [setDialogState]);
-
-  const handleDialogClose = () => {
-    setDialogState({ dialog: null });
-  };
-
-  const handleOpenConnectDialog = useCallback(
-    (connectorId: string) => {
-      setDialogState({ dialog: "connect", connectorId });
-    },
-    [setDialogState]
-  );
-
-  const handleConnectDialogClose = useCallback(() => {
-    setDialogState({ dialog: null });
-  }, [setDialogState]);
-
-  if (!config.ai.tools.mcp.enabled) {
-    return (
-      <SettingsPageContent className="gap-4">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-sm font-medium">MCP is not enabled</p>
-        </div>
-      </SettingsPageContent>
-    );
-  }
-  if (isLoading) {
-    return (
-      <SettingsPageContent className="gap-4">
-        <div className="animate-pulse space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
-          ))}
-        </div>
-      </SettingsPageContent>
-    );
-  }
-
-  const customConnectors = (connectors ?? []).filter((c) => c.userId !== null);
-  const globalConnectors = (connectors ?? []).filter((c) => c.userId === null);
-
-  return (
-    <SettingsPageContent className="gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium">Custom connectors</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            Connect MCP servers you trust to extend your AI with tools.
-          </p>
-        </div>
-        <Button onClick={handleOpenCreateDialog} size="sm">
-          <Plus className="size-4" />
-          Add custom connector
-        </Button>
-      </div>
-
-      <div className="flex flex-col">
-        {customConnectors.length > 0 ? (
-          customConnectors.map((connector, index) => (
-            <Fragment key={connector.id}>
-              <CustomConnectorRow
-                connector={connector}
-                isDisconnecting={isDisconnecting}
-                onConnect={() => handleOpenConnectDialog(connector.id)}
-                onDisconnect={() => disconnectConnector({ id: connector.id })}
-                onUninstall={() => deleteConnector({ id: connector.id })}
-              />
-              {index < customConnectors.length - 1 ? <Separator /> : null}
-            </Fragment>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="bg-muted mb-4 rounded-full p-3">
-              <Radio className="text-muted-foreground size-6" />
-            </div>
-            <p className="text-sm font-medium">No custom connectors</p>
-            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              Add a custom MCP connector to access tools from your services.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {globalConnectors.length > 0 ? (
-        <div>
-          <p className="text-sm font-medium">Built-in connectors</p>
-          <div className="divide-y">
-            {globalConnectors.map((connector) => (
-              <BuiltInConnectorRow connector={connector} key={connector.id} />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <McpCreateDialog onClose={handleDialogClose} open={createOpen} />
-
-      <McpConnectDialog
-        connector={connectConnector}
-        onClose={handleConnectDialogClose}
-        open={connectOpen}
-      />
-    </SettingsPageContent>
-  );
-}
-
-function CustomConnectorRow({
+const CustomConnectorRow = ({
   connector,
   onConnect,
   onUninstall,
@@ -244,7 +47,7 @@ function CustomConnectorRow({
   onUninstall: () => void;
   onDisconnect: () => void;
   isDisconnecting: boolean;
-}) {
+}) => {
   const trpc = useTRPC();
 
   const { data: authStatus } = useQuery({
@@ -254,8 +57,8 @@ function CustomConnectorRow({
 
   const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
     ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
-    staleTime: 30_000,
     retry: false,
+    staleTime: 30_000,
   });
 
   const needsOAuth = connectionStatus?.needsAuth ?? false;
@@ -393,9 +196,9 @@ function CustomConnectorRow({
       </div>
     </div>
   );
-}
+};
 
-function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
+const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
     <div className="flex w-full items-center gap-3 py-3 text-left">
@@ -410,4 +213,206 @@ function BuiltInConnectorRow({ connector }: { connector: McpConnector }) {
       </Button>
     </div>
   );
-}
+};
+
+export const ConnectorsSettings = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {
+    history: "replace",
+    shallow: true,
+  });
+
+  const { data: connectors, isLoading } = useQuery(
+    trpc.mcp.list.queryOptions()
+  );
+
+  const createOpen = qs.dialog === "config";
+  const connectOpen = qs.dialog === "connect";
+
+  const connectConnector = useMemo(() => {
+    if (!(connectOpen && qs.connectorId && connectors)) {
+      return null;
+    }
+    return connectors.find((c) => c.id === qs.connectorId) ?? null;
+  }, [connectOpen, qs.connectorId, connectors]);
+
+  const queryKey = trpc.mcp.list.queryKey();
+
+  const { mutate: deleteConnector } = useMutation(
+    trpc.mcp.delete.mutationOptions({
+      onError: (
+        _err,
+        _data,
+        context: { prev: typeof connectors } | undefined
+      ) => {
+        queryClient.setQueryData(queryKey, context?.prev);
+        toast.error("Failed to uninstall connector");
+      },
+      onMutate: async (data) => {
+        await queryClient.cancelQueries({ queryKey });
+        const prev = queryClient.getQueryData(queryKey);
+        queryClient.setQueryData(queryKey, (old: typeof connectors) => {
+          if (!old) {
+            return old;
+          }
+          return old.filter((c) => c.id !== data.id);
+        });
+        return { prev };
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
+      onSuccess: () => {
+        toast.success("Connector uninstalled");
+      },
+    })
+  );
+
+  const { mutate: disconnectConnector, isPending: isDisconnecting } =
+    useMutation(
+      trpc.mcp.disconnect.mutationOptions({
+        onError: (err) => {
+          toast.error(err.message || "Failed to disconnect");
+        },
+        onSettled: (_data, _err, vars) => {
+          queryClient.invalidateQueries({ queryKey });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
+          });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
+          });
+        },
+        onSuccess: () => {
+          toast.success("Disconnected");
+        },
+      })
+    );
+
+  const setDialogState = useCallback(
+    ({
+      dialog,
+      connectorId,
+    }: {
+      dialog: McpConnectorsDialog | null;
+      connectorId?: string | null;
+    }) => {
+      setQs({
+        connectorId: connectorId ?? null,
+        dialog,
+      });
+    },
+    [setQs]
+  );
+
+  const handleOpenCreateDialog = useCallback(() => {
+    setDialogState({ dialog: "config" });
+  }, [setDialogState]);
+
+  const handleDialogClose = () => {
+    setDialogState({ dialog: null });
+  };
+
+  const handleOpenConnectDialog = useCallback(
+    (connectorId: string) => {
+      setDialogState({
+        connectorId,
+        dialog: "connect",
+      });
+    },
+    [setDialogState]
+  );
+
+  const handleConnectDialogClose = useCallback(() => {
+    setDialogState({ dialog: null });
+  }, [setDialogState]);
+
+  if (!config.ai.tools.mcp.enabled) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-sm font-medium">MCP is not enabled</p>
+        </div>
+      </SettingsPageContent>
+    );
+  }
+  if (isLoading) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div className="animate-pulse space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
+          ))}
+        </div>
+      </SettingsPageContent>
+    );
+  }
+
+  const customConnectors = (connectors ?? []).filter((c) => c.userId !== null);
+  const globalConnectors = (connectors ?? []).filter((c) => c.userId === null);
+
+  return (
+    <SettingsPageContent className="gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">Custom connectors</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Connect MCP servers you trust to extend your AI with tools.
+          </p>
+        </div>
+        <Button onClick={handleOpenCreateDialog} size="sm">
+          <Plus className="size-4" />
+          Add custom connector
+        </Button>
+      </div>
+
+      <div className="flex flex-col">
+        {customConnectors.length > 0 ? (
+          customConnectors.map((connector, index) => (
+            <Fragment key={connector.id}>
+              <CustomConnectorRow
+                connector={connector}
+                isDisconnecting={isDisconnecting}
+                onConnect={() => handleOpenConnectDialog(connector.id)}
+                onDisconnect={() => disconnectConnector({ id: connector.id })}
+                onUninstall={() => deleteConnector({ id: connector.id })}
+              />
+              {index < customConnectors.length - 1 ? <Separator /> : null}
+            </Fragment>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="bg-muted mb-4 rounded-full p-3">
+              <Radio className="text-muted-foreground size-6" />
+            </div>
+            <p className="text-sm font-medium">No custom connectors</p>
+            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
+              Add a custom MCP connector to access tools from your services.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {globalConnectors.length > 0 ? (
+        <div>
+          <p className="text-sm font-medium">Built-in connectors</p>
+          <div className="divide-y">
+            {globalConnectors.map((connector) => (
+              <BuiltInConnectorRow connector={connector} key={connector.id} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <McpCreateDialog onClose={handleDialogClose} open={createOpen} />
+
+      <McpConnectDialog
+        connector={connectConnector}
+        onClose={handleConnectDialogClose}
+        open={connectOpen}
+      />
+    </SettingsPageContent>
+  );
+};

@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
@@ -19,23 +20,23 @@ test("guest comparison reserves two responses once, renders both and isolates ow
   });
   await page.goto("/");
   await expect(
-    page.getByRole("textbox", { name: "Message", exact: true })
+    page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeVisible();
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const principal = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
   expect(principal.status()).toBe(200);
   const { ownerId } = await principal.json();
   const input = {
-    operationId: crypto.randomUUID(),
-    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
     message: "Reply with the single word hello. Do not call tools.",
+    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+    operationId: crypto.randomUUID(),
   };
   const post = (data = input) =>
     page.request.post("/api/agent-response-groups", {
-      headers: { origin },
       data,
+      headers: { origin },
       timeout: 90_000,
     });
   const created = await post();
@@ -74,10 +75,10 @@ test("guest comparison reserves two responses once, renders both and isolates ow
     "hello",
     { timeout: 60_000 }
   );
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Keep this guest draft");
   await page
-    .getByRole("button", { name: "GPT-5 nano Open response", exact: true })
+    .getByRole("button", { exact: true, name: "GPT-5 nano Open response" })
     .click();
   await expect(page).toHaveURL(
     new URL(`/chat/${second.conversationId}`, origin).href
@@ -93,8 +94,8 @@ test("guest comparison reserves two responses once, renders both and isolates ow
   });
   await expect(composer).toHaveText("Keep this guest draft");
   await page.screenshot({
-    path: testInfo.outputPath("guest-comparison.png"),
     animations: "disabled",
+    path: testInfo.outputPath("guest-comparison.png"),
     style:
       "nextjs-portal, .tsqd-parent-container { visibility:hidden !important; }",
   });

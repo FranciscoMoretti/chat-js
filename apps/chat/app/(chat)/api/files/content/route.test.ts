@@ -1,6 +1,8 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ unavailable: vi.fn(), serve: vi.fn() }));
+import { GET } from "./route";
+
+const mocks = vi.hoisted(() => ({ serve: vi.fn(), unavailable: vi.fn() }));
 vi.mock("@/lib/db/eve-files", () => ({
   isEveFileUnavailable: mocks.unavailable,
 }));
@@ -10,8 +12,6 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/lib/file-content-response", () => ({
   createFileContentResponse: mocks.serve,
 }));
-
-import { GET } from "./route";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -31,6 +31,7 @@ test("a deletion fence denies storage redirects and bytes even if an object reap
 test("active EVE and legacy URLs retain the existing content behavior", async () => {
   mocks.unavailable.mockResolvedValue(false);
   const request = new Request(`http://localhost/api/files/content?key=${key}`);
-  expect((await GET(request)).status).toBe(200);
+  const resolvedResult1 = await GET(request);
+  expect(resolvedResult1.status).toBe(200);
   expect(mocks.serve).toHaveBeenCalledWith(request);
 });

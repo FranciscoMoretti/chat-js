@@ -6,11 +6,11 @@ export const eveFollowupSuggestions = z.object({
 });
 
 /** Invalid or unavailable suggestions never hide the completed answer. */
-export function messageFollowupSuggestions(
+export const messageFollowupSuggestions = (
   message: Pick<EveMessage, "metadata">
-): string[] {
+): string[] => {
   const parsed = eveFollowupSuggestions.safeParse(
     message.metadata?.annotations?.["followup-suggestions"]
   );
   return parsed.success ? [...new Set(parsed.data.suggestions)] : [];
-}
+};

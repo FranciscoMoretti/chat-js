@@ -35,7 +35,7 @@ interface OpenRouterModelResponse {
   } | null;
 }
 
-function deriveTags(model: OpenRouterModelResponse): string[] {
+const deriveTags = (model: OpenRouterModelResponse): string[] => {
   const inputMods = model.architecture?.input_modalities ?? ["text"];
   const outputMods = model.architecture?.output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
@@ -60,9 +60,9 @@ function deriveTags(model: OpenRouterModelResponse): string[] {
     tags.push("tool-use");
   }
   return tags;
-}
+};
 
-function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
+const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
   const tags = deriveTags(model);
   const outputMods = model.architecture?.output_modalities ?? ["text"];
 
@@ -74,26 +74,26 @@ function toAiGatewayModel(model: OpenRouterModelResponse): AiGatewayModel {
   const owned_by = model.id.split("/")[0] ?? "unknown";
 
   return {
-    id: model.id,
-    object: "model",
-    created: model.created ?? 0,
-    owned_by,
-    name: model.name ?? model.id,
-    description: model.description ?? "",
     context_window: model.context_length ?? 0,
+    created: model.created ?? 0,
+    description: model.description ?? "",
+    id: model.id,
     max_tokens: model.top_provider?.max_completion_tokens ?? 0,
-    type,
-    tags: tags.length > 0 ? (tags as AiGatewayModel["tags"]) : undefined,
+    name: model.name ?? model.id,
+    object: "model",
+    owned_by,
     pricing: {
-      input: model.pricing?.prompt,
-      output: model.pricing?.completion,
       image: model.pricing?.image,
-      web_search: model.pricing?.web_search,
+      input: model.pricing?.prompt,
       input_cache_read: model.pricing?.input_cache_read,
       input_cache_write: model.pricing?.input_cache_write,
+      output: model.pricing?.completion,
+      web_search: model.pricing?.web_search,
     },
+    tags: tags.length > 0 ? (tags as AiGatewayModel["tags"]) : undefined,
+    type,
   };
-}
+};
 
 export class OpenRouterGateway
   extends GatewayRuntime
@@ -114,12 +114,16 @@ export class OpenRouterGateway
     return provider.chat(modelId);
   }
 
+  // The gateway interface requires an image factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
     return null;
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
@@ -128,6 +132,8 @@ export class OpenRouterGateway
     return this.env.OPENROUTER_API_KEY;
   }
 
+  // The models endpoint is fixed by the provider contract.
+  // eslint-disable-next-line class-methods-use-this
   private getModelsUrl(): string {
     return "https://openrouter.ai/api/v1/models";
   }

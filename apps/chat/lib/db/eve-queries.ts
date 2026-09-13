@@ -1,3 +1,4 @@
+// oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
 import {
   and,
   desc,
@@ -35,14 +36,10 @@ const visibleConversation = inArray(eveConversation.state, [
   "uncertain",
 ]);
 
-export async function ownsEveSession(ownerId: string, sessionId: string) {
-  return Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
-}
-
-export async function getBoundEveConversationForSession(
+export const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-) {
+) => {
   const rows = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -55,11 +52,15 @@ export async function getBoundEveConversationForSession(
     )
     .limit(1);
   return rows[0];
-}
-export async function listEveConversations(
+};
+
+export const ownsEveSession = async (ownerId: string, sessionId: string) =>
+  Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
+export const listEveConversations = async (
   ownerId: string,
-  { search = "", cursor, projectId }: EveHistoryInput = { search: "" }
-) {
+  input?: EveHistoryInput
+) => {
+  const { search = "", cursor, projectId } = input ?? {};
   const title = sql<string>`coalesce(${eveConversation.title}, left(${eveConversation.firstMessage}, 100))`;
   // Preserve PostgreSQL's microseconds: converting the cursor to Date can skip
   // conversations sharing the same millisecond at a page boundary.
@@ -82,14 +83,14 @@ export async function listEveConversations(
   const matchesProject = projectId
     ? eq(eveConversationProject.projectId, projectId)
     : isNull(eveConversationProject.projectId);
-  const escapedSearch = search.replace(/[\\%_]/g, "\\$&");
+  const escapedSearch = search.replaceAll(/[\\%_]/gu, "\\$&");
   const rows = await db
     .select({
       id: eveConversation.id,
-      title,
-      state: eveConversation.state,
-      projectId: eveConversationProject.projectId,
       isPinned: eveConversation.isPinned,
+      projectId: eveConversationProject.projectId,
+      state: eveConversation.state,
+      title,
       updatedAt,
     })
     .from(eveConversation)
@@ -125,10 +126,10 @@ export async function listEveConversations(
         updatedAt: lastActivity,
       }) => ({
         id,
-        title: itemTitle,
-        state,
         isPinned,
         projectId: assignedProjectId,
+        state,
+        title: itemTitle,
         updatedAt: lastActivity,
       })
     ),
@@ -137,8 +138,8 @@ export async function listEveConversations(
         ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
         : null,
   };
-}
-export async function getEveConversation(ownerId: string, id: string) {
+};
+export const getEveConversation = async (ownerId: string, id: string) => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -151,26 +152,32 @@ export async function getEveConversation(ownerId: string, id: string) {
     )
     .limit(1);
   return row;
-}
-export class CreationConflict extends Error {}
-
-function assertCreationAvailable(
-  state: typeof eveConversation.$inferSelect.state
-) {
-  if (state === "deleting" || state === "deleted") {
-    throw new CreationConflict("This conversation can no longer be created.");
+};
+export class CreationConflictError extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "CreationConflictError";
   }
 }
 
-function boundConversation(
+const assertCreationAvailable = (
+  state: typeof eveConversation.$inferSelect.state
+) => {
+  if (state === "deleting" || state === "deleted") {
+    throw new CreationConflictError(
+      "This conversation can no longer be created."
+    );
+  }
+};
+
+const boundConversation = (
   row: typeof eveConversation.$inferSelect | undefined
-) {
-  return row?.state === "bound" && row.sessionId
+) =>
+  row?.state === "bound" && row.sessionId
     ? { id: row.id, sessionId: row.sessionId }
     : undefined;
-}
 
-export async function getEveCreation(ownerId: string, operationId: string) {
+export const getEveCreation = async (ownerId: string, operationId: string) => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -181,15 +188,20 @@ export async function getEveCreation(ownerId: string, operationId: string) {
       )
     );
   return row;
+};
+
+export class CreationProjectNotFoundError extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "CreationProjectNotFoundError";
+  }
 }
 
-export class CreationProjectNotFound extends Error {}
-
-async function assertResponseGroupCandidateAvailable(
+const assertResponseGroupCandidateAvailable = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   operationId: string
-) {
+) => {
   const [deletedGroup] = await tx
     .select({ id: eveResponseGroup.id })
     .from(eveResponseGroup)
@@ -202,23 +214,23 @@ async function assertResponseGroupCandidateAvailable(
     )
     .limit(1);
   if (deletedGroup) {
-    throw new CreationConflict("This response group has been deleted.");
+    throw new CreationConflictError("This response group has been deleted.");
   }
-}
+};
 
-async function assertGuestCreationAdmission(
+const assertGuestCreationAdmission = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   operationId: string,
   reservationId?: string
-) {
+) => {
   if (!reservationId) {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
       .from(eveGuest)
       .where(eq(eveGuest.ownerId, ownerId));
     if (guest) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "Guest creation requires a quota reservation."
       );
     }
@@ -240,7 +252,7 @@ async function assertGuestCreationAdmission(
         )
       );
     if (!quota) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "Guest admission has changed. Retry the saved request."
       );
     }
@@ -255,20 +267,39 @@ async function assertGuestCreationAdmission(
           )
         );
       if (!creation) {
-        throw new CreationConflict(
+        throw new CreationConflictError(
           "Committed guest admission has no creation journal."
         );
       }
     }
   }
-}
+};
 
-async function reserveEveConversation(
+const assignCreationProject = async (
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  conversationId: string,
+  ownerId: string,
+  projectId: string
+) => {
+  const [target] = await tx
+    .select({ id: project.id })
+    .from(project)
+    .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
+    .for("key share");
+  if (!target) {
+    throw new CreationProjectNotFoundError("Project not found.");
+  }
+  await tx
+    .insert(eveConversationProject)
+    .values({ conversationId, ownerId, projectId: target.id });
+};
+
+const reserveEveConversation = async (
   value: typeof eveConversation.$inferInsert,
   fork?: EveForkInput,
   guestReservationId?: string
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
@@ -297,7 +328,7 @@ async function reserveEveConversation(
           )
       : [];
     if (fork && !source?.sessionId) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "The source conversation is not available for editing."
       );
     }
@@ -305,17 +336,17 @@ async function reserveEveConversation(
       .insert(eveConversation)
       .values({
         ...value,
+        forkCheckpointId: fork?.checkpointId,
+        forkMessageId: fork?.beforeMessageId,
+        forkTurnId: fork?.beforeTurnId,
         parentConversationId: fork?.conversationId,
         rootConversationId: source
           ? (source.rootConversationId ?? source.id)
           : undefined,
-        forkTurnId: fork?.beforeTurnId,
-        forkMessageId: fork?.beforeMessageId,
-        forkCheckpointId: fork?.checkpointId,
       })
       .onConflictDoNothing()
       .returning();
-    const created = rows[0];
+    const [created] = rows;
     if (created && value.initialProjectId) {
       await assignCreationProject(
         tx,
@@ -354,42 +385,22 @@ async function reserveEveConversation(
       if (references.length) {
         await tx.insert(eveFileReference).values(
           references.map(({ key }) => ({
+            conversationId: created.id,
             key,
             ownerId: value.ownerId,
-            conversationId: created.id,
           }))
         );
       }
     }
     return rows;
   });
-}
-
-async function assignCreationProject(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  conversationId: string,
-  ownerId: string,
-  projectId: string
-) {
-  const [target] = await tx
-    .select({ id: project.id })
-    .from(project)
-    .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
-    .for("key share");
-  if (!target) {
-    throw new CreationProjectNotFound("Project not found.");
-  }
-  await tx
-    .insert(eveConversationProject)
-    .values({ conversationId, ownerId, projectId: target.id });
-}
 
 /** Fence one conversation family; retirement and physical purge must finish separately. */
-export async function beginEveConversationDeletion(
+export const beginEveConversationDeletion = async (
   ownerId: string,
   id: string
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -400,7 +411,7 @@ export async function beginEveConversationDeletion(
         and(eq(eveConversation.id, id), eq(eveConversation.ownerId, ownerId))
       );
     if (!source) {
-      return undefined;
+      return;
     }
     const rootId = source.rootConversationId ?? source.id;
     const familyCondition = and(
@@ -420,7 +431,7 @@ export async function beginEveConversationDeletion(
         (row) => row.state === "creating" || row.state === "uncertain"
       )
     ) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "Finish recovering conversation creation before deleting this conversation."
       );
     }
@@ -428,6 +439,7 @@ export async function beginEveConversationDeletion(
     // Document writers hold this same lock through their commit. Once the fence
     // commits, later writers fail their bound-conversation check.
     for (const row of family) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${row.id}`}, 0))`
       );
@@ -445,28 +457,29 @@ export async function beginEveConversationDeletion(
         id: eveConversation.id,
         sessionId: eveConversation.sessionId,
       });
-    conversations.sort((left, right) => left.id.localeCompare(right.id));
-    return { rootId, conversations };
+    return {
+      conversations: conversations.toSorted((left, right) =>
+        left.id.localeCompare(right.id)
+      ),
+      rootId,
+    };
   });
-}
 
-function matchesEveFork(
+const matchesEveFork = (
   existing: Pick<
     typeof eveConversation.$inferSelect,
     "parentConversationId" | "forkTurnId" | "forkMessageId" | "forkCheckpointId"
   >,
   fork: EveForkInput | undefined
-) {
-  return (
-    existing.parentConversationId === (fork?.conversationId ?? null) &&
-    existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
-    existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
-    existing.forkCheckpointId === (fork?.checkpointId ?? null)
-  );
-}
+) =>
+  existing.parentConversationId === (fork?.conversationId ?? null) &&
+  existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
+  existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
+  existing.forkCheckpointId === (fork?.checkpointId ?? null);
 
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
-export async function createEveConversation(
+// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+export const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
@@ -486,20 +499,20 @@ export async function createEveConversation(
     initialProjectId?: string;
     guestReservationId?: string;
   } = {}
-) {
+) => {
   if (fork && initialProjectId) {
-    throw new CreationConflict(
+    throw new CreationConflictError(
       "Forks inherit their source conversation project."
     );
   }
   let [reservation] = await reserveEveConversation(
     {
-      ownerId,
-      operationId,
       firstMessage: message,
-      initialModelId,
       initialContentHash,
+      initialModelId,
       initialProjectId,
+      operationId,
+      ownerId,
     },
     fork,
     guestReservationId
@@ -526,7 +539,7 @@ export async function createEveConversation(
       existing.initialProjectId !== (initialProjectId ?? null) ||
       !matchesEveFork(existing, fork)
     ) {
-      throw new CreationConflict(
+      throw new CreationConflictError(
         "This operation already has a different message, attachments, model, tool selection, project, or source turn."
       );
     }
@@ -546,11 +559,13 @@ export async function createEveConversation(
     return await db.transaction(async (tx) => {
       // The reservation is already committed so native hooks can find it.
       // Transaction locks release on worker death; creating rows need no manual repair.
-      const [lock] = await tx.execute<{ locked: boolean }>(
+      const [lock] = await tx.execute<{
+        locked: boolean;
+      }>(
         sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
       );
       if (!lock?.locked) {
-        throw new CreationConflict(
+        throw new CreationConflictError(
           "Creation is still in progress. Retry the same operation shortly."
         );
       }
@@ -569,7 +584,7 @@ export async function createEveConversation(
           (current.state === "creating" || current.state === "uncertain")
         )
       ) {
-        throw new CreationConflict(
+        throw new CreationConflictError(
           "This conversation can no longer be created."
         );
       }
@@ -592,9 +607,9 @@ export async function createEveConversation(
       }
       return { id: bound.id, sessionId: bound.sessionId };
     });
-  } catch (cause) {
-    if (cause instanceof CreationConflict) {
-      throw cause;
+  } catch (error) {
+    if (error instanceof CreationConflictError) {
+      throw error;
     }
     await db
       .update(eveConversation)
@@ -605,12 +620,12 @@ export async function createEveConversation(
           eq(eveConversation.state, "creating")
         )
       );
-    throw cause;
+    throw error;
   }
-}
+};
 
-export async function listEveOwnerBindings(ownerId: string) {
-  return await db
+export const listEveOwnerBindings = async (ownerId: string) =>
+  await db
     .select({
       sessionId: eveConversation.sessionId,
       state: eveConversation.state,
@@ -623,9 +638,8 @@ export async function listEveOwnerBindings(ownerId: string) {
         ne(eveConversation.state, "deleted")
       )
     );
-}
 
-export async function updateEveConversationMetadata(
+export const updateEveConversationMetadata = async (
   ownerId: string,
   id: string,
   updates: {
@@ -633,7 +647,7 @@ export async function updateEveConversationMetadata(
     isPinned?: boolean;
     visibility?: "private" | "public";
   }
-) {
+) => {
   const [row] = await db
     .update(eveConversation)
     .set(updates)
@@ -646,13 +660,13 @@ export async function updateEveConversationMetadata(
     )
     .returning({ id: eveConversation.id });
   return row;
-}
+};
 
-export async function recordEveConversationActivity(
+export const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
   at: Date
-) {
+) => {
   await db
     .update(eveConversation)
     .set({ updatedAt: at })
@@ -664,9 +678,9 @@ export async function recordEveConversationActivity(
         lt(eveConversation.updatedAt, at)
       )
     );
-}
+};
 
-export async function getPublicEveConversation(id: string) {
+export const getPublicEveConversation = async (id: string) => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -679,25 +693,25 @@ export async function getPublicEveConversation(id: string) {
     )
     .limit(1);
   return row;
-}
+};
 
-export async function listEveConversationBranches(
+export const listEveConversationBranches = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const conversation = await getEveConversation(ownerId, conversationId);
   if (!conversation) {
-    return undefined;
+    return;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const branches = await db
     .select({
+      createdAt: eveConversation.createdAt,
+      firstMessage: eveConversation.firstMessage,
+      forkMessageId: eveConversation.forkMessageId,
+      forkTurnId: eveConversation.forkTurnId,
       id: eveConversation.id,
       parentConversationId: eveConversation.parentConversationId,
-      forkTurnId: eveConversation.forkTurnId,
-      forkMessageId: eveConversation.forkMessageId,
-      firstMessage: eveConversation.firstMessage,
-      createdAt: eveConversation.createdAt,
     })
     .from(eveConversation)
     .where(
@@ -711,14 +725,14 @@ export async function listEveConversationBranches(
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  return { rootId, branches };
-}
+  return { branches, rootId };
+};
 
 /** Internal cleanup only; does not grant browser or conversation access. */
-export async function getDeletingEveConversationForSession(
+export const getDeletingEveConversationForSession = async (
   ownerId: string,
   sessionId: string
-) {
+) => {
   const [row] = await db
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -731,17 +745,17 @@ export async function getDeletingEveConversationForSession(
     )
     .limit(1);
   return row;
-}
+};
 
-export async function getEveConversationProject(
+export const getEveConversationProject = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const [assigned] = await db
     .select({
       id: project.id,
-      name: project.name,
       instructions: project.instructions,
+      name: project.name,
     })
     .from(eveConversationProject)
     .innerJoin(
@@ -757,4 +771,4 @@ export async function getEveConversationProject(
       )
     );
   return assigned ?? null;
-}
+};

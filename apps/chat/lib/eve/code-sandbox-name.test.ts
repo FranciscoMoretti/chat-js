@@ -2,15 +2,15 @@ import { expect, test } from "vitest";
 
 import { eveCodeSandboxName } from "./code-sandbox-name";
 
-const provider = { teamId: "team-a", projectId: "project-a" };
-const sandboxNamePattern = /^chatjs-code-[a-f0-9]{48}$/;
+const provider = { projectId: "project-a", teamId: "team-a" };
+const sandboxNamePattern = /^chatjs-code-[a-f0-9]{48}$/u;
 
 test("the same native call has a stable opaque name, isolated by owner and session", () => {
   const scope = {
-    ownerId: "alice",
-    sessionId: "session-a",
     callId: "call-a",
+    ownerId: "alice",
     provider,
+    sessionId: "session-a",
   };
   const name = eveCodeSandboxName(scope);
   expect(eveCodeSandboxName({ ...scope })).toBe(name);
@@ -27,26 +27,26 @@ test("the same native call has a stable opaque name, isolated by owner and sessi
   }
   expect(
     eveCodeSandboxName({
-      ownerId: "a:b",
-      sessionId: "c",
       callId: "d",
+      ownerId: "a:b",
       provider,
+      sessionId: "c",
     })
   ).not.toBe(
     eveCodeSandboxName({
-      ownerId: "a",
-      sessionId: "b:c",
       callId: "d",
+      ownerId: "a",
       provider,
+      sessionId: "b:c",
     })
   );
 });
 
 test("missing native identity cannot allocate an anonymous fallback sandbox", () => {
   for (const scope of [
-    { ownerId: undefined, sessionId: "session", callId: "call", provider },
-    { ownerId: "owner", sessionId: undefined, callId: "call", provider },
-    { ownerId: "owner", sessionId: "session", callId: " ", provider },
+    { callId: "call", ownerId: undefined, provider, sessionId: "session" },
+    { callId: "call", ownerId: "owner", provider, sessionId: undefined },
+    { callId: " ", ownerId: "owner", provider, sessionId: "session" },
   ]) {
     expect(() => eveCodeSandboxName(scope)).toThrow(
       "authenticated native tool call"

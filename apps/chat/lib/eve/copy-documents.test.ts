@@ -14,10 +14,10 @@ const destinationHead = "00000000-0000-4000-8000-000000000006";
 const sourceFile = "abcdefghijklmnopqrstuvwx.png";
 const destinationFile = "abcdefghijklmnopqrstuvwZ.png";
 const base = {
+  createdAt: new Date(0),
   documentId,
   kind: "text",
   title: "Shared document",
-  createdAt: new Date(0),
 } satisfies Partial<
   Parameters<typeof prepareEveCopyDocuments>[0][number]["revisions"][number]
 >;
@@ -28,22 +28,22 @@ const snapshot = [
     revisions: [
       {
         ...base,
+        content: `First version: /api/files/content?key=${sourceFile}`,
         id: firstId,
         parentRevisionId: null,
-        content: `First version: /api/files/content?key=${sourceFile}`,
       },
       {
         ...base,
+        content: `Document ${documentId}, previous revision ${firstId}`,
         id: headId,
         parentRevisionId: firstId,
-        content: `Document ${documentId}, previous revision ${firstId}`,
       },
     ],
   },
 ];
 const allocations = {
-  files: new Map([[sourceFile, destinationFile]]),
   documents: new Map([[documentId, destinationDoc]]),
+  files: new Map([[sourceFile, destinationFile]]),
   revisions: new Map([
     [firstId, destinationFirst],
     [headId, destinationHead],
@@ -76,8 +76,8 @@ it("copies every revision with fresh ancestry, rewritten content, and no source 
 
 it("retains files from older revisions even when the current head no longer mentions them", () => {
   expect(eveCopyDocumentResources(snapshot)).toEqual({
-    fileKeys: [sourceFile],
     documentIds: [documentId],
+    fileKeys: [sourceFile],
     revisionIds: [firstId, headId],
   });
 });

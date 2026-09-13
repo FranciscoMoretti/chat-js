@@ -7,26 +7,30 @@ import {
   readEveCheckpoint,
   waitForEveCheckpoint,
 } from "@/lib/eve/checkpoint-readiness";
-import { CheckpointRejected } from "@/lib/eve/checkpoint-rejection";
+import { CheckpointRejectedError } from "@/lib/eve/checkpoint-rejection";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
 
 const inputSchema = z
   .object({
-    checkpointId: z.uuid(),
     beforeTurnId: z
       .string()
       .max(64)
-      .regex(/^turn_(0|[1-9][0-9]*)$/),
+      .regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u),
+    checkpointId: z.uuid(),
   })
   .strict();
 
 /** The caller retains this checkpoint identity before posting and on ambiguous failure. */
-export async function POST(
+export const POST = async (
   request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: {
+    params: Promise<{
+      id: string;
+    }>;
+  }
+) => {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
@@ -65,8 +69,8 @@ export async function POST(
         principal.ownerId,
         `/eve/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
         {
-          method: "POST",
           body: JSON.stringify(input.data),
+          method: "POST",
           signal: AbortSignal.timeout(15_000),
         }
       );
@@ -81,20 +85,20 @@ export async function POST(
       );
     }
     return Response.json(
-      { ready: true, conversationId: id, ...input.data },
+      { conversationId: id, ready: true, ...input.data },
       { headers: { "cache-control": "no-store" } }
     );
-  } catch (cause) {
-    if (cause instanceof CheckpointRejected) {
+  } catch (error) {
+    if (error instanceof CheckpointRejectedError) {
       return Response.json(
         {
           checkpointRejected: true,
-          reason: cause.reason,
-          error: cause.message,
           conversationId: id,
+          error: error.message,
+          reason: error.reason,
           ...input.data,
         },
-        { status: 409, headers: { "cache-control": "no-store" } }
+        { headers: { "cache-control": "no-store" }, status: 409 }
       );
     }
     return Response.json(
@@ -102,7 +106,7 @@ export async function POST(
         error:
           "Checkpoint capture is unconfirmed. Retain this request before retrying.",
       },
-      { status: 409, headers: { "cache-control": "no-store" } }
+      { headers: { "cache-control": "no-store" }, status: 409 }
     );
   }
-}
+};

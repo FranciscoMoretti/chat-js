@@ -4,11 +4,24 @@ import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveChatPage } from "@/components/eve/eve-chat-page";
 import { isEveEnabled } from "@/lib/eve/availability";
 
-export default function ChatPageRoute({
+const ConversationPage = async ({
   params,
 }: {
-  params: Promise<{ id: string }>;
-}) {
+  params: Promise<{
+    id: string;
+  }>;
+}) => {
+  const resolvedResult1 = await params;
+  return <EveChatPage conversationId={resolvedResult1.id} />;
+};
+
+const ChatPageRoute = ({
+  params,
+}: {
+  params: Promise<{
+    id: string;
+  }>;
+}) => {
   if (!isEveEnabled()) {
     return null;
   }
@@ -17,11 +30,6 @@ export default function ChatPageRoute({
       <ConversationPage params={params} />
     </Suspense>
   );
-}
-async function ConversationPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  return <EveChatPage conversationId={(await params).id} />;
-}
+};
+
+export default ChatPageRoute;

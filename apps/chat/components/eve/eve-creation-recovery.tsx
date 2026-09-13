@@ -4,16 +4,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { CreationRejected } from "@/lib/eve/create-conversation";
+import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import {
-  type CreationScope,
   moveRejectedProjectCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
+import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 
-export function EveCreationRecovery({
+export const EveCreationRecovery = ({
   ownerId,
   operationId,
   firstMessage,
@@ -25,7 +25,7 @@ export function EveCreationRecovery({
   firstMessage: string;
   scope?: CreationScope;
   initiallyRejected?: boolean;
-}) {
+}) => {
   const router = useRouter();
   const lock = useRef(false);
   const [pending, setPending] =
@@ -33,8 +33,9 @@ export function EveCreationRecovery({
   const [rejected, setRejected] = useState(initiallyRejected);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Reset recovery state when the server-provided rejection status changes.
     setRejected(initiallyRejected);
     try {
       const saved = readCreationRequest(sessionStorage, ownerId, scope);
@@ -47,18 +48,19 @@ export function EveCreationRecovery({
           : undefined
       );
     } catch {
-      setError("The saved request could not be restored.");
+      setFailure("The saved request could not be restored.");
     }
     setLoaded(true);
   }, [ownerId, operationId, scope, initiallyRejected]);
 
-  async function retry() {
+  const retry = async () => {
     if (!pending || lock.current) {
       return;
     }
     lock.current = true;
     setBusy(true);
-    setError("");
+    setFailure("");
+    /* oxlint-disable react/todo -- Preserve the recovery lock cleanup in finally. */
     try {
       const id = await resolveCreationRequest(
         sessionStorage,
@@ -67,20 +69,22 @@ export function EveCreationRecovery({
         scope
       );
       window.location.assign(`/chat/${id}`);
-    } catch (cause) {
-      if (cause instanceof CreationRejected && scope?.projectId) {
+    } catch (error) {
+      if (error instanceof CreationRejectedError && scope?.projectId) {
         setRejected(true);
       }
-      setError(
-        cause instanceof Error ? cause.message : "Unable to recover. Try again."
+      setFailure(
+        error instanceof Error ? error.message : "Unable to recover. Try again."
       );
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required recovery lock cleanup in finally.
     } finally {
       lock.current = false;
       setBusy(false);
     }
-  }
+    /* oxlint-enable react/todo */
+  };
 
-  function continueWithoutProject() {
+  const continueWithoutProject = () => {
     if (!(rejected && pending && scope?.projectId)) {
       return;
     }
@@ -92,12 +96,12 @@ export function EveCreationRecovery({
         pending.operationId
       );
       window.location.assign("/");
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Unable to restore the draft."
+    } catch (error) {
+      setFailure(
+        error instanceof Error ? error.message : "Unable to restore the draft."
       );
     }
-  }
+  };
 
   let status = "Checking the saved request…";
   if (loaded) {
@@ -114,8 +118,8 @@ export function EveCreationRecovery({
       <p className="break-words whitespace-pre-wrap">
         {pending ? eveMessageTitle(pending.message) : firstMessage}
       </p>
-      <p role="status">{status}</p>
-      {error && <p role="alert">{error}</p>}
+      <output>{status}</output>
+      {failure && <p role="alert">{failure}</p>}
       {rejected && scope?.projectId ? (
         <Button onClick={continueWithoutProject}>
           Continue without project
@@ -137,4 +141,4 @@ export function EveCreationRecovery({
       )}
     </section>
   );
-}
+};

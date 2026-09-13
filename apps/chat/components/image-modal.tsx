@@ -22,10 +22,10 @@ interface ImageModalProps {
   showActions?: boolean;
 }
 
-async function handleCopyImage(
+const handleCopyImage = async (
   e: React.MouseEvent,
   imageUrl: string | undefined
-) {
+) => {
   e.stopPropagation();
   if (!imageUrl) {
     return;
@@ -36,15 +36,15 @@ async function handleCopyImage(
     const blob = await response.blob();
     await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
     toast.success("Copied image to clipboard!");
-  } catch (_error) {
+  } catch {
     toast.error("Failed to copy image to clipboard");
   }
-}
+};
 
-async function handleDownload(
+const handleDownload = async (
   e: React.MouseEvent,
   imageUrl: string | undefined
-) {
+) => {
   e.stopPropagation();
   if (!imageUrl) {
     return;
@@ -57,55 +57,53 @@ async function handleDownload(
     const a = document.createElement("a");
     a.href = url;
     a.download = `image-${Date.now()}.png`;
-    document.body.appendChild(a);
+    document.body.append(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     URL.revokeObjectURL(url);
-  } catch (_error) {
+  } catch {
     toast.error("Failed to download image");
   }
-}
+};
 
-export function ImageActions({
+export const ImageActions = ({
   className,
   imageUrl,
 }: {
   className?: string;
   imageUrl: string | undefined;
-}) {
-  return (
-    <div className={cn("flex items-center gap-1", className)}>
-      <Button
-        className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
-        onClick={(e) => handleCopyImage(e, imageUrl)}
-        size="icon-sm"
-        title="Copy image"
-        variant="ghost"
-      >
-        <CopyIcon size={16} />
-        <span className="sr-only">Copy image</span>
-      </Button>
-      <Button
-        className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
-        onClick={(e) => handleDownload(e, imageUrl)}
-        size="icon-sm"
-        title="Download image"
-        variant="ghost"
-      >
-        <DownloadIcon size={16} />
-        <span className="sr-only">Download image</span>
-      </Button>
-    </div>
-  );
-}
+}) => (
+  <div className={cn("flex items-center gap-1", className)}>
+    <Button
+      className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
+      onClick={(e) => handleCopyImage(e, imageUrl)}
+      size="icon-sm"
+      title="Copy image"
+      variant="ghost"
+    >
+      <CopyIcon size={16} />
+      <span className="sr-only">Copy image</span>
+    </Button>
+    <Button
+      className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
+      onClick={(e) => handleDownload(e, imageUrl)}
+      size="icon-sm"
+      title="Download image"
+      variant="ghost"
+    >
+      <DownloadIcon size={16} />
+      <span className="sr-only">Download image</span>
+    </Button>
+  </div>
+);
 
-export function ImageModal({
+export const ImageModal = ({
   isOpen,
   onClose,
   imageUrl,
   imageName,
   showActions = true,
-}: ImageModalProps) {
+}: ImageModalProps) => {
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
   return (
@@ -126,27 +124,24 @@ export function ImageModal({
         </DialogClose>
         <button
           className="group flex h-full w-full cursor-pointer items-center justify-center"
-          onClick={() => onClose()}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              onClose();
+            }
+          }}
           type="button"
         >
           {imageUnavailable ? (
-            <span
-              className="flex flex-col items-center gap-3 text-white"
-              role="status"
-            >
+            <output className="flex flex-col items-center gap-3 text-white">
               <ImageOffIcon className="size-10" />
               <span>Image unavailable</span>
-            </span>
+            </output>
           ) : (
             <>
-              {/* biome-ignore lint/performance/noImgElement: Next/Image not desired for modal preview */}
-              {/* biome-ignore lint/correctness/useImageSize: Dynamic image dimensions unknown */}
-              {/* biome-ignore lint/a11y/useKeyWithClickEvents: Click handled by parent button */}
-              {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: Stops propagation to parent and handles loading failure */}
+              {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
               <img
                 alt={imageName ?? "Expanded image"}
                 className="max-h-[90vh] max-w-[90vw] object-contain"
-                onClick={(e) => e.stopPropagation()}
                 onError={handleImageError}
                 src={imageUrl || undefined}
               />
@@ -162,4 +157,4 @@ export function ImageModal({
       </DialogContent>
     </Dialog>
   );
-}
+};

@@ -1,3 +1,5 @@
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -27,12 +29,12 @@ test("moves native conversations from sidebar and project rows with recoverable 
     .parse(await response.json()).result.data.json.id;
   try {
     const created = await page.request.post("/api/agent-conversations", {
-      headers: { origin: new URL(page.url()).origin },
       data: {
-        operationId: crypto.randomUUID(),
-        modelId: "openai/gpt-4.1-mini-fast",
         message: "Reply exactly move-fixture-ok.",
+        modelId: "openai/gpt-4.1-mini-fast",
+        operationId: crypto.randomUUID(),
       },
+      headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
@@ -42,16 +44,18 @@ test("moves native conversations from sidebar and project rows with recoverable 
       { timeout: 90_000 }
     );
     const projectsRoute = (url: URL) => url.pathname.includes("project.list");
-    let releaseProjects: () => void = () => undefined;
+    let releaseProjects: () => void = () => {
+      /* empty */
+    };
     const projectsGate = new Promise<void>((resolve) => {
       releaseProjects = resolve;
     });
     await page.route(projectsRoute, async (route) => {
       await projectsGate;
       await route.fulfill({
-        status: 500,
-        contentType: "application/json",
         body: "{}",
+        contentType: "application/json",
+        status: 500,
       });
     });
     await page.reload();
@@ -61,20 +65,20 @@ test("moves native conversations from sidebar and project rows with recoverable 
         .count()
     ) {
       await page
-        .getByRole("button", { name: "Expand sidebar", exact: true })
+        .getByRole("button", { exact: true, name: "Expand sidebar" })
         .first()
         .click();
     }
     const sidebarRow = page
       .locator('[data-sidebar="menu-item"]')
       .filter({ has: page.locator(`a[href="/chat/${id}"]`) });
-    await sidebarRow.getByRole("button", { name: "More", exact: true }).click();
+    await sidebarRow.getByRole("button", { exact: true, name: "More" }).click();
     await page.getByRole("menuitem", { name: "Move to project" }).click();
     const dialog = page.getByRole("dialog", { name: "Move to project" });
     await expect(dialog.getByRole("status")).toHaveText("Loading projects…");
     await dialog.screenshot({
-      path: testInfo.outputPath("move-loading.png"),
       animations: "disabled",
+      path: testInfo.outputPath("move-loading.png"),
       style: screenshotStyle,
     });
     releaseProjects();
@@ -82,37 +86,39 @@ test("moves native conversations from sidebar and project rows with recoverable 
       "Could not load projects."
     );
     await dialog.screenshot({
-      path: testInfo.outputPath("move-load-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("move-load-error.png"),
       style: screenshotStyle,
     });
     await page.unroute(projectsRoute);
-    await dialog.getByRole("button", { name: "Retry", exact: true }).click();
+    await dialog.getByRole("button", { exact: true, name: "Retry" }).click();
     await expect(
-      dialog.getByRole("combobox", { name: "Project", exact: true })
+      dialog.getByRole("combobox", { exact: true, name: "Project" })
     ).toBeEnabled();
     await dialog.getByRole("combobox").selectOption(projectId);
     await page.route(
       (url) => url.pathname.includes("eve.assignProject"),
       (route) =>
         route.fulfill({
-          status: 500,
-          contentType: "application/json",
           body: "{}",
+          contentType: "application/json",
+          status: 500,
         }),
       { times: 1 }
     );
-    await dialog.getByRole("button", { name: "Move", exact: true }).click();
+    await dialog.getByRole("button", { exact: true, name: "Move" }).click();
     await expect(dialog.getByRole("alert")).toContainText(
       "Could not move the conversation."
     );
     await expect(dialog.getByRole("combobox")).toHaveValue(projectId);
     await dialog.screenshot({
-      path: testInfo.outputPath("move-save-error.png"),
       animations: "disabled",
+      path: testInfo.outputPath("move-save-error.png"),
       style: screenshotStyle,
     });
-    let releaseMove: () => void = () => undefined;
+    let releaseMove: () => void = () => {
+      /* empty */
+    };
     const moveGate = new Promise<void>((resolve) => {
       releaseMove = resolve;
     });
@@ -124,13 +130,13 @@ test("moves native conversations from sidebar and project rows with recoverable 
       },
       { times: 1 }
     );
-    await dialog.getByRole("button", { name: "Move", exact: true }).click();
+    await dialog.getByRole("button", { exact: true, name: "Move" }).click();
     await expect(
-      dialog.getByRole("button", { name: "Moving…", exact: true })
+      dialog.getByRole("button", { exact: true, name: "Moving…" })
     ).toBeDisabled();
     await dialog.screenshot({
-      path: testInfo.outputPath("move-pending.png"),
       animations: "disabled",
+      path: testInfo.outputPath("move-pending.png"),
       style: screenshotStyle,
     });
     releaseMove();
@@ -139,22 +145,22 @@ test("moves native conversations from sidebar and project rows with recoverable 
       page.locator(`a[href="/project/${projectId}/chat/${id}"]`)
     ).toBeVisible();
     await page.goto(`/project/${projectId}`);
-    await page.setViewportSize({ width: 390, height: 850 });
+    await page.setViewportSize({ height: 850, width: 390 });
     const surface = page.locator("section").filter({
-      has: page.getByRole("textbox", { name: "Message", exact: true }),
+      has: page.getByRole("textbox", { exact: true, name: "Message" }),
     });
     const projectRow = surface.locator("li").filter({
       has: page.locator(`a[href="/project/${projectId}/chat/${id}"]`),
     });
-    await projectRow.getByRole("button", { name: "More", exact: true }).click();
+    await projectRow.getByRole("button", { exact: true, name: "More" }).click();
     await page.getByRole("menuitem", { name: "Move to project" }).click();
     await dialog.getByRole("combobox").selectOption("");
     await dialog.screenshot({
-      path: testInfo.outputPath("move-remove-mobile.png"),
       animations: "disabled",
+      path: testInfo.outputPath("move-remove-mobile.png"),
       style: screenshotStyle,
     });
-    await dialog.getByRole("button", { name: "Move", exact: true }).click();
+    await dialog.getByRole("button", { exact: true, name: "Move" }).click();
     await expect(dialog).not.toBeVisible();
     await expect(projectRow).toHaveCount(0);
     await page.goto(`/chat/${id}`);

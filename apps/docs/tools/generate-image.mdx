@@ -1,0 +1,39 @@
+---
+title: Generate Image
+description: Install image generation and editing through your selected AI gateway
+---
+
+## Select during creation
+
+```bash
+npx @chat-js/cli@latest create my-app --yes --image-generation-tool generate-image
+```
+
+Interactive creation offers the built-in gateway implementation or an external registry item when you enable image generation. The built-in implementation uses your selected [gateway](../gateways/overview) and durable [file storage](../storage). Configure their credentials and an image-capable default model before running it.
+
+## Installation
+
+In an existing ChatJS app with registry-based image tools:
+
+```bash
+npx @chat-js/cli@latest add generate-image
+```
+
+Enable `ai.tools.image.enabled` and set `ai.tools.image.default` in `chat.config.ts`.
+
+You receive `tools/chatjs/generate-image/tool.ts`, `renderer.tsx`, and `chatjs.json`. Sync generates the registration and credential configuration. Fresh apps without image generation receive neither this implementation nor its renderer. Shared image viewing and storage helpers remain available to other app features.
+
+## Behavior
+
+The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image creation and editing using attachments or the previous generated image. It uploads results through the configured Files SDK storage and reports model usage to the request's optional cost accumulator. See [Image Generation](../features/image-generation) for model selection and editing behavior.
+
+## External implementations
+
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --image-generation-tool https://example.com/r/image-tool.json
+```
+
+Declare `slot: "generateImage"` in your registry metadata and installed descriptor. Export a standard AI SDK tool with your own input/output schemas. A renderer is optional. External tools do not need a gateway image default. Declare provider credentials in `envRequirements` for the CLI checklist and app validation. Only one item can occupy this selection.
+
+The host supplies optional `attachments`, `lastGeneratedImage`, `selectedModel`, and `costAccumulator` through `ChatToolContext`. The built-in previous-image helper recognizes an `imageUrl` result. Other result schemas work as tools but do not participate in that helper automatically. See [Authoring Tools](./authoring).

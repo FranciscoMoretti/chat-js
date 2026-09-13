@@ -1,19 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import type { ReactNode } from "react";
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
-import {
-  type AppModelDefinition,
-  getDefaultEnabledModels,
-} from "@/lib/ai/app-models";
+import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -27,13 +20,13 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
   undefined
 );
 
-export function ChatModelsProvider({
+export const ChatModelsProvider = ({
   children,
   models,
 }: {
   children: ReactNode;
   models: AppModelDefinition[];
-}) {
+}) => {
   const trpc = useTRPC();
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -72,20 +65,22 @@ export function ChatModelsProvider({
     (modelId: string) => allModelsMap.get(modelId),
     [allModelsMap]
   );
+  const contextValue = useMemo(
+    () => ({ allModels: models, getModelById, models: filteredModels }),
+    [filteredModels, getModelById, models]
+  );
 
   return (
-    <ChatModelsContext.Provider
-      value={{ models: filteredModels, allModels: models, getModelById }}
-    >
+    <ChatModelsContext.Provider value={contextValue}>
       {children}
     </ChatModelsContext.Provider>
   );
-}
+};
 
-export function useChatModels() {
+export const useChatModels = () => {
   const context = useContext(ChatModelsContext);
   if (context === undefined) {
     throw new Error("useChatModels must be used within a ChatModelsProvider");
   }
   return context;
-}
+};

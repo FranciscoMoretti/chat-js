@@ -1,3 +1,1 @@
-import { webdav } from "files-sdk/webdav";
-
-export const createStorageAdapter = webdav;
+export { webdav as createStorageAdapter } from "files-sdk/webdav";

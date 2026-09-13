@@ -15,13 +15,15 @@ const log = createModuleLogger("ai/gateways/fallback");
  * IDs from a different provider, so returning them would cause resolution
  * errors — an empty array is safer.
  */
-export function getFallbackModels(gateway: string): readonly AiGatewayModel[] {
+export const getFallbackModels = (
+  gateway: string
+): readonly AiGatewayModel[] => {
   if (generatedForGateway !== gateway) {
     log.warn(
-      { expected: gateway, actual: generatedForGateway },
+      { actual: generatedForGateway, expected: gateway },
       "Fallback snapshot was generated for a different gateway, skipping. Run `bun fetch:models` to regenerate."
     );
     return [];
   }
   return fallbackModels as unknown as AiGatewayModel[];
-}
+};

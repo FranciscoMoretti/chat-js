@@ -14,23 +14,21 @@ const initialMessage: UIMessage = {
   role: "user",
 };
 
-function chatMessage(
+const chatMessage = (
   id: string,
   text: string,
   role: "assistant" | "user" = "user"
-): ChatMessage {
-  return {
-    id,
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date(0),
-      parentMessageId: null,
-      selectedModel: gatewayModelDefaults.workflows.title,
-    },
-    parts: [{ text, type: "text" }],
-    role,
-  };
-}
+): ChatMessage => ({
+  id,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date(0),
+    parentMessageId: null,
+    selectedModel: gatewayModelDefaults.workflows.title,
+  },
+  parts: [{ text, type: "text" }],
+  role,
+});
 
 describe("ZustandThreadState", () => {
   it("commits one synchronous atomic thread update", () => {

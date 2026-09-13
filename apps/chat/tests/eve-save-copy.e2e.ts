@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -23,28 +27,28 @@ import {
 import { env } from "../lib/env";
 import type { EveCopySeed } from "../lib/eve/copy-journal-contract";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
-import { EveModelUnavailable } from "../lib/eve/model-selection";
+import { EveModelUnavailableError } from "../lib/eve/model-selection";
 import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const mocks = vi.hoisted(() => ({
-  source: vi.fn(),
-  model: vi.fn(),
-  request: vi.fn(),
   download: vi.fn(),
-  upload: vi.fn(),
-  remove: vi.fn(),
   files: new Map<string, Blob>(),
+  model: vi.fn(),
   native: new Map<string, { sessionId: string; seed: EveCopySeed }>(),
+  remove: vi.fn(),
+  request: vi.fn(),
+  source: vi.fn(),
+  upload: vi.fn(),
 }));
 vi.mock("../lib/eve/public-copy-source", () => ({
   readPublicEveCopySource: mocks.source,
 }));
 vi.mock("../lib/eve/model-selection", () => ({
+  EveModelUnavailableError: class extends Error {},
   loadEveModelDefinition: mocks.model,
-  EveModelUnavailable: class extends Error {},
 }));
 vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
@@ -64,8 +68,8 @@ const owners = [ownerId, sourceOwnerId];
 const modelId = "google/gemini-2.5-flash-lite";
 await db.insert(user).values(
   owners.map((id) => ({
-    id,
     email: `${id}@test.invalid`,
+    id,
     name: "Save copy fixture",
   }))
 );
@@ -123,10 +127,10 @@ beforeEach(() => {
           : Response.json({ code: "eve_operation_not_found" }, { status: 404 });
       }
       const body = z
-        .strictObject({ seed: z.literal(true), operationId: z.uuid() })
+        .strictObject({ operationId: z.uuid(), seed: z.literal(true) })
         .parse(JSON.parse(String(init?.body)));
       const seed = await resolveAcceptedEveCopySeed(owner, body.operationId);
-      const native = { sessionId: crypto.randomUUID(), seed };
+      const native = { seed, sessionId: crypto.randomUUID() };
       mocks.native.set(`${owner}/${body.operationId}`, native);
       return Response.json({ sessionId: native.sessionId });
     }
@@ -146,49 +150,47 @@ async function fixture() {
   const head = crypto.randomUUID();
   await db.insert(eveConversation).values({
     ...source,
-    operationId: crypto.randomUUID(),
     firstMessage: source.title,
+    operationId: crypto.randomUUID(),
     state: "bound",
     visibility: "public",
   });
   await db.insert(eveStoredFile).values({ key, ownerId: sourceOwnerId });
   await db
     .insert(eveFileReference)
-    .values({ key, ownerId: sourceOwnerId, conversationId: source.id });
+    .values({ conversationId: source.id, key, ownerId: sourceOwnerId });
   await db.insert(eveDocumentRevision).values([
     {
-      id: first,
-      documentId,
-      conversationId: source.id,
-      ownerId: sourceOwnerId,
-      operationId: "first",
-      title: "Published",
       content: `/api/files/content?key=${key}`,
+      conversationId: source.id,
+      documentId,
+      id: first,
       kind: "text",
+      operationId: "first",
+      ownerId: sourceOwnerId,
+      title: "Published",
     },
     {
-      id: head,
-      documentId,
+      content: "Current revision without image",
       conversationId: source.id,
-      ownerId: sourceOwnerId,
+      documentId,
+      id: head,
+      kind: "text",
       operationId: "head",
+      ownerId: sourceOwnerId,
       parentRevisionId: first,
       title: "Published",
-      content: "Current revision without image",
-      kind: "text",
     },
   ]);
   await db.insert(eveDocumentHead).values({
     conversationId: source.id,
-    ownerId: sourceOwnerId,
     documentId,
+    ownerId: sourceOwnerId,
     revisionId: head,
   });
   mocks.files.set(key, new Blob(["document image"], { type: "image/png" }));
   const projection = prepareEveCopyTranscript([
     {
-      type: "history.seeded",
-      meta: { id: "history", at: new Date(0).toISOString() },
       data: {
         messages: [
           {
@@ -220,34 +222,36 @@ async function fixture() {
           },
         ],
       },
+      meta: { at: new Date(0).toISOString(), id: "history" },
+      type: "history.seeded",
     },
     {
-      type: "session.waiting",
-      meta: { id: "idle", at: new Date(0).toISOString() },
       data: { continuationToken: "private-token", wait: "next-user-message" },
+      meta: { at: new Date(0).toISOString(), id: "idle" },
+      type: "session.waiting",
     },
   ]);
   await db.insert(eveImportedDocumentCheckpoint).values({
     conversationId: source.id,
-    ownerId: sourceOwnerId,
     messageIndex: 0,
+    ownerId: sourceOwnerId,
   });
   mocks.source.mockResolvedValue({
     ...source,
-    projection,
     boundaries: [{ messageIndex: 0, sourceKind: "imported", sourceIndex: 0 }],
+    projection,
   });
   return {
-    source,
-    key,
     documentId,
     first,
     head,
     input: {
-      sourceConversationId: source.id,
-      operationId: crypto.randomUUID(),
       modelId,
+      operationId: crypto.randomUUID(),
+      sourceConversationId: source.id,
     },
+    key,
+    source,
   };
 }
 
@@ -324,7 +328,7 @@ test("a lost native reply recovers without reopening or reading a revoked source
   expect(operation?.conversation.state).toBe("uncertain");
   await db
     .update(eveConversation)
-    .set({ visibility: "private", state: "deleting" })
+    .set({ state: "deleting", visibility: "private" })
     .where(eq(eveConversation.id, f.source.id));
   mocks.files.delete(f.key);
   mocks.source.mockRejectedValue(new Error("Source revoked"));
@@ -446,9 +450,9 @@ test("revocation before acceptance purges only the rejected destination and keep
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Sharing was revoked");
   expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
-    state: "deleted",
     creationKind: "copy",
     sessionId: null,
+    state: "deleted",
   });
   expect(mocks.remove).toHaveBeenCalledTimes(1);
   expect(mocks.files.has(f.key)).toBe(true);
@@ -486,8 +490,8 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("copy was rejected");
   expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
-    state: "deleted",
     creationKind: "copy",
+    state: "deleted",
   });
   expect(mocks.request).not.toHaveBeenCalled();
   expect(mocks.source).toHaveBeenCalledTimes(1);
@@ -504,15 +508,15 @@ test("deletion of an unwritten source file rejects preparation before another st
   mocks.files.delete(f.key);
   await db
     .update(eveConversation)
-    .set({ visibility: "private", state: "deleted" })
+    .set({ state: "deleted", visibility: "private" })
     .where(eq(eveConversation.id, f.source.id));
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Sharing was revoked");
   expect(mocks.download).toHaveBeenCalledTimes(reads);
   expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
-    state: "deleted",
     creationKind: "copy",
+    state: "deleted",
   });
   expect(mocks.request).not.toHaveBeenCalled();
 });
@@ -524,7 +528,9 @@ test("a definitive model rejection tombstones the operation but transient catalo
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Catalog unavailable");
   expect(await getEveCreation(ownerId, f.input.operationId)).toBeUndefined();
-  mocks.model.mockRejectedValueOnce(new EveModelUnavailable("Model removed"));
+  mocks.model.mockRejectedValueOnce(
+    new EveModelUnavailableError("Model removed")
+  );
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Model removed");

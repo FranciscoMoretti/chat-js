@@ -1,4 +1,8 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
+import type * as EveClient from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
@@ -16,9 +20,9 @@ import { voteEveMessage } from "../lib/eve/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
-const native = vi.hoisted(() => ({ snapshot: vi.fn(), attach: vi.fn() }));
+const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 vi.mock("eve/client", async (original) => ({
-  ...(await original<typeof import("eve/client")>()),
+  ...(await original<typeof EveClient>()),
   Client: class {
     sessions = { attach: native.attach };
   },
@@ -27,8 +31,8 @@ vi.mock("eve/client", async (original) => ({
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db.insert(user).values({
-  id: owner,
   email: `${owner}@test.invalid`,
+  id: owner,
   name: "Feedback fixture",
 });
 afterAll(async () => {
@@ -37,20 +41,20 @@ afterAll(async () => {
 });
 const events: MessageStreamEvent[] = [
   {
-    type: "message.received",
-    meta: { id: "received", at: "2026-09-11T00:00:00Z" },
     data: { message: "Question", sequence: 0, turnId: "turn_0" },
+    meta: { at: "2026-09-11T00:00:00Z", id: "received" },
+    type: "message.received",
   },
   {
-    type: "message.completed",
-    meta: { id: "completed", at: "2026-09-11T00:00:01Z" },
     data: {
-      message: "Answer",
       finishReason: "stop",
+      message: "Answer",
       sequence: 1,
       stepIndex: 0,
       turnId: "turn_0",
     },
+    meta: { at: "2026-09-11T00:00:01Z", id: "completed" },
+    type: "message.completed",
   },
 ];
 beforeEach(() => {
@@ -74,13 +78,13 @@ test("native assistant feedback persists, replaces a vote and stays private when
     type: "up",
   };
   expect(await voteEveMessage(owner, input)).toEqual({
-    messageId: input.messageId,
     isUpvoted: true,
+    messageId: input.messageId,
   });
   await voteEveMessage(owner, { ...input, type: "down" });
   await voteEveMessage(owner, { ...input, type: "down" });
   expect(await getEveMessageVotes(owner, row.id)).toEqual([
-    { messageId: input.messageId, isUpvoted: false },
+    { isUpvoted: false, messageId: input.messageId },
   ]);
   await updateEveConversationMetadata(owner, row.id, { visibility: "public" });
   expect(await getEveMessageVotes("stranger", row.id)).toEqual([]);
@@ -140,7 +144,7 @@ test("the same native message ID in a different conversation has independent fee
     type: "down",
   });
   expect(await getEveMessageVotes(owner, first.id)).toEqual([
-    { messageId: "turn_0:assistant", isUpvoted: true },
+    { isUpvoted: true, messageId: "turn_0:assistant" },
   ]);
   native.snapshot.mockRejectedValueOnce(
     new Error("Native snapshot unavailable")
@@ -153,6 +157,6 @@ test("the same native message ID in a different conversation has independent fee
     })
   ).rejects.toThrow("Native snapshot unavailable");
   expect(await getEveMessageVotes(owner, second.id)).toEqual([
-    { messageId: "turn_0:assistant", isUpvoted: false },
+    { isUpvoted: false, messageId: "turn_0:assistant" },
   ]);
 });

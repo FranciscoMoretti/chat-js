@@ -1,9 +1,9 @@
 import type { ChatMessage, ToolName } from "@/lib/ai/types";
 
-export function addExplicitToolRequestToMessages(
+export const addExplicitToolRequestToMessages = (
   messages: ChatMessage[],
   explicitlyRequestedTools: ToolName[] | null
-) {
+) => {
   const lastAssistantMessage = messages.findLast(
     (message) => message.role === "assistant"
   );
@@ -29,15 +29,16 @@ export function addExplicitToolRequestToMessages(
         part.output.format === "clarifying_questions"
       ) {
         toolsToRequest = ["deepResearch"];
-        break; // Found it, no need to continue looping
+        // Found it, no need to continue looping.
+        break;
       }
     }
   }
 
   if (toolsToRequest.length > 0 && lastMessage) {
     lastMessage.parts.push({
-      type: "text",
       text: `I want to use the tools ${toolsToRequest.join(", or ")}`,
+      type: "text",
     });
   }
-}
+};

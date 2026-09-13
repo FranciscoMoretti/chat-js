@@ -5,13 +5,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShareButton, ShareDialogView } from "@/components/share-button";
 import { useTRPC } from "@/trpc/react";
 
-export function EveShareDialogContent({
+export const EveShareDialogContent = ({
   chatId,
   onClose,
 }: {
   chatId: string;
   onClose: () => void;
-}) {
+}) => {
   const trpc = useTRPC();
   const cache = useQueryClient();
   const query = useQuery(trpc.eve.get.queryOptions({ id: chatId }));
@@ -33,15 +33,13 @@ export function EveShareDialogContent({
       {query.error && <p role="alert">{query.error.message}</p>}
     </>
   );
-}
+};
 
-export function EveShareButton({ chatId }: { chatId: string }) {
-  return (
-    <ShareButton
-      chatId={chatId}
-      renderContent={(onClose) => (
-        <EveShareDialogContent chatId={chatId} onClose={onClose} />
-      )}
-    />
-  );
-}
+export const EveShareButton = ({ chatId }: { chatId: string }) => (
+  <ShareButton
+    chatId={chatId}
+    renderContent={(onClose) => (
+      <EveShareDialogContent chatId={chatId} onClose={onClose} />
+    )}
+  />
+);

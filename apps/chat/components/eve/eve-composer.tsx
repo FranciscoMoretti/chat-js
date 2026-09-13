@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  type ComponentProps,
-  type Dispatch,
-  type SetStateAction,
-  useRef,
-} from "react";
+import { useRef } from "react";
+import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
@@ -14,7 +10,8 @@ import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
 import { AttachmentsButton } from "@/components/multimodal-input";
 import { ResponsiveTools } from "@/components/responsive-tools";
-import { expandSelectedModelValue, type UiToolName } from "@/lib/ai/types";
+import { expandSelectedModelValue } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -23,7 +20,7 @@ import { useSession } from "@/providers/session-provider";
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
 
-export function EveComposer({
+export const EveComposer = ({
   files,
   retainedModelId,
   retainedModelIds,
@@ -41,7 +38,7 @@ export function EveComposer({
   retainedModelId?: string;
   retainedModelIds?: string[];
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
-}) {
+}) => {
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const selected = useDefaultModel();
@@ -62,30 +59,31 @@ export function EveComposer({
     );
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
-  function upload(incoming: File[]) {
+  const upload = (incoming: File[]) => {
     if (!session?.user) {
       toast.error("Sign in to attach files.");
       return;
     }
     if (!uploadLocked) {
-      files.upload(incoming).catch(() => undefined);
+      // oxlint-disable-next-line promise/prefer-await-to-then -- Dropzone callbacks intentionally fire-and-forget uploads.
+      files.upload(incoming).catch(() => null);
     }
-  }
+  };
   const { getRootProps } = useDropzone({
-    onDrop: upload,
+    disabled: uploadLocked,
     noClick: true,
     noKeyboard: true,
-    disabled: uploadLocked,
+    onDrop: upload,
   });
   return (
-    <div {...getRootProps({ role: "group", "aria-label": "Message composer" })}>
+    <div {...getRootProps({ "aria-label": "Message composer", role: "group" })}>
       <input
         aria-label="Attach files"
         className="hidden"
         disabled={uploadLocked}
         multiple
         onChange={(event) => {
-          upload(Array.from(event.target.files ?? []));
+          upload([...(event.target.files ?? [])]);
           event.target.value = "";
         }}
         ref={input}
@@ -113,7 +111,7 @@ export function EveComposer({
         onPaste={(event) => {
           if (event.clipboardData.files.length) {
             event.preventDefault();
-            upload(Array.from(event.clipboardData.files));
+            upload([...event.clipboardData.files]);
           }
         }}
         tools={
@@ -150,4 +148,4 @@ export function EveComposer({
       )}
     </div>
   );
-}
+};

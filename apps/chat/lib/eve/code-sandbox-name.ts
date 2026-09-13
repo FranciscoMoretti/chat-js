@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 /** Stable provider identity without exposing account IDs in resource names. */
-export function eveCodeSandboxName({
+export const eveCodeSandboxName = ({
   ownerId,
   sessionId,
   callId,
@@ -10,8 +10,11 @@ export function eveCodeSandboxName({
   ownerId: string | undefined;
   sessionId: string | undefined;
   callId: string;
-  provider: { teamId: string; projectId: string };
-}) {
+  provider: {
+    teamId: string;
+    projectId: string;
+  };
+}) => {
   if (
     !(
       ownerId?.trim() &&
@@ -38,4 +41,4 @@ export function eveCodeSandboxName({
     )
     .digest("hex");
   return `chatjs-code-${digest.slice(0, 48)}`;
-}
+};

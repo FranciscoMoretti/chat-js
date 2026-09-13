@@ -1,3 +1,1 @@
-import { gcs } from "files-sdk/gcs";
-
-export const createStorageAdapter = gcs;
+export { gcs as createStorageAdapter } from "files-sdk/gcs";

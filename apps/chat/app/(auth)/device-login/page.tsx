@@ -10,44 +10,26 @@ import { config } from "@/lib/config";
 import { toSearchParamRecord } from "@/lib/electron-auth";
 
 export const metadata: Metadata = {
-  title: "Device Login",
   description: "Sign in for the desktop app",
+  title: "Device Login",
 };
 
-function DeviceLoginFallback() {
-  return (
-    <div className="container mx-auto flex h-dvh w-screen items-center justify-center px-4">
-      <AuthCardSkeleton
-        cardClassName="w-full max-w-md"
-        description="Connecting your desktop app"
-        title="Device login"
-        variant="device"
-      />
-    </div>
-  );
-}
+const DeviceLoginFallback = () => (
+  <div className="container mx-auto flex h-dvh w-screen items-center justify-center px-4">
+    <AuthCardSkeleton
+      cardClassName="w-full max-w-md"
+      description="Connecting your desktop app"
+      title="Device login"
+      variant="device"
+    />
+  </div>
+);
 
-export default function DeviceLoginRoute({
+const DeviceLoginContent = async ({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  if (!config.desktopApp.enabled) {
-    redirect("/login");
-  }
-
-  return (
-    <Suspense fallback={<DeviceLoginFallback />}>
-      <DeviceLoginContent searchParams={searchParams} />
-    </Suspense>
-  );
-}
-
-async function DeviceLoginContent({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+}) => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -66,4 +48,22 @@ async function DeviceLoginContent({
       <DeviceLoginPage />
     </Suspense>
   );
-}
+};
+
+const DeviceLoginRoute = ({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) => {
+  if (!config.desktopApp.enabled) {
+    redirect("/login");
+  }
+
+  return (
+    <Suspense fallback={<DeviceLoginFallback />}>
+      <DeviceLoginContent searchParams={searchParams} />
+    </Suspense>
+  );
+};
+
+export default DeviceLoginRoute;

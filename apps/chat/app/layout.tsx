@@ -13,31 +13,32 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { config } from "@/lib/config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(config.appUrl),
-  title: config.appTitle ?? config.appName,
   description: config.appDescription,
+  metadataBase: new URL(config.appUrl),
   openGraph: {
-    siteName: config.appName,
-    url: config.appUrl,
-    title: config.appTitle ?? config.appName,
     description: config.appDescription,
+    siteName: config.appName,
+    title: config.appTitle ?? config.appName,
+    url: config.appUrl,
   },
+  title: config.appTitle ?? config.appName,
 };
 
 export const viewport = {
-  maximumScale: 1, // Disable auto-zoom on mobile Safari
   interactiveWidget: "resizes-content" as const,
+  // Disable auto-zoom on mobile Safari
+  maximumScale: 1,
 };
 
 const geist = Geist({
-  subsets: ["latin"],
   display: "swap",
+  subsets: ["latin"],
   variable: "--font-geist",
 });
 
 const geistMono = Geist_Mono({
-  subsets: ["latin"],
   display: "swap",
+  subsets: ["latin"],
   variable: "--font-geist-mono",
 });
 
@@ -61,52 +62,53 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-export default async function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  return (
-    <html
-      className={`${geist.variable} ${geistMono.variable}`}
-      // `next-themes` injects an extra classname to the body element to avoid
-      // visual flicker before hydration. Hence the `suppressHydrationWarning`
-      // prop is necessary to avoid the React hydration mismatch warning.
-      // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
-      lang="en"
-      suppressHydrationWarning
-    >
-      <head>
-        <Script id="theme-color-script" strategy="beforeInteractive">
-          {THEME_COLOR_SCRIPT}
-        </Script>
-        {process.env.NODE_ENV === "production" ? null : (
-          <Script
-            src="https://unpkg.com/react-scan/dist/auto.global.js"
-            strategy="beforeInteractive"
-          />
-        )}
-      </head>
-      <body className="antialiased">
-        <ElectronAuthHandler />
+}>) => (
+  <html
+    className={`${geist.variable} ${geistMono.variable}`}
+    // `next-themes` injects an extra classname to the body element to avoid
+    // visual flicker before hydration. Hence the `suppressHydrationWarning`
+    // prop is necessary to avoid the React hydration mismatch warning.
+    // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
+    lang="en"
+    suppressHydrationWarning
+  >
+    <head>
+      <Script id="theme-color-script" strategy="beforeInteractive">
+        {THEME_COLOR_SCRIPT}
+      </Script>
+      {process.env.NODE_ENV === "production" ||
+      process.env.PLAYWRIGHT ? null : (
         <Script
-          src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
-          strategy="afterInteractive"
+          src="https://unpkg.com/react-scan/dist/auto.global.js"
+          strategy="beforeInteractive"
         />
-        <NuqsAdapter>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-            enableSystem
-          >
-            <Toaster position="top-center" />
-            {children}
-          </ThemeProvider>
-        </NuqsAdapter>
-        <Analytics />
-        <SpeedInsights />
-      </body>
-    </html>
-  );
-}
+      )}
+    </head>
+    <body className="antialiased">
+      <ElectronAuthHandler />
+      <Script
+        src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
+        strategy="afterInteractive"
+      />
+      <NuqsAdapter>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          <Toaster position="top-center" />
+          {children}
+        </ThemeProvider>
+      </NuqsAdapter>
+      <Analytics />
+      <SpeedInsights />
+    </body>
+  </html>
+);
+
+export default RootLayout;

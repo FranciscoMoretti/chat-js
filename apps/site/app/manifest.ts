@@ -4,26 +4,24 @@ import { siteConfig, siteLinks } from "@/lib/site-config";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${siteConfig.name} - Open-Source AI Chat Starter`,
-    short_name: siteConfig.shortName,
-    description: siteConfig.description,
-    start_url: "/",
-    display: "standalone",
     background_color: "#f8f7f4",
-    theme_color: "#09090b",
+    categories: ["developer tools", "productivity", "artificial intelligence"],
+    description: siteConfig.description,
+    display: "standalone",
     icons: [
       {
-        src: "/icon.svg",
         sizes: "any",
+        src: "/icon.svg",
         type: "image/svg+xml",
       },
       {
-        src: "/favicon.ico",
         sizes: "48x48",
+        src: "/favicon.ico",
         type: "image/x-icon",
       },
     ],
-    categories: ["developer tools", "productivity", "artificial intelligence"],
+    name: `${siteConfig.name} - Open-Source AI Chat Starter`,
+    short_name: siteConfig.shortName,
     shortcuts: [
       {
         name: "Documentation",
@@ -34,5 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: siteLinks.demo,
       },
     ],
+    start_url: "/",
+    theme_color: "#09090b",
   };
 }

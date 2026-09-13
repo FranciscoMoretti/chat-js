@@ -1,3 +1,1 @@
-import { supabase } from "files-sdk/supabase";
-
-export const createStorageAdapter = supabase;
+export { supabase as createStorageAdapter } from "files-sdk/supabase";

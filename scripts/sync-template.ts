@@ -1,20 +1,14 @@
 #!/usr/bin/env bun
-import { createHash } from "node:crypto";
-import {
-  cp,
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative, resolve, sep } from "node:path";
+import path from "node:path";
 
+import rootLintBaseline from "../oxlint-baseline.json";
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
+import { collectSnapshot } from "./sync-template-snapshot";
 
+const { join, relative, resolve, sep } = path;
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -58,7 +52,7 @@ const EXCLUDED_FILES = new Set([
   "bun.lockb",
 ]);
 
-function shouldCopyFilePath(filePath: string): boolean {
+const shouldCopyFilePath = (filePath: string): boolean => {
   const rel = relative(sourceDir, filePath);
   if (!rel || rel.startsWith("..")) {
     return true;
@@ -72,7 +66,7 @@ function shouldCopyFilePath(filePath: string): boolean {
     return false;
   }
   return true;
-}
+};
 
 // ─── electron filter ─────────────────────────────────────────────────────────
 
@@ -91,7 +85,7 @@ const ELECTRON_EXCLUDED_FILES = new Set([
   "branding.json",
 ]);
 
-function shouldCopyElectronFilePath(filePath: string): boolean {
+const shouldCopyElectronFilePath = (filePath: string): boolean => {
   const rel = relative(electronSourceDir, filePath);
   if (!rel || rel.startsWith("..")) {
     return true;
@@ -105,12 +99,14 @@ function shouldCopyElectronFilePath(filePath: string): boolean {
     return false;
   }
   return true;
-}
+};
 
 /** Files removed from the template after copying (relative to destination). */
 const TEMPLATE_REMOVED_FILES = [
   "components/github-link.tsx",
   "components/docs-link.tsx",
+  // This reference-app test requires both built-in tools, which scaffolds may omit.
+  "components/part/tool-part.test.tsx",
 ];
 
 /** Import lines stripped from template files after copying. */
@@ -119,7 +115,7 @@ const TEMPLATE_STRIPPED_IMPORTS = [
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
-async function applyTemplateTransforms(destination: string): Promise<void> {
+const applyTemplateTransforms = async (destination: string): Promise<void> => {
   // Delete excluded files
   await Promise.all(
     TEMPLATE_REMOVED_FILES.map((file) =>
@@ -130,21 +126,21 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
   // Strip imports that reference removed files
   if (TEMPLATE_STRIPPED_IMPORTS.length > 0) {
     const headerPath = join(destination, "components", "header-actions.tsx");
-    let content = await readFile(headerPath, "utf8");
+    let content = await readFile(headerPath, "utf-8");
     for (const imp of TEMPLATE_STRIPPED_IMPORTS) {
       content = content.replace(`${imp}\n`, "");
     }
     // Remove JSX usage of the stripped components
-    content = content.replace(/\s*<DocsLink \/>/g, "");
-    content = content.replace(/\s*<GitHubLink \/>/g, "");
+    content = content.replaceAll(/\s*<DocsLink \/>/gu, "");
+    content = content.replaceAll(/\s*<GitHubLink \/>/gu, "");
     await writeFile(headerPath, content);
   }
 
   // Replace monorepo-aware @source paths with single-app path in globals.css
   const globalsCssPath = join(destination, "app", "globals.css");
-  let globalsCss = await readFile(globalsCssPath, "utf8");
+  let globalsCss = await readFile(globalsCssPath, "utf-8");
   globalsCss = globalsCss.replace(
-    /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/,
+    /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/u,
     '@source "../node_modules/streamdown/dist/*.js";'
   );
   await writeFile(globalsCssPath, globalsCss);
@@ -153,6 +149,28 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     destination,
     threadSourceDir: join(rootDir, "packages", "thread", "src"),
   });
+
+  // Preserve file-scoped exceptions when workspace source is copied into a scaffold.
+  const baselinePath = join(destination, "oxlint-baseline.json");
+  const baseline = JSON.parse(
+    await readFile(baselinePath, "utf-8")
+  ) as typeof rootLintBaseline;
+  const sourcePaths = [
+    ["packages/thread/src/", "lib/thread/"],
+    ["apps/electron/", "electron/"],
+    ["packages/registry/src/tools/", "tools/chatjs/"],
+  ];
+  for (const override of rootLintBaseline.overrides) {
+    const files = override.files.flatMap((file) =>
+      sourcePaths.flatMap(([source, target]) =>
+        file.startsWith(source) ? [target + file.slice(source.length)] : []
+      )
+    );
+    if (files.length > 0) {
+      baseline.overrides.push({ files, rules: override.rules });
+    }
+  }
+  await writeFile(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`);
 
   await vendorPatchedPackage({
     destination,
@@ -166,91 +184,75 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     packageName: "@ai-sdk/mcp",
     patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.45.patch"),
   });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: join(rootDir, "node_modules", "@workflow", "world-postgres"),
+    packageName: "@workflow/world-postgres",
+    patchPath: join(
+      rootDir,
+      "patches",
+      "workflow-world-postgres@5.0.0-beta.40.patch"
+    ),
+  });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
   const rootPackageJson = JSON.parse(
-    await readFile(rootPackageJsonPath, "utf8")
+    await readFile(rootPackageJsonPath, "utf-8")
   ) as { packageManager?: string };
   const packageJsonPath = join(destination, "package.json");
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as {
+  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     packageManager?: string;
   };
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
-}
+};
 
-async function applyElectronTemplateTransforms(
+const applyElectronTemplateTransforms = async (
   destination: string
-): Promise<void> {
+): Promise<void> => {
   // tsconfig.json: rewrite monorepo-specific @/ alias to single-app path
   const tsconfigPath = join(destination, "tsconfig.json");
-  let tsconfig = await readFile(tsconfigPath, "utf8");
-  tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/, '"../*"');
+  let tsconfig = await readFile(tsconfigPath, "utf-8");
+  tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/u, '"../*"');
   await writeFile(tsconfigPath, tsconfig);
 
   // package.json: replace hardcoded package name and repository
   const packageJsonPath = join(destination, "package.json");
-  let packageJson = await readFile(packageJsonPath, "utf8");
+  let packageJson = await readFile(packageJsonPath, "utf-8");
   packageJson = packageJson.replace(
-    /"name": "@chat-js\/electron"/,
+    /"name": "@chat-js\/electron"/u,
     '"name": "__PROJECT_NAME__-electron"'
   );
   packageJson = packageJson.replace(
-    /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/,
+    /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/u,
     '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"'
   );
   await writeFile(packageJsonPath, packageJson);
-}
+};
 
-async function copyElectronTemplate(destination: string): Promise<void> {
-  await rm(destination, { recursive: true, force: true });
+const copyElectronTemplate = async (destination: string): Promise<void> => {
+  await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
-    recursive: true,
     filter: shouldCopyElectronFilePath,
+    recursive: true,
   });
   await applyElectronTemplateTransforms(destination);
-}
+};
 
-async function copyTemplate(destination: string): Promise<void> {
-  await rm(destination, { recursive: true, force: true });
+const copyTemplate = async (destination: string): Promise<void> => {
+  await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
-    recursive: true,
     filter: shouldCopyFilePath,
+    recursive: true,
   });
   await applyTemplateTransforms(destination);
-}
+};
 
-async function collectSnapshot(
-  dir: string,
-  prefix = ""
-): Promise<Map<string, string>> {
-  const entries = await readdir(dir, { withFileTypes: true });
-  const output = new Map<string, string>();
-  for (const entry of entries) {
-    const absolute = join(dir, entry.name);
-    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-    if (entry.isDirectory()) {
-      const nested = await collectSnapshot(absolute, rel);
-      for (const [nestedPath, hash] of nested) {
-        output.set(nestedPath, hash);
-      }
-      continue;
-    }
-    if (!entry.isFile()) {
-      continue;
-    }
-    const bytes = await readFile(absolute);
-    const hash = createHash("sha256").update(bytes).digest("hex");
-    output.set(rel, hash);
-  }
-  return output;
-}
-
-async function assertSynced(
+const assertSynced = async (
   label: string,
   actualDir: string,
   copyFn: (dest: string) => Promise<void>
-): Promise<boolean> {
+): Promise<boolean> => {
   const templateStats = await stat(actualDir).catch(() => null);
   if (!templateStats?.isDirectory()) {
     console.error(
@@ -268,12 +270,12 @@ async function assertSynced(
     collectSnapshot(actualDir),
   ]);
 
-  await rm(tempParent, { recursive: true, force: true });
+  await rm(tempParent, { force: true, recursive: true });
 
-  const expectedEntries = [...expectedSnapshot.entries()].sort((a, b) =>
+  const expectedEntries = [...expectedSnapshot.entries()].toSorted((a, b) =>
     a[0].localeCompare(b[0])
   );
-  const actualEntries = [...actualSnapshot.entries()].sort((a, b) =>
+  const actualEntries = [...actualSnapshot.entries()].toSorted((a, b) =>
     a[0].localeCompare(b[0])
   );
 
@@ -285,14 +287,16 @@ async function assertSynced(
   }
   console.log(`${label}: template is synced.`);
   return true;
-}
+};
 
 if (isCheck) {
   const results = await Promise.all([
     assertSynced("chat-app", templateDir, copyTemplate),
     assertSynced("electron", electronTemplateDir, copyElectronTemplate),
   ]);
-  if (results.some((ok) => !ok)) process.exit(1);
+  if (results.some((ok) => !ok)) {
+    process.exit(1);
+  }
 } else {
   await copyTemplate(templateDir);
   console.log("Synced templates/chat-app from apps/chat.");

@@ -7,7 +7,7 @@ import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
@@ -49,4 +49,4 @@ export async function POST(request: Request) {
       { status: 409 }
     );
   }
-}
+};

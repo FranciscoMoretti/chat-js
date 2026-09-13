@@ -13,23 +13,18 @@ export const ELECTRON_TRUSTED_ORIGINS = [
   `${ELECTRON_APP_SCHEME}://`,
 ] as const;
 
-export function isDesktopAppEnabled(): boolean {
-  return config.desktopApp.enabled;
-}
+export const isDesktopAppEnabled = (): boolean => config.desktopApp.enabled;
 
-export function isElectronRenderer(): boolean {
-  return (
-    isDesktopAppEnabled() &&
-    typeof window !== "undefined" &&
-    typeof window.requestAuth === "function"
-  );
-}
+export const isElectronRenderer = (): boolean =>
+  isDesktopAppEnabled() &&
+  typeof window !== "undefined" &&
+  typeof window.requestAuth === "function";
 
 type SearchParamValue = string | string[] | undefined;
 
-export function toSearchParamRecord(
+export const toSearchParamRecord = (
   searchParams: Record<string, SearchParamValue>
-): Record<string, string> {
+): Record<string, string> => {
   const query: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(searchParams)) {
@@ -38,38 +33,39 @@ export function toSearchParamRecord(
       continue;
     }
 
-    if (Array.isArray(value) && value[0]) {
-      query[key] = value[0];
+    if (Array.isArray(value)) {
+      const [firstValue] = value;
+      if (firstValue) {
+        query[key] = firstValue;
+      }
     }
   }
 
   return query;
-}
+};
 
-export function buildAuthPageHref(
+export const buildAuthPageHref = (
   pathname: string,
   searchParams: Record<string, SearchParamValue>
-): string {
+): string => {
   const query = new URLSearchParams(
     toSearchParamRecord(searchParams)
   ).toString();
   return query ? `${pathname}?${query}` : pathname;
-}
+};
 
-export function isElectronTransferQuery(
+export const isElectronTransferQuery = (
   query: Record<string, string>
-): boolean {
-  return query.client_id === ELECTRON_AUTH_CLIENT_ID;
-}
+): boolean => query.client_id === ELECTRON_AUTH_CLIENT_ID;
 
-export function buildSocialAuthRequest(
+export const buildSocialAuthRequest = (
   query: Record<string, string>,
   origin?: string
 ): {
   callbackURL?: string;
   onRedirectToUrl?: (url: string) => void;
   signInOptions?: SocialAuthSignInOptions;
-} {
+} => {
   const isElectronTransfer =
     isDesktopAppEnabled() && isElectronTransferQuery(query);
   const deviceLoginCallbackURL = origin
@@ -93,4 +89,4 @@ export function buildSocialAuthRequest(
   return {
     callbackURL: query.returnTo,
   };
-}
+};

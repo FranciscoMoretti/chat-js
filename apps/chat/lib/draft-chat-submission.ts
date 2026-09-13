@@ -22,7 +22,7 @@ export interface DraftChatSubmission {
   requestSpecs: ParallelRequestSpec[];
 }
 
-export function buildDraftChatSubmission({
+export const buildDraftChatSubmission = ({
   attachments,
   input,
   normalizedSelectedModel,
@@ -36,9 +36,9 @@ export function buildDraftChatSubmission({
   parallelResponsesEnabled: boolean;
   parentMessageId: string | null;
   selectedTool: UiToolName | null;
-}): DraftChatSubmission {
+}): DraftChatSubmission => {
   const requestedModelIds = expandSelectedModelValue(normalizedSelectedModel);
-  const primaryModelId = requestedModelIds[0];
+  const [primaryModelId] = requestedModelIds;
 
   if (!primaryModelId) {
     throw new Error(
@@ -72,30 +72,30 @@ export function buildDraftChatSubmission({
   return {
     message: {
       id: generateUUID(),
-      parts: [
-        ...attachments.map((attachment) => ({
-          type: "file" as const,
-          url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
-        })),
-        {
-          type: "text",
-          text: input,
-        },
-      ],
       metadata: {
+        activeStreamId: null,
         createdAt: new Date(),
-        parentMessageId,
+        isPrimaryParallel: null,
         parallelGroupId,
         parallelIndex: null,
-        isPrimaryParallel: null,
+        parentMessageId,
         selectedModel: normalizedSelectedModel,
-        activeStreamId: null,
         selectedTool: selectedTool || undefined,
       },
+      parts: [
+        ...attachments.map((attachment) => ({
+          mediaType: attachment.contentType,
+          name: attachment.name,
+          type: "file" as const,
+          url: attachment.url,
+        })),
+        {
+          text: input,
+          type: "text",
+        },
+      ],
       role: "user",
     },
     requestSpecs,
   };
-}
+};

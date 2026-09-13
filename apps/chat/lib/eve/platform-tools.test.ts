@@ -1,93 +1,105 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
-import { webSearchStep } from "../../tools/platform/steps/web-search";
 import type { createEvePlatformResult } from "./platform-result";
 import { executeEvePlatformTool } from "./platform-tools";
 
-vi.mock("../env", () => ({ env: {} }));
+const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
 const settings = vi.hoisted(() => ({ enabled: true }));
+
+vi.mock("../env", () => ({ env: {} }));
 vi.mock("../config", () => ({
   config: {
     ai: {
       tools: {
-        webSearch: settings,
         codeExecution: { enabled: false },
-        video: { enabled: false },
         image: { enabled: false },
+        video: { enabled: false },
+        webSearch: settings,
       },
     },
   },
 }));
-vi.mock("../../tools/platform/steps/web-search", () => ({
-  webSearchStep: vi.fn(),
+vi.mock("../ai/installed-tools", async () => {
+  const [{ tool }, { z }] = await Promise.all([import("ai"), import("zod")]);
+  return {
+    installedTools: {
+      webSearch: tool({
+        description: "Test installed search",
+        execute: async (input, { abortSignal, context, toolCallId }) => {
+          const services = context as {
+            costAccumulator?: {
+              addAPICost: (name: string, costCents: number) => void;
+            };
+            dataStream?: {
+              write: (part: {
+                data: {
+                  message: string;
+                  queries: string[];
+                  status: "completed" | "running";
+                  title: string;
+                  toolCallId: string;
+                  type: "web";
+                };
+                id: string;
+                type: "data-researchUpdate";
+              }) => void;
+            };
+          };
+          services.dataStream?.write({
+            data: {
+              message: input.query,
+              queries: [input.query],
+              status: "running",
+              title: "Searching",
+              toolCallId,
+              type: "web",
+            },
+            id: toolCallId,
+            type: "data-researchUpdate",
+          });
+          const result = await mocks.execute({ abortSignal, input });
+          services.costAccumulator?.addAPICost("webSearch", 5);
+          services.dataStream?.write({
+            data: {
+              message: input.query,
+              queries: [input.query],
+              status: "completed",
+              title: "Search complete",
+              toolCallId,
+              type: "web",
+            },
+            id: toolCallId,
+            type: "data-researchUpdate",
+          });
+          return result;
+        },
+        inputSchema: z.object({ query: z.string() }),
+      }),
+    },
+  };
+});
+vi.mock("./generated-files", () => ({
+  eveGeneratedFileUploader: () => vi.fn(),
+}));
+vi.mock("./code-sandbox-ownership", () => ({
+  eveCodeSandboxOwnership: () => {
+    throw new Error("Unexpected code sandbox in this tool test");
+  },
 }));
 
-const input = {
-  search_queries: [{ query: "example", maxResults: 2 }],
-  searchDepth: "advanced",
-  topics: null,
-  exclude_domains: null,
-};
 const context = {
-  callId: "search-test",
   abortSignal: new AbortController().signal,
+  callId: "search-test",
 };
+const input = { query: "example" };
 
 beforeEach(() => {
   settings.enabled = true;
-  vi.mocked(webSearchStep).mockReset();
+  mocks.execute.mockReset();
 });
 
-test("streams native progress before the search resolves, then persists one merged result and charge", async () => {
-  const deferred =
-    Promise.withResolvers<Awaited<ReturnType<typeof webSearchStep>>>();
-  vi.mocked(webSearchStep).mockReturnValue(deferred.promise);
-  const iterator = executeEvePlatformTool("webSearch", input, context, []);
-  const first = await iterator.next();
-  expect(first.value?.updates).toContainEqual(
-    expect.objectContaining({ type: "started" })
-  );
-  const running = await iterator.next();
-  expect(running.value?.updates).toContainEqual(
-    expect.objectContaining({ type: "web", status: "running" })
-  );
-  expect(webSearchStep).toHaveBeenCalledWith(
-    expect.objectContaining({
-      providerOptions: expect.objectContaining({ searchDepth: "advanced" }),
-    })
-  );
-  deferred.resolve({
-    results: [
-      {
-        url: "https://example.com",
-        title: "Example",
-        content: "Found",
-        source: "web",
-      },
-    ],
-  });
-  const remaining: ReturnType<typeof createEvePlatformResult>[] = [];
-  for await (const result of iterator) {
-    remaining.push(result);
-  }
-  const last = remaining.at(-1);
-  expect(last?.usage.costUsd).toBe(0.05);
-  expect(last?.updates?.filter((update) => update.type === "web")).toHaveLength(
-    1
-  );
-  expect(last?.updates).toContainEqual(
-    expect.objectContaining({ type: "web", status: "completed" })
-  );
-  expect(last?.output).toMatchObject({
-    searches: [{ results: [{ title: "Example" }] }],
-  });
-});
-
-test("provider errors remain visible in the final result", async () => {
-  vi.mocked(webSearchStep).mockResolvedValue({
-    results: [],
-    error: "Unavailable",
-  });
+test("executes the installed tool with native progress and durable cost", async () => {
+  mocks.execute.mockResolvedValue({ results: [{ title: "Example" }] });
   const results: ReturnType<typeof createEvePlatformResult>[] = [];
   for await (const result of executeEvePlatformTool(
     "webSearch",
@@ -97,8 +109,15 @@ test("provider errors remain visible in the final result", async () => {
   )) {
     results.push(result);
   }
-  expect(results.at(-1)?.output).toMatchObject({
-    error: "Some searches failed. Try again or use another source.",
+
+  expect(mocks.execute).toHaveBeenCalledWith({
+    abortSignal: expect.any(AbortSignal),
+    input,
+  });
+  expect(results.at(-1)).toMatchObject({
+    output: { results: [{ title: "Example" }] },
+    updates: [{ status: "completed", type: "web" }],
+    usage: { costUsd: 0.05 },
   });
 });
 
@@ -107,39 +126,29 @@ test("disabled search cannot execute even if a prior step advertised it", async 
   await expect(
     executeEvePlatformTool("webSearch", input, context, []).next()
   ).rejects.toThrow("unavailable");
-  expect(webSearchStep).not.toHaveBeenCalled();
+  expect(mocks.execute).not.toHaveBeenCalled();
 });
 
-test("closing the native iterator aborts an in-flight search request", async () => {
-  const aborted = Promise.withResolvers<void>();
-  vi.mocked(webSearchStep).mockImplementation(
-    ({ abortSignal }) =>
-      new Promise((_resolve, reject) => {
-        abortSignal?.addEventListener(
-          "abort",
-          () => {
-            aborted.resolve();
-            reject(abortSignal.reason);
-          },
-          { once: true }
-        );
-      })
+test("closing the native iterator aborts installed tool execution", async () => {
+  const aborted = Promise.withResolvers<undefined>();
+  mocks.execute.mockImplementation(
+    ({ abortSignal }: { abortSignal: AbortSignal }) => {
+      const pending = Promise.withResolvers<never>();
+      abortSignal.addEventListener(
+        "abort",
+        () => {
+          // eslint-disable-next-line unicorn/no-useless-undefined -- PromiseWithResolvers requires its void argument.
+          aborted.resolve(undefined);
+          pending.reject(abortSignal.reason);
+        },
+        { once: true }
+      );
+      return pending.promise;
+    }
   );
   const iterator = executeEvePlatformTool("webSearch", input, context, []);
   await iterator.next();
   await iterator.return();
   await aborted.promise;
-  expect(vi.mocked(webSearchStep).mock.calls[0][0].abortSignal?.aborted).toBe(
-    true
-  );
+  expect(mocks.execute.mock.calls[0][0].abortSignal.aborted).toBe(true);
 });
-
-vi.mock("./generated-files", () => ({
-  eveGeneratedFileUploader: () => vi.fn(),
-}));
-
-vi.mock("./code-sandbox-ownership", () => ({
-  eveCodeSandboxOwnership: () => {
-    throw new Error("Unexpected code sandbox in this tool test");
-  },
-}));

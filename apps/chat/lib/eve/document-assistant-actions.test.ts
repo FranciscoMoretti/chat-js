@@ -4,16 +4,16 @@ import { documentAssistantActions } from "./document-assistant-actions";
 
 const documents = vi.hoisted(() => ({
   enabled: true,
-  types: { text: true, code: true, sheet: true },
+  types: { code: true, sheet: true, text: true },
 }));
 vi.mock("../config", () => ({
   config: {
     ai: {
       tools: {
-        documents,
-        text: { polish: "polish-model" },
         code: { edits: "code-model" },
-        sheet: { format: "format-model", analyze: "analysis-model" },
+        documents,
+        sheet: { analyze: "analysis-model", format: "format-model" },
+        text: { polish: "polish-model" },
       },
     },
   },

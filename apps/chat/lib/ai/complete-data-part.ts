@@ -1,14 +1,12 @@
 "use client";
 
 import type { AbstractThread } from "@chat-js/thread";
-import { type DataUIPart, safeValidateUIMessages } from "ai";
+import { safeValidateUIMessages } from "ai";
+import type { DataUIPart } from "ai";
 import { z } from "zod";
 
-import {
-  type ChatMessage,
-  type CustomUIDataTypes,
-  messageMetadataSchema,
-} from "@/lib/ai/types";
+import { messageMetadataSchema } from "@/lib/ai/types";
+import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 
 const serializedMessageMetadataSchema = messageMetadataSchema.extend({
   createdAt: z.coerce.date(),
@@ -17,9 +15,9 @@ const serializedMessageSchema = z
   .object({ metadata: serializedMessageMetadataSchema })
   .passthrough();
 
-export async function parseAppendedMessage(
+export const parseAppendedMessage = async (
   data: string
-): Promise<ChatMessage | null> {
+): Promise<ChatMessage | null> => {
   let value: unknown;
   try {
     value = JSON.parse(data);
@@ -37,15 +35,15 @@ export async function parseAppendedMessage(
     metadataSchema: messageMetadataSchema,
   });
   return result.success ? (result.data[0] ?? null) : null;
-}
+};
 
-export async function completeDataPart({
+export const completeDataPart = async ({
   dataPart,
   thread,
 }: {
   dataPart: DataUIPart<CustomUIDataTypes>;
   thread: Pick<AbstractThread<ChatMessage>, "upsertMessage">;
-}) {
+}) => {
   if (dataPart.type !== "data-appendMessage") {
     return;
   }
@@ -54,4 +52,4 @@ export async function completeDataPart({
   if (message) {
     thread.upsertMessage(message, message.metadata.parentMessageId);
   }
-}
+};

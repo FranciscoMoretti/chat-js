@@ -9,9 +9,10 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
+  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
-  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
+  experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: defineDynamic({
     events: {
       "step.started": (_event, context) => {
@@ -23,5 +24,4 @@ export default defineAgent({
       },
     },
   }),
-  experimental: { workflow: { world: "@workflow/world-postgres" } },
 });

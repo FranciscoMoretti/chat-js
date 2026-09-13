@@ -1,3 +1,9 @@
+/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
@@ -19,9 +25,9 @@ test("a lost native creation reply recovers the same session from the retained c
     .object({ user: z.object({ id: z.string() }) })
     .parse(await (await page.request.get("/api/auth/get-session")).json());
   const operation = {
-    operationId: crypto.randomUUID(),
     message: "Reply only with creation-recovered-73.",
     modelId: "openai/gpt-4.1-mini-fast",
+    operationId: crypto.randomUUID(),
   };
   let nativeSessionId = "";
   await expect(
@@ -36,11 +42,11 @@ test("a lost native creation reply recovers the same session from the retained c
               session.user.id,
               "/eve/v1/session",
               {
-                method: "POST",
                 body: JSON.stringify({
                   operationId: id,
                   message: operation.message,
                 }),
+                method: "POST",
                 signal: AbortSignal.timeout(30_000),
               },
               operation.modelId
@@ -59,7 +65,7 @@ test("a lost native creation reply recovers the same session from the retained c
           );
         }
         expect(new Set(sessionIds).size).toBe(1);
-        nativeSessionId = sessionIds[0];
+        [nativeSessionId] = sessionIds;
         throw new Error("Simulated lost native reply before app binding");
       },
       { initialModelId: operation.modelId }
@@ -98,7 +104,7 @@ test("a lost native creation reply recovers the same session from the retained c
   await expect(page.locator('[aria-label="Message"]')).toHaveText(
     operation.message
   );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(
     new URL(`/chat/${reservation?.id}`, page.url()).href
   );
@@ -109,9 +115,9 @@ test("a lost native creation reply recovers the same session from the retained c
   expect(bound?.sessionId).toBe(nativeSessionId);
   expect(bound?.state).toBe("bound");
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": session.user.id },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(nativeSessionId)
@@ -147,10 +153,10 @@ test("an unresolved project conversation recovers after its project is deleted",
     })
     .parse(await response.json()).result.data.json.id;
   const operation = {
+    message: "Reply exactly project-recovery-ok.",
+    modelId: "openai/gpt-4.1-mini-fast",
     operationId: crypto.randomUUID(),
     projectId,
-    modelId: "openai/gpt-4.1-mini-fast",
-    message: "Reply exactly project-recovery-ok.",
   };
   await expect(
     createEveConversation(
@@ -158,7 +164,7 @@ test("an unresolved project conversation recovers after its project is deleted",
       operation.operationId,
       operation.message,
       () => Promise.reject(new Error("Simulated dispatch interruption")),
-      { initialProjectId: projectId, initialModelId: operation.modelId }
+      { initialModelId: operation.modelId, initialProjectId: projectId }
     )
   ).rejects.toThrow("Simulated dispatch interruption");
   const reservation = await getEveCreation(
@@ -197,9 +203,9 @@ test("an unresolved project conversation recovers after its project is deleted",
     "**/api/agent-conversations",
     (route) =>
       route.fulfill({
-        status: 503,
-        contentType: "application/json",
         body: JSON.stringify({ error: "Temporary recovery failure" }),
+        contentType: "application/json",
+        status: 503,
       }),
     { times: 1 }
   );
@@ -213,11 +219,13 @@ test("an unresolved project conversation recovers after its project is deleted",
       storageKey
     )
   ).toEqual(operation);
-  await page.setViewportSize({ width: 390, height: 850 });
+  await page.setViewportSize({ height: 850, width: 390 });
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
-  let releaseRetry: () => void = () => undefined;
+  let releaseRetry: () => void = () => {
+    /* empty */
+  };
   const retryGate = new Promise<void>((resolve) => {
     releaseRetry = resolve;
   });
@@ -264,10 +272,10 @@ test("a missing project preserves an unreserved request until definitive rejecti
     .parse(await (await page.request.get("/api/auth/get-session")).json());
   const projectId = crypto.randomUUID();
   const operation = {
-    operationId: crypto.randomUUID(),
-    projectId,
     message: "Preserve my missing project draft",
     modelId: "openai/gpt-4.1-mini-fast",
+    operationId: crypto.randomUUID(),
+    projectId,
   };
   const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   await page.evaluate(
@@ -283,9 +291,9 @@ test("a missing project preserves an unreserved request until definitive rejecti
     async (route) => {
       expect(route.request().postDataJSON()).toEqual(operation);
       await route.fulfill({
-        status: 503,
-        contentType: "application/json",
         body: JSON.stringify({ error: "Temporary failure" }),
+        contentType: "application/json",
+        status: 503,
       });
     },
     { times: 1 }
@@ -305,13 +313,13 @@ test("a missing project preserves an unreserved request until definitive rejecti
     async (route) => {
       expect(route.request().postDataJSON()).toEqual(operation);
       await route.fulfill({
-        status: 404,
-        contentType: "application/json",
         body: JSON.stringify({
           error: "Project not found",
           creationRejected: true,
           code: "project_not_found",
         }),
+        contentType: "application/json",
+        status: 404,
       });
     },
     { times: 1 }
@@ -320,7 +328,7 @@ test("a missing project preserves an unreserved request until definitive rejecti
   await expect(
     recovery.getByRole("button", { name: "Continue without project" })
   ).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 850 });
+  await page.setViewportSize({ height: 850, width: 390 });
   await recovery.screenshot({
     path: testInfo.outputPath("missing-project-rejected-mobile.png"),
   });
@@ -333,10 +341,10 @@ test("a missing project preserves an unreserved request until definitive rejecti
   );
   const saved = await page.evaluate(
     ({ key, ownerId }) => ({
-      old: sessionStorage.getItem(key),
       next: JSON.parse(
         sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
       ),
+      old: sessionStorage.getItem(key),
     }),
     { key, ownerId: session.user.id }
   );
@@ -374,16 +382,16 @@ test("a rejected project composer retains its request across project deletion", 
     .fill("Preserve rejected composer");
   await page.route("**/api/agent-conversations", (route) =>
     route.fulfill({
-      status: 404,
-      contentType: "application/json",
       body: JSON.stringify({
         error: "Project not found",
         creationRejected: true,
         code: "project_not_found",
       }),
+      contentType: "application/json",
+      status: 404,
     })
   );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(
     recovery.getByRole("button", { name: "Continue without project" })

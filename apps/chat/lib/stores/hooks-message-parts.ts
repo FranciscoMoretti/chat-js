@@ -7,23 +7,21 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 import { documentToolTypes } from "@/tools/platform/documents/types";
 
 import type { ChatMessage } from "../ai/types";
-import {
-  type CustomChatStoreState,
-  useCustomChatStoreApi,
-} from "./custom-store-provider";
+import { useCustomChatStoreApi } from "./custom-store-provider";
+import type { CustomChatStoreState } from "./custom-store-provider";
 
 const artifactToolTypes = [...documentToolTypes, "tool-deepResearch"] as const;
 
-function usePartsStore<T>(
+const usePartsStore = <T>(
   selector: (store: CustomChatStoreState<ChatMessage>) => T,
   equalityFn?: (a: T, b: T) => boolean
-): T {
+): T => {
   const store = useCustomChatStoreApi<ChatMessage>();
   if (!store) {
     throw new Error("usePartsStore must be used within ChatStoreProvider");
   }
   return useStoreWithEqualityFn(store, selector, equalityFn);
-}
+};
 
 export const useMessagePartTypesById = (
   messageId: string
@@ -59,11 +57,11 @@ export function useMessagePartByPartIdx<
     : ChatMessage["parts"][number];
 }
 
-export function useMessageResearchUpdatePartByToolCallId(
+export const useMessageResearchUpdatePartByToolCallId = (
   messageId: string,
   toolCallId: string
-): Extract<ChatMessage["parts"][number], { type: "data-researchUpdate" }>[] {
-  return usePartsStore(
+): Extract<ChatMessage["parts"][number], { type: "data-researchUpdate" }>[] =>
+  usePartsStore(
     (state) =>
       state
         .getMessageById(messageId)
@@ -71,13 +69,12 @@ export function useMessageResearchUpdatePartByToolCallId(
         .filter((part) => part.data.toolCallId === toolCallId) ?? [],
     equal
   );
-}
 
-export function useIsLastArtifact(toolCallId: string): boolean {
-  return usePartsStore((state) => {
+export const useIsLastArtifact = (toolCallId: string): boolean =>
+  usePartsStore((state) => {
     const messages = state._throttledMessages || state.messages;
 
-    for (let i = messages.length - 1; i >= 0; i--) {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
       const message = messages[i];
       if (message.role !== "assistant") {
         continue;
@@ -96,4 +93,3 @@ export function useIsLastArtifact(toolCallId: string): boolean {
 
     return false;
   });
-}

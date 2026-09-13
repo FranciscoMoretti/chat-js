@@ -1,3 +1,1 @@
-import { uploadthing } from "files-sdk/uploadthing";
-
-export const createStorageAdapter = uploadthing;
+export { uploadthing as createStorageAdapter } from "files-sdk/uploadthing";

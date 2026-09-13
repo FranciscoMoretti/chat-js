@@ -1,4 +1,5 @@
-import { type ModelMessage, tool } from "ai";
+import { tool } from "ai";
+import type { ModelMessage } from "ai";
 import { Langfuse } from "langfuse";
 import { z } from "zod";
 
@@ -39,67 +40,72 @@ Use for:
 - Perform deep research (also autonomous research, deep search, or similar aliases)
 - Use again if this tool was previously used, produced a clarifying question, and the user has now responded
 `,
-    inputSchema: z.object({}),
     execute: async (_, { toolCallId, abortSignal }) => {
       const researchConfig = getDeepResearchConfig();
 
       try {
         const requestId = generateUUID();
         // Log both requestId and messageId for traceability
-        console.log("DeepResearch start", { requestId, messageId });
+        console.log("DeepResearch start", { messageId, requestId });
 
         // Open a Langfuse trace with id = requestId before the run
         const langfuse = new Langfuse();
         langfuse.trace({ id: requestId, name: "deep-research" });
         const researchResult = await runDeepResearchPipeline(
           {
-            requestId,
             messageId,
-            toolCallId,
             messages,
+            requestId,
+            toolCallId,
           },
           researchConfig,
           dataStream,
           {
-            costAccumulator,
             abortSignal,
+            costAccumulator,
             getLanguageModel,
-            getModelContextWindow: async (id) =>
-              (await getAppModelDefinition(id)).context_window,
+            getModelContextWindow: async (id) => {
+              const definition = await getAppModelDefinition(id);
+              return definition.context_window;
+            },
             publishReportStream: (stream) => dataStream.merge(stream),
             saveReport: (input) =>
-              saveTextDocument(input, { session, messageId }),
+              saveTextDocument(input, { messageId, session }),
           }
         );
 
         // Flush the Langfuse trace right after the run
         await langfuse.flushAsync();
 
-        // biome-ignore lint/style/useDefaultSwitchClause: researchResult is of type never but this might be reached other
         switch (researchResult.type) {
-          case "report":
+          case "report": {
             return {
               ...researchResult.data,
               format: "report" as const,
             };
+          }
 
-          case "clarifying_question":
+          case "clarifying_question": {
             return {
               answer: researchResult.data,
               format: "clarifying_questions" as const,
             };
+          }
+          default: {
+            return researchResult;
+          }
         }
       } catch (error) {
         console.error("Deep research error:", error);
         dataStream.write({
-          id: generateUUID(),
-          type: "data-researchUpdate",
           data: {
-            toolCallId,
             timestamp: Date.now(),
             title: "Deep research failed",
+            toolCallId,
             type: "completed",
           },
+          id: generateUUID(),
+          type: "data-researchUpdate",
         });
         return {
           answer: `Deep research failed with error: ${error instanceof Error ? error.message : String(error)}`,
@@ -107,4 +113,5 @@ Use for:
         };
       }
     },
+    inputSchema: z.object({}),
   });

@@ -28,8 +28,8 @@ describe("Eve request policy", () => {
     expect(
       sameOrigin(
         new Request("http://localhost/api", {
-          method: "POST",
           headers: { origin: "https://evil.test" },
+          method: "POST",
         }),
         "http://localhost"
       )
@@ -64,7 +64,7 @@ describe("Eve request policy", () => {
     expect(policy?.schema.safeParse({ message: "  " }).success).toBe(false);
     expect(
       policy?.schema.safeParse({
-        inputResponses: [{ requestId: "req", optionId: "allow" }],
+        inputResponses: [{ optionId: "allow", requestId: "req" }],
       }).success
     ).toBe(true);
     for (const query of [
@@ -88,11 +88,11 @@ describe("Eve command recovery", () => {
     const data = new Map<string, string>();
     const storage = {
       getItem: (key: string) => data.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        data.set(key, value);
-      },
       removeItem: (key: string) => {
         data.delete(key);
+      },
+      setItem: (key: string, value: string) => {
+        data.set(key, value);
       },
     };
     expect(() => prepareCreation(storage, "alice", " ")).toThrow();
@@ -129,7 +129,7 @@ describe("Eve command recovery", () => {
         return Promise.resolve();
       },
       true,
-      () => undefined
+      () => {}
     );
     expect(replayed).toBe(1);
   });
@@ -148,7 +148,7 @@ it("waits for authoritative acceptance after cancellation without submitting twi
       return Promise.resolve();
     },
     true,
-    () => undefined,
+    () => {},
     () => snapshots >= 2
   );
   expect(submissions).toBe(1);
@@ -156,31 +156,31 @@ it("waits for authoritative acceptance after cancellation without submitting twi
 });
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
-  const input = { operationId: crypto.randomUUID(), message: "replacement" };
+  const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_1" },
+      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { sessionId: "native-session", beforeTurnId: "turn_1" },
+      fork: { beforeTurnId: "turn_1", sessionId: "native-session" },
     }).success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_-1" },
+      fork: { beforeTurnId: "turn_-1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(false);
 });
 
 it("allows a project for new conversations while forks inherit their existing project", () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Project conversation",
+    operationId: crypto.randomUUID(),
     projectId: crypto.randomUUID(),
   };
   expect(createConversationInput.safeParse(input).success).toBe(true);
@@ -191,19 +191,19 @@ it("allows a project for new conversations while forks inherit their existing pr
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_0" },
+      fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(false);
 });
 
 it("accepts exactly one canonical imported fork boundary", () => {
   const input = {
-    operationId: crypto.randomUUID(),
-    message: "Replacement question",
     fork: {
-      conversationId: crypto.randomUUID(),
       beforeMessageId: "seed_message_2",
+      conversationId: crypto.randomUUID(),
     },
+    message: "Replacement question",
+    operationId: crypto.randomUUID(),
   };
   expect(createConversationInput.parse(input)).toEqual(input);
   for (const fork of [

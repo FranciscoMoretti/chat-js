@@ -5,13 +5,16 @@ import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
 
 /** Commit intent before provider I/O; no resource may be allocated by this function. */
-export async function reserveEveCodeSandbox(
+export const reserveEveCodeSandbox = async (
   ownerId: string,
   conversationId: string,
   callId: string,
-  provider: { teamId: string; projectId: string }
-) {
-  return await db.transaction(async (tx) => {
+  provider: {
+    teamId: string;
+    projectId: string;
+  }
+) =>
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -44,14 +47,14 @@ export async function reserveEveCodeSandbox(
       );
     }
     const name = eveCodeSandboxName({
-      ownerId,
-      sessionId: conversation.sessionId,
       callId,
+      ownerId,
       provider,
+      sessionId: conversation.sessionId,
     });
     const [inserted] = await tx
       .insert(eveCodeSandbox)
-      .values({ name, ownerId, conversationId, callId })
+      .values({ callId, conversationId, name, ownerId })
       .onConflictDoNothing()
       .returning({ name: eveCodeSandbox.name });
     // Retrying provider creation is unsafe until the earlier allocation is reconciled.
@@ -62,14 +65,13 @@ export async function reserveEveCodeSandbox(
     }
     return inserted.name;
   });
-}
 
 /** Internal coordinator only: caller must prove no pending allocation can finish later. */
-export async function recordEveCodeSandboxDeletion(
+export const recordEveCodeSandboxDeletion = async (
   ownerId: string,
   conversationId: string,
   name: string
-) {
+) => {
   const [row] = await db
     .update(eveCodeSandbox)
     .set({ state: "deleted" })
@@ -84,14 +86,14 @@ export async function recordEveCodeSandboxDeletion(
   if (!row) {
     throw new Error("Code sandbox ownership not found.");
   }
-}
+};
 
 /** A successful create reply proves this invocation has finished allocating. */
-export async function confirmEveCodeSandboxCreation(
+export const confirmEveCodeSandboxCreation = async (
   ownerId: string,
   conversationId: string,
   name: string
-) {
+) => {
   const [row] = await db
     .update(eveCodeSandbox)
     .set({ creationConfirmed: true })
@@ -107,18 +109,18 @@ export async function confirmEveCodeSandboxCreation(
   if (!row) {
     throw new Error("Unresolved code sandbox ownership not found.");
   }
-}
+};
 
 /** Internal cleanup inventory; unretired families cannot authorize provider deletion. */
-export async function listEveCodeSandboxesForDeletion(
+export const listEveCodeSandboxesForDeletion = async (
   ownerId: string,
   rootId: string
-) {
+) => {
   const family = await db
     .select({
       id: eveConversation.id,
-      state: eveConversation.state,
       rootId: eveConversation.rootConversationId,
+      state: eveConversation.state,
     })
     .from(eveConversation)
     .where(
@@ -140,11 +142,11 @@ export async function listEveCodeSandboxesForDeletion(
   }
   return await db
     .select({
-      name: eveCodeSandbox.name,
       callId: eveCodeSandbox.callId,
-      sessionId: eveConversation.sessionId,
       conversationId: eveCodeSandbox.conversationId,
       creationConfirmed: eveCodeSandbox.creationConfirmed,
+      name: eveCodeSandbox.name,
+      sessionId: eveConversation.sessionId,
     })
     .from(eveCodeSandbox)
     .innerJoin(
@@ -161,4 +163,4 @@ export async function listEveCodeSandboxesForDeletion(
         )
       )
     );
-}
+};

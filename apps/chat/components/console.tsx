@@ -1,5 +1,6 @@
 import { Loader2, Terminal, X } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ export interface ConsoleOutput {
   status: "in_progress" | "loading_packages" | "completed" | "failed";
 }
 
-function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
+const getConsoleStatusText = (consoleOutput: ConsoleOutput): string | null => {
   if (consoleOutput.status === "in_progress") {
     return "Initializing...";
   }
@@ -29,9 +30,9 @@ function getConsoleStatusText(consoleOutput: ConsoleOutput): string | null {
     return textContents;
   }
   return null;
-}
+};
 
-export function Console({
+export const Console = ({
   consoleOutputs,
   setConsoleOutputs,
   className,
@@ -39,7 +40,7 @@ export function Console({
   consoleOutputs: ConsoleOutput[];
   setConsoleOutputs: Dispatch<SetStateAction<ConsoleOutput[]>>;
   className?: string;
-}) {
+}) => {
   const consoleEndRef = useRef<HTMLDivElement>(null);
 
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
@@ -82,11 +83,11 @@ export function Console({
             >
               <div
                 className={cn("w-12 shrink-0", {
+                  "text-emerald-500": consoleOutput.status === "completed",
                   "text-muted-foreground": [
                     "in_progress",
                     "loading_packages",
                   ].includes(consoleOutput.status),
-                  "text-emerald-500": consoleOutput.status === "completed",
                   "text-red-400": consoleOutput.status === "failed",
                 })}
               >
@@ -134,4 +135,4 @@ export function Console({
       </div>
     </div>
   ) : null;
-}
+};

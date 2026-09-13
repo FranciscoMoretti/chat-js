@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type { ChatMessage } from "@/lib/ai/types";
 import type { Vote } from "@/lib/db/schema";
 import { useMessageById } from "@/lib/stores/base";
 import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
@@ -11,7 +12,20 @@ import { MessageVoteActions } from "./message-vote-actions";
 import { RetryButton } from "./retry-button";
 import { Tag } from "./tag";
 
-export function FeedbackActions({
+const SelectedModelId = ({ messageId }: { messageId: string }) => {
+  const message = useMessageById<ChatMessage>(messageId);
+  const selectedModelId = getPrimarySelectedModelId(
+    message?.metadata?.selectedModel
+  );
+
+  return selectedModelId ? (
+    <div className="ml-2 flex items-center">
+      <Tag>{selectedModelId}</Tag>
+    </div>
+  ) : null;
+};
+
+export const FeedbackActions = ({
   chatId,
   messageId,
   vote,
@@ -21,7 +35,7 @@ export function FeedbackActions({
   messageId: string;
   vote: Vote | undefined;
   isReadOnly: boolean;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -59,17 +73,4 @@ export function FeedbackActions({
       <SelectedModelId messageId={messageId} />
     </>
   );
-}
-
-function SelectedModelId({ messageId }: { messageId: string }) {
-  const message = useMessageById<ChatMessage>(messageId);
-  const selectedModelId = getPrimarySelectedModelId(
-    message?.metadata?.selectedModel
-  );
-
-  return selectedModelId ? (
-    <div className="ml-2 flex items-center">
-      <Tag>{selectedModelId}</Tag>
-    </div>
-  ) : null;
-}
+};

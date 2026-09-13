@@ -1,18 +1,17 @@
-function isEnabledFlag(value: string | undefined): boolean {
+const isEnabledFlag = (value: string | undefined): boolean => {
   if (!value) {
     return false;
   }
 
   const normalizedValue = value.trim().toLowerCase();
   return !["0", "false", "no", "off"].includes(normalizedValue);
-}
+};
 
-export function isPlaywrightTestEnvironment(
+export const isPlaywrightTestEnvironment = (
   env: NodeJS.ProcessEnv = process.env
-): boolean {
-  return Boolean(
+): boolean =>
+  Boolean(
     env.PLAYWRIGHT_TEST_BASE_URL ||
     isEnabledFlag(env.PLAYWRIGHT) ||
     isEnabledFlag(env.CI_PLAYWRIGHT)
   );
-}

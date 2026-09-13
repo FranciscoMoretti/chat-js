@@ -12,12 +12,42 @@ import {
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
-/** Fence exclusively referenced files before external deletion; retain references for retries. */
-export async function prepareEveFamilyFilePurge(
+const deletingFamilyIds = async (
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   rootId: string
-) {
-  return await db.transaction(async (tx) => {
+) => {
+  const family = await tx
+    .select({
+      id: eveConversation.id,
+      root: eveConversation.rootConversationId,
+      state: eveConversation.state,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        or(
+          eq(eveConversation.id, rootId),
+          eq(eveConversation.rootConversationId, rootId)
+        )
+      )
+    );
+  if (
+    !family.some((row) => row.id === rootId && row.root === null) ||
+    family.some((row) => row.state !== "deleting")
+  ) {
+    throw new Error("The entire conversation family must be pending deletion.");
+  }
+  return family.map((row) => row.id);
+};
+
+/** Fence exclusively referenced files before external deletion; retain references for retries. */
+export const prepareEveFamilyFilePurge = async (
+  ownerId: string,
+  rootId: string
+) =>
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -47,12 +77,11 @@ export async function prepareEveFamilyFilePurge(
         )
       )
       .returning({ key: eveStoredFile.key });
-    return files.map((file) => file.key).sort();
+    return files.map((file) => file.key).toSorted();
   });
-}
 
 /** Call only after the provider confirms removal; no file identity is recycled. */
-export async function completeEveFilePurge(ownerId: string, keys: string[]) {
+export const completeEveFilePurge = async (ownerId: string, keys: string[]) => {
   if (!keys.length) {
     return;
   }
@@ -71,43 +100,13 @@ export async function completeEveFilePurge(ownerId: string, keys: string[]) {
         )
       );
   });
-}
-
-async function deletingFamilyIds(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  ownerId: string,
-  rootId: string
-) {
-  const family = await tx
-    .select({
-      id: eveConversation.id,
-      root: eveConversation.rootConversationId,
-      state: eveConversation.state,
-    })
-    .from(eveConversation)
-    .where(
-      and(
-        eq(eveConversation.ownerId, ownerId),
-        or(
-          eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
-        )
-      )
-    );
-  if (
-    !family.some((row) => row.id === rootId && row.root === null) ||
-    family.some((row) => row.state !== "deleting")
-  ) {
-    throw new Error("The entire conversation family must be pending deletion.");
-  }
-  return family.map((row) => row.id);
-}
+};
 
 /** Release references only after file cleanup; retry cleanup if another family released first. */
-export async function releaseEveFamilyFileReferences(
+export const releaseEveFamilyFileReferences = async (
   ownerId: string,
   rootId: string
-) {
+) => {
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -154,4 +153,4 @@ export async function releaseEveFamilyFileReferences(
         )
       );
   });
-}
+};

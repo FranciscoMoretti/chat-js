@@ -4,20 +4,20 @@ import type { WorktreeEnvConfig } from "./worktree-runtime";
 import { resolveWorktreeRuntime } from "./worktree-runtime";
 
 const config = {
-  slot: { default: 0, env: "CHATJS_DEV_SLOT" },
-  range: { base: 3000, stride: 10 },
-  url: "http://localhost:{port}",
   apps: {
     chat: {
-      offset: 0,
       exports: { APP_URL: "{url}", PORT: "{port}" },
+      offset: 0,
     },
     electron: {
-      offset: 1,
       exports: { ELECTRON_APP_URL: "{apps.chat.url}" },
+      offset: 1,
     },
-    site: { offset: 2, exports: { PORT: "{port}" } },
+    site: { exports: { PORT: "{port}" }, offset: 2 },
   },
+  range: { base: 3000, stride: 10 },
+  slot: { default: 0, env: "CHATJS_DEV_SLOT" },
+  url: "http://localhost:{port}",
 } satisfies WorktreeEnvConfig;
 
 describe("resolveWorktreeRuntime", () => {
@@ -107,7 +107,7 @@ describe("resolveWorktreeRuntime", () => {
         {
           ...config,
           apps: {
-            chat: { offset: 0, exports: { APP_URL: "{apps.missing.url}" } },
+            chat: { exports: { APP_URL: "{apps.missing.url}" }, offset: 0 },
           },
         },
         {}

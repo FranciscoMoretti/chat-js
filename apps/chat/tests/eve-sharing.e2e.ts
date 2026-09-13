@@ -17,13 +17,13 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message:
         "Reply exactly share-fixture-ok as plain text. Do not call tools.",
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z
@@ -37,21 +37,21 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
   const foreignId = crypto.randomUUID();
   const foreignChat = crypto.randomUUID();
   await db.insert(user).values({
-    id: foreignId,
     email: `${foreignId}@test.invalid`,
+    id: foreignId,
     name: "Share ownership fixture",
   });
   await db.insert(eveConversation).values({
-    id: foreignChat,
-    ownerId: foreignId,
-    operationId: crypto.randomUUID(),
     firstMessage: "Private foreign conversation",
+    id: foreignChat,
+    operationId: crypto.randomUUID(),
+    ownerId: foreignId,
   });
   try {
     const base = new URL(page.url()).origin;
     await publicPage.goto(`${base}/share/${binding.id}`);
     await expect(
-      publicPage.getByRole("heading", { name: "404", exact: true })
+      publicPage.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     await page.goto(`/chat/${binding.id}`);
     await expect(page.locator(".is-assistant")).toContainText(
@@ -66,9 +66,9 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       throw new Error("Missing fixture owner.");
     }
     const native = new Client({
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
       auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
       headers: { "x-chatjs-owner": owner.id },
+      host: env.EVE_INTERNAL_ORIGIN ?? "",
     }).sessions.attach(binding.sessionId);
     // Tool input can contain the same marker before an answer exists.
     await expect
@@ -84,32 +84,32 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
               event.data.message?.trim() === "share-fixture-ok"
           );
         },
-        { timeout: 30_000, intervals: [1000, 2000, 4000] }
+        { intervals: [1000, 2000, 4000], timeout: 30_000 }
       )
       .toBe(true);
-    await page.getByRole("button", { name: "Share chat", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Share chat" }).click();
     await expect(page.getByRole("dialog")).toContainText("Private");
     await expect(
-      page.getByRole("button", { name: "Share Chat", exact: true })
+      page.getByRole("button", { exact: true, name: "Share Chat" })
     ).toBeEnabled();
     await page.getByRole("dialog").screenshot({
+      animations: "disabled",
       path: "tests/eve-results/screenshots/eve-share-private.png",
-      animations: "disabled",
     });
-    await page.getByRole("button", { name: "Share Chat", exact: true }).click();
+    await page.getByRole("button", { exact: true, name: "Share Chat" }).click();
     await expect(
-      page.getByRole("button", { name: "Make Private", exact: true })
+      page.getByRole("button", { exact: true, name: "Make Private" })
     ).toBeEnabled();
     await page.getByRole("dialog").screenshot({
-      path: "tests/eve-results/screenshots/eve-share-public.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-share-public.png",
     });
     await publicPage.reload();
     await expect(publicPage.getByRole("log")).toContainText("share-fixture-ok");
     await expect(publicPage.getByTestId("multimodal-input")).toHaveCount(0);
     await publicPage.locator("main").screenshot({
-      path: "tests/eve-results/screenshots/eve-shared-transcript.png",
       animations: "disabled",
+      path: "tests/eve-results/screenshots/eve-shared-transcript.png",
     });
     const forbidden = await publicPage.request.post(
       `${base}/api/trpc/eve.setVisibility`,
@@ -125,12 +125,12 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     );
     expect(stream.status()).toBe(401);
     await page
-      .getByRole("button", { name: "Make Private", exact: true })
+      .getByRole("button", { exact: true, name: "Make Private" })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await publicPage.reload();
     await expect(
-      publicPage.getByRole("heading", { name: "404", exact: true })
+      publicPage.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     await expect(publicPage.getByRole("log")).toHaveCount(0);
   } finally {

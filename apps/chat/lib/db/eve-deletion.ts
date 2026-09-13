@@ -25,10 +25,10 @@ import {
  * sandbox and file removal before calling this; this is not a deletion endpoint.
  * Keep identity tombstones for replay protection and leave accounting intact.
  */
-export async function completeEveConversationDeletion(
+export const completeEveConversationDeletion = async (
   ownerId: string,
   rootId: string
-) {
+) => {
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -77,6 +77,7 @@ export async function completeEveConversationDeletion(
       eveDocumentHead,
       eveDocumentRevision,
     ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
       const [remaining] = await tx
         .select({ conversationId: table.conversationId })
         .from(table)
@@ -100,24 +101,24 @@ export async function completeEveConversationDeletion(
     await tx
       .update(eveConversation)
       .set({
-        state: "deleted",
         firstMessage: "",
-        title: null,
-        initialModelId: null,
         initialContentHash: null,
+        initialModelId: null,
         initialProjectId: null,
-        visibility: "private",
         isPinned: false,
+        state: "deleted",
+        title: null,
+        visibility: "private",
       })
       .where(condition);
   });
-}
+};
 
 /** Includes identity tombstones so owners can retry and inspect completed deletion. */
-export async function getEveDeletionState(
+export const getEveDeletionState = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const [row] = await db
     .select({
       id: eveConversation.id,
@@ -133,4 +134,4 @@ export async function getEveDeletionState(
     )
     .limit(1);
   return row ? { rootId: row.rootId ?? row.id, state: row.state } : undefined;
-}
+};

@@ -4,7 +4,7 @@ import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveChatPage } from "@/components/eve/eve-chat-page";
 import { isEveEnabled } from "@/lib/eve/availability";
 
-export default function HomePage() {
+const HomePage = () => {
   if (!isEveEnabled()) {
     return null;
   }
@@ -13,4 +13,6 @@ export default function HomePage() {
       <EveChatPage />
     </Suspense>
   );
-}
+};
+
+export default HomePage;

@@ -1,3 +1,1 @@
-import { minio } from "files-sdk/minio";
-
-export const createStorageAdapter = minio;
+export { minio as createStorageAdapter } from "files-sdk/minio";

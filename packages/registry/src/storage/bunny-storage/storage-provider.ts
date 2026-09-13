@@ -1,3 +1,1 @@
-import { bunnyStorage } from "files-sdk/bunny-storage";
-
-export const createStorageAdapter = bunnyStorage;
+export { bunnyStorage as createStorageAdapter } from "files-sdk/bunny-storage";

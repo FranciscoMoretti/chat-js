@@ -20,120 +20,13 @@ type DeviceLoginState = "checking-session" | "transferring" | "waiting-for-app";
 
 const DEVICE_LOGIN_COMPLETED_PARAM = "done";
 
-export function DeviceLoginPage() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [state, setState] = useState<DeviceLoginState>("checking-session");
-  const transferStartedRef = useRef(false);
-
-  const query = useMemo(
-    () => Object.fromEntries(searchParams.entries()),
-    [searchParams]
-  );
-  const isCompletedView =
-    searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
-
-  useEffect(() => {
-    if (isCompletedView) {
-      setState("waiting-for-app");
-      return;
-    }
-
-    if (!isElectronTransferQuery(query)) {
-      setState("waiting-for-app");
-      return;
-    }
-
-    let cancelled = false;
-
-    const checkSession = async () => {
-      const { data: session } = await authClient.getSession();
-
-      if (cancelled || transferStartedRef.current) {
-        return;
-      }
-
-      if (!session?.user) {
-        setState("waiting-for-app");
-        return;
-      }
-
-      transferStartedRef.current = true;
-      setState("transferring");
-
-      await authClient.electron.transferUser({
-        fetchOptions: {
-          query,
-          onSuccess: () => {
-            window.history.replaceState(
-              {},
-              "",
-              `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
-            );
-            setState("waiting-for-app");
-          },
-          onError: () => {
-            transferStartedRef.current = false;
-            setState("waiting-for-app");
-          },
-        },
-      });
-    };
-
-    checkSession().catch(() => {
-      if (cancelled) {
-        return;
-      }
-
-      transferStartedRef.current = false;
-      setState("waiting-for-app");
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isCompletedView, pathname, query]);
-
-  return (
-    <DeviceAuthScreen
-      onRetry={() => {
-        transferStartedRef.current = false;
-        setState("transferring");
-        authClient.electron
-          .transferUser({
-            fetchOptions: {
-              query,
-              onSuccess: () => {
-                window.history.replaceState(
-                  {},
-                  "",
-                  `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
-                );
-                setState("waiting-for-app");
-              },
-              onError: () => {
-                transferStartedRef.current = false;
-                setState("waiting-for-app");
-              },
-            },
-          })
-          .catch(() => {
-            transferStartedRef.current = false;
-            setState("waiting-for-app");
-          });
-      }}
-      state={state}
-    />
-  );
-}
-
-function DeviceAuthScreen({
+const DeviceAuthScreen = ({
   state,
   onRetry,
 }: {
   state: "checking-session" | "transferring" | "waiting-for-app";
   onRetry: () => void;
-}) {
+}) => {
   const isLoading = state === "checking-session" || state === "transferring";
   let title = "You're signed in";
 
@@ -189,4 +82,118 @@ function DeviceAuthScreen({
       </div>
     </div>
   );
-}
+};
+
+export const DeviceLoginPage = () => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [state, setState] = useState<DeviceLoginState>("checking-session");
+  const transferStartedRef = useRef(false);
+
+  const query = useMemo(
+    () => Object.fromEntries(searchParams.entries()),
+    [searchParams]
+  );
+  const isCompletedView =
+    searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
+  const shouldWaitForApp = isCompletedView || !isElectronTransferQuery(query);
+  const displayState =
+    shouldWaitForApp && state === "checking-session"
+      ? "waiting-for-app"
+      : state;
+
+  useEffect(() => {
+    if (shouldWaitForApp) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkSession = async () => {
+      const { data: session } = await authClient.getSession();
+
+      if (cancelled || transferStartedRef.current) {
+        return;
+      }
+
+      if (!session?.user) {
+        setState("waiting-for-app");
+        return;
+      }
+
+      transferStartedRef.current = true;
+      setState("transferring");
+
+      await authClient.electron.transferUser({
+        fetchOptions: {
+          onError: () => {
+            transferStartedRef.current = false;
+            setState("waiting-for-app");
+          },
+          onSuccess: () => {
+            window.history.replaceState(
+              {},
+              "",
+              `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
+            );
+            setState("waiting-for-app");
+          },
+          query,
+        },
+      });
+    };
+
+    const sessionCheck = checkSession();
+    void (async () => {
+      try {
+        await sessionCheck;
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        transferStartedRef.current = false;
+        setState("waiting-for-app");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, query, shouldWaitForApp]);
+
+  return (
+    <DeviceAuthScreen
+      onRetry={() => {
+        transferStartedRef.current = false;
+        setState("transferring");
+        const transfer = authClient.electron.transferUser({
+          fetchOptions: {
+            onError: () => {
+              transferStartedRef.current = false;
+              setState("waiting-for-app");
+            },
+            onSuccess: () => {
+              window.history.replaceState(
+                {},
+                "",
+                `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
+              );
+              setState("waiting-for-app");
+            },
+            query,
+          },
+        });
+        void (async () => {
+          try {
+            await transfer;
+          } catch {
+            transferStartedRef.current = false;
+            setState("waiting-for-app");
+          }
+        })();
+      }}
+      state={displayState}
+    />
+  );
+};

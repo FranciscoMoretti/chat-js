@@ -19,8 +19,6 @@ export class Thread<
   }
 }
 
-export function createThread<TMessage extends UIMessage = UIMessage>(
+export const createThread = <TMessage extends UIMessage = UIMessage>(
   options: ThreadInit<TMessage> = {}
-) {
-  return new Thread(options);
-}
+) => new Thread(options);

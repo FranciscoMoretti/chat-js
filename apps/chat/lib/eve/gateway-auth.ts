@@ -14,15 +14,102 @@ import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 
 const checkpointLookupPath =
-  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint$/;
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
 
 const namedCheckpointLookupPath =
-  /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/i;
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/iu;
 
-const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/;
-const compactionPath = /^\/eve\/v1\/session\/([A-Za-z0-9_-]+)\/compact$/;
+const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
+const compactionPath =
+  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
-export async function authenticateEveGateway(request: Request) {
+const authorizeDeletionRequest = async (
+  request: Request,
+  owner: string,
+  path: string
+) => {
+  const sessionId = parseDeletionSessionRequest(path, request.method);
+  if (!sessionId) {
+    return false;
+  }
+  const rootSessionId = request.headers.get("x-chatjs-deletion-root");
+  if (!rootSessionId) {
+    return Boolean(
+      await getDeletingEveConversationForSession(owner, sessionId)
+    );
+  }
+  if (
+    !(
+      path.endsWith("/sandbox-identity") &&
+      request.method === "GET" &&
+      env.WORKFLOW_POSTGRES_URL &&
+      (await getDeletingEveConversationForSession(owner, rootSessionId))
+    )
+  ) {
+    return false;
+  }
+  return await isFencedEveDescendant(
+    env.WORKFLOW_POSTGRES_URL,
+    rootSessionId,
+    sessionId
+  );
+};
+
+const gatewaySessionPolicy = (path: string, method: string) => {
+  const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
+  if (compactionSession) {
+    return { sessionId: compactionSession };
+  }
+  const ordinaryCheckpoint =
+    (method === "GET" || method === "POST") &&
+    checkpointLookupPath.exec(path)?.[1];
+  const namedCheckpoint =
+    method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
+  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
+  return checkpointSession
+    ? { sessionId: checkpointSession }
+    : parseSessionRequest(path, method);
+};
+
+const readGatewayAttributes = async (request: Request) => {
+  const modelId = request.headers.get("x-chatjs-model") ?? undefined;
+  if (modelId) {
+    await loadEveModelDefinition(modelId);
+  }
+  const toolHeader = request.headers.get("x-chatjs-tool");
+  const selectedTool = frontendToolsSchema
+    .optional()
+    .safeParse(toolHeader ?? undefined);
+  if (!selectedTool.success) {
+    return null;
+  }
+  const attributes: Record<string, string> = {};
+  if (selectedTool.data) {
+    attributes.selectedTool = selectedTool.data;
+  }
+  if (modelId) {
+    attributes.modelId = modelId;
+  }
+  return attributes;
+};
+
+const guestAttributesAllowed = (
+  expiresAt: Date,
+  attributes: Record<string, string>,
+  requiresModel: boolean
+) =>
+  expiresAt > new Date() &&
+  (!requiresModel || !!attributes.modelId) &&
+  (!attributes.modelId ||
+    ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
+      (model) => model === attributes.modelId
+    )) &&
+  (!attributes.selectedTool ||
+    ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
+      (tool) => tool === attributes.selectedTool
+    ));
+
+export const authenticateEveGateway = async (request: Request) => {
   if (env.EVE_ENABLED !== "true" || !env.EVE_GATEWAY_SECRET) {
     return null;
   }
@@ -74,97 +161,8 @@ export async function authenticateEveGateway(request: Request) {
     attributes,
     authenticator: "chatjs-gateway",
     issuer: "chatjs",
-    principalType: "user",
     principalId: owner,
+    principalType: "user",
     subject: owner,
   };
-}
-
-async function readGatewayAttributes(request: Request) {
-  const modelId = request.headers.get("x-chatjs-model") ?? undefined;
-  if (modelId) {
-    await loadEveModelDefinition(modelId);
-  }
-  const toolHeader = request.headers.get("x-chatjs-tool");
-  const selectedTool = frontendToolsSchema
-    .optional()
-    .safeParse(toolHeader ?? undefined);
-  if (!selectedTool.success) {
-    return null;
-  }
-  const attributes: Record<string, string> = {};
-  if (selectedTool.data) {
-    attributes.selectedTool = selectedTool.data;
-  }
-  if (modelId) {
-    attributes.modelId = modelId;
-  }
-  return attributes;
-}
-
-function gatewaySessionPolicy(path: string, method: string) {
-  const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
-  if (compactionSession) {
-    return { sessionId: compactionSession };
-  }
-  const ordinaryCheckpoint =
-    (method === "GET" || method === "POST") &&
-    checkpointLookupPath.exec(path)?.[1];
-  const namedCheckpoint =
-    method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
-  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
-  return checkpointSession
-    ? { sessionId: checkpointSession }
-    : parseSessionRequest(path, method);
-}
-
-async function authorizeDeletionRequest(
-  request: Request,
-  owner: string,
-  path: string
-) {
-  const sessionId = parseDeletionSessionRequest(path, request.method);
-  if (!sessionId) {
-    return false;
-  }
-  const rootSessionId = request.headers.get("x-chatjs-deletion-root");
-  if (!rootSessionId) {
-    return Boolean(
-      await getDeletingEveConversationForSession(owner, sessionId)
-    );
-  }
-  if (
-    !(
-      path.endsWith("/sandbox-identity") &&
-      request.method === "GET" &&
-      env.WORKFLOW_POSTGRES_URL &&
-      (await getDeletingEveConversationForSession(owner, rootSessionId))
-    )
-  ) {
-    return false;
-  }
-  return await isFencedEveDescendant(
-    env.WORKFLOW_POSTGRES_URL,
-    rootSessionId,
-    sessionId
-  );
-}
-
-function guestAttributesAllowed(
-  expiresAt: Date,
-  attributes: Record<string, string>,
-  requiresModel: boolean
-) {
-  return (
-    expiresAt > new Date() &&
-    (!requiresModel || !!attributes.modelId) &&
-    (!attributes.modelId ||
-      ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
-        (model) => model === attributes.modelId
-      )) &&
-    (!attributes.selectedTool ||
-      ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
-        (tool) => tool === attributes.selectedTool
-      ))
-  );
-}
+};

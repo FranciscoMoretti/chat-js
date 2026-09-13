@@ -1,18 +1,18 @@
 import { createHash } from "node:crypto";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import nodePath from "node:path";
 
 /**
  * Permanently stop new local sandbox operations for an authorized native family.
  * Existing operation records must disappear before inventory and cleanup proceed.
  * Never expire or discard unresolved records on a timer: provider work may remain.
  */
-export async function fenceLocalEveSandboxMutations(
+export const fenceLocalEveSandboxMutations = async (
   appRoot: string,
   sessionIds: string[]
-) {
+) => {
   const scopes = [...new Set(sessionIds)].map((id) =>
-    join(
+    nodePath.join(
       appRoot,
       ".eve",
       "sandbox-mutations",
@@ -20,8 +20,10 @@ export async function fenceLocalEveSandboxMutations(
     )
   );
   for (const scope of scopes) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
     await mkdir(scope, { recursive: true });
-    await writeFile(join(scope, "deleted"), "1\n", {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    await writeFile(nodePath.join(scope, "deleted"), "1\n", {
       flag: "wx",
       mode: 0o600,
     }).catch((error: unknown) => {
@@ -33,7 +35,8 @@ export async function fenceLocalEveSandboxMutations(
     });
   }
   for (const scope of scopes) {
-    const operations = await readdir(join(scope, "operations")).catch(
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
+    const operations = await readdir(nodePath.join(scope, "operations")).catch(
       (error: unknown) => {
         if (
           error instanceof Error &&
@@ -51,4 +54,4 @@ export async function fenceLocalEveSandboxMutations(
       );
     }
   }
-}
+};

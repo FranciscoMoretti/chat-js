@@ -9,19 +9,19 @@ import {
 } from "./mcp-tools";
 
 const mocks = vi.hoisted(() => ({
-  list: vi.fn(),
-  get: vi.fn(),
-  connect: vi.fn(),
   close: vi.fn(),
-  tools: vi.fn(),
+  connect: vi.fn(),
   enabled: { enabled: true },
+  get: vi.fn(),
+  list: vi.fn(),
+  tools: vi.fn(),
 }));
 vi.mock("../config", () => ({
   config: { ai: { tools: { mcp: mocks.enabled } } },
 }));
 vi.mock("../db/mcp-queries", () => ({
-  getMcpConnectorsByUserId: mocks.list,
   getMcpConnectorById: mocks.get,
+  getMcpConnectorsByUserId: mocks.list,
 }));
 vi.mock("../ai/mcp/mcp-client", () => ({
   MCPClient: class {
@@ -33,45 +33,45 @@ vi.mock("../ai/mcp/mcp-client", () => ({
 }));
 
 const connector = {
+  createdAt: new Date(),
+  enabled: true,
   id: "connector",
-  userId: "owner",
   name: "Server",
   nameId: "server",
-  url: "https://secret.mcp.test",
-  type: "http",
-  enabled: true,
   oauthClientId: "secret-id",
   oauthClientSecret: "secret-password",
-  createdAt: new Date(),
+  type: "http",
   updatedAt: new Date(),
+  url: "https://secret.mcp.test",
+  userId: "owner",
 };
 const context = {
-  callId: "call",
   abortSignal: new AbortController().signal,
+  callId: "call",
   session: {
-    id: "session",
     auth: {
       current: null,
       initiator: {
+        attributes: {},
+        authenticator: "test",
         principalId: "owner",
         principalType: "user",
-        authenticator: "test",
-        attributes: {},
       },
     },
+    id: "session",
     turn: { id: "turn", sequence: 1 },
   },
 };
 const execute = vi.fn();
 const definition = tool({
   description: "Echo",
+  execute,
   inputSchema: jsonSchema({
-    type: "object",
+    additionalProperties: false,
     properties: { text: { type: "string" } },
     required: ["text"],
-    additionalProperties: false,
+    type: "object",
   }),
-  execute,
   toModelOutput: ({ output }) => ({ type: "text", value: String(output) }),
 });
 
@@ -90,10 +90,10 @@ it("returns serializable namespaced discovery without credentials or live connec
   const tools = await discoverEveMcpTools("owner", context.abortSignal);
   expect(tools).toMatchObject([
     {
-      name: "server__echo",
       connectorId: "connector",
-      remoteName: "echo",
       description: "Echo",
+      name: "server__echo",
+      remoteName: "echo",
     },
   ]);
   expect(JSON.stringify(tools)).not.toContain("secret");
@@ -136,8 +136,8 @@ it("keeps the execution connection open and preserves the MCP model output", asy
   pending.resolve("Echo output");
   expect(await result).toEqual({
     kind: "chatjs.mcp-result",
-    output: "Echo output",
     modelOutput: { type: "text", value: "Echo output" },
+    output: "Echo output",
   });
   expect(mocks.close).toHaveBeenCalledOnce();
 });
@@ -170,6 +170,7 @@ it("forwards cancellation and closes the connection once", async () => {
   const cancellation = new AbortController();
   execute.mockImplementation(
     (_input, options) =>
+      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
       new Promise((_resolve, reject) => {
         options.abortSignal.addEventListener(
           "abort",
@@ -197,12 +198,12 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
   async ($schema) => {
     const schema = {
       $schema,
-      type: "object" as const,
-      properties: {
-        text: { type: "string" as const },
-        language: { type: "string" as const },
-      },
       dependentRequired: { text: ["language"] },
+      properties: {
+        language: { type: "string" as const },
+        text: { type: "string" as const },
+      },
+      type: "object" as const,
     };
     mocks.tools.mockResolvedValue({
       echo: { ...definition, inputSchema: jsonSchema(schema) },
@@ -215,7 +216,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
       executeEveMcpTool(
         "connector",
         "echo",
-        { text: "hello", language: "en" },
+        { language: "en", text: "hello" },
         context,
         []
       )
@@ -229,13 +230,13 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
       ...definition,
       inputSchema: jsonSchema({
         $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
         properties: {
           pair: {
-            type: "array",
             items: [{ type: "string" }, { type: "number" }],
+            type: "array",
           },
         },
+        type: "object",
       }),
     },
   });
@@ -278,7 +279,7 @@ it("preserves conditional policy semantics and requires an owner receipt when tr
     (input: { text: string }) => input.text === "write"
   );
   mocks.tools.mockResolvedValue({ echo: { ...definition, needsApproval } });
-  const messages = [{ role: "user" as const, content: "Read then write" }];
+  const messages = [{ content: "Read then write", role: "user" as const }];
   expect(await discoverEveMcpTools("owner", context.abortSignal)).toHaveLength(
     1
   );
@@ -315,9 +316,9 @@ it("preserves conditional policy semantics and requires an owner receipt when tr
   const approval = {
     requestId: "request",
     responder: {
+      authenticator: "test",
       principalId: "owner",
       principalType: "user",
-      authenticator: "test",
     },
   };
   expect(
@@ -346,7 +347,7 @@ it("preserves conditional policy semantics and requires an owner receipt when tr
   ).rejects.toThrow("approval policy changed");
   expect(needsApproval).toHaveBeenLastCalledWith(
     { text: "write" },
-    { toolCallId: "call", messages, context: undefined }
+    { context: undefined, messages, toolCallId: "call" }
   );
 });
 
@@ -360,28 +361,28 @@ it("registers native per-call approval restricted to the session owner", async (
   }
   const tools = await resolve(
     {},
-    { session: context.session, channel: {}, messages: [] }
+    { channel: {}, messages: [], session: context.session }
   );
-  const approval = tools.server__echo.approval;
+  const { approval } = tools.server__echo;
   if (!approval || typeof approval === "function" || !approval.response) {
     throw new Error("Missing native owner approval policy.");
   }
   expect(
     await approval.request({
-      session: context.session,
-      callId: "call",
-      toolName: "server__echo",
-      toolInput: { text: "write" },
       approvedTools: new Set(),
+      callId: "call",
       getSandbox: () => {
         throw new Error("Unexpected sandbox");
       },
       getSkill: () => {
         throw new Error("Unexpected skill");
       },
+      session: context.session,
+      toolInput: { text: "write" },
+      toolName: "server__echo",
     })
   ).toBe("user-approval");
-  const initiator = context.session.auth.initiator;
+  const { initiator } = context.session.auth;
   const response = {
     auth: {
       getToken: vi.fn(),
@@ -390,8 +391,8 @@ it("registers native per-call approval restricted to the session owner", async (
       },
     },
     request: { callId: "call", requestId: "request", toolName: "server__echo" },
-    response: { decision: "approve" as const },
     responder: initiator,
+    response: { decision: "approve" as const },
     session: { id: "session", initiator, turn: context.session.turn },
   };
   expect(await approval.response(response)).toEqual({ status: "allowed" });
@@ -405,6 +406,6 @@ it("registers native per-call approval restricted to the session owner", async (
 });
 
 vi.mock("./turn-tools", () => ({
-  eveTurnTool: { get: () => null },
   eveTurnGuest: { get: () => false },
+  eveTurnTool: { get: () => null },
 }));

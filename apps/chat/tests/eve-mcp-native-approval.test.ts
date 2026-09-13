@@ -1,3 +1,8 @@
+/* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { expect, test } from "vitest";
 
 import {
@@ -5,22 +10,22 @@ import {
   contextStorage,
 } from "../../../node_modules/eve/dist/src/context/container.js";
 import { SessionKey } from "../../../node_modules/eve/dist/src/context/keys.js";
-import {
-  getToolApprovalReceipt,
-  prepareToolApprovalReceipts,
-} from "../../../node_modules/eve/dist/src/context/tool-approval-receipts.js";
 import { createToolExecuteWithAuth } from "../../../node_modules/eve/dist/src/execution/tool-auth.js";
 import { settleDirectApprovalResponse } from "../../../node_modules/eve/dist/src/harness/approval-candidates.js";
 import type { ResolvedInputBatch } from "../../../node_modules/eve/dist/src/harness/input-request-resolution.js";
+import {
+  getToolApprovalReceipt,
+  prepareToolApprovalReceipts,
+} from "../../../node_modules/eve/eve-patched-dist-src-context-tool-approval-receipts.js";
 
 const actor = {
+  authenticator: "test",
   principalId: "owner",
   principalType: "user",
-  authenticator: "test",
 };
 const session = {
+  auth: { current: null, initiator: { ...actor, attributes: {} } },
   sessionId: "session",
-  auth: { initiator: { ...actor, attributes: {} }, current: null },
   turn: { id: "turn_1", sequence: 1 },
 };
 const batch: ResolvedInputBatch = {
@@ -29,30 +34,30 @@ const batch: ResolvedInputBatch = {
     {
       outcome: "approved",
       request: {
-        kind: "tool-approval",
-        requestId: "request",
-        prompt: "Allow?",
         action: {
-          kind: "tool-call",
           callId: "call",
-          toolName: "mcp__write",
           input: { text: "write" },
+          kind: "tool-call",
+          toolName: "mcp__write",
         },
+        kind: "tool-approval",
+        prompt: "Allow?",
+        requestId: "request",
       },
-      response: { requestId: "request", optionId: "approve" },
+      response: { optionId: "approve", requestId: "request" },
     },
   ],
 };
 function fixture() {
   const ctx = new ContextContainer();
   ctx.set(SessionKey, session);
-  const state = settleDirectApprovalResponse({
+  const { state } = settleDirectApprovalResponse({
     state: undefined,
     actor: { ...actor, attributes: {} },
     outcome: "allowed",
     requestId: "request",
     settledAt: 1,
-  }).state;
+  });
   return { ctx, state };
 }
 
@@ -61,11 +66,11 @@ test("native executor receives only its exact authorized session/call/tool/input
   prepareToolApprovalReceipts(ctx, "session", [batch], state);
   await contextStorage.run(ctx, async () => {
     const execute = createToolExecuteWithAuth({
-      scope: "mcp__write",
       execute: (_input, toolContext) => toolContext.approval,
+      scope: "mcp__write",
     });
     expect(
-      await execute({ text: "write" }, { toolCallId: "call", messages: [] })
+      await execute({ text: "write" }, { messages: [], toolCallId: "call" })
     ).toEqual({ requestId: "request", responder: actor });
     expect(
       getToolApprovalReceipt("other", "mcp__write", { text: "write" })
@@ -131,21 +136,13 @@ test.each(["owner", "stranger"])(
     const { ctx } = fixture();
     const receipts: unknown[] = [];
     const execute = createToolExecuteWithAuth({
-      scope: "mcp__write",
       execute: (_input, context) => {
         receipts.push(context.approval);
         return "written";
       },
+      scope: "mcp__write",
     });
     const tool = {
-      name: "mcp__write",
-      description: "write",
-      inputSchema: jsonSchema({
-        type: "object",
-        properties: { text: { type: "string" } },
-        required: ["text"],
-      }),
-      execute,
       approval: {
         request: () => "user-approval" as const,
         response: ({ responder }: { responder: { principalId: string } }) =>
@@ -153,15 +150,16 @@ test.each(["owner", "stranger"])(
             ? { status: "allowed" as const }
             : { status: "rejected" as const, reason: "Owner only" },
       },
+      description: "write",
+      execute,
+      inputSchema: jsonSchema({
+        type: "object",
+        properties: { text: { type: "string" } },
+        required: ["text"],
+      }),
+      name: "mcp__write",
     };
     const pending = appendPendingInputBatch({
-      session: {
-        sessionId: "session",
-        continuationToken: "continuation",
-        history: [{ role: "user", content: "Write" }],
-        compaction: { recentWindowSize: 10, threshold: 100_000 },
-        agent: { system: "Test", tools: [], modelReference: { id: "mock" } },
-      },
       event: batch.event,
       requests: batch.inputs.map((input) => input.request),
       responseAuthRequiredRequestIds: ["request"],
@@ -183,30 +181,37 @@ test.each(["owner", "stranger"])(
           ],
         },
       ],
+      session: {
+        agent: { modelReference: { id: "mock" }, system: "Test", tools: [] },
+        compaction: { recentWindowSize: 10, threshold: 100_000 },
+        continuationToken: "continuation",
+        history: [{ role: "user", content: "Write" }],
+        sessionId: "session",
+      },
     });
     const model = new MockLanguageModelV4({
       doGenerate: {
-        content: [{ type: "text", text: "Done" }],
-        finishReason: { unified: "stop", raw: "stop" },
+        content: [{ text: "Done", type: "text" }],
+        finishReason: { raw: "stop", unified: "stop" },
         usage: {
-          inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
-          outputTokens: { total: 1, text: 1, reasoning: 0 },
+          inputTokens: { cacheRead: 0, cacheWrite: 0, noCache: 1, total: 1 },
+          outputTokens: { reasoning: 0, text: 1, total: 1 },
         },
         warnings: [],
       },
     });
     const step = createToolLoopHarness({
-      mode: "conversation",
       capabilities: { requestInput: true },
-      tools: new Map([[tool.name, tool]]),
+      mode: "conversation",
       resolveModel: async () => model,
+      tools: new Map([[tool.name, tool]]),
     });
     let result = await contextStorage.run(ctx, () =>
       step(pending, {
         attributedInputResponses: [
           {
-            auth: { ...actor, principalId, attributes: {} },
-            response: { requestId: "request", optionId: "approve" },
+            auth: { ...actor, attributes: {}, principalId },
+            response: { optionId: "approve", requestId: "request" },
           },
         ],
       })
@@ -214,9 +219,9 @@ test.each(["owner", "stranger"])(
     for (
       let iteration = 0;
       iteration < 4 && typeof result.next === "function";
-      iteration++
+      iteration += 1
     ) {
-      const next = result.next;
+      const { next } = result;
       result = await contextStorage.run(ctx, () => next(result.session));
     }
     expect(receipts, JSON.stringify(result)).toEqual(

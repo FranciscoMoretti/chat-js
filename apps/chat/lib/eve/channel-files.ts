@@ -7,7 +7,10 @@ import { keyFromFileUrl } from "../file-url";
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
 
 /** Interpret owned storage keys locally; never fetch the URL's hostname. */
-export async function fetchEveChannelFile(url: string, context?: FileContext) {
+export const fetchEveChannelFile = async (
+  url: string,
+  context?: FileContext
+) => {
   const key = keyFromFileUrl(url);
   if (!key) {
     return null;
@@ -22,4 +25,4 @@ export async function fetchEveChannelFile(url: string, context?: FileContext) {
     bytes: Buffer.from(await file.arrayBuffer()),
     mediaType: file.type,
   };
-}
+};

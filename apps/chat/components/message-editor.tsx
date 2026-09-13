@@ -1,8 +1,10 @@
 "use client";
-import { type Dispatch, type SetStateAction, useCallback } from "react";
+import { useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import type { ModelId } from "@/lib/ai/app-models";
-import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type { ChatMessage } from "@/lib/ai/types";
 import { useChatStatus } from "@/lib/stores/base";
 import {
   getAttachmentsFromMessage,
@@ -19,19 +21,16 @@ export interface MessageEditorProps {
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
 }
 
-function MessageEditorContent({
+const MessageEditorContent = ({
   chatId,
   setMode,
   parentMessageId,
-}: MessageEditorProps & { onModelChange?: (modelId: string) => void }) {
+}: MessageEditorProps & { onModelChange?: (modelId: string) => void }) => {
   const status = useChatStatus();
 
-  const handleOnSendMessage = useCallback(
-    (_: ChatMessage) => {
-      setMode("view");
-    },
-    [setMode]
-  );
+  const handleOnSendMessage = useCallback(() => {
+    setMode("view");
+  }, [setMode]);
 
   return (
     <div className="w-full">
@@ -44,11 +43,11 @@ function MessageEditorContent({
       />
     </div>
   );
-}
+};
 
-export function MessageEditor(
+export const MessageEditor = (
   props: MessageEditorProps & { onModelChange?: (modelId: string) => void }
-) {
+) => {
   // Get the initial input value from the message content
   const initialInput = getTextContentFromMessage(props.message);
   const initialAttachments = getAttachmentsFromMessage(props.message);
@@ -75,4 +74,4 @@ export function MessageEditor(
       />
     </ChatInputProvider>
   );
-}
+};

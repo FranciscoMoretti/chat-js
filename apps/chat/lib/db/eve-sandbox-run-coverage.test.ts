@@ -2,14 +2,12 @@ import { expect, it } from "vitest";
 
 import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
 
-function run(
+const run = (
   id: string,
   kind: string,
   parentId: string | null = null,
   eveParentId: string | null = null
-) {
-  return { id, workflowName: `workflow//eve//${kind}`, parentId, eveParentId };
-}
+) => ({ eveParentId, id, parentId, workflowName: `workflow//eve//${kind}` });
 it("identifies independent child receipts and covers ordinary work", () => {
   expect(
     classifyEveSandboxRuns([
@@ -73,7 +71,7 @@ it("only covers the pinned sleep workflow identity", () => {
 });
 it("handles deep families without recursive stack growth", () => {
   const runs = [run("0", "workflowEntry")];
-  for (let index = 1; index < 10_000; index++) {
+  for (let index = 1; index < 10_000; index += 1) {
     runs.push(run(String(index), "turnWorkflow", String(index - 1)));
   }
   expect(classifyEveSandboxRuns(runs).unresolvedRunIds).toEqual([]);

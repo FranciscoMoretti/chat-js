@@ -6,7 +6,6 @@ import type {
 } from "ai";
 import { z } from "zod";
 
-import type { codeExecution } from "@/tools/platform/code-execution";
 import type { deepResearch } from "@/tools/platform/deep-research/deep-research";
 import type { createCodeDocumentTool } from "@/tools/platform/documents/create-code-document";
 import type { createSheetDocumentTool } from "@/tools/platform/documents/create-sheet-document";
@@ -14,11 +13,8 @@ import type { createTextDocumentTool } from "@/tools/platform/documents/create-t
 import type { editCodeDocumentTool } from "@/tools/platform/documents/edit-code-document";
 import type { editSheetDocumentTool } from "@/tools/platform/documents/edit-sheet-document";
 import type { editTextDocumentTool } from "@/tools/platform/documents/edit-text-document";
-import type { generateImageTool as generateImageToolFactory } from "@/tools/platform/generate-image";
-import type { generateVideoTool as generateVideoToolFactory } from "@/tools/platform/generate-video";
 import type { readDocument } from "@/tools/platform/read-document";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-import type { tavilyWebSearch } from "@/tools/platform/web-search";
 
 import type { AppModelId } from "./app-models";
 import type { InstalledTools } from "./installed-tools";
@@ -62,9 +58,9 @@ export type UiToolName = z.infer<typeof frontendToolsSchema>;
 export type SelectedModelCounts = Partial<Record<AppModelId, number>>;
 export type SelectedModelValue = AppModelId | SelectedModelCounts;
 
-export function isSelectedModelCounts(
+export const isSelectedModelCounts = (
   value: unknown
-): value is SelectedModelCounts {
+): value is SelectedModelCounts => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
@@ -80,17 +76,16 @@ export function isSelectedModelCounts(
       Number.isInteger(count) &&
       count > 0
   );
-}
+};
 
-export function isSelectedModelValue(
+export const isSelectedModelValue = (
   value: unknown
-): value is SelectedModelValue {
-  return typeof value === "string" || isSelectedModelCounts(value);
-}
+): value is SelectedModelValue =>
+  typeof value === "string" || isSelectedModelCounts(value);
 
-export function getPrimarySelectedModelId(
+export const getPrimarySelectedModelId = (
   selectedModel: SelectedModelValue | null | undefined
-): AppModelId | null {
+): AppModelId | null => {
   if (!selectedModel) {
     return null;
   }
@@ -104,11 +99,11 @@ export function getPrimarySelectedModelId(
   ) ?? [null];
 
   return firstSelectedModelId as AppModelId | null;
-}
+};
 
-export function expandSelectedModelValue(
+export const expandSelectedModelValue = (
   selectedModel: SelectedModelValue
-): AppModelId[] {
+): AppModelId[] => {
   if (typeof selectedModel === "string") {
     return [selectedModel];
   }
@@ -126,16 +121,16 @@ export function expandSelectedModelValue(
   }
 
   return expanded;
-}
+};
 
 export const messageMetadataSchema = z.object({
+  activeStreamId: z.string().nullable(),
   createdAt: z.date(),
-  parentMessageId: z.string().nullable(),
+  isPrimaryParallel: z.boolean().nullable().optional(),
   parallelGroupId: z.string().nullable().optional(),
   parallelIndex: z.number().int().nullable().optional(),
-  isPrimaryParallel: z.boolean().nullable().optional(),
+  parentMessageId: z.string().nullable(),
   selectedModel: z.custom<SelectedModelValue>(isSelectedModelValue),
-  activeStreamId: z.string().nullable(),
   selectedTool: frontendToolsSchema.optional(),
   usage: z.custom<LanguageModelUsage | undefined>((_val) => true).optional(),
 });
@@ -162,17 +157,8 @@ type editSheetDocumentToolType = InferUITool<
 >;
 type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
 type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-type generateImageTool = InferUITool<
-  ReturnType<typeof generateImageToolFactory>
->;
-type generateVideoTool = InferUITool<
-  ReturnType<typeof generateVideoToolFactory>
->;
-type webSearchTool = InferUITool<ReturnType<typeof tavilyWebSearch>>;
-type codeExecutionTool = InferUITool<ReturnType<typeof codeExecution>>;
 
 export type ChatTools = {
-  codeExecution: codeExecutionTool;
   createCodeDocument: createCodeDocumentToolType;
   createSheetDocument: createSheetDocumentToolType;
   createTextDocument: createTextDocumentToolType;
@@ -180,10 +166,7 @@ export type ChatTools = {
   editCodeDocument: editCodeDocumentToolType;
   editSheetDocument: editSheetDocumentToolType;
   editTextDocument: editTextDocumentToolType;
-  generateImage: generateImageTool;
-  generateVideo: generateVideoTool;
   readDocument: readDocumentTool;
-  webSearch: webSearchTool;
 } & InstalledTools;
 
 interface FollowupSuggestions {

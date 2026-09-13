@@ -27,7 +27,7 @@ import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
 
-export function EveHistoryList({
+export const EveHistoryList = ({
   initialPage,
   ownerId,
   projectId,
@@ -35,7 +35,7 @@ export function EveHistoryList({
   ownerId: string;
   projectId?: string;
   initialPage: Awaited<ReturnType<typeof listEveConversations>>;
-}) {
+}) => {
   const trpc = useTRPC();
   const { data: session } = useSession();
   const openDeletion = useEveDeletion();
@@ -50,12 +50,12 @@ export function EveHistoryList({
   const search = query.trim();
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { search, projectId, ownerScope: ownerId },
+      { ownerScope: ownerId, projectId, search },
       {
         getNextPageParam: (page) => page.nextCursor,
         initialData: search
           ? undefined
-          : { pages: [initialPage], pageParams: [null] },
+          : { pageParams: [null], pages: [initialPage] },
       }
     )
   );
@@ -69,20 +69,20 @@ export function EveHistoryList({
     seen.add(item.id);
     return true;
   });
-  async function refresh() {
+  const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
     router.refresh();
-  }
+  };
   const rename = useMutation(
     trpc.eve.rename.mutationOptions({
-      onSuccess: refresh,
       onError: (error) => toast.error(error.message),
+      onSuccess: refresh,
     })
   );
   const pin = useMutation(
     trpc.eve.pin.mutationOptions({
-      onSuccess: refresh,
       onError: (error) => toast.error(error.message),
+      onSuccess: refresh,
     })
   );
   const pathname = usePathname();
@@ -161,9 +161,9 @@ export function EveHistoryList({
         })}
       </SidebarMenu>
       {history.isPending && (
-        <p className="text-muted-foreground p-2 text-sm" role="status">
+        <output className="text-muted-foreground p-2 text-sm">
           Loading conversations…
-        </p>
+        </output>
       )}
       {history.isError && (
         <div className="p-2 text-sm" role="alert">
@@ -208,4 +208,4 @@ export function EveHistoryList({
       )}
     </SidebarGroup>
   );
-}
+};

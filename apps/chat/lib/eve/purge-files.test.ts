@@ -1,19 +1,19 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { purgeEveFamilyFiles } from "./purge-files";
+
 const mocks = vi.hoisted(() => ({
-  prepare: vi.fn(),
   complete: vi.fn(),
+  prepare: vi.fn(),
   release: vi.fn(),
   remove: vi.fn(),
 }));
 vi.mock("../db/eve-file-purge", () => ({
-  prepareEveFamilyFilePurge: mocks.prepare,
   completeEveFilePurge: mocks.complete,
+  prepareEveFamilyFilePurge: mocks.prepare,
   releaseEveFamilyFileReferences: mocks.release,
 }));
 vi.mock("../file-storage", () => ({ deleteFilesByUrls: mocks.remove }));
-
-import { purgeEveFamilyFiles } from "./purge-files";
 
 beforeEach(() => vi.resetAllMocks());
 test("failed storage removal leaves the durable deletion pending for retry", async () => {

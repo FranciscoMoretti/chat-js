@@ -11,7 +11,7 @@ import {
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
@@ -72,4 +72,4 @@ export async function POST(request: Request) {
     }
   }
   return response;
-}
+};

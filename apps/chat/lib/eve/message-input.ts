@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
 import { keyFromFileUrl } from "../file-url";
@@ -36,7 +37,7 @@ export const eveMessageInput = z.union([
     ),
 ]);
 export type EveMessageInput = z.infer<typeof eveMessageInput>;
-export function eveMessageTitle(message: EveMessageInput) {
+export const eveMessageTitle = (message: EveMessageInput) => {
   if (typeof message === "string") {
     return message;
   }
@@ -48,4 +49,4 @@ export function eveMessageTitle(message: EveMessageInput) {
     .filter((part) => part.type === "file")
     .map((part) => part.filename)
     .join(", ");
-}
+};

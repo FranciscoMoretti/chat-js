@@ -1,4 +1,5 @@
-import { type Dispatch, memo, type SetStateAction, useState } from "react";
+import { memo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 
 import type {
@@ -33,17 +34,17 @@ interface ArtifactActionsProps {
   setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>;
 }
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
 interface TypedArtifactActionsProps<M extends ArtifactMetadata> extends Omit<
   ArtifactActionsProps,
@@ -54,7 +55,7 @@ interface TypedArtifactActionsProps<M extends ArtifactMetadata> extends Omit<
   setMetadata: Dispatch<SetStateAction<M>>;
 }
 
-function TypedArtifactActions<M extends ArtifactMetadata>({
+const TypedArtifactActions = <M extends ArtifactMetadata>({
   artifact,
   artifactDefinition,
   handleVersionChange,
@@ -64,23 +65,23 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
   metadata,
   setMetadata,
   isReadonly,
-}: TypedArtifactActionsProps<M>) {
+}: TypedArtifactActionsProps<M>) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const actionContext: ArtifactActionContext<M> = {
     content: artifact.content,
-    handleVersionChange,
     currentVersionIndex,
+    handleVersionChange,
     isCurrentVersion,
-    mode,
-    metadata,
-    setMetadata,
     isReadonly,
+    metadata,
+    mode,
+    setMetadata,
   };
 
-  function isActionDisabled(action: {
+  const isActionDisabled = (action: {
     isDisabled?: (context: ArtifactActionContext<M>) => boolean;
-  }): boolean {
+  }): boolean => {
     if (isLoading || artifact.status === "streaming") {
       return true;
     }
@@ -88,7 +89,7 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
       return action.isDisabled(actionContext);
     }
     return false;
-  }
+  };
 
   return (
     <div className="flex flex-row gap-1">
@@ -121,8 +122,9 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
 
                       try {
                         await Promise.resolve(action.onClick(actionContext));
-                      } catch (_error) {
+                      } catch {
                         toast.error("Failed to execute action");
+                        // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required loading cleanup in finally.
                       } finally {
                         setIsLoading(false);
                       }
@@ -145,8 +147,9 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
 
                     try {
                       await Promise.resolve(action.onClick(actionContext));
-                    } catch (_error) {
+                    } catch {
                       toast.error("Failed to execute action");
+                      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required loading cleanup in finally.
                     } finally {
                       setIsLoading(false);
                     }
@@ -163,12 +166,12 @@ function TypedArtifactActions<M extends ArtifactMetadata>({
         ))}
     </div>
   );
-}
+};
 
 export const ArtifactActions = memo(
-  function ArtifactActions(props: ArtifactActionsProps) {
+  (props: ArtifactActionsProps) => {
     switch (props.artifact.kind) {
-      case "code":
+      case "code": {
         return (
           <TypedArtifactActions
             {...props}
@@ -180,7 +183,8 @@ export const ArtifactActions = memo(
             )}
           />
         );
-      case "sheet":
+      }
+      case "sheet": {
         return (
           <TypedArtifactActions
             {...props}
@@ -192,7 +196,8 @@ export const ArtifactActions = memo(
             )}
           />
         );
-      case "text":
+      }
+      case "text": {
         return (
           <TypedArtifactActions
             {...props}
@@ -201,8 +206,10 @@ export const ArtifactActions = memo(
             setMetadata={props.setMetadata}
           />
         );
-      default:
+      }
+      default: {
         throw new Error("Artifact definition not found!");
+      }
     }
   },
   (prevProps, nextProps) => {
@@ -228,3 +235,5 @@ export const ArtifactActions = memo(
     return true;
   }
 );
+
+ArtifactActions.displayName = "ArtifactActions";

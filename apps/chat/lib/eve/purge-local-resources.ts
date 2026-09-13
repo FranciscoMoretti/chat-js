@@ -12,11 +12,11 @@ import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
  * until external tool resources are accounted for and final erasure can proceed.
  * appRoot must be the worker's actual app root, never a request-controlled path.
  */
-export async function purgeLocalEveFamilyResources(
+export const purgeLocalEveFamilyResources = async (
   ownerId: string,
   conversationId: string,
   appRoot: string
-) {
+) => {
   const family = await prepareEveFamilyDeletion(ownerId, conversationId);
   if (!family?.conversations.length) {
     return family;
@@ -38,4 +38,4 @@ export async function purgeLocalEveFamilyResources(
   await purgeEveFamilyDocuments(ownerId, family.rootId);
   await purgeEveFamilyFiles(ownerId, family.rootId);
   return family;
-}
+};

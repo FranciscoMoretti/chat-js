@@ -22,7 +22,7 @@ Enable web search in `chat.config.ts`:
 ai: {
   tools: {
     webSearch: {
-      enabled: true, // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
+      enabled: true, // Requires the selected search tool’s credentials
     },
   },
 }
@@ -30,20 +30,14 @@ ai: {
 
 ## Environment Variables
 
-Configure one of the supported search providers:
+Select a search tool when creating the app:
 
 ```bash
-# Option 1: Tavily (recommended)
-TAVILY_API_KEY=your_tavily_key
-
-# Option 2: Firecrawl
-FIRECRAWL_API_KEY=your_firecrawl_key
+bunx @chat-js/cli create my-app --search-tool tavily-search
+# Or: --search-tool firecrawl-search
 ```
 
-<Callout type="note">
-  If both keys are set, Tavily is used for regular chat and the provider can be
-  configured per-feature (e.g., deep research).
-</Callout>
+Set `TAVILY_API_KEY` for Tavily or `FIRECRAWL_API_KEY` for Firecrawl in `.env.local`. The selected tool is used by both chat and deep research. Keys do not select the implementation automatically.
 
 ## Providers
 
@@ -119,23 +113,17 @@ Returns search results grouped by query:
 
 ### Tool Definition
 
-The tool is defined in `lib/ai/tools/web-search.ts`. You can modify:
+The selected implementation lives in `tools/chatjs/<id>/tool.ts`. Edit its typed schema, description, and execution options there. Shared progress and source card events are handled by `tools/platform/search-presentation.ts`.
 
-- Maximum queries per request (`MAX_SEARCH_QUERIES`)
-- Default results per query (`DEFAULT_MAX_RESULTS`)
-- Tool description to adjust AI behavior
+### Change the selected tool
 
-### Provider Selection
+Keep any custom edits, then remove the previous search tool directory (for example, `tools/chatjs/tavily-search`) and install the replacement:
 
-To use Firecrawl instead of Tavily for regular chat, modify `lib/ai/tools/tools.ts`:
-
-```ts
-webSearch: firecrawlWebSearch({
-  dataStream,
-  writeTopLevelUpdates: true,
-  costAccumulator,
-}),
+```bash
+bunx @chat-js/cli add firecrawl-search
 ```
+
+Sync requires exactly one installed search selection when search is used. It generates the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, plus `search-config.ts` for credentials. Do not edit generated files. An unused native package can be removed after checking that no other tool uses it. Firecrawl may also be needed by URL retrieval.
 
 ## URL Retrieval
 
@@ -160,3 +148,9 @@ The tool extracts:
 - Source URL and language metadata
 
 Use web search for discovery and URL retrieval for extracting content from known URLs.
+
+## External search tools
+
+Pass an external registry item URL to `--search-tool`. The item exports a standard AI SDK tool and declares `slot: "webSearch"`. It owns its schema, output, credentials, and optional renderer. The multi-query schema and progress cards above describe the built-in items, not requirements for external search tools.
+
+Chat and deep research both expose the selected tool to their models. See [Authoring tools](../tools/authoring#selecting-tools-for-app-features) for metadata and renderer registration.

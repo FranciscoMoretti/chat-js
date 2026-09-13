@@ -7,49 +7,49 @@ const url = "/api/files/content?key=abcdefghijklmnopqrstuvwx.png";
 test("uses only the latest user attachments and generated images from this native branch", () => {
   const messages: ModelMessage[] = [
     {
-      role: "user",
       content: [
         {
-          type: "file",
-          mediaType: "image/png",
           data: "data:image/png;base64,b2xk",
+          mediaType: "image/png",
+          type: "file",
         },
       ],
+      role: "user",
     },
     {
-      role: "tool",
       content: [
         {
-          type: "tool-result",
+          output: { type: "json", value: { imageUrl: url, prompt: "tree" } },
           toolCallId: "image-1",
           toolName: "generateImage",
-          output: { type: "json", value: { imageUrl: url, prompt: "tree" } },
+          type: "tool-result",
         },
       ],
+      role: "tool",
     },
     {
-      role: "user",
       content: [
         {
-          type: "file",
-          mediaType: "image/png",
           data: "data:image/png;base64,bmV3",
+          mediaType: "image/png",
+          type: "file",
         },
         {
-          type: "file",
-          mediaType: "application/pdf",
           data: "data:application/pdf;base64,cGRm",
+          mediaType: "application/pdf",
+          type: "file",
         },
       ],
+      role: "user",
     },
   ];
   expect(eveImageContext(messages)).toEqual({
     attachments: [
       {
-        type: "file",
-        mediaType: "image/png",
-        url: "data:image/png;base64,bmV3",
         filename: undefined,
+        mediaType: "image/png",
+        type: "file",
+        url: "data:image/png;base64,bmV3",
       },
     ],
     lastGeneratedImage: { imageUrl: url, name: "generated-image-image-1.png" },
@@ -58,7 +58,7 @@ test("uses only the latest user attachments and generated images from this nativ
     lastGeneratedImage: null,
   });
   expect(
-    eveImageContext([...messages, { role: "user", content: "edit it" }])
+    eveImageContext([...messages, { content: "edit it", role: "user" }])
       .attachments
   ).toEqual([]);
 });

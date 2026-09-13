@@ -12,7 +12,7 @@ const schedulerGlobal: typeof globalThis & {
   chatjsEveGuestCleanup?: CleanupScheduler;
 } = globalThis;
 
-function enabled() {
+const enabled = () => {
   if (
     env.NODE_ENV !== "development" ||
     env.EVE_ENABLED !== "true" ||
@@ -30,10 +30,10 @@ function enabled() {
   } catch {
     return false;
   }
-}
+};
 
 /** Development only. Never load database clients for a remote or disabled runtime. */
-export function startLocalEveGuestCleanup() {
+export const startLocalEveGuestCleanup = () => {
   if (!enabled()) {
     schedulerGlobal.chatjsEveGuestCleanup?.stop();
     return;
@@ -64,6 +64,7 @@ export function startLocalEveGuestCleanup() {
     run,
     start() {
       stopped = false;
+      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
       schedule();
     },
     stop() {
@@ -72,7 +73,7 @@ export function startLocalEveGuestCleanup() {
       timer = undefined;
     },
   };
-  async function tick() {
+  const tick = async () => {
     timer = undefined;
     running = true;
     try {
@@ -83,17 +84,18 @@ export function startLocalEveGuestCleanup() {
       );
     } finally {
       running = false;
+      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
       schedule();
     }
-  }
-  function schedule() {
+  };
+  const schedule = () => {
     if (stopped || running || timer) {
       return;
     }
     timer = setTimeout(tick, CLEANUP_INTERVAL_MS);
     timer.unref();
-  }
+  };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();
   return scheduler.stop;
-}
+};

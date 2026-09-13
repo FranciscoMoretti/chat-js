@@ -5,7 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { cn } from "@/lib/utils";
 
-export function FollowUpSuggestionsView({
+export const FollowUpSuggestionsView = ({
   suggestions,
   className,
   onSelect,
@@ -15,7 +15,7 @@ export function FollowUpSuggestionsView({
   className?: string;
   onSelect: (suggestion: string) => void;
   disabled?: boolean;
-}) {
+}) => {
   if (suggestions.length === 0) {
     return null;
   }
@@ -55,4 +55,4 @@ export function FollowUpSuggestionsView({
       </Suggestions>
     </fieldset>
   );
-}
+};

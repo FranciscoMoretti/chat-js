@@ -1,7 +1,8 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
-import SuperJSON from "superjson";
+import { SuperJSON } from "superjson";
 import { z } from "zod";
 
 import type { AppRouter } from "../trpc/routers/_app";
@@ -19,8 +20,6 @@ export const queryClient = new QueryClient({
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: "http://fixture.invalid/api/trpc",
-      transformer: SuperJSON,
       fetch(input) {
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname !== "/api/trpc/eve.document") {
@@ -72,6 +71,8 @@ export const trpcClient = createTRPCClient<AppRouter>({
           )
         );
       },
+      transformer: SuperJSON,
+      url: "http://fixture.invalid/api/trpc",
     }),
   ],
 });

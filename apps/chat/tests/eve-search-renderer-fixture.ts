@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -7,19 +8,14 @@ import { createEvePlatformResult } from "../lib/eve/platform-result";
 
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   {
-    type: "dynamic-tool",
-    toolName: "webSearch",
-    toolCallId: "loading",
-    state: "input-available",
     input: {},
+    state: "input-available",
+    toolCallId: "loading",
+    toolName: "webSearch",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolName: "webSearch",
-    toolCallId: "progress",
     input: {},
-    state: "output-available",
-    partial: true,
     output: createEvePlatformResult({ searches: [] }, 0, [
       {
         type: "web",
@@ -29,21 +25,22 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
         queries: ["example"],
       },
     ]),
+    partial: true,
+    state: "output-available",
+    toolCallId: "progress",
+    toolName: "webSearch",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolName: "webSearch",
-    toolCallId: "failed",
+    errorText: "Search interrupted.",
     input: {},
     state: "output-error",
-    errorText: "Search interrupted.",
+    toolCallId: "failed",
+    toolName: "webSearch",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
-    toolName: "webSearch",
-    toolCallId: "provider",
     input: {},
-    state: "output-available",
     output: createEvePlatformResult(
       {
         searches: [],
@@ -51,22 +48,26 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.05
     ),
-  },
-  {
-    type: "dynamic-tool",
-    toolName: "webSearch",
-    toolCallId: "malformed",
-    input: {},
     state: "output-available",
-    output: {},
+    toolCallId: "provider",
+    toolName: "webSearch",
+    type: "dynamic-tool",
   },
   {
-    type: "dynamic-tool",
+    input: {},
+    output: {},
+    state: "output-available",
+    toolCallId: "malformed",
     toolName: "webSearch",
-    toolCallId: "denied",
+    type: "dynamic-tool",
+  },
+  {
+    approval: { approved: false, id: "declined" },
     input: {},
     state: "output-denied",
-    approval: { id: "declined", approved: false },
+    toolCallId: "denied",
+    toolName: "webSearch",
+    type: "dynamic-tool",
   },
 ];
 process.stdout.write(
@@ -77,11 +78,11 @@ process.stdout.write(
       parts.map((part) =>
         createElement(
           "section",
-          { key: part.toolCallId, className: "rounded border p-3" },
+          { className: "rounded border p-3", key: part.toolCallId },
           createElement(EvePlatformToolResult, {
-            part,
-            messageId: "fixture",
             isReadonly: true,
+            messageId: "fixture",
+            part,
           })
         )
       )

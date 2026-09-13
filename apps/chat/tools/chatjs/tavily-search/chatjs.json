@@ -1,0 +1,13 @@
+{
+  "contractVersion": 1,
+  "kind": "tool",
+  "id": "tavily-search",
+  "toolExport": "webSearch",
+  "rendererExport": "WebSearchRenderer",
+  "slot": "webSearch",
+  "envRequirements": [
+    {
+      "options": [["TAVILY_API_KEY"]]
+    }
+  ]
+}

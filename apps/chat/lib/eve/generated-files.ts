@@ -4,22 +4,24 @@ import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
 } from "../db/eve-files";
-import {
-  createFileStorageKey,
-  type uploadFile,
-  uploadFileAtKey,
-} from "../file-storage";
+import { createFileStorageKey, uploadFileAtKey } from "../file-storage";
+import type { uploadFile } from "../file-storage";
 import { resolveEveConversationScope } from "./conversation-scope";
 
-export function eveGeneratedFileUploader(
-  context: Pick<ToolContext, "abortSignal"> & {
-    session?: {
-      id: string;
-      auth: { initiator?: { principalId: string } | null };
-    };
-  }
-): typeof uploadFile {
-  return async (filename, body, contentType) => {
+export const eveGeneratedFileUploader =
+  (
+    context: Pick<ToolContext, "abortSignal"> & {
+      session?: {
+        id: string;
+        auth: {
+          initiator?: {
+            principalId: string;
+          } | null;
+        };
+      };
+    }
+  ): typeof uploadFile =>
+  async (filename, body, contentType) => {
     if (!context.session) {
       throw new Error("Generated files require a native session.");
     }
@@ -40,4 +42,3 @@ export function eveGeneratedFileUploader(
       }
     );
   };
-}

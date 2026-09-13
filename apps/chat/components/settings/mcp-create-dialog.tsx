@@ -51,25 +51,25 @@ const mcpConnectorFormSchema = z.object({
     .max(MCP_NAME_MAX_LENGTH, {
       message: `Name must be at most ${MCP_NAME_MAX_LENGTH} characters`,
     }),
+  oauthClientId: z.string().optional(),
+  oauthClientSecret: z.string().optional(),
+  type: z.enum(["http", "sse"]),
   url: z
     .string()
     .min(1, { message: "URL is required" })
     .url({ message: "Please enter a valid URL" }),
-  type: z.enum(["http", "sse"]),
-  oauthClientId: z.string().optional(),
-  oauthClientSecret: z.string().optional(),
 });
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
 const HIDE_ADVANCED_SETTINGS = true;
-export function McpCreateDialog({
+export const McpCreateDialog = ({
   open,
   onClose,
 }: {
   open: boolean;
   onClose: () => void;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
@@ -78,14 +78,14 @@ export function McpCreateDialog({
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const form = useForm<McpConnectorFormValues>({
-    resolver: zodResolver(mcpConnectorFormSchema),
     defaultValues: {
       name: "",
-      url: "",
-      type: "http",
       oauthClientId: "",
       oauthClientSecret: "",
+      type: "http",
+      url: "",
     },
+    resolver: zodResolver(mcpConnectorFormSchema),
   });
 
   useEffect(() => {
@@ -95,12 +95,13 @@ export function McpCreateDialog({
 
     form.reset({
       name: "",
-      url: "",
-      type: "http",
       oauthClientId: "",
       oauthClientSecret: "",
+      type: "http",
+      url: "",
     });
 
+    // oxlint-disable-next-line react/set-state-in-effect -- Reset the controlled form's advanced section on open.
     setAdvancedOpen(false);
   }, [open, form]);
 
@@ -116,17 +117,17 @@ export function McpCreateDialog({
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
-      url: values.url.trim(),
       oauthClientId: values.oauthClientId?.trim() || undefined,
       oauthClientSecret: values.oauthClientSecret?.trim() || undefined,
+      url: values.url.trim(),
     };
 
     await createConnector({
       name: trimmed.name,
-      url: trimmed.url,
-      type: trimmed.type,
       oauthClientId: trimmed.oauthClientId,
       oauthClientSecret: trimmed.oauthClientSecret,
+      type: trimmed.type,
+      url: trimmed.url,
     });
     toast.success("Connector added");
     queryClient.invalidateQueries({ queryKey });
@@ -216,7 +217,7 @@ export function McpCreateDialog({
                         <FormControl>
                           <Select
                             defaultValue={field.value}
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => field.onChange(value)}
                             value={field.value}
                           >
                             <SelectTrigger>
@@ -273,7 +274,7 @@ export function McpCreateDialog({
             <p className="text-muted-foreground text-xs leading-relaxed">
               Only use connectors from developers you trust. {appName} does not
               control which tools developers make available and cannot verify
-              that they will work as intended or that they won't change.
+              that they will work as intended or that they won&apos;t change.
             </p>
 
             <DialogFooter>
@@ -295,4 +296,4 @@ export function McpCreateDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

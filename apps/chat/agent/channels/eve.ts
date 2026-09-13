@@ -6,10 +6,10 @@ import { fetchEveChannelFile } from "../../lib/eve/channel-files";
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 
 export default eveChannel({
-  resolveSeed: ({ auth, operationId }) =>
-    resolveAcceptedEveCopySeed(auth.principalId, operationId),
-  fetchFile: fetchEveChannelFile,
+  auth: authenticateEveGateway,
   authorizeFork: ({ auth, sourceSessionId }) =>
     ownsEveSession(auth.principalId, sourceSessionId),
-  auth: authenticateEveGateway,
+  fetchFile: fetchEveChannelFile,
+  resolveSeed: ({ auth, operationId }) =>
+    resolveAcceptedEveCopySeed(auth.principalId, operationId),
 });

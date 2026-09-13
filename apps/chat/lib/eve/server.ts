@@ -2,7 +2,7 @@ import { env } from "@/lib/env";
 
 import type { UiToolName } from "../ai/types";
 
-export function assertEveConfigured() {
+export const assertEveConfigured = () => {
   if (
     !(
       env.EVE_INTERNAL_ORIGIN &&
@@ -14,15 +14,15 @@ export function assertEveConfigured() {
       "Configure the Eve worker, secret and World database before starting a conversation."
     );
   }
-}
+};
 
-export async function eveRequest(
+export const eveRequest = async (
   owner: string,
   path: string,
   init: RequestInit = {},
   modelId?: string,
   selectedTool?: UiToolName
-) {
+) => {
   assertEveConfigured();
   const headers = new Headers({
     authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
@@ -39,8 +39,8 @@ export async function eveRequest(
   }
   return await fetch(new URL(path, env.EVE_INTERNAL_ORIGIN), {
     ...init,
+    cache: "no-store",
     headers,
     redirect: "error",
-    cache: "no-store",
   });
-}
+};

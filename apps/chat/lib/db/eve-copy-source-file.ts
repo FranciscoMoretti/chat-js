@@ -5,12 +5,16 @@ import { lockEveCopyOwners } from "./eve-copy-journal";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
 /** Read only active files retained by this exact public source; supplied URLs are not authority. */
-export async function readPublicEveCopyFile(
-  source: { id: string; ownerId: string; sessionId: string },
+export const readPublicEveCopyFile = async (
+  source: {
+    id: string;
+    ownerId: string;
+    sessionId: string;
+  },
   key: string,
   read: (key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>
-) {
-  return await db.transaction(async (tx) => {
+) =>
+  await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [source.ownerId]);
     const [reference] = await tx
       .select({ key: eveStoredFile.key })
@@ -47,4 +51,3 @@ export async function readPublicEveCopyFile(
     const file = await read(reference.key);
     return new Blob([await file.arrayBuffer()], { type: file.type });
   });
-}

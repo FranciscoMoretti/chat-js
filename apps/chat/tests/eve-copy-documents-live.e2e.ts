@@ -20,7 +20,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash";
-const boundaryReply = /^boundary-ready\.?$/;
+const boundaryReply = /^boundary-ready\.?$/u;
 
 test("copied document history survives source deletion and supports native editing", async ({
   page,
@@ -39,21 +39,21 @@ test("copied document history survives source deletion and supports native editi
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
-  const origin = new URL(z.url().parse(testInfo.project.use.baseURL)).origin;
+  const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId,
       message:
         'Call createTextDocument exactly once with title "Copy orchard" and content "# Orchard\n\nAmber apples.". Do not use other tools. Then reply briefly.',
+      modelId,
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const source = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${source.id}`);
   await expect(
-    page.getByRole("button", { name: 'Created "Copy orchard"', exact: true })
+    page.getByRole("button", { exact: true, name: 'Created "Copy orchard"' })
   ).toBeVisible({ timeout: 45_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const [original] = await db
@@ -64,20 +64,20 @@ test("copied document history survives source deletion and supports native editi
   const edit = await page.request.post("/api/trpc/eve.saveDocument", {
     data: {
       json: {
+        content: "# Orchard\n\nCobalt pears.",
         conversationId: source.id,
         documentId: original.documentId,
         expectedRevisionId: original.id,
         operationId: crypto.randomUUID(),
         title: original.title,
-        content: "# Orchard\n\nCobalt pears.",
       },
     },
   });
   expect(edit.ok(), await edit.text()).toBe(true);
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Reply exactly boundary-ready. Do not use tools.");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page.getByRole("log").getByText(boundaryReply)).toBeVisible({
     timeout: 45_000,
   });
@@ -87,26 +87,26 @@ test("copied document history survives source deletion and supports native editi
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, source.id));
   const copyInput = {
-    sourceConversationId: source.id,
-    operationId: crypto.randomUUID(),
     modelId,
+    operationId: crypto.randomUUID(),
+    sourceConversationId: source.id,
   };
   let copied = await page.request.post("/api/agent-conversation-copies", {
-    headers: { origin },
     data: copyInput,
+    headers: { origin },
   });
   await expect
     .poll(
       async () => {
         if (copied.status() === 503) {
           copied = await page.request.post("/api/agent-conversation-copies", {
-            headers: { origin },
             data: copyInput,
+            headers: { origin },
           });
         }
         return copied.status();
       },
-      { timeout: 45_000, intervals: [1000, 2000, 4000] }
+      { intervals: [1000, 2000, 4000], timeout: 45_000 }
     )
     .toBe(200);
   const destination = conversationBinding.parse(await copied.json());
@@ -121,9 +121,9 @@ test("copied document history survives source deletion and supports native editi
     .where(eq(eveDocumentHead.conversationId, destination.id));
   expect(head.documentId).not.toBe(original.documentId);
   const native = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": head.ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const copiedSession = native.sessions.attach(destination.sessionId);
   let idle = await copiedSession.snapshot();
@@ -133,7 +133,7 @@ test("copied document history survives source deletion and supports native editi
         idle = await copiedSession.snapshot();
         return idle.events.some((event) => event.type === "history.seeded");
       },
-      { timeout: 20_000, intervals: [250, 500, 1000] }
+      { intervals: [250, 500, 1000], timeout: 20_000 }
     )
     .toBe(true);
   expect(
@@ -147,8 +147,8 @@ test("copied document history survives source deletion and supports native editi
   expect(
     await db
       .select({
-        messageIndex: eveImportedDocumentCheckpointEntry.messageIndex,
         documentId: eveImportedDocumentCheckpointEntry.documentId,
+        messageIndex: eveImportedDocumentCheckpointEntry.messageIndex,
         revisionId: eveImportedDocumentCheckpointEntry.revisionId,
       })
       .from(eveImportedDocumentCheckpointEntry)
@@ -157,8 +157,8 @@ test("copied document history survives source deletion and supports native editi
       )
   ).toEqual([
     {
-      messageIndex: 2,
       documentId: head.documentId,
+      messageIndex: 2,
       revisionId: head.revisionId,
     },
   ]);
@@ -189,7 +189,7 @@ test("copied document history survives source deletion and supports native editi
         return z.object({ status: z.string() }).parse(await response.json())
           .status;
       },
-      { timeout: 45_000, intervals: [1000, 2000, 4000] }
+      { intervals: [1000, 2000, 4000], timeout: 45_000 }
     )
     .toBe("deleted");
   expect(
@@ -200,27 +200,27 @@ test("copied document history survives source deletion and supports native editi
   ).toEqual([]);
   await page.goto(`/chat/${destination.id}`);
   await page
-    .getByRole("button", { name: 'Created "Copy orchard"', exact: true })
+    .getByRole("button", { exact: true, name: 'Created "Copy orchard"' })
     .click();
   const panel = page.getByTestId("artifact");
   await expect(panel).toContainText("Amber apples.");
   await expect(panel).toContainText("Version 1 of 2");
-  await panel.getByRole("button", { name: "Next", exact: true }).click();
+  await panel.getByRole("button", { exact: true, name: "Next" }).click();
   await expect(panel).toContainText("Cobalt pears.");
-  await panel.getByRole("button", { name: "Close", exact: true }).click();
+  await panel.getByRole("button", { exact: true, name: "Close" }).click();
   await page
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
       `Use readDocument with documentId "${head.documentId}" to read the current "Copy orchard" document. Then use editTextDocument to append a new paragraph "Silver plums." to its current content. Preserve its title and existing content.`
     );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByRole("button", { name: 'Updated "Copy orchard"', exact: true })
+    page.getByRole("button", { exact: true, name: 'Updated "Copy orchard"' })
   ).toBeVisible({ timeout: 45_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await page.reload();
   await page
-    .getByRole("button", { name: 'Updated "Copy orchard"', exact: true })
+    .getByRole("button", { exact: true, name: 'Updated "Copy orchard"' })
     .click();
   await expect(panel).toContainText("Cobalt pears.");
   await expect(panel).toContainText("Silver plums.");
@@ -237,18 +237,18 @@ test("copied document history survives source deletion and supports native editi
     )
   ).toBe(true);
   await page
-    .getByRole("button", { name: "Edit message", exact: true })
+    .getByRole("button", { exact: true, name: "Edit message" })
     .nth(1)
     .click();
   const editor = page.getByRole("dialog");
   await editor
-    .getByRole("textbox", { name: "Message", exact: true })
+    .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
       `Use readDocument with documentId "${head.documentId}" once, then reply briefly. Do not edit the document.`
     );
   await editor.screenshot({
-    path: testInfo.outputPath("imported-edit.png"),
     animations: "disabled",
+    path: testInfo.outputPath("imported-edit.png"),
   });
   const forkReply = Promise.withResolvers<{
     input: z.infer<typeof createConversationInput>;
@@ -260,20 +260,20 @@ test("copied document history survives source deletion and supports native editi
       const response = await route.fetch();
       expect(response.ok(), await response.text()).toBe(true);
       forkReply.resolve({
-        input: createConversationInput.parse(route.request().postDataJSON()),
         binding: conversationBinding.parse(await response.json()),
+        input: createConversationInput.parse(route.request().postDataJSON()),
       });
       await route.fulfill({ response });
     },
     { times: 1 }
   );
-  await editor.getByRole("button", { name: "Send", exact: true }).click();
+  await editor.getByRole("button", { exact: true, name: "Send" }).click();
   const { input: forkInput, binding: forked } = await forkReply.promise;
   expect(forkInput.fork).toEqual({
-    conversationId: destination.id,
     beforeMessageId: "seed_message_2",
+    conversationId: destination.id,
   });
-  await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`));
+  await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`, "u"));
   const [forkHead] = await db
     .select()
     .from(eveDocumentHead)
@@ -299,16 +299,16 @@ test("copied document history survives source deletion and supports native editi
     )
   ).toBe(true);
   const replay = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: forkInput,
+    headers: { origin },
   });
   expect(await replay.json()).toEqual(forked);
   const changed = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
       ...forkInput,
       fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
     },
+    headers: { origin },
   });
   expect(changed.status()).toBe(409);
 });

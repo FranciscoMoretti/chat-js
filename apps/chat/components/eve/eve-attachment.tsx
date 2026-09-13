@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 
 import { AttachmentList } from "@/components/attachment-list";
 
-export function EveAttachment({
+export const EveAttachment = ({
   part,
 }: {
   part: Extract<EveMessagePart, { type: "file" }>;
-}) {
+}) => {
   const [resolved, setResolved] = useState<{ source: string; url: string }>();
   const source = part.url;
   useEffect(() => {
@@ -19,15 +19,19 @@ export function EveAttachment({
     let disposed = false;
     let objectUrl: string | undefined;
     // Browsers block top-level data URLs. Give the shared Open action a Blob URL.
-    fetch(source)
-      .then((response) => response.blob())
-      .then((blob) => {
+    const resolveAttachment = async () => {
+      try {
+        const response = await fetch(source);
+        const blob = await response.blob();
         if (!disposed) {
           objectUrl = URL.createObjectURL(blob);
           setResolved({ source, url: objectUrl });
         }
-      })
-      .catch(() => setResolved(undefined));
+      } catch {
+        setResolved(undefined);
+      }
+    };
+    void resolveAttachment();
     return () => {
       disposed = true;
       if (objectUrl) {
@@ -43,13 +47,13 @@ export function EveAttachment({
     <AttachmentList
       attachments={[
         {
-          url,
-          name: part.filename ?? "Attachment",
           contentType: part.mediaType,
+          name: part.filename ?? "Attachment",
+          url,
         },
       ]}
     />
   ) : (
     <p>{part.filename ?? "Attachment"}</p>
   );
-}
+};

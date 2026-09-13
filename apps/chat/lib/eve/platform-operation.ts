@@ -3,20 +3,29 @@ import type { StreamWriter } from "../ai/types";
 import { createEvePlatformResult } from "./platform-result";
 import { createEveToolCost } from "./tool-cost";
 
-/** Share cancellation, progress and durable usage handling across native tools. */
-export async function* executeEvePlatformOperation(
-  signal: AbortSignal,
-  execute: (options: {
-    abortSignal: AbortSignal;
-    dataStream: Pick<StreamWriter, "write">;
-    costAccumulator: ReturnType<typeof createEveToolCost>;
-  }) => AsyncIterable<unknown>
-) {
-  let cancelled = false;
-  const cancellation = new AbortController();
-  const abortSignal = AbortSignal.any([signal, cancellation.signal]);
-  const stream = new ReadableStream<ReturnType<typeof createEvePlatformResult>>(
-    {
+/**
+ * Share cancellation, progress and durable usage handling across native tools.
+ * @yields {object} Durable tool output and usage updates.
+ */
+export const executeEvePlatformOperation =
+  async function* executeEvePlatformOperation(
+    signal: AbortSignal,
+    execute: (options: {
+      abortSignal: AbortSignal;
+      dataStream: Pick<StreamWriter, "write">;
+      costAccumulator: ReturnType<typeof createEveToolCost>;
+    }) => AsyncIterable<unknown>
+  ) {
+    let cancelled = false;
+    const cancellation = new AbortController();
+    const abortSignal = AbortSignal.any([signal, cancellation.signal]);
+    const stream = new ReadableStream<
+      ReturnType<typeof createEvePlatformResult>
+    >({
+      cancel() {
+        cancelled = true;
+        cancellation.abort();
+      },
       async start(controller) {
         const costs = createEveToolCost();
         let costUsd: number | undefined = 0;
@@ -31,8 +40,8 @@ export async function* executeEvePlatformOperation(
         try {
           abortSignal.throwIfAborted();
           for await (const output of execute({
-            costAccumulator: costs,
             abortSignal,
+            costAccumulator: costs,
             dataStream: {
               write(part) {
                 if (part.type !== "data-researchUpdate") {
@@ -43,7 +52,11 @@ export async function* executeEvePlatformOperation(
               },
             },
           })) {
-            costUsd = await costs.totalUsd().catch(() => undefined);
+            try {
+              costUsd = await costs.totalUsd();
+            } catch {
+              costUsd = undefined;
+            }
             enqueue(output);
           }
           if (!cancelled) {
@@ -51,7 +64,11 @@ export async function* executeEvePlatformOperation(
           }
         } catch (error) {
           if (!cancelled) {
-            costUsd = await costs.totalUsd().catch(() => undefined);
+            try {
+              costUsd = await costs.totalUsd();
+            } catch {
+              costUsd = undefined;
+            }
             if (costUsd === undefined || costUsd > 0) {
               // Provider work may already be charged when result processing fails.
               enqueue({
@@ -65,11 +82,6 @@ export async function* executeEvePlatformOperation(
           }
         }
       },
-      cancel() {
-        cancelled = true;
-        cancellation.abort();
-      },
-    }
-  );
-  yield* stream;
-}
+    });
+    yield* stream;
+  };

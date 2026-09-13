@@ -15,22 +15,20 @@ interface OpenAICompatibleModelResponse {
   owned_by: string;
 }
 
-function toAiGatewayModel(
+const toAiGatewayModel = (
   model: OpenAICompatibleModelResponse
-): AiGatewayModel {
-  return {
-    id: model.id,
-    object: "model",
-    created: model.created ?? 0,
-    owned_by: model.owned_by ?? "unknown",
-    name: model.id,
-    description: "",
-    context_window: 0,
-    max_tokens: 0,
-    type: "language",
-    pricing: {},
-  };
-}
+): AiGatewayModel => ({
+  context_window: 0,
+  created: model.created ?? 0,
+  description: "",
+  id: model.id,
+  max_tokens: 0,
+  name: model.id,
+  object: "model",
+  owned_by: model.owned_by ?? "unknown",
+  pricing: {},
+  type: "language",
+});
 
 export class OpenAICompatibleGateway
   extends GatewayRuntime
@@ -45,9 +43,9 @@ export class OpenAICompatibleGateway
       throw new Error("OPENAI_COMPATIBLE_BASE_URL is not configured");
     }
     return createOpenAICompatible({
-      name: "openai-compatible",
-      baseURL,
       apiKey,
+      baseURL,
+      name: "openai-compatible",
     });
   }
 
@@ -61,6 +59,8 @@ export class OpenAICompatibleGateway
     return provider.imageModel(modelId);
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }

@@ -5,10 +5,8 @@ import { FolderPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { SidebarProjectItem } from "@/components/sidebar-project-item";
 import {
   SidebarMenuButton,
@@ -18,7 +16,7 @@ import {
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 
-export function SidebarProjects() {
+export const SidebarProjects = () => {
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
@@ -50,9 +48,9 @@ export function SidebarProjects() {
 
   const handleCreateProject = async (data: ProjectDetailsData) => {
     await createProjectMutation.mutateAsync({
-      name: data.name,
       icon: data.icon,
       iconColor: data.color,
+      name: data.name,
     });
   };
 
@@ -89,4 +87,4 @@ export function SidebarProjects() {
       />
     </>
   );
-}
+};

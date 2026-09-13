@@ -10,7 +10,7 @@ type DeepResearchPart = Extract<
   { type: "tool-deepResearch" }
 >;
 
-function getOutputError(part: DeepResearchPart): string | null {
+const getOutputError = (part: DeepResearchPart): string | null => {
   if (part.state !== "output-available") {
     return null;
   }
@@ -18,15 +18,15 @@ function getOutputError(part: DeepResearchPart): string | null {
     return null;
   }
   return part.output.answer;
-}
+};
 
-export function DeepResearch({
+export const DeepResearch = ({
   messageId,
   part,
 }: {
   messageId: string;
   part: DeepResearchPart;
-}) {
+}) => {
   const { toolCallId } = part;
   const researchUpdates = useMessageResearchUpdatePartByToolCallId(
     messageId,
@@ -45,4 +45,4 @@ export function DeepResearch({
       )}
     </div>
   );
-}
+};

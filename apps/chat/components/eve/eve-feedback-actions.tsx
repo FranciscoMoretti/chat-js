@@ -5,7 +5,7 @@ import { MessageAction } from "@/components/ai-elements/message";
 import { MessageVoteActions } from "@/components/message-vote-actions";
 import { useTRPC } from "@/trpc/react";
 
-export function EveFeedbackActions({
+export const EveFeedbackActions = ({
   conversationId,
   messageId,
   disabled,
@@ -13,7 +13,7 @@ export function EveFeedbackActions({
   conversationId: string;
   messageId: string;
   disabled: boolean;
-}) {
+}) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   // All messages share one cached query and one request per conversation.
@@ -59,4 +59,4 @@ export function EveFeedbackActions({
       vote={votes.data?.find((vote) => vote.messageId === messageId)}
     />
   );
-}
+};

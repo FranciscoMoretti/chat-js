@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -17,7 +18,7 @@ test("guest bootstrap is private, stable and cannot impersonate a registered ses
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const response = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
@@ -51,12 +52,12 @@ test("guest bootstrap is private, stable and cannot impersonate a registered ses
       .where(eq(user.id, guest.ownerId))
   ).toEqual([]);
   const denied = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "unavailable/guest-model",
       message: "Guest cannot bypass the model allowlist.",
+      modelId: "unavailable/guest-model",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(denied.status()).toBe(403);
   await page.goto("/api/dev-login");
@@ -81,7 +82,7 @@ test("guest creation and duplicate follow-ups debit once per native turn without
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/login");
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const bootstrap = await page.request.post("/api/eve-guest", {
     headers: { origin },
   });
@@ -89,33 +90,33 @@ test("guest creation and duplicate follow-ups debit once per native turn without
     .object({ ownerId: z.string() })
     .parse(await bootstrap.json());
   const input = {
-    operationId: crypto.randomUUID(),
-    modelId: "openai/gpt-5-nano",
     message: "Reply with the single word hello.",
+    modelId: "openai/gpt-5-nano",
+    operationId: crypto.randomUUID(),
   };
   const first = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: input,
+    headers: { origin },
   });
   expect(first.status()).toBe(200);
   const binding = conversationBinding.parse(await first.json());
   const replay = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: input,
+    headers: { origin },
   });
   expect(replay.status()).toBe(200);
   expect(await replay.json()).toEqual(binding);
   const changed = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: { ...input, message: "changed content" },
+    headers: { origin },
   });
   expect(changed.status()).toBe(409);
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     headers: {
       authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
       "x-chatjs-owner": principal.ownerId,
     },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const native = client.sessions.attach(binding.sessionId);
   await expect
@@ -124,7 +125,7 @@ test("guest creation and duplicate follow-ups debit once per native turn without
         (await native.snapshot()).events.filter(
           (event) => event.type === "turn.completed"
         ).length,
-      { timeout: 60_000, intervals: [1000] }
+      { intervals: [1000], timeout: 60_000 }
     )
     .toBe(1);
   const snapshot = await native.snapshot();
@@ -146,11 +147,11 @@ test("guest creation and duplicate follow-ups debit once per native turn without
   };
   const send = () =>
     page.request.post(`/api/eve/v1/session/${binding.sessionId}`, {
-      headers: { origin, "x-chatjs-message-operation": operationId },
       data: command,
+      headers: { origin, "x-chatjs-message-operation": operationId },
     });
   const duplicate = await Promise.all([send(), send()]);
-  expect(duplicate.map((response) => response.status()).sort()).toEqual([
+  expect(duplicate.map((response) => response.status()).toSorted()).toEqual([
     202, 409,
   ]);
   const guestCookie = (await page.context().cookies()).find(
@@ -160,8 +161,8 @@ test("guest creation and duplicate follow-ups debit once per native turn without
     throw new Error("Guest credential is missing");
   }
   const publicClient = new Client({
+    headers: { cookie: `${guestCookie.name}=${guestCookie.value}`, origin },
     host: `${origin}/api`,
-    headers: { origin, cookie: `${guestCookie.name}=${guestCookie.value}` },
   });
   const publicSession = publicClient.sessions.attach(binding.sessionId);
   await expect
@@ -170,7 +171,7 @@ test("guest creation and duplicate follow-ups debit once per native turn without
         (await publicSession.snapshot()).events.filter(
           (event) => event.type === "turn.completed"
         ).length,
-      { timeout: 60_000, intervals: [1000] }
+      { intervals: [1000], timeout: 60_000 }
     )
     .toBe(2);
   const followed = await publicSession.snapshot();
@@ -198,7 +199,7 @@ test("guest creation and duplicate follow-ups debit once per native turn without
     expect(hidden.status()).toBe(404);
     const forbidden = await outsider.request.post(
       `${origin}/api/eve/v1/session/${binding.sessionId}/cancel`,
-      { headers: { origin }, data: {} }
+      { data: {}, headers: { origin } }
     );
     expect(forbidden.status()).toBe(404);
   } finally {

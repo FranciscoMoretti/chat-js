@@ -15,9 +15,9 @@ export type EvePrincipal =
     };
 
 /** Cookie-only guest identity never creates a BetterAuth session or transfers history. */
-export async function resolveEvePrincipal(
+export const resolveEvePrincipal = async (
   headers: Headers
-): Promise<EvePrincipal | null> {
+): Promise<EvePrincipal | null> => {
   const session = await auth.api.getSession({ headers });
   if (session?.user) {
     return { kind: "registered", ownerId: session.user.id };
@@ -46,10 +46,10 @@ export async function resolveEvePrincipal(
     return {
       kind: "guest",
       ownerId,
-      tokenHash,
-      state: "active",
       remainingMessages: identity.guest.remainingMessages,
+      state: "active",
+      tokenHash,
     };
   }
-  return { kind: "guest", ownerId, tokenHash, state: "pending" };
-}
+  return { kind: "guest", ownerId, state: "pending", tokenHash };
+};

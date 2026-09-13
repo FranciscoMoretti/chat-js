@@ -9,109 +9,11 @@ import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
 
-/**
- * Handles the electron auth redirect after OAuth completes in the browser.
- * When the user finishes OAuth, `ensureElectronRedirect` detects the
- * electron redirect cookie and sends the user back to the Electron app
- * via deep link.
- *
- * Mount this in the root layout so it runs on every page.
- */
-export function ElectronAuthHandler() {
-  const isDesktopAppEnabled = config.desktopApp.enabled;
-  const router = useRouter();
-  const [authState, setAuthState] = useState<ElectronRendererAuthState>({
-    status: "idle",
-    message: null,
-  });
-
-  useEffect(() => {
-    if (!isDesktopAppEnabled) {
-      return;
-    }
-
-    const id = authClient.ensureElectronRedirect();
-    return () => clearInterval(id);
-  }, [isDesktopAppEnabled]);
-
-  useEffect(() => {
-    if (!isDesktopAppEnabled) {
-      return;
-    }
-
-    if (typeof window.requestAuth !== "function") {
-      return;
-    }
-
-    if (
-      typeof window.onAuthenticated !== "function" ||
-      typeof window.onUserUpdated !== "function" ||
-      typeof window.onAuthError !== "function" ||
-      typeof window.electronAPI?.onAuthStateChanged !== "function"
-    ) {
-      return;
-    }
-
-    const authStatePromise = window.electronAPI?.getAuthState?.();
-    authStatePromise
-      ?.then((state) => {
-        if (state) {
-          setAuthState(state);
-        }
-      })
-      ?.catch((error) => {
-        console.error("Failed to read Electron auth state", error);
-      });
-
-    const syncAndRefresh = async () => {
-      await window.electronAPI?.syncAuthSession?.();
-      router.refresh();
-    };
-
-    const unsubscribeAuthenticated = window.onAuthenticated(() => {
-      syncAndRefresh().catch((error) => {
-        console.error(
-          "Failed to sync auth session after authentication",
-          error
-        );
-      });
-    });
-    const unsubscribeUserUpdated = window.onUserUpdated(() => {
-      syncAndRefresh().catch((error) => {
-        console.error("Failed to sync auth session after user update", error);
-      });
-    });
-    const unsubscribeAuthError = window.onAuthError(
-      (ctx: ElectronAuthErrorContext) => {
-        toast.error(ctx.message || "Authentication failed");
-      }
-    );
-    const unsubscribeAuthState = window.electronAPI.onAuthStateChanged(
-      (state) => {
-        setAuthState(state);
-      }
-    );
-
-    return () => {
-      unsubscribeAuthenticated();
-      unsubscribeUserUpdated();
-      unsubscribeAuthError();
-      unsubscribeAuthState();
-    };
-  }, [isDesktopAppEnabled, router]);
-
-  if (!isDesktopAppEnabled) {
-    return null;
-  }
-
-  const overlayKey = `${authState.status}:${authState.message ?? ""}:${
-    authState.status === "idle" ? "" : (authState.detail ?? "")
-  }`;
-
-  return <ElectronAuthOverlay key={overlayKey} state={authState} />;
-}
-
-function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
+const ElectronAuthOverlay = ({
+  state,
+}: {
+  state: ElectronRendererAuthState;
+}) => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (state.status === "idle" || !state.message) {
@@ -154,10 +56,12 @@ function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
             {canCancel ? (
               <Button
                 className="mt-2"
-                onClick={() => {
-                  window.electronAPI?.cancelAuthFlow?.().catch((error) => {
+                onClick={async () => {
+                  try {
+                    await window.electronAPI?.cancelAuthFlow?.();
+                  } catch (error) {
                     console.error("Failed to cancel Electron auth flow", error);
-                  });
+                  }
                 }}
                 size="sm"
                 type="button"
@@ -182,4 +86,118 @@ function ElectronAuthOverlay({ state }: { state: ElectronRendererAuthState }) {
       </div>
     </div>
   );
-}
+};
+
+/**
+ * Handles the electron auth redirect after OAuth completes in the browser.
+ * When the user finishes OAuth, `ensureElectronRedirect` detects the
+ * electron redirect cookie and sends the user back to the Electron app
+ * via deep link.
+ *
+ * Mount this in the root layout so it runs on every page.
+ */
+export const ElectronAuthHandler = () => {
+  const isDesktopAppEnabled = config.desktopApp.enabled;
+  const router = useRouter();
+  const [authState, setAuthState] = useState<ElectronRendererAuthState>({
+    message: null,
+    status: "idle",
+  });
+
+  useEffect(() => {
+    if (!isDesktopAppEnabled) {
+      return;
+    }
+
+    const id = authClient.ensureElectronRedirect();
+    return () => clearInterval(id);
+  }, [isDesktopAppEnabled]);
+
+  useEffect(() => {
+    if (!isDesktopAppEnabled) {
+      return;
+    }
+
+    if (typeof window.requestAuth !== "function") {
+      return;
+    }
+
+    if (
+      typeof window.onAuthenticated !== "function" ||
+      typeof window.onUserUpdated !== "function" ||
+      typeof window.onAuthError !== "function" ||
+      typeof window.electronAPI?.onAuthStateChanged !== "function"
+    ) {
+      return;
+    }
+
+    const loadAuthState = async () => {
+      try {
+        const state = await window.electronAPI?.getAuthState?.();
+        if (state) {
+          setAuthState(state);
+        }
+      } catch (error) {
+        console.error("Failed to read Electron auth state", error);
+      }
+    };
+
+    void loadAuthState();
+
+    const syncAndRefresh = async () => {
+      await window.electronAPI?.syncAuthSession?.();
+      router.refresh();
+    };
+
+    const unsubscribeAuthenticated = window.onAuthenticated(() => {
+      const syncAuthenticatedSession = async () => {
+        try {
+          await syncAndRefresh();
+        } catch (error) {
+          console.error(
+            "Failed to sync auth session after authentication",
+            error
+          );
+        }
+      };
+      void syncAuthenticatedSession();
+    });
+    const unsubscribeUserUpdated = window.onUserUpdated(() => {
+      const syncUpdatedUser = async () => {
+        try {
+          await syncAndRefresh();
+        } catch (error) {
+          console.error("Failed to sync auth session after user update", error);
+        }
+      };
+      void syncUpdatedUser();
+    });
+    const unsubscribeAuthError = window.onAuthError(
+      (ctx: ElectronAuthErrorContext) => {
+        toast.error(ctx.message || "Authentication failed");
+      }
+    );
+    const unsubscribeAuthState = window.electronAPI.onAuthStateChanged(
+      (state) => {
+        setAuthState(state);
+      }
+    );
+
+    return () => {
+      unsubscribeAuthenticated();
+      unsubscribeUserUpdated();
+      unsubscribeAuthError();
+      unsubscribeAuthState();
+    };
+  }, [isDesktopAppEnabled, router]);
+
+  if (!isDesktopAppEnabled) {
+    return null;
+  }
+
+  const overlayKey = `${authState.status}:${authState.message ?? ""}:${
+    authState.status === "idle" ? "" : (authState.detail ?? "")
+  }`;
+
+  return <ElectronAuthOverlay key={overlayKey} state={authState} />;
+};

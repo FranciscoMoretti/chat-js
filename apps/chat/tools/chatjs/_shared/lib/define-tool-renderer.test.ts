@@ -3,12 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+import type * as ChatjsUI from "@/tools/chatjs/ui";
 
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z } = await import("zod");
-  const { createElement } = await import("react");
+  const { createElement: reactCreateElement } = await import("react");
   const { defineToolRenderer } = await import("@/lib/ai/define-tool-renderer");
-  const original = await importOriginal<typeof import("@/tools/chatjs/ui")>();
+  const original = await importOriginal<typeof ChatjsUI>();
   return {
     ui: {
       ...original.ui,
@@ -16,7 +17,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
         inputSchema: z.object({ text: z.string() }),
         outputSchema: z.object({ echoed: z.string() }),
         render: ({ tool, messageId, isReadonly }) =>
-          createElement(
+          reactCreateElement(
             "p",
             { "data-message": messageId, "data-readonly": isReadonly },
             tool.state === "output-available" ? tool.output.echoed : "Loading"
@@ -26,27 +27,26 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   };
 });
 
-function renderResult(
+const renderResult = (
   toolName: string,
   input: unknown,
   output: unknown,
   isReadonly = true
-) {
-  return renderToStaticMarkup(
+) =>
+  renderToStaticMarkup(
     createElement(EveToolResult, {
-      messageId: "message-fixture",
       isReadonly,
+      messageId: "message-fixture",
       part: {
-        type: "dynamic-tool",
-        toolName,
-        toolCallId: "call-fixture",
-        state: "output-available",
         input,
         output,
+        state: "output-available",
+        toolCallId: "call-fixture",
+        toolName,
+        type: "dynamic-tool",
       },
     })
   );
-}
 
 test("dispatches a custom registry renderer and preserves view context", () => {
   const html = renderResult(
@@ -79,10 +79,10 @@ test("uses the installed word count renderer and rejects malformed persisted res
       "wordCount",
       { text: "one two" },
       {
-        words: 2,
         characters: 7,
         charactersNoSpaces: 6,
         sentences: 1,
+        words: 2,
       }
     )
   ).toContain("Words");
@@ -94,15 +94,15 @@ test("uses the installed word count renderer and rejects malformed persisted res
 test("shows a failed tool instead of its loading skeleton", () => {
   const html = renderToStaticMarkup(
     createElement(EveToolResult, {
-      messageId: "message-fixture",
       isReadonly: true,
+      messageId: "message-fixture",
       part: {
-        type: "dynamic-tool",
-        toolName: "getWeather",
-        toolCallId: "call-fixture",
-        state: "output-error",
-        input: {},
         errorText: "Weather service unavailable",
+        input: {},
+        state: "output-error",
+        toolCallId: "call-fixture",
+        toolName: "getWeather",
+        type: "dynamic-tool",
       },
     })
   );

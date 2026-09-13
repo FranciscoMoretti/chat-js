@@ -1,3 +1,1 @@
-import { filebase } from "files-sdk/filebase";
-
-export const createStorageAdapter = filebase;
+export { filebase as createStorageAdapter } from "files-sdk/filebase";

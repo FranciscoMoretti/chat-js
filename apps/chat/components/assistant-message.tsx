@@ -28,7 +28,7 @@ const PureAssistantMessage = ({
   const isPendingLastMessage =
     messageId === lastMessageId &&
     (status === "submitted" || status === "streaming");
-  const activeStreamId = metadata.activeStreamId;
+  const { activeStreamId } = metadata;
   const hasActiveResponse = activeStreamId !== null;
   const shouldHideCompletionActions =
     isLoading || hasActiveResponse || isPendingLastMessage;

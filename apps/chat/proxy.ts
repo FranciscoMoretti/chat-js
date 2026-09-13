@@ -6,28 +6,22 @@ import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { isEveEnabled } from "@/lib/eve/availability";
 
-const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/;
+const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
 
-function isPublicApiRoute(pathname: string): boolean {
-  return (
-    // Eve routes enforce their own gateway authentication in the worker.
-    pathname.startsWith("/eve/") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/trpc") ||
-    pathname === "/api/chat" ||
-    pathname.startsWith("/api/chat/")
-  );
-}
+const isPublicApiRoute = (pathname: string): boolean =>
+  // Eve routes enforce their own gateway authentication in the worker.
+  pathname.startsWith("/eve/") ||
+  pathname.startsWith("/api/auth") ||
+  pathname.startsWith("/api/trpc") ||
+  pathname === "/api/chat" ||
+  pathname.startsWith("/api/chat/");
 
-function isMetadataRoute(pathname: string): boolean {
-  return (
-    pathname === "/sitemap.xml" ||
-    pathname === "/robots.txt" ||
-    pathname === "/manifest.webmanifest"
-  );
-}
+const isMetadataRoute = (pathname: string): boolean =>
+  pathname === "/sitemap.xml" ||
+  pathname === "/robots.txt" ||
+  pathname === "/manifest.webmanifest";
 
-function isPublicPage(pathname: string): boolean {
+const isPublicPage = (pathname: string): boolean => {
   // EVE pages resolve registered/guest principals and enforce conversation ownership.
   if (isEveEnabled() && EVE_CHAT_PAGE.test(pathname)) {
     return true;
@@ -42,29 +36,25 @@ function isPublicPage(pathname: string): boolean {
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms")
   );
-}
+};
 
-function isAuthPage(pathname: string): boolean {
-  return (
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    isDeviceLoginPage(pathname)
-  );
-}
+const isDeviceLoginPage = (pathname: string): boolean =>
+  appConfig.desktopApp.enabled && pathname.startsWith("/device-login");
 
-function isDeviceLoginPage(pathname: string): boolean {
-  return appConfig.desktopApp.enabled && pathname.startsWith("/device-login");
-}
+const isAuthPage = (pathname: string): boolean =>
+  pathname.startsWith("/login") ||
+  pathname.startsWith("/register") ||
+  isDeviceLoginPage(pathname);
 
-function getSafeReturnTo(url: URL): string | null {
+const getSafeReturnTo = (url: URL): string | null => {
   const returnTo = url.searchParams.get("returnTo");
   if (!returnTo?.startsWith("/") || returnTo.startsWith("//")) {
     return null;
   }
   return returnTo;
-}
+};
 
-export async function proxy(req: NextRequest) {
+export const proxy = async (req: NextRequest) => {
   const url = req.nextUrl;
   const { pathname } = url;
 
@@ -93,7 +83,7 @@ export async function proxy(req: NextRequest) {
   if (!isLoggedIn) {
     return NextResponse.redirect(new URL("/login", url));
   }
-}
+};
 
 export const config = {
   matcher: [

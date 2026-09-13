@@ -1,6 +1,7 @@
 "use client";
 
-import { Cpu, type LucideIcon, Plug, Settings } from "lucide-react";
+import { Cpu, Plug, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
@@ -14,28 +15,36 @@ type SettingsNavItem = {
   icon: LucideIcon;
 };
 
-function getNavItems(): SettingsNavItem[] {
+const getNavItems = (): SettingsNavItem[] => {
   const items: SettingsNavItem[] = [
-    { href: "/settings", label: "General", icon: Settings },
-    { href: "/settings/models", label: "Models", icon: Cpu },
+    {
+      href: "/settings",
+      icon: Settings,
+      label: "General",
+    },
+    {
+      href: "/settings/models",
+      icon: Cpu,
+      label: "Models",
+    },
   ];
 
   if (config.ai.tools.mcp.enabled) {
     items.push({
       href: "/settings/connectors",
-      label: "Connectors",
       icon: Plug,
+      label: "Connectors",
     });
   }
 
   return items;
-}
+};
 
-export function SettingsNav({
+export const SettingsNav = ({
   orientation = "vertical",
 }: {
   orientation?: "horizontal" | "vertical";
-}) {
+}) => {
   const pathname = usePathname();
 
   const navItems = useMemo(() => getNavItems(), []);
@@ -69,4 +78,4 @@ export function SettingsNav({
       })}
     </nav>
   );
-}
+};

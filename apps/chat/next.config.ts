@@ -2,10 +2,7 @@ import { withEve } from "eve/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typedRoutes: true,
-  transpilePackages: ["@chat-js/gateways"],
   cacheComponents: true,
-  partialPrefetching: true,
   experimental: {
     optimizePackageImports: [
       "react-tweet",
@@ -17,16 +14,15 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
-  serverExternalPackages: ["pino", "pino-pretty", "microsandbox"],
   images: {
     remotePatterns: [
       {
         hostname: "avatar.vercel.sh",
       },
       {
-        protocol: "https",
         hostname: "*.googleusercontent.com",
         pathname: "**",
+        protocol: "https",
       },
       {
         hostname: "avatars.githubusercontent.com",
@@ -40,6 +36,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  partialPrefetching: true,
+  serverExternalPackages: ["pino", "pino-pretty", "microsandbox"],
+  transpilePackages: ["@chat-js/gateways"],
+  typedRoutes: true,
 };
 
 // Keep production routing behind the existing migration review gate.

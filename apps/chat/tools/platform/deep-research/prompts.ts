@@ -1,11 +1,11 @@
-export function clarifyWithUserInstructions({
+export const clarifyWithUserInstructions = ({
   messages,
   date,
 }: {
   messages: string;
   date: string;
-}): string {
-  return `These are the messages that have been exchanged so far from the user asking for the report:
+}): string =>
+  `These are the messages that have been exchanged so far from the user asking for the report:
 <Messages>
 ${messages}
 </Messages>
@@ -42,16 +42,15 @@ For the verification message when no clarification is needed:
 - Briefly summarize the key aspects of what you understand from their request
 - Confirm that you will now begin the research process
 - Keep the message concise and professional`;
-}
 
-export function transformMessagesIntoResearchTopicPrompt({
+export const transformMessagesIntoResearchTopicPrompt = ({
   messages,
   date,
 }: {
   messages: string;
   date: string;
-}): string {
-  return `You will be given a set of messages that have been exchanged so far between yourself and the user. 
+}): string =>
+  `You will be given a set of messages that have been exchanged so far between yourself and the user.
 Your job is to translate these messages into a more detailed and concrete research question that will be used to guide the research.
 
 The messages that have been exchanged so far between yourself and the user are:
@@ -84,16 +83,15 @@ Guidelines:
 - For academic or scientific queries, prefer linking directly to the original paper or official journal publication rather than survey papers or secondary summaries.
 - For people, try linking directly to their LinkedIn profile, or their personal website if they have one.
 - If the query is in a specific language, prioritize sources published in that language.`;
-}
 
-export function leadResearcherPrompt({
+export const leadResearcherPrompt = ({
   date,
   max_concurrent_research_units,
 }: {
   date: string;
   max_concurrent_research_units: number;
-}): string {
-  return `You are a research supervisor. Your job is to conduct research by calling the "ConductResearch" tool. For context, today's date is ${date}.
+}): string =>
+  `You are a research supervisor. Your job is to conduct research by calling the "ConductResearch" tool. For context, today's date is ${date}.
 
 <Task>
 Your focus is to call the "ConductResearch" tool to conduct research against the overall research question passed in by the user. 
@@ -153,9 +151,8 @@ When you are completely satisfied with the research findings returned from the t
 </Crucial Reminders>
 
 With all of the above in mind, call the ConductResearch tool to conduct research on specific topics, OR call the "ResearchComplete" tool to indicate that you are done with your research.`;
-}
 
-export function researchSystemPrompt({
+export const researchSystemPrompt = ({
   date,
   mcp_prompt,
   max_search_queries,
@@ -163,8 +160,8 @@ export function researchSystemPrompt({
   date: string;
   mcp_prompt: string;
   max_search_queries: number;
-}): string {
-  return `You are a research assistant conducting deep research on the user's input topic. Use the tools and search methods provided to research the user's input topic. For context, today's date is ${date}.
+}): string =>
+  `You are a research assistant conducting deep research on the user's input topic. Use the tools and search methods provided to research the user's input topic. For context, today's date is ${date}.
 
 <Task>
 Your job is to use tools and search methods to find information that can answer the question that a user asks.
@@ -198,14 +195,13 @@ You can use any of the tools provided to you to find resources that can help ans
 - You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
 - Do not repeat or summarize your research findings unless the user explicitly asks you to do so. Your main job is to call tools. You should call tools until you are satisfied with the research findings, and then stop making tool calls.
 </Critical Reminders>`;
-}
 
-export function compressResearchSystemPrompt({
+export const compressResearchSystemPrompt = ({
   date,
 }: {
   date: string;
-}): string {
-  return `You are a research assistant that has conducted research on a topic by calling several tools and web searches. Your job is now to clean up the findings, but preserve all of the relevant statements and information that the researcher has gathered. For context, today's date is ${date}.
+}): string =>
+  `You are a research assistant that has conducted research on a topic by calling several tools and web searches. Your job is now to clean up the findings, but preserve all of the relevant statements and information that the researcher has gathered. For context, today's date is ${date}.
 
 <Task>
 You need to clean up information gathered from tool calls and web searches in the existing messages.
@@ -241,13 +237,12 @@ The report should be structured like this:
 </Citation Rules>
 
 Critical Reminder: It is extremely important that any information that is even remotely relevant to the user's research topic is preserved verbatim (e.g. don't rewrite it, don't summarize it, don't paraphrase it).`;
-}
 
 export const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
 
 DO NOT summarize the information. I want the raw information returned, just in a cleaner format. Make sure all relevant information is preserved - you can rewrite findings verbatim.`;
 
-export function finalReportGenerationPrompt({
+export const finalReportGenerationPrompt = ({
   research_brief,
   date,
   findings,
@@ -255,8 +250,8 @@ export function finalReportGenerationPrompt({
   research_brief: string;
   date: string;
   findings: string;
-}): string {
-  return `Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
+}): string =>
+  `Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
 <Research Brief>
 ${research_brief}
 </Research Brief>
@@ -322,4 +317,3 @@ Format the report in clear markdown with proper structure and include source ref
   [2] Source Title: URL
 - Citations are extremely important. Make sure to include these, and pay a lot of attention to getting these right. Users will often use these citations to look into more information.
 </Citation Rules>`;
-}

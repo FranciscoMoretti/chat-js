@@ -24,8 +24,8 @@ const runMigrate = async () => {
 
   const settings = databaseConnection(
     {
-      DATABASE_URL: process.env.DATABASE_URL,
       DATABASE_MIGRATION_URL: process.env.DATABASE_MIGRATION_URL,
+      DATABASE_URL: process.env.DATABASE_URL,
     },
     "migration"
   );
@@ -45,8 +45,12 @@ const runMigrate = async () => {
   console.log("✅ Migrations completed in", end - start, "ms");
 };
 
-runMigrate().catch((err) => {
-  console.error("❌ Migration failed");
-  console.error(err);
-  process.exitCode = 1;
-});
+void (async () => {
+  try {
+    await runMigrate();
+  } catch (error) {
+    console.error("❌ Migration failed");
+    console.error(error);
+    process.exitCode = 1;
+  }
+})();

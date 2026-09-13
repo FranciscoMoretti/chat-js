@@ -5,7 +5,7 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { EveHistoryList } from "./eve-history-list";
 
-export async function EveHistory() {
+export const EveHistory = async () => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
     return null;
@@ -18,4 +18,4 @@ export async function EveHistory() {
       ownerId={principal.ownerId}
     />
   );
-}
+};

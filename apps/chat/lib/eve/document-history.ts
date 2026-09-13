@@ -1,9 +1,9 @@
 import type { MessageStreamEvent } from "eve/client";
 
-const nativeTurnId = /^turn_\d+$/;
+const nativeTurnId = /^turn_\d+$/u;
 
 /** Include inherited turns: restored history does not replay turn.started. */
-export function documentHistoryTurns(events: readonly MessageStreamEvent[]) {
+export const documentHistoryTurns = (events: readonly MessageStreamEvent[]) => {
   const turns = new Set<number>();
   const addTurn = (turnId: string) => {
     if (!nativeTurnId.test(turnId)) {
@@ -11,7 +11,7 @@ export function documentHistoryTurns(events: readonly MessageStreamEvent[]) {
     }
     const turn = Number(turnId.slice("turn_".length));
     if (!Number.isSafeInteger(turn)) {
-      throw new Error("Native document history has an invalid turn.");
+      throw new TypeError("Native document history has an invalid turn.");
     }
     turns.add(turn);
   };
@@ -28,4 +28,4 @@ export function documentHistoryTurns(events: readonly MessageStreamEvent[]) {
     }
   }
   return [...turns];
-}
+};

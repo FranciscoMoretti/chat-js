@@ -4,13 +4,13 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
 const mocks = vi.hoisted(() => ({
+  feature: { default: "google/gemini-2.5-flash-lite", enabled: true },
   generate: vi.fn(),
   model: vi.fn(),
-  feature: { enabled: true, default: "google/gemini-2.5-flash-lite" },
 }));
 vi.mock("ai", () => ({
-  generateText: mocks.generate,
   Output: { object: vi.fn() },
+  generateText: mocks.generate,
 }));
 vi.mock("./model-selection", () => ({ resolveEveModel: mocks.model }));
 vi.mock("../config", () => ({
@@ -21,14 +21,14 @@ const evidence: {
   usage: Partial<LanguageModelUsage>;
   providerMetadata: ProviderMetadata;
 } = {
-  usage: { inputTokens: 10, outputTokens: 20 },
   providerMetadata: {
     gateway: { cost: "0.00002", generationId: "generation" },
   },
+  usage: { inputTokens: 10, outputTokens: 20 },
 };
 const exchange = {
-  user: "What is rain?",
   assistant: "Rain is liquid precipitation.",
+  user: "What is rain?",
 };
 const suggestions = [
   "How do clouds form?",
@@ -60,7 +60,7 @@ it("retains paid usage when structured output cannot be read", async () => {
     { modelId: mocks.feature.default, ...evidence },
   ]);
   expect(mocks.generate).toHaveBeenCalledWith(
-    expect.objectContaining({ maxRetries: 0, maxOutputTokens: 512 })
+    expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
   );
 });
 
@@ -70,8 +70,8 @@ it("returns valid suggestions and records the configured auxiliary model", async
     return { output: { suggestions } };
   });
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    responseMetadata: { suggestions },
     modelCalls: [{ modelId: mocks.feature.default, ...evidence }],
+    responseMetadata: { suggestions },
   });
   expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
 });
@@ -79,7 +79,7 @@ it("returns valid suggestions and records the configured auxiliary model", async
 it("records a failed attempt without turning an optional feature error into answer failure", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [{ modelId: mocks.feature.default, failed: true }],
+    modelCalls: [{ failed: true, modelId: mocks.feature.default }],
   });
 });
 

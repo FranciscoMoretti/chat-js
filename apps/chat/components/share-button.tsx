@@ -28,29 +28,32 @@ import { LoginPrompt } from "./upgrade-cta/login-prompt";
 type ShareStep = "info" | "shared";
 
 // Dialog content component that only renders when dialog is open
-function ShareDialogContent({
+const ShareDialogContent = ({
   chatId,
   onClose,
 }: {
   chatId: string;
   onClose: () => void;
-}) {
+}) => {
   const { data: chat } = useGetChatById(chatId);
   const mutation = useSetVisibility();
   return (
-    <ShareDialogView
-      chatId={chatId}
-      isPending={mutation.isPending}
-      isPublic={chat?.visibility === "public"}
-      onClose={onClose}
-      setVisibility={async (visibility) => {
-        await mutation.mutateAsync({ chatId, visibility });
-      }}
-    />
+    <>
+      {/* oxlint-disable-next-line eslint/no-use-before-define -- The content controller intentionally stays above its presentational view. */}
+      <ShareDialogView
+        chatId={chatId}
+        isPending={mutation.isPending}
+        isPublic={chat?.visibility === "public"}
+        onClose={onClose}
+        setVisibility={async (visibility) => {
+          await mutation.mutateAsync({ chatId, visibility });
+        }}
+      />
+    </>
   );
-}
+};
 
-export function ShareDialogView({
+export const ShareDialogView = ({
   chatId,
   isPublic,
   isPending,
@@ -62,30 +65,28 @@ export function ShareDialogView({
   isPending: boolean;
   onClose: () => void;
   setVisibility: (visibility: "private" | "public") => Promise<void>;
-}) {
+}) => {
   const [step, setStep] = useState<ShareStep>("info");
-  const handleShare = () => {
-    setVisibility("public")
-      .then(() => setStep("shared"))
-      .catch((error) =>
-        toast.error(
-          error instanceof Error ? error.message : "Unable to share chat."
-        )
+  const handleShare = async () => {
+    try {
+      await setVisibility("public");
+      setStep("shared");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to share chat."
       );
+    }
   };
-  const handleUnshare = () => {
-    setVisibility("private")
-      .then(() => {
-        onClose();
-        setStep("info");
-      })
-      .catch((error) =>
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Unable to make chat private."
-        )
+  const handleUnshare = async () => {
+    try {
+      await setVisibility("private");
+      onClose();
+      setStep("info");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to make chat private."
       );
+    }
   };
 
   const handleCopyLink = () => {
@@ -245,10 +246,10 @@ export function ShareDialogView({
       )}
     </>
   );
-}
+};
 
 // Extracted dialog component that can be controlled externally
-export function ShareDialog({
+export const ShareDialog = ({
   chatId,
   open,
   onOpenChange,
@@ -260,7 +261,7 @@ export function ShareDialog({
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
   renderContent?: (onClose: () => void) => React.ReactNode;
-}) {
+}) => {
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
   };
@@ -281,16 +282,16 @@ export function ShareDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export function ShareButton({
+export const ShareButton = ({
   chatId,
   className,
   renderContent,
 }: {
   chatId: string;
   renderContent?: (onClose: () => void) => React.ReactNode;
-} & React.ComponentProps<typeof Button>) {
+} & React.ComponentProps<typeof Button>) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const isAuthenticated = !!session?.user;
@@ -326,4 +327,4 @@ export function ShareButton({
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
     </ShareDialog>
   );
-}
+};

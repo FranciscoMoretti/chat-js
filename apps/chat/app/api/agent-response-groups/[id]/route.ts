@@ -4,10 +4,16 @@ import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-export async function GET(
+export const GET = async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  {
+    params,
+  }: {
+    params: Promise<{
+      id: string;
+    }>;
+  }
+) => {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
@@ -25,4 +31,4 @@ export async function GET(
         headers: { "cache-control": "private, no-store" },
       })
     : new Response(null, { status: 404 });
-}
+};

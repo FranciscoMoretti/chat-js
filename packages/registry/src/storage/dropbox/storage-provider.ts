@@ -1,3 +1,1 @@
-import { dropbox } from "files-sdk/dropbox";
-
-export const createStorageAdapter = dropbox;
+export { dropbox as createStorageAdapter } from "files-sdk/dropbox";

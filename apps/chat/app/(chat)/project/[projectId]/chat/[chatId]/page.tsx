@@ -6,11 +6,14 @@ import { auth } from "@/lib/auth";
 import { getEveConversationProject } from "@/lib/db/eve-queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 
-export default async function ProjectChatPageRoute({
+const ProjectChatPageRoute = async ({
   params,
 }: {
-  params: Promise<{ projectId: string; chatId: string }>;
-}) {
+  params: Promise<{
+    projectId: string;
+    chatId: string;
+  }>;
+}) => {
   if (!isEveEnabled()) {
     return null;
   }
@@ -32,4 +35,6 @@ export default async function ProjectChatPageRoute({
     notFound();
   }
   redirect(`/chat/${chatId}`);
-}
+};
+
+export default ProjectChatPageRoute;

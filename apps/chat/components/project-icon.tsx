@@ -31,11 +31,18 @@ import { getColorValue } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
-  folder: Folder,
-  briefcase: Briefcase,
   book: Book,
+  briefcase: Briefcase,
+  calendar: Calendar,
+  camera: Camera,
+  "chart-bar": ChartBar,
+  clipboard: Clipboard,
   code: Code,
+  coffee: Coffee,
   "dollar-sign": DollarSign,
+  flask: Beaker,
+  folder: Folder,
+  globe: Globe,
   "graduation-cap": GraduationCap,
   heart: Heart,
   home: Home,
@@ -43,19 +50,12 @@ const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   music: Music,
   pencil: Pencil,
   plane: Plane,
+  rocket: Rocket,
   "shopping-cart": ShoppingCart,
   star: Star,
   target: Target,
   users: Users,
   zap: Zap,
-  coffee: Coffee,
-  camera: Camera,
-  globe: Globe,
-  flask: Beaker,
-  "chart-bar": ChartBar,
-  calendar: Calendar,
-  clipboard: Clipboard,
-  rocket: Rocket,
 };
 
 interface ProjectIconProps {
@@ -65,12 +65,12 @@ interface ProjectIconProps {
   size?: number;
 }
 
-export function ProjectIcon({
+export const ProjectIcon = ({
   icon,
   color,
   size = 16,
   className,
-}: ProjectIconProps) {
+}: ProjectIconProps) => {
   const IconComponent = ICON_MAP[icon] ?? Folder;
   const colorValue = getColorValue(color);
 
@@ -81,4 +81,4 @@ export function ProjectIcon({
       style={{ color: colorValue }}
     />
   );
-}
+};

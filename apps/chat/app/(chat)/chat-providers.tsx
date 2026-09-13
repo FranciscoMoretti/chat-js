@@ -6,11 +6,13 @@ import { useMemo } from "react";
 import { AnonymousSessionInit } from "@/components/anonymous-session-init";
 import { AppRuntimeSlot } from "@/components/chat-runtime-controller";
 import {
-  type AppRuntimeData,
-  type CreateAppRuntimeInput,
   createAppRuntimeInput,
   ProvisionalAppRuntimeIdentityProvider,
   useProvisionalAppRuntimeIdentity,
+} from "@/lib/app-chat-runtime";
+import type {
+  AppRuntimeData,
+  CreateAppRuntimeInput,
 } from "@/lib/app-chat-runtime";
 import { RuntimeRegistryProvider, RuntimeSlots } from "@/lib/runtime-registry";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
@@ -19,7 +21,7 @@ interface ChatProvidersProps {
   children: React.ReactNode;
 }
 
-function getProvisionalRuntimeScopeKey(pathname: string | null) {
+const getProvisionalRuntimeScopeKey = (pathname: string | null) => {
   const route = parseChatIdFromPathname(pathname);
 
   if (route.type === "home") {
@@ -31,9 +33,9 @@ function getProvisionalRuntimeScopeKey(pathname: string | null) {
   }
 
   return null;
-}
+};
 
-export function ChatProviders({ children }: ChatProvidersProps) {
+export const ChatProviders = ({ children }: ChatProvidersProps) => {
   const pathname = usePathname();
   const provisionalRuntime = useProvisionalAppRuntimeIdentity(
     getProvisionalRuntimeScopeKey(pathname)
@@ -64,4 +66,4 @@ export function ChatProviders({ children }: ChatProvidersProps) {
       </RuntimeRegistryProvider>
     </>
   );
-}
+};

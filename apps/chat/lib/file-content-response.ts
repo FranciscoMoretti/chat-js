@@ -8,32 +8,32 @@ import {
 } from "./file-storage";
 import { keyFromFileUrl } from "./file-url";
 
-const RANGE_HEADER = /^bytes=(?:(\d+)-(\d*)|-(\d+))$/;
+const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-function parseRange(value: string, size: number) {
+const parseRange = (value: string, size: number) => {
   const match = RANGE_HEADER.exec(value);
   if (!match) {
     return null;
   }
-  if (match[3]) {
-    const length = Number(match[3]);
+  if (match.groups?.suffix) {
+    const length = Number(match.groups.suffix);
     return Number.isSafeInteger(length) && length > 0 && size > 0
-      ? { start: Math.max(size - length, 0), end: size - 1 }
+      ? { end: size - 1, start: Math.max(size - length, 0) }
       : null;
   }
-  const start = Number(match[1]);
-  const requestedEnd = match[2] ? Number(match[2]) : size - 1;
+  const start = Number(match.groups?.start);
+  const requestedEnd = match.groups?.end ? Number(match.groups.end) : size - 1;
   const end = Math.min(requestedEnd, size - 1);
   return Number.isSafeInteger(start) &&
     Number.isSafeInteger(end) &&
     start >= 0 &&
     start <= end &&
     start < size
-    ? { start, end }
+    ? { end, start }
     : null;
-}
+};
 
-export async function createFileContentResponse(request: Request) {
+export const createFileContentResponse = async (request: Request) => {
   const key = keyFromFileUrl(request.url);
   if (!key) {
     return new Response("Invalid file URL", { status: 400 });
@@ -44,8 +44,8 @@ export async function createFileContentResponse(request: Request) {
     if (providerUrl) {
       return new Response(null, {
         headers: {
-          Location: providerUrl,
           "Cache-Control": "private, no-store",
+          Location: providerUrl,
         },
         status: 307,
       });
@@ -91,4 +91,4 @@ export async function createFileContentResponse(request: Request) {
     }
     return new Response("File download failed", { status: 500 });
   }
-}
+};

@@ -3,11 +3,11 @@ import { z } from "zod";
 import { eveRequest } from "./server";
 
 /** Idempotent seed lookup/creation, without browser history or source capabilities. */
-export async function createNativeEveCopy(
+export const createNativeEveCopy = async (
   ownerId: string,
   operationId: string,
   modelId: string
-) {
+) => {
   const existing = await eveRequest(
     ownerId,
     `/eve/v1/operation/${operationId}?kind=seed`,
@@ -29,9 +29,9 @@ export async function createNativeEveCopy(
     ownerId,
     "/eve/v1/session",
     {
+      body: JSON.stringify({ operationId, seed: true }),
       method: "POST",
       signal: AbortSignal.timeout(30_000),
-      body: JSON.stringify({ seed: true, operationId }),
     },
     modelId
   );
@@ -39,4 +39,4 @@ export async function createNativeEveCopy(
     throw new Error("Native copy creation is unresolved.");
   }
   return session.parse(await result.json()).sessionId;
-}
+};

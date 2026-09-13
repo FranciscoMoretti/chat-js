@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -27,8 +31,8 @@ vi.mock("../lib/eve/create-conversation-operation", () => ({
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db.insert(user).values({
-  id: owner,
   email: `${owner}@test.invalid`,
+  id: owner,
   name: "Response group test",
 });
 afterAll(async () => {
@@ -47,9 +51,9 @@ afterAll(async () => {
 
 test("parallel reservations and partial dispatch retries keep ordered exact identities", async () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Compare these models",
     modelIds: ["model-a", "model-b", "model-c"],
+    operationId: crypto.randomUUID(),
   };
   const [left, right] = await Promise.all([
     reserveEveResponseGroup(owner, input),
@@ -59,7 +63,7 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   await expect(
     reserveEveResponseGroup(owner, {
       ...input,
-      modelIds: [...input.modelIds].reverse(),
+      modelIds: [...input.modelIds].toReversed(),
     })
   ).rejects.toThrow("different message");
   await expect(
@@ -80,7 +84,7 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
           nativeCalls.push(id);
           return Promise.resolve(`session-${id}`);
         },
-        { initialModelId: operation.modelId, fork: operation.fork }
+        { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
     }
@@ -115,9 +119,9 @@ test("unconfirmed initial creation never starts independent secondary roots", as
     .mockReset()
     .mockResolvedValue(Response.json({ error: "Lost reply" }, { status: 409 }));
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Wait for root",
     modelIds: ["model-a", "model-b"],
+    operationId: crypto.randomUUID(),
   };
   const result = await createEveResponseGroup(owner, input);
   expect(result.candidates.map((candidate) => candidate.state)).toEqual([
@@ -142,16 +146,16 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
         operation.operationId,
         String(operation.message),
         (id) => Promise.resolve(`continued-${id}`),
-        { initialModelId: operation.modelId, fork: operation.fork }
+        { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
     });
-  const fork = { conversationId: source.id, beforeTurnId: "turn_0" };
+  const fork = { beforeTurnId: "turn_0", conversationId: source.id };
   const input = {
-    operationId: crypto.randomUUID(),
+    fork,
     message: "Continue",
     modelIds: ["model-a", "model-b"],
-    fork,
+    operationId: crypto.randomUUID(),
   };
   const result = await createEveResponseGroup(owner, input);
   expect(
@@ -165,17 +169,17 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   await expect(
     createEveResponseGroup(owner, {
       ...input,
-      operationId: crypto.randomUUID(),
       fork: { ...fork, conversationId: crypto.randomUUID() },
+      operationId: crypto.randomUUID(),
     })
   ).rejects.toThrow("Source conversation not found");
 });
 
 test("definitive rejection is distinct from uncertainty and repeated model choices remain independent", async () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Five responses",
     modelIds: ["model-a", "model-a", "model-b", "model-c", "model-d"],
+    operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
   expect(group.candidates.map((candidate) => candidate.modelId)).toEqual(
@@ -188,14 +192,14 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
     .mockReset()
     .mockResolvedValue(
       Response.json(
-        { error: "Model unavailable", creationRejected: true },
+        { creationRejected: true, error: "Model unavailable" },
         { status: 400 }
       )
     );
   const result = await createEveResponseGroup(owner, input);
   expect(result.candidates[0]).toMatchObject({
-    state: "rejected",
     error: "Model unavailable",
+    state: "rejected",
   });
   expect(
     result.candidates
@@ -206,9 +210,9 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
 
 test("deleting a partial family erases group payloads and fences unstarted candidates", async () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Private group",
     modelIds: ["model-a", "model-b"],
+    operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
   const root = await createEveConversation(
@@ -219,8 +223,8 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   );
   const forkInput = {
     ...input,
+    fork: { beforeTurnId: "turn_0", conversationId: root.id },
     operationId: crypto.randomUUID(),
-    fork: { conversationId: root.id, beforeTurnId: "turn_0" },
   };
   const pendingFork = await reserveEveResponseGroup(owner, forkInput);
   const unrelated = await reserveEveResponseGroup(owner, {
@@ -230,18 +234,18 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   await beginEveConversationDeletion(owner, root.id);
   await completeEveConversationDeletion(owner, root.id);
   for (const { saved, original } of [
-    { saved: group, original: input },
-    { saved: pendingFork, original: forkInput },
+    { original: input, saved: group },
+    { original: forkInput, saved: pendingFork },
   ]) {
     const [row] = await db
       .select()
       .from(eveResponseGroup)
       .where(eq(eveResponseGroup.id, saved.id));
     expect(row).toMatchObject({
-      deleted: true,
-      candidates: null,
-      inputHash: null,
       candidateOperationIds: saved.candidateOperationIds,
+      candidates: null,
+      deleted: true,
+      inputHash: null,
     });
     await expect(reserveEveResponseGroup(owner, original)).rejects.toThrow(
       "deleted"
@@ -253,7 +257,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       group.candidates[1].operationId,
       input.message,
       async () => "must-not-create",
-      { fork: { conversationId: root.id, beforeTurnId: "turn_0" } }
+      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
     )
   ).rejects.toThrow();
   await expect(
@@ -280,10 +284,10 @@ test("group reservation racing retirement cannot leave an active unstarted group
     async (id) => `session-${id}`
   );
   const input = {
-    operationId: crypto.randomUUID(),
+    fork: { beforeTurnId: "turn_0", conversationId: root.id },
     message: "Concurrent",
     modelIds: ["model-a", "model-b"],
-    fork: { conversationId: root.id, beforeTurnId: "turn_0" },
+    operationId: crypto.randomUUID(),
   };
   await Promise.allSettled([
     reserveEveResponseGroup(owner, input),
@@ -314,15 +318,15 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     async (id) => `session-${id}`
   );
   const input = {
-    operationId: crypto.randomUUID(),
+    fork: { beforeTurnId: "turn_0", conversationId: root.id },
     message: "Preserved",
     modelIds: ["model-a", "model-b"],
-    fork: { conversationId: root.id, beforeTurnId: "turn_0" },
+    operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
   await db
     .update(eveResponseGroup)
-    .set({ sourceIdentityKnown: false, sourceConversationId: null })
+    .set({ sourceConversationId: null, sourceIdentityKnown: false })
     .where(eq(eveResponseGroup.id, group.id));
   await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
     "Recover saved response group"
@@ -335,16 +339,16 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     .where(eq(eveResponseGroup.id, group.id));
   expect(row).toMatchObject({
     deleted: true,
-    sourceIdentityKnown: true,
     sourceConversationId: root.id,
+    sourceIdentityKnown: true,
   });
 });
 
 test("owner-only group reads preserve order and rejection recovery without exposing intent hashes", async () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "Read group",
     modelIds: ["model-a", "model-b"],
+    operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
   const first = await createEveConversation(
@@ -357,7 +361,7 @@ test("owner-only group reads preserve order and rejection recovery without expos
     owner,
     group.id,
     group.candidates[1].operationId,
-    { error: "Project missing", code: "project_not_found" }
+    { code: "project_not_found", error: "Project missing" }
   );
   const result = await getEveResponseGroup(owner, group.id);
   expect(result?.candidates.map((candidate) => candidate.state)).toEqual([
@@ -395,19 +399,19 @@ test("owner-only group reads preserve order and rejection recovery without expos
 
 test("an in-flight candidate prevents family erasure until its binding resolves", async () => {
   const input = {
-    operationId: crypto.randomUUID(),
     message: "In flight",
     modelIds: ["model-a", "model-b"],
+    operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
-  const entered = Promise.withResolvers<void>();
-  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
   const creation = createEveConversation(
     owner,
     group.candidates[0].operationId,
     input.message,
     async (id) => {
-      entered.resolve();
+      entered.resolve(undefined);
       await release.promise;
       return `session-${id}`;
     }
@@ -422,7 +426,7 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
       "Finish recovering"
     );
   } finally {
-    release.resolve();
+    release.resolve(undefined);
   }
   const root = await creation;
   await beginEveConversationDeletion(owner, root.id);

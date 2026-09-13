@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+/* oxlint-disable nextjs/no-img-element -- Sandbox screenshots use dynamic image URLs. */
 "use client";
 
 import type { ToolUIPart } from "ai";
@@ -25,13 +25,13 @@ interface SandboxComposedProps {
   title?: string;
 }
 
-export function SandboxComposed({
+export const SandboxComposed = ({
   code,
   output,
   language = "tsx",
   title,
   state,
-}: SandboxComposedProps) {
+}: SandboxComposedProps) => {
   const [activeTab, setActiveTab] = React.useState("code");
 
   return (
@@ -55,4 +55,4 @@ export function SandboxComposed({
       </SandboxContent>
     </Sandbox>
   );
-}
+};

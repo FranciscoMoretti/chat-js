@@ -21,7 +21,7 @@ import { useTRPC } from "@/trpc/react";
 import { EveHistoryList } from "./eve-history-list";
 import { NewEveConversation } from "./new-eve-conversation";
 
-export function EveProjectHome({
+export const EveProjectHome = ({
   ownerId,
   initialProject,
   initialPage,
@@ -29,7 +29,7 @@ export function EveProjectHome({
   ownerId: string;
   initialProject: Project;
   initialPage: Awaited<ReturnType<typeof listEveConversations>>;
-}) {
+}) => {
   const trpc = useTRPC();
   const cache = useQueryClient();
   const project = useQuery(
@@ -41,9 +41,9 @@ export function EveProjectHome({
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
-  async function refresh() {
+  const refresh = async () => {
     await cache.invalidateQueries({ queryKey: trpc.project.pathKey() });
-  }
+  };
   const save = useMutation(
     trpc.project.setInstructions.mutationOptions({
       onSuccess: async () => {
@@ -125,9 +125,9 @@ export function EveProjectHome({
               await rename.mutateAsync({
                 id: current.id,
                 updates: {
-                  name: value.name,
                   icon: value.icon,
                   iconColor: value.color,
+                  name: value.name,
                 },
               });
             }}
@@ -137,4 +137,4 @@ export function EveProjectHome({
       </div>
     </section>
   );
-}
+};

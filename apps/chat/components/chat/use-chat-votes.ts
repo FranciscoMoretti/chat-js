@@ -8,10 +8,10 @@ import { useIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
-export function useChatVotes(
+export const useChatVotes = (
   chatId: string,
   { isReadonly }: { isReadonly: boolean }
-) {
+) => {
   const trpc = useTRPC();
   const { data: session } = useSession();
   const isLoading = chatId !== useChatId();
@@ -27,4 +27,4 @@ export function useChatVotes(
       !!session?.user &&
       !isLoading,
   });
-}
+};

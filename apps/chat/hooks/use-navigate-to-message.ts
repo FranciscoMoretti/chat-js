@@ -5,7 +5,7 @@ import type { ChatMessage } from "@/lib/ai/types";
 import { useDataStream } from "@/lib/stores/hooks-data-stream";
 import { useSwitchToMessage } from "@/lib/stores/hooks-threads";
 
-export function useNavigateToMessage() {
+export const useNavigateToMessage = () => {
   const { setDataStream } = useDataStream();
   const { artifact, closeArtifact } = useArtifact();
   const switchToMessage = useSwitchToMessage();
@@ -34,4 +34,4 @@ export function useNavigateToMessage() {
       switchToMessage,
     ]
   );
-}
+};

@@ -13,9 +13,9 @@ import {
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.defaults.tools.documents.types = {
-    text: false,
     code: true,
     sheet: false,
+    text: false,
   };
   definition.defaults.tools.mcp.enabled = true;
   definition.defaults.tools.webSearch.enabled = true;
@@ -27,13 +27,13 @@ it("uses external defaults and every environment group with --yes", async () => 
   const documentTypes = await promptDocumentTypes(true, true, definition);
   const { builtInTools } = await promptAssistantTools([], true, definition);
   expect(coreFeatures.mcp).toBe(true);
-  expect(documentTypes).toEqual({ text: false, code: true, sheet: false });
+  expect(documentTypes).toEqual({ code: true, sheet: false, text: false });
   expect(builtInTools.webSearch).toBe(true);
   const input = {
-    gateway: "acme",
-    coreFeatures,
+    auth: { github: false, google: false, vercel: false },
     builtInTools,
-    auth: { google: false, github: false, vercel: false },
+    coreFeatures,
+    gateway: "acme",
   };
   const entries = collectEnvChecklist({
     ...input,
@@ -51,7 +51,7 @@ it("uses external defaults and every environment group with --yes", async () => 
 it("rejects a default for media the gateway cannot support", () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.capabilities.image = false;
-  definition.defaults.tools.image = { enabled: false, default: "unsupported" };
+  definition.defaults.tools.image = { default: "unsupported", enabled: false };
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
@@ -62,4 +62,15 @@ it("enables web search when external defaults enable deep research", async () =>
   const { builtInTools } = await promptAssistantTools([], true, definition);
   expect(builtInTools.deepResearch).toBe(true);
   expect(builtInTools.webSearch).toBe(true);
+});
+
+it("keeps unconfigured media tools disabled with --yes", async () => {
+  const definition = externalGatewayFixture().root.meta.chatjs;
+  definition.capabilities.image = false;
+  definition.capabilities.video = false;
+  definition.defaults.tools.image = { enabled: false };
+  definition.defaults.tools.video = { enabled: false };
+  const { builtInTools } = await promptAssistantTools([], true, definition);
+  expect(builtInTools.imageGeneration).toBe(false);
+  expect(builtInTools.videoGeneration).toBe(false);
 });

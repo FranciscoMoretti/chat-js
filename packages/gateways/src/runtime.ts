@@ -1,10 +1,10 @@
 import type { AiGatewayModel } from "./models.ts";
 
 interface GatewayLogger {
-  debug(data: unknown, message?: string): void;
-  info(data: unknown, message?: string): void;
-  warn(data: unknown, message?: string): void;
-  error(data: unknown, message?: string): void;
+  debug: (data: unknown, message?: string) => void;
+  info: (data: unknown, message?: string) => void;
+  warn: (data: unknown, message?: string) => void;
+  error: (data: unknown, message?: string) => void;
 }
 
 export interface GatewayOptions {
@@ -17,10 +17,18 @@ export interface GatewayOptions {
 }
 
 const silentLogger: GatewayLogger = {
-  debug() {},
-  info() {},
-  warn() {},
-  error() {},
+  debug: () => {
+    /* intentionally silent */
+  },
+  error: () => {
+    /* intentionally silent */
+  },
+  info: () => {
+    /* intentionally silent */
+  },
+  warn: () => {
+    /* intentionally silent */
+  },
 };
 
 export class GatewayRuntime {

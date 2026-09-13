@@ -5,15 +5,12 @@ import { memo, useEffect } from "react";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useIsLastArtifact } from "@/lib/stores/hooks-message-parts";
-import {
-  type DocumentToolType,
-  getToolKind,
-  isEditTool,
-} from "@/tools/platform/documents/types";
+import { getToolKind, isEditTool } from "@/tools/platform/documents/types";
+import type { DocumentToolType } from "@/tools/platform/documents/types";
 
 import { DocumentPreview } from "./document-preview";
 
-type DocumentTool = Extract<
+type DocumentToolPart = Extract<
   ChatMessage["parts"][number],
   { type: DocumentToolType }
 >;
@@ -21,14 +18,14 @@ type DocumentTool = Extract<
 interface DocumentToolComponentProps {
   isReadonly: boolean;
   messageId: string;
-  tool: DocumentTool;
+  tool: DocumentToolPart;
 }
 
-function PureDocumentTool({
+const PureDocumentTool = ({
   tool,
   isReadonly,
   messageId,
-}: DocumentToolComponentProps) {
+}: DocumentToolComponentProps) => {
   const { setArtifact } = useArtifact();
   const kind = getToolKind(tool.type);
   const isEdit = isEditTool(tool.type);
@@ -42,31 +39,31 @@ function PureDocumentTool({
     if (tool.state === "input-streaming" || tool.state === "input-available") {
       setArtifact((prev) => ({
         ...prev,
-        documentId: "init",
-        title: inputTitle,
         content: inputContent,
+        documentId: "init",
         kind,
         messageId,
         status: "streaming",
+        title: inputTitle,
         ...(prev.status !== "streaming" && { isVisible: true }),
       }));
     }
 
     if (tool.state === "output-available" && tool.output) {
-      const output = tool.output;
+      const { output } = tool;
       if (output.status === "success") {
         setArtifact((prev) => ({
           ...prev,
+          date: output.date,
           documentId: output.documentId,
           status: "idle",
-          date: output.date,
         }));
       }
     }
   }, [tool, messageId, kind, inputTitle, inputContent, setArtifact]);
 
   if (tool.state === "output-error" || tool.output?.status === "error") {
-    const output = tool.output;
+    const { output } = tool;
     const error = output?.status === "error" ? output.error : tool.errorText;
 
     return (
@@ -81,7 +78,11 @@ function PureDocumentTool({
   ) {
     return (
       <DocumentPreview
-        input={{ title: inputTitle, kind, content: inputContent }}
+        input={{
+          content: inputContent,
+          kind,
+          title: inputTitle,
+        }}
         isLastArtifact={isLastArtifact}
         isReadonly={isReadonly}
         messageId={messageId}
@@ -89,8 +90,8 @@ function PureDocumentTool({
           tool.output
             ? {
                 documentId: tool.output.documentId,
-                title: inputTitle,
                 kind,
+                title: inputTitle,
               }
             : undefined
         }
@@ -100,7 +101,7 @@ function PureDocumentTool({
   }
 
   return null;
-}
+};
 
 export const DocumentTool = memo(
   PureDocumentTool,

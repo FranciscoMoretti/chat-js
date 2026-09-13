@@ -1,3 +1,4 @@
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -27,29 +28,29 @@ for (const state of ["deleting", "deleted"] as const) {
     const operationId = crypto.randomUUID();
     const sessionId = `wrun_deleted_${id}`;
     await db.insert(eveConversation).values({
+      firstMessage: "Deleted test conversation",
       id,
       operationId,
       ownerId: owner,
-      firstMessage: "Deleted test conversation",
-      state,
       sessionId,
+      state,
       visibility: "public",
     });
     const anonymous = await browser.newContext();
     try {
       const retry = await page.request.post("/api/agent-conversations", {
-        headers: { origin: new URL(page.url()).origin },
         data: {
-          operationId,
           message: "Deleted test conversation",
           modelId: "openai/gpt-5-mini",
+          operationId,
         },
+        headers: { origin: new URL(page.url()).origin },
       });
       expect(retry.status()).toBe(404);
       expect(await retry.json()).toMatchObject({ creationRejected: true });
       await page.goto(`/chat/${id}`);
       await expect(
-        page.getByRole("heading", { name: "404", exact: true })
+        page.getByRole("heading", { exact: true, name: "404" })
       ).toBeVisible();
       const stream = await page.request.get(
         `/api/eve/v1/session/${sessionId}/stream`,
@@ -62,7 +63,7 @@ for (const state of ["deleting", "deleted"] as const) {
       );
       await publicPage.goto(`${new URL(page.url()).origin}/share/${id}`);
       await expect(
-        publicPage.getByRole("heading", { name: "404", exact: true })
+        publicPage.getByRole("heading", { exact: true, name: "404" })
       ).toBeVisible();
       await expect(publicPage.getByRole("log")).toHaveCount(0);
     } finally {

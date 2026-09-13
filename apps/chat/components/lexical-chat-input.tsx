@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  type InitialConfigType,
-  LexicalComposer,
-} from "@lexical/react/LexicalComposer";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -15,61 +13,56 @@ import {
   $createTextNode,
   $getRoot,
   COMMAND_PRIORITY_HIGH,
-  type EditorState,
   KEY_ENTER_COMMAND,
-  type LexicalEditor,
 } from "lexical";
-import {
-  type ClipboardEvent,
-  type KeyboardEvent,
-  type RefObject,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useState,
-} from "react";
+import type { EditorState, LexicalEditor } from "lexical";
+import { useCallback, useEffect, useImperativeHandle, useState } from "react";
+import type { ClipboardEvent, KeyboardEvent, RefObject } from "react";
 
 import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { cn } from "@/lib/utils";
 
 // Plugin to handle Enter key submissions
-function EnterKeySubmitPlugin({
+const EnterKeySubmitPlugin = ({
   onEnterSubmit,
 }: {
   onEnterSubmit?: (event: globalThis.KeyboardEvent) => boolean;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
-  useEffect(() => {
-    return editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      (event: globalThis.KeyboardEvent | null) => {
-        // Call the custom handler if provided
-        if (event && !event.isComposing && onEnterSubmit) {
-          const handled = onEnterSubmit(event);
-          if (handled) {
-            // Prevent the default Enter behavior immediately
-            event.preventDefault();
-            // Prevent default Enter behavior (adding newline)
-            return true;
+  useEffect(
+    () =>
+      editor.registerCommand(
+        KEY_ENTER_COMMAND,
+        (event: globalThis.KeyboardEvent | null) => {
+          // Call the custom handler if provided
+          if (event && !event.isComposing && onEnterSubmit) {
+            const handled = onEnterSubmit(event);
+            if (handled) {
+              // Prevent the default Enter behavior immediately
+              event.preventDefault();
+              // Prevent default Enter behavior (adding newline)
+              return true;
+            }
+            // Allow default behavior for non-submit cases (Shift+Enter, etc.)
+            return false;
           }
-        }
-        // Allow default behavior for non-submit cases (Shift+Enter, etc.)
-        return false;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor, onEnterSubmit]);
+          return false;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor, onEnterSubmit]
+  );
 
   return null;
-}
+};
 
 // Plugin to get editor instance for imperative ref
-function EditorRefPlugin({
+const EditorRefPlugin = ({
   setEditor,
 }: {
   setEditor: (editor: LexicalEditor) => void;
-}) {
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -77,7 +70,7 @@ function EditorRefPlugin({
   }, [editor, setEditor]);
 
   return null;
-}
+};
 
 interface LexicalChatInputRef {
   clear: () => void;
@@ -101,16 +94,16 @@ interface LexicalChatInputProps {
 }
 
 const theme = {
-  root: "lexical-root",
   ltr: "ltr",
-  rtl: "rtl",
-  placeholder: "editor-placeholder",
   paragraph: "editor-paragraph",
+  placeholder: "editor-placeholder",
+  root: "lexical-root",
+  rtl: "rtl",
 };
 
-function onError(error: Error) {
+const onError = (error: Error) => {
   console.error("Lexical error:", error);
-}
+};
 
 export const LexicalChatInput = ({
   initialValue = "",
@@ -138,12 +131,12 @@ export const LexicalChatInput = ({
   useAutoFocus({ autoFocus, editor });
 
   const initialConfig: InitialConfigType = {
-    namespace: "LexicalChatInput",
     // Accept input only after the editor and its change listeners are mounted.
     editable: false,
-    theme,
-    onError,
+    namespace: "LexicalChatInput",
     nodes: [],
+    onError,
+    theme,
   };
 
   const handleChange = useCallback(
@@ -162,17 +155,17 @@ export const LexicalChatInput = ({
   useImperativeHandle(
     ref,
     () => ({
-      focus: () => {
-        if (editor) {
-          editor.focus();
-        }
-      },
       clear: () => {
         if (editor) {
           editor.update(() => {
             const root = $getRoot();
             root.clear();
           });
+        }
+      },
+      focus: () => {
+        if (editor) {
+          editor.focus();
         }
       },
       getValue: () => {
@@ -208,13 +201,10 @@ export const LexicalChatInput = ({
     }
   }, [editor, initialValue]);
 
-  const PlaceholderComponent = useCallback(
-    () => (
-      <div className="lexical-placeholder text-muted-foreground pointer-events-none absolute pt-2 pl-3">
-        {placeholder}
-      </div>
-    ),
-    [placeholder]
+  const placeholderElement = (
+    <div className="lexical-placeholder text-muted-foreground pointer-events-none absolute pt-2 pl-3">
+      {placeholder}
+    </div>
   );
 
   return (
@@ -242,15 +232,15 @@ export const LexicalChatInput = ({
               onPaste={onPaste}
               spellCheck={true}
               style={{
-                WebkitBoxShadow: "none",
                 MozBoxShadow: "none",
+                WebkitBoxShadow: "none",
                 boxShadow: "none",
               }}
               // aria-placeholder={placeholder}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
-          placeholder={<PlaceholderComponent />}
+          placeholder={placeholderElement}
         />
         <OnChangePlugin onChange={handleChange} />
         <HistoryPlugin />

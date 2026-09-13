@@ -9,11 +9,13 @@ import { listEveConversations } from "@/lib/db/eve-queries";
 import { getProjectById } from "@/lib/db/queries";
 import { isEveEnabled } from "@/lib/eve/availability";
 
-export default async function ProjectPageRoute({
+const ProjectPageRoute = async ({
   params,
 }: {
-  params: Promise<{ projectId: string }>;
-}) {
+  params: Promise<{
+    projectId: string;
+  }>;
+}) => {
   if (!isEveEnabled()) {
     return null;
   }
@@ -39,8 +41,8 @@ export default async function ProjectPageRoute({
     );
   }
   const initialPage = await listEveConversations(session.user.id, {
-    search: "",
     projectId,
+    search: "",
   });
   return (
     <EveProjectHome
@@ -49,4 +51,6 @@ export default async function ProjectPageRoute({
       ownerId={session.user.id}
     />
   );
-}
+};
+
+export default ProjectPageRoute;

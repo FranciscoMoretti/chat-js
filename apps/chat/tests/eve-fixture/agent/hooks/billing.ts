@@ -11,11 +11,11 @@ export default defineHook({
         throw new Error("Missing fixture owner.");
       }
       await recordEveUsage({
+        costUsd: 0,
+        eventId: event.meta.id,
         ownerId,
         sessionId: context.session.id,
-        eventId: event.meta.id,
         turnId: event.data.turnId,
-        costUsd: 0,
       });
     },
   },

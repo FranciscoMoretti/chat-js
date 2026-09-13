@@ -1,4 +1,5 @@
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -6,15 +7,15 @@ import { cn } from "@/lib/utils";
 const alertVariants = cva(
   "[&>svg]:text-foreground relative w-full rounded-lg border p-4 [&>svg]:absolute [&>svg]:top-4 [&>svg]:left-4 [&>svg+div]:translate-y-[-3px] [&>svg~*]:pl-7",
   {
+    defaultVariants: {
+      variant: "default",
+    },
     variants: {
       variant: {
         default: "bg-background text-foreground",
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
       },
-    },
-    defaultVariants: {
-      variant: "default",
     },
   }
 );
@@ -36,11 +37,14 @@ const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h5
-    className={cn("mb-1 leading-none font-medium tracking-tight", className)}
-    ref={ref}
-    {...props}
-  />
+  <>
+    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
+    <h5
+      className={cn("mb-1 leading-none font-medium tracking-tight", className)}
+      ref={ref}
+      {...props}
+    />
+  </>
 ));
 AlertTitle.displayName = "AlertTitle";
 

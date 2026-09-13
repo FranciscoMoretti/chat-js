@@ -7,35 +7,35 @@ export const weatherInput = z.object({
 
 export const weatherResult = z.object({
   current: z.object({
-    time: z.iso.datetime({ local: true }),
     interval: z.number(),
     temperature_2m: z.number(),
+    time: z.iso.datetime({ local: true }),
   }),
   current_units: z.object({
-    time: z.string(),
     interval: z.string(),
     temperature_2m: z.string(),
+    time: z.string(),
   }),
   daily: z.object({
-    time: z.array(z.string()),
     sunrise: z.array(z.string()).min(1),
     sunset: z.array(z.string()).min(1),
+    time: z.array(z.string()),
   }),
   daily_units: z.object({
-    time: z.string(),
     sunrise: z.string(),
     sunset: z.string(),
+    time: z.string(),
   }),
+  elevation: z.number(),
+  generationtime_ms: z.number(),
   hourly: z.object({
-    time: z.array(z.string()),
     temperature_2m: z.array(z.number()).min(1),
+    time: z.array(z.string()),
   }),
-  hourly_units: z.object({ time: z.string(), temperature_2m: z.string() }),
+  hourly_units: z.object({ temperature_2m: z.string(), time: z.string() }),
   latitude: z.number(),
   longitude: z.number(),
-  generationtime_ms: z.number(),
-  utc_offset_seconds: z.number(),
   timezone: z.string(),
   timezone_abbreviation: z.string(),
-  elevation: z.number(),
+  utc_offset_seconds: z.number(),
 });

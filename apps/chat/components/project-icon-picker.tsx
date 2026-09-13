@@ -25,13 +25,13 @@ interface ProjectIconPickerProps {
   onIconChange: (icon: ProjectIconName) => void;
 }
 
-export function ProjectIconPicker({
+export const ProjectIconPicker = ({
   icon,
   color,
   onIconChange,
   onColorChange,
   className,
-}: ProjectIconPickerProps) {
+}: ProjectIconPickerProps) => {
   const displayColor = color ?? DEFAULT_PROJECT_COLOR;
 
   return (
@@ -89,4 +89,4 @@ export function ProjectIconPicker({
       </PopoverContent>
     </Popover>
   );
-}
+};

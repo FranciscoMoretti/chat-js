@@ -1,7 +1,4 @@
 import { config } from "@/lib/config";
-import { env } from "@/lib/env";
-
-export type SearchAPI = "firecrawl" | "tavily" | "none";
 
 export interface DeepResearchRuntimeConfig {
   allow_clarification: boolean;
@@ -23,10 +20,10 @@ export interface DeepResearchRuntimeConfig {
   mcp_prompt?: string;
   research_model: string;
   research_model_max_tokens: number;
+  search_api_max_queries: number;
 
   // Research Configuration
-  search_api: SearchAPI;
-  search_api_max_queries: number;
+  search_enabled: boolean;
   status_update_model: string;
   status_update_model_max_tokens: number;
 
@@ -35,17 +32,7 @@ export interface DeepResearchRuntimeConfig {
   summarization_model_max_tokens: number;
 }
 
-function getSearchApi(): SearchAPI {
-  if (env.TAVILY_API_KEY) {
-    return "tavily";
-  }
-  if (env.FIRECRAWL_API_KEY) {
-    return "firecrawl";
-  }
-  return "none";
-}
-
-export function getDeepResearchConfig(): DeepResearchRuntimeConfig {
+export const getDeepResearchConfig = (): DeepResearchRuntimeConfig => {
   const {
     defaultModel,
     finalReportModel,
@@ -57,25 +44,21 @@ export function getDeepResearchConfig(): DeepResearchRuntimeConfig {
 
   return {
     // General Configuration
-    max_structured_output_retries: 3,
     allow_clarification: allowClarification,
-    max_concurrent_research_units: maxConcurrentResearchUnits,
-
-    // Research Configuration
-    search_api: getSearchApi(),
-    search_api_max_queries: maxSearchQueries,
-    max_researcher_iterations: maxResearcherIterations,
-
-    // Model Configuration - use same model for research/compression/summarization
-    summarization_model: defaultModel,
-    summarization_model_max_tokens: 4000,
-    research_model: defaultModel,
-    research_model_max_tokens: 4000,
     compression_model: defaultModel,
     compression_model_max_tokens: 4000,
     final_report_model: finalReportModel,
     final_report_model_max_tokens: 6000,
+    max_concurrent_research_units: maxConcurrentResearchUnits,
+    max_researcher_iterations: maxResearcherIterations,
+    max_structured_output_retries: 3,
+    research_model: defaultModel,
+    research_model_max_tokens: 4000,
+    search_api_max_queries: maxSearchQueries,
+    search_enabled: true,
     status_update_model: defaultModel,
     status_update_model_max_tokens: 4000,
+    summarization_model: defaultModel,
+    summarization_model_max_tokens: 4000,
   };
-}
+};

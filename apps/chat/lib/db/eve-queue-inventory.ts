@@ -7,10 +7,13 @@ import { z } from "zod";
  * Includes resilient child creation even when its run row does not exist yet.
  * This read neither locks nor removes jobs; later cleanup must recheck ownership.
  */
-export async function readEvePostgresQueueInventory(
+export const readEvePostgresQueueInventory = async (
   connection: Sql | TransactionSql,
-  input: { runIds: string[]; taskIdentifier: string }
-) {
+  input: {
+    runIds: string[];
+    taskIdentifier: string;
+  }
+) => {
   const { runIds, taskIdentifier } = z
     .object({
       runIds: z.array(z.string().min(1)).min(1).max(10_000),
@@ -21,8 +24,8 @@ export async function readEvePostgresQueueInventory(
     .array(
       z.object({
         id: z.string(),
-        runId: z.string().nullable(),
         locked: z.boolean(),
+        runId: z.string().nullable(),
         unsupported: z.boolean(),
       })
     )
@@ -60,9 +63,9 @@ export async function readEvePostgresQueueInventory(
   return {
     jobs: rows
       .filter((row) => !row.unsupported)
-      .map(({ id, runId, locked }) => ({ id, runId, locked })),
+      .map(({ id, runId, locked }) => ({ id, locked, runId })),
     unsupportedJobIds: rows
       .filter((row) => row.unsupported)
       .map((row) => row.id),
   };
-}
+};

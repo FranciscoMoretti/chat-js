@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/func-names -- Anonymous spies expose their behavior through the owning test variable. */
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
@@ -25,7 +28,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db
   .insert(user)
-  .values({ id: owner, email: `${owner}@test.invalid`, name: "Cursor test" });
+  .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
@@ -49,9 +52,9 @@ async function session() {
 }
 function step(costUsd: number | undefined) {
   return {
-    type: "step.completed",
-    meta: { id: crypto.randomUUID() },
     data: { turnId: "turn_0", usage: { costUsd } },
+    meta: { id: crypto.randomUUID() },
+    type: "step.completed",
   };
 }
 
@@ -124,11 +127,11 @@ test.each(["step.completed", "compaction.usage"])(
     );
     expect(await getEveUsageCursor(owner, id)).toBe(0);
     await recordEveUsage({
+      costUsd: 0.03,
+      eventId: event.meta.id,
       ownerId: owner,
       sessionId: id,
-      eventId: event.meta.id,
       turnId: "turn_0",
-      costUsd: 0.03,
     });
     await reconcileEveUsage(owner, id);
     expect(await getEveUsageCursor(owner, id)).toBe(1);
@@ -183,13 +186,13 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
 test("unpriced auxiliary usage retains the unread cursor until its exact attempt is reconciled", async () => {
   const id = await session();
   const event = {
-    type: "hook.result",
-    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
     data: {
       hookId: "followup-suggestions",
-      turnId: "turn_0",
       modelCalls: [{ modelId: "model" }],
+      turnId: "turn_0",
     },
+    meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
+    type: "hook.result",
   };
   transport.stream.mockImplementation(function* ({ startIndex }) {
     if (startIndex === 0) {
@@ -201,11 +204,11 @@ test("unpriced auxiliary usage retains the unread cursor until its exact attempt
   );
   expect(await getEveUsageCursor(owner, id)).toBe(0);
   await recordEveUsage({
+    costUsd: 0.001,
+    eventId: `${event.meta.id}:model-call:0`,
     ownerId: owner,
     sessionId: id,
-    eventId: `${event.meta.id}:model-call:0`,
     turnId: "turn_0",
-    costUsd: 0.001,
   });
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);

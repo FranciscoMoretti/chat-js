@@ -2,15 +2,16 @@
 
 import { CheckIcon, CopyIcon } from "lucide-react";
 import {
-  type ComponentProps,
   createContext,
-  type HTMLAttributes,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import { type BundledLanguage, codeToHtml, type ShikiTransformer } from "shiki";
+import type { ComponentProps, HTMLAttributes } from "react";
+import { codeToHtml } from "shiki";
+import type { BundledLanguage, ShikiTransformer } from "shiki";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,11 +31,9 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
 });
 
 const lineNumberTransformer: ShikiTransformer = {
-  name: "line-numbers",
   line(node, line) {
     node.children.unshift({
-      type: "element",
-      tagName: "span",
+      children: [{ type: "text", value: String(line) }],
       properties: {
         className: [
           "inline-block",
@@ -45,16 +44,18 @@ const lineNumberTransformer: ShikiTransformer = {
           "text-muted-foreground",
         ],
       },
-      children: [{ type: "text", value: String(line) }],
+      tagName: "span",
+      type: "element",
     });
   },
+  name: "line-numbers",
 };
 
-export async function highlightCode(
+export const highlightCode = async (
   code: string,
   language: BundledLanguage,
   showLineNumbers = false
-) {
+) => {
   const transformers: ShikiTransformer[] = showLineNumbers
     ? [lineNumberTransformer]
     : [];
@@ -71,7 +72,7 @@ export async function highlightCode(
       transformers,
     }),
   ]);
-}
+};
 
 export const CodeBlock = ({
   code,
@@ -86,21 +87,30 @@ export const CodeBlock = ({
   const mounted = useRef(false);
 
   useEffect(() => {
-    highlightCode(code, language, showLineNumbers).then(([light, dark]) => {
+    const updateHighlightedCode = async () => {
+      const [light, dark] = await highlightCode(
+        code,
+        language,
+        showLineNumbers
+      );
       if (!mounted.current) {
         setHtml(light);
         setDarkHtml(dark);
         mounted.current = true;
       }
-    });
+    };
+
+    void updateHighlightedCode();
 
     return () => {
       mounted.current = false;
     };
   }, [code, language, showLineNumbers]);
 
+  const contextValue = useMemo(() => ({ code }), [code]);
+
   return (
-    <CodeBlockContext.Provider value={{ code }}>
+    <CodeBlockContext.Provider value={contextValue}>
       <div
         className={cn(
           "group bg-background text-foreground relative w-full overflow-hidden rounded-md border",
@@ -109,15 +119,15 @@ export const CodeBlock = ({
         {...props}
       >
         <div className="relative">
+          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: "this is needed."
-            dangerouslySetInnerHTML={{ __html: html }}
+            {...{ dangerouslySetInnerHTML: { __html: html } }}
           />
+          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: "this is needed."
-            dangerouslySetInnerHTML={{ __html: darkHtml }}
+            {...{ dangerouslySetInnerHTML: { __html: darkHtml } }}
           />
           {children && (
             <div className="absolute top-2 right-2 flex items-center gap-2">

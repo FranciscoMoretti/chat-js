@@ -1,11 +1,15 @@
+/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
+/* oxlint-disable promise/prefer-await-to-then -- The event Promise forwards completion through the callback chain it observes. */
+/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-const CHAT_URL = /\/chat\/[^/]+$/;
-const UUID = /^[0-9a-f-]{36}$/;
+const CHAT_URL = /\/chat\/[^/]+$/u;
+const UUID = /^[0-9a-f-]{36}$/u;
 const visualStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root, .tsqd-parent-container { visibility:hidden !important; }";
 
@@ -17,21 +21,23 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
   });
-  let release: () => void = () => undefined;
+  let release: () => void = () => {
+    /* empty */
+  };
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
   await page.route("**/api/eve-guest", async (route) => {
     await gate;
-    await route.fulfill({ status: 503, body: "unavailable" });
+    await route.fulfill({ body: "unavailable", status: 503 });
   });
   await page.goto("/");
   await expect(
     page.getByText("Preparing chat…", { exact: true })
   ).toBeVisible();
   await page.screenshot({
-    path: testInfo.outputPath("guest-preparing.png"),
     animations: "disabled",
+    path: testInfo.outputPath("guest-preparing.png"),
     style: visualStyle,
   });
   release();
@@ -39,13 +45,13 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
     page.getByRole("alert").filter({ hasText: "Could not start chat" })
   ).toContainText("Could not start chat");
   await page.screenshot({
-    path: testInfo.outputPath("guest-bootstrap-error.png"),
     animations: "disabled",
+    path: testInfo.outputPath("guest-bootstrap-error.png"),
     style: visualStyle,
   });
   await page.unroute("**/api/eve-guest");
-  await page.getByRole("button", { name: "Try again", exact: true }).click();
-  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  await page.getByRole("button", { exact: true, name: "Try again" }).click();
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await expect(composer).toBeVisible();
   await composer.fill("Reply with the single word hello.");
   const creation = new Promise<ReturnType<typeof conversationBinding.parse>>(
@@ -65,7 +71,7 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
         .catch(reject);
     }
   );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   const binding = await creation;
   await expect(page).toHaveURL(CHAT_URL);
   await expect(page.getByRole("log").locator(".is-assistant")).toContainText(
@@ -85,7 +91,7 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
       response.request().method() === "POST" &&
       response.url().endsWith(`/api/eve/v1/session/${binding.sessionId}`)
   );
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(composer).toHaveText("");
   const sent = await followup;
   expect(sent.status()).toBe(202);
@@ -113,26 +119,26 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
   ).toBe(401);
   await page.reload();
   const expand = page.getByRole("button", {
-    name: "Expand sidebar",
     exact: true,
+    name: "Expand sidebar",
   });
   if (await expand.isVisible()) {
     await expand.click();
   }
   await expect(
-    page.getByRole("link", { name: "Guest conversation", exact: true })
+    page.getByRole("link", { exact: true, name: "Guest conversation" })
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "New project", exact: true })
+    page.getByRole("button", { exact: true, name: "New project" })
   ).toHaveCount(0);
   await page.screenshot({
-    path: testInfo.outputPath("guest-chat-desktop.png"),
     animations: "disabled",
+    path: testInfo.outputPath("guest-chat-desktop.png"),
     style: visualStyle,
   });
   const outsider = await browser.newContext();
   try {
-    const origin = new URL(page.url()).origin;
+    const { origin } = new URL(page.url());
     await outsider.request.post(`${origin}/api/eve-guest`, {
       headers: { origin },
     });
@@ -144,17 +150,17 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
   } finally {
     await outsider.close();
   }
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await expect(composer).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth)
   ).toBeLessThanOrEqual(390);
   await page.screenshot({
-    path: testInfo.outputPath("guest-chat-mobile.png"),
     animations: "disabled",
+    path: testInfo.outputPath("guest-chat-mobile.png"),
     style: visualStyle,
   });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ height: 720, width: 1280 });
   const previousPrincipal = await page.request.post("/api/eve-guest", {
     headers: { origin: new URL(page.url()).origin },
   });
@@ -165,11 +171,11 @@ test("guest uses the existing chat shell, retries bootstrap, sends, reloads and 
   });
   await page.context().clearCookies({ name: "chatjs-eve-guest" });
   await page
-    .getByRole("link", { name: "New conversation", exact: true })
+    .getByRole("link", { exact: true, name: "New conversation" })
     .click();
   await expect(composer).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Guest conversation", exact: true })
+    page.getByRole("link", { exact: true, name: "Guest conversation" })
   ).toHaveCount(0);
   expect(
     await page.evaluate(() => document.documentElement.dataset.guestCacheTest)

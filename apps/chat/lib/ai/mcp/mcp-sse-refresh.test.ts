@@ -1,8 +1,5 @@
-import {
-  createMCPClient,
-  type OAuthClientProvider,
-  type OAuthTokens,
-} from "@ai-sdk/mcp";
+import { createMCPClient } from "@ai-sdk/mcp";
+import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
 import { expect, test } from "vitest";
 
 const serverUrl = "https://mcp.test/";
@@ -18,31 +15,31 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
       | undefined;
     let tokens: OAuthTokens = {
       access_token: "access-old",
-      refresh_token: "refresh-stable",
-      token_type: "Bearer",
-      issuer: authorizationServerUrl,
       authorization_server: authorizationServerUrl,
+      issuer: authorizationServerUrl,
+      refresh_token: "refresh-stable",
       token_endpoint: tokenEndpoint,
+      token_type: "Bearer",
     };
     let validAccessToken = tokens.access_token;
     let refreshes = 0;
     let oldTokenRequests = 0;
-    const firstRefreshSaved = Promise.withResolvers<void>();
-    const bothOldTokenRequestsStarted = Promise.withResolvers<void>();
+    const firstRefreshSaved = Promise.withResolvers<undefined>();
+    const bothOldTokenRequestsStarted = Promise.withResolvers<undefined>();
     const encoder = new TextEncoder();
 
     const provider: OAuthClientProvider = {
-      tokens: () => tokens,
+      clientInformation: () => ({ client_id: "client" }),
+      clientMetadata: { redirect_uris: ["https://app.test/oauth/callback"] },
+      codeVerifier: () => "verifier",
+      redirectToAuthorization: () => {},
+      redirectUrl: "https://app.test/oauth/callback",
+      saveCodeVerifier: () => {},
       saveTokens: (nextTokens) => {
         tokens = nextTokens;
-        firstRefreshSaved.resolve();
+        firstRefreshSaved.resolve(undefined);
       },
-      redirectToAuthorization: () => undefined,
-      saveCodeVerifier: () => undefined,
-      codeVerifier: () => "verifier",
-      redirectUrl: "https://app.test/oauth/callback",
-      clientMetadata: { redirect_uris: ["https://app.test/oauth/callback"] },
-      clientInformation: () => ({ client_id: "client" }),
+      tokens: () => tokens,
     };
 
     const fakeFetch = async (
@@ -67,8 +64,8 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
 
       if (request.url.endsWith("/.well-known/oauth-protected-resource")) {
         return Response.json({
-          resource: serverUrl,
           authorization_servers: [authorizationServerUrl],
+          resource: serverUrl,
         });
       }
 
@@ -77,11 +74,11 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         `${authorizationServerUrl}.well-known/oauth-authorization-server`
       ) {
         return Response.json({
-          issuer: authorizationServerUrl,
           authorization_endpoint: `${authorizationServerUrl}authorize`,
-          token_endpoint: tokenEndpoint,
-          response_types_supported: ["code"],
           grant_types_supported: ["refresh_token"],
+          issuer: authorizationServerUrl,
+          response_types_supported: ["code"],
+          token_endpoint: tokenEndpoint,
           token_endpoint_auth_methods_supported: ["none"],
         });
       }
@@ -104,7 +101,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         if (authorization !== `Bearer ${validAccessToken}`) {
           oldTokenRequests += 1;
           if (oldTokenRequests >= 2) {
-            bothOldTokenRequestsStarted.resolve();
+            bothOldTokenRequestsStarted.resolve(undefined);
           }
           if (timing === "after-save" && oldTokenRequests === 2) {
             await firstRefreshSaved.promise;
@@ -122,8 +119,8 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
           streamController?.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
-                jsonrpc: "2.0",
                 id: message.id,
+                jsonrpc: "2.0",
                 result: { resources: [] },
               })}\n\n`
             )
@@ -136,16 +133,16 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     };
 
     const client = await createMCPClient({
+      initialInitializeResult: {
+        capabilities: { resources: {} },
+        protocolVersion: "2024-11-05",
+        serverInfo: { name: "fake", version: "1" },
+      },
       transport: {
-        type: "sse",
-        url: serverUrl,
         authProvider: provider,
         fetch: fakeFetch,
-      },
-      initialInitializeResult: {
-        protocolVersion: "2024-11-05",
-        capabilities: { resources: {} },
-        serverInfo: { name: "fake", version: "1" },
+        type: "sse",
+        url: serverUrl,
       },
     });
     validAccessToken = "access-invalidated";

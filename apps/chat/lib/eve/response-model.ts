@@ -1,7 +1,9 @@
 import type { MessageStreamEvent } from "eve/client";
 
 /** First native model reference per turn, including inherited history. */
-export function responseModelReferences(events: readonly MessageStreamEvent[]) {
+export const responseModelReferences = (
+  events: readonly MessageStreamEvent[]
+) => {
   const models = new Map<string, string>();
   for (const event of events) {
     const candidates =
@@ -16,14 +18,14 @@ export function responseModelReferences(events: readonly MessageStreamEvent[]) {
     }
   }
   return models;
-}
+};
 
 /** Native responses require runtime evidence; imported responses retain provenance. */
-export function responseModel(
+export const responseModel = (
   events: readonly MessageStreamEvent[],
   turnId: string,
   importedModelId?: string
-): string {
+): string => {
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;
@@ -34,4 +36,4 @@ export function responseModel(
   throw new Error(
     "The response model is unavailable. Reload before regenerating."
   );
-}
+};

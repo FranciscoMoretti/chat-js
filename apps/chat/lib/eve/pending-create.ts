@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import type { UiToolName } from "../ai/types";
-import { createConversationInput, type EveForkInput } from "./contracts";
+import { createConversationInput } from "./contracts";
+import type { EveForkInput } from "./contracts";
 import type { EveMessageInput } from "./message-input";
 import { eveResponseGroupInput } from "./response-group-input";
 
@@ -24,14 +25,98 @@ const keyFor = (ownerId: string, scope?: CreationScope) => {
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
 
-export function prepareSelectedCreation(
+export const readCreationRequest = (
+  storage: StorageAccess,
+  ownerId: string,
+  scope?: CreationScope
+) => {
+  const stored = storage.getItem(keyFor(ownerId, scope));
+  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
+};
+
+export const prepareResponseGroupCreation = (
+  storage: StorageAccess,
+  ownerId: string,
+  message: EveMessageInput,
+  modelIds: string[],
+  context?: CreationScope & {
+    fork?: EveForkInput;
+  },
+  selectedTool?: UiToolName
+) => {
+  const saved = readCreationRequest(storage, ownerId, context);
+  if (saved) {
+    if (!("modelIds" in saved)) {
+      throw new Error(
+        "Recover the saved conversation before starting a comparison."
+      );
+    }
+    return saved;
+  }
+  const request = eveResponseGroupInput.parse({
+    fork: context?.fork,
+    message,
+    modelIds,
+    operationId: crypto.randomUUID(),
+    projectId: context?.projectId,
+    selectedTool,
+  });
+  storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
+  return request;
+};
+
+export const readCreation = (
+  storage: StorageAccess,
+  ownerId: string,
+  scope?: CreationScope
+) => {
+  const request = readCreationRequest(storage, ownerId, scope);
+  if (request && "modelIds" in request) {
+    throw new Error(
+      "Recover the saved comparison before starting another request."
+    );
+  }
+  return request;
+};
+
+export const prepareCreation = (
+  storage: StorageAccess,
+  ownerId: string,
+  draft: EveMessageInput,
+  modelId?: string,
+  context?: CreationScope & {
+    fork?: EveForkInput;
+  },
+  selectedTool?: UiToolName
+) => {
+  const key = keyFor(ownerId, context);
+  const stored = readCreation(storage, ownerId, context);
+  if (stored) {
+    return stored;
+  }
+  const pending = createConversationInput.safeParse({
+    fork: context?.fork,
+    message: draft,
+    modelId,
+    operationId: crypto.randomUUID(),
+    projectId: context?.projectId,
+    selectedTool,
+  });
+  if (!pending.success) {
+    throw new Error("Enter a message between 1 and 16,000 characters.");
+  }
+  storage.setItem(key, JSON.stringify(pending.data));
+  return pending.data;
+};
+
+export const prepareSelectedCreation = (
   storage: StorageAccess,
   ownerId: string,
   draft: EveMessageInput,
   modelIds: string[],
   scope?: CreationScope,
   selectedTool?: UiToolName
-) {
+) => {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
     return saved;
@@ -53,102 +138,22 @@ export function prepareSelectedCreation(
         scope,
         selectedTool
       );
-}
-
-export function prepareCreation(
-  storage: StorageAccess,
-  ownerId: string,
-  draft: EveMessageInput,
-  modelId?: string,
-  context?: CreationScope & { fork?: EveForkInput },
-  selectedTool?: UiToolName
-) {
-  const key = keyFor(ownerId, context);
-  const stored = readCreation(storage, ownerId, context);
-  if (stored) {
-    return stored;
-  }
-  const pending = createConversationInput.safeParse({
-    operationId: crypto.randomUUID(),
-    message: draft,
-    selectedTool,
-    modelId,
-    fork: context?.fork,
-    projectId: context?.projectId,
-  });
-  if (!pending.success) {
-    throw new Error("Enter a message between 1 and 16,000 characters.");
-  }
-  storage.setItem(key, JSON.stringify(pending.data));
-  return pending.data;
-}
-export function finishCreation(
+};
+export const finishCreation = (
   storage: StorageAccess,
   ownerId: string,
   scope?: CreationScope
-) {
+) => {
   storage.removeItem(keyFor(ownerId, scope));
-}
-
-export function readCreation(
-  storage: StorageAccess,
-  ownerId: string,
-  scope?: CreationScope
-) {
-  const request = readCreationRequest(storage, ownerId, scope);
-  if (request && "modelIds" in request) {
-    throw new Error(
-      "Recover the saved comparison before starting another request."
-    );
-  }
-  return request;
-}
-
-export function readCreationRequest(
-  storage: StorageAccess,
-  ownerId: string,
-  scope?: CreationScope
-) {
-  const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
-}
-
-export function prepareResponseGroupCreation(
-  storage: StorageAccess,
-  ownerId: string,
-  message: EveMessageInput,
-  modelIds: string[],
-  context?: CreationScope & { fork?: EveForkInput },
-  selectedTool?: UiToolName
-) {
-  const saved = readCreationRequest(storage, ownerId, context);
-  if (saved) {
-    if (!("modelIds" in saved)) {
-      throw new Error(
-        "Recover the saved conversation before starting a comparison."
-      );
-    }
-    return saved;
-  }
-  const request = eveResponseGroupInput.parse({
-    operationId: crypto.randomUUID(),
-    message,
-    selectedTool,
-    modelIds,
-    projectId: context?.projectId,
-    fork: context?.fork,
-  });
-  storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
-  return request;
-}
+};
 
 /** Only call after the server definitively rejected the original operation. */
-export function moveRejectedProjectCreation(
+export const moveRejectedProjectCreation = (
   storage: StorageAccess,
   ownerId: string,
   projectId: string,
   operationId: string
-) {
+) => {
   const scope = { projectId };
   const pending = readCreationRequest(storage, ownerId, scope);
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
@@ -179,4 +184,4 @@ export function moveRejectedProjectCreation(
         );
   finishCreation(storage, ownerId, scope);
   return next;
-}
+};

@@ -1,3 +1,5 @@
+/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -38,18 +40,18 @@ test("internal retirement settles usage after access revocation and is retryable
     .user.id;
   await db
     .insert(userCredit)
-    .values({ userId: owner, credits: 1000 })
+    .values({ credits: 1000, userId: owner })
     .onConflictDoUpdate({
-      target: userCredit.userId,
       set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      target: userCredit.userId,
     });
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin: new URL(page.url()).origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message: "Reply exactly retire-fixture-ok. Do not call tools.",
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin: new URL(page.url()).origin },
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z
@@ -62,15 +64,15 @@ test("internal retirement settles usage after access revocation and is retryable
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await saveEveDocumentRevision({
-    ownerId: owner,
+    content: "Artifact content to remove",
     conversationId: binding.id,
     documentId: crypto.randomUUID(),
-    operationId: crypto.randomUUID(),
     expectedRevisionId: null,
-    turnIndex: 0,
-    title: "Removal fixture",
-    content: "Artifact content to remove",
     kind: "text",
+    operationId: crypto.randomUUID(),
+    ownerId: owner,
+    title: "Removal fixture",
+    turnIndex: 0,
   });
   const family = await retireEveFamilyForDeletion(owner, binding.id);
   expect(family?.conversations).toEqual([
@@ -159,12 +161,12 @@ test("internal retirement settles usage after access revocation and is retryable
     });
     expect(deletion.status(), await deletion.text()).toBe(200);
     expect(await deletion.json()).toEqual({
-      status: "deleted",
       rootId: binding.id,
+      status: "deleted",
     });
     expect(await (await page.request.get(deletionUrl)).json()).toEqual({
-      status: "deleted",
       rootId: binding.id,
+      status: "deleted",
     });
     expect(
       (
@@ -204,19 +206,19 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     .user.id;
   await db
     .insert(userCredit)
-    .values({ userId: owner, credits: 1000 })
+    .values({ credits: 1000, userId: owner })
     .onConflictDoUpdate({
-      target: userCredit.userId,
       set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      target: userCredit.userId,
     });
-  const origin = new URL(page.url()).origin;
+  const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: "google/gemini-2.5-flash-lite",
       message: "Reply exactly deletion-api-ok. Do not call tools.",
+      modelId: "google/gemini-2.5-flash-lite",
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(response.ok(), await response.text()).toBe(true);
   const binding = z
@@ -229,12 +231,12 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const url = `/api/agent-conversations/${binding.id}`;
   expect(await (await page.request.get(url)).json()).toEqual({
-    status: "active",
     rootId: binding.id,
+    status: "active",
   });
   const expand = page.getByRole("button", {
-    name: "Expand sidebar",
     exact: true,
+    name: "Expand sidebar",
   });
   if (await expand.isVisible()) {
     await expand.click();
@@ -243,8 +245,8 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     .locator("li")
     .filter({ has: page.locator(`a[href="/chat/${binding.id}"]`) });
   await row.hover();
-  await row.getByRole("button", { name: "More", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+  await row.getByRole("button", { exact: true, name: "More" }).click();
+  await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
   const result = page.waitForResponse(
     (response) =>
       response.url().endsWith(url) && response.request().method() === "DELETE"
@@ -252,8 +254,8 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   await page
     .getByRole("dialog", { name: "Delete conversation and branches?" })
     .getByRole("button", {
-      name: "Delete conversation and branches",
       exact: true,
+      name: "Delete conversation and branches",
     })
     .click();
   const deleted = await result;
@@ -263,12 +265,12 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     page.getByRole("dialog", { name: "Delete conversation and branches?" })
   ).toHaveCount(0);
   expect(await deleted.json()).toEqual({
-    status: "deleted",
     rootId: binding.id,
+    status: "deleted",
   });
   expect(await (await page.request.get(url)).json()).toEqual({
-    status: "deleted",
     rootId: binding.id,
+    status: "deleted",
   });
   expect(
     (await page.request.delete(url, { headers: { origin } })).status()

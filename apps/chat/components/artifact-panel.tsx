@@ -56,19 +56,19 @@ export interface UIArtifact {
   title: string;
 }
 
-function createTypedMetadataSetter<M extends ArtifactMetadata>(
-  setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
-  coerce: (metadata: ArtifactMetadata) => M
-): Dispatch<SetStateAction<M>> {
-  return (value) => {
+const createTypedMetadataSetter =
+  <M extends ArtifactMetadata>(
+    setMetadata: Dispatch<SetStateAction<ArtifactMetadata>>,
+    coerce: (metadata: ArtifactMetadata) => M
+  ): Dispatch<SetStateAction<M>> =>
+  (value) => {
     setMetadata((current) => {
       const typedCurrent = coerce(current);
       return typeof value === "function" ? value(typedCurrent) : value;
     });
   };
-}
 
-function PureArtifactPanel({
+const PureArtifactPanel = ({
   isReadonly,
   isAuthenticated,
   className,
@@ -76,7 +76,7 @@ function PureArtifactPanel({
   isReadonly: boolean;
   isAuthenticated: boolean;
   className?: string;
-}) {
+}) => {
   const storeApi = useChatStoreApi<ChatMessage>();
   const { artifact, setArtifact, metadata, setMetadata, closeArtifact } =
     useArtifact();
@@ -104,6 +104,7 @@ function PureArtifactPanel({
         // Fallback to the most recent document
         const latestDocument = documents.at(-1);
         if (latestDocument) {
+          // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the selected document with the loaded artifact query.
           setDocument(latestDocument);
           setCurrentVersionIndex(documents.length - 1);
           setArtifact((currentArtifact) => ({
@@ -152,10 +153,10 @@ function PureArtifactPanel({
       ) {
         setIsContentDirty(true);
         saveDocumentMutation.mutate({
-          id: lastDocument.id,
-          title: lastDocument.title,
           content: updatedContent,
+          id: lastDocument.id,
           kind: lastDocument.kind,
+          title: lastDocument.title,
         });
       }
     },
@@ -188,7 +189,7 @@ function PureArtifactPanel({
     [document, debouncedHandleContentChange, handleContentChange, isReadonly]
   );
 
-  function getDocumentContentById(index: number) {
+  const getDocumentContentById = (index: number) => {
     if (!documents) {
       return "";
     }
@@ -196,7 +197,7 @@ function PureArtifactPanel({
       return "";
     }
     return documents[index].content ?? "";
-  }
+  };
 
   const handleVersionChange = (type: "next" | "prev" | "toggle" | "latest") => {
     if (!documents) {
@@ -239,41 +240,45 @@ function PureArtifactPanel({
   useEffect(() => {
     if (artifact.documentId !== "init" && artifact.status !== "streaming") {
       switch (artifact.kind) {
-        case "code":
+        case "code": {
           codeArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata: createTypedMetadataSetter(
               setMetadata,
               getCodeArtifactMetadata
             ),
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
-        case "sheet":
+        }
+        case "sheet": {
           sheetArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata: createTypedMetadataSetter(
               setMetadata,
               getSheetArtifactMetadata
             ),
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
-        case "text":
+        }
+        case "text": {
           textArtifact.initialize?.({
             documentId: artifact.documentId,
+            isAuthenticated,
+            queryClient,
             setMetadata,
             trpc,
-            queryClient,
-            isAuthenticated,
           });
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
     }
   }, [
@@ -312,7 +317,7 @@ function PureArtifactPanel({
 
   const renderArtifactContent = () => {
     switch (artifact.kind) {
-      case "code":
+      case "code": {
         return (
           <>
             <codeArtifact.content
@@ -335,7 +340,8 @@ function PureArtifactPanel({
             ) : null}
           </>
         );
-      case "sheet":
+      }
+      case "sheet": {
         return (
           <>
             <sheetArtifact.content
@@ -358,7 +364,8 @@ function PureArtifactPanel({
             ) : null}
           </>
         );
-      case "text":
+      }
+      case "text": {
         return (
           <>
             <textArtifact.content
@@ -375,8 +382,10 @@ function PureArtifactPanel({
             ) : null}
           </>
         );
-      default:
+      }
+      default: {
         return null;
+      }
     }
   };
 
@@ -469,7 +478,7 @@ function PureArtifactPanel({
       </ArtifactContent>
     </ArtifactCard>
   );
-}
+};
 
 export const ArtifactPanel = memo(PureArtifactPanel, (prevProps, nextProps) => {
   if (prevProps.isReadonly !== nextProps.isReadonly) {

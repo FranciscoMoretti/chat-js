@@ -2,6 +2,7 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { expect, test } from "vitest";
 
 const pages = [
+  { name: "threads", path: "/docs/threads" },
   { name: "database", path: "/docs/reference/database" },
   { name: "redis", path: "/docs/reference/redis" },
   { name: "storage", path: "/docs/storage" },
@@ -15,6 +16,8 @@ const pages = [
   { name: "word-count", path: "/docs/tools/word-count" },
   { name: "get-weather", path: "/docs/tools/get-weather" },
   { name: "retrieve-url", path: "/docs/tools/retrieve-url" },
+  { name: "generate-image", path: "/docs/tools/generate-image" },
+  { name: "generate-video", path: "/docs/tools/generate-video" },
   { name: "quickstart", path: "/docs/quickstart" },
   { name: "changelog", path: "/docs/changelog" },
   { name: "cookbook", path: "/docs/cookbook" },
@@ -51,7 +54,7 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      [...document.images].map((image) => image.decode().catch(() => undefined))
+      [...document.images].map((image) => image.decode().catch(() => {}))
     );
     await document.fonts.ready;
     await takeSnapshot(page.name);

@@ -8,7 +8,7 @@ import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";
 
-export function EveDocumentTool({
+export const EveDocumentTool = ({
   part,
   messageId,
   isReadonly,
@@ -16,7 +16,7 @@ export function EveDocumentTool({
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
   messageId: string;
   isReadonly: boolean;
-}) {
+}) => {
   const isClient = useIsClient();
   const { setArtifact } = useArtifact();
   const pendingCall = useRef<string | undefined>(undefined);
@@ -50,14 +50,14 @@ export function EveDocumentTool({
       current.isVisible
         ? current
         : {
-            documentId: completed.data.documentId,
-            revisionId: completed.data.revisionId,
-            kind: completed.data.kind,
-            title: completed.data.title,
             content: "",
-            messageId,
-            status: "idle",
+            documentId: completed.data.documentId,
             isVisible: true,
+            kind: completed.data.kind,
+            messageId,
+            revisionId: completed.data.revisionId,
+            status: "idle",
+            title: completed.data.title,
           }
     );
   }, [part, isReadonly, messageId, setArtifact]);
@@ -69,11 +69,11 @@ export function EveDocumentTool({
   }
   if (part.state !== "output-available") {
     return (
-      <p role="status">
+      <output>
         {part.toolName === "readDocument"
           ? "Reading document…"
           : "Writing document…"}
-      </p>
+      </output>
     );
   }
   const result = eveDocumentResult.safeParse(part.output);
@@ -90,4 +90,4 @@ export function EveDocumentTool({
       type={part.toolName === "readDocument" ? "read" : writeAction}
     />
   );
-}
+};

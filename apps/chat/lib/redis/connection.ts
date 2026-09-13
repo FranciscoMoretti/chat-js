@@ -22,11 +22,10 @@ export const redisEnvOptions = {
     ),
 };
 
-export function redisConnectionOptions(environment: { REDIS_URL?: string }) {
-  return environment.REDIS_URL
+export const redisConnectionOptions = (environment: { REDIS_URL?: string }) =>
+  environment.REDIS_URL
     ? {
-        url: environment.REDIS_URL,
         socket: { connectTimeout: CONNECT_TIMEOUT_MS },
+        url: environment.REDIS_URL,
       }
     : null;
-}

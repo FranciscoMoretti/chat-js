@@ -6,7 +6,7 @@ export const checkpointRejectionReason = z.enum([
 ]);
 
 /** Only durable native rejections that prove this checkpoint never became usable. */
-export class CheckpointRejected extends Error {
+export class CheckpointRejectedError extends Error {
   readonly reason: z.infer<typeof checkpointRejectionReason>;
 
   constructor(reason: z.infer<typeof checkpointRejectionReason>) {
@@ -15,6 +15,7 @@ export class CheckpointRejected extends Error {
         ? "The conversation was still running when the comparison was requested. Your draft is saved. Wait for it to finish, then send again."
         : "The conversation changed before the comparison could start. Your draft is saved. Review the latest response, then send again."
     );
+    this.name = "CheckpointRejectedError";
     this.reason = reason;
   }
 }

@@ -5,9 +5,9 @@ import { restoreEveAttachment } from "./restore-attachment";
 const origin = "http://localhost:3790";
 const path = "/api/files/content?key=abcdefghijklmnopqrstuvwx.png";
 const part = {
-  type: "file",
-  mediaType: "image/png",
   filename: "image.png",
+  mediaType: "image/png",
+  type: "file",
   url: path,
 } satisfies Parameters<typeof restoreEveAttachment>[0];
 afterEach(() => vi.unstubAllGlobals());
@@ -21,7 +21,9 @@ it("restores exact bytes and filename from relative and absolute owned file URLs
   );
   vi.stubGlobal("fetch", fetcher);
   for (const url of [path, origin + path]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     const file = await restoreEveAttachment({ ...part, url }, origin, 10);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     expect(new Uint8Array(await file.arrayBuffer())).toEqual(bytes);
     expect(file.name).toBe("image.png");
     expect(file.type).toBe("image/png");
@@ -54,6 +56,7 @@ it("rejects external, malformed, and unsupported references without fetching", a
     "data:text/html;base64,AQID",
     `${path}#fragment`,
   ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await expect(
       restoreEveAttachment({ ...part, url }, origin, 10)
     ).rejects.toThrow();
@@ -69,6 +72,7 @@ it("rejects unavailable, mismatched, empty, and oversized files instead of dropp
     new Response("too large", { headers: { "content-type": "image/png" } }),
   ]) {
     vi.stubGlobal("fetch", () => Promise.resolve(response));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await expect(restoreEveAttachment(part, origin, 3)).rejects.toThrow();
   }
 });

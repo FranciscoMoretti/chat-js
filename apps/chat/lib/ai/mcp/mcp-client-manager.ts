@@ -7,7 +7,7 @@ const clientsMap = new Map<string, MCPClient>();
 /**
  * Get or create an MCP client for a connector.
  */
-export function getOrCreateMcpClient({
+export const getOrCreateMcpClient = ({
   id,
   name,
   url,
@@ -19,35 +19,33 @@ export function getOrCreateMcpClient({
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
-}): MCPClient {
+}): MCPClient => {
   let client = clientsMap.get(id);
-
   if (!client) {
-    client = new MCPClient(id, name, { url, type, headers }, () =>
+    client = new MCPClient(id, name, { headers, type, url }, () =>
       invalidateAllMcpCaches(id)
     );
     clientsMap.set(id, client);
   }
-
   return client;
-}
+};
 
 /**
  * Remove an MCP client from the cache and close it.
  */
-export async function removeMcpClient(id: string): Promise<void> {
+export const removeMcpClient = async (id: string): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
     await client.close();
     clientsMap.delete(id);
   }
-}
+};
 
 /**
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.
  */
-export function createMcpClientForCallback({
+export const createMcpClientForCallback = ({
   id,
   name,
   url,
@@ -59,8 +57,7 @@ export function createMcpClientForCallback({
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
-}): MCPClient {
-  return new MCPClient(id, name, { url, type, headers }, () =>
+}): MCPClient =>
+  new MCPClient(id, name, { headers, type, url }, () =>
     invalidateAllMcpCaches(id)
   );
-}

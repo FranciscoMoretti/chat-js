@@ -7,14 +7,14 @@ import {
 } from "./guest-message-admission";
 
 const mocks = vi.hoisted(() => ({
-  reserve: vi.fn(),
   commit: vi.fn(),
   release: vi.fn(),
+  reserve: vi.fn(),
 }));
 vi.mock("../db/eve-guests", () => ({
-  reserveEveGuestMessage: mocks.reserve,
   commitEveGuestMessage: mocks.commit,
   releaseEveGuestMessage: mocks.release,
+  reserveEveGuestMessage: mocks.reserve,
 }));
 vi.mock("./guest-admission", () => ({
   guestRequestIpHash: () => "a".repeat(64),
@@ -37,8 +37,8 @@ const request = new Request("http://localhost/api/eve/v1/session/native", {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.reserve.mockResolvedValue({
-    status: "reserved",
     reservationId: admission.reservationId,
+    status: "reserved",
   });
 });
 
@@ -66,15 +66,17 @@ it("permits dispatch only for the first reservation and never marks replays as u
   );
   for (const status of ["replay", "conflict"]) {
     mocks.reserve.mockResolvedValue({
-      status,
       reservationId: admission.reservationId,
+      status,
     });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     const repeated = await admitGuestMessage(request, "owner", "native", input);
     expect(repeated).toBeInstanceOf(Response);
     if (!(repeated instanceof Response)) {
       throw new Error("Expected reconnect response");
     }
     expect(repeated.status).toBe(409);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     expect(await repeated.json()).toMatchObject({
       code: "chatjs_message_operation_exists",
     });
@@ -88,6 +90,7 @@ it("distinguishes content and destination in quota identity", async () => {
     ["two", "hello"],
     ["one", "changed"],
   ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }

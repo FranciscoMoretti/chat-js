@@ -8,7 +8,7 @@ import type { EveCopyPlan } from "../eve/copy-journal-contract";
 import { eveCopyResources } from "../eve/copy-transcript";
 import { isFileStorageKey } from "../file-url";
 import { db } from "./client";
-import { CreationConflict } from "./eve-queries";
+import { CreationConflictError } from "./eve-queries";
 import {
   eveConversation,
   eveConversationCopy,
@@ -19,15 +19,32 @@ import {
 } from "./schema";
 
 type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-const hashPattern = /^[a-f0-9]{64}$/;
+const hashPattern = /^[a-f0-9]{64}$/u;
 
-export class EveCopySourceChanged extends CreationConflict {}
+export class EveCopySourceChangedError extends CreationConflictError {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "EveCopySourceChangedError";
+  }
+}
+
+export const lockEveCopyOwners = async (
+  tx: CopyTransaction,
+  owners: string[]
+) => {
+  for (const owner of [...new Set(owners)].toSorted()) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owner}`}, 0))`
+    );
+  }
+};
 
 /** Durable rejection prevents a concurrent request from later reserving the discarded operation. */
-export async function rejectEveCopyPreflight(
+export const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
-) {
+) => {
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const [existing] = await tx
@@ -56,19 +73,19 @@ export async function rejectEveCopyPreflight(
       return;
     }
     await tx.insert(eveConversation).values({
-      ownerId,
-      operationId,
       creationKind: "copy",
-      state: "deleted",
       firstMessage: "",
+      operationId,
+      ownerId,
+      state: "deleted",
     });
   });
-}
+};
 
-export async function isUnacceptedEveCopy(
+export const isUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const [copy] = await db
     .select({ id: eveConversationCopy.conversationId })
     .from(eveConversationCopy)
@@ -80,17 +97,17 @@ export async function isUnacceptedEveCopy(
       )
     );
   return Boolean(copy);
-}
+};
 
 /** Caller holds source/destination family locks; the shared row lock serializes revocation. */
-export async function assertEveCopySourceAvailable(
+export const assertEveCopySourceAvailable = async (
   tx: CopyTransaction,
   source: {
     sourceConversationId: string;
     sourceSessionId: string;
     sourceOwnerId: string;
   }
-) {
+) => {
   const [row] = await tx
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -105,25 +122,17 @@ export async function assertEveCopySourceAvailable(
     )
     .for("share");
   if (!row) {
-    throw new EveCopySourceChanged(
+    throw new EveCopySourceChangedError(
       "Sharing was revoked before the copy was accepted."
     );
   }
-}
+};
 
-export async function lockEveCopyOwners(tx: CopyTransaction, owners: string[]) {
-  for (const owner of [...new Set(owners)].sort()) {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owner}`}, 0))`
-    );
-  }
-}
-
-export async function readEveCopy(
+export const readEveCopy = async (
   tx: Pick<CopyTransaction, "select">,
   ownerId: string,
   conversationId: string
-) {
+) => {
   const [row] = await tx
     .select({ conversation: eveConversation, copy: eveConversationCopy })
     .from(eveConversation)
@@ -142,15 +151,15 @@ export async function readEveCopy(
       )
     );
   if (!row) {
-    throw new CreationConflict("Saved copy operation not found.");
+    throw new CreationConflictError("Saved copy operation not found.");
   }
   return row;
-}
+};
 
-export async function getEveCopyOperation(
+export const getEveCopyOperation = async (
   ownerId: string,
   operationId: string
-) {
+) => {
   const [conversation] = await db
     .select()
     .from(eveConversation)
@@ -161,196 +170,58 @@ export async function getEveCopyOperation(
       )
     );
   if (!conversation) {
-    return undefined;
+    return;
   }
   if (conversation.creationKind !== "copy") {
-    throw new CreationConflict(
+    throw new CreationConflictError(
       "This operation belongs to ordinary message creation."
     );
   }
   return await readEveCopy(db, ownerId, conversation.id);
-}
+};
 
-/** Allocation and source authorization are committed before any destination storage I/O. */
-export async function reserveEveCopyOperation(
-  ownerId: string,
-  input: {
-    operationId: string;
-    sourceConversationId: string;
-    sourceSessionId: string;
-    sourceOwnerId: string;
-    projectionHash: string;
-    title: string;
-    modelId: string;
-    plan: EveCopyPlan;
-  }
-) {
-  validateCopyPlan(input.plan);
-  if (!hashPattern.test(input.projectionHash)) {
-    throw new Error("Invalid public projection hash.");
-  }
-  const planHash = createHash("sha256")
-    .update(JSON.stringify(input.plan))
-    .digest("hex");
-  return await db.transaction(async (tx) => {
-    await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
-    const [existing] = await tx
-      .select()
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.ownerId, ownerId),
-          eq(eveConversation.operationId, input.operationId)
-        )
-      );
-    if (existing) {
-      if (existing.creationKind !== "copy") {
-        throw new CreationConflict(
-          "This operation belongs to ordinary message creation."
-        );
-      }
-      const saved = await readEveCopy(tx, ownerId, existing.id);
-      if (
-        saved.copy.sourceConversationId !== input.sourceConversationId ||
-        saved.copy.sourceSessionId !== input.sourceSessionId ||
-        saved.copy.sourceOwnerId !== input.sourceOwnerId ||
-        saved.copy.projectionHash !== input.projectionHash ||
-        saved.copy.planHash !== planHash ||
-        saved.conversation.initialModelId !== input.modelId ||
-        saved.conversation.firstMessage !== input.title
-      ) {
-        throw new CreationConflict(
-          "This copy operation already has a different immutable preparation."
-        );
-      }
-      return saved;
-    }
-    const [group] = await tx
-      .select({ id: eveResponseGroup.id })
-      .from(eveResponseGroup)
-      .where(
-        and(
-          eq(eveResponseGroup.ownerId, ownerId),
-          sql`${input.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
-        )
-      )
-      .limit(1);
-    if (group) {
-      throw new CreationConflict(
-        "Response group operations cannot create saved copies."
-      );
-    }
-    const [source] = await tx
-      .select({ id: eveConversation.id })
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.id, input.sourceConversationId),
-          eq(eveConversation.ownerId, input.sourceOwnerId),
-          eq(eveConversation.sessionId, input.sourceSessionId),
-          eq(eveConversation.state, "bound"),
-          eq(eveConversation.visibility, "public")
-        )
-      )
-      .for("share");
-    if (!source) {
-      throw new CreationConflict("Shared conversation is unavailable.");
-    }
-    await assertSourceFiles(
-      tx,
-      input.sourceOwnerId,
-      input.sourceConversationId,
-      input.plan
-    );
-    const [conversation] = await tx
-      .insert(eveConversation)
-      .values({
-        ownerId,
-        operationId: input.operationId,
-        creationKind: "copy",
-        firstMessage: input.title,
-        initialModelId: input.modelId,
-        initialContentHash: input.projectionHash,
-      })
-      .returning();
-    await tx.insert(eveConversationCopy).values({
-      conversationId: conversation.id,
-      ownerId,
-      sourceConversationId: input.sourceConversationId,
-      sourceSessionId: input.sourceSessionId,
-      sourceOwnerId: input.sourceOwnerId,
-      projectionHash: input.projectionHash,
-      planHash,
-      plan: input.plan,
-    });
-    if (input.plan.files.length) {
-      await tx
-        .insert(eveStoredFile)
-        .values(input.plan.files.map((file) => ({ key: file.key, ownerId })));
-      await tx.insert(eveFileReference).values(
-        input.plan.files.map((file) => ({
-          key: file.key,
-          ownerId,
-          conversationId: conversation.id,
-        }))
-      );
-      await tx.insert(eveConversationCopyFile).values(
-        input.plan.files.map((file) => ({
-          key: file.key,
-          ownerId,
-          conversationId: conversation.id,
-          sha256: file.sha256,
-          size: file.size,
-          mediaType: file.mediaType,
-        }))
-      );
-    }
-    return await readEveCopy(tx, ownerId, conversation.id);
-  });
-}
-
-async function assertSourceFiles(
-  tx: CopyTransaction,
-  ownerId: string,
-  conversationId: string,
-  plan: EveCopyPlan
-) {
-  const keys = [
-    ...new Set(
-      plan.files.flatMap((file) =>
-        file.source.kind === "stored" ? [file.source.key] : []
-      )
-    ),
-  ];
-  if (!keys.length) {
-    return;
-  }
-  const rows = await tx
-    .select({ key: eveFileReference.key })
-    .from(eveFileReference)
-    .innerJoin(
-      eveStoredFile,
-      and(
-        eq(eveStoredFile.key, eveFileReference.key),
-        eq(eveStoredFile.ownerId, ownerId),
-        eq(eveStoredFile.state, "active")
-      )
-    )
-    .where(
-      and(
-        eq(eveFileReference.ownerId, ownerId),
-        eq(eveFileReference.conversationId, conversationId),
-        inArray(eveFileReference.key, keys)
-      )
-    );
-  if (rows.length !== keys.length) {
+const validateCopyDocumentCheckpoints = (plan: EveCopyPlan) => {
+  const checkpoints = new Map(
+    plan.documentCheckpoints.map((checkpoint) => [
+      checkpoint.messageIndex,
+      checkpoint,
+    ])
+  );
+  const users = plan.seed.messages.flatMap((message, index) =>
+    message.role === "user" ? [index] : []
+  );
+  if (
+    checkpoints.size !== plan.documentCheckpoints.length ||
+    checkpoints.size !== users.length ||
+    users.some((index) => !checkpoints.has(index))
+  ) {
     throw new Error(
-      "Copy source files are not available in the published conversation."
+      "Copied document boundaries must match imported user messages."
     );
   }
-}
+  const revisionDocuments = new Map(
+    plan.documents.flatMap((document) =>
+      document.revisions.map((revision) => [revision.id, document.documentId])
+    )
+  );
+  for (const checkpoint of checkpoints.values()) {
+    const seen = new Set<string>();
+    for (const head of checkpoint.heads) {
+      if (
+        seen.has(head.documentId) ||
+        revisionDocuments.get(head.revisionId) !== head.documentId
+      ) {
+        throw new Error(
+          "Copied document boundary has invalid revision ownership."
+        );
+      }
+      seen.add(head.documentId);
+    }
+  }
+};
 
-function validateCopyPlan(plan: EveCopyPlan) {
+// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+const validateCopyPlan = (plan: EveCopyPlan) => {
   parseSessionTranscriptSeed(plan.seed);
   const keys = new Set<string>();
   const sourceKeys = new Set(
@@ -374,7 +245,7 @@ function validateCopyPlan(plan: EveCopyPlan) {
     keys.add(file.key);
   }
   const referenced = new Set(
-    eveCopyResources({ seed: plan.seed, documents: plan.documents }).fileKeys
+    eveCopyResources({ documents: plan.documents, seed: plan.seed }).fileKeys
   );
   if (
     referenced.size !== keys.size ||
@@ -419,44 +290,183 @@ function validateCopyPlan(plan: EveCopyPlan) {
     }
   }
   validateCopyDocumentCheckpoints(plan);
-}
+};
 
-function validateCopyDocumentCheckpoints(plan: EveCopyPlan) {
-  const checkpoints = new Map(
-    plan.documentCheckpoints.map((checkpoint) => [
-      checkpoint.messageIndex,
-      checkpoint,
-    ])
-  );
-  const users = plan.seed.messages.flatMap((message, index) =>
-    message.role === "user" ? [index] : []
-  );
-  if (
-    checkpoints.size !== plan.documentCheckpoints.length ||
-    checkpoints.size !== users.length ||
-    users.some((index) => !checkpoints.has(index))
-  ) {
+const assertSourceFiles = async (
+  tx: CopyTransaction,
+  ownerId: string,
+  conversationId: string,
+  plan: EveCopyPlan
+) => {
+  const keys = [
+    ...new Set(
+      plan.files.flatMap((file) =>
+        file.source.kind === "stored" ? [file.source.key] : []
+      )
+    ),
+  ];
+  if (!keys.length) {
+    return;
+  }
+  const rows = await tx
+    .select({ key: eveFileReference.key })
+    .from(eveFileReference)
+    .innerJoin(
+      eveStoredFile,
+      and(
+        eq(eveStoredFile.key, eveFileReference.key),
+        eq(eveStoredFile.ownerId, ownerId),
+        eq(eveStoredFile.state, "active")
+      )
+    )
+    .where(
+      and(
+        eq(eveFileReference.ownerId, ownerId),
+        eq(eveFileReference.conversationId, conversationId),
+        inArray(eveFileReference.key, keys)
+      )
+    );
+  if (rows.length !== keys.length) {
     throw new Error(
-      "Copied document boundaries must match imported user messages."
+      "Copy source files are not available in the published conversation."
     );
   }
-  const revisionDocuments = new Map(
-    plan.documents.flatMap((document) =>
-      document.revisions.map((revision) => [revision.id, document.documentId])
-    )
-  );
-  for (const checkpoint of checkpoints.values()) {
-    const seen = new Set<string>();
-    for (const head of checkpoint.heads) {
-      if (
-        seen.has(head.documentId) ||
-        revisionDocuments.get(head.revisionId) !== head.documentId
-      ) {
-        throw new Error(
-          "Copied document boundary has invalid revision ownership."
+};
+
+/** Allocation and source authorization are committed before any destination storage I/O. */
+export const reserveEveCopyOperation = async (
+  ownerId: string,
+  input: {
+    operationId: string;
+    sourceConversationId: string;
+    sourceSessionId: string;
+    sourceOwnerId: string;
+    projectionHash: string;
+    title: string;
+    modelId: string;
+    plan: EveCopyPlan;
+  }
+) => {
+  validateCopyPlan(input.plan);
+  if (!hashPattern.test(input.projectionHash)) {
+    throw new Error("Invalid public projection hash.");
+  }
+  const planHash = createHash("sha256")
+    .update(JSON.stringify(input.plan))
+    .digest("hex");
+  return await db.transaction(async (tx) => {
+    await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
+    const [existing] = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.operationId, input.operationId)
+        )
+      );
+    if (existing) {
+      if (existing.creationKind !== "copy") {
+        throw new CreationConflictError(
+          "This operation belongs to ordinary message creation."
         );
       }
-      seen.add(head.documentId);
+      const saved = await readEveCopy(tx, ownerId, existing.id);
+      if (
+        saved.copy.sourceConversationId !== input.sourceConversationId ||
+        saved.copy.sourceSessionId !== input.sourceSessionId ||
+        saved.copy.sourceOwnerId !== input.sourceOwnerId ||
+        saved.copy.projectionHash !== input.projectionHash ||
+        saved.copy.planHash !== planHash ||
+        saved.conversation.initialModelId !== input.modelId ||
+        saved.conversation.firstMessage !== input.title
+      ) {
+        throw new CreationConflictError(
+          "This copy operation already has a different immutable preparation."
+        );
+      }
+      return saved;
     }
-  }
-}
+    const [group] = await tx
+      .select({ id: eveResponseGroup.id })
+      .from(eveResponseGroup)
+      .where(
+        and(
+          eq(eveResponseGroup.ownerId, ownerId),
+          sql`${input.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+        )
+      )
+      .limit(1);
+    if (group) {
+      throw new CreationConflictError(
+        "Response group operations cannot create saved copies."
+      );
+    }
+    const [source] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, input.sourceConversationId),
+          eq(eveConversation.ownerId, input.sourceOwnerId),
+          eq(eveConversation.sessionId, input.sourceSessionId),
+          eq(eveConversation.state, "bound"),
+          eq(eveConversation.visibility, "public")
+        )
+      )
+      .for("share");
+    if (!source) {
+      throw new CreationConflictError("Shared conversation is unavailable.");
+    }
+    await assertSourceFiles(
+      tx,
+      input.sourceOwnerId,
+      input.sourceConversationId,
+      input.plan
+    );
+    const [conversation] = await tx
+      .insert(eveConversation)
+      .values({
+        creationKind: "copy",
+        firstMessage: input.title,
+        initialContentHash: input.projectionHash,
+        initialModelId: input.modelId,
+        operationId: input.operationId,
+        ownerId,
+      })
+      .returning();
+    await tx.insert(eveConversationCopy).values({
+      conversationId: conversation.id,
+      ownerId,
+      plan: input.plan,
+      planHash,
+      projectionHash: input.projectionHash,
+      sourceConversationId: input.sourceConversationId,
+      sourceOwnerId: input.sourceOwnerId,
+      sourceSessionId: input.sourceSessionId,
+    });
+    if (input.plan.files.length) {
+      await tx
+        .insert(eveStoredFile)
+        .values(input.plan.files.map((file) => ({ key: file.key, ownerId })));
+      await tx.insert(eveFileReference).values(
+        input.plan.files.map((file) => ({
+          conversationId: conversation.id,
+          key: file.key,
+          ownerId,
+        }))
+      );
+      await tx.insert(eveConversationCopyFile).values(
+        input.plan.files.map((file) => ({
+          conversationId: conversation.id,
+          key: file.key,
+          mediaType: file.mediaType,
+          ownerId,
+          sha256: file.sha256,
+          size: file.size,
+        }))
+      );
+    }
+    return await readEveCopy(tx, ownerId, conversation.id);
+  });
+};

@@ -19,10 +19,10 @@ import { eveGuestIpHash } from "./guest-credential";
 import { loadEveModelDefinition } from "./model-selection";
 import type { EvePrincipal } from "./principal";
 
-const MAPPED_IP = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/;
+const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 
 /** Development never trusts caller-supplied forwarding headers. */
-export function guestRequestIpHash(request: Request) {
+export const guestRequestIpHash = (request: Request) => {
   if (env.NODE_ENV === "development") {
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
@@ -47,14 +47,19 @@ export function guestRequestIpHash(request: Request) {
       ].join(".")
     : canonical;
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
-}
+};
 
 /** Checks guest policy and ownership before reserving quota. */
-export async function validateGuestCreation(
+export const validateGuestCreation = async (
   request: Request,
-  principal: Extract<EvePrincipal, { kind: "guest" }>,
+  principal: Extract<
+    EvePrincipal,
+    {
+      kind: "guest";
+    }
+  >,
   input: z.infer<typeof createConversationInput>
-) {
+) => {
   if (
     input.projectId ||
     !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
@@ -67,8 +72,8 @@ export async function validateGuestCreation(
   ) {
     return Response.json(
       {
-        error: "Sign in to use this model, tool or project.",
         creationRejected: true,
+        error: "Sign in to use this model, tool or project.",
       },
       { status: 403 }
     );
@@ -80,7 +85,7 @@ export async function validateGuestCreation(
     );
     if (source?.state !== "bound" || !source.sessionId) {
       return Response.json(
-        { error: "Source conversation not found.", creationRejected: true },
+        { creationRejected: true, error: "Source conversation not found." },
         { status: 404 }
       );
     }
@@ -103,21 +108,26 @@ export async function validateGuestCreation(
   } catch {
     return Response.json(
       {
-        error: "This model or attachment is unavailable.",
         creationRejected: true,
+        error: "This model or attachment is unavailable.",
       },
       { status: 400 }
     );
   }
   return ipHash;
-}
+};
 
 /** Creation replays use eve's native operation ID; this must not wrap raw follow-up sends. */
-export async function admitGuestCreation(
+export const admitGuestCreation = async (
   request: Request,
-  principal: Extract<EvePrincipal, { kind: "guest" }>,
+  principal: Extract<
+    EvePrincipal,
+    {
+      kind: "guest";
+    }
+  >,
   input: z.infer<typeof createConversationInput>
-) {
+) => {
   const requestHash = createHash("sha256")
     .update(JSON.stringify(input))
     .digest("hex");
@@ -132,7 +142,7 @@ export async function admitGuestCreation(
         { status: 409 }
       );
     }
-    return { status: "replay", reservationId: existing.reservationId } as const;
+    return { reservationId: existing.reservationId, status: "replay" } as const;
   }
   const ipHash = await validateGuestCreation(request, principal, input);
   if (ipHash instanceof Response) {
@@ -140,17 +150,17 @@ export async function admitGuestCreation(
   }
   const reservation = await reserveEveGuestMessage(
     {
-      ownerId: principal.ownerId,
-      operationId: input.operationId,
-      requestHash,
       ipHash,
+      operationId: input.operationId,
+      ownerId: principal.ownerId,
+      requestHash,
       requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
       requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
     },
     {
-      tokenHash: principal.tokenHash,
-      messageLimit: ANONYMOUS_LIMITS.CREDITS,
       expiresAt: new Date(Date.now() + ANONYMOUS_LIMITS.SESSION_DURATION),
+      messageLimit: ANONYMOUS_LIMITS.CREDITS,
+      tokenHash: principal.tokenHash,
     }
   );
   if (reservation.status === "reserved" || reservation.status === "replay") {
@@ -158,24 +168,24 @@ export async function admitGuestCreation(
   }
   return Response.json(
     {
+      creationRejected: reservation.status !== "conflict",
       error:
         reservation.status === "conflict"
           ? "This operation has different content."
           : "Guest message limit reached. Sign in to continue.",
-      creationRejected: reservation.status !== "conflict",
     },
     {
       status: reservation.status === "conflict" ? 409 : 429,
     }
   );
-}
+};
 
-export async function settleGuestCreation(
+export const settleGuestCreation = async (
   response: Response,
   ownerId: string,
   operationId: string,
   reservationId: string
-) {
+) => {
   if (response.ok) {
     await commitEveGuestMessage(ownerId, operationId, reservationId);
   } else {
@@ -191,4 +201,4 @@ export async function settleGuestCreation(
       return await releaseEveGuestCreation(ownerId, operationId, reservationId);
     }
   }
-}
+};

@@ -8,7 +8,7 @@ const genericErrorMessages = new Set([
   FALLBACK_STREAM_ERROR_MESSAGE,
 ]);
 
-function getErrorText(error: unknown): string | null {
+const getErrorText = (error: unknown): string | null => {
   if (typeof error === "string") {
     const trimmed = error.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -25,9 +25,9 @@ function getErrorText(error: unknown): string | null {
   }
 
   return null;
-}
+};
 
-function mapKnownStreamErrorMessage(message: string): string {
+const mapKnownStreamErrorMessage = (message: string): string => {
   const normalized = message.toLowerCase();
 
   if (
@@ -62,22 +62,25 @@ function mapKnownStreamErrorMessage(message: string): string {
   }
 
   return FALLBACK_STREAM_ERROR_MESSAGE;
-}
+};
 
-export function getStreamErrorMessage(error: unknown): string {
-  return mapKnownStreamErrorMessage(
+export const getStreamErrorMessage = (error: unknown): string =>
+  mapKnownStreamErrorMessage(
     getErrorText(error) ?? FALLBACK_STREAM_ERROR_MESSAGE
   );
-}
 
-export function getStreamErrorToastContent(error: Error): {
+export const getStreamErrorToastContent = (
+  error: Error
+): {
   description?: string;
   message: string;
-} {
+} => {
   const rawMessage =
     typeof error.message === "string" ? error.message.trim() : "";
   const rawCause =
-    error.cause == null ? undefined : (getErrorText(error.cause) ?? undefined);
+    error.cause === null || error.cause === undefined
+      ? undefined
+      : (getErrorText(error.cause) ?? undefined);
 
   const rawResolved =
     (rawMessage.length <= 1 || genericErrorMessages.has(rawMessage)) && rawCause
@@ -87,8 +90,8 @@ export function getStreamErrorToastContent(error: Error): {
   const message = mapKnownStreamErrorMessage(rawResolved);
 
   if (rawCause && rawCause !== message && !genericErrorMessages.has(rawCause)) {
-    return { message, description: rawCause };
+    return { description: rawCause, message };
   }
 
   return { message };
-}
+};

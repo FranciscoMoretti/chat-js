@@ -1,7 +1,9 @@
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 
 import { Sandbox, Snapshot } from "microsandbox";
 import { expect, test } from "vitest";
@@ -19,25 +21,25 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
   const childStateSnapshotName = `eve-sbx-state-${childSuffix}`;
   const stateSnapshotName = `eve-sbx-state-${suffix}`;
   const survivorName = `eve-sbx-fork-${randomBytes(16).toString("hex")}`;
-  const root = await mkdtemp(join(tmpdir(), "eve-snapshot-acceptance-"));
-  const sessionDirectory = join(root, name);
-  const childDirectory = join(root, childName);
+  const root = await mkdtemp(path.join(tmpdir(), "eve-snapshot-acceptance-"));
+  const sessionDirectory = path.join(root, name);
+  const childDirectory = path.join(root, childName);
   let sandbox: Sandbox | undefined;
   let childSandbox: Sandbox | undefined;
   try {
-    await mkdir(join(sessionDirectory, "fork-checkpoints"), {
+    await mkdir(path.join(sessionDirectory, "fork-checkpoints"), {
       recursive: true,
     });
     await writeFile(
-      join(sessionDirectory, "metadata.json"),
+      path.join(sessionDirectory, "metadata.json"),
       JSON.stringify({
-        version: 2,
         optionsHash: "fixture",
         sandboxName: name,
         stateSnapshotName,
+        version: 2,
       })
     );
-    const manifest = join(
+    const manifest = path.join(
       sessionDirectory,
       "fork-checkpoints",
       `${snapshotName}.json`
@@ -45,10 +47,10 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     await writeFile(
       manifest,
       JSON.stringify({
-        version: 1,
+        optionsHash: "fixture",
         sessionKey: name,
         snapshotName,
-        optionsHash: "fixture",
+        version: 1,
       })
     );
     sandbox = await Sandbox.builder(name)
@@ -73,12 +75,12 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     await (await Sandbox.get(childName)).snapshot(childStateSnapshotName);
     await mkdir(childDirectory, { recursive: true });
     await writeFile(
-      join(childDirectory, "metadata.json"),
+      path.join(childDirectory, "metadata.json"),
       JSON.stringify({
-        version: 2,
         optionsHash: "fixture",
         sandboxName: childName,
         stateSnapshotName: childStateSnapshotName,
+        version: 2,
       })
     );
     await Snapshot.get(snapshotName);
@@ -125,7 +127,7 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       },
       { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
-    expect(JSON.parse(await readFile(manifest, "utf8")).snapshotName).toBe(
+    expect(JSON.parse(await readFile(manifest, "utf-8")).snapshotName).toBe(
       snapshotName
     );
   } finally {
@@ -159,7 +161,7 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
         }
       });
     }
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { force: true, recursive: true });
   }
 }, 120_000);
 
@@ -169,9 +171,9 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     image: "ghcr.io/vercel/eve:0.52.2",
     setup: { autoInstall: false },
   });
-  const appRoot = await mkdtemp(join(tmpdir(), "eve-backend-capture-"));
+  const appRoot = await mkdtemp(path.join(tmpdir(), "eve-backend-capture-"));
   const sessionKey = `eve-acceptance-${randomBytes(16).toString("hex")}`;
-  const sessionDirectory = join(
+  const sessionDirectory = path.join(
     appRoot,
     ".eve",
     "sandbox-cache",
@@ -181,12 +183,12 @@ test("EVE checkpoint capture records real provider resources for retryable clean
   );
   await mkdir(sessionDirectory, { recursive: true });
   await writeFile(
-    join(sessionDirectory, "owner.json"),
+    path.join(sessionDirectory, "owner.json"),
     JSON.stringify({
-      version: 1,
       backendName: "microsandbox",
-      sessionKey,
       sessionId: sessionKey,
+      sessionKey,
+      version: 1,
     })
   );
   const handle = await backend.create({
@@ -198,38 +200,38 @@ test("EVE checkpoint capture records real provider resources for retryable clean
   const inputs = [{ sessionDirectory, sessionKey }];
   try {
     await handle.session.writeTextFile({
-      path: "checkpoint.txt",
       content: "at turn zero",
+      path: "checkpoint.txt",
     });
     const checkpoint = await handle.captureForkCheckpoint?.("turn_0");
     expect(checkpoint).toBeDefined();
     if (typeof checkpoint?.snapshotName !== "string") {
-      throw new Error("EVE did not return a fork snapshot identity.");
+      throw new TypeError("EVE did not return a fork snapshot identity.");
     }
     const manifest = JSON.parse(
       await readFile(
-        join(
+        path.join(
           sessionDirectory,
           "fork-checkpoints",
           `${checkpoint.snapshotName}.json`
         ),
-        "utf8"
+        "utf-8"
       )
     );
     expect(manifest).toMatchObject({
-      version: 1,
+      optionsHash: checkpoint.optionsHash,
       sessionKey,
       snapshotName: checkpoint.snapshotName,
-      optionsHash: checkpoint.optionsHash,
+      version: 1,
     });
     await Snapshot.get(checkpoint.snapshotName);
     expect(await handle.captureForkCheckpoint?.("turn_0")).toEqual(checkpoint);
     await handle.session.writeTextFile({
-      path: "checkpoint.txt",
       content: "later parent edit",
+      path: "checkpoint.txt",
     });
     const childKey = `${sessionKey}-child`;
-    const childDirectory = join(
+    const childDirectory = path.join(
       appRoot,
       ".eve",
       "sandbox-cache",
@@ -239,23 +241,22 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     );
     await mkdir(childDirectory, { recursive: true });
     await writeFile(
-      join(childDirectory, "owner.json"),
+      path.join(childDirectory, "owner.json"),
       JSON.stringify({
-        version: 1,
         backendName: "microsandbox",
-        sessionKey: childKey,
         sessionId: childKey,
+        sessionKey: childKey,
+        version: 1,
       })
     );
     child = await backend.create({
+      forkCheckpoint: checkpoint,
       runtimeContext: { appRoot },
       sessionKey: childKey,
       templateKey: null,
-      forkCheckpoint: checkpoint,
     });
     inputs.push({
-      sessionKey: childKey,
-      sessionDirectory: join(
+      sessionDirectory: path.join(
         appRoot,
         ".eve",
         "sandbox-cache",
@@ -263,6 +264,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
         "sessions",
         childKey
       ),
+      sessionKey: childKey,
     });
     expect(await child.session.readTextFile({ path: "checkpoint.txt" })).toBe(
       "at turn zero"
@@ -274,7 +276,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await child.captureState();
     // Simulate losing the final metadata write: pre-creation records still own
     // the child VM and state snapshot, so cleanup must not need reattachment.
-    await rm(join(inputs[1].sessionDirectory, "metadata.json"));
+    await rm(path.join(inputs[1].sessionDirectory, "metadata.json"));
     await child.shutdown();
     await handle.shutdown();
     await fenceLocalEveSandboxMutations(appRoot, [sessionKey, childKey]);
@@ -311,6 +313,6 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await child?.shutdown();
     await handle.shutdown();
     await purgeLocalEveSandboxes(inputs);
-    await rm(appRoot, { recursive: true, force: true });
+    await rm(appRoot, { force: true, recursive: true });
   }
 }, 60_000);

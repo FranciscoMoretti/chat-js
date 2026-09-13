@@ -12,10 +12,10 @@ import { eveManualDocumentInput } from "./document-contracts";
 import { documentHistoryTurns } from "./document-history";
 import { assertEveConfigured } from "./server";
 
-export async function saveManualEveDocument(
+export const saveManualEveDocument = async (
   ownerId: string,
   value: z.input<typeof eveManualDocumentInput>
-) {
+) => {
   const input = eveManualDocumentInput.parse(value);
   const conversation = await getEveConversation(ownerId, input.conversationId);
   if (!(conversation?.sessionId && conversation.state === "bound")) {
@@ -38,9 +38,9 @@ export async function saveManualEveDocument(
   }
   assertEveConfigured();
   const client = new Client({
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers: { "x-chatjs-owner": ownerId },
+    host: env.EVE_INTERNAL_ORIGIN ?? "",
   });
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
@@ -49,20 +49,20 @@ export async function saveManualEveDocument(
   const saved = await saveEveDocumentRevision(
     {
       ...input,
-      ownerId,
-      operationId: `manual:${input.operationId}`,
       kind: previous.kind,
+      operationId: `manual:${input.operationId}`,
+      ownerId,
       turnIndex: null,
     },
     undefined,
     turns
   );
   return {
-    id: saved.id,
-    documentId: saved.documentId,
-    title: saved.title,
     content: saved.content,
-    kind: saved.kind,
     createdAt: saved.createdAt,
+    documentId: saved.documentId,
+    id: saved.id,
+    kind: saved.kind,
+    title: saved.title,
   };
-}
+};

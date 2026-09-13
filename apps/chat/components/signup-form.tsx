@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 
 import { SocialAuthProviders } from "@/components/auth-providers";
 import { InternalLink } from "@/components/internal-link";
@@ -17,20 +17,20 @@ import {
   isElectronRenderer,
 } from "@/lib/electron-auth";
 
-export function SignupForm({
-  className,
+export const SignupForm = ({
+  className: _className,
   ...props
-}: React.ComponentProps<typeof Card>) {
+}: React.ComponentProps<typeof Card>) => {
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
-  const [isElectron, setIsElectron] = useState(false);
+  const isElectron = useSyncExternalStore(
+    () => () => null,
+    isElectronRenderer,
+    () => false
+  );
   const { callbackURL, onRedirectToUrl, signInOptions } =
     buildSocialAuthRequest(query, globalThis.location?.origin);
   const loginHref = { pathname: "/login" as const, query };
-
-  useEffect(() => {
-    setIsElectron(isElectronRenderer());
-  }, []);
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -83,4 +83,4 @@ export function SignupForm({
       </div>
     </div>
   );
-}
+};

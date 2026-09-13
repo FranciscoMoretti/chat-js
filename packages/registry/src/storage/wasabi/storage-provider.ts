@@ -1,3 +1,1 @@
-import { wasabi } from "files-sdk/wasabi";
-
-export const createStorageAdapter = wasabi;
+export { wasabi as createStorageAdapter } from "files-sdk/wasabi";

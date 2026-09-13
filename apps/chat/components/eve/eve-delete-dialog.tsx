@@ -26,7 +26,7 @@ const resultSchema = z.object({
   status: z.enum(["active", "pending", "deleted"]),
 });
 
-export function EveDeleteDialog({
+export const EveDeleteDialog = ({
   conversation,
   onClose,
   onChanged,
@@ -34,12 +34,13 @@ export function EveDeleteDialog({
   conversation: { id: string; title: string; state: string };
   onClose: () => void;
   onChanged: (rootId: string) => Promise<void>;
-}) {
+}) => {
   const [phase, setPhase] = useState<EveDeletionPhase>(
     conversation.state === "deleting" ? "pending" : "confirm"
   );
-  async function request(method: "GET" | "DELETE") {
+  const request = async (method: "GET" | "DELETE") => {
     setPhase(method === "GET" ? "checking" : "deleting");
+    /* oxlint-disable react/todo -- Preserve the unconfirmed deletion recovery catch. */
     try {
       const response = await fetch(
         `/api/agent-conversations/${conversation.id}`,
@@ -54,6 +55,7 @@ export function EveDeleteDialog({
         return;
       }
       if (!response.ok) {
+        // oxlint-disable-next-line react/todo -- Preserve the explicit unconfirmed deletion error.
         throw new Error("Deletion unconfirmed");
       }
       const result = resultSchema.parse(await response.json());
@@ -62,28 +64,32 @@ export function EveDeleteDialog({
         return;
       }
       if (result.status === "deleted") {
-        await onChanged(result.rootId).catch(() => undefined);
+        await onChanged(result.rootId).catch(() => null);
         onClose();
         return;
       }
       setPhase("pending");
-      await onChanged(result.rootId).catch(() => undefined);
+      await onChanged(result.rootId).catch(() => null);
     } catch {
       setPhase("unconfirmed");
     }
-  }
+    /* oxlint-enable react/todo */
+  };
   return (
-    <EveDeleteDialogView
-      onCheck={() => request("GET")}
-      onClose={onClose}
-      onDelete={() => request("DELETE")}
-      phase={phase}
-      title={conversation.title}
-    />
+    <>
+      {/* oxlint-disable-next-line eslint/no-use-before-define -- The controller stays above the reusable presentational view. */}
+      <EveDeleteDialogView
+        onCheck={() => request("GET")}
+        onClose={onClose}
+        onDelete={() => request("DELETE")}
+        phase={phase}
+        title={conversation.title}
+      />
+    </>
   );
-}
+};
 
-export function EveDeleteDialogView({
+export const EveDeleteDialogView = ({
   title,
   phase,
   onClose,
@@ -95,7 +101,7 @@ export function EveDeleteDialogView({
   onClose: () => void;
   onDelete: () => void;
   onCheck: () => void;
-}) {
+}) => {
   const busy = phase === "deleting" || phase === "checking";
   return (
     <Dialog
@@ -124,14 +130,14 @@ export function EveDeleteDialogView({
           </p>
         )}
         {phase === "deleting" && (
-          <p role="status">Deleting conversation and branches…</p>
+          <output>Deleting conversation and branches…</output>
         )}
-        {phase === "checking" && <p role="status">Checking deletion status…</p>}
+        {phase === "checking" && <output>Checking deletion status…</output>}
         {phase === "pending" && (
-          <p role="status">
+          <output>
             Access has been removed, but cleanup is not complete. Retry to
             continue. You can also resume deletion from the sidebar later.
-          </p>
+          </output>
         )}
         {phase === "unconfirmed" && (
           <p role="alert">
@@ -168,4 +174,4 @@ export function EveDeleteDialogView({
       </DialogContent>
     </Dialog>
   );
-}
+};

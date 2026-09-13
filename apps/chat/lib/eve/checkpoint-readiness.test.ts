@@ -16,9 +16,9 @@ it("waits through source initialization and verifies exact checkpoint identity",
     )
     .mockResolvedValueOnce(
       Response.json({
+        beforeTurnId: "turn_0",
         ready: true,
         sessionId: "source",
-        beforeTurnId: "turn_0",
       })
     );
   const ready = waitForEveCheckpoint("owner", "source", "turn_0");
@@ -32,7 +32,7 @@ it("waits through source initialization and verifies exact checkpoint identity",
 });
 it("does not accept an unrelated source receipt or a generic not found", async () => {
   request.mockResolvedValueOnce(
-    Response.json({ ready: true, sessionId: "other", beforeTurnId: "turn_0" })
+    Response.json({ beforeTurnId: "turn_0", ready: true, sessionId: "other" })
   );
   await expect(
     waitForEveCheckpoint("owner", "source", "turn_0")
@@ -68,10 +68,10 @@ it("times out without allocating or changing the requested checkpoint", async ()
 it("requires the exact named checkpoint receipt and never falls back to a turn lookup", async () => {
   const checkpointId = crypto.randomUUID();
   const receipt = {
-    ready: true,
-    sessionId: "source",
     beforeTurnId: "turn_1",
     checkpointId,
+    ready: true,
+    sessionId: "source",
   };
   request.mockResolvedValueOnce(Response.json(receipt));
   await waitForEveCheckpoint("owner", "source", "turn_1", checkpointId);
@@ -85,6 +85,7 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     { ...receipt, ready: false },
   ]) {
     request.mockResolvedValueOnce(Response.json(invalid));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await expect(
       waitForEveCheckpoint("owner", "source", "turn_1", checkpointId)
     ).rejects.toThrow("Invalid source checkpoint");

@@ -2,39 +2,45 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import nodePath from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
-if (process.platform !== "darwin")
+if (process.platform !== "darwin") {
   throw new Error("This local service uses macOS launchd.");
-const root = resolve(import.meta.dir, "..");
+}
+const root = nodePath.resolve(import.meta.dir, "..");
 const id = createHash("sha256").update(root).digest("hex").slice(0, 12);
 const label = `com.chatjs.dev.${id}`;
 const target = `gui/${process.getuid?.()}`;
-const plist = join(homedir(), "Library/LaunchAgents", `${label}.plist`);
-const logs = join(homedir(), "Library/Logs/ChatJS", id);
+const plist = nodePath.join(
+  homedir(),
+  "Library/LaunchAgents",
+  `${label}.plist`
+);
+const logs = nodePath.join(homedir(), "Library/Logs/ChatJS", id);
 const action = process.argv[2] ?? "status";
-function ctl(...args: string[]) {
-  return execFileSync("launchctl", args, {
-    encoding: "utf8",
+const ctl = (...args: string[]) =>
+  execFileSync("launchctl", args, {
+    encoding: "utf-8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-}
-async function stop() {
+const stop = async () => {
   try {
     ctl("bootout", `${target}/${label}`);
   } catch {
     /* Not loaded. */
   }
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 30; i += 1) {
     try {
       ctl("print", `${target}/${label}`);
     } catch {
       return;
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    await delay(1000);
   }
   throw new Error("Service is still stopping; retry shortly.");
-}
+};
 const xml = (value: string) =>
   value
     .replaceAll("&", "&amp;")
@@ -45,7 +51,7 @@ if (action === "start") {
   const [node, version] = execFileSync(
     "node",
     ["-p", "process.execPath + '\\n' + process.versions.node"],
-    { encoding: "utf8" }
+    { encoding: "utf-8" }
   )
     .trim()
     .split("\n");
@@ -55,7 +61,7 @@ if (action === "start") {
       `ChatJS with Eve requires Node.js >=24; the current shell resolves ${version ?? "an unknown version"}. Select Node 24 or newer on PATH and retry. The existing service has not been changed.`
     );
   }
-  mkdirSync(dirname(plist), { recursive: true });
+  mkdirSync(nodePath.dirname(plist), { recursive: true });
   mkdirSync(logs, { recursive: true });
   writeFileSync(
     plist,
@@ -65,11 +71,11 @@ if (action === "start") {
 <key>Label</key><string>${label}</string>
 <key>ProgramArguments</key><array><string>${xml(process.execPath)}</string><string>run</string><string>dev:supervise</string></array>
 <key>WorkingDirectory</key><string>${xml(root)}</string>
-<key>EnvironmentVariables</key><dict><key>PATH</key><string>${xml(`${dirname(node)}:${dirname(process.execPath)}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`)}</string></dict>
+<key>EnvironmentVariables</key><dict><key>PATH</key><string>${xml(`${nodePath.dirname(node)}:${nodePath.dirname(process.execPath)}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`)}</string></dict>
 <key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
 <key>ThrottleInterval</key><integer>10</integer>
-<key>StandardOutPath</key><string>${xml(join(logs, "runtime.log"))}</string>
-<key>StandardErrorPath</key><string>${xml(join(logs, "error.log"))}</string>
+<key>StandardOutPath</key><string>${xml(nodePath.join(logs, "runtime.log"))}</string>
+<key>StandardErrorPath</key><string>${xml(nodePath.join(logs, "error.log"))}</string>
 </dict></plist>`,
     { mode: 0o600 }
   );
@@ -87,4 +93,6 @@ if (action === "start") {
     console.info("Managed runtime is stopped.");
   }
   console.info(`Logs: ${logs}`);
-} else throw new Error("Use start, stop or status.");
+} else {
+  throw new Error("Use start, stop or status.");
+}

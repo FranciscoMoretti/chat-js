@@ -104,7 +104,7 @@ if (threadRef.current === null) {
 }
 ```
 
-The same `Thread` is retained while its identity inputs remain unchanged. Supplying a different external `thread` or a different defined `id` replaces the controller, including its state and active runs. Otherwise, callback wrappers read the latest React callbacks without replacing the retained controller.
+The same `Thread` is retained while its identity inputs remain unchanged. Supplying a different external `thread` or a different defined `id` replaces the controller, so the hook observes the replacement state and runs. This does not stop the previous controller's requests. Call `stopAll()` explicitly when abandoning an active controller. Otherwise, callback wrappers read the latest React callbacks without replacing the retained controller. Construction options such as transport and initial tree are retained. Changing those hook options alone does not recreate the controller.
 
 An existing `AbstractThread` can also be supplied. This includes both the default `Thread` and custom subclasses:
 
@@ -217,7 +217,7 @@ Tree mutations enforce these invariants:
 
 `Thread.id` identifies the complete threaded conversation. It has the same role as AI SDK's `Chat.id`, remains stable as messages are added, and is sent to the transport as `chatId` on every request.
 
-Within that conversation, each `message.id` identifies one immutable tree node. Each run has a separate stable ID identifying its request lifecycle. A run is present while submitted even though no assistant message exists yet, then binds to the assistant ID produced by AI SDK's stream reducer. A message ID identifies a branch head, and following parent links identifies the complete root-to-head path.
+Within that conversation, each `message.id` identifies a stable tree node. Its content can change as streaming and tool updates arrive, while its identity and parent remain stable. Each run has a separate stable ID identifying its request lifecycle. A run is present while submitted even though no assistant message exists yet, then binds to the assistant ID produced by AI SDK's stream reducer. A message ID identifies a branch head, and following parent links identifies the complete root-to-head path.
 
 `cursorId` is the mutable selection of one such head. A followed send attaches the new user beneath the selected head, then attaches and selects the assistant when AI SDK first publishes it. Starting from an earlier node creates siblings without changing existing identities or ancestry.
 
@@ -235,7 +235,6 @@ Every assistant response lifecycle has one `RunRecord`:
 
 ```ts
 type RunRecord<TMessage extends UIMessage> = {
-  aborted: boolean;
   chat: ThreadRunChat<TMessage>;
   error: Error | undefined;
   finished: Promise<void>;
@@ -277,7 +276,7 @@ The internal `ThreadRunState` presents one run-local linear branch path to `Abst
 
 The supplied AI SDK `ChatTransport` remains the request and stream boundary. The package does not define another transport protocol or manually parse `UIMessageChunk` values. A delegating transport ensures new and reconnected runs use the latest transport configured on `Thread`.
 
-Each request receives the selected linear path. `ChatRequestOptions` are passed to the configured transport unchanged; tree controls never leak into the application request body.
+Each request receives its owning run's linear path, even when the cursor selects a different branch. `ChatRequestOptions` are passed to the configured transport unchanged; tree controls never leak into the application request body.
 
 As in AI SDK's `AbstractChat`, a submitted response remains private streaming state until the first stream write. A server-provided `messageId` in the AI SDK `start` chunk replaces the provisional ID before publication, so the tree only ever observes the canonical assistant node. Runs reserve an internal sibling position so concurrent streams remain ordered by creation rather than arrival.
 
@@ -306,7 +305,7 @@ As in AI SDK, expected transport and stream failures resolve after publishing `e
 
 AI SDK truncates only the adapter's linear request path. The canonical tree retains the target response, then inserts the streamed replacement beside it using the run's reserved sibling order. A root assistant regenerates into another root. The cursor follows the replacement on its first write only when it still points to the regeneration target, so navigation during submission or streaming is not overwritten.
 
-AI SDK 6.0.244 and later initialize fresh response state for regeneration. This allows a response whose parent is also an assistant to regenerate without mutating that shared parent. For `[user, assistant A, assistant B]`, regenerating `assistant B` preserves both existing messages and creates a replacement sibling under `assistant A`.
+The supported AI SDK 7 runtime initializes fresh response state for regeneration. This allows a response whose parent is also an assistant to regenerate without mutating that shared parent. For `[user, assistant A, assistant B]`, regenerating `assistant B` preserves both existing messages and creates a replacement sibling under `assistant A`.
 
 ## Reconnection with AI SDK 7
 
@@ -383,6 +382,18 @@ useThread({
 ```
 
 `maxActiveRuns` limits the complete conversation. `maxActiveRunsPerMessage` limits assistant siblings generated from one user message. A rejected run does not leave an extra user message behind.
+
+## Editing Earlier Messages
+
+To preserve an original message and its descendants, select its parent and send the edited content with a new message ID. This creates a sibling user message and a new response branch. Passing an existing user message ID updates that node in place instead, preserving its original parent. Editing controls and the choice between replacing content and creating a branch belong to the UI.
+
+## Dependencies and Entry Points
+
+Install with `bun add @chat-js/thread`. The package declares `ai` and `@ai-sdk/react` as dependencies, so consumers do not need to repeat the supported SDK versions in their install command. `ai` supplies the runtime request engine. `@ai-sdk/react` supplies the `UseChatHelpers` type contract used by the adapter. The supported ranges live in `package.json`.
+
+React remains an optional peer dependency (React 18 or newer), so the React adapter shares the application's React instance. The core entry point has no React runtime imports. Dependency installation may still include React through the SDK adapter's peer requirements; runtime independence does not mean an installation without React-related packages.
+
+The build emits external-package ESM and TypeScript declarations for the core and `/react` entry points. The React entry includes `"use client"`. Bun and development export conditions point to source; ordinary Node and bundler consumers use `dist`.
 
 ## Package Boundary
 

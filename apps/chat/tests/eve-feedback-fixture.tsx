@@ -11,9 +11,9 @@ const states: {
   { label: "Not rated" },
   { label: "Upvoted", vote: { isUpvoted: true } },
   { label: "Downvoted", vote: { isUpvoted: false } },
-  { label: "Loading or saving", disabled: true },
+  { disabled: true, label: "Loading or saving" },
 ];
-const root = document.getElementById("fixture");
+const root = document.querySelector("#fixture");
 if (!root) {
   throw new Error("Missing fixture root");
 }
@@ -26,7 +26,9 @@ createRoot(root).render(
         <MessageActions>
           <MessageVoteActions
             disabled={state.disabled}
-            onVote={async () => undefined}
+            onVote={async () => {
+              /* empty */
+            }}
             vote={state.vote}
           />
         </MessageActions>

@@ -8,8 +8,10 @@
     "docs:links": "blume validate --external --strict",
     "docs:audit": "blume audit",
     "docs:eval": "blume eval",
-    "lint": "blume doctor",
-    "test:visual": "blume build && vitest run --config vitest.config.ts"
+    "lint": "oxlint . && oxfmt --check .",
+    "test:visual": "blume build && vitest run --config vitest.config.ts",
+    "docs:doctor": "blume doctor",
+    "format": "oxfmt --write ."
   },
   "devDependencies": {
     "blume": "^1.6.3"

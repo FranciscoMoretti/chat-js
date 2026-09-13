@@ -9,8 +9,8 @@ describe("RecursiveCharacterTextSplitter", () => {
 
   beforeEach(() => {
     splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 50,
       chunkOverlap: 10,
+      chunkSize: 50,
     });
   });
 
@@ -58,7 +58,7 @@ describe("RecursiveCharacterTextSplitter", () => {
     splitter.chunkSize = 200;
     assert.deepEqual(
       splitter.splitText(largeText),
-      new Array(5).fill("A".repeat(200))
+      Array.from({ length: 5 }, () => "A".repeat(200))
     );
 
     const specialCharText = "Hello!@# world$%^ &*( this) is+ a-test";

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 const documentContent = z.object({
-  title: z.string().min(1).max(1000),
   content: z.string().max(2_000_000),
+  title: z.string().min(1).max(1000),
 });
 export const eveDocumentCreateInput = documentContent;
 export const eveDocumentEditInput = documentContent.extend({
@@ -20,19 +20,19 @@ export const eveManualDocumentInput = eveDocumentEditInput.extend({
 });
 
 export const eveDocumentOperations = {
-  createTextDocument: { kind: "text", edit: false },
-  editTextDocument: { kind: "text", edit: true },
-  createCodeDocument: { kind: "code", edit: false },
-  editCodeDocument: { kind: "code", edit: true },
-  createSheetDocument: { kind: "sheet", edit: false },
-  editSheetDocument: { kind: "sheet", edit: true },
+  createCodeDocument: { edit: false, kind: "code" },
+  createSheetDocument: { edit: false, kind: "sheet" },
+  createTextDocument: { edit: false, kind: "text" },
+  editCodeDocument: { edit: true, kind: "code" },
+  editSheetDocument: { edit: true, kind: "sheet" },
+  editTextDocument: { edit: true, kind: "text" },
 } as const;
 
 export const eveDocumentResult = z.object({
-  status: z.literal("success"),
-  documentId: z.uuid(),
-  revisionId: z.uuid(),
-  title: z.string(),
-  kind: z.enum(["text", "code", "sheet"]),
   date: z.string(),
+  documentId: z.uuid(),
+  kind: z.enum(["text", "code", "sheet"]),
+  revisionId: z.uuid(),
+  status: z.literal("success"),
+  title: z.string(),
 });

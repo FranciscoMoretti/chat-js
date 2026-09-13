@@ -1,4 +1,5 @@
-import { frontendToolsSchema, type UiToolName } from "@/lib/ai/types";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
@@ -14,7 +15,8 @@ import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
-import { type EvePrincipal, resolveEvePrincipal } from "@/lib/eve/principal";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
+import type { EvePrincipal } from "@/lib/eve/principal";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import {
   parseSessionRequest,
@@ -23,19 +25,18 @@ import {
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
 
-function rejectRequest(request: Request, message: string, status: number) {
+const rejectRequest = (request: Request, message: string, status: number) =>
   // A failed stream read cannot prove that an earlier POST was rejected.
-  return request.method === "POST"
+  request.method === "POST"
     ? rejectEveCommand(message, status)
     : Response.json({ error: message }, { status });
-}
 
-async function checkTurnAdmission(
+const checkTurnAdmission = async (
   request: Request,
   principal: EvePrincipal,
   sessionId: string,
   command: Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
-) {
+) => {
   if (!command.isNewMessage || command.message === undefined) {
     return;
   }
@@ -50,28 +51,26 @@ async function checkTurnAdmission(
   if (!(await canSpend(principal.ownerId))) {
     return rejectEveCommand("Insufficient credits", 402);
   }
-}
+};
 
-function selectionsConflict(header: string | null, body: string | undefined) {
-  return header !== null && body !== undefined && header !== body;
-}
+const selectionsConflict = (header: string | null, body: string | undefined) =>
+  header !== null && body !== undefined && header !== body;
 
-function parseToolSelection(
+const parseToolSelection = (
   header: string | null,
   body: UiToolName | undefined
-) {
-  return frontendToolsSchema
+) =>
+  frontendToolsSchema
     .optional()
     .refine(() => header === null || body === undefined || header === body)
     .safeParse(header ?? body);
-}
 
-async function readCommand(
+const readCommand = async (
   request: Request,
   policy: NonNullable<ReturnType<typeof parseSessionRequest>>,
   ownerId: string,
   conversationId: string
-) {
+) => {
   let body: string | undefined;
   let isNewMessage = false;
   let message: EveMessageInput | undefined;
@@ -85,7 +84,7 @@ async function readCommand(
       return rejectEveCommand("Invalid command.", 400);
     }
     if ("message" in input.data) {
-      message = input.data.message;
+      ({ message } = input.data);
       const suppliedTool = request.headers.get("x-chatjs-selected-tool");
       const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
       if (!tool.success) {
@@ -108,9 +107,9 @@ async function readCommand(
           message: await prepareEveMessage(input.data.message, modelId),
           messageMetadata: eveToolMetadata(selectedTool),
         });
-      } catch (cause) {
+      } catch (error) {
         return rejectEveCommand(
-          cause instanceof Error ? cause.message : "Unable to read attachment.",
+          error instanceof Error ? error.message : "Unable to read attachment.",
           400
         );
       }
@@ -120,12 +119,16 @@ async function readCommand(
     isNewMessage = "message" in input.data;
   }
   return { body, isNewMessage, message, modelId, selectedTool };
-}
+};
 
-async function handle(
+const handle = async (
   request: Request,
-  context: { params: Promise<{ path: string[] }> }
-) {
+  context: {
+    params: Promise<{
+      path: string[];
+    }>;
+  }
+) => {
   if (!isEveEnabled()) {
     return rejectRequest(request, "Agent conversations are unavailable.", 404);
   }
@@ -176,8 +179,8 @@ async function handle(
       principal.ownerId,
       upstreamPath + (query.size ? `?${query}` : ""),
       {
-        method: request.method,
         body,
+        method: request.method,
         // Closing the reader must not cancel a validated command before Eve
         // can durably accept it. Streaming reads still follow browser lifetime.
         signal:
@@ -204,7 +207,7 @@ async function handle(
         headers.set(key, value);
       }
     }
-    return new Response(result.body, { status: result.status, headers });
+    return new Response(result.body, { headers, status: result.status });
   } catch {
     return Response.json(
       {
@@ -214,6 +217,6 @@ async function handle(
       { status: 502 }
     );
   }
-}
+};
 export const GET = handle;
 export const POST = handle;

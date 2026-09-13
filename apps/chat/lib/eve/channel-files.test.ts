@@ -1,23 +1,23 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ owned: vi.fn(), download: vi.fn() }));
+import { fetchEveChannelFile } from "./channel-files";
+
+const mocks = vi.hoisted(() => ({ download: vi.fn(), owned: vi.fn() }));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
 
-import { fetchEveChannelFile } from "./channel-files";
-
 const key = "abcdefghijklmnopqrstuvwx.png";
 const owner = {
+  attributes: {},
   authenticator: "test",
   principalId: "destination-owner",
   principalType: "user",
-  attributes: {},
 } satisfies NonNullable<
   NonNullable<Parameters<typeof fetchEveChannelFile>[1]>["session"]
 >["auth"]["current"];
 const context = {
-  state: {},
   session: { auth: { current: owner, initiator: owner } },
+  state: {},
 };
 beforeEach(() => {
   vi.clearAllMocks();

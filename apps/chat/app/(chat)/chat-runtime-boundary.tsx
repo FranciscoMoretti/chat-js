@@ -6,13 +6,13 @@ import type { ReactNode } from "react";
 import { ChatProviders } from "./chat-providers";
 import { ChatRouteHost } from "./chat-route-host";
 
-export function ChatRuntimeBoundary({
+export const ChatRuntimeBoundary = ({
   children,
   eveEnabled,
 }: {
   children: ReactNode;
   eveEnabled: boolean;
-}) {
+}) => {
   const pathname = usePathname();
   if (
     eveEnabled &&
@@ -28,4 +28,4 @@ export function ChatRuntimeBoundary({
       <ChatRouteHost>{children}</ChatRouteHost>
     </ChatProviders>
   );
-}
+};

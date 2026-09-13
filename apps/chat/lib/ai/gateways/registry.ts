@@ -6,11 +6,17 @@ import type { generatedForGateway, models } from "../models.generated";
 
 export type InstalledGateway = InstanceType<typeof Gateway>;
 export type GatewayType = typeof gatewayType;
-export type GatewayProvider = GatewayProviderBase<GatewayType>;
+export type GatewayProvider = GatewayProviderBase<
+  GatewayType,
+  Parameters<InstalledGateway["createLanguageModel"]>[0],
+  Parameters<InstalledGateway["createImageModel"]>[0],
+  Parameters<InstalledGateway["createVideoModel"]>[0]
+>;
 
-export type GatewayModelIdMap = {
-  [K in GatewayType]: Parameters<InstalledGateway["createLanguageModel"]>[0];
-};
+export type GatewayModelIdMap = Record<
+  GatewayType,
+  Parameters<InstalledGateway["createLanguageModel"]>[0]
+>;
 
 // Helper: check if tuple T contains element E
 type TupleIncludes<T extends readonly unknown[], E> = T extends readonly [
@@ -41,6 +47,7 @@ export type GatewayImageModelIdMap = {
     | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
 };
 
-export type GatewayVideoModelIdMap = {
-  [K in GatewayType]: Parameters<InstalledGateway["createVideoModel"]>[0];
-};
+export type GatewayVideoModelIdMap = Record<
+  GatewayType,
+  Parameters<InstalledGateway["createVideoModel"]>[0]
+>;

@@ -35,7 +35,7 @@ import { isElectronRenderer } from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
-export function SidebarUserNav() {
+export const SidebarUserNav = () => {
   const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
@@ -190,4 +190,4 @@ export function SidebarUserNav() {
       </SidebarMenuItem>
     </SidebarMenu>
   );
-}
+};

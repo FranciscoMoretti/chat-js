@@ -4,11 +4,16 @@ import { keyFromFileUrl } from "../file-url";
 import { draftAttachment } from "./draft";
 
 /** Restore exact bytes from inline native history or an owned same-origin copy. */
-export async function restoreEveAttachment(
-  part: Extract<EveMessagePart, { type: "file" }>,
+export const restoreEveAttachment = async (
+  part: Extract<
+    EveMessagePart,
+    {
+      type: "file";
+    }
+  >,
   origin: string,
   maxBytes: number
-) {
+) => {
   const mediaType = draftAttachment.shape.contentType.parse(part.mediaType);
   if (!part.url) {
     throw new Error("This attachment is unavailable for editing.");
@@ -41,4 +46,4 @@ export async function restoreEveAttachment(
     throw new Error("This attachment has an unsupported type or size.");
   }
   return new File([blob], part.filename ?? "attachment", { type: mediaType });
-}
+};

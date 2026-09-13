@@ -10,7 +10,7 @@ import { withRegistryTransport } from "./transport";
 
 export const registryUrl =
   "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json";
-export async function registryConfig(cwd: string) {
+export const registryConfig = async (cwd: string) => {
   const config = await getRegistriesConfig(cwd);
   return {
     registries: {
@@ -18,12 +18,12 @@ export async function registryConfig(cwd: string) {
       ...config.registries,
     },
   };
-}
-export function itemAddress(
+};
+export const itemAddress = (
   source: string,
   kind: "gateway" | "tool" | "storage"
-) {
-  if (/^[a-z][a-z0-9-]*$/.test(source)) {
+): string => {
+  if (/^[a-z][a-z0-9-]*$/u.test(source)) {
     const suffix =
       kind === "tool" || (kind === "gateway" && source.endsWith("-gateway"))
         ? ""
@@ -31,30 +31,30 @@ export function itemAddress(
     return `@chatjs/${source}${suffix}`;
   }
   return source;
-}
-export async function readItem(source: string, cwd: string) {
+};
+export const readItem = async (source: string, cwd: string) => {
   const [item] = await withRegistryTransport(async () =>
     getRegistryItems([source], { config: await registryConfig(cwd) })
   );
   return registryItemSchema.parse(item);
-}
-export async function listTools(cwd: string) {
+};
+export const listTools = async (cwd: string) => {
   const catalog = await withRegistryTransport(async () =>
     getRegistry("@chatjs", { config: await registryConfig(cwd) })
   );
   return catalog.items.filter((item) => item.meta?.chatjs?.kind === "tool");
-}
-export async function installItems(
+};
+export const installItems = async (
   sources: string[],
   cwd: string,
   overwrite = false
-) {
+): Promise<void> => {
   await withRegistryTransport(async () =>
     addRegistryItems(sources, {
-      cwd,
       config: await registryConfig(cwd),
+      cwd,
       overwrite,
       silent: true,
     })
   );
-}
+};

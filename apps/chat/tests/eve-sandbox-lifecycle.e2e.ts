@@ -17,30 +17,31 @@ import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { eveCodeSandboxOwnership } from "../lib/eve/code-sandbox-ownership";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
 import { createModuleLogger } from "../lib/logger";
-import { codeExecution } from "../tools/platform/code-execution";
-import { executeJavaScriptInSandbox } from "../tools/platform/code-execution.javascript";
-import { executePythonInSandbox } from "../tools/platform/code-execution.python";
+import { executeJavaScriptInSandbox } from "../tools/chatjs/vercel-code-execution/javascript";
+import { executePythonInSandbox } from "../tools/chatjs/vercel-code-execution/python";
 import {
   cleanupSandbox,
   createSandbox,
-  getTokenAuth,
-} from "../tools/platform/code-execution.shared";
-import { resolveSandboxAuth } from "../tools/platform/sandbox-auth";
+  resolveSandboxAuth,
+} from "../tools/chatjs/vercel-code-execution/sandbox";
+import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 for (const language of ["javascript", "python"] as const) {
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
     test.setTimeout(120_000);
+    const auth = resolveSandboxAuth();
     const name = eveCodeSandboxName({
-      ownerId: "local-sdk-fixture",
-      sessionId: crypto.randomUUID(),
       callId: language,
-      provider: await resolveSandboxAuth(),
+      ownerId: "local-sdk-fixture",
+      provider: auth,
+      sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
       language === "javascript" ? "node22" : "python3.13",
       AbortSignal.timeout(30_000),
-      name
+      name,
+      auth
     );
     const log = createModuleLogger("sandbox-sdk-test");
     const requestId = crypto.randomUUID();
@@ -48,10 +49,10 @@ for (const language of ["javascript", "python"] as const) {
       expect(sandbox.persistent).toBe(false);
       expect(sandbox.name).toBe(name);
       const context = {
-        sandbox,
+        code: language === "javascript" ? "console.log(6 * 7)" : "print(6 * 7)",
         log,
         requestId,
-        code: language === "javascript" ? "console.log(6 * 7)" : "print(6 * 7)",
+        sandbox,
       };
       const result =
         language === "javascript"
@@ -67,7 +68,7 @@ for (const language of ["javascript", "python"] as const) {
         name: sandbox.name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
-        ...getTokenAuth(),
+        ...auth,
       });
     } catch (error) {
       removed = error instanceof APIError && error.response.status === 404;
@@ -84,15 +85,15 @@ test("native sandbox ownership is durably released after real provider cleanup",
   assertEveTestDatabase(env.DATABASE_URL);
   const ownerId = crypto.randomUUID();
   await db.insert(user).values({
+    email: `${ownerId}@test.invalid`,
     id: ownerId,
     name: "Sandbox fixture",
-    email: `${ownerId}@test.invalid`,
   });
   const row = await createEveConversation(
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
-    async () => crypto.randomUUID()
+    () => Promise.resolve(crypto.randomUUID())
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");
@@ -101,25 +102,25 @@ test("native sandbox ownership is durably released after real provider cleanup",
     const sandboxOwnership = eveCodeSandboxOwnership({
       callId: "sdk-fixture",
       session: {
-        id: row.sessionId,
         auth: { initiator: { principalId: ownerId } },
+        id: row.sessionId,
       },
     });
-    const tool = codeExecution({ sandboxOwnership });
+    const tool = codeExecution;
     if (!tool.execute) {
       throw new Error("Missing code executor");
     }
     const result = await tool.execute(
       {
-        title: "Ownership check",
-        language: "javascript",
         code: "console.log(6 * 7)",
+        language: "javascript",
+        title: "Ownership check",
       },
       {
-        toolCallId: "sdk-fixture",
-        messages: [],
-        context: {},
         abortSignal: AbortSignal.timeout(60_000),
+        context: { sandboxOwnership },
+        messages: [],
+        toolCallId: "sdk-fixture",
       }
     );
     expect(result).toMatchObject({ message: expect.stringContaining("42") });
@@ -136,7 +137,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
         name: resources[0].name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
-        ...getTokenAuth(),
+        ...resolveSandboxAuth(),
       });
     } catch (error) {
       missing = error instanceof APIError && error.response.status === 404;
@@ -147,12 +148,13 @@ test("native sandbox ownership is durably released after real provider cleanup",
       ownerId,
       row.id,
       "orphan-fixture",
-      await resolveSandboxAuth()
+      resolveSandboxAuth()
     );
     const orphan = await createSandbox(
       "node22",
       AbortSignal.timeout(30_000),
-      orphanName
+      orphanName,
+      resolveSandboxAuth()
     );
     await confirmEveCodeSandboxCreation(ownerId, row.id, orphan.name);
     await beginEveConversationDeletion(ownerId, row.id);

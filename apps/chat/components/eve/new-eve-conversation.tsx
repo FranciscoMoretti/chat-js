@@ -12,10 +12,9 @@ import { ChatWelcomeView } from "@/components/chat/chat-welcome";
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
-  type SelectedModelValue,
-  type UiToolName,
 } from "@/lib/ai/types";
-import { CreationRejected } from "@/lib/eve/create-conversation";
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import {
   finishCreation,
@@ -32,13 +31,13 @@ import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { useEveAttachments } from "./use-eve-attachments";
 
-export function NewEveConversation({
+export const NewEveConversation = ({
   ownerId,
   projectId,
 }: {
   ownerId: string;
   projectId?: string;
-}) {
+}) => {
   const scope = useMemo(
     () => (projectId ? { projectId } : undefined),
     [projectId]
@@ -54,13 +53,14 @@ export function NewEveConversation({
   const [retained, setRetained] = useState(false);
   const [retainedModelId, setRetainedModelId] = useState<string>();
   const [retainedModelIds, setRetainedModelIds] = useState<string[]>();
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   useEffect(() => {
     try {
       const pending = readCreationRequest(sessionStorage, ownerId, scope);
       if (pending) {
+        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the recovery composer from its durable request.
         setRetained(true);
         setSelectedTool(pending.selectedTool ?? null);
         const restored = restoreDraft(pending.message);
@@ -72,12 +72,12 @@ export function NewEveConversation({
         setRetainedModelId("modelIds" in pending ? undefined : pending.modelId);
       }
     } catch {
-      setError("The saved draft could not be restored.");
+      setFailure("The saved draft could not be restored.");
     }
   }, [ownerId, scope, setAttachments]);
-  function retainOperation(
+  const retainOperation = (
     operation: ReturnType<typeof prepareSelectedCreation>
-  ) {
+  ) => {
     setDraft(restoreDraft(operation.message).text);
     setSelectedTool(operation.selectedTool ?? null);
     setRetainedModelId("modelIds" in operation ? undefined : operation.modelId);
@@ -85,15 +85,16 @@ export function NewEveConversation({
       "modelIds" in operation ? operation.modelIds : undefined
     );
     setRetained(true);
-  }
-  async function submit() {
+  };
+  const submit = async () => {
     if (lock.current) {
       return;
     }
     lock.current = true;
     setBusy(true);
-    setError("");
+    setFailure("");
     let navigating = false;
+    /* oxlint-disable react/todo -- Preserve operation lock cleanup across navigation and errors. */
     try {
       const modelIds = expandSelectedModelValue(selection ?? selectedModel);
       const operation = prepareSelectedCreation(
@@ -113,31 +114,33 @@ export function NewEveConversation({
       );
       window.location.assign(`/chat/${id}`);
       navigating = true;
-    } catch (cause) {
+    } catch (error) {
       if (
-        cause instanceof CreationRejected &&
-        cause.projectUnavailable &&
+        error instanceof CreationRejectedError &&
+        error.projectUnavailable &&
         projectId
       ) {
         setProjectRejected(true);
-      } else if (cause instanceof CreationRejected) {
+      } else if (error instanceof CreationRejectedError) {
         finishCreation(sessionStorage, ownerId, scope);
         setRetainedModelId(undefined);
         setRetainedModelIds(undefined);
         setRetained(false);
       }
-      setError(
-        cause instanceof Error
-          ? cause.message
+      setFailure(
+        error instanceof Error
+          ? error.message
           : "Unable to start. Retain this operation before retrying."
       );
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required operation lock cleanup in finally.
     } finally {
       lock.current = false;
       if (!navigating) {
         setBusy(false);
       }
     }
-  }
+    /* oxlint-enable react/todo */
+  };
   if (projectRejected) {
     return (
       <EveCreationRecovery
@@ -157,7 +160,6 @@ export function NewEveConversation({
         draft={busy ? "" : draft}
         files={busy ? { ...files, attachments: [] } : files}
         modelSelection={{
-          value: selection ?? selectedModel,
           onChange: async (value) => {
             setSelection(value);
             const primary = getPrimarySelectedModelId(value);
@@ -165,6 +167,7 @@ export function NewEveConversation({
               await changeModel(primary);
             }
           },
+          value: selection ?? selectedModel,
         }}
         onDraftChange={(value) => {
           // Clearing the controlled editor must not erase the saved send intent.
@@ -179,7 +182,7 @@ export function NewEveConversation({
         retainedModelIds={retainedModelIds}
         selectedTool={selectedTool}
       />
-      {error && <p role="alert">{error}</p>}
+      {failure && <p role="alert">{failure}</p>}
     </>
   );
   if (busy) {
@@ -194,9 +197,7 @@ export function NewEveConversation({
                 <AttachmentList attachments={files.attachments} />
               </MessageContent>
             </Message>
-            <p className="text-muted-foreground text-sm" role="status">
-              Sending…
-            </p>
+            <output className="text-muted-foreground text-sm">Sending…</output>
           </ConversationContent>
         </Conversation>
         <div className="mx-auto w-full max-w-3xl p-4">{composer}</div>
@@ -204,4 +205,4 @@ export function NewEveConversation({
     );
   }
   return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
-}
+};

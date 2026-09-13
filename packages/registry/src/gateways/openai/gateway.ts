@@ -27,21 +27,19 @@ interface OpenAIModelResponse {
   owned_by: string;
 }
 
-function toAiGatewayModel(model: OpenAIModelResponse): AiGatewayModel {
-  return {
-    id: model.id,
-    object: "model",
-    created: model.created ?? 0,
-    owned_by:
-      (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
-    name: model.id,
-    description: "",
-    context_window: 0,
-    max_tokens: 0,
-    type: "language",
-    pricing: {},
-  };
-}
+const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
+  context_window: 0,
+  created: model.created ?? 0,
+  description: "",
+  id: model.id,
+  max_tokens: 0,
+  name: model.id,
+  object: "model",
+  owned_by:
+    (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
+  pricing: {},
+  type: "language",
+});
 
 export class OpenAIGateway
   extends GatewayRuntime
@@ -68,6 +66,8 @@ export class OpenAIGateway
     return provider.image(modelId);
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }

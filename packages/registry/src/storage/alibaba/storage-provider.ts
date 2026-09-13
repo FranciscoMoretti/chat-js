@@ -1,3 +1,1 @@
-import { alibaba } from "files-sdk/alibaba";
-
-export const createStorageAdapter = alibaba;
+export { alibaba as createStorageAdapter } from "files-sdk/alibaba";

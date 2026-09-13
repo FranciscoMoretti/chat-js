@@ -5,7 +5,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ANONYMOUS_SESSION_COOKIES_KEY } from "./constants";
 
 // Client-side cookie helpers
-function getCookie(name: string): string | null {
+const getCookie = (name: string): string | null => {
   if (typeof document === "undefined") {
     return null;
   }
@@ -17,9 +17,9 @@ function getCookie(name: string): string | null {
     return cookieValue ? decodeURIComponent(cookieValue) : null;
   }
   return null;
-}
+};
 
-function setCookie(name: string, value: string, maxAge: number): void {
+const setCookie = (name: string, value: string, maxAge: number): void => {
   if (typeof document === "undefined") {
     return;
   }
@@ -27,38 +27,44 @@ function setCookie(name: string, value: string, maxAge: number): void {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   const encodedValue = encodeURIComponent(value);
   if ("cookieStore" in window) {
-    window.cookieStore
-      .set({
-        name,
-        value: encodedValue,
-        path: "/",
-        expires: Date.now() + maxAge * 1000,
-        sameSite: "lax",
-      })
-      .catch(() => {
+    const cookieSet = window.cookieStore.set({
+      expires: Date.now() + maxAge * 1000,
+      name,
+      path: "/",
+      sameSite: "lax",
+      value: encodedValue,
+    });
+    void (async () => {
+      try {
+        await cookieSet;
+      } catch {
         // Fail silently if Cookie Store API fails
-      });
+      }
+    })();
   } else {
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=${encodedValue}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
   }
-}
+};
 
-function deleteCookie(name: string): void {
+const deleteCookie = (name: string): void => {
   if (typeof document === "undefined") {
     return;
   }
   if ("cookieStore" in window) {
-    window.cookieStore.delete(name).catch(() => {
-      // Fail silently if Cookie Store API fails
-    });
+    const cookieDeletion = window.cookieStore.delete(name);
+    void (async () => {
+      try {
+        await cookieDeletion;
+      } catch {
+        // Fail silently if Cookie Store API fails
+      }
+    })();
   } else {
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available
     document.cookie = `${name}=; Path=/; Max-Age=0`;
   }
-}
+};
 
-export function getAnonymousSession(): AnonymousSession | null {
+export const getAnonymousSession = (): AnonymousSession | null => {
   try {
     const sessionData = getCookie(ANONYMOUS_SESSION_COOKIES_KEY);
     if (!sessionData) {
@@ -82,16 +88,16 @@ export function getAnonymousSession(): AnonymousSession | null {
     console.error("Error parsing anonymous session:", error);
     return null;
   }
-}
+};
 
-export function setAnonymousSession(session: AnonymousSession): void {
+export const setAnonymousSession = (session: AnonymousSession): void => {
   setCookie(
     ANONYMOUS_SESSION_COOKIES_KEY,
     JSON.stringify(session),
     ANONYMOUS_LIMITS.SESSION_DURATION
   );
-}
+};
 
-export function clearAnonymousSession(): void {
+export const clearAnonymousSession = (): void => {
   deleteCookie(ANONYMOUS_SESSION_COOKIES_KEY);
-}
+};

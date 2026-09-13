@@ -1,20 +1,20 @@
 import { expect, test, vi } from "vitest";
 
+import { eveMessageInput } from "./message-input";
+import { prepareEveMessage } from "./prepare-message";
+
 const mocks = vi.hoisted(() => ({ download: vi.fn(), model: vi.fn() }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
 vi.mock("../config", () => ({
-  config: { features: { attachments: true }, attachments: { maxBytes: 1024 } },
+  config: { attachments: { maxBytes: 1024 }, features: { attachments: true } },
 }));
 
-import { eveMessageInput } from "./message-input";
-import { prepareEveMessage } from "./prepare-message";
-
 const attachment = {
-  type: "file",
   data: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-  mediaType: "image/png",
   filename: "image.png",
+  mediaType: "image/png",
+  type: "file",
 };
 
 test("only accepts supported ChatJS attachment references", () => {
@@ -43,10 +43,10 @@ test("reads verified bytes from storage and rejects mismatched types and unsuppo
   const input = eveMessageInput.parse([attachment]);
   await expect(prepareEveMessage(input, "vision")).resolves.toEqual([
     {
-      type: "file",
+      data: "data:image/png;base64,aW1hZ2UgYnl0ZXM=",
       filename: "image.png",
       mediaType: "image/png",
-      data: "data:image/png;base64,aW1hZ2UgYnl0ZXM=",
+      type: "file",
     },
   ]);
   expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");

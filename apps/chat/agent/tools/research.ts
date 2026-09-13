@@ -1,5 +1,5 @@
 import { defineDynamic, defineTool, toolOutput } from "eve/tools";
-import superjson from "superjson";
+import { parse, stringify } from "superjson";
 
 import { config } from "../../lib/config";
 import { evePlatformResult } from "../../lib/eve/platform-result";
@@ -27,14 +27,14 @@ export default defineDynamic({
       ) {
         return {};
       }
-      const messages = superjson.stringify(context.messages);
+      const messages = stringify(context.messages);
       return {
         deepResearch: defineTool<unknown, unknown>({
           description:
             "Conduct deep research using this conversation, search sources, and save a cited report. Use for explicit deep research requests. If the result asks clarifying questions, ask the user and call this tool again after their answer. The saved report is displayed to the user; do not repeat it in full.",
-          inputSchema: eveResearchInput,
           execute: (input, toolContext) =>
-            executeEveResearch(input, toolContext, superjson.parse(messages)),
+            executeEveResearch(input, toolContext, parse(messages)),
+          inputSchema: eveResearchInput,
           toModelOutput: (output) =>
             toolOutput.json(evePlatformResult.parse(output).output),
         }),

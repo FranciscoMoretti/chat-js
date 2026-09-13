@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -44,9 +48,9 @@ async function findEveGuest(tokenHash: string) {
 async function guest(messageLimit = 10) {
   const credential = createEveGuestCredential();
   const row = await createEveGuest({
-    tokenHash: credential.tokenHash,
-    messageLimit,
     expiresAt: new Date(Date.now() + 60_000),
+    messageLimit,
+    tokenHash: credential.tokenHash,
   });
   owners.push(row.ownerId);
   return row;
@@ -56,10 +60,10 @@ function request(ownerId: string) {
   const ipHash = createEveGuestCredential().tokenHash;
   ips.push(ipHash);
   return {
-    ownerId,
-    operationId: crypto.randomUUID(),
-    requestHash: createEveGuestCredential().tokenHash,
     ipHash,
+    operationId: crypto.randomUUID(),
+    ownerId,
+    requestHash: createEveGuestCredential().tokenHash,
     requestsPerMinute: 100,
     requestsPerMonth: 100,
   };
@@ -151,8 +155,8 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
   expect(
     await reserveEveGuestMessage({
       ...input,
-      ownerId: second.ownerId,
       operationId: crypto.randomUUID(),
+      ownerId: second.ownerId,
     })
   ).toEqual({ status: "rate-limited" });
   expect((await findEveGuest(second.tokenHash))?.remainingMessages).toBe(10);
@@ -174,11 +178,11 @@ test("simultaneous guests share one IP admission limit", async () => {
     reserveEveGuestMessage(input),
     reserveEveGuestMessage({
       ...input,
-      ownerId: second.ownerId,
       operationId: crypto.randomUUID(),
+      ownerId: second.ownerId,
     }),
   ]);
-  expect(results.map((result) => result.status).sort()).toEqual([
+  expect(results.map((result) => result.status).toSorted()).toEqual([
     "rate-limited",
     "reserved",
   ]);
@@ -263,8 +267,8 @@ test("guest provider accounting survives expiry and replay without creating mone
     .set({ expiresAt: new Date(0) })
     .where(eq(eveGuest.ownerId, row.ownerId));
   const evidence = {
-    ownerId: row.ownerId,
     eventId: crypto.randomUUID(),
+    ownerId: row.ownerId,
     sessionId: crypto.randomUUID(),
     turnId: "turn_0",
   };
@@ -292,9 +296,9 @@ test("first admission creates one guest and reserves once across different IPs",
   owners.push(ownerId);
   const input = request(ownerId);
   const bootstrap = {
-    tokenHash: credential.tokenHash,
-    messageLimit: 2,
     expiresAt: new Date(Date.now() + 60_000),
+    messageLimit: 2,
+    tokenHash: credential.tokenHash,
   };
   const attempts = await Promise.all(
     Array.from({ length: 6 }, () => {
@@ -332,9 +336,9 @@ test("denied first admission creates no account or quota rows", async () => {
         requestsPerMinute: denial === "rate" ? 0 : 100,
       },
       {
-        tokenHash: credential.tokenHash,
-        messageLimit: denial === "balance" ? 0 : 2,
         expiresAt: new Date(Date.now() + 60_000),
+        messageLimit: denial === "balance" ? 0 : 2,
+        tokenHash: credential.tokenHash,
       }
     );
     expect(result.status).toBe(
@@ -360,9 +364,9 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
   const input = request(row.ownerId);
   await reserveEveGuestMessage(input);
   const bootstrap = {
-    tokenHash: row.tokenHash,
-    messageLimit: 50,
     expiresAt: new Date(Date.now() + 60_000),
+    messageLimit: 50,
+    tokenHash: row.tokenHash,
   };
   expect(
     (await reserveEveGuestMessage(request(row.ownerId), bootstrap)).status
@@ -387,9 +391,9 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
   const result = await reserveEveGuestMessages(
     [first, { ...first, operationId: crypto.randomUUID() }],
     {
-      tokenHash: credential.tokenHash,
-      messageLimit: 1,
       expiresAt: new Date(Date.now() + 60_000),
+      messageLimit: 1,
+      tokenHash: credential.tokenHash,
     }
   );
   expect(result).toEqual({ status: "exhausted" });
@@ -506,10 +510,10 @@ test("comparison persistence failure rolls back guest identity and every quota r
   owners.push(ownerId);
   const first = request(ownerId);
   const input = {
-    operationId: crypto.randomUUID(),
-    modelIds: ["cheap", "cheap"],
+    fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     message: "hello",
-    fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_0" },
+    modelIds: ["cheap", "cheap"],
+    operationId: crypto.randomUUID(),
   };
   const candidates = eveResponseGroupCandidates(
     input.operationId,
@@ -522,9 +526,9 @@ test("comparison persistence failure rolls back guest identity and every quota r
         operationId: candidate.operationId,
       })),
       {
-        tokenHash: credential.tokenHash,
-        messageLimit: 2,
         expiresAt: new Date(Date.now() + 60_000),
+        messageLimit: 2,
+        tokenHash: credential.tokenHash,
       },
       (tx) => reserveEveResponseGroupInTransaction(tx, ownerId, input)
     )
@@ -592,7 +596,7 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
 });
 
 test("creation claims and refunds serialize without a free native dispatch", async () => {
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < 4; index += 1) {
     const row = await guest(1);
     const input = request(row.ownerId);
     const quota = await reserveEveGuestMessage(input);

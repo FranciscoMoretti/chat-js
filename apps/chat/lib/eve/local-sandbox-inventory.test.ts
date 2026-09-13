@@ -9,15 +9,17 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import nodePath from "node:path";
 
 import { expect, test } from "vitest";
 
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
 
 test("local inventory selects exact native owners across versions and reports unknown resources", async () => {
-  const appRoot = await mkdtemp(join(tmpdir(), "eve-owner-inventory-"));
-  const directory = join(
+  const appRoot = await mkdtemp(
+    nodePath.join(tmpdir(), "eve-owner-inventory-")
+  );
+  const directory = nodePath.join(
     appRoot,
     ".eve",
     "sandbox-cache",
@@ -34,56 +36,71 @@ test("local inventory selects exact native owners across versions and reports un
       ["new-version", "session"],
       ["foreign", "session-extra"],
     ]) {
-      await mkdir(join(directory, sessionKey), { recursive: true });
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+      await mkdir(nodePath.join(directory, sessionKey), { recursive: true });
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
       await writeFile(
-        join(directory, sessionKey, "owner.json"),
+        nodePath.join(directory, sessionKey, "owner.json"),
         JSON.stringify({
-          version: 1,
           backendName: "microsandbox",
-          sessionKey,
           sessionId,
+          sessionKey,
+          version: 1,
         })
       );
     }
-    await mkdir(join(directory, "legacy"));
-    await mkdir(join(directory, "malformed"));
-    await writeFile(join(directory, "malformed", "owner.json"), "{");
-    await symlink(join(directory, "foreign"), join(directory, "link"));
+    await mkdir(nodePath.join(directory, "legacy"));
+    await mkdir(nodePath.join(directory, "malformed"));
+    await writeFile(nodePath.join(directory, "malformed", "owner.json"), "{");
+    await symlink(
+      nodePath.join(directory, "foreign"),
+      nodePath.join(directory, "link")
+    );
     const result = await readLocalEveSandboxInventory(appRoot, [
       "session",
       "session",
     ]);
     expect(result.owned).toEqual(
       ["new-version", "old-version"].map((sessionKey) => ({
+        sessionDirectory: nodePath.join(directory, sessionKey),
         sessionKey,
-        sessionDirectory: join(directory, sessionKey),
       }))
     );
     expect(result.unattributedDirectories).toEqual(
-      ["legacy", "link", "malformed"].map((name) => join(directory, name))
+      ["legacy", "link", "malformed"].map((name) =>
+        nodePath.join(directory, name)
+      )
     );
     // A valid owner record copied into another directory does not establish ownership.
     await writeFile(
-      join(directory, "legacy", "owner.json"),
-      await readFile(join(directory, "old-version", "owner.json"))
+      nodePath.join(directory, "legacy", "owner.json"),
+      await readFile(nodePath.join(directory, "old-version", "owner.json"))
     );
-    expect(
-      (await readLocalEveSandboxInventory(appRoot, ["session"]))
-        .unattributedDirectories
-    ).toContain(join(directory, "legacy"));
-    expect(
-      (await readLocalEveSandboxInventory(appRoot, ["session-extra"])).owned
-    ).toEqual([
-      { sessionKey: "foreign", sessionDirectory: join(directory, "foreign") },
+    const resolvedResult1 = await readLocalEveSandboxInventory(appRoot, [
+      "session",
+    ]);
+    expect(resolvedResult1.unattributedDirectories).toContain(
+      nodePath.join(directory, "legacy")
+    );
+    const resolvedResult2 = await readLocalEveSandboxInventory(appRoot, [
+      "session-extra",
+    ]);
+    expect(resolvedResult2.owned).toEqual([
+      {
+        sessionDirectory: nodePath.join(directory, "foreign"),
+        sessionKey: "foreign",
+      },
     ]);
   } finally {
-    await rm(appRoot, { recursive: true, force: true });
+    await rm(appRoot, { force: true, recursive: true });
   }
 });
 
 test("only canonical unrelated legacy keys are excluded; possible family resources stay unresolved", async () => {
-  const appRoot = await mkdtemp(join(tmpdir(), "eve-legacy-inventory-"));
-  const directory = join(
+  const appRoot = await mkdtemp(
+    nodePath.join(tmpdir(), "eve-legacy-inventory-")
+  );
+  const directory = nodePath.join(
     appRoot,
     ".eve",
     "sandbox-cache",
@@ -103,46 +120,51 @@ test("only canonical unrelated legacy keys are excluded; possible family resourc
   const wrongScope = foreign.replace(scope, "f".repeat(16));
   try {
     for (const key of [ownedCandidate, foreign, truncated, wrongScope]) {
-      await mkdir(join(directory, key), { recursive: true });
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+      await mkdir(nodePath.join(directory, key), { recursive: true });
     }
     const result = await readLocalEveSandboxInventory(appRoot, [target]);
     expect(result.owned).toEqual([]);
-    expect(result.unattributedDirectories.sort()).toEqual(
+    expect(result.unattributedDirectories.toSorted()).toEqual(
       [ownedCandidate, truncated, wrongScope]
-        .map((key) => join(directory, key))
-        .sort()
+        .map((key) => nodePath.join(directory, key))
+        .toSorted()
     );
     // Corrupt explicit ownership cannot be overridden with directory-name inference.
-    await writeFile(join(directory, foreign, "owner.json"), "{}");
-    expect(
-      (await readLocalEveSandboxInventory(appRoot, [target]))
-        .unattributedDirectories
-    ).toContain(join(directory, foreign));
+    await writeFile(nodePath.join(directory, foreign, "owner.json"), "{}");
+    const resolvedResult3 = await readLocalEveSandboxInventory(appRoot, [
+      target,
+    ]);
+    expect(resolvedResult3.unattributedDirectories).toContain(
+      nodePath.join(directory, foreign)
+    );
   } finally {
-    await rm(appRoot, { recursive: true, force: true });
+    await rm(appRoot, { force: true, recursive: true });
   }
 });
 
 test("other backend caches and linked provider roots prevent a complete local inventory", async () => {
-  const appRoot = await mkdtemp(join(tmpdir(), "eve-provider-inventory-"));
-  const cacheRoot = join(appRoot, ".eve", "sandbox-cache");
+  const appRoot = await mkdtemp(
+    nodePath.join(tmpdir(), "eve-provider-inventory-")
+  );
+  const cacheRoot = nodePath.join(appRoot, ".eve", "sandbox-cache");
   try {
-    const other = join(cacheRoot, "docker");
+    const other = nodePath.join(cacheRoot, "docker");
     await mkdir(other, { recursive: true });
     expect(await readLocalEveSandboxInventory(appRoot, ["session"])).toEqual({
       owned: [],
       unattributedDirectories: [other],
     });
     await rm(other, { recursive: true });
-    const outside = join(appRoot, "outside");
+    const outside = nodePath.join(appRoot, "outside");
     await mkdir(outside);
-    const linked = join(cacheRoot, "microsandbox");
+    const linked = nodePath.join(cacheRoot, "microsandbox");
     await symlink(outside, linked);
     expect(await readLocalEveSandboxInventory(appRoot, ["session"])).toEqual({
       owned: [],
       unattributedDirectories: [linked],
     });
   } finally {
-    await rm(appRoot, { recursive: true, force: true });
+    await rm(appRoot, { force: true, recursive: true });
   }
 });

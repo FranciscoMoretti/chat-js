@@ -1,6 +1,7 @@
 "use client";
 import { MoreHorizontal } from "lucide-react";
-import { memo, type ReactNode, useState } from "react";
+import { memo, useState } from "react";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { ChatMenuItems } from "@/components/chat-menu-items";
@@ -61,7 +62,7 @@ const PureSidebarChatItem = ({
       await onRename(chat.id, editTitle.trim());
       setIsEditing(false);
       toast.success("Chat renamed successfully");
-    } catch (_error) {
+    } catch {
       setEditTitle(chat.title);
       setIsEditing(false);
     }

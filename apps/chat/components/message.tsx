@@ -4,7 +4,8 @@ import { memo } from "react";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 
 import { AssistantMessage } from "./assistant-message";
-import { type BaseMessageProps, UserMessage } from "./user-message";
+import { UserMessage } from "./user-message";
+import type { BaseMessageProps } from "./user-message";
 
 const PurePreviewMessage = ({
   messageId,
@@ -17,23 +18,19 @@ const PurePreviewMessage = ({
     return null;
   }
 
-  return (
-    <>
-      {role === "user" ? (
-        <UserMessage
-          isLoading={isLoading}
-          isReadonly={isReadonly}
-          messageId={messageId}
-          parentMessageId={parentMessageId}
-        />
-      ) : (
-        <AssistantMessage
-          isLoading={isLoading}
-          isReadonly={isReadonly}
-          messageId={messageId}
-        />
-      )}
-    </>
+  return role === "user" ? (
+    <UserMessage
+      isLoading={isLoading}
+      isReadonly={isReadonly}
+      messageId={messageId}
+      parentMessageId={parentMessageId}
+    />
+  ) : (
+    <AssistantMessage
+      isLoading={isLoading}
+      isReadonly={isReadonly}
+      messageId={messageId}
+    />
   );
 };
 

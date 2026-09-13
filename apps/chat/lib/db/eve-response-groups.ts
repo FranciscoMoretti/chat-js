@@ -9,36 +9,15 @@ import { eveResponseGroupInput } from "../eve/response-group-input";
 import { db } from "./client";
 import { eveConversation, eveResponseGroup } from "./schema";
 
-/** Reserve every candidate under the same owner lock used by family deletion. */
-export async function reserveEveResponseGroup(
-  ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
-) {
-  const result = await db.transaction((tx) =>
-    reserveGroupRow(tx, ownerId, value)
-  );
-  return requireGroup(result);
-}
-
-/** Must commit with guest quota when admitting an anonymous comparison. */
-export async function reserveEveResponseGroupInTransaction(
+const reserveGroupRow = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   value: z.infer<typeof eveResponseGroupInput>
-) {
-  return requireGroup(await reserveGroupRow(tx, ownerId, value));
-}
-
-async function reserveGroupRow(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
-) {
+) => {
   const input = eveResponseGroupInput.parse(value);
   const inputHash = createHash("sha256")
     .update(JSON.stringify(input))
     .digest("hex");
-
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
   );
@@ -79,7 +58,7 @@ async function reserveGroupRow(
       .where(condition);
   }
   if (source && source.state !== "bound") {
-    return undefined;
+    return;
   }
   if (existing) {
     return existing;
@@ -91,21 +70,21 @@ async function reserveGroupRow(
   const [group] = await tx
     .insert(eveResponseGroup)
     .values({
-      ownerId,
-      operationId: input.operationId,
-      inputHash,
-      candidates,
       candidateOperationIds: candidates.map(
         (candidate) => candidate.operationId
       ),
+      candidates,
+      inputHash,
+      operationId: input.operationId,
+      ownerId,
       sourceConversationId: sourceId,
       sourceIdentityKnown: true,
     })
     .returning();
   return group;
-}
+};
 
-function requireGroup(result: Awaited<ReturnType<typeof reserveGroupRow>>) {
+const requireGroup = (result: Awaited<ReturnType<typeof reserveGroupRow>>) => {
   if (!result) {
     throw new Error("Source conversation is unavailable.");
   }
@@ -117,14 +96,35 @@ function requireGroup(result: Awaited<ReturnType<typeof reserveGroupRow>>) {
     candidates: result.candidates,
     inputHash: result.inputHash,
   };
-}
+};
 
-/** Caller holds the owner family lock; retain identities but erase request metadata. */
-export async function tombstoneEveResponseGroups(
+/** Reserve every candidate under the same owner lock used by family deletion. */
+export const reserveEveResponseGroup = async (
+  ownerId: string,
+  value: z.infer<typeof eveResponseGroupInput>
+) => {
+  const result = await db.transaction((tx) =>
+    reserveGroupRow(tx, ownerId, value)
+  );
+  return requireGroup(result);
+};
+
+/** Must commit with guest quota when admitting an anonymous comparison. */
+export const reserveEveResponseGroupInTransaction = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
-  family: Array<{ id: string; operationId: string }>
-) {
+  value: z.infer<typeof eveResponseGroupInput>
+) => requireGroup(await reserveGroupRow(tx, ownerId, value));
+
+/** Caller holds the owner family lock; retain identities but erase request metadata. */
+export const tombstoneEveResponseGroups = async (
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  family: {
+    id: string;
+    operationId: string;
+  }[]
+) => {
   const [unknown] = await tx
     .select({ id: eveResponseGroup.id })
     .from(eveResponseGroup)
@@ -147,7 +147,7 @@ export async function tombstoneEveResponseGroups(
   )}]`;
   await tx
     .update(eveResponseGroup)
-    .set({ deleted: true, inputHash: null, candidates: null })
+    .set({ candidates: null, deleted: true, inputHash: null })
     .where(
       and(
         eq(eveResponseGroup.ownerId, ownerId),
@@ -160,15 +160,18 @@ export async function tombstoneEveResponseGroups(
         )
       )
     );
-}
+};
 
 /** Clear an old rejection before retry; only a definitive result may replace it. */
-export async function recordEveResponseGroupRejection(
+export const recordEveResponseGroupRejection = async (
   ownerId: string,
   groupId: string,
   operationId: string,
-  rejection?: { error: string; code?: "project_not_found" }
-) {
+  rejection?: {
+    error: string;
+    code?: "project_not_found";
+  }
+) => {
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -197,10 +200,10 @@ export async function recordEveResponseGroupRejection(
     );
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
-}
+};
 
 /** Owner-only ordered bindings; transcript content remains in native sessions. */
-export async function getEveResponseGroup(ownerId: string, id: string) {
+export const getEveResponseGroup = async (ownerId: string, id: string) => {
   const [group] = await db
     .select()
     .from(eveResponseGroup)
@@ -212,7 +215,7 @@ export async function getEveResponseGroup(ownerId: string, id: string) {
       )
     );
   if (!group?.candidates) {
-    return undefined;
+    return;
   }
   const conversations = await db
     .select()
@@ -228,14 +231,13 @@ export async function getEveResponseGroup(ownerId: string, id: string) {
       (row) => row.state === "deleting" || row.state === "deleted"
     )
   ) {
-    return undefined;
+    return;
   }
   return eveResponseGroupResult.parse({
-    id: group.id,
     candidates: group.candidates.map((candidate) => {
       const identity = {
-        operationId: candidate.operationId,
         modelId: candidate.modelId,
+        operationId: candidate.operationId,
       };
       const row = conversations.find(
         (conversation) => conversation.operationId === candidate.operationId
@@ -243,9 +245,9 @@ export async function getEveResponseGroup(ownerId: string, id: string) {
       if (row?.state === "bound" && row.sessionId) {
         return {
           ...identity,
-          state: "bound",
           conversationId: row.id,
           sessionId: row.sessionId,
+          state: "bound",
         };
       }
       if (row) {
@@ -255,13 +257,14 @@ export async function getEveResponseGroup(ownerId: string, id: string) {
         ? { ...identity, state: "rejected", ...candidate.rejection }
         : { ...identity, state: "waiting" };
     }),
+    id: group.id,
   });
-}
+};
 
-export async function getEveResponseGroupForConversation(
+export const getEveResponseGroupForConversation = async (
   ownerId: string,
   conversationId: string
-) {
+) => {
   const [conversation] = await db
     .select({ operationId: eveConversation.operationId })
     .from(eveConversation)
@@ -273,7 +276,7 @@ export async function getEveResponseGroupForConversation(
       )
     );
   if (!conversation) {
-    return undefined;
+    return;
   }
   const [group] = await db
     .select({ id: eveResponseGroup.id })
@@ -286,4 +289,4 @@ export async function getEveResponseGroupForConversation(
       )
     );
   return group ? await getEveResponseGroup(ownerId, group.id) : undefined;
-}
+};

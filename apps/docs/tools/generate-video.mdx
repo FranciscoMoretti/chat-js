@@ -1,0 +1,39 @@
+---
+title: Generate Video
+description: Install video generation using your selected gateway and storage
+---
+
+## Select during creation
+
+```bash
+npx @chat-js/cli@latest create my-app --yes --video-generation-tool generate-video
+```
+
+Choose the built-in gateway implementation or an external registry item. The built-in tool needs a [gateway](../gateways/overview) supporting video models, a configured `ai.tools.video.default`, and durable [file storage](../storage).
+
+## Installation
+
+In a ChatJS app with registry-based media tools:
+
+```bash
+npx @chat-js/cli@latest add generate-video
+```
+
+Enable `ai.tools.video.enabled` and configure its default model in `chat.config.ts`. You receive `tools/chatjs/generate-video/tool.ts`, `renderer.tsx`, and `chatjs.json`. Sync generates registrations and credential requirements. Fresh apps without video generation receive neither the built-in tool nor its renderer.
+
+## Behavior
+
+The built-in tool accepts a prompt, optional aspect ratio, and optional duration. It uploads the result through Files SDK and returns `{ videoUrl, prompt }`. The renderer shows progress, the video player, or a failure message.
+
+Request context supplies the selected model and optional cost accumulator. The tool retains the existing fixed estimate of 50 cents per successful generation. This estimate is not a provider invoice. See [Video Generation](../features/video-generation).
+
+## External implementations
+
+```bash
+npx @chat-js/cli@latest create my-app --yes \
+  --video-generation-tool https://example.com/r/video-tool.json
+```
+
+Declare `slot: "generateVideo"` in registry metadata and the installed descriptor. Export a standard AI SDK tool with your own schemas and optional renderer. Declare provider credentials in `envRequirements` so the installer and app ask for the selected variables. External tools can use their own provider without a gateway video default. Only one item can occupy this selection.
+
+See [Authoring Tools](./authoring) for the shared request context and cost reporting.

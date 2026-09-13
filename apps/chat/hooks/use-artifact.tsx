@@ -13,14 +13,14 @@ import type { UIArtifact } from "@/components/artifact-panel";
 import type { ArtifactMetadata } from "@/components/create-artifact";
 
 const initialArtifactData: UIArtifact = {
-  documentId: "init",
   content: "",
+  date: undefined,
+  documentId: "init",
+  isVisible: false,
   kind: "text",
-  title: "",
   messageId: "",
   status: "idle",
-  isVisible: false,
-  date: undefined,
+  title: "",
 };
 
 type Selector<T> = (state: UIArtifact) => T;
@@ -45,8 +45,8 @@ const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
 
-export function ArtifactProvider({ children }: { children: ReactNode }) {
-  const [artifact, setArtifactState] =
+export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
+  const [artifactState, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
   const [metadataStore, setMetadataStore] = useState<MetadataStore>({});
 
@@ -77,12 +77,12 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   const contextValue = useMemo(
     () => ({
-      artifact,
-      setArtifact,
+      artifact: artifactState,
       metadata: metadataStore,
+      setArtifact,
       setMetadata,
     }),
-    [artifact, setArtifact, metadataStore, setMetadata]
+    [artifactState, setArtifact, metadataStore, setMetadata]
   );
 
   return (
@@ -90,25 +90,27 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
       {children}
     </ArtifactContext.Provider>
   );
-}
+};
 
-function useArtifactContext() {
+const useArtifactContext = () => {
   const context = useContext(ArtifactContext);
   if (!context) {
     throw new Error("Artifact hooks must be used within ArtifactProvider");
   }
   return context;
-}
+};
 
-export function useArtifactSelector<Selected>(selector: Selector<Selected>) {
+export const useArtifactSelector = <Selected,>(
+  selector: Selector<Selected>
+) => {
   const { artifact } = useArtifactContext();
 
   const selectedValue = useMemo(() => selector(artifact), [artifact, selector]);
 
   return selectedValue;
-}
+};
 
-export function useArtifact() {
+export const useArtifact = () => {
   const {
     artifact,
     setArtifact,
@@ -149,12 +151,12 @@ export function useArtifact() {
   return useMemo(
     () => ({
       artifact,
-      setArtifact,
-      resetArtifact,
       closeArtifact,
       metadata,
+      resetArtifact,
+      setArtifact,
       setMetadata,
     }),
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
-}
+};

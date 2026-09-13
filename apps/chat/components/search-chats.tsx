@@ -1,7 +1,7 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -9,24 +9,23 @@ import { SearchChatsDialog } from "./search-chats-dialog";
 import { SidebarMenuButton } from "./ui/sidebar";
 
 // Helper function to get platform-specific shortcut text
-function getSearchShortcutText() {
+const getSearchShortcutText = () => {
   if (typeof window === "undefined") {
     return "Ctrl+K";
   }
 
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
   return isMac ? "Cmd+K" : "Ctrl+K";
-}
+};
 
-export function SearchChatsButton() {
+export const SearchChatsButton = () => {
   const [open, setOpen] = useState(false);
   const { setOpenMobile } = useSidebar();
-  const [shortcutText, setShortcutText] = useState("Ctrl+K");
-
-  // Update shortcut text on mount
-  useEffect(() => {
-    setShortcutText(getSearchShortcutText());
-  }, []);
+  const shortcutText = useSyncExternalStore(
+    () => () => null,
+    getSearchShortcutText,
+    () => "Ctrl+K"
+  );
 
   // Global keyboard shortcut
   useEffect(() => {
@@ -64,4 +63,4 @@ export function SearchChatsButton() {
       )}
     </>
   );
-}
+};

@@ -1,3 +1,7 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -38,14 +42,14 @@ import type { EveCopyPlan } from "../lib/eve/copy-journal-contract";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const invalidSeedError = /Too small|byte limit/;
+const invalidSeedError = /Too small|byte limit/u;
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
 await db.insert(user).values(
   owners.map((id) => ({
-    id,
     email: `${id}@test.invalid`,
+    id,
     name: "Copy journal fixture",
   }))
 );
@@ -79,31 +83,31 @@ async function fixture() {
   const documentId = crypto.randomUUID();
   const revisionId = crypto.randomUUID();
   await db.insert(eveConversation).values({
-    id: sourceId,
-    ownerId: sourceOwnerId,
-    operationId: crypto.randomUUID(),
     firstMessage: "Shared",
+    id: sourceId,
+    operationId: crypto.randomUUID(),
+    ownerId: sourceOwnerId,
+    sessionId: sourceSessionId,
     state: "bound",
     visibility: "public",
-    sessionId: sourceSessionId,
   });
   await db
     .insert(eveStoredFile)
     .values({ key: sourceKey, ownerId: sourceOwnerId });
   await db.insert(eveFileReference).values({
+    conversationId: sourceId,
     key: sourceKey,
     ownerId: sourceOwnerId,
-    conversationId: sourceId,
   });
   await db.insert(eveDocumentRevision).values({
-    id: sourceRevisionId,
-    documentId: sourceDocumentId,
-    conversationId: sourceId,
-    ownerId: sourceOwnerId,
-    operationId: "published",
-    title: "Source",
     content: "Shared revision",
+    conversationId: sourceId,
+    documentId: sourceDocumentId,
+    id: sourceRevisionId,
     kind: "text",
+    operationId: "published",
+    ownerId: sourceOwnerId,
+    title: "Source",
   });
   await db.insert(eveDocumentHead).values({
     conversationId: sourceId,
@@ -113,6 +117,31 @@ async function fixture() {
   });
   const plan: EveCopyPlan = {
     documentCheckpoints: [{ messageIndex: 0, heads: [] }],
+    documents: [
+      {
+        documentId,
+        headRevisionId: revisionId,
+        revisions: [
+          {
+            id: revisionId,
+            parentRevisionId: null,
+            title: "Copied",
+            content: `Image: /api/files/content?key=${targetKey}`,
+            kind: "text",
+            createdAt: new Date(0).toISOString(),
+          },
+        ],
+      },
+    ],
+    files: [
+      {
+        key: targetKey,
+        source: { kind: "stored", key: sourceKey },
+        sha256,
+        size: bytes.length,
+        mediaType: "image/png",
+      },
+    ],
     seed: {
       attachments: "channel",
       messages: [
@@ -133,41 +162,16 @@ async function fixture() {
     sourceHeads: [
       { documentId: sourceDocumentId, revisionId: sourceRevisionId },
     ],
-    files: [
-      {
-        key: targetKey,
-        source: { kind: "stored", key: sourceKey },
-        sha256,
-        size: bytes.length,
-        mediaType: "image/png",
-      },
-    ],
-    documents: [
-      {
-        documentId,
-        headRevisionId: revisionId,
-        revisions: [
-          {
-            id: revisionId,
-            parentRevisionId: null,
-            title: "Copied",
-            content: `Image: /api/files/content?key=${targetKey}`,
-            kind: "text",
-            createdAt: new Date(0).toISOString(),
-          },
-        ],
-      },
-    ],
   };
   const input = {
-    operationId: crypto.randomUUID(),
-    sourceConversationId: sourceId,
-    sourceSessionId,
-    sourceOwnerId,
-    projectionHash: sha256,
-    title: "Saved answer",
     modelId: "google/gemini-2.5-flash-lite",
+    operationId: crypto.randomUUID(),
     plan,
+    projectionHash: sha256,
+    sourceConversationId: sourceId,
+    sourceOwnerId,
+    sourceSessionId,
+    title: "Saved answer",
   };
   const saved = await reserveEveCopyOperation(ownerId, input);
   const storage = {
@@ -179,16 +183,16 @@ async function fixture() {
     ),
   };
   return {
+    documentId,
     input,
+    revisionId,
     saved,
+    sourceDocumentId,
+    sourceId,
+    sourceKey,
+    sourceRevisionId,
     storage,
     targetKey,
-    sourceKey,
-    sourceId,
-    sourceDocumentId,
-    sourceRevisionId,
-    documentId,
-    revisionId,
   };
 }
 async function prepare(f: Awaited<ReturnType<typeof fixture>>) {
@@ -220,7 +224,7 @@ test("reserves one immutable root and destination resources before writes, rejec
     .select()
     .from(eveFileReference)
     .where(eq(eveFileReference.conversationId, f.saved.conversation.id));
-  expect(reference).toMatchObject({ ownerId, key: f.targetKey });
+  expect(reference).toMatchObject({ key: f.targetKey, ownerId });
   await expect(
     reserveEveCopyOperation(ownerId, {
       ...f.input,
@@ -246,7 +250,7 @@ test("reserves one immutable root and destination resources before writes, rejec
 
 test("cannot accept or expose a native seed before file and document receipts commit", async () => {
   const f = await fixture();
-  const id = f.saved.conversation.id;
+  const { id } = f.saved.conversation;
   await expect(acceptEveCopy(ownerId, id)).rejects.toThrow("documents");
   await expect(resolveAcceptedEveCopySeed(ownerId, id)).rejects.toThrow();
   const create = vi.fn(() => Promise.resolve("not allowed"));
@@ -307,7 +311,7 @@ test("accepted copies recover after source revocation and a lost native reply, t
   await acceptEveCopy(ownerId, f.saved.conversation.id);
   await db
     .update(eveConversation)
-    .set({ visibility: "private", state: "deleting" })
+    .set({ state: "deleting", visibility: "private" })
     .where(eq(eveConversation.id, f.sourceId));
   const nativeId = crypto.randomUUID();
   const operations: string[] = [];
@@ -387,15 +391,15 @@ test("revocation before acceptance prevents dispatch and permits a never-dispatc
     .where(eq(eveConversation.id, f.saved.conversation.id));
   expect(tombstone).toMatchObject({
     creationKind: "copy",
-    state: "deleted",
     firstMessage: "",
+    state: "deleted",
   });
   await expect(reserveEveCopyOperation(ownerId, f.input)).rejects.toThrow();
 });
 
 test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a copy", async () => {
   const f = await fixture();
-  const id = f.saved.conversation.id;
+  const { id } = f.saved.conversation;
   await expect(
     writeEveCopyFile(sourceOwnerId, id, f.targetKey, f.storage)
   ).rejects.toThrow("not found");
@@ -418,13 +422,13 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
 test("invalid initial native seeds never reserve resources or become accepted", async () => {
   for (const seed of [
     { attachments: "channel", messages: [] },
-    { attachments: "channel", messages: [{ role: "user", parts: [] }] },
+    { attachments: "channel", messages: [{ parts: [], role: "user" }] },
     {
       attachments: "channel",
       messages: [
         {
-          role: "user",
           parts: [{ type: "text", text: "x".repeat(8 * 1024 * 1024) }],
+          role: "user",
         },
       ],
     },
@@ -432,20 +436,20 @@ test("invalid initial native seeds never reserve resources or become accepted", 
     const operationId = crypto.randomUUID();
     await expect(
       reserveEveCopyOperation(ownerId, {
-        operationId,
-        sourceConversationId: crypto.randomUUID(),
-        sourceSessionId: crypto.randomUUID(),
-        sourceOwnerId,
-        projectionHash: sha256,
-        title: "Invalid seed",
         modelId: "google/gemini-2.5-flash-lite",
+        operationId,
         plan: {
-          seed,
           documentCheckpoints: [{ messageIndex: 0, heads: [] }],
-          sourceHeads: [],
-          files: [],
           documents: [],
+          files: [],
+          seed,
+          sourceHeads: [],
         },
+        projectionHash: sha256,
+        sourceConversationId: crypto.randomUUID(),
+        sourceOwnerId,
+        sourceSessionId: crypto.randomUUID(),
+        title: "Invalid seed",
       })
     ).rejects.toThrow(invalidSeedError);
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
@@ -457,15 +461,15 @@ test("document changes before acceptance leave the copy rejectable", async () =>
   await prepare(f);
   const nextRevision = crypto.randomUUID();
   await db.insert(eveDocumentRevision).values({
-    id: nextRevision,
-    documentId: f.sourceDocumentId,
+    content: "New published revision",
     conversationId: f.sourceId,
+    documentId: f.sourceDocumentId,
+    id: nextRevision,
+    kind: "text",
+    operationId: "changed",
     ownerId: sourceOwnerId,
     parentRevisionId: f.sourceRevisionId,
-    operationId: "changed",
     title: "Changed",
-    content: "New published revision",
-    kind: "text",
   });
   await db
     .update(eveDocumentHead)
@@ -483,10 +487,10 @@ test("concurrent accepted retries dispatch once and return the same binding", as
   const f = await fixture();
   await prepare(f);
   await acceptEveCopy(ownerId, f.saved.conversation.id);
-  const started = Promise.withResolvers<void>();
+  const started = Promise.withResolvers<undefined>();
   const finish = Promise.withResolvers<string>();
   const create = vi.fn(() => {
-    started.resolve();
+    started.resolve(undefined);
     return finish.promise;
   });
   const first = dispatchEveCopy(ownerId, f.saved.conversation.id, create);
@@ -519,7 +523,7 @@ test("commits an empty imported document boundary together with copied resources
         )
       )
   ).toEqual([
-    { conversationId: f.saved.conversation.id, ownerId, messageIndex: 0 },
+    { conversationId: f.saved.conversation.id, messageIndex: 0, ownerId },
   ]);
   expect(
     await db

@@ -9,7 +9,7 @@ import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveSharedMessages } from "./eve-shared-messages";
 
-export async function EveSharedPage({ id }: { id: string }) {
+export const EveSharedPage = async ({ id }: { id: string }) => {
   if (!z.uuid().safeParse(id).success) {
     notFound();
   }
@@ -42,4 +42,4 @@ export async function EveSharedPage({ id }: { id: string }) {
       </section>
     </EveArtifactLayout>
   );
-}
+};

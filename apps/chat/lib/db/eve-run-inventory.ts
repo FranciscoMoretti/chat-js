@@ -4,39 +4,21 @@ import { z } from "zod";
 import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
 
 const runRow = z.object({
-  id: z.string(),
-  workflowName: z.string().min(1),
-  status: z.enum(["pending", "running", "completed", "failed", "cancelled"]),
-  parentId: z.string().nullable(),
-  eveParentId: z.string().nullable(),
   collectorId: z.string().nullable(),
+  eveParentId: z.string().nullable(),
+  id: z.string(),
+  parentId: z.string().nullable(),
+  status: z.enum(["pending", "running", "completed", "failed", "cancelled"]),
+  workflowName: z.string().min(1),
 });
 const inventoryLimit = 10_000;
 
-/**
- * Read-only adapter for @workflow/world-postgres 5.0.0-beta.40.
- * The caller must authorize the session before using this internal primitive.
- * This snapshot inventories known run/stream relationships, not queue, sandbox,
- * or blob coverage. It is not a retirement barrier or a purge receipt.
- */
-export async function readEvePostgresRunInventory(
-  connection: Sql,
-  sessionId: string
-) {
-  return await connection.begin(
-    "isolation level repeatable read read only",
-    async (query) => {
-      return await readEvePostgresRunInventoryInTransaction(query, sessionId);
-    }
-  );
-}
-
 /** Caller controls isolation and holds any write fences needed by this read. */
-export async function readEvePostgresRunInventoryInTransaction(
+export const readEvePostgresRunInventoryInTransaction = async (
   query: TransactionSql,
   sessionId: string,
   additionalRunIds: string[] = []
-) {
+) => {
   const seeds = [...new Set([sessionId, ...additionalRunIds])];
   const runs = z.array(runRow).parse(
     await query`
@@ -81,7 +63,7 @@ export async function readEvePostgresRunInventoryInTransaction(
         )
       ),
     ]),
-  ].sort();
+  ].toSorted();
   const streams = z.array(z.object({ id: z.string() })).parse(
     await query`
     select distinct stream_id as id from workflow.workflow_stream_chunks
@@ -108,13 +90,29 @@ export async function readEvePostgresRunInventoryInTransaction(
   `
   );
   return {
-    runs,
-    sandboxCoverage: classifyEveSandboxRuns(runs),
-    streamIds: streams.map((stream) => stream.id),
     activeRunIds: runs
       .filter((run) => run.status === "running" || run.status === "pending")
       .map((run) => run.id),
-    missingRunIds,
     ambiguousStreamIds: ambiguous.map((stream) => stream.id),
+    missingRunIds,
+    runs,
+    sandboxCoverage: classifyEveSandboxRuns(runs),
+    streamIds: streams.map((stream) => stream.id),
   };
-}
+};
+
+/**
+ * Read-only adapter for @workflow/world-postgres 5.0.0-beta.40.
+ * The caller must authorize the session before using this internal primitive.
+ * This snapshot inventories known run/stream relationships, not queue, sandbox,
+ * or blob coverage. It is not a retirement barrier or a purge receipt.
+ */
+export const readEvePostgresRunInventory = async (
+  connection: Sql,
+  sessionId: string
+) =>
+  await connection.begin(
+    "isolation level repeatable read read only",
+    async (query) =>
+      await readEvePostgresRunInventoryInTransaction(query, sessionId)
+  );

@@ -11,7 +11,15 @@ import {
   XIcon,
 } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Streamdown } from "streamdown";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 import "streamdown/styles.css";
 
-const plugins = { code, mermaid, math };
+const plugins = { code, math, mermaid };
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -150,31 +158,37 @@ export const MessageBranch = ({
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
   const [branches, setBranches] = useState<ReactElement[]>([]);
 
-  const handleBranchChange = (newBranch: number) => {
-    setCurrentBranch(newBranch);
-    onBranchChange?.(newBranch);
-  };
+  const handleBranchChange = useCallback(
+    (newBranch: number) => {
+      setCurrentBranch(newBranch);
+      onBranchChange?.(newBranch);
+    },
+    [onBranchChange]
+  );
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     const newBranch =
       currentBranch > 0 ? currentBranch - 1 : branches.length - 1;
     handleBranchChange(newBranch);
-  };
+  }, [branches.length, currentBranch, handleBranchChange]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     const newBranch =
       currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
     handleBranchChange(newBranch);
-  };
+  }, [branches.length, currentBranch, handleBranchChange]);
 
-  const contextValue: MessageBranchContextType = {
-    currentBranch,
-    totalBranches: branches.length,
-    goToPrevious,
-    goToNext,
-    branches,
-    setBranches,
-  };
+  const contextValue = useMemo<MessageBranchContextType>(
+    () => ({
+      branches,
+      currentBranch,
+      goToNext,
+      goToPrevious,
+      setBranches,
+      totalBranches: branches.length,
+    }),
+    [branches, currentBranch, goToNext, goToPrevious]
+  );
 
   return (
     <MessageBranchContext.Provider value={contextValue}>
@@ -221,8 +235,8 @@ export type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const MessageBranchSelector = ({
-  className,
-  from,
+  className: _className,
+  from: _from,
   ...props
 }: MessageBranchSelectorProps) => {
   const { totalBranches } = useMessageBranch();
@@ -268,7 +282,7 @@ export type MessageBranchNextProps = ComponentProps<typeof Button>;
 
 export const MessageBranchNext = ({
   children,
-  className,
+  className: _className,
   ...props
 }: MessageBranchNextProps) => {
   const { goToNext, totalBranches } = useMessageBranch();
@@ -333,12 +347,12 @@ export type MessageAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   onRemove?: () => void;
 };
 
-export function MessageAttachment({
+export const MessageAttachment = ({
   data,
   className,
   onRemove,
   ...props
-}: MessageAttachmentProps) {
+}: MessageAttachmentProps) => {
   const filename = data.filename || "";
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
@@ -355,6 +369,7 @@ export function MessageAttachment({
     >
       {isImage ? (
         <>
+          {/* oxlint-disable-next-line next/no-img-element -- Attachment URLs may be blob or data URLs. */}
           <img
             alt={filename || "attachment"}
             className="size-full object-cover"
@@ -409,15 +424,15 @@ export function MessageAttachment({
       )}
     </div>
   );
-}
+};
 
 export type MessageAttachmentsProps = ComponentProps<"div">;
 
-export function MessageAttachments({
+export const MessageAttachments = ({
   children,
   className,
   ...props
-}: MessageAttachmentsProps) {
+}: MessageAttachmentsProps) => {
   if (!children) {
     return null;
   }
@@ -433,7 +448,7 @@ export function MessageAttachments({
       {children}
     </div>
   );
-}
+};
 
 export type MessageToolbarProps = ComponentProps<"div">;
 

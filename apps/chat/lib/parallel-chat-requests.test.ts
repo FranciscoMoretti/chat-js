@@ -16,10 +16,10 @@ import {
 } from "./parallel-chat-requests";
 
 class ControlledTransport implements ChatTransport<ChatMessage> {
-  readonly requests: Array<{
+  readonly requests: {
     body: object | undefined;
     controller: ReadableStreamDefaultController<UIMessageChunk>;
-  }> = [];
+  }[] = [];
 
   reconnectToStream() {
     return Promise.resolve(null);
@@ -55,7 +55,7 @@ const message: ChatMessage = {
     parentMessageId: null,
     selectedModel: gatewayModelDefaults.workflows.chat,
   },
-  parts: [{ type: "text", text: "Compare both approaches" }],
+  parts: [{ text: "Compare both approaches", type: "text" }],
   role: "user",
 };
 
@@ -83,13 +83,45 @@ afterEach(() => {
 });
 
 describe("runParallelThreadRequestSpecs", () => {
+  it("fails a blocked secondary run when the primary ends without persistence", async () => {
+    const transport = new ControlledTransport();
+    const chat = new Thread<ChatMessage>({
+      transport: createGatedChatTransport(transport),
+    });
+    const result = runParallelThreadRequestSpecs({
+      chatId: "unconfirmed-chat",
+      isAuthenticated: true,
+      message,
+      onRunStarted: vi.fn(),
+      projectId: null,
+      requestSpecs,
+      startRun: chat.startRun,
+    });
+
+    await vi.waitFor(() => {
+      assert.equal(chat.getSnapshot().runs.length, 2);
+    });
+    transport.finish(0, "primary-without-ack");
+
+    assert.deepEqual(await result, [requestSpecs[1]]);
+    assert.equal(transport.requests.length, 1);
+    assert.equal(
+      acknowledgeParallelUserMessagePersistence({
+        chatId: "unconfirmed-chat",
+        parallelGroupId: "response-group-1",
+        userMessageId: message.id,
+      }),
+      false
+    );
+  });
+
   it("creates every run immediately and gates only secondary transport", async () => {
     const underlyingTransport = new ControlledTransport();
-    const startedRuns: Array<{
+    const startedRuns: {
       parallelGroupId: string;
       parallelIndex: number;
       runId: string;
-    }> = [];
+    }[] = [];
     const chat = new Thread<ChatMessage>({
       transport: createGatedChatTransport(underlyingTransport),
     });

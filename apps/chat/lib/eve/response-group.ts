@@ -14,25 +14,28 @@ import { eveResponseGroupInput } from "./response-group-input";
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 
 /** Sequential root reservation followed by independent forks; retries reuse all identities. */
-export async function createEveResponseGroup(
+export const createEveResponseGroup = async (
   ownerId: string,
   value: z.infer<typeof eveResponseGroupInput>,
   guestAdmission?: {
-    reservations: Array<{ operationId: string; reservationId: string }>;
+    reservations: {
+      operationId: string;
+      reservationId: string;
+    }[];
     group: Pick<
       Awaited<ReturnType<typeof reserveEveResponseGroup>>,
       "id" | "candidates"
     >;
   }
-) {
+) => {
   const input = eveResponseGroupInput.parse(value);
   const group =
     guestAdmission?.group ?? (await reserveEveResponseGroup(ownerId, input));
   const guestReservations = guestAdmission?.reservations;
-  async function dispatch(
+  const dispatch = async (
     candidate: (typeof group.candidates)[number],
     fork = input.fork
-  ): Promise<CandidateResult> {
+  ): Promise<CandidateResult> => {
     try {
       await recordEveResponseGroupRejection(
         ownerId,
@@ -45,9 +48,9 @@ export async function createEveResponseGroup(
       const response = await createEveConversationOperation(
         ownerId,
         {
-          operationId: candidate.operationId,
-          modelId: candidate.modelId,
           message: input.message,
+          modelId: candidate.modelId,
+          operationId: candidate.operationId,
           selectedTool: input.selectedTool,
           ...(fork ? { fork } : { projectId: input.projectId }),
         },
@@ -65,9 +68,9 @@ export async function createEveResponseGroup(
       if (!response.ok) {
         const failure = z
           .object({
+            code: z.string().optional(),
             creationRejected: z.literal(true),
             error: z.string(),
-            code: z.string().optional(),
           })
           .safeParse(await response.json().catch(() => null));
         if (
@@ -75,7 +78,10 @@ export async function createEveResponseGroup(
           (response.status === 400 || response.status === 404) &&
           failure.success
         ) {
-          const rejection: { error: string; code?: "project_not_found" } = {
+          const rejection: {
+            error: string;
+            code?: "project_not_found";
+          } = {
             error: failure.data.error,
             ...(failure.data.code === "project_not_found"
               ? { code: "project_not_found" }
@@ -88,8 +94,8 @@ export async function createEveResponseGroup(
             rejection
           );
           return {
-            operationId: candidate.operationId,
             modelId: candidate.modelId,
+            operationId: candidate.operationId,
             state: "rejected",
             ...rejection,
           };
@@ -99,21 +105,21 @@ export async function createEveResponseGroup(
       const binding = conversationBinding.parse(await response.json());
       return {
         ...candidate,
-        state: "bound",
         conversationId: binding.id,
         sessionId: binding.sessionId,
+        state: "bound",
       };
     } catch {
       // Network loss and native uncertainty are retried with this exact identity.
       return { ...candidate, state: "unresolved" };
     }
-  }
+  };
   if (input.fork) {
     return {
-      id: group.id,
       candidates: await Promise.all(
         group.candidates.map((candidate) => dispatch(candidate))
       ),
+      id: group.id,
     };
   }
   const [first, ...rest] = group.candidates;
@@ -144,7 +150,6 @@ export async function createEveResponseGroup(
       );
     }
     return {
-      id: group.id,
       candidates: [
         primary,
         ...rest.map(
@@ -152,15 +157,16 @@ export async function createEveResponseGroup(
             ({ ...candidate, state: "waiting" }) satisfies CandidateResult
         ),
       ],
+      id: group.id,
     };
   }
   const candidates = await Promise.all(
     rest.map((candidate) =>
       dispatch(candidate, {
-        conversationId: primary.conversationId,
         beforeTurnId: "turn_0",
+        conversationId: primary.conversationId,
       })
     )
   );
-  return { id: group.id, candidates: [primary, ...candidates] };
-}
+  return { candidates: [primary, ...candidates], id: group.id };
+};

@@ -10,11 +10,11 @@ import authClient from "@/lib/auth-client";
 
 import { Button } from "./ui/button";
 
-export function ElectronBrowserSignIn({
+export const ElectronBrowserSignIn = ({
   buttonLabel = "Continue with browser",
 }: {
   buttonLabel?: string;
-}) {
+}) => {
   const [opened, setOpened] = useState(false);
 
   return (
@@ -26,15 +26,19 @@ export function ElectronBrowserSignIn({
       <Button
         className="w-full"
         onClick={() => {
-          const requestAuth = window.requestAuth;
+          const { requestAuth } = window;
           if (typeof requestAuth !== "function") {
             return;
           }
-          Promise.resolve()
-            .then(() => requestAuth())
-            .catch((error) => {
+          const launchBrowserSignIn = async () => {
+            try {
+              await Promise.resolve();
+              await requestAuth();
+            } catch (error) {
               console.error("Failed to launch browser sign-in", error);
-            });
+            }
+          };
+          void launchBrowserSignIn();
           window.setTimeout(() => setOpened(true), 300);
         }}
         type="button"
@@ -52,15 +56,15 @@ export function ElectronBrowserSignIn({
       ) : null}
     </div>
   );
-}
+};
 
-export function ElectronTransferUser({
+export const ElectronTransferUser = ({
   query,
   session,
 }: {
   query: Record<string, string>;
   session: Session;
-}) {
+}) => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const hasStartedTransferRef = useRef(false);
@@ -120,4 +124,4 @@ export function ElectronTransferUser({
       </Button>
     </div>
   );
-}
+};

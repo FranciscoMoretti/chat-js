@@ -1,3 +1,6 @@
+/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
+/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
+/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -39,9 +42,9 @@ function runId() {
 function envelope(body: unknown) {
   return {
     attempt: 1,
-    messageId: `msg_${crypto.randomUUID()}`,
-    id: "fixture",
     data: Buffer.from(JSON.stringify(body)).toString("base64"),
+    id: "fixture",
+    messageId: `msg_${crypto.randomUUID()}`,
   };
 }
 async function job(body: unknown) {
@@ -111,16 +114,16 @@ test("queue purge removes queued descendants and retains their IDs across retrie
     runInput: { attributes: { $parentRunId: child } },
   });
   const unrelated = await job({ runId: runId() });
-  const input = { sessionId: root, runIds: [root], taskIdentifier: task };
+  const input = { runIds: [root], sessionId: root, taskIdentifier: task };
   await expect(purgeEvePostgresQueue(query, input)).rejects.toThrow(
     "Fence all runs"
   );
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   const result = await purgeEvePostgresQueue(query, input);
   expect(result.removedJobIds).toEqual(
-    [rootJob, childJob, grandchildJob].sort()
+    [rootJob, childJob, grandchildJob].toSorted()
   );
-  expect(result.runIds).toEqual([root, child, grandchild].sort());
+  expect(result.runIds).toEqual([root, child, grandchild].toSorted());
   expect(
     await query`select id from graphile_worker._private_jobs where id::text in ${query([rootJob, childJob, grandchildJob])}`
   ).toEqual([]);
@@ -141,7 +144,7 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
   const id = await job({ runId: root });
   await query`update graphile_worker._private_jobs set locked_at = now() - interval '5 hours', locked_by = 'fixture-only' where id::text = ${id}`;
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
-  const input = { sessionId: root, runIds: [root], taskIdentifier: task };
+  const input = { runIds: [root], sessionId: root, taskIdentifier: task };
   await expect(purgeEvePostgresQueue(query, input)).rejects.toThrow(
     "active queue workers"
   );

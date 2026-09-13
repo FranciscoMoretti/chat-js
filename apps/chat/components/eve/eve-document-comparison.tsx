@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/react";
 
 const DiffView = dynamic(
+  // next/dynamic requires a promise projection for named exports.
+  // oxlint-disable-next-line promise/prefer-await-to-then
   () => import("@/components/diffview").then((module) => module.DiffView),
   {
-    ssr: false,
     loading: () => <DocumentSkeleton artifactKind="text" />,
+    ssr: false,
   }
 );
 
-export function EveDocumentComparison({
+export const EveDocumentComparison = ({
   conversationId,
   documentId,
   previousRevisionId,
@@ -27,7 +29,7 @@ export function EveDocumentComparison({
   previousRevisionId: string;
   content: string;
   version: number;
-}) {
+}) => {
   const trpc = useTRPC();
   const previous = useQuery(
     trpc.eve.document.queryOptions({
@@ -61,4 +63,4 @@ export function EveDocumentComparison({
       )}
     </section>
   );
-}
+};

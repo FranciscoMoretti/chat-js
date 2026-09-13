@@ -23,11 +23,11 @@ interface DeleteProjectDialogProps {
   showDeleteDialog: boolean;
 }
 
-export function DeleteProjectDialog({
+export const DeleteProjectDialog = ({
   deleteId,
   showDeleteDialog,
   setShowDeleteDialog,
-}: DeleteProjectDialogProps) {
+}: DeleteProjectDialogProps) => {
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
@@ -35,15 +35,17 @@ export function DeleteProjectDialog({
 
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
+      onError: () => {
+        toast.error("Failed to delete project");
+      },
       onSuccess: async () => {
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: trpc.project.pathKey() }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.project.list.queryKey(),
+          }),
           queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
         ]);
         toast.success("Project deleted");
-      },
-      onError: () => {
-        toast.error("Failed to delete project");
       },
     })
   );
@@ -55,7 +57,8 @@ export function DeleteProjectDialog({
     try {
       await deleteMutation.mutateAsync({ id: deleteId });
     } catch {
-      return; // Keep the dialog and route available for retry.
+      // Keep the dialog and route available for retry.
+      return;
     }
 
     setShowDeleteDialog(false);
@@ -107,4 +110,4 @@ export function DeleteProjectDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

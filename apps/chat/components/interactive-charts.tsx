@@ -13,7 +13,11 @@ const ChartSkeleton = () => (
 );
 
 export default dynamic(
-  () => import("./interactive-chart-impl").then((m) => m.default),
+  async () => {
+    const { default: InteractiveChart } =
+      await import("./interactive-chart-impl");
+    return InteractiveChart;
+  },
   {
     loading: () => <ChartSkeleton />,
     ssr: false,

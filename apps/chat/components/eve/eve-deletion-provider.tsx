@@ -2,7 +2,8 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import type { ReactNode } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { useCurrentChatRoute } from "@/lib/chat-route";
@@ -15,22 +16,30 @@ const DeletionContext = createContext<
   ((conversation: Conversation) => void) | null
 >(null);
 
-export function useEveDeletion() {
+export const useEveDeletion = () => {
   const open = useContext(DeletionContext);
   if (!open) {
     throw new Error("Eve deletion requires its layout provider");
   }
   return open;
-}
+};
 
-export function EveDeletionProvider({ children }: { children: ReactNode }) {
+export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
   const [conversation, setConversation] = useState<Conversation>();
   const route = useCurrentChatRoute();
   const router = useRouter();
   const cache = useQueryClient();
   const trpc = useTRPC();
   const { setOpenMobile } = useSidebar();
-  async function changed(rootId: string) {
+  const openConversation = useCallback(
+    (value: Conversation) => {
+      setConversation(value);
+      setOpenMobile(false);
+    },
+    [setOpenMobile]
+  );
+  const changed = async (rootId: string) => {
+    /* oxlint-disable react/todo -- Preserve cache invalidation in finally after route changes. */
     try {
       if (route.id && (route.type === "chat" || route.type === "projectChat")) {
         const response = await fetch(`/api/agent-conversations/${route.id}`, {
@@ -45,18 +54,15 @@ export function EveDeletionProvider({ children }: { children: ReactNode }) {
           );
         }
       }
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required cache cleanup in finally.
     } finally {
       await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
       router.refresh();
     }
-  }
+    /* oxlint-enable react/todo */
+  };
   return (
-    <DeletionContext.Provider
-      value={(value) => {
-        setConversation(value);
-        setOpenMobile(false);
-      }}
-    >
+    <DeletionContext.Provider value={openConversation}>
       {children}
       {conversation && (
         <EveDeleteDialog
@@ -68,4 +74,4 @@ export function EveDeletionProvider({ children }: { children: ReactNode }) {
       )}
     </DeletionContext.Provider>
   );
-}
+};

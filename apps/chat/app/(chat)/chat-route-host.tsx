@@ -7,7 +7,8 @@ import {
   usePathname,
   useSearchParams,
 } from "next/navigation";
-import { type ReactNode, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { Chat } from "@/components/chat";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
@@ -19,23 +20,21 @@ import {
 import { useChatSystemInitialState } from "@/hooks/use-chat-system-initial-state";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
-  type AppRuntime,
-  type AppRuntimeData,
-  type CreateAppRuntimeInput,
   createAppRuntimeInput,
   useCurrentProvisionalAppRuntimeIdentity,
 } from "@/lib/app-chat-runtime";
-import {
-  type ChatRuntimeId,
-  createMainChatRuntimeId,
-} from "@/lib/chat-runtime-id";
+import type {
+  AppRuntime,
+  AppRuntimeData,
+  CreateAppRuntimeInput,
+} from "@/lib/app-chat-runtime";
+import { createMainChatRuntimeId } from "@/lib/chat-runtime-id";
+import type { ChatRuntimeId } from "@/lib/chat-runtime-id";
 import { useRuntime, useRuntimeActions } from "@/lib/runtime-registry";
 import { useRuntimeIsChatPersisted } from "@/lib/stores/hooks-chat-persistence";
 import { useChatModels } from "@/providers/chat-models-provider";
-import {
-  type ParsedChatIdFromPathname,
-  parseChatIdFromPathname,
-} from "@/providers/parse-chat-id-from-pathname";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+import type { ParsedChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -53,15 +52,13 @@ type PersistedChatRoute = Extract<
   { type: "chat" | "projectChat" }
 >;
 
-function getPersistedRoute(route: HostedParsedChatRoute) {
-  return route.type === "chat" || route.type === "projectChat" ? route : null;
-}
+const getPersistedRoute = (route: HostedParsedChatRoute) =>
+  route.type === "chat" || route.type === "projectChat" ? route : null;
 
-function getProjectHomeId(route: HostedParsedChatRoute) {
-  return route.type === "projectHome" ? route.projectId : null;
-}
+const getProjectHomeId = (route: HostedParsedChatRoute) =>
+  route.type === "projectHome" ? route.projectId : null;
 
-function getProjectIdForChatSystem({
+const getProjectIdForChatSystem = ({
   persistedRoute,
   projectId,
   route,
@@ -69,45 +66,39 @@ function getProjectIdForChatSystem({
   persistedRoute: PersistedChatRoute | null;
   projectId?: string;
   route: HostedParsedChatRoute;
-}) {
+}) => {
   if (route.type === "projectHome") {
     return projectId;
   }
 
   return persistedRoute?.projectId ?? undefined;
-}
+};
 
-function shouldShowSessionLoading({
+const shouldShowSessionLoading = ({
   isSessionPending,
   route,
 }: {
   isSessionPending: boolean;
   route: HostedParsedChatRoute;
-}) {
-  return isSessionPending && route.type !== "home";
-}
+}) => isSessionPending && route.type !== "home";
 
-function shouldRedirectForAuth({
+const shouldRedirectForAuth = ({
   hasUser,
   route,
 }: {
   hasUser: boolean;
   route: HostedParsedChatRoute;
-}) {
-  return route.type !== "home" && !hasUser;
-}
+}) => route.type !== "home" && !hasUser;
 
-function shouldShowProjectLoading({
+const shouldShowProjectLoading = ({
   isProjectPending,
   route,
 }: {
   isProjectPending: boolean;
   route: HostedParsedChatRoute;
-}) {
-  return route.type === "projectHome" && isProjectPending;
-}
+}) => route.type === "projectHome" && isProjectPending;
 
-function shouldShowPersistedLoading({
+const shouldShowPersistedLoading = ({
   chatReady,
   hasLiveRuntime,
   messagesReady,
@@ -117,11 +108,9 @@ function shouldShowPersistedLoading({
   hasLiveRuntime: boolean;
   messagesReady: boolean;
   persistedRoute: PersistedChatRoute | null;
-}) {
-  return !!(persistedRoute && !hasLiveRuntime && !(chatReady && messagesReady));
-}
+}) => !!(persistedRoute && !hasLiveRuntime && !(chatReady && messagesReady));
 
-function shouldReturnNotFound({
+const shouldReturnNotFound = ({
   chat,
   chatError,
   hasLiveRuntime,
@@ -137,7 +126,7 @@ function shouldReturnNotFound({
   persistedRoute: PersistedChatRoute | null;
   project: unknown;
   route: HostedParsedChatRoute;
-}) {
+}) => {
   if (route.type === "projectHome" && !project) {
     return true;
   }
@@ -155,7 +144,7 @@ function shouldReturnNotFound({
     chat &&
     chat.projectId !== persistedRoute.projectId
   );
-}
+};
 
 const PERSISTED_CHAT_ROUTE_QUERY_OPTIONS = {
   gcTime: 0,
@@ -165,35 +154,29 @@ const PERSISTED_CHAT_ROUTE_QUERY_OPTIONS = {
   staleTime: 0,
 };
 
-function getFreshRouteQueryData<TData>({
+const getFreshRouteQueryData = <TData,>({
   data,
   isFetchedAfterMount,
 }: {
   data: TData | undefined;
   isFetchedAfterMount: boolean;
-}) {
-  return isFetchedAfterMount ? data : undefined;
-}
+}) => (isFetchedAfterMount ? data : undefined);
 
-function isFreshRouteQueryReady({
+const isFreshRouteQueryReady = ({
   isFetchedAfterMount,
 }: {
   isFetchedAfterMount: boolean;
-}) {
-  return isFetchedAfterMount;
-}
+}) => isFetchedAfterMount;
 
-function getFreshRouteQueryError({
+const getFreshRouteQueryError = ({
   error,
   isFetchedAfterMount,
 }: {
   error: unknown;
   isFetchedAfterMount: boolean;
-}) {
-  return isFetchedAfterMount ? error : null;
-}
+}) => (isFetchedAfterMount ? error : null);
 
-function getOverrideModelId({
+const getOverrideModelId = ({
   getModelById,
   route,
   value,
@@ -201,13 +184,12 @@ function getOverrideModelId({
   getModelById: ReturnType<typeof useChatModels>["getModelById"];
   route: HostedParsedChatRoute;
   value: string | null;
-}) {
-  return route.type === "home" && value && getModelById(value)
+}) =>
+  route.type === "home" && value && getModelById(value)
     ? (value as AppModelId)
     : undefined;
-}
 
-function canCreateRouteRuntime({
+const canCreateRouteRuntime = ({
   persistedRoute,
   project,
   route,
@@ -215,19 +197,19 @@ function canCreateRouteRuntime({
   persistedRoute: PersistedChatRoute | null;
   project: unknown;
   route: HostedParsedChatRoute;
-}) {
+}) => {
   if (persistedRoute) {
     return false;
   }
 
   return route.type === "home" || (route.type === "projectHome" && !!project);
-}
+};
 
 interface RouteRuntimeCreationRequest {
   runtimeInput: CreateAppRuntimeInput;
 }
 
-function getRouteRuntimeCreationRequest({
+const getRouteRuntimeCreationRequest = ({
   existingRuntime,
   initialMessages,
   initialTree,
@@ -251,7 +233,7 @@ function getRouteRuntimeCreationRequest({
   project: unknown;
   runtimeId: ChatRuntimeId | null;
   route: HostedParsedChatRoute;
-}): RouteRuntimeCreationRequest | null {
+}): RouteRuntimeCreationRequest | null => {
   if (existingRuntime || !runtimeId) {
     return null;
   }
@@ -265,8 +247,8 @@ function getRouteRuntimeCreationRequest({
       runtimeInput: createAppRuntimeInput({
         bootstrap: true,
         initialMessages,
-        initialTree,
         initialTool,
+        initialTree,
         runtimeId,
       }),
     };
@@ -282,11 +264,11 @@ function getRouteRuntimeCreationRequest({
       runtimeId,
     }),
   };
-}
+};
 
-function useEnsureRouteRuntimeAfterCommit(
+const useEnsureRouteRuntimeAfterCommit = (
   request: RouteRuntimeCreationRequest | null
-) {
+) => {
   const { ensureRuntime } = useRuntimeActions<AppRuntimeData>();
 
   useEffect(() => {
@@ -296,10 +278,9 @@ function useEnsureRouteRuntimeAfterCommit(
 
     ensureRuntime(request.runtimeInput);
   }, [ensureRuntime, request]);
-}
+};
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Coordinates route data, persisted state, and live runtime fallback.
-function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
+const HostedChatRoute = ({ route }: { route: HostedParsedChatRoute }) => {
   const { data: session, isPending: isSessionPending } = useSession();
   const trpc = useTRPC();
   const searchParams = useSearchParams();
@@ -368,14 +349,14 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
       getRouteRuntimeCreationRequest({
         existingRuntime,
         initialMessages: persistedInitialState.initialMessages,
-        initialTree: persistedInitialState.initialTree,
         initialTool: persistedInitialState.initialTool,
+        initialTree: persistedInitialState.initialTree,
         persistedChat,
         persistedMessages,
         persistedRoute,
         project: projectQuery.data,
-        runtimeId,
         route,
+        runtimeId,
       }),
     [
       existingRuntime,
@@ -481,9 +462,9 @@ function HostedChatRoute({ route }: { route: HostedParsedChatRoute }) {
       />
     </ChatSystem>
   );
-}
+};
 
-export function ChatRouteHost({ children }: ChatRouteHostProps) {
+export const ChatRouteHost = ({ children }: ChatRouteHostProps) => {
   const pathname = usePathname();
   const route = useMemo(() => parseChatIdFromPathname(pathname), [pathname]);
 
@@ -504,4 +485,4 @@ export function ChatRouteHost({ children }: ChatRouteHostProps) {
       <div hidden>{children}</div>
     </>
   );
-}
+};

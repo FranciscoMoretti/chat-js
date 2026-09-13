@@ -1,7 +1,5 @@
-import {
-  createThreadStateSnapshot,
-  type ThreadStateSnapshot,
-} from "@chat-js/thread";
+import { createThreadStateSnapshot } from "@chat-js/thread";
+import type { ThreadStateSnapshot } from "@chat-js/thread";
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
 
@@ -17,10 +15,10 @@ export type ThreadStateStore<TMessage extends UIMessage> =
     ) => void;
   };
 
-function haveSelectedPathIdsChanged<TMessage extends { id: string }>(
+const haveSelectedPathIdsChanged = <TMessage extends { id: string }>(
   previous: TMessage[] | null | undefined,
   next: TMessage[]
-): boolean {
+): boolean => {
   const previousMessages = previous ?? [];
   if (previousMessages.length !== next.length) {
     return true;
@@ -28,7 +26,7 @@ function haveSelectedPathIdsChanged<TMessage extends { id: string }>(
   return previousMessages.some(
     (message, index) => message.id !== next[index]?.id
   );
-}
+};
 
 export const withThreadState =
   <TMessage extends UIMessage, TState extends BaseChatStoreState<TMessage>>(
@@ -53,26 +51,25 @@ export const withThreadState =
       updateThreadSnapshot: (updater) => {
         let didChangeSelectedPath = false;
         set((state) => {
-          const threadSnapshot = updater(state.threadSnapshot);
+          const nextSnapshot = updater(state.threadSnapshot);
           // Sibling switches change the rendered ids. Flush throttled
           // messages in the same update so UserMessage can still resolve
           // the ids it is currently rendering; otherwise it returns null
           // and the assistant jumps up for a frame.
           didChangeSelectedPath = haveSelectedPathIdsChanged(
             state._throttledMessages ?? state.messages,
-            threadSnapshot.messages
+            nextSnapshot.messages
           );
-          state._messageIndex.update(threadSnapshot.messages);
+          state._messageIndex.update(nextSnapshot.messages);
 
           return {
             ...state,
-            _memoizedSelectors: new Map(),
-            error: threadSnapshot.error,
-            messages: threadSnapshot.messages,
-            status: threadSnapshot.status,
-            threadSnapshot,
+            error: nextSnapshot.error,
+            messages: nextSnapshot.messages,
+            status: nextSnapshot.status,
+            threadSnapshot: nextSnapshot,
             ...(didChangeSelectedPath
-              ? { _throttledMessages: threadSnapshot.messages }
+              ? { _throttledMessages: nextSnapshot.messages }
               : {}),
           };
         });

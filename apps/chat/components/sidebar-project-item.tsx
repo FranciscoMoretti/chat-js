@@ -5,10 +5,8 @@ import { useState } from "react";
 
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { InternalLink } from "@/components/internal-link";
-import {
-  type ProjectDetailsData,
-  ProjectDetailsDialog,
-} from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
+import type { ProjectDetailsData } from "@/components/project-details-dialog";
 import { ProjectIcon } from "@/components/project-icon";
 import { ProjectMenuItems } from "@/components/project-menu-items";
 import {
@@ -25,7 +23,7 @@ import { useRenameProject } from "@/hooks/chat-sync-hooks";
 import type { Project } from "@/lib/db/schema";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
-export function SidebarProjectItem({
+export const SidebarProjectItem = ({
   project,
   isActive,
   setOpenMobile,
@@ -33,7 +31,7 @@ export function SidebarProjectItem({
   project: Project;
   isActive: boolean;
   setOpenMobile: (open: boolean) => void;
-}) {
+}) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -45,9 +43,9 @@ export function SidebarProjectItem({
     await renameProject({
       id: project.id,
       updates: {
-        name: data.name,
         icon: data.icon,
         iconColor: data.color,
+        name: data.name,
       },
     });
   };
@@ -107,4 +105,4 @@ export function SidebarProjectItem({
       />
     </SidebarMenuItem>
   );
-}
+};

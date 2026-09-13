@@ -9,9 +9,9 @@ import { createLoader, parseAsString } from "nuqs/server";
 
 const mcpOAuthCallbackSearchParamsServer = {
   code: parseAsString,
-  state: parseAsString,
   error: parseAsString,
   error_description: parseAsString,
+  state: parseAsString,
 };
 
 export const loadMcpOAuthCallbackSearchParams = createLoader(

@@ -11,10 +11,10 @@ import { ResearchTasks } from "./research-tasks";
 
 // Add the updateName mapping (consider moving to a shared util later)
 const updateName = {
-  web: "Web Search",
-  started: "Started",
   completed: "Completed",
+  started: "Started",
   thoughts: "Thoughts",
+  web: "Web Search",
   writing: "Writing",
 } as const;
 
@@ -44,7 +44,7 @@ export const ResearchProgress = ({
     [updates]
   );
 
-  // TODO: First update is not showing
+  // Keep the fallback title while no update has been received.
   const lastUpdateTitle = (() => {
     if (!lastUpdate) {
       return "Researching";

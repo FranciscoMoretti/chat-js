@@ -11,7 +11,7 @@ import {
   saveComparisonDraftIntent,
 } from "@/lib/eve/comparison-draft-intent";
 import type { EveForkInput } from "@/lib/eve/contracts";
-import { CreationRejected } from "@/lib/eve/create-conversation";
+import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
@@ -32,7 +32,7 @@ import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 
-export function useEveFork(
+export const useEveFork = (
   ownerId: string,
   conversationId: string,
   onComparisonCreated?: (
@@ -40,7 +40,7 @@ export function useEveFork(
     selectedTool: UiToolName | undefined,
     clearComposer: boolean
   ) => void
-) {
+) => {
   const trpc = useTRPC();
   const family = useQuery(
     trpc.eve.branches.queryOptions({ id: conversationId })
@@ -56,7 +56,7 @@ export function useEveFork(
   const [busy, setBusy] = useState(false);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
   const lock = useRef(false);
 
   useEffect(() => {
@@ -66,8 +66,10 @@ export function useEveFork(
       });
       if (operation) {
         if (!operation.fork) {
+          // oxlint-disable-next-line react/todo -- Preserve the explicit missing-fork recovery error.
           throw new Error("Missing saved fork source.");
         }
+        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the controlled fork editor from its durable request.
         setPending(operation);
         setSelectedTool(operation.selectedTool ?? null);
         setSource(operation.fork);
@@ -85,24 +87,25 @@ export function useEveFork(
             : operation.message
                 .filter((part) => part.type === "file")
                 .map((part) => ({
-                  url: part.data,
-                  name: part.filename,
                   contentType: part.mediaType,
                   digest: "",
+                  name: part.filename,
+                  url: part.data,
                 }))
         );
       }
     } catch {
       setRestoreFailed(true);
-      setError(
+      setFailure(
         "The saved version request could not be restored. Keep this tab for recovery."
       );
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required restore cleanup in finally.
     } finally {
       setLoaded(true);
     }
   }, [conversationId, ownerId, setAttachments]);
 
-  async function execute(operation: Operation) {
+  const execute = async (operation: Operation) => {
     const id = await resolveCreationRequest(
       sessionStorage,
       ownerId,
@@ -124,40 +127,41 @@ export function useEveFork(
       );
     }
     window.location.assign(`/chat/${id}`);
-  }
+  };
 
-  async function run(action: () => Promise<void>, reopenEdit = true) {
+  const run = async (action: () => Promise<void>, reopenEdit = true) => {
     if (lock.current) {
       return;
     }
     lock.current = true;
     setBusy(true);
-    setError("");
+    setFailure("");
     try {
       await action();
-    } catch (cause) {
-      if (cause instanceof CreationRejected) {
+    } catch (error) {
+      if (error instanceof CreationRejectedError) {
         finishCreation(sessionStorage, ownerId, { conversationId });
         setPending(undefined);
         setOpen(reopenEdit);
       }
-      setError(
-        cause instanceof Error ? cause.message : "Unable to create a version."
+      setFailure(
+        error instanceof Error ? error.message : "Unable to create a version."
       );
+      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required fork lock cleanup in finally.
     } finally {
       lock.current = false;
       setBusy(false);
     }
-  }
+  };
 
-  function begin(
+  const begin = (
     message: EveMessage,
     regeneration?: {
       response: EveMessage;
       events: readonly MessageStreamEvent[];
     }
-  ) {
-    return run(async () => {
+  ) =>
+    run(async () => {
       const boundary = eveUserForkBoundary(message);
       if (pending || !family.data || !boundary) {
         return;
@@ -211,22 +215,10 @@ export function useEveFork(
         setOpen(true);
       }
     });
-  }
 
   return {
-    family,
-    draft,
-    setDraft,
-    selectedTool,
-    setSelectedTool,
-    files,
-    open,
-    setOpen,
-    busy,
-    error,
-    pending,
     begin,
-    locked: !loaded || restoreFailed || busy || !!pending,
+    busy,
     compare: (
       message: EveMessageInput,
       modelIds: string[],
@@ -246,9 +238,9 @@ export function useEveFork(
           {
             conversationId,
             fork: {
-              conversationId,
               beforeTurnId,
               checkpointId: crypto.randomUUID(),
+              conversationId,
             },
           },
           requestedTool
@@ -263,6 +255,26 @@ export function useEveFork(
         setPending(operation);
         await execute(operation);
       }, false),
+    draft,
+    error: failure,
+    family,
+    files,
+    locked: !loaded || restoreFailed || busy || !!pending,
+    open,
+    pending,
+    retry: () =>
+      run(
+        async () => {
+          if (pending) {
+            await execute(pending);
+          }
+        },
+        !(pending && "modelIds" in pending)
+      ),
+    selectedTool,
+    setDraft,
+    setOpen,
+    setSelectedTool,
     submit: () =>
       run(async () => {
         if (!source) {
@@ -280,14 +292,5 @@ export function useEveFork(
         setOpen(false);
         await execute(operation);
       }),
-    retry: () =>
-      run(
-        async () => {
-          if (pending) {
-            await execute(pending);
-          }
-        },
-        !(pending && "modelIds" in pending)
-      ),
   };
-}
+};

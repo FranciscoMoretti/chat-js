@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
 import { frontendToolsSchema } from "../ai/types";

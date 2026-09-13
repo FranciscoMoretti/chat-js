@@ -6,38 +6,25 @@ import {
 import { resolveEveConversationScope } from "./conversation-scope";
 
 /** One native tool invocation owns one allocation intent, including failed creates. */
-export function eveCodeSandboxOwnership(context: {
+export const eveCodeSandboxOwnership = (context: {
   callId: string;
   session?: {
     id: string;
-    auth: { initiator?: { principalId: string } | null };
+    auth: {
+      initiator?: {
+        principalId: string;
+      } | null;
+    };
   };
-}) {
+}) => {
   let reservation:
-    | { ownerId: string; conversationId: string; name: string }
+    | {
+        ownerId: string;
+        conversationId: string;
+        name: string;
+      }
     | undefined;
   return {
-    async reserve(
-      provider: { teamId: string; projectId: string },
-      signal?: AbortSignal
-    ) {
-      if (!context.session) {
-        throw new Error("Code execution requires a native session.");
-      }
-      const scope = await resolveEveConversationScope(
-        context.session.auth.initiator?.principalId,
-        context.session.id,
-        signal ?? new AbortController().signal
-      );
-      const name = await reserveEveCodeSandbox(
-        scope.ownerId,
-        scope.conversationId,
-        context.callId,
-        provider
-      );
-      reservation = { ...scope, name };
-      return name;
-    },
     async created(name: string) {
       if (!reservation || reservation.name !== name) {
         throw new Error(
@@ -60,5 +47,29 @@ export function eveCodeSandboxOwnership(context: {
         reservation.name
       );
     },
+    async reserve(
+      provider: {
+        teamId: string;
+        projectId: string;
+      },
+      signal?: AbortSignal
+    ) {
+      if (!context.session) {
+        throw new Error("Code execution requires a native session.");
+      }
+      const scope = await resolveEveConversationScope(
+        context.session.auth.initiator?.principalId,
+        context.session.id,
+        signal ?? new AbortController().signal
+      );
+      const name = await reserveEveCodeSandbox(
+        scope.ownerId,
+        scope.conversationId,
+        context.callId,
+        provider
+      );
+      reservation = { ...scope, name };
+      return name;
+    },
   };
-}
+};

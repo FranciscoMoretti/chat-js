@@ -1,29 +1,35 @@
 import { MockLanguageModelV3 } from "ai/test";
 import { expect, test, vi } from "vitest";
 
+import {
+  getEveModelDefinition,
+  loadEveModelDefinition,
+  resolveEveModel,
+} from "./model-selection";
+
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
+    createLanguageModel: (id: string) =>
+      new MockLanguageModelV3({
+        doGenerate: () => Promise.reject(new Error(`provider model: ${id}`)),
+        modelId: id,
+        provider: "test",
+      }),
     fetchModels: async () => {
       const { getFallbackModels } =
         await import("../ai/gateways/fallback-models");
       return [
         ...getFallbackModels("test"),
-        { id: "live-only", type: "language", tags: [], pricing: {} },
+        { id: "live-only", pricing: {}, tags: [], type: "language" },
       ];
     },
-    createLanguageModel: (id: string) =>
-      new MockLanguageModelV3({
-        modelId: id,
-        provider: "test",
-        doGenerate: () => Promise.reject(new Error(`provider model: ${id}`)),
-      }),
   }),
 }));
 vi.mock("../config", () => ({
   config: {
     ai: {
-      gateway: "test",
       disabledModels: ["disabled"],
+      gateway: "test",
       workflows: { chat: "plain" },
     },
   },
@@ -31,31 +37,25 @@ vi.mock("../config", () => ({
 vi.mock("../ai/gateways/fallback-models", () => ({
   getFallbackModels: () => [
     {
-      id: "plain",
-      type: "language",
-      tags: [],
       context_window: 1000,
-      pricing: {},
+      id: "plain",
       owned_by: "openai",
+      pricing: {},
+      tags: [],
+      type: "language",
     },
     {
-      id: "thinking",
-      type: "language",
-      tags: ["reasoning"],
       context_window: 2000,
-      pricing: {},
+      id: "thinking",
       owned_by: "anthropic",
+      pricing: {},
+      tags: ["reasoning"],
+      type: "language",
     },
-    { id: "disabled", type: "language", tags: [], pricing: {} },
-    { id: "image", type: "image", tags: [], pricing: {} },
+    { id: "disabled", pricing: {}, tags: [], type: "language" },
+    { id: "image", pricing: {}, tags: [], type: "image" },
   ],
 }));
-
-import {
-  getEveModelDefinition,
-  loadEveModelDefinition,
-  resolveEveModel,
-} from "./model-selection";
 
 test("keeps the provider model and reasoning variant distinct", async () => {
   expect(getEveModelDefinition()).toMatchObject({

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-export function EveGuestBootstrap() {
+export const EveGuestBootstrap = () => {
   const router = useRouter();
   const pending = useRef<
     { attempt: number; request: Promise<void> } | undefined
@@ -14,29 +14,31 @@ export function EveGuestBootstrap() {
   const [error, setError] = useState(false);
   useEffect(() => {
     let active = true;
+    const createRequest = async () => {
+      const response = await fetch("/api/eve-guest", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Chat could not be prepared.");
+      }
+    };
     if (pending.current?.attempt !== attempt) {
       pending.current = {
         attempt,
-        request: fetch("/api/eve-guest", { method: "POST" }).then(
-          (response) => {
-            if (!response.ok) {
-              throw new Error("Chat could not be prepared.");
-            }
-          }
-        ),
+        request: createRequest(),
       };
     }
-    pending.current.request
-      .then(() => {
+    const { request } = pending.current;
+    void (async () => {
+      try {
+        await request;
         if (active) {
           router.refresh();
         }
-      })
-      .catch(() => {
+      } catch {
         if (active) {
           setError(true);
         }
-      });
+      }
+    })();
     return () => {
       active = false;
     };
@@ -56,10 +58,10 @@ export function EveGuestBootstrap() {
           </Button>
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm" role="status">
+        <output className="text-muted-foreground text-sm">
           Preparing chat…
-        </p>
+        </output>
       )}
     </div>
   );
-}
+};

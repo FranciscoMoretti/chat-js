@@ -4,9 +4,9 @@ import type { McpOAuthSession } from "../../db/schema";
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
 
 const mocks = vi.hoisted(() => ({
+  fetch: vi.fn(),
   read: vi.fn(),
   save: vi.fn(),
-  fetch: vi.fn(),
 }));
 vi.mock("@/lib/db/mcp-queries", () => ({
   getAuthenticatedSession: mocks.read,
@@ -18,42 +18,40 @@ vi.mock("@/lib/db/mcp-oauth-lock", () => ({
     await run(),
 }));
 let stored: McpOAuthSession;
-function provider() {
-  return new McpOAuthClientProvider({
-    mcpConnectorId: "connector",
-    serverUrl: "http://127.0.0.1:3799/mcp",
+const provider = () =>
+  new McpOAuthClientProvider({
     clientMetadata: { redirect_uris: ["http://localhost:3790/callback"] },
-    onRedirectToAuthorization: async () => undefined,
+    mcpConnectorId: "connector",
+    onRedirectToAuthorization: () => Promise.resolve(),
+    serverUrl: "http://127.0.0.1:3799/mcp",
   });
-}
-function refreshRequest(refreshToken: string) {
-  return new Request("http://127.0.0.1:3799/token", {
-    method: "POST",
+const refreshRequest = (refreshToken: string) =>
+  new Request("http://127.0.0.1:3799/token", {
     body: new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: refreshToken,
     }),
+    method: "POST",
   });
-}
 beforeEach(() => {
   vi.resetAllMocks();
   stored = {
+    clientInfo: null,
+    codeVerifier: null,
+    createdAt: new Date(0),
     id: "session",
     mcpConnectorId: "connector",
     serverUrl: "http://127.0.0.1:3799/mcp",
     state: "state",
-    codeVerifier: null,
-    clientInfo: null,
     tokens: {
       access_token: "old",
+      pin: "retained",
       refresh_token: "refresh-old",
       token_type: "Bearer",
-      pin: "retained",
     },
-    createdAt: new Date(0),
     updatedAt: new Date(0),
   };
-  mocks.read.mockImplementation(async () => stored);
+  mocks.read.mockImplementation(() => Promise.resolve(stored));
   mocks.save.mockImplementation(
     ({ tokens }: { tokens: Record<string, unknown> }) => {
       stored = { ...stored, tokens };
@@ -110,8 +108,8 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
 
 test("refresh responses cannot replace the saved authorization-server pins", async () => {
   const pins = {
-    issuer: "https://trusted.example",
     authorization_server: "https://trusted.example",
+    issuer: "https://trusted.example",
     token_endpoint: "https://trusted.example/token",
   };
   stored = { ...stored, tokens: { ...stored.tokens, ...pins } };
@@ -120,11 +118,11 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   mocks.fetch.mockResolvedValueOnce(
     Response.json({
       access_token: "new",
-      token_type: "Bearer",
+      authorization_server: "invalid-url",
       id_token: "identity",
       issuer: "https://untrusted.example",
-      authorization_server: "invalid-url",
       token_endpoint: "https://untrusted.example/token",
+      token_type: "Bearer",
     })
   );
   const response = await client.fetch(refreshRequest("refresh-old"));
@@ -136,8 +134,8 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   });
   expect(await response.json()).toEqual({
     access_token: "new",
-    token_type: "Bearer",
     id_token: "identity",
+    token_type: "Bearer",
   });
   await client.saveTokens({ access_token: "new", token_type: "Bearer" });
   expect(stored.tokens).toMatchObject(pins);

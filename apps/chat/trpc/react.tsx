@@ -1,15 +1,12 @@
 "use client";
 
-import {
-  isServer,
-  type QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { isServer, QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
-import SuperJSON from "superjson";
+import superjson from "superjson";
 
 import { getBaseUrl } from "@/lib/url";
 import type { AppRouter } from "@/trpc/routers/_app";
@@ -21,7 +18,7 @@ export const { TRPCProvider, useTRPC, useTRPCClient } =
 
 let browserQueryClient: QueryClient | undefined;
 
-function getQueryClient() {
+const getQueryClient = () => {
   if (isServer) {
     // Server: always make a new query client
     return makeQueryClient();
@@ -34,9 +31,9 @@ function getQueryClient() {
     browserQueryClient = makeQueryClient();
   }
   return browserQueryClient;
-}
+};
 
-function getUrl() {
+const getUrl = () => {
   const base = (() => {
     if (typeof window !== "undefined") {
       return "";
@@ -44,8 +41,8 @@ function getUrl() {
     return getBaseUrl();
   })();
   return `${base}/api/trpc`;
-}
-export function TRPCReactProvider(props: { children: React.ReactNode }) {
+};
+export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
@@ -57,13 +54,13 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             (op.direction === "down" && op.result instanceof Error),
         }),
         httpBatchLink({
-          url: getUrl(),
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
             return headers;
           },
-          transformer: SuperJSON,
+          transformer: superjson,
+          url: getUrl(),
         }),
       ],
     })
@@ -77,4 +74,4 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
-}
+};

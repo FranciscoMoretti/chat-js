@@ -14,7 +14,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const originalModel = "google/gemini-2.5-flash-lite";
 const selectedModel = "google/gemini-2.5-flash";
-const answer = /^provenance-ready\.?$/i;
+const answer = /^provenance-ready\.?$/iu;
 
 test("copied responses regenerate with their original model after reload", async ({
   page,
@@ -27,14 +27,14 @@ test("copied responses regenerate with their original model after reload", async
   await page.request.post("/api/chat-model", {
     data: { model: originalModel },
   });
-  const origin = new URL(z.url().parse(testInfo.project.use.baseURL)).origin;
+  const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
   const created = await page.request.post("/api/agent-conversations", {
-    headers: { origin },
     data: {
-      operationId: crypto.randomUUID(),
-      modelId: originalModel,
       message: "Reply exactly provenance-ready. Do not call tools.",
+      modelId: originalModel,
+      operationId: crypto.randomUUID(),
     },
+    headers: { origin },
   });
   expect(created.status()).toBe(200);
   const source = conversationBinding.parse(await created.json());
@@ -48,26 +48,26 @@ test("copied responses regenerate with their original model after reload", async
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, source.id));
   const copyInput = {
-    sourceConversationId: source.id,
-    operationId: crypto.randomUUID(),
     modelId: selectedModel,
+    operationId: crypto.randomUUID(),
+    sourceConversationId: source.id,
   };
   let copied = await page.request.post("/api/agent-conversation-copies", {
-    headers: { origin },
     data: copyInput,
+    headers: { origin },
   });
   await expect
     .poll(
       async () => {
         if (copied.status() === 503) {
           copied = await page.request.post("/api/agent-conversation-copies", {
-            headers: { origin },
             data: copyInput,
+            headers: { origin },
           });
         }
         return copied.status();
       },
-      { timeout: 45_000, intervals: [1000, 2000, 4000] }
+      { intervals: [1000, 2000, 4000], timeout: 45_000 }
     )
     .toBe(200);
   const destination = conversationBinding.parse(await copied.json());
@@ -82,13 +82,13 @@ test("copied responses regenerate with their original model after reload", async
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByRole("log").getByText(answer)).toBeVisible();
   const regenerate = page.getByRole("button", {
-    name: "Regenerate response",
     exact: true,
+    name: "Regenerate response",
   });
   await expect(regenerate).toBeEnabled();
   await page.getByRole("log").screenshot({
-    path: testInfo.outputPath("imported-regeneration.png"),
     animations: "disabled",
+    path: testInfo.outputPath("imported-regeneration.png"),
   });
   let regenerated: z.infer<typeof conversationBinding> | undefined;
   await page.route(
@@ -98,8 +98,8 @@ test("copied responses regenerate with their original model after reload", async
         route.request().postDataJSON()
       );
       expect(input.fork).toEqual({
-        conversationId: destination.id,
         beforeMessageId: "seed_message_0",
+        conversationId: destination.id,
       });
       expect(input.modelId).toBe(originalModel);
       const response = await route.fetch({ timeout: 90_000 });
@@ -116,7 +116,7 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 45_000,
   });
   await expect(
-    page.getByRole("button", { name: "Regenerate response", exact: true })
+    page.getByRole("button", { exact: true, name: "Regenerate response" })
   ).toHaveCount(1);
   await page.reload();
   await expect(page.getByRole("log").getByText(answer)).toBeVisible({

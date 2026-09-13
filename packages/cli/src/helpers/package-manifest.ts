@@ -22,11 +22,9 @@ const BETTER_AUTH_PACKAGES = [
   "better-auth",
 ] as const;
 
-function toExactVersion(range: string): string {
-  return range.replace(/^[~^]/, "");
-}
+const toExactVersion = (range: string): string => range.replace(/^[~^]/u, "");
 
-function resolveBetterAuthVersion(packageJson: PackageJson): string | null {
+const resolveBetterAuthVersion = (packageJson: PackageJson): string | null => {
   for (const dependencyGroup of [
     packageJson.dependencies,
     packageJson.devDependencies,
@@ -44,12 +42,12 @@ function resolveBetterAuthVersion(packageJson: PackageJson): string | null {
   }
 
   return null;
-}
+};
 
-function pinBetterAuthVersions(
+const pinBetterAuthVersions = (
   dependencyGroup: DependencyMap | undefined,
   version: string
-): void {
+): void => {
   if (!dependencyGroup) {
     return;
   }
@@ -59,10 +57,10 @@ function pinBetterAuthVersions(
       dependencyGroup[packageName] = version;
     }
   }
-}
+};
 
-function normalizeChatAppScripts(scripts: ScriptMap): void {
-  const defaultBranchName = "$" + "{1:-dev-local}";
+const normalizeChatAppScripts = (scripts: ScriptMap): void => {
+  const defaultBranchName = `\${1:-dev-local}`;
 
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
@@ -70,7 +68,7 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
   scripts.prod =
     "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && next build && next start";
   scripts.lint = "ultracite check";
-  scripts.format = "ultracite fix";
+  scripts.format = "oxfmt --write .";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["eve:db:setup:local"] = "tsx scripts/install-eve-local-postgres.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
@@ -89,10 +87,10 @@ function normalizeChatAppScripts(scripts: ScriptMap): void {
     "export PLAYWRIGHT=True && playwright test --workers=4 && vitest run";
   scripts["test:e2e"] = "export PLAYWRIGHT=True && playwright test --workers=4";
   scripts["ai:devtools"] = "npx @ai-sdk/devtools";
-  scripts["fetch:models"] = "tsx scripts/fetch-models.ts && ultracite fix";
-}
+  scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
+};
 
-function normalizeElectronScripts(scripts: ScriptMap): void {
+const normalizeElectronScripts = (scripts: ScriptMap): void => {
   const prebuild =
     "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
   const build =
@@ -122,12 +120,12 @@ function normalizeElectronScripts(scripts: ScriptMap): void {
   delete scripts["dist:linux"];
   delete scripts["publish:mac"];
   delete scripts["publish:win"];
-}
+};
 
-function normalizeElectronDevDependencies(
+const normalizeElectronDevDependencies = (
   devDependencies: DependencyMap | undefined,
   tsxVersion?: string
-): void {
+): void => {
   if (!devDependencies) {
     return;
   }
@@ -136,9 +134,9 @@ function normalizeElectronDevDependencies(
   if (tsxVersion) {
     devDependencies.tsx = tsxVersion;
   }
-}
+};
 
-export function normalizeScaffoldedPackageJson(
+export const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: {
     packageManager?: PackageManager;
@@ -146,26 +144,27 @@ export function normalizeScaffoldedPackageJson(
     template?: "chat-app" | "electron";
     tsxVersion?: string;
   }
-): PackageJson {
+): PackageJson => {
   const betterAuthVersion = resolveBetterAuthVersion(packageJson);
 
   if (betterAuthVersion) {
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
     packageJson.overrides = {
-      ...(packageJson.overrides ?? {}),
+      ...packageJson.overrides,
       "@better-auth/core": betterAuthVersion,
     };
   }
 
   switch (options?.template) {
-    case "chat-app":
+    case "chat-app": {
       packageJson.type = "module";
       if (packageJson.scripts) {
         normalizeChatAppScripts(packageJson.scripts);
       }
       break;
-    case "electron":
+    }
+    case "electron": {
       if (packageJson.scripts) {
         normalizeElectronScripts(packageJson.scripts);
       }
@@ -174,25 +173,28 @@ export function normalizeScaffoldedPackageJson(
         options?.tsxVersion
       );
       break;
-    default:
+    }
+    default: {
       break;
+    }
   }
 
   if (options?.persistPackageManager !== false) {
     const packageManager = options?.packageManager ?? "bun";
     const launcherVersion = process.env.npm_config_user_agent?.match(
-      new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`)
+      new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`, "u")
     )?.[1];
     const version =
       launcherVersion ??
       execFileSync(packageManager, ["--version"], {
         cwd: tmpdir(),
-        encoding: "utf8",
+        encoding: "utf-8",
       }).trim();
-    if (!/^\d+\.\d+\.\d+/.test(version))
+    if (!/^\d+\.\d+\.\d+/u.test(version)) {
       throw new Error(`Cannot determine ${packageManager} version.`);
+    }
     packageJson.packageManager = `${packageManager}@${version}`;
   }
 
   return packageJson;
-}
+};

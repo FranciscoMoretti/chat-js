@@ -5,11 +5,11 @@ export const ThinkingMessage = () => {
 
   return (
     <motion.div
-      animate={{ y: 0, opacity: 1, transition: { delay: 1 } }}
+      animate={{ opacity: 1, transition: { delay: 1 }, y: 0 }}
       className="group/message mx-auto w-full max-w-3xl px-4"
       data-role={role}
       data-testid="message-assistant-loading"
-      initial={{ y: 5, opacity: 0 }}
+      initial={{ opacity: 0, y: 5 }}
     >
       <div className="bg-muted-foreground m-1.5 size-3 animate-[pulse-dot_2s_ease-in-out_infinite] rounded-full">
         <span className="sr-only">Loading</span>

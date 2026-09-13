@@ -13,7 +13,7 @@ import {
   secondModel,
 } from "./eve-comparison-data.fixture";
 
-const secondModelLabel = /Gemini 2.5 Flash$/;
+const secondModelLabel = /Gemini 2.5 Flash$/u;
 
 test("multi-model creation retains exact partial operation across navigation and recovery", async ({
   page,
@@ -24,7 +24,7 @@ test("multi-model creation retains exact partial operation across navigation and
   const preferences: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const script = execFileSync("bun", ["tests/eve-comparison-ui.build.mjs"], {
-    encoding: "utf8",
+    encoding: "utf-8",
     maxBuffer: 40 * 1024 * 1024,
   });
   const css = execFileSync(
@@ -33,21 +33,21 @@ test("multi-model creation retains exact partial operation across navigation and
       "-e",
       'import postcss from "postcss";import tailwind from "@tailwindcss/postcss";const from=process.cwd()+"/app/globals.css";process.stdout.write((await postcss([tailwind()]).process(await Bun.file(from).text(),{from})).css);',
     ],
-    { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
+    { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
   await page.route("https://eve-comparison.test/**", (route) => {
     const url = new URL(route.request().url());
     if (url.pathname === "/fixture.js") {
-      return route.fulfill({ contentType: "text/javascript", body: script });
+      return route.fulfill({ body: script, contentType: "text/javascript" });
     }
     if (url.pathname === "/api/chat-model") {
-      const model = route.request().postDataJSON().model;
+      const { model } = route.request().postDataJSON();
       preferences.push(model);
       return route.fulfill({
-        json: {},
         headers: {
           "set-cookie": `chat-model=${model}; Path=/; Secure; SameSite=Lax`,
         },
+        json: {},
       });
     }
     if (
@@ -64,22 +64,22 @@ test("multi-model creation retains exact partial operation across navigation and
     }
     if (url.pathname === "/" || url.pathname.startsWith("/chat/")) {
       return route.fulfill({
-        contentType: "text/html",
         body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div><script type="module" src="/fixture.js"></script></body></html>`,
+        contentType: "text/html",
       });
     }
-    return route.fulfill({ status: 404, body: "Unexpected fixture request" });
+    return route.fulfill({ body: "Unexpected fixture request", status: 404 });
   });
   await page.goto("https://eve-comparison.test/");
   expect(errors).toEqual([]);
   await expect(page.locator('[contenteditable="true"]'))
     .toBeVisible({ timeout: 3000 })
-    .catch((cause) => {
-      throw new Error(JSON.stringify(errors), { cause });
+    .catch((error) => {
+      throw new Error(JSON.stringify(errors), { cause: error });
     });
   await page.getByTitle("Select Tools", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "Canvas", exact: true }).click();
-  await page.getByRole("combobox").click();
+  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
+  await page.getByTestId("model-selector").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   await page.getByRole("option", { name: secondModelLabel }).click();
   await page.keyboard.press("Escape");
@@ -87,18 +87,18 @@ test("multi-model creation retains exact partial operation across navigation and
     .locator('[contenteditable="true"]')
     .fill("Compare a short greeting");
   await page.screenshot({
-    path: testInfo.outputPath("new-comparison.png"),
     animations: "disabled",
+    path: testInfo.outputPath("new-comparison.png"),
   });
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(
     `https://eve-comparison.test/chat/${firstConversation}`
   );
   expect(submissions).toHaveLength(1);
   expect(submissions[0]).toMatchObject({
     message: "Compare a short greeting",
-    selectedTool: "createTextDocument",
     modelIds: expect.arrayContaining([firstModel, secondModel]),
+    selectedTool: "createTextDocument",
   });
   const pending = await page.evaluate(
     (key) => sessionStorage.getItem(key),
@@ -107,22 +107,22 @@ test("multi-model creation retains exact partial operation across navigation and
   expect(JSON.parse(pending ?? "null")).toEqual(submissions[0]);
   await page.getByLabel("Follow-up draft").fill("Keep this unsent follow-up");
   await page.getByTitle("Select Tools", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "Canvas", exact: true }).click();
+  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
   await page
-    .getByRole("button", { name: "Attach fixture PDF", exact: true })
+    .getByRole("button", { exact: true, name: "Attach fixture PDF" })
     .click();
   await page
-    .getByRole("button", { name: "Simulate pending send", exact: true })
+    .getByRole("button", { exact: true, name: "Simulate pending send" })
     .click();
   await expect(page.getByTitle("Select Tools", { exact: true })).toBeDisabled();
   await expect(
     page.getByRole("button", {
-      name: "Gemini 2.5 Flash Needs retry",
       exact: true,
+      name: "Gemini 2.5 Flash Needs retry",
     })
   ).toBeDisabled();
   await page
-    .getByRole("button", { name: "Resolve pending send", exact: true })
+    .getByRole("button", { exact: true, name: "Resolve pending send" })
     .click();
   await page.reload();
   await expect(page.getByLabel("Follow-up draft")).toHaveValue(
@@ -130,25 +130,25 @@ test("multi-model creation retains exact partial operation across navigation and
   );
   await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Clear Canvas tool", exact: true })
+    page.getByRole("button", { exact: true, name: "Clear Canvas tool" })
   ).toBeVisible();
   await expect(
     page.getByText("Selected native session: first-native")
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Gemini 2.5 Flash Needs retry", exact: true })
+    .getByRole("button", { exact: true, name: "Gemini 2.5 Flash Needs retry" })
     .click();
   await expect(
-    page.getByRole("button", { name: "Retry response", exact: true })
+    page.getByRole("button", { exact: true, name: "Retry response" })
   ).toBeVisible();
-  await page.getByRole("button", { name: "Check again", exact: true }).click();
+  await page.getByRole("button", { exact: true, name: "Check again" }).click();
   expect(submissions).toHaveLength(1);
   await page.screenshot({
-    path: testInfo.outputPath("comparison-recovery.png"),
     animations: "disabled",
+    path: testInfo.outputPath("comparison-recovery.png"),
   });
   await page
-    .getByRole("button", { name: "Retry response", exact: true })
+    .getByRole("button", { exact: true, name: "Retry response" })
     .click();
   await expect(page).toHaveURL(
     `https://eve-comparison.test/chat/${secondConversation}`
@@ -169,16 +169,16 @@ test("multi-model creation retains exact partial operation across navigation and
   );
   await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Clear Canvas tool", exact: true })
+    page.getByRole("button", { exact: true, name: "Clear Canvas tool" })
   ).toBeVisible();
   expect(preferences.at(-1)).toBe(secondModel);
   await expect(
     page.getByText(`Follow-up model: ${secondModel}`, { exact: true })
   ).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ height: 844, width: 390 });
   await page.screenshot({
-    path: testInfo.outputPath("comparison-mobile.png"),
     animations: "disabled",
+    path: testInfo.outputPath("comparison-mobile.png"),
   });
   expect(
     await page.evaluate(
@@ -187,8 +187,8 @@ test("multi-model creation retains exact partial operation across navigation and
   ).toBe(true);
   await page
     .getByRole("button", {
-      name: "Gemini 2.5 Flash Lite Open response",
       exact: true,
+      name: "Gemini 2.5 Flash Lite Open response",
     })
     .click();
   await expect(page).toHaveURL(

@@ -2,27 +2,28 @@
 
 import React, {
   createContext,
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 
 import type { LexicalChatInputRef } from "@/components/lexical-chat-input";
 import type { AppModelId } from "@/lib/ai/app-models";
-import {
-  type Attachment,
-  getPrimarySelectedModelId,
-  type SelectedModelValue,
-  type UiToolName,
+import { getPrimarySelectedModelId } from "@/lib/ai/types";
+import type {
+  Attachment,
+  SelectedModelValue,
+  UiToolName,
 } from "@/lib/ai/types";
 
 import { useChatModels } from "./chat-models-provider";
 import { useDefaultModel, useModelChange } from "./default-model-provider";
+
+const emptyAttachments: Attachment[] = [];
 
 interface ChatInputContextType {
   attachments: Attachment[];
@@ -53,23 +54,26 @@ interface ChatInputProviderProps {
   initialTool?: UiToolName | null;
   isProjectContext?: boolean;
   localStorageEnabled?: boolean;
-  overrideModelId?: AppModelId; // For message editing where we want to use the original model
-  overrideModelSelection?: SelectedModelValue; // For message editing with multi-model selection
+  // For message editing where we want to use the original model
+  overrideModelId?: AppModelId;
+  // For message editing with multi-model selection
+  overrideModelSelection?: SelectedModelValue;
 }
 
-export function ChatInputProvider({
+export const ChatInputProvider = ({
   children,
   initialInput = "",
   initialTool = null,
-  initialAttachments = [],
+  initialAttachments = emptyAttachments,
   overrideModelId,
   overrideModelSelection,
   localStorageEnabled = true,
   isProjectContext = false,
-}: ChatInputProviderProps) {
+}: ChatInputProviderProps) => {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Mark the client-only provider hydration boundary.
     setHasHydrated(true);
   }, []);
 
@@ -235,36 +239,51 @@ export function ChatInputProvider({
     },
     [clearAttachments, clearInput, selectedTool, resetData]
   );
+  const contextValue = useMemo<ChatInputContextType>(
+    () => ({
+      attachments,
+      editorRef,
+      getInitialInput,
+      getInputValue,
+      handleInputChange,
+      handleModelChange,
+      handleModelSelectionChange,
+      handleSubmit,
+      isEmpty,
+      isProjectContext,
+      selectedModelId,
+      selectedModelSelection,
+      selectedTool,
+      setAttachments,
+      setSelectedTool,
+    }),
+    [
+      attachments,
+      getInitialInput,
+      getInputValue,
+      handleInputChange,
+      handleModelChange,
+      handleModelSelectionChange,
+      handleSubmit,
+      isEmpty,
+      isProjectContext,
+      selectedModelId,
+      selectedModelSelection,
+      selectedTool,
+    ]
+  );
 
   return (
-    <ChatInputContext.Provider
-      value={{
-        editorRef,
-        selectedTool,
-        setSelectedTool,
-        attachments,
-        setAttachments,
-        selectedModelId,
-        selectedModelSelection,
-        handleModelChange,
-        handleModelSelectionChange,
-        getInputValue,
-        handleInputChange,
-        getInitialInput,
-        isEmpty,
-        handleSubmit,
-        isProjectContext,
-      }}
-    >
+    <ChatInputContext.Provider value={contextValue}>
       {children}
     </ChatInputContext.Provider>
   );
-}
+};
 
-export function useChatInput() {
+export const useChatInput = () => {
   const context = useContext(ChatInputContext);
   if (context === undefined) {
     throw new Error("useChatInput must be used within a ChatInputProvider");
   }
   return context;
-}
+};

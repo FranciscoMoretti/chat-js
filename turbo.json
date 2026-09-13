@@ -36,7 +36,10 @@
     "APP_URL",
     "ELECTRON_APP_URL",
     "PORT",
-    "VERCEL_URL"
+    "VERCEL_URL",
+    "PLAYWRIGHT",
+    "CI_PLAYWRIGHT",
+    "PLAYWRIGHT_TEST_BASE_URL"
   ],
   "tasks": {
     "dev": {
@@ -104,14 +107,16 @@
         "$TURBO_ROOT$/packages/thread/src/**",
         "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
-        "$TURBO_ROOT$/patches/eve@0.52.2.patch",
+        "$TURBO_ROOT$/patches/*.patch",
+        "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ],
       "outputs": ["dist/**", "templates/**"]
     },
@@ -125,14 +130,16 @@
         "$TURBO_ROOT$/packages/thread/src/**",
         "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
-        "$TURBO_ROOT$/patches/eve@0.52.2.patch",
+        "$TURBO_ROOT$/patches/*.patch",
+        "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ]
     },
     "@chat-js/cli#test:scaffold": {
@@ -154,7 +161,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
-      "dependsOn": ["^test:types"],
+      "dependsOn": ["^test:types", "@chat-js/thread#test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -171,15 +178,21 @@
         "$TURBO_ROOT$/packages/thread/src/**",
         "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
-        "$TURBO_ROOT$/patches/eve@0.52.2.patch",
+        "$TURBO_ROOT$/patches/*.patch",
+        "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/oxlint-baseline.json"
       ]
+    },
+    "@chat-js/thread#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
     }
   }
 }
