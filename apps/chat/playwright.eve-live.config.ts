@@ -4,6 +4,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-optimistic-create.e2e.ts",
     "eve-guest-cookie.e2e.ts",
     "eve-guest-ui.e2e.ts",
     "eve-guest-create-recovery.e2e.ts",

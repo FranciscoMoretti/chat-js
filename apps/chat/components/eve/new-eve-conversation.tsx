@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Conversation,
+  ConversationContent,
+} from "@/components/ai-elements/conversation";
+import { Message, MessageContent } from "@/components/ai-elements/message";
+import { AttachmentList } from "@/components/attachment-list";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome";
 import {
   expandSelectedModelValue,
@@ -85,6 +91,7 @@ export function NewEveConversation({
     lock.current = true;
     setBusy(true);
     setError("");
+    let navigating = false;
     try {
       const modelIds = expandSelectedModelValue(selection ?? selectedModel);
       const operation = prepareSelectedCreation(
@@ -103,6 +110,7 @@ export function NewEveConversation({
         scope
       );
       window.location.assign(`/chat/${id}`);
+      navigating = true;
     } catch (cause) {
       if (
         cause instanceof CreationRejected &&
@@ -123,7 +131,9 @@ export function NewEveConversation({
       );
     } finally {
       lock.current = false;
-      setBusy(false);
+      if (!navigating) {
+        setBusy(false);
+      }
     }
   }
   if (projectRejected) {
@@ -142,8 +152,8 @@ export function NewEveConversation({
         autoFocus
         busy={busy}
         disabled={busy}
-        draft={draft}
-        files={files}
+        draft={busy ? "" : draft}
+        files={busy ? { ...files, attachments: [] } : files}
         modelSelection={{
           value: selection ?? selectedModel,
           onChange: async (value) => {
@@ -154,7 +164,12 @@ export function NewEveConversation({
             }
           },
         }}
-        onDraftChange={setDraft}
+        onDraftChange={(value) => {
+          // Clearing the controlled editor must not erase the saved send intent.
+          if (!busy) {
+            setDraft(value);
+          }
+        }}
         onSubmit={submit}
         onToolChange={setSelectedTool}
         readOnly={retained}
@@ -165,5 +180,26 @@ export function NewEveConversation({
       {error && <p role="alert">{error}</p>}
     </>
   );
+  if (busy) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <Conversation>
+          <ConversationContent className="mx-auto w-full max-w-3xl">
+            <Message className="flex-col" from="user">
+              <MessageContent className="min-w-0 max-w-full">
+                <span className="sr-only">You</span>
+                <p className="whitespace-pre-wrap">{draft}</p>
+                <AttachmentList attachments={files.attachments} />
+              </MessageContent>
+            </Message>
+            <p className="text-muted-foreground text-sm" role="status">
+              Sending…
+            </p>
+          </ConversationContent>
+        </Conversation>
+        <div className="mx-auto w-full max-w-3xl p-4">{composer}</div>
+      </div>
+    );
+  }
   return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
 }
