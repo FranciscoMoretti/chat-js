@@ -34,7 +34,7 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       message: "Reply with the single word amber.",
     },
   });
-  expect(created.status()).toBe(200);
+  expect(created.status(), await created.text()).toBe(200);
   const source = conversationBinding.parse(await created.json());
   try {
     await page.goto(`/chat/${source.id}`);

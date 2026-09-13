@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   remove: vi.fn(),
   cleanupEve: vi.fn(),
+  cleanupGuests: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
   env: mocks.env,
@@ -30,12 +31,21 @@ vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: mocks.cleanupEve,
 }));
 
+vi.mock("@/lib/eve/cleanup-expired-guests", () => ({
+  cleanupExpiredEveGuests: mocks.cleanupGuests,
+}));
+
 import { GET } from "./route";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.CRON_SECRET = "fixture-secret";
   mocks.cleanupEve.mockResolvedValue({ deletedCount: 0, skipped: false });
+  mocks.cleanupGuests.mockResolvedValue({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
 });
 
 test.each([
@@ -54,6 +64,7 @@ test.each([
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.remove).not.toHaveBeenCalled();
   expect(mocks.cleanupEve).not.toHaveBeenCalled();
+  expect(mocks.cleanupGuests).not.toHaveBeenCalled();
 });
 
 test("cleanup uses EVE ownership even while new EVE admission is disabled", async () => {
@@ -88,4 +99,35 @@ test("cleanup still requires cron authorization", async () => {
   expect(mocks.references).not.toHaveBeenCalled();
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+test("storage failure does not prevent expired guest cleanup and reports retry", async () => {
+  mocks.cleanupEve.mockRejectedValueOnce(new Error("storage unavailable"));
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(503);
+  expect(mocks.cleanupGuests).toHaveBeenCalledWith(process.cwd());
+  expect(await response.json()).toMatchObject({
+    success: false,
+    results: { expiredGuests: { pendingCount: 0 } },
+  });
+});
+
+test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
+  mocks.cleanupGuests.mockResolvedValueOnce({
+    skipped: false,
+    deletedCount: 1,
+    pendingCount: 1,
+  });
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(503);
+  expect(mocks.cleanupEve).toHaveBeenCalledOnce();
+  expect(await response.json()).toMatchObject({ success: false });
 });

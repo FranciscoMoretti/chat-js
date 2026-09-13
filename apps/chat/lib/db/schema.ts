@@ -322,7 +322,7 @@ export const user = pgTable("user", {
 });
 
 // Guest ownership is separate from BetterAuth sessions and monetary credits.
-// Retain expired rows until owner cleanup: late usage must still be classified as guest usage.
+// Retain expired identities after content cleanup so late usage remains guest usage.
 export const eveGuest = pgTable(
   "EveGuest",
   {
@@ -546,6 +546,9 @@ export const eveConversation = pgTable(
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     sessionId: text("sessionId").unique(),
     usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+    guestCleanupAttemptedAt: timestamp("guestCleanupAttemptedAt", {
+      withTimezone: true,
+    }),
     state: text("state", {
       enum: ["creating", "bound", "uncertain", "deleting", "deleted"],
     })

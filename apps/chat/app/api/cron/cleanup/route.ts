@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 import { getAllAttachmentUrls } from "@/lib/db/queries";
 import { env } from "@/lib/env";
+import { cleanupExpiredEveGuests } from "@/lib/eve/cleanup-expired-guests";
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 import { deleteFilesByUrls, listFiles } from "@/lib/file-storage";
 import { isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
@@ -19,16 +20,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const results = {
-      orphanedAttachments: await cleanupOrphanedAttachments(),
-      // Add other cleanup tasks here in the future
-    };
-
-    return NextResponse.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-      results,
-    });
+    const [attachments, guests] = await Promise.allSettled([
+      cleanupOrphanedAttachments(),
+      cleanupExpiredEveGuests(process.cwd()),
+    ]);
+    const success =
+      attachments.status === "fulfilled" &&
+      guests.status === "fulfilled" &&
+      guests.value.pendingCount === 0;
+    return NextResponse.json(
+      {
+        success,
+        timestamp: new Date().toISOString(),
+        results: {
+          orphanedAttachments:
+            attachments.status === "fulfilled"
+              ? attachments.value
+              : { error: "Attachment cleanup failed; retry required." },
+          expiredGuests:
+            guests.status === "fulfilled"
+              ? guests.value
+              : { error: "Guest cleanup failed; retry required." },
+        },
+      },
+      { status: success ? 200 : 503 }
+    );
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(

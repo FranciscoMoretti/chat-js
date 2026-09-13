@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
+import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
@@ -43,22 +44,6 @@ export async function GET(request: Request, context: Context) {
     },
     { headers }
   );
-}
-
-function localDeletionAvailable() {
-  try {
-    const local = new Set(["localhost", "127.0.0.1", "[::1]"]);
-    const world = new URL(env.WORKFLOW_POSTGRES_URL ?? "");
-    const worker = new URL(env.EVE_INTERNAL_ORIGIN ?? "");
-    return (
-      ["postgres:", "postgresql:"].includes(world.protocol) &&
-      local.has(world.hostname) &&
-      ["http:", "https:"].includes(worker.protocol) &&
-      local.has(worker.hostname)
-    );
-  } catch {
-    return false;
-  }
 }
 
 /** Erases the conversation family through the verified local-provider coordinator. */
