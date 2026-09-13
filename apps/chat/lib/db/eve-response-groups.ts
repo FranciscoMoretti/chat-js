@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import type { z } from "zod";
+import { eveResponseGroupCandidates } from "../eve/response-group-candidates";
 import { eveResponseGroupResult } from "../eve/response-group-contracts";
 import { eveResponseGroupInput } from "../eve/response-group-input";
 import { db } from "./client";
@@ -11,79 +12,98 @@ export async function reserveEveResponseGroup(
   ownerId: string,
   value: z.infer<typeof eveResponseGroupInput>
 ) {
+  const result = await db.transaction((tx) =>
+    reserveGroupRow(tx, ownerId, value)
+  );
+  return requireGroup(result);
+}
+
+/** Must commit with guest quota when admitting an anonymous comparison. */
+export async function reserveEveResponseGroupInTransaction(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  value: z.infer<typeof eveResponseGroupInput>
+) {
+  return requireGroup(await reserveGroupRow(tx, ownerId, value));
+}
+
+async function reserveGroupRow(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  value: z.infer<typeof eveResponseGroupInput>
+) {
   const input = eveResponseGroupInput.parse(value);
   const inputHash = createHash("sha256")
     .update(JSON.stringify(input))
     .digest("hex");
-  const result = await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+  );
+  const condition = and(
+    eq(eveResponseGroup.ownerId, ownerId),
+    eq(eveResponseGroup.operationId, input.operationId)
+  );
+  const [existing] = await tx.select().from(eveResponseGroup).where(condition);
+  if (existing?.deleted) {
+    throw new Error("This response group has been deleted.");
+  }
+  if (existing && existing.inputHash !== inputHash) {
+    throw new Error(
+      "This response group already has a different message, model order, tool selection, or source."
     );
-    const condition = and(
-      eq(eveResponseGroup.ownerId, ownerId),
-      eq(eveResponseGroup.operationId, input.operationId)
-    );
-    const [existing] = await tx
-      .select()
-      .from(eveResponseGroup)
-      .where(condition);
-    if (existing?.deleted) {
-      throw new Error("This response group has been deleted.");
-    }
-    if (existing && existing.inputHash !== inputHash) {
-      throw new Error(
-        "This response group already has a different message, model order, tool selection, or source."
-      );
-    }
-    const sourceId = input.fork?.conversationId ?? null;
-    const [source] = sourceId
-      ? await tx
-          .select()
-          .from(eveConversation)
-          .where(
-            and(
-              eq(eveConversation.id, sourceId),
-              eq(eveConversation.ownerId, ownerId)
-            )
+  }
+  const sourceId = input.fork?.conversationId ?? null;
+  const [source] = sourceId
+    ? await tx
+        .select()
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.id, sourceId),
+            eq(eveConversation.ownerId, ownerId)
           )
-      : [];
-    if (sourceId && !source) {
-      throw new Error("Source conversation not found.");
-    }
-    // An exact replay can recover the missing association of a pre-contract group.
-    // Commit it even when the source has since retired, so deletion can find it.
-    if (existing && !existing.sourceIdentityKnown) {
-      await tx
-        .update(eveResponseGroup)
-        .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
-        .where(condition);
-    }
-    if (source && source.state !== "bound") {
-      return undefined;
-    }
-    if (existing) {
-      return existing;
-    }
-    const candidates = input.modelIds.map((modelId) => ({
-      modelId,
-      operationId: crypto.randomUUID(),
-    }));
-    const [group] = await tx
-      .insert(eveResponseGroup)
-      .values({
-        ownerId,
-        operationId: input.operationId,
-        inputHash,
-        candidates,
-        candidateOperationIds: candidates.map(
-          (candidate) => candidate.operationId
-        ),
-        sourceConversationId: sourceId,
-        sourceIdentityKnown: true,
-      })
-      .returning();
-    return group;
-  });
+        )
+    : [];
+  if (sourceId && !source) {
+    throw new Error("Source conversation not found.");
+  }
+  // An exact replay can recover the missing association of a pre-contract group.
+  // Commit it even when the source has since retired, so deletion can find it.
+  if (existing && !existing.sourceIdentityKnown) {
+    await tx
+      .update(eveResponseGroup)
+      .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
+      .where(condition);
+  }
+  if (source && source.state !== "bound") {
+    return undefined;
+  }
+  if (existing) {
+    return existing;
+  }
+  const candidates = eveResponseGroupCandidates(
+    input.operationId,
+    input.modelIds
+  );
+  const [group] = await tx
+    .insert(eveResponseGroup)
+    .values({
+      ownerId,
+      operationId: input.operationId,
+      inputHash,
+      candidates,
+      candidateOperationIds: candidates.map(
+        (candidate) => candidate.operationId
+      ),
+      sourceConversationId: sourceId,
+      sourceIdentityKnown: true,
+    })
+    .returning();
+  return group;
+}
+
+function requireGroup(result: Awaited<ReturnType<typeof reserveGroupRow>>) {
   if (!result) {
     throw new Error("Source conversation is unavailable.");
   }

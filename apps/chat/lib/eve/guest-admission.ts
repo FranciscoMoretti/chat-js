@@ -4,10 +4,10 @@ import { z } from "zod";
 import { assertEveFilesOwned } from "../db/eve-files";
 import {
   commitEveGuestMessage,
-  releaseEveGuestMessage,
+  releaseEveGuestCreation,
   reserveEveGuestMessage,
 } from "../db/eve-guests";
-import { getEveConversation, getEveCreation } from "../db/eve-queries";
+import { getEveConversation } from "../db/eve-queries";
 import { env } from "../env";
 import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import type { createConversationInput } from "./contracts";
@@ -46,8 +46,8 @@ export function guestRequestIpHash(request: Request) {
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 }
 
-/** Creation replays use eve's native operation ID; this must not wrap raw follow-up sends. */
-export async function admitGuestCreation(
+/** Checks guest policy and ownership before reserving quota. */
+export async function validateGuestCreation(
   request: Request,
   principal: Extract<EvePrincipal, { kind: "guest" }>,
   input: z.infer<typeof createConversationInput>
@@ -106,6 +106,19 @@ export async function admitGuestCreation(
       { status: 400 }
     );
   }
+  return ipHash;
+}
+
+/** Creation replays use eve's native operation ID; this must not wrap raw follow-up sends. */
+export async function admitGuestCreation(
+  request: Request,
+  principal: Extract<EvePrincipal, { kind: "guest" }>,
+  input: z.infer<typeof createConversationInput>
+) {
+  const ipHash = await validateGuestCreation(request, principal, input);
+  if (ipHash instanceof Response) {
+    return ipHash;
+  }
   const reservation = await reserveEveGuestMessage(
     {
       ownerId: principal.ownerId,
@@ -157,8 +170,8 @@ export async function settleGuestCreation(
     );
     // A terminal rejection of an existing operation does not prove non-admission.
     // Keep ambiguous quota through deletion and failures to commit the accepted turn.
-    if (result.success && !(await getEveCreation(ownerId, operationId))) {
-      await releaseEveGuestMessage(ownerId, operationId, reservationId);
+    if (result.success) {
+      return await releaseEveGuestCreation(ownerId, operationId, reservationId);
     }
   }
 }

@@ -16,4 +16,8 @@ export const eveResponseGroupInput = z
   .refine(
     (input) => !(input.fork && input.projectId),
     "Forks inherit their source project."
-  );
+  )
+  .transform((input) => ({
+    ...input,
+    operationId: input.operationId.toLowerCase(),
+  }));

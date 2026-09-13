@@ -1,6 +1,7 @@
-import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
@@ -10,8 +11,8 @@ export async function POST(request: Request) {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
+  const principal = await resolveEvePrincipal(request.headers);
+  if (!principal) {
     return new Response(null, { status: 401 });
   }
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
@@ -27,9 +28,16 @@ export async function POST(request: Request) {
     );
   }
   try {
+    const admission =
+      principal.kind === "guest"
+        ? await admitGuestResponseGroup(request, principal, input.data)
+        : undefined;
+    if (admission instanceof Response) {
+      return admission;
+    }
     return Response.json(
       eveResponseGroupResult.parse(
-        await createEveResponseGroup(session.user.id, input.data)
+        await createEveResponseGroup(principal.ownerId, input.data, admission)
       )
     );
   } catch {

@@ -1,16 +1,20 @@
 import { eq, inArray } from "drizzle-orm";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   commitEveGuestMessage,
   createEveGuest,
   readEveGuestCredential,
+  releaseEveGuestCreation,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
   reserveEveGuestMessages,
 } from "../lib/db/eve-guests";
+import { createEveConversation } from "../lib/db/eve-queries";
+import { reserveEveResponseGroupInTransaction } from "../lib/db/eve-response-groups";
 import {
+  eveConversation,
   eveGuest,
   eveGuestMessage,
   eveGuestRate,
@@ -24,6 +28,7 @@ import {
   createEveGuestCredential,
   eveGuestOwnerId,
 } from "../lib/eve/guest-credential";
+import { eveResponseGroupCandidates } from "../lib/eve/response-group-candidates";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -62,6 +67,9 @@ function request(ownerId: string) {
 afterAll(async () => {
   if (owners.length) {
     await db.delete(eveUsage).where(inArray(eveUsage.ownerId, owners));
+    await db
+      .delete(eveConversation)
+      .where(inArray(eveConversation.ownerId, owners));
     await db.delete(user).where(inArray(user.id, owners));
   }
   if (ips.length) {
@@ -489,4 +497,151 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
       { ...first, operationId: first.operationId.toUpperCase() },
     ])
   ).rejects.toThrow("unique operations");
+});
+
+test("comparison persistence failure rolls back guest identity and every quota reservation", async () => {
+  const credential = createEveGuestCredential();
+  const ownerId = eveGuestOwnerId(credential.tokenHash);
+  owners.push(ownerId);
+  const first = request(ownerId);
+  const input = {
+    operationId: crypto.randomUUID(),
+    modelIds: ["cheap", "cheap"],
+    message: "hello",
+    fork: { conversationId: crypto.randomUUID(), beforeTurnId: "turn_0" },
+  };
+  const candidates = eveResponseGroupCandidates(
+    input.operationId,
+    input.modelIds
+  );
+  await expect(
+    reserveEveGuestMessages(
+      candidates.map((candidate) => ({
+        ...first,
+        operationId: candidate.operationId,
+      })),
+      {
+        tokenHash: credential.tokenHash,
+        messageLimit: 2,
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+      (tx) => reserveEveResponseGroupInTransaction(tx, ownerId, input)
+    )
+  ).rejects.toThrow("Source conversation not found");
+  expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual([]);
+  expect(
+    await db
+      .select()
+      .from(eveGuestMessage)
+      .where(eq(eveGuestMessage.ownerId, ownerId))
+  ).toEqual([]);
+  expect(
+    await db
+      .select()
+      .from(eveGuestRate)
+      .where(eq(eveGuestRate.ipHash, first.ipHash))
+  ).toEqual([]);
+});
+
+test("refunded guest creation cannot dispatch late, while a new admission can recover", async () => {
+  const row = await guest(1);
+  const input = request(row.ownerId);
+  const original = await reserveEveGuestMessage(input);
+  if (original.status !== "reserved") {
+    throw new Error("Missing admission");
+  }
+  expect(
+    await releaseEveGuestCreation(
+      row.ownerId,
+      input.operationId,
+      original.reservationId
+    )
+  ).toBe(true);
+  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  await expect(
+    createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
+      guestReservationId: original.reservationId,
+    })
+  ).rejects.toThrow("Guest admission has changed");
+  await expect(
+    createEveConversation(row.ownerId, input.operationId, "hello", dispatch)
+  ).rejects.toThrow("requires a quota reservation");
+  expect(dispatch).not.toHaveBeenCalled();
+  const retry = await reserveEveGuestMessage(input);
+  if (retry.status !== "reserved") {
+    throw new Error("Missing retry admission");
+  }
+  const binding = await createEveConversation(
+    row.ownerId,
+    input.operationId,
+    "hello",
+    dispatch,
+    { guestReservationId: retry.reservationId }
+  );
+  expect(binding.sessionId).toBe(`native-${input.operationId}`);
+  expect(
+    await releaseEveGuestCreation(
+      row.ownerId,
+      input.operationId,
+      retry.reservationId
+    )
+  ).toBe(false);
+  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+  expect(dispatch).toHaveBeenCalledTimes(1);
+});
+
+test("creation claims and refunds serialize without a free native dispatch", async () => {
+  for (let index = 0; index < 4; index++) {
+    const row = await guest(1);
+    const input = request(row.ownerId);
+    const quota = await reserveEveGuestMessage(input);
+    if (quota.status !== "reserved") {
+      throw new Error("Missing admission");
+    }
+    const dispatch = vi.fn(async () => `native-race-${input.operationId}`);
+    const [creation, refund] = await Promise.allSettled([
+      createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
+        guestReservationId: quota.reservationId,
+      }),
+      releaseEveGuestCreation(
+        row.ownerId,
+        input.operationId,
+        quota.reservationId
+      ),
+    ]);
+    expect(refund.status).toBe("fulfilled");
+    if (refund.status !== "fulfilled") {
+      throw new Error("Refund failed");
+    }
+    if (refund.value) {
+      expect(creation.status).toBe("rejected");
+      expect(dispatch).not.toHaveBeenCalled();
+      expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(1);
+    } else {
+      expect(creation.status).toBe("fulfilled");
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+    }
+  }
+});
+
+test("committed quota without a creation journal cannot authorize a new dispatch", async () => {
+  const row = await guest(1);
+  const input = request(row.ownerId);
+  const quota = await reserveEveGuestMessage(input);
+  if (quota.status !== "reserved") {
+    throw new Error("Missing admission");
+  }
+  await commitEveGuestMessage(
+    row.ownerId,
+    input.operationId,
+    quota.reservationId
+  );
+  const dispatch = vi.fn(async () => `native-${input.operationId}`);
+  await expect(
+    createEveConversation(row.ownerId, input.operationId, "hello", dispatch, {
+      guestReservationId: quota.reservationId,
+    })
+  ).rejects.toThrow("Committed guest admission has no creation journal");
+  expect(dispatch).not.toHaveBeenCalled();
 });

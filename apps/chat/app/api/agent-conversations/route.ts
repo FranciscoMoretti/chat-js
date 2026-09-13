@@ -38,7 +38,8 @@ export async function POST(request: Request) {
   }
   const response = await createEveConversationOperation(
     principal.ownerId,
-    input.data
+    input.data,
+    admission?.reservationId
   );
   if (admission) {
     await settleGuestCreation(

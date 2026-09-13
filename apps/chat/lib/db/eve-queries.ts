@@ -15,6 +15,8 @@ import {
   eveConversation,
   eveConversationProject,
   eveFileReference,
+  eveGuest,
+  eveGuestMessage,
   eveResponseGroup,
   project,
 } from "@/lib/db/schema";
@@ -202,14 +204,78 @@ async function assertResponseGroupCandidateAvailable(
   }
 }
 
+async function assertGuestCreationAdmission(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  ownerId: string,
+  operationId: string,
+  reservationId?: string
+) {
+  if (!reservationId) {
+    const [guest] = await tx
+      .select({ ownerId: eveGuest.ownerId })
+      .from(eveGuest)
+      .where(eq(eveGuest.ownerId, ownerId));
+    if (guest) {
+      throw new CreationConflict(
+        "Guest creation requires a quota reservation."
+      );
+    }
+    return;
+  }
+  if (reservationId) {
+    const [quota] = await tx
+      .select({
+        id: eveGuestMessage.reservationId,
+        state: eveGuestMessage.state,
+      })
+      .from(eveGuestMessage)
+      .where(
+        and(
+          eq(eveGuestMessage.ownerId, ownerId),
+          eq(eveGuestMessage.operationId, operationId),
+          eq(eveGuestMessage.reservationId, reservationId),
+          inArray(eveGuestMessage.state, ["reserved", "committed"])
+        )
+      );
+    if (!quota) {
+      throw new CreationConflict(
+        "Guest admission has changed. Retry the saved request."
+      );
+    }
+    if (quota.state === "committed") {
+      const [creation] = await tx
+        .select({ id: eveConversation.id })
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.ownerId, ownerId),
+            eq(eveConversation.operationId, operationId)
+          )
+        );
+      if (!creation) {
+        throw new CreationConflict(
+          "Committed guest admission has no creation journal."
+        );
+      }
+    }
+  }
+}
+
 async function reserveEveConversation(
   value: typeof eveConversation.$inferInsert,
-  fork?: EveForkInput
+  fork?: EveForkInput,
+  guestReservationId?: string
 ) {
   return await db.transaction(async (tx) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
+    );
+    await assertGuestCreationAdmission(
+      tx,
+      value.ownerId,
+      value.operationId,
+      guestReservationId
     );
     await assertResponseGroupCandidateAvailable(
       tx,
@@ -409,12 +475,14 @@ export async function createEveConversation(
     fork,
     fileKeys = [],
     initialProjectId,
+    guestReservationId,
   }: {
     initialModelId?: string;
     initialContentHash?: string;
     fork?: EveForkInput;
     fileKeys?: string[];
     initialProjectId?: string;
+    guestReservationId?: string;
   } = {}
 ) {
   if (fork && initialProjectId) {
@@ -431,7 +499,8 @@ export async function createEveConversation(
       initialContentHash,
       initialProjectId,
     },
-    fork
+    fork,
+    guestReservationId
   );
   if (!reservation) {
     const [existing] = await db

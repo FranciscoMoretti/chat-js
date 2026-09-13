@@ -1,12 +1,18 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  session: vi.fn(),
+  principal: vi.fn(),
+  admit: vi.fn(),
   create: vi.fn(),
   enabled: vi.fn(),
   get: vi.fn(),
 }));
-vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
+vi.mock("@/lib/eve/principal", () => ({
+  resolveEvePrincipal: mocks.principal,
+}));
+vi.mock("@/lib/eve/guest-group-admission", () => ({
+  admitGuestResponseGroup: mocks.admit,
+}));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: mocks.enabled }));
 vi.mock("@/lib/eve/response-group", () => ({
@@ -34,17 +40,21 @@ function request(origin = "http://localhost:3790") {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.enabled.mockReturnValue(true);
-  mocks.session.mockResolvedValue({ user: { id: "owner" } });
+  mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ id: input.operationId, candidates: [] });
 });
 test("authenticates and checks origin before dispatching with server-owned identity", async () => {
   expect((await POST(request("https://foreign.invalid"))).status).toBe(403);
   expect(mocks.create).not.toHaveBeenCalled();
   expect((await POST(request())).status).toBe(200);
-  expect(mocks.create).toHaveBeenCalledExactlyOnceWith("owner", input);
+  expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
+    "owner",
+    input,
+    undefined
+  );
 });
 test("unauthenticated or disabled requests cannot create groups", async () => {
-  mocks.session.mockResolvedValue(null);
+  mocks.principal.mockResolvedValue(null);
   expect((await POST(request())).status).toBe(401);
   mocks.enabled.mockReturnValue(false);
   expect((await POST(request())).status).toBe(404);
@@ -58,4 +68,27 @@ test("reads only through the authenticated owner's scope and does not cache bind
   expect((await GET(request(), { params })).headers.get("cache-control")).toBe(
     "private, no-store"
   );
+});
+
+test("guest comparisons cannot dispatch without successful batch admission", async () => {
+  mocks.principal.mockResolvedValue({
+    kind: "guest",
+    ownerId: "guest",
+    tokenHash: "hash",
+  });
+  mocks.admit.mockResolvedValue(new Response(null, { status: 429 }));
+  expect((await POST(request())).status).toBe(429);
+  expect(mocks.create).not.toHaveBeenCalled();
+  const reservations = [
+    { operationId: input.operationId, reservationId: "quota" },
+  ];
+  mocks.admit.mockResolvedValue(reservations);
+  expect((await POST(request())).status).toBe(200);
+  expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
+    "guest",
+    input,
+    reservations
+  );
+  await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
+  expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });

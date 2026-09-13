@@ -3,7 +3,13 @@ import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { eveGuestOwnerId } from "../eve/guest-credential";
 import { db } from "./client";
-import { eveGuest, eveGuestMessage, eveGuestRate, user } from "./schema";
+import {
+  eveConversation,
+  eveGuest,
+  eveGuestMessage,
+  eveGuestRate,
+  user,
+} from "./schema";
 
 const hash = z.string().regex(/^[0-9a-f]{64}$/);
 const reservation = z.object({
@@ -118,9 +124,12 @@ class GuestBatchRejected extends Error {
 }
 
 /** Comparisons admit every candidate or none, including first-guest account creation. */
-export async function reserveEveGuestMessages(
+export async function reserveEveGuestMessages<T = undefined>(
   inputs: GuestReservationInput[],
-  bootstrap?: GuestBootstrap
+  bootstrap?: GuestBootstrap,
+  persistAdmission?: (
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0]
+  ) => Promise<T>
 ) {
   const [first] = inputs;
   if (!first) {
@@ -156,7 +165,8 @@ export async function reserveEveGuestMessages(
         }
         reservations.push({ operationId: input.operationId, ...result });
       }
-      return { status: "admitted", reservations } as const;
+      const admission = await persistAdmission?.(tx);
+      return { status: "admitted", reservations, admission } as const;
     });
   } catch (error) {
     if (error instanceof GuestBatchRejected) {
@@ -277,6 +287,24 @@ export async function releaseEveGuestMessage(
   operationId: string,
   reservationId: string
 ) {
+  return await releaseMessage(ownerId, operationId, reservationId, false);
+}
+
+/** Serialize proof of no creation with the same family lock used before native dispatch. */
+export async function releaseEveGuestCreation(
+  ownerId: string,
+  operationId: string,
+  reservationId: string
+) {
+  return await releaseMessage(ownerId, operationId, reservationId, true);
+}
+
+async function releaseMessage(
+  ownerId: string,
+  operationId: string,
+  reservationId: string,
+  requireUncreated: boolean
+) {
   return await db.transaction(async (tx) => {
     const identity = and(
       eq(eveGuestMessage.ownerId, ownerId),
@@ -295,6 +323,23 @@ export async function releaseEveGuestMessage(
       .from(eveGuest)
       .where(eq(eveGuest.ownerId, ownerId))
       .for("update");
+    if (requireUncreated) {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+      );
+      const [creation] = await tx
+        .select({ id: eveConversation.id })
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.ownerId, ownerId),
+            eq(eveConversation.operationId, operationId)
+          )
+        );
+      if (creation) {
+        return false;
+      }
+    }
     const [released] = await tx
       .update(eveGuestMessage)
       .set({ state: "released" })

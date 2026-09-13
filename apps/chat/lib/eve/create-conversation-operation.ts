@@ -25,7 +25,8 @@ import { eveToolMetadata } from "./message-tool-selection";
 
 export async function createEveConversationOperation(
   ownerId: string,
-  input: z.infer<typeof createConversationInput>
+  input: z.infer<typeof createConversationInput>,
+  guestReservationId?: string
 ) {
   try {
     assertEveConfigured();
@@ -162,6 +163,7 @@ export async function createEveConversationOperation(
           .parse(await result.json()).sessionId;
       },
       {
+        guestReservationId,
         initialModelId: input.modelId,
         initialContentHash: eveCreationContentHash(
           input.message,

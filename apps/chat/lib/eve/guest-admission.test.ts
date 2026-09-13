@@ -7,7 +7,6 @@ import {
 
 const mocks = vi.hoisted(() => ({
   source: vi.fn(),
-  creation: vi.fn(),
   reserve: vi.fn(),
   commit: vi.fn(),
   release: vi.fn(),
@@ -27,11 +26,10 @@ vi.mock("../types/anonymous", () => ({
 vi.mock("../db/eve-guests", () => ({
   reserveEveGuestMessage: mocks.reserve,
   commitEveGuestMessage: mocks.commit,
-  releaseEveGuestMessage: mocks.release,
+  releaseEveGuestCreation: mocks.release,
 }));
 vi.mock("../db/eve-queries", () => ({
   getEveConversation: mocks.source,
-  getEveCreation: mocks.creation,
 }));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.files }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));
@@ -53,7 +51,6 @@ beforeEach(() => {
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
   mocks.source.mockResolvedValue(undefined);
-  mocks.creation.mockResolvedValue(undefined);
   mocks.files.mockResolvedValue(undefined);
   mocks.reserve.mockResolvedValue({
     status: "reserved",
@@ -159,24 +156,15 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
   );
 });
 
-it("does not refund an accepted or unresolved operation rejected after deletion", async () => {
-  mocks.creation.mockResolvedValue({
-    state: "deleted",
-    sessionId: "native-session",
-  });
-  await settleGuestCreation(
-    Response.json({ creationRejected: true }, { status: 404 }),
-    "guest",
-    input.operationId,
-    "attempt"
-  );
-  expect(mocks.release).not.toHaveBeenCalled();
-  mocks.creation.mockResolvedValue({ state: "reserved", sessionId: null });
-  await settleGuestCreation(
-    Response.json({ creationRejected: true }, { status: 409 }),
-    "guest",
-    input.operationId,
-    "attempt"
-  );
-  expect(mocks.release).not.toHaveBeenCalled();
+it("propagates the atomic refund decision when a creation already exists", async () => {
+  mocks.release.mockResolvedValue(false);
+  expect(
+    await settleGuestCreation(
+      Response.json({ creationRejected: true }, { status: 404 }),
+      "guest",
+      input.operationId,
+      "attempt"
+    )
+  ).toBe(false);
+  expect(mocks.commit).not.toHaveBeenCalled();
 });
