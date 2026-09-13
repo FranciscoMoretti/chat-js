@@ -12,6 +12,7 @@ import { getEveUsageCursor } from "../lib/db/eve-billing";
 import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -216,7 +217,10 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const endpoint = `/api/eve/v1/session/${conversation.sessionId}`;
   const rejected = await page.request.post(endpoint, {
     data: { message: "Do not dispatch this", modelId: "invalid-model" },
-    headers: { origin: new URL(page.url()).origin },
+    headers: {
+      [EVE_MESSAGE_OPERATION_HEADER]: crypto.randomUUID(),
+      origin: new URL(page.url()).origin,
+    },
   });
   expect(rejected.status()).toBe(400);
   expect(conversation.initialModelId).toBe("openai/gpt-4.1-mini-fast");

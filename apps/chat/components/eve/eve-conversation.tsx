@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { z } from "zod";
 
 import {
   Conversation,
@@ -15,19 +14,14 @@ import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import {
   expandSelectedModelValue,
-  frontendToolsSchema,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
-import {
-  draftAttachment,
-  draftMessage,
-  matchesDraft,
-  restoreDraft,
-} from "@/lib/eve/draft";
-import { eveMessageTool } from "@/lib/eve/message-tool-selection";
+import { draftMessage, restoreDraft } from "@/lib/eve/draft";
+import type { DraftAttachment } from "@/lib/eve/draft";
+import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
   useDefaultModel,
@@ -43,17 +37,7 @@ import type { EveResponseCardCandidate } from "./eve-response-group-cards";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
-
-const pendingMessageSchema = z.object({
-  afterSequence: z.number(),
-  attachments: z.array(draftAttachment).default([]),
-  checkUntil: z.number(),
-  message: z.string(),
-  modelId: z.string().optional(),
-  operationId: z.uuid().optional(),
-  rejection: z.string().optional(),
-  selectedTool: frontendToolsSchema.optional(),
-});
+import { useEveMessageDelivery } from "./use-eve-message-delivery";
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
 // oxlint-disable-next-line eslint/complexity
@@ -88,13 +72,10 @@ export const EveConversation = ({
   } = useConversationInput(ownerId, conversationId, draftScopeId);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
-  const storageKey = `chatjs.eve.pending-message:${sessionId}`;
-  const [pendingMessage, setPendingMessage] = useState<z.infer<
-    typeof pendingMessageSchema
-  > | null>(null);
+  const delivery = useEveMessageDelivery(sessionId);
+  const pendingMessage = delivery.pending;
   const commandError = useRef<Error | undefined>(undefined);
   const afterCancellation = useRef(0);
-  const receivedMessages = useRef(0);
   const commandLock = useRef(false);
   const { text: draft, setText: setDraft } = composerDraft;
   const [commandFailure, setCommandFailure] = useState<Error>();
@@ -137,9 +118,7 @@ export const EveConversation = ({
           // oxlint-disable-next-line promise/prefer-await-to-then -- Event callbacks intentionally fire-and-forget cache refreshes.
           .catch(() => null);
       }
-      if (event.type === "message.received") {
-        receivedMessages.current += 1;
-      }
+      delivery.accept(event);
       // Eve 0.52.2 does not always promote a durable turn failure to onError.
       if (event.type === "turn.failed") {
         commandError.current = new Error(event.data.message);
@@ -147,7 +126,6 @@ export const EveConversation = ({
     },
     resume: true,
   });
-  const resumeAgent = agent.resume;
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -169,74 +147,6 @@ export const EveConversation = ({
     agent.status === "streaming" ||
     agent.status === "submitted" ||
     agent.status === "resuming";
-  useEffect(() => {
-    const stored = sessionStorage.getItem(storageKey);
-    if (!stored) {
-      return;
-    }
-    try {
-      const pending = pendingMessageSchema.safeParse(JSON.parse(stored));
-      if (pending.success) {
-        // oxlint-disable-next-line react/set-state-in-effect -- Restore the durable pending-message marker on mount.
-        setPendingMessage(pending.data);
-      }
-    } catch {
-      sessionStorage.removeItem(storageKey);
-    }
-  }, [storageKey]);
-  useEffect(() => {
-    if (!pendingMessage || pendingMessage.rejection) {
-      return;
-    }
-    const pending = pendingMessage;
-    let disposed = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const reconcile = async () => {
-      for (const event of agent.events) {
-        if (
-          event.type === "message.received" &&
-          event.data.sequence > pending.afterSequence &&
-          eveMessageTool({ metadata: { custom: event.data.metadata } }) ===
-            (pending.selectedTool ?? null) &&
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Compare in event order so recovery never races matching messages.
-          (await matchesDraft(
-            event.data.parts ?? event.data.message,
-            pending.message,
-            pending.attachments
-          ))
-        ) {
-          if (!disposed) {
-            sessionStorage.removeItem(storageKey);
-            setPendingMessage(null);
-          }
-          return;
-        }
-      }
-      // Poll the native log after an ambiguous POST; never resend automatically.
-      if (
-        !(disposed || busy || commandPending) &&
-        Date.now() < pending.checkUntil
-      ) {
-        timer = setTimeout(() => {
-          // oxlint-disable-next-line promise/prefer-await-to-then -- Timer callbacks intentionally fire-and-forget recovery polling.
-          resumeAgent().catch(() => null);
-        }, 2000);
-      }
-    };
-    // oxlint-disable-next-line promise/prefer-await-to-then -- Effect cleanup owns the reconciliation promise.
-    reconcile().catch(() => null);
-    return () => {
-      disposed = true;
-      clearTimeout(timer);
-    };
-  }, [
-    agent.events,
-    busy,
-    commandPending,
-    pendingMessage,
-    resumeAgent,
-    storageKey,
-  ]);
   const hasApproval = agent.data.messages.some((message) =>
     message.parts.some(
       (part) =>
@@ -276,15 +186,14 @@ export const EveConversation = ({
       setCommandPending(false);
     }
   };
-  const send = async (action: () => Promise<void>, isMessage = false) => {
-    const received = receivedMessages.current;
+  const send = async (action: () => Promise<void>, operationId?: string) => {
     const cancellation = afterCancellation.current;
     await sendCommand(
       action,
       agent.resume,
       cancellation > 0,
       () => commandError.current,
-      () => !isMessage || receivedMessages.current > received
+      () => !operationId || delivery.hasAcknowledged(operationId)
     );
     if (afterCancellation.current === cancellation) {
       afterCancellation.current = 0;
@@ -292,28 +201,17 @@ export const EveConversation = ({
   };
   const submitMessage = async (
     message: string,
-    attachments: z.infer<typeof draftAttachment>[],
+    attachments: DraftAttachment[],
     modelId: string,
     clearComposer: boolean,
     selectedTool?: UiToolName
   ) => {
-    const pending = {
-      afterSequence: Math.max(
-        -1,
-        ...agent.events.flatMap((event) =>
-          event.type === "message.received" ? [event.data.sequence] : []
-        )
-      ),
+    const pending = delivery.begin({
       attachments,
-      checkUntil: Date.now() + 60_000,
       message: message.trim(),
       modelId,
-      operationId: crypto.randomUUID(),
       selectedTool,
-    };
-    // Save before sending: a reload may happen before Eve accepts it.
-    sessionStorage.setItem(storageKey, JSON.stringify(pending));
-    setPendingMessage(pending);
+    });
     if (clearComposer) {
       setDraft("");
       files.setAttachments([]);
@@ -325,20 +223,18 @@ export const EveConversation = ({
         () =>
           agent.send(draftMessage(message, attachments), {
             headers: {
-              "x-chatjs-message-operation": pending.operationId,
+              [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
               "x-chatjs-selected-model": modelId,
               ...(selectedTool
                 ? { "x-chatjs-selected-tool": selectedTool }
                 : {}),
             },
           }),
-        true
+        pending.operationId
       );
     } catch (error) {
       if (isEveCommandRejection(error)) {
-        const rejected = { ...pending, rejection: error.message };
-        sessionStorage.setItem(storageKey, JSON.stringify(rejected));
-        setPendingMessage(rejected);
+        delivery.reject(pending, error.message);
       }
       throw error;
     }
@@ -488,8 +384,7 @@ export const EveConversation = ({
                     composerDraft.setSelectedTool(
                       pendingMessage.selectedTool ?? null
                     );
-                    sessionStorage.removeItem(storageKey);
-                    setPendingMessage(null);
+                    delivery.release(pendingMessage);
                     setCommandFailure(
                       pendingMessage.rejection
                         ? undefined

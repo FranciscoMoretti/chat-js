@@ -12,9 +12,9 @@ import {
 import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import { rejectEveCommand } from "./command-rejection";
 import { guestRequestIpHash } from "./guest-admission";
+import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { EveMessageInput } from "./message-input";
 
-export const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 /** Only the first reservation may dispatch: eve's session POST has no replay key. */
 export const admitGuestMessage = async (
   request: Request,

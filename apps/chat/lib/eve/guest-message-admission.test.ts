@@ -2,9 +2,9 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import {
   admitGuestMessage,
-  EVE_MESSAGE_OPERATION_HEADER,
   settleGuestMessage,
 } from "./guest-message-admission";
+import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { frontendToolsSchema } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
 import { canSpend } from "@/lib/db/credits";
@@ -11,8 +13,11 @@ import {
   admitGuestMessage,
   settleGuestMessage,
 } from "@/lib/eve/guest-message-admission";
+import {
+  EVE_MESSAGE_OPERATION_HEADER,
+  eveMessageDeliveryMetadata,
+} from "@/lib/eve/message-delivery";
 import type { EveMessageInput } from "@/lib/eve/message-input";
-import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -85,6 +90,12 @@ const readCommand = async (
     }
     if ("message" in input.data) {
       ({ message } = input.data);
+      const operationId = z
+        .uuid()
+        .safeParse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
+      if (!operationId.success) {
+        return rejectEveCommand("A message operation ID is required.", 400);
+      }
       const suppliedTool = request.headers.get("x-chatjs-selected-tool");
       const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
       if (!tool.success) {
@@ -105,7 +116,10 @@ const readCommand = async (
         );
         body = JSON.stringify({
           message: await prepareEveMessage(input.data.message, modelId),
-          messageMetadata: eveToolMetadata(selectedTool),
+          messageMetadata: eveMessageDeliveryMetadata(
+            operationId.data,
+            selectedTool
+          ),
         });
       } catch (error) {
         return rejectEveCommand(
