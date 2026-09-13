@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { createConversationInput } from "@/lib/eve/contracts";
@@ -42,12 +43,32 @@ export async function POST(request: Request) {
     admission?.reservationId
   );
   if (admission) {
-    await settleGuestCreation(
+    const settled = await settleGuestCreation(
       response,
       principal.ownerId,
       input.data.operationId,
       admission.reservationId
     );
+    if (settled === false) {
+      const deleted = z
+        .object({ code: z.literal("conversation_deleted") })
+        .safeParse(
+          await response
+            .clone()
+            .json()
+            .catch(() => null)
+        );
+      if (deleted.success) {
+        return response;
+      }
+      return Response.json(
+        {
+          error:
+            "Creation is unresolved. Retry the saved operation to recover it.",
+        },
+        { status: 503 }
+      );
+    }
   }
   return response;
 }

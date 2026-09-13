@@ -61,6 +61,7 @@ export async function createEveConversationOperation(
         {
           error: "This conversation has been deleted.",
           creationRejected: true,
+          code: "conversation_deleted",
         },
         { status: 404 }
       );

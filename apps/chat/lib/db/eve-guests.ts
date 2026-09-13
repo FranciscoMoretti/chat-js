@@ -76,6 +76,26 @@ export async function readEveGuestCredential(tokenHash: string) {
   return { status: "active", guest } as const;
 }
 
+export async function readExistingEveGuestMessage(
+  ownerId: string,
+  operationId: string
+) {
+  const [message] = await db
+    .select({
+      state: eveGuestMessage.state,
+      requestHash: eveGuestMessage.requestHash,
+      reservationId: eveGuestMessage.reservationId,
+    })
+    .from(eveGuestMessage)
+    .where(
+      and(
+        eq(eveGuestMessage.ownerId, ownerId),
+        eq(eveGuestMessage.operationId, operationId)
+      )
+    );
+  return message;
+}
+
 type GuestBootstrap = {
   tokenHash: string;
   messageLimit: number;

@@ -6,6 +6,7 @@ export default defineConfig({
   testMatch: [
     "eve-guest-cookie.e2e.ts",
     "eve-guest-ui.e2e.ts",
+    "eve-guest-create-recovery.e2e.ts",
     "eve-guest-comparison.e2e.ts",
     "eve-guest-lifecycle.e2e.ts",
     "eve-guest-expiry.e2e.ts",

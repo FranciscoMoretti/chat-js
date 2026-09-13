@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assertEveFilesOwned } from "../db/eve-files";
 import {
   commitEveGuestMessage,
+  readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
 } from "../db/eve-guests";
@@ -115,6 +116,22 @@ export async function admitGuestCreation(
   principal: Extract<EvePrincipal, { kind: "guest" }>,
   input: z.infer<typeof createConversationInput>
 ) {
+  const requestHash = createHash("sha256")
+    .update(JSON.stringify(input))
+    .digest("hex");
+  const existing = await readExistingEveGuestMessage(
+    principal.ownerId,
+    input.operationId
+  );
+  if (existing && existing.state !== "released") {
+    if (existing.requestHash !== requestHash) {
+      return Response.json(
+        { error: "This operation has different content." },
+        { status: 409 }
+      );
+    }
+    return { status: "replay", reservationId: existing.reservationId } as const;
+  }
   const ipHash = await validateGuestCreation(request, principal, input);
   if (ipHash instanceof Response) {
     return ipHash;
@@ -123,9 +140,7 @@ export async function admitGuestCreation(
     {
       ownerId: principal.ownerId,
       operationId: input.operationId,
-      requestHash: createHash("sha256")
-        .update(JSON.stringify(input))
-        .digest("hex"),
+      requestHash,
       ipHash,
       requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
       requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
