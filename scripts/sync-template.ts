@@ -11,7 +11,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
-import { vendorEvePackage } from "../packages/cli/src/helpers/vendor-eve-package";
+import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 
 const rootDir = resolve(import.meta.dir, "..");
@@ -153,10 +153,17 @@ async function applyTemplateTransforms(destination: string): Promise<void> {
     threadSourceDir: join(rootDir, "packages", "thread", "src"),
   });
 
-  await vendorEvePackage({
+  await vendorPatchedPackage({
     destination,
     packageDir: join(rootDir, "node_modules", "eve"),
+    packageName: "eve",
     patchPath: join(rootDir, "patches", "eve@0.52.2.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: join(rootDir, "node_modules", "@ai-sdk", "mcp"),
+    packageName: "@ai-sdk/mcp",
+    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.45.patch"),
   });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.

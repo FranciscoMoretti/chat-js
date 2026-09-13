@@ -7,7 +7,7 @@ import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { syncTools } from "../utils/sync-tools";
 import { registryUrl } from "../registry/shadcn";
 import { runCommand } from "../utils/run-command";
-import { vendorEvePackage } from "./vendor-eve-package";
+import { vendorPatchedPackage } from "./vendor-patched-package";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
 const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
@@ -213,10 +213,17 @@ async function applyChatTemplateSourceTransforms(
     destination,
     threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
   });
-  await vendorEvePackage({
+  await vendorPatchedPackage({
     destination,
     packageDir: join(getRepoRoot(), "node_modules", "eve"),
+    packageName: "eve",
     patchPath: join(getRepoRoot(), "patches", "eve@0.52.2.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: join(getRepoRoot(), "node_modules", "@ai-sdk", "mcp"),
+    packageName: "@ai-sdk/mcp",
+    patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.45.patch"),
   });
 }
 

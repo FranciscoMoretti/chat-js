@@ -66,6 +66,7 @@
 		"node": ">=24"
 	},
 	"patchedDependencies": {
+		"@ai-sdk/mcp@2.0.45": "patches/ai-sdk-mcp@2.0.45.patch",
 		"eve@0.52.2": "patches/eve@0.52.2.patch",
 		"@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch"
 	}

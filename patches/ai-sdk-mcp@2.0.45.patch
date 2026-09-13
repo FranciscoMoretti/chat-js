@@ -1,0 +1,181 @@
+--- a/src/tool/mcp-sse-transport.ts
++++ b/src/tool/mcp-sse-transport.ts
+@@ -12,6 +12,7 @@
+   extractWWWAuthenticateParams,
+   UnauthorizedError,
+   auth,
++  type AuthResult,
+   type OAuthClientProvider,
+ } from './oauth';
+ import { LATEST_LEGACY_PROTOCOL_VERSION } from './types';
+@@ -33,6 +34,7 @@
+   private resourceMetadataUrl?: URL;
+   private redirectMode: RequestRedirect;
+   private fetchFn: FetchFunction;
++  private authPromise?: Promise<AuthResult>;
+ 
+   onclose?: () => void;
+   onerror?: (error: unknown) => void;
+@@ -87,6 +89,43 @@
+     );
+   }
+ 
++  private authorizeOnce(
++    resourceMetadataUrl?: URL,
++    scope?: string,
++  ): Promise<AuthResult> {
++    if (!this.authProvider) {
++      return Promise.resolve('REDIRECT');
++    }
++
++    if (!this.authPromise) {
++      this.authPromise = auth(this.authProvider, {
++        serverUrl: this.url,
++        resourceMetadataUrl,
++        scope,
++        fetchFn: this.fetchFn,
++      }).finally(() => {
++        this.authPromise = undefined;
++      });
++    }
++
++    return this.authPromise;
++  }
++
++  private async hasNewerAccessToken(
++    headers: Record<string, string>,
++  ): Promise<boolean> {
++    if (!this.authProvider) {
++      return false;
++    }
++
++    const currentAccessToken = (await this.authProvider.tokens())?.access_token;
++    const sentAuthorization = headers.Authorization ?? headers.authorization;
++    return (
++      currentAccessToken != null &&
++      sentAuthorization !== `Bearer ${currentAccessToken}`
++    );
++  }
++
+   async start(): Promise<void> {
+     return new Promise<void>((resolve, reject) => {
+       if (this.connected) {
+@@ -107,16 +146,17 @@
+           });
+ 
+           if (response.status === 401 && this.authProvider && !triedAuth) {
++            if (await this.hasNewerAccessToken(headers)) {
++              return establishConnection(true);
++            }
+             const { resourceMetadataUrl, scope } =
+               extractWWWAuthenticateParams(response);
+             this.resourceMetadataUrl = resourceMetadataUrl;
+             try {
+-              const result = await auth(this.authProvider, {
+-                serverUrl: this.url,
+-                resourceMetadataUrl: this.resourceMetadataUrl,
++              const result = await this.authorizeOnce(
++                this.resourceMetadataUrl,
+                 scope,
+-                fetchFn: this.fetchFn,
+-              });
++              );
+               if (result !== 'AUTHORIZED') {
+                 const error = new UnauthorizedError();
+                 this.onerror?.(error);
+@@ -277,15 +317,16 @@
+         const response = await this.fetchFn(endpoint.href, init);
+ 
+         if (response.status === 401 && this.authProvider && !triedAuth) {
++          if (await this.hasNewerAccessToken(headers)) {
++            return attempt(true);
++          }
+           const { resourceMetadataUrl, scope } =
+             extractWWWAuthenticateParams(response);
+           this.resourceMetadataUrl = resourceMetadataUrl;
+-          const result = await auth(this.authProvider, {
+-            serverUrl: this.url,
+-            resourceMetadataUrl: this.resourceMetadataUrl,
++          const result = await this.authorizeOnce(
++            this.resourceMetadataUrl,
+             scope,
+-            fetchFn: this.fetchFn,
+-          });
++          );
+           if (result !== 'AUTHORIZED') {
+             throw new UnauthorizedError();
+           }
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1479,7 +1479,32 @@
+       `ai-sdk/${VERSION}`,
+       getRuntimeEnvironmentUserAgent()
+     );
++  }
++  authorizeOnce(resourceMetadataUrl, scope) {
++    if (!this.authProvider) {
++      return Promise.resolve("REDIRECT");
++    }
++    if (!this.authPromise) {
++      this.authPromise = auth(this.authProvider, {
++        serverUrl: this.url,
++        resourceMetadataUrl,
++        scope,
++        fetchFn: this.fetchFn
++      }).finally(() => {
++        this.authPromise = void 0;
++      });
++    }
++    return this.authPromise;
+   }
++  async hasNewerAccessToken(headers) {
++    var _a3;
++    if (!this.authProvider) {
++      return false;
++    }
++    const currentAccessToken = (_a3 = await this.authProvider.tokens()) == null ? void 0 : _a3.access_token;
++    const sentAuthorization = headers.Authorization ?? headers.authorization;
++    return currentAccessToken != null && sentAuthorization !== `Bearer ${currentAccessToken}`;
++  }
+   async start() {
+     return new Promise((resolve, reject) => {
+       if (this.connected) {
+@@ -1498,15 +1523,13 @@
+             redirect: this.redirectMode
+           });
+           if (response.status === 401 && this.authProvider && !triedAuth) {
++            if (await this.hasNewerAccessToken(headers)) {
++              return establishConnection(true);
++            }
+             const { resourceMetadataUrl, scope } = extractWWWAuthenticateParams(response);
+             this.resourceMetadataUrl = resourceMetadataUrl;
+             try {
+-              const result = await auth(this.authProvider, {
+-                serverUrl: this.url,
+-                resourceMetadataUrl: this.resourceMetadataUrl,
+-                scope,
+-                fetchFn: this.fetchFn
+-              });
++              const result = await this.authorizeOnce(this.resourceMetadataUrl, scope);
+               if (result !== "AUTHORIZED") {
+                 const error = new UnauthorizedError();
+                 (_b3 = this.onerror) == null ? void 0 : _b3.call(this, error);
+@@ -1633,14 +1656,12 @@
+         };
+         const response = await this.fetchFn(endpoint.href, init);
+         if (response.status === 401 && this.authProvider && !triedAuth) {
++          if (await this.hasNewerAccessToken(headers)) {
++            return attempt(true);
++          }
+           const { resourceMetadataUrl, scope } = extractWWWAuthenticateParams(response);
+           this.resourceMetadataUrl = resourceMetadataUrl;
+-          const result = await auth(this.authProvider, {
+-            serverUrl: this.url,
+-            resourceMetadataUrl: this.resourceMetadataUrl,
+-            scope,
+-            fetchFn: this.fetchFn
+-          });
++          const result = await this.authorizeOnce(this.resourceMetadataUrl, scope);
+           if (result !== "AUTHORIZED") {
+             throw new UnauthorizedError();
+           }
