@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
+import { isEveEnabled } from "@/lib/eve/availability";
+
+const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/;
 
 function isPublicApiRoute(pathname: string): boolean {
   return (
@@ -24,6 +27,10 @@ function isMetadataRoute(pathname: string): boolean {
 }
 
 function isPublicPage(pathname: string): boolean {
+  // EVE pages resolve registered/guest principals and enforce conversation ownership.
+  if (isEveEnabled() && EVE_CHAT_PAGE.test(pathname)) {
+    return true;
+  }
   if (pathname === "/") {
     return true;
   }

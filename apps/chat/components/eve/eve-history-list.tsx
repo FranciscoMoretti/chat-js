@@ -19,6 +19,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
+import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
@@ -26,12 +27,15 @@ import { EveShareDialogContent } from "./eve-share-dialog";
 
 export function EveHistoryList({
   initialPage,
+  ownerId,
   projectId,
 }: {
+  ownerId: string;
   projectId?: string;
   initialPage: Awaited<ReturnType<typeof listEveConversations>>;
 }) {
   const trpc = useTRPC();
+  const { data: session } = useSession();
   const openDeletion = useEveDeletion();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -44,7 +48,7 @@ export function EveHistoryList({
   const search = query.trim();
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { search, projectId },
+      { search, projectId, ownerScope: ownerId },
       {
         getNextPageParam: (page) => page.nextCursor,
         initialData: search
@@ -117,7 +121,9 @@ export function EveHistoryList({
                   chat={item}
                   onDelete={() => openDeletion(item)}
                   onMoveProject={
-                    item.state === "bound" ? () => setMoving(item) : undefined
+                    session?.user && item.state === "bound"
+                      ? () => setMoving(item)
+                      : undefined
                   }
                   onRename={async (id, title) => {
                     await rename.mutateAsync({ id, title });
@@ -136,7 +142,9 @@ export function EveHistoryList({
               key={item.id}
               onDelete={() => openDeletion(item)}
               onMoveProject={
-                item.state === "bound" ? () => setMoving(item) : undefined
+                session?.user && item.state === "bound"
+                  ? () => setMoving(item)
+                  : undefined
               }
               onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
               onRename={async (id, title) => {

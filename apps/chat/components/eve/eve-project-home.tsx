@@ -95,7 +95,11 @@ export function EveProjectHome({
             ownerId={ownerId}
             projectId={current.id}
           />
-          <EveHistoryList initialPage={initialPage} projectId={current.id} />
+          <EveHistoryList
+            initialPage={initialPage}
+            ownerId={ownerId}
+            projectId={current.id}
+          />
           <ProjectInstructionsDialog
             error={
               save.error ? "Could not save instructions. Try again." : undefined

@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
 import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 const headers = { "cache-control": "no-store" };
@@ -15,19 +15,19 @@ async function authorize(request: Request, context: Context) {
   if (!isEveEnabled()) {
     return new Response(null, { status: 404, headers });
   }
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
+  const principal = await resolveEvePrincipal(request.headers);
+  if (!principal) {
     return new Response(null, { status: 401, headers });
   }
   const { id } = await context.params;
   if (!z.uuid().safeParse(id).success) {
     return new Response(null, { status: 400, headers });
   }
-  const source = await getEveDeletionState(session.user.id, id);
+  const source = await getEveDeletionState(principal.ownerId, id);
   if (!source) {
     return new Response(null, { status: 404, headers });
   }
-  return { ownerId: session.user.id, id, source };
+  return { ownerId: principal.ownerId, id, source };
 }
 
 /** Status only; reading never resumes deletion or exposes conversation payloads. */

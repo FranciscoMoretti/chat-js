@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { DELETE, GET } from "./route";
 
 const mocks = vi.hoisted(() => ({
-  session: vi.fn(),
+  principal: vi.fn(),
   state: vi.fn(),
   remove: vi.fn(),
   unacceptedCopy: vi.fn(),
@@ -14,7 +14,9 @@ const mocks = vi.hoisted(() => ({
     EVE_INTERNAL_ORIGIN: "http://localhost:4000",
   },
 }));
-vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
+vi.mock("@/lib/eve/principal", () => ({
+  resolveEvePrincipal: mocks.principal,
+}));
 vi.mock("@/lib/db/eve-deletion", () => ({ getEveDeletionState: mocks.state }));
 vi.mock("@/lib/db/eve-copy-journal", () => ({
   isUnacceptedEveCopy: mocks.unacceptedCopy,
@@ -41,7 +43,7 @@ beforeEach(() => {
   mocks.enabled = true;
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://localhost/test";
   mocks.env.EVE_INTERNAL_ORIGIN = "http://localhost:4000";
-  mocks.session.mockResolvedValue({ user: { id: "owner" } });
+  mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
 });
@@ -66,9 +68,9 @@ it("hides unavailable and foreign bindings without cleanup", async () => {
   expect(mocks.remove).not.toHaveBeenCalled();
 });
 it("requires login, valid coordinates and the feature flag", async () => {
-  mocks.session.mockResolvedValue(null);
+  mocks.principal.mockResolvedValue(null);
   expect((await DELETE(request(), context)).status).toBe(401);
-  mocks.session.mockResolvedValue({ user: { id: "owner" } });
+  mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   expect(
     (await DELETE(request(), { params: Promise.resolve({ id: "invalid" }) }))
       .status

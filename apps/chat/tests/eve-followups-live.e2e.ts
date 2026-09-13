@@ -57,10 +57,10 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     submittedText
   );
   await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
-  await expect(related).toHaveCount(1);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 60_000,
   });
+  await expect(related).toHaveCount(1);
   await expect(page.getByRole("log")).not.toContainText("Validation error:");
   await expect
     .poll(async () => {

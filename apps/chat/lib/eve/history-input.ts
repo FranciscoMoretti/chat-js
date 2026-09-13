@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const eveHistoryInput = z.object({
+  ownerScope: z.string().min(1).max(128).optional(),
   projectId: z.uuid().nullable().optional(),
   search: z.string().trim().max(255).default(""),
   cursor: z

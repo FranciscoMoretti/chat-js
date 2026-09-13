@@ -1,18 +1,19 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header";
-import { auth } from "@/lib/auth";
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComparisonConversation } from "./eve-comparison-conversation";
 import { EveConversation } from "./eve-conversation";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
+import { EveGuestBootstrap } from "./eve-guest-bootstrap";
 import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
@@ -21,15 +22,15 @@ export async function EveChatPage({
 }: {
   conversationId?: string;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    redirect("/login");
+  const principal = await resolveEvePrincipal(await headers());
+  if (!principal) {
+    return <EveGuestBootstrap />;
   }
   if (conversationId && !z.uuid().safeParse(conversationId).success) {
     notFound();
   }
   const selected = conversationId
-    ? await getEveConversation(session.user.id, conversationId)
+    ? await getEveConversation(principal.ownerId, conversationId)
     : undefined;
   if (conversationId && !selected) {
     notFound();
@@ -44,7 +45,9 @@ export async function EveChatPage({
     <ChatHeaderView
       actions={
         <>
-          {selected?.sessionId && <EveShareButton chatId={selected.id} />}
+          {principal.kind === "registered" && selected?.sessionId && (
+            <EveShareButton chatId={selected.id} />
+          )}
           <Link className="text-sm" href="/">
             New conversation
           </Link>
@@ -59,7 +62,7 @@ export async function EveChatPage({
   );
   if (selected?.sessionId && selected.state === "bound") {
     const group = await getEveResponseGroupForConversation(
-      session.user.id,
+      principal.ownerId,
       selected.id
     );
     if (group) {
@@ -69,7 +72,7 @@ export async function EveChatPage({
           header={header}
           initialGroup={group}
           key={selected.sessionId}
-          ownerId={session.user.id}
+          ownerId={principal.ownerId}
         />
       );
     }
@@ -78,17 +81,17 @@ export async function EveChatPage({
         conversationId={selected.id}
         header={header}
         key={selected.sessionId}
-        ownerId={session.user.id}
+        ownerId={principal.ownerId}
         sessionId={selected.sessionId}
       />
     );
   }
   const copy =
     selected?.creationKind === "copy"
-      ? await getEveCopyOperation(session.user.id, selected.operationId)
+      ? await getEveCopyOperation(principal.ownerId, selected.operationId)
       : undefined;
   let content = (
-    <NewEveConversation key={session.user.id} ownerId={session.user.id} />
+    <NewEveConversation key={principal.ownerId} ownerId={principal.ownerId} />
   );
   if (selected) {
     content = (
@@ -96,7 +99,7 @@ export async function EveChatPage({
         firstMessage={selected.firstMessage}
         key={selected.id}
         operationId={selected.operationId}
-        ownerId={session.user.id}
+        ownerId={principal.ownerId}
         scope={recoveryScope}
       />
     );

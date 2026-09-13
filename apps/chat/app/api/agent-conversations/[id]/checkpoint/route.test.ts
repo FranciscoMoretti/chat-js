@@ -2,13 +2,15 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
-  session: vi.fn(),
+  principal: vi.fn(),
   source: vi.fn(),
   capture: vi.fn(),
   read: vi.fn(),
   ready: vi.fn(),
 }));
-vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
+vi.mock("@/lib/eve/principal", () => ({
+  resolveEvePrincipal: mocks.principal,
+}));
 vi.mock("@/lib/db/eve-queries", () => ({ getEveConversation: mocks.source }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: () => true }));
@@ -32,7 +34,7 @@ function request(origin = "http://localhost:3790", body: unknown = input) {
 }
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.session.mockResolvedValue({ user: { id: "owner" } });
+  mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.source.mockResolvedValue({
     sessionId: "native-source",
     state: "bound",
@@ -43,7 +45,7 @@ beforeEach(() => {
   );
 });
 it("requires authentication, same origin and bound ownership before native access", async () => {
-  mocks.session.mockResolvedValueOnce(null);
+  mocks.principal.mockResolvedValueOnce(null);
   expect((await POST(request(), context)).status).toBe(401);
   expect((await POST(request("https://foreign.invalid"), context)).status).toBe(
     403

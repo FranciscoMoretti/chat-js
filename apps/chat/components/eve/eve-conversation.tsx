@@ -43,6 +43,7 @@ import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 
 const pendingMessageSchema = z.object({
+  operationId: z.uuid().optional(),
   message: z.string(),
   attachments: z.array(draftAttachment).default([]),
   modelId: z.string().optional(),
@@ -281,6 +282,7 @@ export function EveConversation({
     selectedTool?: UiToolName
   ) {
     const pending = {
+      operationId: crypto.randomUUID(),
       message: message.trim(),
       attachments,
       modelId,
@@ -306,6 +308,7 @@ export function EveConversation({
         () =>
           agent.send(draftMessage(message, attachments), {
             headers: {
+              "x-chatjs-message-operation": pending.operationId,
               "x-chatjs-selected-model": modelId,
               ...(selectedTool
                 ? { "x-chatjs-selected-tool": selectedTool }

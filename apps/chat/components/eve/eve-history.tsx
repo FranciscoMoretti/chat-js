@@ -1,13 +1,19 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { EveHistoryList } from "./eve-history-list";
 
 export async function EveHistory() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  const principal = await resolveEvePrincipal(await headers());
+  if (!principal) {
     return null;
   }
-  const current = await listEveConversations(session.user.id);
-  return <EveHistoryList initialPage={current} />;
+  const current = await listEveConversations(principal.ownerId);
+  return (
+    <EveHistoryList
+      initialPage={current}
+      key={principal.ownerId}
+      ownerId={principal.ownerId}
+    />
+  );
 }

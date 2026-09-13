@@ -7,6 +7,7 @@ import {
   useRef,
 } from "react";
 import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
 import { ControlledChatComposer } from "@/components/chat-composer";
 import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
@@ -16,6 +17,7 @@ import { expandSelectedModelValue, type UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
+import { useSession } from "@/providers/session-provider";
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
 
@@ -39,6 +41,7 @@ export function EveComposer({
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const { data: session } = useSession();
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
   const models = (
@@ -58,6 +61,10 @@ export function EveComposer({
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
   function upload(incoming: File[]) {
+    if (!session?.user) {
+      toast.error("Sign in to attach files.");
+      return;
+    }
     if (!uploadLocked) {
       files.upload(incoming).catch(() => undefined);
     }

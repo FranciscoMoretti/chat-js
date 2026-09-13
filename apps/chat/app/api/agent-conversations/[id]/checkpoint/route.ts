@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
@@ -8,6 +7,7 @@ import {
   waitForEveCheckpoint,
 } from "@/lib/eve/checkpoint-readiness";
 import { CheckpointRejected } from "@/lib/eve/checkpoint-rejection";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
 
@@ -29,8 +29,8 @@ export async function POST(
   if (!isEveEnabled()) {
     return new Response(null, { status: 404 });
   }
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
+  const principal = await resolveEvePrincipal(request.headers);
+  if (!principal) {
     return new Response(null, { status: 401 });
   }
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
@@ -44,7 +44,7 @@ export async function POST(
       { status: 400 }
     );
   }
-  const source = await getEveConversation(session.user.id, id);
+  const source = await getEveConversation(principal.ownerId, id);
   if (!source?.sessionId || source.state !== "bound") {
     return Response.json(
       { error: "Source conversation not found." },
@@ -54,14 +54,14 @@ export async function POST(
   try {
     if (
       !(await readEveCheckpoint(
-        session.user.id,
+        principal.ownerId,
         source.sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId
       ))
     ) {
       const accepted = await eveRequest(
-        session.user.id,
+        principal.ownerId,
         `/eve/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
         {
           method: "POST",
@@ -73,7 +73,7 @@ export async function POST(
         throw new Error("Checkpoint capture was not accepted.");
       }
       await waitForEveCheckpoint(
-        session.user.id,
+        principal.ownerId,
         source.sessionId,
         input.data.beforeTurnId,
         input.data.checkpointId

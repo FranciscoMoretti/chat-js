@@ -1,4 +1,5 @@
 import { Cpu } from "lucide-react";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { EveHistory } from "@/components/eve/eve-history";
 import { InternalLink } from "@/components/internal-link";
@@ -17,6 +18,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { auth } from "@/lib/auth";
 import { isEveEnabled } from "@/lib/eve/availability";
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
 import { SidebarUserNav } from "./sidebar-user-nav";
@@ -58,9 +60,7 @@ export function AppSidebar() {
             <Suspense
               fallback={<p className="p-3 text-sm">Loading conversations…</p>}
             >
-              <SidebarMenu className="px-2">
-                <SidebarProjects />
-              </SidebarMenu>
+              <RegisteredEveProjects />
               <EveHistory />
             </Suspense>
           ) : (
@@ -74,4 +74,13 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+async function RegisteredEveProjects() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return session?.user ? (
+    <SidebarMenu className="px-2">
+      <SidebarProjects />
+    </SidebarMenu>
+  ) : null;
 }
