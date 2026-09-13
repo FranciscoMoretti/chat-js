@@ -1,1 +1,0 @@
-ALTER TABLE "EveConversation" ADD COLUMN "initialContentHash" text;

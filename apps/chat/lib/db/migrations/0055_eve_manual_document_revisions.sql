@@ -1,1 +1,0 @@
-ALTER TABLE "EveDocumentRevision" ALTER COLUMN "turnIndex" DROP NOT NULL;
