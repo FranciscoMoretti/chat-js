@@ -64,3 +64,35 @@ it("notifies the web owner after disconnect and authentication errors", async ()
   await client.close();
   expect(invalidate).toHaveBeenCalledTimes(2);
 });
+
+it("concurrent connection requests share one transport and close it once", async () => {
+  const gate = Promise.withResolvers<void>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    url: "https://mcp.test",
+    type: "http",
+  });
+  const first = client.connect();
+  const second = client.connect();
+  expect(mocks.create).toHaveBeenCalledOnce();
+  gate.resolve();
+  await Promise.all([first, second]);
+  await client.close();
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("a failed connection can be retried without retaining a failed promise", async () => {
+  mocks.create.mockRejectedValueOnce(new Error("temporarily unavailable"));
+  const client = new MCPClient("id", "Test", {
+    url: "https://mcp.test",
+    type: "http",
+  });
+  await expect(client.connect()).rejects.toThrow("temporarily unavailable");
+  await client.connect();
+  expect(client.status).toBe("connected");
+  expect(mocks.create).toHaveBeenCalledTimes(2);
+  await client.close();
+});

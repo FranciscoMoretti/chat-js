@@ -32,6 +32,7 @@ type McpClientStatus =
  */
 export class MCPClient {
   private client?: McpClientInstance;
+  private connectPromise?: Promise<McpClientInstance | undefined>;
   private readonly invalidateCache?: () => void;
   private readonly oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
@@ -104,6 +105,19 @@ export class MCPClient {
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
     abortSignal?.throwIfAborted();
+    this.connectPromise ??= this.connectOnce(oauthState, abortSignal).finally(
+      () => {
+        this.connectPromise = undefined;
+      }
+    );
+    return await this.connectPromise;
+  }
+
+  private async connectOnce(
+    oauthState?: string,
+    abortSignal?: AbortSignal
+  ): Promise<McpClientInstance | undefined> {
+    abortSignal?.throwIfAborted();
     if (this.status === "connected" && this.client) {
       return this.client;
     }
@@ -124,6 +138,7 @@ export class MCPClient {
           url: this.serverConfig.url,
           headers: this.serverConfig.headers,
           authProvider: this.oauthProvider,
+          fetch: this.oauthProvider.fetch,
         },
       });
 
@@ -214,6 +229,7 @@ export class MCPClient {
     await auth(this.oauthProvider, {
       serverUrl: this.serverConfig.url,
       authorizationCode: code,
+      fetchFn: this.oauthProvider.fetch,
     });
 
     this.authorizationUrl = undefined;

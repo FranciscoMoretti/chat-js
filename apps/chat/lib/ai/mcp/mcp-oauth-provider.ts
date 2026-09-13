@@ -4,6 +4,8 @@ import type {
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+import { z } from "zod";
+import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -19,6 +21,14 @@ import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");
+const refreshTokensSchema = z.object({
+  access_token: z.string(),
+  id_token: z.string().optional(),
+  token_type: z.string(),
+  refresh_token: z.string().optional(),
+  expires_in: z.number().optional(),
+  scope: z.string().optional(),
+});
 
 /**
  * Custom error thrown when OAuth authorization is required.
@@ -43,6 +53,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private currentOAuthState = "";
   private cachedAuthData: McpOAuthSession | undefined;
   private initialized = false;
+  private committedRefreshes = 0;
   private saveCodeVerifierPromise: Promise<void> | null = null;
   private cachedAuthorizationUrl: URL | null = null;
   private readonly config: {
@@ -220,7 +231,84 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return authData?.tokens as OAuthTokens | undefined;
   }
 
+  /** The SDK uses this for transport and OAuth requests, including later 401 refreshes. */
+  fetch = async (
+    input: string | URL | Request,
+    init?: RequestInit
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    if (
+      request.method !== "POST" ||
+      !request.headers
+        .get("content-type")
+        ?.includes("application/x-www-form-urlencoded")
+    ) {
+      return await globalThis.fetch(request);
+    }
+    const params = new URLSearchParams(await request.clone().text());
+    if (params.get("grant_type") !== "refresh_token") {
+      return await globalThis.fetch(request);
+    }
+    const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
+    return await withMcpOAuthRefreshLock(
+      this.config.mcpConnectorId,
+      async () => {
+        request.signal.throwIfAborted();
+        const latest = await getSessionByState({
+          state: this.currentOAuthState,
+        });
+        if (
+          !latest?.tokens?.refresh_token ||
+          latest.mcpConnectorId !== this.config.mcpConnectorId ||
+          latest.serverUrl !== this.config.serverUrl
+        ) {
+          throw new Error("MCP credentials changed; reconnect this connector.");
+        }
+        if (
+          latest.tokens.refresh_token !== params.get("refresh_token") ||
+          latest.tokens.access_token !== observedAccessToken
+        ) {
+          // Another instance already rotated this credential. Return its result
+          // to the SDK instead of consuming the old single-use refresh token.
+          this.cachedAuthData = latest;
+          this.committedRefreshes += 1;
+          return Response.json(latest.tokens);
+        }
+        const response = await globalThis.fetch(request, {
+          signal: AbortSignal.any([
+            request.signal,
+            AbortSignal.timeout(30_000),
+          ]),
+        });
+        if (!response.ok) {
+          return response;
+        }
+        const refreshed = refreshTokensSchema.parse(
+          await response.clone().json()
+        );
+        this.cachedAuthData = await saveTokensAndCleanup({
+          state: this.currentOAuthState,
+          mcpConnectorId: this.config.mcpConnectorId,
+          // Preserve the SDK's pinned authorization-server metadata and an
+          // existing refresh token when the server does not rotate it.
+          tokens: { ...latest.tokens, ...refreshed },
+        });
+        this.committedRefreshes += 1;
+        return Response.json(refreshed);
+      }
+    );
+  };
+
   async saveTokens(tokens: OAuthTokens): Promise<void> {
+    if (this.committedRefreshes > 0) {
+      this.committedRefreshes -= 1;
+      // Refresh was saved while holding the cross-process lock. The SDK's
+      // later save must not overwrite a newer rotation from another client.
+      this.cachedAuthData = await getSessionByState({
+        state: this.currentOAuthState,
+      });
+      return;
+    }
     this.cachedAuthData = await saveTokensAndCleanup({
       state: this.currentOAuthState,
       mcpConnectorId: this.config.mcpConnectorId,
@@ -257,8 +345,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       log.info(
         {
           state: this.currentOAuthState,
-          existingVerifierPrefix: existingVerifier.slice(0, 10),
-          newVerifierPrefix: pkceVerifier.slice(0, 10),
         },
         "saveCodeVerifier: SKIPPING - verifier already exists"
       );
@@ -269,7 +355,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     log.info(
       {
         state: this.currentOAuthState,
-        codeVerifierPrefix: pkceVerifier.slice(0, 10),
       },
       "saveCodeVerifier: saving first verifier"
     );
@@ -302,7 +387,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       {
         state: this.currentOAuthState,
         hasCodeVerifier: !!authData?.codeVerifier,
-        codeVerifierPrefix: authData?.codeVerifier?.slice(0, 10),
       },
       "codeVerifier called"
     );
