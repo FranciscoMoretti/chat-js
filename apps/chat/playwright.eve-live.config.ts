@@ -20,6 +20,7 @@ export default defineConfig({
     "eve-deletion-fence.e2e.ts",
     "eve-mcp.e2e.ts",
     "eve-mcp-oauth.e2e.ts",
+    "eve-model-picker.e2e.ts",
     "eve-tool-selection.e2e.ts",
     "eve-followups-ui.e2e.ts",
     "eve-followups-live.e2e.ts",
