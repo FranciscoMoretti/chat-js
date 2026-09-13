@@ -1,7 +1,9 @@
 # ChatJS → EVE migration report
 
 Report date: 13 September 2026. Implementation reviewed at `d9cb2c84` on
-`codex/eve-app-runtime`. This report accompanies a consolidated draft PR.
+`codex/eve-app-runtime`. This report accompanies consolidated draft
+[PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444). GitHub reports
+merge conflicts with current `main`; this is not a merge-ready branch.
 
 ## Status and scope
 
@@ -25,7 +27,8 @@ and its regression checks remain outstanding.
 
 The runtime gate explicitly requires `NODE_ENV === "development"` and
 `EVE_ENABLED === "true"`. Merely setting the flag in production does not activate
-EVE. No production database cutover, merge, release, or upstream issue publication
+EVE. The Next.js wrapper also only enables EVE for the development-server
+phase. No production database cutover, merge, release, or upstream issue publication
 is included. The consolidated PR can be split into a review stack later.
 
 Historical ChatJS conversations are intentionally not imported or displayed in
@@ -148,6 +151,7 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts),
 | `@workflow/world-postgres@5.0.0-beta.40` patch | Cancellation delivery and efficient resumed-stream reads | Re-evaluate on upstream upgrade; concurrency/deduplication and transfer regressions need explicit tests |
 | `@ai-sdk/mcp@2.0.45` patch | Single-flight SSE auth recovery and late-401 handling | Replace after upstream equivalent lands; test rotating credentials across fresh and established clients |
 | Missing world patch in generated apps **(known defect)** | Root installs a patched world; scaffold and template sync vendor only EVE/MCP, leaving the registry world dependency | Vendor/verify the patched world too, or exclude EVE from generated apps until an equivalent upstream release; cancellation and efficient stream reads otherwise differ from this worktree |
+| Direct Postgres stream-position reads | Efficient billing reconciliation currently uses pinned World schema/stream naming | Replace with a supported authorized batch-position API; schema upgrades need adapter/regression review |
 | Local SQL resource fences/inventories/retirement | Safe erasure is not a single upstream delete call | Hosted/provider-portable deletion needs separate design and certification; setup is an explicit local migration |
 | Checkpoint snapshots and copy journals | Restore history/resources without a second execution authority | Full snapshots can grow quadratically; retention/compaction/garbage-collection policy needs production-scale work |
 | Patch helper relocation and vendored tarballs | Bun nested patch-file creation/cache behavior and cross-package-manager distribution | Remove only when supported tooling installs equivalent files reliably; repeat clean-cache installation checks on upgrades |
@@ -155,6 +159,10 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts),
 | Acceptance suite/model drift | Work progressed in many validated slices; some older tests still reference GPT-4.1 aliases | Normalize obsolete fixtures and maintain a runnable low-cost acceptance manifest; a historical pass does not guarantee an old script runs unchanged today |
 | Documentation drift | Some upstream drafts and patch notes were written before later implementation | Reconcile stale “remaining work” sections before using them as release notes; e.g. comparisons/OAuth now have later passing evidence |
 | Local-only observability/supervision | Development reliability was needed immediately | Hosted worker supervision, metrics, alerting, incident response and SLOs remain deployment work |
+
+The MCP SDK patch coordinates one transport; the application database lock also
+coordinates independent clients. An upstream per-transport fix alone is not a
+reason to remove the cross-client credential-rotation protection.
 
 Patch implementation and rebuild details live in [patches/README.md](../patches/README.md).
 Its older remaining-work statements must be read against this dated report and
@@ -218,17 +226,28 @@ co-located with implementation. A recorded pass only supports the named scenario
 | Internal retirement settles usage after access revocation and retries | `eve-retire-browser-final.log` (1 passed) | Local provider contract |
 | Deleting/deleted conversations reject browser access and old creation requests | `eve-deletion-fence-browser-fresh.log` (2 passed) | Access/operation fences, not hosted-provider erasure |
 
-Additional implemented verification covers PDF input and preview; imported
-PNG/PDF edit and copy independence after source deletion; copied document history;
-regenerating copied responses; follow-up suggestions; votes; project moves;
-search and MCP result states; cancellation/approval continuation; guest lifecycle
-and comparison quota/refund races; code sandbox lifecycle; and scaffold packaging.
-Relevant suites include `eve-pdf`, `eve-copy-live`, `eve-copy-documents-live`,
-`eve-copy-regeneration-live`, `eve-followups-live`, `eve-feedback`,
-`eve-project-move`, `eve-search`, `eve-mcp`, `eve-guest-lifecycle`,
-`eve-guest-comparison`, and the co-located ledger/storage/provider tests.
-These suite names locate the checks; they are not, by themselves, proof of a
-fresh successful run. See the limits below before claiming exhaustive coverage.
+### Additional recorded acceptance
+
+| Scenario | Log evidence | Result / level |
+| --- | --- | --- |
+| PDF reaches model and opens after reload | `eve-pdf-full-chromium2.log` | 1 passed; native/browser |
+| Save a public copy, recover and continue | `eve-copy-ui-browser.log` | 1 passed; native/browser |
+| Copied attachments, PDF and imported image edits | `eve-copy-attachment-live.log`, `eve-copy-pdf-live.log`, `eve-copy-png-edit-browser.log`, `eve-copy-image-final.log` | 1 passed each; native/browser, later successes coexist with older failed runs |
+| Independent copied documents and native continuation/editing | `eve-copy-documents-live.log` | 1 passed; native/browser |
+| Regenerating copied responses with original model provenance | `eve-model-browser.log` | 1 passed; `eve-copy-regeneration-live.e2e.ts` |
+| Private votes, reload/error recovery and feedback UI states | `eve-feedback-final-browser.log` | 2 passed; persistence/browser and UI fixtures |
+| Follow-up suggestions, normal submission and retained unsent content | `eve-followups-browser.log` | 2 passed; native and UI tests |
+| Moving conversations between projects with error recovery | `eve-project-move-verified-browser.log` | 1 passed; browser/local DB |
+| Search execution/results | `eve-search-browser.log` | 1 passed; `eve-search.e2e.ts` |
+| Guest comparison and guest lifecycle | `eve-guest-comparison-browser.log`, `eve-guest-lifecycle-browser.log` | 1 passed each; native/browser/local DB |
+| Registered creation lost-response recovery | `eve-create-recovery-browser-final.log` | 1 passed; browser/native |
+| Cancellation and related recovery/retirement/MCP scenarios | `eve-cancel-final-browser.log` | 5 passed; mixed lifecycle batch |
+| Tool selection | `eve-tool-selection-browser.log` | 1 passed; selected-tool integration |
+| Template/package installation smoke checks | `eve-template-fallback-tests.log`, `eve-bunpacked-tests.log` | 14 pass each; packaging smoke, not proof of patched-world inclusion |
+
+These records are historical scenario evidence, not a claim that every older
+script runs unchanged against today's catalog. Tests and assertions should be
+reviewed alongside the log when deciding what to repeat after main integration.
 
 Unit and isolated database contracts additionally exercise authorization,
 immutable operation hashes, admission races, quota release fencing, cost replay,
