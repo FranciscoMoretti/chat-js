@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { executeEveCodeDocument } from "./document-execution";
 
 const mocks = vi.hoisted(() => ({
@@ -102,11 +103,16 @@ it.each([
   undefined,
   { ...revision, kind: "text" },
   { ...revision, title: "unsupported.ts" },
-])("rejects unavailable or unsupported revisions before sandbox execution", async (value) => {
-  mocks.read.mockResolvedValue(value);
-  await expect(executeEveCodeDocument(input, context).next()).rejects.toThrow();
-  expect(mocks.execute).not.toHaveBeenCalled();
-});
+])(
+  "rejects unavailable or unsupported revisions before sandbox execution",
+  async (value) => {
+    mocks.read.mockResolvedValue(value);
+    await expect(
+      executeEveCodeDocument(input, context).next()
+    ).rejects.toThrow();
+    expect(mocks.execute).not.toHaveBeenCalled();
+  }
+);
 
 it("does not execute when cancelled during revision lookup", async () => {
   const cancellation = new AbortController();
@@ -143,23 +149,22 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
   });
 });
 
-it.each([
-  "documents",
-  "code",
-  "execution",
-])("enforces the %s configuration gate before accessing documents", async (gate) => {
-  if (gate === "documents") {
-    mocks.documents.enabled = false;
+it.each(["documents", "code", "execution"])(
+  "enforces the %s configuration gate before accessing documents",
+  async (gate) => {
+    if (gate === "documents") {
+      mocks.documents.enabled = false;
+    }
+    if (gate === "code") {
+      mocks.documents.types.code = false;
+    }
+    if (gate === "execution") {
+      mocks.execution.enabled = false;
+    }
+    await expect(executeEveCodeDocument(input, context).next()).rejects.toThrow(
+      "disabled"
+    );
+    expect(mocks.read).not.toHaveBeenCalled();
+    expect(mocks.execute).not.toHaveBeenCalled();
   }
-  if (gate === "code") {
-    mocks.documents.types.code = false;
-  }
-  if (gate === "execution") {
-    mocks.execution.enabled = false;
-  }
-  await expect(executeEveCodeDocument(input, context).next()).rejects.toThrow(
-    "disabled"
-  );
-  expect(mocks.read).not.toHaveBeenCalled();
-  expect(mocks.execute).not.toHaveBeenCalled();
-});
+);

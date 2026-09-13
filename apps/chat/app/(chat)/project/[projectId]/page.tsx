@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
+
 import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
 import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
@@ -28,7 +29,7 @@ export default async function ProjectPageRoute({
   if (!project || project.userId !== session.user.id) {
     return (
       <div className="p-4">
-        <h1 className="font-semibold text-xl">Project unavailable</h1>
+        <h1 className="text-xl font-semibold">Project unavailable</h1>
         <EveCreationRecovery
           firstMessage=""
           ownerId={session.user.id}

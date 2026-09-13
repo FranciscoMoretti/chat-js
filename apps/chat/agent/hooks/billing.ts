@@ -1,4 +1,5 @@
 import { defineHook } from "eve/hooks";
+
 import { ingestEveUsage } from "../../lib/eve/usage";
 
 export default defineHook({

@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { MCPClient } from "./mcp-client";
 
 const mocks = vi.hoisted(() => ({

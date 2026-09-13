@@ -6,7 +6,10 @@ description: "Access hundreds of AI models through a pluggable gateway abstracti
 ChatJS provides access to hundreds of models from multiple providers through a pluggable [gateway system](/gateways/overview). Set `ai.gateway` in `chat.config.ts` to choose your backend, then configure which models are available and how they behave.
 
 <Frame>
-  <img src="/docs/images/ai-models.gif" alt="Switching between AI models in the model selector" />
+  <img
+    src="/docs/images/ai-models.gif"
+    alt="Switching between AI models in the model selector"
+  />
 </Frame>
 
 See [Gateways](/gateways/overview) for setup instructions and the full gateway comparison.
@@ -47,18 +50,20 @@ ai: {
 },
 ```
 
-| Setting                    | Description                                      |
-| -------------------------- | ------------------------------------------------ |
-| `ai.gateway`               | Active AI gateway                                |
-| `ai.providerOrder`         | Provider sort order in the model selector        |
-| `ai.disabledModels`        | Models hidden from all users                     |
-| `ai.curatedDefaults`       | Models enabled by default for new users          |
-| `ai.anonymousModels`       | Models available to anonymous users              |
-| `ai.workflows.*`           | Default models for shared application workflows  |
-| `ai.tools.*`               | Tool enablement and tool-specific model defaults |
+| Setting              | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `ai.gateway`         | Active AI gateway                                |
+| `ai.providerOrder`   | Provider sort order in the model selector        |
+| `ai.disabledModels`  | Models hidden from all users                     |
+| `ai.curatedDefaults` | Models enabled by default for new users          |
+| `ai.anonymousModels` | Models available to anonymous users              |
+| `ai.workflows.*`     | Default models for shared application workflows  |
+| `ai.tools.*`         | Tool enablement and tool-specific model defaults |
 
 <Callout type="note">
-Image generation uses `ai.tools.image.default`. Language models with the `image-generation` tag can also generate images inline. See [Image Generation](/features/image-generation) for details.
+  Image generation uses `ai.tools.image.default`. Language models with the
+  `image-generation` tag can also generate images inline. See [Image
+  Generation](/features/image-generation) for details.
 </Callout>
 
 ## Reasoning Variants

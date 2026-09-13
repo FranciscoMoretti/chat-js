@@ -43,9 +43,8 @@ export function startLocalEveGuestCleanup() {
     if (!enabled()) {
       return;
     }
-    const { cleanupExpiredEveGuests } = await import(
-      "./cleanup-expired-guests"
-    );
+    const { cleanupExpiredEveGuests } =
+      await import("./cleanup-expired-guests");
     const result = await cleanupExpiredEveGuests(appRoot);
     if (result.deletedCount || result.pendingCount) {
       console.info("Local EVE guest cleanup", result);

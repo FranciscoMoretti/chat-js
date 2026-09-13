@@ -3,6 +3,7 @@
 import type { EveMessagePart } from "eve/client";
 import { useEffect, useRef } from "react";
 import { useIsClient } from "usehooks-ts";
+
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";

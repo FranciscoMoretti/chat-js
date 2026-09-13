@@ -1,9 +1,11 @@
 import { Maximize2, Minimize2 } from "lucide-react";
 import React from "react";
+
 import { UpdateTitle } from "@/components/update-title";
 import { cn } from "@/lib/utils";
 // Type-only imports
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import { ResearchTask } from "./research-task";
 import { ResearchTasks } from "./research-tasks";
 
@@ -76,7 +78,7 @@ export const ResearchProgress = ({
       <button
         className={cn(
           "flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2",
-          "transition-colors hover:bg-accent hover:text-accent-foreground"
+          "hover:bg-accent hover:text-accent-foreground transition-colors"
         )}
         onClick={() => setIsExpanded(!isExpanded)}
         type="button"
@@ -94,12 +96,12 @@ export const ResearchProgress = ({
           {isExpanded ? (
             <Minimize2
               aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
+              className="text-muted-foreground size-4 shrink-0"
             />
           ) : (
             <Maximize2
               aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
+              className="text-muted-foreground size-4 shrink-0"
             />
           )}
         </div>

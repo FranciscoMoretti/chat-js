@@ -1,6 +1,7 @@
 import { Copy, History, Pen, Redo2, Undo2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
+
 import { Artifact } from "@/components/create-artifact";
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { config } from "@/lib/config";

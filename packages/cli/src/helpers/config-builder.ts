@@ -1,57 +1,58 @@
-import { z } from "zod";
-import {
-	applyDefaults,
-	configDescriptionSchema,
-} from "../../../../apps/chat/lib/config-schema";
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import { z } from "zod";
+
+import {
+  applyDefaults,
+  configDescriptionSchema,
+} from "../../../../apps/chat/lib/config-schema";
 import { builtInGateways } from "../registry/gateways";
 
 function defaultsFor(input: {
-	gateway: string;
-	gatewayDefaults?: GatewayDefinition["defaults"];
+  gateway: string;
+  gatewayDefaults?: GatewayDefinition["defaults"];
 }) {
-	const defaults =
-		input.gatewayDefaults ??
-		builtInGateways.find((item) => item.meta.chatjs.id === input.gateway)?.meta
-			.chatjs.defaults;
-	if (!defaults)
-		throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
-	return defaults;
+  const defaults =
+    input.gatewayDefaults ??
+    builtInGateways.find((item) => item.meta.chatjs.id === input.gateway)?.meta
+      .chatjs.defaults;
+  if (!defaults)
+    throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
+  return defaults;
 }
 
 import type {
-	AuthProvider,
-	BuiltInToolKey,
-	CoreFeatureKey,
-	DocumentTypeKey,
-	Gateway,
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
 } from "../types";
 
 function extractDescriptions(
-	schema: z.ZodType,
-	prefix = "",
-	result: Map<string, string> = new Map(),
+  schema: z.ZodType,
+  prefix = "",
+  result: Map<string, string> = new Map()
 ): Map<string, string> {
-	if (schema.description && prefix) {
-		result.set(prefix, schema.description);
-	}
+  if (schema.description && prefix) {
+    result.set(prefix, schema.description);
+  }
 
-	if (schema instanceof z.ZodObject) {
-		const shape = schema.shape;
-		for (const [key, propSchema] of Object.entries(shape)) {
-			const path = prefix ? `${prefix}.${key}` : key;
-			extractDescriptions(propSchema as z.ZodType, path, result);
-		}
-	}
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    for (const [key, propSchema] of Object.entries(shape)) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      extractDescriptions(propSchema as z.ZodType, path, result);
+    }
+  }
 
-	if (schema instanceof z.ZodDiscriminatedUnion) {
-		for (const option of schema.options.values()) {
-			if (option instanceof z.ZodType)
-				extractDescriptions(option, prefix, result);
-		}
-	}
+  if (schema instanceof z.ZodDiscriminatedUnion) {
+    for (const option of schema.options.values()) {
+      if (option instanceof z.ZodType)
+        extractDescriptions(option, prefix, result);
+    }
+  }
 
-	return result;
+  return result;
 }
 
 const descriptions = extractDescriptions(configDescriptionSchema);
@@ -59,166 +60,166 @@ const descriptions = extractDescriptions(configDescriptionSchema);
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 
 const formatKey = (key: string) =>
-	VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
+  VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
 
 function formatValue(value: unknown, indent: number): string {
-	const spaces = "  ".repeat(indent);
-	const inner = "  ".repeat(indent + 1);
+  const spaces = "  ".repeat(indent);
+  const inner = "  ".repeat(indent + 1);
 
-	if (value === null || value === undefined) return "undefined";
-	if (typeof value === "string") return JSON.stringify(value);
-	if (
-		typeof value === "number" &&
-		Number.isSafeInteger(value) &&
-		Math.abs(value) >= 10_000
-	) {
-		return String(value).replace(/(\d)(?=(\d{3})+$)/g, "$1_");
-	}
-	if (typeof value === "number" || typeof value === "boolean") {
-		return String(value);
-	}
+  if (value === null || value === undefined) return "undefined";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (
+    typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    Math.abs(value) >= 10_000
+  ) {
+    return String(value).replace(/(\d)(?=(\d{3})+$)/g, "$1_");
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
 
-	if (Array.isArray(value)) {
-		if (value.length === 0) return "[]";
-		if (value.every((v) => typeof v === "string")) {
-			return `[${value.map((v) => JSON.stringify(v)).join(", ")}]`;
-		}
-		return `[\n${value
-			.map((v) => `${inner}${formatValue(v, indent + 1)}`)
-			.join(",\n")}\n${spaces}]`;
-	}
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "[]";
+    if (value.every((v) => typeof v === "string")) {
+      return `[${value.map((v) => JSON.stringify(v)).join(", ")}]`;
+    }
+    return `[\n${value
+      .map((v) => `${inner}${formatValue(v, indent + 1)}`)
+      .join(",\n")}\n${spaces}]`;
+  }
 
-	if (typeof value === "object") {
-		const entries = Object.entries(value);
-		if (entries.length === 0) return "{}";
-		return `{\n${entries
-			.map(([k, v]) => `${inner}${formatKey(k)}: ${formatValue(v, indent + 1)}`)
-			.join(",\n")},\n${spaces}}`;
-	}
+  if (typeof value === "object") {
+    const entries = Object.entries(value);
+    if (entries.length === 0) return "{}";
+    return `{\n${entries
+      .map(([k, v]) => `${inner}${formatKey(k)}: ${formatValue(v, indent + 1)}`)
+      .join(",\n")},\n${spaces}}`;
+  }
 
-	return String(value);
+  return String(value);
 }
 
 function generateConfig(
-	obj: Record<string, unknown>,
-	indent: number,
-	pathPrefix: string,
+  obj: Record<string, unknown>,
+  indent: number,
+  pathPrefix: string
 ): string {
-	const spaces = "  ".repeat(indent);
+  const spaces = "  ".repeat(indent);
 
-	return Object.entries(obj)
-		.map(([key, value]) => {
-			const path = pathPrefix ? `${pathPrefix}.${key}` : key;
-			const desc = descriptions.get(path);
-			const comment = desc ? ` // ${desc}` : "";
+  return Object.entries(obj)
+    .map(([key, value]) => {
+      const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+      const desc = descriptions.get(path);
+      const comment = desc ? ` // ${desc}` : "";
 
-			if (
-				typeof value === "object" &&
-				value !== null &&
-				!Array.isArray(value)
-			) {
-				const nested = generateConfig(
-					value as Record<string, unknown>,
-					indent + 1,
-					path,
-				);
-				return `${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},${comment}`;
-			}
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        const nested = generateConfig(
+          value as Record<string, unknown>,
+          indent + 1,
+          path
+        );
+        return `${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},${comment}`;
+      }
 
-			return `${spaces}${formatKey(key)}: ${formatValue(
-				value,
-				indent,
-			)},${comment}`;
-		})
-		.join("\n");
+      return `${spaces}${formatKey(key)}: ${formatValue(
+        value,
+        indent
+      )},${comment}`;
+    })
+    .join("\n");
 }
 
 function toConfigInput(input: {
-	appName: string;
-	appPrefix: string;
-	appUrl: string;
-	withElectron: boolean;
-	gateway: Gateway;
-	gatewayDefaults?: GatewayDefinition["defaults"];
-	coreFeatures: Record<CoreFeatureKey, boolean>;
-	documentTypes: Record<DocumentTypeKey, boolean>;
-	builtInTools: Record<BuiltInToolKey, boolean>;
-	auth: Record<AuthProvider, boolean>;
+  appName: string;
+  appPrefix: string;
+  appUrl: string;
+  withElectron: boolean;
+  gateway: Gateway;
+  gatewayDefaults?: GatewayDefinition["defaults"];
+  coreFeatures: Record<CoreFeatureKey, boolean>;
+  documentTypes: Record<DocumentTypeKey, boolean>;
+  builtInTools: Record<BuiltInToolKey, boolean>;
+  auth: Record<AuthProvider, boolean>;
 }) {
-	const gatewayToolDefaults = defaultsFor(input).tools;
-	const hasImageDefault =
-		typeof (gatewayToolDefaults.image as { default?: unknown }).default ===
-		"string";
-	const hasVideoDefault =
-		typeof (gatewayToolDefaults.video as { default?: unknown }).default ===
-		"string";
+  const gatewayToolDefaults = defaultsFor(input).tools;
+  const hasImageDefault =
+    typeof (gatewayToolDefaults.image as { default?: unknown }).default ===
+    "string";
+  const hasVideoDefault =
+    typeof (gatewayToolDefaults.video as { default?: unknown }).default ===
+    "string";
 
-	return {
-		appName: input.appName,
-		appPrefix: input.appPrefix,
-		appUrl: input.appUrl,
-		features: {
-			attachments: input.coreFeatures.attachments,
-			parallelResponses: input.coreFeatures.parallelResponses,
-		},
-		authentication: input.auth,
-		desktopApp: {
-			enabled: input.withElectron,
-		},
-		ai: {
-			gateway: input.gateway,
-			tools: {
-				mcp: { enabled: input.coreFeatures.mcp },
-				followupSuggestions: {
-					enabled: input.coreFeatures.followupSuggestions,
-				},
-				documents: {
-					enabled: input.coreFeatures.documents,
-					types: input.documentTypes,
-				},
-				webSearch: { enabled: input.builtInTools.webSearch },
-				urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
-				deepResearch: { enabled: input.builtInTools.deepResearch },
-				codeExecution: { enabled: input.builtInTools.codeExecution },
-				image: {
-					enabled: input.builtInTools.imageGeneration && hasImageDefault,
-				},
-				video: {
-					enabled: input.builtInTools.videoGeneration && hasVideoDefault,
-				},
-			},
-		},
-	};
+  return {
+    appName: input.appName,
+    appPrefix: input.appPrefix,
+    appUrl: input.appUrl,
+    features: {
+      attachments: input.coreFeatures.attachments,
+      parallelResponses: input.coreFeatures.parallelResponses,
+    },
+    authentication: input.auth,
+    desktopApp: {
+      enabled: input.withElectron,
+    },
+    ai: {
+      gateway: input.gateway,
+      tools: {
+        mcp: { enabled: input.coreFeatures.mcp },
+        followupSuggestions: {
+          enabled: input.coreFeatures.followupSuggestions,
+        },
+        documents: {
+          enabled: input.coreFeatures.documents,
+          types: input.documentTypes,
+        },
+        webSearch: { enabled: input.builtInTools.webSearch },
+        urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
+        deepResearch: { enabled: input.builtInTools.deepResearch },
+        codeExecution: { enabled: input.builtInTools.codeExecution },
+        image: {
+          enabled: input.builtInTools.imageGeneration && hasImageDefault,
+        },
+        video: {
+          enabled: input.builtInTools.videoGeneration && hasVideoDefault,
+        },
+      },
+    },
+  };
 }
 
 export function buildConfigTs(input: {
-	appName: string;
-	appPrefix: string;
-	appUrl: string;
-	withElectron: boolean;
-	gateway: Gateway;
-	gatewayDefaults?: GatewayDefinition["defaults"];
-	coreFeatures: Record<CoreFeatureKey, boolean>;
-	documentTypes: Record<DocumentTypeKey, boolean>;
-	builtInTools: Record<BuiltInToolKey, boolean>;
-	auth: Record<AuthProvider, boolean>;
+  appName: string;
+  appPrefix: string;
+  appUrl: string;
+  withElectron: boolean;
+  gateway: Gateway;
+  gatewayDefaults?: GatewayDefinition["defaults"];
+  coreFeatures: Record<CoreFeatureKey, boolean>;
+  documentTypes: Record<DocumentTypeKey, boolean>;
+  builtInTools: Record<BuiltInToolKey, boolean>;
+  auth: Record<AuthProvider, boolean>;
 }): string {
-	const partial = toConfigInput(input);
-	const { ai, ...appConfig } = partial;
-	const defaults = defaultsFor(input);
-	const toolOverrides: Record<string, object> = ai.tools;
-	const tools = Object.fromEntries(
-		Object.entries(defaults.tools).map(([name, value]) => [
-			name,
-			{ ...value, ...toolOverrides[name] },
-		]),
-	);
-	const fullConfig = {
-		...applyDefaults(appConfig),
-		ai: { ...defaults, ...ai, tools },
-	};
+  const partial = toConfigInput(input);
+  const { ai, ...appConfig } = partial;
+  const defaults = defaultsFor(input);
+  const toolOverrides: Record<string, object> = ai.tools;
+  const tools = Object.fromEntries(
+    Object.entries(defaults.tools).map(([name, value]) => [
+      name,
+      { ...value, ...toolOverrides[name] },
+    ])
+  );
+  const fullConfig = {
+    ...applyDefaults(appConfig),
+    ai: { ...defaults, ...ai, tools },
+  };
 
-	return `import { defineConfig } from "@/lib/config-schema";
+  return `import { defineConfig } from "@/lib/config-schema";
 
 /**
  * ChatJS Configuration

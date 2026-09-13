@@ -1,4 +1,5 @@
 import { LogIn } from "lucide-react";
+
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,7 @@ export function DevLoginTool() {
     <a
       className={cn(
         buttonVariants({ size: "sm" }),
-        "group fixed bottom-5 left-16 z-50 h-9 rounded-full border border-white/10 bg-black/80 px-2.5 text-xs text-zinc-300 shadow-black/30 shadow-lg backdrop-blur-md hover:border-white/15 hover:bg-zinc-900 hover:text-white"
+        "group fixed bottom-5 left-16 z-50 h-9 rounded-full border border-white/10 bg-black/80 px-2.5 text-xs text-zinc-300 shadow-lg shadow-black/30 backdrop-blur-md hover:border-white/15 hover:bg-zinc-900 hover:text-white"
       )}
       href="/api/dev-login"
     >

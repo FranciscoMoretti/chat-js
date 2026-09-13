@@ -1,6 +1,7 @@
 import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
+
 import { Action } from "@/components/ai-elements/actions";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
@@ -60,7 +61,7 @@ export function RetryButton({
 
   return (
     <Action
-      className={`h-7 w-7 text-muted-foreground hover:bg-accent hover:text-accent-foreground p-0${
+      className={`text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0${
         className ? ` ${className}` : ""
       }`}
       onClick={handleRetry}

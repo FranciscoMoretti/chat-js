@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+
 import { expect, test } from "@playwright/test";
 
 test("live document completion opens once without replacing an existing panel or opening history", async ({

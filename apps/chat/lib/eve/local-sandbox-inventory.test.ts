@@ -10,7 +10,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { expect, test } from "vitest";
+
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
 
 test("local inventory selects exact native owners across versions and reports unknown resources", async () => {

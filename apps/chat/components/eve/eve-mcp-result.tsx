@@ -1,7 +1,9 @@
 "use client";
 
 import type { EveMessagePart } from "eve/client";
+
 import { eveMcpResult } from "@/lib/eve/mcp-result";
+
 import { McpToolResult } from "../part/mcp-tool-result";
 
 export function EveMcpResult({

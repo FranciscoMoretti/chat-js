@@ -18,6 +18,7 @@ import {
   useState,
 } from "react";
 import { useOnClickOutside } from "usehooks-ts";
+
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +30,7 @@ import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 import { useChatActions, type useChatStoreApi } from "@/lib/stores/base";
 import { cn } from "@/lib/utils";
 import { useChatInput } from "@/providers/chat-input-provider";
+
 import { artifactDefinitions } from "./artifact-panel";
 import type {
   ArtifactToolbarContext,
@@ -134,7 +136,7 @@ function Tool({
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
-        className="rounded-2xl bg-foreground p-3 px-4 text-background"
+        className="bg-foreground text-background rounded-2xl p-3 px-4"
         side="left"
         sideOffset={16}
       >
@@ -195,7 +197,7 @@ function ReadingLevelSelector({
           key={id}
           transition={{ delay: 0.1 }}
         >
-          <div className="size-2 rounded-full bg-muted-foreground/40" />
+          <div className="bg-muted-foreground/40 size-2 rounded-full" />
         </motion.div>
       ))}
 
@@ -203,7 +205,7 @@ function ReadingLevelSelector({
         <TooltipTrigger asChild>
           <motion.div
             className={cn(
-              "absolute flex flex-row items-center rounded-full border bg-background p-3",
+              "bg-background absolute flex flex-row items-center rounded-full border p-3",
               {
                 "bg-primary text-primary-foreground": currentLevel !== 2,
                 "bg-background text-foreground": currentLevel === 2,
@@ -253,7 +255,7 @@ function ReadingLevelSelector({
           </motion.div>
         </TooltipTrigger>
         <TooltipContent
-          className="rounded-2xl bg-foreground p-3 px-4 text-background text-sm"
+          className="bg-foreground text-background rounded-2xl p-3 px-4 text-sm"
           side="left"
           sideOffset={16}
         >
@@ -418,7 +420,7 @@ function PureToolbar({
             scale: 1,
           };
         })()}
-        className="absolute right-6 bottom-6 flex cursor-pointer flex-col justify-end rounded-full border bg-background p-1.5 shadow-lg"
+        className="bg-background absolute right-6 bottom-6 flex cursor-pointer flex-col justify-end rounded-full border p-1.5 shadow-lg"
         exit={{ opacity: 0, y: -20, transition: { duration: 0.1 } }}
         initial={{ opacity: 0, y: -20, scale: 1 }}
         onAnimationComplete={() => {

@@ -17,15 +17,15 @@
       "!lib/utils.ts",
       "!tools/chatjs/tools.ts",
       "!tools/chatjs/ui.ts",
-      "!hooks/use-mobile.ts"
-    ]
+      "!hooks/use-mobile.ts",
+    ],
   },
   "linter": {
     "rules": {
       "style": {
         /* Allow mixing interface and type — type is required for intersection/mapped types */
-        "useConsistentTypeDefinitions": "off"
-      }
-    }
-  }
+        "useConsistentTypeDefinitions": "off",
+      },
+    },
+  },
 }

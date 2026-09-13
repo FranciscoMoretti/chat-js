@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
 import { memo, useEffect, useMemo, useState } from "react";
 import DataGrid, { textEditor } from "react-data-grid";
+
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
@@ -66,10 +67,10 @@ const PureSpreadsheetEditor = ({
       name: String.fromCharCode(65 + i),
       renderEditCell: isReadonly ? undefined : textEditor,
       width: 120,
-      cellClass: cn("border-t bg-background text-foreground", {
+      cellClass: cn("bg-background text-foreground border-t", {
         "border-l": i !== 0,
       }),
-      headerCellClass: cn("border-t bg-muted text-foreground", {
+      headerCellClass: cn("bg-muted text-foreground border-t", {
         "border-l": i !== 0,
       }),
     }));

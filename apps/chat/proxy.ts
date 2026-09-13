@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+
 import { auth } from "@/lib/auth";
 import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";

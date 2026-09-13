@@ -1,6 +1,7 @@
 "use client";
 
 import { type ComponentProps, memo, type ReactNode } from "react";
+
 import {
   PromptInput,
   PromptInputFooter,
@@ -60,8 +61,8 @@ function ChatComposerFooter({
   actions: ReactNode;
 }) {
   return (
-    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between @[500px]:gap-2 gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 [.border-t]:pt-1">
-      <PromptInputTools className="flex min-w-0 items-center @[500px]:gap-2 gap-1">
+    <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
+      <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
         {tools}
       </PromptInputTools>
       <div className="flex items-center gap-1">{actions}</div>
@@ -149,7 +150,7 @@ export function ControlledChatComposer({
         actions={
           <PromptInputSubmit
             aria-label={busy && onStop ? "Stop" : "Send"}
-            className="@[500px]:size-10 size-8 shrink-0"
+            className="size-8 shrink-0 @[500px]:size-10"
             disabled={busy && onStop ? stopDisabled : !canSend}
             onClick={(event) => {
               event.preventDefault();
@@ -165,7 +166,7 @@ export function ControlledChatComposer({
         tools={tools}
       />
       {draft.length > 16_000 && (
-        <p className="px-3 text-destructive text-sm" role="alert">
+        <p className="text-destructive px-3 text-sm" role="alert">
           Messages must be at most 16,000 characters.
         </p>
       )}

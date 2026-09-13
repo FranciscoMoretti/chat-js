@@ -9,7 +9,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { expect, test } from "vitest";
+
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 
 test("fences every member before checking pending operations and never expires unresolved work", async () => {

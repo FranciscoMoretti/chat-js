@@ -1,4 +1,5 @@
 import { tool } from "ai";
+
 import { wordCountInput } from "./schemas";
 
 const WORD_SPLIT_REGEX = /\s+/;

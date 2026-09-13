@@ -107,8 +107,7 @@ which is longer than the specified ${this.chunkSize}`
   }
 }
 
-export interface RecursiveCharacterTextSplitterParams
-  extends TextSplitterParams {
+export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams {
   separators: string[];
 }
 

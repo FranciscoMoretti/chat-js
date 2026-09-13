@@ -6,6 +6,7 @@ import {
   Telescope,
   Video,
 } from "lucide-react";
+
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 

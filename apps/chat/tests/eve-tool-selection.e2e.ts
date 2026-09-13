@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
+
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 

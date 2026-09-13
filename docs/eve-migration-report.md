@@ -1,39 +1,16 @@
 # ChatJS → EVE migration report
 
-Report date: 13 September 2026. Implementation reviewed at `d9cb2c84` on
-`codex/eve-app-runtime`. This report accompanies consolidated draft
-[PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444). GitHub reports
-merge conflicts with current `main`; this is not a merge-ready branch.
+Report date: 13 September 2026. Implementation reviewed at `d9cb2c84` on `codex/eve-app-runtime`. This report accompanies consolidated draft [PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444). GitHub reports merge conflicts with current `main`; this is not a merge-ready branch.
 
 ## Status and scope
 
-The migration is implemented and exercised locally inside the existing ChatJS
-application. EVE owns conversation execution and the durable transcript; the
-normal ChatJS routes, composer, sidebar and artifact UI integrate with it.
-This is **ready for code review, not production cutover**. The reporting audit
-found a concrete generated-app release blocker: the patched Postgres Workflow
-World is not vendored alongside EVE and MCP. This narrows the earlier local
-completion statement: the worktree is validated, but generated-app runtime
-equivalence is not complete.
+The migration is implemented and exercised locally inside the existing ChatJS application. EVE owns conversation execution and the durable transcript; the normal ChatJS routes, composer, sidebar and artifact UI integrate with it. This is **ready for code review, not production cutover**. The reporting audit found a concrete generated-app release blocker: the patched Postgres Workflow World is not vendored alongside EVE and MCP. This narrows the earlier local completion statement: the worktree is validated, but generated-app runtime equivalence is not complete.
 
-At report time, the branch has 199 commits not in current `origin/main`, and
-current `main` has 87 commits not in this branch. The migration diff against the
-merge base is 589 files, +132,571 / −1,302 lines, before this report. Approximately
-65,283 added lines are Drizzle snapshots, 29,877 are tests/fixtures, 13,037 are
-patches and their documentation, and 24,374 are other source/configuration/docs.
-These figures describe review size, not product complexity or test coverage.
-The last integration with main was earlier in the work; current-main integration
-and its regression checks remain outstanding.
+At report time, the branch has 199 commits not in current `origin/main`, and current `main` has 87 commits not in this branch. The migration diff against the merge base is 589 files, +132,571 / −1,302 lines, before this report. Approximately 65,283 added lines are Drizzle snapshots, 29,877 are tests/fixtures, 13,037 are patches and their documentation, and 24,374 are other source/configuration/docs. These figures describe review size, not product complexity or test coverage. The last integration with main was earlier in the work; current-main integration and its regression checks remain outstanding.
 
-The runtime gate explicitly requires `NODE_ENV === "development"` and
-`EVE_ENABLED === "true"`. Merely setting the flag in production does not activate
-EVE. The Next.js wrapper also only enables EVE for the development-server
-phase. No production database cutover, merge, release, or upstream issue publication
-is included. The consolidated PR can be split into a review stack later.
+The runtime gate explicitly requires `NODE_ENV === "development"` and `EVE_ENABLED === "true"`. Merely setting the flag in production does not activate EVE. The Next.js wrapper also only enables EVE for the development-server phase. No production database cutover, merge, release, or upstream issue publication is included. The consolidated PR can be split into a review stack later.
 
-Historical ChatJS conversations are intentionally not imported or displayed in
-EVE mode. Their data remains untouched. Saving a copy of an **EVE public share**
-is implemented and is separate from importing legacy ChatJS conversations.
+Historical ChatJS conversations are intentionally not imported or displayed in EVE mode. Their data remains untouched. Saving a copy of an **EVE public share** is implemented and is separate from importing legacy ChatJS conversations.
 
 ## Architecture and data ownership
 
@@ -49,26 +26,13 @@ flowchart TD
   Tools --> Files[Owned files and document revisions]
 ```
 
-- **EVE:** messages, execution, approvals, turn identity, restored history,
-  checkpoints and workflow state. The browser uses EVE's native reducer/stream.
-- **ChatJS:** authentication, session ownership, operation admission/recovery,
-  titles/pins/projects/sharing/votes, quota and billing ledgers, file ownership,
-  document revisions, deletion inventories and receipts.
-- **Providers:** model calls, object storage and sandbox resources. Their lifetime
-  requires explicit accounting and cleanup beyond deleting a conversation row.
+- **EVE:** messages, execution, approvals, turn identity, restored history, checkpoints and workflow state. The browser uses EVE's native reducer/stream.
+- **ChatJS:** authentication, session ownership, operation admission/recovery, titles/pins/projects/sharing/votes, quota and billing ledgers, file ownership, document revisions, deletion inventories and receipts.
+- **Providers:** model calls, object storage and sandbox resources. Their lifetime requires explicit accounting and cleanup beyond deleting a conversation row.
 
-There is no ongoing synchronization of two independently authoritative chat
-transcripts. Creation intents, copy preparation and checkpoint references do
-persist recovery material; documents also retain their own revision history.
-Those are deliberate domain records, not a second live conversation engine.
-Public sharing uses an allowlisted projection of native content rather than
-exposing the native session API to anonymous readers.
+There is no ongoing synchronization of two independently authoritative chat transcripts. Creation intents, copy preparation and checkpoint references do persist recovery material; documents also retain their own revision history. Those are deliberate domain records, not a second live conversation engine. Public sharing uses an allowlisted projection of native content rather than exposing the native session API to anonymous readers.
 
-Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts),
-[agent](../apps/chat/agent/agent.ts),
-[gateway](../apps/chat/app/api/eve/[...path]/route.ts),
-[conversation UI](../apps/chat/components/eve/eve-conversation.tsx), and
-[application procedures](../apps/chat/trpc/routers/eve.router.ts).
+Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](../apps/chat/agent/agent.ts), [gateway](../apps/chat/app/api/eve/[...path]/route.ts), [conversation UI](../apps/chat/components/eve/eve-conversation.tsx), and [application procedures](../apps/chat/trpc/routers/eve.router.ts).
 
 ## What migrated
 
@@ -102,46 +66,16 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts),
 
 ## Complications encountered and resolutions
 
-1. **Backend-only integration would have created competing state owners.** The
-   chosen implementation uses `useEveAgent` through the existing ChatJS UI. App
-   metadata is indexed separately, while native conversation state remains EVE's.
-2. **Sending could look stuck or lose visible intent on reload.** Composer state
-   and durable creation identity now distinguish acceptance, explicit rejection
-   and unknown delivery. Recovery reuses the operation; guests replay admitted
-   requests before volatile quota/model/file preflight can invalidate them.
-3. **Fork/edit behavior needed more than replaying visible messages.** Native
-   checkpoints carry model history and compatible resource snapshots; display
-   history is restored without replaying execution or charging copied turns.
-   Named idle checkpoints enable later comparisons/copies without a dummy turn.
-4. **Approval continuation lacked a valid turn identity.** A maintained EVE guard
-   opens the required turn for continuation, preserving usage attribution.
-5. **Pending work could block cancellation in Postgres workflows.** The world
-   patch removes serialization between distinct deliveries while retaining exact
-   delivery deduplication.
-6. **Deletion spans much more than app rows.** Native sessions, child/collector
-   runs, streams, queued work, documents, shared file references and provider
-   resources require fences and retry receipts. Unknown resource ownership or
-   uncertain allocation leaves deletion pending rather than reporting erasure.
-7. **Repeated billing reads consumed excessive database transfer.** Reconciliation
-   now tracks durable cursors and skips unchanged streams; the Postgres reader
-   patch resumes after the consumed boundary. After the Neon quota warning,
-   verification moved to isolated local Postgres. This report performs no Neon
-   reads. It does not claim a measured production bandwidth budget.
-8. **Generated apps must receive the exact maintained runtime.** Bun patch/cache
-   behavior required relocated helper files, installed-byte verification and
-   vendored tarballs, rather than assuming a successful install proved the patch.
-   The reporting audit found that this is incomplete for the Postgres world
-   package; see the confirmed generated-app blocker below.
-9. **MCP OAuth refreshes raced.** Connector-scoped serialization and token reuse
-   protect rotation across fresh clients. A separate SDK SSE patch coalesces
-   refresh and handles late 401 responses. Tokens/credentials are not persisted
-   inside workflow closures or copied into public transcripts.
-10. **Browser tests exposed fixture drift.** Old model aliases, changed recovery
-    text, an unintended model-selected approval tool, too-short deletion cleanup,
-    and an obsolete one-row billing assumption were corrected in the latest
-    parity tests. The extra billing row was an independently recorded follow-up
-    suggestion call. These were not all product failures, and failures were not
-    simply rerun until green without examining them.
+1. **Backend-only integration would have created competing state owners.** The chosen implementation uses `useEveAgent` through the existing ChatJS UI. App metadata is indexed separately, while native conversation state remains EVE's.
+2. **Sending could look stuck or lose visible intent on reload.** Composer state and durable creation identity now distinguish acceptance, explicit rejection and unknown delivery. Recovery reuses the operation; guests replay admitted requests before volatile quota/model/file preflight can invalidate them.
+3. **Fork/edit behavior needed more than replaying visible messages.** Native checkpoints carry model history and compatible resource snapshots; display history is restored without replaying execution or charging copied turns. Named idle checkpoints enable later comparisons/copies without a dummy turn.
+4. **Approval continuation lacked a valid turn identity.** A maintained EVE guard opens the required turn for continuation, preserving usage attribution.
+5. **Pending work could block cancellation in Postgres workflows.** The world patch removes serialization between distinct deliveries while retaining exact delivery deduplication.
+6. **Deletion spans much more than app rows.** Native sessions, child/collector runs, streams, queued work, documents, shared file references and provider resources require fences and retry receipts. Unknown resource ownership or uncertain allocation leaves deletion pending rather than reporting erasure.
+7. **Repeated billing reads consumed excessive database transfer.** Reconciliation now tracks durable cursors and skips unchanged streams; the Postgres reader patch resumes after the consumed boundary. After the Neon quota warning, verification moved to isolated local Postgres. This report performs no Neon reads. It does not claim a measured production bandwidth budget.
+8. **Generated apps must receive the exact maintained runtime.** Bun patch/cache behavior required relocated helper files, installed-byte verification and vendored tarballs, rather than assuming a successful install proved the patch. The reporting audit found that this is incomplete for the Postgres world package; see the confirmed generated-app blocker below.
+9. **MCP OAuth refreshes raced.** Connector-scoped serialization and token reuse protect rotation across fresh clients. A separate SDK SSE patch coalesces refresh and handles late 401 responses. Tokens/credentials are not persisted inside workflow closures or copied into public transcripts.
+10. **Browser tests exposed fixture drift.** Old model aliases, changed recovery text, an unintended model-selected approval tool, too-short deletion cleanup, and an obsolete one-row billing assumption were corrected in the latest parity tests. The extra billing row was an independently recorded follow-up suggestion call. These were not all product failures, and failures were not simply rerun until green without examining them.
 
 ## Maintained patches and technical debt
 
@@ -160,40 +94,17 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts),
 | Documentation drift | Some upstream drafts and patch notes were written before later implementation | Reconcile stale “remaining work” sections before using them as release notes; e.g. comparisons/OAuth now have later passing evidence |
 | Local-only observability/supervision | Development reliability was needed immediately | Hosted worker supervision, metrics, alerting, incident response and SLOs remain deployment work |
 
-The MCP SDK patch coordinates one transport; the application database lock also
-coordinates independent clients. An upstream per-transport fix alone is not a
-reason to remove the cross-client credential-rotation protection.
+The MCP SDK patch coordinates one transport; the application database lock also coordinates independent clients. An upstream per-transport fix alone is not a reason to remove the cross-client credential-rotation protection.
 
-Patch implementation and rebuild details live in [patches/README.md](../patches/README.md).
-Its older remaining-work statements must be read against this dated report and
-current code; it is not an authoritative completion checklist. In particular,
-its “Remaining integration” and named-checkpoint sections still describe
-comparison/composer work as pending, and the public-copy draft contains both
-earlier missing-journal notes and later completed-integration notes.
+Patch implementation and rebuild details live in [patches/README.md](../patches/README.md). Its older remaining-work statements must be read against this dated report and current code; it is not an authoritative completion checklist. In particular, its “Remaining integration” and named-checkpoint sections still describe comparison/composer work as pending, and the public-copy draft contains both earlier missing-journal notes and later completed-integration notes.
 
-Explicit limits include a 1,000-record fork-checkpoint scan cap, bounded 8 MiB /
-50,000-event history restoration, a bounded transcript-copy size, and local
-filesystem snapshot limits of 20,000 entries / 128 MiB. Unsupported resources,
-symlinks/special files or missing birth evidence can make a fork/deletion fail
-closed. Historical sessions created before required checkpoint/identity support
-cannot be assumed compatible. Microsandbox snapshot capture can interrupt source
-processes; provider-wide snapshot retention and atomic capture of concurrent
-background writes are not established.
+Explicit limits include a 1,000-record fork-checkpoint scan cap, bounded 8 MiB / 50,000-event history restoration, a bounded transcript-copy size, and local filesystem snapshot limits of 20,000 entries / 128 MiB. Unsupported resources, symlinks/special files or missing birth evidence can make a fork/deletion fail closed. Historical sessions created before required checkpoint/identity support cannot be assumed compatible. Microsandbox snapshot capture can interrupt source processes; provider-wide snapshot retention and atomic capture of concurrent background writes are not established.
 
-Billing rounds to cents per turn, preserves known zero costs and records auxiliary
-model calls separately. Unknown completed costs block new admission pending
-reconciliation. Already running work can overspend the positive-credit gate.
-Approval/cancellation remains available at zero credits. This is intentional
-behavior, not a hard financial budget guarantee.
+Billing rounds to cents per turn, preserves known zero costs and records auxiliary model calls separately. Unknown completed costs block new admission pending reconciliation. Already running work can overspend the positive-credit gate. Approval/cancellation remains available at zero credits. This is intentional behavior, not a hard financial budget guarantee.
 
 ## Verification evidence
 
-Evidence below combines the latest parity batch and earlier successful checks on
-the migrated paths. **It is not one clean all-features run on the final commit.**
-Raw local logs may contain request details and are not uploaded. Filenames below
-are provenance on the development machine under `/private/tmp` (also `/tmp`),
-not portable CI artifacts. Test source lives in `apps/chat/tests/`; unit tests are
-co-located with implementation. A recorded pass only supports the named scenario.
+Evidence below combines the latest parity batch and earlier successful checks on the migrated paths. **It is not one clean all-features run on the final commit.** Raw local logs may contain request details and are not uploaded. Filenames below are provenance on the development machine under `/private/tmp` (also `/tmp`), not portable CI artifacts. Test source lives in `apps/chat/tests/`; unit tests are co-located with implementation. A recorded pass only supports the named scenario.
 
 ### Latest parity batch
 
@@ -245,79 +156,29 @@ co-located with implementation. A recorded pass only supports the named scenario
 | Tool selection | `eve-tool-selection-browser.log` | 1 passed; selected-tool integration |
 | Template/package installation smoke checks | `eve-template-fallback-tests.log`, `eve-bunpacked-tests.log` | 14 pass each; packaging smoke, not proof of patched-world inclusion |
 
-These records are historical scenario evidence, not a claim that every older
-script runs unchanged against today's catalog. Tests and assertions should be
-reviewed alongside the log when deciding what to repeat after main integration.
+These records are historical scenario evidence, not a claim that every older script runs unchanged against today's catalog. Tests and assertions should be reviewed alongside the log when deciding what to repeat after main integration.
 
-Unit and isolated database contracts additionally exercise authorization,
-immutable operation hashes, admission races, quota release fencing, cost replay,
-usage cursors, file reference ownership, document revisions/checkpoints,
-copy reservations, provider scope/birth evidence, queue inventories and late-write
-fences, cleanup retries, tool schemas, approval receipt identity and SDK refresh
-concurrency. Some native harness tests use deterministic models and no provider.
+Unit and isolated database contracts additionally exercise authorization, immutable operation hashes, admission races, quota release fencing, cost replay, usage cursors, file reference ownership, document revisions/checkpoints, copy reservations, provider scope/birth evidence, queue inventories and late-write fences, cleanup retries, tool schemas, approval receipt identity and SDK refresh concurrency. Some native harness tests use deterministic models and no provider.
 
-Selected UI tests include desktop/mobile captures, error/pending/empty states and
-artifact renderers. They do not establish a hosted visual baseline, complete
-mobile coverage, accessibility compliance or cross-browser compatibility.
+Selected UI tests include desktop/mobile captures, error/pending/empty states and artifact renderers. They do not establish a hosted visual baseline, complete mobile coverage, accessibility compliance or cross-browser compatibility.
 
 ## Where gaps could remain
 
-1. **Generated-app runtime mismatch (confirmed blocker).**
-   `scripts/sync-template.ts` and `packages/cli/src/helpers/scaffold.ts` vendor
-   EVE and MCP, while the app manifest retains the registry Postgres world.
-   The root patch registration does not travel with that generated dependency.
-   Add world vendoring and fresh-install/archive assertions before an EVE
-   scaffold release. Existing packaging passes cover EVE/MCP, not all three.
-2. **Integration with latest main.** The 87 missing commits need merge/rebase,
-   conflict review and regression testing. This draft does not certify the merge
-   result or current-main feature parity. Splitting the 199-commit migration will
-   make review safer and expose accidental coupling.
-3. **Hosted deployment and production data.** The development gate remains in
-   place. Hosted worker topology, migrations, auth callbacks, secrets, database
-   pools, rollback, provider setup and deletion support need deployment-specific
-   rehearsal. Local Postgres success is not evidence of Neon production behavior.
-4. **CI/runtime mismatch.** Existing Playwright workflow still selects Node 22,
-   while EVE requires Node 24+. No dedicated hosted EVE acceptance pipeline was
-   established by the local runs. A green legacy pipeline alone cannot certify
-   this migration; fresh PR CI results must be reviewed separately.
-5. **Coverage provenance and fixture drift.** Evidence spans different commits,
-   providers and controlled fixtures. Some old test model IDs and draft notes are
-   stale. Maintain a reproducible acceptance manifest and run the chosen suite
-   after main integration; do not advertise a numerical “100% coverage” claim.
-6. **Scale and storage.** Large/long conversations, many concurrent sessions,
-   checkpoint growth, comparison fan-out, database transfer, queue backpressure
-   and long-duration recovery have not been load/soak-certified. Existing bounds
-   reject unsupported work but do not prove acceptable production capacity.
-7. **Provider uncertainty.** Lost sandbox-create replies, changed credential
-   scope, unavailable cleanup APIs and incomplete birth evidence can leave
-   deletion pending. A provider 404 or timeout is not automatically proof of
-   non-allocation. This is documented behavior requiring operational handling.
-8. **Backend portability.** Snapshot/deletion evidence is scoped to implemented
-   local providers. Other EVE worlds/sandbox backends, hosted erasure guarantees,
-   snapshot retention and recovery across mixed runtime versions need work.
-9. **MCP and approvals.** OAuth refresh is exercised end to end with a fixture;
-   native approval receipt invariants have harness tests. This does not certify
-   arbitrary remote servers, all conditional-policy changes or every compiled
-   restart/resume path. The pinned SDK does not provide a universal server-driven
-   approval policy contract.
-10. **User experience breadth.** Chromium and selected responsive states are
-   exercised. Safari/Firefox, full keyboard/screen-reader audits, Electron
-   packaging/runtime behavior, every model/file/tool combination and a hosted
-   visual-baseline run are not claimed.
-11. **Explicitly deferred scope.** Historical ChatJS conversation import remains
-    deferred by product decision. Video remains disabled and has no live
-    paid-provider end-to-end acceptance claim. PR splitting, production cutover
-    and release approval remain separate steps.
+1. **Generated-app runtime mismatch (confirmed blocker).** `scripts/sync-template.ts` and `packages/cli/src/helpers/scaffold.ts` vendor EVE and MCP, while the app manifest retains the registry Postgres world. The root patch registration does not travel with that generated dependency. Add world vendoring and fresh-install/archive assertions before an EVE scaffold release. Existing packaging passes cover EVE/MCP, not all three.
+2. **Integration with latest main.** The 87 missing commits need merge/rebase, conflict review and regression testing. This draft does not certify the merge result or current-main feature parity. Splitting the 199-commit migration will make review safer and expose accidental coupling.
+3. **Hosted deployment and production data.** The development gate remains in place. Hosted worker topology, migrations, auth callbacks, secrets, database pools, rollback, provider setup and deletion support need deployment-specific rehearsal. Local Postgres success is not evidence of Neon production behavior.
+4. **CI/runtime mismatch.** Existing Playwright workflow still selects Node 22, while EVE requires Node 24+. No dedicated hosted EVE acceptance pipeline was established by the local runs. A green legacy pipeline alone cannot certify this migration; fresh PR CI results must be reviewed separately.
+5. **Coverage provenance and fixture drift.** Evidence spans different commits, providers and controlled fixtures. Some old test model IDs and draft notes are stale. Maintain a reproducible acceptance manifest and run the chosen suite after main integration; do not advertise a numerical “100% coverage” claim.
+6. **Scale and storage.** Large/long conversations, many concurrent sessions, checkpoint growth, comparison fan-out, database transfer, queue backpressure and long-duration recovery have not been load/soak-certified. Existing bounds reject unsupported work but do not prove acceptable production capacity.
+7. **Provider uncertainty.** Lost sandbox-create replies, changed credential scope, unavailable cleanup APIs and incomplete birth evidence can leave deletion pending. A provider 404 or timeout is not automatically proof of non-allocation. This is documented behavior requiring operational handling.
+8. **Backend portability.** Snapshot/deletion evidence is scoped to implemented local providers. Other EVE worlds/sandbox backends, hosted erasure guarantees, snapshot retention and recovery across mixed runtime versions need work.
+9. **MCP and approvals.** OAuth refresh is exercised end to end with a fixture; native approval receipt invariants have harness tests. This does not certify arbitrary remote servers, all conditional-policy changes or every compiled restart/resume path. The pinned SDK does not provide a universal server-driven approval policy contract.
+10. **User experience breadth.** Chromium and selected responsive states are exercised. Safari/Firefox, full keyboard/screen-reader audits, Electron packaging/runtime behavior, every model/file/tool combination and a hosted visual-baseline run are not claimed.
+11. **Explicitly deferred scope.** Historical ChatJS conversation import remains deferred by product decision. Video remains disabled and has no live paid-provider end-to-end acceptance claim. PR splitting, production cutover and release approval remain separate steps.
 
 ## Upstream reports and review order
 
-Unpublished drafts are in [docs/upstream-drafts](upstream-drafts): batch stream
-positions, compaction usage, checkpoint readiness, MCP approval policy, pending
-cancellation, public conversation copy, session deletion, Sandbox allocation
-reconciliation and Postgres stream transfer. The SDK SSE refresh draft is in
-[patches/ai-sdk-mcp-sse-refresh.issue.md](../patches/ai-sdk-mcp-sse-refresh.issue.md).
-Publishing this ChatJS PR does not publish those issues to upstream repositories.
-Some drafts need updating against later fixes before approval to send them.
+Unpublished drafts are in [docs/upstream-drafts](upstream-drafts): batch stream positions, compaction usage, checkpoint readiness, MCP approval policy, pending cancellation, public conversation copy, session deletion, Sandbox allocation reconciliation and Postgres stream transfer. The SDK SSE refresh draft is in [patches/ai-sdk-mcp-sse-refresh.issue.md](../patches/ai-sdk-mcp-sse-refresh.issue.md). Publishing this ChatJS PR does not publish those issues to upstream repositories. Some drafts need updating against later fixes before approval to send them.
 
 Recommended review sequence:
 
@@ -325,5 +186,4 @@ Recommended review sequence:
 2. Maintained EVE/world/SDK patches and their reproducible packaging.
 3. Auth/admission/guest quotas/billing and the deletion/resource-fence protocol.
 4. Native UI, branches/comparisons/copies, files/documents and tool adapters.
-5. Main integration, CI/Node alignment, acceptance manifest and staged deployment
-   rehearsal before considering production cutover.
+5. Main integration, CI/Node alignment, acceptance manifest and staged deployment rehearsal before considering production cutover.

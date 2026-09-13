@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
+
 import { executeEveTool } from "../../lib/eve/adapt-tool";
 import { executeEvePlatformTool } from "../../lib/eve/platform-tools";
 import { generateImageTool } from "./generate-image";
@@ -78,79 +79,79 @@ beforeEach(() => {
   });
 });
 
-test.each([
-  "test/multimodal",
-  undefined,
-])("image edits send storage bytes to %s rather than a localhost URL", async (selectedModel) => {
-  const cost = { addLLMCost: vi.fn() };
-  const definition = generateImageTool({
-    selectedModel,
-    costAccumulator: cost,
-    lastGeneratedImage: { imageUrl, name: "reference.png" },
-    attachments: [
-      {
-        type: "file",
-        mediaType: "image/png",
-        url: "data:image/png;base64,YXR0YWNobWVudA==",
-      },
-    ],
-  });
-  const results = await Array.fromAsync(
-    executeEveTool(definition, input, context, [])
-  );
-  expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
-  const images = [Buffer.from("saved-reference"), Buffer.from("attachment")];
-  if (selectedModel) {
-    expect(mocks.generateText).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: selectedModel,
-        abortSignal: context.abortSignal,
-        messages: [
-          {
-            role: "user",
-            content: [
-              ...images.map((image) => ({ type: "image", image })),
-              {
-                type: "text",
-                text: `Based on the provided image(s), ${input.prompt}`,
-              },
-            ],
-          },
-        ],
-      })
+test.each(["test/multimodal", undefined])(
+  "image edits send storage bytes to %s rather than a localhost URL",
+  async (selectedModel) => {
+    const cost = { addLLMCost: vi.fn() };
+    const definition = generateImageTool({
+      selectedModel,
+      costAccumulator: cost,
+      lastGeneratedImage: { imageUrl, name: "reference.png" },
+      attachments: [
+        {
+          type: "file",
+          mediaType: "image/png",
+          url: "data:image/png;base64,YXR0YWNobWVudA==",
+        },
+      ],
+    });
+    const results = await Array.fromAsync(
+      executeEveTool(definition, input, context, [])
     );
-  } else {
-    expect(mocks.generateImage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        abortSignal: context.abortSignal,
-        prompt: { text: input.prompt, images },
-      })
+    expect(mocks.download).toHaveBeenCalledWith("abcdefghijklmnopqrstuvwx.png");
+    const images = [Buffer.from("saved-reference"), Buffer.from("attachment")];
+    if (selectedModel) {
+      expect(mocks.generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: selectedModel,
+          abortSignal: context.abortSignal,
+          messages: [
+            {
+              role: "user",
+              content: [
+                ...images.map((image) => ({ type: "image", image })),
+                {
+                  type: "text",
+                  text: `Based on the provided image(s), ${input.prompt}`,
+                },
+              ],
+            },
+          ],
+        })
+      );
+    } else {
+      expect(mocks.generateImage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          abortSignal: context.abortSignal,
+          prompt: { text: input.prompt, images },
+        })
+      );
+    }
+    expect(results).toEqual([{ imageUrl, prompt: input.prompt }]);
+    expect(cost.addLLMCost).toHaveBeenCalledOnce();
+  }
+);
+
+test.each(["test/multimodal", undefined])(
+  "upload failure keeps usage from %s",
+  async (selectedModel) => {
+    const cost = { addLLMCost: vi.fn() };
+    mocks.upload.mockRejectedValue(new Error("Upload failed"));
+    await expect(
+      executeEveTool(
+        generateImageTool({ selectedModel, costAccumulator: cost }),
+        input,
+        context,
+        []
+      ).next()
+    ).rejects.toThrow("Upload failed");
+    expect(cost.addLLMCost).toHaveBeenCalledWith(
+      selectedModel ?? "test/dedicated",
+      expect.objectContaining({ inputTokens: 4, outputTokens: 8 }),
+      expect.any(String)
     );
   }
-  expect(results).toEqual([{ imageUrl, prompt: input.prompt }]);
-  expect(cost.addLLMCost).toHaveBeenCalledOnce();
-});
-
-test.each([
-  "test/multimodal",
-  undefined,
-])("upload failure keeps usage from %s", async (selectedModel) => {
-  const cost = { addLLMCost: vi.fn() };
-  mocks.upload.mockRejectedValue(new Error("Upload failed"));
-  await expect(
-    executeEveTool(
-      generateImageTool({ selectedModel, costAccumulator: cost }),
-      input,
-      context,
-      []
-    ).next()
-  ).rejects.toThrow("Upload failed");
-  expect(cost.addLLMCost).toHaveBeenCalledWith(
-    selectedModel ?? "test/dedicated",
-    expect.objectContaining({ inputTokens: 4, outputTokens: 8 }),
-    expect.any(String)
-  );
-});
+);
 
 test("disabled image generation cannot use a selected multimodal model", async () => {
   mocks.enabled = false;

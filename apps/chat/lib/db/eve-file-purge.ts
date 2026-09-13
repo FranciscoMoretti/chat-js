@@ -8,6 +8,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { canSpend } from "@/lib/db/credits";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
@@ -19,6 +20,7 @@ import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
 import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
+
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import { eveCreationContentHash } from "./creation-content-hash";
 import { eveToolMetadata } from "./message-tool-selection";

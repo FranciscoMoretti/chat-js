@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+
 import { useNavigateToMessage } from "@/hooks/use-navigate-to-message";
 import type { AppModelId } from "@/lib/ai/app-models";
 import {
@@ -14,6 +15,7 @@ import { useParallelGroupInfo } from "@/lib/stores/hooks-threads";
 import { getParallelResponseForSlot } from "@/lib/thread-utils";
 import { useChatInput } from "@/providers/chat-input-provider";
 import { useChatModels } from "@/providers/chat-models-provider";
+
 import {
   getParallelResponseLifecycle,
   getStatusLabel,

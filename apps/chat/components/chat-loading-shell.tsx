@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function ChatLoadingShell() {
   return (
-    <div className="flex h-dvh w-full flex-col bg-background">
+    <div className="bg-background flex h-dvh w-full flex-col">
       <header className="flex h-(--header-height) shrink-0 items-center gap-2 px-2 md:px-2">
         <Skeleton className="size-8 shrink-0 md:hidden" />
         <Skeleton className="h-5 w-36" />

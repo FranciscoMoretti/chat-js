@@ -1,5 +1,7 @@
 import type React from "react";
+
 import { cn } from "@/lib/utils";
+
 import { Favicon } from "./favicon";
 
 // Define a simpler interface for the sources needed by this component
@@ -27,7 +29,7 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
         <Favicon
           alt={`Favicon for ${source.title || new URL(source.url).hostname}`}
           className={cn(
-            "h-5 w-5 rounded-full border-2 border-background",
+            "border-background h-5 w-5 rounded-full border-2",
             index > 0 ? "-ml-2" : ""
           )}
           key={source.url || index}

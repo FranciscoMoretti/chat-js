@@ -1,9 +1,11 @@
 import { generateText, type ModelMessage, Output, streamText, tool } from "ai";
 import { z } from "zod";
+
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
 import { truncateMessages } from "@/lib/ai/token-utils";
 import type { StreamWriter } from "@/lib/ai/types";
 import { generateUUID, getTextContentFromModelMessage } from "@/lib/utils";
+
 import type { DocumentToolResult } from "../documents/types";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 import {

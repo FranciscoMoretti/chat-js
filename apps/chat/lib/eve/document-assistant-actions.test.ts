@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { documentAssistantActions } from "./document-assistant-actions";
 
 const documents = vi.hoisted(() => ({

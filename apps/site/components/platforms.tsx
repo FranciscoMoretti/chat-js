@@ -96,7 +96,7 @@ export function Platforms() {
     >
       {/* Background atmosphere */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-foreground/[0.02] blur-[100px]" />
+        <div className="bg-foreground/[0.02] absolute top-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full blur-[100px]" />
         <div className="absolute bottom-0 left-[20%] h-[400px] w-[500px] rounded-full bg-amber-500/[0.015] blur-[120px] dark:bg-amber-400/[0.025]" />
         <div className="absolute top-[40%] right-[15%] h-[350px] w-[400px] rounded-full bg-indigo-500/[0.012] blur-[100px] dark:bg-indigo-400/[0.02]" />
       </div>
@@ -105,11 +105,11 @@ export function Platforms() {
         {/* ── Header ── */}
         <div className="mb-20 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="font-mono text-[11px] text-foreground/50 uppercase tracking-[0.35em]">
+            <p className="text-foreground/50 font-mono text-[11px] tracking-[0.35em] uppercase">
               Platforms
             </p>
             <h2
-              className="mt-5 max-w-xl font-display text-4xl leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
+              className="font-display mt-5 max-w-xl text-4xl leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
               id="platforms-heading"
             >
               Use it on the <span className="italic">web</span>,
@@ -117,7 +117,7 @@ export function Platforms() {
               <span className="italic">desktop</span>
             </h2>
           </div>
-          <p className="max-w-sm text-[15px] text-foreground/60 leading-relaxed lg:text-right">
+          <p className="text-foreground/60 max-w-sm text-[15px] leading-relaxed lg:text-right">
             Start in the browser instantly. Or read the desktop guide to learn
             how to install the native app.
           </p>
@@ -127,26 +127,26 @@ export function Platforms() {
         <div className="grid gap-4 lg:grid-cols-5 lg:gap-5">
           {/* Web — spans 3 columns */}
           <a
-            className="platform-card group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-8 backdrop-blur-sm transition-all duration-500 hover:border-foreground/15 hover:bg-card/90 hover:shadow-2xl hover:shadow-foreground/[0.04] sm:p-10 lg:col-span-3 lg:min-h-[360px]"
+            className="platform-card group border-border/40 bg-card/60 hover:border-foreground/15 hover:bg-card/90 hover:shadow-foreground/[0.04] relative flex flex-col justify-between overflow-hidden rounded-2xl border p-8 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl sm:p-10 lg:col-span-3 lg:min-h-[360px]"
             href={siteLinks.demo}
           >
             {/* Hover glow */}
             <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-500/[0.06] opacity-0 blur-[80px] transition-opacity duration-700 group-hover:opacity-100 dark:bg-amber-400/[0.08]" />
 
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-foreground/[0.08] bg-foreground/[0.04] px-3 py-1">
+              <div className="border-foreground/[0.08] bg-foreground/[0.04] inline-flex items-center gap-2 rounded-full border px-3 py-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_1px] shadow-emerald-500/40" />
-                <span className="font-mono text-[10px] text-foreground/60 uppercase tracking-[0.2em]">
+                <span className="text-foreground/60 font-mono text-[10px] tracking-[0.2em] uppercase">
                   Live
                 </span>
               </div>
 
-              <h3 className="mt-8 font-display text-3xl tracking-tight sm:text-4xl">
+              <h3 className="font-display mt-8 text-3xl tracking-tight sm:text-4xl">
                 Web
               </h3>
-              <p className="mt-4 max-w-md text-[15px] text-foreground/55 leading-relaxed">
+              <p className="text-foreground/55 mt-4 max-w-md text-[15px] leading-relaxed">
                 Open ChatJS instantly at{" "}
-                <span className="font-mono text-foreground/70 text-sm">
+                <span className="text-foreground/70 font-mono text-sm">
                   demo.chatjs.dev
                 </span>
                 . No install, no sign-up friction. The full experience, right in
@@ -156,32 +156,32 @@ export function Platforms() {
 
             {/* Browser illustration */}
             <div className="relative z-10 mt-8 flex items-end justify-between">
-              <span className="inline-flex items-center gap-2 font-medium text-foreground/70 text-sm transition-colors duration-300 group-hover:text-foreground">
+              <span className="text-foreground/70 group-hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors duration-300">
                 Launch web app
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </span>
-              <BrowserFrame className="hidden h-20 w-auto text-foreground/60 transition-transform duration-500 group-hover:scale-105 sm:block" />
+              <BrowserFrame className="text-foreground/60 hidden h-20 w-auto transition-transform duration-500 group-hover:scale-105 sm:block" />
             </div>
           </a>
 
           {/* Desktop — spans 2 columns, single card with horizontal buttons */}
           <div
-            className="platform-card relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-8 backdrop-blur-sm sm:p-10 lg:col-span-2"
+            className="platform-card border-border/40 bg-card/60 relative flex flex-col justify-between overflow-hidden rounded-2xl border p-8 backdrop-blur-sm sm:p-10 lg:col-span-2"
             style={{ animationDelay: "0.08s" }}
           >
             <div className="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-indigo-500/[0.04] blur-[80px] dark:bg-indigo-400/[0.06]" />
 
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-foreground/[0.08] bg-foreground/[0.04] px-3 py-1">
+              <div className="border-foreground/[0.08] bg-foreground/[0.04] inline-flex items-center gap-2 rounded-full border px-3 py-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-[0_0_6px_1px] shadow-indigo-400/40" />
-                <span className="font-mono text-[10px] text-foreground/60 uppercase tracking-[0.2em]">
+                <span className="text-foreground/60 font-mono text-[10px] tracking-[0.2em] uppercase">
                   Native
                 </span>
               </div>
-              <h3 className="mt-8 font-display text-3xl tracking-tight sm:text-4xl">
+              <h3 className="font-display mt-8 text-3xl tracking-tight sm:text-4xl">
                 Desktop
               </h3>
-              <p className="mt-4 text-[15px] text-foreground/55 leading-relaxed">
+              <p className="text-foreground/55 mt-4 text-[15px] leading-relaxed">
                 Packaged for macOS, Windows, and Linux. Builds are currently
                 unsigned, so the install guide walks you through the OS
                 warnings.
@@ -190,29 +190,29 @@ export function Platforms() {
 
             <div className="relative z-10 mt-8 flex flex-col gap-2.5">
               <a
-                className="group inline-flex items-center gap-3 rounded-xl border border-border/50 bg-foreground/[0.03] px-5 py-3.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/[0.07]"
+                className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
                 href={siteLinks.docsDesktopMac}
               >
-                <AppleLogo className="h-5 w-5 text-foreground/70 transition-colors group-hover:text-foreground" />
-                <span className="font-medium text-foreground/75 text-sm transition-colors group-hover:text-foreground">
+                <AppleLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+                <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                   macOS
                 </span>
               </a>
               <a
-                className="group inline-flex items-center gap-3 rounded-xl border border-border/50 bg-foreground/[0.03] px-5 py-3.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/[0.07]"
+                className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
                 href={siteLinks.docsDesktopWindows}
               >
-                <WindowsLogo className="h-5 w-5 text-foreground/70 transition-colors group-hover:text-foreground" />
-                <span className="font-medium text-foreground/75 text-sm transition-colors group-hover:text-foreground">
+                <WindowsLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+                <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                   Windows
                 </span>
               </a>
               <a
-                className="group inline-flex items-center gap-3 rounded-xl border border-border/50 bg-foreground/[0.03] px-5 py-3.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/[0.07]"
+                className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
                 href={siteLinks.docsDesktopLinux}
               >
-                <LinuxLogo className="h-5 w-5 text-foreground/70 transition-colors group-hover:text-foreground" />
-                <span className="font-medium text-foreground/75 text-sm transition-colors group-hover:text-foreground">
+                <LinuxLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+                <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                   Linux
                 </span>
               </a>

@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import type { EveMessagePart } from "eve/client";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+
 import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
 import { SidebarProvider } from "../components/ui/sidebar";

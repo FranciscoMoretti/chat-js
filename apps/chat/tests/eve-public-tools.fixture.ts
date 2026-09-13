@@ -1,6 +1,7 @@
 import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
 
@@ -52,13 +53,11 @@ const parts: EveMessagePart[] = [
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
-      messages: parts.map(
-        (part, index): EveMessage => ({
-          id: `public-${index}`,
-          role: "assistant",
-          parts: sharedEvePart(part),
-        })
-      ),
+      messages: parts.map((part, index): EveMessage => ({
+        id: `public-${index}`,
+        role: "assistant",
+        parts: sharedEvePart(part),
+      })),
     })
   )
 );

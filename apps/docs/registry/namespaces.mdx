@@ -3,14 +3,9 @@ title: Namespaces
 description: Identify registry sources independently of item categories and installed paths
 ---
 
-Configure registry source aliases such as `@chatjs` or `@acme` in `components.json`.
-An address such as `@chatjs/word-count` identifies an item from that source.
-The item's `meta.chatjs.kind` identifies its category independently of its name.
+Configure registry source aliases such as `@chatjs` or `@acme` in `components.json`. An address such as `@chatjs/word-count` identifies an item from that source. The item's `meta.chatjs.kind` identifies its category independently of its name.
 
-Source folders, public item names, and installed paths are separate. The built-in
-Vercel item is named `vercel-gateway`, is authored under `src/gateways/vercel/`,
-and installs into `lib/ai/gateway.ts`. Changing a registry alias does not change an
-item's explicit file targets.
+Source folders, public item names, and installed paths are separate. The built-in Vercel item is named `vercel-gateway`, is authored under `src/gateways/vercel/`, and installs into `lib/ai/gateway.ts`. Changing a registry alias does not change an item's explicit file targets.
 
 For example, configure an external source alongside the built-in registry:
 
@@ -23,12 +18,8 @@ For example, configure an external source alongside the built-in registry:
 }
 ```
 
-Install an external tool with `npx @chat-js/cli@latest add @acme/my-tool`.
-Replace the example registry address with your publisher's endpoint.
+Install an external tool with `npx @chat-js/cli@latest add @acme/my-tool`. Replace the example registry address with your publisher's endpoint.
 
-A third-party gateway still belongs to the gateway category. Its namespace
-identifies who distributes it, while its metadata identifies its ChatJS contract.
-Review explicit file targets when composing items from different registries.
-A namespace does not automatically isolate installed files or registration keys.
+A third-party gateway still belongs to the gateway category. Its namespace identifies who distributes it, while its metadata identifies its ChatJS contract. Review explicit file targets when composing items from different registries. A namespace does not automatically isolate installed files or registration keys.
 
 See [Tools Overview](../tools/overview) for direct shadcn installation and sync.

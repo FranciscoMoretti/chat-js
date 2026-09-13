@@ -1,6 +1,7 @@
 import { Cpu } from "lucide-react";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+
 import { EveHistory } from "@/components/eve/eve-history";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
 import { isEveEnabled } from "@/lib/eve/availability";
+
 import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
 import { SidebarUserNav } from "./sidebar-user-nav";
 

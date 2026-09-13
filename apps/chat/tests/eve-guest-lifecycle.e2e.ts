@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+
 import { db } from "../lib/db/client";
 import { eveConversation, eveGuest } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";

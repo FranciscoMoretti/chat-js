@@ -1,5 +1,6 @@
 import { ClientError } from "eve/client";
 import { expect, it } from "vitest";
+
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
 
 it("recognizes an explicit local refusal without treating a failed connection as rejection", async () => {

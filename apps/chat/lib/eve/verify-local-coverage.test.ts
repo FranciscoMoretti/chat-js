@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 
 const mocks = vi.hoisted(() => ({
@@ -77,24 +79,23 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-it.each([
-  "appRoot",
-  "sessionId",
-  "backendName",
-])("rejects native %s mismatch", async (field) => {
-  mocks.fetch.mockImplementation(async () =>
-    Response.json({
-      version: 1,
-      snapshotVersion: 2,
-      sessionId,
-      local: { ...identity(), [field]: "different" },
-    })
-  );
-  await expect(
-    verifyLocalEveFamilyCoverage("owner", root, inventories)
-  ).rejects.toThrow();
-  expect(mocks.end).toHaveBeenCalledOnce();
-});
+it.each(["appRoot", "sessionId", "backendName"])(
+  "rejects native %s mismatch",
+  async (field) => {
+    mocks.fetch.mockImplementation(async () =>
+      Response.json({
+        version: 1,
+        snapshotVersion: 2,
+        sessionId,
+        local: { ...identity(), [field]: "different" },
+      })
+    );
+    await expect(
+      verifyLocalEveFamilyCoverage("owner", root, inventories)
+    ).rejects.toThrow();
+    expect(mocks.end).toHaveBeenCalledOnce();
+  }
+);
 it("rejects missing native evidence and mismatched local evidence", async () => {
   mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 503 }));
   await expect(

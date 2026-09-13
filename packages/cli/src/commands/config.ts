@@ -1,9 +1,11 @@
-import { Command } from "commander";
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { handleError } from "../utils/handle-error";
-import { inferPackageManager } from "../utils/get-package-manager";
+
+import { Command } from "commander";
+
 import type { PackageManager } from "../types";
+import { inferPackageManager } from "../utils/get-package-manager";
+import { handleError } from "../utils/handle-error";
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
@@ -26,11 +28,13 @@ function getTsEvalCommand(pm: PackageManager): [string, string[]] {
 
 export const config = new Command()
   .name("config")
-  .description("print the resolved configuration for the current ChatJS project")
+  .description(
+    "print the resolved configuration for the current ChatJS project"
+  )
   .option(
     "-c, --cwd <cwd>",
     "the working directory (defaults to current directory)",
-    process.cwd(),
+    process.cwd()
   )
   .action(async (opts) => {
     try {
@@ -51,8 +55,8 @@ export const config = new Command()
         child.on("error", (err) => {
           reject(
             new Error(
-              `Could not spawn ${cmd}. Make sure ${pm} is installed.\n${err.message}`,
-            ),
+              `Could not spawn ${cmd}. Make sure ${pm} is installed.\n${err.message}`
+            )
           );
         });
 
@@ -60,9 +64,7 @@ export const config = new Command()
           if (code === 0) resolve();
           else
             reject(
-              new Error(
-                `Failed to resolve config:\n${stderr.join("").trim()}`,
-              ),
+              new Error(`Failed to resolve config:\n${stderr.join("").trim()}`)
             );
         });
       });

@@ -9,6 +9,7 @@ import type {
 import { Copy, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import {
   Message,
   MessageAction,
@@ -28,6 +29,7 @@ import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { isEvePlatformTool } from "@/lib/eve/platform-result";
+
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
@@ -249,7 +251,7 @@ export function EveMessages({
     }
     return (
       <Message className="flex-col" from={message.role} key={message.id}>
-        <MessageContent className="min-w-0 max-w-full">
+        <MessageContent className="max-w-full min-w-0">
           <span className="sr-only">
             {message.role === "user" ? "You" : "Assistant"}
           </span>

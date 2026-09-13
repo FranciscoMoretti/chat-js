@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+
 import type { ChatStatus } from "ai";
 import { describe, it } from "vitest";
+
 import {
   getParallelResponseLifecycle,
   getResponseAwareStatus,

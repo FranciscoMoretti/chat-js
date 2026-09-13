@@ -2,6 +2,7 @@
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,7 +111,7 @@ export function ImageModal({
   return (
     <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent
-        className="h-screen w-screen max-w-none rounded-none border-none bg-background/50 p-0 backdrop-blur-sm sm:max-w-none"
+        className="bg-background/50 h-screen w-screen max-w-none rounded-none border-none p-0 backdrop-blur-sm sm:max-w-none"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">

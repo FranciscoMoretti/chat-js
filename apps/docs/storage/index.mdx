@@ -3,10 +3,7 @@ title: "File storage"
 description: "Configure provider-agnostic storage for attachments and generated media"
 ---
 
-ChatJS uses [Files SDK](https://files-sdk.dev) to store files without coupling
-application code to one storage provider. Built-in providers use Files SDK adapters. You choose the adapter when you create
-the app, and ChatJS uses the same storage layer for uploads, generated media,
-downloads, cloning, and cleanup.
+ChatJS uses [Files SDK](https://files-sdk.dev) to store files without coupling application code to one storage provider. Built-in providers use Files SDK adapters. You choose the adapter when you create the app, and ChatJS uses the same storage layer for uploads, generated media, downloads, cloning, and cleanup.
 
 Durable file storage is required when you enable any of these capabilities:
 
@@ -21,15 +18,13 @@ Durable file storage is required when you enable any of these capabilities:
 
 ## Choose a provider
 
-The interactive installer asks you to choose a file storage provider when your
-selected features require one:
+The interactive installer asks you to choose a file storage provider when your selected features require one:
 
 ```bash
 npx @chat-js/cli@latest create my-app
 ```
 
-For a non-interactive installation, pass a provider slug and any non-secret
-adapter options:
+For a non-interactive installation, pass a provider slug and any non-secret adapter options:
 
 ```bash
 npx @chat-js/cli@latest create my-app \
@@ -37,17 +32,9 @@ npx @chat-js/cli@latest create my-app \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
 
-The installer derives its choices, peer dependencies, and environment hints
-from the Files SDK provider catalog. See the
-[Files SDK provider reference](https://files-sdk.dev/docs/providers) for the
-available providers and their configuration requirements.
+The installer derives its choices, peer dependencies, and environment hints from the Files SDK provider catalog. See the [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the available providers and their configuration requirements.
 
-The installer omits adapters that are not suitable for its generated
-production runtime. This includes non-persistent or development-only adapters,
-runtime-specific adapters such as Convex and Bun S3, and adapters whose
-production credentials must be embedded in constructor options. You can still
-integrate those adapters manually when your runtime and secret-management model
-support them.
+The installer omits adapters that are not suitable for its generated production runtime. This includes non-persistent or development-only adapters, runtime-specific adapters such as Convex and Bun S3, and adapters whose production credentials must be embedded in constructor options. You can still integrate those adapters manually when your runtime and secret-management model support them.
 
 <Callout type="note">
   `--storage-config` is only for non-secret adapter options such as a bucket,
@@ -56,8 +43,7 @@ support them.
   credential chain.
 </Callout>
 
-You can also select a third-party registry item with a namespace, HTTPS URL,
-or local JSON path:
+You can also select a third-party registry item with a namespace, HTTPS URL, or local JSON path:
 
 ```bash
 npx @chat-js/cli@latest create my-app --yes \
@@ -65,13 +51,11 @@ npx @chat-js/cli@latest create my-app --yes \
   --storage-config '{"bucket":"uploads"}'
 ```
 
-The external item must implement the [storage authoring contract](./custom).
-Its identifier does not need to be in Files SDK's provider catalog.
+The external item must implement the [storage authoring contract](./custom). Its identifier does not need to be in Files SDK's provider catalog.
 
 ## Installed configuration
 
-shadcn installs the selected item source and declared dependencies. The ChatJS
-CLI writes typed options and environment requirements without evaluating the item.
+shadcn installs the selected item source and declared dependencies. The ChatJS CLI writes typed options and environment requirements without evaluating the item.
 
 | File | Responsibility |
 | --- | --- |
@@ -92,11 +76,18 @@ export const createStorageAdapter = vercelBlob;
 ```typescript title="lib/storage-options.ts"
 import type { createStorageAdapter } from "./storage-provider";
 
-export const storageOptions = {} satisfies Parameters<typeof createStorageAdapter>[0];
+export const storageOptions = {} satisfies Parameters<
+  typeof createStorageAdapter
+>[0];
 export const storageId = "vercel-blob";
-export const storageEnvRequirements = [{
-  options: [["BLOB_READ_WRITE_TOKEN"], ["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"]],
-}];
+export const storageEnvRequirements = [
+  {
+    options: [
+      ["BLOB_READ_WRITE_TOKEN"],
+      ["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"],
+    ],
+  },
+];
 ```
 
 Run the environment check after configuring deployment secrets:
@@ -116,35 +107,21 @@ flowchart LR
     Route --> Storage
 ```
 
-ChatJS stores application URLs such as
-`/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png` instead of saving a
-provider URL. The
-content route validates the key and either redirects to a provider URL or
-streams the file through the app. This keeps message data independent from a
-provider hostname.
+ChatJS stores application URLs such as `/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png` instead of saving a provider URL. The content route validates the key and either redirects to a provider URL or streams the file through the app. This keeps message data independent from a provider hostname.
 
-Files are namespaced under `<appPrefix>/files/` in the selected provider. Files
-SDK adds and removes that prefix internally, so the rest of ChatJS works with
-stable relative keys.
+Files are namespaced under `<appPrefix>/files/` in the selected provider. Files SDK adds and removes that prefix internally, so the rest of ChatJS works with stable relative keys.
 
 ## Credentials
 
-Credential requirements depend on the selected provider. Built-in items derive
-requirements from Files SDK metadata. External items declare their own requirements.
-The app validates the generated requirements at build time. Some providers can also use an SDK credential chain such as an IAM
-role, shared profile, workload identity, or runtime binding.
+Credential requirements depend on the selected provider. Built-in items derive requirements from Files SDK metadata. External items declare their own requirements. The app validates the generated requirements at build time. Some providers can also use an SDK credential chain such as an IAM role, shared profile, workload identity, or runtime binding.
 
-Copy `.env.example` to `.env.local` for local development, then set the values
-generated for your provider. For deployment, use your platform's secret
-management instead of committing credentials.
+Copy `.env.example` to `.env.local` for local development, then set the values generated for your provider. For deployment, use your platform's secret management instead of committing credentials.
 
 See [Environment variables](../reference/env-vars) for the ChatJS-wide rules.
 
 ### Vercel Blob
 
-Vercel Blob is the default durable provider for generated ChatJS apps. Connect
-a Blob store to your Vercel project to receive `BLOB_READ_WRITE_TOKEN`
-automatically, or set the token in `.env.local` for local development.
+Vercel Blob is the default durable provider for generated ChatJS apps. Connect a Blob store to your Vercel project to receive `BLOB_READ_WRITE_TOKEN` automatically, or set the token in `.env.local` for local development.
 
 ```bash
 npx @chat-js/cli@latest create my-app \
@@ -159,23 +136,15 @@ npx @chat-js/cli@latest create my-app \
   the same ChatJS key in the destination provider.
 </Callout>
 
-Deploying a provider change only changes where future runtime operations read
-and write. It does not migrate stored objects or database references.
+Deploying a provider change only changes where future runtime operations read and write. It does not migrate stored objects or database references.
 
-If you are upgrading from a ChatJS version that stored Vercel Blob URLs
-directly, those legacy references are not migrated automatically. Keep the old
-Blob store available until you have copied and verified the objects and updated
-their database references. Delete old objects only after the migrated files
-have been verified.
+If you are upgrading from a ChatJS version that stored Vercel Blob URLs directly, those legacy references are not migrated automatically. Keep the old Blob store available until you have copied and verified the objects and updated their database references. Delete old objects only after the migrated files have been verified.
 
 ChatJS does not currently ship an automatic file migration command.
 
 ## Cleanup
 
-The authenticated `/api/cron/cleanup` route removes old, unreferenced files
-created through the current ChatJS storage layer. It ignores legacy or foreign
-keys that do not match the managed ChatJS key format. Set `CRON_SECRET` before
-enabling the scheduled cleanup job.
+The authenticated `/api/cron/cleanup` route removes old, unreferenced files created through the current ChatJS storage layer. It ignores legacy or foreign keys that do not match the managed ChatJS key format. Set `CRON_SECRET` before enabling the scheduled cleanup job.
 
 ## Troubleshooting
 

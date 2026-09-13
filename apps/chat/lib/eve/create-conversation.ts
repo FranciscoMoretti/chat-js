@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { conversationBinding, type createConversationInput } from "./contracts";
 
 export class CreationRejected extends Error {

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
+
 import { db } from "../lib/db/client";
 import {
   advanceEveUsageCursor,
@@ -108,31 +109,31 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows[0].chargedCents).toBe(5);
 });
 
-test.each([
-  "step.completed",
-  "compaction.usage",
-])("missing %s cost blocks cursor advancement until durable provider reconciliation", async (type) => {
-  const id = await session();
-  const event = { ...step(undefined), type };
-  transport.stream.mockImplementation(function* ({ startIndex }) {
-    if (startIndex === 0) {
-      yield event;
-    }
-  });
-  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-    "provider cost reconciliation"
-  );
-  expect(await getEveUsageCursor(owner, id)).toBe(0);
-  await recordEveUsage({
-    ownerId: owner,
-    sessionId: id,
-    eventId: event.meta.id,
-    turnId: "turn_0",
-    costUsd: 0.03,
-  });
-  await reconcileEveUsage(owner, id);
-  expect(await getEveUsageCursor(owner, id)).toBe(1);
-});
+test.each(["step.completed", "compaction.usage"])(
+  "missing %s cost blocks cursor advancement until durable provider reconciliation",
+  async (type) => {
+    const id = await session();
+    const event = { ...step(undefined), type };
+    transport.stream.mockImplementation(function* ({ startIndex }) {
+      if (startIndex === 0) {
+        yield event;
+      }
+    });
+    await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
+      "provider cost reconciliation"
+    );
+    expect(await getEveUsageCursor(owner, id)).toBe(0);
+    await recordEveUsage({
+      ownerId: owner,
+      sessionId: id,
+      eventId: event.meta.id,
+      turnId: "turn_0",
+      costUsd: 0.03,
+    });
+    await reconcileEveUsage(owner, id);
+    expect(await getEveUsageCursor(owner, id)).toBe(1);
+  }
+);
 
 test("compaction attempts share per-turn rounding and replay does not double-charge", async () => {
   const id = await session();

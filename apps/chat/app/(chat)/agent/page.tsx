@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+
 import { isEveEnabled } from "@/lib/eve/availability";
 
 export default async function AgentPage({

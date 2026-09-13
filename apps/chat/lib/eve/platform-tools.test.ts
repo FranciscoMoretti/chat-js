@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
+
 import { webSearchStep } from "../../tools/platform/steps/web-search";
 import type { createEvePlatformResult } from "./platform-result";
 import { executeEvePlatformTool } from "./platform-tools";

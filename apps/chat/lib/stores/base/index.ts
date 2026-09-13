@@ -26,11 +26,7 @@ export {
   useVirtualMessages,
 } from "./hooks";
 // Enhanced useChat hook
-export {
-  type UseChatHelpers,
-  type UseChatOptions,
-  useChat,
-} from "./use-chat";
+export { type UseChatHelpers, type UseChatOptions, useChat } from "./use-chat";
 // Data parts hooks
 export {
   type DataPart,

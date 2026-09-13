@@ -5,8 +5,7 @@ description: Review and fix ChatJS Blume documentation and MDX files. Use when c
 
 # Review ChatJS documentation
 
-Read each target file completely and verify code examples, paths, terminology,
-and behavior against the repository.
+Read each target file completely and verify code examples, paths, terminology, and behavior against the repository.
 
 Fix directly when the correct change is clear:
 
@@ -16,6 +15,4 @@ Fix directly when the correct change is clear:
 - Missing imports and inconsistent terminology
 - Dead external links
 
-Report only issues that require a product, architecture, or domain decision.
-Summarize edited files and list any remaining decisions with context and
-concrete options.
+Report only issues that require a product, architecture, or domain decision. Summarize edited files and list any remaining decisions with context and concrete options.

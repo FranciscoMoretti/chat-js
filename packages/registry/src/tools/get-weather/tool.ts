@@ -1,4 +1,5 @@
 import { tool } from "ai";
+
 import { weatherInput } from "./schemas";
 
 export const getWeather = tool({

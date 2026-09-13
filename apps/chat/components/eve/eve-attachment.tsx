@@ -2,6 +2,7 @@
 
 import type { EveMessagePart } from "eve/client";
 import { useEffect, useState } from "react";
+
 import { AttachmentList } from "@/components/attachment-list";
 
 export function EveAttachment({

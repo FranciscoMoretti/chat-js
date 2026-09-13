@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
+
 import { readEvePostgresQueueInventory } from "../lib/db/eve-queue-inventory";
 import { env } from "../lib/env";
 

@@ -48,24 +48,23 @@ beforeEach(() => {
   });
 });
 
-test.each([
-  undefined,
-  "",
-  "   ",
-])("unconfigured cleanup rejects a matching interpolated credential: %j", async (secret) => {
-  mocks.env.CRON_SECRET = secret;
-  const response = await GET(
-    new NextRequest("http://localhost/api/cron/cleanup", {
-      headers: { authorization: `Bearer ${secret}` },
-    })
-  );
-  expect(response.status).toBe(401);
-  expect(mocks.references).not.toHaveBeenCalled();
-  expect(mocks.list).not.toHaveBeenCalled();
-  expect(mocks.remove).not.toHaveBeenCalled();
-  expect(mocks.cleanupEve).not.toHaveBeenCalled();
-  expect(mocks.cleanupGuests).not.toHaveBeenCalled();
-});
+test.each([undefined, "", "   "])(
+  "unconfigured cleanup rejects a matching interpolated credential: %j",
+  async (secret) => {
+    mocks.env.CRON_SECRET = secret;
+    const response = await GET(
+      new NextRequest("http://localhost/api/cron/cleanup", {
+        headers: { authorization: `Bearer ${secret}` },
+      })
+    );
+    expect(response.status).toBe(401);
+    expect(mocks.references).not.toHaveBeenCalled();
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.cleanupEve).not.toHaveBeenCalled();
+    expect(mocks.cleanupGuests).not.toHaveBeenCalled();
+  }
+);
 
 test("cleanup uses EVE ownership even while new EVE admission is disabled", async () => {
   const response = await GET(

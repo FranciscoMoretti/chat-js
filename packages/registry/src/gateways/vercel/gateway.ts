@@ -3,7 +3,6 @@ import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import {
   type AiGatewayModel,
@@ -14,6 +13,7 @@ import {
 } from "@chat-js/gateways/models";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+import type { ImageModel } from "ai";
 
 type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
 type VercelVideoModelId = Parameters<(typeof gateway)["videoModel"]>[0];

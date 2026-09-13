@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { spawn } from "bun";
+
 import { loadWorktreeConfig, resolveWorktreeRuntime } from "./worktree-runtime";
 
 const args = process.argv.slice(2);

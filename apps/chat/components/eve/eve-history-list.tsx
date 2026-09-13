@@ -8,6 +8,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
 import type { listEveConversations } from "@/lib/db/eve-queries";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
@@ -159,7 +161,7 @@ export function EveHistoryList({
         })}
       </SidebarMenu>
       {history.isPending && (
-        <p className="p-2 text-muted-foreground text-sm" role="status">
+        <p className="text-muted-foreground p-2 text-sm" role="status">
           Loading conversations…
         </p>
       )}
@@ -191,7 +193,7 @@ export function EveHistoryList({
         </Button>
       )}
       {!(filtered.length || history.isPending || history.isError) && (
-        <p className="p-2 text-muted-foreground text-sm">
+        <p className="text-muted-foreground p-2 text-sm">
           {query
             ? "No matching conversations."
             : "Your conversations will appear here."}

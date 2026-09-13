@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import {
   type ConnectionStatusResult,
   createCachedConnectionStatus,
@@ -11,7 +13,6 @@ import {
   getOrCreateMcpClient,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
-import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import { config } from "@/lib/config";
 import {
   createMcpConnector,

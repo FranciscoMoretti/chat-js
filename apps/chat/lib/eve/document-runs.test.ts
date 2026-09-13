@@ -1,5 +1,6 @@
 import type { EveMessage, EveMessagePart } from "eve/client";
 import { expect, it } from "vitest";
+
 import { latestDocumentRun } from "./document-runs";
 
 const documentId = "60dbe86a-b2c4-4d32-ae09-a00e90b84e99";

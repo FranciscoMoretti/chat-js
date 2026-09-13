@@ -3,9 +3,7 @@ title: Authoring Tools
 description: Author tested source files and publish them as shadcn registry items
 ---
 
-Author tools as real TypeScript files that you can import, type-check, and test.
-In this repository, canonical implementations live in `packages/registry/src/tools/<id>/`.
-The app consumes installed copies through normal local imports.
+Author tools as real TypeScript files that you can import, type-check, and test. In this repository, canonical implementations live in `packages/registry/src/tools/<id>/`. The app consumes installed copies through normal local imports.
 
 ## Server and renderer
 
@@ -33,10 +31,7 @@ export const wordCount = tool({
 });
 ```
 
-Export your renderer through `defineToolRenderer`. The wrapper validates persisted
-inputs and outputs before calling your component. It also displays failed,
-declined, and malformed results. Your component receives typed loading and
-successful result states:
+Export your renderer through `defineToolRenderer`. The wrapper validates persisted inputs and outputs before calling your component. It also displays failed, declined, and malformed results. Your component receives typed loading and successful result states:
 
 ```tsx
 "use client";
@@ -56,17 +51,11 @@ export const WordCountRenderer = defineToolRenderer({
 });
 ```
 
-Both ChatJS chat paths use this registry contract. Custom entries in `custom-ui.ts`
-use the same wrapper. Keep runtime imports of server tools out of renderers and
-schema modules. You can use type-only imports and `ToolPartFromTool` when extracting
-a separate view component. EVE approval requests remain handled by the chat's input
-controls; tools with AI SDK approval or model-output policies need an explicit EVE
-adapter before they can execute.
+Both ChatJS chat paths use this registry contract. Custom entries in `custom-ui.ts` use the same wrapper. Keep runtime imports of server tools out of renderers and schema modules. You can use type-only imports and `ToolPartFromTool` when extracting a separate view component. EVE approval requests remain handled by the chat's input controls; tools with AI SDK approval or model-output policies need an explicit EVE adapter before they can execute.
 
 ## Item metadata
 
-Declare standard shadcn files and dependencies in `packages/registry/registry.ts`.
-ChatJS metadata describes only registration and environment requirements:
+Declare standard shadcn files and dependencies in `packages/registry/registry.ts`. ChatJS metadata describes only registration and environment requirements:
 
 ```json
 {
@@ -79,11 +68,7 @@ ChatJS metadata describes only registration and environment requirements:
 }
 ```
 
-The same metadata is emitted as `meta.chatjs` in the registry item and as an
-installed `tools/chatjs/word-count/chatjs.json` descriptor. Each item targets
-`tool.ts`, `renderer.tsx`, `schemas.ts`, and `chatjs.json` under `~/tools/chatjs/<id>/`.
-Shared helpers use standard `registryDependencies`. npm packages use
-`dependencies` or `devDependencies`.
+The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor. Each item targets `tool.ts`, `renderer.tsx`, `schemas.ts`, and `chatjs.json` under `~/tools/chatjs/<id>/`. Shared helpers use standard `registryDependencies`. npm packages use `dependencies` or `devDependencies`.
 
 For credentials, declare environment alternatives in the typed item metadata:
 
@@ -91,11 +76,7 @@ For credentials, declare environment alternatives in the typed item metadata:
 const envRequirements = [{ options: [["FIRECRAWL_API_KEY"]] }];
 ```
 
-Every outer requirement must be satisfied. Within one requirement, `options`
-contains alternatives, and each alternative lists variables needed together.
-The build serializes this data into the descriptor. The installed app's
-`check-env` command reads it without evaluating remote source. The old
-`toolEnvVars` source parser and registry authoring-type npm exports are removed.
+Every outer requirement must be satisfied. Within one requirement, `options` contains alternatives, and each alternative lists variables needed together. The build serializes this data into the descriptor. The installed app's `check-env` command reads it without evaluating remote source. The old `toolEnvVars` source parser and registry authoring-type npm exports are removed.
 
 ## Build and verify
 
@@ -105,21 +86,15 @@ bun run --cwd packages/registry test:unit
 bun run --cwd packages/registry build
 ```
 
-The small build script emits `registry.json`, then pinned `shadcn@4.21.0 build`
-reads the actual sources and generates `dist/r/*.json`. Do not hand-maintain JSON
-source strings. Publish those generated files from your registry endpoint.
+The small build script emits `registry.json`, then pinned `shadcn@4.21.0 build` reads the actual sources and generates `dist/r/*.json`. Do not hand-maintain JSON source strings. Publish those generated files from your registry endpoint.
 
-Install the built item into an independent ChatJS app and type-check it. Source
-tests validate execution logic, while installation tests catch missing files,
-dependencies, incorrect targets, and renderer registration problems.
+Install the built item into an independent ChatJS app and type-check it. Source tests validate execution logic, while installation tests catch missing files, dependencies, incorrect targets, and renderer registration problems.
 
 ```bash
 npx @chat-js/cli@latest add https://example.com/r/word-count.json
 ```
 
-Third-party registries use the same standard item format and descriptor contract.
-There is no runtime plugin loader or general compatibility solver. The installed
-app's TypeScript checks validate composition against its actual local contracts.
+Third-party registries use the same standard item format and descriptor contract. There is no runtime plugin loader or general compatibility solver. The installed app's TypeScript checks validate composition against its actual local contracts.
 
 ## Related
 

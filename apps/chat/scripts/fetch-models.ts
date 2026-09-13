@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+
 import { getActiveGateway } from "../lib/ai/active-gateway";
 
 async function fetchAndSaveModels() {

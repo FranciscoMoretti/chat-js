@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
+
 import { GetWeatherRenderer } from "./renderer";
 import type { WeatherAtLocation } from "./tool";
 

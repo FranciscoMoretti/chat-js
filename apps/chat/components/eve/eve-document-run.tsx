@@ -2,11 +2,13 @@
 
 import type { EveMessage } from "eve/client";
 import { Play } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { config } from "@/lib/config";
 import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
 import { documentExecutionLanguage } from "@/lib/eve/document-execution-contracts";
 import { latestDocumentRun } from "@/lib/eve/document-runs";
+
 import { EvePlatformToolResult } from "./eve-platform-tool-result";
 
 export function EveDocumentRun({

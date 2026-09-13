@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { proxy } from "./proxy";
 
 const mocks = vi.hoisted(() => ({ session: vi.fn(), eveEnabled: true }));

@@ -1,4 +1,5 @@
 import { expect, test, vi } from "vitest";
+
 import { generateVideoOutput } from "../../tools/platform/generate-video.schemas";
 import { executeEvePlatformTool } from "./platform-tools";
 

@@ -17,6 +17,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+
 import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
@@ -696,14 +697,13 @@ export const eveResponseGroup = pgTable(
       .references(() => user.id),
     operationId: uuid("operationId").notNull(),
     inputHash: text("inputHash"),
-    candidates:
-      jsonb("candidates").$type<
-        Array<{
-          modelId: string;
-          operationId: string;
-          rejection?: { error: string; code?: "project_not_found" };
-        }>
-      >(),
+    candidates: jsonb("candidates").$type<
+      Array<{
+        modelId: string;
+        operationId: string;
+        rejection?: { error: string; code?: "project_not_found" };
+      }>
+    >(),
     candidateOperationIds: uuid("candidateOperationIds").array().notNull(),
     sourceConversationId: uuid("sourceConversationId"),
     sourceIdentityKnown: boolean("sourceIdentityKnown")

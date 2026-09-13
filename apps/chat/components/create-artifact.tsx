@@ -2,9 +2,11 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { QueryClient } from "@tanstack/react-query";
 import type { DataUIPart } from "ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
+
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 import type { useChatStoreApi } from "@/lib/stores/base";
 import type { useTRPC } from "@/trpc/react";
+
 import type { UIArtifact } from "./artifact-panel";
 
 export type ArtifactMetadata = object | null;

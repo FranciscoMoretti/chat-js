@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+
 import { connectRedisClients } from "./client";
 
 const clients = vi.hoisted(() => {

@@ -2,7 +2,9 @@
 
 import { shallow } from "zustand/shallow";
 import { useStoreWithEqualityFn } from "zustand/traditional";
+
 import type { ChatMessage } from "@/lib/ai/types";
+
 import {
   type CustomChatStoreState,
   useCustomChatStoreApi,

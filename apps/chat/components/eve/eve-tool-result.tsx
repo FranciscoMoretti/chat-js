@@ -1,6 +1,7 @@
 "use client";
 
 import type { EveMessagePart } from "eve/client";
+
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 
 export function EveToolResult({

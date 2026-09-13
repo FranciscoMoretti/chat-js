@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+
 import { FollowUpSuggestionsView } from "../components/followup-suggestions-view";
 
 const suggestions = [

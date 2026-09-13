@@ -1,4 +1,5 @@
 import { env } from "@/lib/env";
+
 import type { UiToolName } from "../ai/types";
 
 export function assertEveConfigured() {

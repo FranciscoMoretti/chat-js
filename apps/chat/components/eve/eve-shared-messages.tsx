@@ -2,10 +2,12 @@
 
 import type { EveMessage } from "eve/client";
 import type { ReactNode } from "react";
+
 import {
   Conversation,
   ConversationContent,
 } from "@/components/ai-elements/conversation";
+
 import { EveMessages } from "./eve-messages";
 
 export function EveSharedMessages({

@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { InternalLink } from "@/components/internal-link";
 import { getNewChatShortcutText } from "@/components/keyboard-shortcuts";
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
@@ -25,7 +26,7 @@ export function NewChatButton() {
       >
         <Plus aria-label="New Chat" size={16} />
         <span>New Chat</span>
-        <span className="ml-auto text-muted-foreground text-xs">
+        <span className="text-muted-foreground ml-auto text-xs">
           {shortcutText}
         </span>
       </InternalLink>

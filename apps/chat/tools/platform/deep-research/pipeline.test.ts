@@ -1,6 +1,7 @@
 import type { LanguageModelV3StreamPart } from "@ai-sdk/provider";
 import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import type { DocumentToolResult } from "../documents/types";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 

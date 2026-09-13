@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+
 import { expect, test } from "@playwright/test";
 
 test("deletion dialog state gallery", async ({ page }, testInfo) => {

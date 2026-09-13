@@ -8,6 +8,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { type ReactNode, useEffect, useMemo } from "react";
+
 import { Chat } from "@/components/chat";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { ChatSystem } from "@/components/chat-system";

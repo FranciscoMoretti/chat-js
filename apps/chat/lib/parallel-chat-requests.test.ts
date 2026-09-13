@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+
 import { Thread } from "@chat-js/thread";
 import type { ChatTransport, UIMessageChunk } from "ai";
 import { afterEach, describe, it, vi } from "vitest";
+
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage } from "@/lib/ai/types";
+
 import type { ParallelRequestSpec } from "./draft-chat-submission";
 import { createGatedChatTransport } from "./gated-chat-transport";
 import {

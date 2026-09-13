@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+
 import { describeEveTool } from "./adapt-tool";
 
 describe("Eve tool contract", () => {

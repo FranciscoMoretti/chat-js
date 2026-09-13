@@ -4,9 +4,8 @@ import { expect, test, vi } from "vitest";
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
     fetchModels: async () => {
-      const { getFallbackModels } = await import(
-        "../ai/gateways/fallback-models"
-      );
+      const { getFallbackModels } =
+        await import("../ai/gateways/fallback-models");
       return [
         ...getFallbackModels("test"),
         { id: "live-only", type: "language", tags: [], pricing: {} },
@@ -83,14 +82,12 @@ test("the logical reasoning identity still dispatches to the original provider m
   );
 });
 
-test.each([
-  "unknown",
-  "disabled",
-  "image",
-  "plain-reasoning",
-])("rejects unavailable selection %s", (id) => {
-  expect(() => getEveModelDefinition(id)).toThrow("not available");
-});
+test.each(["unknown", "disabled", "image", "plain-reasoning"])(
+  "rejects unavailable selection %s",
+  (id) => {
+    expect(() => getEveModelDefinition(id)).toThrow("not available");
+  }
+);
 
 test("accepts live catalog models absent from the snapshot", async () => {
   expect(() => getEveModelDefinition("live-only")).toThrow();

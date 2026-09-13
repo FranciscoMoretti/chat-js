@@ -1,5 +1,7 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+
 import { createModuleLogger } from "@/lib/logger";
+
 import {
   models as fallbackModels,
   generatedForGateway,

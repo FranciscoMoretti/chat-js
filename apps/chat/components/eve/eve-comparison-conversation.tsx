@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   readResponseGroupDraft,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/eve/response-group-contracts";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useModelChange } from "@/providers/default-model-provider";
+
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveConversation } from "./eve-conversation";
 import {

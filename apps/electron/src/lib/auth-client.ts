@@ -1,12 +1,14 @@
-import { safeStorage } from "electron";
 import { electronClient } from "@better-auth/electron/client";
 import { storage } from "@better-auth/electron/storage";
 import { createAuthClient } from "better-auth/client";
+import { safeStorage } from "electron";
+
 import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
 } from "@/lib/electron-auth";
+
 import { APP_SCHEME, APP_URL } from "../config";
 
 if (process.env.NODE_ENV !== "production") {

@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
+
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
 import { z } from "zod";
+
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
 import {
   createOAuthSession,

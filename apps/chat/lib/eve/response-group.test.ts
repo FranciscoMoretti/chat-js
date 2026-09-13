@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { createEveResponseGroup } from "./response-group";
 import { eveResponseGroupCandidates } from "./response-group-candidates";
 

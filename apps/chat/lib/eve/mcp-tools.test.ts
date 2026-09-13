@@ -1,5 +1,6 @@
 import { jsonSchema, tool } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import mcp from "../../agent/tools/mcp";
 import {
   discoverEveMcpTools,
@@ -99,17 +100,17 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-it.each([
-  { userId: "stranger" },
-  { enabled: false },
-])("rejects inaccessible or disabled connectors before connection: %j", async (change) => {
-  mocks.get.mockResolvedValue({ ...connector, ...change });
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
-  ).rejects.toThrow("unavailable");
-  expect(mocks.connect).not.toHaveBeenCalled();
-  expect(execute).not.toHaveBeenCalled();
-});
+it.each([{ userId: "stranger" }, { enabled: false }])(
+  "rejects inaccessible or disabled connectors before connection: %j",
+  async (change) => {
+    mocks.get.mockResolvedValue({ ...connector, ...change });
+    await expect(
+      executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
+    ).rejects.toThrow("unavailable");
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
+  }
+);
 
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
@@ -191,36 +192,36 @@ it("forwards cancellation and closes the connection once", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-it.each([
-  undefined,
-  "https://json-schema.org/draft/2020-12/schema",
-])("enforces modern MCP schema keywords with dialect %s", async ($schema) => {
-  const schema = {
-    $schema,
-    type: "object" as const,
-    properties: {
-      text: { type: "string" as const },
-      language: { type: "string" as const },
-    },
-    dependentRequired: { text: ["language"] },
-  };
-  mocks.tools.mockResolvedValue({
-    echo: { ...definition, inputSchema: jsonSchema(schema) },
-  });
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "hello" }, context, [])
-  ).rejects.toThrow("Invalid tool input");
-  expect(execute).not.toHaveBeenCalled();
-  await expect(
-    executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "hello", language: "en" },
-      context,
-      []
-    )
-  ).resolves.toMatchObject({ output: "Echo output" });
-});
+it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
+  "enforces modern MCP schema keywords with dialect %s",
+  async ($schema) => {
+    const schema = {
+      $schema,
+      type: "object" as const,
+      properties: {
+        text: { type: "string" as const },
+        language: { type: "string" as const },
+      },
+      dependentRequired: { text: ["language"] },
+    };
+    mocks.tools.mockResolvedValue({
+      echo: { ...definition, inputSchema: jsonSchema(schema) },
+    });
+    await expect(
+      executeEveMcpTool("connector", "echo", { text: "hello" }, context, [])
+    ).rejects.toThrow("Invalid tool input");
+    expect(execute).not.toHaveBeenCalled();
+    await expect(
+      executeEveMcpTool(
+        "connector",
+        "echo",
+        { text: "hello", language: "en" },
+        context,
+        []
+      )
+    ).resolves.toMatchObject({ output: "Echo output" });
+  }
+);
 
 it("retains explicitly declared draft-07 tuple validation", async () => {
   mocks.tools.mockResolvedValue({

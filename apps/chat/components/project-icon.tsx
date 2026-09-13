@@ -25,6 +25,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { getColorValue } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";

@@ -164,16 +164,6 @@
     "zod": "^4.3.6",
     "zustand": "^5.0.6"
   },
-  "overrides": {
-    "commander": "^14.0.0",
-    "evalite": {
-      "better-sqlite3": "$better-sqlite3",
-      "ai": "$ai"
-    },
-    "files-sdk": {
-      "ai": "$ai"
-    }
-  },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@playwright/test": "^1.50.1",
@@ -197,6 +187,16 @@
     "ultracite": "7.4.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.0.0"
+  },
+  "overrides": {
+    "commander": "^14.0.0",
+    "evalite": {
+      "better-sqlite3": "$better-sqlite3",
+      "ai": "$ai"
+    },
+    "files-sdk": {
+      "ai": "$ai"
+    }
   },
   "engines": {
     "node": ">=24"

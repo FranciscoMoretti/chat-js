@@ -8,7 +8,10 @@ description: Secure Python and JavaScript sandbox for running code
 Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The sandbox runs on Vercel infrastructure with a 5-minute timeout and 2 vCPUs.
 
 <Frame>
-  <img src="/docs/images/code-execution.gif" alt="Running Python and JavaScript code in the sandbox from chat" />
+  <img
+    src="/docs/images/code-execution.gif"
+    alt="Running Python and JavaScript code in the sandbox from chat"
+  />
 </Frame>
 
 ## Quick Start
@@ -71,7 +74,8 @@ result = np.mean([1, 2, 3, 4, 5])
 ```
 
 <Callout type="warning">
-  Implicit REPL output (last expression value) is not captured. Always use `print()` or assign to `result`.
+  Implicit REPL output (last expression value) is not captured. Always use
+  `print()` or assign to `result`.
 </Callout>
 
 ## Charts
@@ -93,12 +97,14 @@ plt.ylabel("sin(x)")
 ```
 
 Supported chart types:
+
 - Line charts
 - Scatter plots
 - Bar charts
 
 <Callout type="note">
-  Charts are rendered as PNG images. Complex chart types beyond line, scatter, and bar may not render correctly.
+  Charts are rendered as PNG images. Complex chart types beyond line, scatter,
+  and bar may not render correctly.
 </Callout>
 
 ## Customization

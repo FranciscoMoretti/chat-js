@@ -1,6 +1,8 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
 import type { ToolSet } from "ai";
+
 import type { StreamWriter } from "@/lib/ai/types";
+
 import { firecrawlWebSearch, tavilyWebSearch } from "../web-search";
 import type { DeepResearchRuntimeConfig } from "./configuration";
 

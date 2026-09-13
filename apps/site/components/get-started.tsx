@@ -35,32 +35,32 @@ export function GetStarted() {
         <h2 className="font-display text-3xl tracking-tight sm:text-5xl">
           Get started in under <span className="italic">five minutes</span>
         </h2>
-        <p className="mt-6 text-foreground/75 text-lg">
+        <p className="text-foreground/75 mt-6 text-lg">
           Scaffold a new project with a single command. Customize it, deploy it,
           ship it.
         </p>
 
         {/* Terminal */}
         <div className="mx-auto mt-12 max-w-lg">
-          <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-foreground/2 shadow-lg">
-            <div className="flex items-center gap-2 border-border/40 border-b bg-secondary/40 px-4 py-2.5">
+          <div className="border-border/50 bg-card shadow-foreground/2 overflow-hidden rounded-xl border shadow-lg">
+            <div className="border-border/40 bg-secondary/40 flex items-center gap-2 border-b px-4 py-2.5">
               <div className="flex gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
-                <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
-                <div className="h-2.5 w-2.5 rounded-full bg-foreground/10" />
+                <div className="bg-foreground/10 h-2.5 w-2.5 rounded-full" />
+                <div className="bg-foreground/10 h-2.5 w-2.5 rounded-full" />
+                <div className="bg-foreground/10 h-2.5 w-2.5 rounded-full" />
               </div>
-              <span className="ml-2 text-[11px] text-foreground/65">
+              <span className="text-foreground/65 ml-2 text-[11px]">
                 Terminal
               </span>
             </div>
             <div className="flex items-center justify-between px-5 py-4">
               <code className="font-mono text-sm">
-                <span className="select-none text-foreground/70">$ </span>
+                <span className="text-foreground/70 select-none">$ </span>
                 <span className="text-foreground">{command}</span>
               </code>
               <button
                 aria-label="Copy command"
-                className="ml-3 rounded-md p-1.5 text-foreground/75 transition-colors hover:bg-secondary hover:text-foreground"
+                className="text-foreground/75 hover:bg-secondary hover:text-foreground ml-3 rounded-md p-1.5 transition-colors"
                 onClick={handleCopy}
                 type="button"
               >
@@ -76,14 +76,14 @@ export function GetStarted() {
         {/* CTAs */}
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <a
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground text-sm shadow-lg shadow-primary/15 transition-all hover:-translate-y-0.5 hover:shadow-primary/20 hover:shadow-xl"
+            className="bg-primary text-primary-foreground shadow-primary/15 hover:shadow-primary/20 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
             href={siteLinks.docs}
           >
             <BookOpen className="h-4 w-4" />
             Read the Docs
           </a>
           <a
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-6 py-3 font-medium text-foreground text-sm transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-card"
+            className="border-border bg-card/80 text-foreground hover:border-foreground/20 hover:bg-card inline-flex items-center gap-2 rounded-xl border px-6 py-3 text-sm font-medium transition-all hover:-translate-y-0.5"
             href={siteLinks.github}
           >
             <svg

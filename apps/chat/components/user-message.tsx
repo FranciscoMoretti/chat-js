@@ -1,9 +1,11 @@
 "use client";
 import { memo, useState } from "react";
+
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatId, useMessageById } from "@/lib/stores/base";
 import { cn, getAttachmentsFromMessage } from "@/lib/utils";
+
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";
 import { MessageActions } from "./message-actions";
@@ -69,7 +71,7 @@ const PureUserMessage = ({
 
           {mode === "view" && isReadonly && (
             <MessageContent
-              className="text-left group-[.is-user]:bg-card"
+              className="group-[.is-user]:bg-card text-left"
               data-testid="message-content"
             >
               <AttachmentList
@@ -77,14 +79,14 @@ const PureUserMessage = ({
                 onImageClick={handleImageClick}
                 testId="message-attachments"
               />
-              <pre className="whitespace-pre-wrap font-sans">
+              <pre className="font-sans whitespace-pre-wrap">
                 {textPart.text}
               </pre>
             </MessageContent>
           )}
           {mode === "view" && !isReadonly && (
             <button
-              className="block cursor-pointer select-text text-left transition-opacity hover:opacity-80"
+              className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
               data-testid="message-content"
               onClick={(e) => {
                 const selection = window.getSelection();
@@ -99,7 +101,7 @@ const PureUserMessage = ({
               type="button"
             >
               <MessageContent
-                className="text-left group-[.is-user]:max-w-none group-[.is-user]:bg-card"
+                className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
                 data-testid="message-content"
               >
                 <AttachmentList
@@ -107,7 +109,7 @@ const PureUserMessage = ({
                   onImageClick={handleImageClick}
                   testId="message-attachments"
                 />
-                <pre className="whitespace-pre-wrap font-sans">
+                <pre className="font-sans whitespace-pre-wrap">
                   {textPart.text}
                 </pre>
               </MessageContent>

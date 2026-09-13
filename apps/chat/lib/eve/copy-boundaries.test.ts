@@ -1,5 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
+
 import { eveCopyBoundaries } from "./copy-boundaries";
 
 it("distinguishes imported boundaries from new native turns that restart at zero", () => {

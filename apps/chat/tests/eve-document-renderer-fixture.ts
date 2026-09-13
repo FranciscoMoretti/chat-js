@@ -1,6 +1,7 @@
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
 import { ArtifactProvider } from "../hooks/use-artifact";
 

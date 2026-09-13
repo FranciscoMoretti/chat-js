@@ -22,8 +22,8 @@ ai: {
 ```
 
 <Callout type="note">
-  Video generation requires a durable
-  [file storage provider](../storage) for generated videos.
+  Video generation requires a durable [file storage provider](../storage) for
+  generated videos.
 </Callout>
 
 Configure the default video model:
@@ -42,11 +42,11 @@ ai: {
 
 The tool accepts the following inputs:
 
-| Parameter         | Type                          | Default | Description                        |
-| ----------------- | ----------------------------- | ------- | ---------------------------------- |
-| `prompt`          | string                        | Required | Descriptive text for the video    |
-| `aspectRatio`     | `"16:9"` \| `"9:16"` \| `"1:1"` | `"16:9"` | Output aspect ratio             |
-| `durationSeconds` | number (1–10)                 | `5`     | Length of the generated video      |
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `prompt` | string | Required | Descriptive text for the video |
+| `aspectRatio` | `"16:9"` \| `"9:16"` \| `"1:1"` | `"16:9"` | Output aspect ratio |
+| `durationSeconds` | number (1–10) | `5` | Length of the generated video |
 
 The LLM fills in these parameters automatically based on the user's request.
 
@@ -64,17 +64,15 @@ lib/ai/tools/generate-video.ts → components/part/generate-video.tsx
 return { videoUrl: result.url, prompt };
 ```
 
-The generated video is uploaded through the configured Files SDK provider and
-the ChatJS file URL is returned. Supported container formats are mp4, webm, and
-mov, resolved from the response media type.
+The generated video is uploaded through the configured Files SDK provider and the ChatJS file URL is returned. Supported container formats are mp4, webm, and mov, resolved from the response media type.
 
 ### UI States
 
-| State             | Shows                                    |
-| ----------------- | ---------------------------------------- |
+| State | Shows |
+| --- | --- |
 | `input-available` | Pulsing placeholder + `Generating video: {prompt}` |
 | `output-available` | Inline video player with controls, autoplay, loop, and mute |
-| `failed`          | Error message with suggestion to try a different prompt |
+| `failed` | Error message with suggestion to try a different prompt |
 
 ## Configuration
 

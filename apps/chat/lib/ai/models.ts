@@ -1,7 +1,9 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { unstable_cache } from "next/cache";
+
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
+
 import { getActiveGateway } from "./active-gateway";
 import type { ModelData } from "./model-data";
 import { toModelData } from "./to-model-data";

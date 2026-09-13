@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { CreationRejected } from "@/lib/eve/create-conversation";
 import { eveMessageTitle } from "@/lib/eve/message-input";
@@ -110,7 +111,7 @@ export function EveCreationRecovery({
   }
   return (
     <section aria-label="Conversation recovery" className="space-y-4 p-4">
-      <p className="whitespace-pre-wrap break-words">
+      <p className="break-words whitespace-pre-wrap">
         {pending ? eveMessageTitle(pending.message) : firstMessage}
       </p>
       <p role="status">{status}</p>

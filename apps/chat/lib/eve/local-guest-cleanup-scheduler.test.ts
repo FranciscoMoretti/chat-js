@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
 import { startLocalEveGuestCleanup } from "./local-guest-cleanup-scheduler";
 
 const mocks = vi.hoisted(() => ({
@@ -70,13 +71,16 @@ test.each([
   { EVE_GATEWAY_SECRET: "" },
   { DATABASE_URL: "postgresql://remote.example/fixture" },
   { DATABASE_URL: "https://localhost/fixture" },
-])("unsafe or disabled configuration never starts cleanup: %j", async (values) => {
-  Object.assign(mocks.env, values);
-  stop = startLocalEveGuestCleanup();
-  await vi.advanceTimersByTimeAsync(120_000);
-  expect(mocks.cleanup).not.toHaveBeenCalled();
-  expect(stop).toBeUndefined();
-});
+])(
+  "unsafe or disabled configuration never starts cleanup: %j",
+  async (values) => {
+    Object.assign(mocks.env, values);
+    stop = startLocalEveGuestCleanup();
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(mocks.cleanup).not.toHaveBeenCalled();
+    expect(stop).toBeUndefined();
+  }
+);
 
 test("remote worker or World and a config disabled after startup cannot sweep", async () => {
   mocks.available.mockReturnValue(false);

@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
+
 import { databaseConnection } from "./lib/db/connection";
 
 config({

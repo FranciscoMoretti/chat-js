@@ -4,6 +4,7 @@
 
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
+
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
 
 // Helper types to safely derive the message part and part.type types from UI_MESSAGE

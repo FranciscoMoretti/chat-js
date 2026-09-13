@@ -11,7 +11,7 @@ export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
   if (tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
-        <div className="h-64 w-full animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
           Generating video: &quot;{tool.input.prompt}&quot;
         </div>
@@ -24,7 +24,7 @@ export function GenerateVideo({ tool }: { tool: GenerateVideoTool }) {
     const fallbackPrompt = tool.input?.prompt ?? "the same idea";
 
     return (
-      <div className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border p-4 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex w-full flex-col items-center justify-center gap-2 rounded-lg border p-4 text-sm">
         <div>Couldn&apos;t generate video.</div>
         <div className="text-xs">
           Try again with a different prompt: &quot;{fallbackPrompt}&quot;

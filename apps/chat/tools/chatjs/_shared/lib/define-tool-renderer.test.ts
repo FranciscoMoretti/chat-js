@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
+
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {

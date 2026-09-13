@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -194,7 +195,7 @@ export function McpCreateDialog({
               <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
                 <CollapsibleTrigger asChild>
                   <Button
-                    className="h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
                     size="sm"
                     type="button"
                     variant="ghost"

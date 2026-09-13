@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+
 import { ControlledChatComposer } from "@/components/chat-composer";
 import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
@@ -18,6 +19,7 @@ import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
+
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
 
@@ -115,7 +117,7 @@ export function EveComposer({
           }
         }}
         tools={
-          <div className="flex min-w-0 flex-wrap items-center @[500px]:gap-2 gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 @[500px]:gap-2">
             {config.features.attachments && (
               <AttachmentsButton
                 acceptAll="image/jpeg,image/png,application/pdf"

@@ -1,8 +1,10 @@
 import type { UIMessage } from "ai";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage } from "@/lib/ai/types";
 import { ApplicationThread } from "@/lib/application-thread";
+
 import { createCustomChatStore } from "./custom-store-provider";
 import { ZustandThreadState } from "./zustand-thread-state";
 

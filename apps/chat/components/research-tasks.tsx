@@ -2,8 +2,10 @@ import { CircleCheck, Dot, FileText, Pencil, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import type React from "react";
 import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import { ResearchTask } from "./research-task";
 
 export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
@@ -36,14 +38,14 @@ interface StepWrapperProps {
 const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
   <div className="flex w-full flex-row items-stretch justify-start gap-2">
     <div className="flex min-h-full shrink-0 flex-col items-center justify-start px-2">
-      <div className="h-1 shrink-0 bg-border/50" />
-      <div className="z-10 bg-background py-0.5">
+      <div className="bg-border/50 h-1 shrink-0" />
+      <div className="bg-background z-10 py-0.5">
         <StepTypeIcon update={update} />
       </div>
       <motion.div
         animate={{ height: "100%" }}
         className={cn(
-          "min-h-full w-px flex-1 border-border border-l border-dashed",
+          "border-border min-h-full w-px flex-1 border-l border-dashed",
           isLast && "hidden"
         )}
         initial={{ height: 0 }}
@@ -71,5 +73,5 @@ const icons: Record<ResearchUpdate["type"], React.ElementType> = {
 
 const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
   const Icon = icons[update.type];
-  return <Icon className="h-4 w-4 text-muted-foreground" />;
+  return <Icon className="text-muted-foreground h-4 w-4" />;
 };

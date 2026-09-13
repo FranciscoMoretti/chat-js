@@ -4,6 +4,7 @@
 
 import type { UIMessage } from "ai";
 import type { StateCreator } from "zustand";
+
 import type { StoreState as BaseChatStoreState } from "@/lib/stores/base";
 
 export type ChatPersistenceAugmentedState<UM extends UIMessage> =

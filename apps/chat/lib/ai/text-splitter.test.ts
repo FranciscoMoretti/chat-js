@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+
 import { beforeEach, describe, it } from "vitest";
+
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
 
 describe("RecursiveCharacterTextSplitter", () => {

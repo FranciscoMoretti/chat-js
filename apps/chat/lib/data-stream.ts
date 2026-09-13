@@ -1,5 +1,6 @@
 import { type DataUIPart, isDataUIPart } from "ai";
 import equal from "fast-deep-equal";
+
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/ai/types";
 
 export function isDataPartOnMessagePath(

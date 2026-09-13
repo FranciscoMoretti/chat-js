@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { keyFromFileUrl } from "@/lib/file-url";
 
 export const generateVideoInput = z.object({

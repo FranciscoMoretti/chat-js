@@ -1,4 +1,5 @@
 import { expect, test, vi } from "vitest";
+
 import { createEveToolCost } from "./tool-cost";
 
 vi.mock("../ai/active-gateway", () => ({
@@ -28,11 +29,11 @@ test("missing pricing and missing usage remain unknown rather than free", async 
   await expect(empty.totalUsd()).rejects.toThrow("usage is unavailable");
 });
 
-test.each([
-  { inputTokens: 100 },
-  { outputTokens: 100 },
-])("partial usage remains unresolved: %j", async (usage) => {
-  const cost = createEveToolCost();
-  cost.addLLMCost("priced", usage, "image");
-  await expect(cost.totalUsd()).rejects.toThrow("usage is unavailable");
-});
+test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
+  "partial usage remains unresolved: %j",
+  async (usage) => {
+    const cost = createEveToolCost();
+    cost.addLLMCost("priced", usage, "image");
+    await expect(cost.totalUsd()).rejects.toThrow("usage is unavailable");
+  }
+);

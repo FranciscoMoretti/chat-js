@@ -1,63 +1,65 @@
 import { expect, it } from "bun:test";
+
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
 import { externalGatewayFixture } from "../../test/external-gateway";
-import {
-	promptAssistantTools,
-	promptCoreFeatures,
-	promptDocumentTypes,
-} from "./prompts";
 import { collectEnvChecklist } from "./env-checklist";
+import {
+  promptAssistantTools,
+  promptCoreFeatures,
+  promptDocumentTypes,
+} from "./prompts";
 
 it("uses external defaults and every environment group with --yes", async () => {
-	const definition = externalGatewayFixture().root.meta.chatjs;
-	definition.defaults.tools.documents.types = {
-		text: false,
-		code: true,
-		sheet: false,
-	};
-	definition.defaults.tools.mcp.enabled = true;
-	definition.defaults.tools.webSearch.enabled = true;
-	definition.envRequirements = [
-		{ options: [["FIRST"]] },
-		{ options: [["SECOND"], ["ALTERNATE"]] },
-	];
-	const coreFeatures = await promptCoreFeatures(true, definition);
-	const documentTypes = await promptDocumentTypes(true, true, definition);
-	const { builtInTools } = await promptAssistantTools([], true, definition);
-	expect(coreFeatures.mcp).toBe(true);
-	expect(documentTypes).toEqual({ text: false, code: true, sheet: false });
-	expect(builtInTools.webSearch).toBe(true);
-	const input = {
-		gateway: "acme",
-		coreFeatures,
-		builtInTools,
-		auth: { google: false, github: false, vercel: false },
-	};
-	const entries = collectEnvChecklist({
-		...input,
-		gatewayRequirements: definition.envRequirements,
-	});
-	expect(entries.map((entry) => entry.vars)).toEqual(
-		expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"]),
-	);
-	expect(() => collectEnvChecklist(input)).not.toThrow();
-	expect(() =>
-		collectEnvChecklist({ ...input, gatewayRequirements: [] }),
-	).not.toThrow();
+  const definition = externalGatewayFixture().root.meta.chatjs;
+  definition.defaults.tools.documents.types = {
+    text: false,
+    code: true,
+    sheet: false,
+  };
+  definition.defaults.tools.mcp.enabled = true;
+  definition.defaults.tools.webSearch.enabled = true;
+  definition.envRequirements = [
+    { options: [["FIRST"]] },
+    { options: [["SECOND"], ["ALTERNATE"]] },
+  ];
+  const coreFeatures = await promptCoreFeatures(true, definition);
+  const documentTypes = await promptDocumentTypes(true, true, definition);
+  const { builtInTools } = await promptAssistantTools([], true, definition);
+  expect(coreFeatures.mcp).toBe(true);
+  expect(documentTypes).toEqual({ text: false, code: true, sheet: false });
+  expect(builtInTools.webSearch).toBe(true);
+  const input = {
+    gateway: "acme",
+    coreFeatures,
+    builtInTools,
+    auth: { google: false, github: false, vercel: false },
+  };
+  const entries = collectEnvChecklist({
+    ...input,
+    gatewayRequirements: definition.envRequirements,
+  });
+  expect(entries.map((entry) => entry.vars)).toEqual(
+    expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"])
+  );
+  expect(() => collectEnvChecklist(input)).not.toThrow();
+  expect(() =>
+    collectEnvChecklist({ ...input, gatewayRequirements: [] })
+  ).not.toThrow();
 });
 
 it("rejects a default for media the gateway cannot support", () => {
-	const definition = externalGatewayFixture().root.meta.chatjs;
-	definition.capabilities.image = false;
-	definition.defaults.tools.image = { enabled: false, default: "unsupported" };
-	expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
+  const definition = externalGatewayFixture().root.meta.chatjs;
+  definition.capabilities.image = false;
+  definition.defaults.tools.image = { enabled: false, default: "unsupported" };
+  expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
 it("enables web search when external defaults enable deep research", async () => {
-	const definition = externalGatewayFixture().root.meta.chatjs;
-	definition.defaults.tools.webSearch.enabled = false;
-	definition.defaults.tools.deepResearch.enabled = true;
-	const { builtInTools } = await promptAssistantTools([], true, definition);
-	expect(builtInTools.deepResearch).toBe(true);
-	expect(builtInTools.webSearch).toBe(true);
+  const definition = externalGatewayFixture().root.meta.chatjs;
+  definition.defaults.tools.webSearch.enabled = false;
+  definition.defaults.tools.deepResearch.enabled = true;
+  const { builtInTools } = await promptAssistantTools([], true, definition);
+  expect(builtInTools.deepResearch).toBe(true);
+  expect(builtInTools.webSearch).toBe(true);
 });

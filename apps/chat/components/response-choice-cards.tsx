@@ -1,6 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,8 +39,8 @@ export function ResponseChoiceCards({
           type="button"
           variant="outline"
         >
-          <span className="font-medium text-sm">{slot.modelName}</span>
-          <span className="flex items-center gap-1 text-muted-foreground text-xs">
+          <span className="text-sm font-medium">{slot.modelName}</span>
+          <span className="text-muted-foreground flex items-center gap-1 text-xs">
             {slot.loading ? (
               <LoaderCircle aria-hidden className="size-3 animate-spin" />
             ) : null}

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+
 import { ProjectConfig } from "@/components/project-config";
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { ProjectInstructionsDialog } from "@/components/project-instructions-dialog";
@@ -16,6 +17,7 @@ import {
   PROJECT_ICONS,
 } from "@/lib/project-icons";
 import { useTRPC } from "@/trpc/react";
+
 import { EveHistoryList } from "./eve-history-list";
 import { NewEveConversation } from "./new-eve-conversation";
 

@@ -1,12 +1,13 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
-import type { ForgeConfig } from "@electron-forge/shared-types";
+
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+import type { ForgeConfig } from "@electron-forge/shared-types";
 
 type Branding = {
   appName: string;
@@ -30,7 +31,9 @@ function loadBranding(): Branding {
     );
   }
 
-  const branding = JSON.parse(readFileSync(brandingPath, "utf8")) as Partial<Branding>;
+  const branding = JSON.parse(
+    readFileSync(brandingPath, "utf8")
+  ) as Partial<Branding>;
 
   if (!branding.appName || !branding.appPrefix || !branding.appUrl) {
     throw new Error(
@@ -48,7 +51,9 @@ function runBunScript(script: string, env: NodeJS.ProcessEnv = {}): void {
   });
 
   if (result.status !== 0) {
-    throw new Error(`bun run ${script} failed with exit code ${result.status ?? "unknown"}`);
+    throw new Error(
+      `bun run ${script} failed with exit code ${result.status ?? "unknown"}`
+    );
   }
 }
 

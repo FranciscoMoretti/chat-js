@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 export function Tag({
@@ -13,7 +14,7 @@ export function Tag({
   return (
     <span
       className={cn(
-        "flex gap-1 rounded bg-muted px-1.5 py-1 text-muted-foreground text-xs",
+        "bg-muted text-muted-foreground flex gap-1 rounded px-1.5 py-1 text-xs",
         className
       )}
     >

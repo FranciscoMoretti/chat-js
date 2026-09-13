@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { SignupForm } from "@/components/signup-form";
 

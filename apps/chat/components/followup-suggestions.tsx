@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+
 import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
 import type { ChatMessage, UiToolName } from "@/lib/ai/types";
 import { useChatStoreApi } from "@/lib/stores/base";

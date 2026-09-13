@@ -3,9 +3,11 @@
 import { ExternalLink, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+
 import config from "@/chat.config";
 import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
+
 import { Button } from "./ui/button";
 
 export function ElectronBrowserSignIn({
@@ -17,7 +19,7 @@ export function ElectronBrowserSignIn({
 
   return (
     <div className="space-y-3">
-      <p className="text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         Sign-in opens in your browser. On macOS, {config.appName} may ask to use
         Keychain so it can store your session securely.
       </p>
@@ -43,7 +45,7 @@ export function ElectronBrowserSignIn({
       </Button>
 
       {opened ? (
-        <p className="text-center text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-center text-sm">
           Finish signing in through your browser. If macOS asks about Keychain
           access, allow it to keep your session saved securely.
         </p>

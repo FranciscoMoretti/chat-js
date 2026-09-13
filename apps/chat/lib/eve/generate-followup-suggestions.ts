@@ -1,5 +1,6 @@
 import { generateText, Output } from "ai";
 import type { HookModelCall, TurnCompletedHookResult } from "eve/hooks";
+
 import { config } from "../config";
 import type { FollowupContext } from "./followup-context";
 import { eveFollowupSuggestions } from "./followup-suggestions";

@@ -1,5 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { ingestEveUsage } from "./usage";
 
 const record = vi.hoisted(() => vi.fn());

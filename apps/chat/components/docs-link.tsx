@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 const DOCS_URL = "https://chatjs.dev/docs";

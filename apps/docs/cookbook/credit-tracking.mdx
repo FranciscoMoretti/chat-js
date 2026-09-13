@@ -90,15 +90,16 @@ Anonymous users have a separate, simpler credit system stored in browser cookies
 
 ### Why Two Systems?
 
-| Aspect | Anonymous | Authenticated |
-| --- | --- | --- |
-| Storage | Cookie (`anonymous-session`) | Database (`userCredit`) |
-| Unit | Message count | Cents (dollars × 100) |
-| Cost per request | Fixed: 1 credit | Actual LLM + API costs |
-| Deduction timing | Pre-streaming | Post-streaming |
-| Default balance | 10 (prod) / 1000 (dev) | Based on plan |
+| Aspect           | Anonymous                    | Authenticated           |
+| ---------------- | ---------------------------- | ----------------------- |
+| Storage          | Cookie (`anonymous-session`) | Database (`userCredit`) |
+| Unit             | Message count                | Cents (dollars × 100)   |
+| Cost per request | Fixed: 1 credit              | Actual LLM + API costs  |
+| Deduction timing | Pre-streaming                | Post-streaming          |
+| Default balance  | 10 (prod) / 1000 (dev)       | Based on plan           |
 
 The message-based system for anonymous users is intentional:
+
 - Easier to communicate ("10 free messages" vs explaining token costs)
 - Pre-deduction required because cookies cannot be set after response streaming begins
 - No need for database writes for unregistered users
@@ -129,13 +130,13 @@ anonymous: {
 
 ### Anonymous Credit Files
 
-| File | Purpose |
-| --- | --- |
-| `lib/anonymous-session-client.ts` | Client-side cookie read/write |
-| `lib/anonymous-session-server.ts` | Server-side cookie read/write |
-| `lib/create-anonymous-session.ts` | Shared session factory |
-| `lib/types/anonymous.ts` | Types and `ANONYMOUS_LIMITS` |
-| `components/upgrade-cta/limit-display.tsx` | UI for remaining credits |
+| File                                       | Purpose                       |
+| ------------------------------------------ | ----------------------------- |
+| `lib/anonymous-session-client.ts`          | Client-side cookie read/write |
+| `lib/anonymous-session-server.ts`          | Server-side cookie read/write |
+| `lib/create-anonymous-session.ts`          | Shared session factory        |
+| `lib/types/anonymous.ts`                   | Types and `ANONYMOUS_LIMITS`  |
+| `components/upgrade-cta/limit-display.tsx` | UI for remaining credits      |
 
 ## Key Files
 

@@ -1,4 +1,5 @@
 import type { InferUITool } from "ai";
+
 import { tools } from "@/tools/chatjs/tools";
 
 export const installedTools = tools;

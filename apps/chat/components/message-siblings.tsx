@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memo } from "react";
+
 import { Action } from "@/components/ai-elements/actions";
 import { useNavigateToSibling } from "@/hooks/use-navigate-to-sibling";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
@@ -37,7 +38,7 @@ function PureMessageSiblings({
       {hasSiblings && (
         <>
           <Action
-            className="h-7 w-7 px-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 px-0"
             disabled={siblingInfo.siblingIndex === 0}
             onClick={() => navigateToSibling(messageId, "prev")}
             tooltip="Previous version"
@@ -50,7 +51,7 @@ function PureMessageSiblings({
           </span>
 
           <Action
-            className="h-7 w-7 px-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 px-0"
             disabled={
               siblingInfo.siblingIndex === siblingInfo.siblings.length - 1
             }

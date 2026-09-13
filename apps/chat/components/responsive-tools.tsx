@@ -5,6 +5,7 @@ import {
   type SetStateAction,
   useState,
 } from "react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import type { UiToolName } from "@/lib/ai/types";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+
 import { enabledTools, toolDefinitions } from "./chat-features-definitions";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -58,18 +60,18 @@ export function ResponsiveTools({
   };
 
   return (
-    <div className="flex items-center @[500px]:gap-2 gap-1">
+    <div className="flex items-center gap-1 @[500px]:gap-2">
       {isAnonymous ? (
         <Popover onOpenChange={setShowLoginPopover} open={showLoginPopover}>
           <PopoverTrigger asChild>
             <Button
-              className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5"
+              className="h-8 gap-1 p-1.5 @[500px]:h-10 @[500px]:gap-2"
               disabled={disabled}
               title="Select Tools"
               variant="ghost"
             >
               <Settings2 size={14} />
-              <span className="@[500px]:inline hidden">Tools</span>
+              <span className="hidden @[500px]:inline">Tools</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-80 p-0">
@@ -83,14 +85,14 @@ export function ResponsiveTools({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 p-1.5 px-2.5"
+              className="h-8 gap-1 p-1.5 px-2.5 @[500px]:h-10 @[500px]:gap-2"
               disabled={disabled}
               size="sm"
               title="Select Tools"
               variant="ghost"
             >
               <Settings2 size={14} />
-              <span className="@[500px]:inline hidden">Tools</span>
+              <span className="hidden @[500px]:inline">Tools</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -130,12 +132,12 @@ export function ResponsiveTools({
       {activeTool && (
         <>
           <Separator
-            className="h-4 bg-muted-foreground/50"
+            className="bg-muted-foreground/50 h-4"
             orientation="vertical"
           />
           <Button
             aria-label={`Clear ${toolDefinitions[activeTool].shortName} tool`}
-            className="@[500px]:h-10 h-8 @[500px]:gap-2 gap-1 rounded-full text-primary hover:text-primary/80"
+            className="text-primary hover:text-primary/80 h-8 gap-1 rounded-full @[500px]:h-10 @[500px]:gap-2"
             disabled={disabled}
             onClick={() => setTool(null)}
             size="sm"
@@ -144,7 +146,7 @@ export function ResponsiveTools({
             {createElement(toolDefinitions[activeTool].icon, {
               size: 14,
             })}
-            <span className="@[500px]:inline hidden">
+            <span className="hidden @[500px]:inline">
               {toolDefinitions[activeTool].shortName}
             </span>
             <X className="opacity-70" size={12} />

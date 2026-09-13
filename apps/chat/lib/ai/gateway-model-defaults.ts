@@ -1,4 +1,5 @@
 import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
+
 import type { Gateway } from "./gateway";
 
 export const gatewayType = "vercel" satisfies InstanceType<

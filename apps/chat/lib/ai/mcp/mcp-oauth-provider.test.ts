@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
 import type { McpOAuthSession } from "../../db/schema";
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
 

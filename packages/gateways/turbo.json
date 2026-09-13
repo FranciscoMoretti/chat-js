@@ -1,7 +1,5 @@
 {
-  "extends": [
-    "//"
-  ],
+  "extends": ["//"],
   "tasks": {
     "test:types": {
       "inputs": [
@@ -9,9 +7,7 @@
         "$TURBO_ROOT$/packages/registry/src/gateways/**",
         "$TURBO_ROOT$/packages/registry/package.json"
       ],
-      "outputs": [
-        "dist/**"
-      ]
+      "outputs": ["dist/**"]
     },
     "test:unit": {
       "inputs": [

@@ -1,12 +1,7 @@
 ---
 name: next-cache-components-adoption
 description: >
-  Turn on Cache Components in a Next.js app and resolve the blocking routes it
-  surfaces. Use when the user wants to enable, adopt, or migrate to Cache
-  Components, flip the `cacheComponents` flag, work through a flood of
-  blocking-prerender / instant validation errors, run the
-  `cache-components-instant-false` codemod, or decide between opting routes out
-  with `export const instant = false` and fixing them in place.
+  Turn on Cache Components in a Next.js app and resolve the blocking routes it surfaces. Use when the user wants to enable, adopt, or migrate to Cache Components, flip the `cacheComponents` flag, work through a flood of blocking-prerender / instant validation errors, run the `cache-components-instant-false` codemod, or decide between opting routes out with `export const instant = false` and fixing them in place.
 ---
 
 # next-cache-components-adoption
@@ -133,7 +128,7 @@ If the codemod isn't available (older `@next/codemod`, sandboxed environment, of
 ```ts
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false
+export const instant = false;
 ```
 
 The codemod opts every segment out, not only the root, on purpose. Resolution is top-down, first-explicit-config-wins: the highest `instant = false` decides the whole subtree. With an opt-out on every segment, removing one segment's opt-out validates only that segment; descendants keep their own opt-outs and stay passing. If only the root were opted out, removing it would re-arm validation for the entire app at once.

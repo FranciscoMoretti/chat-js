@@ -1,5 +1,6 @@
 import type { EveMessagePart } from "eve/client";
 import { renderToStaticMarkup } from "react-dom/server";
+
 import { EvePlatformToolResult } from "../components/eve/eve-platform-tool-result";
 import { ArtifactProvider } from "../hooks/use-artifact";
 import { createEvePlatformResult } from "../lib/eve/platform-result";

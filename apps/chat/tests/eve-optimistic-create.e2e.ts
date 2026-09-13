@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+
 import { textPdf } from "./eve-attachment-fixtures";
 
 const projectPath = /\/project\/[a-f\d-]+$/;

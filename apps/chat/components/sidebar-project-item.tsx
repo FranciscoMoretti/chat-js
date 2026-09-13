@@ -2,6 +2,7 @@
 
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { InternalLink } from "@/components/internal-link";
 import {
@@ -73,7 +74,7 @@ export function SidebarProjectItem({
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
-            className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
             showOnHover={!isActive}
           >
             <MoreHorizontal size={16} />

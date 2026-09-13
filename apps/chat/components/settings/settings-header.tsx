@@ -9,8 +9,8 @@ export function SettingsHeader() {
     <div className="mb-8 flex flex-col items-start gap-2">
       <div className="h-10 shrink-0">{isMobile && <SidebarTrigger />}</div>
       <div>
-        <h1 className="font-semibold text-2xl">Settings</h1>
-        <p className="mt-1 text-muted-foreground text-sm">
+        <h1 className="text-2xl font-semibold">Settings</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
           Manage your chat preferences and configurations.
         </p>
       </div>

@@ -2,6 +2,7 @@
 
 import type { EveMessagePart } from "eve/client";
 import { z } from "zod";
+
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import { evePlatformOutput } from "@/lib/eve/platform-result";
 import {
@@ -16,6 +17,7 @@ import {
   generateVideoInput,
   generateVideoOutput,
 } from "@/tools/platform/generate-video.schemas";
+
 import { CodeExecution } from "../part/code-execution";
 import { GenerateImage } from "../part/generate-image";
 import { GenerateVideo } from "../part/generate-video";

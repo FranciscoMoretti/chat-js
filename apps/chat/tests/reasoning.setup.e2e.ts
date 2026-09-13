@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import { test as setup } from "@playwright/test";
 
 const reasoningFile = path.resolve("playwright/.reasoning/session.json");

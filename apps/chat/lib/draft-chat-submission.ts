@@ -50,16 +50,14 @@ export function buildDraftChatSubmission({
     parallelResponsesEnabled && requestedModelIds.length > 1;
   const parallelGroupId = isParallelRequest ? generateUUID() : null;
   const requestSpecs = isParallelRequest
-    ? requestedModelIds.map(
-        (modelId, parallelIndex): ParallelRequestSpec => ({
-          createdAt: new Date(Date.now() + parallelIndex),
-          isPrimary: parallelIndex === 0,
-          modelId,
-          parallelGroupId,
-          parallelIndex,
-          requestId: generateUUID(),
-        })
-      )
+    ? requestedModelIds.map((modelId, parallelIndex): ParallelRequestSpec => ({
+        createdAt: new Date(Date.now() + parallelIndex),
+        isPrimary: parallelIndex === 0,
+        modelId,
+        parallelGroupId,
+        parallelIndex,
+        requestId: generateUUID(),
+      }))
     : [
         {
           createdAt: new Date(Date.now()),

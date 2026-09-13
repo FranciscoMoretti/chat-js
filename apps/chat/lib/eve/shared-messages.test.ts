@@ -1,5 +1,6 @@
 import type { EveMessagePart } from "eve/client";
 import { expect, it } from "vitest";
+
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 
 it("shares transcript content without authorization challenges or runtime metadata", () => {
@@ -72,24 +73,27 @@ it.each([
   "generateVideo",
   "generateImage",
   "deepResearch",
-])("shared %s results retain the output without billing metadata", (toolName) => {
-  const [part] = sharedEvePart({
-    type: "dynamic-tool",
-    toolName,
-    toolCallId: "call",
-    state: "output-available",
-    input: { title: "Test", language: "javascript", code: "console.log(42)" },
-    output: {
-      kind: "chatjs.platform-result",
-      version: 1,
-      output: { message: "42", chart: "" },
-      usage: { costUsd: 0.05 },
-    },
-  });
-  expect(JSON.stringify(part)).toContain('"message":"42"');
-  expect(JSON.stringify(part)).not.toContain("costUsd");
-  expect(JSON.stringify(part)).not.toContain("usage");
-});
+])(
+  "shared %s results retain the output without billing metadata",
+  (toolName) => {
+    const [part] = sharedEvePart({
+      type: "dynamic-tool",
+      toolName,
+      toolCallId: "call",
+      state: "output-available",
+      input: { title: "Test", language: "javascript", code: "console.log(42)" },
+      output: {
+        kind: "chatjs.platform-result",
+        version: 1,
+        output: { message: "42", chart: "" },
+        usage: { costUsd: 0.05 },
+      },
+    });
+    expect(JSON.stringify(part)).toContain('"message":"42"');
+    expect(JSON.stringify(part)).not.toContain("costUsd");
+    expect(JSON.stringify(part)).not.toContain("usage");
+  }
+);
 
 it("removes owner approval and execution fields while preserving every tool status", () => {
   const base = {

@@ -1,5 +1,6 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+
 import * as png2icons from "png2icons";
 
 const root = resolve(__dirname, "..");

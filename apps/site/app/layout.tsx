@@ -1,7 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 
 import { siteConfig } from "@/lib/site-config";
 

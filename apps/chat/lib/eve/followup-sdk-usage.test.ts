@@ -1,5 +1,6 @@
 import { MockLanguageModelV3 } from "ai/test";
 import { expect, it, vi } from "vitest";
+
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
 const model = new MockLanguageModelV3({

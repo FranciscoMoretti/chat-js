@@ -1,5 +1,6 @@
 "use client";
 import { type Dispatch, type SetStateAction, useCallback } from "react";
+
 import type { ModelId } from "@/lib/ai/app-models";
 import { type ChatMessage, getPrimarySelectedModelId } from "@/lib/ai/types";
 import { useChatStatus } from "@/lib/stores/base";
@@ -8,6 +9,7 @@ import {
   getTextContentFromMessage,
 } from "@/lib/utils";
 import { ChatInputProvider } from "@/providers/chat-input-provider";
+
 import { ChatComposer } from "./chat-composer";
 
 export interface MessageEditorProps {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Smile } from "lucide-react";
+
 import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +45,7 @@ export function ProjectIconPicker({
           {icon ? (
             <ProjectIcon color={displayColor} icon={icon} size={18} />
           ) : (
-            <Smile className="size-[18px] text-muted-foreground" />
+            <Smile className="text-muted-foreground size-[18px]" />
           )}
         </Button>
       </PopoverTrigger>
@@ -58,7 +59,7 @@ export function ProjectIconPicker({
               className={cn(
                 "size-6 rounded-full transition-transform hover:scale-110",
                 displayColor === c.name &&
-                  "ring-2 ring-foreground ring-offset-2"
+                  "ring-foreground ring-2 ring-offset-2"
               )}
               key={c.name}
               onClick={() => onColorChange(c.name)}
@@ -74,8 +75,8 @@ export function ProjectIconPicker({
               aria-label={`Select ${iconName} icon`}
               aria-pressed={icon === iconName}
               className={cn(
-                "flex size-8 items-center justify-center rounded-md transition-colors hover:bg-muted",
-                icon === iconName && "bg-muted ring-1 ring-foreground"
+                "hover:bg-muted flex size-8 items-center justify-center rounded-md transition-colors",
+                icon === iconName && "bg-muted ring-foreground ring-1"
               )}
               key={iconName}
               onClick={() => onIconChange(iconName)}

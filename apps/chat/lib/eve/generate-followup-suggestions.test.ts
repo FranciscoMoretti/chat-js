@@ -1,5 +1,6 @@
 import type { LanguageModelUsage, ProviderMetadata } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
 const mocks = vi.hoisted(() => ({

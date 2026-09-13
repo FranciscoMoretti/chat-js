@@ -7,18 +7,17 @@ description: Auto-authenticate AI agents for browser testing
 
 The `/api/dev-login` route allows AI agents to authenticate automatically during development. This enables automated browser testing without manual login flows.
 
-<Callout type="warning">Only works when `NODE_ENV=development`. Returns 404 in production.</Callout>
+<Callout type="warning">
+  Only works when `NODE_ENV=development`. Returns 404 in production.
+</Callout>
 
 ## Usage
 
-Have the agent navigate its browser to `/api/dev-login` on the app URL. This
-creates a dev user session and redirects to the app with valid auth cookies.
+Have the agent navigate its browser to `/api/dev-login` on the app URL. This creates a dev user session and redirects to the app with valid auth cookies.
 
 ## Agent Setup
 
-Use any browser-capable agent or browser automation tool. Navigate to
-`/api/dev-login` on the app URL before testing authenticated features so that
-the browser receives the session cookie.
+Use any browser-capable agent or browser automation tool. Navigate to `/api/dev-login` on the app URL before testing authenticated features so that the browser receives the session cookie.
 
 ## How It Works
 

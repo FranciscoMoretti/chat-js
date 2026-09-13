@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import postgres from "postgres";
 import { z } from "zod";
+
 import { databaseConnection, databaseEnvOptions } from "../lib/db/connection";
 
 config({ path: ".env.local", quiet: true });

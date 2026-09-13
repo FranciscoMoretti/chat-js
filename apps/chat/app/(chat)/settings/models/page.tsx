@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { Suspense } from "react";
+
 import { ModelsSettings } from "@/components/settings/models-settings";
 import {
   SettingsPage,
@@ -17,7 +18,7 @@ function ModelsSettingsHeader({
   return (
     <SettingsPageHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 className="font-semibold text-lg">Models</h2>
+        <h2 className="text-lg font-semibold">Models</h2>
         <p className="text-muted-foreground text-sm">
           Configure your AI model preferences.
         </p>

@@ -40,17 +40,15 @@ The `Response` component wraps [Streamdown](https://streamdown.ai), a markdown r
 ```tsx title="components/ai-elements/response.tsx"
 import { Streamdown } from "streamdown";
 
-export const Response = memo(
-  ({ className, ...props }: ResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      {...props}
-    />
-  )
-);
+export const Response = memo(({ className, ...props }: ResponseProps) => (
+  <Streamdown
+    className={cn(
+      "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+      className
+    )}
+    {...props}
+  />
+));
 ```
 
 Streamdown handles:
@@ -65,18 +63,17 @@ Streamdown handles:
 
 Streamdown supports all languages supported by Shiki, including:
 
-| Category | Languages |
-|----------|-----------|
-| Web | TypeScript, JavaScript, HTML, CSS, JSON |
-| Backend | Python, Go, Rust, Java, C#, Ruby, PHP |
-| Systems | C, C++, Zig, Assembly |
-| Data | SQL, GraphQL, YAML, TOML |
-| Shell | Bash, PowerShell, Fish |
-| Markup | Markdown, LaTeX, XML |
+| Category | Languages                               |
+| -------- | --------------------------------------- |
+| Web      | TypeScript, JavaScript, HTML, CSS, JSON |
+| Backend  | Python, Go, Rust, Java, C#, Ruby, PHP   |
+| Systems  | C, C++, Zig, Assembly                   |
+| Data     | SQL, GraphQL, YAML, TOML                |
+| Shell    | Bash, PowerShell, Fish                  |
+| Markup   | Markdown, LaTeX, XML                    |
 
 ## Theming
 
 Syntax highlighting automatically adapts to light/dark mode. The theme is configured in Streamdown and uses VS Code-compatible color schemes.
 
 To customize the code theme, see the [Streamdown documentation](https://streamdown.ai).
-

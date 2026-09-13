@@ -34,14 +34,14 @@ Config validation runs at build time via `bun run prebuild`. A missing env var f
 
 ### Required environment variables
 
-| Provider | Variable | Description |
-|----------|----------|-------------|
-| GitHub | `AUTH_GITHUB_ID` | OAuth App client ID |
-| GitHub | `AUTH_GITHUB_SECRET` | OAuth App client secret |
-| Google | `AUTH_GOOGLE_ID` | OAuth client ID |
-| Google | `AUTH_GOOGLE_SECRET` | OAuth client secret |
-| Vercel | `VERCEL_APP_CLIENT_ID` | Vercel integration client ID |
-| Vercel | `VERCEL_APP_CLIENT_SECRET` | Vercel integration client secret |
+| Provider | Variable                   | Description                      |
+| -------- | -------------------------- | -------------------------------- |
+| GitHub   | `AUTH_GITHUB_ID`           | OAuth App client ID              |
+| GitHub   | `AUTH_GITHUB_SECRET`       | OAuth App client secret          |
+| Google   | `AUTH_GOOGLE_ID`           | OAuth client ID                  |
+| Google   | `AUTH_GOOGLE_SECRET`       | OAuth client secret              |
+| Vercel   | `VERCEL_APP_CLIENT_ID`     | Vercel integration client ID     |
+| Vercel   | `VERCEL_APP_CLIENT_SECRET` | Vercel integration client secret |
 
 All providers also require a shared secret used to sign session tokens:
 
@@ -77,7 +77,8 @@ openssl rand -base64 32
 6. Enable in `chat.config.ts`: `authentication: { github: true }`
 
 <Callout type="note">
-For local development, create a separate GitHub OAuth App with the callback URL set to `http://localhost:3000/api/auth/callback/github`.
+  For local development, create a separate GitHub OAuth App with the callback
+  URL set to `http://localhost:3000/api/auth/callback/github`.
 </Callout>
 
 ---
@@ -100,7 +101,9 @@ For local development, create a separate GitHub OAuth App with the callback URL 
 6. Enable in `chat.config.ts`: `authentication: { google: true }`
 
 <Callout type="note">
-The Google OAuth consent screen must be configured and published before users outside your Google Workspace can sign in. For testing, add yourself as a test user without publishing.
+  The Google OAuth consent screen must be configured and published before users
+  outside your Google Workspace can sign in. For testing, add yourself as a test
+  user without publishing.
 </Callout>
 
 ---
@@ -121,7 +124,8 @@ The Google OAuth consent screen must be configured and published before users ou
 5. Enable in `chat.config.ts`: `authentication: { vercel: true }`
 
 <Callout type="note">
-The Vercel provider is useful when your users are Vercel teams and you want to authenticate using their Vercel account. It is off by default.
+  The Vercel provider is useful when your users are Vercel teams and you want to
+  authenticate using their Vercel account. It is off by default.
 </Callout>
 
 ---

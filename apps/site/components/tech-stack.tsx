@@ -185,22 +185,22 @@ function TechCard({ tech, index }: { tech: Tech; index: number }) {
 
   return (
     <div
-      className="tech-card group relative flex flex-col items-center gap-4 rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-foreground/3 hover:shadow-lg"
+      className="tech-card group border-border/50 bg-card hover:border-border hover:shadow-foreground/3 relative flex flex-col items-center gap-4 rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
       style={{ animationDelay: delay }}
     >
       {/* Subtle corner glow on hover — matches Features cards */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-foreground/2 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="bg-foreground/2 pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
 
       {/* Icon container */}
       <div
-        className="relative flex h-14 w-14 items-center justify-center rounded-xl border border-border/50 bg-secondary/50 transition-colors duration-300 [&>svg]:h-6 [&>svg]:w-6"
+        className="border-border/50 bg-secondary/50 relative flex h-14 w-14 items-center justify-center rounded-xl border transition-colors duration-300 [&>svg]:h-6 [&>svg]:w-6"
         style={{ color: tech.glowColor }}
       >
         {tech.icon}
       </div>
 
       {/* Name */}
-      <span className="relative text-center font-medium text-[13px] text-muted-foreground tracking-tight transition-colors duration-300 group-hover:text-foreground">
+      <span className="text-muted-foreground group-hover:text-foreground relative text-center text-[13px] font-medium tracking-tight transition-colors duration-300">
         {tech.name}
       </span>
     </div>
@@ -209,10 +209,10 @@ function TechCard({ tech, index }: { tech: Tech; index: number }) {
 
 export function TechStack() {
   return (
-    <section className="relative overflow-hidden bg-secondary py-24 sm:py-32">
+    <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
       {/* Seamless edge blending — tall gradients for a smooth transition */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-linear-to-b from-background via-background/60 to-transparent sm:h-56" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-background via-background/60 to-transparent sm:h-56" />
+      <div className="from-background via-background/60 pointer-events-none absolute inset-x-0 top-0 h-48 bg-linear-to-b to-transparent sm:h-56" />
+      <div className="from-background via-background/60 pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-linear-to-t to-transparent sm:h-56" />
 
       {/* Grid pattern — subdued to match site tone */}
       <div
@@ -230,14 +230,14 @@ export function TechStack() {
       <div className="relative mx-auto max-w-6xl px-6">
         {/* Header */}
         <div className="mb-16 text-center">
-          <p className="mb-4 font-mono text-muted-foreground text-xs uppercase tracking-[0.25em]">
+          <p className="text-muted-foreground mb-4 font-mono text-xs tracking-[0.25em] uppercase">
             Tech Stack
           </p>
-          <h2 className="font-display text-3xl text-foreground tracking-tight sm:text-5xl">
+          <h2 className="font-display text-foreground text-3xl tracking-tight sm:text-5xl">
             Built on the{" "}
             <span className="text-muted-foreground italic">best tools</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground leading-relaxed">
+          <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-base leading-relaxed">
             A modern, type-safe stack chosen for developer experience and
             production reliability.
           </p>

@@ -2,6 +2,7 @@
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+
 import { wordCountInput, wordCountResult } from "./schemas";
 import type { wordCount } from "./tool";
 
@@ -16,7 +17,7 @@ function WordCountRendererView({
 }) {
   if (tool.state === "input-available" || tool.state === "input-streaming") {
     return (
-      <div className="rounded-lg border p-3 text-muted-foreground text-sm">
+      <div className="text-muted-foreground rounded-lg border p-3 text-sm">
         Counting words...
       </div>
     );
@@ -45,7 +46,7 @@ function WordCountRendererView({
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="font-semibold text-lg">{value}</span>
+      <span className="text-lg font-semibold">{value}</span>
       <span className="text-muted-foreground text-xs">{label}</span>
     </div>
   );

@@ -59,10 +59,22 @@ const aiGatewayModelSchema = z.object({
     web_search: z.string().optional(),
     image: z.string().optional(),
     input_tiers: z
-      .array(z.object({ cost: z.string(), min: z.number(), max: z.number().optional() }))
+      .array(
+        z.object({
+          cost: z.string(),
+          min: z.number(),
+          max: z.number().optional(),
+        })
+      )
       .optional(),
     output_tiers: z
-      .array(z.object({ cost: z.string(), min: z.number(), max: z.number().optional() }))
+      .array(
+        z.object({
+          cost: z.string(),
+          min: z.number(),
+          max: z.number().optional(),
+        })
+      )
       .optional(),
   }),
 });
@@ -235,7 +247,7 @@ bun fetch:models
 ## Caching Strategy
 
 | Layer | Cache Key | TTL | Tag |
-| ----- | --------- | --- | --- |
+| --- | --- | --- | --- |
 | API response + transform | `["ai-gateway-models"]` | 1 hour | `ai-gateway-models` |
 
 To invalidate the cache manually:
@@ -247,13 +259,13 @@ revalidateTag("ai-gateway-models");
 
 ## Key Files
 
-| File | Purpose |
-| ---- | ------- |
-| `lib/ai/ai-gateway-models-schemas.ts` | Zod schema for API response |
-| `lib/ai/models.generated.ts` | Static fallback snapshot |
-| `lib/ai/models.ts` | Runtime fetcher with cache |
-| `lib/ai/model-data.ts` | Type definitions and transforms |
-| `scripts/fetch-models.ts` | Build-time sync script |
+| File                                  | Purpose                         |
+| ------------------------------------- | ------------------------------- |
+| `lib/ai/ai-gateway-models-schemas.ts` | Zod schema for API response     |
+| `lib/ai/models.generated.ts`          | Static fallback snapshot        |
+| `lib/ai/models.ts`                    | Runtime fetcher with cache      |
+| `lib/ai/model-data.ts`                | Type definitions and transforms |
+| `scripts/fetch-models.ts`             | Build-time sync script          |
 
 ## Gotchas
 

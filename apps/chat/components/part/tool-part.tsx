@@ -1,8 +1,10 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
+
 import { getInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import type { ChatTools } from "@/lib/ai/types";
+
 import { CodeExecution } from "./code-execution";
 import { DeepResearch } from "./deep-research";
 import { DocumentTool } from "./document-tool";

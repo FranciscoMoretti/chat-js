@@ -7,14 +7,13 @@ description: Install registry tools and generate their ChatJS registrations
 npx @chat-js/cli@latest add <tools...> [options]
 ```
 
-Accepts built-in names, standard `@namespace/item` addresses, complete item URLs,
-and local registry JSON paths. Run inside a ChatJS app with `chat.config.ts`.
+Accepts built-in names, standard `@namespace/item` addresses, complete item URLs, and local registry JSON paths. Run inside a ChatJS app with `chat.config.ts`.
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `-y, --yes` | `false` | Skip ChatJS confirmation |
-| `-o, --overwrite` | `false` | Replace existing source files |
-| `-c, --cwd <cwd>` | Current directory | Destination app |
+| Flag              | Default           | Description                   |
+| ----------------- | ----------------- | ----------------------------- |
+| `-y, --yes`       | `false`           | Skip ChatJS confirmation      |
+| `-o, --overwrite` | `false`           | Replace existing source files |
+| `-c, --cwd <cwd>` | Current directory | Destination app               |
 
 ```bash
 npx @chat-js/cli@latest add word-count get-weather --yes
@@ -22,9 +21,7 @@ npx @chat-js/cli@latest add @acme/my-tool
 npx @chat-js/cli@latest add ./my-tool.json --cwd apps/chat
 ```
 
-Configure namespaces in `components.json`. The former `--registry` flag is
-removed. shadcn installs source and packages using the project's detected package
-manager, then ChatJS syncs local tool descriptors into typed registrations.
+Configure namespaces in `components.json`. The former `--registry` flag is removed. shadcn installs source and packages using the project's detected package manager, then ChatJS syncs local tool descriptors into typed registrations.
 
 After direct shadcn installation, regenerate registrations explicitly:
 
@@ -32,8 +29,7 @@ After direct shadcn installation, regenerate registrations explicitly:
 npx @chat-js/cli@latest sync --cwd apps/chat
 ```
 
-If wiring fails after source installation, the command exits unsuccessfully with
-recovery instructions. Repair the reported descriptor or index and rerun `sync`.
+If wiring fails after source installation, the command exits unsuccessfully with recovery instructions. Repair the reported descriptor or index and rerun `sync`.
 
 - [Tool Registry](../tools/overview) explains customizations and migration.
 - [Tools](../tools/authoring) explains authoring.

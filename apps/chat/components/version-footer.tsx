@@ -2,9 +2,11 @@
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useWindowSize } from "usehooks-ts";
+
 import { useSaveDocument } from "@/hooks/chat-sync-hooks";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/lib/db/schema";
+
 import { Button } from "./ui/button";
 
 interface VersionFooterProps {
@@ -35,7 +37,7 @@ export const VersionFooter = ({
   return (
     <motion.div
       animate={{ y: 0 }}
-      className="flex w-full flex-col justify-between gap-4 border-t bg-background p-4 lg:flex-row"
+      className="bg-background flex w-full flex-col justify-between gap-4 border-t p-4 lg:flex-row"
       exit={{ y: isMobile ? 200 : 77 }}
       initial={{ y: isMobile ? 200 : 77 }}
       transition={{ type: "spring", stiffness: 140, damping: 20 }}

@@ -61,8 +61,11 @@ it.each([
   "https://foreign.example/private",
   "/api/files/content?key=../../private",
   "https://foreign.example/?next=/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-])("leaves unrelated or malformed URL %s to the channel policy", async (url) => {
-  expect(await fetchEveChannelFile(url, context)).toBeNull();
-  expect(mocks.owned).not.toHaveBeenCalled();
-  expect(mocks.download).not.toHaveBeenCalled();
-});
+])(
+  "leaves unrelated or malformed URL %s to the channel policy",
+  async (url) => {
+    expect(await fetchEveChannelFile(url, context)).toBeNull();
+    expect(mocks.owned).not.toHaveBeenCalled();
+    expect(mocks.download).not.toHaveBeenCalled();
+  }
+);

@@ -9,10 +9,7 @@ Start in a ChatJS app containing `chat.config.ts` and `components.json`.
 npx @chat-js/cli@latest add word-count --yes
 ```
 
-The CLI validates the item's ChatJS metadata and existing registration outputs.
-shadcn installs the item, supporting registry files, and npm dependencies using
-your project's package manager. ChatJS then reads local descriptors and generates
-typed imports in `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts`.
+The CLI validates the item's ChatJS metadata and existing registration outputs. shadcn installs the item, supporting registry files, and npm dependencies using your project's package manager. ChatJS then reads local descriptors and generates typed imports in `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts`.
 
 ```mermaid
 flowchart LR
@@ -22,16 +19,13 @@ flowchart LR
   D --> E[Typed server and client registrations]
 ```
 
-The app derives installed tool types through `lib/ai/installed-tools.ts` and
-selects their renderers through `lib/ai/tool-renderer-registry.ts`.
+The app derives installed tool types through `lib/ai/installed-tools.ts` and selects their renderers through `lib/ai/tool-renderer-registry.ts`.
 
 ## Customize and update
 
-Edit installed `tool.ts` and `renderer.tsx` normally. Put additional registrations
-in `custom-tools.ts` and `custom-ui.ts`. Leave generated indexes to `sync`.
+Edit installed `tool.ts` and `renderer.tsx` normally. Put additional registrations in `custom-tools.ts` and `custom-ui.ts`. Leave generated indexes to `sync`.
 
-Repeat `add` to update an item. Existing files use normal shadcn overwrite
-behavior. Use `--overwrite` only when you want to replace installed source.
+Repeat `add` to update an item. Existing files use normal shadcn overwrite behavior. Use `--overwrite` only when you want to replace installed source.
 
 After a direct shadcn install, or a reported registration failure, run:
 
@@ -39,10 +33,7 @@ After a direct shadcn install, or a reported registration failure, run:
 npx @chat-js/cli@latest sync
 ```
 
-Sync validates descriptors, duplicate installed descriptor keys, and generated-index
-integrity before writing registrations. Generated indexes detect collisions with
-custom registrations when loaded. A missing or mismatched requested descriptor is
-an error.
+Sync validates descriptors, duplicate installed descriptor keys, and generated-index integrity before writing registrations. Generated indexes detect collisions with custom registrations when loaded. A missing or mismatched requested descriptor is an error.
 
 ## Related
 

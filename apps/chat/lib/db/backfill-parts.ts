@@ -2,8 +2,10 @@ import { config } from "dotenv";
 import { inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+
 import type { ChatMessage } from "@/lib/ai/types";
 import { mapUIMessagePartsToDBParts } from "@/lib/utils/message-mapping";
+
 import { message, part } from "./schema";
 
 config({

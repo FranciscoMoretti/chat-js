@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { createEvePlatformResult, evePlatformResult } from "./platform-result";
 
 test("tool receipts preserve known zero cost and reject invalid billing values", () => {

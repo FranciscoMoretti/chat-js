@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { beforeEach, expect, test, vi } from "vitest";
 import { z } from "zod";
+
 import application from "../../agent/tools/application";
 
 const settings = vi.hoisted(() => ({ enabled: false, approval: false }));

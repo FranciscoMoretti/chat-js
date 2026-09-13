@@ -1,4 +1,5 @@
 import type { ChatMessage } from "@/lib/ai/types";
+
 import InteractiveChart, { type BaseChart } from "../interactive-charts";
 import { SandboxComposed } from "../sandbox";
 

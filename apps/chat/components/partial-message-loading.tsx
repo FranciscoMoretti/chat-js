@@ -2,6 +2,7 @@
 
 import { useChatStatus } from "@/lib/stores/base";
 import { useMessageMetadataById } from "@/lib/stores/hooks-base";
+
 import { Skeleton } from "./ui/skeleton";
 
 export function PartialMessageLoading({ messageId }: { messageId: string }) {

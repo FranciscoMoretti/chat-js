@@ -1,4 +1,5 @@
 import pino, { type Logger, stdTimeFunctions } from "pino";
+
 import userConfig from "@/chat.config";
 
 const appBinding = userConfig.appPrefix || userConfig.appName || "chatjs";

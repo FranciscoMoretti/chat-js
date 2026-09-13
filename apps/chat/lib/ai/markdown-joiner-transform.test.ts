@@ -1,5 +1,6 @@
 import type { TextStreamPart, ToolSet } from "ai";
 import { expect, it } from "vitest";
+
 import { markdownJoinerTransform } from "./markdown-joiner-transform";
 
 it("flushes buffered markdown before its text part ends, retaining the part ID", async () => {

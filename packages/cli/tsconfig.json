@@ -1,16 +1,10 @@
 {
   "extends": "../../apps/chat/tsconfig.json",
   "compilerOptions": {
-    "types": [
-      "bun",
-      "node",
-      "next"
-    ],
+    "types": ["bun", "node", "next"],
     "allowImportingTsExtensions": true,
     "paths": {
-      "@/*": [
-        "../../apps/chat/*"
-      ]
+      "@/*": ["../../apps/chat/*"]
     }
   },
   "include": [
@@ -18,9 +12,5 @@
     "../../apps/chat/types/**/*.d.ts",
     "../../apps/chat/electron.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "templates",
-    "dist"
-  ]
+  "exclude": ["node_modules", "templates", "dist"]
 }

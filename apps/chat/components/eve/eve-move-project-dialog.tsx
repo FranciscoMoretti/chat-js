@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,7 +59,7 @@ export function EveMoveProjectDialog({
         </DialogHeader>
         <Label htmlFor={fieldId}>Project</Label>
         <select
-          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+          className="bg-background h-10 w-full rounded-md border px-3 text-sm"
           disabled={projects.isPending || projects.isError || move.isPending}
           id={fieldId}
           onChange={(event) => setProjectId(event.target.value)}

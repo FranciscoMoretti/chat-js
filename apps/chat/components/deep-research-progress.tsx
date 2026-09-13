@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import { ResearchProgress } from "./research-progress";
 
 interface ReasonSearchResearchProgressProps {

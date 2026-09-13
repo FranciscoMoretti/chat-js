@@ -13,12 +13,12 @@ A responsive two-panel layout where the main chat occupies the primary space and
 
 The layout uses `react-resizable-panels` wrapped in composable components:
 
-| Component             | Purpose                                                  |
-| --------------------- | -------------------------------------------------------- |
-| `ChatLayout`          | Root container with sidebar-aware max-width              |
-| `ChatLayoutMain`      | Primary panel, hides on mobile when secondary is visible |
-| `ChatLayoutHandle`    | Drag handle between panels                               |
-| `ChatLayoutSecondary` | Conditional panel, renders only when visible             |
+| Component | Purpose |
+| --- | --- |
+| `ChatLayout` | Root container with sidebar-aware max-width |
+| `ChatLayoutMain` | Primary panel, hides on mobile when secondary is visible |
+| `ChatLayoutHandle` | Drag handle between panels |
+| `ChatLayoutSecondary` | Conditional panel, renders only when visible |
 
 Visibility is controlled via the `isSecondaryPanelVisible` prop on `ChatLayout`. This value is shared to child components through React context, so they automatically show/hide based on the state.
 

@@ -126,229 +126,72 @@ A failed local sandbox setup can leave only an ownership record. New directories
 
 ## Updated external code-execution sandbox findings (2026-09-11)
 
-The initial audit found the separate ChatJS code-execution tool using
-`@vercel/sandbox` 1.9.3, which could not select a name before allocation.
-The application has since upgraded to pinned 3.3.0. Its disposable sandboxes
-explicitly disable persistence, and cleanup awaits stop and deletion with
-independent timeouts. Native code calls now derive an opaque, stable resource
-name from the authenticated owner, native session, and call ID.
+The initial audit found the separate ChatJS code-execution tool using `@vercel/sandbox` 1.9.3, which could not select a name before allocation. The application has since upgraded to pinned 3.3.0. Its disposable sandboxes explicitly disable persistence, and cleanup awaits stop and deletion with independent timeouts. Native code calls now derive an opaque, stable resource name from the authenticated owner, native session, and call ID.
 
-Real JavaScript and Python SDK lifecycle tests verified execution and subsequent
-lookup-by-name returning not found. Native browser tests verified rendered
-output, once-only billing, and reload. These establish normal cleanup, not
-recovery from a worker crash or an uncertain create response. That remaining
-window is separate from EVE's own VM inventory.
+Real JavaScript and Python SDK lifecycle tests verified execution and subsequent lookup-by-name returning not found. Native browser tests verified rendered output, once-only billing, and reload. These establish normal cleanup, not recovery from a worker crash or an uncertain create response. That remaining window is separate from EVE's own VM inventory.
 
-Do not report named-resource recovery as a missing capability in the current
-Sandbox SDK. The published 3.3.0 package now exposes:
+Do not report named-resource recovery as a missing capability in the current Sandbox SDK. The published 3.3.0 package now exposes:
 
 - `Sandbox.create({ name, persistent, ... })` and `Sandbox.get({ name })`.
-- `Sandbox.getOrCreate({ name, ... })`; its implementation can delete and recreate
-  a named sandbox on `snapshot_not_found`, so it is inappropriate for a deletion
-  reconciliation path that must never create new resources.
-- `sandbox.delete({ deleteOrphanSnapshots, signal })`. Orphan snapshot deletion is
-  explicitly asynchronous and defaults to false. A resolved delete call must not
-  be presented as proof that every previously created snapshot has been erased.
-- Persistence enabled by default. Our disposable code-execution tool now
-  explicitly sets `persistent: false`.
-- `stop({ signal })`, without the 1.x `blocking` option. Our cleanup now uses
-  the new signature and attempts deletion even if stopping fails.
+- `Sandbox.getOrCreate({ name, ... })`; its implementation can delete and recreate a named sandbox on `snapshot_not_found`, so it is inappropriate for a deletion reconciliation path that must never create new resources.
+- `sandbox.delete({ deleteOrphanSnapshots, signal })`. Orphan snapshot deletion is explicitly asynchronous and defaults to false. A resolved delete call must not be presented as proof that every previously created snapshot has been erased.
+- Persistence enabled by default. Our disposable code-execution tool now explicitly sets `persistent: false`.
+- `stop({ signal })`, without the 1.x `blocking` option. Our cleanup now uses the new signature and attempts deletion even if stopping fails.
 
-Initial audit evidence: then-installed 1.9.3 declarations, published 3.3.0 `dist/sandbox.d.ts` and
-`dist/sandbox.js`, and the official [SDK reference](https://vercel.com/docs/sandbox/sdk-reference)
-and [persistence announcement](https://vercel.com/changelog/sandbox-persistence-is-now-ga).
-The source audit did not allocate, list, stop, or delete any remote sandbox.
+Initial audit evidence: then-installed 1.9.3 declarations, published 3.3.0 `dist/sandbox.d.ts` and `dist/sandbox.js`, and the official [SDK reference](https://vercel.com/docs/sandbox/sdk-reference) and [persistence announcement](https://vercel.com/changelog/sandbox-persistence-is-now-ga). The source audit did not allocate, list, stop, or delete any remote sandbox.
 
-The next implementation must durably record the stable name and its
-owner/conversation association before allocation, and
-use lookup-only recovery plus deletion fences. Keep EVE's own SDK dependency and
-VM provider separate until their compatibility is checked. Persist unresolved
-allocation intent even when creation times out. Do not mark conversation erasure
-complete while a creation operation can still finish after the cleanup barrier,
-or while an older resource has no verified ownership record.
+The next implementation must durably record the stable name and its owner/conversation association before allocation, and use lookup-only recovery plus deletion fences. Keep EVE's own SDK dependency and VM provider separate until their compatibility is checked. Persist unresolved allocation intent even when creation times out. Do not mark conversation erasure complete while a creation operation can still finish after the cleanup barrier, or while an older resource has no verified ownership record.
 
-The SDK upgrade and stable naming are implemented. Allocation ownership is
-recorded as described below; crash recovery and full conversation erasure
-verification remain incomplete. The existing
-`resolveEveConversationScope` helper already handles first-turn binding delay
-for generated files; sandbox registration should reuse that trusted scope and
-the owner-family deletion lock. Retain unresolved allocation intent instead of
-assuming a timeout proves no resource exists. No provider issue is ready for
-publication on this evidence alone.
+The SDK upgrade and stable naming are implemented. Allocation ownership is recorded as described below; crash recovery and full conversation erasure verification remain incomplete. The existing `resolveEveConversationScope` helper already handles first-turn binding delay for generated files; sandbox registration should reuse that trusted scope and the owner-family deletion lock. Retain unresolved allocation intent instead of assuming a timeout proves no resource exists. No provider issue is ready for publication on this evidence alone.
 
 ### Durable allocation ownership (local implementation)
 
-`EveCodeSandbox` now records the stable provider name, trusted conversation,
-owner, and call before allocation. Reservation shares the owner-family lock
-with deletion. Duplicate reservations cannot allocate again, and unknown
-creation outcomes retain unresolved intent. Normal tool cleanup marks ownership
-deleted only after provider stop/deletion succeeds; a failed cleanup retains it.
-Final application deletion refuses any unresolved sandbox in the family.
+`EveCodeSandbox` now records the stable provider name, trusted conversation, owner, and call before allocation. Reservation shares the owner-family lock with deletion. Duplicate reservations cannot allocate again, and unknown creation outcomes retain unresolved intent. Normal tool cleanup marks ownership deleted only after provider stop/deletion succeeds; a failed cleanup retains it. Final application deletion refuses any unresolved sandbox in the family.
 
-Local database tests cover foreign ownership, duplicate calls, deletion races,
-and the final-erasure guard. A real SDK/local-database test executes code,
-verifies the released record, and confirms provider lookup by name returns 404.
-Confirmed creation is now recorded before executing code. After native family
-retirement, the coordinator can recover a sandbox whose successful creation was
-recorded but whose cleanup did not complete. It uses lookup without resume,
-rejects unexpected identity or persistence, and confirms absence after cleanup.
-A real SDK/local-database test covers this abandoned-resource path and retry.
+Local database tests cover foreign ownership, duplicate calls, deletion races, and the final-erasure guard. A real SDK/local-database test executes code, verifies the released record, and confirms provider lookup by name returns 404. Confirmed creation is now recorded before executing code. After native family retirement, the coordinator can recover a sandbox whose successful creation was recorded but whose cleanup did not complete. It uses lookup without resume, rejects unexpected identity or persistence, and confirms absence after cleanup. A real SDK/local-database test covers this abandoned-resource path and retry.
 
-Unconfirmed creation remains unresolved: lookup of its name must not be treated
-as proof that a still-pending create cannot finish later. This includes a crash
-between the successful provider reply and committing creation confirmation.
-Older unindexed code sandboxes also remain outside this ownership guarantee.
+Unconfirmed creation remains unresolved: lookup of its name must not be treated as proof that a still-pending create cannot finish later. This includes a crash between the successful provider reply and committing creation confirmation. Older unindexed code sandboxes also remain outside this ownership guarantee.
 
 ### Integrated local family deletion
 
-The internal `deleteLocalEveConversationFamily` entry point now composes resource
-cleanup, native payload purge, and final application tombstones in that order.
-Failures retain pending deletion; retirement and purge receipts allow retry after
-partial native erasure. A local PostgreSQL test deletes through a fork, checks
-that both family members lose their native and application payloads, retries,
-and verifies an unrelated conversation survives. An uncertain sandbox allocation
-blocks the sequence before native erasure.
+The internal `deleteLocalEveConversationFamily` entry point now composes resource cleanup, native payload purge, and final application tombstones in that order. Failures retain pending deletion; retirement and purge receipts allow retry after partial native erasure. A local PostgreSQL test deletes through a fork, checks that both family members lose their native and application payloads, retries, and verifies an unrelated conversation survives. An uncertain sandbox allocation blocks the sequence before native erasure.
 
-This is an internal local-provider entry point, not an enabled deletion API.
-Deployment/provider wiring, crash-left local mutation admissions, unconfirmed
-allocations, and older unattributed resources still need resolution before
-claiming complete user-facing deletion support.
+This is an internal local-provider entry point, not an enabled deletion API. Deployment/provider wiring, crash-left local mutation admissions, unconfirmed allocations, and older unattributed resources still need resolution before claiming complete user-facing deletion support.
 
-The pinned EVE `selectDefaultSandbox` implementation selects Vercel when
-`VERCEL` is set, otherwise Docker when available, then microsandbox on supported
-platforms, then just-bash. A development server alone therefore does not prove
-microsandbox ownership. Local inventory now refuses other backend cache entries
-and linked provider roots rather than silently ignoring them. This catches
-local evidence of mixed providers; absence of those entries does not prove that
-remote resources never existed. API wiring must establish the actual provider
-and worker storage root for the sessions being erased before using this local
-coordinator.
+The pinned EVE `selectDefaultSandbox` implementation selects Vercel when `VERCEL` is set, otherwise Docker when available, then microsandbox on supported platforms, then just-bash. A development server alone therefore does not prove microsandbox ownership. Local inventory now refuses other backend cache entries and linked provider roots rather than silently ignoring them. This catches local evidence of mixed providers; absence of those entries does not prove that remote resources never existed. API wiring must establish the actual provider and worker storage root for the sessions being erased before using this local coordinator.
 
 ### Native provider identity
 
-The unused application backend wrapper and its opt-in configuration were removed.
-The maintained native creation path records the actual selected provider and
-worker root before provider access. The deletion coordinator validates those
-receipts and matching local records rather than introducing another provider
-selection layer.
+The unused application backend wrapper and its opt-in configuration were removed. The maintained native creation path records the actual selected provider and worker root before provider access. The deletion coordinator validates those receipts and matching local records rather than introducing another provider selection layer.
 
-Introducing an authored sandbox can change EVE's source-derived
-sandbox keys; earlier versions and their ownership records must remain in the
-deletion inventory. Before exposing cleanup, every native family member needs
-an immutable provider and worker-root identity recorded at its creation, before
-any sandbox/provider operation, with later execution refusing a different
-identity. Sessions predating that record must remain unsupported until their
-resource history is explicitly reconciled. A first-use backend wrapper cannot
-retroactively supply that proof: EVE's current `ensureSandboxAccess` drops old
-reconnect metadata when the backend name or session key changes. Neither an
-empty local cache nor missing `existingMetadata` excludes prior remote resources.
+Introducing an authored sandbox can change EVE's source-derived sandbox keys; earlier versions and their ownership records must remain in the deletion inventory. Before exposing cleanup, every native family member needs an immutable provider and worker-root identity recorded at its creation, before any sandbox/provider operation, with later execution refusing a different identity. Sessions predating that record must remain unsupported until their resource history is explicitly reconciled. A first-use backend wrapper cannot retroactively supply that proof: EVE's current `ensureSandboxAccess` drops old reconnect metadata when the backend name or session key changes. Neither an empty local cache nor missing `existingMetadata` excludes prior remote resources.
 
-Response groups now retain candidate operation identities separately from their
-request hash and model-selection payload. Family retirement tombstones related
-groups under the same owner lock used by group and conversation reservation,
-clears that payload, and prevents even an unstarted candidate from being replayed
-as a standalone conversation. Groups with a source but no started candidates
-are included through an explicit source association. Groups created before this
-association contract block deletion until replay of the exact saved request
-recovers their source; unknown scope is never inferred from absent candidates.
-Local PostgreSQL tests cover partial groups, an in-flight candidate, concurrent
-reservation/retirement, unrelated groups, and direct candidate replay.
+Response groups now retain candidate operation identities separately from their request hash and model-selection payload. Family retirement tombstones related groups under the same owner lock used by group and conversation reservation, clears that payload, and prevents even an unstarted candidate from being replayed as a standalone conversation. Groups with a source but no started candidates are included through an explicit source association. Groups created before this association contract block deletion until replay of the exact saved request recovers their source; unknown scope is never inferred from absent candidates. Local PostgreSQL tests cover partial groups, an in-flight candidate, concurrent reservation/retirement, unrelated groups, and direct candidate replay.
 
 ### Local session-birth identity (implementation in progress)
 
-The maintained native patch now records the resolved backend and canonical worker
-root during local `createSessionStep`, before any session sandbox access. It
-publishes the sidecar atomically, preserves the identity through durable
-projection/hydration, and rejects a changed backend/root before template waits or
-allocation. Fork creation records the child's identity instead of copying the
-source's. Hosted and historical sessions are not retroactively certified.
+The maintained native patch now records the resolved backend and canonical worker root during local `createSessionStep`, before any session sandbox access. It publishes the sidecar atomically, preserves the identity through durable projection/hydration, and rejects a changed backend/root before template waits or allocation. Fork creation records the child's identity instead of copying the source's. Hosted and historical sessions are not retroactively certified.
 
-Native tests cover concurrent publication, conflicting retry, canonical aliases,
-provider/root drift, durable round trips, and independent fork identities. The
-record is not yet a deletion authorization: the coordinator must verify native
-birth evidence and descendant coverage. The version 2 contract described below
-now prevents older snapshot consumers from silently discarding the identity. Cross-host attempts whose creation step never
-committed also need authoritative reconciliation; a local sidecar alone cannot
-prove that the eventual session ran on that host. The user-facing deletion API
-remains disabled until these requirements and allocation recovery are handled.
+Native tests cover concurrent publication, conflicting retry, canonical aliases, provider/root drift, durable round trips, and independent fork identities. The record is not yet a deletion authorization: the coordinator must verify native birth evidence and descendant coverage. The version 2 contract described below now prevents older snapshot consumers from silently discarding the identity. Cross-host attempts whose creation step never committed also need authoritative reconciliation; a local sidecar alone cannot prove that the eventual session ran on that host. The user-facing deletion API remains disabled until these requirements and allocation recovery are handled.
 
 ### Versioned native birth evidence
 
-Durable snapshots now use version 2 so older consumers reject a shape whose
-identity they would otherwise discard. The v1 migration preserves conversation
-history but removes the unverified local identity; it cannot establish a new
-provider-history guarantee retroactively. New session creation emits a receipt
-into `eve.sandbox-identity`, with its native session ID, snapshot version, and
-local identity (or null for a hosted attempt), before any session tool work.
-A failed receipt write fails creation. Retries may emit duplicates, so a deletion
-reader must require matching receipts and reject conflicting local/hosted attempts.
-The native fork regression verifies independent source and child receipts.
+Durable snapshots now use version 2 so older consumers reject a shape whose identity they would otherwise discard. The v1 migration preserves conversation history but removes the unverified local identity; it cannot establish a new provider-history guarantee retroactively. New session creation emits a receipt into `eve.sandbox-identity`, with its native session ID, snapshot version, and local identity (or null for a hosted attempt), before any session tool work. A failed receipt write fails creation. Retries may emit duplicates, so a deletion reader must require matching receipts and reject conflicting local/hosted attempts. The native fork regression verifies independent source and child receipts.
 
-The remaining coordinator work is to read this evidence under retirement/write
-fences, validate every owning descendant and its local sidecar, and retain that
-proof across partial purge retries. This is not yet a user-facing deletion API.
+The remaining coordinator work is to read this evidence under retirement/write fences, validate every owning descendant and its local sidecar, and retain that proof across partial purge retries. This is not yet a user-facing deletion API.
 
-New drivers validate both the creation handle and embedded snapshot version before
-starting a turn. An older creation worker cannot bypass the contract by ignoring
-the receipt-writer input and returning a v1 result. Focused tests cover mismatched
-handle/snapshot versions, missing snapshots, future versions, failed receipt
-publication, and historical checkpoint restoration without retroactive identity.
+New drivers validate both the creation handle and embedded snapshot version before starting a turn. An older creation worker cannot bypass the contract by ignoring the receipt-writer input and returning a v1 result. Focused tests cover mismatched handle/snapshot versions, missing snapshots, future versions, failed receipt publication, and historical checkpoint restoration without retroactive identity.
 
-The internal native birth reader is now implemented and exercised against real
-parent and forked session streams. It accepts identical retry records but rejects
-any conflicting or uncertified attempt, including hosted attempts following a
-local attempt. Reads have a finite prefix, a 100-record limit, and a 10-second
-deadline; cancellation cannot delay a timeout. This primitive intentionally does
-not authorize erasure. The application coordinator must still read it under
-writer fences, account for every sandbox-owning descendant, match local sidecar
-evidence, and persist verified ownership before deleting native payloads.
+The internal native birth reader is now implemented and exercised against real parent and forked session streams. It accepts identical retry records but rejects any conflicting or uncertified attempt, including hosted attempts following a local attempt. Reads have a finite prefix, a 100-record limit, and a 10-second deadline; cancellation cannot delay a timeout. This primitive intentionally does not authorize erasure. The application coordinator must still read it under writer fences, account for every sandbox-owning descendant, match local sidecar evidence, and persist verified ownership before deleting native payloads.
 
-The birth reader is now reachable through an authenticated read-only native
-sandbox-identity route. ChatJS restricts that route to an owner-matched session
-already pending deletion, and denies ordinary session access and mutation verbs.
-The installed-package regression checks the response contract and rejection of a
-hosted retry after local evidence. Descendant authorization and persisting verified
-family coverage remain prerequisites for using it in the erasure coordinator.
+The birth reader is now reachable through an authenticated read-only native sandbox-identity route. ChatJS restricts that route to an owner-matched session already pending deletion, and denies ordinary session access and mutation verbs. The installed-package regression checks the response contract and rejection of a hosted retry after local evidence. Descendant authorization and persisting verified family coverage remain prerequisites for using it in the erasure coordinator.
 
-The native inventory now includes each run's workflow name for explicit resource
-coverage classification. A queue-discovered run whose native row is missing is
-reported as incomplete ownership, rather than silently omitted: a missing row
-cannot prove the run never allocated external resources. Local database tests
-verify preparation and retries remain blocked without erasing payloads, while
-ordinary cleanup and retries after a completed purge still succeed.
+The native inventory now includes each run's workflow name for explicit resource coverage classification. A queue-discovered run whose native row is missing is reported as incomplete ownership, rather than silently omitted: a missing row cannot prove the run never allocated external resources. Local database tests verify preparation and retries remain blocked without erasing payloads, while ordinary cleanup and retries after a completed purge still succeed.
 
-Sandbox coverage now classifies the pinned workflow identities in the native
-inventory. Each `workflowEntry` is a session requiring its own birth receipt;
-turn, timeout, and pinned sleep runs are covered only when every parent path
-resolves through known workflow types to such a session. Missing ancestry,
-cycles, unknown versions, collectors, and authored workflow wrappers remain
-unresolved. Graph traversal visits each ancestry edge once and does not authorize
-erasure; the coordinator still needs receipt validation and persistent proof.
+Sandbox coverage now classifies the pinned workflow identities in the native inventory. Each `workflowEntry` is a session requiring its own birth receipt; turn, timeout, and pinned sleep runs are covered only when every parent path resolves through known workflow types to such a session. Missing ancestry, cycles, unknown versions, collectors, and authored workflow wrappers remain unresolved. Graph traversal visits each ancestry edge once and does not authorize erasure; the coordinator still needs receipt validation and persistent proof.
 
-The internal local coordinator now enforces coverage before sandbox, document,
-or file erasure. Under the same advisory lock as native payload deletion, it
-requires a complete classified run inventory and fences for every run and stream,
-then verifies each session's native v2 birth receipt against its canonical local
-microsandbox identity file. Identity files cannot be symlinks. Descendant reads
-require an owner-matched deleting root plus fenced native ancestry, including
-queue-retained associations.
+The internal local coordinator now enforces coverage before sandbox, document, or file erasure. Under the same advisory lock as native payload deletion, it requires a complete classified run inventory and fences for every run and stream, then verifies each session's native v2 birth receipt against its canonical local microsandbox identity file. Identity files cannot be symlinks. Descendant reads require an owner-matched deleting root plus fenced native ancestry, including queue-retained associations.
 
-A provider-side `eve_sandbox_coverage` row records the verified worker root, run
-IDs and sandbox-owning session IDs before native erasure. Retries require the
-same scope and can proceed after native payloads are gone without rereading lost
-birth streams. The table is installed explicitly with the local provider fence
-migration; no request creates it. Local database tests cover missing fences,
-failed verification, unknown workflows, foreign descendants, and changed retry
-scope. The browser retirement test now uses Gemini Flash Lite and verifies
-composed cleanup again after native erasure with settled credits unchanged.
-Unknown authored workflow coverage and uncertain external allocations remain
-unresolved; this is still an internal coordinator, not the public deletion UI.
+A provider-side `eve_sandbox_coverage` row records the verified worker root, run IDs and sandbox-owning session IDs before native erasure. Retries require the same scope and can proceed after native payloads are gone without rereading lost birth streams. The table is installed explicitly with the local provider fence migration; no request creates it. Local database tests cover missing fences, failed verification, unknown workflows, foreign descendants, and changed retry scope. The browser retirement test now uses Gemini Flash Lite and verifies composed cleanup again after native erasure with settled credits unchanged. Unknown authored workflow coverage and uncertain external allocations remain unresolved; this is still an internal coordinator, not the public deletion UI.
 
-ChatJS now exposes owner-only deletion/status endpoints for the verified local
-configuration. DELETE operates on the conversation family and reports completed,
-pending with an explicit retry requirement, or not started. GET reads status
-without resuming work; completed tombstones support idempotent retries. Foreign
-origins and ownership are rejected. Hosted-provider configurations are refused
-before access revocation. Browser tests cover both retry after native erasure
-and full retirement/erasure initiated by the API for a fresh conversation.
-The sidebar action and hosted-provider cleanup are still outstanding.
+ChatJS now exposes owner-only deletion/status endpoints for the verified local configuration. DELETE operates on the conversation family and reports completed, pending with an explicit retry requirement, or not started. GET reads status without resuming work; completed tombstones support idempotent retries. Foreign origins and ownership are rejected. Hosted-provider configurations are refused before access revocation. Browser tests cover both retry after native erasure and full retirement/erasure initiated by the API for a fresh conversation. The sidebar action and hosted-provider cleanup are still outstanding.

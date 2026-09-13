@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
+
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
@@ -310,139 +311,141 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
   }
 });
 
-test.each([
-  "codeExecution",
-  "webSearch",
-])("%s receipts debit once per native call and keep missing cost evidence unresolved", async (toolName) => {
-  const sessionId = crypto.randomUUID();
-  const callId = crypto.randomUUID();
-  const event: MessageStreamEvent = {
-    type: "action.result",
-    meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
-    data: {
-      turnId: "tool-receipt",
-      stepIndex: 0,
-      sequence: 0,
-      status: "completed",
-      result: {
-        kind: "tool-result",
-        toolName,
-        callId,
-        output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
+test.each(["codeExecution", "webSearch"])(
+  "%s receipts debit once per native call and keep missing cost evidence unresolved",
+  async (toolName) => {
+    const sessionId = crypto.randomUUID();
+    const callId = crypto.randomUUID();
+    const event: MessageStreamEvent = {
+      type: "action.result",
+      meta: { id: crypto.randomUUID(), at: new Date().toISOString() },
+      data: {
+        turnId: "tool-receipt",
+        stepIndex: 0,
+        sequence: 0,
+        status: "completed",
+        result: {
+          kind: "tool-result",
+          toolName,
+          callId,
+          output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
+        },
       },
-    },
-  };
-  await Promise.all(
-    Array.from({ length: 8 }, () =>
-      ingestEveUsage(owner, sessionId, {
-        ...event,
-        meta: { ...event.meta, id: crypto.randomUUID() },
-      })
-    )
-  );
-  const [row] = await db
-    .select()
-    .from(eveUsage)
-    .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
-  expect(Number(row.costUsd)).toBe(0.05);
-  expect(row.chargedCents).toBe(5);
-  const unknown = {
-    ...event,
-    data: {
-      ...event.data,
-      result: {
-        ...event.data.result,
-        callId: crypto.randomUUID(),
-        output: "result lost its receipt",
-      },
-    },
-  };
-  expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
-  const [unpriced] = await db
-    .select()
-    .from(eveUsage)
-    .where(
-      eq(
-        eveUsage.eventId,
-        `eve-tool:${sessionId}:${unknown.data.result.callId}`
+    };
+    await Promise.all(
+      Array.from({ length: 8 }, () =>
+        ingestEveUsage(owner, sessionId, {
+          ...event,
+          meta: { ...event.meta, id: crypto.randomUUID() },
+        })
       )
     );
-  expect(unpriced.costUsd).toBeNull();
-  expect(unpriced.chargedCents).toBe(0);
-});
-
-test.each([
-  "deleting",
-  "deleted",
-] as const)("%s conversations are fenced from access, mutation and creation replay", async (state) => {
-  const operation = crypto.randomUUID();
-  let starts = 0;
-  const start = () => {
-    starts += 1;
-    return Promise.resolve(crypto.randomUUID());
-  };
-  const bound = await createEveConversation(
-    owner,
-    operation,
-    "deleted marker",
-    start
-  );
-  await db
-    .update(eveConversation)
-    .set({ state, visibility: "public" })
-    .where(eq(eveConversation.id, bound.id));
-  const before = await getEveCreation(owner, operation);
-  expect(await getEveConversation(owner, bound.id)).toBeUndefined();
-  expect(await getPublicEveConversation(bound.id)).toBeUndefined();
-  expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
-  expect(
-    Boolean(await getDeletingEveConversationForSession(owner, bound.sessionId))
-  ).toBe(state === "deleting");
-  expect(
-    await getDeletingEveConversationForSession("other", bound.sessionId)
-  ).toBeUndefined();
-
-  const recoveryRow = (await listEveConversations(owner)).items.find(
-    (row) => row.id === bound.id
-  );
-  // Pending deletion remains discoverable so its owner can resume cleanup.
-  // The transcript and native access above remain fenced throughout.
-  if (state === "deleting") {
-    expect(recoveryRow).toMatchObject({ id: bound.id, state: "deleting" });
-    expect(recoveryRow).not.toHaveProperty("sessionId");
-  } else {
-    expect(recoveryRow).toBeUndefined();
+    const [row] = await db
+      .select()
+      .from(eveUsage)
+      .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
+    expect(Number(row.costUsd)).toBe(0.05);
+    expect(row.chargedCents).toBe(5);
+    const unknown = {
+      ...event,
+      data: {
+        ...event.data,
+        result: {
+          ...event.data.result,
+          callId: crypto.randomUUID(),
+          output: "result lost its receipt",
+        },
+      },
+    };
+    expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
+    const [unpriced] = await db
+      .select()
+      .from(eveUsage)
+      .where(
+        eq(
+          eveUsage.eventId,
+          `eve-tool:${sessionId}:${unknown.data.result.callId}`
+        )
+      );
+    expect(unpriced.costUsd).toBeNull();
+    expect(unpriced.chargedCents).toBe(0);
   }
-  expect(await listEveConversationBranches(owner, bound.id)).toBeUndefined();
-  expect(
-    await updateEveConversationMetadata(owner, bound.id, {
-      visibility: "public",
-      title: "resurrected",
-    })
-  ).toBeUndefined();
-  await recordEveConversationActivity(
-    owner,
-    bound.sessionId,
-    new Date(Date.now() + 60_000)
-  );
-  expect((await getEveCreation(owner, operation))?.updatedAt).toEqual(
-    before?.updatedAt
-  );
-  await expect(
-    createEveConversation(owner, operation, "deleted marker", start)
-  ).rejects.toThrow("can no longer be created");
-  await expect(
-    createEveConversation(owner, crypto.randomUUID(), "fork", start, {
-      fork: { conversationId: bound.id, beforeTurnId: "turn_0" },
-    })
-  ).rejects.toThrow("not available");
-  expect(starts).toBe(1);
-  expect(
-    (await listEveOwnerBindings(owner)).some(
-      (row) => row.sessionId === bound.sessionId
-    )
-  ).toBe(state === "deleting");
-});
+);
+
+test.each(["deleting", "deleted"] as const)(
+  "%s conversations are fenced from access, mutation and creation replay",
+  async (state) => {
+    const operation = crypto.randomUUID();
+    let starts = 0;
+    const start = () => {
+      starts += 1;
+      return Promise.resolve(crypto.randomUUID());
+    };
+    const bound = await createEveConversation(
+      owner,
+      operation,
+      "deleted marker",
+      start
+    );
+    await db
+      .update(eveConversation)
+      .set({ state, visibility: "public" })
+      .where(eq(eveConversation.id, bound.id));
+    const before = await getEveCreation(owner, operation);
+    expect(await getEveConversation(owner, bound.id)).toBeUndefined();
+    expect(await getPublicEveConversation(bound.id)).toBeUndefined();
+    expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
+    expect(
+      Boolean(
+        await getDeletingEveConversationForSession(owner, bound.sessionId)
+      )
+    ).toBe(state === "deleting");
+    expect(
+      await getDeletingEveConversationForSession("other", bound.sessionId)
+    ).toBeUndefined();
+
+    const recoveryRow = (await listEveConversations(owner)).items.find(
+      (row) => row.id === bound.id
+    );
+    // Pending deletion remains discoverable so its owner can resume cleanup.
+    // The transcript and native access above remain fenced throughout.
+    if (state === "deleting") {
+      expect(recoveryRow).toMatchObject({ id: bound.id, state: "deleting" });
+      expect(recoveryRow).not.toHaveProperty("sessionId");
+    } else {
+      expect(recoveryRow).toBeUndefined();
+    }
+    expect(await listEveConversationBranches(owner, bound.id)).toBeUndefined();
+    expect(
+      await updateEveConversationMetadata(owner, bound.id, {
+        visibility: "public",
+        title: "resurrected",
+      })
+    ).toBeUndefined();
+    await recordEveConversationActivity(
+      owner,
+      bound.sessionId,
+      new Date(Date.now() + 60_000)
+    );
+    expect((await getEveCreation(owner, operation))?.updatedAt).toEqual(
+      before?.updatedAt
+    );
+    await expect(
+      createEveConversation(owner, operation, "deleted marker", start)
+    ).rejects.toThrow("can no longer be created");
+    await expect(
+      createEveConversation(owner, crypto.randomUUID(), "fork", start, {
+        fork: { conversationId: bound.id, beforeTurnId: "turn_0" },
+      })
+    ).rejects.toThrow("not available");
+    expect(starts).toBe(1);
+    expect(
+      (await listEveOwnerBindings(owner)).some(
+        (row) => row.sessionId === bound.sessionId
+      )
+    ).toBe(state === "deleting");
+  }
+);
 
 test("deletion fences the entire owned family and is retryable", async () => {
   const start = () => Promise.resolve(crypto.randomUUID());
@@ -639,34 +642,35 @@ const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "uncertain",
   "bound",
 ];
-test.each(
-  copyReservationStates
-)("ordinary creation cannot consume a %s copy reservation", async (state) => {
-  const operationId = crypto.randomUUID();
-  const sessionId = state === "bound" ? crypto.randomUUID() : null;
-  const [copy] = await db
-    .insert(eveConversation)
-    .values({
-      ownerId: owner,
-      operationId,
-      firstMessage: "Same visible title",
+test.each(copyReservationStates)(
+  "ordinary creation cannot consume a %s copy reservation",
+  async (state) => {
+    const operationId = crypto.randomUUID();
+    const sessionId = state === "bound" ? crypto.randomUUID() : null;
+    const [copy] = await db
+      .insert(eveConversation)
+      .values({
+        ownerId: owner,
+        operationId,
+        firstMessage: "Same visible title",
+        creationKind: "copy",
+        state,
+        sessionId,
+      })
+      .returning();
+    const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    await expect(
+      createEveConversation(owner, operationId, "Same visible title", create)
+    ).rejects.toThrow("different");
+    expect(create).not.toHaveBeenCalled();
+    expect(await getEveCreation(owner, operationId)).toMatchObject({
+      id: copy.id,
       creationKind: "copy",
       state,
       sessionId,
-    })
-    .returning();
-  const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
-  await expect(
-    createEveConversation(owner, operationId, "Same visible title", create)
-  ).rejects.toThrow("different");
-  expect(create).not.toHaveBeenCalled();
-  expect(await getEveCreation(owner, operationId)).toMatchObject({
-    id: copy.id,
-    creationKind: "copy",
-    state,
-    sessionId,
-  });
-});
+    });
+  }
+);
 
 test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
   const sourceOperation = crypto.randomUUID();

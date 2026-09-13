@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+
 import { expect, test } from "@playwright/test";
 
 test("installed renderer states stay readable at desktop and mobile sizes", async ({

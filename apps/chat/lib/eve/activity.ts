@@ -1,4 +1,5 @@
 import type { MessageStreamEvent } from "eve/client";
+
 import { recordEveConversationActivity } from "../db/eve-queries";
 
 /** Project only activity metadata from Eve; replay must never move a chat backwards. */

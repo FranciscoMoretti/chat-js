@@ -5,6 +5,7 @@ import type { EveMessage } from "eve/client";
 import dynamic from "next/dynamic";
 import type { ComponentProps, ReactNode } from "react";
 import { useCallback, useState } from "react";
+
 import {
   Artifact,
   ArtifactClose,
@@ -25,6 +26,7 @@ import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
 import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
 import { getLanguageFromFileName } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
+
 import { EveDocumentActions } from "./eve-document-actions";
 import { EveDocumentAssistantActions } from "./eve-document-assistant-actions";
 import { EveDocumentComparison } from "./eve-document-comparison";
@@ -247,7 +249,7 @@ function EveArtifactPanel({
       data-testid="artifact"
       role="region"
     >
-      <ArtifactHeader className="shrink-0 items-start bg-background/80 p-2">
+      <ArtifactHeader className="bg-background/80 shrink-0 items-start p-2">
         <div className="flex min-w-0 items-start gap-4">
           <ArtifactClose onClick={closeArtifact} variant="outline" />
           <ArtifactTitle className="break-words">

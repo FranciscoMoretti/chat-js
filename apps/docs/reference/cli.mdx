@@ -35,20 +35,20 @@ npx @chat-js/cli@latest [directory] [options]
 
 **Arguments**
 
-| Argument    | Description                                                          |
-| ----------- | -------------------------------------------------------------------- |
+| Argument | Description |
+| --- | --- |
 | `directory` | Target directory for the project. Prompted interactively if omitted. |
 
 **Options**
 
-| Flag                                      | Default  | Description                                                                  |
-| ----------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `-y, --yes`                               | `false`  | Skip prompts and use the scaffold defaults.                                  |
-| `--electron` / `--no-electron`            | Prompted | Include or exclude the Electron desktop app.                                 |
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-y, --yes` | `false` | Skip prompts and use the scaffold defaults. |
+| `--electron` / `--no-electron` | Prompted | Include or exclude the Electron desktop app. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
-| `--from-git <url>`                        | Built-in scaffold | Clone from a Git repository instead of the built-in scaffold.         |
-| `--storage-provider <provider>`           | Prompted when needed | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`. |
-| `--storage-config <json>`                 | —        | Supply non-secret Files SDK adapter options as JSON.                         |
+| `--from-git <url>` | Built-in scaffold | Clone from a Git repository instead of the built-in scaffold. |
+| `--storage-provider <provider>` | Prompted when needed | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`. |
+| `--storage-config <json>` | — | Supply non-secret Files SDK adapter options as JSON. |
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 
@@ -66,11 +66,11 @@ npx @chat-js/cli@latest add <tools...> [options]
 
 Install one or more registry tools into an existing ChatJS project. Items specify explicit targets under `tools/chatjs`. Namespace configuration lives in `components.json`.
 
-| Flag                   | Default           | Description                                      |
-| ---------------------- | ----------------- | ------------------------------------------------ |
-| `-y, --yes`            | `false`           | Skip the installation confirmation.              |
-| `-o, --overwrite`      | `false`           | Overwrite existing tool files without prompting. |
-| `-c, --cwd <cwd>`      | Current directory | Run against another ChatJS project.               |
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-y, --yes` | `false` | Skip the installation confirmation. |
+| `-o, --overwrite` | `false` | Overwrite existing tool files without prompting. |
+| `-c, --cwd <cwd>` | Current directory | Run against another ChatJS project. |
 
 ```bash
 npx @chat-js/cli@latest add word-count
@@ -86,8 +86,8 @@ Print the fully resolved `chat.config.ts`, including gateway defaults.
 npx @chat-js/cli@latest config
 ```
 
-| Flag              | Default           | Description                        |
-| ----------------- | ----------------- | ---------------------------------- |
+| Flag              | Default           | Description                         |
+| ----------------- | ----------------- | ----------------------------------- |
 | `-c, --cwd <cwd>` | Current directory | Read another ChatJS project config. |
 
 ## What gets generated

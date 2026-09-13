@@ -1,5 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
+
 import { responseModel } from "./response-model";
 
 const step = {

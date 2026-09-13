@@ -2,6 +2,7 @@
 
 import type { ChatMessage } from "@/lib/ai/types";
 import { useMessageResearchUpdatePartByToolCallId } from "@/lib/stores/hooks-message-parts";
+
 import { ResearchUpdates } from "./message-annotations";
 
 type DeepResearchPart = Extract<
@@ -38,7 +39,7 @@ export function DeepResearch({
     <div className="flex w-full flex-col gap-3">
       <ResearchUpdates updates={researchUpdates.map((u) => u.data)} />
       {outputError && (
-        <div className="rounded border bg-destructive/10 p-2 text-destructive-foreground">
+        <div className="bg-destructive/10 text-destructive-foreground rounded border p-2">
           Error: {outputError}
         </div>
       )}

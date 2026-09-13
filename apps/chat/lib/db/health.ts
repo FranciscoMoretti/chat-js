@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+
 import { db } from "./client";
 
 let pending: Promise<void> | undefined;

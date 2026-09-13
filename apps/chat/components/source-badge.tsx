@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
+
 import { Favicon } from "./favicon";
 
 export function WebSourceBadge({ result }: { result: SearchResultItem }) {
@@ -31,7 +32,7 @@ export function WebSourceBadge({ result }: { result: SearchResultItem }) {
           <p className="font-semibold">{result.title}</p>
         </div>
         <p className="text-muted-foreground text-xs">{result.url}</p>
-        <p className="line-clamp-5 text-muted-foreground text-xs">
+        <p className="text-muted-foreground line-clamp-5 text-xs">
           {result.content}
         </p>
       </TooltipContent>

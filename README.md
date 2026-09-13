@@ -80,29 +80,13 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun lint`: run workspace lint
 - `bun test:types`: run chat app typecheck
 
-Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten
-ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`,
-and the site uses `2`, as configured in `.worktree-env.json`. The local file is
-ignored by Git and kept separate from Vercel-managed `.env.local`. Run
-`bun dev:info` instead of assuming a port.
+Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
 
 ### Native Eve development flow
 
-With `EVE_ENABLED=true` in development, `/` and `/chat/[id]` use
-`useEveAgent` and a private Eve worker. `/agent` redirects to the normal routes. Eve owns
-the durable transcript, approvals and execution. ChatJS authenticates requests
-and stores conversation ownership, creation intent, the Eve session ID, and a
-usage ledger keyed by durable event ID.
-The worker uses the selected ChatJS gateway/model. The sidebar lists and searches
-Eve conversations only. Legacy ChatJS conversations remain untouched and are not
-shown or imported in this mode. Registered users retain project organization;
-guests use their own isolated conversation history.
+With `EVE_ENABLED=true` in development, `/` and `/chat/[id]` use `useEveAgent` and a private Eve worker. `/agent` redirects to the normal routes. Eve owns the durable transcript, approvals and execution. ChatJS authenticates requests and stores conversation ownership, creation intent, the Eve session ID, and a usage ledger keyed by durable event ID. The worker uses the selected ChatJS gateway/model. The sidebar lists and searches Eve conversations only. Legacy ChatJS conversations remain untouched and are not shown or imported in this mode. Registered users retain project organization; guests use their own isolated conversation history.
 
-Use Node 24+ for Eve and Bun for package scripts. Set `EVE_ENABLED=true`, a random
-`EVE_GATEWAY_SECRET` of at least 32 characters, and isolated local Postgres URLs
-for `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` in `.env.worktree.local`.
-Apply ChatJS migrations, initialize the Workflow World, and install the local
-provider's deletion fences and retirement receipts before starting the app:
+Use Node 24+ for Eve and Bun for package scripts. Set `EVE_ENABLED=true`, a random `EVE_GATEWAY_SECRET` of at least 32 characters, and isolated local Postgres URLs for `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` in `.env.worktree.local`. Apply ChatJS migrations, initialize the Workflow World, and install the local provider's deletion fences and retirement receipts before starting the app:
 
 ```sh
 bunx dotenv -e .env.worktree.local -e .env.local -- bun db:migrate
@@ -111,52 +95,23 @@ bun eve:db:setup:local
 bun dev
 ```
 
-The provider setup command is idempotent and refuses remote database URLs.
-It is an explicit migration; request handlers never install provider tables.
-Normal development starts ChatJS and Eve together with `withEve`; no separate
-worker command is needed. Browsers use authenticated same-origin ChatJS routes.
+The provider setup command is idempotent and refuses remote database URLs. It is an explicit migration; request handlers never install provider tables. Normal development starts ChatJS and Eve together with `withEve`; no separate worker command is needed. Browsers use authenticated same-origin ChatJS routes.
 
-With Eve enabled and both databases and the worker on loopback addresses, the
-Node development server also cleans up expired guest conversation families.
-The first sweep starts after one minute; later sweeps start one minute after the
-previous sweep finishes. Each sweep attempts at most five families, and failed
-families become eligible for another attempt after five minutes. Cleanup retains
-guest identities, quota history and billing records, and never imports or deletes
-legacy conversations. Remote databases and production do not start this local
-scheduler. The authorized cleanup endpoint reports incomplete work with HTTP 503.
+With Eve enabled and both databases and the worker on loopback addresses, the Node development server also cleans up expired guest conversation families. The first sweep starts after one minute; later sweeps start one minute after the previous sweep finishes. Each sweep attempts at most five families, and failed families become eligible for another attempt after five minutes. Cleanup retains guest identities, quota history and billing records, and never imports or deletes legacy conversations. Remote databases and production do not start this local scheduler. The authorized cleanup endpoint reports incomplete work with HTTP 503.
 
+Local acceptance covers guest and registered conversations, model comparisons, editing/regeneration with version navigation, reload, cancellation, and family deletion. Guest generations reserve message quota before native admission; retries reuse operation identities and do not debit quota twice. Incomplete creation or deletion retains recovery state rather than claiming success.
 
-Local acceptance covers guest and registered conversations, model comparisons,
-editing/regeneration with version navigation, reload, cancellation, and family
-deletion. Guest generations reserve message quota before native admission;
-retries reuse operation identities and do not debit quota twice. Incomplete
-creation or deletion retains recovery state rather than claiming success.
+Model costs are recorded by the worker hook and repaired from authoritative session snapshots before new work. Replaying an event does not charge twice; charges round up to cents per turn. Completed usage with an unknown cost blocks new admission until provider evidence is reconciled. Failed-step costs remain unresolved evidence. The positive-credit check permits in-progress overspend; it is not a hard budget reservation. Approval responses and cancellation remain available at zero credits.
 
-Model costs are recorded by the worker hook and repaired from authoritative
-session snapshots before new work. Replaying an event does not charge twice;
-charges round up to cents per turn. Completed usage with an unknown cost blocks
-new admission until provider evidence is reconciled. Failed-step costs remain
-unresolved evidence. The positive-credit check permits in-progress overspend;
-it is not a hard budget reservation. Approval responses and cancellation remain
-available at zero credits.
+Eve is disabled in production even when the flag is set. Production cutover requires review. Full feature parity and lifecycle recovery remain under active validation; the local acceptance checks are not a production-readiness claim. Historical conversation import is intentionally deferred.
 
-Eve is disabled in production even when the flag is set. Production cutover
-requires review. Full feature parity and lifecycle recovery remain under active
-validation; the local acceptance checks are not a production-readiness claim.
-Historical conversation import is intentionally deferred.
-
-Use isolated local databases for acceptance testing. Browser tests use development
-login or guest credentials and save sanitized captures under
-`apps/chat/tests/eve-results`. For example, with the app running and valid model
-credentials, run the guest lifecycle check from the repository root:
+Use isolated local databases for acceptance testing. Browser tests use development login or guest credentials and save sanitized captures under `apps/chat/tests/eve-results`. For example, with the app running and valid model credentials, run the guest lifecycle check from the repository root:
 
 ```sh
 bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts eve-guest-lifecycle.e2e.ts'
 ```
 
-Database contracts use `apps/chat/vitest.eve.config.ts`. Each suite checks its
-configured database before writing fixtures. Prefer local Postgres and cheap
-models for repeated acceptance runs.
+Database contracts use `apps/chat/vitest.eve.config.ts`. Each suite checks its configured database before writing fixtures. Prefer local Postgres and cheap models for repeated acceptance runs.
 
 ## Releases
 
@@ -179,10 +134,7 @@ Apache-2.0
 
 ### Local Eve runtime
 
-With `EVE_ENABLED=true` in `.env.worktree.local`, `bun dev` starts ChatJS and
-Eve together using `withEve`. Keep the isolated development database configured;
-this does not enable the production migration. There is no separate Eve process
-to start for normal development.
+With `EVE_ENABLED=true` in `.env.worktree.local`, `bun dev` starts ChatJS and Eve together using `withEve`. Keep the isolated development database configured; this does not enable the production migration. There is no separate Eve process to start for normal development.
 
 For unattended local development on macOS:
 
@@ -193,17 +145,4 @@ bun dev:service status # process state and log location
 bun dev:service stop   # stop this checkout and remove its login startup entry
 ```
 
-Stop a manually running `bun dev` before starting the service. Each checkout has
-its own service identity and worktree port. The supervisor checks readiness every
-ten seconds. Startup gets three minutes initially, then six and at most ten
-minutes after consecutive unsuccessful launches, so slow compilation can finish.
-Eve's development startup timeout is also ten minutes. Once healthy, the runtime
-must remain unavailable for two minutes across at least three failed checks
-before it is replaced. A successful readiness check resets the startup allowance;
-process exits still trigger recovery immediately. Restarts back off to sixty
-seconds. Node heaps are capped at 4 GiB
-per process; this is not a total system memory cap. Logs are retained under
-`~/Library/Logs/ChatJS/` (the status command prints the checkout's directory).
-The Mac must be awake and the database/network available; supervision cannot
-make a sleeping laptop serve traffic. `bun dev:service stop` leaves other
-checkouts alone.
+Stop a manually running `bun dev` before starting the service. Each checkout has its own service identity and worktree port. The supervisor checks readiness every ten seconds. Startup gets three minutes initially, then six and at most ten minutes after consecutive unsuccessful launches, so slow compilation can finish. Eve's development startup timeout is also ten minutes. Once healthy, the runtime must remain unavailable for two minutes across at least three failed checks before it is replaced. A successful readiness check resets the startup allowance; process exits still trigger recovery immediately. Restarts back off to sixty seconds. Node heaps are capped at 4 GiB per process; this is not a total system memory cap. Logs are retained under `~/Library/Logs/ChatJS/` (the status command prints the checkout's directory). The Mac must be awake and the database/network available; supervision cannot make a sleeping laptop serve traffic. `bun dev:service stop` leaves other checkouts alone.

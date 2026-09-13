@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@/providers/session-provider";
+
 import { ArtifactPanel } from "../artifact-panel";
 
 export function SecondaryChatPanel({

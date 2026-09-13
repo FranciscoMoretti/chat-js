@@ -2,6 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { createContext, useContext } from "react";
+
 import {
   ResizableHandle,
   ResizablePanel,
@@ -43,7 +44,7 @@ export const ChatLayout = ({
     <ChatLayoutContext.Provider value={{ isSecondaryPanelVisible }}>
       <ResizablePanelGroup
         className={cn(
-          "@container flex h-dvh max-h-dvh w-full min-w-0 max-w-screen flex-col bg-background md:max-w-[calc(100vw-var(--sidebar-width))]",
+          "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
           className
         )}

@@ -1,7 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
+
 import type { StreamWriter } from "@/lib/ai/types";
 import { getDocumentById } from "@/lib/db/queries";
+
 import type { ToolSession } from "./types";
 
 interface ReadDocumentProps {

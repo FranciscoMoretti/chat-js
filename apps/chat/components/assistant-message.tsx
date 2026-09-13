@@ -1,11 +1,13 @@
 "use client";
 import { memo } from "react";
+
 import { config } from "@/lib/config";
 import { useChatId, useChatStatus } from "@/lib/stores/base";
 import {
   useLastMessageId,
   useMessageMetadataById,
 } from "@/lib/stores/hooks-base";
+
 import { Message, MessageContent } from "./ai-elements/message";
 import { FollowUpSuggestionsParts } from "./followup-suggestions";
 import { MessageActions } from "./message-actions";

@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+
 import { expect, test } from "@playwright/test";
 
 // Dense state gallery uses the real application CSS and components, without a server or database.

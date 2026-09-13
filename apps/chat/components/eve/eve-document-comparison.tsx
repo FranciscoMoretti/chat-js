@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/react";

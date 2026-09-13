@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Conversation,
   ConversationContent,
@@ -26,6 +27,7 @@ import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
+
 import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { useEveAttachments } from "./use-eve-attachments";
@@ -186,7 +188,7 @@ export function NewEveConversation({
         <Conversation>
           <ConversationContent className="mx-auto w-full max-w-3xl">
             <Message className="flex-col" from="user">
-              <MessageContent className="min-w-0 max-w-full">
+              <MessageContent className="max-w-full min-w-0">
                 <span className="sr-only">You</span>
                 <p className="whitespace-pre-wrap">{draft}</p>
                 <AttachmentList attachments={files.attachments} />

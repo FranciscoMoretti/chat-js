@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+
 import { config as loadEnv } from "dotenv";
 import { createClient } from "redis";
 import { z } from "zod";
+
 import { config } from "../lib/config";
 import {
   redisConnectionOptions,

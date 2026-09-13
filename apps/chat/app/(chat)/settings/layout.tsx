@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";

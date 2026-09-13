@@ -13,7 +13,7 @@ Search for an existing component and extend it (`variant="danger"`, a new prop) 
 
 ## 2. Cover every state, in the same change
 
-Every component or state you add or change owes a story/capture in the *same* change, never a follow-up. Don't hand-write one per combination - generate them densely (`economical-visual-tests`). No visual testing wired yet? `setup-visual-testing` first.
+Every component or state you add or change owes a story/capture in the _same_ change, never a follow-up. Don't hand-write one per combination - generate them densely (`economical-visual-tests`). No visual testing wired yet? `setup-visual-testing` first.
 
 ## 3. Check the blast radius
 

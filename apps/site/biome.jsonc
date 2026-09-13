@@ -1,14 +1,14 @@
 {
   "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
   "files": {
-    "includes": ["**/*", "!.next"]
+    "includes": ["**/*", "!.next"],
   },
   "css": {
     "parser": {
-      "cssModules": false
+      "cssModules": false,
     },
     "linter": {
-      "enabled": false
-    }
-  }
+      "enabled": false,
+    },
+  },
 }

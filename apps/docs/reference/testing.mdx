@@ -57,13 +57,13 @@ bun test:e2e
 
 The Playwright config defines five test projects that run in dependency order:
 
-| Project           | File                      | Depends On        | Purpose                       |
-| ----------------- | ------------------------- | ----------------- | ----------------------------- |
-| `setup:auth`      | `auth.setup.e2e.ts`       | -                 | Authenticate and save session |
-| `setup:reasoning` | `reasoning.setup.e2e.ts`  | `setup:auth`      | Prepare reasoning model state |
-| `chat`            | `chat.e2e.ts`             | `setup:auth`      | Core chat interactions        |
-| `reasoning`       | `reasoning.e2e.ts`        | `setup:reasoning` | Reasoning model tests         |
-| `artifacts`       | `artifacts.e2e.ts`        | `setup:auth`      | Canvas and document tests     |
+| Project | File | Depends On | Purpose |
+| --- | --- | --- | --- |
+| `setup:auth` | `auth.setup.e2e.ts` | - | Authenticate and save session |
+| `setup:reasoning` | `reasoning.setup.e2e.ts` | `setup:auth` | Prepare reasoning model state |
+| `chat` | `chat.e2e.ts` | `setup:auth` | Core chat interactions |
+| `reasoning` | `reasoning.e2e.ts` | `setup:reasoning` | Reasoning model tests |
+| `artifacts` | `artifacts.e2e.ts` | `setup:auth` | Canvas and document tests |
 
 ### CI behavior
 

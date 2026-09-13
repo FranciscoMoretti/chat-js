@@ -1,5 +1,6 @@
 import type { ModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
+
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
 
 const MinChunkSize = 140;

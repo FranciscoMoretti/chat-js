@@ -1,4 +1,5 @@
 import { readdir, lstat } from "node:fs/promises";
+
 import { highlighter } from "../utils/highlighter";
 import { logger } from "../utils/logger";
 
@@ -8,7 +9,8 @@ export async function ensureTargetEmpty(targetDir: string): Promise<void> {
     throw error;
   });
   if (!targetStats) return;
-  if (targetStats.isSymbolicLink()) throw new Error("Target directory must not be a symlink.");
+  if (targetStats.isSymbolicLink())
+    throw new Error("Target directory must not be a symlink.");
 
   if (!targetStats.isDirectory()) {
     logger.error(

@@ -6,18 +6,21 @@ description: Create and edit text documents, code, and spreadsheets
 Canvas lets you create and edit documents directly in chat. The AI creates text documents, code files, and spreadsheets in a side panel where you can view, edit, and refine them.
 
 <Frame>
-  <img src="/docs/images/canvas.gif" alt="Creating and editing a document in the canvas side panel" />
+  <img
+    src="/docs/images/canvas.gif"
+    alt="Creating and editing a document in the canvas side panel"
+  />
 </Frame>
 
 ## Canvas types
 
 You can create three types of canvas:
 
-| Type      | Best for                                                     | Features                                                        |
-| --------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
-| **Text**  | Essays, emails, reports, documentation, and other written content | Markdown support, diff view, version history, direct editing, polish tool |
-| **Code**  | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution (via Pyodide), version history, console output |
-| **Sheet** | Data tables, datasets, and CSV files                         | Spreadsheet editor, CSV export, data visualization via Python   |
+| Type | Best for | Features |
+| --- | --- | --- |
+| **Text** | Essays, emails, reports, documentation, and other written content | Markdown support, diff view, version history, direct editing, polish tool |
+| **Code** | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution (via Pyodide), version history, console output |
+| **Sheet** | Data tables, datasets, and CSV files | Spreadsheet editor, CSV export, data visualization via Python |
 
 ## Creating a canvas
 
@@ -28,6 +31,7 @@ When you ask the AI to create something substantial, it automatically creates a 
 - **Spreadsheets**: "Create a spreadsheet with..." or "Build a data table for..."
 
 The AI uses dedicated tools to create documents:
+
 - `createTextDocument` for markdown text content
 - `createCodeDocument` for code files (filename determines syntax highlighting)
 - `createSheetDocument` for CSV-format spreadsheets
@@ -66,13 +70,16 @@ Text documents support a diff view that highlights additions and deletions betwe
 A floating toolbar appears at the bottom-right of the canvas. Each canvas type has different quick actions:
 
 ### Text toolbar
+
 - **Add final polish**: Checks grammar, adds section titles, improves readability
 
 ### Code toolbar
+
 - **Add comments**: Adds explanatory comments to the code
 - **Add logs**: Adds debug logging statements
 
 ### Sheet toolbar
+
 - **Format and clean data**: Cleans and formats the spreadsheet data
 - **Analyze and visualize**: Creates a Python code canvas with data analysis and visualization
 
@@ -81,6 +88,7 @@ A floating toolbar appears at the bottom-right of the canvas. Each canvas type h
 Python code can run directly in the browser using Pyodide. Click the **Run** button to execute.
 
 Execution features:
+
 - Console output displays below the code editor
 - Matplotlib plots render as images in the console
 - Package imports are loaded automatically
@@ -93,13 +101,16 @@ Code execution is only available for Python files. The run button is disabled fo
 Each canvas type has action buttons in the header:
 
 ### All types
+
 - **Undo/Redo**: Navigate version history
 - **Copy**: Copy content to clipboard
 
 ### Text only
+
 - **View changes**: Toggle diff view comparing current and previous version
 
 ### Sheet only
+
 - **Copy as CSV**: Exports clean CSV (removes empty rows)
 
 ## Configuration

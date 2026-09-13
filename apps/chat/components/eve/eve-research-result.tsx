@@ -2,7 +2,9 @@
 
 import type { EveMessagePart } from "eve/client";
 import { z } from "zod";
+
 import { evePlatformOutput } from "@/lib/eve/platform-result";
+
 import { ResearchUpdates } from "../part/message-annotations";
 import { EveDocumentTool } from "./eve-document-tool";
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+
 import { databaseConnection, databaseEnvOptions } from "./connection";
 
 const databaseOptionsSchema = z.object(databaseEnvOptions);

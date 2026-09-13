@@ -3,12 +3,13 @@ title: "Attachments"
 description: "Upload images and PDFs to conversations"
 ---
 
-ChatJS supports file attachments in conversations. Files are uploaded through
-the configured [file storage provider](../storage) and processed by AI
-models that support multimodal input.
+ChatJS supports file attachments in conversations. Files are uploaded through the configured [file storage provider](../storage) and processed by AI models that support multimodal input.
 
 <Frame>
-  <img src="/docs/images/attachments.gif" alt="Uploading file attachments to a conversation" />
+  <img
+    src="/docs/images/attachments.gif"
+    alt="Uploading file attachments to a conversation"
+  />
 </Frame>
 
 <Callout type="note">
@@ -18,10 +19,10 @@ models that support multimodal input.
 
 ## Supported File Types
 
-| Type | Extensions | Processing |
-|------|------------|------------|
+| Type   | Extensions              | Processing          |
+| ------ | ----------------------- | ------------------- |
 | Images | `.png`, `.jpg`, `.jpeg` | Direct vision input |
-| PDFs | `.pdf` | Text extraction |
+| PDFs   | `.pdf`                  | Text extraction     |
 
 ## How It Works
 
@@ -43,16 +44,14 @@ features: {
 ```
 
 When disabled:
+
 - Attachment button is hidden from the chat input
 - Drag-and-drop and paste file handling are disabled
 - File upload API returns 503
 
 ### File Storage
 
-Choose a durable provider during installation and configure the environment
-variables generated for that provider. Vercel Blob uses
-`BLOB_READ_WRITE_TOKEN`, while other providers have their own credential modes.
-See [File storage](../storage) for setup and migration guidance.
+Choose a durable provider during installation and configure the environment variables generated for that provider. Vercel Blob uses `BLOB_READ_WRITE_TOKEN`, while other providers have their own credential modes. See [File storage](../storage) for setup and migration guidance.
 
 ### Attachment Settings
 

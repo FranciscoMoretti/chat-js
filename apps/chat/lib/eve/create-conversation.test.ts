@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+
 import { CreationRejected, requestConversation } from "./create-conversation";
 
 const operation = {
@@ -41,35 +42,36 @@ it("returns the existing binding on retry and clears its deadline", async () => 
   expect(vi.getTimerCount()).toBe(0);
 });
 
-it.each([
-  400, 404,
-])("distinguishes definitive rejection (%i) from uncertain creation", async (status) => {
-  vi.stubGlobal(
-    "fetch",
-    vi
-      .fn()
-      .mockResolvedValue(
-        Response.json(
-          { error: "Unavailable", creationRejected: true },
-          { status }
+it.each([400, 404])(
+  "distinguishes definitive rejection (%i) from uncertain creation",
+  async (status) => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json(
+            { error: "Unavailable", creationRejected: true },
+            { status }
+          )
         )
-      )
-  );
-  await expect(requestConversation(operation)).rejects.toBeInstanceOf(
-    CreationRejected
-  );
-  vi.stubGlobal(
-    "fetch",
-    vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ error: "Unresolved" }, { status: 409 })
-      )
-  );
-  await expect(requestConversation(operation)).rejects.not.toBeInstanceOf(
-    CreationRejected
-  );
-});
+    );
+    await expect(requestConversation(operation)).rejects.toBeInstanceOf(
+      CreationRejected
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json({ error: "Unresolved" }, { status: 409 })
+        )
+    );
+    await expect(requestConversation(operation)).rejects.not.toBeInstanceOf(
+      CreationRejected
+    );
+  }
+);
 
 it("identifies a missing project only on a definitive rejection", async () => {
   vi.stubGlobal(

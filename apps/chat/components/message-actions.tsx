@@ -2,6 +2,7 @@ import { Copy, Pencil, PencilOff } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
+
 import {
   MessageAction as Action,
   MessageActions as Actions,
@@ -9,6 +10,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatStoreApi } from "@/lib/stores/base";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
+
 import { useChatVotes } from "./chat/use-chat-votes";
 import { FeedbackActions } from "./feedback-actions";
 import { MessageSiblings } from "./message-siblings";
@@ -51,14 +53,14 @@ function PureMessageActions({
       className={
         showActionsWithoutHover
           ? ""
-          : "opacity-0 transition-opacity duration-150 focus-within:opacity-100 hover:opacity-100 group-hover/message:opacity-100 group-hover:opacity-100"
+          : "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100"
       }
     >
       {role === "user" &&
         !isReadOnly &&
         (isEditing ? (
           <Action
-            className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={() => onCancelEdit?.()}
             tooltip="Cancel edit"
           >
@@ -66,7 +68,7 @@ function PureMessageActions({
           </Action>
         ) : (
           <Action
-            className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={() => onStartEdit?.()}
             tooltip="Edit message"
           >
@@ -77,7 +79,7 @@ function PureMessageActions({
       <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
 
       <Action
-        className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
         onClick={async () => {
           const message = storeApi
             .getState()

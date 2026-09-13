@@ -21,7 +21,7 @@ export const gatewayDefinitionSchema = z
         options: z
           .array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/)).min(1))
           .min(1),
-      }),
+      })
     ),
     defaults: z.object({
       anonymousModels: z.array(model),

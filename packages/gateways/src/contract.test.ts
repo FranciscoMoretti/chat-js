@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 import {
   type GatewayType,
   gatewayMetadata,
 } from "../../registry/src/gateways/metadata";
-import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
+import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
 import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 import gatewayPackage from "../package.json";
@@ -70,7 +71,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     const { dependency, version } = gatewayMetadata[adapter.name];
     expect(gatewayPackage.devDependencies[dependency]).toBe(version);
     expect(
-      gateway.createLanguageModel(adapter.model).specificationVersion,
+      gateway.createLanguageModel(adapter.model).specificationVersion
     ).toBe("v4");
     expect(gateway.createImageModel("test-image") !== null).toBe(adapter.image);
     expect(gateway.createVideoModel("test-video") !== null).toBe(adapter.video);

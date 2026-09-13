@@ -2,8 +2,9 @@ import { asSchema, jsonSchema, type ModelMessage, type Tool } from "ai";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
 import type { ToolContext } from "eve/tools";
-import { MCPClient } from "../ai/mcp/mcp-client";
+
 import { createToolId } from "../ai/mcp-name-id";
+import { MCPClient } from "../ai/mcp/mcp-client";
 import { config } from "../config";
 import {
   getMcpConnectorById,
@@ -12,7 +13,6 @@ import {
 import type { McpConnector } from "../db/schema";
 import { createModuleLogger } from "../logger";
 import { describeEveTool, executeEveTool } from "./adapt-tool";
-
 import { eveMcpResult } from "./mcp-result";
 
 const log = createModuleLogger("eve.mcp");

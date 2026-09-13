@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { z } from "zod";
+
 import {
   Conversation,
   ConversationContent,
@@ -33,6 +34,7 @@ import {
   useModelChange,
 } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkControls } from "./eve-fork-controls";

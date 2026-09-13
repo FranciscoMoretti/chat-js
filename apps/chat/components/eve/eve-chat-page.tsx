@@ -2,12 +2,14 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+
 import { ChatHeaderView } from "@/components/chat-header";
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComparisonConversation } from "./eve-comparison-conversation";
 import { EveConversation } from "./eve-conversation";
@@ -54,7 +56,7 @@ export async function EveChatPage({
         </>
       }
       breadcrumb={
-        <h1 className="ml-2 truncate font-medium text-sm">
+        <h1 className="ml-2 truncate text-sm font-medium">
           {selected?.title ?? selected?.firstMessage.slice(0, 100) ?? "Chat"}
         </h1>
       }

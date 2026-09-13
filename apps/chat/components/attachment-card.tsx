@@ -8,6 +8,7 @@ import {
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 import type { Attachment } from "@/lib/ai/types";
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils";
 function LoadingPreview() {
   return (
     <div className="flex size-full items-center justify-center">
-      <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
+      <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
     </div>
   );
 }
@@ -27,7 +28,7 @@ function ImagePreview({ name, url }: { name: string; url: string }) {
   if (imageUnavailable) {
     return (
       <div
-        className="flex size-full flex-col items-center justify-center gap-1 text-muted-foreground"
+        className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1"
         role="status"
       >
         <ImageOffIcon className="size-5" />
@@ -56,7 +57,7 @@ function FilePreview({ isPdf }: { isPdf: boolean }) {
       {isPdf ? (
         <FileTextIcon className="size-5 text-red-500" />
       ) : (
-        <PaperclipIcon className="size-5 text-muted-foreground" />
+        <PaperclipIcon className="text-muted-foreground size-5" />
       )}
     </div>
   );
@@ -102,7 +103,7 @@ export function AttachmentCard({
   return (
     <div
       className={cn(
-        "group relative size-20 shrink-0 select-none overflow-hidden rounded-xl border border-border bg-muted/30 shadow-xs",
+        "group border-border bg-muted/30 relative size-20 shrink-0 overflow-hidden rounded-xl border shadow-xs select-none",
         isUploading && "opacity-60",
         className
       )}
@@ -119,7 +120,7 @@ export function AttachmentCard({
       {onRemove && !isUploading && (
         <Button
           aria-label="Remove attachment"
-          className="absolute top-1 right-1 size-6 rounded-full border border-border bg-background/90 p-0 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 supports-[backdrop-filter]:bg-background/70 [&>svg]:size-3"
+          className="border-border bg-background/90 supports-[backdrop-filter]:bg-background/70 absolute top-1 right-1 size-6 rounded-full border p-0 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 [&>svg]:size-3"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();

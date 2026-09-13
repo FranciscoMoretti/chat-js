@@ -1,10 +1,12 @@
 import { experimental_generateVideo as generateVideo, tool } from "ai";
+
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import { toModelData } from "@/lib/ai/to-model-data";
 import { config } from "@/lib/config";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
+
 import { generateVideoInput } from "./generate-video.schemas";
 
 const COST_CENTS = 50; // Fixed estimate — not yet available from provider API

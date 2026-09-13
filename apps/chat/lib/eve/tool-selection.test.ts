@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+
 import {
   ContextContainer,
   contextStorage,
@@ -93,12 +94,13 @@ it("includes document revision reads without leaking unrelated tools", () => {
   expect(selectedEveTools("generateVideo")).toEqual(["generateVideo"]);
 });
 
-it.each(
-  frontendToolsSchema.options
-)("never treats explicit %s as automatic", (selected) => {
-  expect(selectedEveTools(selected)).toContain(selected);
-  expect(selectedEveTools(selected)).not.toContain("server__echo");
-});
+it.each(frontendToolsSchema.options)(
+  "never treats explicit %s as automatic",
+  (selected) => {
+    expect(selectedEveTools(selected)).toContain(selected);
+    expect(selectedEveTools(selected)).not.toContain("server__echo");
+  }
+);
 
 it("includes tool selection in creation identity while preserving existing automatic identities", () => {
   expect(eveCreationContentHash("hello")).toBeUndefined();
@@ -108,51 +110,51 @@ it("includes tool selection in creation identity while preserving existing autom
   expect(search).not.toBe(eveCreationContentHash("changed", "webSearch"));
 });
 
-it.each([
-  ["model-a"],
-  ["model-a", "model-b"],
-])("retains exact selected tools through retry and rejected-project recovery: %j", (...modelIds) => {
-  const entries = new Map<string, string>();
-  const storage = {
-    getItem: (key: string) => entries.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      entries.set(key, value);
-    },
-    removeItem: (key: string) => {
-      entries.delete(key);
-    },
-  };
-  const projectId = crypto.randomUUID();
-  const original = prepareSelectedCreation(
-    storage,
-    "owner",
-    "hello",
-    modelIds,
-    { projectId },
-    "webSearch"
-  );
-  expect(readCreationRequest(storage, "owner", { projectId })).toEqual(
-    original
-  );
-  expect(
-    prepareSelectedCreation(
+it.each([["model-a"], ["model-a", "model-b"]])(
+  "retains exact selected tools through retry and rejected-project recovery: %j",
+  (...modelIds) => {
+    const entries = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => entries.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        entries.set(key, value);
+      },
+      removeItem: (key: string) => {
+        entries.delete(key);
+      },
+    };
+    const projectId = crypto.randomUUID();
+    const original = prepareSelectedCreation(
       storage,
       "owner",
-      "changed",
+      "hello",
       modelIds,
       { projectId },
-      "deepResearch"
-    )
-  ).toEqual(original);
-  const moved = moveRejectedProjectCreation(
-    storage,
-    "owner",
-    projectId,
-    original.operationId
-  );
-  expect(moved.selectedTool).toBe("webSearch");
-  expect(moved.operationId).not.toBe(original.operationId);
-});
+      "webSearch"
+    );
+    expect(readCreationRequest(storage, "owner", { projectId })).toEqual(
+      original
+    );
+    expect(
+      prepareSelectedCreation(
+        storage,
+        "owner",
+        "changed",
+        modelIds,
+        { projectId },
+        "deepResearch"
+      )
+    ).toEqual(original);
+    const moved = moveRejectedProjectCreation(
+      storage,
+      "owner",
+      projectId,
+      original.operationId
+    );
+    expect(moved.selectedTool).toBe("webSearch");
+    expect(moved.operationId).not.toBe(original.operationId);
+  }
+);
 
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
   const original = new ContextContainer();

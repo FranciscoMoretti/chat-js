@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { authenticateEveGateway } from "./gateway-auth";
 
 const mocks = vi.hoisted(() => ({
@@ -53,14 +54,17 @@ it.each([
   ["/eve/v1/session/session/reset", "POST"],
   ["/eve/v1/session/session/stream", "GET"],
   ["/eve/v1/session/session/sandbox-identity", "GET"],
-])("allows authenticated cleanup only for the deleting owner's session: %s", async (path, method) => {
-  expect(await authenticateEveGateway(request(path, method))).toMatchObject({
-    principalId: "owner",
-  });
-  expect(mocks.deleting).toHaveBeenCalledWith("owner", "session");
-  mocks.deleting.mockResolvedValue(undefined);
-  expect(await authenticateEveGateway(request(path, method))).toBeNull();
-});
+])(
+  "allows authenticated cleanup only for the deleting owner's session: %s",
+  async (path, method) => {
+    expect(await authenticateEveGateway(request(path, method))).toMatchObject({
+      principalId: "owner",
+    });
+    expect(mocks.deleting).toHaveBeenCalledWith("owner", "session");
+    mocks.deleting.mockResolvedValue(undefined);
+    expect(await authenticateEveGateway(request(path, method))).toBeNull();
+  }
+);
 
 it.each([
   ["/eve/v1/session", "POST"],
@@ -70,10 +74,13 @@ it.each([
   ["/eve/v1/session/session/stream", "POST"],
   ["/eve/v1/session/session/sandbox-identity", "POST"],
   ["/eve/v1/operation/id", "GET"],
-])("cleanup credentials cannot start work or broaden access: %s", async (path, method) => {
-  expect(await authenticateEveGateway(request(path, method))).toBeNull();
-  expect(mocks.deleting).not.toHaveBeenCalled();
-});
+])(
+  "cleanup credentials cannot start work or broaden access: %s",
+  async (path, method) => {
+    expect(await authenticateEveGateway(request(path, method))).toBeNull();
+    expect(mocks.deleting).not.toHaveBeenCalled();
+  }
+);
 
 it("rejects a forged cleanup header before querying ownership", async () => {
   expect(

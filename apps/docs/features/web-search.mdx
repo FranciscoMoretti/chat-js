@@ -8,7 +8,10 @@ description: Real-time web search with citations
 Enable your AI to search the web in real-time and provide answers with inline citations. The tool supports multiple queries per request for comprehensive research.
 
 <Frame>
-  <img src="/docs/images/web-search.gif" alt="AI searching the web and returning results with citations" />
+  <img
+    src="/docs/images/web-search.gif"
+    alt="AI searching the web and returning results with citations"
+  />
 </Frame>
 
 ## Quick Start
@@ -44,10 +47,10 @@ FIRECRAWL_API_KEY=your_firecrawl_key
 
 ## Providers
 
-| Provider  | Best For           | Features                                      |
-| --------- | ------------------ | --------------------------------------------- |
-| Tavily    | General search     | Topic filtering, news mode, domain exclusions |
-| Firecrawl | Content extraction | High-quality markdown from web pages          |
+| Provider | Best For | Features |
+| --- | --- | --- |
+| Tavily | General search | Topic filtering, news mode, domain exclusions |
+| Firecrawl | Content extraction | High-quality markdown from web pages |
 
 ### Tavily
 
@@ -72,7 +75,7 @@ The tool accepts up to 2 queries per request, executed in parallel:
   search_queries: [
     { query: "latest AI developments 2024", maxResults: 5 },
     { query: "machine learning trends", maxResults: 5 },
-  ]
+  ];
 }
 ```
 
@@ -101,7 +104,7 @@ Returns search results grouped by query:
       query: { query: "...", maxResults: 5 },
       results: [{ url: "...", title: "...", content: "..." }],
     },
-  ]
+  ];
 }
 ```
 

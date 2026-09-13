@@ -90,6 +90,7 @@ git wta feature-auth
 ```
 
 This creates `../chatjs-feature-auth/` with:
+
 - Fresh checkout of the branch
 - Copied `.env.local` from main repo
 - Installed dependencies
@@ -121,10 +122,10 @@ git worktree remove --force ../chatjs-feature-auth
 
 ### Commands Reference
 
-| Command | Description |
-| ------- | ----------- |
-| `git wta <branch>` | Add worktree for branch |
-| `git wtl` | List all worktrees |
-| `git wtr <path>` | Remove worktree |
-| `git wtp` | Prune stale worktrees |
-| `git wt-cleanup` | Remove merged branches and their worktrees |
+| Command            | Description                                |
+| ------------------ | ------------------------------------------ |
+| `git wta <branch>` | Add worktree for branch                    |
+| `git wtl`          | List all worktrees                         |
+| `git wtr <path>`   | Remove worktree                            |
+| `git wtp`          | Prune stale worktrees                      |
+| `git wt-cleanup`   | Remove merged branches and their worktrees |

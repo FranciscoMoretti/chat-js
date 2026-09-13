@@ -5,10 +5,12 @@ import {
 } from "ai";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
+
 import { ChatSDKError } from "@/lib/ai/errors";
 import type { ChatMessage } from "@/lib/ai/types";
 import { auth } from "@/lib/auth";
 import { getChatById, getChatMessageWithPartsById } from "@/lib/db/queries";
+
 import { getStreamContext } from "../../route";
 
 function appendMessageResponse(message: ChatMessage) {

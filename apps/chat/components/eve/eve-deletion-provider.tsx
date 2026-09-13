@@ -3,9 +3,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useState } from "react";
+
 import { useSidebar } from "@/components/ui/sidebar";
 import { useCurrentChatRoute } from "@/lib/chat-route";
 import { useTRPC } from "@/trpc/react";
+
 import { EveDeleteDialog } from "./eve-delete-dialog";
 
 type Conversation = { id: string; title: string; state: string };

@@ -3,11 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
+
 import { Table, TableBody } from "@/components/ui/table";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { ModelRow } from "./model-row";
 
 export function ModelsTable({
@@ -121,7 +123,7 @@ export function ModelsTable({
     return (
       <div className="animate-pulse space-y-1">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div className="h-11 rounded bg-muted/50" key={i} />
+          <div className="bg-muted/50 h-11 rounded" key={i} />
         ))}
       </div>
     );
@@ -129,7 +131,7 @@ export function ModelsTable({
 
   return (
     <>
-      <p className="mb-2 text-muted-foreground text-xs">
+      <p className="text-muted-foreground mb-2 text-xs">
         {filteredModels.length} model{filteredModels.length !== 1 && "s"}
       </p>
       <Table className={className}>
@@ -146,7 +148,7 @@ export function ModelsTable({
       </Table>
 
       {filteredModels.length === 0 && (
-        <p className="py-8 text-center text-muted-foreground text-sm">
+        <p className="text-muted-foreground py-8 text-center text-sm">
           No models found.
         </p>
       )}

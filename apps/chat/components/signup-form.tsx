@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+
 import { SocialAuthProviders } from "@/components/auth-providers";
 import { InternalLink } from "@/components/internal-link";
 import {
@@ -57,7 +58,7 @@ export function SignupForm({
               />
             </Suspense>
             {isElectron ? (
-              <div className="text-center text-muted-foreground text-sm">
+              <div className="text-muted-foreground text-center text-sm">
                 New and existing accounts both continue through the browser
                 flow.
               </div>
@@ -75,7 +76,7 @@ export function SignupForm({
           </div>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
+      <div className="text-muted-foreground [&_a]:hover:text-primary text-center text-xs text-balance [&_a]:underline [&_a]:underline-offset-4">
         By clicking continue, you agree to our{" "}
         <InternalLink href="/terms">Terms of Service</InternalLink> and{" "}
         <InternalLink href="/privacy">Privacy Policy</InternalLink>.

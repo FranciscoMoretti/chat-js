@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { inferPackageManager } from "./get-package-manager";
 
 describe("inferPackageManager", () => {
@@ -46,15 +47,15 @@ describe("inferPackageManager", () => {
 });
 
 for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
-	it(`uses a lockfile when the manifest is unusable: ${manifest}`, () => {
-		const cwd = join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
-		mkdirSync(cwd, { recursive: true });
-		try {
-			writeFileSync(join(cwd, "package.json"), manifest);
-			writeFileSync(join(cwd, "pnpm-lock.yaml"), "");
-			expect(inferPackageManager(cwd)).toBe("pnpm");
-		} finally {
-			rmSync(cwd, { recursive: true, force: true });
-		}
-	});
+  it(`uses a lockfile when the manifest is unusable: ${manifest}`, () => {
+    const cwd = join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
+    mkdirSync(cwd, { recursive: true });
+    try {
+      writeFileSync(join(cwd, "package.json"), manifest);
+      writeFileSync(join(cwd, "pnpm-lock.yaml"), "");
+      expect(inferPackageManager(cwd)).toBe("pnpm");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 }

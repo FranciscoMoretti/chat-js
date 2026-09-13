@@ -71,53 +71,55 @@ it("keeps the authenticated MCP client open through execution and closes afterwa
   });
 });
 
-it.each([
-  "discovery",
-  "execution",
-])("closes the client when %s fails", async (phase) => {
-  const failure = new Error("failed");
-  if (phase === "discovery") {
-    mocks.tools.mockRejectedValueOnce(failure);
+it.each(["discovery", "execution"])(
+  "closes the client when %s fails",
+  async (phase) => {
+    const failure = new Error("failed");
+    if (phase === "discovery") {
+      mocks.tools.mockRejectedValueOnce(failure);
+    }
+    await expect(
+      withResearchTools(config, { write: vi.fn() }, () =>
+        Promise.reject(failure)
+      )
+    ).rejects.toBe(failure);
+    expect(mocks.close).toHaveBeenCalledOnce();
   }
-  await expect(
-    withResearchTools(config, { write: vi.fn() }, () => Promise.reject(failure))
-  ).rejects.toBe(failure);
-  expect(mocks.close).toHaveBeenCalledOnce();
-});
+);
 
-it.each([
-  "tavily",
-  "firecrawl",
-] as const)("forwards %s usage and preserves built-in tools over remote names", async (search_api) => {
-  const costAccumulator = { addAPICost: vi.fn() };
-  mocks.tools.mockResolvedValue({
-    webSearch: { inputSchema: z.object({}) },
-    remote,
-    excluded: remote,
-  });
-  await withResearchTools(
-    {
-      ...config,
-      search_api,
-      mcp_config: { ...config.mcp_config, tools: ["webSearch", "remote"] },
-    },
-    { write: vi.fn() },
-    async (tools) => {
-      expect(Object.keys(tools)).toEqual(["webSearch", "remote"]);
-      expect(tools.webSearch).toBe(remote);
-      await remote.execute();
-    },
-    "parent",
-    costAccumulator
-  );
-  expect(mocks.search).toHaveBeenCalledWith(
-    expect.objectContaining({
-      costAccumulator,
-      toolCallIdOverride: "parent",
-      writeTopLevelUpdates: false,
-    })
-  );
-});
+it.each(["tavily", "firecrawl"] as const)(
+  "forwards %s usage and preserves built-in tools over remote names",
+  async (search_api) => {
+    const costAccumulator = { addAPICost: vi.fn() };
+    mocks.tools.mockResolvedValue({
+      webSearch: { inputSchema: z.object({}) },
+      remote,
+      excluded: remote,
+    });
+    await withResearchTools(
+      {
+        ...config,
+        search_api,
+        mcp_config: { ...config.mcp_config, tools: ["webSearch", "remote"] },
+      },
+      { write: vi.fn() },
+      async (tools) => {
+        expect(Object.keys(tools)).toEqual(["webSearch", "remote"]);
+        expect(tools.webSearch).toBe(remote);
+        await remote.execute();
+      },
+      "parent",
+      costAccumulator
+    );
+    expect(mocks.search).toHaveBeenCalledWith(
+      expect.objectContaining({
+        costAccumulator,
+        toolCallIdOverride: "parent",
+        writeTopLevelUpdates: false,
+      })
+    );
+  }
+);
 
 it("closes the MCP client when research is cancelled", async () => {
   const cancellation = new AbortController();

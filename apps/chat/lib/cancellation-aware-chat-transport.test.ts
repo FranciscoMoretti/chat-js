@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+
 import type { ChatTransport, UIMessageChunk } from "ai";
 import { describe, it, vi } from "vitest";
+
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import type { ChatMessage } from "@/lib/ai/types";
+
 import { createAssistantRequestMessageId } from "./assistant-request-id";
 import { createCancellationAwareChatTransport } from "./cancellation-aware-chat-transport";
 import {

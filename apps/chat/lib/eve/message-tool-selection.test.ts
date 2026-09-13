@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 
 it("restores explicit selections and treats historical messages as automatic", () => {

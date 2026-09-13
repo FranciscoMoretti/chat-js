@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState } from "react";
+
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import {
@@ -26,6 +27,7 @@ import { responseModel } from "@/lib/eve/response-model";
 import { restoreEveAttachment } from "@/lib/eve/restore-attachment";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
+
 import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;

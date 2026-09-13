@@ -1,4 +1,5 @@
 import type { EveMessage } from "eve/client";
+
 import { documentExecutionInput } from "./document-execution-contracts";
 
 /** Project the latest execution of this revision from the native transcript. */

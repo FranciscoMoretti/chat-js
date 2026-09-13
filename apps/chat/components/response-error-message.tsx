@@ -1,6 +1,8 @@
 import { RefreshCcwIcon } from "lucide-react";
+
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatActions } from "@/lib/stores/base";
+
 import { Button } from "./ui/button";
 
 export function ResponseErrorMessage() {

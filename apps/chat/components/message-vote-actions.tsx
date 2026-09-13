@@ -1,5 +1,6 @@
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
+
 import { MessageAction } from "./ai-elements/message";
 
 export function MessageVoteActions({
@@ -15,7 +16,7 @@ export function MessageVoteActions({
     <>
       <MessageAction
         aria-pressed={vote ? !vote.isUpvoted : false}
-        className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground pointer-events-auto! h-7 w-7 p-0"
         data-testid="message-downvote"
         disabled={disabled || vote?.isUpvoted === false}
         onClick={() => {
@@ -31,7 +32,7 @@ export function MessageVoteActions({
       </MessageAction>
       <MessageAction
         aria-pressed={vote?.isUpvoted ?? false}
-        className="pointer-events-auto! h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground pointer-events-auto! h-7 w-7 p-0"
         data-testid="message-upvote"
         disabled={disabled || vote?.isUpvoted === true}
         onClick={() => {

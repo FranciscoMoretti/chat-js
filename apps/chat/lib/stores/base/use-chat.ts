@@ -13,6 +13,7 @@ import {
 } from "@chat-js/thread/react";
 import type { ChatInit } from "ai";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+
 import { type StoreState, useChatStoreApi } from "./hooks";
 
 export type {

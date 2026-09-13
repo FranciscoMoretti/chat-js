@@ -13,6 +13,7 @@ import {
   Square,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+
 import {
   buildTreeLayout,
   initialTree,
@@ -46,15 +47,15 @@ export function ThreadInstallCommand() {
   }
 
   return (
-    <div className="mt-8 max-w-3xl border border-border bg-card">
-      <div className="flex items-center justify-between border-border border-b px-3 py-2">
-        <span className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
+    <div className="border-border bg-card mt-8 max-w-3xl border">
+      <div className="border-border flex items-center justify-between border-b px-3 py-2">
+        <span className="text-muted-foreground flex items-center gap-2 px-2 text-sm">
           <Package className="size-3.5" />
           npm package
         </span>
         <button
           aria-label="Copy installation command"
-          className="grid size-8 place-items-center text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
           onClick={copyCommand}
           type="button"
         >
@@ -62,8 +63,8 @@ export function ThreadInstallCommand() {
         </button>
       </div>
       <div className="overflow-x-auto px-4 py-4">
-        <code className="whitespace-nowrap font-mono text-sm">
-          <span className="select-none text-muted-foreground">$ </span>
+        <code className="font-mono text-sm whitespace-nowrap">
+          <span className="text-muted-foreground select-none">$ </span>
           {INSTALL_COMMAND}
         </code>
       </div>
@@ -92,10 +93,10 @@ function Conversation({
 }) {
   return (
     <section className="flex h-[43rem] min-w-0 flex-col">
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-5 py-3">
+      <header className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
         <div>
-          <p className="font-medium text-sm">Active conversation</p>
-          <p className="font-mono text-[11px] text-muted-foreground">
+          <p className="text-sm font-medium">Active conversation</p>
+          <p className="text-muted-foreground font-mono text-[11px]">
             messages = tree.getPath(cursorId)
           </p>
         </div>
@@ -131,8 +132,8 @@ function Conversation({
             <article
               className={
                 isUser
-                  ? "group ml-auto max-w-[82%] bg-foreground px-4 py-3 text-background"
-                  : "group max-w-[90%] border-foreground/20 border-l-2 px-4 py-1"
+                  ? "group bg-foreground text-background ml-auto max-w-[82%] px-4 py-3"
+                  : "group border-foreground/20 max-w-[90%] border-l-2 px-4 py-1"
               }
               key={message.id}
             >
@@ -140,12 +141,12 @@ function Conversation({
                 <span>{message.role}</span>
                 <span className="font-mono normal-case">{message.id}</span>
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-6">
+              <p className="text-sm leading-6 whitespace-pre-wrap">
                 {getMessageText(message) || "Streaming..."}
               </p>
-              <div className="mt-2 flex min-h-7 items-center gap-1 opacity-60 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+              <div className="mt-2 flex min-h-7 items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                 <button
-                  className="inline-flex h-7 items-center gap-1.5 px-1 text-[11px] hover:bg-background/10 disabled:opacity-30"
+                  className="hover:bg-background/10 inline-flex h-7 items-center gap-1.5 px-1 text-[11px] disabled:opacity-30"
                   disabled={chat.tree.activeRuns.length >= MAX_ACTIVE_RUNS}
                   onClick={async () => {
                     await onBranch(message.id);
@@ -162,7 +163,7 @@ function Conversation({
                     </legend>
                     <button
                       aria-label={`Previous branch for ${message.id}`}
-                      className="grid size-7 place-items-center hover:bg-background/10 disabled:opacity-30"
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === 0}
                       onClick={() => navigateToSibling(siblingIndex - 1)}
                       title="Previous version"
@@ -175,7 +176,7 @@ function Conversation({
                     </span>
                     <button
                       aria-label={`Next branch for ${message.id}`}
-                      className="grid size-7 place-items-center hover:bg-background/10 disabled:opacity-30"
+                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === siblings.length - 1}
                       onClick={() => navigateToSibling(siblingIndex + 1)}
                       title="Next version"
@@ -198,7 +199,7 @@ function Conversation({
           await onSend();
         }}
       >
-        <div className="border border-border focus-within:border-foreground/40">
+        <div className="border-border focus-within:border-foreground/40 border">
           <textarea
             aria-label="Message this branch"
             className="block min-h-16 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none"
@@ -207,13 +208,13 @@ function Conversation({
             rows={2}
             value={draft}
           />
-          <div className="flex items-center justify-between gap-2 border-border border-t p-1.5">
-            <label className="flex h-8 items-center gap-1.5 px-2 text-muted-foreground text-xs">
+          <div className="border-border flex items-center justify-between gap-2 border-t p-1.5">
+            <label className="text-muted-foreground flex h-8 items-center gap-1.5 px-2 text-xs">
               <GitBranch className="size-3.5" />
               <span>Responses</span>
               <select
                 aria-label="Number of responses"
-                className="bg-transparent font-mono text-foreground outline-none"
+                className="text-foreground bg-transparent font-mono outline-none"
                 onChange={(event) =>
                   onResponseCountChange(Number(event.target.value))
                 }
@@ -229,7 +230,7 @@ function Conversation({
             <div className="flex items-center gap-1.5">
               <button
                 aria-label="Stop selected response"
-                className="h-8 px-2 text-muted-foreground text-xs hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground h-8 px-2 text-xs disabled:opacity-30"
                 disabled={
                   chat.status !== "submitted" && chat.status !== "streaming"
                 }
@@ -241,7 +242,7 @@ function Conversation({
               </button>
               <button
                 aria-label="Stop all responses"
-                className="grid size-8 place-items-center text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-30"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center disabled:opacity-30"
                 disabled={chat.tree.activeRuns.length === 0}
                 onClick={() => chat.tree.stopAll()}
                 title="Stop all responses"
@@ -253,7 +254,7 @@ function Conversation({
                 aria-label={`Send message with ${responseCount} ${
                   responseCount === 1 ? "response" : "responses"
                 }`}
-                className="grid size-8 place-items-center bg-primary text-primary-foreground disabled:opacity-40"
+                className="bg-primary text-primary-foreground grid size-8 place-items-center disabled:opacity-40"
                 disabled={
                   !draft.trim() ||
                   chat.tree.activeRuns.length + responseCount > MAX_ACTIVE_RUNS
@@ -268,7 +269,7 @@ function Conversation({
         </div>
         <p
           aria-live="polite"
-          className="min-h-5 pt-1.5 text-red-600 text-xs dark:text-red-400"
+          className="min-h-5 pt-1.5 text-xs text-red-600 dark:text-red-400"
         >
           {playgroundError}
         </p>
@@ -296,7 +297,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
       >
         <svg
           aria-hidden="true"
-          className="absolute inset-0 text-border"
+          className="text-border absolute inset-0"
           height={layout.height}
           width={layout.width}
         >
@@ -345,7 +346,7 @@ function TreeCanvas({ chat }: { chat: PlaygroundChat }) {
               type="button"
             >
               <span className="flex items-center justify-between gap-2">
-                <span className="truncate font-medium text-[10px] uppercase">
+                <span className="truncate text-[10px] font-medium uppercase">
                   {message.role}
                 </span>
                 <span className="shrink-0 font-mono text-[9px] opacity-60">
@@ -470,15 +471,15 @@ export function ThreadPlayground() {
   }
 
   return (
-    <div className="mt-12 overflow-hidden border border-border bg-card shadow-2xl shadow-foreground/5">
-      <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-border border-b px-4 py-3">
+    <div className="border-border bg-card shadow-foreground/5 mt-12 overflow-hidden border shadow-2xl">
+      <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div>
-          <p className="font-medium text-sm">useThread playground</p>
+          <p className="text-sm font-medium">useThread playground</p>
           <p className="text-muted-foreground text-xs">
             Real tree state with simulated local streams
           </p>
         </div>
-        <p className="font-mono text-[10px] text-muted-foreground">
+        <p className="text-muted-foreground font-mono text-[10px]">
           {chat.tree.activeRuns.length} active runs
         </p>
       </div>
@@ -494,16 +495,16 @@ export function ThreadPlayground() {
           playgroundError={playgroundError}
           responseCount={responseCount}
         />
-        <aside className="flex h-[43rem] min-w-0 flex-col border-border border-t bg-muted/15 lg:border-t-0 lg:border-l">
-          <header className="flex min-h-16 items-center justify-between border-border border-b px-5 py-3">
+        <aside className="border-border bg-muted/15 flex h-[43rem] min-w-0 flex-col border-t lg:border-t-0 lg:border-l">
+          <header className="border-border flex min-h-16 items-center justify-between border-b px-5 py-3">
             <div>
-              <p className="font-medium text-sm">Message tree</p>
-              <p className="font-mono text-[11px] text-muted-foreground">
+              <p className="text-sm font-medium">Message tree</p>
+              <p className="text-muted-foreground font-mono text-[11px]">
                 {Object.keys(chat.tree.messagesById).length} nodes ·{" "}
                 {chat.tree.activeRuns.length} active runs
               </p>
             </div>
-            <GitBranch className="size-4 text-muted-foreground" />
+            <GitBranch className="text-muted-foreground size-4" />
           </header>
           <TreeCanvas chat={chat} />
         </aside>

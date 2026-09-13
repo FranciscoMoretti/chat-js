@@ -1,5 +1,6 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
+
 import {
   EveCopyNotReady,
   eveCopyInlineAttachments,
@@ -129,15 +130,18 @@ it.each([
     documents: allocations.documents,
     revisions: new Map<string, string>(),
   },
-])("never falls back to a source resource when an allocation is missing", (mapping) => {
-  expect(() =>
-    rewriteEveCopyResources(
-      { url: sourceUrl, documentId, revisionId },
-      mapping,
-      true
-    )
-  ).toThrow("Missing copied");
-});
+])(
+  "never falls back to a source resource when an allocation is missing",
+  (mapping) => {
+    expect(() =>
+      rewriteEveCopyResources(
+        { url: sourceUrl, documentId, revisionId },
+        mapping,
+        true
+      )
+    ).toThrow("Missing copied");
+  }
+);
 
 it("preserves inline attachments and tool error or denial content without approval receipts", () => {
   const result = prepareEveCopyTranscript(
@@ -508,43 +512,43 @@ it("does not inject destination keys into a foreign URL's query string", () => {
   expect(rewriteEveCopyResources(url, allocations)).toBe(url);
 });
 
-it.each([
-  "not-a-valid-document-id",
-  documentId,
-])("preserves failed document arguments that do not denote copied artifacts: %s", async (id) => {
-  const prepared = prepareEveCopyTranscript(
-    history([
+it.each(["not-a-valid-document-id", documentId])(
+  "preserves failed document arguments that do not denote copied artifacts: %s",
+  async (id) => {
+    const prepared = prepareEveCopyTranscript(
+      history([
+        {
+          id: "answer",
+          role: "assistant",
+          parts: [
+            {
+              type: "dynamic-tool",
+              toolName: "readDocument",
+              toolCallId: "call",
+              state: "output-error",
+              input: { documentId: id },
+              errorText: "Document not found",
+            },
+          ],
+        },
+      ])
+    );
+    expect(prepared.resources.documentIds).toEqual([]);
+    const seed = await materializeEveCopyTranscript(
+      prepared.seed,
       {
-        id: "answer",
-        role: "assistant",
-        parts: [
-          {
-            type: "dynamic-tool",
-            toolName: "readDocument",
-            toolCallId: "call",
-            state: "output-error",
-            input: { documentId: id },
-            errorText: "Document not found",
-          },
-        ],
+        files: new Map(),
+        documents: new Map(),
+        revisions: new Map(),
       },
-    ])
-  );
-  expect(prepared.resources.documentIds).toEqual([]);
-  const seed = await materializeEveCopyTranscript(
-    prepared.seed,
-    {
-      files: new Map(),
-      documents: new Map(),
-      revisions: new Map(),
-    },
-    () => {
-      throw new Error("Unexpected file read");
-    },
-    "https://chatjs.example"
-  );
-  expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
-});
+      () => {
+        throw new Error("Unexpected file read");
+      },
+      "https://chatjs.example"
+    );
+    expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
+  }
+);
 
 it("retains model provenance in copies of copies without carrying private metadata", () => {
   const events = history([

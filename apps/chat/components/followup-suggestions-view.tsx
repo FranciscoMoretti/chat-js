@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,7 @@ export function FollowUpSuggestionsView({
       aria-label="Related questions"
       className={cn("mt-2 mb-2 flex min-w-0 flex-col gap-2", className)}
     >
-      <legend className="font-medium text-muted-foreground text-xs">
+      <legend className="text-muted-foreground text-xs font-medium">
         Related
       </legend>
       <Suggestions className="gap-1.5">
@@ -36,7 +37,7 @@ export function FollowUpSuggestionsView({
             const key = count === 0 ? s : `${s}-${count}`;
             return (
               <Suggestion
-                className="h-7 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground h-7"
                 disabled={disabled}
                 key={key}
                 onClick={onSelect}

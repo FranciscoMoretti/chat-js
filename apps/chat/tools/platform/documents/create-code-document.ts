@@ -1,7 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
+
 import { saveDocument } from "@/lib/db/queries";
 import { generateUUID } from "@/lib/utils";
+
 import { codeGuidelines } from "./code-guidelines";
 import type { DocumentToolContext, DocumentToolResult } from "./types";
 

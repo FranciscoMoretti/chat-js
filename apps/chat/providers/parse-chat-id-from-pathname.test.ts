@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parseChatIdFromPathname } from "./parse-chat-id-from-pathname";
 
 describe("parseChatIdFromPathname", () => {

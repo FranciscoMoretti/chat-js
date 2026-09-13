@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import {
   ContextContainer,
   contextStorage,
@@ -117,113 +118,114 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
   });
 });
 
-test.each([
-  "owner",
-  "stranger",
-])("native harness binds approval to its authorized responder: %s", async (principalId) => {
-  const { jsonSchema } = await import("../../../node_modules/ai/dist/index.js");
-  const { MockLanguageModelV4 } = await import("ai/test");
-  const { appendPendingInputBatch } = await import(
-    "../../../node_modules/eve/dist/src/harness/pending-input-batches.js"
-  );
-  const { createToolLoopHarness } = await import(
-    "../../../node_modules/eve/dist/src/harness/tool-loop.js"
-  );
-  const { ctx } = fixture();
-  const receipts: unknown[] = [];
-  const execute = createToolExecuteWithAuth({
-    scope: "mcp__write",
-    execute: (_input, context) => {
-      receipts.push(context.approval);
-      return "written";
-    },
-  });
-  const tool = {
-    name: "mcp__write",
-    description: "write",
-    inputSchema: jsonSchema({
-      type: "object",
-      properties: { text: { type: "string" } },
-      required: ["text"],
-    }),
-    execute,
-    approval: {
-      request: () => "user-approval" as const,
-      response: ({ responder }: { responder: { principalId: string } }) =>
-        responder.principalId === "owner"
-          ? { status: "allowed" as const }
-          : { status: "rejected" as const, reason: "Owner only" },
-    },
-  };
-  const pending = appendPendingInputBatch({
-    session: {
-      sessionId: "session",
-      continuationToken: "continuation",
-      history: [{ role: "user", content: "Write" }],
-      compaction: { recentWindowSize: 10, threshold: 100_000 },
-      agent: { system: "Test", tools: [], modelReference: { id: "mock" } },
-    },
-    event: batch.event,
-    requests: batch.inputs.map((input) => input.request),
-    responseAuthRequiredRequestIds: ["request"],
-    responseMessages: [
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "tool-call",
-            toolCallId: "call",
-            toolName: "mcp__write",
-            input: { text: "write" },
-          },
-          {
-            type: "tool-approval-request",
-            toolCallId: "call",
-            approvalId: "request",
-          },
-        ],
+test.each(["owner", "stranger"])(
+  "native harness binds approval to its authorized responder: %s",
+  async (principalId) => {
+    const { jsonSchema } =
+      await import("../../../node_modules/ai/dist/index.js");
+    const { MockLanguageModelV4 } = await import("ai/test");
+    const { appendPendingInputBatch } =
+      await import("../../../node_modules/eve/dist/src/harness/pending-input-batches.js");
+    const { createToolLoopHarness } =
+      await import("../../../node_modules/eve/dist/src/harness/tool-loop.js");
+    const { ctx } = fixture();
+    const receipts: unknown[] = [];
+    const execute = createToolExecuteWithAuth({
+      scope: "mcp__write",
+      execute: (_input, context) => {
+        receipts.push(context.approval);
+        return "written";
       },
-    ],
-  });
-  const model = new MockLanguageModelV4({
-    doGenerate: {
-      content: [{ type: "text", text: "Done" }],
-      finishReason: { unified: "stop", raw: "stop" },
-      usage: {
-        inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
-        outputTokens: { total: 1, text: 1, reasoning: 0 },
+    });
+    const tool = {
+      name: "mcp__write",
+      description: "write",
+      inputSchema: jsonSchema({
+        type: "object",
+        properties: { text: { type: "string" } },
+        required: ["text"],
+      }),
+      execute,
+      approval: {
+        request: () => "user-approval" as const,
+        response: ({ responder }: { responder: { principalId: string } }) =>
+          responder.principalId === "owner"
+            ? { status: "allowed" as const }
+            : { status: "rejected" as const, reason: "Owner only" },
       },
-      warnings: [],
-    },
-  });
-  const step = createToolLoopHarness({
-    mode: "conversation",
-    capabilities: { requestInput: true },
-    tools: new Map([[tool.name, tool]]),
-    resolveModel: async () => model,
-  });
-  let result = await contextStorage.run(ctx, () =>
-    step(pending, {
-      attributedInputResponses: [
+    };
+    const pending = appendPendingInputBatch({
+      session: {
+        sessionId: "session",
+        continuationToken: "continuation",
+        history: [{ role: "user", content: "Write" }],
+        compaction: { recentWindowSize: 10, threshold: 100_000 },
+        agent: { system: "Test", tools: [], modelReference: { id: "mock" } },
+      },
+      event: batch.event,
+      requests: batch.inputs.map((input) => input.request),
+      responseAuthRequiredRequestIds: ["request"],
+      responseMessages: [
         {
-          auth: { ...actor, principalId, attributes: {} },
-          response: { requestId: "request", optionId: "approve" },
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolCallId: "call",
+              toolName: "mcp__write",
+              input: { text: "write" },
+            },
+            {
+              type: "tool-approval-request",
+              toolCallId: "call",
+              approvalId: "request",
+            },
+          ],
         },
       ],
-    })
-  );
-  for (
-    let iteration = 0;
-    iteration < 4 && typeof result.next === "function";
-    iteration++
-  ) {
-    const next = result.next;
-    result = await contextStorage.run(ctx, () => next(result.session));
+    });
+    const model = new MockLanguageModelV4({
+      doGenerate: {
+        content: [{ type: "text", text: "Done" }],
+        finishReason: { unified: "stop", raw: "stop" },
+        usage: {
+          inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
+          outputTokens: { total: 1, text: 1, reasoning: 0 },
+        },
+        warnings: [],
+      },
+    });
+    const step = createToolLoopHarness({
+      mode: "conversation",
+      capabilities: { requestInput: true },
+      tools: new Map([[tool.name, tool]]),
+      resolveModel: async () => model,
+    });
+    let result = await contextStorage.run(ctx, () =>
+      step(pending, {
+        attributedInputResponses: [
+          {
+            auth: { ...actor, principalId, attributes: {} },
+            response: { requestId: "request", optionId: "approve" },
+          },
+        ],
+      })
+    );
+    for (
+      let iteration = 0;
+      iteration < 4 && typeof result.next === "function";
+      iteration++
+    ) {
+      const next = result.next;
+      result = await contextStorage.run(ctx, () => next(result.session));
+    }
+    expect(receipts, JSON.stringify(result)).toEqual(
+      principalId === "owner"
+        ? [{ requestId: "request", responder: actor }]
+        : []
+    );
+    if (principalId !== "owner") {
+      expect(model.doGenerateCalls).toHaveLength(0);
+    }
   }
-  expect(receipts, JSON.stringify(result)).toEqual(
-    principalId === "owner" ? [{ requestId: "request", responder: actor }] : []
-  );
-  if (principalId !== "owner") {
-    expect(model.doGenerateCalls).toHaveLength(0);
-  }
-});
+);

@@ -11,6 +11,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
+
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 
@@ -194,11 +195,10 @@ async function applyElectronTemplateTransforms(
     /"name": "@chat-js\/electron"/,
     '"name": "__PROJECT_NAME__-electron"'
   );
-  packageJson = packageJson
-    .replace(
-      /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/,
-      '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"'
-    );
+  packageJson = packageJson.replace(
+    /"url": "https:\/\/github.com\/FranciscoMoretti\/chat-js.git"/,
+    '"url": "https://github.com/__GITHUB_OWNER__/__GITHUB_REPO__.git"'
+  );
   await writeFile(packageJsonPath, packageJson);
 }
 
@@ -278,7 +278,9 @@ async function assertSynced(
   );
 
   if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
-    console.error(`${label}: template drift detected. Run \`bun template:sync\`.`);
+    console.error(
+      `${label}: template drift detected. Run \`bun template:sync\`.`
+    );
     return false;
   }
   console.log(`${label}: template is synced.`);

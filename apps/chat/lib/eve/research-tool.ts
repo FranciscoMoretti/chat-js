@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+
 import { type ModelMessage, wrapLanguageModel } from "ai";
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
+
 import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { config } from "../config";

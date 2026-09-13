@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+
 import { followupContext } from "./followup-context";
 import { messageFollowupSuggestions } from "./followup-suggestions";
 

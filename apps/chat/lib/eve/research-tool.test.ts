@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
+
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
 

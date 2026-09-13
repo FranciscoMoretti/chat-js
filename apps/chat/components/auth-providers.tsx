@@ -4,6 +4,7 @@ import { Github } from "lucide-react";
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

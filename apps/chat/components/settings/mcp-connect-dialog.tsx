@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import {
 import { config } from "@/lib/config";
 import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
+
 import { Favicon } from "../favicon";
 import { getGoogleFaviconUrl } from "../get-google-favicon-url";
 import { getUrlWithoutParams } from "../get-url-without-params";
@@ -69,14 +71,14 @@ export function McpConnectDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+            <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
               {faviconUrl ? (
                 <>
                   <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-                  <Globe className="hidden size-5 text-muted-foreground" />
+                  <Globe className="text-muted-foreground hidden size-5" />
                 </>
               ) : (
-                <Globe className="size-5 text-muted-foreground" />
+                <Globe className="text-muted-foreground size-5" />
               )}
             </div>
             <div className="min-w-0 flex-1 overflow-hidden">
@@ -92,12 +94,12 @@ export function McpConnectDialog({
 
         <div className="space-y-6 py-2">
           <div className="flex gap-4">
-            <Shield className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <Shield className="text-muted-foreground mt-0.5 size-4 shrink-0" />
             <div>
-              <p className="font-medium text-sm">
+              <p className="text-sm font-medium">
                 Permissions always respected
               </p>
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="text-muted-foreground mt-1 text-sm">
                 {config.appName} is strictly limited to permissions you
                 explicitly set. Disable access anytime to revoke permissions.
               </p>
@@ -105,12 +107,12 @@ export function McpConnectDialog({
           </div>
 
           <div className="flex gap-4">
-            <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <Lock className="text-muted-foreground mt-0.5 size-4 shrink-0" />
             <div>
-              <p className="font-medium text-sm">
+              <p className="text-sm font-medium">
                 How {config.appName} uses data
               </p>
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="text-muted-foreground mt-1 text-sm">
                 By default, we do not train on your data. Data from{" "}
                 {connector?.name ?? "this connector"} may be used to provide you
                 relevant and useful information.
@@ -119,12 +121,12 @@ export function McpConnectDialog({
           </div>
 
           <div className="flex gap-4">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <AlertTriangle className="text-muted-foreground mt-0.5 size-4 shrink-0" />
             <div>
-              <p className="font-medium text-sm">
+              <p className="text-sm font-medium">
                 Connectors may introduce risk
               </p>
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Connectors are designed to respect your privacy, but sites may
                 attempt to steal your data.
               </p>
