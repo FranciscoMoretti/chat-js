@@ -15,6 +15,8 @@ import { loadEveModelDefinition } from "./model-selection";
 import { executeEvePlatformOperation } from "./platform-operation";
 import { isEvePlatformTool } from "./platform-result";
 
+const registeredTools: ToolSet = installedTools;
+
 const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
     const gateway = getActiveGateway();
@@ -63,7 +65,7 @@ const eveInstalledToolEnabled = (name: string) =>
 
 export const getEvePlatformTools = (): ToolSet =>
   Object.fromEntries(
-    Object.entries(installedTools).filter(
+    Object.entries(registeredTools).filter(
       ([name]) => isEvePlatformTool(name) && eveInstalledToolEnabled(name)
     )
   );

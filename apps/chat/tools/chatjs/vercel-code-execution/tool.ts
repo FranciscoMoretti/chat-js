@@ -2,6 +2,7 @@ import type { Sandbox } from "@vercel/sandbox";
 import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
 
+import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -9,6 +10,7 @@ import { executeJavaScriptInSandbox } from "./javascript";
 import { executePythonInSandbox } from "./python";
 import {
   cleanupSandbox,
+  codeSandboxCleanupCapability,
   createSandbox,
   getErrorMessage,
   getSandboxRuntime,
@@ -28,8 +30,9 @@ const observeCleanup = async (pending: Promise<void>) => {
   }
 };
 
-export const codeExecution = tool({
-  description: `Sandboxed code execution for Python and JavaScript.
+export const codeExecution = withCodeSandboxCleanup(
+  tool({
+    description: `Sandboxed code execution for Python and JavaScript.
 
 Use for:
 - Execute Python for calculations, data analysis, and visualisations
@@ -70,81 +73,83 @@ Output rules:
 - Python values: assign 'result' or 'results', or print explicitly
 - JavaScript values: assign 'result' or 'results', return a value, or print explicitly
 - Don't rely on implicit REPL last-expression output`,
-  execute: async (
-    {
-      code,
-      title,
-      language,
-    }: {
-      code: string;
-      title: string;
-      language: SupportedExecutionLanguage;
-    },
-    { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ) => {
-    const { costAccumulator, sandboxOwnership } = context ?? {};
-    const log = createModuleLogger("code-execution");
-    const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const runtime = getSandboxRuntime(language);
+    execute: async (
+      {
+        code,
+        title,
+        language,
+      }: {
+        code: string;
+        title: string;
+        language: SupportedExecutionLanguage;
+      },
+      { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
+    ) => {
+      const { costAccumulator, sandboxOwnership } = context ?? {};
+      const log = createModuleLogger("code-execution");
+      const requestId = `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const runtime = getSandboxRuntime(language);
 
-    let sandbox: Sandbox | undefined;
-    let cleanup: Promise<void> | undefined;
-    const cleanupOwnedSandbox = async () => {
-      await cleanupSandbox(sandbox, log, requestId);
-      if (sandbox) {
-        await sandboxOwnership?.release();
-      }
-    };
-    const stop = () => {
-      if (!cleanup) {
-        cleanup = cleanupOwnedSandbox();
-        void observeCleanup(cleanup);
-      }
-    };
-
-    try {
-      abortSignal?.throwIfAborted();
-      log.info({ language, requestId, runtime, title }, "creating sandbox");
-      const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
-      const name = auth
-        ? await sandboxOwnership?.reserve(auth, abortSignal)
-        : undefined;
-      sandbox = await createSandbox(runtime, abortSignal, name, auth);
-      await sandboxOwnership?.created(sandbox.name);
-      abortSignal?.addEventListener("abort", stop, { once: true });
-      abortSignal?.throwIfAborted();
-      log.debug({ requestId }, "sandbox created");
-
-      log.info({ language, requestId, title }, "executing code");
-      const result =
-        language === "javascript"
-          ? await executeJavaScriptInSandbox({
-              code,
-              log,
-              requestId,
-              sandbox,
-            })
-          : await executePythonInSandbox({
-              code,
-              log,
-              requestId,
-              sandbox,
-            });
-
-      costAccumulator?.addAPICost("codeExecution", COST_CENTS);
-
-      return result;
-    } catch (error) {
-      log.error({ error, language, requestId }, "code execution failed");
-      return {
-        chart: "",
-        message: `Sandbox execution failed: ${getErrorMessage(error)}`,
+      let sandbox: Sandbox | undefined;
+      let cleanup: Promise<void> | undefined;
+      const cleanupOwnedSandbox = async () => {
+        await cleanupSandbox(sandbox, log, requestId);
+        if (sandbox) {
+          await sandboxOwnership?.release();
+        }
       };
-    } finally {
-      abortSignal?.removeEventListener("abort", stop);
-      stop();
-      await cleanup;
-    }
-  },
-  inputSchema: codeExecutionInput,
-});
+      const stop = () => {
+        if (!cleanup) {
+          cleanup = cleanupOwnedSandbox();
+          void observeCleanup(cleanup);
+        }
+      };
+
+      try {
+        abortSignal?.throwIfAborted();
+        log.info({ language, requestId, runtime, title }, "creating sandbox");
+        const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
+        const name = auth
+          ? await sandboxOwnership?.reserve(auth, abortSignal)
+          : undefined;
+        sandbox = await createSandbox(runtime, abortSignal, name, auth);
+        await sandboxOwnership?.created(sandbox.name);
+        abortSignal?.addEventListener("abort", stop, { once: true });
+        abortSignal?.throwIfAborted();
+        log.debug({ requestId }, "sandbox created");
+
+        log.info({ language, requestId, title }, "executing code");
+        const result =
+          language === "javascript"
+            ? await executeJavaScriptInSandbox({
+                code,
+                log,
+                requestId,
+                sandbox,
+              })
+            : await executePythonInSandbox({
+                code,
+                log,
+                requestId,
+                sandbox,
+              });
+
+        costAccumulator?.addAPICost("codeExecution", COST_CENTS);
+
+        return result;
+      } catch (error) {
+        log.error({ error, language, requestId }, "code execution failed");
+        return {
+          chart: "",
+          message: `Sandbox execution failed: ${getErrorMessage(error)}`,
+        };
+      } finally {
+        abortSignal?.removeEventListener("abort", stop);
+        stop();
+        await cleanup;
+      }
+    },
+    inputSchema: codeExecutionInput,
+  }),
+  codeSandboxCleanupCapability
+);

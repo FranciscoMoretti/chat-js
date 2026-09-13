@@ -469,6 +469,18 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
   return commands[packageManager];
 };
 
+const removeUnavailableToolTests = async (
+  targetDir: string,
+  installedTools: Awaited<ReturnType<typeof syncTools>>
+): Promise<void> => {
+  if (installedTools.some((tool) => tool.id === "vercel-code-execution")) {
+    return;
+  }
+  const sandboxLifecycleTest = "tests/eve-sandbox-lifecycle.e2e.ts";
+  await preflight(targetDir, [sandboxLifecycleTest]);
+  await rm(path.join(targetDir, sandboxLifecycleTest), { force: true });
+};
+
 const installRegistryItems = async (
   options: CreateOptions,
   packageManager: PackageManager,
@@ -492,6 +504,7 @@ const installRegistryItems = async (
     const installedTools = await syncTools(project.targetDir, {
       expected: setup.expectedTools,
     });
+    await removeUnavailableToolTests(project.targetDir, installedTools);
     await runCommand(packageManager, ["install"], project.targetDir);
     if (!options.fromGit) {
       await runCommand(

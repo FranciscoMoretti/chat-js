@@ -13,6 +13,7 @@ const fixtureModels = models
     ...model,
     apiModelId: model.id,
     input: { image: true, pdf: true, text: true },
+    name: model.id === firstModel ? "First model" : "Second model",
   }));
 const modelContext = {
   allModels: fixtureModels,

@@ -13,7 +13,7 @@ import {
   secondModel,
 } from "./eve-comparison-data.fixture";
 
-const secondModelLabel = /Gemini 2.5 Flash$/u;
+const secondModelLabel = /Second model$/u;
 
 test("multi-model creation retains exact partial operation across navigation and recovery", async ({
   page,
@@ -118,7 +118,7 @@ test("multi-model creation retains exact partial operation across navigation and
   await expect(
     page.getByRole("button", {
       exact: true,
-      name: "Gemini 2.5 Flash Needs retry",
+      name: "Second model Needs retry",
     })
   ).toBeDisabled();
   await page
@@ -136,7 +136,7 @@ test("multi-model creation retains exact partial operation across navigation and
     page.getByText("Selected native session: first-native")
   ).toBeVisible();
   await page
-    .getByRole("button", { exact: true, name: "Gemini 2.5 Flash Needs retry" })
+    .getByRole("button", { exact: true, name: "Second model Needs retry" })
     .click();
   await expect(
     page.getByRole("button", { exact: true, name: "Retry response" })
@@ -188,7 +188,7 @@ test("multi-model creation retains exact partial operation across navigation and
   await page
     .getByRole("button", {
       exact: true,
-      name: "Gemini 2.5 Flash Lite Open response",
+      name: "First model Open response",
     })
     .click();
   await expect(page).toHaveURL(

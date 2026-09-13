@@ -1,7 +1,8 @@
-import { Sandbox } from "@vercel/sandbox";
+import { APIError, Sandbox } from "@vercel/sandbox";
 
+import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
-import type { createModuleLogger } from "@/lib/logger";
+import { createModuleLogger } from "@/lib/logger";
 
 import type { SupportedExecutionLanguage } from "./types";
 
@@ -137,6 +138,46 @@ export const cleanupSandbox = async (
     log.warn({ closeError, requestId }, "failed to close sandbox");
     throw closeError;
   }
+};
+
+const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
+  try {
+    return await Sandbox.get({
+      name,
+      resume: false,
+      signal: AbortSignal.timeout(15_000),
+      ...auth,
+    });
+  } catch (error) {
+    if (error instanceof APIError && error.response.status === 404) {
+      return;
+    }
+    throw error;
+  }
+};
+
+export const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
+  createCleanupSession: () => {
+    const auth = resolveSandboxAuth();
+    const log = createModuleLogger("eve-code-sandbox-cleanup");
+    return {
+      async deleteAndConfirmAbsent(name) {
+        const sandbox = await findSandboxForCleanup(name, auth);
+        if (sandbox) {
+          if (sandbox.name !== name || sandbox.persistent) {
+            throw new Error(
+              "Code sandbox identity or persistence needs reconciliation."
+            );
+          }
+          await cleanupSandbox(sandbox, log, name);
+          if (await findSandboxForCleanup(name, auth)) {
+            throw new Error("Code sandbox remains available after deletion.");
+          }
+        }
+      },
+      provider: auth,
+    };
+  },
 };
 
 export const getErrorMessage = (err: unknown): string =>

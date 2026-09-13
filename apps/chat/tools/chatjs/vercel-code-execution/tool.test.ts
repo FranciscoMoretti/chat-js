@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("./sandbox", () => ({
   cleanupSandbox: mocks.cleanup,
+  codeSandboxCleanupCapability: { createCleanupSession: vi.fn() },
   createSandbox: mocks.create,
   getErrorMessage: (error: Error) => error.message,
   getSandboxRuntime: (language: string) => language,

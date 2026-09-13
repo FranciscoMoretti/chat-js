@@ -5,12 +5,16 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
 
-const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { text: true } },
-  enabled: { enabled: true },
-  resolveModel: vi.fn(),
-  save: vi.fn(),
-}));
+const mocks = await vi.hoisted(async () => {
+  const { gatewayModelDefaults } = await import("../ai/gateway-model-defaults");
+  return {
+    documents: { enabled: true, types: { text: true } },
+    enabled: { enabled: true },
+    modelId: gatewayModelDefaults.workflows.chat,
+    resolveModel: vi.fn(),
+    save: vi.fn(),
+  };
+});
 vi.mock("../config", () => ({
   config: {
     ai: { tools: { deepResearch: mocks.enabled, documents: mocks.documents } },
@@ -32,7 +36,7 @@ vi.mock("../ai/active-gateway", () => ({
     fetchModels: () =>
       Promise.resolve([
         {
-          id: "openai/gpt-4.1",
+          id: mocks.modelId,
           pricing: { input: "0.000001", output: "0.000002" },
         },
       ]),
@@ -91,7 +95,7 @@ it("persists through the owning native call and includes research progress and a
       });
       options.costAccumulator.addAPICost("search", 5);
       options.costAccumulator.addLLMCost(
-        "openai/gpt-4.1",
+        mocks.modelId,
         { inputTokens: 100, outputTokens: 200 },
         "research"
       );
@@ -177,7 +181,7 @@ it("forwards configured reasoning options into the research provider request", a
       await expect(
         generateText({
           maxRetries: 0,
-          model: await options.getLanguageModel("openai/gpt-4.1"),
+          model: await options.getLanguageModel(mocks.modelId),
           prompt: "Research",
         })
       ).rejects.toThrow("provider reached");

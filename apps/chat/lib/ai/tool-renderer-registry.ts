@@ -26,7 +26,7 @@ export type ToolRendererRegistry = {
   [K in InstalledToolType]?: ComponentType<ToolRendererProps<K>>;
 };
 
-export const toolRendererRegistry = ui satisfies ToolRendererRegistry;
+export const toolRendererRegistry: ToolRendererRegistry = ui;
 
 export const isInstalledToolType = (
   type: string

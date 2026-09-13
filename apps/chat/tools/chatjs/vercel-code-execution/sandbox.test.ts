@@ -1,4 +1,4 @@
-import { Sandbox } from "@vercel/sandbox";
+import { APIError, Sandbox } from "@vercel/sandbox";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const envMock: {
@@ -198,4 +198,74 @@ it("does not report successful cleanup until deletion has completed", async () =
   expect(log.info).not.toHaveBeenCalled();
   gate.reject(new Error("delete unavailable"));
   await rejected;
+});
+
+describe("codeSandboxCleanupCapability", () => {
+  it("deletes an exact disposable sandbox and confirms provider absence", async () => {
+    Object.assign(envMock, {
+      VERCEL_PROJECT_ID: "project",
+      VERCEL_TEAM_ID: "team",
+      VERCEL_TOKEN: "opaque",
+    });
+    const stop = vi.fn(() => Promise.resolve());
+    const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+    const sandbox = Object.create(Sandbox.prototype, {
+      delete: { value: remove },
+      name: { value: "owned" },
+      persistent: { value: false },
+      stop: { value: stop },
+    }) as Sandbox;
+    const get = vi
+      .spyOn(Sandbox, "get")
+      .mockResolvedValueOnce(sandbox)
+      .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
+    try {
+      const { codeSandboxCleanupCapability } = await import("./sandbox");
+      const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+      expect(cleanup.provider).toMatchObject({
+        projectId: "project",
+        teamId: "team",
+      });
+      await cleanup.deleteAndConfirmAbsent("owned");
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(get).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "owned", resume: false })
+      );
+      expect(stop).toHaveBeenCalledOnce();
+      expect(remove).toHaveBeenCalledOnce();
+    } finally {
+      get.mockRestore();
+    }
+  });
+
+  it.each([
+    { name: "foreign", persistent: false },
+    { name: "owned", persistent: true },
+  ])("refuses unsafe sandbox identity %#", async (identity) => {
+    Object.assign(envMock, {
+      VERCEL_PROJECT_ID: "project",
+      VERCEL_TEAM_ID: "team",
+      VERCEL_TOKEN: "opaque",
+    });
+    const stop = vi.fn(() => Promise.resolve());
+    const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+    const sandbox = Object.create(Sandbox.prototype, {
+      delete: { value: remove },
+      name: { value: identity.name },
+      persistent: { value: identity.persistent },
+      stop: { value: stop },
+    }) as Sandbox;
+    const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
+    try {
+      const { codeSandboxCleanupCapability } = await import("./sandbox");
+      const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+      await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
+        "identity or persistence"
+      );
+      expect(stop).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
+    } finally {
+      get.mockRestore();
+    }
+  });
 });
