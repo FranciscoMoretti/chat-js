@@ -1,22 +1,21 @@
+import {
+  ContextContainer,
+  contextStorage,
+} from "@eve-test/dist/src/context/container.js";
+import { SessionKey } from "@eve-test/dist/src/context/keys.js";
+import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
+import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
+import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
+import {
+  getToolApprovalReceipt,
+  prepareToolApprovalReceipts,
+} from "@eve-test/eve-patched-dist-src-context-tool-approval-receipts.js";
 /* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { expect, test } from "vitest";
-
-import {
-  ContextContainer,
-  contextStorage,
-} from "../../../node_modules/eve/dist/src/context/container.js";
-import { SessionKey } from "../../../node_modules/eve/dist/src/context/keys.js";
-import { createToolExecuteWithAuth } from "../../../node_modules/eve/dist/src/execution/tool-auth.js";
-import { settleDirectApprovalResponse } from "../../../node_modules/eve/dist/src/harness/approval-candidates.js";
-import type { ResolvedInputBatch } from "../../../node_modules/eve/dist/src/harness/input-request-resolution.js";
-import {
-  getToolApprovalReceipt,
-  prepareToolApprovalReceipts,
-} from "../../../node_modules/eve/eve-patched-dist-src-context-tool-approval-receipts.js";
 
 const actor = {
   authenticator: "test",
@@ -126,13 +125,12 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
 test.each(["owner", "stranger"])(
   "native harness binds approval to its authorized responder: %s",
   async (principalId) => {
-    const { jsonSchema } =
-      await import("../../../node_modules/ai/dist/index.js");
+    const { jsonSchema } = await import("ai");
     const { MockLanguageModelV4 } = await import("ai/test");
     const { appendPendingInputBatch } =
-      await import("../../../node_modules/eve/dist/src/harness/pending-input-batches.js");
+      await import("@eve-test/dist/src/harness/pending-input-batches.js");
     const { createToolLoopHarness } =
-      await import("../../../node_modules/eve/dist/src/harness/tool-loop.js");
+      await import("@eve-test/dist/src/harness/tool-loop.js");
     const { ctx } = fixture();
     const receipts: unknown[] = [];
     const execute = createToolExecuteWithAuth({

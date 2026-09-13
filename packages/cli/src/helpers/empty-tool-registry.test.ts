@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
+import { existsSync } from "node:fs";
 import { mkdtemp, rm, symlink } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
@@ -13,8 +15,18 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
   );
   try {
     await scaffoldFromTemplate(destination);
+    const chatApp = nodePath.resolve(import.meta.dir, "../../../../apps/chat");
+    const dependencyPaths = createRequire(
+      nodePath.join(chatApp, "package.json")
+    ).resolve.paths("react");
+    const nodeModules = dependencyPaths?.find((candidate) =>
+      existsSync(nodePath.join(candidate, "react", "package.json"))
+    );
+    if (!nodeModules) {
+      throw new Error("Could not locate the ChatJS app dependencies.");
+    }
     await symlink(
-      nodePath.resolve(import.meta.dir, "../../../../node_modules"),
+      nodeModules,
       nodePath.join(destination, "node_modules"),
       "dir"
     );

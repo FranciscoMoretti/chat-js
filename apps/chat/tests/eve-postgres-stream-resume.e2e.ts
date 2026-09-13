@@ -1,3 +1,7 @@
+import { Schema } from "@world-postgres-test/dist/drizzle/index.js";
+import { createStreamer } from "@world-postgres-test/dist/streamer.js";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
@@ -5,10 +9,6 @@ import { Pool } from "pg";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
-import { Schema } from "../../../node_modules/@workflow/world-postgres/dist/drizzle/index.js";
-import { createStreamer } from "../../../node_modules/@workflow/world-postgres/dist/streamer.js";
-import { eq } from "../../../node_modules/drizzle-orm/index.js";
-import { drizzle } from "../../../node_modules/drizzle-orm/node-postgres/index.js";
 import { readEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";

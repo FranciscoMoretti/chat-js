@@ -7,6 +7,7 @@ import type { PackageManager } from "../types";
 import { runCommand } from "../utils/run-command";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
+import { resolvePackageDirectory } from "./resolve-package-directory";
 import { vendorPatchedPackage } from "./vendor-patched-package";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
@@ -221,23 +222,27 @@ const applyChatTemplateSourceTransforms = async (
   });
   await vendorPatchedPackage({
     destination,
-    packageDir: join(getRepoRoot(), "node_modules", "eve"),
+    packageDir: await resolvePackageDirectory(
+      "eve",
+      join(getRepoRoot(), "apps", "chat")
+    ),
     packageName: "eve",
     patchPath: join(getRepoRoot(), "patches", "eve@0.52.2.patch"),
   });
   await vendorPatchedPackage({
     destination,
-    packageDir: join(getRepoRoot(), "node_modules", "@ai-sdk", "mcp"),
+    packageDir: await resolvePackageDirectory(
+      "@ai-sdk/mcp",
+      join(getRepoRoot(), "apps", "chat")
+    ),
     packageName: "@ai-sdk/mcp",
     patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.45.patch"),
   });
   await vendorPatchedPackage({
     destination,
-    packageDir: join(
-      getRepoRoot(),
-      "node_modules",
-      "@workflow",
-      "world-postgres"
+    packageDir: await resolvePackageDirectory(
+      "@workflow/world-postgres",
+      join(getRepoRoot(), "apps", "chat")
     ),
     packageName: "@workflow/world-postgres",
     patchPath: join(

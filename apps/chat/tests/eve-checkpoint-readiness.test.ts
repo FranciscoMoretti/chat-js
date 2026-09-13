@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 const eveRoot = fileURLToPath(
-  new URL("../../../node_modules/eve/", import.meta.url)
+  new URL("./", import.meta.resolve("eve/package.json"))
 );
 it("installed native reader distinguishes missing, ready, malformed, and corrupt checkpoints", () => {
   const result = execFileSync(

@@ -1,13 +1,13 @@
-import { expect, it, vi } from "vitest";
-
 import {
   ContextContainer,
   contextStorage,
-} from "../../../../node_modules/eve/dist/src/context/container.js";
+} from "@eve-test/dist/src/context/container.js";
 import {
   deserializeContext,
   serializeContext,
-} from "../../../../node_modules/eve/dist/src/context/serialize.js";
+} from "@eve-test/dist/src/context/serialize.js";
+import { expect, it, vi } from "vitest";
+
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
 import { eveCreationContentHash } from "./creation-content-hash";

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import rootLintBaseline from "../oxlint-baseline.json";
+import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 import { collectSnapshot } from "./sync-template-snapshot";
@@ -174,19 +175,22 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 
   await vendorPatchedPackage({
     destination,
-    packageDir: join(rootDir, "node_modules", "eve"),
+    packageDir: await resolvePackageDirectory("eve", sourceDir),
     packageName: "eve",
     patchPath: join(rootDir, "patches", "eve@0.52.2.patch"),
   });
   await vendorPatchedPackage({
     destination,
-    packageDir: join(rootDir, "node_modules", "@ai-sdk", "mcp"),
+    packageDir: await resolvePackageDirectory("@ai-sdk/mcp", sourceDir),
     packageName: "@ai-sdk/mcp",
     patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.45.patch"),
   });
   await vendorPatchedPackage({
     destination,
-    packageDir: join(rootDir, "node_modules", "@workflow", "world-postgres"),
+    packageDir: await resolvePackageDirectory(
+      "@workflow/world-postgres",
+      sourceDir
+    ),
     packageName: "@workflow/world-postgres",
     patchPath: join(
       rootDir,
