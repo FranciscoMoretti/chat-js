@@ -52,6 +52,7 @@ const ELECTRON_EXCLUDED_FILES = new Set([
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "better-sqlite3",
+  "cbor-extract",
   "electron",
   "electron-winstaller",
   "esbuild",

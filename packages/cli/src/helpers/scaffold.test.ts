@@ -325,6 +325,7 @@ describe("scaffoldFromTemplate", () => {
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
     expect(workspaceConfig).toContain("better-sqlite3: true");
+    expect(workspaceConfig).toContain("cbor-extract: true");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
     expect(workspaceConfig).toContain("esbuild: true");
