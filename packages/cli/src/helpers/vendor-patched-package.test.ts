@@ -46,58 +46,71 @@ it("refuses to distribute a stale installed runtime", async () => {
   }
 });
 
-it("ships a patched scoped package under an explicit safe tarball name", async () => {
-  const root = await mkdtemp(nodePath.join(tmpdir(), "scoped-package-test-"));
-  try {
-    const destination = nodePath.join(root, "app");
-    const packageDir = nodePath.join(root, "mcp");
-    const patchPath = nodePath.join(root, "mcp.patch");
-    await mkdir(nodePath.join(packageDir, "dist"), { recursive: true });
-    await mkdir(destination);
-    await writeFile(
-      nodePath.join(destination, "package.json"),
-      JSON.stringify({ dependencies: { "@ai-sdk/mcp": "2.0.45" } })
-    );
-    await writeFile(
-      nodePath.join(packageDir, "package.json"),
-      JSON.stringify({
-        files: ["dist"],
-        name: "@ai-sdk/mcp",
-        version: "2.0.45",
-      })
-    );
-    await writeFile(nodePath.join(packageDir, "dist", "index.js"), "patched\n");
-    await writeFile(
-      patchPath,
-      "diff --git a/dist/index.js b/dist/index.js\n--- a/dist/index.js\n+++ b/dist/index.js\n@@ -1 +1 @@\n-original\n+patched\n"
-    );
-    await vendorPatchedPackage({
-      destination,
-      packageDir,
-      packageName: "@ai-sdk/mcp",
-      patchPath,
-    });
-    const manifest = JSON.parse(
-      await readFile(nodePath.join(destination, "package.json"), "utf-8")
-    );
-    expect(manifest.dependencies["@ai-sdk/mcp"]).toBe(
-      "file:vendor/ai-sdk-mcp-2.0.45.tgz"
-    );
-    const archive = nodePath.join(
-      destination,
-      "vendor",
-      "ai-sdk-mcp-2.0.45.tgz"
-    );
-    const metadata = execFileSync("tar", [
-      "-xOf",
-      archive,
-      "package/package.json",
-    ]);
-    expect(JSON.parse(metadata.toString())).toMatchObject({
-      name: "@ai-sdk/mcp",
-      version: "2.0.45",
-    });
-  } finally {
-    await rm(root, { force: true, recursive: true });
+it.each([
+  {
+    archiveName: "ai-sdk-mcp-2.0.45.tgz",
+    name: "@ai-sdk/mcp",
+    version: "2.0.45",
+  },
+  { archiveName: "eve-0.52.2.tgz", name: "eve", version: "0.52.2" },
+])(
+  "ships the maintained $name archive with compatible metadata",
+  async ({ name, version, archiveName }) => {
+    const root = await mkdtemp(nodePath.join(tmpdir(), "scoped-package-test-"));
+    try {
+      const destination = nodePath.join(root, "app");
+      const packageDir = nodePath.join(root, "mcp");
+      const patchPath = nodePath.join(root, "mcp.patch");
+      await mkdir(nodePath.join(packageDir, "dist"), { recursive: true });
+      await mkdir(destination);
+      await writeFile(
+        nodePath.join(destination, "package.json"),
+        JSON.stringify({ dependencies: { [name]: version } })
+      );
+      await writeFile(
+        nodePath.join(packageDir, "package.json"),
+        JSON.stringify({
+          files: ["dist"],
+          name,
+          peerDependencies: name === "eve" ? { microsandbox: "^0.5.0" } : {},
+          version,
+        })
+      );
+      await writeFile(
+        nodePath.join(packageDir, "dist", "index.js"),
+        "patched\n"
+      );
+      await writeFile(
+        patchPath,
+        "diff --git a/dist/index.js b/dist/index.js\n--- a/dist/index.js\n+++ b/dist/index.js\n@@ -1 +1 @@\n-original\n+patched\n"
+      );
+      await vendorPatchedPackage({
+        destination,
+        packageDir,
+        packageName: name,
+        patchPath,
+      });
+      const manifest = JSON.parse(
+        await readFile(nodePath.join(destination, "package.json"), "utf-8")
+      );
+      expect(manifest.dependencies[name]).toBe(`file:vendor/${archiveName}`);
+      const archive = nodePath.join(destination, "vendor", archiveName);
+      const metadata = execFileSync("tar", [
+        "-xOf",
+        archive,
+        "package/package.json",
+      ]);
+      expect(JSON.parse(metadata.toString())).toMatchObject({
+        name,
+        version,
+      });
+      if (name === "eve") {
+        expect(
+          JSON.parse(metadata.toString()).peerDependencies.microsandbox
+        ).toBe("^0.6.18");
+      }
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
   }
-});
+);

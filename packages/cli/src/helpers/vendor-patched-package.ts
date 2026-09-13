@@ -26,6 +26,7 @@ export const vendorPatchedPackage = async (input: {
   ) as {
     files?: string[];
     name: string;
+    peerDependencies?: Record<string, string>;
     version: string;
   };
   if (
@@ -52,6 +53,12 @@ export const vendorPatchedPackage = async (input: {
     });
     if (input.packageName === "eve") {
       installed.files = [...(installed.files ?? []), "*.js", "*.d.ts"];
+      // The maintained sandbox/snapshot integration uses the 0.6 SDK. Correct
+      // the archive metadata so npm can enforce its peer contract normally.
+      installed.peerDependencies = {
+        ...installed.peerDependencies,
+        microsandbox: "^0.6.18",
+      };
     }
     await writeFile(
       nodePath.join(staging, "package.json"),
