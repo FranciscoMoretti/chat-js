@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { canSpend } from "@/lib/db/credits";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
+import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import {
   CreationConflict,
   CreationProjectNotFound,
@@ -77,12 +78,14 @@ export async function createEveConversationOperation(
           { status: 400 }
         );
       }
-      await reconcileEveOwnerUsage(ownerId);
-      if (!(await canSpend(ownerId))) {
-        return Response.json(
-          { error: "Insufficient credits" },
-          { status: 402 }
-        );
+      if (!(await readEveGuestOwner(ownerId))) {
+        await reconcileEveOwnerUsage(ownerId);
+        if (!(await canSpend(ownerId))) {
+          return Response.json(
+            { error: "Insufficient credits" },
+            { status: 402 }
+          );
+        }
       }
     }
   } catch {
