@@ -8,9 +8,11 @@ import {
   readEveGuestCredential,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
+  reserveEveGuestMessages,
 } from "../lib/db/eve-guests";
 import {
   eveGuest,
+  eveGuestMessage,
   eveGuestRate,
   eveUsage,
   session,
@@ -366,4 +368,125 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
   await expect(
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
+});
+
+test("comparison admission rolls back a fresh account when any candidate exceeds quota", async () => {
+  const credential = createEveGuestCredential();
+  const ownerId = eveGuestOwnerId(credential.tokenHash);
+  owners.push(ownerId);
+  const first = request(ownerId);
+  const result = await reserveEveGuestMessages(
+    [first, { ...first, operationId: crypto.randomUUID() }],
+    {
+      tokenHash: credential.tokenHash,
+      messageLimit: 1,
+      expiresAt: new Date(Date.now() + 60_000),
+    }
+  );
+  expect(result).toEqual({ status: "exhausted" });
+  expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual([]);
+  expect(
+    await db
+      .select()
+      .from(eveGuestMessage)
+      .where(eq(eveGuestMessage.ownerId, ownerId))
+  ).toEqual([]);
+  expect(
+    await db
+      .select()
+      .from(eveGuestRate)
+      .where(eq(eveGuestRate.ipHash, first.ipHash))
+  ).toEqual([]);
+});
+
+test("failed mixed replay/new comparison leaves prior admission intact and rolls back new debits", async () => {
+  const row = await guest(2);
+  const first = request(row.ownerId);
+  const accepted = await reserveEveGuestMessage(first);
+  expect(accepted.status).toBe("reserved");
+  const result = await reserveEveGuestMessages([
+    first,
+    { ...first, operationId: crypto.randomUUID() },
+    { ...first, operationId: crypto.randomUUID() },
+  ]);
+  expect(result).toEqual({ status: "exhausted" });
+  expect(await reserveEveGuestMessage(first)).toEqual({
+    ...accepted,
+    status: "replay",
+  });
+  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(1);
+  const entries = await db
+    .select()
+    .from(eveGuestMessage)
+    .where(eq(eveGuestMessage.ownerId, row.ownerId));
+  expect(entries).toHaveLength(1);
+  expect(
+    (
+      await db
+        .select()
+        .from(eveGuestRate)
+        .where(eq(eveGuestRate.ipHash, first.ipHash))
+    ).map((bucket) => bucket.requests)
+  ).toEqual([1, 1]);
+});
+
+test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
+  const row = await guest(2);
+  const first = request(row.ownerId);
+  const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
+  const results = await Promise.all(
+    Array.from({ length: 4 }, () => reserveEveGuestMessages(inputs))
+  );
+  for (const result of results) {
+    expect(result.status).toBe("admitted");
+    if (result.status !== "admitted") {
+      throw new Error("Comparison admission failed.");
+    }
+    expect(result.reservations.map((entry) => entry.operationId)).toEqual(
+      inputs.map((entry) => entry.operationId)
+    );
+  }
+  expect(
+    results.filter(
+      (result) =>
+        result.status === "admitted" &&
+        result.reservations.every((entry) => entry.status === "reserved")
+    )
+  ).toHaveLength(1);
+  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+  expect(
+    (
+      await db
+        .select()
+        .from(eveGuestRate)
+        .where(eq(eveGuestRate.ipHash, first.ipHash))
+    ).map((bucket) => bucket.requests)
+  ).toEqual([2, 2]);
+});
+
+test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
+  const row = await guest(10);
+  const first = { ...request(row.ownerId), requestsPerMinute: 1 };
+  expect(
+    await reserveEveGuestMessages([
+      first,
+      { ...first, operationId: crypto.randomUUID() },
+    ])
+  ).toEqual({ status: "rate-limited" });
+  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(10);
+  expect(
+    await db
+      .select()
+      .from(eveGuestMessage)
+      .where(eq(eveGuestMessage.ownerId, row.ownerId))
+  ).toEqual([]);
+  await expect(reserveEveGuestMessages([first, first])).rejects.toThrow(
+    "unique operations"
+  );
+  await expect(
+    reserveEveGuestMessages([
+      first,
+      { ...first, operationId: first.operationId.toUpperCase() },
+    ])
+  ).rejects.toThrow("unique operations");
 });

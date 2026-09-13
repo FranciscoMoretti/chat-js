@@ -70,10 +70,16 @@ export async function readEveGuestCredential(tokenHash: string) {
   return { status: "active", guest } as const;
 }
 
-/** Reserve before native admission. Ambiguous admission keeps its reservation. */
-export async function reserveEveGuestMessage(
-  input: z.infer<typeof reservation>,
-  bootstrap?: { tokenHash: string; messageLimit: number; expiresAt: Date }
+type GuestBootstrap = {
+  tokenHash: string;
+  messageLimit: number;
+  expiresAt: Date;
+};
+type GuestReservationInput = z.infer<typeof reservation>;
+
+function validateReservation(
+  input: GuestReservationInput,
+  bootstrap?: GuestBootstrap
 ) {
   reservation.parse(input);
   if (bootstrap) {
@@ -87,86 +93,162 @@ export async function reserveEveGuestMessage(
       throw new Error("Invalid guest admission identity or expiry.");
     }
   }
-  return await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
-    );
-    // Serialize first admission even when the same credential arrives from two IPs.
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-owner:${input.ownerId}`}))`
-    );
-    const now = new Date();
-    const admission = await admissionGuest(tx, input, bootstrap, now);
-    if (admission.status !== "ready") {
-      return admission;
+}
+
+/** Reserve before native admission. Ambiguous admission keeps its reservation. */
+export async function reserveEveGuestMessage(
+  input: GuestReservationInput,
+  bootstrap?: GuestBootstrap
+) {
+  validateReservation(input, bootstrap);
+  return await db.transaction((tx) => reserveMessage(tx, input, bootstrap));
+}
+
+type GuestReservationResult = Awaited<ReturnType<typeof reserveMessage>>;
+type GuestReservationFailure = Exclude<
+  GuestReservationResult,
+  { status: "reserved" | "replay" }
+>;
+class GuestBatchRejected extends Error {
+  readonly result: GuestReservationFailure;
+  constructor(result: GuestReservationFailure) {
+    super("Guest batch was not admitted.");
+    this.result = result;
+  }
+}
+
+/** Comparisons admit every candidate or none, including first-guest account creation. */
+export async function reserveEveGuestMessages(
+  inputs: GuestReservationInput[],
+  bootstrap?: GuestBootstrap
+) {
+  const [first] = inputs;
+  if (!first) {
+    throw new Error("Guest admission requires at least one operation.");
+  }
+  const operations = new Set<string>();
+  for (const input of inputs) {
+    validateReservation(input, bootstrap);
+    if (
+      input.ownerId !== first.ownerId ||
+      input.ipHash !== first.ipHash ||
+      input.requestsPerMinute !== first.requestsPerMinute ||
+      input.requestsPerMonth !== first.requestsPerMonth ||
+      operations.has(input.operationId.toLowerCase())
+    ) {
+      throw new Error(
+        "Guest batch must use one owner, address and policy with unique operations."
+      );
     }
-    const { guest } = admission;
-    const identity = and(
-      eq(eveGuestMessage.ownerId, input.ownerId),
-      eq(eveGuestMessage.operationId, input.operationId)
-    );
-    const [existing] = await tx.select().from(eveGuestMessage).where(identity);
-    if (existing && existing.requestHash !== input.requestHash) {
-      return { status: "conflict" } as const;
+    operations.add(input.operationId.toLowerCase());
+  }
+  try {
+    return await db.transaction(async (tx) => {
+      const reservations: Array<{
+        operationId: string;
+        reservationId: string;
+        status: "reserved" | "replay";
+      }> = [];
+      for (const input of inputs) {
+        const result = await reserveMessage(tx, input, bootstrap);
+        if (result.status !== "reserved" && result.status !== "replay") {
+          throw new GuestBatchRejected(result);
+        }
+        reservations.push({ operationId: input.operationId, ...result });
+      }
+      return { status: "admitted", reservations } as const;
+    });
+  } catch (error) {
+    if (error instanceof GuestBatchRejected) {
+      return error.result;
     }
-    if (existing && existing.state !== "released") {
-      return {
-        status: "replay",
-        reservationId: existing.reservationId,
-      } as const;
-    }
-    if (guest.remainingMessages === 0) {
-      return { status: "exhausted" } as const;
-    }
-    const periods = windows(now);
-    if (!(await rateAvailable(tx, input, periods))) {
-      return { status: "rate-limited" } as const;
-    }
-    for (const period of periods) {
-      await tx
-        .insert(eveGuestRate)
-        .values({
-          ipHash: input.ipHash,
-          windowSeconds: period.seconds,
-          startsAt: period.startsAt,
-          requests: 1,
-        })
-        .onConflictDoUpdate({
-          target: [
-            eveGuestRate.ipHash,
-            eveGuestRate.windowSeconds,
-            eveGuestRate.startsAt,
-          ],
-          set: { requests: sql`${eveGuestRate.requests} + 1` },
-        });
-    }
+    throw error;
+  }
+}
+
+async function reserveMessage(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  input: GuestReservationInput,
+  bootstrap?: GuestBootstrap
+) {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
+  );
+  // Serialize first admission even when the same credential arrives from two IPs.
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-owner:${input.ownerId}`}))`
+  );
+  const now = new Date();
+  const admission = await admissionGuest(tx, input, bootstrap, now);
+  if (admission.status !== "ready") {
+    return admission;
+  }
+  const { guest } = admission;
+  const identity = and(
+    eq(eveGuestMessage.ownerId, input.ownerId),
+    eq(eveGuestMessage.operationId, input.operationId)
+  );
+  const [existing] = await tx.select().from(eveGuestMessage).where(identity);
+  if (existing && existing.requestHash !== input.requestHash) {
+    return { status: "conflict" } as const;
+  }
+  if (existing && existing.state !== "released") {
+    return {
+      status: "replay",
+      reservationId: existing.reservationId,
+    } as const;
+  }
+  if (guest.remainingMessages === 0) {
+    return { status: "exhausted" } as const;
+  }
+  const periods = windows(now);
+  if (!(await rateAvailable(tx, input, periods))) {
+    return { status: "rate-limited" } as const;
+  }
+  for (const period of periods) {
     await tx
-      .update(eveGuest)
-      .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
-      .where(eq(eveGuest.ownerId, input.ownerId));
-    const reservationId = randomUUID();
-    await tx
-      .insert(eveGuestMessage)
+      .insert(eveGuestRate)
       .values({
-        ownerId: input.ownerId,
-        operationId: input.operationId,
-        requestHash: input.requestHash,
-        reservationId,
         ipHash: input.ipHash,
-        state: "reserved",
-        reservedAt: now,
+        windowSeconds: period.seconds,
+        startsAt: period.startsAt,
+        requests: 1,
       })
       .onConflictDoUpdate({
-        target: [eveGuestMessage.ownerId, eveGuestMessage.operationId],
-        set: {
-          state: "reserved",
-          reservationId,
-          ipHash: input.ipHash,
-          reservedAt: now,
-        },
+        target: [
+          eveGuestRate.ipHash,
+          eveGuestRate.windowSeconds,
+          eveGuestRate.startsAt,
+        ],
+        set: { requests: sql`${eveGuestRate.requests} + 1` },
       });
-    return { status: "reserved", reservationId } as const;
-  });
+  }
+  await tx
+    .update(eveGuest)
+    .set({ remainingMessages: sql`${eveGuest.remainingMessages} - 1` })
+    .where(eq(eveGuest.ownerId, input.ownerId));
+  const reservationId = randomUUID();
+  await tx
+    .insert(eveGuestMessage)
+    .values({
+      ownerId: input.ownerId,
+      operationId: input.operationId,
+      requestHash: input.requestHash,
+      reservationId,
+      ipHash: input.ipHash,
+      state: "reserved",
+      reservedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [eveGuestMessage.ownerId, eveGuestMessage.operationId],
+      set: {
+        state: "reserved",
+        reservationId,
+        ipHash: input.ipHash,
+        reservedAt: now,
+      },
+    });
+  return { status: "reserved", reservationId } as const;
 }
 
 export async function commitEveGuestMessage(
