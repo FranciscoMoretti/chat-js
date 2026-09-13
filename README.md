@@ -116,6 +116,16 @@ It is an explicit migration; request handlers never install provider tables.
 Normal development starts ChatJS and Eve together with `withEve`; no separate
 worker command is needed. Browsers use authenticated same-origin ChatJS routes.
 
+With Eve enabled and both databases and the worker on loopback addresses, the
+Node development server also cleans up expired guest conversation families.
+The first sweep starts after one minute; later sweeps start one minute after the
+previous sweep finishes. Each sweep attempts at most five families, and failed
+families become eligible for another attempt after five minutes. Cleanup retains
+guest identities, quota history and billing records, and never imports or deletes
+legacy conversations. Remote databases and production do not start this local
+scheduler. The authorized cleanup endpoint reports incomplete work with HTTP 503.
+
+
 Local acceptance covers guest and registered conversations, model comparisons,
 editing/regeneration with version navigation, reload, cancellation, and family
 deletion. Guest generations reserve message quota before native admission;
