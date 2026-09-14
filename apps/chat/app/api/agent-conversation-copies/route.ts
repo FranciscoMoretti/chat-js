@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getEveCreation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { eveCopyInput } from "@/lib/eve/copy-input";
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
 import { sameOrigin } from "@/lib/eve/request-policy";
@@ -43,9 +42,6 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
 };
 
 export const POST = async (request: Request) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { headers, status: 404 });
-  }
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });

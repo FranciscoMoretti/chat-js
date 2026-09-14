@@ -19,39 +19,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useGetChatById, useSetVisibility } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
-
-// Dialog content component that only renders when dialog is open
-const ShareDialogContent = ({
-  chatId,
-  onClose,
-}: {
-  chatId: string;
-  onClose: () => void;
-}) => {
-  const { data: chat } = useGetChatById(chatId);
-  const mutation = useSetVisibility();
-  return (
-    <>
-      {/* oxlint-disable-next-line eslint/no-use-before-define -- The content controller intentionally stays above its presentational view. */}
-      <ShareDialogView
-        chatId={chatId}
-        isPending={mutation.isPending}
-        isPublic={chat?.visibility === "public"}
-        onClose={onClose}
-        setVisibility={async (visibility) => {
-          await mutation.mutateAsync({ chatId, visibility });
-        }}
-      />
-    </>
-  );
-};
 
 export const ShareDialogView = ({
   chatId,
@@ -250,17 +223,15 @@ export const ShareDialogView = ({
 
 // Extracted dialog component that can be controlled externally
 export const ShareDialog = ({
-  chatId,
   open,
   onOpenChange,
   children,
   renderContent,
 }: {
-  chatId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
-  renderContent?: (onClose: () => void) => React.ReactNode;
+  renderContent: (onClose: () => void) => React.ReactNode;
 }) => {
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -270,27 +241,17 @@ export const ShareDialog = ({
     <Dialog onOpenChange={handleDialogOpenChange} open={open}>
       {children}
       <DialogContent className="sm:max-w-md">
-        {open &&
-          (renderContent ? (
-            renderContent(() => onOpenChange(false))
-          ) : (
-            <ShareDialogContent
-              chatId={chatId}
-              onClose={() => onOpenChange(false)}
-            />
-          ))}
+        {open && renderContent(() => onOpenChange(false))}
       </DialogContent>
     </Dialog>
   );
 };
 
 export const ShareButton = ({
-  chatId,
   className,
   renderContent,
 }: {
-  chatId: string;
-  renderContent?: (onClose: () => void) => React.ReactNode;
+  renderContent: (onClose: () => void) => React.ReactNode;
 } & React.ComponentProps<typeof Button>) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
@@ -319,7 +280,6 @@ export const ShareButton = ({
 
   return (
     <ShareDialog
-      chatId={chatId}
       onOpenChange={setOpen}
       open={open}
       renderContent={renderContent}

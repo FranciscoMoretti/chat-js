@@ -1,1 +1,0 @@
-ALTER TABLE "Document" ADD COLUMN "metadata" json;

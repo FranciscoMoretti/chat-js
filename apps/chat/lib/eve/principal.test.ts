@@ -6,7 +6,6 @@ import { EVE_GUEST_COOKIE, resolveEvePrincipal } from "./principal";
 
 const mocks = vi.hoisted(() => ({
   credential: vi.fn(),
-  enabled: true,
   env: { APP_URL: "http://localhost:3790", NODE_ENV: "development" },
   session: vi.fn(),
 }));
@@ -15,7 +14,6 @@ vi.mock("../db/eve-guests", () => ({
   readEveGuestCredential: mocks.credential,
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
-vi.mock("./availability", () => ({ isEveEnabled: () => mocks.enabled }));
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { SESSION_DURATION: 2_147_483_647 },
 }));
@@ -24,7 +22,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.session.mockResolvedValue(null);
   mocks.credential.mockResolvedValue({ status: "missing" });
-  mocks.enabled = true;
   mocks.env.NODE_ENV = "development";
 });
 
@@ -96,7 +93,7 @@ test("expired credentials cannot become pending guests and mismatched bindings f
   });
 });
 
-test("bootstrap rejects cross-origin requests before authentication and remains feature gated", async () => {
+test("bootstrap rejects cross-origin requests before authentication", async () => {
   const rejected = await POST(
     new Request("http://localhost:3790/api/eve-guest", {
       headers: { origin: "https://other.invalid" },
@@ -105,15 +102,6 @@ test("bootstrap rejects cross-origin requests before authentication and remains 
   );
   expect(rejected.status).toBe(403);
   expect(mocks.session).not.toHaveBeenCalled();
-  mocks.enabled = false;
-  const disabled = await POST(
-    new Request("http://localhost:3790/api/eve-guest", {
-      headers: { origin: "http://localhost:3790" },
-      method: "POST",
-    })
-  );
-  expect(disabled.status).toBe(404);
-  expect(disabled.headers.has("set-cookie")).toBe(false);
 });
 
 test("bootstrap keeps its secret in an HttpOnly cookie and does not rotate a valid credential", async () => {

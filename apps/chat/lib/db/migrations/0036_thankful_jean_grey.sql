@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX IF NOT EXISTS "McpConnector_user_name_id_unique" ON "McpConnector" USING btree ("userId","nameId");

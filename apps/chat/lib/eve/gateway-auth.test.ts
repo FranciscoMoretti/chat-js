@@ -18,7 +18,6 @@ vi.mock("../types/anonymous", () => ({
 }));
 vi.mock("../env", () => ({
   env: {
-    EVE_ENABLED: "true",
     EVE_GATEWAY_SECRET: "fixture-secret",
     WORKFLOW_POSTGRES_URL: "postgresql://local",
   },

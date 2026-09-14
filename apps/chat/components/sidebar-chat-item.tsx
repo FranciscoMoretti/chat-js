@@ -18,7 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import type { UIChat } from "@/lib/types/ui-chat";
 
 const PureSidebarChatItem = ({
   chat,
@@ -32,7 +31,12 @@ const PureSidebarChatItem = ({
   showShare = true,
   renderShareContent,
 }: {
-  chat: Pick<UIChat, "id" | "title" | "isPinned" | "projectId">;
+  chat: {
+    id: string;
+    title: string;
+    isPinned: boolean;
+    projectId: string | null;
+  };
   isActive: boolean;
   onDelete?: (chatId: string) => void;
   onMoveProject?: () => void;
@@ -41,7 +45,7 @@ const PureSidebarChatItem = ({
   setOpenMobile: (open: boolean) => void;
   prefetch?: boolean;
   showShare?: boolean;
-  renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
+  renderShareContent: (chatId: string, onClose: () => void) => ReactNode;
 }) => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     chat.projectId
@@ -134,14 +138,9 @@ const PureSidebarChatItem = ({
 
       {shareDialogOpen && (
         <ShareDialog
-          chatId={chat.id}
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
-          renderContent={
-            renderShareContent
-              ? (onClose) => renderShareContent(chat.id, onClose)
-              : undefined
-          }
+          renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}
     </SidebarMenuItem>

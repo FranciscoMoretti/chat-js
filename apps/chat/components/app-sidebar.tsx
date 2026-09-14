@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { EveHistory } from "@/components/eve/eve-history";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
-import { SearchChatsButton } from "@/components/search-chats";
 import { SidebarProjects } from "@/components/sidebar-projects";
 import { SidebarTopRow } from "@/components/sidebar-top-row";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,9 +19,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
-import { isEveEnabled } from "@/lib/eve/availability";
 
-import { AppSidebarHistoryConditional } from "./app-sidebar-history-conditional";
 import { SidebarUserNav } from "./sidebar-user-nav";
 
 const RegisteredEveProjects = async () => {
@@ -46,11 +43,6 @@ export const AppSidebar = () => (
         </div>
 
         <NewChatButton />
-        {!isEveEnabled() && (
-          <SidebarMenuItem>
-            <SearchChatsButton />
-          </SidebarMenuItem>
-        )}
         <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Models">
             <InternalLink href="/settings/models">
@@ -66,16 +58,12 @@ export const AppSidebar = () => (
     <SidebarSeparator />
     <ScrollArea className="relative flex-1 overflow-y-auto">
       <SidebarContent className="max-w-(--sidebar-width) pr-2">
-        {isEveEnabled() ? (
-          <Suspense
-            fallback={<p className="p-3 text-sm">Loading conversations…</p>}
-          >
-            <RegisteredEveProjects />
-            <EveHistory />
-          </Suspense>
-        ) : (
-          <AppSidebarHistoryConditional />
-        )}
+        <Suspense
+          fallback={<p className="p-3 text-sm">Loading conversations…</p>}
+        >
+          <RegisteredEveProjects />
+          <EveHistory />
+        </Suspense>
       </SidebarContent>
     </ScrollArea>
     <SidebarSeparator />

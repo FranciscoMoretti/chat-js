@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 export const GET = async (
@@ -14,9 +13,6 @@ export const GET = async (
     }>;
   }
 ) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { status: 401 });

@@ -7,7 +7,6 @@ import { EveProjectHome } from "@/components/eve/eve-project-home";
 import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
 import { getProjectById } from "@/lib/db/queries";
-import { isEveEnabled } from "@/lib/eve/availability";
 
 const ProjectPageRoute = async ({
   params,
@@ -16,9 +15,6 @@ const ProjectPageRoute = async ({
     projectId: string;
   }>;
 }) => {
-  if (!isEveEnabled()) {
-    return null;
-  }
   const { projectId } = await params;
   if (!z.uuid().safeParse(projectId).success) {
     notFound();

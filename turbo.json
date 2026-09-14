@@ -5,7 +5,6 @@
   },
   "globalEnv": [
     "DATABASE_URL",
-    "EVE_ENABLED",
     "EVE_INTERNAL_ORIGIN",
     "EVE_GATEWAY_SECRET",
     "WORKFLOW_POSTGRES_URL",
@@ -24,7 +23,6 @@
     "OPENAI_COMPATIBLE_API_KEY",
     "OPENAI_API_KEY",
     "CRON_SECRET",
-    "REDIS_URL",
     "TAVILY_API_KEY",
     "EXA_API_KEY",
     "FIRECRAWL_API_KEY",
@@ -39,7 +37,8 @@
     "VERCEL_URL",
     "PLAYWRIGHT",
     "CI_PLAYWRIGHT",
-    "PLAYWRIGHT_TEST_BASE_URL"
+    "PLAYWRIGHT_TEST_BASE_URL",
+    "TRUSTED_CLIENT_IP_HEADER"
   ],
   "tasks": {
     "dev": {
@@ -104,8 +103,6 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
-        "$TURBO_ROOT$/packages/thread/src/**",
-        "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
@@ -127,8 +124,6 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
-        "$TURBO_ROOT$/packages/thread/src/**",
-        "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
@@ -161,7 +156,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
-      "dependsOn": ["^test:types", "@chat-js/thread#test:types"],
+      "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -175,8 +170,6 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
-        "$TURBO_ROOT$/packages/thread/src/**",
-        "$TURBO_ROOT$/packages/thread/package.json",
         "$TURBO_ROOT$/scripts/sync-template.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",

@@ -2,7 +2,7 @@ import type { EveMessage } from "eve/client";
 import { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { ControlledChatComposer } from "../components/chat-composer";
+import { ControlledChatComposer } from "../components/controlled-chat-composer";
 import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";

@@ -7,12 +7,15 @@ The readable source inputs are applied in this order from the EVE repository roo
 1. `eve-session-checkpoints.source.patch` (9,607 lines)
 2. `eve-collector-inventory.source.patch` from `packages/eve`
 3. `eve-approval-receipts.source.patch`
+4. `eve-next-production-server.source.patch`
 
 They are not `patchedDependencies` entries. They document the source that must produce `eve@0.52.2.patch`; only the compiled patch is installed by Bun.
 
 ## Capability ownership
 
 EVE owns reusable runtime primitives: checkpoint capture/read/restore, bounded transcript restoration, named idle checkpoints, validated fork authorization, explicit sandbox snapshot capability, durable metadata/hook-result/compaction events, and approval receipts. These are candidates for upstream proposals.
+
+The Next.js integration also starts the managed local production server while Next evaluates `phase-production-server`. Production routing uses the rewrites persisted during `next build`, so starting the child only inside `rewrites()` leaves `next start` proxying to an unopened stable port.
 
 ChatJS owns permanent product policy: principal-to-session ownership, immutable operation/retry payloads, model and credit choices, document/file manifests, public-copy access, family deletion, external resource inventory, and UI state. An EVE capability does not authorize a ChatJS source, accept an application operation, or prove deletion. The capability matrix and source-test boundaries are in [the maintenance draft](../docs/upstream-drafts/eve-fork-runtime-maintenance.md).
 
@@ -32,6 +35,7 @@ node --version # v24 or newer
 git apply "$fork_root/patches/eve-session-checkpoints.source.patch"
 git -C packages/eve apply "$fork_root/patches/eve-collector-inventory.source.patch"
 git apply "$fork_root/patches/eve-approval-receipts.source.patch"
+git apply "$fork_root/patches/eve-next-production-server.source.patch"
 pnpm install --frozen-lockfile
 pnpm --filter eve build:types
 pnpm --filter eve build:js

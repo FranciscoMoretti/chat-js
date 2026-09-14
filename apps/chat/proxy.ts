@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
-import { isEveEnabled } from "@/lib/eve/availability";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
 
@@ -12,9 +11,7 @@ const isPublicApiRoute = (pathname: string): boolean =>
   // Eve routes enforce their own gateway authentication in the worker.
   pathname.startsWith("/eve/") ||
   pathname.startsWith("/api/auth") ||
-  pathname.startsWith("/api/trpc") ||
-  pathname === "/api/chat" ||
-  pathname.startsWith("/api/chat/");
+  pathname.startsWith("/api/trpc");
 
 const isMetadataRoute = (pathname: string): boolean =>
   pathname === "/sitemap.xml" ||
@@ -23,7 +20,7 @@ const isMetadataRoute = (pathname: string): boolean =>
 
 const isPublicPage = (pathname: string): boolean => {
   // EVE pages resolve registered/guest principals and enforce conversation ownership.
-  if (isEveEnabled() && EVE_CHAT_PAGE.test(pathname)) {
+  if (EVE_CHAT_PAGE.test(pathname)) {
     return true;
   }
   if (pathname === "/") {

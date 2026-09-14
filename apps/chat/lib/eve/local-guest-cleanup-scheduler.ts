@@ -15,7 +15,6 @@ const schedulerGlobal: typeof globalThis & {
 const enabled = () => {
   if (
     env.NODE_ENV !== "development" ||
-    env.EVE_ENABLED !== "true" ||
     !env.EVE_GATEWAY_SECRET ||
     !localDeletionAvailable()
   ) {

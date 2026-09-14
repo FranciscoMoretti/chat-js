@@ -4,7 +4,7 @@
 
 # ChatJS
 
-Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with authentication, 120+ models, streaming, and tools so you can focus on what makes your app unique.
+Stop rebuilding the same AI chat infrastructure. ChatJS gives you an EVE-native foundation with authentication, models, streaming, and tools so you can focus on what makes your app unique.
 
 [**Website**](https://chatjs.dev) · [**Live Demo**](https://demo.chatjs.dev) · [**Documentation**](https://chatjs.dev/docs)
 
@@ -29,7 +29,7 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - **120+ Models**: Claude, GPT, Gemini, Grok via one API
 - **Auth**: GitHub, Google, anonymous. Ready to go.
 - **Attachments**: Images, PDFs, docs. Drag and drop.
-- **Resumable Streams**: Continue generation after page refresh
+- **Native EVE Runtime**: Durable conversations, approvals, and recovery
 - **Branching**: Fork conversations, explore alternatives
 - **Sharing**: Share conversations with public links
 - **Web Search**: Real-time web search integration
@@ -47,13 +47,12 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - [Better Auth](https://www.better-auth.com) - Authentication & authorization
 - [Drizzle ORM](https://orm.drizzle.team) - Type-safe database queries
 - [PostgreSQL](https://www.postgresql.org) - Primary database
-- [Redis](https://redis.io) - Caching & resumable streams
+- [EVE](https://github.com/openai/eve) - Durable conversation runtime
 - [Vercel Blob](https://vercel.com/storage/blob) - Blob storage
 - [Shadcn/UI](https://ui.shadcn.com) - Beautiful, accessible components
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 - [tRPC](https://trpc.io) - End-to-end type-safe APIs
 - [Zod](https://zod.dev) - Schema validation
-- [Zustand](https://zustand.docs.pmnd.rs/) - State management
 - [Motion](https://motion.dev) - Animations
 - [t3-env](https://env.t3.gg) - Environment variables
 - [Pino](https://getpino.io) - Structured Logging
@@ -86,36 +85,13 @@ Ultracite supplies the Oxlint and Oxfmt presets. The `oxlint-baseline.json` file
 
 Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
 
-### Native Eve development flow
+### Native Eve runtime
 
-With `EVE_ENABLED=true` in development, `/` and `/chat/[id]` use `useEveAgent` and a private Eve worker. `/agent` redirects to the normal routes. Eve owns the durable transcript, approvals and execution. ChatJS authenticates requests and stores conversation ownership, creation intent, the Eve session ID, and a usage ledger keyed by durable event ID. The worker uses the selected ChatJS gateway/model. The sidebar lists and searches Eve conversations only. Legacy ChatJS conversations remain untouched and are not shown or imported in this mode. Registered users retain project organization; guests use their own isolated conversation history.
+EVE is the sole ChatJS conversation runtime. It owns the durable transcript, execution state, approvals, checkpoints, and stream recovery. ChatJS owns authenticated access, conversation metadata, projects, sharing, files, documents, and billing evidence around that runtime. Historical ChatJS conversations are not imported.
 
-Use Node 24+ for Eve and Bun for package scripts. Set `EVE_ENABLED=true`, a random `EVE_GATEWAY_SECRET` of at least 32 characters, and isolated local Postgres URLs for `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` in `.env.worktree.local`. Apply ChatJS migrations, initialize the Workflow World, and install the local provider's deletion fences and retirement receipts before starting the app:
+Local EVE development requires Node 24+, Bun, ChatJS and Workflow World Postgres configuration, and the EVE gateway secret specified by the app environment schema. Use isolated local databases while developing or validating lifecycle changes.
 
-```sh
-bunx dotenv -e .env.worktree.local -e .env.local -- bun db:migrate
-bunx dotenv -e .env.worktree.local -e .env.local -- node node_modules/@workflow/world-postgres/bin/setup.js
-bun eve:db:setup:local
-bun dev
-```
-
-The provider setup command is idempotent and refuses remote database URLs. It is an explicit migration; request handlers never install provider tables. Normal development starts ChatJS and Eve together with `withEve`; no separate worker command is needed. Browsers use authenticated same-origin ChatJS routes.
-
-With Eve enabled and both databases and the worker on loopback addresses, the Node development server also cleans up expired guest conversation families. The first sweep starts after one minute; later sweeps start one minute after the previous sweep finishes. Each sweep attempts at most five families, and failed families become eligible for another attempt after five minutes. Cleanup retains guest identities, quota history and billing records, and never imports or deletes legacy conversations. Remote databases and production do not start this local scheduler. The authorized cleanup endpoint reports incomplete work with HTTP 503.
-
-Local acceptance covers guest and registered conversations, model comparisons, editing/regeneration with version navigation, reload, cancellation, and family deletion. Guest generations reserve message quota before native admission; retries reuse operation identities and do not debit quota twice. Incomplete creation or deletion retains recovery state rather than claiming success.
-
-Model costs are recorded by the worker hook and repaired from authoritative session snapshots before new work. Replaying an event does not charge twice; charges round up to cents per turn. Completed usage with an unknown cost blocks new admission until provider evidence is reconciled. Failed-step costs remain unresolved evidence. The positive-credit check permits in-progress overspend; it is not a hard budget reservation. Approval responses and cancellation remain available at zero credits.
-
-Eve is disabled in production even when the flag is set. Production cutover requires review. Full feature parity and lifecycle recovery remain under active validation; the local acceptance checks are not a production-readiness claim. Historical conversation import is intentionally deferred.
-
-Use isolated local databases for acceptance testing. Browser tests use development login or guest credentials and save sanitized captures under `apps/chat/tests/eve-results`. For example, with the app running and valid model credentials, run the guest lifecycle check from the repository root:
-
-```sh
-bunx dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- sh -c 'cd apps/chat && bunx playwright test --config playwright.eve-live.config.ts eve-guest-lifecycle.e2e.ts'
-```
-
-Database contracts use `apps/chat/vitest.eve.config.ts`. Each suite checks its configured database before writing fixtures. Prefer local Postgres and cheap models for repeated acceptance runs.
+The EVE-only runtime does not itself establish production readiness. Provider deletion coverage and guest-hosting readiness remain release gates. See [the migration report](docs/eve-migration-report.md) for the current boundary and historical validation evidence.
 
 ## Releases
 
@@ -136,9 +112,9 @@ Apache-2.0
 </a>
 <br />
 
-### Local Eve runtime
+### Local EVE runtime
 
-With `EVE_ENABLED=true` in `.env.worktree.local`, `bun dev` starts ChatJS and Eve together using `withEve`. Keep the isolated development database configured; this does not enable the production migration. There is no separate Eve process to start for normal development.
+`bun dev` starts the local application with its EVE runtime. Keep its configured databases isolated from shared environments.
 
 For unattended local development on macOS:
 

@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
   after: vi.fn(),
   create: vi.fn(),
-  enabled: vi.fn(),
   get: vi.fn(),
   persistTitle: vi.fn(),
   principal: vi.fn(),
@@ -20,7 +19,6 @@ vi.mock("@/lib/eve/guest-group-admission", () => ({
   admitGuestResponseGroup: mocks.admit,
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
-vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: mocks.enabled }));
 vi.mock("@/lib/eve/response-group", () => ({
   createEveResponseGroup: mocks.create,
 }));
@@ -44,7 +42,6 @@ const request = (origin = "http://localhost:3790") =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.enabled.mockReturnValue(true);
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
@@ -60,14 +57,10 @@ test("authenticates and checks origin before dispatching with server-owned ident
     undefined
   );
 });
-test("unauthenticated or disabled requests cannot create groups", async () => {
+test("unauthenticated requests cannot create groups", async () => {
   mocks.principal.mockResolvedValue(null);
   const resolvedResult3 = await POST(request());
   expect(resolvedResult3.status).toBe(401);
-  mocks.enabled.mockReturnValue(false);
-  const resolvedResult4 = await POST(request());
-  expect(resolvedResult4.status).toBe(404);
-  expect(mocks.create).not.toHaveBeenCalled();
 });
 test("reads only through the authenticated owner's scope and does not cache bindings", async () => {
   const params = Promise.resolve({ id: input.operationId });

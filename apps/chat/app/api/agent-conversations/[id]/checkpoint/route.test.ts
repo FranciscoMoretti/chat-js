@@ -14,7 +14,6 @@ vi.mock("@/lib/eve/principal", () => ({
 }));
 vi.mock("@/lib/db/eve-queries", () => ({ getEveConversation: mocks.source }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
-vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: () => true }));
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.capture }));
 vi.mock("@/lib/eve/checkpoint-readiness", () => ({
   readEveCheckpoint: mocks.read,

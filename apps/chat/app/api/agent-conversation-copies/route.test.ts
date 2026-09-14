@@ -4,7 +4,6 @@ import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
   creation: vi.fn(),
-  enabled: true,
   save: vi.fn(),
   session: vi.fn(),
 }));
@@ -12,9 +11,6 @@ vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock("@/lib/db/eve-queries", () => ({ getEveCreation: mocks.creation }));
 vi.mock("@/lib/eve/save-copy-operation", () => ({
   saveEveCopyOperation: mocks.save,
-}));
-vi.mock("@/lib/eve/availability", () => ({
-  isEveEnabled: () => mocks.enabled,
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 const input = {
@@ -30,15 +26,10 @@ const request = (body: unknown = input, origin = "http://localhost:3790") =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.enabled = true;
   mocks.session.mockResolvedValue({ user: { id: "owner" } });
   mocks.save.mockResolvedValue({ id: input.operationId, sessionId: "native" });
 });
-it("requires login, same origin and the migration flag before copy work", async () => {
-  mocks.enabled = false;
-  const resolvedResult1 = await POST(request());
-  expect(resolvedResult1.status).toBe(404);
-  mocks.enabled = true;
+it("requires login and same origin before copy work", async () => {
   mocks.session.mockResolvedValue(null);
   const resolvedResult2 = await POST(request());
   expect(resolvedResult2.status).toBe(401);

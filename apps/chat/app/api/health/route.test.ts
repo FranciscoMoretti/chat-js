@@ -10,7 +10,6 @@ vi.mock("@/lib/env", () => ({
     NODE_ENV: "development",
   },
 }));
-vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: () => true }));
 
 afterEach(() => {
   vi.unstubAllGlobals();

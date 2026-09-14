@@ -23,7 +23,6 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getBoundEveConversationForSession: mocks.bound,
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
-vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: () => true }));
 vi.mock("@/lib/eve/guest-message-admission", () => ({
   admitGuestMessage: vi.fn(),
   settleGuestMessage: vi.fn(),

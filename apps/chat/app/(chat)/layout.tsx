@@ -10,7 +10,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
@@ -19,7 +18,6 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
 import { auth } from "../../lib/auth";
-import { ChatRuntimeBoundary } from "./chat-runtime-boundary";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
@@ -71,11 +69,6 @@ const ChatLayoutDynamic = async ({
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
     queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
     queryClient.prefetchQuery(trpc.project.list.queryOptions());
-    if (!isEveEnabled()) {
-      queryClient.prefetchQuery(
-        trpc.chat.getAllChats.queryOptions({ projectId: null })
-      );
-    }
   }
 
   return (
@@ -85,9 +78,7 @@ const ChatLayoutDynamic = async ({
       <ChatModelsProvider models={chatModels}>
         <DefaultModelProvider defaultModel={defaultModel}>
           <KeyboardShortcuts />
-          <ChatRuntimeBoundary eveEnabled={isEveEnabled()}>
-            {children}
-          </ChatRuntimeBoundary>
+          {children}
         </DefaultModelProvider>
       </ChatModelsProvider>
     </HydrateClient>
@@ -112,11 +103,7 @@ const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          {isEveEnabled() ? (
-            <EveDeletionProvider>{content}</EveDeletionProvider>
-          ) : (
-            content
-          )}
+          <EveDeletionProvider>{content}</EveDeletionProvider>
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>

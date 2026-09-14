@@ -10,7 +10,6 @@ const REPOSITORY_ONLY_FILES = new Set([
   "evalite.config.ts",
   "playwright.visual.config.ts",
   "lib/ai/eval-agent.ts",
-  "lib/db/backfill-parts.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
@@ -56,19 +55,25 @@ const EXCLUDED_SEGMENTS = new Set([
 ]);
 const EXCLUDED_FILES = new Set([".DS_Store", "bun.lock", "bun.lockb"]);
 
-export const shouldCopyChatAppFile = (relativePath: string): boolean => {
+const shouldCopyAppFile = (relativePath: string): boolean => {
   const segments = relativePath.split(path.sep);
-  return !(
-    isRepositoryOnlyFile(relativePath) ||
-    segments.some(
-      (segment) =>
-        EXCLUDED_SEGMENTS.has(segment) ||
-        EXCLUDED_FILES.has(segment) ||
-        segment.endsWith(".tsbuildinfo") ||
-        (segment.startsWith(".env") && segment !== ".env.example")
-    )
+  return !segments.some(
+    (segment) =>
+      EXCLUDED_SEGMENTS.has(segment) ||
+      EXCLUDED_FILES.has(segment) ||
+      segment.endsWith(".tsbuildinfo") ||
+      (segment.startsWith(".env") && segment !== ".env.example")
   );
 };
+
+export const shouldCopyChatAppFile = (relativePath: string): boolean =>
+  shouldCopyAppFile(relativePath) && !isRepositoryOnlyFile(relativePath);
+
+export const shouldCopyElectronFile = (relativePath: string): boolean =>
+  shouldCopyAppFile(relativePath) &&
+  !relativePath
+    .split(path.sep)
+    .some((segment) => segment === "release" || segment === "branding.json");
 
 // Remove the reference-app project while retaining the starter behavior suites.
 const REFERENCE_VISUAL_PROJECT =
@@ -86,7 +91,7 @@ export const normalizeScaffoldContent = async (destination: string) => {
   ]) {
     delete manifest.devDependencies?.[dependency];
   }
-  for (const script of ["eval:dev", "eval:serve", "db:backfill-parts"]) {
+  for (const script of ["eval:dev", "eval:serve"]) {
     delete manifest.scripts?.[script];
   }
   delete manifest.overrides?.evalite;

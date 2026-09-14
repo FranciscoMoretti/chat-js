@@ -4,12 +4,12 @@ import { build } from "bun";
 const imageImport = /^next\/image$/u;
 const navigationImport = /^next\/navigation$/u;
 const replacedModule =
-  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link|connectors-dropdown)\.tsx$/u;
+  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|connectors-dropdown)\.tsx$/u;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
 const replacements = {
   "chat-models-provider.tsx": "useChatModels",
-  "chat-welcome.tsx": "ChatWelcomeView",
+  "chat-welcome-view.tsx": "ChatWelcomeView",
   "connectors-dropdown.tsx": "ConnectorsDropdown",
   "eve-artifact-layout.tsx": "EveArtifactLayout",
   "eve-conversation.tsx": "EveConversation",

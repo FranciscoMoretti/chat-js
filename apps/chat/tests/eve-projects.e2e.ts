@@ -17,7 +17,6 @@ import {
 } from "../lib/db/eve-queries";
 import { assignEveConversationProject } from "../lib/db/queries";
 import {
-  chat,
   eveConversation,
   eveChatProject,
   project,
@@ -32,7 +31,6 @@ const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
 const ownProject = crypto.randomUUID();
 const foreignProject = crypto.randomUUID();
-const legacyId = crypto.randomUUID();
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -54,18 +52,10 @@ await db.insert(project).values([
     userId: stranger,
   },
 ]);
-await db.insert(chat).values({
-  createdAt: new Date(),
-  id: legacyId,
-  projectId: ownProject,
-  title: "Legacy fixture",
-  userId: owner,
-});
 afterAll(async () => {
   await db
     .delete(eveConversation)
     .where(inArray(eveConversation.ownerId, [owner, stranger]));
-  await db.delete(chat).where(eq(chat.id, legacyId));
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
@@ -78,7 +68,7 @@ async function conversation() {
   );
 }
 
-test("assignment, filtered history and removal retain native identity and exclude legacy conversations", async () => {
+test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
   expect(await assignEveConversationProject(owner, row.id, ownProject)).toEqual(
     { conversationId: row.id, projectId: ownProject }
@@ -96,11 +86,6 @@ test("assignment, filtered history and removal retain native identity and exclud
     (
       await listEveConversations(owner, { projectId: null, search: "" })
     ).items.some((item) => item.conversationId === row.id)
-  ).toBe(false);
-  expect(
-    (await listEveConversations(owner)).items.some(
-      (item) => item.id === legacyId
-    )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
@@ -167,12 +152,8 @@ test("deleting a project detaches its Eve conversations without erasing their se
   ).toBeNull();
 });
 
-test("conversation deletion fences assignment and removes metadata without touching legacy rows or the project", async () => {
+test("conversation deletion fences assignment and removes metadata without touching the project", async () => {
   const row = await conversation();
-  const [legacyBefore] = await db
-    .select()
-    .from(chat)
-    .where(eq(chat.id, legacyId));
   await assignEveConversationProject(owner, row.id, ownProject);
   await beginEveConversationDeletion(owner, row.id);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
@@ -195,9 +176,6 @@ test("conversation deletion fences assignment and removes metadata without touch
         )
       )
   ).toEqual([]);
-  expect(await db.select().from(chat).where(eq(chat.id, legacyId))).toEqual([
-    legacyBefore,
-  ]);
   expect(
     await db.select().from(project).where(eq(project.id, ownProject))
   ).toHaveLength(1);

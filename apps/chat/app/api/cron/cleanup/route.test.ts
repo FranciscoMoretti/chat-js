@@ -8,26 +8,12 @@ const mocks = vi.hoisted(() => ({
   cleanupGuests: vi.fn(),
   env: {
     CRON_SECRET: "fixture-secret" as string | undefined,
-    EVE_ENABLED: "false",
+
     WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
   },
-  list: vi.fn(),
-  references: vi.fn(),
-  remove: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
   env: mocks.env,
-}));
-vi.mock("@/lib/config", () => ({
-  config: {
-    ai: { tools: { image: { enabled: true } } },
-    features: { attachments: true },
-  },
-}));
-vi.mock("@/lib/db/queries", () => ({ getAllAttachmentUrls: mocks.references }));
-vi.mock("@/lib/file-storage", () => ({
-  deleteFilesByUrls: mocks.remove,
-  listFiles: mocks.list,
 }));
 vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: mocks.cleanupEve,
@@ -58,15 +44,13 @@ test.each([undefined, "", "   "])(
       })
     );
     expect(response.status).toBe(401);
-    expect(mocks.references).not.toHaveBeenCalled();
-    expect(mocks.list).not.toHaveBeenCalled();
-    expect(mocks.remove).not.toHaveBeenCalled();
+
     expect(mocks.cleanupEve).not.toHaveBeenCalled();
     expect(mocks.cleanupGuests).not.toHaveBeenCalled();
   }
 );
 
-test("cleanup uses EVE ownership even while new EVE admission is disabled", async () => {
+test("cleanup uses EVE ownership", async () => {
   const response = await GET(
     new NextRequest("http://localhost/api/cron/cleanup", {
       headers: { authorization: "Bearer fixture-secret" },
@@ -81,9 +65,7 @@ test("cleanup uses EVE ownership even while new EVE admission is disabled", asyn
       },
     },
   });
-  expect(mocks.references).not.toHaveBeenCalled();
-  expect(mocks.list).not.toHaveBeenCalled();
-  expect(mocks.remove).not.toHaveBeenCalled();
+
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
   expect(mocks.cleanupEve.mock.calls[0]?.[0].getTime()).toBeLessThanOrEqual(
     Date.now() - 4 * 60 * 60 * 1000
@@ -95,9 +77,6 @@ test("cleanup still requires cron authorization", async () => {
     new NextRequest("http://localhost/api/cron/cleanup")
   );
   expect(response.status).toBe(401);
-  expect(mocks.references).not.toHaveBeenCalled();
-  expect(mocks.list).not.toHaveBeenCalled();
-  expect(mocks.remove).not.toHaveBeenCalled();
 });
 
 test("storage failure does not prevent expired guest cleanup and reports retry", async () => {

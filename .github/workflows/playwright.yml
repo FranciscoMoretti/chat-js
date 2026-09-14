@@ -28,6 +28,9 @@ jobs:
       CI_PLAYWRIGHT: "true"
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
+      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
+      EVE_INTERNAL_ORIGIN: http://localhost:3000
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +75,9 @@ jobs:
       - name: Migrate isolated test database
         if: steps.affected.outputs.run == 'true'
         run: bun run --cwd apps/chat db:migrate
+      - name: Bootstrap isolated EVE workflow database
+        if: steps.affected.outputs.run == 'true'
+        run: bun run --cwd apps/chat eve:db:setup:local
       - uses: actions/cache@v4
         if: steps.affected.outputs.run == 'true'
         id: playwright-cache

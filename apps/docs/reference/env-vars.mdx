@@ -250,17 +250,16 @@ ai: {
 
 ---
 
+## EVE runtime and trusted proxy headers
+
+| Variable | Description |
+| --- | --- |
+| `EVE_GATEWAY_SECRET` | **Required.** Private credential used between ChatJS and EVE. Generate at least 32 random characters. |
+| `WORKFLOW_POSTGRES_URL` | **Required.** Postgres connection for durable EVE workflows. |
+| `EVE_INTERNAL_ORIGIN` | **Required.** Same-origin application URL or private worker origin. |
+| `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
+
 ## Optional / Advanced
-
-### Resumable Streams
-
-Allows users to reconnect to an ongoing AI generation after a page refresh or network interruption.
-
-| Variable | Description | Get it |
-| --- | --- | --- |
-| `REDIS_URL` | Redis TCP/TLS URL for stream coordination and anonymous rate limits | [Redis setup](./redis) |
-
-Without `REDIS_URL`, streams work normally but cannot be resumed after disconnection. Redis-backed anonymous rate-limit counters are also disabled. To check a configured provider, use your package manager: `npm run redis:connect`, `pnpm redis:connect`, `yarn redis:connect`, or `bun redis:connect`.
 
 ### Cron Job Secret
 
@@ -332,7 +331,10 @@ All variables in one place:
 | `VERCEL_SANDBOX_RUNTIME_PYTHON` | Feature | Optional Python sandbox runtime override |
 | `VERCEL_SANDBOX_RUNTIME_JAVASCRIPT` | Feature | Optional JavaScript sandbox runtime override |
 | `VERCEL_SANDBOX_RUNTIME` | Feature | Legacy Python sandbox runtime override |
-| `REDIS_URL` | Optional | Resumable streams |
+| `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |
+| `WORKFLOW_POSTGRES_URL` | Required | Postgres connection for durable workflows |
+| `EVE_INTERNAL_ORIGIN` | Required | Same-origin application or private worker origin |
+| `TRUSTED_CLIENT_IP_HEADER` | EVE | Optional self-hosted trusted proxy header |
 | `CRON_SECRET` | Optional | Secure cleanup cron endpoint |
 | `APP_URL` | Optional | Required on non-Vercel deployments |
 | `VERCEL_URL` | Optional | Auto-set by Vercel platform |

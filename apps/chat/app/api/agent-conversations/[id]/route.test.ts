@@ -3,7 +3,6 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { DELETE, GET } from "./route";
 
 const mocks = vi.hoisted(() => ({
-  enabled: true,
   env: {
     APP_URL: "http://localhost:3790",
     EVE_INTERNAL_ORIGIN: "http://localhost:4000",
@@ -28,9 +27,6 @@ vi.mock("@/lib/eve/delete-unaccepted-copy", () => ({
 vi.mock("@/lib/eve/delete-local-conversation", () => ({
   deleteLocalEveConversationFamily: mocks.remove,
 }));
-vi.mock("@/lib/eve/availability", () => ({
-  isEveEnabled: () => mocks.enabled,
-}));
 vi.mock("@/lib/env", () => ({ env: mocks.env }));
 const id = "5c57c1d6-5540-4c6d-9d03-064a33528a5d";
 const context = { params: Promise.resolve({ id }) };
@@ -41,7 +37,6 @@ const request = (method = "DELETE", origin = "http://localhost:3790") =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.enabled = true;
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://localhost/test";
   mocks.env.EVE_INTERNAL_ORIGIN = "http://localhost:4000";
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
@@ -70,7 +65,7 @@ it("hides unavailable and foreign bindings without cleanup", async () => {
   expect(mocks.state).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-it("requires login, valid coordinates and the feature flag", async () => {
+it("requires login and valid coordinates", async () => {
   mocks.principal.mockResolvedValue(null);
   const resolvedResult3 = await DELETE(request(), context);
   expect(resolvedResult3.status).toBe(401);
@@ -79,9 +74,6 @@ it("requires login, valid coordinates and the feature flag", async () => {
     params: Promise.resolve({ id: "invalid" }),
   });
   expect(resolvedResult4.status).toBe(400);
-  mocks.enabled = false;
-  const resolvedResult5 = await GET(request("GET"), context);
-  expect(resolvedResult5.status).toBe(404);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
 it("rejects cross-origin mutation before any cleanup", async () => {

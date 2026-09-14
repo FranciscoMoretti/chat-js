@@ -87,7 +87,7 @@ test.each([
   ["apps/chat/package.json", true],
   ["apps/electron/forge.config.ts", true],
   ["apps/electron/package.json", true],
-  ["packages/thread/src/index.ts", true],
+  ["packages/thread/src/index.ts", false],
   ["scripts/sync-template.ts", true],
   ["scripts/sync-template-snapshot.ts", true],
   [".github/workflows/cli-scaffold.yml", true],

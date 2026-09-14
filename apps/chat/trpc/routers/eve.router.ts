@@ -13,7 +13,6 @@ import {
   assignEveConversationProject,
   getEveMessageVotes,
 } from "@/lib/db/queries";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -25,17 +24,9 @@ import {
   publicProcedure,
 } from "@/trpc/init";
 
-const eveProcedure = protectedProcedure.use(({ next }) => {
-  if (!isEveEnabled()) {
-    throw new TRPCError({ code: "NOT_FOUND" });
-  }
-  return next();
-});
+const eveProcedure = protectedProcedure;
 
 const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  if (!isEveEnabled()) {
-    throw new TRPCError({ code: "NOT_FOUND" });
-  }
   let ownerId = ctx.user?.id;
   if (!ownerId) {
     const principal = await resolveEvePrincipal(await headers());
@@ -87,9 +78,6 @@ export const eveRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      if (!isEveEnabled()) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
       let ownerId = ctx.user?.id;
       if (!ownerId) {
         const principal = await resolveEvePrincipal(await headers());

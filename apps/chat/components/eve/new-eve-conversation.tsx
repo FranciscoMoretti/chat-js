@@ -8,7 +8,7 @@ import {
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { AttachmentList } from "@/components/attachment-list";
-import { ChatWelcomeView } from "@/components/chat/chat-welcome";
+import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,

@@ -5,10 +5,10 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
-import { ControlledChatComposer } from "@/components/chat-composer";
+import { AttachmentsButton } from "@/components/attachments-button";
 import { ConnectorsDropdown } from "@/components/connectors-dropdown";
 import { ContextBar } from "@/components/context-bar";
-import { AttachmentsButton } from "@/components/multimodal-input";
+import { ControlledChatComposer } from "@/components/controlled-chat-composer";
 import { ResponsiveTools } from "@/components/responsive-tools";
 import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";

@@ -7,13 +7,13 @@ import rootLintBaseline from "../oxlint-baseline.json";
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 import {
   shouldCopyChatAppFile,
+  shouldCopyElectronFile,
   normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
-import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 import { collectSnapshot } from "./sync-template-snapshot";
 
-const { join, relative, resolve, sep } = path;
+const { join, relative, resolve } = path;
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -36,39 +36,6 @@ const electronTemplateDir = join(
 
 const shouldCopyFilePath = (filePath: string): boolean =>
   shouldCopyChatAppFile(relative(sourceDir, filePath));
-
-// ─── electron filter ─────────────────────────────────────────────────────────
-
-const ELECTRON_EXCLUDED_SEGMENTS = new Set([
-  "node_modules",
-  ".turbo",
-  "build",
-  "dist",
-  "release",
-]);
-
-const ELECTRON_EXCLUDED_FILES = new Set([
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-  "branding.json",
-]);
-
-const shouldCopyElectronFilePath = (filePath: string): boolean => {
-  const rel = relative(electronSourceDir, filePath);
-  if (!rel || rel.startsWith("..")) {
-    return true;
-  }
-  const segments = rel.split(sep);
-  if (segments.some((segment) => ELECTRON_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  if (fileName && ELECTRON_EXCLUDED_FILES.has(fileName)) {
-    return false;
-  }
-  return true;
-};
 
 /** Files removed from the template after copying (relative to destination). */
 const TEMPLATE_REMOVED_FILES = [
@@ -116,18 +83,12 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   );
   await writeFile(globalsCssPath, globalsCss);
 
-  await vendorThreadPackage({
-    destination,
-    threadSourceDir: join(rootDir, "packages", "thread", "src"),
-  });
-
   // Preserve file-scoped exceptions when workspace source is copied into a scaffold.
   const baselinePath = join(destination, "oxlint-baseline.json");
   const baseline = JSON.parse(
     await readFile(baselinePath, "utf-8")
   ) as typeof rootLintBaseline;
   const sourcePaths = [
-    ["packages/thread/src/", "lib/thread/"],
     ["apps/electron/", "electron/"],
     ["packages/registry/src/tools/", "tools/chatjs/"],
   ];
@@ -207,7 +168,7 @@ const applyElectronTemplateTransforms = async (
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
-    filter: shouldCopyElectronFilePath,
+    filter: (file) => shouldCopyElectronFile(relative(electronSourceDir, file)),
     recursive: true,
   });
   await applyElectronTemplateTransforms(destination);

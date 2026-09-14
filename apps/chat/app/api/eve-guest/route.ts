@@ -1,5 +1,4 @@
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import {
   createEveGuestCredential,
   eveGuestOwnerId,
@@ -10,9 +9,6 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 
 /** Bootstrap only: no account row, message admission, or monetary credit is created. */
 export const POST = async (request: Request) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
-  }
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
   }

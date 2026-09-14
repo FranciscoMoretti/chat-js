@@ -65,19 +65,19 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
   scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
+  scripts.build =
+    "tsx lib/db/migrate.ts --deployment && eve build && next build";
   scripts.prod =
-    "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && next build && next start";
+    "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && eve build && next build && next start";
   scripts.lint = "ultracite check";
   scripts.format = "oxfmt --write .";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["eve:db:setup:local"] = "tsx scripts/install-eve-local-postgres.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
-  scripts["redis:connect"] = "tsx scripts/check-redis.ts";
   scripts["db:migrate"] = "tsx lib/db/migrate.ts";
   scripts["dev:neon"] =
     "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
   scripts["db:migrate:neon"] = "bash scripts/with-db.sh tsx lib/db/migrate.ts";
-  scripts["db:backfill-parts"] = "tsx lib/db/backfill-parts.ts";
   scripts["db:branch:start"] =
     `bash -c 'N=${defaultBranchName}; bash scripts/db-branch-create.sh "$N" && bash scripts/db-branch-use.sh "$N"' --`;
   scripts["db:branch:stop"] =

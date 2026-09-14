@@ -4,10 +4,10 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "bun --filter @chat-js/thread build && bun --filter @chat-js/gateways build && bun run check-env",
+    "prebuild": "bun --filter @chat-js/gateways build && bun run check-env",
     "dev": "bun run check-env && next dev",
     "dev:inspect": "bun run check-env && next dev --inspect",
-    "build": "tsx lib/db/migrate.ts --deployment && next build",
+    "build": "tsx lib/db/migrate.ts --deployment && eve build && next build",
     "analyze": "next experimental-analyze",
     "start": "next start",
     "prod": "bun run build && bun run start",
@@ -16,7 +16,6 @@
     "check-env": "bun scripts/check-env.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bunx tsx lib/db/migrate.ts",
-    "db:backfill-parts": "npx tsx lib/db/backfill-parts.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
@@ -28,8 +27,6 @@
     "db:branch:start": "bash -c 'N=${1:-dev-local}; bun db:branch:create $N && bun db:branch:use $N' --",
     "db:branch:stop": "bash -c 'N=${1:-dev-local}; bun db:branch:use main && bun db:branch:delete $N' --",
     "db:branch:list": "bunx neonctl branches list",
-    "eval:dev": "evalite watch",
-    "eval:serve": "evalite serve",
     "test": "bun test:e2e && bun test:unit",
     "test:e2e": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
@@ -39,7 +36,6 @@
     "dev:neon": "bash scripts/with-db.sh bun dev",
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
     "db:connect": "bun scripts/check-db.ts",
-    "redis:connect": "bun scripts/check-redis.ts",
     "eve:build": "eve build",
     "eve:db:setup:local": "bun scripts/install-eve-local-postgres.ts",
     "eve:start": "NODE_ENV=production eve start --host 127.0.0.1"
@@ -50,11 +46,9 @@
     "@ai-sdk/mcp": "2.0.45",
     "@ai-sdk/otel": "1.0.93",
     "@ai-sdk/provider": "4.0.10",
-    "@ai-sdk/react": "4.0.96",
     "@better-auth/core": "1.5.6",
     "@better-auth/electron": "^1.5.6",
     "@chat-js/gateways": "workspace:*",
-    "@chat-js/thread": "workspace:*",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/state": "^6.5.0",
@@ -147,22 +141,18 @@
     "react-hook-form": "^7.62.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.6",
-    "redis": "^5.5.6",
-    "resumable-stream": "2.2.10",
     "server-only": "^0.0.1",
     "shiki": "^3.19.0",
     "sonner": "^2.0.7",
     "streamdown": "^2.5.0",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
-    "throttleit": "^2.1.0",
     "tokenlens": "^1.3.1",
     "use-stick-to-bottom": "^1.1.1",
     "usehooks-ts": "^3.1.0",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.6"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -176,9 +166,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@types/react-test-renderer": "19.1.0",
-    "better-sqlite3": "^12.4.1",
     "drizzle-kit": "^0.31.9",
-    "evalite": "1.0.0-beta.16",
     "microsandbox": "^0.6.18",
     "oxfmt": "0.67.0",
     "oxlint": "1.82.0",
@@ -196,10 +184,6 @@
   },
   "overrides": {
     "commander": "^14.0.0",
-    "evalite": {
-      "better-sqlite3": "$better-sqlite3",
-      "ai": "$ai"
-    },
     "files-sdk": {
       "ai": "$ai"
     }

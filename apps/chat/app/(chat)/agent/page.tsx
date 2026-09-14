@@ -1,6 +1,4 @@
-import { notFound, redirect } from "next/navigation";
-
-import { isEveEnabled } from "@/lib/eve/availability";
+import { redirect } from "next/navigation";
 
 const AgentPage = async ({
   searchParams,
@@ -9,9 +7,6 @@ const AgentPage = async ({
     conversation?: string;
   }>;
 }) => {
-  if (!isEveEnabled()) {
-    notFound();
-  }
   const { conversation } = await searchParams;
   redirect(conversation ? `/chat/${encodeURIComponent(conversation)}` : "/");
 };

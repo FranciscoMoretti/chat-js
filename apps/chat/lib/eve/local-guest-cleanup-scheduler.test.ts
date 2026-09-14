@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),
   env: {
     DATABASE_URL: "postgresql://localhost/fixture",
-    EVE_ENABLED: "true",
+
     EVE_GATEWAY_SECRET: "local-fixture-secret",
     NODE_ENV: "development",
   },
@@ -24,7 +24,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.resetAllMocks();
   mocks.env.NODE_ENV = "development";
-  mocks.env.EVE_ENABLED = "true";
+
   mocks.env.EVE_GATEWAY_SECRET = "local-fixture-secret";
   mocks.env.DATABASE_URL = "postgresql://localhost/fixture";
   mocks.available.mockReturnValue(true);
@@ -67,7 +67,7 @@ test("startup is singleton and sweeps never overlap", async () => {
 
 test.each([
   { NODE_ENV: "production" },
-  { EVE_ENABLED: "false" },
+
   { EVE_GATEWAY_SECRET: "" },
   { DATABASE_URL: "postgresql://remote.example/fixture" },
   { DATABASE_URL: "https://localhost/fixture" },

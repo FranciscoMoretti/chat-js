@@ -234,7 +234,6 @@ describe("scaffoldFromTemplate", () => {
       "lib/eve/purge-local-sandbox.test.ts",
       "lib/eve/verify-local-coverage.test.ts",
       "lib/db/eve-sandbox-run-coverage.test.ts",
-      "lib/db/backfill-parts.ts",
       "evals/my-eval.eval.ts",
       "lib/ai/eval-agent.ts",
       "evalite.config.ts",
@@ -251,7 +250,7 @@ describe("scaffoldFromTemplate", () => {
       "tests/artifacts.e2e.ts",
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
-      "lib/db/migrations/0046_eve_runtime.sql",
+      "lib/db/migrations/0000_eve_baseline.sql",
       "scripts/install-eve-local-postgres.ts",
       "vitest.config.ts",
     ]) {
@@ -286,7 +285,7 @@ describe("scaffoldFromTemplate", () => {
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
     expect(manifest.overrides?.evalite).toBeUndefined();
-    for (const script of ["eval:dev", "eval:serve", "db:backfill-parts"]) {
+    for (const script of ["eval:dev", "eval:serve"]) {
       expect(manifest.scripts[script]).toBeUndefined();
     }
   });
@@ -325,7 +324,11 @@ describe("scaffoldFromTemplate", () => {
     expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
+    expect(packageJson.scripts?.build).toBe(
+      "tsx lib/db/migrate.ts --deployment && eve build && next build"
+    );
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
+    expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
     expect(existsSync(join(destination, "biome.jsonc"))).toBe(false);
     expect(existsSync(join(destination, "oxlint.config.ts"))).toBe(true);
@@ -336,15 +339,32 @@ describe("scaffoldFromTemplate", () => {
     );
     expect(lintBaseline).not.toContain("packages/thread/src/");
 
-    expect(existsSync(join(destination, "lib", "thread", "react.ts"))).toBe(
-      true
-    );
-    const chatStoreSource = await readFile(
-      join(destination, "lib", "stores", "base", "use-chat.ts"),
-      "utf-8"
-    );
-    expect(chatStoreSource).toContain('from "@/lib/thread"');
-    expect(chatStoreSource).toContain('from "@/lib/thread/react"');
+    for (const path of [
+      "app/(chat)/api/chat",
+      "app/(chat)/chat-providers.tsx",
+      "app/(chat)/chat-route-host.tsx",
+      "app/(chat)/chat-runtime-boundary.tsx",
+      "components/chat-runtime-controller.tsx",
+      "components/chat-header.tsx",
+      "components/chat-sync.tsx",
+      "components/chat-system.tsx",
+      "lib/app-chat-runtime.ts",
+      "lib/application-thread.ts",
+      "lib/chat-runtime-id.ts",
+      "lib/runtime-registry",
+      "lib/stores",
+      "lib/thread",
+      "providers/chat-input-provider.tsx",
+    ]) {
+      expect(existsSync(join(destination, path))).toBe(false);
+    }
+
+    expect(
+      existsSync(join(destination, "components/chat-header-view.tsx"))
+    ).toBe(true);
+    expect(
+      existsSync(join(destination, "components/chat/chat-layout.tsx"))
+    ).toBe(true);
   });
 
   it("rewrites the generated web app to be npm-friendly", async () => {

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { getEveConversation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import {
   readEveCheckpoint,
   waitForEveCheckpoint,
@@ -31,9 +30,6 @@ export const POST = async (
     }>;
   }
 ) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { status: 401 });

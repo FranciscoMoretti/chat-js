@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
   after: vi.fn(),
   create: vi.fn(),
-  enabled: vi.fn(),
   persistTitle: vi.fn(),
   principal: vi.fn(),
   settle: vi.fn(),
@@ -15,7 +14,6 @@ vi.mock("next/server", () => ({ after: mocks.after }));
 vi.mock("@/lib/env", () => ({
   env: { APP_URL: "http://localhost:3790" },
 }));
-vi.mock("@/lib/eve/availability", () => ({ isEveEnabled: mocks.enabled }));
 vi.mock("@/lib/eve/principal", () => ({
   resolveEvePrincipal: mocks.principal,
 }));
@@ -48,7 +46,6 @@ const request = () =>
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.enabled.mockReturnValue(true);
   mocks.principal.mockResolvedValue({
     kind: "guest",
     ownerId: "guest",

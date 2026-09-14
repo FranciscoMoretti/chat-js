@@ -110,7 +110,7 @@ const guestAttributesAllowed = (
     ));
 
 export const authenticateEveGateway = async (request: Request) => {
-  if (env.EVE_ENABLED !== "true" || !env.EVE_GATEWAY_SECRET) {
+  if (!env.EVE_GATEWAY_SECRET) {
     return null;
   }
   const expected = Buffer.from(`Bearer ${env.EVE_GATEWAY_SECRET}`);

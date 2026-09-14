@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { getEveConversationProject } from "@/lib/db/eve-queries";
-import { isEveEnabled } from "@/lib/eve/availability";
 
 const ProjectChatPageRoute = async ({
   params,
@@ -14,9 +13,6 @@ const ProjectChatPageRoute = async ({
     chatId: string;
   }>;
 }) => {
-  if (!isEveEnabled()) {
-    return null;
-  }
   const { projectId, chatId } = await params;
   if (
     !(

@@ -12,16 +12,7 @@ import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import {
-  chat,
-  eveConversation,
-  eveUsage,
-  message,
-  part,
-  project,
-  user,
-  userCredit,
-} from "../lib/db/schema";
+import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -400,85 +391,26 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   expect(legacyRequests).toEqual([]);
 });
 
-test("legacy conversations are hidden without deleting their data", async ({
+test("unknown conversations and removed legacy APIs are unavailable", async ({
   page,
 }) => {
-  const [owner] = await db
-    .select()
-    .from(user)
-    .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
-    throw new Error("Missing development user");
-  }
   const id = crypto.randomUUID();
-  const messageId = crypto.randomUUID();
-  const projectId = crypto.randomUUID();
-  await db.insert(project).values({
-    id: projectId,
-    name: "Archived project fixture",
-    userId: owner.id,
-  });
-  await db.insert(chat).values({
-    createdAt: new Date(),
-    id,
-    projectId,
-    title: "Archived migration fixture",
-    userId: owner.id,
-  });
-  await db.insert(message).values({
-    attachments: [],
-    chatId: id,
-    createdAt: new Date(),
-    id: messageId,
-    role: "user",
-  });
-  await db.insert(part).values({
-    messageId,
-    text_text: "Preserved historical message",
-    type: "text",
-  });
-  try {
-    await page.goto("/");
-    await expect(
-      page.getByRole("link", { name: "Archived migration fixture" })
-    ).toHaveCount(0);
-    await page.goto(`/chat/${id}`);
-    await expect(
-      page.getByText("Preserved historical message", { exact: true })
-    ).toHaveCount(0);
+  for (const path of [`/chat/${id}`, `/share/${id}`]) {
+    await page.goto(path);
     await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
-    await capture(page, "legacy-conversation-hidden");
-    await page.goto(`/project/${projectId}/chat/${id}`);
-    await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
-    await page.goto(`/share/${id}`);
-    await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
-    for (const procedure of [
-      "getChatById",
-      "getChatMessages",
-      "getPublicChat",
-      "getPublicChatMessages",
-    ]) {
-      const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
-        params: { input: JSON.stringify({ json: { chatId: id } }) },
-      });
-      expect(response.status()).toBe(404);
-      expect(await response.text()).not.toContain(
-        "Preserved historical message"
-      );
-    }
-    await page.goto(`/project/${projectId}`);
-    await expect(
-      page.getByRole("link", { name: "Archived migration fixture" })
-    ).toHaveCount(0);
-    await capture(page, "legacy-project-hidden");
-    const retained = await db
-      .select()
-      .from(message)
-      .where(eq(message.id, messageId));
-    expect(retained).toHaveLength(1);
-  } finally {
-    await db.delete(chat).where(eq(chat.id, id));
-    await db.delete(project).where(eq(project.id, projectId));
+  }
+  const legacySend = await page.request.post("/api/chat", { data: {} });
+  expect(legacySend.status()).toBe(404);
+  for (const procedure of [
+    "getChatById",
+    "getChatMessages",
+    "getPublicChat",
+    "getPublicChatMessages",
+  ]) {
+    const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
+      params: { input: JSON.stringify({ json: { chatId: id } }) },
+    });
+    expect(response.status()).toBe(404);
   }
 });
 

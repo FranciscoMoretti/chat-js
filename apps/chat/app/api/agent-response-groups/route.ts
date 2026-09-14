@@ -1,7 +1,6 @@
 import { after } from "next/server";
 
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
 import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -11,9 +10,6 @@ import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 
 export const POST = async (request: Request) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { status: 401 });

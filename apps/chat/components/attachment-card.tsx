@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+import type { AttachmentViewData } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +84,7 @@ export const AttachmentCard = ({
   onRemove,
   className,
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading: boolean;
   onRemove?: () => void;
   className?: string;

@@ -2,7 +2,7 @@
 
 import { PromptInputHeader } from "@/components/ai-elements/prompt-input";
 import { AttachmentList } from "@/components/attachment-list";
-import type { Attachment } from "@/lib/ai/types";
+import type { AttachmentViewData } from "@/components/attachment-list";
 import { cn } from "@/lib/utils";
 
 export const ContextBar = ({
@@ -11,9 +11,9 @@ export const ContextBar = ({
   onRemoveAction,
   className,
 }: {
-  attachments: Attachment[];
+  attachments: AttachmentViewData[];
   uploadQueue: string[];
-  onRemoveAction?: (attachment: Attachment) => void;
+  onRemoveAction?: (attachment: AttachmentViewData) => void;
   className?: string;
 }) => {
   const hasBarContent = attachments.length > 0 || uploadQueue.length > 0;

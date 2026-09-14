@@ -3,6 +3,12 @@ title: Resumable Streams
 description: Continue AI responses after connection interruptions
 ---
 
+<Callout type="note">
+  This is a portable AI SDK and Redis recipe, retained as reference material.
+  The EVE-only ChatJS app resumes its native EVE event stream and does not use
+  this `/api/chat` transport.
+</Callout>
+
 Resumable streams let `useChat` reconnect to ongoing message generation after page reloads, network interruptions, or tab switches. Without this, users lose partial AI responses and must regenerate from scratch.
 
 <Frame>

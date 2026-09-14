@@ -6,7 +6,6 @@ import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import {
@@ -143,9 +142,6 @@ const handle = async (
     }>;
   }
 ) => {
-  if (!isEveEnabled()) {
-    return rejectRequest(request, "Agent conversations are unavailable.", 404);
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return rejectRequest(request, "Sign in to continue.", 401);

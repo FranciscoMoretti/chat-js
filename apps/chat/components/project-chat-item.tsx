@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-import type { UIChat } from "@/lib/types/ui-chat";
 
 export const ProjectChatItem = ({
   chat,
@@ -25,12 +24,15 @@ export const ProjectChatItem = ({
   onMoveProject,
   renderShareContent,
 }: {
-  chat: Pick<UIChat, "id" | "title" | "projectId"> & {
+  chat: {
+    id: string;
+    title: string;
+    projectId: string | null;
     updatedAt?: Date | string;
   };
   onDelete?: (chatId: string) => void;
   onMoveProject?: () => void;
-  renderShareContent?: (chatId: string, onClose: () => void) => ReactNode;
+  renderShareContent: (chatId: string, onClose: () => void) => ReactNode;
   onRename: (chatId: string, title: string) => Promise<void>;
 }) => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -110,14 +112,9 @@ export const ProjectChatItem = ({
       </div>
       {shareDialogOpen && (
         <ShareDialog
-          chatId={chat.id}
           onOpenChange={setShareDialogOpen}
           open={shareDialogOpen}
-          renderContent={
-            renderShareContent
-              ? (onClose) => renderShareContent(chat.id, onClose)
-              : undefined
-          }
+          renderContent={(onClose) => renderShareContent(chat.id, onClose)}
         />
       )}
 

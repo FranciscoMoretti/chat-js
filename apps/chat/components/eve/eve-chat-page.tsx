@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { ChatHeaderView } from "@/components/chat-header";
+import { ChatHeaderView } from "@/components/chat-header-view";
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";

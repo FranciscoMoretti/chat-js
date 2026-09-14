@@ -10,27 +10,12 @@ import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
 import {
   shouldCopyChatAppFile,
+  shouldCopyElectronFile,
   normalizeScaffoldContent,
 } from "./scaffold-content";
 import { vendorPatchedPackage } from "./vendor-patched-package";
-import { vendorThreadPackage } from "./vendor-thread-package";
 
-const { join, relative, resolve, sep } = pathModule;
-
-const ELECTRON_EXCLUDED_SEGMENTS = new Set([
-  "node_modules",
-  ".turbo",
-  "build",
-  "dist",
-  "release",
-]);
-
-const ELECTRON_EXCLUDED_FILES = new Set([
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-  "branding.json",
-]);
+const { join, relative, resolve } = pathModule;
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "cbor-extract",
@@ -67,19 +52,6 @@ const shouldCopyChatAppFilePath = (
   sourceDir: string,
   filePath: string
 ): boolean => shouldCopyChatAppFile(relative(sourceDir, filePath));
-
-const shouldCopyElectronFilePath = (
-  sourceDir: string,
-  filePath: string
-): boolean => {
-  const relativePath = relative(sourceDir, filePath);
-  const segments = relativePath.split(sep);
-  if (segments.some((segment) => ELECTRON_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  return !(fileName && ELECTRON_EXCLUDED_FILES.has(fileName));
-};
 
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
@@ -190,10 +162,6 @@ const applyChatTemplateSourceTransforms = async (
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
-  await vendorThreadPackage({
-    destination,
-    threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
-  });
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
@@ -259,7 +227,7 @@ const copyElectronTemplateFromRepoSource = async (
 ): Promise<void> => {
   const sourceDir = join(getRepoRoot(), "apps", "electron");
   await cp(sourceDir, destination, {
-    filter: (filePath) => shouldCopyElectronFilePath(sourceDir, filePath),
+    filter: (filePath) => shouldCopyElectronFile(relative(sourceDir, filePath)),
     recursive: true,
   });
   await applyElectronTemplateSourceTransforms(destination);
@@ -485,7 +453,10 @@ export const scaffoldElectron = async (
   const templateDir = findTemplateDir("electron");
 
   await (templateDir
-    ? cp(templateDir, destination, { recursive: true })
+    ? cp(templateDir, destination, {
+        filter: (file) => shouldCopyElectronFile(relative(templateDir, file)),
+        recursive: true,
+      })
     : copyElectronTemplateFromRepoSource(destination));
 
   const packageJsonPath = join(destination, "package.json");

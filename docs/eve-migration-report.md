@@ -1,16 +1,28 @@
 # ChatJS → EVE migration report
 
-Report date: 13 September 2026. This report accompanies consolidated draft [PR #444](https://github.com/FranciscoMoretti/chat-js/pull/444), on `codex/eve-app-runtime`. The branch integrates main through `4584f093`; merge validation and subsequent architecture-review changes are recorded below.
+Report updated: 14 September 2026. This report retains the historical validation record for the EVE migration and records the EVE-only release boundary below.
 
 ## Status and scope
 
-The migration is implemented and exercised locally inside the existing ChatJS application. EVE owns conversation execution and the durable transcript; the normal ChatJS routes, composer, sidebar and artifact UI integrate with it. This is **ready for code review, not production cutover**. The reporting audit previously found a generated-app release blocker: the patched Postgres Workflow World was not vendored alongside EVE and MCP. The main integration fixes this by verifying and packaging all three patched dependencies in generated apps.
+EVE is the only ChatJS application runtime. The normal routes, composer, sidebar, artifacts, sharing, projects, and conversation history use EVE; the legacy AI SDK chat runtime, local message stores, transport routes, and scaffold vendoring path are removed. `@chat-js/thread` remains a standalone package with its own reference documentation and is not copied into generated ChatJS apps.
+
+This report does not claim production readiness. Provider deletion coverage and guest-hosting readiness remain release gates owned by the current implementation and deployment review. The historical evidence below may describe the earlier feature-gated rollout and should not be read as a dual-runtime contract.
 
 The integration incorporates main’s Oxfmt/Oxlint migration and optional shadcn registry architecture. Formatting was normalized before merging. The generated model catalog has since been restored byte-for-byte to main and excluded from general formatting; its earlier approximately 8,500 changed lines were whitespace, not an EVE model-catalog update. Installed AI SDK tools provide their own schemas and renderers; the EVE adapter supplies execution context, cancellation, owned file storage, sandbox identity and usage accounting. The old platform factory implementations are removed. Final checks must cover both the reference app and generated apps with optional capabilities absent.
 
-The runtime gate explicitly requires `NODE_ENV === "development"` and `EVE_ENABLED === "true"`. Merely setting the flag in production does not activate EVE. The Next.js wrapper also only enables EVE for the development-server phase. No production database cutover, merge, release, or upstream issue publication is included. The consolidated PR can be split into a review stack later.
+Historical ChatJS conversations are not imported into EVE. Saving a copy of an **EVE public share** is implemented and is separate from importing legacy data.
 
-Historical ChatJS conversations are intentionally not imported or displayed in EVE mode. Their data remains untouched. Saving a copy of an **EVE public share** is implemented and is separate from importing legacy ChatJS conversations.
+## Latest EVE-only cleanup and validation
+
+The new-package release boundary uses `0000_eve_baseline.sql`, containing 31 current tables, instead of carrying legacy schema history into fresh installations. The migrator refuses unknown histories and existing untracked ChatJS tables before applying migrations. Existing development databases were left untouched; validation used newly provisioned local application and workflow databases.
+
+Legacy routes/controllers/stores, Redis support, old anonymous-session machinery, legacy schema and scaffold thread vendoring are removed. EVE is required in development and production. Standalone `packages/thread`, its dedicated docs and its website demo remain unchanged. The generated build retains the baseline migration step before `eve build` and `next build`.
+
+Latest checks passed: 583 app unit tests, 86 CLI unit tests, all seven workspace type-check tasks, lint/docs checks and template consistency. An independently installed Vercel-gateway scaffold passed installation, lint and types. The fresh PostgreSQL baseline and repeat migration passed. A local Node-server production build/start passed live Gemini Flash Lite messaging, transcript reload and read-only sharing. The EVE fork now starts its production worker during Next configuration evaluation; 20 focused upstream Next integration tests passed, and the new compiled patch changes only that integration module.
+
+Desktop/mobile message-presentation captures were reviewed. The retained model-selector fixture has two meaningful states, closed and open; updated macOS baselines were inspected and their comparison passed. **Two Linux selector baselines still need regeneration. Linux Playwright CI is not expected to pass until those baselines are supplied.** The CI workflow now bootstraps its own EVE workflow database.
+
+This does not close the maintained-fork source-test/build-equivalence gate, hosted deletion/guest-hosting acceptance, Docker image validation or scale/retention work. Nothing has been released, deployed to production or published upstream.
 
 ## Architecture and data ownership
 
@@ -32,13 +44,13 @@ flowchart TD
 
 There is no ongoing synchronization of two independently authoritative chat transcripts. Creation intents, copy preparation and checkpoint references do persist recovery material; documents also retain their own revision history. Those are deliberate domain records, not a second live conversation engine. Public sharing uses an allowlisted projection of native content rather than exposing the native session API to anonymous readers.
 
-Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](../apps/chat/agent/agent.ts), [gateway](../apps/chat/app/api/eve/[...path]/route.ts), [conversation UI](../apps/chat/components/eve/eve-conversation.tsx), and [application procedures](../apps/chat/trpc/routers/eve.router.ts).
+Key entry points: [agent](../apps/chat/agent/agent.ts), [gateway](../apps/chat/app/api/eve/[...path]/route.ts), [conversation UI](../apps/chat/components/eve/eve-conversation.tsx), and [application procedures](../apps/chat/trpc/routers/eve.router.ts).
 
 ## What migrated
 
 | Area | Implemented behavior | Important boundary |
 | --- | --- | --- |
-| App integration | `/`, `/chat/[id]`, project chats, sidebar, composer and artifacts use EVE in development; `/agent` redirects into the normal app | Legacy runtime remains for EVE-disabled operation |
+| App integration | `/`, `/chat/[id]`, project chats, sidebar, composer and artifacts use EVE; `/agent` redirects into the normal app | There is no legacy runtime fallback |
 | Sending and recovery | Immediate composer clearing on accepted send; retained intent for uncertain delivery; reload/retry with stable operation identity; explicit rejection restores editable input | A lost response is not treated as proof that creation failed |
 | Streaming and lifecycle | Durable reload/resume, checkpoints, native pending input, approval continuation and cancellation | Worker/provider availability is still required; local supervision is not hosted availability |
 | Models | Existing model picker, validated per-turn model selection, durable response provenance, regeneration with original model | The available catalog and credentials still govern usable models |
@@ -62,7 +74,7 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](
 | Deletion | Owner-visible pending/deleted state, immediate access fence, family-wide inventory, retryable native retirement, files/documents/sandboxes/queue payload cleanup and durable tombstones | Complete erasure is implemented for the explicitly supported local provider configuration, not arbitrary hosted worlds |
 | Expiry and orphan cleanup | Guest-family expiry, bounded fair retries, retained billing identity, orphan upload ownership/fences | Automatic scheduler is development/loopback-only |
 | Developer operation | Single app/EVE startup, bounded health checks, macOS supervision, restart backoff and heap limits | Laptop sleep, database failure and remote provider outages remain real availability limits |
-| Generated apps | Patched runtime vendoring, helper inclusion and validation during scaffold/template generation; shared registry tool schemas/renderers | EVE, MCP and the Postgres world are vendored; hosted/generated-app deployment still needs rehearsal |
+| Generated apps | Patched runtime vendoring and validation during scaffold/template generation; shared registry tool schemas/renderers | EVE, MCP and the Postgres world are vendored; `@chat-js/thread` is not copied into the app scaffold; hosted/generated-app deployment still needs rehearsal |
 
 ## Complications encountered and resolutions
 
@@ -89,7 +101,7 @@ Key entry points: [runtime gate](../apps/chat/lib/eve/availability.ts), [agent](
 | Local SQL resource fences/inventories/retirement | Safe erasure is not a single upstream delete call | Hosted/provider-portable deletion needs separate design and certification; setup is an explicit local migration |
 | Checkpoint snapshots and copy journals | Restore history/resources without a second execution authority | Full snapshots can grow quadratically; retention/compaction/garbage-collection policy needs production-scale work |
 | Patch helper relocation and vendored tarballs | Bun fails to create nested additions while applying the EVE patch. All 35 new nested modules now live at package root with exact import aliases | Fresh-cache Bun install, runtime imports and TypeScript resolution pass. Remove only when supported tooling installs equivalent files reliably |
-| Legacy runtime retained behind gate | Production has not cut over | Remove after cutover and rollback policy are settled; shared component regressions remain possible in either mode |
+| Legacy runtime and scaffold vendoring | Removed from the application and generated app contract | The standalone `@chat-js/thread` package and its documentation remain independently maintained |
 | Acceptance suite/model drift | Work progressed in many validated slices; some older tests still reference GPT-4.1 aliases | Normalize obsolete fixtures and maintain a runnable low-cost acceptance manifest; a historical pass does not guarantee an old script runs unchanged today |
 | Documentation drift | Some upstream drafts and patch notes were written before later implementation | Reconcile stale “remaining work” sections before using them as release notes; e.g. comparisons/OAuth now have later passing evidence |
 | Local-only observability/supervision | Development reliability was needed immediately | Hosted worker supervision, metrics, alerting, incident response and SLOs remain deployment work |
@@ -166,7 +178,7 @@ Selected UI tests include desktop/mobile captures, error/pending/empty states an
 
 1. **Generated-app deployment breadth.** All three maintained patches now travel with scaffolds. Local archive/install checks do not certify every package manager, target OS or hosted runtime.
 2. **Main integration review.** The merge incorporates the 87 previously missing main commits. PR splitting and human review remain separate; final validation results below define what was actually rechecked.
-3. **Hosted deployment and production data.** The development gate remains in place. Hosted worker topology, migrations, auth callbacks, secrets, database pools, rollback, provider setup and deletion support need deployment-specific rehearsal. Local Postgres success is not evidence of Neon production behavior.
+3. **Hosted deployment and production data.** The development-only runtime gate has been removed; release still requires human review. Hosted worker topology, migrations, auth callbacks, secrets, database pools, rollback, provider setup and deletion support need deployment-specific rehearsal. Local Postgres success is not evidence of Neon production behavior.
 4. **CI/runtime mismatch.** Workflows now select Node 24, matching the EVE runtime requirement. Playwright uses an ephemeral Postgres service instead of the shared database secret. No dedicated hosted EVE acceptance pipeline was established by the local runs. A green legacy pipeline alone cannot certify this migration; fresh PR CI results must be reviewed separately.
 5. **Coverage provenance and fixture drift.** Evidence spans different commits, providers and controlled fixtures. Some old test model IDs and draft notes are stale. Maintain a reproducible acceptance manifest and run the chosen suite after main integration; do not advertise a numerical “100% coverage” claim.
 6. **Scale and storage.** Large/long conversations, many concurrent sessions, checkpoint growth, comparison fan-out, database transfer, queue backpressure and long-duration recovery have not been load/soak-certified. Existing bounds reject unsupported work but do not prove acceptable production capacity.
@@ -230,9 +242,11 @@ Strict npm installation then exposed peer-version drift hidden by Bun: the vendo
 
 With the archive metadata corrected, a CLI-generated standalone app installed successfully through npm with normal peer checks. The archive metadata regression test brings CLI coverage to 83 passing tests; lint, all seven type-check tasks and template consistency also passed.
 
-## Architecture-review cleanup
+## Historical architecture-review cleanup
 
-The maintainer confirmed that only isolated local development databases had applied the unreleased EVE migration sequence. Migrations `0046`–`0072` are consolidated into `0046_eve_runtime.sql` and one final snapshot. Fresh databases migrate from main directly; the exact completed old-history marker preserves existing schema/data while Drizzle records the new migration. Partial histories fail before mutation and have an explicit transition procedure in the [migration README](../apps/chat/lib/db/migrations/README.md).
+The migration packaging and test counts in this section predate the EVE-only baseline described above.
+
+The maintainer confirmed that only isolated local development databases had applied the unreleased EVE migration sequence. Migrations `0046`–`0072` are consolidated into `0046_eve_runtime.sql` and one final snapshot. Fresh databases migrate from main directly; the exact completed old-history marker preserves existing schema/data while Drizzle records the new migration. Partial histories fail before mutation and have an explicit transition procedure in the then-current migration instructions.
 
 Disposable in-memory PostgreSQL checks compare the complete old sequence with the consolidated migration, including column types/defaults/nullability, constraint definitions and indexes. The catalogs match. Permanent tests exercise the real Drizzle migrator for fresh, completed-old and partial-old histories, including preserved data and migration high-water marks. No existing database was inspected or modified for this cleanup.
 

@@ -27,9 +27,10 @@ export const guestRequestIpHash = (request: Request) => {
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
   // https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for
-  const address = env.VERCEL_URL
-    ? request.headers.get("x-vercel-forwarded-for")?.trim()
-    : undefined;
+  const header = env.VERCEL_URL
+    ? "x-vercel-forwarded-for"
+    : env.TRUSTED_CLIENT_IP_HEADER;
+  const address = header ? request.headers.get(header)?.trim() : undefined;
   if (!(address && isIP(address)) || address.includes("%")) {
     throw new Error("Trusted client address is unavailable.");
   }

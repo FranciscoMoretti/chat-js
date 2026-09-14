@@ -42,12 +42,4 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 };
 
-// Keep production routing behind the existing migration review gate.
-export default process.env.EVE_ENABLED === "true"
-  ? (phase: string) =>
-      phase === "phase-development-server"
-        ? withEve(nextConfig, { devServerTimeoutMs: 600_000 })(phase, {
-            defaultConfig: nextConfig,
-          })
-        : nextConfig
-  : nextConfig;
+export default withEve(nextConfig, { devServerTimeoutMs: 600_000 });

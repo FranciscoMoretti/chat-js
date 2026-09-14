@@ -9,8 +9,7 @@ import {
   useState,
 } from "react";
 
-import type { UIArtifact } from "@/components/artifact-panel";
-import type { ArtifactMetadata } from "@/components/create-artifact";
+import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
 
 const initialArtifactData: UIArtifact = {
   content: "",

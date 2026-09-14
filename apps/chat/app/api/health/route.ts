@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { checkDatabase } from "@/lib/db/health";
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 
 const eveHealth = z.object({
   ok: z.literal(true),
@@ -20,18 +19,16 @@ export const GET = async () => {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        isEveEnabled()
-          ? fetch(new URL("/eve/v1/health", env.EVE_INTERNAL_ORIGIN), {
-              cache: "no-store",
-              redirect: "error",
-              signal: AbortSignal.timeout(4000),
-            }).then(async (response) => {
-              if (!response.ok) {
-                throw new Error("Eve unavailable");
-              }
-              eveHealth.parse(await response.json());
-            })
-          : Promise.resolve(),
+        fetch(new URL("/eve/v1/health", env.EVE_INTERNAL_ORIGIN), {
+          cache: "no-store",
+          redirect: "error",
+          signal: AbortSignal.timeout(4000),
+        }).then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Eve unavailable");
+          }
+          eveHealth.parse(await response.json());
+        }),
       ]),
       // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
       new Promise<never>((_resolve, reject) => {

@@ -1,210 +1,35 @@
 ---
-title: "Follow-up Questions"
-description: "Generate and display contextual follow-up suggestions"
+title: Follow-up Questions
+description: Generate contextual suggestions through an EVE turn-completion hook
 ---
 
-> Suggest follow-up questions after AI responses, shown only on the last message.
+ChatJS can add three to five follow-up suggestions after an EVE response completes. Suggestions are annotations on the native assistant message, so they stay out of later model context and survive transcript recovery.
 
-## Overview
+## Configure the model
 
-After the AI responds, generate contextual follow-up questions using a fast model. These are streamed as `data-*` parts which are UI-only - they're filtered out before sending context to the LLM.
+Enable the feature and select a fast model in `chat.config.ts`:
 
-File convention: `lib/ai/followup-suggestions.ts` → `components/followup-suggestions.tsx`
-
-## How it works
-
-1. **Generate** suggestions after the main response using a cheap/fast model
-2. **Stream** as `data-followupSuggestions` part (data-\* prefix = UI-only)
-3. **Ignore** data-\* parts via `convertToModelMessages({ convertDataPart: () => undefined })`
-4. **Render** only on the last message
-
-## Code
-
-### 1. Generate & Stream Suggestions
-
-```ts title="lib/ai/followup-suggestions.ts"
-import { type ModelMessage, Output, streamText } from "ai";
-import { z } from "zod";
-import { getLanguageModel } from "@/lib/ai/providers";
-import type { StreamWriter } from "@/lib/ai/types";
-import { config } from "@/lib/config";
-import { generateUUID } from "@/lib/utils";
-
-const FOLLOWUP_CONTEXT_MESSAGES = 2;
-
-export async function generateFollowupSuggestions(
-  modelMessages: ModelMessage[]
-) {
-  const maxQuestionCount = 5;
-  const minQuestionCount = 3;
-  const maxCharactersPerQuestion = 80;
-  const recentMessages = modelMessages.slice(-FOLLOWUP_CONTEXT_MESSAGES);
-
-  return streamText({
-    model: await getLanguageModel(config.ai.tools.followupSuggestions.default),
-    messages: [
-      ...recentMessages,
-      {
-        role: "user",
-        content: `What question should I ask next? Return an array of suggested questions (minimum ${minQuestionCount}, maximum ${maxQuestionCount}). Each question should be no more than ${maxCharactersPerQuestion} characters.`,
-      },
-    ],
-    output: Output.object({
-      schema: z.object({
-        suggestions: z
-          .array(z.string())
-          .min(minQuestionCount)
-          .max(maxQuestionCount),
-      }),
-    }),
-  });
-}
-
-export async function streamFollowupSuggestions({
-  followupSuggestionsResult,
-  writer,
-}: {
-  followupSuggestionsResult: ReturnType<typeof generateFollowupSuggestions>;
-  writer: StreamWriter;
-}) {
-  const dataPartId = generateUUID();
-  const result = await followupSuggestionsResult;
-
-  for await (const chunk of result.partialOutputStream) {
-    writer.write({
-      id: dataPartId,
-      type: "data-followupSuggestions", // data-* = UI-only, filtered from LLM context
-      data: {
-        suggestions:
-          chunk.suggestions?.filter((s): s is string => s !== undefined) ?? [],
-      },
-    });
-  }
-}
-```
-
-### 2. Call After Response
-
-```ts title="app/(chat)/api/chat/route.ts"
-// Inside createUIMessageStream execute callback, after result.consumeStream()
-await result.consumeStream();
-
-const response = await result.response;
-const responseMessages = response.messages;
-
-if (config.ai.tools.followupSuggestions.enabled) {
-  const followupSuggestionsResult = generateFollowupSuggestions([
-    ...contextForLLM,
-    ...responseMessages,
-  ]);
-  await streamFollowupSuggestions({
-    followupSuggestionsResult,
-    writer: dataStream,
-  });
-}
-```
-
-### 3. Ignore Data Parts in Conversion
-
-```ts title="lib/ai/core-chat-agent.ts"
-import { convertToModelMessages } from "ai";
-import { filterPartsForLLM } from "@/app/(chat)/api/chat/filter-reasoning-parts";
-
-// Convert to model messages, ignoring data-* parts (UI-only)
-const filteredMessages = filterPartsForLLM(messages);
-const modelMessages = await convertToModelMessages(filteredMessages, {
-  convertDataPart: (_part): undefined => undefined,
-});
-```
-
-### 4. Render on Last Message Only
-
-```tsx title="components/followup-suggestions.tsx"
-"use client";
-
-import { useCallback } from "react";
-import { useChatStoreApi } from "@/lib/stores/base";
-import { useMessageIds } from "@/lib/stores/hooks-base";
-import {
-  useMessagePartByPartIdx,
-  useMessagePartTypesById,
-} from "@/lib/stores/hooks-message-parts";
-import type { ChatMessage, UiToolName } from "@/lib/ai/types";
-import { generateUUID } from "@/lib/utils";
-import { useChatInput } from "@/providers/chat-input-provider";
-
-function FollowUpSuggestions({ suggestions }: { suggestions: string[] }) {
-  const storeApi = useChatStoreApi();
-  const { selectedModelId, selectedTool } = useChatInput();
-
-  const handleClick = useCallback(
-    (suggestion: string) => {
-      const sendMessage = storeApi.getState().sendMessage;
-      if (!sendMessage) return;
-
-      const message: ChatMessage = {
-        id: generateUUID(),
-        role: "user",
-        parts: [{ type: "text", text: suggestion }],
-        metadata: {
-          createdAt: new Date(),
-          parentMessageId: storeApi.getState().getLastMessageId(),
-          selectedModel: selectedModelId,
-          activeStreamId: null,
-          selectedTool: (selectedTool as UiToolName | null) || undefined,
-        },
-      };
-
-      sendMessage(message);
+```ts
+ai: {
+  tools: {
+    followupSuggestions: {
+      enabled: true,
+      default: "google/gemini-2.5-flash-lite",
     },
-    [storeApi, selectedModelId, selectedTool]
-  );
-
-  if (suggestions.length === 0) return null;
-
-  return (
-    <div>
-      <div>Related</div>
-      {suggestions.map((suggestion) => (
-        <button key={suggestion} onClick={() => handleClick(suggestion)}>
-          {suggestion}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function FollowUpSuggestionsParts({ messageId }: { messageId: string }) {
-  const types = useMessagePartTypesById(messageId);
-  const ids = useMessageIds();
-  const isLastMessage = ids.at(-1) === messageId;
-
-  // Only show on the last message
-  if (!isLastMessage) {
-    return null;
-  }
-
-  const partIdx = types.indexOf("data-followupSuggestions");
-  if (partIdx === -1) {
-    return null;
-  }
-
-  return <FollowUpSuggestionsPart messageId={messageId} partIdx={partIdx} />;
-}
-
-function FollowUpSuggestionsPart({
-  messageId,
-  partIdx,
-}: {
-  messageId: string;
-  partIdx: number;
-}) {
-  const part = useMessagePartByPartIdx(
-    messageId,
-    partIdx,
-    "data-followupSuggestions"
-  );
-
-  return <FollowUpSuggestions suggestions={part.data.suggestions} />;
+  },
 }
 ```
+
+## Runtime flow
+
+1. `agent/hooks/followup-suggestions.ts` collects the latest user and assistant content for the native turn.
+2. `lib/eve/generate-followup-suggestions.ts` makes the auxiliary model call after the answer has completed.
+3. The hook stores valid suggestions in the EVE message annotation `followup-suggestions`.
+4. `components/eve/eve-messages.tsx` reads that annotation and renders the suggestions below the assistant message.
+
+The auxiliary generation never hides a completed answer. It records its model usage with the EVE turn so billing can reconcile it with the rest of the conversation.
+
+## Related
+
+- [Follow-up Suggestions](/features/follow-up-suggestions) for product behavior
+- [Native EVE Conversations](/cookbook/next-chat-transition) for the runtime boundary

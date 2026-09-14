@@ -1,12 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("model selector and artifact toolbar visual fixture", async ({ page }) => {
+test("model selector visual fixture", async ({ page }) => {
   await page.goto("/visual-fixtures/model-toolbar");
 
-  const fixture = page.getByTestId("model-toolbar-fixture");
-  const selector = page.getByTestId("model-selector");
-  const toolbar = page.getByTestId("toolbar-visual-fixture");
-  const toolbarControl = toolbar.locator(":scope > div.absolute");
+  // Next's cached route tree can retain a hidden copy of this fixture.
+  const fixture = page.locator('[data-testid="model-toolbar-fixture"]:visible');
+  const selector = fixture.getByTestId("model-selector");
 
   await expect(fixture).toBeVisible();
   await expect(selector).toHaveText("Primary fixture model");
@@ -21,12 +20,4 @@ test("model selector and artifact toolbar visual fixture", async ({ page }) => {
 
   await selector.click();
   await expect(page.getByPlaceholder("Search models...")).toBeHidden();
-
-  await toolbarControl.hover();
-  await expect(toolbarControl.locator("svg")).toHaveCount(2);
-  await toolbarControl.locator("svg").last().hover();
-  await expect(
-    page.getByRole("tooltip", { name: "Add comments" })
-  ).toBeVisible();
-  await expect(fixture).toHaveScreenshot("artifact-toolbar-expanded.png");
 });

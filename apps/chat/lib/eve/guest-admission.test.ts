@@ -10,7 +10,12 @@ import {
 
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),
-  env: { AUTH_SECRET: "fixture", NODE_ENV: "development", VERCEL_URL: "" },
+  env: {
+    AUTH_SECRET: "fixture",
+    NODE_ENV: "development",
+    TRUSTED_CLIENT_IP_HEADER: undefined as string | undefined,
+    VERCEL_URL: "",
+  },
   existing: vi.fn(),
   files: vi.fn(),
   model: vi.fn(),
@@ -58,6 +63,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.env.NODE_ENV = "development";
   mocks.env.VERCEL_URL = "";
+  mocks.env.TRUSTED_CLIENT_IP_HEADER = undefined;
   mocks.source.mockResolvedValue(undefined);
   mocks.existing.mockResolvedValue(undefined);
   mocks.files.mockResolvedValue(undefined);
@@ -87,6 +93,37 @@ it("does not trust arbitrary forwarded headers or alternate IP spellings for quo
   expect(digest("::ffff:192.0.2.1")).toBe(digest("192.0.2.1"));
   expect(() => digest("192.0.2.1, 192.0.2.2")).toThrow();
   expect(() => digest("fe80::1%eth0")).toThrow();
+});
+
+it("self-hosted guest quotas use only the configured proxy header", () => {
+  mocks.env.NODE_ENV = "production";
+  mocks.env.TRUSTED_CLIENT_IP_HEADER = "x-real-ip";
+  const headers = {
+    "x-forwarded-for": "198.51.100.2",
+    "x-real-ip": "192.0.2.1",
+  };
+  const hash = guestRequestIpHash(new Request(request, { headers }));
+  expect(
+    guestRequestIpHash(
+      new Request(request, {
+        headers: { ...headers, "x-forwarded-for": "203.0.113.3" },
+      })
+    )
+  ).toBe(hash);
+  expect(() =>
+    guestRequestIpHash(
+      new Request(request, {
+        headers: { "x-forwarded-for": "192.0.2.1" },
+      })
+    )
+  ).toThrow("Trusted client address");
+  expect(() =>
+    guestRequestIpHash(
+      new Request(request, {
+        headers: { "x-real-ip": "192.0.2.1, 198.51.100.2" },
+      })
+    )
+  ).toThrow("Trusted client address");
 });
 
 it("checks guest policy and ownership before reserving account/quota", async () => {

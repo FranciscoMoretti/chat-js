@@ -20,11 +20,16 @@ import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
 const emptyUploadQueue: string[] = [];
+
+export interface AttachmentViewData {
+  contentType: string;
+  name: string;
+  url: string;
+}
 
 const AttachmentIcon = ({
   isImage,
@@ -73,7 +78,7 @@ const AttachmentPill = ({
   isUploading,
   onRemove,
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading: boolean;
   onRemove?: () => void;
 }) => {
@@ -140,7 +145,7 @@ const AttachmentItem = ({
   onImageClick,
   variant = "card",
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading?: boolean;
   onRemove?: () => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
@@ -257,9 +262,9 @@ export const AttachmentList = ({
   testId = "attachments",
   className,
 }: {
-  attachments: Attachment[];
+  attachments: AttachmentViewData[];
   uploadQueue?: string[];
-  onRemoveAction?: (attachment: Attachment) => void;
+  onRemoveAction?: (attachment: AttachmentViewData) => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
   testId?: string;

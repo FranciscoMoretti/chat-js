@@ -2,7 +2,6 @@ import { after } from "next/server";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import {
   conversationBinding,
   createConversationInput,
@@ -17,9 +16,6 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 export const POST = async (request: Request) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { status: 404 });
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { status: 401 });

@@ -37,7 +37,6 @@ export const EveShareDialogContent = ({
 
 export const EveShareButton = ({ chatId }: { chatId: string }) => (
   <ShareButton
-    chatId={chatId}
     renderContent={(onClose) => (
       <EveShareDialogContent chatId={chatId} onClose={onClose} />
     )}

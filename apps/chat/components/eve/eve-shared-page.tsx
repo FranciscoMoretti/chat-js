@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { ChatHeaderView } from "@/components/chat-header";
+import { ChatHeaderView } from "@/components/chat-header-view";
 import { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";

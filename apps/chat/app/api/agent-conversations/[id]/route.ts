@@ -3,7 +3,6 @@ import { z } from "zod";
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
 import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { env } from "@/lib/env";
-import { isEveEnabled } from "@/lib/eve/availability";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
@@ -14,9 +13,6 @@ const headers = { "cache-control": "no-store" };
 type Context = { params: Promise<{ id: string }> };
 
 const authorize = async (request: Request, context: Context) => {
-  if (!isEveEnabled()) {
-    return new Response(null, { headers, status: 404 });
-  }
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { headers, status: 401 });
