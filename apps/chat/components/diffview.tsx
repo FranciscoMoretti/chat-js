@@ -102,8 +102,8 @@ class DiffTextNode extends TextNode {
 
     if (prevDiffType !== currentDiffType) {
       // Update classes if diff type changed
-      // Force recreation
-      return false;
+      // Recreate the span when its diff styling changes.
+      return true;
     }
 
     return super.updateDOM(prevNode as this, dom, config);
@@ -141,31 +141,29 @@ const DiffContentPlugin = ({
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    if (oldContent && newContent) {
-      editor.update(() => {
-        const root = $getRoot();
+    editor.update(() => {
+      const root = $getRoot();
 
-        // Clear existing content
-        const children = root.getChildren();
-        for (const child of children) {
-          child.remove();
-        }
+      // Clear existing content
+      const children = root.getChildren();
+      for (const child of children) {
+        child.remove();
+      }
 
-        // Compute proper diff using LCS algorithm
-        const diffResult = computeProperDiff(oldContent, newContent);
+      // Compute proper diff using LCS algorithm
+      const diffResult = computeProperDiff(oldContent, newContent);
 
-        // Create a single paragraph with all diff nodes
-        const paragraphNode = $createParagraphNode();
+      // Create a single paragraph with all diff nodes
+      const paragraphNode = $createParagraphNode();
 
-        for (const { text, type } of diffResult) {
-          const textNode = new DiffTextNode(text);
-          textNode.setDiffType(type);
-          paragraphNode.append(textNode);
-        }
+      for (const { text, type } of diffResult) {
+        const textNode = new DiffTextNode(text);
+        textNode.setDiffType(type);
+        paragraphNode.append(textNode);
+      }
 
-        root.append(paragraphNode);
-      });
-    }
+      root.append(paragraphNode);
+    });
   }, [oldContent, newContent, editor]);
 
   return null;

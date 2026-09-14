@@ -1,1 +1,0 @@
-ALTER TABLE "Message" DROP COLUMN IF EXISTS "isPartial";

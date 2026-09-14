@@ -1,5 +1,6 @@
 import { tool } from "ai";
-import { z } from "zod";
+
+import { wordCountInput } from "./schemas";
 
 const WORD_SPLIT_REGEX = /\s+/u;
 const SENTENCE_SPLIT_REGEX = /[.!?]+/u;
@@ -17,9 +18,7 @@ export const wordCount = tool({
 
     return { characters, charactersNoSpaces, sentences, words };
   },
-  inputSchema: z.object({
-    text: z.string().describe("The text to analyze"),
-  }),
+  inputSchema: wordCountInput,
 });
 
 export interface WordCountOutput {

@@ -10,6 +10,7 @@ export const Favicon = ({
   url: string;
   className?: string;
 } & React.ImgHTMLAttributes<HTMLImageElement>) => (
+  // oxlint-disable-next-line next/no-img-element -- Favicon URLs come from arbitrary sites and cannot use Next image configuration.
   <img
     className={cn("h-4 w-4", className)}
     height={16}

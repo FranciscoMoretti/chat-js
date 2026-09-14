@@ -18,8 +18,8 @@
     "format": "oxfmt --write .",
     "lint": "ultracite check . && bun run --filter=@chatjs/docs docs:doctor",
     "clean:modules": "find . -name node_modules -type d -prune -exec rm -rf {} +",
-    "test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
-    "test:unit": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts && turbo run test:unit",
+    "test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
+    "test:unit": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts && turbo run test:unit",
     "test:types": "turbo run test:types",
     "docs:links": "turbo run docs:links --filter=@chatjs/docs",
     "test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
@@ -38,7 +38,13 @@
     "build:electron": "turbo run electron:build --filter=@chat-js/electron",
     "dist:electron": "turbo run electron:make --filter=@chat-js/electron",
     "test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
-    "lint:fix": "oxlint --fix ."
+    "lint:fix": "oxlint --fix .",
+    "dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
+    "build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",
+    "eve:db:setup:local": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:db:setup:local",
+    "dev:supervise": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-supervisor.ts",
+    "dev:service": "bun scripts/dev-service.ts",
+    "dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
@@ -61,7 +67,12 @@
     "astro": "7.3.1"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
-  "packageManager": "bun@1.3.1"
+  "packageManager": "bun@1.3.1",
+  "patchedDependencies": {
+    "@ai-sdk/mcp@2.0.45": "patches/ai-sdk-mcp@2.0.45.patch",
+    "eve@0.52.2": "patches/eve@0.52.2.patch",
+    "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch"
+  }
 }

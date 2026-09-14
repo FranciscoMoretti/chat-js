@@ -1,6 +1,8 @@
 import type * as AI from "ai";
+import { MockVideoModelV4 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
 import { generateVideoTool } from "./tool";
@@ -18,7 +20,6 @@ vi.mock("ai", async (importOriginal) => ({
   experimental_generateVideo: mocks.generateVideo,
 }));
 vi.mock("@/lib/ai/app-models", () => ({ getAppModelDefinition: mocks.model }));
-vi.mock("@/lib/ai/providers", () => ({ getVideoModel: mocks.getVideoModel }));
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { video: { default: "default-video", enabled: true } } },
@@ -29,6 +30,20 @@ vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
+const modelProvider: ToolModelProvider = {
+  createImageModel: () => {
+    throw new Error("Unexpected image model request");
+  },
+  createLanguageModel: () => {
+    throw new Error("Unexpected language model request");
+  },
+  createVideoModel: (modelId) => {
+    mocks.getVideoModel(modelId);
+    return new MockVideoModelV4();
+  },
+  getModelDefinition: (modelId) => mocks.model(modelId),
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.model.mockResolvedValue({ output: { video: false } });
@@ -38,7 +53,6 @@ beforeEach(() => {
   mocks.uploadFile.mockResolvedValue({
     url: "/api/files/content?key=generated",
   });
-  mocks.getVideoModel.mockReturnValue("sdk-model");
 });
 
 it("uses the selected model's provider ID and records the existing estimate", async () => {
@@ -54,7 +68,11 @@ it("uses the selected model's provider ID and records the existing estimate", as
   const result = await generateVideoTool.execute(
     { aspectRatio: "9:16", durationSeconds: 3, prompt: "Ocean" },
     {
-      context: { costAccumulator, selectedModel: "selected-reasoning" },
+      context: {
+        costAccumulator,
+        modelProvider,
+        selectedModel: "selected-reasoning",
+      },
       messages: [],
       toolCallId: "video",
     }
@@ -86,7 +104,7 @@ it("works without optional request services", async () => {
   }
   await generateVideoTool.execute(
     { prompt: "Ocean" },
-    { context: {}, messages: [], toolCallId: "video" }
+    { context: { modelProvider }, messages: [], toolCallId: "video" }
   );
   expect(mocks.getVideoModel).toHaveBeenCalledWith("default-video");
   expect(mocks.generateVideo).toHaveBeenCalledWith(
@@ -103,7 +121,11 @@ it("does not upload or charge when no video is generated", async () => {
   await expect(
     generateVideoTool.execute(
       { prompt: "Ocean" },
-      { context: { costAccumulator }, messages: [], toolCallId: "video" }
+      {
+        context: { costAccumulator, modelProvider },
+        messages: [],
+        toolCallId: "video",
+      }
     )
   ).rejects.toThrow("No video generated");
   expect(mocks.uploadFile).not.toHaveBeenCalled();
@@ -119,8 +141,43 @@ it("retains provider cost when storage upload fails", async () => {
   await expect(
     generateVideoTool.execute(
       { prompt: "Ocean" },
-      { context: { costAccumulator }, messages: [], toolCallId: "video" }
+      {
+        context: { costAccumulator, modelProvider },
+        messages: [],
+        toolCallId: "video",
+      }
     )
   ).rejects.toThrow("Storage unavailable");
   expect(await costAccumulator.getTotalCost()).toBe(50);
+});
+
+it("uses request-owned storage and forwards cancellation", async () => {
+  const storeFile = vi.fn().mockResolvedValue({ url: "eve://video" });
+  const controller = new AbortController();
+  if (!generateVideoTool.execute) {
+    throw new Error("Missing execution");
+  }
+  const result = await generateVideoTool.execute(
+    { prompt: "Ocean" },
+    {
+      abortSignal: controller.signal,
+      context: { modelProvider, storeFile },
+      messages: [],
+      toolCallId: "video",
+    }
+  );
+
+  expect(mocks.generateVideo).toHaveBeenCalledWith(
+    expect.objectContaining({ abortSignal: controller.signal })
+  );
+  expect(storeFile).toHaveBeenCalledWith(
+    expect.stringMatching(MP4_EXTENSION),
+    Buffer.from("video"),
+    "video/mp4"
+  );
+  expect(mocks.uploadFile).not.toHaveBeenCalled();
+  if (Symbol.asyncIterator in result) {
+    throw new TypeError("Expected a non-streaming video result");
+  }
+  expect(result.videoUrl).toBe("eve://video");
 });

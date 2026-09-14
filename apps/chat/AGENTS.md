@@ -6,7 +6,7 @@ These instructions apply to this application directory.
 
 - Use Next.js App Router, React, the Vercel AI SDK, Tailwind CSS 4, and shadcn/ui.
 - Keep shadcn primitives in `components/ui`; its config is `components.json`.
-- Chat requests enter through `app/(chat)/api/chat/route.ts`.
+- EVE is the only chat runtime. Browser commands enter through `app/api/eve/[...path]/route.ts`; agent hooks and tools live in `agent/`.
 - Keep Drizzle schema in `lib/db/schema.ts` and database operations in `lib/db/queries.ts`.
 - Register every tRPC router in `trpc/routers/_app.ts`.
 

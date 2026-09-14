@@ -19,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useRenameProject } from "@/hooks/chat-sync-hooks";
+import { useRenameProject } from "@/hooks/use-projects";
 import type { Project } from "@/lib/db/schema";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 

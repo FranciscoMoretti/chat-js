@@ -1,172 +1,32 @@
 ---
 title: "Docker"
-description: "Deploy ChatJS with Docker"
+description: "Container deployment requirements for ChatJS"
 ---
 
-Deploy ChatJS using Docker for containerized, portable deployments.
+ChatJS does not currently publish or validate a Docker deployment layout for the EVE-only application. Do not treat a generic Next.js standalone image as a working ChatJS deployment.
 
-## Dockerfile
+<Callout type="warning">
+  Hosted provider deletion and guest-hosting validation remain release gates.
+  This page records container requirements; it does not certify Docker or
+  Compose for production use.
+</Callout>
 
-Create a `Dockerfile` in your project root:
+## Required topology
 
-```dockerfile
-FROM oven/bun:1 AS base
+An EVE-aware container deployment needs all of the following:
 
-# Install dependencies
-FROM base AS deps
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+- **Node.js 24+** for the application and EVE runtime
+- The complete EVE `.output` tree produced by `eve build`, including `.output/server`; copying only `.next/standalone` and `.next/static` omits EVE output
+- A same-origin EVE gateway URL in `EVE_INTERNAL_ORIGIN` (for example, `http://localhost:3790`), rather than a raw worker origin
+- `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN` at build and runtime
+- A primary ChatJS Postgres database and a World Postgres database for durable EVE workflows
 
-# Build
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+Bootstrap the pinned World Postgres package before the application starts. The `eve:db:setup:local` command accepts only loopback database URLs, so it cannot initialize a typical Compose service hostname or a hosted database. Provider bootstrap alone does not establish hosted deletion coverage.
 
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN bun run build
+For self-hosted guest access, terminate traffic at a trusted proxy. Configure `TRUSTED_CLIENT_IP_HEADER` only when that proxy overwrites the caller-provided header with one verified client IP. Vercel uses its own trusted header.
 
-# Production
-FROM base AS runner
-WORKDIR /app
+## Current support boundary
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+The EVE runtime has passed local production-mode checks, but Docker image lifecycle validation is not complete for this release. A deployment must preserve the `eve build` output, run the required topology, provision its databases, and validate its own lifecycle behavior before it can be considered for use.
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["bun", "server.js"]
-```
-
-## Next.js Configuration
-
-Enable standalone output in `next.config.ts`:
-
-```typescript
-const nextConfig: NextConfig = {
-  output: "standalone",
-  // ... other config
-};
-```
-
-## Docker Compose
-
-Create `docker-compose.yml` for local development with all dependencies:
-
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chatjs
-      - REDIS_URL=redis://redis:6379
-      - AUTH_SECRET=${AUTH_SECRET}
-      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
-      # Optional, for the Vercel Blob provider
-      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
-    depends_on:
-      - db
-      - redis
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: chatjs
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-volumes:
-  postgres_data:
-  redis_data:
-```
-
-## Build and Run
-
-```bash
-# Build the image
-docker build -t chatjs .
-
-# Run with docker-compose
-docker-compose up -d
-
-# Run migrations
-docker-compose exec app bun db:migrate
-```
-
-## Environment Variables
-
-Create a `.env` file for Docker:
-
-```env
-# Required
-AUTH_SECRET=your-secret-here
-AI_GATEWAY_API_KEY=your-gateway-key
-
-# Auth (choose one)
-AUTH_GITHUB_ID=...
-AUTH_GITHUB_SECRET=...
-
-# Optional, when Vercel Blob is the selected file storage provider
-BLOB_READ_WRITE_TOKEN=your-blob-token
-
-# Optional
-TAVILY_API_KEY=...
-```
-
-## Production Considerations
-
-### Health Checks
-
-Add a health check to your Dockerfile:
-
-```dockerfile
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-```
-
-### Managed Services
-
-For production, consider using managed services instead of containerized databases:
-
-- **Database**: Neon, Supabase, or AWS RDS
-- **Redis**: Upstash, Redis Cloud, or AWS ElastiCache
-- **File Storage**: Choose a Files SDK provider such as Vercel Blob, AWS S3, or Cloudflare R2
-
-### Container Registry
-
-Push your image to a container registry:
-
-```bash
-# Tag and push to Docker Hub
-docker tag chatjs your-username/chatjs:latest
-docker push your-username/chatjs:latest
-
-# Or use GitHub Container Registry
-docker tag chatjs ghcr.io/your-org/chatjs:latest
-docker push ghcr.io/your-org/chatjs:latest
-```
+Use the [Quickstart](/quickstart) for local development and [Self-Hosted](/deployment/self-hosted) for the remaining deployment limits.

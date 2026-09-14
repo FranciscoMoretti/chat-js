@@ -5,27 +5,26 @@ import { useState } from "react";
 
 import { ImageActions, ImageModal } from "@/components/image-modal";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
+import { generateImageInput, generateImageResult } from "./schemas";
 import type { generateImageTool } from "./tool";
 
 type GenerateImageTool = ToolPartFromTool<typeof generateImageTool>;
 
-export const GenerateImageRenderer = ({
-  tool,
-}: {
-  tool: GenerateImageTool;
-}) => {
+const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
-  if (tool.state === "input-available") {
+  if (tool.state === "input-streaming" || tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating image: &quot;{tool.input.prompt}&quot;
+          Generating image: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          &quot;
         </div>
       </div>
     );
@@ -85,3 +84,9 @@ export const GenerateImageRenderer = ({
     </>
   );
 };
+
+export const GenerateImageRenderer = defineToolRenderer({
+  inputSchema: generateImageInput,
+  outputSchema: generateImageResult,
+  render: GenerateImageView,
+});

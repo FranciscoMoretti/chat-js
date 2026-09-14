@@ -1,2 +1,7 @@
 .vercel
 .devtools
+.eve/
+.output/
+tests/eve-fixture/.eve/
+tests/eve-fixture/.output/
+tests/eve-results/

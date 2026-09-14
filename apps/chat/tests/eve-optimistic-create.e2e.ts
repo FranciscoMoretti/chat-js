@@ -1,0 +1,133 @@
+import { expect, test } from "@playwright/test";
+
+import { textPdf } from "./eve-attachment-fixtures";
+
+const projectPath = /\/project\/[a-f\d-]+$/u;
+
+for (const project of [false, true]) {
+  test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
+    page,
+  }, testInfo) => {
+    await page.route("https://unpkg.com/react-scan/**", (route) =>
+      route.abort()
+    );
+    await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
+    const composer = page.getByRole("group", {
+      exact: true,
+      name: "Message composer",
+    });
+    let projectId: string | undefined;
+    const release = Promise.withResolvers<undefined>();
+    let received = false;
+    await page.route("**/api/agent-conversations", async (route) => {
+      received = true;
+      await release.promise;
+      await route.fulfill({
+        json: { error: "Test creation unavailable" },
+        status: 503,
+      });
+    });
+    try {
+      await expect(
+        composer.getByLabel("Message", { exact: true })
+      ).toHaveAttribute("contenteditable", "true");
+      if (project) {
+        await page
+          .getByRole("button", { exact: true, name: "New project" })
+          .click();
+        const dialog = page.getByRole("dialog");
+        await dialog
+          .getByPlaceholder("Project name")
+          .fill("Optimistic send fixture");
+        await dialog
+          .getByRole("button", { exact: true, name: "Create" })
+          .click();
+        await expect(page).toHaveURL(projectPath);
+        projectId = new URL(page.url()).pathname.split("/").at(-1);
+        await page.setViewportSize({ height: 844, width: 390 });
+        await page.route("**/api/files/upload", (route) =>
+          route.fulfill({
+            json: {
+              url: "/api/files/content?key=012345678901234567890123.pdf",
+            },
+            status: 200,
+          })
+        );
+        await page
+          .getByRole("group", { exact: true, name: "Message composer" })
+          .getByLabel("Attach files", { exact: true })
+          .setInputFiles({
+            buffer: textPdf("Pending attachment"),
+            mimeType: "application/pdf",
+            name: "pending.pdf",
+          });
+        await expect(
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
+        ).toBeVisible();
+      }
+      const input = composer.getByLabel("Message", { exact: true });
+      await expect(input).toHaveAttribute("contenteditable", "true");
+      await input.fill("Optimistic first message");
+      await composer.getByLabel("Send", { exact: true }).click();
+      await expect.poll(() => received, { timeout: 5000 }).toBe(true);
+
+      await expect(page.getByRole("log")).toContainText(
+        "Optimistic first message",
+        { timeout: 1000 }
+      );
+      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
+        ""
+      );
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("optimistic-first-message.png"),
+      });
+      if (project) {
+        await expect(
+          page
+            .getByRole("log")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
+        ).toBeVisible();
+        await expect(
+          page
+            .getByRole("group", { exact: true, name: "Message composer" })
+            .getByTestId("input-attachment-preview")
+        ).toHaveCount(0);
+      }
+      release.resolve(undefined);
+      await expect(page.getByRole("alert")).toBeVisible();
+      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
+        "Optimistic first message"
+      );
+      if (project) {
+        await expect(
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
+        ).toBeVisible();
+      }
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
+        "Optimistic first message"
+      );
+      if (project) {
+        await expect(
+          composer
+            .getByTestId("attachments-preview")
+            .getByRole("button", { exact: true, name: "pending.pdf" })
+        ).toBeVisible();
+      }
+    } finally {
+      release.resolve(undefined);
+      if (projectId) {
+        const removed = await page.request.post("/api/trpc/project.remove", {
+          data: { json: { id: projectId } },
+          timeout: 15_000,
+        });
+        expect(removed.status()).toBe(200);
+      }
+    }
+  });
+}

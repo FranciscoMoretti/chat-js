@@ -71,10 +71,10 @@ await __run();
 `;
 };
 
-type JsExecInfo = {
+interface JsExecInfo {
   success: boolean;
   error?: { name: string; value: string; traceback: string };
-};
+}
 
 const execInfoFromExitCode = (exitCode: number): JsExecInfo => {
   if (exitCode === 0) {

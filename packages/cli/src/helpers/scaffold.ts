@@ -7,46 +7,18 @@ import type { PackageManager } from "../types";
 import { runCommand } from "../utils/run-command";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
-import { vendorThreadPackage } from "./vendor-thread-package";
+import { resolvePackageDirectory } from "./resolve-package-directory";
+import {
+  shouldCopyChatAppFile,
+  shouldCopyElectronFile,
+  normalizeScaffoldContent,
+} from "./scaffold-content";
+import { vendorPatchedPackage } from "./vendor-patched-package";
 
-const { join, relative, resolve, sep } = pathModule;
-
-const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
-  "node_modules",
-  ".next",
-  ".turbo",
-  "playwright",
-  "playwright-report",
-  "test-results",
-  "blob-report",
-  "dist",
-  "build",
-]);
-
-const CHAT_APP_EXCLUDED_FILES = new Set([
-  ".env.local",
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-]);
-
-const ELECTRON_EXCLUDED_SEGMENTS = new Set([
-  "node_modules",
-  ".turbo",
-  "build",
-  "dist",
-  "release",
-]);
-
-const ELECTRON_EXCLUDED_FILES = new Set([
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-  "branding.json",
-]);
+const { join, relative, resolve } = pathModule;
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
-  "better-sqlite3",
+  "cbor-extract",
   "electron",
   "electron-winstaller",
   "esbuild",
@@ -79,28 +51,7 @@ const findTemplateDir = (name: string): string | null => {
 const shouldCopyChatAppFilePath = (
   sourceDir: string,
   filePath: string
-): boolean => {
-  const relativePath = relative(sourceDir, filePath);
-  const segments = relativePath.split(sep);
-  if (segments.some((segment) => CHAT_APP_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  return !(fileName && CHAT_APP_EXCLUDED_FILES.has(fileName));
-};
-
-const shouldCopyElectronFilePath = (
-  sourceDir: string,
-  filePath: string
-): boolean => {
-  const relativePath = relative(sourceDir, filePath);
-  const segments = relativePath.split(sep);
-  if (segments.some((segment) => ELECTRON_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  return !(fileName && ELECTRON_EXCLUDED_FILES.has(fileName));
-};
+): boolean => shouldCopyChatAppFile(relative(sourceDir, filePath));
 
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
@@ -211,9 +162,36 @@ const applyChatTemplateSourceTransforms = async (
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
-  await vendorThreadPackage({
+  await vendorPatchedPackage({
     destination,
-    threadSourceDir: join(getRepoRoot(), "packages", "thread", "src"),
+    packageDir: await resolvePackageDirectory(
+      "eve",
+      join(getRepoRoot(), "apps", "chat")
+    ),
+    packageName: "eve",
+    patchPath: join(getRepoRoot(), "patches", "eve@0.52.2.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: await resolvePackageDirectory(
+      "@ai-sdk/mcp",
+      join(getRepoRoot(), "apps", "chat")
+    ),
+    packageName: "@ai-sdk/mcp",
+    patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.45.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: await resolvePackageDirectory(
+      "@workflow/world-postgres",
+      join(getRepoRoot(), "apps", "chat")
+    ),
+    packageName: "@workflow/world-postgres",
+    patchPath: join(
+      getRepoRoot(),
+      "patches",
+      "workflow-world-postgres@5.0.0-beta.40.patch"
+    ),
   });
 };
 
@@ -249,7 +227,7 @@ const copyElectronTemplateFromRepoSource = async (
 ): Promise<void> => {
   const sourceDir = join(getRepoRoot(), "apps", "electron");
   await cp(sourceDir, destination, {
-    filter: (filePath) => shouldCopyElectronFilePath(sourceDir, filePath),
+    filter: (filePath) => shouldCopyElectronFile(relative(sourceDir, filePath)),
     recursive: true,
   });
   await applyElectronTemplateSourceTransforms(destination);
@@ -259,6 +237,8 @@ const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
+  await normalizeScaffoldContent(destination);
+
   await replaceInFile(join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],
   ]);
@@ -398,7 +378,10 @@ export const scaffoldFromTemplate = async (
   const templateDir = findTemplateDir("chat-app");
 
   await (templateDir
-    ? cp(templateDir, destination, { recursive: true })
+    ? cp(templateDir, destination, {
+        filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
+        recursive: true,
+      })
     : copyChatTemplateFromRepoSource(destination));
 
   // npm packing omits nested .gitignore files, so materialize the app's rules.
@@ -470,7 +453,10 @@ export const scaffoldElectron = async (
   const templateDir = findTemplateDir("electron");
 
   await (templateDir
-    ? cp(templateDir, destination, { recursive: true })
+    ? cp(templateDir, destination, {
+        filter: (file) => shouldCopyElectronFile(relative(templateDir, file)),
+        recursive: true,
+      })
     : copyElectronTemplateFromRepoSource(destination));
 
   const packageJsonPath = join(destination, "package.json");

@@ -1,6 +1,8 @@
 import type * as AI from "ai";
+import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
 import { generateImageTool } from "./tool";
@@ -22,10 +24,6 @@ vi.mock("ai", async (importOriginal) => ({
 vi.mock("@/lib/ai/app-models", () => ({
   getAppModelDefinition: mocks.modelDefinition,
 }));
-vi.mock("@/lib/ai/providers", () => ({
-  getImageModel: () => "image-model",
-  getMultimodalImageModel: mocks.imageModel,
-}));
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { image: { default: "test-image", enabled: true } } },
@@ -42,6 +40,18 @@ vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 vi.mock("@/lib/url", () => ({ getBaseUrl: () => "https://example.com" }));
+
+const modelProvider: ToolModelProvider = {
+  createImageModel: () => new MockImageModelV3(),
+  createLanguageModel: (modelId) => {
+    mocks.imageModel(modelId);
+    return new MockLanguageModelV3();
+  },
+  createVideoModel: () => {
+    throw new Error("Unexpected video model request");
+  },
+  getModelDefinition: (modelId) => mocks.modelDefinition(modelId),
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -77,6 +87,7 @@ it("uses request attachments and prior image for editing and records model usage
           imageUrl: "data:image/png;base64,cHJldmlvdXM=",
           name: "previous.png",
         },
+        modelProvider,
       },
       messages: [],
       toolCallId: "edit",
@@ -109,13 +120,74 @@ it("generates without optional request services", async () => {
   }
   const result = await generateImageTool.execute(
     { prompt: "Blue sky" },
-    { context: {}, messages: [], toolCallId: "new" }
+    { context: { modelProvider }, messages: [], toolCallId: "new" }
   );
   expect(mocks.generateImage.mock.calls[0][0].prompt).toBe("Blue sky");
   expect(result).toEqual({
     imageUrl: "https://example.com/result.png",
     prompt: "Blue sky",
   });
+});
+
+it("uses request-owned storage and retains provider cost if storage fails", async () => {
+  const storeFile = vi.fn().mockRejectedValue(new Error("Storage unavailable"));
+  const costAccumulator = new CostAccumulator();
+  if (!generateImageTool.execute) {
+    throw new Error("Missing execution");
+  }
+
+  await expect(
+    generateImageTool.execute(
+      { prompt: "Blue sky" },
+      {
+        context: { costAccumulator, modelProvider, storeFile },
+        messages: [],
+        toolCallId: "owned-storage",
+      }
+    )
+  ).rejects.toThrow("Storage unavailable");
+  expect(storeFile).toHaveBeenCalledWith(
+    expect.any(String),
+    Buffer.from("image"),
+    "image/png"
+  );
+  expect(mocks.uploadFile).not.toHaveBeenCalled();
+  expect(await costAccumulator.getTotalCost()).toBe(4);
+});
+
+it("forwards request cancellation to the image provider", async () => {
+  const controller = new AbortController();
+  const started = Promise.withResolvers<undefined>();
+  mocks.generateImage.mockImplementation(
+    ({ abortSignal }: { abortSignal: AbortSignal }) => {
+      const pending = Promise.withResolvers<never>();
+      // eslint-disable-next-line unicorn/no-useless-undefined -- PromiseWithResolvers requires its void argument.
+      started.resolve(undefined);
+      abortSignal.addEventListener(
+        "abort",
+        () => pending.reject(abortSignal.reason),
+        { once: true }
+      );
+      return pending.promise;
+    }
+  );
+  if (!generateImageTool.execute) {
+    throw new Error("Missing execution");
+  }
+  const result = generateImageTool.execute(
+    { prompt: "Blue sky" },
+    {
+      abortSignal: controller.signal,
+      context: { modelProvider },
+      messages: [],
+      toolCallId: "cancelled",
+    }
+  );
+  await started.promise;
+  controller.abort(new Error("cancelled"));
+
+  await expect(result).rejects.toThrow("cancelled");
+  expect(mocks.uploadFile).not.toHaveBeenCalled();
 });
 
 it("uses the selected multimodal model from request context", async () => {
@@ -138,6 +210,7 @@ it("uses the selected multimodal model from request context", async () => {
     {
       context: {
         costAccumulator,
+        modelProvider,
         selectedModel: "google/image-model-reasoning",
       },
       messages: [],
@@ -168,7 +241,10 @@ it.each([
     generateImageTool.execute(
       { prompt: "Edit" },
       {
-        context: { lastGeneratedImage: { imageUrl, name: "image" } },
+        context: {
+          lastGeneratedImage: { imageUrl, name: "image" },
+          modelProvider,
+        },
         messages: [],
         toolCallId: "bad",
       }
@@ -191,6 +267,7 @@ it("reads uploaded images directly from storage", async () => {
           imageUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
           name: "image",
         },
+        modelProvider,
       },
       messages: [],
       toolCallId: "stored",

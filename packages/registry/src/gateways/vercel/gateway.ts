@@ -57,6 +57,8 @@ export class VercelGateway
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
+  // The models endpoint is fixed by the provider contract.
+  // eslint-disable-next-line class-methods-use-this
   private getModelsUrl(): string {
     return "https://ai-gateway.vercel.sh/v1/models";
   }

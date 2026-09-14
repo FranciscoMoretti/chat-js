@@ -11,7 +11,10 @@ import type {
   ConnectionStatusResult,
   DiscoveryResult,
 } from "@/lib/ai/mcp/cache";
-import { getOrCreateMcpClient, removeMcpClient } from "@/lib/ai/mcp/mcp-client";
+import {
+  getOrCreateMcpClient,
+  removeMcpClient,
+} from "@/lib/ai/mcp/mcp-client-manager";
 import { config } from "@/lib/config";
 import {
   createMcpConnector,

@@ -52,7 +52,7 @@ export const toolItems = [
     ({
       dependencies,
       description,
-      files: ["tool.ts", "renderer.tsx"].map((file) => ({
+      files: ["tool.ts", "renderer.tsx", "schemas.ts"].map((file) => ({
         path: `src/tools/${definition.id}/${file}`,
         target: `~/tools/chatjs/${definition.id}/${file}`,
         type: "registry:file",
@@ -95,6 +95,11 @@ export const searchToolItems = [
       target: `~/tools/chatjs/${id}/renderer.tsx`,
       type: "registry:file" as const,
     },
+    {
+      path: `src/tools/${id}/schemas.ts`,
+      target: `~/tools/chatjs/${id}/schemas.ts`,
+      type: "registry:file" as const,
+    },
   ],
   meta: {
     chatjs: toolDefinitionSchema.parse({
@@ -125,6 +130,7 @@ export const codeExecutionItem = {
     "javascript.ts",
     "types.ts",
     "renderer.tsx",
+    "schemas.ts",
   ].map((file) => ({
     path: `src/tools/vercel-code-execution/${file}`,
     target: `~/tools/chatjs/vercel-code-execution/${file}`,

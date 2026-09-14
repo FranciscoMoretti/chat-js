@@ -1,104 +1,33 @@
 ---
-title: Provisional Chat Runtime
-description: Keep first-message chat execution alive while App Router moves from a draft route to a persisted chat route
+title: Native EVE Conversations
+description: How the EVE-backed app creates, resumes, and recovers conversations
 ---
 
-This cookbook used to describe the route-transition provider. That provider has been removed from the active architecture. The current first-message flow is owned by persistent chat runtimes instead of a temporary route transition.
+ChatJS uses EVE as its conversation runtime. The browser connects through the authenticated ChatJS gateway, while EVE owns the durable transcript, execution state, approvals, and stream recovery.
 
-For the full migration plan, see `CHAT_RUNTIME_MIGRATION_PLAN.md` at the repo root.
+ChatJS stores application-owned records around that runtime: ownership, project membership, titles, sharing, file ownership, document revisions, and billing evidence. Those records do not mirror the EVE transcript.
 
-## The Problem
+## First message and recovery
 
-The first-message flow has competing requirements:
+For a new conversation, the composer records a durable creation request before it asks ChatJS to create the EVE session. The page then navigates to `/chat/:id`. If the request is interrupted, the retained request can recover or retry without treating an uncertain network response as proof that creation failed.
 
-1. A new chat needs a real URL like `/chat/:id` or `/project/:projectId/chat/:chatId`
-2. The submitted message and pending assistant placeholders must survive route changes
-3. Normal navigation between unrelated chats must not leak state
-4. Backend queries for persisted chat data must not run before the provisional chat is confirmed
-5. Streams should continue even when the route tree changes
+An existing conversation starts `useEveAgent` with its EVE session ID and resumes from the durable stream position. The client does not mount a second chat runtime or reconstruct an AI SDK stream from local message state.
 
-Using a route-local controller makes the App Router navigation own too much of the chat lifecycle. A route remount can stop the stream, lose optimistic state, or fetch persisted chat data before the server has confirmed the row.
+## Boundaries
 
-## Current Solution
-
-`ChatRuntimeRegistryProvider` owns live chat runtime entries. A provisional chat starts by registering a runtime with:
-
-- the generated chat id
-- an owned chat store
-- the submitted user message
-- pending primary submission data
-- parallel request specs
-- `persistenceStatus: "provisional"`
-
-`MountedChatRuntimes` renders controllers outside the route tree, so streaming continues while navigation changes which chat is visible.
-
-`ChatRouteHost` is now a view resolver. It decides whether the visible route is backed by a live runtime store or by persisted query data. Persisted chat and message queries are enabled only when there is no live runtime or when the live runtime is confirmed.
-
-## Parts Involved
-
-| Part | Responsibility |
+| Boundary | Owner |
 | --- | --- |
-| `parseChatIdFromPathname` | Classifies `/`, `/chat/:id`, `/project/:projectId`, `/project/:projectId/chat/:chatId`, `/share/:id`, and passthrough routes |
-| `ChatRuntimeRegistryProvider` | Owns live runtime entries and provisional/confirmed persistence state |
-| `useChatRuntimeApi` | Provides the public runtime boundary for lookup, provisional startup, confirmation, and runtime-targeted sends |
-| `MountedChatRuntimes` | Keeps runtime controllers mounted outside route transitions |
-| `useDraftChatId` / `resetDraftChatId` | Generates per-home and per-project draft ids and advances them after promotion |
-| `useStartProvisionalChat` | Creates the provisional runtime, adds optimistic messages, and updates browser history |
-| `ChatRouteHost` | Chooses live runtime data or persisted query data for the visible route |
-| `ChatSystem` | Renders the chat tree against either a route-owned store or an external runtime store |
-| `ChatSync` | Owns the transport for a mounted controller and reports `data-chatConfirmed` |
-| `RuntimeConfirmationController` | Invalidates persisted queries and runs secondary parallel requests after confirmation |
-| `/api/chat` | Idempotently creates the chat/user/assistant records, streams the primary response, and emits `data-chatConfirmed` |
-| `/api/chat/prepare` | Prepares secondary parallel requests against an already-created chat |
+| Native messages, turns, approvals, checkpoints, and stream position | EVE |
+| Authentication, ownership, projects, sharing, billing, files, and document revisions | ChatJS |
+| Model calls, storage, and sandboxes | Configured providers |
 
-## Flow
+The same route family serves new conversations, registered-user project conversations, guest conversations, and public read-only shares. EVE history is the source for the sidebar and search.
 
-1. `ChatRouteHost` renders `/` or `/project/:projectId` with a draft id.
-2. `MultimodalInput` or `SuggestedActions` calls `buildDraftChatSubmission`.
-3. `useStartProvisionalChat` registers a provisional runtime, adds the user and pending assistant messages, and calls `window.history.pushState`.
-4. The destination route re-renders through `ChatRouteHost`.
-5. If a live runtime exists for the destination chat id, `ChatRouteHost` uses its store and suppresses route-owned `ChatSync`.
-6. The mounted runtime's `ChatSync` sends the primary request and receives stream data.
-7. On `data-chatConfirmed`, `ChatSync` marks the runtime confirmed.
-8. `RuntimeConfirmationController` invalidates persisted chat queries and runs secondary parallel requests.
-9. Later route navigation only swaps the visible runtime or persisted data source; it does not own stream lifetime.
+## Important limits
 
-## Runtime Keys
-
-Draft routes include the draft id in the base key:
-
-```ts
-path:${pathname}:draft:${draftChatId}
-```
-
-Persisted routes use:
-
-```ts
-path:${pathname}
-```
-
-When a live runtime backs the route, the visible `ChatSystem` uses the runtime id instead. That keeps the visible tree attached to the runtime-owned store without reintroducing a separate transition key model.
-
-## Query Gating
-
-Persisted chat queries should only run when one of these is true:
-
-- there is no live runtime for the route chat id
-- the live runtime has `persistenceStatus: "confirmed"`
-
-This prevents provisional routes from calling `chat.getChatById` or `chat.getChatMessages` before the server has confirmed the chat.
-
-## Parallel Responses
-
-The runtime entry carries all parallel response metadata:
-
-- the first request is sent by the mounted runtime controller
-- pending assistant placeholders are added when the provisional runtime starts
-- after confirmation, secondary request specs run from `RuntimeConfirmationController`
-- failed secondary requests are converted from pending placeholders into empty assistant messages with `activeStreamId: null`
+Lifecycle and hosting validation still determine whether a deployment is ready. The EVE-only runtime design does not by itself establish provider deletion coverage, guest-hosting readiness, or production release approval.
 
 ## Related
 
-- [URL Routing](/reference/routing) for the supported route shapes
-- [Parallel Responses](/features/parallel-responses) for multi-model response behavior
-- [Resumable Streams](/cookbook/resumable-streams) for reconnecting to active streams after refresh
+- [Architecture](/core/architecture) for the application and package boundaries
+- `docs/eve-migration-report.md` in the repository for current release-gate context

@@ -5,6 +5,12 @@ description: Production deployment with Vercel's integrated platform
 
 Vercel is the recommended deployment platform. It provides integrated storage, AI Gateway, and edge infrastructure with zero configuration.
 
+<Callout type="warning">
+  The EVE-only application still has release gates for hosted provider deletion
+  and guest hosting. This guide does not claim that completing the Vercel setup
+  clears those gates.
+</Callout>
+
 <Callout type="note">
   If you haven't set up your project yet, start with the
   [Quickstart](/quickstart) to scaffold and run locally first.
@@ -18,7 +24,6 @@ ChatJS uses several Vercel platform features. Enable them in your Vercel dashboa
 | --- | --- | --- |
 | **Vercel Postgres** or **Neon** | Primary database | Yes |
 | **Vercel Blob** | File attachments, generated images | If using attachments/image gen |
-| **Vercel KV** | Resumable streams (Redis) | Optional |
 | **AI Gateway** | Unified access to 120+ AI models | Yes |
 
 ### AI Gateway
@@ -52,16 +57,6 @@ ai: {
   },
 }
 ```
-
-### KV (Redis)
-
-Enables resumable streams - users can refresh the page mid-generation and continue where they left off.
-
-1. Go to **Storage** → **Create** → **KV**
-2. Connect to your project
-3. Environment variable `REDIS_URL` is auto-added
-
-Without Redis, streams work normally but can't be resumed after disconnection.
 
 ## Cron Jobs
 
@@ -152,7 +147,6 @@ Sandboxes run with:
 | Variable                | Feature                                |
 | ----------------------- | -------------------------------------- |
 | `BLOB_READ_WRITE_TOKEN` | Blob storage (auto-set by integration) |
-| `REDIS_URL`             | KV/Redis for resumable streams         |
 | `CRON_SECRET`           | Secure cron endpoint                   |
 
 ### Pull from Vercel
@@ -166,14 +160,14 @@ vercel env pull .env.local
 
 ## Rate Limiting and Security
 
-The `/api/chat` endpoint is expensive (it calls AI providers on every request). Protect it from abuse in production.
+The authenticated EVE gateway is expensive because it can call AI providers. Protect its routes from abuse in production.
 
 ### Vercel Firewall
 
 Enable [Vercel Firewall](https://vercel.com/docs/security/vercel-firewall) in your project settings. Create a rate limiting rule for the chat endpoint:
 
 1. Go to **Settings** → **Firewall**
-2. Add a rule targeting `POST /api/chat`
+2. Add a rule targeting the authenticated EVE gateway routes
 3. Set a rate limit (for example, 20 requests per minute per IP)
 4. Choose **Challenge** or **Block** as the action
 
@@ -202,16 +196,16 @@ Before going live:
     https://yourdomain.com/api/auth/callback/google ```
   </AccordionItem>
   <AccordionItem title="Enable rate limiting">
-    Set up [Vercel Firewall](#vercel-firewall) rules for the `/api/chat`
-    endpoint to prevent abuse. See the section above for details.
+    Set up [Vercel Firewall](#vercel-firewall) rules for the EVE gateway to
+    prevent abuse. See the section above for details.
   </AccordionItem>
   <AccordionItem title="Set up monitoring">
     - Enable [Vercel Analytics](https://vercel.com/analytics) for web vitals -
     Configure [Langfuse](https://langfuse.com) for LLM observability (optional)
   </AccordionItem>
   <AccordionItem title="Review storage limits">
-    Check your plan limits for: - Blob storage (file count and size) - KV
-    operations (for resumable streams) - AI Gateway usage
+    Check your plan limits for blob storage, EVE workflow storage, and AI
+    Gateway usage.
   </AccordionItem>
 </Accordion>
 

@@ -101,6 +101,7 @@ export const McpCreateDialog = ({
       url: "",
     });
 
+    // oxlint-disable-next-line react/set-state-in-effect -- Reset the controlled form's advanced section on open.
     setAdvancedOpen(false);
   }, [open, form]);
 
@@ -216,7 +217,7 @@ export const McpCreateDialog = ({
                         <FormControl>
                           <Select
                             defaultValue={field.value}
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => field.onChange(value)}
                             value={field.value}
                           >
                             <SelectTrigger>

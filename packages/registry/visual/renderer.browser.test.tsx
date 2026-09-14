@@ -155,6 +155,8 @@ test("chart output validates shapes and fits PNG output", async () => {
             style={index < malformed.length ? { display: "none" } : undefined}
           >
             <CodeExecution
+              isReadonly
+              messageId="code-fixture"
               tool={{
                 input: { code: "", language: "python", title: "Chart" },
                 output: { chart, message: "" },

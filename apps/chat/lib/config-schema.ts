@@ -451,9 +451,8 @@ type ConfigInputForGateway<G extends GatewayType> = Omit<
   ai?: AiInputFor<G>;
 };
 
-export type ConfigInput = {
-  [G in GatewayType]: ConfigInputForGateway<G>;
-}[GatewayType];
+// Each installation selects one gateway and its corresponding model IDs.
+export type ConfigInput = ConfigInputForGateway<GatewayType>;
 
 /**
  * Type-safe config helper. Infers the gateway type from `ai.gateway` so

@@ -73,7 +73,7 @@ export const gatewayModelDefaults = {
     },
   },
   workflows: {
-    chat: "openai/gpt-5-mini",
+    chat: "google/gemini-2.5-flash-lite",
     chatImageCompatible: "openai/gpt-4o-mini",
     pdf: "openai/gpt-5-mini",
     title: "openai/gpt-5-nano",

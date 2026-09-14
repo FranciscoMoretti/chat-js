@@ -20,8 +20,8 @@ import {
   isRequirementSatisfied,
 } from "../lib/config-requirements";
 import { databaseEnvOptions } from "../lib/db/connection";
+import { eveRuntimeEnvOptions } from "../lib/env-schema";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
-import { redisEnvOptions } from "../lib/redis/connection";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
 loadEnvConfig({ path: ".env.local" });
@@ -228,22 +228,25 @@ const checkEnv = async (): Promise<void> => {
         },
       ];
 
-  const redisOptions = z.object(redisEnvOptions).safeParse(env);
-  const redisErrors = redisOptions.success
+  const eveOptions = z.object(eveRuntimeEnvOptions).safeParse(env);
+  const eveErrors = eveOptions.success
     ? []
     : [
         {
-          feature: "Redis",
-          missing: ["REDIS_URL must be a redis:// or rediss:// connection URL"],
+          feature: "Eve",
+          missing: eveOptions.error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`
+          ),
         },
       ];
+
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
   const installedToolErrors = await validateInstalledTools(env);
   const errors = [
+    ...eveErrors,
     ...databaseErrors,
-    ...redisErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),
@@ -258,7 +261,7 @@ const checkEnv = async (): Promise<void> => {
       .join("\n");
 
     console.error(
-      `❌ Environment validation failed:\n${message}\n\nEither set the env vars or disable the feature in chat.config.ts`
+      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables or update chat.config.ts for optional features.`
     );
     process.exit(1);
   }

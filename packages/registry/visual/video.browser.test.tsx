@@ -22,9 +22,13 @@ test("video tool streaming, loading, player, and error states", async () => {
     root.render(
       <>
         <GenerateVideoRenderer
+          isReadonly
+          messageId="video-fixture"
           tool={{ state: "input-streaming", toolCallId: "streaming" }}
         />
         <GenerateVideoRenderer
+          isReadonly
+          messageId="video-fixture"
           tool={{
             input: { prompt: "Blue sky" },
             state: "input-available",
@@ -32,6 +36,8 @@ test("video tool streaming, loading, player, and error states", async () => {
           }}
         />
         <GenerateVideoRenderer
+          isReadonly
+          messageId="video-fixture"
           tool={{
             input: { prompt: "Blue sky" },
             output: {
@@ -43,6 +49,8 @@ test("video tool streaming, loading, player, and error states", async () => {
           }}
         />
         <GenerateVideoRenderer
+          isReadonly
+          messageId="video-fixture"
           tool={{
             errorText: "Provider failed",
             input: { prompt: "Blue sky" },

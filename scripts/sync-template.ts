@@ -4,10 +4,16 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import rootLintBaseline from "../oxlint-baseline.json";
-import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
+import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
+import {
+  shouldCopyChatAppFile,
+  shouldCopyElectronFile,
+  normalizeScaffoldContent,
+} from "../packages/cli/src/helpers/scaffold-content";
+import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { collectSnapshot } from "./sync-template-snapshot";
 
-const { join, relative, resolve, sep } = path;
+const { join, relative, resolve } = path;
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -28,74 +34,8 @@ const electronTemplateDir = join(
 
 // ─── chat-app filter ────────────────────────────────────────────────────────
 
-const EXCLUDED_SEGMENTS = new Set([
-  ".devtools",
-  "node_modules",
-  ".next",
-  ".turbo",
-  "playwright",
-  "playwright-report",
-  "test-results",
-  "blob-report",
-  "dist",
-  "build",
-]);
-
-const EXCLUDED_FILES = new Set([
-  ".env.local",
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-]);
-
-const shouldCopyFilePath = (filePath: string): boolean => {
-  const rel = relative(sourceDir, filePath);
-  if (!rel || rel.startsWith("..")) {
-    return true;
-  }
-  const segments = rel.split(sep);
-  if (segments.some((segment) => EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  if (fileName && EXCLUDED_FILES.has(fileName)) {
-    return false;
-  }
-  return true;
-};
-
-// ─── electron filter ─────────────────────────────────────────────────────────
-
-const ELECTRON_EXCLUDED_SEGMENTS = new Set([
-  "node_modules",
-  ".turbo",
-  "build",
-  "dist",
-  "release",
-]);
-
-const ELECTRON_EXCLUDED_FILES = new Set([
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-  "branding.json",
-]);
-
-const shouldCopyElectronFilePath = (filePath: string): boolean => {
-  const rel = relative(electronSourceDir, filePath);
-  if (!rel || rel.startsWith("..")) {
-    return true;
-  }
-  const segments = rel.split(sep);
-  if (segments.some((segment) => ELECTRON_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  if (fileName && ELECTRON_EXCLUDED_FILES.has(fileName)) {
-    return false;
-  }
-  return true;
-};
+const shouldCopyFilePath = (filePath: string): boolean =>
+  shouldCopyChatAppFile(relative(sourceDir, filePath));
 
 /** Files removed from the template after copying (relative to destination). */
 const TEMPLATE_REMOVED_FILES = [
@@ -112,6 +52,8 @@ const TEMPLATE_STRIPPED_IMPORTS = [
 ];
 
 const applyTemplateTransforms = async (destination: string): Promise<void> => {
+  await normalizeScaffoldContent(destination);
+
   // Delete excluded files
   await Promise.all(
     TEMPLATE_REMOVED_FILES.map((file) =>
@@ -141,18 +83,12 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   );
   await writeFile(globalsCssPath, globalsCss);
 
-  await vendorThreadPackage({
-    destination,
-    threadSourceDir: join(rootDir, "packages", "thread", "src"),
-  });
-
   // Preserve file-scoped exceptions when workspace source is copied into a scaffold.
   const baselinePath = join(destination, "oxlint-baseline.json");
   const baseline = JSON.parse(
     await readFile(baselinePath, "utf-8")
   ) as typeof rootLintBaseline;
   const sourcePaths = [
-    ["packages/thread/src/", "lib/thread/"],
     ["apps/electron/", "electron/"],
     ["packages/registry/src/tools/", "tools/chatjs/"],
   ];
@@ -167,6 +103,32 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     }
   }
   await writeFile(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`);
+
+  await vendorPatchedPackage({
+    destination,
+    packageDir: await resolvePackageDirectory("eve", sourceDir),
+    packageName: "eve",
+    patchPath: join(rootDir, "patches", "eve@0.52.2.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: await resolvePackageDirectory("@ai-sdk/mcp", sourceDir),
+    packageName: "@ai-sdk/mcp",
+    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.45.patch"),
+  });
+  await vendorPatchedPackage({
+    destination,
+    packageDir: await resolvePackageDirectory(
+      "@workflow/world-postgres",
+      sourceDir
+    ),
+    packageName: "@workflow/world-postgres",
+    patchPath: join(
+      rootDir,
+      "patches",
+      "workflow-world-postgres@5.0.0-beta.40.patch"
+    ),
+  });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
   const rootPackageJson = JSON.parse(
@@ -206,7 +168,7 @@ const applyElectronTemplateTransforms = async (
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
-    filter: shouldCopyElectronFilePath,
+    filter: (file) => shouldCopyElectronFile(relative(electronSourceDir, file)),
     recursive: true,
   });
   await applyElectronTemplateTransforms(destination);

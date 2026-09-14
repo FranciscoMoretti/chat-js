@@ -11,7 +11,7 @@ interface ReasonSearchResearchProgressProps {
 export const ReasonSearchResearchProgress = ({
   updates,
 }: ReasonSearchResearchProgressProps) => {
-  // TODO: This should come from a progress update
+  // The current protocol does not provide an expected step count.
   const totalExpectedSteps = 0;
 
   const isComplete = useMemo(() => {

@@ -44,6 +44,7 @@ export const ProjectDetailsDialog = ({
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
 }) => {
+  const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
   const [color, setColor] = useState<ProjectColorName | null>(
@@ -52,6 +53,8 @@ export const ProjectDetailsDialog = ({
 
   useEffect(() => {
     if (open) {
+      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with its latest server values.
+      setSubmitError("");
       setName(initialName ?? "");
       setIcon(initialIcon ?? null);
       setColor(initialColor ?? null);
@@ -62,12 +65,12 @@ export const ProjectDetailsDialog = ({
   const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
   const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
-  const handleSubmit = async () => {
+  const submitChanges = async () => {
     const trimmedName = name.trim();
 
     if (mode === "create") {
       if (trimmedName) {
-        onSubmit({
+        await onSubmit({
           color: finalColor,
           icon: finalIcon,
           name: trimmedName,
@@ -91,6 +94,15 @@ export const ProjectDetailsDialog = ({
       onOpenChange(false);
     } else {
       onOpenChange(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitError("");
+    try {
+      await submitChanges();
+    } catch {
+      setSubmitError("Could not save project. Try again.");
     }
   };
 
@@ -148,6 +160,7 @@ export const ProjectDetailsDialog = ({
             value={name}
           />
         </div>
+        {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
           <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel

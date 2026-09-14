@@ -239,11 +239,13 @@ const CommandItem = memo(
 );
 
 const PureModelSelector = ({
+  allowMultiple = true,
   selectedModelId,
   selectedModelSelection,
   className,
   onModelSelectionChangeAction,
 }: {
+  allowMultiple?: boolean;
   selectedModelId: AppModelId;
   selectedModelSelection: SelectedModelValue;
   onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
@@ -260,6 +262,7 @@ const PureModelSelector = ({
   );
   // Ref so callbacks don't capture stale optimisticSelection in their closure
   const optimisticSelectionRef = useRef(optimisticSelection);
+  // oxlint-disable-next-line react/refs -- Keep callbacks synchronized with the optimistic selection.
   optimisticSelectionRef.current = optimisticSelection;
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
@@ -273,6 +276,7 @@ const PureModelSelector = ({
   }
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Keep the multi-model toggle synchronized with the controlled selection.
     setUseMultipleModels(isSelectedModelCounts(selectedModelSelection));
   }, [selectedModelSelection]);
 
@@ -508,7 +512,6 @@ const PureModelSelector = ({
           aria-expanded={open}
           className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
           data-testid="model-selector"
-          role="combobox"
           variant="ghost"
         >
           <div className="flex items-center gap-2">
@@ -633,21 +636,23 @@ const PureModelSelector = ({
                 </PopoverContent>
               </Popover>
             </div>
-            {!isAnonymous && config.features.parallelResponses && (
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <Label
-                  className="cursor-pointer text-sm"
-                  htmlFor="use-multiple-models"
-                >
-                  Use Multiple Models
-                </Label>
-                <Switch
-                  checked={useMultipleModels}
-                  id="use-multiple-models"
-                  onCheckedChange={handleMultipleModelsToggle}
-                />
-              </div>
-            )}
+            {allowMultiple &&
+              !isAnonymous &&
+              config.features.parallelResponses && (
+                <div className="flex items-center justify-between border-b px-3 py-2">
+                  <Label
+                    className="cursor-pointer text-sm"
+                    htmlFor="use-multiple-models"
+                  >
+                    Use Multiple Models
+                  </Label>
+                  <Switch
+                    checked={useMultipleModels}
+                    id="use-multiple-models"
+                    onCheckedChange={handleMultipleModelsToggle}
+                  />
+                </div>
+              )}
             {hasDisabledModels && (
               <div className="p-3">
                 <LoginCtaBanner
@@ -728,6 +733,7 @@ const PureModelSelector = ({
 export const ModelSelector = memo(
   PureModelSelector,
   (prev, next) =>
+    prev.allowMultiple === next.allowMultiple &&
     prev.selectedModelId === next.selectedModelId &&
     prev.selectedModelSelection === next.selectedModelSelection &&
     prev.className === next.className &&

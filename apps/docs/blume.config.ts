@@ -171,7 +171,6 @@ export default defineConfig({
             "/reference/config",
             "/reference/env-vars",
             "/reference/database",
-            "/reference/redis",
             "/reference/routing",
             "/reference/testing",
             "/reference/evaluations",

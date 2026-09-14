@@ -66,6 +66,8 @@ export class OpenAIGateway
     return provider.image(modelId);
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }

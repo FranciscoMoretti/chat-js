@@ -79,6 +79,7 @@ export const Reasoning = memo(
     useEffect(() => {
       if (isStreaming) {
         if (startTime === null) {
+          // oxlint-disable-next-line react/set-state-in-effect -- Capture the external stream start timestamp.
           setStartTime(Date.now());
         }
       } else if (startTime !== null) {

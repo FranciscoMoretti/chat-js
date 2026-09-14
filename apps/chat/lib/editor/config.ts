@@ -2,10 +2,8 @@ import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import { $createHeadingNode, HeadingNode, QuoteNode } from "@lexical/rich-text";
-import type { HeadingTagType } from "@lexical/rich-text";
-import { $getSelection, $insertNodes } from "lexical";
-import type { EditorState, LexicalEditor, TextNode } from "lexical";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import type { EditorState, LexicalEditor } from "lexical";
 
 // Create initial editor configuration
 export const createEditorConfig = () => ({
@@ -22,25 +20,6 @@ export const createEditorConfig = () => ({
   onError: (error: Error) => {
     console.error("Lexical error:", error);
   },
-});
-
-// Heading transform function equivalent to ProseMirror's headingRule
-const _createHeadingTransform = (level: number) => ({
-  dependencies: [],
-  export: null,
-  importDOM: null,
-  regExp: new RegExp(`^(#{1,${level}})\\s$`, "u"),
-  replace: (_textNode: TextNode) => {
-    const selection = $getSelection();
-    if (selection) {
-      const headingTag = `h${level}` as HeadingTagType;
-      const headingNode = $createHeadingNode(headingTag);
-      headingNode.append();
-      $insertNodes([headingNode]);
-    }
-  },
-  trigger: " ",
-  type: "text-match",
 });
 
 export const handleEditorChange = ({

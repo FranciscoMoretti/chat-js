@@ -73,7 +73,6 @@ const ContextIcon = () => {
     <svg
       aria-label="Model context usage"
       height="20"
-      role="img"
       style={{ color: "currentcolor" }}
       viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
       width="20"

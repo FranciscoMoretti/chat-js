@@ -12,7 +12,6 @@ import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
 
-import { invalidateAllMcpCaches } from "./cache";
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
 import { OAuthAuthorizationRequiredError } from "./oauth-authorization-required-error";
 
@@ -33,6 +32,8 @@ type McpClientStatus =
  */
 export class MCPClient {
   private client?: McpClientInstance;
+  private connectPromise?: Promise<McpClientInstance | undefined>;
+  private readonly invalidateCache?: () => void;
   private readonly oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
   private _status: McpClientStatus = "disconnected";
@@ -52,8 +53,10 @@ export class MCPClient {
       url: string;
       type: "http" | "sse";
       headers?: Record<string, string>;
-    }
+    },
+    invalidateCache?: () => void
   ) {
+    this.invalidateCache = invalidateCache;
     this.id = id;
     this.name = name;
     this.serverConfig = serverConfig;
@@ -68,7 +71,6 @@ export class MCPClient {
         scope: "mcp:tools",
         software_id: config.appPrefix,
         software_version: "1.0.0",
-        // PKCE
         token_endpoint_auth_method: "none",
       },
       mcpConnectorId: this.id,
@@ -98,7 +100,26 @@ export class MCPClient {
     return this.client?.serverInfo;
   }
 
-  async connect(oauthState?: string): Promise<McpClientInstance | undefined> {
+  async connect(
+    oauthState?: string,
+    abortSignal?: AbortSignal
+  ): Promise<McpClientInstance | undefined> {
+    abortSignal?.throwIfAborted();
+    this.connectPromise ??= (async () => {
+      try {
+        return await this.connectOnce(oauthState, abortSignal);
+      } finally {
+        this.connectPromise = undefined;
+      }
+    })();
+    return await this.connectPromise;
+  }
+
+  private async connectOnce(
+    oauthState?: string,
+    abortSignal?: AbortSignal
+  ): Promise<McpClientInstance | undefined> {
+    abortSignal?.throwIfAborted();
     if (this.status === "connected" && this.client) {
       return this.client;
     }
@@ -113,8 +134,10 @@ export class MCPClient {
     try {
       // AI SDK handles 401 internally and calls auth() with the provider
       this.client = await createMCPClient({
+        initializationOptions: { signal: abortSignal },
         transport: {
           authProvider: this.oauthProvider,
+          fetch: this.oauthProvider.fetch,
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
           url: this.serverConfig.url,
@@ -207,6 +230,7 @@ export class MCPClient {
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(this.oauthProvider, {
       authorizationCode: code,
+      fetchFn: this.oauthProvider.fetch,
       serverUrl: this.serverConfig.url,
     });
 
@@ -276,7 +300,7 @@ export class MCPClient {
     this.client = undefined;
     this._status = "disconnected";
     // Invalidate caches since connection state changed
-    invalidateAllMcpCaches(this.id);
+    this.invalidateCache?.();
   }
 
   /**
@@ -296,70 +320,7 @@ export class MCPClient {
         { connectorId: this.id, errorMessage },
         "Auth error detected, invalidating caches"
       );
-      invalidateAllMcpCaches(this.id);
+      this.invalidateCache?.();
     }
   }
 }
-
-// Map to store active MCP clients by connector ID
-const clientsMap = new Map<string, MCPClient>();
-
-/**
- * Get or create an MCP client for a connector.
- */
-export const getOrCreateMcpClient = ({
-  id,
-  name,
-  url,
-  type,
-  headers,
-}: {
-  id: string;
-  name: string;
-  url: string;
-  type: "http" | "sse";
-  headers?: Record<string, string>;
-}): MCPClient => {
-  let client = clientsMap.get(id);
-
-  if (!client) {
-    client = new MCPClient(id, name, { headers, type, url });
-    clientsMap.set(id, client);
-  }
-
-  return client;
-};
-
-/**
- * Remove an MCP client from the cache and close it.
- */
-export const removeMcpClient = async (id: string): Promise<void> => {
-  const client = clientsMap.get(id);
-  if (client) {
-    await client.close();
-    clientsMap.delete(id);
-  }
-};
-
-/**
- * Get an existing MCP client by ID.
- */
-const _getMcpClient = (id: string): MCPClient | undefined => clientsMap.get(id);
-
-/**
- * Create a fresh MCP client for OAuth callback handling.
- * Does NOT use the cache - creates a new instance to avoid state conflicts.
- */
-export const createMcpClientForCallback = ({
-  id,
-  name,
-  url,
-  type,
-  headers,
-}: {
-  id: string;
-  name: string;
-  url: string;
-  type: "http" | "sse";
-  headers?: Record<string, string>;
-}): MCPClient => new MCPClient(id, name, { headers, type, url });

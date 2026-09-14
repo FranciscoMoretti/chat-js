@@ -14,7 +14,8 @@
       "offset": 0,
       "exports": {
         "APP_URL": "{url}",
-        "PORT": "{port}"
+        "PORT": "{port}",
+        "EVE_INTERNAL_ORIGIN": "{url}"
       }
     },
     "electron": {
@@ -31,6 +32,12 @@
     },
     "docs": {
       "offset": 3,
+      "exports": {
+        "PORT": "{port}"
+      }
+    },
+    "eve": {
+      "offset": 4,
       "exports": {
         "PORT": "{port}"
       }

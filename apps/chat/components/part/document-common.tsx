@@ -2,22 +2,7 @@ import { File, Loader2, Pencil } from "lucide-react";
 import { memo } from "react";
 
 import { useArtifact } from "@/hooks/use-artifact";
-import type { ChatMessage } from "@/lib/ai/types";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-import type {
-  CreateDocumentToolType,
-  EditDocumentToolType,
-} from "@/tools/platform/documents/types";
-
-export type CreateDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: CreateDocumentToolType }
->;
-
-export type EditDocumentTool = Extract<
-  ChatMessage["parts"][number],
-  { type: EditDocumentToolType }
->;
 
 export const hasProp = <T extends string>(
   obj: unknown,
@@ -36,10 +21,13 @@ export const isArtifactToolResult = (
   typeof o.kind === "string";
 
 const getActionText = (
-  type: "create" | "update",
+  type: "create" | "update" | "read",
   tense: "present" | "past"
 ) => {
   switch (type) {
+    case "read": {
+      return tense === "present" ? "Reading" : "Read";
+    }
     case "create": {
       return tense === "present" ? "Creating" : "Created";
     }
@@ -53,17 +41,20 @@ const getActionText = (
 };
 
 interface DocumentToolResultProps {
+  disabled?: boolean;
   isReadonly: boolean;
   messageId: string;
   result: {
     id: string;
     title: string;
     kind: ArtifactKind;
+    revisionId?: string;
   };
-  type: "create" | "update";
+  type: "create" | "update" | "read";
 }
 
 const PureDocumentToolResult = ({
+  disabled = false,
   type,
   result,
   isReadonly: _isReadonly,
@@ -74,6 +65,7 @@ const PureDocumentToolResult = ({
   return (
     <button
       className="bg-background flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border px-3 py-2"
+      disabled={disabled}
       onClick={() => {
         setArtifact({
           content: "",
@@ -81,6 +73,7 @@ const PureDocumentToolResult = ({
           isVisible: true,
           kind: result.kind,
           messageId,
+          revisionId: result.revisionId,
           status: "idle",
           title: result.title,
         });
@@ -89,7 +82,7 @@ const PureDocumentToolResult = ({
     >
       <div className="text-muted-foreground">
         {(() => {
-          if (type === "create") {
+          if (type === "create" || type === "read") {
             return <File size={16} />;
           }
           if (type === "update") {
@@ -105,12 +98,12 @@ const PureDocumentToolResult = ({
   );
 };
 
-export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
+export const DocumentToolResult = memo(PureDocumentToolResult);
 
 interface DocumentToolCallProps {
   args: { title?: string };
   isReadonly: boolean;
-  type: "create" | "update";
+  type: "create" | "update" | "read";
 }
 
 const PureDocumentToolCall = ({
@@ -134,7 +127,7 @@ const PureDocumentToolCall = ({
       <div className="flex flex-row items-start gap-3">
         <div className="text-muted-foreground mt-1">
           {(() => {
-            if (type === "create") {
+            if (type === "create" || type === "read") {
               return <File size={16} />;
             }
             if (type === "update") {

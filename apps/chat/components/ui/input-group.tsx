@@ -30,7 +30,6 @@ const InputGroup = ({ className, ...props }: React.ComponentProps<"div">) => (
       className
     )}
     data-slot="input-group"
-    role="group"
     {...props}
   />
 );
@@ -72,8 +71,14 @@ const InputGroupAddon = ({
       }
       e.currentTarget.parentElement?.querySelector("input")?.focus();
     }}
-    role="group"
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.currentTarget.parentElement?.querySelector("input")?.focus();
+      }
+    }}
     {...props}
+    role="button"
+    tabIndex={0}
   />
 );
 

@@ -1,36 +1,9 @@
 {
   "overrides": [
     {
-      "files": ["components/chat-sync.tsx"],
-      "rules": {
-        "arrow-body-style": "off"
-      }
-    },
-    {
-      "files": ["lib/ai/gateway.ts", "lib/parallel-chat-requests.test.ts"],
+      "files": ["lib/ai/gateway.ts"],
       "rules": {
         "class-methods-use-this": "off"
-      }
-    },
-    {
-      "files": [
-        "app/(chat)/chat-route-host.tsx",
-        "components/header-breadcrumb.tsx"
-      ],
-      "rules": {
-        "complexity": "off"
-      }
-    },
-    {
-      "files": ["tools/platform/deep-research/deep-research.ts"],
-      "rules": {
-        "default-case": "off"
-      }
-    },
-    {
-      "files": ["components/artifact-panel.tsx", "components/toolbar.tsx"],
-      "rules": {
-        "import/no-cycle": "off"
       }
     },
     {
@@ -64,10 +37,8 @@
       "files": [
         "components/ai-elements/context.tsx",
         "components/attachment-card.tsx",
-        "components/context-usage.tsx",
         "components/image-modal.tsx",
         "components/model-selector.tsx",
-        "components/response-error-message.tsx",
         "components/ui/breadcrumb.tsx",
         "components/ui/button-group.tsx",
         "components/ui/input-group.tsx",
@@ -110,30 +81,13 @@
       }
     },
     {
-      "files": [
-        "lib/artifacts/code/client.tsx",
-        "lib/clone-messages.ts",
-        "lib/db/backfill-parts.ts",
-        "lib/files/upload-prep.ts",
-        "tools/platform/tools.ts"
-      ],
+      "files": ["lib/files/upload-prep.ts"],
       "rules": {
         "no-await-in-loop": "off"
       }
     },
     {
-      "files": [
-        "app/(chat)/share/\\[id\\]/shared-chat-page.tsx",
-        "components/deep-research-progress.tsx",
-        "components/research-progress.tsx",
-        "components/user-message.tsx"
-      ],
-      "rules": {
-        "no-warning-comments": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts", "trpc/init.ts"],
+      "files": ["trpc/init.ts"],
       "rules": {
         "node/callback-return": "off"
       }
@@ -145,38 +99,15 @@
       }
     },
     {
-      "files": [
-        "components/ai-elements/prompt-input.tsx",
-        "lib/cancellation-aware-chat-transport.test.ts",
-        "lib/gated-chat-transport.test.ts",
-        "lib/gated-chat-transport.ts",
-        "lib/parallel-chat-requests.ts",
-        "lib/redis/client.ts",
-        "scripts/check-redis.ts"
-      ],
+      "files": ["components/ai-elements/prompt-input.tsx"],
       "rules": {
         "promise/avoid-new": "off"
-      }
-    },
-    {
-      "files": ["components/chat-sync.tsx", "lib/stores/base/hooks.ts"],
-      "rules": {
-        "promise/prefer-await-to-callbacks": "off"
       }
     },
     {
       "files": ["components/ui/sidebar.tsx"],
       "rules": {
         "react/button-has-type": "off"
-      }
-    },
-    {
-      "files": [
-        "components/messages.tsx",
-        "components/part/text-message-part.tsx"
-      ],
-      "rules": {
-        "react/display-name": "off"
       }
     },
     {
@@ -189,24 +120,9 @@
       }
     },
     {
-      "files": ["lib/stores/base/use-chat.ts"],
-      "rules": {
-        "react/exhaustive-effect-dependencies": "off"
-      }
-    },
-    {
       "files": ["components/auth-providers.tsx", "trpc/react.tsx"],
       "rules": {
         "react/hook-use-state": "off"
-      }
-    },
-    {
-      "files": [
-        "components/sidebar-chats-list.tsx",
-        "lib/stores/base/use-chat.ts"
-      ],
-      "rules": {
-        "react/immutability": "off"
       }
     },
     {
@@ -236,10 +152,7 @@
     {
       "files": [
         "components/attachment-list.tsx",
-        "components/auth-providers.tsx",
-        "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/stores/custom-store-provider.tsx",
-        "providers/chat-input-provider.tsx"
+        "components/auth-providers.tsx"
       ],
       "rules": {
         "react/no-object-type-as-default-prop": "off"
@@ -259,13 +172,8 @@
     },
     {
       "files": [
-        "components/ai-elements/extra/conversation-content-scroll-area.tsx",
         "components/model-selector.tsx",
-        "components/settings/models-table.tsx",
-        "lib/app-chat-runtime.ts",
-        "lib/stores/base/hooks.ts",
-        "lib/stores/base/use-chat.ts",
-        "lib/stores/custom-store-provider.tsx"
+        "components/settings/models-table.tsx"
       ],
       "rules": {
         "react/refs": "off"
@@ -275,17 +183,11 @@
       "files": [
         "components/ai-elements/prompt-input.tsx",
         "components/ai-elements/reasoning.tsx",
-        "components/artifact-panel.tsx",
         "components/chat-rename-dialog.tsx",
         "components/model-selector.tsx",
-        "components/parallel-response-cards.tsx",
         "components/project-details-dialog.tsx",
         "components/settings/mcp-create-dialog.tsx",
-        "components/sheet-editor.tsx",
-        "components/toolbar.tsx",
-        "lib/runtime-registry/runtime-registry-provider.tsx",
-        "lib/stores/hooks-chat-persistence.ts",
-        "providers/chat-input-provider.tsx"
+        "components/sheet-editor.tsx"
       ],
       "rules": {
         "react/set-state-in-effect": "off"
@@ -301,19 +203,9 @@
       }
     },
     {
-      "files": [
-        "components/artifact-actions.tsx",
-        "components/attachment-list.tsx",
-        "components/multimodal-input.tsx"
-      ],
+      "files": ["components/attachment-list.tsx"],
       "rules": {
         "react/todo": "off"
-      }
-    },
-    {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "typescript/method-signature-style": "off"
       }
     },
     {
@@ -323,32 +215,19 @@
       }
     },
     {
-      "files": [
-        "components/interactive-chart-impl.tsx",
-        "components/search-chats-dialog.tsx",
-        "components/sidebar-chats-list.tsx"
-      ],
+      "files": ["components/interactive-chart-impl.tsx"],
       "rules": {
         "unicorn/no-array-reduce": "off"
       }
     },
     {
-      "files": ["lib/utils/message-mapping.ts"],
-      "rules": {
-        "unicorn/no-array-sort": "off"
-      }
-    },
-    {
-      "files": ["components/ui/sidebar.tsx", "lib/anonymous-session-client.ts"],
+      "files": ["components/ui/sidebar.tsx"],
       "rules": {
         "unicorn/no-document-cookie": "off"
       }
     },
     {
-      "files": [
-        "components/data-stream-handler.tsx",
-        "lib/social-auth.test.ts"
-      ],
+      "files": ["lib/social-auth.test.ts"],
       "rules": {
         "unicorn/no-useless-undefined": "off"
       }
@@ -360,13 +239,7 @@
       }
     },
     {
-      "files": ["lib/stores/base/hooks.ts"],
-      "rules": {
-        "unicorn/prefer-at": "off"
-      }
-    },
-    {
-      "files": ["lib/credits/cost-accumulator.ts", "lib/utils/rate-limit.ts"],
+      "files": ["lib/credits/cost-accumulator.ts"],
       "rules": {
         "unicorn/prefer-number-coercion": "off"
       }

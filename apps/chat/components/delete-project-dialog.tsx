@@ -38,10 +38,13 @@ export const DeleteProjectDialog = ({
       onError: () => {
         toast.error("Failed to delete project");
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: trpc.project.list.queryKey(),
-        });
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.project.list.queryKey(),
+          }),
+          queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
+        ]);
         toast.success("Project deleted");
       },
     })
@@ -54,7 +57,8 @@ export const DeleteProjectDialog = ({
     try {
       await deleteMutation.mutateAsync({ id: deleteId });
     } catch {
-      // error surfaced via onError above
+      // Keep the dialog and route available for retry.
+      return;
     }
 
     setShowDeleteDialog(false);
@@ -70,7 +74,14 @@ export const DeleteProjectDialog = ({
   }, [deleteId, deleteMutation, pathname, router, setShowDeleteDialog]);
 
   return (
-    <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+    <AlertDialog
+      onOpenChange={(open) => {
+        if (!deleteMutation.isPending) {
+          setShowDeleteDialog(open);
+        }
+      }}
+      open={showDeleteDialog}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this project?</AlertDialogTitle>
@@ -79,9 +90,22 @@ export const DeleteProjectDialog = ({
             project and its associations.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {deleteMutation.error && (
+          <p role="alert">Could not delete project. Try again.</p>
+        )}
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={deleteMutation.isPending}
+            onClick={(event) => {
+              event.preventDefault();
+              return handleDelete();
+            }}
+          >
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

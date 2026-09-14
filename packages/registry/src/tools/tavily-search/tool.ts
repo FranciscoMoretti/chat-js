@@ -1,7 +1,6 @@
 import { tavily } from "@tavily/core";
 import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
-import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { env } from "@/lib/env";
@@ -9,8 +8,9 @@ import { createModuleLogger } from "@/lib/logger";
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
-  searchQueriesSchema,
 } from "@/tools/platform/search-presentation";
+
+import { webSearchInput } from "./schemas";
 
 const TAVILY_COST_CENTS = 5;
 export const webSearch = tool({
@@ -100,23 +100,5 @@ Avoid:
     return result;
   },
   // Keep defaultable fields required and nullable for strict tool calling.
-  inputSchema: z.object({
-    exclude_domains: z
-      .array(z.string())
-      .describe(
-        "Domains to exclude from all results. Pass null for no exclusions."
-      )
-      .nullable(),
-    searchDepth: z
-      .enum(["basic", "advanced"])
-      .describe('Search depth to use. Pass null for "basic".')
-      .nullable(),
-    search_queries: searchQueriesSchema,
-    topics: z
-      .array(z.enum(["general", "news"]))
-      .describe(
-        "Array of topic types to search for. Pass null for general search."
-      )
-      .nullable(),
-  }),
+  inputSchema: webSearchInput,
 });

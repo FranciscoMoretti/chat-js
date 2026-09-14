@@ -32,6 +32,8 @@ test("image tool loading, success, and unavailable states", async () => {
     root.render(
       <>
         <GenerateImageRenderer
+          isReadonly
+          messageId="image-fixture"
           tool={{
             input: { prompt: "Blue sky" },
             state: "input-available",
@@ -39,6 +41,8 @@ test("image tool loading, success, and unavailable states", async () => {
           }}
         />
         <GenerateImageRenderer
+          isReadonly
+          messageId="image-fixture"
           tool={{
             input: { prompt: "Blue sky" },
             output: { imageUrl, prompt: "Blue sky" },
@@ -47,6 +51,8 @@ test("image tool loading, success, and unavailable states", async () => {
           }}
         />
         <GenerateImageRenderer
+          isReadonly
+          messageId="image-fixture"
           tool={{
             input: { prompt: "Unavailable" },
             output: {

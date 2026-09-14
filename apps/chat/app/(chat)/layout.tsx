@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
+import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
@@ -17,8 +18,6 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
 
 import { auth } from "../../lib/auth";
-import { ChatProviders } from "./chat-providers";
-import { ChatRouteHost } from "./chat-route-host";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
@@ -70,22 +69,18 @@ const ChatLayoutDynamic = async ({
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
     queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
     queryClient.prefetchQuery(trpc.project.list.queryOptions());
-    queryClient.prefetchQuery(
-      trpc.chat.getAllChats.queryOptions({ projectId: null })
-    );
   }
 
   return (
     <HydrateClient>
       <SessionSeed session={session} />
-      <ChatProviders>
-        <ChatModelsProvider models={chatModels}>
-          <DefaultModelProvider defaultModel={defaultModel}>
-            <KeyboardShortcuts />
-            <ChatRouteHost>{children}</ChatRouteHost>
-          </DefaultModelProvider>
-        </ChatModelsProvider>
-      </ChatProviders>
+
+      <ChatModelsProvider models={chatModels}>
+        <DefaultModelProvider defaultModel={defaultModel}>
+          <KeyboardShortcuts />
+          {children}
+        </DefaultModelProvider>
+      </ChatModelsProvider>
     </HydrateClient>
   );
 };
@@ -94,16 +89,21 @@ const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
+  const content = (
+    <>
+      <AppSidebar />
+      <SidebarInset className={sidebarInsetClassName}>
+        <Suspense fallback={<ChatLoadingShell />}>
+          <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
+        </Suspense>
+      </SidebarInset>
+    </>
+  );
   return (
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <SidebarInset className={sidebarInsetClassName}>
-            <Suspense fallback={<ChatLoadingShell />}>
-              <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
-            </Suspense>
-          </SidebarInset>
+          <EveDeletionProvider>{content}</EveDeletionProvider>
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>

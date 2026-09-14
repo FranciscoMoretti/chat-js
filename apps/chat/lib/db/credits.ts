@@ -53,16 +53,3 @@ export const deductCredits = async (
     })
     .where(eq(userCredit.userId, userId));
 };
-
-/**
- * Add credits to user (for purchases, refunds, etc).
- */
-const _addCredits = async (userId: string, amount: number): Promise<void> => {
-  await ensureUserCreditRow(userId);
-  await db
-    .update(userCredit)
-    .set({
-      credits: sql`${userCredit.credits} + ${amount}`,
-    })
-    .where(eq(userCredit.userId, userId));
-};

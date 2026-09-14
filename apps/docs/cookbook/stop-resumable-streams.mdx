@@ -3,6 +3,11 @@ title: Stop Resumable Streams
 description: Abort provider streams without breaking resume
 ---
 
+<Callout type="note">
+  This is a portable AI SDK and Redis recipe, retained as reference material.
+  The EVE-only ChatJS app uses native EVE cancellation and recovery instead.
+</Callout>
+
 ## Problem
 
 You want a user to stop an in-flight response without killing resumable streams. Calling `stop()` on the client only ends the UI stream. The provider keeps generating tokens and you keep paying.

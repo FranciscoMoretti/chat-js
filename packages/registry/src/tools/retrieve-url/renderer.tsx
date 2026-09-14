@@ -3,8 +3,10 @@
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
+import { retrievedInput, retrievedResult } from "./schemas";
 import type { retrieveUrl } from "./tool";
 
 type RetrieveUrlRendererTool = ToolPartFromTool<typeof retrieveUrl>;
@@ -151,7 +153,7 @@ const getErrorMessage = (
   return topLevelError ?? firstItemError ?? null;
 };
 
-export const RetrieveUrlRenderer = ({
+const RetrieveUrlView = ({
   tool,
 }: {
   tool: RetrieveUrlRendererTool;
@@ -185,3 +187,9 @@ export const RetrieveUrlRenderer = ({
     </div>
   );
 };
+
+export const RetrieveUrlRenderer = defineToolRenderer({
+  inputSchema: retrievedInput,
+  outputSchema: retrievedResult,
+  render: RetrieveUrlView,
+});

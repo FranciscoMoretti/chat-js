@@ -2,7 +2,7 @@
 
 import { Github } from "lucide-react";
 import type { ComponentType } from "react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
@@ -19,6 +19,8 @@ import type {
   SocialAuthProvider,
   SocialAuthSignInOptions,
 } from "@/lib/social-auth";
+
+const emptyQuery: Record<string, string> = {};
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24">
@@ -75,7 +77,7 @@ export const SocialAuthProviders = ({
   electronBrowserLabel,
   isElectron = false,
   onRedirectToUrl,
-  query = {},
+  query = emptyQuery,
   signInOptions,
 }: {
   callbackURL?: string;
@@ -85,10 +87,10 @@ export const SocialAuthProviders = ({
   query?: Record<string, string>;
   signInOptions?: SocialAuthSignInOptions;
 } = {}) => {
-  const [lastUsedProvider] = useState<SocialAuthProvider | null>(() => {
+  const lastUsedProvider = useMemo<SocialAuthProvider | null>(() => {
     const remembered = authClient.getLastUsedLoginMethod();
     return isSocialAuthProvider(remembered) ? remembered : null;
-  });
+  }, []);
 
   const providers = useMemo<AuthProviderDefinition[]>(() => {
     const providerDefinitions = getEnabledSocialAuthProviders(

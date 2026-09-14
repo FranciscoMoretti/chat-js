@@ -1,1 +1,0 @@
-ALTER TABLE "Message" ADD COLUMN "isPartial" boolean DEFAULT false NOT NULL;
