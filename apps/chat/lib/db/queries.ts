@@ -4,8 +4,6 @@ import {
   asc,
   desc,
   eq,
-  gt,
-  gte,
   inArray,
   isNotNull,
   isNull,
@@ -37,7 +35,6 @@ import {
   message,
   part,
   project,
-  suggestion,
   user,
   userModelPreference,
   vote,
@@ -136,15 +133,6 @@ const updateChatUpdatedAt = async ({ chatId }: { chatId: string }) => {
       .where(eq(chat.id, chatId));
   } catch (error) {
     console.error("Failed to update chat updatedAt by id from database");
-    throw error;
-  }
-};
-
-const _getUserByEmail = async (email: string): Promise<User[]> => {
-  try {
-    return await db.select().from(user).where(eq(user.email, email));
-  } catch (error) {
-    console.error("Failed to get user from database");
     throw error;
   }
 };
@@ -381,43 +369,6 @@ export const deleteProject = async ({ id }: { id: string }) => {
   } catch (error) {
     console.error("Failed to delete project from database");
     throw error;
-  }
-};
-
-const _getChatsByProjectId = async ({ projectId }: { projectId: string }) => {
-  try {
-    return await db
-      .select()
-      .from(chat)
-      .where(eq(chat.projectId, projectId))
-      .orderBy(desc(chat.updatedAt));
-  } catch (error) {
-    console.error("Failed to get chats by project id from database");
-    throw error;
-  }
-};
-
-const _moveChatToProject = async ({
-  chatId,
-  projectId,
-}: {
-  chatId: string;
-  projectId: string | null;
-}) => {
-  try {
-    return await db.update(chat).set({ projectId }).where(eq(chat.id, chatId));
-  } catch (error) {
-    console.error("Failed to move chat to project in database");
-    throw error;
-  }
-};
-
-const _tryGetChatById = async ({ id }: { id: string }) => {
-  try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
-    return selectedChat;
-  } catch {
-    return null;
   }
 };
 
@@ -858,34 +809,6 @@ export const getDocumentById = async ({ id }: { id: string }) => {
   }
 };
 
-const _deleteDocumentsByIdAfterTimestamp = async ({
-  id,
-  timestamp,
-}: {
-  id: string;
-  timestamp: Date;
-}) => {
-  try {
-    await db
-      .delete(suggestion)
-      .where(
-        and(
-          eq(suggestion.documentId, id),
-          gt(suggestion.documentCreatedAt, timestamp)
-        )
-      );
-
-    return await db
-      .delete(document)
-      .where(and(eq(document.id, id), gt(document.createdAt, timestamp)));
-  } catch (error) {
-    console.error(
-      "Failed to delete documents by id after timestamp from database"
-    );
-    throw error;
-  }
-};
-
 export const getDocumentsByMessageIds = async ({
   messageIds,
 }: {
@@ -994,47 +917,6 @@ export const getChatMessageWithPartsById = async ({
     logger.error(
       { error, messageId: id },
       "getChatMessageWithPartsById failed"
-    );
-    throw error;
-  }
-};
-
-const _deleteMessagesByChatIdAfterTimestamp = async ({
-  chatId,
-  timestamp,
-}: {
-  chatId: string;
-  timestamp: Date;
-}) => {
-  try {
-    const messagesToDelete = await db
-      .select()
-      .from(message)
-      .where(
-        and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
-      );
-
-    const messageIds = messagesToDelete.map((msg) => msg.id);
-
-    if (messageIds.length > 0) {
-      // Clean up attachments before deleting messages
-      await deleteAttachmentsFromMessages(messagesToDelete);
-
-      await db
-        .delete(vote)
-        .where(
-          and(eq(vote.chatId, chatId), inArray(vote.messageId, messageIds))
-        );
-
-      return await db
-        .delete(message)
-        .where(
-          and(eq(message.chatId, chatId), inArray(message.id, messageIds))
-        );
-    }
-  } catch (error) {
-    console.error(
-      "Failed to delete messages by id after timestamp from database"
     );
     throw error;
   }

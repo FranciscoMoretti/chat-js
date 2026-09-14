@@ -1,9 +1,7 @@
-import type { ModelId } from "@/lib/ai/app-models";
 import type { Chat, DBMessage } from "@/lib/db/schema";
 import type { UIChat } from "@/lib/types/ui-chat";
 
-import { isSelectedModelValue } from "./ai/types";
-import type { ChatMessage, UiToolName } from "./ai/types";
+import type { ChatMessage } from "./ai/types";
 
 // Helper functions for type conversion
 export const dbChatToUIChat = (chat: Chat): UIChat => ({
@@ -16,30 +14,6 @@ export const dbChatToUIChat = (chat: Chat): UIChat => ({
   userId: chat.userId,
   visibility: chat.visibility,
 });
-
-const _dbMessageToChatMessage = (message: DBMessage): ChatMessage =>
-  // Note: This function should not be used directly for messages with parts
-  // Use getAllMessagesByChatId which reconstructs parts from Part table
-  // Parts are now stored in Part table, not in Message.parts
-  // Parts are stored in Part table - use getAllMessagesByChatId instead.
-  ({
-    id: message.id,
-    metadata: {
-      activeStreamId: message.activeStreamId,
-      createdAt: message.createdAt,
-      isPrimaryParallel: message.isPrimaryParallel,
-      parallelGroupId: message.parallelGroupId,
-      parallelIndex: message.parallelIndex,
-      parentMessageId: message.parentMessageId,
-      selectedModel: isSelectedModelValue(message.selectedModel)
-        ? message.selectedModel
-        : ("" as ModelId),
-      selectedTool: (message.selectedTool as UiToolName | null) || undefined,
-      usage: message.lastContext as ChatMessage["metadata"]["usage"],
-    },
-    parts: [],
-    role: message.role as ChatMessage["role"],
-  });
 
 export const chatMessageToDbMessage = (
   message: ChatMessage,
