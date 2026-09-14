@@ -4,7 +4,11 @@ import path from "node:path";
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "components/model-toolbar-visual-fixture.tsx",
+  "components/ui/layout-primitives-visual-fixture.tsx",
+  "components/ui/ui-primitives-visual-fixture.tsx",
   "evalite.config.ts",
+  "playwright.visual.config.ts",
   "lib/ai/eval-agent.ts",
   "lib/db/backfill-parts.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
@@ -24,6 +28,13 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
     file === "evals" ||
     file.startsWith("evals/") ||
     file.startsWith("tests/eve-") ||
+    file === "app/(chat)/visual-fixtures" ||
+    file.startsWith("app/(chat)/visual-fixtures/") ||
+    (file.startsWith("tests/") &&
+      (file.endsWith(".visual.e2e.ts") ||
+        file
+          .split("/")
+          .some((segment) => segment.endsWith(".visual.e2e.ts-snapshots")))) ||
     (file.startsWith("playwright.eve") && file.endsWith(".config.ts"))
   );
 };
@@ -59,6 +70,10 @@ export const shouldCopyChatAppFile = (relativePath: string): boolean => {
   );
 };
 
+// Remove the reference-app project while retaining the starter behavior suites.
+const REFERENCE_VISUAL_PROJECT =
+  /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
+
 export const normalizeScaffoldContent = async (destination: string) => {
   const packagePath = path.join(destination, "package.json");
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
@@ -82,6 +97,13 @@ export const normalizeScaffoldContent = async (destination: string) => {
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+
+  const playwrightPath = path.join(destination, "playwright.config.ts");
+  const playwright = await readFile(playwrightPath, "utf-8");
+  await writeFile(
+    playwrightPath,
+    playwright.replace(REFERENCE_VISUAL_PROJECT, "")
+  );
 
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");

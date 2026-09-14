@@ -215,6 +215,17 @@ describe("scaffoldFromTemplate", () => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
     for (const file of [
+      "tests/ui-primitives.visual.e2e.ts",
+      "tests/layout-primitives.visual.e2e.ts",
+      "tests/model-toolbar.visual.e2e.ts",
+      "tests/ui-primitives.visual.e2e.ts-snapshots",
+      "tests/layout-primitives.visual.e2e.ts-snapshots",
+      "tests/model-toolbar.visual.e2e.ts-snapshots",
+      "app/(chat)/visual-fixtures",
+      "components/model-toolbar-visual-fixture.tsx",
+      "components/ui/layout-primitives-visual-fixture.tsx",
+      "components/ui/ui-primitives-visual-fixture.tsx",
+      "playwright.visual.config.ts",
       "tests/eve-browser.e2e.ts",
       "tests/eve-message-presentation.fixture.tsx",
       "tests/fixtures/eve-oauth-mcp-server.ts",
@@ -235,6 +246,9 @@ describe("scaffoldFromTemplate", () => {
       expect(existsSync(join(destination, file))).toBe(false);
     }
     for (const file of [
+      "tests/chat.e2e.ts",
+      "tests/reasoning.e2e.ts",
+      "tests/artifacts.e2e.ts",
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
       "lib/db/migrations/0046_eve_runtime.sql",
@@ -243,6 +257,14 @@ describe("scaffoldFromTemplate", () => {
     ]) {
       expect(existsSync(join(destination, file))).toBe(true);
     }
+    const playwright = await readFile(
+      join(destination, "playwright.config.ts"),
+      "utf-8"
+    );
+    expect(playwright).not.toContain('name: "visual"');
+    expect(playwright).toContain('name: "chat"');
+    expect(playwright).toContain('name: "reasoning"');
+    expect(playwright).toContain('name: "artifacts"');
     const tsconfig = await readFile(
       join(destination, "tsconfig.json"),
       "utf-8"
