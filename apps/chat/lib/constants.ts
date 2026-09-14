@@ -1,8 +1,6 @@
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment as getIsPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
-const _isProductionEnvironment = process.env.NODE_ENV === "production";
-
 export const isPlaywrightTestEnvironment = getIsPlaywrightTestEnvironment(
   process.env
 );
