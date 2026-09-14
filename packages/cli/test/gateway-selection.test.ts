@@ -448,7 +448,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     }
     expect(
       await Bun.file(join(cwd, "tests/eve-sandbox-lifecycle.e2e.ts")).exists()
-    ).toBe(gateway === "vercel");
+    ).toBe(false);
     if (gateway === "vercel" || gateway === "acme") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
         /image:\s*\{[^}]*\benabled:\s*true/u

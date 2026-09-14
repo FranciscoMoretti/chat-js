@@ -504,7 +504,9 @@ const installRegistryItems = async (
     const installedTools = await syncTools(project.targetDir, {
       expected: setup.expectedTools,
     });
-    await removeUnavailableToolTests(project.targetDir, installedTools);
+    if (options.fromGit) {
+      await removeUnavailableToolTests(project.targetDir, installedTools);
+    }
     await runCommand(packageManager, ["install"], project.targetDir);
     if (!options.fromGit) {
       await runCommand(

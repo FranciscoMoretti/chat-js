@@ -5,6 +5,10 @@ import path from "node:path";
 
 import rootLintBaseline from "../oxlint-baseline.json";
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
+import {
+  isMaintainerOnlyFile,
+  normalizeScaffoldTestConfig,
+} from "../packages/cli/src/helpers/scaffold-content";
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
 import { collectSnapshot } from "./sync-template-snapshot";
@@ -57,6 +61,9 @@ const shouldCopyFilePath = (filePath: string): boolean => {
   const rel = relative(sourceDir, filePath);
   if (!rel || rel.startsWith("..")) {
     return true;
+  }
+  if (isMaintainerOnlyFile(rel)) {
+    return false;
   }
   const segments = rel.split(sep);
   if (segments.some((segment) => EXCLUDED_SEGMENTS.has(segment))) {
@@ -117,6 +124,8 @@ const TEMPLATE_STRIPPED_IMPORTS = [
 ];
 
 const applyTemplateTransforms = async (destination: string): Promise<void> => {
+  await normalizeScaffoldTestConfig(destination);
+
   // Delete excluded files
   await Promise.all(
     TEMPLATE_REMOVED_FILES.map((file) =>

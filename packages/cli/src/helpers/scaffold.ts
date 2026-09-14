@@ -8,6 +8,10 @@ import { runCommand } from "../utils/run-command";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
+import {
+  isMaintainerOnlyFile,
+  normalizeScaffoldTestConfig,
+} from "./scaffold-content";
 import { vendorPatchedPackage } from "./vendor-patched-package";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
@@ -87,6 +91,9 @@ const shouldCopyChatAppFilePath = (
   filePath: string
 ): boolean => {
   const relativePath = relative(sourceDir, filePath);
+  if (isMaintainerOnlyFile(relativePath)) {
+    return false;
+  }
   const segments = relativePath.split(sep);
   if (segments.some((segment) => CHAT_APP_EXCLUDED_SEGMENTS.has(segment))) {
     return false;
@@ -296,6 +303,8 @@ const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
+  await normalizeScaffoldTestConfig(destination);
+
   await replaceInFile(join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],
   ]);
@@ -435,7 +444,10 @@ export const scaffoldFromTemplate = async (
   const templateDir = findTemplateDir("chat-app");
 
   await (templateDir
-    ? cp(templateDir, destination, { recursive: true })
+    ? cp(templateDir, destination, {
+        filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
+        recursive: true,
+      })
     : copyChatTemplateFromRepoSource(destination));
 
   // npm packing omits nested .gitignore files, so materialize the app's rules.

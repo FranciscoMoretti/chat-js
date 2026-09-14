@@ -211,6 +211,43 @@ describe("scaffoldFromTemplate", () => {
     }
   });
 
+  it("omits maintainer harnesses while preserving application source and starter tests", async () => {
+    const destination = makeTempDir("maintainer-boundary");
+    await scaffoldFromTemplate(destination);
+    for (const file of [
+      "tests/eve-browser.e2e.ts",
+      "tests/eve-message-presentation.fixture.tsx",
+      "tests/fixtures/eve-oauth-mcp-server.ts",
+      "lib/eve/tool-selection.test.ts",
+      "lib/db/migrations/eve-runtime-migration.test.ts",
+      "playwright.eve.config.ts",
+      "vitest.eve.config.ts",
+    ]) {
+      expect(existsSync(join(destination, file))).toBe(false);
+    }
+    for (const file of [
+      "components/eve/eve-conversation.tsx",
+      "lib/eve/message-delivery.test.ts",
+      "lib/db/migrations/0046_eve_runtime.sql",
+      "scripts/install-eve-local-postgres.ts",
+      "vitest.config.ts",
+    ]) {
+      expect(existsSync(join(destination, file))).toBe(true);
+    }
+    const tsconfig = await readFile(
+      join(destination, "tsconfig.json"),
+      "utf-8"
+    );
+    expect(tsconfig).not.toContain("@eve-test");
+    expect(tsconfig).not.toContain("@world-postgres-test");
+    const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
+    expect(lint).not.toContain("tests/eve-fixture");
+    const manifest = JSON.parse(
+      await readFile(join(destination, "package.json"), "utf-8")
+    );
+    expect(manifest.devDependencies["@electric-sql/pglite"]).toBeUndefined();
+  });
+
   it("leaves the storage slot and provider peers to registry installation", async () => {
     const destination = await makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
@@ -380,6 +417,14 @@ describe("scaffoldFromTemplate", () => {
         devDependencies: Record<string, string>;
       };
 
+      expect(existsSync(join(projectDir, "tests/eve-browser.e2e.ts"))).toBe(
+        false
+      );
+      expect(
+        existsSync(
+          join(projectDir, "lib/db/migrations/eve-runtime-migration.test.ts")
+        )
+      ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
       expect(packageJson.dependencies.eve).toBe("file:vendor/eve-0.52.2.tgz");
       expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe(
