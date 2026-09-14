@@ -1,29 +1,80 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-// These verify the maintained runtime, not downstream application customizations.
-// Keep their sources and CI coverage in ChatJS, outside generated applications.
-const MAINTAINER_FILES = new Set([
+// Runtime regressions, historical migration tools and sample evaluations stay
+// in the reference repository rather than becoming downstream app source.
+const REPOSITORY_ONLY_FILES = new Set([
+  "evalite.config.ts",
+  "lib/ai/eval-agent.ts",
+  "lib/db/backfill-parts.ts",
+  "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
+  "lib/eve/local-sandbox-inventory.test.ts",
+  "lib/eve/purge-local-sandbox.test.ts",
+  "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
   "tests/fixtures/eve-oauth-mcp-server.ts",
   "vitest.eve.config.ts",
 ]);
 
-export const isMaintainerOnlyFile = (relativePath: string): boolean => {
+const isRepositoryOnlyFile = (relativePath: string): boolean => {
   const file = relativePath.split(path.sep).join("/");
   return (
-    MAINTAINER_FILES.has(file) ||
+    REPOSITORY_ONLY_FILES.has(file) ||
+    file === "evals" ||
+    file.startsWith("evals/") ||
     file.startsWith("tests/eve-") ||
     (file.startsWith("playwright.eve") && file.endsWith(".config.ts"))
   );
 };
 
-export const normalizeScaffoldTestConfig = async (destination: string) => {
+const EXCLUDED_SEGMENTS = new Set([
+  ".devtools",
+  ".eve",
+  ".output",
+  "eve-results",
+  "node_modules",
+  ".next",
+  ".turbo",
+  "playwright",
+  "playwright-report",
+  "test-results",
+  "blob-report",
+  "dist",
+  "build",
+]);
+const EXCLUDED_FILES = new Set([".DS_Store", "bun.lock", "bun.lockb"]);
+
+export const shouldCopyChatAppFile = (relativePath: string): boolean => {
+  const segments = relativePath.split(path.sep);
+  return !(
+    isRepositoryOnlyFile(relativePath) ||
+    segments.some(
+      (segment) =>
+        EXCLUDED_SEGMENTS.has(segment) ||
+        EXCLUDED_FILES.has(segment) ||
+        segment.endsWith(".tsbuildinfo") ||
+        (segment.startsWith(".env") && segment !== ".env.example")
+    )
+  );
+};
+
+export const normalizeScaffoldContent = async (destination: string) => {
   const packagePath = path.join(destination, "package.json");
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
-  // Only the omitted migration regression uses the embedded database.
-  delete manifest.devDependencies?.["@electric-sql/pglite"];
+  for (const dependency of [
+    "@electric-sql/pglite",
+    "pg",
+    "@types/pg",
+    "evalite",
+    "better-sqlite3",
+  ]) {
+    delete manifest.devDependencies?.[dependency];
+  }
+  for (const script of ["eval:dev", "eval:serve", "db:backfill-parts"]) {
+    delete manifest.scripts?.[script];
+  }
+  delete manifest.overrides?.evalite;
   await writeFile(packagePath, `${JSON.stringify(manifest, null, 2)}\n`);
 
   const tsconfigPath = path.join(destination, "tsconfig.json");

@@ -6,8 +6,8 @@ import path from "node:path";
 import rootLintBaseline from "../oxlint-baseline.json";
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 import {
-  isMaintainerOnlyFile,
-  normalizeScaffoldTestConfig,
+  shouldCopyChatAppFile,
+  normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { vendorThreadPackage } from "../packages/cli/src/helpers/vendor-thread-package";
@@ -34,47 +34,8 @@ const electronTemplateDir = join(
 
 // ─── chat-app filter ────────────────────────────────────────────────────────
 
-const EXCLUDED_SEGMENTS = new Set([
-  ".devtools",
-  ".eve",
-  ".output",
-  "eve-results",
-  "node_modules",
-  ".next",
-  ".turbo",
-  "playwright",
-  "playwright-report",
-  "test-results",
-  "blob-report",
-  "dist",
-  "build",
-]);
-
-const EXCLUDED_FILES = new Set([
-  ".env.local",
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-]);
-
-const shouldCopyFilePath = (filePath: string): boolean => {
-  const rel = relative(sourceDir, filePath);
-  if (!rel || rel.startsWith("..")) {
-    return true;
-  }
-  if (isMaintainerOnlyFile(rel)) {
-    return false;
-  }
-  const segments = rel.split(sep);
-  if (segments.some((segment) => EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  if (fileName && EXCLUDED_FILES.has(fileName)) {
-    return false;
-  }
-  return true;
-};
+const shouldCopyFilePath = (filePath: string): boolean =>
+  shouldCopyChatAppFile(relative(sourceDir, filePath));
 
 // ─── electron filter ─────────────────────────────────────────────────────────
 
@@ -124,7 +85,7 @@ const TEMPLATE_STRIPPED_IMPORTS = [
 ];
 
 const applyTemplateTransforms = async (destination: string): Promise<void> => {
-  await normalizeScaffoldTestConfig(destination);
+  await normalizeScaffoldContent(destination);
 
   // Delete excluded files
   await Promise.all(

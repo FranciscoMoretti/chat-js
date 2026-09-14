@@ -9,35 +9,13 @@ import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
 import {
-  isMaintainerOnlyFile,
-  normalizeScaffoldTestConfig,
+  shouldCopyChatAppFile,
+  normalizeScaffoldContent,
 } from "./scaffold-content";
 import { vendorPatchedPackage } from "./vendor-patched-package";
 import { vendorThreadPackage } from "./vendor-thread-package";
 
 const { join, relative, resolve, sep } = pathModule;
-
-const CHAT_APP_EXCLUDED_SEGMENTS = new Set([
-  ".eve",
-  ".output",
-  "eve-results",
-  "node_modules",
-  ".next",
-  ".turbo",
-  "playwright",
-  "playwright-report",
-  "test-results",
-  "blob-report",
-  "dist",
-  "build",
-]);
-
-const CHAT_APP_EXCLUDED_FILES = new Set([
-  ".env.local",
-  ".DS_Store",
-  "bun.lock",
-  "bun.lockb",
-]);
 
 const ELECTRON_EXCLUDED_SEGMENTS = new Set([
   "node_modules",
@@ -55,7 +33,6 @@ const ELECTRON_EXCLUDED_FILES = new Set([
 ]);
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
-  "better-sqlite3",
   "cbor-extract",
   "electron",
   "electron-winstaller",
@@ -89,18 +66,7 @@ const findTemplateDir = (name: string): string | null => {
 const shouldCopyChatAppFilePath = (
   sourceDir: string,
   filePath: string
-): boolean => {
-  const relativePath = relative(sourceDir, filePath);
-  if (isMaintainerOnlyFile(relativePath)) {
-    return false;
-  }
-  const segments = relativePath.split(sep);
-  if (segments.some((segment) => CHAT_APP_EXCLUDED_SEGMENTS.has(segment))) {
-    return false;
-  }
-  const fileName = segments.at(-1);
-  return !(fileName && CHAT_APP_EXCLUDED_FILES.has(fileName));
-};
+): boolean => shouldCopyChatAppFile(relative(sourceDir, filePath));
 
 const shouldCopyElectronFilePath = (
   sourceDir: string,
@@ -303,7 +269,7 @@ const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
-  await normalizeScaffoldTestConfig(destination);
+  await normalizeScaffoldContent(destination);
 
   await replaceInFile(join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],

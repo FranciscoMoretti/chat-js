@@ -219,6 +219,15 @@ describe("scaffoldFromTemplate", () => {
       "tests/eve-message-presentation.fixture.tsx",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "lib/eve/tool-selection.test.ts",
+      "lib/eve/local-sandbox-inventory.test.ts",
+      "lib/eve/purge-local-sandbox.test.ts",
+      "lib/eve/verify-local-coverage.test.ts",
+      "lib/db/eve-sandbox-run-coverage.test.ts",
+      "lib/db/backfill-parts.ts",
+      "evals/my-eval.eval.ts",
+      "lib/ai/eval-agent.ts",
+      "evalite.config.ts",
+      "tsconfig.tsbuildinfo",
       "lib/db/migrations/eve-runtime-migration.test.ts",
       "playwright.eve.config.ts",
       "vitest.eve.config.ts",
@@ -245,7 +254,19 @@ describe("scaffoldFromTemplate", () => {
     const manifest = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     );
-    expect(manifest.devDependencies["@electric-sql/pglite"]).toBeUndefined();
+    for (const dependency of [
+      "@electric-sql/pglite",
+      "pg",
+      "@types/pg",
+      "evalite",
+      "better-sqlite3",
+    ]) {
+      expect(manifest.devDependencies[dependency]).toBeUndefined();
+    }
+    expect(manifest.overrides?.evalite).toBeUndefined();
+    for (const script of ["eval:dev", "eval:serve", "db:backfill-parts"]) {
+      expect(manifest.scripts[script]).toBeUndefined();
+    }
   });
 
   it("leaves the storage slot and provider peers to registry installation", async () => {
@@ -361,7 +382,7 @@ describe("scaffoldFromTemplate", () => {
     expect(packageJson.packageManager).toBe("pnpm@10.33.1");
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
-    expect(workspaceConfig).toContain("better-sqlite3: true");
+    expect(workspaceConfig).not.toContain("better-sqlite3");
     expect(workspaceConfig).toContain("cbor-extract: true");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
@@ -686,7 +707,7 @@ describe("scaffoldElectron", () => {
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
     expect(workspaceConfig).toContain("blockExoticSubdeps: false");
-    expect(workspaceConfig).toContain("better-sqlite3: true");
+    expect(workspaceConfig).not.toContain("better-sqlite3");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
     expect(workspaceConfig).toContain("esbuild: true");
