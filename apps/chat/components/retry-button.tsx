@@ -1,8 +1,7 @@
-import { RefreshCcw } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import { Action } from "@/components/ai-elements/actions";
+import { RetryButtonView } from "@/components/retry-button-view";
 import type { ChatMessage } from "@/lib/ai/types";
 import { getRetryMessageInput } from "@/lib/chat-tree-actions";
 import { useChatStatus, useChatStoreApi } from "@/lib/stores/base";
@@ -64,15 +63,5 @@ export const RetryButton = ({
     return null;
   }
 
-  return (
-    <Action
-      className={`text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0${
-        className ? ` ${className}` : ""
-      }`}
-      onClick={handleRetry}
-      tooltip="Retry"
-    >
-      <RefreshCcw className="h-3.5 w-3.5" />
-    </Action>
-  );
+  return <RetryButtonView className={className} onRetry={handleRetry} />;
 };

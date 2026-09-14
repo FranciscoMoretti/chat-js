@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { ChatHeaderView } from "@/components/chat-header";
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
-import { getEveConversation } from "@/lib/db/eve-queries";
+import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -34,7 +34,7 @@ export const EveChatPage = async ({
     notFound();
   }
   const selected = conversationId
-    ? await getEveConversation(principal.ownerId, conversationId)
+    ? await getEveChatPageConversation(principal.ownerId, conversationId)
     : undefined;
   if (conversationId && !selected) {
     notFound();

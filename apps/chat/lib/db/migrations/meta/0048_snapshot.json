@@ -1,0 +1,3644 @@
+{
+  "id": "06ab4a7e-8af3-4518-b6f9-b78fb24f8526",
+  "prevId": "1a727826-40da-4e47-96e2-5d4a7e361a7c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Chat": {
+      "name": "Chat",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "isPinned": {
+          "name": "isPinned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "projectId": {
+          "name": "projectId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Chat_projectId_Project_id_fk": {
+          "name": "Chat_projectId_Project_id_fk",
+          "tableFrom": "Chat",
+          "tableTo": "Project",
+          "columnsFrom": ["projectId"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "Chat_userId_user_id_fk": {
+          "name": "Chat_userId_user_id_fk",
+          "tableFrom": "Chat",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Document": {
+      "name": "Document",
+      "schema": "",
+      "columns": {
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'text'"
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Document_message_id_idx": {
+          "name": "Document_message_id_idx",
+          "columns": [
+            {
+              "expression": "messageId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Document_messageId_Message_id_fk": {
+          "name": "Document_messageId_Message_id_fk",
+          "tableFrom": "Document",
+          "tableTo": "Message",
+          "columnsFrom": ["messageId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "Document_userId_user_id_fk": {
+          "name": "Document_userId_user_id_fk",
+          "tableFrom": "Document",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Document_id_createdAt_pk": {
+          "name": "Document_id_createdAt_pk",
+          "columns": ["id", "createdAt"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveChat": {
+      "name": "EveChat",
+      "schema": "",
+      "columns": {
+        "activeConversationId": {
+          "name": "activeConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "isPinned": {
+          "name": "isPinned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titleStatus": {
+          "name": "titleStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "EveChat_id_owner": {
+          "name": "EveChat_id_owner",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveChat_owner_activity": {
+          "name": "EveChat_owner_activity",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isPinned",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updatedAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveChat_ownerId_user_id_fk": {
+          "name": "EveChat_ownerId_user_id_fk",
+          "tableFrom": "EveChat",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveChat_title_status": {
+          "name": "EveChat_title_status",
+          "value": "\"EveChat\".\"titleStatus\" in ('pending', 'fallback', 'generated', 'manual')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveChatProject": {
+      "name": "EveChatProject",
+      "schema": "",
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "projectId": {
+          "name": "projectId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveChatProject_project": {
+          "name": "EveChatProject_project",
+          "columns": [
+            {
+              "expression": "projectId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveChatProject_chatId_ownerId_EveChat_id_ownerId_fk": {
+          "name": "EveChatProject_chatId_ownerId_EveChat_id_ownerId_fk",
+          "tableFrom": "EveChatProject",
+          "tableTo": "EveChat",
+          "columnsFrom": ["chatId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "EveChatProject_projectId_ownerId_Project_id_userId_fk": {
+          "name": "EveChatProject_projectId_ownerId_Project_id_userId_fk",
+          "tableFrom": "EveChatProject",
+          "tableTo": "Project",
+          "columnsFrom": ["projectId", "ownerId"],
+          "columnsTo": ["id", "userId"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveCodeSandbox": {
+      "name": "EveCodeSandbox",
+      "schema": "",
+      "columns": {
+        "callId": {
+          "name": "callId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "creationConfirmed": {
+          "name": "creationConfirmed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unresolved'"
+        }
+      },
+      "indexes": {
+        "EveCodeSandbox_conversation": {
+          "name": "EveCodeSandbox_conversation",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveCodeSandbox_conversationId_ownerId_EveConversation_id_ownerId_fk": {
+          "name": "EveCodeSandbox_conversationId_ownerId_EveConversation_id_ownerId_fk",
+          "tableFrom": "EveCodeSandbox",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveConversation": {
+      "name": "EveConversation",
+      "schema": "",
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "creationKind": {
+          "name": "creationKind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'message'"
+        },
+        "firstMessage": {
+          "name": "firstMessage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "forkCheckpointId": {
+          "name": "forkCheckpointId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forkKind": {
+          "name": "forkKind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forkMessageId": {
+          "name": "forkMessageId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forkTurnId": {
+          "name": "forkTurnId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guestCleanupAttemptedAt": {
+          "name": "guestCleanupAttemptedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "initialContentHash": {
+          "name": "initialContentHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initialModelId": {
+          "name": "initialModelId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initialProjectId": {
+          "name": "initialProjectId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operationId": {
+          "name": "operationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parentConversationId": {
+          "name": "parentConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rootConversationId": {
+          "name": "rootConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'creating'"
+        },
+        "usageStreamIndex": {
+          "name": "usageStreamIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        }
+      },
+      "indexes": {
+        "EveConversation_id_owner": {
+          "name": "EveConversation_id_owner",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveConversation_id_owner_chat": {
+          "name": "EveConversation_id_owner_chat",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chatId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveConversation_owner_chat": {
+          "name": "EveConversation_owner_chat",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chatId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveConversation_owner_root": {
+          "name": "EveConversation_owner_root",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "rootConversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveConversation_owner_operation": {
+          "name": "EveConversation_owner_operation",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveConversation_ownerId_user_id_fk": {
+          "name": "EveConversation_ownerId_user_id_fk",
+          "tableFrom": "EveConversation",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveConversation_chat_owner_fk": {
+          "name": "EveConversation_chat_owner_fk",
+          "tableFrom": "EveConversation",
+          "tableTo": "EveChat",
+          "columnsFrom": ["chatId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveConversation_parent_owner_fk": {
+          "name": "EveConversation_parent_owner_fk",
+          "tableFrom": "EveConversation",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["parentConversationId", "ownerId", "chatId"],
+          "columnsTo": ["id", "ownerId", "chatId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveConversation_root_owner_fk": {
+          "name": "EveConversation_root_owner_fk",
+          "tableFrom": "EveConversation",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["rootConversationId", "ownerId", "chatId"],
+          "columnsTo": ["id", "ownerId", "chatId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "EveConversation_sessionId_unique": {
+          "name": "EveConversation_sessionId_unique",
+          "nullsNotDistinct": false,
+          "columns": ["sessionId"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "EveConversation_creation_kind": {
+          "name": "EveConversation_creation_kind",
+          "value": "\"EveConversation\".\"creationKind\" in ('message', 'copy')"
+        },
+        "EveConversation_copy_root": {
+          "name": "EveConversation_copy_root",
+          "value": "\"EveConversation\".\"creationKind\" <> 'copy' or (\n      \"EveConversation\".\"parentConversationId\" is null and \"EveConversation\".\"rootConversationId\" is null and\n      \"EveConversation\".\"forkTurnId\" is null and \"EveConversation\".\"forkMessageId\" is null and \"EveConversation\".\"forkCheckpointId\" is null and\n      \"EveConversation\".\"forkKind\" is null\n    )"
+        },
+        "EveConversation_named_fork_shape": {
+          "name": "EveConversation_named_fork_shape",
+          "value": "\"EveConversation\".\"forkCheckpointId\" is null or (\n      \"EveConversation\".\"parentConversationId\" is not null and \"EveConversation\".\"forkMessageId\" is null\n    )"
+        },
+        "EveConversation_fork_shape": {
+          "name": "EveConversation_fork_shape",
+          "value": "(\n      \"EveConversation\".\"parentConversationId\" is null and \"EveConversation\".\"rootConversationId\" is null and\n      \"EveConversation\".\"forkTurnId\" is null and \"EveConversation\".\"forkMessageId\" is null and \"EveConversation\".\"forkKind\" is null\n    ) or (\n      \"EveConversation\".\"parentConversationId\" is not null and \"EveConversation\".\"rootConversationId\" is not null and\n      (\n        (\"EveConversation\".\"forkTurnId\" is not null and \"EveConversation\".\"forkTurnId\" ~ '^turn_(0|[1-9][0-9]*)$' and \"EveConversation\".\"forkMessageId\" is null) or\n        (\"EveConversation\".\"forkMessageId\" is not null and \"EveConversation\".\"forkMessageId\" ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and \"EveConversation\".\"forkTurnId\" is null)\n      ) and\n      \"EveConversation\".\"parentConversationId\" <> \"EveConversation\".\"id\" and \"EveConversation\".\"rootConversationId\" <> \"EveConversation\".\"id\"\n    )"
+        },
+        "EveConversation_fork_kind": {
+          "name": "EveConversation_fork_kind",
+          "value": "\"EveConversation\".\"forkKind\" is null or \"EveConversation\".\"forkKind\" in ('edit', 'regenerate', 'comparison')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveConversationCopy": {
+      "name": "EveConversationCopy",
+      "schema": "",
+      "columns": {
+        "acceptedAt": {
+          "name": "acceptedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "documentsReady": {
+          "name": "documentsReady",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparing'"
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "planHash": {
+          "name": "planHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "projectionHash": {
+          "name": "projectionHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seed": {
+          "name": "seed",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourceConversationId": {
+          "name": "sourceConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceOwnerId": {
+          "name": "sourceOwnerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceSessionId": {
+          "name": "sourceSessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveConversationCopy_owner_identity": {
+          "name": "EveConversationCopy_owner_identity",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveConversationCopy_owner_fk": {
+          "name": "EveConversationCopy_owner_fk",
+          "tableFrom": "EveConversationCopy",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveConversationCopy_phase_payload": {
+          "name": "EveConversationCopy_phase_payload",
+          "value": "(\n    \"EveConversationCopy\".\"phase\" = 'preparing' and \"EveConversationCopy\".\"plan\" is not null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is null\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'accepted' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is not null and \"EveConversationCopy\".\"acceptedAt\" is not null and \"EveConversationCopy\".\"documentsReady\"\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'bound' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is not null and \"EveConversationCopy\".\"documentsReady\"\n  ) or (\n    \"EveConversationCopy\".\"phase\" = 'rejected' and \"EveConversationCopy\".\"plan\" is null and \"EveConversationCopy\".\"seed\" is null and \"EveConversationCopy\".\"acceptedAt\" is null\n  )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveConversationCopyFile": {
+      "name": "EveConversationCopyFile",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mediaType": {
+          "name": "mediaType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "writtenAt": {
+          "name": "writtenAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveConversationCopyFile_copy_owner_fk": {
+          "name": "EveConversationCopyFile_copy_owner_fk",
+          "tableFrom": "EveConversationCopyFile",
+          "tableTo": "EveConversationCopy",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["conversationId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveConversationCopyFile_conversationId_key_pk": {
+          "name": "EveConversationCopyFile_conversationId_key_pk",
+          "columns": ["conversationId", "key"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveConversationCopyFile_size": {
+          "name": "EveConversationCopyFile_size",
+          "value": "\"EveConversationCopyFile\".\"size\" > 0"
+        },
+        "EveConversationCopyFile_hash": {
+          "name": "EveConversationCopyFile_hash",
+          "value": "\"EveConversationCopyFile\".\"sha256\" ~ '^[a-f0-9]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveDocumentCheckpoint": {
+      "name": "EveDocumentCheckpoint",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "turnIndex": {
+          "name": "turnIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveDocumentCheckpoint_owner_identity": {
+          "name": "EveDocumentCheckpoint_owner_identity",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "turnIndex",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveDocumentCheckpoint_conversation_owner_fk": {
+          "name": "EveDocumentCheckpoint_conversation_owner_fk",
+          "tableFrom": "EveDocumentCheckpoint",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveDocumentCheckpoint_conversationId_turnIndex_pk": {
+          "name": "EveDocumentCheckpoint_conversationId_turnIndex_pk",
+          "columns": ["conversationId", "turnIndex"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveDocumentCheckpoint_turn_nonnegative": {
+          "name": "EveDocumentCheckpoint_turn_nonnegative",
+          "value": "\"EveDocumentCheckpoint\".\"turnIndex\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveDocumentCheckpointEntry": {
+      "name": "EveDocumentCheckpointEntry",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisionId": {
+          "name": "revisionId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "turnIndex": {
+          "name": "turnIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveDocumentCheckpointEntry_checkpoint_owner_fk": {
+          "name": "EveDocumentCheckpointEntry_checkpoint_owner_fk",
+          "tableFrom": "EveDocumentCheckpointEntry",
+          "tableTo": "EveDocumentCheckpoint",
+          "columnsFrom": ["conversationId", "turnIndex", "ownerId"],
+          "columnsTo": ["conversationId", "turnIndex", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveDocumentCheckpointEntry_revision_owner_fk": {
+          "name": "EveDocumentCheckpointEntry_revision_owner_fk",
+          "tableFrom": "EveDocumentCheckpointEntry",
+          "tableTo": "EveDocumentRevision",
+          "columnsFrom": ["revisionId", "documentId", "ownerId"],
+          "columnsTo": ["id", "documentId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveDocumentCheckpointEntry_conversationId_turnIndex_documentId_pk": {
+          "name": "EveDocumentCheckpointEntry_conversationId_turnIndex_documentId_pk",
+          "columns": ["conversationId", "turnIndex", "documentId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveDocumentHead": {
+      "name": "EveDocumentHead",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisionId": {
+          "name": "revisionId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveDocumentHead_conversation_owner_fk": {
+          "name": "EveDocumentHead_conversation_owner_fk",
+          "tableFrom": "EveDocumentHead",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveDocumentHead_revision_document_owner_fk": {
+          "name": "EveDocumentHead_revision_document_owner_fk",
+          "tableFrom": "EveDocumentHead",
+          "tableTo": "EveDocumentRevision",
+          "columnsFrom": ["revisionId", "documentId", "ownerId"],
+          "columnsTo": ["id", "documentId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveDocumentHead_conversationId_documentId_pk": {
+          "name": "EveDocumentHead_conversationId_documentId_pk",
+          "columns": ["conversationId", "documentId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveDocumentRevision": {
+      "name": "EveDocumentRevision",
+      "schema": "",
+      "columns": {
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operationId": {
+          "name": "operationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parentRevisionId": {
+          "name": "parentRevisionId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "turnIndex": {
+          "name": "turnIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "EveDocumentRevision_operation": {
+          "name": "EveDocumentRevision_operation",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveDocumentRevision_identity": {
+          "name": "EveDocumentRevision_identity",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "documentId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveDocumentRevision_conversation_owner_fk": {
+          "name": "EveDocumentRevision_conversation_owner_fk",
+          "tableFrom": "EveDocumentRevision",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveDocumentRevision_parent_document_owner_fk": {
+          "name": "EveDocumentRevision_parent_document_owner_fk",
+          "tableFrom": "EveDocumentRevision",
+          "tableTo": "EveDocumentRevision",
+          "columnsFrom": ["parentRevisionId", "documentId", "ownerId"],
+          "columnsTo": ["id", "documentId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveDocumentRevision_turn_nonnegative": {
+          "name": "EveDocumentRevision_turn_nonnegative",
+          "value": "\"EveDocumentRevision\".\"turnIndex\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveFileReference": {
+      "name": "EveFileReference",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveFileReference_key": {
+          "name": "EveFileReference_key",
+          "columns": [
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveFileReference_conversationId_ownerId_EveConversation_id_ownerId_fk": {
+          "name": "EveFileReference_conversationId_ownerId_EveConversation_id_ownerId_fk",
+          "tableFrom": "EveFileReference",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveFileReference_key_ownerId_EveStoredFile_key_ownerId_fk": {
+          "name": "EveFileReference_key_ownerId_EveStoredFile_key_ownerId_fk",
+          "tableFrom": "EveFileReference",
+          "tableTo": "EveStoredFile",
+          "columnsFrom": ["key", "ownerId"],
+          "columnsTo": ["key", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveFileReference_conversationId_key_pk": {
+          "name": "EveFileReference_conversationId_key_pk",
+          "columns": ["conversationId", "key"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveGuest": {
+      "name": "EveGuest",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageLimit": {
+          "name": "messageLimit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "remainingMessages": {
+          "name": "remainingMessages",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tokenHash": {
+          "name": "tokenHash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveGuest_expiry_idx": {
+          "name": "EveGuest_expiry_idx",
+          "columns": [
+            {
+              "expression": "expiresAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveGuest_ownerId_user_id_fk": {
+          "name": "EveGuest_ownerId_user_id_fk",
+          "tableFrom": "EveGuest",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "EveGuest_tokenHash_unique": {
+          "name": "EveGuest_tokenHash_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tokenHash"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "EveGuest_message_balance": {
+          "name": "EveGuest_message_balance",
+          "value": "\"EveGuest\".\"remainingMessages\" >= 0 and \"EveGuest\".\"remainingMessages\" <= \"EveGuest\".\"messageLimit\""
+        },
+        "EveGuest_token_hash": {
+          "name": "EveGuest_token_hash",
+          "value": "\"EveGuest\".\"tokenHash\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveGuestMessage": {
+      "name": "EveGuestMessage",
+      "schema": "",
+      "columns": {
+        "ipHash": {
+          "name": "ipHash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operationId": {
+          "name": "operationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requestHash": {
+          "name": "requestHash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservationId": {
+          "name": "reservationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservedAt": {
+          "name": "reservedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveGuestMessage_ownerId_EveGuest_ownerId_fk": {
+          "name": "EveGuestMessage_ownerId_EveGuest_ownerId_fk",
+          "tableFrom": "EveGuestMessage",
+          "tableTo": "EveGuest",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["ownerId"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveGuestMessage_ownerId_operationId_pk": {
+          "name": "EveGuestMessage_ownerId_operationId_pk",
+          "columns": ["ownerId", "operationId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveGuestMessage_state": {
+          "name": "EveGuestMessage_state",
+          "value": "\"EveGuestMessage\".\"state\" in ('reserved', 'committed', 'released')"
+        },
+        "EveGuestMessage_request_hash": {
+          "name": "EveGuestMessage_request_hash",
+          "value": "\"EveGuestMessage\".\"requestHash\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveGuestRate": {
+      "name": "EveGuestRate",
+      "schema": "",
+      "columns": {
+        "ipHash": {
+          "name": "ipHash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requests": {
+          "name": "requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "startsAt": {
+          "name": "startsAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "windowSeconds": {
+          "name": "windowSeconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "EveGuestRate_ipHash_windowSeconds_startsAt_pk": {
+          "name": "EveGuestRate_ipHash_windowSeconds_startsAt_pk",
+          "columns": ["ipHash", "windowSeconds", "startsAt"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveGuestRate_requests": {
+          "name": "EveGuestRate_requests",
+          "value": "\"EveGuestRate\".\"requests\" >= 0"
+        },
+        "EveGuestRate_window": {
+          "name": "EveGuestRate_window",
+          "value": "\"EveGuestRate\".\"windowSeconds\" in (60, 2592000)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveImportedDocumentCheckpoint": {
+      "name": "EveImportedDocumentCheckpoint",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageIndex": {
+          "name": "messageIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveImportedDocumentCheckpoint_owner_identity": {
+          "name": "EveImportedDocumentCheckpoint_owner_identity",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "messageIndex",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveImportedDocumentCheckpoint_conversation_owner_fk": {
+          "name": "EveImportedDocumentCheckpoint_conversation_owner_fk",
+          "tableFrom": "EveImportedDocumentCheckpoint",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveImportedDocumentCheckpoint_conversationId_messageIndex_pk": {
+          "name": "EveImportedDocumentCheckpoint_conversationId_messageIndex_pk",
+          "columns": ["conversationId", "messageIndex"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveImportedDocumentCheckpoint_message_range": {
+          "name": "EveImportedDocumentCheckpoint_message_range",
+          "value": "\"EveImportedDocumentCheckpoint\".\"messageIndex\" between 0 and 9999"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveImportedDocumentCheckpointEntry": {
+      "name": "EveImportedDocumentCheckpointEntry",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageIndex": {
+          "name": "messageIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisionId": {
+          "name": "revisionId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveImportedDocumentCheckpointEntry_checkpoint_owner_fk": {
+          "name": "EveImportedDocumentCheckpointEntry_checkpoint_owner_fk",
+          "tableFrom": "EveImportedDocumentCheckpointEntry",
+          "tableTo": "EveImportedDocumentCheckpoint",
+          "columnsFrom": ["conversationId", "messageIndex", "ownerId"],
+          "columnsTo": ["conversationId", "messageIndex", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveImportedDocumentCheckpointEntry_revision_owner_fk": {
+          "name": "EveImportedDocumentCheckpointEntry_revision_owner_fk",
+          "tableFrom": "EveImportedDocumentCheckpointEntry",
+          "tableTo": "EveDocumentRevision",
+          "columnsFrom": ["revisionId", "documentId", "ownerId"],
+          "columnsTo": ["id", "documentId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveImportedDocumentCheckpointEntry_conversationId_messageIndex_documentId_pk": {
+          "name": "EveImportedDocumentCheckpointEntry_conversationId_messageIndex_documentId_pk",
+          "columns": ["conversationId", "messageIndex", "documentId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveNamedDocumentCheckpoint": {
+      "name": "EveNamedDocumentCheckpoint",
+      "schema": "",
+      "columns": {
+        "checkpointId": {
+          "name": "checkpointId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "turnIndex": {
+          "name": "turnIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveNamedDocumentCheckpoint_owner_identity": {
+          "name": "EveNamedDocumentCheckpoint_owner_identity",
+          "columns": [
+            {
+              "expression": "conversationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "checkpointId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveNamedDocumentCheckpoint_conversation_owner_fk": {
+          "name": "EveNamedDocumentCheckpoint_conversation_owner_fk",
+          "tableFrom": "EveNamedDocumentCheckpoint",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId", "ownerId"],
+          "columnsTo": ["id", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveNamedDocumentCheckpoint_conversationId_checkpointId_pk": {
+          "name": "EveNamedDocumentCheckpoint_conversationId_checkpointId_pk",
+          "columns": ["conversationId", "checkpointId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "EveNamedDocumentCheckpoint_turn_nonnegative": {
+          "name": "EveNamedDocumentCheckpoint_turn_nonnegative",
+          "value": "\"EveNamedDocumentCheckpoint\".\"turnIndex\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.EveNamedDocumentCheckpointEntry": {
+      "name": "EveNamedDocumentCheckpointEntry",
+      "schema": "",
+      "columns": {
+        "checkpointId": {
+          "name": "checkpointId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisionId": {
+          "name": "revisionId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveNamedDocumentCheckpointEntry_checkpoint_owner_fk": {
+          "name": "EveNamedDocumentCheckpointEntry_checkpoint_owner_fk",
+          "tableFrom": "EveNamedDocumentCheckpointEntry",
+          "tableTo": "EveNamedDocumentCheckpoint",
+          "columnsFrom": ["conversationId", "checkpointId", "ownerId"],
+          "columnsTo": ["conversationId", "checkpointId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "EveNamedDocumentCheckpointEntry_revision_owner_fk": {
+          "name": "EveNamedDocumentCheckpointEntry_revision_owner_fk",
+          "tableFrom": "EveNamedDocumentCheckpointEntry",
+          "tableTo": "EveDocumentRevision",
+          "columnsFrom": ["revisionId", "documentId", "ownerId"],
+          "columnsTo": ["id", "documentId", "ownerId"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveNamedDocumentCheckpointEntry_conversationId_checkpointId_documentId_pk": {
+          "name": "EveNamedDocumentCheckpointEntry_conversationId_checkpointId_documentId_pk",
+          "columns": ["conversationId", "checkpointId", "documentId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveResponseGroup": {
+      "name": "EveResponseGroup",
+      "schema": "",
+      "columns": {
+        "candidateOperationIds": {
+          "name": "candidateOperationIds",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidates": {
+          "name": "candidates",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted": {
+          "name": "deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "inputHash": {
+          "name": "inputHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operationId": {
+          "name": "operationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sourceConversationId": {
+          "name": "sourceConversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourceIdentityKnown": {
+          "name": "sourceIdentityKnown",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "EveResponseGroup_owner_operation": {
+          "name": "EveResponseGroup_owner_operation",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveResponseGroup_ownerId_user_id_fk": {
+          "name": "EveResponseGroup_ownerId_user_id_fk",
+          "tableFrom": "EveResponseGroup",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveStoredFile": {
+      "name": "EveStoredFile",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        }
+      },
+      "indexes": {
+        "EveStoredFile_owner": {
+          "name": "EveStoredFile_owner",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "EveStoredFile_key_owner": {
+          "name": "EveStoredFile_key_owner",
+          "columns": [
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveStoredFile_ownerId_user_id_fk": {
+          "name": "EveStoredFile_ownerId_user_id_fk",
+          "tableFrom": "EveStoredFile",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveUsage": {
+      "name": "EveUsage",
+      "schema": "",
+      "columns": {
+        "chargedCents": {
+          "name": "chargedCents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "costUsd": {
+          "name": "costUsd",
+          "type": "numeric(24, 12)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "generationId": {
+          "name": "generationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "turnId": {
+          "name": "turnId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "EveUsage_session_turn": {
+          "name": "EveUsage_session_turn",
+          "columns": [
+            {
+              "expression": "sessionId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "turnId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "EveUsage_ownerId_user_id_fk": {
+          "name": "EveUsage_ownerId_user_id_fk",
+          "tableFrom": "EveUsage",
+          "tableTo": "user",
+          "columnsFrom": ["ownerId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.EveVote": {
+      "name": "EveVote",
+      "schema": "",
+      "columns": {
+        "conversationId": {
+          "name": "conversationId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "EveVote_conversationId_EveConversation_id_fk": {
+          "name": "EveVote_conversationId_EveConversation_id_fk",
+          "tableFrom": "EveVote",
+          "tableTo": "EveConversation",
+          "columnsFrom": ["conversationId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "EveVote_conversationId_messageId_pk": {
+          "name": "EveVote_conversationId_messageId_pk",
+          "columns": ["conversationId", "messageId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.GenerationCancellation": {
+      "name": "GenerationCancellation",
+      "schema": "",
+      "columns": {
+        "canceledAt": {
+          "name": "canceledAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "GenerationCancellation_userId_user_id_fk": {
+          "name": "GenerationCancellation_userId_user_id_fk",
+          "tableFrom": "GenerationCancellation",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "GenerationCancellation_messageId_userId_pk": {
+          "name": "GenerationCancellation_messageId_userId_pk",
+          "columns": ["messageId", "userId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.McpConnector": {
+      "name": "McpConnector",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nameId": {
+          "name": "nameId",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "oauthClientId": {
+          "name": "oauthClientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oauthClientSecret": {
+          "name": "oauthClientSecret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'http'"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "McpConnector_user_id_idx": {
+          "name": "McpConnector_user_id_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "McpConnector_user_name_id_idx": {
+          "name": "McpConnector_user_name_id_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nameId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "McpConnector_user_name_id_unique": {
+          "name": "McpConnector_user_name_id_unique",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nameId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "McpConnector_userId_user_id_fk": {
+          "name": "McpConnector_userId_user_id_fk",
+          "tableFrom": "McpConnector",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.McpOAuthSession": {
+      "name": "McpOAuthSession",
+      "schema": "",
+      "columns": {
+        "clientInfo": {
+          "name": "clientInfo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codeVerifier": {
+          "name": "codeVerifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "mcpConnectorId": {
+          "name": "mcpConnectorId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "serverUrl": {
+          "name": "serverUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tokens": {
+          "name": "tokens",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "McpOAuthSession_connector_idx": {
+          "name": "McpOAuthSession_connector_idx",
+          "columns": [
+            {
+              "expression": "mcpConnectorId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "McpOAuthSession_state_idx": {
+          "name": "McpOAuthSession_state_idx",
+          "columns": [
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "McpOAuthSession_mcpConnectorId_McpConnector_id_fk": {
+          "name": "McpOAuthSession_mcpConnectorId_McpConnector_id_fk",
+          "tableFrom": "McpOAuthSession",
+          "tableTo": "McpConnector",
+          "columnsFrom": ["mcpConnectorId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "McpOAuthSession_state_unique": {
+          "name": "McpOAuthSession_state_unique",
+          "nullsNotDistinct": false,
+          "columns": ["state"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Message": {
+      "name": "Message",
+      "schema": "",
+      "columns": {
+        "activeStreamId": {
+          "name": "activeStreamId",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "annotations": {
+          "name": "annotations",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canceledAt": {
+          "name": "canceledAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "isPrimaryParallel": {
+          "name": "isPrimaryParallel",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastContext": {
+          "name": "lastContext",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parallelGroupId": {
+          "name": "parallelGroupId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parallelIndex": {
+          "name": "parallelIndex",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parentMessageId": {
+          "name": "parentMessageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "selectedModel": {
+          "name": "selectedModel",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "selectedTool": {
+          "name": "selectedTool",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Message_chatId_Chat_id_fk": {
+          "name": "Message_chatId_Chat_id_fk",
+          "tableFrom": "Message",
+          "tableTo": "Chat",
+          "columnsFrom": ["chatId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Part": {
+      "name": "Part",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "data_blob": {
+          "name": "data_blob",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_type": {
+          "name": "data_type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_filename": {
+          "name": "file_filename",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_mediaType": {
+          "name": "file_mediaType",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "providerMetadata": {
+          "name": "providerMetadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reasoning_text": {
+          "name": "reasoning_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_filename": {
+          "name": "source_document_filename",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_mediaType": {
+          "name": "source_document_mediaType",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_sourceId": {
+          "name": "source_document_sourceId",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_title": {
+          "name": "source_document_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_url_sourceId": {
+          "name": "source_url_sourceId",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_url_title": {
+          "name": "source_url_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_url_url": {
+          "name": "source_url_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text_text": {
+          "name": "text_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_errorText": {
+          "name": "tool_errorText",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_input": {
+          "name": "tool_input",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_name": {
+          "name": "tool_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_output": {
+          "name": "tool_output",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_state": {
+          "name": "tool_state",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_toolCallId": {
+          "name": "tool_toolCallId",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Part_message_id_idx": {
+          "name": "Part_message_id_idx",
+          "columns": [
+            {
+              "expression": "messageId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Part_message_id_order_idx": {
+          "name": "Part_message_id_order_idx",
+          "columns": [
+            {
+              "expression": "messageId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Part_messageId_Message_id_fk": {
+          "name": "Part_messageId_Message_id_fk",
+          "tableFrom": "Part",
+          "tableTo": "Message",
+          "columnsFrom": ["messageId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "Part_data_required_if_type_data": {
+          "name": "Part_data_required_if_type_data",
+          "value": "CASE WHEN \"Part\".\"type\" LIKE 'data-%' THEN \"Part\".\"data_type\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_file_required_if_type_file": {
+          "name": "Part_file_required_if_type_file",
+          "value": "CASE WHEN \"Part\".\"type\" = 'file' THEN \"Part\".\"file_mediaType\" IS NOT NULL AND \"Part\".\"file_url\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_reasoning_required_if_type_reasoning": {
+          "name": "Part_reasoning_required_if_type_reasoning",
+          "value": "CASE WHEN \"Part\".\"type\" = 'reasoning' THEN \"Part\".\"reasoning_text\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_source_document_required_if_type_source_document": {
+          "name": "Part_source_document_required_if_type_source_document",
+          "value": "CASE WHEN \"Part\".\"type\" = 'source-document' THEN \"Part\".\"source_document_sourceId\" IS NOT NULL AND \"Part\".\"source_document_mediaType\" IS NOT NULL AND \"Part\".\"source_document_title\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_source_url_required_if_type_source_url": {
+          "name": "Part_source_url_required_if_type_source_url",
+          "value": "CASE WHEN \"Part\".\"type\" = 'source-url' THEN \"Part\".\"source_url_sourceId\" IS NOT NULL AND \"Part\".\"source_url_url\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_text_required_if_type_text": {
+          "name": "Part_text_required_if_type_text",
+          "value": "CASE WHEN \"Part\".\"type\" = 'text' THEN \"Part\".\"text_text\" IS NOT NULL ELSE TRUE END"
+        },
+        "Part_tool_required_if_type_tool": {
+          "name": "Part_tool_required_if_type_tool",
+          "value": "CASE WHEN \"Part\".\"type\" LIKE 'tool-%' THEN \"Part\".\"tool_toolCallId\" IS NOT NULL AND \"Part\".\"tool_state\" IS NOT NULL ELSE TRUE END"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.Project": {
+      "name": "Project",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "icon": {
+          "name": "icon",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'folder'"
+        },
+        "iconColor": {
+          "name": "iconColor",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'gray'"
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "instructions": {
+          "name": "instructions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Project_id_user_idx": {
+          "name": "Project_id_user_idx",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Project_user_id_idx": {
+          "name": "Project_user_id_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Project_userId_user_id_fk": {
+          "name": "Project_userId_user_id_fk",
+          "tableFrom": "Project",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": ["token"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Suggestion": {
+      "name": "Suggestion",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "documentCreatedAt": {
+          "name": "documentCreatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documentId": {
+          "name": "documentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "isResolved": {
+          "name": "isResolved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "originalText": {
+          "name": "originalText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "suggestedText": {
+          "name": "suggestedText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Suggestion_userId_user_id_fk": {
+          "name": "Suggestion_userId_user_id_fk",
+          "tableFrom": "Suggestion",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk": {
+          "name": "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_fk",
+          "tableFrom": "Suggestion",
+          "tableTo": "Document",
+          "columnsFrom": ["documentId", "documentCreatedAt"],
+          "columnsTo": ["id", "createdAt"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Suggestion_id_pk": {
+          "name": "Suggestion_id_pk",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": ["email"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.UserCredit": {
+      "name": "UserCredit",
+      "schema": "",
+      "columns": {
+        "credits": {
+          "name": "credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "UserCredit_userId_user_id_fk": {
+          "name": "UserCredit_userId_user_id_fk",
+          "tableFrom": "UserCredit",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.UserModelPreference": {
+      "name": "UserModelPreference",
+      "schema": "",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modelId": {
+          "name": "modelId",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "UserModelPreference_user_id_idx": {
+          "name": "UserModelPreference_user_id_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "UserModelPreference_userId_user_id_fk": {
+          "name": "UserModelPreference_userId_user_id_fk",
+          "tableFrom": "UserModelPreference",
+          "tableTo": "user",
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "UserModelPreference_userId_modelId_pk": {
+          "name": "UserModelPreference_userId_modelId_pk",
+          "columns": ["userId", "modelId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Vote": {
+      "name": "Vote",
+      "schema": "",
+      "columns": {
+        "chatId": {
+          "name": "chatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isUpvoted": {
+          "name": "isUpvoted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "messageId": {
+          "name": "messageId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Vote_chatId_Chat_id_fk": {
+          "name": "Vote_chatId_Chat_id_fk",
+          "tableFrom": "Vote",
+          "tableTo": "Chat",
+          "columnsFrom": ["chatId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "Vote_messageId_Message_id_fk": {
+          "name": "Vote_messageId_Message_id_fk",
+          "tableFrom": "Vote",
+          "tableTo": "Message",
+          "columnsFrom": ["messageId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "Vote_chatId_messageId_pk": {
+          "name": "Vote_chatId_messageId_pk",
+          "columns": ["chatId", "messageId"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -3,7 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "./client";
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
 import { CreationConflictError } from "./eve-queries";
-import { eveConversation, eveConversationCopy } from "./schema";
+import { eveChat, eveConversation, eveConversationCopy } from "./schema";
 
 /** Used only by the authenticated native seed resolver; accepted copies no longer depend on their source. */
 export const resolveAcceptedEveCopySeed = async (
@@ -70,6 +70,12 @@ export const dispatchEveCopy = async (
         .update(eveConversation)
         .set({ sessionId, state: "bound" })
         .where(eq(eveConversation.id, conversation.id));
+      await tx
+        .update(eveChat)
+        .set({ activeConversationId: conversation.id, updatedAt: new Date() })
+        .where(
+          and(eq(eveChat.id, conversation.chatId), eq(eveChat.ownerId, ownerId))
+        );
       await tx
         .update(eveConversationCopy)
         .set({ phase: "bound", seed: null })

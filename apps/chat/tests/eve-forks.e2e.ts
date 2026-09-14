@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -150,7 +151,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       id: foreignOwner,
       name: "Foreign fork fixture",
     });
-    await db.insert(eveConversation).values({
+    await insertEveConversationFixtures({
       firstMessage: "Private source",
       id: foreignId,
       operationId: crypto.randomUUID(),

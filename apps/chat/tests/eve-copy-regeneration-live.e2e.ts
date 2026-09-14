@@ -42,7 +42,9 @@ test("copied responses regenerate with their original model after reload", async
   await expect(page.getByRole("log").getByText(answer)).toBeVisible({
     timeout: 45_000,
   });
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Ready", { exact: true }).filter({ visible: true })
+  ).toBeVisible();
   await db
     .update(eveConversation)
     .set({ visibility: "public" })
@@ -79,11 +81,13 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 30_000,
   });
   await page.reload();
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Ready", { exact: true }).filter({ visible: true })
+  ).toBeVisible();
   await expect(page.getByRole("log").getByText(answer)).toBeVisible();
   const regenerate = page.getByRole("button", {
     exact: true,
-    name: "Regenerate response",
+    name: "Retry",
   });
   await expect(regenerate).toBeEnabled();
   await page.getByRole("log").screenshot({
@@ -116,7 +120,7 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 45_000,
   });
   await expect(
-    page.getByRole("button", { exact: true, name: "Regenerate response" })
+    page.getByRole("button", { exact: true, name: "Retry" })
   ).toHaveCount(1);
   await page.reload();
   await expect(page.getByRole("log").getByText(answer)).toBeVisible({

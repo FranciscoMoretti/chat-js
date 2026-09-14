@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { UiToolName } from "../ai/types";
 import { createConversationInput } from "./contracts";
-import type { EveForkInput } from "./contracts";
+import type { EveForkInput, EveForkKind } from "./contracts";
 import type { EveMessageInput } from "./message-input";
 import { eveResponseGroupInput } from "./response-group-input";
 
@@ -41,6 +41,7 @@ export const prepareResponseGroupCreation = (
   modelIds: string[],
   context?: CreationScope & {
     fork?: EveForkInput;
+    forkKind?: Extract<EveForkKind, "comparison" | "edit">;
   },
   selectedTool?: UiToolName
 ) => {
@@ -55,6 +56,7 @@ export const prepareResponseGroupCreation = (
   }
   const request = eveResponseGroupInput.parse({
     fork: context?.fork,
+    forkKind: context?.forkKind,
     message,
     modelIds,
     operationId: crypto.randomUUID(),
@@ -86,6 +88,7 @@ export const prepareCreation = (
   modelId?: string,
   context?: CreationScope & {
     fork?: EveForkInput;
+    forkKind?: EveForkKind;
   },
   selectedTool?: UiToolName
 ) => {
@@ -96,6 +99,7 @@ export const prepareCreation = (
   }
   const pending = createConversationInput.safeParse({
     fork: context?.fork,
+    forkKind: context?.forkKind,
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),

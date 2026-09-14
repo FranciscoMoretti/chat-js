@@ -5,7 +5,7 @@ import { ResponseChoiceCards } from "../response-choice-cards";
 export type EveResponseCardCandidate = {
   operationId: string;
   modelName: string;
-  state: "bound" | "unresolved" | "waiting" | "rejected";
+  state: "bound" | "unresolved" | "waiting" | "rejected" | "pending";
   status?:
     | "submitted"
     | "streaming"
@@ -34,12 +34,15 @@ export const EveResponseGroupCards = ({
       slots={candidates.map((candidate) => {
         const selected = candidate.operationId === selectedOperationId;
         const loading =
-          candidate.state === "bound" &&
-          (candidate.status === "submitted" ||
-            candidate.status === "streaming" ||
-            candidate.status === "resuming");
+          candidate.state === "pending" ||
+          (candidate.state === "bound" &&
+            (candidate.status === "submitted" ||
+              candidate.status === "streaming" ||
+              candidate.status === "resuming"));
         let statusLabel = "Open response";
-        if (candidate.state === "unresolved") {
+        if (candidate.state === "pending") {
+          statusLabel = "Generating...";
+        } else if (candidate.state === "unresolved") {
           statusLabel = "Needs retry";
         } else if (candidate.state === "waiting") {
           statusLabel = "Waiting";

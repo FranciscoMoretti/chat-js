@@ -34,6 +34,9 @@ vi.mock("./prepare-message", () => ({
   prepareEveMessage: (message: string) => Promise.resolve(message),
 }));
 vi.mock("./reconcile-usage", () => ({ reconcileEveOwnerUsage: vi.fn() }));
+vi.mock("./conversation-title", () => ({
+  eveConversationTitleFallback: (message: string) => `Fallback: ${message}`,
+}));
 const input = {
   fork: { beforeTurnId: "turn_0", conversationId: "source-chat" },
   message: "compare",
@@ -115,6 +118,19 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
   });
 });
 
+it("persists fork intent without forwarding ChatJS metadata to Eve", async () => {
+  const regeneration = {
+    ...input,
+    forkKind: "regenerate",
+  } satisfies Parameters<typeof createEveConversationOperation>[1];
+  const response = await createEveConversationOperation("owner", regeneration);
+  expect(response.status).toBe(200);
+  expect(mocks.reserve.mock.calls.at(-1)?.[4].forkKind).toBe("regenerate");
+  expect(
+    JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body)
+  ).not.toHaveProperty("forkKind");
+});
+
 it("rejects saved-copy operations before ordinary native lookup or dispatch", async () => {
   mocks.creation.mockResolvedValue({
     creationKind: "copy",
@@ -169,5 +185,13 @@ it("forwards selected tools on creation and includes them in the reservation ide
   });
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
     originalHash
+  );
+});
+
+it("persists a compact fallback title before native creation", async () => {
+  await createEveConversationOperation("owner", input);
+
+  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialTitle).toBe(
+    "Fallback: compare"
   );
 });

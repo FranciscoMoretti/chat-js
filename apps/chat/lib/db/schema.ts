@@ -541,15 +541,54 @@ export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 export const schema = { account, session, user, verification };
 
 // Metadata only. Eve owns the transcript and execution state.
+export const eveChat = pgTable(
+  "EveChat",
+  {
+    activeConversationId: uuid("activeConversationId"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    isPinned: boolean("isPinned").notNull().default(false),
+    ownerId: text("ownerId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    titleStatus: text("titleStatus", {
+      enum: ["pending", "fallback", "generated", "manual"],
+    })
+      .notNull()
+      .default("pending"),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("EveChat_id_owner").on(table.id, table.ownerId),
+    index("EveChat_owner_activity").on(
+      table.ownerId,
+      table.isPinned,
+      table.updatedAt
+    ),
+    check(
+      "EveChat_title_status",
+      sql`${table.titleStatus} in ('pending', 'fallback', 'generated', 'manual')`
+    ),
+  ]
+);
+
+export type EveChat = InferSelectModel<typeof eveChat>;
+
+// One logical chat may contain several private native EVE sessions.
 export const eveConversation = pgTable(
   "EveConversation",
   {
+    chatId: uuid("chatId").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     creationKind: text("creationKind", { enum: ["message", "copy"] })
       .notNull()
       .default("message"),
     firstMessage: text("firstMessage").notNull(),
     forkCheckpointId: uuid("forkCheckpointId"),
+    forkKind: text("forkKind", {
+      enum: ["edit", "regenerate", "comparison"],
+    }),
     forkMessageId: text("forkMessageId"),
     forkTurnId: text("forkTurnId"),
     guestCleanupAttemptedAt: timestamp("guestCleanupAttemptedAt", {
@@ -560,7 +599,6 @@ export const eveConversation = pgTable(
     initialModelId: text("initialModelId"),
     // Immutable creation intent; retained when the project is removed.
     initialProjectId: uuid("initialProjectId"),
-    isPinned: boolean("isPinned").notNull().default(false),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()
@@ -573,8 +611,6 @@ export const eveConversation = pgTable(
     })
       .notNull()
       .default("creating"),
-    title: text("title"),
-    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
     visibility: varchar("visibility", { enum: ["private", "public"] })
       .notNull()
@@ -589,22 +625,34 @@ export const eveConversation = pgTable(
       "EveConversation_copy_root",
       sql`${table.creationKind} <> 'copy' or (
       ${table.parentConversationId} is null and ${table.rootConversationId} is null and
-      ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkCheckpointId} is null
+      ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkCheckpointId} is null and
+      ${table.forkKind} is null
     )`
     ),
     uniqueIndex("EveConversation_id_owner").on(table.id, table.ownerId),
+    uniqueIndex("EveConversation_id_owner_chat").on(
+      table.id,
+      table.ownerId,
+      table.chatId
+    ),
+    index("EveConversation_owner_chat").on(table.ownerId, table.chatId),
+    foreignKey({
+      columns: [table.chatId, table.ownerId],
+      foreignColumns: [eveChat.id, eveChat.ownerId],
+      name: "EveConversation_chat_owner_fk",
+    }),
     index("EveConversation_owner_root").on(
       table.ownerId,
       table.rootConversationId
     ),
     foreignKey({
-      columns: [table.parentConversationId, table.ownerId],
-      foreignColumns: [table.id, table.ownerId],
+      columns: [table.parentConversationId, table.ownerId, table.chatId],
+      foreignColumns: [table.id, table.ownerId, table.chatId],
       name: "EveConversation_parent_owner_fk",
     }),
     foreignKey({
-      columns: [table.rootConversationId, table.ownerId],
-      foreignColumns: [table.id, table.ownerId],
+      columns: [table.rootConversationId, table.ownerId, table.chatId],
+      foreignColumns: [table.id, table.ownerId, table.chatId],
       name: "EveConversation_root_owner_fk",
     }),
     check(
@@ -617,7 +665,7 @@ export const eveConversation = pgTable(
       "EveConversation_fork_shape",
       sql`(
       ${table.parentConversationId} is null and ${table.rootConversationId} is null and
-      ${table.forkTurnId} is null and ${table.forkMessageId} is null
+      ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkKind} is null
     ) or (
       ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
       (
@@ -626,6 +674,10 @@ export const eveConversation = pgTable(
       ) and
       ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
     )`
+    ),
+    check(
+      "EveConversation_fork_kind",
+      sql`${table.forkKind} is null or ${table.forkKind} in ('edit', 'regenerate', 'comparison')`
     ),
     uniqueIndex("EveConversation_owner_operation").on(
       table.ownerId,
@@ -744,18 +796,18 @@ export const eveResponseGroup = pgTable(
 );
 
 /** Removing a project detaches its conversations without deleting their native sessions. */
-export const eveConversationProject = pgTable(
-  "EveConversationProject",
+export const eveChatProject = pgTable(
+  "EveChatProject",
   {
-    conversationId: uuid("conversationId").primaryKey(),
+    chatId: uuid("chatId").primaryKey(),
     ownerId: text("ownerId").notNull(),
     projectId: uuid("projectId").notNull(),
   },
   (table) => [
-    index("EveConversationProject_project").on(table.projectId),
+    index("EveChatProject_project").on(table.projectId),
     foreignKey({
-      columns: [table.conversationId, table.ownerId],
-      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      columns: [table.chatId, table.ownerId],
+      foreignColumns: [eveChat.id, eveChat.ownerId],
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.projectId, table.ownerId],

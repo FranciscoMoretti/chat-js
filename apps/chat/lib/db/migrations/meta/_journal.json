@@ -330,6 +330,20 @@
       "when": 1789326208169,
       "tag": "0046_eve_runtime",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1789329401492,
+      "tag": "0047_eve_fork_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1789369749468,
+      "tag": "0048_eve_chat_identity",
+      "breakpoints": true
     }
   ]
 }

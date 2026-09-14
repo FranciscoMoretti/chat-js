@@ -29,6 +29,9 @@ export const eveForkInput = z.union([
 ]);
 export type EveForkInput = z.infer<typeof eveForkInput>;
 
+export const eveForkKind = z.enum(["edit", "regenerate", "comparison"]);
+export type EveForkKind = z.infer<typeof eveForkKind>;
+
 export const createConversationInput = z
   .object({
     operationId: z.uuid(),
@@ -36,11 +39,15 @@ export const createConversationInput = z
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
+    forkKind: eveForkKind.optional(),
     projectId: z.uuid().optional(),
   })
   .strict()
   .refine((input) => !(input.fork && input.projectId), {
     message: "Forks inherit their source conversation project.",
+  })
+  .refine((input) => !input.forkKind || input.fork, {
+    message: "Fork intent requires a source conversation.",
   });
 export const conversationBinding = z.object({
   id: z.uuid(),

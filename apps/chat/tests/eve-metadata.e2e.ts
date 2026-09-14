@@ -6,7 +6,8 @@ import { expect, test } from "@playwright/test";
 import { eq, inArray } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveConversation, user } from "../lib/db/schema";
+import { eveChat, eveConversation, user } from "../lib/db/schema";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 const metadataTitle = /renamed|metadata newer/u;
@@ -36,7 +37,7 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     id: foreignOwner,
     name: "Metadata test",
   });
-  await db.insert(eveConversation).values(
+  await insertEveConversationFixtures(
     ids.map((id, index) => ({
       firstMessage: index === 0 ? firstTitle : secondTitle,
       id,
@@ -86,8 +87,9 @@ test("rename and pin persist, preserve input, and reject another owner's changes
         async () =>
           (
             await db
-              .select()
+              .select({ isPinned: eveChat.isPinned })
               .from(eveConversation)
+              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
               .where(eq(eveConversation.id, ids[0]))
           )?.[0]?.isPinned
       )
@@ -117,8 +119,9 @@ test("rename and pin persist, preserve input, and reject another owner's changes
         async () =>
           (
             await db
-              .select()
+              .select({ isPinned: eveChat.isPinned })
               .from(eveConversation)
+              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
               .where(eq(eveConversation.id, ids[0]))
           )?.[0]?.isPinned
       )
@@ -149,16 +152,26 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       await anonymous.close();
     }
     const [stored] = await db
-      .select()
+      .select({
+        firstMessage: eveConversation.firstMessage,
+        isPinned: eveChat.isPinned,
+        title: eveChat.title,
+      })
       .from(eveConversation)
+      .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
       .where(eq(eveConversation.id, ids[0]));
     expect(stored?.title).toBe(renamed);
     expect(stored?.firstMessage).toBe(firstTitle);
     const [foreign] = await db
-      .select()
+      .select({
+        firstMessage: eveConversation.firstMessage,
+        isPinned: eveChat.isPinned,
+        title: eveChat.title,
+      })
       .from(eveConversation)
+      .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
       .where(eq(eveConversation.id, ids[2]));
-    expect(foreign?.title).toBeNull();
+    expect(foreign?.title).toBe(secondTitle);
     expect(foreign?.isPinned).toBe(false);
   } finally {
     await db.delete(eveConversation).where(inArray(eveConversation.id, ids));

@@ -4,10 +4,11 @@ import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveCodeSandbox,
+  eveChat,
+  eveChatProject,
   eveConversation,
   eveConversationCopy,
   eveConversationCopyFile,
-  eveConversationProject,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
@@ -27,24 +28,39 @@ import {
  */
 export const completeEveConversationDeletion = async (
   ownerId: string,
-  rootId: string
+  routeId: string
 ) => {
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
+    const [identity] = await tx
+      .select({ chatId: eveChat.id })
+      .from(eveChat)
+      .leftJoin(
+        eveConversation,
+        and(
+          eq(eveConversation.chatId, eveChat.id),
+          eq(eveConversation.ownerId, eveChat.ownerId),
+          eq(eveConversation.id, routeId)
+        )
+      )
+      .where(
+        and(
+          eq(eveChat.ownerId, ownerId),
+          or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId))
+        )
+      );
+    if (!identity) {
+      throw new Error("Conversation identity is unavailable.");
+    }
     const condition = and(
       eq(eveConversation.ownerId, ownerId),
-      or(
-        eq(eveConversation.id, rootId),
-        eq(eveConversation.rootConversationId, rootId)
-      )
+      eq(eveConversation.chatId, identity.chatId)
     );
     const family = await tx.select().from(eveConversation).where(condition);
     if (
-      !family.some(
-        (row) => row.id === rootId && row.rootConversationId === null
-      ) ||
+      !family.length ||
       family.some((row) => row.state !== "deleting" && row.state !== "deleted")
     ) {
       throw new Error(
@@ -95,8 +111,8 @@ export const completeEveConversationDeletion = async (
       .delete(eveConversationCopy)
       .where(inArray(eveConversationCopy.conversationId, ids));
     await tx
-      .delete(eveConversationProject)
-      .where(inArray(eveConversationProject.conversationId, ids));
+      .delete(eveChatProject)
+      .where(eq(eveChatProject.chatId, identity.chatId));
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)
@@ -105,12 +121,21 @@ export const completeEveConversationDeletion = async (
         initialContentHash: null,
         initialModelId: null,
         initialProjectId: null,
-        isPinned: false,
         state: "deleted",
-        title: null,
         visibility: "private",
       })
       .where(condition);
+    await tx
+      .update(eveChat)
+      .set({
+        activeConversationId: null,
+        isPinned: false,
+        title: "",
+        titleStatus: "fallback",
+      })
+      .where(
+        and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
+      );
   });
 };
 
@@ -121,17 +146,43 @@ export const getEveDeletionState = async (
 ) => {
   const [row] = await db
     .select({
-      id: eveConversation.id,
-      rootId: eveConversation.rootConversationId,
+      chatId: eveChat.id,
       state: eveConversation.state,
     })
-    .from(eveConversation)
-    .where(
+    .from(eveChat)
+    .leftJoin(
+      eveConversation,
       and(
-        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
         eq(eveConversation.id, conversationId)
       )
     )
+    .where(
+      and(
+        eq(eveChat.ownerId, ownerId),
+        or(
+          eq(eveChat.id, conversationId),
+          eq(eveConversation.id, conversationId)
+        )
+      )
+    )
     .limit(1);
-  return row ? { rootId: row.rootId ?? row.id, state: row.state } : undefined;
+  if (!row) {
+    return;
+  }
+  if (row.state) {
+    return { rootId: row.chatId, state: row.state };
+  }
+  const [member] = await db
+    .select({ state: eveConversation.state })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.chatId, row.chatId),
+        eq(eveConversation.ownerId, ownerId)
+      )
+    )
+    .limit(1);
+  return member ? { rootId: row.chatId, state: member.state } : undefined;
 };

@@ -43,7 +43,7 @@ const journal = journalSchema.parse(
 );
 const finalSnapshot = finalSnapshotSchema.parse(
   JSON.parse(
-    readFileSync(`${migrationsDirectory}meta/0046_snapshot.json`, "utf-8")
+    readFileSync(`${migrationsDirectory}meta/0048_snapshot.json`, "utf-8")
   )
 );
 const consolidatedSql = readFileSync(

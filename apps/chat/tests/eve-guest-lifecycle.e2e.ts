@@ -41,7 +41,9 @@ test("guest edits, regenerates and deletes its complete conversation family", as
   const source = conversationBinding.parse(await created.json());
   try {
     await page.goto(`/chat/${source.id}`);
-    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    await expect(
+      page.getByText("Ready", { exact: true }).filter({ visible: true })
+    ).toBeVisible({
       timeout: 60_000,
     });
     await expect(page.getByRole("log").locator(".is-assistant")).toContainText(
@@ -50,7 +52,10 @@ test("guest edits, regenerates and deletes its complete conversation family", as
     await page
       .getByRole("button", { exact: true, name: "Edit message" })
       .click();
-    const editor = page.getByRole("dialog");
+    const userMessage = page.getByRole("log").locator(".is-user").first();
+    const editor = userMessage.getByRole("group", {
+      name: "Message composer",
+    });
     await editor
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Reply with the single word cobalt.");
@@ -62,32 +67,34 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       }
     );
     const editedUrl = page.url();
-    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    await expect(
+      page.getByText("Ready", { exact: true }).filter({ visible: true })
+    ).toBeVisible({
       timeout: 60_000,
     });
     await expect(page.getByRole("log").locator(".is-assistant")).toContainText(
       "cobalt"
     );
-    await expect(
-      page.getByRole("combobox", { name: "Conversation version" })
-    ).toContainText("Version 2");
+    await expect(userMessage).toContainText("2/2");
     await page.reload();
-    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    await expect(
+      page.getByText("Ready", { exact: true }).filter({ visible: true })
+    ).toBeVisible({
       timeout: 60_000,
     });
-    await page
-      .getByRole("button", { exact: true, name: "Regenerate response" })
-      .click();
+    await page.getByRole("button", { exact: true, name: "Retry" }).click();
     await expect(page).not.toHaveURL(editedUrl, { timeout: 60_000 });
-    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    await expect(
+      page.getByText("Ready", { exact: true }).filter({ visible: true })
+    ).toBeVisible({
       timeout: 60_000,
     });
     await expect(page.getByRole("log").locator(".is-assistant")).toContainText(
       "cobalt"
     );
     await expect(
-      page.getByRole("combobox", { name: "Conversation version" })
-    ).toContainText("Version 3");
+      page.getByRole("log").locator(".is-assistant").first()
+    ).toContainText("2/2");
     const family = await db
       .select()
       .from(eveConversation)
@@ -115,7 +122,9 @@ test("guest edits, regenerates and deletes its complete conversation family", as
       await outsider.close();
     }
     await page
-      .getByRole("link", { exact: true, name: "Original conversation" })
+      .getByRole("log")
+      .locator(".is-user")
+      .getByRole("button", { exact: true, name: "Previous version" })
       .click();
     await expect(page.getByRole("log")).toContainText("amber");
     await expect(page.getByRole("log")).not.toContainText("cobalt");

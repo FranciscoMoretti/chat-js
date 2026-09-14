@@ -39,6 +39,10 @@ export const InternalLink = ({
   children: ReactNode;
   href: string;
 }) => <a href={href}>{children}</a>;
+export const useRouter = () => ({
+  push: (href: string) => window.location.assign(href),
+});
+export const usePathname = () => window.location.pathname;
 export const EveConversation = ({
   header,
   sessionId,
@@ -46,6 +50,7 @@ export const EveConversation = ({
   draftScopeId,
   onStatusChange,
   onNavigationBlockedChange,
+  comparisonPresentation,
 }: {
   header: ReactNode;
   sessionId: string;
@@ -53,6 +58,7 @@ export const EveConversation = ({
   draftScopeId: string;
   onStatusChange?: (status: "ready") => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
+  comparisonPresentation?: { cards: ReactNode };
 }) => {
   const model = useDefaultModel();
   const draft = useEveComposerDraft(ownerId, draftScopeId);
@@ -67,6 +73,7 @@ export const EveConversation = ({
     <main>
       {header}
       <section className="mx-auto max-w-3xl space-y-4 p-4">
+        {comparisonPresentation?.cards}
         <p>Selected native session: {sessionId}</p>
         <p>Follow-up model: {model}</p>
         <ResponsiveTools

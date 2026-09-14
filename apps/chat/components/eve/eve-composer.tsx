@@ -115,7 +115,7 @@ export const EveComposer = ({
           }
         }}
         tools={
-          <div className="flex min-w-0 flex-wrap items-center gap-1 @[500px]:gap-2">
+          <>
             {config.features.attachments && (
               <AttachmentsButton
                 acceptAll="image/jpeg,image/png,application/pdf"
@@ -138,7 +138,7 @@ export const EveComposer = ({
               setTools={onToolChange}
               tools={selectedTool}
             />
-          </div>
+          </>
         }
       />
       {unsupported && (

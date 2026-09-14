@@ -3,10 +3,11 @@
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProjectChatItem } from "@/components/project-chat-item";
@@ -26,6 +27,11 @@ import { useTRPC } from "@/trpc/react";
 import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
+
+const uuidPathSegment =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const titlePollIntervalMs = 1000;
+const titlePollLimitMs = 30_000;
 
 export const EveHistoryList = ({
   initialPage,
@@ -60,6 +66,49 @@ export const EveHistoryList = ({
     )
   );
   const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
+  const pathname = usePathname();
+  const routeId = pathname.split("/").at(-1);
+  const selectedIdentity = useQuery(
+    trpc.eve.get.queryOptions(
+      { id: routeId ?? "" },
+      { enabled: Boolean(routeId && uuidPathSegment.test(routeId)) }
+    )
+  );
+  const hadPendingTitle = useRef(false);
+  const titlePollStartedAt = useRef<number | undefined>(undefined);
+  const hasPendingTitle = conversations.some(
+    (conversation) => conversation.titleStatus === "pending"
+  );
+  useEffect(() => {
+    if (!hasPendingTitle) {
+      if (hadPendingTitle.current) {
+        router.refresh();
+      }
+      hadPendingTitle.current = false;
+      titlePollStartedAt.current = undefined;
+      return;
+    }
+    hadPendingTitle.current = true;
+    if (titlePollStartedAt.current === undefined) {
+      titlePollStartedAt.current = Date.now();
+    }
+    const remaining =
+      titlePollLimitMs - (Date.now() - titlePollStartedAt.current);
+    if (remaining <= 0) {
+      return;
+    }
+    const interval = window.setInterval(() => {
+      history.refetch();
+    }, titlePollIntervalMs);
+    const timeout = window.setTimeout(() => {
+      window.clearInterval(interval);
+      history.refetch();
+    }, remaining);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [hasPendingTitle, history, router]);
   // Activity can move a row across a loaded page boundary between requests.
   const seen = new Set<string>();
   const filtered = conversations.filter((item) => {
@@ -85,7 +134,6 @@ export const EveHistoryList = ({
       onSuccess: refresh,
     })
   );
-  const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
@@ -130,8 +178,11 @@ export const EveHistoryList = ({
                   onRename={async (id, title) => {
                     await rename.mutateAsync({ id, title });
                   }}
-                  renderShareContent={(chatId, onClose) => (
-                    <EveShareDialogContent chatId={chatId} onClose={onClose} />
+                  renderShareContent={(_chatId, onClose) => (
+                    <EveShareDialogContent
+                      chatId={item.conversationId}
+                      onClose={onClose}
+                    />
                   )}
                 />
               </li>
@@ -140,7 +191,7 @@ export const EveHistoryList = ({
           return (
             <SidebarChatItem
               chat={item}
-              isActive={pathname === `/chat/${item.id}`}
+              isActive={selectedIdentity.data?.chatId === item.id}
               key={item.id}
               onDelete={() => openDeletion(item)}
               onMoveProject={
@@ -152,8 +203,11 @@ export const EveHistoryList = ({
               onRename={async (id, title) => {
                 await rename.mutateAsync({ id, title });
               }}
-              renderShareContent={(chatId, onClose) => (
-                <EveShareDialogContent chatId={chatId} onClose={onClose} />
+              renderShareContent={(_chatId, onClose) => (
+                <EveShareDialogContent
+                  chatId={item.conversationId}
+                  onClose={onClose}
+                />
               )}
               setOpenMobile={setOpenMobile}
             />

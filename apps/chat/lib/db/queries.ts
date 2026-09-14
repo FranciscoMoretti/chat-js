@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  or,
   sql,
 } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
@@ -28,8 +29,9 @@ import { db } from "./client";
 import {
   chat,
   document,
+  eveChat,
+  eveChatProject,
   eveConversation,
-  eveConversationProject,
   eveVote,
   generationCancellation,
   message,
@@ -1408,30 +1410,43 @@ export const saveEveMessageVote = (
 
 export const assignEveConversationProject = (
   ownerId: string,
-  conversationId: string,
+  routeId: string,
   projectId: string | null
 ) =>
   db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [conversation] = await tx
-      .select({ id: eveConversation.id })
-      .from(eveConversation)
+    const [logicalChat] = await tx
+      .select({ id: eveChat.id })
+      .from(eveChat)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
-          eq(eveConversation.ownerId, ownerId),
-          eq(eveConversation.state, "bound")
+          eq(eveChat.ownerId, ownerId),
+          or(
+            eq(eveChat.id, routeId),
+            sql`exists (
+              select 1 from "EveConversation" route_member
+              where route_member."chatId" = ${eveChat.id}
+                and route_member."ownerId" = ${ownerId}
+                and route_member."id" = ${routeId}
+            )`
+          ),
+          sql`exists (
+            select 1 from "EveConversation" member
+            where member."chatId" = ${eveChat.id}
+              and member."ownerId" = ${ownerId}
+              and member."state" = 'bound'
+          )`
         )
       );
-    if (!conversation) {
+    if (!logicalChat) {
       return null;
     }
     if (projectId === null) {
       await tx
-        .delete(eveConversationProject)
-        .where(eq(eveConversationProject.conversationId, conversationId));
+        .delete(eveChatProject)
+        .where(eq(eveChatProject.chatId, logicalChat.id));
     } else {
       const [target] = await tx
         .select({ id: project.id })
@@ -1442,16 +1457,16 @@ export const assignEveConversationProject = (
         return null;
       }
       await tx
-        .insert(eveConversationProject)
-        .values({ conversationId, ownerId, projectId })
+        .insert(eveChatProject)
+        .values({ chatId: logicalChat.id, ownerId, projectId })
         .onConflictDoUpdate({
           set: { projectId },
-          target: eveConversationProject.conversationId,
+          target: eveChatProject.chatId,
         });
     }
     await tx
-      .update(eveConversation)
+      .update(eveChat)
       .set({ updatedAt: new Date() })
-      .where(eq(eveConversation.id, conversationId));
-    return { conversationId, projectId };
+      .where(eq(eveChat.id, logicalChat.id));
+    return { conversationId: routeId, projectId };
   });

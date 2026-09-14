@@ -2,7 +2,7 @@
 import { build } from "bun";
 
 const imageImport = /^next\/image$/u;
-const fixtureModule = /.*/u;
+const navigationImport = /^next\/navigation$/u;
 const replacedModule =
   /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome|internal-link|connectors-dropdown)\.tsx$/u;
 
@@ -30,11 +30,25 @@ const result = await build({
           path: "fixture-next-image",
           namespace: "fixture",
         }));
-        builder.onLoad({ filter: fixtureModule, namespace: "fixture" }, () => ({
-          contents:
-            'import {createElement} from "react";export default function Image(props){return createElement("img",props)}',
-          loader: "jsx",
+        builder.onResolve({ filter: navigationImport }, () => ({
+          path: "fixture-next-navigation",
+          namespace: "fixture",
         }));
+        builder.onLoad(
+          { filter: /fixture-next-navigation/u, namespace: "fixture" },
+          () => ({
+            contents: `export {usePathname,useRouter} from ${JSON.stringify(mocks)}`,
+            loader: "tsx",
+          })
+        );
+        builder.onLoad(
+          { filter: /fixture-next-image/u, namespace: "fixture" },
+          () => ({
+            contents:
+              'import {createElement} from "react";export default function Image(props){return createElement("img",props)}',
+            loader: "jsx",
+          })
+        );
         builder.onLoad(
           {
             filter: replacedModule,

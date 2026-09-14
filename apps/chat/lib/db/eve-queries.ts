@@ -14,8 +14,9 @@ import {
 
 import { db } from "@/lib/db/client";
 import {
+  eveChat,
+  eveChatProject,
   eveConversation,
-  eveConversationProject,
   eveFileReference,
   eveGuest,
   eveGuestMessage,
@@ -61,78 +62,88 @@ export const listEveConversations = async (
   input?: EveHistoryInput
 ) => {
   const { search = "", cursor, projectId } = input ?? {};
-  const title = sql<string>`coalesce(${eveConversation.title}, left(${eveConversation.firstMessage}, 100))`;
+  const { title } = eveChat;
   // Preserve PostgreSQL's microseconds: converting the cursor to Date can skip
   // conversations sharing the same millisecond at a page boundary.
-  const updatedAt = sql<string>`to_char(${eveConversation.updatedAt}, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+  const updatedAt = sql<string>`to_char(${eveChat.updatedAt}, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+  const routeConversationId = sql<string>`coalesce((
+    select active."id" from "EveConversation" active
+    where active."id" = ${eveChat.activeConversationId}
+      and active."chatId" = ${eveChat.id}
+      and active."ownerId" = ${ownerId}
+      and active."state" in ('creating', 'bound', 'uncertain', 'deleting')
+  ), (
+    select member."id" from "EveConversation" member
+    where member."chatId" = ${eveChat.id}
+      and member."ownerId" = ${ownerId}
+      and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
+    order by (member."state" = 'bound') desc, member."createdAt", member."id"
+    limit 1
+  ))`;
+  const chatState = sql<"creating" | "bound" | "uncertain" | "deleting">`(
+    select case
+      when bool_and(member."state" = 'deleting') then 'deleting'
+      when bool_or(member."state" = 'bound') then 'bound'
+      when bool_or(member."state" = 'uncertain') then 'uncertain'
+      else 'creating'
+    end
+    from "EveConversation" member
+    where member."chatId" = ${eveChat.id}
+      and member."ownerId" = ${ownerId}
+      and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
+  )`;
   const beforeCursor = cursor
     ? or(
-        cursor.isPinned ? eq(eveConversation.isPinned, false) : undefined,
+        cursor.isPinned ? eq(eveChat.isPinned, false) : undefined,
         and(
-          eq(eveConversation.isPinned, cursor.isPinned),
+          eq(eveChat.isPinned, cursor.isPinned),
           or(
-            sql`${eveConversation.updatedAt} < ${cursor.updatedAt}::timestamp`,
+            sql`${eveChat.updatedAt} < ${cursor.updatedAt}::timestamp`,
             and(
-              sql`${eveConversation.updatedAt} = ${cursor.updatedAt}::timestamp`,
-              lt(eveConversation.id, cursor.id)
+              sql`${eveChat.updatedAt} = ${cursor.updatedAt}::timestamp`,
+              lt(eveChat.id, cursor.id)
             )
           )
         )
       )
     : undefined;
   const matchesProject = projectId
-    ? eq(eveConversationProject.projectId, projectId)
-    : isNull(eveConversationProject.projectId);
+    ? eq(eveChatProject.projectId, projectId)
+    : isNull(eveChatProject.projectId);
   const escapedSearch = search.replaceAll(/[\\%_]/gu, "\\$&");
   const rows = await db
     .select({
-      id: eveConversation.id,
-      isPinned: eveConversation.isPinned,
-      projectId: eveConversationProject.projectId,
-      state: eveConversation.state,
+      conversationId: routeConversationId,
+      id: eveChat.id,
+      isPinned: eveChat.isPinned,
+      projectId: eveChatProject.projectId,
+      state: chatState,
       title,
+      titleStatus: eveChat.titleStatus,
       updatedAt,
     })
-    .from(eveConversation)
-    .leftJoin(
-      eveConversationProject,
-      eq(eveConversationProject.conversationId, eveConversation.id)
-    )
+    .from(eveChat)
+    .leftJoin(eveChatProject, eq(eveChatProject.chatId, eveChat.id))
     .where(
       and(
-        eq(eveConversation.ownerId, ownerId),
-        or(visibleConversation, eq(eveConversation.state, "deleting")),
+        eq(eveChat.ownerId, ownerId),
+        sql`exists (
+          select 1 from "EveConversation" member
+          where member."chatId" = ${eveChat.id}
+            and member."ownerId" = ${ownerId}
+            and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
+        )`,
         projectId === undefined ? undefined : matchesProject,
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
     )
-    .orderBy(
-      desc(eveConversation.isPinned),
-      desc(eveConversation.updatedAt),
-      desc(eveConversation.id)
-    )
+    .orderBy(desc(eveChat.isPinned), desc(eveChat.updatedAt), desc(eveChat.id))
     .limit(51);
   const page = rows.slice(0, 50);
   const last = page.at(-1);
   return {
-    items: page.map(
-      ({
-        id,
-        title: itemTitle,
-        state,
-        isPinned,
-        projectId: assignedProjectId,
-        updatedAt: lastActivity,
-      }) => ({
-        id,
-        isPinned,
-        projectId: assignedProjectId,
-        state,
-        title: itemTitle,
-        updatedAt: lastActivity,
-      })
-    ),
+    items: page,
     nextCursor:
       rows.length > 50 && last
         ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
@@ -141,8 +152,24 @@ export const listEveConversations = async (
 };
 export const getEveConversation = async (ownerId: string, id: string) => {
   const [row] = await db
-    .select()
+    .select({
+      chat: {
+        id: eveChat.id,
+        isPinned: eveChat.isPinned,
+        title: eveChat.title,
+        titleStatus: eveChat.titleStatus,
+        updatedAt: eveChat.updatedAt,
+      },
+      conversation: eveConversation,
+    })
     .from(eveConversation)
+    .innerJoin(
+      eveChat,
+      and(
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, eveConversation.ownerId)
+      )
+    )
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
@@ -151,7 +178,93 @@ export const getEveConversation = async (ownerId: string, id: string) => {
       )
     )
     .limit(1);
-  return row;
+  return row
+    ? {
+        ...row.conversation,
+        chatId: row.chat.id,
+        id: row.conversation.id,
+        isPinned: row.chat.isPinned,
+        title: row.chat.title,
+        titleStatus: row.chat.titleStatus,
+        updatedAt: row.chat.updatedAt,
+      }
+    : undefined;
+};
+
+/** Resolve either a logical chat route or an exact private session route. */
+export const getEveChatPageConversation = async (
+  ownerId: string,
+  routeId: string
+) => {
+  const exact = await getEveConversation(ownerId, routeId);
+  if (exact) {
+    await db
+      .update(eveChat)
+      .set({ activeConversationId: exact.id })
+      .where(and(eq(eveChat.id, exact.chatId), eq(eveChat.ownerId, ownerId)));
+    return exact;
+  }
+  const [logical] = await db
+    .select({ activeConversationId: eveChat.activeConversationId })
+    .from(eveChat)
+    .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
+    .limit(1);
+  if (!logical) {
+    return;
+  }
+  if (logical.activeConversationId) {
+    const active = await getEveConversation(
+      ownerId,
+      logical.activeConversationId
+    );
+    if (active?.chatId === routeId) {
+      return active;
+    }
+  }
+  const [member] = await db
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.chatId, routeId),
+        eq(eveConversation.ownerId, ownerId),
+        visibleConversation
+      )
+    )
+    .orderBy(
+      desc(sql`${eveConversation.state} = 'bound'`),
+      eveConversation.createdAt,
+      eveConversation.id
+    )
+    .limit(1);
+  return member ? await getEveConversation(ownerId, member.id) : undefined;
+};
+
+export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
+  const [identity] = await db
+    .select({
+      chatId: eveChat.id,
+      title: eveChat.title,
+      titleStatus: eveChat.titleStatus,
+      visibility: eveConversation.visibility,
+    })
+    .from(eveChat)
+    .leftJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
+        eq(eveConversation.id, routeId)
+      )
+    )
+    .where(
+      and(
+        eq(eveChat.ownerId, ownerId),
+        or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId))
+      )
+    )
+    .limit(1);
+  return identity;
 };
 export class CreationConflictError extends Error {
   constructor(message?: string, options?: ErrorOptions) {
@@ -277,7 +390,7 @@ const assertGuestCreationAdmission = async (
 
 const assignCreationProject = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  conversationId: string,
+  chatId: string,
   ownerId: string,
   projectId: string
 ) => {
@@ -290,15 +403,18 @@ const assignCreationProject = async (
     throw new CreationProjectNotFoundError("Project not found.");
   }
   await tx
-    .insert(eveConversationProject)
-    .values({ conversationId, ownerId, projectId: target.id });
+    .insert(eveChatProject)
+    .values({ chatId, ownerId, projectId: target.id })
+    .onConflictDoNothing();
 };
 
 const reserveEveConversation = async (
-  value: typeof eveConversation.$inferInsert,
+  value: Omit<typeof eveConversation.$inferInsert, "chatId">,
+  initialTitle: string,
   fork?: EveForkInput,
   guestReservationId?: string
 ) =>
+  // oxlint-disable-next-line eslint/complexity -- Reservation keeps identity, admission, project, and fork writes in one transaction.
   await db.transaction(async (tx) => {
     // Shared with deletion: a new fork cannot appear behind its family fence.
     await tx.execute(
@@ -315,6 +431,19 @@ const reserveEveConversation = async (
       value.ownerId,
       value.operationId
     );
+    const [existingReservation] = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, value.ownerId),
+          eq(eveConversation.operationId, value.operationId)
+        )
+      )
+      .limit(1);
+    if (existingReservation) {
+      return [];
+    }
     const [source] = fork
       ? await tx
           .select()
@@ -332,11 +461,44 @@ const reserveEveConversation = async (
         "The source conversation is not available for editing."
       );
     }
+    const [initialGroup] = source
+      ? []
+      : await tx
+          .select({ id: eveResponseGroup.id })
+          .from(eveResponseGroup)
+          .where(
+            and(
+              eq(eveResponseGroup.ownerId, value.ownerId),
+              eq(eveResponseGroup.deleted, false),
+              isNull(eveResponseGroup.sourceConversationId),
+              sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+            )
+          )
+          .limit(1);
+    const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+    const [createdChat] = await tx
+      .insert(eveChat)
+      .values({ id: chatId, ownerId: value.ownerId, title: initialTitle })
+      .onConflictDoNothing()
+      .returning({ id: eveChat.id });
+    if (!createdChat) {
+      const [existingChat] = await tx
+        .select({ id: eveChat.id })
+        .from(eveChat)
+        .where(and(eq(eveChat.id, chatId), eq(eveChat.ownerId, value.ownerId)));
+      if (!existingChat) {
+        throw new CreationConflictError(
+          "Conversation identity is unavailable."
+        );
+      }
+    }
     const rows = await tx
       .insert(eveConversation)
       .values({
         ...value,
+        chatId,
         forkCheckpointId: fork?.checkpointId,
+        forkKind: value.forkKind,
         forkMessageId: fork?.beforeMessageId,
         forkTurnId: fork?.beforeTurnId,
         parentConversationId: fork?.conversationId,
@@ -347,31 +509,15 @@ const reserveEveConversation = async (
       .onConflictDoNothing()
       .returning();
     const [created] = rows;
-    if (created && value.initialProjectId) {
+    if (createdChat && value.initialProjectId) {
       await assignCreationProject(
         tx,
-        created.id,
+        chatId,
         value.ownerId,
         value.initialProjectId
       );
     }
     if (created && source) {
-      const [assignment] = await tx
-        .select({ projectId: project.id })
-        .from(project)
-        .innerJoin(
-          eveConversationProject,
-          eq(eveConversationProject.projectId, project.id)
-        )
-        .where(eq(eveConversationProject.conversationId, source.id))
-        .for("key share", { of: project });
-      if (assignment) {
-        await tx.insert(eveConversationProject).values({
-          conversationId: created.id,
-          ownerId: value.ownerId,
-          projectId: assignment.projectId,
-        });
-      }
       // Retain inherited files conservatively; native history owns turn contents.
       const references = await tx
         .select({ key: eveFileReference.key })
@@ -405,21 +551,28 @@ export const beginEveConversationDeletion = async (
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
     const [source] = await tx
-      .select()
-      .from(eveConversation)
+      .select({ chatId: eveChat.id })
+      .from(eveChat)
+      .leftJoin(
+        eveConversation,
+        and(
+          eq(eveConversation.chatId, eveChat.id),
+          eq(eveConversation.ownerId, eveChat.ownerId),
+          eq(eveConversation.id, id)
+        )
+      )
       .where(
-        and(eq(eveConversation.id, id), eq(eveConversation.ownerId, ownerId))
+        and(
+          eq(eveChat.ownerId, ownerId),
+          or(eq(eveChat.id, id), eq(eveConversation.id, id))
+        )
       );
     if (!source) {
       return;
     }
-    const rootId = source.rootConversationId ?? source.id;
     const familyCondition = and(
       eq(eveConversation.ownerId, ownerId),
-      or(
-        eq(eveConversation.id, rootId),
-        eq(eveConversation.rootConversationId, rootId)
-      )
+      eq(eveConversation.chatId, source.chatId)
     );
     const family = await tx
       .select()
@@ -461,21 +614,27 @@ export const beginEveConversationDeletion = async (
       conversations: conversations.toSorted((left, right) =>
         left.id.localeCompare(right.id)
       ),
-      rootId,
+      rootId: source.chatId,
     };
   });
 
 const matchesEveFork = (
   existing: Pick<
     typeof eveConversation.$inferSelect,
-    "parentConversationId" | "forkTurnId" | "forkMessageId" | "forkCheckpointId"
+    | "parentConversationId"
+    | "forkTurnId"
+    | "forkMessageId"
+    | "forkCheckpointId"
+    | "forkKind"
   >,
-  fork: EveForkInput | undefined
+  fork: EveForkInput | undefined,
+  forkKind: typeof eveConversation.$inferSelect.forkKind
 ) =>
   existing.parentConversationId === (fork?.conversationId ?? null) &&
   existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
   existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
-  existing.forkCheckpointId === (fork?.checkpointId ?? null);
+  existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
+  existing.forkKind === forkKind;
 
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
@@ -487,19 +646,28 @@ export const createEveConversation = async (
   {
     initialModelId,
     initialContentHash,
+    initialTitle = message,
     fork,
+    forkKind,
     fileKeys = [],
     initialProjectId,
     guestReservationId,
   }: {
     initialModelId?: string;
     initialContentHash?: string;
+    initialTitle?: string;
     fork?: EveForkInput;
+    forkKind?: typeof eveConversation.$inferInsert.forkKind;
     fileKeys?: string[];
     initialProjectId?: string;
     guestReservationId?: string;
   } = {}
 ) => {
+  if (forkKind && !fork) {
+    throw new CreationConflictError(
+      "Fork intent requires a source conversation."
+    );
+  }
   if (fork && initialProjectId) {
     throw new CreationConflictError(
       "Forks inherit their source conversation project."
@@ -508,12 +676,14 @@ export const createEveConversation = async (
   let [reservation] = await reserveEveConversation(
     {
       firstMessage: message,
+      forkKind,
       initialContentHash,
       initialModelId,
       initialProjectId,
       operationId,
       ownerId,
     },
+    initialTitle,
     fork,
     guestReservationId
   );
@@ -537,7 +707,7 @@ export const createEveConversation = async (
       existing.initialModelId !== (initialModelId ?? null) ||
       existing.initialContentHash !== (initialContentHash ?? null) ||
       existing.initialProjectId !== (initialProjectId ?? null) ||
-      !matchesEveFork(existing, fork)
+      !matchesEveFork(existing, fork, forkKind ?? null)
     ) {
       throw new CreationConflictError(
         "This operation already has a different message, attachments, model, tool selection, project, or source turn."
@@ -605,6 +775,13 @@ export const createEveConversation = async (
       if (!bound?.sessionId) {
         throw new Error("Session binding was not saved.");
       }
+      await tx
+        .update(eveChat)
+        .set({
+          activeConversationId: sql`coalesce(${eveChat.activeConversationId}, ${bound.id}::uuid)`,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
       return { id: bound.id, sessionId: bound.sessionId };
     });
   } catch (error) {
@@ -648,18 +825,116 @@ export const updateEveConversationMetadata = async (
     visibility?: "private" | "public";
   }
 ) => {
+  if (updates.visibility !== undefined) {
+    const [conversation] = await db
+      .update(eveConversation)
+      .set({ visibility: updates.visibility })
+      .where(
+        and(
+          eq(eveConversation.id, id),
+          eq(eveConversation.ownerId, ownerId),
+          visibleConversation
+        )
+      )
+      .returning({ id: eveConversation.id });
+    return conversation;
+  }
+  const titleStatus = updates.title ? "manual" : undefined;
   const [row] = await db
-    .update(eveConversation)
-    .set(updates)
+    .update(eveChat)
+    .set({
+      isPinned: updates.isPinned,
+      title: updates.title,
+      titleStatus,
+    })
     .where(
       and(
-        eq(eveConversation.id, id),
-        eq(eveConversation.ownerId, ownerId),
-        visibleConversation
+        eq(eveChat.id, id),
+        eq(eveChat.ownerId, ownerId),
+        sql`exists (
+          select 1 from "EveConversation" member
+          where member."chatId" = ${eveChat.id}
+            and member."ownerId" = ${ownerId}
+            and member."state" in ('creating', 'bound', 'uncertain')
+        )`
       )
     )
-    .returning({ id: eveConversation.id });
+    .returning({ id: eveChat.id });
   return row;
+};
+
+export const isEveRootTitlePending = async (
+  ownerId: string,
+  conversationId: string,
+  fallbackTitle: string
+) => {
+  const [row] = await db
+    .select({ id: eveChat.id })
+    .from(eveConversation)
+    .innerJoin(
+      eveChat,
+      and(
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, eveConversation.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveChat.title, fallbackTitle),
+        eq(eveChat.titleStatus, "pending")
+      )
+    )
+    .limit(1);
+  return Boolean(row);
+};
+
+export const replaceEveRootFallbackTitle = async (
+  ownerId: string,
+  conversationId: string,
+  fallbackTitle: string,
+  generatedTitle: string
+) => {
+  const [row] = await db
+    .update(eveChat)
+    .set({ title: generatedTitle, titleStatus: "generated" })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, ownerId),
+        eq(eveChat.title, fallbackTitle),
+        eq(eveChat.titleStatus, "pending")
+      )
+    )
+    .returning({ id: eveChat.id });
+  return Boolean(row);
+};
+
+export const settleEveRootFallbackTitle = async (
+  ownerId: string,
+  conversationId: string,
+  fallbackTitle: string
+) => {
+  const [row] = await db
+    .update(eveChat)
+    .set({ titleStatus: "fallback" })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, ownerId),
+        eq(eveChat.title, fallbackTitle),
+        eq(eveChat.titleStatus, "pending")
+      )
+    )
+    .returning({ id: eveChat.id });
+  return Boolean(row);
 };
 
 export const recordEveConversationActivity = async (
@@ -668,22 +943,32 @@ export const recordEveConversationActivity = async (
   at: Date
 ) => {
   await db
-    .update(eveConversation)
+    .update(eveChat)
     .set({ updatedAt: at })
+    .from(eveConversation)
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.sessionId, sessionId),
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, ownerId),
         visibleConversation,
-        lt(eveConversation.updatedAt, at)
+        lt(eveChat.updatedAt, at)
       )
     );
 };
 
 export const getPublicEveConversation = async (id: string) => {
   const [row] = await db
-    .select()
+    .select({ chat: { title: eveChat.title }, conversation: eveConversation })
     .from(eveConversation)
+    .innerJoin(
+      eveChat,
+      and(
+        eq(eveChat.id, eveConversation.chatId),
+        eq(eveChat.ownerId, eveConversation.ownerId)
+      )
+    )
     .where(
       and(
         eq(eveConversation.id, id),
@@ -692,7 +977,7 @@ export const getPublicEveConversation = async (id: string) => {
       )
     )
     .limit(1);
-  return row;
+  return row ? { ...row.conversation, title: row.chat.title } : undefined;
 };
 
 export const listEveConversationBranches = async (
@@ -708,20 +993,30 @@ export const listEveConversationBranches = async (
     .select({
       createdAt: eveConversation.createdAt,
       firstMessage: eveConversation.firstMessage,
+      forkKind: eveConversation.forkKind,
       forkMessageId: eveConversation.forkMessageId,
       forkTurnId: eveConversation.forkTurnId,
       id: eveConversation.id,
       parentConversationId: eveConversation.parentConversationId,
+      responseGroupId: eveResponseGroup.id,
+      responseGroupIndex: sql<
+        number | null
+      >`array_position(${eveResponseGroup.candidateOperationIds}, ${eveConversation.operationId})`,
     })
     .from(eveConversation)
+    .leftJoin(
+      eveResponseGroup,
+      and(
+        eq(eveResponseGroup.ownerId, ownerId),
+        eq(eveResponseGroup.deleted, false),
+        sql`${eveConversation.operationId} = ANY(${eveResponseGroup.candidateOperationIds})`
+      )
+    )
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound"),
-        or(
-          eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
-        )
+        eq(eveConversation.chatId, conversation.chatId)
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
@@ -749,7 +1044,7 @@ export const getDeletingEveConversationForSession = async (
 
 export const getEveConversationProject = async (
   ownerId: string,
-  conversationId: string
+  routeId: string
 ) => {
   const [assigned] = await db
     .select({
@@ -757,17 +1052,33 @@ export const getEveConversationProject = async (
       instructions: project.instructions,
       name: project.name,
     })
-    .from(eveConversationProject)
-    .innerJoin(
+    .from(eveChat)
+    .leftJoin(
       eveConversation,
-      eq(eveConversation.id, eveConversationProject.conversationId)
+      and(
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
+        eq(eveConversation.id, routeId)
+      )
     )
-    .innerJoin(project, eq(project.id, eveConversationProject.projectId))
+    .innerJoin(
+      eveChatProject,
+      and(
+        eq(eveChatProject.chatId, eveChat.id),
+        eq(eveChatProject.ownerId, eveChat.ownerId)
+      )
+    )
+    .innerJoin(project, eq(project.id, eveChatProject.projectId))
     .where(
       and(
-        eq(eveConversationProject.conversationId, conversationId),
-        eq(eveConversationProject.ownerId, ownerId),
-        inArray(eveConversation.state, ["creating", "bound", "uncertain"])
+        eq(eveChat.ownerId, ownerId),
+        or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId)),
+        sql`exists (
+          select 1 from "EveConversation" member
+          where member."chatId" = ${eveChat.id}
+            and member."ownerId" = ${ownerId}
+            and member."state" in ('creating', 'bound', 'uncertain')
+        )`
       )
     );
   return assigned ?? null;

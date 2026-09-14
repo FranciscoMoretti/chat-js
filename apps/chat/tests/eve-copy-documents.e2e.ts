@@ -15,6 +15,7 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -33,7 +34,7 @@ await db.insert(user).values({
   id: ownerId,
   name: "Copy documents fixture",
 });
-await db.insert(eveConversation).values([
+await insertEveConversationFixtures([
   {
     firstMessage: "Published",
     id: conversationId,

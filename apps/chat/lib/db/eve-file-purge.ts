@@ -1,13 +1,4 @@
-import {
-  and,
-  eq,
-  inArray,
-  ne,
-  notExists,
-  notInArray,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
@@ -20,23 +11,16 @@ const deletingFamilyIds = async (
   const family = await tx
     .select({
       id: eveConversation.id,
-      root: eveConversation.rootConversationId,
       state: eveConversation.state,
     })
     .from(eveConversation)
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        or(
-          eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
-        )
+        eq(eveConversation.chatId, rootId)
       )
     );
-  if (
-    !family.some((row) => row.id === rootId && row.root === null) ||
-    family.some((row) => row.state !== "deleting")
-  ) {
+  if (!family.length || family.some((row) => row.state !== "deleting")) {
     throw new Error("The entire conversation family must be pending deletion.");
   }
   return family.map((row) => row.id);

@@ -19,7 +19,7 @@ import { assignEveConversationProject } from "../lib/db/queries";
 import {
   chat,
   eveConversation,
-  eveConversationProject,
+  eveChatProject,
   project,
   user,
 } from "../lib/db/schema";
@@ -95,7 +95,7 @@ test("assignment, filtered history and removal retain native identity and exclud
   expect(
     (
       await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.id === row.id)
+    ).items.some((item) => item.conversationId === row.id)
   ).toBe(false);
   expect(
     (await listEveConversations(owner)).items.some(
@@ -130,9 +130,17 @@ test("both application checks and database constraints reject cross-owner assign
   ).toEqual([]);
   await expect(
     db
-      .update(eveConversationProject)
+      .update(eveChatProject)
       .set({ projectId: foreignProject })
-      .where(eq(eveConversationProject.conversationId, row.id))
+      .where(
+        inArray(
+          eveChatProject.chatId,
+          db
+            .select({ chatId: eveConversation.chatId })
+            .from(eveConversation)
+            .where(eq(eveConversation.id, row.id))
+        )
+      )
   ).rejects.toThrow();
   expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
 });
@@ -152,7 +160,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   expect(
     (
       await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.id === row.id)
+    ).items.some((item) => item.conversationId === row.id)
   ).toBe(true);
   expect(
     await assignEveConversationProject(owner, row.id, projectId)
@@ -176,8 +184,16 @@ test("conversation deletion fences assignment and removes metadata without touch
   expect(
     await db
       .select()
-      .from(eveConversationProject)
-      .where(eq(eveConversationProject.conversationId, row.id))
+      .from(eveChatProject)
+      .where(
+        inArray(
+          eveChatProject.chatId,
+          db
+            .select({ chatId: eveConversation.chatId })
+            .from(eveConversation)
+            .where(eq(eveConversation.id, row.id))
+        )
+      )
   ).toEqual([]);
   expect(await db.select().from(chat).where(eq(chat.id, legacyId))).toEqual([
     legacyBefore,
@@ -187,7 +203,7 @@ test("conversation deletion fences assignment and removes metadata without touch
   ).toHaveLength(1);
 });
 
-test("forks inherit their source project once and retry cannot silently move them", async () => {
+test("fork paths share their chat project and retry cannot restore an old assignment", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
@@ -205,16 +221,22 @@ test("forks inherit their source project once and retry cannot silently move the
   );
   await assignEveConversationProject(owner, source.id, null);
   expect((await createFork()).id).toBe(fork.id);
-  expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
-    ownProject
-  );
+  expect(await getEveConversationProject(owner, fork.id)).toBeNull();
   await beginEveConversationDeletion(owner, source.id);
   await completeEveConversationDeletion(owner, source.id);
   expect(
     await db
       .select()
-      .from(eveConversationProject)
-      .where(eq(eveConversationProject.conversationId, fork.id))
+      .from(eveChatProject)
+      .where(
+        inArray(
+          eveChatProject.chatId,
+          db
+            .select({ chatId: eveConversation.chatId })
+            .from(eveConversation)
+            .where(eq(eveConversation.id, fork.id))
+        )
+      )
   ).toEqual([]);
 });
 

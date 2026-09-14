@@ -30,6 +30,7 @@ import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { EveModelUnavailableError } from "../lib/eve/model-selection";
 import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";
 import { keyFromFileUrl } from "../lib/file-url";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -148,7 +149,7 @@ async function fixture() {
   const documentId = crypto.randomUUID();
   const first = crypto.randomUUID();
   const head = crypto.randomUUID();
-  await db.insert(eveConversation).values({
+  await insertEveConversationFixtures({
     ...source,
     firstMessage: source.title,
     operationId: crypto.randomUUID(),

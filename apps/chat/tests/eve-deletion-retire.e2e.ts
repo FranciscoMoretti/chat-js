@@ -16,6 +16,7 @@ import {
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
+  eveChat,
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
@@ -57,6 +58,14 @@ test("internal retirement settles usage after access revocation and is retryable
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(await created.json());
+  const [identity] = await db
+    .select({ chatId: eveConversation.chatId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, binding.id));
+  if (!identity) {
+    throw new Error("Missing logical chat identity");
+  }
+  expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
   await expect(page.locator(".is-assistant")).toContainText(
     "retire-fixture-ok",
@@ -75,6 +84,7 @@ test("internal retirement settles usage after access revocation and is retryable
     turnIndex: 0,
   });
   const family = await retireEveFamilyForDeletion(owner, binding.id);
+  expect(family?.rootId).toBe(identity.chatId);
   expect(family?.conversations).toEqual([
     { id: binding.id, sessionId: binding.sessionId },
   ]);
@@ -161,11 +171,11 @@ test("internal retirement settles usage after access revocation and is retryable
     });
     expect(deletion.status(), await deletion.text()).toBe(200);
     expect(await deletion.json()).toEqual({
-      rootId: binding.id,
+      rootId: identity.chatId,
       status: "deleted",
     });
     expect(await (await page.request.get(deletionUrl)).json()).toEqual({
-      rootId: binding.id,
+      rootId: identity.chatId,
       status: "deleted",
     });
     expect(
@@ -192,6 +202,7 @@ test("internal retirement settles usage after access revocation and is retryable
       .delete(eveDocumentCheckpoint)
       .where(eq(eveDocumentCheckpoint.conversationId, binding.id));
     await tx.delete(eveConversation).where(eq(eveConversation.id, binding.id));
+    await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
   });
 });
 
@@ -224,14 +235,22 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(await response.json());
+  const [identity] = await db
+    .select({ chatId: eveConversation.chatId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, binding.id));
+  if (!identity) {
+    throw new Error("Missing logical chat identity");
+  }
+  expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
   await expect(page.locator(".is-assistant")).toContainText("deletion-api-ok", {
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  const url = `/api/agent-conversations/${binding.id}`;
+  const url = `/api/agent-conversations/${identity.chatId}`;
   expect(await (await page.request.get(url)).json()).toEqual({
-    rootId: binding.id,
+    rootId: identity.chatId,
     status: "active",
   });
   const expand = page.getByRole("button", {
@@ -243,7 +262,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   }
   const row = page
     .locator("li")
-    .filter({ has: page.locator(`a[href="/chat/${binding.id}"]`) });
+    .filter({ has: page.locator(`a[href="/chat/${identity.chatId}"]`) });
   await row.hover();
   await row.getByRole("button", { exact: true, name: "More" }).click();
   await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
@@ -265,11 +284,11 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     page.getByRole("dialog", { name: "Delete conversation and branches?" })
   ).toHaveCount(0);
   expect(await deleted.json()).toEqual({
-    rootId: binding.id,
+    rootId: identity.chatId,
     status: "deleted",
   });
   expect(await (await page.request.get(url)).json()).toEqual({
-    rootId: binding.id,
+    rootId: identity.chatId,
     status: "deleted",
   });
   expect(

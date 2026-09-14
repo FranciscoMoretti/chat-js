@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -41,7 +42,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     id: foreignId,
     name: "Share ownership fixture",
   });
-  await db.insert(eveConversation).values({
+  await insertEveConversationFixtures({
     firstMessage: "Private foreign conversation",
     id: foreignChat,
     operationId: crypto.randomUUID(),

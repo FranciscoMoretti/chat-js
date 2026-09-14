@@ -29,6 +29,7 @@ import {
 
 import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
+import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
 
 export const NewEveConversation = ({
@@ -55,6 +56,13 @@ export const NewEveConversation = ({
   const [retainedModelIds, setRetainedModelIds] = useState<string[]>();
   const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
+  const [optimisticComparison, setOptimisticComparison] =
+    useState<
+      Extract<
+        ReturnType<typeof prepareSelectedCreation>,
+        { modelIds: string[] }
+      >
+    >();
   const lock = useRef(false);
   useEffect(() => {
     try {
@@ -84,6 +92,7 @@ export const NewEveConversation = ({
     setRetainedModelIds(
       "modelIds" in operation ? operation.modelIds : undefined
     );
+    setOptimisticComparison("modelIds" in operation ? operation : undefined);
     setRetained(true);
   };
   const submit = async () => {
@@ -125,6 +134,7 @@ export const NewEveConversation = ({
         finishCreation(sessionStorage, ownerId, scope);
         setRetainedModelId(undefined);
         setRetainedModelIds(undefined);
+        setOptimisticComparison(undefined);
         setRetained(false);
       }
       setFailure(
@@ -190,14 +200,18 @@ export const NewEveConversation = ({
       <div className="flex min-h-0 flex-1 flex-col">
         <Conversation>
           <ConversationContent className="mx-auto w-full max-w-3xl">
-            <Message className="flex-col" from="user">
-              <MessageContent className="max-w-full min-w-0">
-                <span className="sr-only">You</span>
-                <p className="whitespace-pre-wrap">{draft}</p>
-                <AttachmentList attachments={files.attachments} />
-              </MessageContent>
-            </Message>
-            <output className="text-muted-foreground text-sm">Sending…</output>
+            {optimisticComparison ? (
+              <EveOptimisticResponseGroup operation={optimisticComparison} />
+            ) : (
+              <Message className="flex-col" from="user">
+                <MessageContent className="max-w-full min-w-0">
+                  <span className="sr-only">You</span>
+                  <p className="whitespace-pre-wrap">{draft}</p>
+                  <AttachmentList attachments={files.attachments} />
+                </MessageContent>
+              </Message>
+            )}
+            <output className="sr-only">Sending…</output>
           </ConversationContent>
         </Conversation>
         <div className="mx-auto w-full max-w-3xl p-4">{composer}</div>

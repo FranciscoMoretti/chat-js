@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
 import {
-  getEveConversation,
+  getEveChatIdentity,
   listEveConversationBranches,
   listEveConversations,
   updateEveConversationMetadata,
@@ -109,11 +109,11 @@ export const eveRouter = createTRPCRouter({
   get: eveOwnedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
-      const row = await getEveConversation(ctx.eveOwnerId, input.id);
+      const row = await getEveChatIdentity(ctx.eveOwnerId, input.id);
       if (!row) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-      return { id: row.id, visibility: row.visibility };
+      return row;
     }),
   list: eveOwnedProcedure
     .input(eveHistoryInput)

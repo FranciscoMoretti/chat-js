@@ -1,13 +1,8 @@
-import { Copy, Pencil, PencilOff } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 
-import {
-  MessageAction as Action,
-  MessageActions as Actions,
-} from "@/components/ai-elements/message";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { MessageActionsView } from "@/components/message-actions-view";
 import { useChatStoreApi } from "@/lib/stores/base";
 import { useMessageRoleById } from "@/lib/stores/hooks-base";
 
@@ -36,86 +31,52 @@ const PureMessageActions = ({
   const [_, copyToClipboard] = useCopyToClipboard();
   const role = useMessageRoleById(messageId);
 
-  const isMobile = useIsMobile();
-
   const { data: votes } = useChatVotes(chatId, { isReadonly: isReadOnly });
   const vote = votes?.find((v) => v.messageId === messageId);
 
-  // Version selector and model tag handled by MessageVersionAndModel component
-
-  if (isLoading) {
-    return <div className="h-7" />;
-  }
-
-  const showActionsWithoutHover = isMobile || isEditing || role === "assistant";
   return (
-    <Actions
-      className={
-        showActionsWithoutHover
-          ? ""
-          : "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100"
+    <MessageActionsView
+      isEditing={isEditing}
+      isLoading={isLoading}
+      onCancelEdit={onCancelEdit}
+      onStartEdit={isReadOnly ? undefined : onStartEdit}
+      role={role ?? "user"}
+      siblings={
+        <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
       }
-    >
-      {role === "user" &&
-        !isReadOnly &&
-        (isEditing ? (
-          <Action
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
-            onClick={() => onCancelEdit?.()}
-            tooltip="Cancel edit"
-          >
-            <PencilOff className="h-3.5 w-3.5" />
-          </Action>
-        ) : (
-          <Action
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
-            onClick={() => onStartEdit?.()}
-            tooltip="Edit message"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Action>
-        ))}
+      feedback={
+        role === "assistant" && !isReadOnly ? (
+          <FeedbackActions
+            chatId={chatId}
+            isReadOnly={isReadOnly}
+            messageId={messageId}
+            vote={vote}
+          />
+        ) : null
+      }
+      onCopy={async () => {
+        const message = storeApi
+          .getState()
+          .messages.find((m) => m.id === messageId);
+        if (!message) {
+          return;
+        }
 
-      <MessageSiblings isReadOnly={isReadOnly} messageId={messageId} />
+        const textFromParts = message.parts
+          ?.filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join("\n")
+          .trim();
 
-      <Action
-        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
-        onClick={async () => {
-          const message = storeApi
-            .getState()
-            .messages.find((m) => m.id === messageId);
-          if (!message) {
-            return;
-          }
+        if (!textFromParts) {
+          toast.error("There's no text to copy!");
+          return;
+        }
 
-          const textFromParts = message.parts
-            ?.filter((part) => part.type === "text")
-            .map((part) => part.text)
-            .join("\n")
-            .trim();
-
-          if (!textFromParts) {
-            toast.error("There's no text to copy!");
-            return;
-          }
-
-          await copyToClipboard(textFromParts);
-          toast.success("Copied to clipboard!");
-        }}
-        tooltip="Copy"
-      >
-        <Copy size={14} />
-      </Action>
-
-      {role === "assistant" && !isReadOnly && (
-        <FeedbackActions
-          chatId={chatId}
-          isReadOnly={isReadOnly}
-          messageId={messageId}
-          vote={vote}
-        />
-      )}
-    </Actions>
+        await copyToClipboard(textFromParts);
+        toast.success("Copied to clipboard!");
+      }}
+    />
   );
 };
 

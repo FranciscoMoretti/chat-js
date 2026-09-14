@@ -36,6 +36,7 @@ export const createEveResponseGroup = async (
     candidate: (typeof group.candidates)[number],
     fork = input.fork
   ): Promise<CandidateResult> => {
+    const forkKind = input.forkKind ?? "comparison";
     try {
       await recordEveResponseGroupRejection(
         ownerId,
@@ -52,7 +53,7 @@ export const createEveResponseGroup = async (
           modelId: candidate.modelId,
           operationId: candidate.operationId,
           selectedTool: input.selectedTool,
-          ...(fork ? { fork } : { projectId: input.projectId }),
+          ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
         },
         guestReservation?.reservationId
       );

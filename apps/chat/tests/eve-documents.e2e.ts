@@ -42,6 +42,7 @@ import {
 import { env } from "../lib/env";
 import { documentHistoryTurns } from "../lib/eve/document-history";
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -1087,17 +1088,14 @@ test("imported forks restore the selected document boundary and exclude the late
     },
   ]);
   for (const index of [0, 2, 6]) {
-    const [child] = await db
-      .insert(eveConversation)
-      .values({
-        firstMessage: "Imported edit",
-        forkMessageId: `seed_message_${index}`,
-        operationId: crypto.randomUUID(),
-        ownerId: owner,
-        parentConversationId: root.id,
-        rootConversationId: root.id,
-      })
-      .returning();
+    const [child] = await insertEveConversationFixtures({
+      firstMessage: "Imported edit",
+      forkMessageId: `seed_message_${index}`,
+      operationId: crypto.randomUUID(),
+      ownerId: owner,
+      parentConversationId: root.id,
+      rootConversationId: root.id,
+    });
     await expect(
       initializeEveForkDocuments(stranger, child.id)
     ).rejects.toThrow("Fork conversation not found");

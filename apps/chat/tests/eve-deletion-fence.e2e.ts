@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Deletion tests require local Postgres.");
@@ -27,7 +28,7 @@ for (const state of ["deleting", "deleted"] as const) {
     const id = crypto.randomUUID();
     const operationId = crypto.randomUUID();
     const sessionId = `wrun_deleted_${id}`;
-    await db.insert(eveConversation).values({
+    await insertEveConversationFixtures({
       firstMessage: "Deleted test conversation",
       id,
       operationId,

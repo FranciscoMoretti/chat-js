@@ -4,11 +4,14 @@ import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
+  after: vi.fn(),
   create: vi.fn(),
   enabled: vi.fn(),
+  persistTitle: vi.fn(),
   principal: vi.fn(),
   settle: vi.fn(),
 }));
+vi.mock("next/server", () => ({ after: mocks.after }));
 vi.mock("@/lib/env", () => ({
   env: { APP_URL: "http://localhost:3790" },
 }));
@@ -22,6 +25,9 @@ vi.mock("@/lib/eve/guest-admission", () => ({
 }));
 vi.mock("@/lib/eve/create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
+}));
+vi.mock("@/lib/eve/conversation-title", () => ({
+  persistGeneratedEveConversationTitle: mocks.persistTitle,
 }));
 
 const input = {
@@ -96,5 +102,26 @@ test("preserves authoritative deletion when its committed quota cannot be refund
   expect(await response.json()).toMatchObject({
     code: "conversation_deleted",
     creationRejected: true,
+  });
+});
+
+test("defers root title generation until after the creation response", async () => {
+  mocks.create.mockResolvedValue(
+    Response.json({
+      id: "00000000-0000-4000-8000-000000000002",
+      sessionId: "session",
+    })
+  );
+
+  const response = await POST(request());
+
+  expect(response.status).toBe(200);
+  expect(mocks.persistTitle).not.toHaveBeenCalled();
+  expect(mocks.after).toHaveBeenCalledOnce();
+  await mocks.after.mock.calls[0]?.[0]();
+  expect(mocks.persistTitle).toHaveBeenCalledWith({
+    conversationId: "00000000-0000-4000-8000-000000000002",
+    message: "hello",
+    ownerId: "guest",
   });
 });

@@ -14,6 +14,7 @@ import type {
   createConversationInput,
   EveForkInput,
 } from "@/lib/eve/contracts";
+import { eveConversationTitleFallback } from "@/lib/eve/conversation-title";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
@@ -216,6 +217,7 @@ export const createEveConversationOperation = async (
       {
         fileKeys: eveMessageFileKeys(input.message),
         fork: input.fork,
+        forkKind: input.forkKind,
         guestReservationId,
         initialContentHash: eveCreationContentHash(
           input.message,
@@ -223,6 +225,7 @@ export const createEveConversationOperation = async (
         ),
         initialModelId: input.modelId,
         initialProjectId: input.projectId,
+        initialTitle: eveConversationTitleFallback(input.message),
       }
     );
     return Response.json(binding);

@@ -1,8 +1,13 @@
+import { after } from "next/server";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
-import { createConversationInput } from "@/lib/eve/contracts";
+import {
+  conversationBinding,
+  createConversationInput,
+} from "@/lib/eve/contracts";
+import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
 import {
   admitGuestCreation,
@@ -68,6 +73,23 @@ export const POST = async (request: Request) => {
             "Creation is unresolved. Retry the saved operation to recover it.",
         },
         { status: 503 }
+      );
+    }
+  }
+  if (response.ok && !input.data.fork) {
+    const binding = conversationBinding.safeParse(
+      await response
+        .clone()
+        .json()
+        .catch(() => null)
+    );
+    if (binding.success) {
+      after(() =>
+        persistGeneratedEveConversationTitle({
+          conversationId: binding.data.id,
+          message: input.data.message,
+          ownerId: principal.ownerId,
+        })
       );
     }
   }

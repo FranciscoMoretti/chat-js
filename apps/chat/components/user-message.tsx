@@ -1,16 +1,16 @@
 "use client";
 import { memo, useState } from "react";
 
-import { Message, MessageContent } from "@/components/ai-elements/message";
 import type { ChatMessage } from "@/lib/ai/types";
 import { useChatId, useMessageById } from "@/lib/stores/base";
-import { cn, getAttachmentsFromMessage } from "@/lib/utils";
+import { getAttachmentsFromMessage } from "@/lib/utils";
 
 import { AttachmentList } from "./attachment-list";
 import { ImageModal } from "./image-modal";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { ParallelResponseCards } from "./parallel-response-cards";
+import { UserMessageView } from "./user-message-view";
 
 export interface BaseMessageProps {
   isLoading: boolean;
@@ -55,99 +55,47 @@ const PureUserMessage = ({
 
   return (
     <>
-      <Message
-        className={cn(
-          // Editing uses the full available width so the editor matches the displayed message.
-          mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
-          "py-1"
-        )}
-        from="user"
-      >
-        <div
-          className={cn(
-            "flex w-full flex-col gap-2",
-            message.role === "user" && mode !== "edit" && "items-end"
-          )}
-        >
-          {mode === "view" && (
-            <ParallelResponseCards
-              isReadonly={isReadonly}
-              messageId={message.id}
-            />
-          )}
-
-          {mode === "view" && isReadonly && (
-            <MessageContent
-              className="group-[.is-user]:bg-card text-left"
-              data-testid="message-content"
-            >
-              <AttachmentList
-                attachments={getAttachmentsFromMessage(message)}
-                onImageClick={handleImageClick}
-                testId="message-attachments"
-              />
-              <pre className="font-sans whitespace-pre-wrap">
-                {textPart.text}
-              </pre>
-            </MessageContent>
-          )}
-          {mode === "view" && !isReadonly && (
-            <button
-              className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
-              data-testid="message-content"
-              onClick={(e) => {
-                const selection = window.getSelection();
-                if (
-                  selection?.toString() &&
-                  e.currentTarget.contains(selection.anchorNode)
-                ) {
-                  return;
-                }
-                setMode("edit");
-              }}
-              type="button"
-            >
-              <MessageContent
-                className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
-                data-testid="message-content"
-              >
-                <AttachmentList
-                  attachments={getAttachmentsFromMessage(message)}
-                  onImageClick={handleImageClick}
-                  testId="message-attachments"
-                />
-                <pre className="font-sans whitespace-pre-wrap">
-                  {textPart.text}
-                </pre>
-              </MessageContent>
-            </button>
-          )}
-          {mode !== "view" && (
-            <div className="flex flex-row items-start gap-2">
-              <MessageEditor
-                chatId={chatId}
-                key={message.id}
-                message={message}
-                parentMessageId={parentMessageId}
-                setMode={setMode}
-              />
-            </div>
-          )}
-
-          <div className="self-end">
-            <MessageActions
+      <UserMessageView
+        messageId={message.id}
+        text={textPart.text}
+        onEdit={isReadonly ? undefined : () => setMode("edit")}
+        attachments={
+          <AttachmentList
+            attachments={getAttachmentsFromMessage(message)}
+            onImageClick={handleImageClick}
+            testId="message-attachments"
+          />
+        }
+        responses={
+          <ParallelResponseCards
+            isReadonly={isReadonly}
+            messageId={message.id}
+          />
+        }
+        editor={
+          mode === "edit" ? (
+            <MessageEditor
               chatId={chatId}
-              isEditing={mode === "edit"}
-              isLoading={isLoading}
-              isReadOnly={isReadonly}
-              key={`action-${message.id}`}
-              messageId={message.id}
-              onCancelEdit={() => setMode("view")}
-              onStartEdit={() => setMode("edit")}
+              key={message.id}
+              message={message}
+              parentMessageId={parentMessageId}
+              setMode={setMode}
             />
-          </div>
-        </div>
-      </Message>
+          ) : undefined
+        }
+        actions={
+          <MessageActions
+            chatId={chatId}
+            isEditing={mode === "edit"}
+            isLoading={isLoading}
+            isReadOnly={isReadonly}
+            key={`action-${message.id}`}
+            messageId={messageId}
+            onCancelEdit={() => setMode("view")}
+            onStartEdit={() => setMode("edit")}
+          />
+        }
+      />
       <ImageModal
         imageName={imageModal.imageName}
         imageUrl={imageModal.imageUrl}

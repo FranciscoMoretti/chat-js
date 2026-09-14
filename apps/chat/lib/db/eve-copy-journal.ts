@@ -10,6 +10,7 @@ import { isFileStorageKey } from "../file-url";
 import { db } from "./client";
 import { CreationConflictError } from "./eve-queries";
 import {
+  eveChat,
   eveConversation,
   eveConversationCopy,
   eveConversationCopyFile,
@@ -72,9 +73,19 @@ export const rejectEveCopyPreflight = async (
     if (group) {
       return;
     }
+    const conversationId = crypto.randomUUID();
+    const chatId = crypto.randomUUID();
+    await tx.insert(eveChat).values({
+      id: chatId,
+      ownerId,
+      title: "",
+      titleStatus: "fallback",
+    });
     await tx.insert(eveConversation).values({
+      chatId,
       creationKind: "copy",
       firstMessage: "",
+      id: conversationId,
       operationId,
       ownerId,
       state: "deleted",
@@ -424,11 +435,21 @@ export const reserveEveCopyOperation = async (
       input.sourceConversationId,
       input.plan
     );
+    const conversationId = crypto.randomUUID();
+    const chatId = crypto.randomUUID();
+    await tx.insert(eveChat).values({
+      id: chatId,
+      ownerId,
+      title: input.title,
+      titleStatus: "manual",
+    });
     const [conversation] = await tx
       .insert(eveConversation)
       .values({
+        chatId,
         creationKind: "copy",
         firstMessage: input.title,
+        id: conversationId,
         initialContentHash: input.projectionHash,
         initialModelId: input.modelId,
         operationId: input.operationId,

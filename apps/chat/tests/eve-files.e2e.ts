@@ -32,6 +32,7 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("File ownership acceptance requires local Postgres.");
@@ -88,7 +89,7 @@ test("registration rejects URLs and invalid storage keys", async () => {
 
 test("references reject foreign files and become immutable behind the deletion fence", async () => {
   const id = crypto.randomUUID();
-  await db.insert(eveConversation).values({
+  await insertEveConversationFixtures({
     firstMessage: "fixture",
     id,
     operationId: crypto.randomUUID(),

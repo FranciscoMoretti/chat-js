@@ -3,11 +3,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import {
-  eveConversation,
-  eveConversationProject,
-  project,
-} from "../lib/db/schema";
+import { eveChat, eveConversation, project } from "../lib/db/schema";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -73,7 +70,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     if (!root) {
       throw new Error("Missing project conversation");
     }
-    await db.insert(eveConversation).values({
+    await insertEveConversationFixtures({
       firstMessage: "Uncertain fork fixture",
       forkTurnId: "turn_0",
       id: pendingId,
@@ -83,15 +80,15 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       rootConversationId: root.id,
       state: "uncertain",
     });
-    await db
-      .insert(eveConversationProject)
-      .values({ conversationId: pendingId, ownerId: root.ownerId, projectId });
     await page.goto(`/project/${projectId}/chat/${pendingId}`);
     await expect(page).toHaveURL(new RegExp(`/chat/${pendingId}$`, "u"));
-    const recovery = page
-      .getByRole("alert")
-      .filter({ hasText: "Creation is unresolved." });
+    const recovery = page.getByRole("region", {
+      name: "Conversation recovery",
+    });
     await expect(recovery).toBeVisible();
+    await expect(recovery).toContainText(
+      "This browser does not have the original request."
+    );
     await recovery.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("project-creation-recovery.png"),
@@ -104,8 +101,15 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     await expect(page.locator(".is-assistant")).toContainText(
       "project-route-fixture-ok"
     );
+    const [chat] = await db
+      .select({ title: eveChat.title })
+      .from(eveChat)
+      .where(eq(eveChat.id, root.chatId));
+    if (!chat) {
+      throw new Error("Missing project chat title");
+    }
     const query = await page.request.get(
-      `/api/trpc/eve.list?input=${encodeURIComponent(JSON.stringify({ json: { projectId: null, search: "project-route-fixture-ok" } }))}`
+      `/api/trpc/eve.list?input=${encodeURIComponent(JSON.stringify({ json: { projectId: null, search: chat.title } }))}`
     );
     expect(query.ok(), await query.text()).toBe(true);
     expect(await query.text()).toContain(binding.id);

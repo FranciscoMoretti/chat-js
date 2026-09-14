@@ -6,21 +6,20 @@ import type {
   EveMessagePart,
   InputResponse,
 } from "eve/client";
-import { Copy, Pencil, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import {
-  Message,
-  MessageAction,
-  MessageActions,
-  MessageContent,
-} from "@/components/ai-elements/message";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
+import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
+import { RetryButtonView } from "@/components/retry-button-view";
+import { Tag } from "@/components/tag";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { UserMessageView } from "@/components/user-message-view";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
@@ -224,8 +223,7 @@ const Part = ({
     </section>
   );
 };
-// This renderer coordinates transcript grouping, actions, and streamed tool states.
-// oxlint-disable-next-line eslint/complexity
+// Parts remain EVE-owned; the message chrome is shared with the original runtime.
 export const EveMessages = ({
   conversationId,
   messages,
@@ -235,6 +233,10 @@ export const EveMessages = ({
   onEdit,
   onRegenerate,
   onSuggestion,
+  editor,
+  renderVersions,
+  renderResponses,
+  modelForMessage,
   actionsDisabled = disabled,
 }: {
   conversationId?: string;
@@ -244,100 +246,149 @@ export const EveMessages = ({
   onEdit?: (message: EveMessage) => void;
   onSuggestion?: (suggestion: string) => void;
   onRegenerate?: (message: EveMessage, response: EveMessage) => void;
+  editor?: {
+    messageId: string;
+    content: ReactNode;
+    onCancel: () => void;
+    disabled: boolean;
+  };
+  renderResponses?: (message: EveMessage) => ReactNode;
+  renderVersions?: (message: EveMessage, userMessage?: EveMessage) => ReactNode;
+  modelForMessage?: (message: EveMessage) => string | undefined;
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) => {
   let precedingUser: EveMessage | undefined;
-  // oxlint-disable-next-line eslint/complexity -- A transcript row renders all message actions and streamed content states together.
+  // oxlint-disable-next-line eslint/complexity -- A row combines streamed content with its role-specific shared controls.
   return messages.map((message) => {
     const userMessage = precedingUser;
     if (message.role === "user") {
       precedingUser = message;
     }
+    const editing = editor?.messageId === message.id ? editor : undefined;
+    const canEdit =
+      !isReadonly &&
+      onEdit &&
+      !actionsDisabled &&
+      !editor &&
+      eveUserForkBoundary(message);
+    const text = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n");
+    const modelId = modelForMessage?.(message);
+    const actions = (
+      <MessageActionsView
+        editDisabled={
+          editing
+            ? editing.disabled
+            : actionsDisabled || !!editor || !eveUserForkBoundary(message)
+        }
+        isEditing={!!editing}
+        isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
+        onCancelEdit={editing?.onCancel}
+        onStartEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
+        role={message.role}
+        siblings={renderVersions?.(message, userMessage)}
+        onCopy={async () => {
+          if (!text.trim()) {
+            toast.error("There's no text to copy!");
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(text.trim());
+            toast.success("Copied to clipboard!");
+          } catch {
+            toast.error("Unable to copy this message.");
+          }
+        }}
+        feedback={
+          message.role === "assistant" && !isReadonly ? (
+            <>
+              {conversationId && (
+                <EveFeedbackActions
+                  conversationId={conversationId}
+                  disabled={disabled}
+                  messageId={message.id}
+                />
+              )}
+              {onRegenerate && (
+                <RetryButtonView
+                  disabled={
+                    actionsDisabled ||
+                    !!editor ||
+                    !(message.metadata?.turnId || message.metadata?.modelId) ||
+                    !(userMessage && eveUserForkBoundary(userMessage))
+                  }
+                  onRetry={() => {
+                    if (userMessage) {
+                      onRegenerate(userMessage, message);
+                    }
+                  }}
+                />
+              )}
+              {modelId && (
+                <div className="ml-2 flex items-center">
+                  <Tag>{modelId}</Tag>
+                </div>
+              )}
+            </>
+          ) : undefined
+        }
+      />
+    );
+    if (message.role === "user") {
+      return (
+        <UserMessageView
+          actions={actions}
+          attachments={message.parts
+            .filter((part) => part.type === "file")
+            .map((part, index) => (
+              // File parts retain their position in the streamed message.
+              <EveAttachment key={`${message.id}:file:${index}`} part={part} />
+            ))}
+          editor={editing?.content}
+          editDisabled={!canEdit}
+          key={message.id}
+          messageId={message.id}
+          responses={renderResponses?.(message)}
+          onEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
+          text={text}
+        />
+      );
+    }
     return (
-      <Message className="flex-col" from={message.role} key={message.id}>
-        <MessageContent className="max-w-full min-w-0">
-          <span className="sr-only">
-            {message.role === "user" ? "You" : "Assistant"}
-          </span>
+      <Message
+        className="w-full max-w-full items-start py-1"
+        data-message-id={message.id}
+        from={message.role}
+        key={message.id}
+      >
+        <MessageContent className="w-full px-0 py-0 text-left">
+          <span className="sr-only">Assistant</span>
           {message.parts.map((part, index) => (
             <Part
               disabled={disabled}
               isReadonly={isReadonly}
               // Eve message parts are append-only; their index is their stable identity.
-              // biome-ignore lint/suspicious/noArrayIndexKey: Eve parts have no IDs and retain their order during streaming.
               key={`${message.id}:${index}`}
               messageId={message.id}
               part={part}
               respond={respond}
             />
           ))}
+          {actions}
+          {message.id === messages.at(-1)?.id &&
+            !isReadonly &&
+            !actionsDisabled &&
+            onSuggestion &&
+            config.ai.tools.followupSuggestions.enabled && (
+              <FollowUpSuggestionsView
+                onSelect={onSuggestion}
+                suggestions={messageFollowupSuggestions(message)}
+              />
+            )}
         </MessageContent>
-        <MessageActions
-          className={message.role === "user" ? "justify-end" : ""}
-        >
-          {message.role === "user" && onEdit && (
-            <MessageAction
-              disabled={actionsDisabled || !eveUserForkBoundary(message)}
-              onClick={() => onEdit(message)}
-              tooltip="Edit message"
-            >
-              <Pencil size={14} />
-            </MessageAction>
-          )}
-          {message.role === "assistant" && onRegenerate && (
-            <MessageAction
-              disabled={
-                actionsDisabled ||
-                !(message.metadata?.turnId || message.metadata?.modelId) ||
-                !(userMessage && eveUserForkBoundary(userMessage))
-              }
-              onClick={() => {
-                if (userMessage) {
-                  onRegenerate(userMessage, message);
-                }
-              }}
-              tooltip="Regenerate response"
-            >
-              <RotateCcw size={14} />
-            </MessageAction>
-          )}
-          {conversationId && !isReadonly && message.role === "assistant" && (
-            <EveFeedbackActions
-              conversationId={conversationId}
-              disabled={disabled}
-              messageId={message.id}
-            />
-          )}
-          <MessageAction
-            onClick={async () => {
-              const text = message.parts
-                .filter((part) => part.type === "text")
-                .map((part) => part.text)
-                .join("\n");
-              try {
-                await navigator.clipboard.writeText(text);
-                toast.success("Copied to clipboard!");
-              } catch {
-                toast.error("Unable to copy this message.");
-              }
-            }}
-            tooltip="Copy"
-          >
-            <Copy size={14} />
-          </MessageAction>
-        </MessageActions>
-        {message.role === "assistant" &&
-          message.id === messages.at(-1)?.id &&
-          !isReadonly &&
-          !actionsDisabled &&
-          onSuggestion &&
-          config.ai.tools.followupSuggestions.enabled && (
-            <FollowUpSuggestionsView
-              onSelect={onSuggestion}
-              suggestions={messageFollowupSuggestions(message)}
-            />
-          )}
       </Message>
     );
   });

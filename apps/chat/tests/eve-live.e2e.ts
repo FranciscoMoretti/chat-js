@@ -4,13 +4,13 @@
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
-import { eq } from "drizzle-orm";
+import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
 
 import { db } from "../lib/db/client";
 import { getEveUsageCursor } from "../lib/db/eve-billing";
 import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
-import { eveConversation, eveUsage } from "../lib/db/schema";
+import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
@@ -58,8 +58,12 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     throw new Error("Missing conversation identity.");
   }
   const [conversation] = await db
-    .select()
+    .select({
+      ...getTableColumns(eveConversation),
+      updatedAt: eveChat.updatedAt,
+    })
     .from(eveConversation)
+    .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
@@ -208,8 +212,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
     throw new Error("Missing conversation ID");
   }
   const [conversation] = await db
-    .select()
+    .select({
+      ...getTableColumns(eveConversation),
+      updatedAt: eveChat.updatedAt,
+    })
     .from(eveConversation)
+    .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
   if (!conversation?.sessionId) {
     throw new Error("Missing session");
@@ -324,8 +332,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
   }
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
   const [activeConversation] = await db
-    .select()
+    .select({
+      ...getTableColumns(eveConversation),
+      updatedAt: eveChat.updatedAt,
+    })
     .from(eveConversation)
+    .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, conversation.id));
   expect(activeConversation?.updatedAt.getTime()).toBeGreaterThan(
     conversation.updatedAt.getTime()

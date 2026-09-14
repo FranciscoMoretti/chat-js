@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { eveUserForkBoundary, resolveForkSource } from "./fork-source";
+import {
+  eveUserForkBoundary,
+  projectEveMessageSiblingNavigation,
+  resolveForkSource,
+} from "./fork-source";
+import type { EveBranchReference } from "./fork-source";
 import {
   finishCreation,
   prepareCreation,
@@ -144,4 +149,374 @@ it("enables only durable user-message boundaries", () => {
     })
   ).toBeUndefined();
   expect(eveUserForkBoundary({ id: "pending", role: "user" })).toBeUndefined();
+});
+
+describe("message sibling projection", () => {
+  it("combines independent and repeated edits into one ordered sibling row", () => {
+    const branches: EveBranchReference[] = [
+      { forkTurnId: null, id: "root", parentConversationId: null },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_2",
+        id: "first-edit",
+        parentConversationId: "root",
+      },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_2",
+        id: "independent-edit",
+        parentConversationId: "root",
+      },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_2",
+        id: "repeated-edit",
+        parentConversationId: "first-edit",
+      },
+    ];
+    const projection = projectEveMessageSiblingNavigation(
+      "repeated-edit",
+      [
+        { id: "user-2", metadata: { turnId: "turn_2" }, role: "user" },
+        {
+          id: "assistant-2",
+          metadata: { turnId: "turn_2" },
+          role: "assistant",
+        },
+      ],
+      branches
+    );
+    expect(projection.get("user-2")).toEqual({
+      currentIndex: 3,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "first-edit" },
+        { conversationId: "independent-edit" },
+        { conversationId: "repeated-edit" },
+      ],
+    });
+    expect(projection.has("assistant-2")).toBe(false);
+  });
+
+  it("keeps user edits and assistant regenerations on their own message rows", () => {
+    const branches: EveBranchReference[] = [
+      { forkTurnId: null, id: "root", parentConversationId: null },
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_0",
+        id: "root-regeneration",
+        parentConversationId: "root",
+      },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_0",
+        id: "edit",
+        parentConversationId: "root",
+      },
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_0",
+        id: "edited-regeneration",
+        parentConversationId: "edit",
+      },
+    ];
+    const projection = projectEveMessageSiblingNavigation(
+      "edited-regeneration",
+      [
+        { id: "edited-user", metadata: { turnId: "turn_0" }, role: "user" },
+        {
+          id: "edited-assistant",
+          metadata: { turnId: "turn_0" },
+          role: "assistant",
+        },
+      ],
+      branches
+    );
+    expect(projection.get("edited-user")).toEqual({
+      currentIndex: 1,
+      siblings: [{ conversationId: "root" }, { conversationId: "edit" }],
+    });
+    expect(projection.get("edited-assistant")).toEqual({
+      currentIndex: 1,
+      siblings: [
+        { conversationId: "edit" },
+        { conversationId: "edited-regeneration" },
+      ],
+    });
+  });
+
+  it("collapses response-group edit candidates and leaves comparisons to cards", () => {
+    const editedBranches: EveBranchReference[] = [
+      { forkTurnId: null, id: "root", parentConversationId: null },
+      ...[1, 2].map((responseGroupIndex): EveBranchReference => ({
+        forkKind: "edit",
+        forkTurnId: "turn_1",
+        id: `edit-candidate-${responseGroupIndex}`,
+        parentConversationId: "root",
+        responseGroupId: "edited-group",
+        responseGroupIndex,
+      })),
+    ];
+    const messages: Parameters<typeof projectEveMessageSiblingNavigation>[1] = [
+      { id: "user-1", metadata: { turnId: "turn_1" }, role: "user" },
+      {
+        id: "assistant-1",
+        metadata: { turnId: "turn_1" },
+        role: "assistant",
+      },
+    ];
+    expect(
+      projectEveMessageSiblingNavigation(
+        "edit-candidate-2",
+        messages,
+        editedBranches
+      ).get("user-1")
+    ).toEqual({
+      currentIndex: 1,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "edit-candidate-2" },
+      ],
+    });
+
+    const comparisonBranches = editedBranches.map(
+      (branch): EveBranchReference =>
+        branch.id === "root" ? branch : { ...branch, forkKind: "comparison" }
+    );
+    expect(
+      projectEveMessageSiblingNavigation(
+        "edit-candidate-2",
+        messages,
+        comparisonBranches
+      ).size
+    ).toBe(0);
+  });
+
+  it("leaves same-boundary edit-group retries to cards but navigates later turns", () => {
+    const branches: EveBranchReference[] = [
+      { forkTurnId: null, id: "root", parentConversationId: null },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_1",
+        id: "edit-candidate",
+        parentConversationId: "root",
+        responseGroupId: "edit-group",
+        responseGroupIndex: 1,
+      },
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_1",
+        id: "replacement-retry",
+        parentConversationId: "edit-candidate",
+      },
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_2",
+        id: "later-retry",
+        parentConversationId: "edit-candidate",
+      },
+    ];
+    const messages: Parameters<typeof projectEveMessageSiblingNavigation>[1] = [
+      { id: "edited-user", metadata: { turnId: "turn_1" }, role: "user" },
+      {
+        id: "edited-assistant",
+        metadata: { turnId: "turn_1" },
+        role: "assistant",
+      },
+      { id: "later-user", metadata: { turnId: "turn_2" }, role: "user" },
+      {
+        id: "later-assistant",
+        metadata: { turnId: "turn_2" },
+        role: "assistant",
+      },
+    ];
+
+    const replacementProjection = projectEveMessageSiblingNavigation(
+      "replacement-retry",
+      messages,
+      branches
+    );
+    expect(replacementProjection.has("edited-assistant")).toBe(false);
+    expect(replacementProjection.get("edited-user")).toBeDefined();
+    expect(
+      projectEveMessageSiblingNavigation("later-retry", messages, branches).get(
+        "later-assistant"
+      )
+    ).toEqual({
+      currentIndex: 1,
+      siblings: [
+        { conversationId: "edit-candidate" },
+        { conversationId: "later-retry" },
+      ],
+    });
+  });
+
+  it("keeps an ordinary retry navigable beside an independent comparison", () => {
+    const messages: Parameters<typeof projectEveMessageSiblingNavigation>[1] = [
+      { id: "user", metadata: { turnId: "turn_0" }, role: "user" },
+      {
+        id: "assistant",
+        metadata: { turnId: "turn_0" },
+        role: "assistant",
+      },
+    ];
+    const branches: EveBranchReference[] = [
+      { forkTurnId: null, id: "root", parentConversationId: null },
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_0",
+        id: "retry",
+        parentConversationId: "root",
+      },
+      ...[1, 2].map((responseGroupIndex): EveBranchReference => ({
+        forkKind: "comparison",
+        forkTurnId: "turn_0",
+        id: `comparison-${responseGroupIndex}`,
+        parentConversationId: "root",
+        responseGroupId: "comparison-group",
+        responseGroupIndex,
+      })),
+      {
+        forkKind: "regenerate",
+        forkTurnId: "turn_0",
+        id: "comparison-1-retry",
+        parentConversationId: "comparison-1",
+      },
+    ];
+
+    expect(
+      projectEveMessageSiblingNavigation("retry", messages, branches).get(
+        "assistant"
+      )
+    ).toEqual({
+      currentIndex: 1,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "retry" },
+        { conversationId: "comparison-1" },
+      ],
+    });
+    expect(
+      projectEveMessageSiblingNavigation("root", messages, branches).get(
+        "assistant"
+      )
+    ).toEqual({
+      currentIndex: 0,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "retry" },
+        { conversationId: "comparison-1" },
+      ],
+    });
+    expect(
+      projectEveMessageSiblingNavigation(
+        "comparison-2",
+        messages,
+        branches
+      ).get("assistant")
+    ).toEqual({
+      currentIndex: 2,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "retry" },
+        { conversationId: "comparison-2" },
+      ],
+    });
+    expect(
+      projectEveMessageSiblingNavigation(
+        "comparison-1-retry",
+        messages,
+        branches
+      ).get("assistant")
+    ).toEqual({
+      currentIndex: 2,
+      siblings: [
+        { conversationId: "root" },
+        { conversationId: "retry" },
+        { conversationId: "comparison-1-retry" },
+      ],
+    });
+  });
+
+  it("maps imported edits and their native descendants to the replacement row", () => {
+    const branches: EveBranchReference[] = [
+      { forkTurnId: null, id: "copy", parentConversationId: null },
+      {
+        forkKind: "edit",
+        forkMessageId: "seed_message_2",
+        forkTurnId: null,
+        id: "imported-edit",
+        parentConversationId: "copy",
+      },
+      {
+        forkKind: "edit",
+        forkTurnId: "turn_0",
+        id: "native-reedit",
+        parentConversationId: "imported-edit",
+      },
+    ];
+    const projection = projectEveMessageSiblingNavigation(
+      "native-reedit",
+      [
+        { id: "seed_message_0", role: "user" },
+        { id: "native-user", metadata: { turnId: "turn_0" }, role: "user" },
+        {
+          id: "native-assistant",
+          metadata: { turnId: "turn_0" },
+          role: "assistant",
+        },
+      ],
+      branches
+    );
+    expect(projection.get("native-user")).toEqual({
+      currentIndex: 2,
+      siblings: [
+        { conversationId: "copy" },
+        { conversationId: "imported-edit" },
+        { conversationId: "native-reedit" },
+      ],
+    });
+  });
+
+  it("does not attach an imported regeneration to a later turn's assistant", () => {
+    const projection = projectEveMessageSiblingNavigation(
+      "copy",
+      [
+        { id: "seed_message_2", role: "user" },
+        { id: "seed_message_3", role: "user" },
+        { id: "seed_message_4", role: "assistant" },
+      ],
+      [
+        { forkTurnId: null, id: "copy", parentConversationId: null },
+        {
+          forkKind: "regenerate",
+          forkMessageId: "seed_message_2",
+          forkTurnId: null,
+          id: "regeneration",
+          parentConversationId: "copy",
+        },
+      ]
+    );
+    expect(projection.size).toBe(0);
+  });
+
+  it("keeps unknown legacy forks on the user boundary without guessing", () => {
+    const projection = projectEveMessageSiblingNavigation(
+      "legacy",
+      [{ id: "user", metadata: { turnId: "turn_0" }, role: "user" }],
+      [
+        { forkTurnId: null, id: "root", parentConversationId: null },
+        {
+          forkKind: null,
+          forkTurnId: "turn_0",
+          id: "legacy",
+          parentConversationId: "root",
+        },
+      ]
+    );
+    expect(projection.get("user")?.siblings).toEqual([
+      { conversationId: "root" },
+      { conversationId: "legacy" },
+    ]);
+  });
 });

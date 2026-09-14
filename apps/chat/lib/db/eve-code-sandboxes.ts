@@ -1,4 +1,4 @@
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "../eve/code-sandbox-name";
 import { db } from "./client";
@@ -119,21 +119,17 @@ export const listEveCodeSandboxesForDeletion = async (
   const family = await db
     .select({
       id: eveConversation.id,
-      rootId: eveConversation.rootConversationId,
       state: eveConversation.state,
     })
     .from(eveConversation)
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        or(
-          eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
-        )
+        eq(eveConversation.chatId, rootId)
       )
     );
   if (
-    !family.some((row) => row.id === rootId && row.rootId === null) ||
+    !family.length ||
     family.some((row) => row.state !== "deleting" && row.state !== "deleted")
   ) {
     throw new Error(
@@ -157,10 +153,7 @@ export const listEveCodeSandboxesForDeletion = async (
       and(
         eq(eveCodeSandbox.ownerId, ownerId),
         eq(eveCodeSandbox.state, "unresolved"),
-        or(
-          eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
-        )
+        eq(eveConversation.chatId, rootId)
       )
     );
 };

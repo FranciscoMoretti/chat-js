@@ -1,5 +1,8 @@
+import { after } from "next/server";
+
 import { env } from "@/lib/env";
 import { isEveEnabled } from "@/lib/eve/availability";
+import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
 import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
@@ -35,11 +38,26 @@ export const POST = async (request: Request) => {
     if (admission instanceof Response) {
       return admission;
     }
-    return Response.json(
-      eveResponseGroupResult.parse(
-        await createEveResponseGroup(principal.ownerId, input.data, admission)
-      )
+    const result = eveResponseGroupResult.parse(
+      await createEveResponseGroup(principal.ownerId, input.data, admission)
     );
+    // Initial comparison candidates share a logical chat. Title it once from
+    // the bound primary candidate, after the response has been sent.
+    if (!input.data.fork) {
+      const source = result.candidates.find(
+        (candidate) => candidate.state === "bound"
+      );
+      if (source?.state === "bound") {
+        after(() =>
+          persistGeneratedEveConversationTitle({
+            conversationId: source.conversationId,
+            message: input.data.message,
+            ownerId: principal.ownerId,
+          })
+        );
+      }
+    }
+    return Response.json(result);
   } catch {
     return Response.json(
       {

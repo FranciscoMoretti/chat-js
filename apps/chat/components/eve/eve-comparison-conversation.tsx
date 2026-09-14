@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,8 @@ export const EveComparisonConversation = ({
   header: ReactNode;
 }) => {
   const { getModelById } = useChatModels();
+  const router = useRouter();
+  const [navigating, startNavigation] = useTransition();
   const changeModel = useModelChange();
   const [group, setGroup] = useState(initialGroup);
   const [selectedOperationId, setSelectedOperationId] = useState(
@@ -62,7 +65,9 @@ export const EveComparisonConversation = ({
     if (candidate.conversationId === conversationId) {
       setSelectedOperationId(candidate.operationId);
     } else {
-      window.location.assign(`/chat/${candidate.conversationId}`);
+      startNavigation(() =>
+        router.push(`/chat/${candidate.conversationId}`, { scroll: false })
+      );
     }
   };
 
@@ -117,50 +122,50 @@ export const EveComparisonConversation = ({
     /* oxlint-enable react/todo */
   };
   const cards = (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-2">
-      <EveResponseGroupCards
-        candidates={group.candidates.map((candidate) => ({
-          ...candidate,
-          disabled: busy || navigationBlocked,
-          modelName: getModelById(candidate.modelId)?.name ?? candidate.modelId,
-          status:
-            candidate.operationId === selectedOperationId ? status : undefined,
-        }))}
-        onSelect={async (operationId) => {
-          const candidate = group.candidates.find(
-            (value) => value.operationId === operationId
-          );
-          if (candidate?.state === "bound") {
-            setBusy(true);
-            /* oxlint-disable react/todo -- Keep comparison selection cleanup in finally. */
-            try {
-              await openResponse(candidate);
-              // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required selection cleanup in finally.
-            } finally {
-              setBusy(false);
-            }
-            /* oxlint-enable react/todo */
-          } else {
-            setSelectedOperationId(operationId);
-            setStatus(undefined);
-            setFailure("");
+    <EveResponseGroupCards
+      candidates={group.candidates.map((candidate) => ({
+        ...candidate,
+        disabled: busy || navigating || navigationBlocked,
+        modelName: getModelById(candidate.modelId)?.name ?? candidate.modelId,
+        status:
+          candidate.operationId === selectedOperationId ? status : undefined,
+      }))}
+      onSelect={async (operationId) => {
+        const candidate = group.candidates.find(
+          (value) => value.operationId === operationId
+        );
+        if (candidate?.state === "bound") {
+          setBusy(true);
+          /* oxlint-disable react/todo -- Keep comparison selection cleanup in finally. */
+          try {
+            await openResponse(candidate);
+            // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required selection cleanup in finally.
+          } finally {
+            setBusy(false);
           }
-        }}
-        selectedOperationId={selectedOperationId}
-      />
-    </div>
+          /* oxlint-enable react/todo */
+        } else {
+          setSelectedOperationId(operationId);
+          setStatus(undefined);
+          setFailure("");
+        }
+      }}
+      selectedOperationId={selectedOperationId}
+    />
   );
+  const selectedModels: Record<string, number> = {};
+  for (const candidate of group.candidates) {
+    selectedModels[candidate.modelId] =
+      (selectedModels[candidate.modelId] ?? 0) + 1;
+  }
   if (selected?.state === "bound") {
     return (
       <EveConversation
         conversationId={selected.conversationId}
         draftScopeId={group.id}
-        header={
-          <>
-            {header}
-            {cards}
-          </>
-        }
+        header={header}
+        comparisonPresentation={{ cards, modelSelection: selectedModels }}
+        key={selected.sessionId}
         onNavigationBlockedChange={setNavigationBlocked}
         onStatusChange={setStatus}
         ownerId={ownerId}

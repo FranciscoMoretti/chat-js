@@ -11,6 +11,7 @@ import {
   listEveConversations,
 } from "../lib/db/eve-queries";
 import { eveConversation, user } from "../lib/db/schema";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -53,7 +54,7 @@ for (const width of [1280, 390]) {
     }
     const id = crypto.randomUUID();
     const title = "Deletion UI fixture";
-    await db.insert(eveConversation).values({
+    await insertEveConversationFixtures({
       firstMessage: title,
       id,
       operationId: crypto.randomUUID(),

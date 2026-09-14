@@ -43,6 +43,7 @@ export const EveModelPicker = ({
   return (
     <fieldset disabled={disabled}>
       <ModelSelector
+        className="h-8 w-fit max-w-none shrink justify-start truncate px-2 text-xs @[500px]:h-10 @[500px]:px-3 @[500px]:text-sm"
         allowMultiple={!!modelSelection}
         onModelSelectionChangeAction={async (selection) => {
           if (modelSelection) {

@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { z } from "zod";
 
 import { eveResponseGroupCandidates } from "../eve/response-group-candidates";
 import { eveResponseGroupResult } from "../eve/response-group-contracts";
 import { eveResponseGroupInput } from "../eve/response-group-input";
+import { resolveEveResponseGroupLineage } from "../eve/response-group-lineage";
 import { db } from "./client";
 import { eveConversation, eveResponseGroup } from "./schema";
 
@@ -266,7 +267,10 @@ export const getEveResponseGroupForConversation = async (
   conversationId: string
 ) => {
   const [conversation] = await db
-    .select({ operationId: eveConversation.operationId })
+    .select({
+      id: eveConversation.id,
+      rootConversationId: eveConversation.rootConversationId,
+    })
     .from(eveConversation)
     .where(
       and(
@@ -278,15 +282,138 @@ export const getEveResponseGroupForConversation = async (
   if (!conversation) {
     return;
   }
-  const [group] = await db
-    .select({ id: eveResponseGroup.id })
+  const rootId = conversation.rootConversationId ?? conversation.id;
+  const family = await db
+    .select({
+      createdAt: eveConversation.createdAt,
+      forkKind: eveConversation.forkKind,
+      forkMessageId: eveConversation.forkMessageId,
+      forkTurnId: eveConversation.forkTurnId,
+      id: eveConversation.id,
+      operationId: eveConversation.operationId,
+      parentConversationId: eveConversation.parentConversationId,
+      sessionId: eveConversation.sessionId,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound"),
+        or(
+          eq(eveConversation.id, rootId),
+          eq(eveConversation.rootConversationId, rootId)
+        )
+      )
+    );
+  const boundFamily = family.flatMap((member) =>
+    member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+  );
+  if (!boundFamily.length) {
+    return;
+  }
+  const operationIds = sql`ARRAY[${sql.join(
+    boundFamily.map((member) => sql`${member.operationId}::uuid`),
+    sql`, `
+  )}]`;
+  const groups = await db
+    .select({
+      candidateOperationIds: eveResponseGroup.candidateOperationIds,
+      id: eveResponseGroup.id,
+    })
     .from(eveResponseGroup)
     .where(
       and(
         eq(eveResponseGroup.ownerId, ownerId),
         eq(eveResponseGroup.deleted, false),
-        sql`${conversation.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
+        sql`${eveResponseGroup.candidateOperationIds} && ${operationIds}`,
+        or(
+          isNull(eveResponseGroup.sourceConversationId),
+          inArray(
+            eveResponseGroup.sourceConversationId,
+            boundFamily.map((member) => member.id)
+          )
+        )
       )
     );
-  return group ? await getEveResponseGroup(ownerId, group.id) : undefined;
+  const lineage = resolveEveResponseGroupLineage(
+    conversationId,
+    boundFamily,
+    groups
+  );
+  if (!lineage) {
+    return;
+  }
+  const lineageGroup = groups.find((group) => group.id === lineage.groupId);
+  if (!lineageGroup) {
+    return;
+  }
+  const candidateConversations = await db
+    .select({
+      id: eveConversation.id,
+      rootConversationId: eveConversation.rootConversationId,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound"),
+        inArray(eveConversation.operationId, lineageGroup.candidateOperationIds)
+      )
+    );
+  const candidateRootIds = [
+    ...new Set(
+      candidateConversations.map(
+        (candidate) => candidate.rootConversationId ?? candidate.id
+      )
+    ),
+  ];
+  if (!candidateRootIds.length) {
+    return;
+  }
+  const groupFamilies = await db
+    .select({
+      createdAt: eveConversation.createdAt,
+      forkKind: eveConversation.forkKind,
+      forkMessageId: eveConversation.forkMessageId,
+      forkTurnId: eveConversation.forkTurnId,
+      id: eveConversation.id,
+      operationId: eveConversation.operationId,
+      parentConversationId: eveConversation.parentConversationId,
+      sessionId: eveConversation.sessionId,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound"),
+        or(
+          inArray(eveConversation.id, candidateRootIds),
+          inArray(eveConversation.rootConversationId, candidateRootIds)
+        )
+      )
+    );
+  const boundGroupFamilies = groupFamilies.flatMap((member) =>
+    member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+  );
+  const groupLineage = resolveEveResponseGroupLineage(
+    conversationId,
+    boundGroupFamilies,
+    [lineageGroup]
+  );
+  if (!groupLineage) {
+    return;
+  }
+  const group = await getEveResponseGroup(ownerId, lineage.groupId);
+  if (!group) {
+    return;
+  }
+  return eveResponseGroupResult.parse({
+    ...group,
+    candidates: group.candidates.map((candidate) => {
+      const replacement = groupLineage.replacements.get(candidate.operationId);
+      return candidate.state === "bound" && replacement
+        ? { ...candidate, ...replacement }
+        : candidate;
+    }),
+  });
 };

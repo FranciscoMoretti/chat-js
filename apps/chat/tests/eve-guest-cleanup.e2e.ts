@@ -8,6 +8,7 @@ import { claimExpiredEveGuestFamilies } from "../lib/db/eve-guest-cleanup";
 import { createEveGuest } from "../lib/db/eve-guests";
 import { eveConversation, eveGuest, user } from "../lib/db/schema";
 import { createEveGuestCredential } from "../lib/eve/guest-credential";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -34,7 +35,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     operationId: crypto.randomUUID(),
     ownerId: guest.ownerId,
   }));
-  await db.insert(eveConversation).values(roots);
+  await insertEveConversationFixtures(roots);
   const registeredOwner = crypto.randomUUID();
   owners.push(registeredOwner);
   await db.insert(user).values({
@@ -47,7 +48,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     crypto.randomUUID(),
     crypto.randomUUID(),
   ];
-  await db.insert(eveConversation).values([
+  await insertEveConversationFixtures([
     {
       ...roots[0],
       id: excluded[0],

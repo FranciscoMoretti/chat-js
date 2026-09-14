@@ -9,6 +9,7 @@ import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../lib/db/client";
 import { listEveConversations } from "../lib/db/eve-queries";
 import { eveConversation, user } from "../lib/db/schema";
+import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -33,7 +34,7 @@ test("history pages and searches older conversations without exposing other owne
     id: foreignOwner,
     name: "History test",
   });
-  await db.insert(eveConversation).values(
+  await insertEveConversationFixtures(
     ids.map((id, index) => ({
       id,
       ownerId: index === 55 ? foreignOwner : owner.id,
@@ -61,7 +62,7 @@ test("history pages and searches older conversations without exposing other owne
     const literal = await listEveConversations(owner.id, {
       search: "100%_literal",
     });
-    expect(literal.items.map((row) => row.id)).toContain(ids[54]);
+    expect(literal.items.map((row) => row.conversationId)).toContain(ids[54]);
     const last = second.items.at(-1);
     if (!last) {
       throw new Error("Missing last page fixture");

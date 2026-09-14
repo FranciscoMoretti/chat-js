@@ -21,7 +21,12 @@ import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
+import {
+  eveUserForkBoundary,
+  projectEveMessageSiblingNavigation,
+} from "@/lib/eve/fork-source";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
+import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
   useDefaultModel,
@@ -31,8 +36,13 @@ import { useTRPC } from "@/trpc/react";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
-import { EveForkControls } from "./eve-fork-controls";
+import { EveForkRecovery } from "./eve-fork-recovery";
+import { EveMessageVersions } from "./eve-message-versions";
 import { EveMessages } from "./eve-messages";
+import {
+  EveOptimisticResponseGroup,
+  shouldAppendEveOptimisticResponseGroup,
+} from "./eve-optimistic-response-group";
 import type { EveResponseCardCandidate } from "./eve-response-group-cards";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
@@ -49,11 +59,16 @@ export const EveConversation = ({
   onStatusChange,
   draftScopeId,
   onNavigationBlockedChange,
+  comparisonPresentation,
 }: {
   sessionId: string;
   conversationId: string;
   ownerId: string;
   header: ReactNode;
+  comparisonPresentation?: {
+    cards: ReactNode;
+    modelSelection: SelectedModelValue;
+  };
   onStatusChange?: (status: EveResponseCardCandidate["status"]) => void;
   draftScopeId?: string;
   onNavigationBlockedChange?: (blocked: boolean) => void;
@@ -62,8 +77,6 @@ export const EveConversation = ({
     fork,
     composerDraft,
     files,
-    composerFiles,
-    retainedDraft,
     comparison,
     modelSelection,
     modelIds,
@@ -143,6 +156,33 @@ export const EveConversation = ({
     (message) =>
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
+  const messageVersions = projectEveMessageSiblingNavigation(
+    conversationId,
+    messages,
+    fork.family.data?.branches ?? []
+  );
+  const currentBranch = fork.family.data?.branches.find(
+    (branch) => branch.id === conversationId
+  );
+  // Imported forks replay a seed prefix; their replacement user starts native turn_0.
+  const comparisonBoundary = currentBranch?.forkTurnId ?? "turn_0";
+  const editingMessageId =
+    fork.editingMessageId ??
+    messages.find(
+      (message) =>
+        eveUserForkBoundary(message) === fork.editingBoundary &&
+        !!fork.editingBoundary
+    )?.id;
+  const responseModels = responseModelReferences(agent.events);
+  const modelForMessage = (message: (typeof messages)[number]) => {
+    const reference = message.metadata?.turnId
+      ? responseModels.get(message.metadata.turnId)
+      : message.metadata?.modelId;
+    const separator = reference?.indexOf("/") ?? -1;
+    return reference && separator > 0 && separator < reference.length - 1
+      ? reference.slice(separator + 1)
+      : undefined;
+  };
   const busy =
     agent.status === "streaming" ||
     agent.status === "submitted" ||
@@ -261,6 +301,9 @@ export const EveConversation = ({
     composerDraft.selectedTool
   );
   const handleSelectedToolChange = composerDraft.setSelectedTool;
+  const handleEditDraft = fork.setDraft;
+  const handleEditSubmit = fork.submit;
+  const handleEditToolChange = fork.setSelectedTool;
   let statusLabel = "Ready";
   if (busy) {
     statusLabel = "Responding…";
@@ -293,11 +336,6 @@ export const EveConversation = ({
       <section className="flex h-full min-h-0 flex-col">
         {header}
         <div className="flex min-h-0 flex-1 flex-col">
-          <EveForkControls
-            conversationId={conversationId}
-            disabled={busy || commandPending || hasApproval || !!pendingMessage}
-            fork={fork}
-          />
           <Conversation>
             <ConversationContent className="mx-auto w-full max-w-3xl">
               <EveMessages
@@ -313,7 +351,90 @@ export const EveConversation = ({
                 disabled={busy || commandPending}
                 isReadonly={false}
                 messages={messages}
-                onEdit={(message) => fork.begin(message)}
+                editor={
+                  editingMessageId
+                    ? {
+                        content: (
+                          <div className="w-full">
+                            <EveComposer
+                              autoFocus
+                              busy={fork.busy}
+                              disabled={
+                                busy ||
+                                commandPending ||
+                                hasApproval ||
+                                !!pendingMessage ||
+                                fork.locked
+                              }
+                              readOnly={!!fork.pending}
+                              draft={fork.draft}
+                              files={fork.files}
+                              modelSelection={fork.modelSelection}
+                              onDraftChange={handleEditDraft}
+                              onSubmit={handleEditSubmit}
+                              onToolChange={handleEditToolChange}
+                              selectedTool={fork.selectedTool}
+                            />
+                            {fork.error && (
+                              <p
+                                className="text-destructive text-sm"
+                                role="alert"
+                              >
+                                {fork.error}
+                              </p>
+                            )}
+                          </div>
+                        ),
+                        disabled: fork.busy || !!fork.pending,
+                        messageId: editingMessageId,
+                        onCancel: fork.cancelEdit,
+                      }
+                    : undefined
+                }
+                modelForMessage={modelForMessage}
+                renderVersions={(message) => (
+                  <EveMessageVersions
+                    navigation={messageVersions.get(message.id)}
+                    disabled={
+                      busy ||
+                      commandPending ||
+                      fork.locked ||
+                      !!editingMessageId ||
+                      hasApproval ||
+                      !!pendingMessage
+                    }
+                  />
+                )}
+                renderResponses={
+                  comparisonPresentation
+                    ? (message) =>
+                        eveUserForkBoundary(message) === comparisonBoundary
+                          ? comparisonPresentation.cards
+                          : undefined
+                    : undefined
+                }
+                onEdit={(message) => {
+                  const following = messages.slice(
+                    messages.indexOf(message) + 1
+                  );
+                  const nextUser = following.findIndex(
+                    (candidate) => candidate.role === "user"
+                  );
+                  const response = following
+                    .slice(0, nextUser === -1 ? following.length : nextUser)
+                    .find((candidate) => candidate.role === "assistant");
+                  return fork.begin(message, undefined, {
+                    events: agent.events,
+                    modelSelection:
+                      eveUserForkBoundary(message) === comparisonBoundary
+                        ? comparisonPresentation?.modelSelection
+                        : undefined,
+                    response:
+                      response && modelForMessage(response)
+                        ? response
+                        : undefined,
+                  });
+                }}
                 onRegenerate={(message, response) =>
                   fork.begin(message, { events: agent.events, response })
                 }
@@ -344,11 +465,16 @@ export const EveConversation = ({
                   run(() => send(() => agent.respond([response])))
                 }
               />
+              {comparison &&
+                shouldAppendEveOptimisticResponseGroup(comparison) && (
+                  <EveOptimisticResponseGroup operation={comparison} />
+                )}
             </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
           <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
-            <p aria-live="polite" className="text-muted-foreground text-sm">
+            <EveForkRecovery fork={fork} showError={!editingMessageId} />
+            <p aria-live="polite" className="sr-only">
               {statusLabel}
             </p>
             {[displayedError, composerDraft.error]
@@ -412,8 +538,8 @@ export const EveConversation = ({
                 !!pendingMessage ||
                 fork.locked
               }
-              draft={retainedDraft?.text ?? draft}
-              files={composerFiles}
+              draft={draft}
+              files={files}
               modelSelection={modelSelection}
               onDraftChange={setDraft}
               onStop={cancel}
@@ -525,16 +651,10 @@ const useConversationInput = (
   );
   const comparison =
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
-  const retainedDraft = comparison
-    ? restoreDraft(comparison.message)
-    : undefined;
 
   return {
     comparison,
     composerDraft,
-    composerFiles: retainedDraft
-      ? { ...files, attachments: retainedDraft.attachments }
-      : files,
     files,
     fork,
     modelIds: expandSelectedModelValue(selection ?? selectedModel),
@@ -548,7 +668,6 @@ const useConversationInput = (
       },
       value: selection ?? selectedModel,
     },
-    retainedDraft,
   };
 };
 

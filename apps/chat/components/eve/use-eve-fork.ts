@@ -1,15 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 
-import type { UiToolName } from "@/lib/ai/types";
+import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
-import {
-  consumeComparisonDraftIntent,
-  saveComparisonDraftIntent,
-} from "@/lib/eve/comparison-draft-intent";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { draftMessage } from "@/lib/eve/draft";
@@ -32,27 +30,65 @@ import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 
+type EditContext = {
+  events?: readonly MessageStreamEvent[];
+  modelSelection?: SelectedModelValue;
+  response?: EveMessage;
+};
+
+const responseModelSelection = (
+  response: EveMessage,
+  events: readonly MessageStreamEvent[]
+) => {
+  const modelId = responseModel(
+    events,
+    response.metadata?.turnId ?? "",
+    response.metadata?.modelId
+  );
+  return isSelectedModelValue(modelId) ? modelId : undefined;
+};
+
+const operationModelSelection = (operation: Operation) => {
+  if (!("modelIds" in operation)) {
+    return operation.modelId && isSelectedModelValue(operation.modelId)
+      ? operation.modelId
+      : undefined;
+  }
+  const selection: Record<string, number> = {};
+  for (const modelId of operation.modelIds) {
+    selection[modelId] = (selection[modelId] ?? 0) + 1;
+  }
+  return isSelectedModelValue(selection) ? selection : undefined;
+};
+
 export const useEveFork = (
   ownerId: string,
   conversationId: string,
-  onComparisonCreated?: (
+  onComparisonStarted?: (
     message: EveMessageInput,
     selectedTool: UiToolName | undefined,
     clearComposer: boolean
   ) => void
 ) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const family = useQuery(
     trpc.eve.branches.queryOptions({ id: conversationId })
   );
+  const router = useRouter();
+  const [isNavigating, startTransition] = useTransition();
   const selectedModel = useDefaultModel();
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
+  const [modelSelectionValue, setModelSelectionValue] =
+    useState<SelectedModelValue>();
   const [source, setSource] = useState<EveForkInput>();
   const [pending, setPending] = useState<Operation>();
-  const [open, setOpen] = useState(false);
+  const [editingBoundary, setEditingBoundary] = useState<string>();
+  const [editingMessageId, setEditingMessageId] = useState<string>();
+  const [editRestoreFailed, setEditRestoreFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -71,8 +107,14 @@ export const useEveFork = (
         }
         // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the controlled fork editor from its durable request.
         setPending(operation);
+        setModelSelectionValue(operationModelSelection(operation));
         setSelectedTool(operation.selectedTool ?? null);
         setSource(operation.fork);
+        if (operation.forkKind === "edit") {
+          setEditingBoundary(
+            operation.fork.beforeTurnId ?? operation.fork.beforeMessageId
+          );
+        }
         setDraft(
           typeof operation.message === "string"
             ? operation.message
@@ -114,22 +156,31 @@ export const useEveFork = (
         conversationId,
       }
     );
-    if ("modelIds" in operation) {
-      onComparisonCreated?.(
-        operation.message,
-        operation.selectedTool,
-        consumeComparisonDraftIntent(
-          sessionStorage,
-          ownerId,
-          conversationId,
-          operation.operationId
-        )
-      );
-    }
-    window.location.assign(`/chat/${id}`);
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: trpc.eve.branches.pathKey(),
+        refetchType: "none",
+      }),
+      queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
+    ]);
+    startTransition(() => {
+      // App Router Activity can keep this source route mounted while its successor
+      // is active. Clear the fulfilled editor in the navigation transition so
+      // recovery cannot revive an operation storage has already released.
+      setPending(undefined);
+      setEditingMessageId(undefined);
+      setEditingBoundary(undefined);
+      setSource(undefined);
+      setDraft("");
+      setSelectedTool(null);
+      setModelSelectionValue(undefined);
+      setEditRestoreFailed(false);
+      setAttachments([]);
+      router.push(`/chat/${id}`, { scroll: false });
+    });
   };
 
-  const run = async (action: () => Promise<void>, reopenEdit = true) => {
+  const run = async (action: () => Promise<void>) => {
     if (lock.current) {
       return;
     }
@@ -142,7 +193,6 @@ export const useEveFork = (
       if (error instanceof CreationRejectedError) {
         finishCreation(sessionStorage, ownerId, { conversationId });
         setPending(undefined);
-        setOpen(reopenEdit);
       }
       setFailure(
         error instanceof Error ? error.message : "Unable to create a version."
@@ -159,20 +209,22 @@ export const useEveFork = (
     regeneration?: {
       response: EveMessage;
       events: readonly MessageStreamEvent[];
-    }
+    },
+    editContext?: EditContext
   ) =>
     run(async () => {
       const boundary = eveUserForkBoundary(message);
-      if (pending || !family.data || !boundary) {
+      if (pending || editingMessageId || !family.data || !boundary) {
         return;
       }
+      const responseSelection = editContext?.response
+        ? responseModelSelection(editContext.response, editContext.events ?? [])
+        : undefined;
+      const editingSelection =
+        editContext?.modelSelection ?? responseSelection ?? selectedModel;
       const modelId = regeneration
-        ? responseModel(
-            regeneration.events,
-            regeneration.response.metadata?.turnId ?? "",
-            regeneration.response.metadata?.modelId
-          )
-        : selectedModel;
+        ? responseModelSelection(regeneration.response, regeneration.events)
+        : undefined;
       const fork = resolveForkSource(
         conversationId,
         boundary,
@@ -183,42 +235,72 @@ export const useEveFork = (
         .map((part) => part.text)
         .join("\n");
       const originalTool = eveMessageTool(message);
-      // Re-upload the exact native bytes; never silently drop a file on an edit.
-      const attachments = await Promise.all(
-        message.parts
-          .filter((part) => part.type === "file")
-          .map(async (part) => {
-            const file = await restoreEveAttachment(
-              part,
-              window.location.origin,
-              config.attachments.maxBytes
-            );
-            return uploadAttachment(file);
-          })
-      );
       setSelectedTool(originalTool);
+      setModelSelectionValue(editingSelection);
       setDraft(text);
-      files.setAttachments(attachments);
       setSource(fork);
+      if (!regeneration) {
+        setEditRestoreFailed(false);
+        setEditingBoundary(boundary);
+        setEditingMessageId(message.id);
+        files.setAttachments([]);
+      }
+      // Re-upload the exact native bytes; never silently drop a file on an edit.
+      let attachments: Awaited<ReturnType<typeof uploadAttachment>>[];
+      try {
+        attachments = await Promise.all(
+          message.parts
+            .filter((part) => part.type === "file")
+            .map(async (part) => {
+              const file = await restoreEveAttachment(
+                part,
+                window.location.origin,
+                config.attachments.maxBytes
+              );
+              return uploadAttachment(file);
+            })
+        );
+      } catch (error) {
+        if (!regeneration) {
+          setEditRestoreFailed(true);
+        }
+        throw error;
+      }
+      files.setAttachments(attachments);
       if (regeneration) {
+        if (!modelId || typeof modelId !== "string") {
+          throw new Error(
+            "The response model is unavailable. Reload before regenerating."
+          );
+        }
         const operation = prepareCreation(
           sessionStorage,
           ownerId,
           draftMessage(text, attachments),
           modelId,
-          { conversationId, fork },
+          { conversationId, fork, forkKind: "regenerate" },
           originalTool ?? undefined
         );
         setPending(operation);
         await execute(operation);
       } else {
-        setOpen(true);
+        setEditingMessageId(message.id);
       }
     });
 
   return {
     begin,
     busy,
+    cancelEdit: () => {
+      if (busy || pending || isNavigating) {
+        return;
+      }
+      setEditingMessageId(undefined);
+      setEditingBoundary(undefined);
+      setEditRestoreFailed(false);
+      setSource(undefined);
+      setFailure("");
+    },
     compare: (
       message: EveMessageInput,
       modelIds: string[],
@@ -227,7 +309,7 @@ export const useEveFork = (
       clearComposer = true
     ) =>
       run(async () => {
-        if (!loaded || restoreFailed || pending || open) {
+        if (!loaded || restoreFailed || pending || editingMessageId) {
           return;
         }
         const operation = prepareResponseGroupCreation(
@@ -245,51 +327,82 @@ export const useEveFork = (
           },
           requestedTool
         );
-        saveComparisonDraftIntent(
-          sessionStorage,
-          ownerId,
-          conversationId,
-          operation.operationId,
+        onComparisonStarted?.(
+          operation.message,
+          operation.selectedTool,
           clearComposer
         );
         setPending(operation);
         await execute(operation);
-      }, false),
+      }),
     draft,
+    editingBoundary,
+    editingMessageId,
     error: failure,
     family,
     files,
-    locked: !loaded || restoreFailed || busy || !!pending,
-    open,
+    locked:
+      !loaded ||
+      restoreFailed ||
+      editRestoreFailed ||
+      busy ||
+      isNavigating ||
+      !!pending,
+    modelSelection: {
+      onChange: (value: SelectedModelValue) => {
+        if (busy || pending || isNavigating) {
+          return Promise.resolve();
+        }
+        setModelSelectionValue(value);
+        return Promise.resolve();
+      },
+      value: modelSelectionValue ?? selectedModel,
+    },
     pending,
     retry: () =>
-      run(
-        async () => {
-          if (pending) {
-            await execute(pending);
-          }
-        },
-        !(pending && "modelIds" in pending)
-      ),
+      run(async () => {
+        if (pending) {
+          await execute(pending);
+        }
+      }),
     selectedTool,
     setDraft,
-    setOpen,
     setSelectedTool,
     submit: () =>
       run(async () => {
-        if (!source) {
+        if (
+          !loaded ||
+          restoreFailed ||
+          editRestoreFailed ||
+          isNavigating ||
+          pending ||
+          !source
+        ) {
           return;
         }
-        const operation = prepareCreation(
-          sessionStorage,
-          ownerId,
-          draftMessage(draft, files.attachments),
-          selectedModel,
-          { conversationId, fork: source },
-          selectedTool ?? undefined
+        const modelIds = expandSelectedModelValue(
+          modelSelectionValue ?? selectedModel
         );
+        const message = draftMessage(draft, files.attachments);
+        const operation =
+          modelIds.length > 1
+            ? prepareResponseGroupCreation(
+                sessionStorage,
+                ownerId,
+                message,
+                modelIds,
+                { conversationId, fork: source, forkKind: "edit" },
+                selectedTool ?? undefined
+              )
+            : prepareCreation(
+                sessionStorage,
+                ownerId,
+                message,
+                modelIds[0],
+                { conversationId, fork: source, forkKind: "edit" },
+                selectedTool ?? undefined
+              );
         setPending(operation);
-        setOpen(false);
         await execute(operation);
       }),
   };

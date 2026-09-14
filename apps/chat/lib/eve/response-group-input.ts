@@ -12,12 +12,17 @@ export const eveResponseGroupInput = z
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
+    forkKind: z.enum(["edit", "comparison"]).optional(),
     projectId: z.uuid().optional(),
   })
   .strict()
   .refine(
     (input) => !(input.fork && input.projectId),
     "Forks inherit their source project."
+  )
+  .refine(
+    (input) => !input.forkKind || input.fork,
+    "Fork intent requires a source conversation."
   )
   .transform((input) => ({
     ...input,

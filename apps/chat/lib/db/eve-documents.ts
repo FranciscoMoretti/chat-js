@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { artifactKinds } from "../artifacts/artifact-kind";
@@ -47,24 +47,17 @@ export const purgeEveFamilyDocuments = async (
     const family = await tx
       .select({
         id: eveConversation.id,
-        rootConversationId: eveConversation.rootConversationId,
         state: eveConversation.state,
       })
       .from(eveConversation)
       .where(
         and(
           eq(eveConversation.ownerId, ownerId),
-          or(
-            eq(eveConversation.id, rootId),
-            eq(eveConversation.rootConversationId, rootId)
-          )
+          eq(eveConversation.chatId, rootId)
         )
       )
       .orderBy(eveConversation.id);
-    if (
-      !family.some((row) => row.id === rootId && !row.rootConversationId) ||
-      family.some((row) => row.state !== "deleting")
-    ) {
+    if (!family.length || family.some((row) => row.state !== "deleting")) {
       throw new Error(
         "The entire conversation family must be pending deletion."
       );
