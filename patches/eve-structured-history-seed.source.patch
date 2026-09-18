@@ -1,0 +1,734 @@
+diff --git a/packages/eve/src/execution/session-transcript-seed.ts b/packages/eve/src/execution/session-transcript-seed.ts
+--- a/packages/eve/src/execution/session-transcript-seed.ts
++++ b/packages/eve/src/execution/session-transcript-seed.ts
+@@ -19,7 +19,7 @@
+ });
+ const toolBase = { type: z.literal("dynamic-tool"), toolName: z.string().min(1), input: z.json() };
+ const tool = z.discriminatedUnion("state", [
+-  z.strictObject({ ...toolBase, state: z.literal("output-available"), output: z.json() }),
++  z.strictObject({ ...toolBase, state: z.literal("output-available"), output: z.json(), outputType: z.literal("text").optional() }),
+   z.strictObject({ ...toolBase, state: z.literal("output-error"), errorText: z.string() }),
+   z.strictObject({ ...toolBase, state: z.literal("output-denied"), reason: z.string().optional() }),
+ ]);
+@@ -56,7 +56,6 @@
+         }),
+       ]),
+     )
+-    .min(1)
+     .max(10_000),
+ });
+ export type SessionTranscriptSeed = z.infer<typeof sessionTranscriptSeed>;
+@@ -65,7 +64,14 @@
+ export function parseSessionTranscriptSeed(value: unknown): SessionTranscriptSeed {
+   if (new TextEncoder().encode(JSON.stringify(value)).byteLength > 8 * 1024 * 1024)
+     throw new Error("Session transcript seed byte limit exceeded.");
+-  return sessionTranscriptSeed.parse(value);
++  const seed = sessionTranscriptSeed.parse(value);
++  for (const message of seed.messages) {
++    for (const part of message.parts) {
++      if (part.type === "dynamic-tool" && part.state === "output-available" && part.outputType === "text" && typeof part.output !== "string")
++        throw new Error("Text tool output must be a string.");
++    }
++  }
++  return seed;
+ }
+ 
+ /** Derives both native model history and display from one capability-free transcript. */
+@@ -133,7 +139,9 @@
+           });
+           const output =
+             part.state === "output-available"
+-              ? { type: "json" as const, value: part.output }
++              ? part.outputType === "text" && typeof part.output === "string"
++                ? { type: "text" as const, value: part.output }
++                : { type: "json" as const, value: part.output }
+               : {
+                   type: "error-text" as const,
+                   value:
+diff --git a/packages/eve/src/execution/read-session-transcript-prefix.ts b/packages/eve/src/execution/read-session-transcript-prefix.ts
+--- a/packages/eve/src/execution/read-session-transcript-prefix.ts
++++ b/packages/eve/src/execution/read-session-transcript-prefix.ts
+@@ -26,7 +26,7 @@
+         input: part.input,
+         state: part.state,
+       };
+-      if (part.state === "output-available") return { ...base, output: part.output };
++      if (part.state === "output-available") return { ...base, output: part.output, ...(part.outputType === undefined ? {} : { outputType: part.outputType }) };
+       if (part.state === "output-error") return { ...base, errorText: part.errorText };
+       if (part.state === "output-denied") return { ...base, reason: part.approval?.reason };
+       break;
+diff --git a/packages/eve/src/public/transcript.ts b/packages/eve/src/public/transcript.ts
+--- a/packages/eve/src/public/transcript.ts
++++ b/packages/eve/src/public/transcript.ts
+@@ -1 +1,5 @@
+-export { parseSessionTranscriptSeed, type SessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++export {
++  parseSessionTranscriptSeed,
++  type SessionTranscriptSeed,
++} from "#execution/session-transcript-seed.js";
++export { createSessionHistorySeed } from "#execution/session-history-seed.js";
+diff --git a/packages/eve/src/client/message-reducer-types.ts b/packages/eve/src/client/message-reducer-types.ts
+--- a/packages/eve/src/client/message-reducer-types.ts
++++ b/packages/eve/src/client/message-reducer-types.ts
+@@ -193,6 +193,8 @@
+       readonly errorText?: never;
+       readonly input: unknown;
+       readonly output: unknown;
++      /** Imported model tool output is text rather than JSON when specified. */
++      readonly outputType?: "text";
+       readonly partial?: true;
+       readonly state: "output-available";
+     }
+diff --git a/packages/eve/src/harness/emission.ts b/packages/eve/src/harness/emission.ts
+--- a/packages/eve/src/harness/emission.ts
++++ b/packages/eve/src/harness/emission.ts
+@@ -216,12 +216,14 @@
+   emitFn: HarnessEmitFn,
+   state: HarnessEmissionState,
+   mode: RunMode,
++  messages?: readonly ModelMessage[],
+ ): Promise<HarnessEmissionState> {
+   await emitFn(
+     createTurnCompletedEvent({
+       sequence: state.sequence,
+       turnId: state.turnId,
+     }),
++    messages,
+   );
+ 
+   if (mode === "conversation") {
+diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
+--- a/packages/eve/src/harness/tool-loop.ts
++++ b/packages/eve/src/harness/tool-loop.ts
+@@ -2831,6 +2831,7 @@
+   emissionState: ReturnType<typeof getHarnessEmissionState>,
+   structured: JsonValue,
+   mode: RunMode,
++  messages: readonly ModelMessage[],
+ ): Promise<ReturnType<typeof getHarnessEmissionState>> {
+   await emit(
+     createResultCompletedEvent({
+@@ -2840,7 +2841,7 @@
+       turnId: emissionState.turnId,
+     }),
+   );
+-  return emitTurnEpilogue(emit, emissionState, mode);
++  return emitTurnEpilogue(emit, emissionState, mode, messages);
+ }
+ 
+ /**
+@@ -2863,7 +2864,7 @@
+ 
+   if (schema === undefined) {
+     if (emit) {
+-      emissionState = await emitTurnEpilogue(emit, emissionState, "task");
++      emissionState = await emitTurnEpilogue(emit, emissionState, "task", session.history);
+       session = setHarnessEmissionState(session, emissionState);
+     }
+     return { next: { done: true, output: stepOutput ?? "" }, session };
+@@ -2887,7 +2888,7 @@
+ 
+   session = persistStructuredAssistantTurn(session, history, structured);
+   if (emit) {
+-    emissionState = await emitStructuredResult(emit, emissionState, structured, "task");
++    emissionState = await emitStructuredResult(emit, emissionState, structured, "task", session.history);
+     session = setHarnessEmissionState(session, emissionState);
+   }
+   return { next: { done: true, output: structured }, session };
+@@ -2913,7 +2914,7 @@
+ 
+   if (schema === undefined) {
+     if (emit) {
+-      emissionState = await emitTurnEpilogue(emit, emissionState, "conversation");
++      emissionState = await emitTurnEpilogue(emit, emissionState, "conversation", session.history);
+       session = setHarnessEmissionState(session, emissionState);
+     }
+     const settledTurn = { output: stepOutput ?? "" } satisfies SettledTurn;
+@@ -2941,7 +2942,7 @@
+ 
+   session = persistStructuredAssistantTurn(session, history, structured);
+   if (emit) {
+-    emissionState = await emitStructuredResult(emit, emissionState, structured, "conversation");
++    emissionState = await emitStructuredResult(emit, emissionState, structured, "conversation", session.history);
+     session = setHarnessEmissionState(session, emissionState);
+   }
+   const settledTurn = { output: structured } satisfies SettledTurn;
+diff --git a/docs/channels/eve.mdx b/docs/channels/eve.mdx
+--- a/docs/channels/eve.mdx
++++ b/docs/channels/eve.mdx
+@@ -219,3 +219,34 @@
+ The new session retains its own authentication, instructions, limits, and execution identity. eve derives model and display history from the same durable imported prefix. Completed tool results remain historical content; tools are not replayed. Imported attachments are resolved through the destination channel on the first turn. A later source sandbox is not inherited. Application-owned documents must be restored separately to the selected boundary. Imported messages retained in the prefix remain addressable in descendant forks.
+ 
+ Imported assistant seed messages may include an optional `modelId` (1–512 characters), using the same provider/model reference as `step.started`. It is preserved in display metadata across imported forks. This informational value does not select a model or change executable history; the application chooses the model for a new turn. User seed messages and arbitrary metadata remain rejected.
++
++
++## Importing selected settled history
++
++The experimental `createSessionHistorySeed` export from `eve/transcript` converts
++selected structured model messages into the existing server-resolved transcript
++seed. It returns `seed`, one destination `messageIds` entry per input message, and
++a `toolCallIds` map. Assistant calls and their adjacent tool-result batch share a
++display-message identity. IDs are local to the new session.
++
++Capture immutable history in a memory provider's `turn.completed` callback, select
++the desired settled prefix, and call `createSessionHistorySeed(history)` on the
++server. Bind its seed to an authorized, immutable operation and return it through
++the channel's existing `resolveSeed` callback. The browser sends the operation ID;
++it must not choose arbitrary raw history. Empty history supports replacing the
++first user message. Initial seeding emits history and waits without model or tool
++replay; a later send begins fresh execution.
++
++The helper preserves text, unsigned reasoning, URL attachments, and paired tool
++results of type JSON, text, or error-text. It rejects unsupported provider data,
++system messages, binary attachments, incomplete tools, pending approvals, and
++oversized input. Text results remain text when copied again. Attachment URLs must
++already be authorized for the destination. Keep model selection, UI annotations,
++resource manifests, retention, and retry receipts in the application.
++
++This is normalized conversation import, not exact execution restoration. It does
++not export historical checkpoints, define compaction boundary mapping, copy
++sandbox resources, or establish a writer fence. Memory-capture failures are
++logged by the runtime; the application must require its own persisted receipt
++before declaring a branch ready. Approval/authentication pauses are not settled
++captures.
+diff --git a/packages/eve/src/execution/session-history-seed.ts b/packages/eve/src/execution/session-history-seed.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/session-history-seed.ts
+@@ -0,0 +1,188 @@
++import { z } from "#compiled/zod/index.js";
++import {
++  parseSessionTranscriptSeed,
++  type SessionTranscriptSeed,
++} from "#execution/session-transcript-seed.js";
++
++const withoutEmptyProviderOptions = <T extends z.ZodType>(schema: T) =>
++  z.preprocess((value) => {
++    if (
++      value !== null &&
++      typeof value === "object" &&
++      !Array.isArray(value) &&
++      "providerOptions" in value
++    ) {
++      const { providerOptions, ...content } = value;
++      if (
++        providerOptions === undefined ||
++        (providerOptions !== null &&
++          typeof providerOptions === "object" &&
++          !Array.isArray(providerOptions) &&
++          Object.keys(providerOptions).length === 0)
++      )
++        return content;
++    }
++    return value;
++  }, schema);
++const text = withoutEmptyProviderOptions(
++  z.strictObject({ type: z.literal("text"), text: z.string() }),
++);
++const reasoning = withoutEmptyProviderOptions(
++  z.strictObject({ type: z.literal("reasoning"), text: z.string() }),
++);
++const url = z.preprocess((value) => (value instanceof URL ? value.href : value), z.url());
++const file = withoutEmptyProviderOptions(
++  z.strictObject({
++    type: z.literal("file"),
++    data: url,
++    mediaType: z.string().min(1),
++    filename: z.string().optional(),
++  }),
++);
++const image = withoutEmptyProviderOptions(
++  z.strictObject({
++    type: z.literal("image"),
++    image: url,
++    mediaType: z.string().startsWith("image/"),
++  }),
++);
++const call = withoutEmptyProviderOptions(
++  z.strictObject({
++    type: z.literal("tool-call"),
++    toolCallId: z.string().min(1),
++    toolName: z.string().min(1),
++    input: z.json(),
++  }),
++);
++const result = withoutEmptyProviderOptions(
++  z.strictObject({
++    type: z.literal("tool-result"),
++    toolCallId: z.string().min(1),
++    toolName: z.string().min(1),
++    output: z.discriminatedUnion("type", [
++      z.strictObject({ type: z.literal("json"), value: z.json() }),
++      z.strictObject({ type: z.literal("text"), value: z.string() }),
++      z.strictObject({ type: z.literal("error-text"), value: z.string() }),
++    ]),
++  }),
++);
++const historySchema = z
++  .array(
++    z.discriminatedUnion("role", [
++      z.strictObject({
++        role: z.literal("user"),
++        content: z.union([z.string(), z.array(z.union([text, file, image])).min(1)]),
++      }),
++      z.strictObject({
++        role: z.literal("assistant"),
++        content: z.union([z.string(), z.array(z.union([text, reasoning, file, call])).min(1)]),
++      }),
++      z.strictObject({ role: z.literal("tool"), content: z.array(result).min(1) }),
++    ]),
++  )
++  .max(10_000);
++
++type SeedMessage = SessionTranscriptSeed["messages"][number];
++type AssistantSeed = Extract<SeedMessage, { role: "assistant" }>;
++
++/**
++ * Converts a trusted, selected, settled conversation into a fresh idle-session seed.
++ * This is a bounded normalizer, not a historical reader or runtime checkpoint.
++ * Unsupported provider-specific data, system messages, binary files, live approvals,
++ * and incomplete tool batches reject rather than silently changing model context.
++ * File URLs must already belong to the destination; channel authorization is used
++ * on first continuation. Returned message IDs are scoped to the new session.
++ */
++export function createSessionHistorySeed(value: unknown): {
++  readonly seed: SessionTranscriptSeed;
++  readonly messageIds: readonly string[];
++  readonly toolCallIds: Readonly<Record<string, string>>;
++} {
++  const encoded = JSON.stringify(value);
++  if (encoded === undefined || new TextEncoder().encode(encoded).byteLength > 8 * 1024 * 1024)
++    throw new Error("Session history byte limit exceeded.");
++  const history = historySchema.parse(value);
++  const messages: SeedMessage[] = [];
++  const messageIds: string[] = [];
++  const toolCallIds: Record<string, string> = Object.create(null);
++  let toolSequence = 0;
++  for (let index = 0; index < history.length; index++) {
++    const message = history[index]!;
++    const messageId = `seed_message_${messages.length}`;
++    if (message.role === "tool") throw new Error("Unpaired tool results in session history.");
++    messageIds.push(messageId);
++    if (message.role === "user") {
++      const content =
++        typeof message.content === "string"
++          ? [{ type: "text" as const, text: message.content }]
++          : message.content;
++      messages.push({
++        role: "user",
++        parts: content.map((part) => {
++          if (part.type === "text") return part;
++          return {
++            type: "file",
++            url: part.type === "image" ? part.image : part.data,
++            mediaType: part.mediaType,
++            ...(part.type === "file" && part.filename !== undefined
++              ? { filename: part.filename }
++              : {}),
++          };
++        }),
++      });
++      continue;
++    }
++    const content =
++      typeof message.content === "string"
++        ? [{ type: "text" as const, text: message.content }]
++        : message.content;
++    const calls = content.filter((part) => part.type === "tool-call");
++    const next = history[index + 1];
++    if (calls.length && (next?.role !== "tool" || next.content.length !== calls.length))
++      throw new Error("Session history requires a complete adjacent tool-result batch.");
++    const parts: AssistantSeed["parts"] = [];
++    let callIndex = 0;
++    for (const part of content) {
++      if (part.type !== "tool-call") {
++        if (callIndex)
++          throw new Error("Assistant content after tool calls requires a separate message.");
++        if (part.type === "file")
++          parts.push({
++            type: "file",
++            url: part.data,
++            mediaType: part.mediaType,
++            filename: part.filename,
++          });
++        else parts.push(part);
++        continue;
++      }
++      const output = next?.role === "tool" ? next.content[callIndex++] : undefined;
++      if (!output || output.toolCallId !== part.toolCallId || output.toolName !== part.toolName)
++        throw new Error("Tool results must match call identity, name and order.");
++      if (Object.hasOwn(toolCallIds, part.toolCallId))
++        throw new Error("Duplicate tool-call identity in session history.");
++      toolCallIds[part.toolCallId] = `seed_tool_${toolSequence++}`;
++      const base = { type: "dynamic-tool" as const, toolName: part.toolName, input: part.input };
++      if (output.output.type === "error-text")
++        parts.push({ ...base, state: "output-error", errorText: output.output.value });
++      else if (output.output.type === "text")
++        parts.push({
++          ...base,
++          state: "output-available",
++          output: output.output.value,
++          outputType: "text",
++        });
++      else parts.push({ ...base, state: "output-available", output: output.output.value });
++    }
++    messages.push({ role: "assistant", parts });
++    if (calls.length) {
++      messageIds.push(messageId);
++      index++;
++    }
++  }
++  return {
++    seed: parseSessionTranscriptSeed({ attachments: "channel", messages }),
++    messageIds,
++    toolCallIds,
++  };
++}
+diff --git a/packages/eve/src/execution/session-history-seed.test.ts b/packages/eve/src/execution/session-history-seed.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/session-history-seed.test.ts
+@@ -0,0 +1,162 @@
++import { expect, it } from "vitest";
++import { createSessionHistorySeed } from "#public/transcript.js";
++import { prepareSessionTranscriptSeed } from "#execution/session-transcript-seed.js";
++import { prepareSessionTranscriptPrefix } from "#execution/read-session-transcript-prefix.js";
++
++const call = {
++  type: "tool-call",
++  toolCallId: "original-call",
++  toolName: "calculate",
++  input: { n: 2 },
++};
++const result = {
++  type: "tool-result",
++  toolCallId: "original-call",
++  toolName: "calculate",
++  output: { type: "json", value: { answer: 4 } },
++};
++const selected = [
++  { role: "user", content: "Calculate" },
++  { role: "assistant", content: [call] },
++  { role: "tool", content: [result] },
++  { role: "assistant", content: "Four" },
++];
++
++it("imports selected structured roles with fresh paired identities and deterministic display mapping", () => {
++  const imported = createSessionHistorySeed(selected);
++  const prepared = prepareSessionTranscriptSeed(imported.seed);
++  expect(imported.messageIds).toEqual([
++    "seed_message_0",
++    "seed_message_1",
++    "seed_message_1",
++    "seed_message_2",
++  ]);
++  expect(imported.toolCallIds).toEqual({ "original-call": "seed_tool_0" });
++  expect(prepared.history).toEqual([
++    { role: "user", content: [{ type: "text", text: "Calculate" }] },
++    { role: "assistant", content: [{ ...call, toolCallId: "seed_tool_0" }] },
++    { role: "tool", content: [{ ...result, toolCallId: "seed_tool_0" }] },
++    { role: "assistant", content: [{ type: "text", text: "Four" }] },
++  ]);
++  expect(createSessionHistorySeed(selected)).toEqual(imported);
++  expect(selected[1]?.content).toEqual([call]);
++});
++
++it("permits an empty selected prefix for editing or regenerating the first turn", () => {
++  expect(prepareSessionTranscriptSeed(createSessionHistorySeed([]).seed)).toEqual({
++    history: [],
++    messages: [],
++  });
++});
++
++it.each(["text", "json", "error-text"])(
++  "preserves %s tool outputs including a subsequent imported-prefix fork",
++  (type) => {
++    const output = { type, value: "plain result" };
++    const { seed } = createSessionHistorySeed([
++      ...selected.slice(0, 2),
++      { role: "tool", content: [{ ...result, output }] },
++      { role: "user", content: "replace this" },
++    ]);
++    const prepared = prepareSessionTranscriptSeed(seed);
++    const prefix = prepareSessionTranscriptPrefix(prepared.messages, "seed_message_2");
++    expect(prepared.history[2]).toMatchObject({ role: "tool", content: [{ output }] });
++    expect(prefix.history[2]).toMatchObject({ role: "tool", content: [{ output }] });
++  },
++);
++
++it("retains destination-owned file URLs for deferred channel staging, including URL objects", () => {
++  const { seed } = createSessionHistorySeed([
++    {
++      role: "user",
++      content: [
++        {
++          type: "image",
++          image: new URL("https://owned.example/image.png"),
++          mediaType: "image/png",
++        },
++        {
++          type: "file",
++          data: "https://owned.example/report.pdf",
++          mediaType: "application/pdf",
++          filename: "report.pdf",
++        },
++      ],
++    },
++  ]);
++  expect(seed.attachments).toBe("channel");
++  expect(seed.messages[0]?.parts).toEqual([
++    { type: "file", url: "https://owned.example/image.png", mediaType: "image/png" },
++    {
++      type: "file",
++      url: "https://owned.example/report.pdf",
++      mediaType: "application/pdf",
++      filename: "report.pdf",
++    },
++  ]);
++});
++
++it.each(
++  [
++    [{ role: "assistant", content: [call] }],
++    [{ role: "tool", content: [result] }],
++    [
++      { role: "assistant", content: [call] },
++      { role: "tool", content: [{ ...result, toolCallId: "wrong" }] },
++    ],
++    [
++      { role: "assistant", content: [call] },
++      { role: "tool", content: [{ ...result, toolName: "wrong" }] },
++    ],
++    [...selected, ...selected],
++    [{ role: "system", content: "private instructions" }],
++    [{ role: "assistant", content: [{ ...call, providerExecuted: true }] }, selected[2]],
++    [{ role: "assistant", content: [call, { type: "text", text: "after call" }] }, selected[2]],
++    [
++      {
++        role: "user",
++        content: [{ type: "file", data: "file:///private", mediaType: "text/plain" }],
++      },
++    ],
++    [
++      {
++        role: "user",
++        content: [{ type: "file", data: new Uint8Array([1]), mediaType: "text/plain" }],
++      },
++    ],
++    [
++      { role: "assistant", content: [call] },
++      { role: "tool", content: [{ ...result, output: { type: "content", value: [] } }] },
++    ],
++  ].map((history) => ({ history })),
++)(
++  "rejects unsupported or unsettled histories instead of normalizing away semantics: %j",
++  ({ history }) => {
++    expect(() => createSessionHistorySeed(history)).toThrow();
++  },
++);
++
++it("rejects oversize histories and malformed text output before creating a native session", () => {
++  expect(() =>
++    createSessionHistorySeed([{ role: "user", content: "x".repeat(8 * 1024 * 1024) }]),
++  ).toThrow("byte limit");
++  expect(() =>
++    prepareSessionTranscriptSeed({
++      messages: [
++        {
++          role: "assistant",
++          parts: [
++            {
++              type: "dynamic-tool",
++              toolName: "x",
++              input: {},
++              state: "output-available",
++              output: {},
++              outputType: "text",
++            },
++          ],
++        },
++      ],
++    }),
++  ).toThrow("Text tool output");
++});
+diff --git a/packages/eve/src/execution/session-history-seed.integration.test.ts b/packages/eve/src/execution/session-history-seed.integration.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/eve/src/execution/session-history-seed.integration.test.ts
+@@ -0,0 +1,133 @@
++import { expect, it } from "vitest";
++import { defineMemory } from "#public/memory/index.js";
++import { createSessionHistorySeed } from "#public/transcript.js";
++import { createTestRuntime } from "#internal/testing/app-harness.js";
++import { captureTurnEvents } from "#internal/testing/events.js";
++import { start } from "#internal/workflow/runtime.js";
++import { createBundledRuntimeCompiledArtifactsSource } from "#runtime/compiled-artifacts-source.js";
++import { workflowEntry } from "#execution/workflow-entry.js";
++import { createWorkflowRuntime } from "#execution/workflow-runtime.js";
++import { defaultMessageReducer } from "#client/message-reducer.js";
++import type { ModelMessage } from "ai";
++
++const context = () => ({
++  "eve.auth": null,
++  "eve.bundle": { source: createBundledRuntimeCompiledArtifactsSource() },
++  "eve.channel": { kind: "http", state: {} },
++  "eve.mode": "conversation",
++});
++
++it("captures through public memory, then edits/regenerates/branches into fresh runs without checkpoint reads or execution clones", async () => {
++  const captures = new Map<string, readonly ModelMessage[]>();
++  const fixture = await createTestRuntime({
++    modules: [
++      {
++        logicalPath: "memory/branch-history.ts",
++        loadNamespace: async () => ({
++          default: defineMemory({
++            scope: "branch-history-test",
++            namespace: "branch-history-test",
++            provider: {
++              recall: { "turn.started": () => null },
++              capture: {
++                "turn.completed": (ctx) => {
++                  captures.set(`${ctx.session.id}:${ctx.turn.id}`, structuredClone(ctx.messages));
++                },
++              },
++            },
++          }),
++        }),
++      },
++    ],
++  });
++  await fixture.run(async () => {
++    const runtime = createWorkflowRuntime({
++      compiledArtifactsSource: createBundledRuntimeCompiledArtifactsSource(),
++    });
++    const source = await start(workflowEntry, [
++      { input: { message: "remember first question" }, serializedContext: context() },
++    ]);
++    const sourceStream = captureTurnEvents(source);
++    const stop = async (sessionId: string) => {
++      await runtime.dispatchSession({ sessionId, command: { kind: "reset" } });
++    };
++    try {
++      const initialEvents = await sourceStream.nextTurn();
++      expect(
++        initialEvents.some((event) => event.type === "turn.completed"),
++        JSON.stringify(initialEvents),
++      ).toBe(true);
++      await expect.poll(() => [...captures.keys()]).toContain(`${source.runId}:turn_0`);
++      const first = captures.get(`${source.runId}:turn_0`);
++      expect(first).toBeDefined();
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "excluded second question" } },
++      });
++      await sourceStream.nextTurn();
++      const whole = captures.get(`${source.runId}:turn_1`);
++      expect(whole).toBeDefined();
++      const cases = [
++        { label: "edit-first", history: [], message: "replacement first question" },
++        { label: "regenerate-first", history: [], message: "remember first question" },
++        { label: "edit-second", history: first, message: "replacement second question" },
++        { label: "regenerate-second", history: first, message: "excluded second question" },
++        { label: "branch", history: whole, message: "independent followup" },
++      ];
++      for (const scenario of cases) {
++        const imported = createSessionHistorySeed(scenario.history);
++        const child = await start(workflowEntry, [
++          { input: { message: "" }, seed: imported.seed, serializedContext: context() },
++        ]);
++        const stream = captureTurnEvents(child);
++        try {
++          const idle = await stream.nextTurn();
++          expect(
++            idle.map((event) => event.type),
++            scenario.label,
++          ).toEqual(["history.seeded", "session.waiting"]);
++          expect(captures.has(`${child.runId}:turn_0`)).toBe(false);
++          await runtime.dispatchSession({
++            sessionId: child.runId,
++            command: { kind: "send", payload: { message: scenario.message } },
++          });
++          const events = await stream.nextTurn();
++          expect(
++            events.some((event) => event.type === "turn.completed"),
++            scenario.label,
++          ).toBe(true);
++          const reducer = defaultMessageReducer();
++          const projection = [...idle, ...events].reduce(reducer.reduce, reducer.initial());
++          expect(
++            projection.messages.filter((message) => message.role === "user").at(-1)?.parts,
++          ).toContainEqual({ type: "text", text: scenario.message, state: "done" });
++          if (scenario.label === "edit-second")
++            expect(JSON.stringify(projection.messages)).not.toContain("excluded second question");
++          const continued = captures.get(`${child.runId}:turn_0`);
++          expect(continued).toBeDefined();
++          expect(JSON.stringify(continued)).toContain(scenario.message);
++          expect(child.runId).not.toBe(source.runId);
++        } finally {
++          await stop(child.runId);
++          await child.returnValue;
++          stream.dispose();
++        }
++      }
++      await runtime.dispatchSession({
++        sessionId: source.runId,
++        command: { kind: "send", payload: { message: "parent keeps going" } },
++      });
++      expect((await sourceStream.nextTurn()).some((event) => event.type === "turn.completed")).toBe(
++        true,
++      );
++      expect(JSON.stringify(captures.get(`${source.runId}:turn_2`))).toContain(
++        "excluded second question",
++      );
++      expect(JSON.stringify(first)).not.toContain("excluded second question");
++    } finally {
++      await stop(source.runId);
++      await source.returnValue;
++      sourceStream.dispose();
++    }
++  });
++}, 30_000);
+diff --git a/research/structured-history-seed.md b/research/structured-history-seed.md
+new file mode 100644
+--- /dev/null
++++ b/research/structured-history-seed.md
+@@ -0,0 +1,28 @@
++---
++issue: null
++status: draft
++last_updated: 2026-09-18
++---
++
++# Selected settled history seeds
++
++Prototype a small continuation contract on top of the maintained transcript seed:
++`createSessionHistorySeed(history)` returns `{ seed, messageIds, toolCallIds }`.
++A public memory capture callback supplies immutable structured history. The
++application selects a settled boundary and provides an authorized seed through
++`resolveSeed`. Empty prefixes support first-message edit and regeneration.
++
++Reuse the existing idle seed path; do not read or clone Workflow checkpoints.
++Normal successful completion must supply history to the declared memory callback.
++Reject unsupported provider-specific semantics instead of pretending this is
++lossless state restoration. Preserve text versus JSON tool output across copies.
++
++Local mock integration covers edit-first, regenerate-first, edit-later,
++regenerate-later, branching, idle initialization, continued parent execution,
++and the public capture hook. Pure tests cover bounds, pair validation, IDs,
++attachments, and unsupported inputs. Existing seed integration covers the trusted
++channel import. Paid-model and hosted e2e validation are intentionally pending.
++
++Resource fencing/snapshots, historical selection across compaction, and a
++production ChatJS capture store remain separate work. This experiment has no
++published issue or contribution.
+diff --git a/.changeset/settled-history-seed.md b/.changeset/settled-history-seed.md
+new file mode 100644
+--- /dev/null
++++ b/.changeset/settled-history-seed.md
+@@ -0,0 +1,5 @@
++---
++"eve": patch
++---
++
++Add a bounded structured-history seed helper for fresh idle conversations and preserve imported text tool results. Supply settled history to successful turn-completion memory capture callbacks.

@@ -89,6 +89,7 @@ const completedPart = (part: EveMessagePart): SeedPart => {
         ...base,
         state: part.state,
         output: z.json().parse(part.output),
+        ...(part.outputType ? { outputType: part.outputType } : {}),
       };
     }
     case "output-error": {

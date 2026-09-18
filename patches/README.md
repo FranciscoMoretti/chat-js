@@ -8,6 +8,7 @@ The readable source inputs are applied in this order from the EVE repository roo
 2. `eve-collector-inventory.source.patch` from `packages/eve`
 3. `eve-approval-receipts.source.patch`
 4. `eve-next-production-server.source.patch`
+5. `eve-structured-history-seed.source.patch` (experimental selected-history initialization)
 
 They are not `patchedDependencies` entries. They document the source that must produce `eve@0.52.2.patch`; only the compiled patch is installed by Bun.
 
@@ -36,6 +37,7 @@ git apply "$fork_root/patches/eve-session-checkpoints.source.patch"
 git -C packages/eve apply "$fork_root/patches/eve-collector-inventory.source.patch"
 git apply "$fork_root/patches/eve-approval-receipts.source.patch"
 git apply "$fork_root/patches/eve-next-production-server.source.patch"
+git apply "$fork_root/patches/eve-structured-history-seed.source.patch"
 pnpm install --frozen-lockfile
 pnpm --filter eve build:types
 pnpm --filter eve build:js
@@ -68,3 +70,16 @@ The template helper reverse-checks the installed patch, then packages it as `ven
 Upstream the fork as independent EVE slices: checkpoint/fork protocol and authorization; transcript seed/imported-prefix fork; durable events; named checkpoint readiness; sandbox snapshots/local identity; then the collector attribute separately. Each slice needs its native regression, wire/version contract, and explicit retention owner. No issue or change has been published.
 
 Remove a local slice only after an upstream release has the same public contract, its focused regression passes against that release, the fresh build shrinks the compiled patch, and ChatJS policy tests remain green. Do not delete product-policy tests merely because an EVE primitive lands upstream.
+
+## Structured history experiment
+
+The fifth source patch adds bounded `createSessionHistorySeed` conversion and fixes successful completion memory capture. It reuses the existing trusted seed channel and idle runtime. It is an experiment, not a production migration or complete provider-history contract. See [results and limitations](../docs/upstream-drafts/eve-minimal-history-contract-experiment.md).
+
+After building that native source, regenerate only this experiment's compiled modules and changed harness functions while preserving the existing overlay:
+
+```sh
+bun prototypes/app-owned-branching/build-eve-history-patch.ts "$eve_root" "$expected_root"
+bun install --frozen-lockfile
+```
+
+For this command, `expected_root` must be the **pristine**, unpacked npm package, before applying the compiled patch. The script validates its version and exports. The helper uses TypeScript's parser to replace named functions rather than replacing whole harness files with unrelated source-build differences.
