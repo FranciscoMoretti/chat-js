@@ -169,7 +169,7 @@ const applyChatTemplateSourceTransforms = async (
       join(getRepoRoot(), "apps", "chat")
     ),
     packageName: "eve",
-    patchPath: join(getRepoRoot(), "patches", "eve@0.52.2.patch"),
+    patchPath: join(getRepoRoot(), "patches", "eve@0.61.0.patch"),
   });
   await vendorPatchedPackage({
     destination,
@@ -178,7 +178,7 @@ const applyChatTemplateSourceTransforms = async (
       join(getRepoRoot(), "apps", "chat")
     ),
     packageName: "@ai-sdk/mcp",
-    patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.45.patch"),
+    patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.52.patch"),
   });
   await vendorPatchedPackage({
     destination,

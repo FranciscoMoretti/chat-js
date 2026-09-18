@@ -95,7 +95,7 @@ Key entry points: [agent](../apps/chat/agent/agent.ts), [gateway](../apps/chat/a
 | --- | --- | --- |
 | `eve@0.52.2` compiled dependency and readable source patches | Approval continuation, native checkpoints/forks/restored history, idle seeds, approval receipts, resource/birth/inventory support | Upstream or a published maintained fork must replace them with equivalent contracts and migration tests. Browser and worker must use matching patched wire versions |
 | `@workflow/world-postgres@5.0.0-beta.40` patch | Cancellation delivery and efficient resumed-stream reads | Re-evaluate on upstream upgrade; concurrency/deduplication and transfer regressions need explicit tests |
-| `@ai-sdk/mcp@2.0.45` patch | Single-flight SSE auth recovery and late-401 handling | Replace after upstream equivalent lands; test rotating credentials across fresh and established clients |
+| `@ai-sdk/mcp@2.0.52` patch | Single-flight SSE auth recovery and late-401 handling | Replace after upstream equivalent lands; test rotating credentials across fresh and established clients |
 | Patched runtime distribution | Scaffold and template sync now verify and vendor EVE, MCP and Postgres Workflow World together | Keep clean-install and archive-presence checks when upgrading any patched package |
 | Direct Postgres stream-position reads | Efficient billing reconciliation currently uses pinned World schema/stream naming | Replace with a supported authorized batch-position API; schema upgrades need adapter/regression review |
 | Local SQL resource fences/inventories/retirement | Safe erasure is not a single upstream delete call | Hosted/provider-portable deletion needs separate design and certification; setup is an explicit local migration |

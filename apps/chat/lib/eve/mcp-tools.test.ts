@@ -361,7 +361,7 @@ it("registers native per-call approval restricted to the session owner", async (
   }
   const tools = await resolve(
     {},
-    { channel: {}, messages: [], session: context.session }
+    { channel: {}, messages: [], model: null, session: context.session }
   );
   const { approval } = tools.server__echo;
   if (!approval || typeof approval === "function" || !approval.response) {
@@ -369,6 +369,7 @@ it("registers native per-call approval restricted to the session owner", async (
   }
   expect(
     await approval.request({
+      abortSignal: new AbortController().signal,
       approvedTools: new Set(),
       callId: "call",
       getSandbox: () => {

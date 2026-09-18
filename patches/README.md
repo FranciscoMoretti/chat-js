@@ -1,85 +1,43 @@
-# Maintained EVE runtime fork
+# Maintained dependency patches
 
-`eve@0.52.2.patch` is the active Bun dependency patch. `package.json` and `bun.lock` pin it; scaffold generation also verifies the installed package before it vendors a tarball. The baseline is EVE tag `eve@0.52.2` (`247b3f05244893170bcf4dbcf20a2e35e416ccee`). The installed worker and browser client support stream versions 21–28. The old claim that this fork only advanced to version 26 was stale.
+The isolated ChatJS worktree installs **eve 0.61.0** with `eve@0.61.0.patch`. The readable implementation and tests are in **one** `eve-0.61.0.source.patch`, based on tag `eve@0.61.0` (`241e5004cb1ac1e2bcd716a154bbc64f5a61cc53`). Both `package.json` and `bun.lock` pin the installed artifact. Scaffold generation verifies and vendors that same installed package.
 
-The readable source inputs are applied in this order from the EVE repository root:
+The five old source patches, compiled 0.52.2 patch, and incremental experiment builder have been retired. They remain in Git at `27c14d41`. See the [reduction report](../docs/upstream-drafts/eve-fork-061-reduction.md) for retained contracts and migration limits.
 
-1. `eve-session-checkpoints.source.patch` (9,607 lines)
-2. `eve-collector-inventory.source.patch` from `packages/eve`
-3. `eve-approval-receipts.source.patch`
-4. `eve-next-production-server.source.patch`
-5. `eve-structured-history-seed.source.patch` (experimental selected-history initialization)
+## Rebuild
 
-They are not `patchedDependencies` entries. They document the source that must produce `eve@0.52.2.patch`; only the compiled patch is installed by Bun.
-
-## Capability ownership
-
-EVE owns reusable runtime primitives: checkpoint capture/read/restore, bounded transcript restoration, named idle checkpoints, validated fork authorization, explicit sandbox snapshot capability, durable metadata/hook-result/compaction events, and approval receipts. These are candidates for upstream proposals.
-
-The Next.js integration also starts the managed local production server while Next evaluates `phase-production-server`. Production routing uses the rewrites persisted during `next build`, so starting the child only inside `rewrites()` leaves `next start` proxying to an unopened stable port.
-
-ChatJS owns permanent product policy: principal-to-session ownership, immutable operation/retry payloads, model and credit choices, document/file manifests, public-copy access, family deletion, external resource inventory, and UI state. An EVE capability does not authorize a ChatJS source, accept an application operation, or prove deletion. The capability matrix and source-test boundaries are in [the maintenance draft](../docs/upstream-drafts/eve-fork-runtime-maintenance.md).
-
-## Rebuild gate
-
-The source sequence has passed `build:types` and `build:js` in an isolated Node 24 worktree with a new dependency tree populated from the existing local pnpm store. The rebuilt receipt helper and call sites also passed the four existing native approval-contract cases through a temporary test alias. This is useful source-build evidence, but it is not a clean-cache install, a native EVE source-test run, or byte-for-byte equivalence proof.
-
-The broader, test-inclusive `pnpm --filter eve typecheck` was attempted and fails in patched source tests: stale checkpoint snapshot versions, transcript seed/prefix authenticator types, an unused fork-test binding, and compaction/public-channel types. Repair and rerun that source suite before upstreaming or claiming full fork validation. Passing production builds do not close this gate.
+Use a separate checkout of the exact upstream tag and a pristine unpacked npm package. Apply the source patch at the checkout root:
 
 ```sh
-fork_root=/absolute/path/to/chat-js
-eve_root=$(mktemp -d)
-git clone https://github.com/vercel/eve.git "$eve_root"
-cd "$eve_root"
-git checkout 247b3f05244893170bcf4dbcf20a2e35e416ccee
-node --version # v24 or newer
-git apply "$fork_root/patches/eve-session-checkpoints.source.patch"
-git -C packages/eve apply "$fork_root/patches/eve-collector-inventory.source.patch"
-git apply "$fork_root/patches/eve-approval-receipts.source.patch"
-git apply "$fork_root/patches/eve-next-production-server.source.patch"
-git apply "$fork_root/patches/eve-structured-history-seed.source.patch"
-pnpm install --frozen-lockfile
-pnpm --filter eve build:types
-pnpm --filter eve build:js
+git apply "$chatjs_root/patches/eve-0.61.0.source.patch"
 ```
 
-Use a dedicated pristine package directory for the compiled-patch comparison; do not run `git diff` inside `node_modules/eve`, which is not an EVE repository. Apply the compiled patch to that copy and retain the resulting `diff` report as the review input for the source build:
+Build with eve's toolchain: vendored dependencies (`build:compiled`), production declarations (`tsconfig.build.json`), and JavaScript (`scripts/build-rolldown.mjs`, after copying compiled assets). The local validation used Bun and an isolated dependency tree; its root workspace manifest was adapted from upstream's pnpm workspace/catalog. That build-only adaptation is not in the source patch. The package assembler requires completed build outputs; it does not install dependencies or run tests.
+
+From ChatJS:
 
 ```sh
-published_root=$(mktemp -d)
-npm pack eve@0.52.2 --pack-destination "$published_root"
-tar -xzf "$published_root/eve-0.52.2.tgz" -C "$published_root"
-expected_root="$published_root/package"
-git -C "$expected_root" apply --check "$fork_root/patches/eve@0.52.2.patch"
-git -C "$expected_root" apply "$fork_root/patches/eve@0.52.2.patch"
-diff -ruN "$eve_root/packages/eve/dist/src" "$expected_root/dist/src" \
-  > "$published_root/source-build-vs-compiled.diff" || true
-
-# Installed package check after a clean Bun-cache installation.
-installed_eve="$fork_root/node_modules/eve"
-git -C "$installed_eve" apply --reverse --check \
-  "$fork_root/patches/eve@0.52.2.patch"
+bun scripts/build-eve-patch.ts "$eve_root" "$pristine_eve_package"
+bun install
+bun lint
+bun test:types
 ```
 
-The reverse check proves the installed package contains the compiled patch. The `diff` is not yet a passing equivalence assertion: the source build uses normal nested helpers while the installed patch relocates helpers and rewrites imports at the package root for Bun 1.3.11. Turn it into a failing verifier only after the relocation transform is explicit and it permits no other source-to-dist delta. Then repeat with a new Bun cache and fresh package installation. Remove the relocation only after a supported Bun version passes that fresh install and generated-output check with ordinary nested paths.
+The builder checks the source tag and published version, produces the source patch with a temporary Git index, and copies only changed source modules into the compiled overlay. It preserves the published package's vendored dependency bundles. New helpers are relocated to package-root files with explicit import aliases because Bun's nested-file patch installation previously failed. A fresh-cache install and public `eve/transcript` import verify this packaging.
 
-## Packaging and upstreaming
-
-The template helper reverse-checks the installed patch, then packages it as `vendor/eve-0.52.2.tgz`. This makes npm, Bun, pnpm, and Yarn scaffolds receive the same checked runtime. Archive metadata declares `microsandbox@^0.6.18` so npm enforces the peer used by the maintained snapshot lifecycle.
-
-Upstream the fork as independent EVE slices: checkpoint/fork protocol and authorization; transcript seed/imported-prefix fork; durable events; named checkpoint readiness; sandbox snapshots/local identity; then the collector attribute separately. Each slice needs its native regression, wire/version contract, and explicit retention owner. No issue or change has been published.
-
-Remove a local slice only after an upstream release has the same public contract, its focused regression passes against that release, the fresh build shrinks the compiled patch, and ChatJS policy tests remain green. Do not delete product-policy tests merely because an EVE primitive lands upstream.
-
-## Structured history experiment
-
-The fifth source patch adds bounded `createSessionHistorySeed` conversion and fixes successful completion memory capture. It reuses the existing trusted seed channel and idle runtime. It is an experiment, not a production migration or complete provider-history contract. See [results and limitations](../docs/upstream-drafts/eve-minimal-history-contract-experiment.md).
-
-After building that native source, regenerate only this experiment's compiled modules and changed harness functions while preserving the existing overlay:
+Verify an installed package with:
 
 ```sh
-bun prototypes/app-owned-branching/build-eve-history-patch.ts "$eve_root" "$expected_root"
-bun install --frozen-lockfile
+verify_root=$(mktemp -d)
+cp -R "$installed_eve" "$verify_root/package"
+git -C "$verify_root/package" apply --reverse --check "$chatjs_root/patches/eve@0.61.0.patch"
 ```
 
-For this command, `expected_root` must be the **pristine**, unpacked npm package, before applying the compiled patch. The script validates its version and exports. The helper uses TypeScript's parser to replace named functions rather than replacing whole harness files with unrelated source-build differences.
+Run this check outside the ChatJS Git tree; an ignored `node_modules` subdirectory can cause Git to skip patch paths. If Bun retains stale files after a patch change, reinstall the eve package with a fresh cache and verify again.
+
+Run the source unit and integration tests using eve's tier-specific Vitest configs; they resolve source aliases rather than stale compiled files. The reduction report records exact validation and outstanding upstream failures.
+
+## Other active patches
+
+- `ai-sdk-mcp@2.0.52.patch`: single-flight SSE authorization refresh and late-401 handling. Rebased from 2.0.45 by applying with Git and regenerating the diff against the new package. Correct hunk offsets matter for Bun. SDK versions across ChatJS, gateways, registry, thread, telemetry, and React are aligned with `ai@7.0.105`.
+- `workflow-world-postgres@5.0.0-beta.40.patch`: unchanged stream-transfer patch. This upgrade does not change the app's Postgres world package or migrate a database.

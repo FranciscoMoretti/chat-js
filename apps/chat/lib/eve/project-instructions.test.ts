@@ -73,6 +73,7 @@ const readInstructions = () =>
     {
       channel: {},
       messages: [],
+      model: null,
       session: {
         auth: { current: null, initiator: null },
         id: "native-session",

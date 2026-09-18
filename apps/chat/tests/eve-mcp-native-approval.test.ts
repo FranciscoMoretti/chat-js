@@ -183,7 +183,7 @@ test.each(["owner", "stranger"])(
         agent: { modelReference: { id: "mock" }, system: "Test", tools: [] },
         compaction: { recentWindowSize: 10, threshold: 100_000 },
         continuationToken: "continuation",
-        history: [{ role: "user", content: "Write" }],
+        history: [{ role: "user", kind: "user", content: "Write" }],
         sessionId: "session",
       },
     });

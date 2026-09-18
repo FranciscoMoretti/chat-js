@@ -195,9 +195,9 @@ describe("scaffoldFromTemplate", () => {
       await readFile(join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
     const archives = {
-      "@ai-sdk/mcp": "ai-sdk-mcp-2.0.45.tgz",
+      "@ai-sdk/mcp": "ai-sdk-mcp-2.0.52.tgz",
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
-      eve: "eve-0.52.2.tgz",
+      eve: "eve-0.61.0.tgz",
     };
 
     for (const [packageName, archiveName] of Object.entries(archives)) {
@@ -489,9 +489,9 @@ describe("scaffoldFromTemplate", () => {
         )
       ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
-      expect(packageJson.dependencies.eve).toBe("file:vendor/eve-0.52.2.tgz");
+      expect(packageJson.dependencies.eve).toBe("file:vendor/eve-0.61.0.tgz");
       expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe(
-        "file:vendor/ai-sdk-mcp-2.0.45.tgz"
+        "file:vendor/ai-sdk-mcp-2.0.52.tgz"
       );
       expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
         "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"

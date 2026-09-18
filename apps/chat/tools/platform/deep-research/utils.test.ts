@@ -38,7 +38,7 @@ const config: DeepResearchRuntimeConfig = {
   summarization_model: "test",
   summarization_model_max_tokens: 100,
 };
-const remote = { execute: vi.fn(), inputSchema: z.object({}) };
+const remote = { execute: vi.fn(), inputSchema: z.object({}), type: "dynamic" };
 
 beforeEach(() => {
   vi.clearAllMocks();

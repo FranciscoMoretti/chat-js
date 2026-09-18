@@ -5,7 +5,7 @@ const gatewayMetadataEntries = [
       dependency: "@ai-sdk/gateway",
       exportName: "VercelGateway",
       supportsVideo: true,
-      version: "4.0.75",
+      version: "4.0.85",
     },
   ],
   [

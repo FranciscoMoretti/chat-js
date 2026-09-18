@@ -32,6 +32,7 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
     {
       channel: {},
       messages: [],
+      model: null,
       session: {
         auth: {
           current: null,
@@ -67,6 +68,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
       {
         channel: {},
         messages: [],
+        model: null,
         session: { auth: { current: null, initiator: null }, id: "session" },
       }
     )
@@ -88,6 +90,7 @@ it("does not discover remote tools for an explicitly selected local capability",
         {
           channel: {},
           messages: [],
+          model: null,
           session: { auth: { current: null, initiator: null }, id: "session" },
         }
       )
@@ -108,6 +111,7 @@ it("never discovers registered account connectors for a guest", async () => {
         {
           channel: {},
           messages: [],
+          model: null,
           session: {
             auth: { current: null, initiator: null },
             id: "guest-session",

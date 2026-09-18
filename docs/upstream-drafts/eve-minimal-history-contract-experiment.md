@@ -1,5 +1,7 @@
 # Minimal EVE history contract: fork experiment
 
+> Historical 0.52.2 audit. The installed fork is now 0.61.0; see [the current reduction report](eve-fork-061-reduction.md) and [patch instructions](../../patches/README.md). Older patch files remain available in commit `27c14d41`.
+
 The smaller contract works for the tested **settled conversation** flows. It is not yet a complete ChatJS migration. The experiment uses the maintained EVE 0.52.2 fork, not pristine upstream; the existing authenticated transcript-seed channel and idle initialization remain prerequisites.
 
 ## What changed
