@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import DataGrid, { textEditor } from "react-data-grid";
 
 import { cn } from "@/lib/utils";
@@ -100,10 +100,11 @@ const PureSpreadsheetEditor = ({
 
   const [localRows, setLocalRows] = useState(initialRows);
 
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the controlled spreadsheet rows when the document changes.
+  const [previousRows, setPreviousRows] = useState(initialRows);
+  if (previousRows !== initialRows) {
+    setPreviousRows(initialRows);
     setLocalRows(initialRows);
-  }, [initialRows]);
+  }
 
   const handleRowsChange = (newRows: Record<string, string | number>[]) => {
     if (isReadonly) {

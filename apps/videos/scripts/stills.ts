@@ -20,6 +20,7 @@ for (const second of [
   36.7, 37, 38, 39, 40, 42.5, 45, 7,
 ]) {
   const output = `out/stills/${second}${seen.has(second) ? "-seek" : ""}.png`;
+  // oxlint-disable-next-line no-await-in-loop -- Preserve seek order and avoid concurrent browser renderers consuming unbounded memory.
   await renderStill({
     composition,
     frame: Math.round(second * composition.fps),
@@ -27,9 +28,14 @@ for (const second of [
     serveUrl,
   });
   if (seen.has(second)) {
+    // oxlint-disable-next-line no-await-in-loop -- Compare the repeated frame only after this sequential render has completed.
+    const [actual, expected] = await Promise.all([
+      readFile(output),
+      readFile(`out/stills/${second}.png`),
+    ]);
     assert.deepEqual(
-      await readFile(output),
-      await readFile(`out/stills/${second}.png`),
+      actual,
+      expected,
       "Out-of-order renders must be identical"
     );
   }

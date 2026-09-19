@@ -469,12 +469,27 @@ export type PromptInputProps = Omit<
 const convertBlobUrlToDataUrl = async (url: string): Promise<string> => {
   const response = await fetch(url);
   const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+  const { promise, resolve, reject } = Promise.withResolvers<string>();
+  const reader = new FileReader();
+  reader.addEventListener(
+    "load",
+    () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Unable to read attachment as a data URL"));
+      }
+    },
+    { once: true }
+  );
+  reader.addEventListener("error", () => reject(reader.error), { once: true });
+  reader.addEventListener(
+    "abort",
+    () => reject(new Error("Attachment read aborted")),
+    { once: true }
+  );
+  reader.readAsDataURL(blob);
+  return promise;
 };
 
 export const PromptInput = ({
@@ -581,37 +596,30 @@ export const PromptInput = ({
     [matchesAccept, maxFiles, maxFileSize, onError]
   );
 
-  const add = usingProvider
-    ? (incomingFiles: File[] | FileList) =>
-        controller.attachments.add(incomingFiles)
-    : addLocal;
-
-  const remove = usingProvider
-    ? (id: string) => controller.attachments.remove(id)
-    : (id: string) =>
-        setItems((prev) => {
-          const found = prev.find((file) => file.id === id);
-          if (found?.url) {
-            URL.revokeObjectURL(found.url);
-          }
-          return prev.filter((file) => file.id !== id);
-        });
-
-  const clear = usingProvider
-    ? () => controller.attachments.clear()
-    : () =>
-        setItems((prev) => {
-          for (const file of prev) {
-            if (file.url) {
-              URL.revokeObjectURL(file.url);
-            }
-          }
-          return [];
-        });
-
-  const openFileDialog = usingProvider
-    ? () => controller.attachments.openFileDialog()
-    : openFileDialogLocal;
+  const removeLocal = useCallback((id: string) => {
+    setItems((prev) => {
+      const found = prev.find((file) => file.id === id);
+      if (found?.url) {
+        URL.revokeObjectURL(found.url);
+      }
+      return prev.filter((file) => file.id !== id);
+    });
+  }, []);
+  const clearLocal = useCallback(() => {
+    setItems((prev) => {
+      for (const file of prev) {
+        if (file.url) {
+          URL.revokeObjectURL(file.url);
+        }
+      }
+      return [];
+    });
+  }, []);
+  const add = controller?.attachments.add ?? addLocal;
+  const remove = controller?.attachments.remove ?? removeLocal;
+  const clear = controller?.attachments.clear ?? clearLocal;
+  const openFileDialog =
+    controller?.attachments.openFileDialog ?? openFileDialogLocal;
 
   // Let provider know about our hidden file input so external menus can call openFileDialog()
   useEffect(() => {
@@ -967,6 +975,7 @@ export const PromptInputButton = ({
   ...props
 }: PromptInputButtonProps) => {
   const newSize =
+    // oxlint-disable-next-line react/no-react-children -- Preserve React child-count semantics for the public button sizing API.
     size ?? (Children.count(props.children) > 1 ? "sm" : "icon-sm");
 
   return (
@@ -1170,10 +1179,10 @@ export const PromptInputSpeechButton = ({
         }
       };
 
-      speechRecognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
+      speechRecognition.addEventListener("error", (event) => {
+        console.error("Speech recognition error:", event);
         setIsListening(false);
-      };
+      });
 
       recognitionRef.current = speechRecognition;
       // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.

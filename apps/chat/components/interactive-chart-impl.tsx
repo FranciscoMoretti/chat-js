@@ -190,17 +190,13 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
     }
 
     if (chart.type === "bar") {
-      const data = chart.elements.reduce(
-        (acc: Record<string, BarElement[]>, item) => {
-          const key = item.group;
-          if (!acc[key]) {
-            acc[key] = [];
-          }
-          acc[key].push(item);
-          return acc;
-        },
-        {}
-      );
+      const data: Record<string, BarElement[]> = {};
+      for (const item of chart.elements) {
+        if (!data[item.group]) {
+          data[item.group] = [];
+        }
+        data[item.group].push(item);
+      }
 
       const series = Object.entries(data).map(([group, elements], index) => ({
         data: elements?.map((e) => [e.label, e.value]),

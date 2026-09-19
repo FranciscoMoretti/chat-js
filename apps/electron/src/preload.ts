@@ -10,9 +10,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   cancelAuthFlow: () => ipcRenderer.invoke("chatjs:cancel-auth-flow"),
   getAuthState: () => ipcRenderer.invoke("chatjs:get-auth-state"),
   isElectron: true,
-  onAuthStateChanged: (callback: (state: unknown) => void) => {
+  onAuthStateChanged: (onStateChange: (state: unknown) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, state: unknown) => {
-      callback(state);
+      onStateChange(state);
     };
 
     ipcRenderer.on("chatjs:auth-state-changed", listener);

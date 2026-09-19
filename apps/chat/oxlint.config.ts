@@ -3,8 +3,6 @@ import core from "ultracite/oxlint/core";
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
-import baseline from "./oxlint-baseline.json" with { type: "json" };
-
 export default defineConfig({
   extends: [core, react, next],
   // Oxlint does not inherit ignorePatterns from extended configs.
@@ -13,7 +11,6 @@ export default defineConfig({
     ".eve/**",
     "tests/eve-results/**",
   ],
-  // Existing violations only: remove file/rule entries as they are fixed.
   overrides: [
     // EVE derives the public tool name from this filename.
     {
@@ -23,12 +20,6 @@ export default defineConfig({
       ],
       rules: { "unicorn/filename-case": "off" },
     },
-    ...baseline.overrides.map(({ files, rules }) => ({
-      files,
-      rules: Object.fromEntries(
-        Object.keys(rules).map((rule) => [rule, "off" as const])
-      ),
-    })),
   ],
   rules: {
     // Keep anonymous React callbacks consistent with prefer-arrow-callback.

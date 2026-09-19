@@ -89,6 +89,7 @@ export const processFilesForUpload = async (
 
   for (const file of files) {
     if (file.type.startsWith("image/")) {
+      // oxlint-disable-next-line no-await-in-loop -- Compress one image at a time to bound browser worker and memory use.
       const maybeCompressed = await compressImageIfNeeded(file, options);
       if (maybeCompressed.size > maxBytes) {
         stillOversized.push(file);

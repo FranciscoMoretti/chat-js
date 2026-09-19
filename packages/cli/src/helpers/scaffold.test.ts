@@ -333,11 +333,7 @@ describe("scaffoldFromTemplate", () => {
     expect(existsSync(join(destination, "biome.jsonc"))).toBe(false);
     expect(existsSync(join(destination, "oxlint.config.ts"))).toBe(true);
     expect(existsSync(join(destination, "oxfmt.config.ts"))).toBe(true);
-    const lintBaseline = await readFile(
-      join(destination, "oxlint-baseline.json"),
-      "utf-8"
-    );
-    expect(lintBaseline).not.toContain("packages/thread/src/");
+    expect(existsSync(join(destination, "oxlint-baseline.json"))).toBe(false);
 
     for (const path of [
       "app/(chat)/api/chat",

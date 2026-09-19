@@ -21,7 +21,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTreeLayout,
   initialTree,
-  PlaygroundTransport,
+  createPlaygroundTransport,
 } from "./thread-playground-model";
 import type {
   PlaygroundChat as ThreadChat,
@@ -525,6 +525,16 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
   );
 };
 
+const messageInput = (text: string, title: string, messageId?: string) => ({
+  messageId,
+  metadata: {
+    activeStreamId: null,
+    createdAt: new Date().toISOString(),
+    title,
+  },
+  text,
+});
+
 const PlaygroundSession = () => {
   const [draft, setDraft] = useState("");
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
@@ -546,21 +556,12 @@ const PlaygroundSession = () => {
         setStoppedIds((previous) => new Set([...previous, message.id]));
       }
     },
-    transport: new PlaygroundTransport(),
+    transport: createPlaygroundTransport(),
   });
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
-  const messageInput = (text: string, title: string, messageId?: string) => ({
-    messageId,
-    metadata: {
-      activeStreamId: null,
-      createdAt: new Date().toISOString(),
-      title,
-    },
-    text,
-  });
-
-  const sendDraft = async (text = draft.trim(), count = responseCount) => {
+  const sendDraft = async (input?: string, count = responseCount) => {
+    const text = input ?? draft.trim();
     if (!text) {
       return;
     }
@@ -591,10 +592,11 @@ const PlaygroundSession = () => {
           })
         )
       );
-      await Promise.all([
+      const completions = [
         primaryRun.finished,
         ...siblingRuns.map((run) => run.finished),
-      ]);
+      ];
+      await Promise.all(completions);
     } catch (error) {
       setPlaygroundError(
         error instanceof Error ? error.message : "Unable to start this response"

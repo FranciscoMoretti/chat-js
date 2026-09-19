@@ -16,10 +16,12 @@ it("wires selected defaults and snapshot identity without managing dependencies"
     await rm(join(cwd, "lib/ai/models.generated.ts"));
     const manifest = await readFile(join(cwd, "package.json"), "utf-8");
     for (const item of builtInGateways) {
+      // oxlint-disable-next-line no-await-in-loop -- Exercise successive gateway switches in the same generated application.
       await configureGatewayProvider(cwd, {
         definition: item.meta.chatjs,
         source: item.name,
       });
+      // oxlint-disable-next-line no-await-in-loop -- Verify each gateway before the next switch overwrites the same files.
       const generatedDefaults = await readFile(
         join(cwd, "lib/ai/gateway-model-defaults.ts"),
         "utf-8"
@@ -38,8 +40,10 @@ it("wires selected defaults and snapshot identity without managing dependencies"
       expect(allowClarificationIndex).toBeGreaterThanOrEqual(0);
       expect(defaultModelIndex).toBeGreaterThan(allowClarificationIndex);
       expect(
+        // oxlint-disable-next-line no-await-in-loop -- Read the snapshot for this switch before the next mutation.
         await readFile(join(cwd, "lib/ai/models.generated.ts"), "utf-8")
       ).toContain(`generatedForGateway = "${item.meta.chatjs.id}"`);
+      // oxlint-disable-next-line no-await-in-loop -- Assert the manifest after each sequential switch.
       expect(await readFile(join(cwd, "package.json"), "utf-8")).toBe(manifest);
     }
     const target = join(cwd, "lib/ai/gateway-model-defaults.ts");

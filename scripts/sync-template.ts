@@ -3,7 +3,6 @@ import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import rootLintBaseline from "../oxlint-baseline.json";
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 import {
   shouldCopyChatAppFile,
@@ -82,27 +81,6 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     '@source "../node_modules/streamdown/dist/*.js";'
   );
   await writeFile(globalsCssPath, globalsCss);
-
-  // Preserve file-scoped exceptions when workspace source is copied into a scaffold.
-  const baselinePath = join(destination, "oxlint-baseline.json");
-  const baseline = JSON.parse(
-    await readFile(baselinePath, "utf-8")
-  ) as typeof rootLintBaseline;
-  const sourcePaths = [
-    ["apps/electron/", "electron/"],
-    ["packages/registry/src/tools/", "tools/chatjs/"],
-  ];
-  for (const override of rootLintBaseline.overrides) {
-    const files = override.files.flatMap((file) =>
-      sourcePaths.flatMap(([source, target]) =>
-        file.startsWith(source) ? [target + file.slice(source.length)] : []
-      )
-    );
-    if (files.length > 0) {
-      baseline.overrides.push({ files, rules: override.rules });
-    }
-  }
-  await writeFile(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`);
 
   await vendorPatchedPackage({
     destination,

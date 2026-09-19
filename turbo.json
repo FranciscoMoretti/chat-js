@@ -112,8 +112,7 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts",
-        "$TURBO_ROOT$/oxlint-baseline.json"
+        "$TURBO_ROOT$/packages/registry/build.ts"
       ],
       "outputs": ["dist/**", "templates/**"]
     },
@@ -133,8 +132,7 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts",
-        "$TURBO_ROOT$/oxlint-baseline.json"
+        "$TURBO_ROOT$/packages/registry/build.ts"
       ]
     },
     "@chat-js/cli#test:scaffold": {
@@ -179,8 +177,7 @@
         "!$TURBO_ROOT$/apps/electron/branding.json",
         "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts",
-        "$TURBO_ROOT$/oxlint-baseline.json"
+        "$TURBO_ROOT$/packages/registry/build.ts"
       ]
     },
     "@chat-js/thread#test:types": {

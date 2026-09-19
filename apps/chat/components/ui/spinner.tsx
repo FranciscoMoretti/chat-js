@@ -2,13 +2,18 @@ import { Loader2Icon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Spinner = ({ className, ...props }: React.ComponentProps<"svg">) => (
-  <Loader2Icon
-    aria-label="Loading"
-    className={cn("size-4 animate-spin", className)}
-    role="status"
-    {...props}
-  />
+const Spinner = ({
+  className,
+  "aria-label": label = "Loading",
+  ...props
+}: React.ComponentProps<"svg">) => (
+  <output aria-label={label} className="contents">
+    <Loader2Icon
+      aria-hidden="true"
+      className={cn("size-4 animate-spin", className)}
+      {...props}
+    />
+  </output>
 );
 
 export { Spinner };

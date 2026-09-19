@@ -54,7 +54,7 @@ export const ease = (x: number) => {
 };
 const textAt = (text: string, fraction: number) =>
   text.slice(0, Math.floor(clamp(fraction) * text.length));
-export const stateAt = (t: number, content: LaunchScript = script) => {
+const editTextAt = (t: number, content: LaunchScript) => {
   let prefixLength = 0;
   while (
     prefixLength < content.prompt.length &&
@@ -65,6 +65,24 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
   }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
+  return t < 42.6
+    ? content.prompt
+    : `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`;
+};
+
+const noteAt = (t: number) => {
+  let note = "";
+  if (t >= 22) {
+    note = "Both paths are yours to keep.";
+  } else if (t >= 12 && t < 18) {
+    note = "One prompt. Two answers.";
+  } else if (t >= 19 && t < 22) {
+    note = "Your original is here. The other reply keeps going.";
+  }
+  return note;
+};
+
+export const stateAt = (t: number, content: LaunchScript = script) => {
   let selected: PathId = "city";
   if (t >= 12.2 && t < 19) {
     selected = "food";
@@ -90,21 +108,10 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
     city: t < 6.5 ? "streaming" : "complete",
     food: t < 22.2 ? "streaming" : "complete",
   };
-  let note = "";
-  if (t >= 22) {
-    note = "Both paths are yours to keep.";
-  } else if (t >= 12 && t < 18) {
-    note = "One prompt. Two answers.";
-  } else if (t >= 19 && t < 22) {
-    note = "Your original is here. The other reply keeps going.";
-  }
   return {
     answer: texts[selected],
     budget,
-    editText:
-      t < 42.6
-        ? content.prompt
-        : `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`,
+    editText: editTextAt(t, content),
     edited,
     editing,
     family,
@@ -115,7 +122,7 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
       text: textAt(followup.reply, progress),
     },
     foodVisible: t >= 12.2,
-    note,
+    note: noteAt(t),
     portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
     portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
     reveal: ease((t - 11.5) / 0.3),

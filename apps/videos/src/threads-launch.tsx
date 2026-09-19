@@ -75,6 +75,35 @@ const ActionIcon = ({
     </svg>
   );
 };
+const VersionActions = ({
+  count,
+  index,
+  actionTime,
+}: {
+  count: number;
+  index: number;
+  actionTime: number;
+}) =>
+  count > 1 ? (
+    <>
+      <span
+        className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
+        style={{ opacity: index === 1 ? 0.3 : 1 }}
+      >
+        <ActionIcon name="previous" />
+      </span>
+      <span className="versionCount">
+        {index} / {count}
+      </span>
+      <span
+        className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
+        style={{ opacity: index === count ? 0.3 : 1 }}
+      >
+        <ActionIcon name="next" />
+      </span>
+    </>
+  ) : null;
+
 const MessageActions = ({
   user = false,
   index = 1,
@@ -101,25 +130,7 @@ const MessageActions = ({
         <ActionIcon name="edit" />
       </span>
     )}
-    {count > 1 && (
-      <>
-        <span
-          className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
-          style={{ opacity: index === 1 ? 0.3 : 1 }}
-        >
-          <ActionIcon name="previous" />
-        </span>
-        <span className="versionCount">
-          {index} / {count}
-        </span>
-        <span
-          className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
-          style={{ opacity: index === count ? 0.3 : 1 }}
-        >
-          <ActionIcon name="next" />
-        </span>
-      </>
-    )}
+    <VersionActions count={count} index={index} actionTime={actionTime} />
     {!user && !streaming && (
       <span
         className={`messageAction regenerateAction ${regenerateHint ? "highlightAction" : ""}`}
@@ -154,6 +165,41 @@ const getReplyDescription = (s: StoryState, id: "city" | "food") => {
   return id === "city" ? "Original answer" : "Alternative answer";
 };
 
+const PromptMessage = ({
+  s,
+  t,
+  content,
+}: {
+  s: StoryState;
+  t: number;
+  content: LaunchScript;
+}) => (
+  <div className="user">
+    <div className="role">You</div>
+    <div className={`bubble ${s.editing ? "editingBubble" : ""}`}>
+      {getPromptText(s, content)}
+      {s.editing && <span className="editCaret">|</span>}
+    </div>
+    {s.editing && (
+      <div className="editControls">
+        <span>Cancel</span>
+        <button type="button" className={t >= 44.3 ? "highlightAction" : ""}>
+          Save
+        </button>
+      </div>
+    )}
+    {!s.editing && (
+      <MessageActions
+        user
+        className="promptActions"
+        actionTime={t}
+        index={2}
+        count={s.edited ? 2 : 1}
+      />
+    )}
+  </div>
+);
+
 const Chat = ({
   s,
   t,
@@ -174,33 +220,7 @@ const Chat = ({
       </span>
     </div>
     <div className="messages">
-      <div className="user">
-        <div className="role">You</div>
-        <div className={`bubble ${s.editing ? "editingBubble" : ""}`}>
-          {getPromptText(s, content)}
-          {s.editing && <span className="editCaret">|</span>}
-        </div>
-        {s.editing && (
-          <div className="editControls">
-            <span>Cancel</span>
-            <button
-              type="button"
-              className={t >= 44.3 ? "highlightAction" : ""}
-            >
-              Save
-            </button>
-          </div>
-        )}
-        {!s.editing && (
-          <MessageActions
-            user
-            className="promptActions"
-            actionTime={t}
-            index={2}
-            count={s.edited ? 2 : 1}
-          />
-        )}
-      </div>
+      <PromptMessage s={s} t={t} content={content} />
       <div className="assistant" style={{ opacity: s.editing ? 0.25 : 1 }}>
         <div className="author">
           <Author />

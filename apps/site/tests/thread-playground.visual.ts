@@ -45,11 +45,12 @@ try {
   });
   const docsLinks = page.getByRole("link", { name: "Read the docs" });
   assert.equal(await docsLinks.count(), 2);
-  for (const link of await docsLinks.all()) {
-    assert.equal(
-      await link.getAttribute("href"),
-      "https://chatjs.dev/docs/threads"
-    );
+  const links = await docsLinks.all();
+  const hrefs = await Promise.all(
+    links.map((link) => link.getAttribute("href"))
+  );
+  for (const href of hrefs) {
+    assert.equal(href, "https://chatjs.dev/docs/threads");
   }
   await docsLinks
     .last()
