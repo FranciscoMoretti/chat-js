@@ -238,8 +238,10 @@ export const EveMessages = ({
   renderResponses,
   modelForMessage,
   actionsDisabled = disabled,
+  messageKey,
 }: {
   conversationId?: string;
+  messageKey?: (message: EveMessage) => string;
   messages: readonly EveMessage[];
   isReadonly: boolean;
   actionsDisabled?: boolean;
@@ -349,7 +351,7 @@ export const EveMessages = ({
             ))}
           editor={editing?.content}
           editDisabled={!canEdit}
-          key={message.id}
+          key={messageKey?.(message) ?? message.id}
           messageId={message.id}
           responses={renderResponses?.(message)}
           onEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
@@ -362,7 +364,7 @@ export const EveMessages = ({
         className="w-full max-w-full items-start py-1"
         data-message-id={message.id}
         from={message.role}
-        key={message.id}
+        key={messageKey?.(message) ?? message.id}
       >
         <MessageContent className="w-full px-0 py-0 text-left">
           <span className="sr-only">Assistant</span>

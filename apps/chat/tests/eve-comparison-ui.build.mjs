@@ -21,7 +21,7 @@ const result = await build({
     "process.env": "{}",
     "process.env.NODE_ENV": JSON.stringify("development"),
   },
-  entrypoints: [process.argv[2] ?? "tests/eve-comparison-ui.fixture.tsx"],
+  entrypoints: [process.argv[2] ?? "tests/eve-followups-ui.fixture.tsx"],
   plugins: [
     {
       name: "strict-comparison-fixture-boundaries",

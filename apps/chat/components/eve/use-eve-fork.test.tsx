@@ -8,9 +8,9 @@ import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 import { useEveFork } from "./use-eve-fork";
 
 const mocks = vi.hoisted(() => ({
+  openRuntime: vi.fn(),
   resolveCreationRequest: vi.fn(),
   restoreEveAttachment: vi.fn(),
-  routerPush: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -28,8 +28,8 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mocks.routerPush }),
+vi.mock("./eve-logical-context", () => ({
+  useEveRuntime: () => mocks.openRuntime,
 }));
 
 vi.mock("@/lib/eve/resolve-creation-request", () => ({
@@ -124,7 +124,7 @@ const flushEffects = async () => {
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();
   mocks.restoreEveAttachment.mockReset();
-  mocks.routerPush.mockReset();
+  mocks.openRuntime.mockReset();
   vi.unstubAllGlobals();
 });
 
@@ -298,7 +298,11 @@ describe("useEveFork", () => {
         currentStorage.removeItem(
           `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
         );
-        return "11111111-1111-4111-8111-111111111114";
+        return {
+          group: undefined,
+          id: "11111111-1111-4111-8111-111111111114",
+          sessionId: "session",
+        };
       }
     );
     let renderer: ReturnType<typeof create> | undefined;
@@ -316,9 +320,11 @@ describe("useEveFork", () => {
         await required(fork).submit();
       });
 
-      expect(mocks.routerPush).toHaveBeenCalledWith(
-        "/chat/11111111-1111-4111-8111-111111111114",
-        { scroll: false }
+      expect(mocks.openRuntime).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "11111111-1111-4111-8111-111111111114",
+          ownerId,
+        })
       );
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).editingMessageId).toBeUndefined();
@@ -377,7 +383,7 @@ describe("useEveFork", () => {
         currentStorage.removeItem(
           `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
         );
-        return id;
+        return { group: undefined, id, sessionId: "session" };
       }
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
@@ -449,9 +455,11 @@ describe("useEveFork", () => {
       });
       const original = required(required(fork).pending);
 
-      mocks.resolveCreationRequest.mockResolvedValueOnce(
-        "11111111-1111-4111-8111-111111111116"
-      );
+      mocks.resolveCreationRequest.mockResolvedValueOnce({
+        group: undefined,
+        id: "11111111-1111-4111-8111-111111111116",
+        sessionId: "session",
+      });
       await act(async () => {
         await required(fork).retry();
       });

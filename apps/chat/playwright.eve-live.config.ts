@@ -5,6 +5,7 @@ import config from "./playwright.eve.config";
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-logical-chat.e2e.ts",
     "eve-chat-identity.e2e.ts",
     "eve-optimistic-create.e2e.ts",
     "eve-guest-cookie.e2e.ts",

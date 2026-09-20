@@ -6,16 +6,14 @@ import { z } from "zod";
 import { ChatHeaderView } from "@/components/chat-header-view";
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
 import { getEveChatPageConversation } from "@/lib/db/eve-queries";
-import { getEveResponseGroupForConversation } from "@/lib/db/eve-response-groups";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
-import { EveComparisonConversation } from "./eve-comparison-conversation";
-import { EveConversation } from "./eve-conversation";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveGuestBootstrap } from "./eve-guest-bootstrap";
+import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
@@ -65,31 +63,17 @@ export const EveChatPage = async ({
     />
   );
   if (selected?.sessionId && selected.state === "bound") {
-    const group = await getEveResponseGroupForConversation(
-      principal.ownerId,
-      selected.id
-    );
-    if (group) {
-      return (
-        <EveComparisonConversation
-          conversationId={selected.id}
-          header={header}
-          initialGroup={group}
-          key={selected.sessionId}
-          ownerId={principal.ownerId}
-        />
-      );
-    }
     return (
-      <EveConversation
-        conversationId={selected.id}
-        header={header}
-        key={selected.sessionId}
-        ownerId={principal.ownerId}
+      <EveRuntimeRoute
+        id={selected.id}
+        chatId={selected.chatId}
         sessionId={selected.sessionId}
+        ownerId={principal.ownerId}
+        title={selected.title}
       />
     );
   }
+
   const copy =
     selected?.creationKind === "copy"
       ? await getEveCopyOperation(principal.ownerId, selected.operationId)

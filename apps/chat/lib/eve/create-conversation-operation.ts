@@ -24,7 +24,7 @@ import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
 
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import { eveCreationContentHash } from "./creation-content-hash";
-import { eveToolMetadata } from "./message-tool-selection";
+import { eveMessageDeliveryMetadata } from "./message-delivery";
 
 const resolveFork = async (
   ownerId: string,
@@ -198,7 +198,10 @@ export const createEveConversationOperation = async (
             body: JSON.stringify({
               fork,
               message: preparedMessage,
-              messageMetadata: eveToolMetadata(input.selectedTool),
+              messageMetadata: eveMessageDeliveryMetadata(
+                input.operationId,
+                input.selectedTool
+              ),
               operationId,
             }),
             method: "POST",

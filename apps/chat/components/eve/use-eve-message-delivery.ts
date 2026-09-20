@@ -17,6 +17,9 @@ export const useEveMessageDelivery = (sessionId: string) => {
   useEffect(() => {
     const stored = eveMessageDelivery.read(sessionStorage, sessionId);
     pendingRef.current = stored;
+    acknowledged.current = undefined;
+    // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the selected session with its browser delivery journal.
+    setPending(stored);
     if (stored) {
       // oxlint-disable-next-line react/set-state-in-effect -- Restore the durable pending-message marker on mount.
       setPending((current) => {

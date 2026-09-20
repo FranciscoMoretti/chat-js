@@ -198,10 +198,6 @@ export const getEveChatPageConversation = async (
 ) => {
   const exact = await getEveConversation(ownerId, routeId);
   if (exact) {
-    await db
-      .update(eveChat)
-      .set({ activeConversationId: exact.id })
-      .where(and(eq(eveChat.id, exact.chatId), eq(eveChat.ownerId, ownerId)));
     return exact;
   }
   const [logical] = await db
@@ -984,7 +980,10 @@ export const listEveConversationBranches = async (
   ownerId: string,
   conversationId: string
 ) => {
-  const conversation = await getEveConversation(ownerId, conversationId);
+  const conversation = await getEveChatPageConversation(
+    ownerId,
+    conversationId
+  );
   if (!conversation) {
     return;
   }
@@ -996,12 +995,16 @@ export const listEveConversationBranches = async (
       forkKind: eveConversation.forkKind,
       forkMessageId: eveConversation.forkMessageId,
       forkTurnId: eveConversation.forkTurnId,
+      groupCandidates: eveResponseGroup.candidates,
       id: eveConversation.id,
+      initialModelId: eveConversation.initialModelId,
+      operationId: eveConversation.operationId,
       parentConversationId: eveConversation.parentConversationId,
       responseGroupId: eveResponseGroup.id,
       responseGroupIndex: sql<
         number | null
       >`array_position(${eveResponseGroup.candidateOperationIds}, ${eveConversation.operationId})`,
+      sessionId: eveConversation.sessionId,
     })
     .from(eveConversation)
     .leftJoin(
@@ -1020,7 +1023,7 @@ export const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  return { branches, rootId };
+  return { branches, chatId: conversation.chatId, rootId };
 };
 
 /** Internal cleanup only; does not grant browser or conversation access. */

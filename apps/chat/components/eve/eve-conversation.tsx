@@ -1,8 +1,7 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEveAgent } from "eve/react";
-import { useEffect, useRef, useState } from "react";
+import type { useEveAgent } from "eve/react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -18,36 +17,38 @@ import {
 } from "@/lib/ai/types";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import {
-  eveUserForkBoundary,
-  projectEveMessageSiblingNavigation,
-} from "@/lib/eve/fork-source";
+import { eveUserForkBoundary } from "@/lib/eve/fork-source";
+import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
+import type { EveMessageInput } from "@/lib/eve/message-input";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
-import { useTRPC } from "@/trpc/react";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
-import { EveMessageVersions } from "./eve-message-versions";
+import { EveInitialMessage } from "./eve-initial-message";
+import { useLogicalChat } from "./eve-logical-context";
+import {
+  EveLogicalVersions,
+  EveLogicalResponses,
+} from "./eve-logical-navigation";
 import { EveMessages } from "./eve-messages";
 import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
-import type { EveResponseCardCandidate } from "./eve-response-group-cards";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
+import { useLogicalCommands } from "./use-logical-commands";
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
 // oxlint-disable-next-line eslint/complexity
@@ -56,22 +57,15 @@ export const EveConversation = ({
   conversationId,
   ownerId,
   header,
-  onStatusChange,
   draftScopeId,
-  onNavigationBlockedChange,
-  comparisonPresentation,
+  initialMessage,
 }: {
   sessionId: string;
   conversationId: string;
   ownerId: string;
   header: ReactNode;
-  comparisonPresentation?: {
-    cards: ReactNode;
-    modelSelection: SelectedModelValue;
-  };
-  onStatusChange?: (status: EveResponseCardCandidate["status"]) => void;
+  initialMessage?: EveMessageInput;
   draftScopeId?: string;
-  onNavigationBlockedChange?: (blocked: boolean) => void;
 }) => {
   const {
     fork,
@@ -83,62 +77,28 @@ export const EveConversation = ({
     // The input hook owns the shared composer/fork lifecycle for this controller.
     // oxlint-disable-next-line eslint/no-use-before-define
   } = useConversationInput(ownerId, conversationId, draftScopeId);
-  const queryClient = useQueryClient();
-  const trpc = useTRPC();
   const delivery = useEveMessageDelivery(sessionId);
   const pendingMessage = delivery.pending;
-  const commandError = useRef<Error | undefined>(undefined);
-  const afterCancellation = useRef(0);
-  const commandLock = useRef(false);
+  const { controller, snapshot } = useLogicalChat();
+  const command = useLogicalCommands(controller.commands, conversationId);
+  const commandFailure = command.failure;
+  const commandPending = command.pending;
+  const cancelPending = command.cancelling;
+  const setCommandFailure = (failure?: Error) =>
+    controller.commands.update(conversationId, { failure });
+  const setCancelPending = (cancelling: boolean) =>
+    controller.commands.update(conversationId, { cancelling });
   const { text: draft, setText: setDraft } = composerDraft;
-  const [commandFailure, setCommandFailure] = useState<Error>();
-  const [commandPending, setCommandPending] = useState(false);
-  const [cancelPending, setCancelPending] = useState(false);
+  const agent = snapshot.agents.get(conversationId);
+  if (!agent) {
+    throw new Error("Native observer is not ready.");
+  }
+  const acceptDelivery = delivery.accept;
   useEffect(() => {
-    onNavigationBlockedChange?.(
-      !composerDraft.loaded ||
-        !!composerDraft.error ||
-        files.uploadQueue.length > 0 ||
-        fork.locked
-    );
-  }, [
-    composerDraft.loaded,
-    composerDraft.error,
-    files.uploadQueue.length,
-    fork.locked,
-    onNavigationBlockedChange,
-  ]);
-  const agent = useEveAgent({
-    host: "/api",
-    initialSession: { sessionId, streamIndex: 0 },
-    onError: (cause) => {
-      commandError.current = cause;
-    },
-    onEvent: (event) => {
-      if (
-        event.type === "action.result" &&
-        event.data.result.kind === "tool-result" &&
-        Object.hasOwn(eveDocumentOperations, event.data.result.toolName)
-      ) {
-        queryClient
-          .invalidateQueries({ queryKey: trpc.eve.document.pathKey() })
-          // oxlint-disable-next-line promise/prefer-await-to-then -- Event callbacks intentionally fire-and-forget cache refreshes.
-          .catch(() => null);
-      }
-      if (event.type === "turn.completed") {
-        queryClient
-          .invalidateQueries({ queryKey: trpc.eve.list.pathKey() })
-          // oxlint-disable-next-line promise/prefer-await-to-then -- Event callbacks intentionally fire-and-forget cache refreshes.
-          .catch(() => null);
-      }
-      delivery.accept(event);
-      // Eve 0.52.2 does not always promote a durable turn failure to onError.
-      if (event.type === "turn.failed") {
-        commandError.current = new Error(event.data.message);
-      }
-    },
-    resume: true,
-  });
+    for (const event of agent.events) {
+      acceptDelivery(event);
+    }
+  }, [agent.events, acceptDelivery]);
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -152,20 +112,32 @@ export const EveConversation = ({
     commandFailure?.message ?? agent.error?.message ?? durableError;
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
-  const messages = agent.data.messages.filter(
-    (message) =>
-      !(message.metadata?.optimistic && message.metadata.status === "failed")
-  );
-  const messageVersions = projectEveMessageSiblingNavigation(
-    conversationId,
-    messages,
-    fork.family.data?.branches ?? []
-  );
-  const currentBranch = fork.family.data?.branches.find(
-    (branch) => branch.id === conversationId
-  );
-  // Imported forks replay a seed prefix; their replacement user starts native turn_0.
-  const comparisonBoundary = currentBranch?.forkTurnId ?? "turn_0";
+  const selectedPath = new Set<string>();
+  let selectedNode = snapshot.cursorId
+    ? snapshot.nodes.get(snapshot.cursorId)
+    : undefined;
+  while (selectedNode) {
+    selectedPath.add(selectedNode.id);
+    selectedNode = selectedNode.parentId
+      ? snapshot.nodes.get(selectedNode.parentId)
+      : undefined;
+  }
+  const messages = agent.data.messages
+    .filter((message) => {
+      if (
+        message.metadata?.optimistic &&
+        message.metadata.status === "failed"
+      ) {
+        return false;
+      }
+      const logicalId = controller.logicalId(conversationId, message.id);
+      return !snapshot.cursorId || (!!logicalId && selectedPath.has(logicalId));
+    })
+    .map((message) => {
+      const id = controller.logicalId(conversationId, message.id);
+      const canonical = id ? snapshot.nodes.get(id)?.message : undefined;
+      return canonical ? { ...message, parts: canonical.parts } : message;
+    });
   const editingMessageId =
     fork.editingMessageId ??
     messages.find(
@@ -193,24 +165,11 @@ export const EveConversation = ({
         part.type === "dynamic-tool" && part.state === "approval-requested"
     )
   );
-  useEffect(() => {
-    let status: EveResponseCardCandidate["status"] = agent.status;
-    if (displayedError) {
-      status = "error";
-    }
-    if (hasApproval) {
-      status = "awaiting-input";
-    }
-    onStatusChange?.(status);
-  }, [agent.status, displayedError, hasApproval, onStatusChange]);
   const run = async (action: () => Promise<unknown>) => {
-    if (commandLock.current) {
+    if (!controller.commands.claim(conversationId)) {
       return;
     }
-    commandLock.current = true;
-    setCommandPending(true);
     setCommandFailure(undefined);
-    commandError.current = undefined;
     // oxlint-disable-next-line react/todo -- Preserve command lock cleanup while React Compiler lacks finally support.
     try {
       await action();
@@ -222,21 +181,20 @@ export const EveConversation = ({
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required command lock cleanup in finally.
     } finally {
-      commandLock.current = false;
-      setCommandPending(false);
+      controller.commands.update(conversationId, { pending: false });
     }
   };
   const send = async (action: () => Promise<void>, operationId?: string) => {
-    const cancellation = afterCancellation.current;
+    const { cancellation } = controller.commands.get(conversationId);
     await sendCommand(
       action,
       agent.resume,
       cancellation > 0,
-      () => commandError.current,
+      () => controller.getSnapshot().agents.get(conversationId)?.error,
       () => !operationId || delivery.hasAcknowledged(operationId)
     );
-    if (afterCancellation.current === cancellation) {
-      afterCancellation.current = 0;
+    if (controller.commands.get(conversationId).cancellation === cancellation) {
+      controller.commands.update(conversationId, { cancellation: 0 });
     }
   };
   const submitMessage = async (
@@ -246,6 +204,7 @@ export const EveConversation = ({
     clearComposer: boolean,
     selectedTool?: UiToolName
   ) => {
+    controller.selectBranch(conversationId);
     const pending = delivery.begin({
       attachments,
       message: message.trim(),
@@ -281,7 +240,9 @@ export const EveConversation = ({
   };
   const cancel = async () => {
     setCancelPending(true);
-    afterCancellation.current += 1;
+    controller.commands.update(conversationId, {
+      cancellation: controller.commands.get(conversationId).cancellation + 1,
+    });
     try {
       await agent.cancel();
     } catch {
@@ -338,12 +299,16 @@ export const EveConversation = ({
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation>
             <ConversationContent className="mx-auto w-full max-w-3xl">
+              {initialMessage && messages.length === 0 && (
+                <EveInitialMessage message={initialMessage} />
+              )}
               <EveMessages
                 actionsDisabled={
                   busy ||
                   commandPending ||
                   fork.locked ||
                   !fork.family.data ||
+                  !!snapshot.error ||
                   hasApproval ||
                   !!pendingMessage
                 }
@@ -393,26 +358,28 @@ export const EveConversation = ({
                 }
                 modelForMessage={modelForMessage}
                 renderVersions={(message) => (
-                  <EveMessageVersions
-                    navigation={messageVersions.get(message.id)}
+                  <EveLogicalVersions
+                    conversationId={conversationId}
+                    messageId={message.id}
                     disabled={
-                      busy ||
-                      commandPending ||
-                      fork.locked ||
-                      !!editingMessageId ||
-                      hasApproval ||
-                      !!pendingMessage
+                      fork.locked || !!editingMessageId || !!pendingMessage
                     }
                   />
                 )}
-                renderResponses={
-                  comparisonPresentation
-                    ? (message) =>
-                        eveUserForkBoundary(message) === comparisonBoundary
-                          ? comparisonPresentation.cards
-                          : undefined
-                    : undefined
+                renderResponses={(message) => (
+                  <EveLogicalResponses
+                    conversationId={conversationId}
+                    messageId={message.id}
+                    disabled={
+                      fork.locked || !!editingMessageId || !!pendingMessage
+                    }
+                  />
+                )}
+                messageKey={(message) =>
+                  controller.logicalId(conversationId, message.id) ??
+                  `${sessionId}:${message.id}`
                 }
+
                 onEdit={(message) => {
                   const following = messages.slice(
                     messages.indexOf(message) + 1
@@ -423,12 +390,21 @@ export const EveConversation = ({
                   const response = following
                     .slice(0, nextUser === -1 ? following.length : nextUser)
                     .find((candidate) => candidate.role === "assistant");
+                  const logicalId = controller.logicalId(
+                    conversationId,
+                    message.id
+                  );
+                  const group = logicalId
+                    ? logicalResponseSlots(snapshot, logicalId)
+                    : undefined;
+                  const groupModels: Record<string, number> = {};
+                  for (const slot of group?.slots ?? []) {
+                    groupModels[slot.modelId] =
+                      (groupModels[slot.modelId] ?? 0) + 1;
+                  }
                   return fork.begin(message, undefined, {
                     events: agent.events,
-                    modelSelection:
-                      eveUserForkBoundary(message) === comparisonBoundary
-                        ? comparisonPresentation?.modelSelection
-                        : undefined,
+                    modelSelection: group ? groupModels : undefined,
                     response:
                       response && modelForMessage(response)
                         ? response
@@ -477,7 +453,7 @@ export const EveConversation = ({
             <p aria-live="polite" className="sr-only">
               {statusLabel}
             </p>
-            {[displayedError, composerDraft.error]
+            {[snapshot.error, displayedError, composerDraft.error]
               .filter(Boolean)
               .map((message) => (
                 <p key={message} role="alert">

@@ -5,11 +5,13 @@ import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
+import { EveRuntimeProvider } from "@/components/eve/eve-runtime-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
@@ -34,6 +36,9 @@ const ChatLayoutDynamic = async ({
   const session = isPlaywrightTestEnvironment
     ? null
     : await auth.api.getSession({ headers: headersRes });
+  const principal = isPlaywrightTestEnvironment
+    ? null
+    : await resolveEvePrincipal(headersRes);
 
   const cookieModel = cookieStore.get("chat-model")?.value;
   const isAnonymous = !session?.user;
@@ -78,7 +83,12 @@ const ChatLayoutDynamic = async ({
       <ChatModelsProvider models={chatModels}>
         <DefaultModelProvider defaultModel={defaultModel}>
           <KeyboardShortcuts />
-          {children}
+          <EveRuntimeProvider
+            key={principal?.ownerId ?? "anonymous"}
+            ownerId={principal?.ownerId}
+          >
+            {children}
+          </EveRuntimeProvider>
         </DefaultModelProvider>
       </ChatModelsProvider>
     </HydrateClient>
