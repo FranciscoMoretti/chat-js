@@ -165,15 +165,6 @@ const applyChatTemplateSourceTransforms = async (
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
-      "eve",
-      join(getRepoRoot(), "apps", "chat")
-    ),
-    packageName: "eve",
-    patchPath: join(getRepoRoot(), "patches", "eve@0.61.0.patch"),
-  });
-  await vendorPatchedPackage({
-    destination,
-    packageDir: await resolvePackageDirectory(
       "@ai-sdk/mcp",
       join(getRepoRoot(), "apps", "chat")
     ),

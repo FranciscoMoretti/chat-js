@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "eve": "0.61.0"
+    "eve": "npm:@chat-js/eve@0.61.0-chatjs.0"
   }
 }
