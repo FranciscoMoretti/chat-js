@@ -7,12 +7,18 @@ import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 const appRequire = createRequire(
-  new URL("../../../apps/chat/package.json", import.meta.url)
+  new URL("../../apps/chat/package.json", import.meta.url)
+);
+
+// The `geist` package's exports map blocks deep woff2 imports, so resolve the
+// variable font files by path and alias them (see _shared/visual.tsx).
+const geistFonts = fileURLToPath(
+  new URL("../../node_modules/geist/dist/fonts", import.meta.url)
 );
 
 export default defineConfig({
   css: {
-    postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+    postcss: fileURLToPath(new URL("../../apps/chat", import.meta.url)),
   },
   define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
@@ -23,14 +29,23 @@ export default defineConfig({
       "next/dist/client/image-component",
       "react",
       "react-dom/client",
+      "shiki",
     ],
   },
   oxc: { jsx: { runtime: "automatic" } },
   plugins: [uiverifyPlugin()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+      "@": fileURLToPath(new URL("../../apps/chat", import.meta.url)),
       echarts: createRequire(import.meta.url).resolve("echarts"),
+      "geist-mono.woff2": path.join(
+        geistFonts,
+        "geist-mono/GeistMono-Variable.woff2"
+      ),
+      "geist-sans.woff2": path.join(
+        geistFonts,
+        "geist-sans/Geist-Variable.woff2"
+      ),
       "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
       react: path.dirname(appRequire.resolve("react/package.json")),
       "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),
@@ -45,6 +60,6 @@ export default defineConfig({
       provider: playwright(),
       viewport: { height: 900, width: 1000 },
     },
-    include: ["visual/*.browser.test.tsx"],
+    include: ["src/tools/*/renderer.visual.tsx"],
   },
 });

@@ -34,7 +34,8 @@
     "prepublishOnly": "bun run build",
     "test:types": "tsc --noEmit",
     "test:unit": "bun test src",
-    "test:visual": "vitest run --config visual/vitest.config.ts",
+    "test:visual": "vitest run --config vitest.visual.config.ts",
+    "check": "bun run test:types && bun run test:unit && bun run test:visual",
     "lint": "oxlint . && oxfmt --check .",
     "format": "oxfmt --write ."
   },
@@ -60,6 +61,7 @@
     "date-fns": "^4.1.0",
     "echarts": "6.0.0",
     "files-sdk": "2.1.0",
+    "geist": "^1.7.2",
     "lucide-react": "0.553.0",
     "next": "16.3.0",
     "react": "19.2.3",

@@ -1,0 +1,68 @@
+name: UI Verify Registry
+
+# Broad path filter on purpose: the registry snapshots render against apps/chat
+# (globals.css + interactive-chart-impl), so a change there can move a snapshot.
+# The upload's `--only-changed` scopes the actual rendering to the tools the diff
+# affects (via the archive's dependency graph), so the broad trigger stays cheap.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/registry/**"
+      - "packages/gateways/**"
+      - "apps/chat/**"
+      - "bun.lock"
+      - ".github/workflows/uiverify-registry.yml"
+  pull_request:
+    paths:
+      - "packages/registry/**"
+      - "packages/gateways/**"
+      - "apps/chat/**"
+      - "bun.lock"
+      - ".github/workflows/uiverify-registry.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uiverify-registry-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uiverify-registry:
+    name: uiverify-registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - name: Install Chromium
+        run: node_modules/.bin/playwright install --with-deps chromium
+      # Always capture the full suite so the archive carries the complete
+      # dependency graph (preview-stats.json). The upload runs with
+      # `--only-changed`, which uses that graph to render only the stories whose
+      # closure includes this commit's changed files (the graph traces into
+      # apps/chat, so an app-side change still maps to the tools it renders) and
+      # carries every untouched story's baseline forward. Capturing all 8 tools
+      # is cheap (~5s); the scoping happens server-side at upload.
+      - name: Capture registry visual
+        working-directory: packages/registry
+        run: bun run test:visual
+      - name: Upload UI Verify build
+        env:
+          UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_REGISTRY_API_KEY }}
+        run: bun run uiverify:upload:registry
