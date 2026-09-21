@@ -1,20 +1,30 @@
-name: UI Verify
+name: UI Verify Docs
 
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/docs/**"
+      - "packages/thread/**"
+      - "bun.lock"
+      - ".github/workflows/uiverify-docs.yml"
   pull_request:
+    paths:
+      - "apps/docs/**"
+      - "packages/thread/**"
+      - "bun.lock"
+      - ".github/workflows/uiverify-docs.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: uiverify-${{ github.event.pull_request.number || github.ref }}
+  group: uiverify-docs-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  visual:
-    name: Docs visual regression
+  uiverify-docs:
+    name: uiverify-docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -39,7 +49,6 @@ jobs:
       - name: Capture docs
         run: bun run test:visual:docs
       - name: Upload UI Verify build
-        if: env.UIVERIFY_API_KEY != ''
         env:
-          UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_API_KEY }}
+          UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY }}
         run: bun run uiverify:upload:docs
