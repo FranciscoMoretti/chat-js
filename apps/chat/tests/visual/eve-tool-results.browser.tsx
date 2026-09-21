@@ -8,9 +8,9 @@ import { expect, test, vi } from "vitest";
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
-/* oxlint-disable import/no-relative-parent-imports -- ../../../../packages/registry/visual/charts-finished import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
+/* oxlint-disable import/no-relative-parent-imports -- ../../../../packages/registry/src/tools/_shared/charts-finished import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 
-import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
+import { chartsFinished } from "../../../../packages/registry/src/tools/_shared/charts-finished";
 /* oxlint-enable import/no-relative-parent-imports */
 
 import "./sandbox.css";

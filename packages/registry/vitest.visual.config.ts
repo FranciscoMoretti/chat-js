@@ -19,13 +19,19 @@ import { defineConfig } from "vitest/config";
 /* oxlint-enable eslint/sort-imports */
 
 const appRequire = createRequire(
-  new URL("../../../apps/chat/package.json", import.meta.url)
+  new URL("../../apps/chat/package.json", import.meta.url)
+);
+
+// The `geist` package's exports map blocks deep woff2 imports, so resolve the
+// variable font files by path and alias them (see _shared/visual.tsx).
+const geistFonts = fileURLToPath(
+  new URL("node_modules/geist/dist/fonts", import.meta.url)
 );
 
 /* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
 export default defineConfig({
   css: {
-    postcss: fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+    postcss: fileURLToPath(new URL("../../apps/chat", import.meta.url)),
   },
   define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
@@ -45,6 +51,7 @@ export default defineConfig({
       "react",
       "react-dom/client",
       "react-dropzone",
+      "shiki",
       "sonner",
     ],
   },
@@ -52,8 +59,16 @@ export default defineConfig({
   plugins: [uiverifyPlugin()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+      "@": fileURLToPath(new URL("../../apps/chat", import.meta.url)),
       echarts: createRequire(import.meta.url).resolve("echarts"),
+      "geist-mono.woff2": path.join(
+        geistFonts,
+        "geist-mono/GeistMono-Variable.woff2"
+      ),
+      "geist-sans.woff2": path.join(
+        geistFonts,
+        "geist-sans/Geist-Variable.woff2"
+      ),
       "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
       react: path.dirname(appRequire.resolve("react/package.json")),
       "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),
@@ -69,7 +84,7 @@ export default defineConfig({
       viewport: { height: 900, width: 1000 },
     },
     include: [
-      "visual/*.browser.test.tsx",
+      "src/tools/*/renderer.visual.tsx",
       "../../apps/chat/tests/visual/*.browser.tsx",
     ],
   },
