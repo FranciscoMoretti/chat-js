@@ -114,11 +114,14 @@ export const EveCreationRecovery = ({
       "The original request was rejected. You can continue with the saved message outside this project.";
   }
   return (
-    <section aria-label="Conversation recovery" className="space-y-4 p-4">
+    <section
+      aria-label="Conversation recovery"
+      className="mx-auto w-full max-w-3xl space-y-4 p-4"
+    >
       <p className="break-words whitespace-pre-wrap">
         {pending ? eveMessageTitle(pending.message) : firstMessage}
       </p>
-      <output>{status}</output>
+      <output className="block">{status}</output>
       {failure && <p role="alert">{failure}</p>}
       {rejected && scope?.projectId ? (
         <Button onClick={continueWithoutProject}>

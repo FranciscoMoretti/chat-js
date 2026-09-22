@@ -54,7 +54,8 @@ export const NewEveConversation = ({
   const [draft, setDraft] = useState("");
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   const [projectRejected, setProjectRejected] = useState(false);
-  const [retained, setRetained] = useState(false);
+  const [retainedOperationId, setRetainedOperationId] = useState<string>();
+  const retained = retainedOperationId !== undefined;
   const [retainedModelId, setRetainedModelId] = useState<string>();
   const [retainedModelIds, setRetainedModelIds] = useState<string[]>();
   const [failure, setFailure] = useState("");
@@ -75,7 +76,7 @@ export const NewEveConversation = ({
       const pending = readCreationRequest(sessionStorage, ownerId, scope);
       if (pending) {
         // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the recovery composer from its durable request.
-        setRetained(true);
+        setRetainedOperationId(pending.operationId);
         setSelectedTool(pending.selectedTool ?? null);
         const restored = restoreDraft(pending.message);
         setDraft(restored.text);
@@ -99,7 +100,7 @@ export const NewEveConversation = ({
       "modelIds" in operation ? operation.modelIds : undefined
     );
     setOptimisticComparison("modelIds" in operation ? operation : undefined);
-    setRetained(true);
+    setRetainedOperationId(operation.operationId);
   };
   const submit = async () => {
     if (lock.current) {
@@ -141,7 +142,7 @@ export const NewEveConversation = ({
         setRetainedModelId(undefined);
         setRetainedModelIds(undefined);
         setOptimisticComparison(undefined);
-        setRetained(false);
+        setRetainedOperationId(undefined);
       }
       setFailure(
         error instanceof Error
@@ -157,11 +158,12 @@ export const NewEveConversation = ({
     }
     /* oxlint-enable react/todo */
   };
-  if (projectRejected) {
+  if (projectRejected || (retained && !busy)) {
     return (
       <EveCreationRecovery
         firstMessage={draft}
-        initiallyRejected
+        initiallyRejected={projectRejected}
+        operationId={retainedOperationId}
         ownerId={ownerId}
         scope={scope}
       />

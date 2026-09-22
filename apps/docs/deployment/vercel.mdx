@@ -142,6 +142,16 @@ Sandboxes run with:
 | `AUTH_SECRET` | Session encryption key |
 | `AI_GATEWAY_API_KEY` | Vercel AI Gateway key (or `OPENROUTER_API_KEY` if using OpenRouter) |
 
+The application and EVE worker need these values during `prebuild` as well as at runtime:
+
+| Variable | Purpose |
+| --- | --- |
+| `EVE_GATEWAY_SECRET` | Shared gateway/worker authentication secret, at least 32 characters. Generate with `openssl rand -base64 32`. |
+| `EVE_INTERNAL_ORIGIN` | Absolute HTTPS origin the worker can reach for this deployment's internal callbacks. Use the matching environment's stable application URL. |
+| `WORKFLOW_POSTGRES_URL` | PostgreSQL connection for EVE workflow persistence, with the workflow schema initialized. |
+
+Use separate application and workflow databases for previews and production. Set branch-scoped preview values rather than inheriting the production `DATABASE_URL` or `WORKFLOW_POSTGRES_URL`. Initialize the application migrations and workflow schema against those isolated databases before exercising a preview. The local-only bootstrap command intentionally rejects hosted database URLs; it is not a hosted provisioning command. Configure deployment protection so the worker can reach its authenticated callback origin.
+
 ### Optional (Vercel Features)
 
 | Variable                | Feature                                |

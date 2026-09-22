@@ -13,6 +13,39 @@ export const isEveFileUnavailable = async (key: string) => {
   return file !== undefined && file.state !== "active";
 };
 
+/** Recheck durable access on every download, including URLs disclosed by old shares. */
+export const canReadEveFile = async (key: string, ownerId?: string) => {
+  const [file] = await db
+    .select()
+    .from(eveStoredFile)
+    .where(eq(eveStoredFile.key, key));
+  if (!file) {
+    return { allowed: true, managed: false };
+  }
+  if (file.state !== "active") {
+    return { allowed: false, managed: true };
+  }
+  if (file.ownerId === ownerId) {
+    return { allowed: true, managed: true };
+  }
+  const [reference] = await db
+    .select({ key: eveFileReference.key })
+    .from(eveFileReference)
+    .innerJoin(
+      eveConversation,
+      eq(eveConversation.id, eveFileReference.conversationId)
+    )
+    .where(
+      and(
+        eq(eveFileReference.key, key),
+        eq(eveConversation.state, "bound"),
+        sql`(${eveConversation.ownerId} = ${ownerId ?? null} or ${eveConversation.visibility} = 'public')`
+      )
+    )
+    .limit(1);
+  return { allowed: Boolean(reference), managed: true };
+};
+
 const DOCUMENT_FILE_URL = new RegExp(
   `${FILE_CONTENT_PATH}\\?key=([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
   "gu"

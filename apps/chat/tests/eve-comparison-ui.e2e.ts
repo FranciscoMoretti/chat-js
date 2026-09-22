@@ -127,3 +127,41 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(cards).toHaveCount(4);
   expect(page.url()).toBe(url);
 });
+
+test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
+  page,
+}, testInfo) => {
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.goto("/");
+  const submissions: unknown[] = [];
+  await page.route("**/api/agent-conversations", (route) => {
+    submissions.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: { error: "Temporary transport failure" },
+      status: 503,
+    });
+  });
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("Keep this exact request");
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+  expect(submissions).toHaveLength(1);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+  await page.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("new-chat-recovery.png"),
+  });
+  await page.getByRole("button", { name: "Retry creation" }).click();
+  await expect.poll(() => submissions.length).toBe(2);
+  expect(submissions[1]).toEqual(submissions[0]);
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+});

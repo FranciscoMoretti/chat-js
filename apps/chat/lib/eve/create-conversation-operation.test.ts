@@ -203,3 +203,19 @@ it("journals the complete creation command before dispatch so another tab can re
   await createEveConversationOperation("owner", command);
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
 });
+
+it("recovers an accepted fork after the source was deleted", async () => {
+  mocks.creation.mockResolvedValue({
+    creationKind: "message",
+    state: "uncertain",
+  });
+  mocks.source.mockResolvedValue(undefined);
+  mocks.request.mockResolvedValue(
+    Response.json({ sessionId: "accepted-child" })
+  );
+  const response = await createEveConversationOperation("owner", input);
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ sessionId: "accepted-child" });
+  expect(mocks.source).not.toHaveBeenCalled();
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+});
