@@ -42,6 +42,7 @@
   ],
   "tasks": {
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
@@ -72,6 +73,7 @@
       "cache": false
     },
     "test:e2e": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "electron:build": {
