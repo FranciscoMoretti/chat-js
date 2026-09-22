@@ -5,6 +5,7 @@ import {
   CreationProjectNotFoundError,
   createEveConversation,
   getEveConversation,
+  getEveCreation,
 } from "../db/eve-queries";
 import { createModuleLogger } from "../logger";
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
@@ -80,11 +81,15 @@ export const executeEveConversationCreation = async (
   initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>
 ) => {
   let preparedMessage = initialPreparedMessage;
-  const fork = await resolveFork(ownerId, input.fork);
-  if (fork instanceof Response) {
-    return fork;
-  }
   try {
+    let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
+    if (!(await getEveCreation(ownerId, input.operationId))) {
+      const resolved = await resolveFork(ownerId, input.fork);
+      if (resolved instanceof Response) {
+        return resolved;
+      }
+      fork = resolved;
+    }
     const binding = await createEveConversation(
       ownerId,
       input.operationId,
@@ -108,6 +113,14 @@ export const executeEveConversationCreation = async (
           .safeParse(await existing.json().catch(() => null));
         if (existing.status !== 404 || !lookupFailure.success) {
           throw new EveCreationTransportError("lookup", existing.status);
+        }
+        // Accepted operations recover independently of their former source.
+        if (input.fork && !fork) {
+          const resolved = await resolveFork(ownerId, input.fork);
+          if (resolved instanceof Response) {
+            throw new CreationConflictError("Source conversation not found.");
+          }
+          fork = resolved;
         }
         if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
           await waitForEveCheckpoint(

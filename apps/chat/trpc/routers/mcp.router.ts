@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { assertUrlIsSafeToFetch } from "guarded-fetch";
 import { z } from "zod";
 
 import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
@@ -205,6 +206,7 @@ export const mcpRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       assertMcpEnabled();
+      await assertUrlIsSafeToFetch(input.url, { opaqueErrors: true });
       const nameId = await validateAndGenerateNameId({
         name: input.name,
         userId: ctx.user.id,
@@ -576,6 +578,9 @@ export const mcpRouter = createTRPCRouter({
       });
 
       const updates = { ...input.updates };
+      if (updates.url) {
+        await assertUrlIsSafeToFetch(updates.url, { opaqueErrors: true });
+      }
       if (updates.name) {
         const nameId = await validateAndGenerateNameId({
           excludeId: input.id,
