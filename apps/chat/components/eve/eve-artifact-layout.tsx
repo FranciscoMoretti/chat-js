@@ -1,14 +1,15 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 import type { EveMessage } from "eve/client";
-import dynamic from "next/dynamic";
-import type { ComponentProps, ReactNode } from "react";
-import { useCallback, useState } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   Artifact,
   ArtifactClose,
+  ArtifactDescription,
   ArtifactContent,
   ArtifactHeader,
   ArtifactTitle,
@@ -21,109 +22,43 @@ import {
 } from "@/components/chat/chat-layout";
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
 import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
-import { getLanguageFromFileName } from "@/lib/utils";
+import { eveDocumentResult } from "@/lib/eve/document-contracts";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDocumentActions } from "./eve-document-actions";
 import { EveDocumentAssistantActions } from "./eve-document-assistant-actions";
-import { EveDocumentComparison } from "./eve-document-comparison";
+import { DocumentBody } from "./eve-document-body";
+import {
+  EveDocumentContext,
+  EveDocumentReplayContext,
+} from "./eve-document-context";
 import { EveDocumentRun } from "./eve-document-run";
 import { useDocumentDraft } from "./use-document-draft";
-
-const Editor = dynamic(
-  // next/dynamic requires a promise projection for named exports.
-  // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("@/components/text-editor").then((m) => m.Editor),
-  { ssr: false }
-);
-const CodeEditor = dynamic(
-  // next/dynamic requires a promise projection for named exports.
-  // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("@/components/code-editor").then((m) => m.CodeEditor),
-  { ssr: false }
-);
-const SpreadsheetEditor = dynamic(
-  // next/dynamic requires a promise projection for named exports.
-  // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("@/components/sheet-editor").then((m) => m.SpreadsheetEditor),
-  { ssr: false }
-);
 
 const artifactRegionProps = { role: "region" as const };
 const emptyEveMessages: readonly EveMessage[] = [];
 
 type DocumentActionProps = {
   messages?: readonly EveMessage[];
+  replaying?: boolean;
+  onStopExecution?: (conversationId: string) => Promise<void>;
+  isExecutionBusy?: (conversationId: string) => boolean;
+  getExecutionMessages?: (conversationId: string) => readonly EveMessage[];
   onDocumentAction?: (request: DocumentAssistantRequest) => Promise<void>;
   documentActionsDisabled?: boolean;
 };
 
-const DocumentBody = ({
-  kind,
-  title,
-  editorProps,
-  comparison,
-}: {
-  kind: "text" | "code" | "sheet";
-  title: string;
-  editorProps: ComponentProps<typeof Editor>;
-  comparison?: ComponentProps<typeof EveDocumentComparison>;
-}) => {
-  if (kind === "sheet") {
-    return (
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <SpreadsheetEditor
-          {...editorProps}
-          saveContent={editorProps.onSaveContent}
-        />
-      </div>
-    );
-  }
-  return (
-    <ScrollArea className="min-h-0 flex-1">
-      {kind === "code" && (
-        <CodeEditor
-          {...editorProps}
-          language={getLanguageFromFileName(title) || "python"}
-        />
-      )}
-      {kind === "text" &&
-        (comparison ? (
-          <EveDocumentComparison {...comparison} />
-        ) : (
-          <div className="mx-auto max-w-3xl px-4 py-8">
-            <Editor {...editorProps} />
-          </div>
-        ))}
-    </ScrollArea>
-  );
-};
-
 const DocumentSaveStatus = ({
   editing,
-  editable,
 }: {
   editing: ReturnType<typeof useDocumentDraft>;
-  editable: boolean;
 }) => {
   const handleRetry = editing.retry;
   const handleDiscard = editing.discard;
-  let status = "Previous version · read only";
-  if (editable) {
-    status = "All changes saved";
-  }
-  if (editing.draft) {
-    status = "Unsaved changes";
-  }
-  if (editing.saving) {
-    status = "Saving…";
-  }
   return (
-    <div className="shrink-0 space-y-2 border-b px-4 py-2 text-sm">
-      <output>{status}</output>
+    <div className="shrink-0 space-y-2 px-4 text-sm">
       {editing.storageError && (
         <p role="alert">
           Draft recovery is unavailable in this browser. Keep this panel open
@@ -147,38 +82,6 @@ const DocumentSaveStatus = ({
   );
 };
 
-const DocumentHistoryNavigation = ({
-  disabled,
-  history,
-  index,
-  onSelect,
-}: {
-  disabled: boolean;
-  history: readonly { id: string }[];
-  index: number;
-  onSelect: (revisionId: string | undefined) => void;
-}) => (
-  <div className="flex shrink-0 items-center justify-between gap-2 border-t p-2">
-    <Button
-      disabled={disabled || index <= 0}
-      onClick={() => onSelect(history[index - 1]?.id)}
-      variant="outline"
-    >
-      Previous
-    </Button>
-    <span className="text-muted-foreground text-sm">
-      Version {index + 1} of {history.length}
-    </span>
-    <Button
-      disabled={disabled || index >= history.length - 1}
-      onClick={() => onSelect(history[index + 1]?.id)}
-      variant="outline"
-    >
-      Next
-    </Button>
-  </div>
-);
-
 // This panel coordinates editor, revision, assistant, and recovery states.
 // oxlint-disable-next-line eslint/complexity
 const EveArtifactPanel = ({
@@ -187,44 +90,69 @@ const EveArtifactPanel = ({
   onDocumentAction,
   documentActionsDisabled = false,
   messages = emptyEveMessages,
+  executionBusy,
+  onStop,
 }: {
   conversationId: string;
+  executionBusy?: boolean;
+  onStop?: () => Promise<void>;
   readOnly: boolean;
 } & DocumentActionProps) => {
-  const { artifact, closeArtifact } = useArtifact();
-  const [selectedRevisionId, setSelectedRevisionId] = useState(
-    artifact.revisionId
+  const { artifact, closeArtifact, setArtifact } = useArtifact();
+  const selectedRevisionId = artifact.followLive
+    ? undefined
+    : artifact.revisionId;
+  const setSelectedRevisionId = useCallback(
+    (revisionId: string | undefined) => {
+      setArtifact((current) => ({
+        ...current,
+        followLive: revisionId === undefined,
+        revisionId,
+      }));
+    },
+    [setArtifact]
   );
   const [showChanges, setShowChanges] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const document = useQuery(
-    trpc.eve.document.queryOptions({
-      conversationId,
-      documentId: artifact.documentId,
-      revisionId: selectedRevisionId,
-    })
+    trpc.eve.document.queryOptions(
+      {
+        conversationId,
+        documentId: artifact.documentId,
+        revisionId: selectedRevisionId,
+      },
+      { enabled: artifact.documentId !== "init" }
+    )
   );
   const history = document.data?.history ?? [];
   const revision = document.data?.revision;
   const index = history.findIndex((item) => item.id === revision?.id);
+  const previewing =
+    artifact.status === "streaming" && artifact.followLive !== false;
   const owned = !readOnly && document.data?.canEdit;
-  const onSaved = useCallback(
-    async (revisionId: string) => {
-      await queryClient.fetchQuery(
-        trpc.eve.document.queryOptions({
+  const onSaved = useCallback(async () => {
+    // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
+    await queryClient.fetchQuery(
+      trpc.eve.document.queryOptions(
+        {
           conversationId,
           documentId: artifact.documentId,
-          revisionId,
-        })
-      );
-      setSelectedRevisionId(revisionId);
-      await queryClient.invalidateQueries({
-        queryKey: trpc.eve.document.pathKey(),
-      });
-    },
-    [queryClient, trpc, conversationId, artifact.documentId]
-  );
+        },
+        { staleTime: 0 }
+      )
+    );
+    setSelectedRevisionId(undefined);
+    await queryClient.invalidateQueries({
+      queryKey: trpc.eve.document.pathKey(),
+    });
+  }, [
+    queryClient,
+    trpc,
+    conversationId,
+    artifact.documentId,
+    setSelectedRevisionId,
+  ]);
   const editing = useDocumentDraft({
     conversationId,
     documentId: artifact.documentId,
@@ -235,15 +163,29 @@ const EveArtifactPanel = ({
   });
   const editable =
     owned &&
+    !previewing &&
     editing.ready &&
     (Boolean(editing.draft) || index === history.length - 1);
   const contentProps = {
-    content: editing.draft?.content ?? revision?.content ?? "",
+    content: previewing
+      ? artifact.content
+      : (editing.draft?.content ?? revision?.content ?? ""),
     currentVersionIndex: index,
     isCurrentVersion: index === history.length - 1,
     isReadonly: !editable,
     onSaveContent: editing.edit,
-    status: "idle" as const,
+    status: previewing ? ("streaming" as const) : ("idle" as const),
+  };
+  const selectRevision = (id: string | undefined) => {
+    setSelectedRevisionId(id);
+    setArtifact((current) => ({ ...current, followLive: id === undefined }));
+  };
+  const restoreVersion = () => {
+    const latest = history.at(-1);
+    if (!revision || !latest) {
+      return;
+    }
+    editing.restore(revision.content, revision.title, latest.id);
   };
   const previousRevisionId = history[index - 1]?.id;
   const canCompare = Boolean(previousRevisionId && !editing.draft);
@@ -253,21 +195,40 @@ const EveArtifactPanel = ({
     documentActionsDisabled ||
     !editable ||
     Boolean(editing.draft);
+  let subtitle = "Loading document…";
+  if (revision?.createdAt) {
+    subtitle = `Updated ${formatDistanceToNow(new Date(revision.createdAt), { addSuffix: true })}`;
+  }
+  if (editing.draft || editing.saving) {
+    subtitle = "Saving changes...";
+  }
+  if (previewing) {
+    subtitle = "Writing document…";
+  }
   return (
     <>
       {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Artifact is a shared div primitive; this identifies the document region. */}
       <Artifact
         aria-label="Document"
-        className="h-full min-h-0 w-full rounded-none border-0"
+        className="relative h-full min-h-0 w-full rounded-none border-0"
         data-testid="artifact"
         {...artifactRegionProps}
       >
         <ArtifactHeader className="bg-background/80 shrink-0 items-start p-2">
           <div className="flex min-w-0 items-start gap-4">
-            <ArtifactClose onClick={closeArtifact} variant="outline" />
-            <ArtifactTitle className="break-words">
-              {revision?.title ?? artifact.title}
-            </ArtifactTitle>
+            <ArtifactClose
+              className="hover:bg-accent h-fit p-2"
+              onClick={closeArtifact}
+              variant="outline"
+            />
+            <div className="min-w-0">
+              <ArtifactTitle className="break-words">
+                {previewing
+                  ? artifact.title
+                  : (revision?.title ?? artifact.title)}
+              </ArtifactTitle>
+              <ArtifactDescription>{subtitle} </ArtifactDescription>
+            </div>
           </div>
           {revision && !document.isError && (
             <EveDocumentActions
@@ -276,31 +237,43 @@ const EveArtifactPanel = ({
               content={contentProps.content}
               kind={revision.kind}
               onCompare={() => setShowChanges((current) => !current)}
+              disabled={previewing}
+              previousDisabled={Boolean(editing.draft) || index <= 0}
+              nextDisabled={
+                Boolean(editing.draft) || index >= history.length - 1
+              }
+              onPrevious={() => selectRevision(history[index - 1]?.id)}
+              onNext={() =>
+                selectRevision(
+                  index + 1 === history.length - 1
+                    ? undefined
+                    : history[index + 1]?.id
+                )
+              }
+              run={
+                <EveDocumentRun
+                  documentId={artifact.documentId}
+                  revisionId={revision.id}
+                  title={revision.title}
+                  kind={revision.kind}
+                  messages={messages}
+                  disabled={actionsDisabled}
+                  onAction={owned ? onDocumentAction : undefined}
+                  buttonOnly
+                />
+              }
             />
           )}
         </ArtifactHeader>
-        {owned && (
-          <>
-            <DocumentSaveStatus
-              editable={Boolean(editable)}
-              editing={editing}
-            />
-            {onDocumentAction && revision && (
-              <EveDocumentAssistantActions
-                disabled={actionsDisabled}
-                documentId={artifact.documentId}
-                kind={revision.kind}
-                onAction={(request) => {
-                  setSelectedRevisionId(undefined);
-                  return onDocumentAction(request);
-                }}
-                revisionId={revision.id}
-              />
-            )}
-          </>
+        {owned && <DocumentSaveStatus editing={editing} />}
+        <span className="sr-only">
+          Version {index + 1} of {history.length}
+        </span>
+        {owned && !editing.draft && !editing.saving && (
+          <span className="sr-only">All changes saved</span>
         )}
         <ArtifactContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
-          {document.isPending && (
+          {document.isPending && !previewing && (
             <DocumentSkeleton artifactKind={artifact.kind} />
           )}
           {document.isError && (
@@ -313,7 +286,14 @@ const EveArtifactPanel = ({
               </Button>
             </div>
           )}
-          {revision && !document.isError && (
+          {previewing && (
+            <DocumentBody
+              editorProps={contentProps}
+              kind={artifact.kind}
+              title={artifact.title}
+            />
+          )}
+          {revision && !document.isError && !previewing && (
             <DocumentBody
               comparison={
                 comparing && previousRevisionId
@@ -331,6 +311,37 @@ const EveArtifactPanel = ({
               title={revision.title}
             />
           )}
+          {previewing && !revision && !readOnly && executionBusy && onStop && (
+            <EveDocumentAssistantActions
+              kind={artifact.kind}
+              documentId={artifact.documentId}
+              revisionId=""
+              disabled
+              busy
+              onStop={onStop}
+            />
+          )}
+          {owned &&
+            index === history.length - 1 &&
+            (onDocumentAction || onStop) &&
+            revision && (
+              <EveDocumentAssistantActions
+                disabled={actionsDisabled}
+                busy={executionBusy}
+                onStop={onStop}
+                documentId={artifact.documentId}
+                kind={revision.kind}
+                onAction={
+                  onDocumentAction
+                    ? (request) => {
+                        selectRevision(undefined);
+                        return onDocumentAction(request);
+                      }
+                    : undefined
+                }
+                revisionId={revision.id}
+              />
+            )}
         </ArtifactContent>
         {revision && !document.isError && (
           <>
@@ -342,13 +353,33 @@ const EveArtifactPanel = ({
               onAction={owned ? onDocumentAction : undefined}
               revisionId={revision.id}
               title={revision.title}
+              resultOnly
             />
-            <DocumentHistoryNavigation
-              disabled={Boolean(editing.draft)}
-              history={history}
-              index={index}
-              onSelect={setSelectedRevisionId}
-            />
+            {owned && index !== -1 && index < history.length - 1 && (
+              <div className="bg-background flex flex-col justify-between gap-4 border-t p-4 lg:flex-row">
+                <div>
+                  <div>You are viewing a previous version</div>
+                  <div className="text-muted-foreground text-sm">
+                    Restore this version to make edits
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <Button
+                    disabled={Boolean(editing.draft) || editing.saving}
+                    onClick={restoreVersion}
+                  >
+                    Restore this version
+                  </Button>
+                  <Button
+                    disabled={Boolean(editing.draft)}
+                    variant="outline"
+                    onClick={() => selectRevision(undefined)}
+                  >
+                    Back to latest version
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </Artifact>
@@ -363,15 +394,62 @@ const Layout = ({
   onDocumentAction,
   documentActionsDisabled,
   messages,
+  isExecutionBusy,
+  getExecutionMessages,
+  onStopExecution,
 }: {
   children: ReactNode;
   conversationId?: string;
   readOnly?: boolean;
 } & DocumentActionProps) => {
-  const { artifact } = useArtifact();
-  const visible = Boolean(
-    conversationId && artifact.isVisible && artifact.documentId !== "init"
-  );
+  const { artifact, setArtifact } = useArtifact();
+  const ownerId = artifact.conversationId ?? conversationId;
+  const busy = ownerId ? isExecutionBusy?.(ownerId) : undefined;
+  const ownerMessages = ownerId ? getExecutionMessages?.(ownerId) : undefined;
+  useEffect(() => {
+    if (artifact.status !== "streaming" || !artifact.previewCallId) {
+      return;
+    }
+    const call = ownerMessages
+      ?.flatMap((message) => message.parts)
+      .find(
+        (part) =>
+          part.type === "dynamic-tool" &&
+          part.toolCallId === artifact.previewCallId
+      );
+    if (call?.type === "dynamic-tool" && call.state === "output-available") {
+      const result = eveDocumentResult.safeParse(call.output);
+      if (result.success) {
+        setArtifact((current) => ({
+          ...current,
+          content: "",
+          date: result.data.date,
+          documentId: result.data.documentId,
+          kind: result.data.kind,
+          previewCallId: undefined,
+          revisionId: undefined,
+          status: "idle",
+          title: result.data.title,
+        }));
+        return;
+      }
+    }
+    if (busy === false) {
+      setArtifact((current) => ({
+        ...current,
+        isVisible: current.documentId !== "init" && current.isVisible,
+        previewCallId: undefined,
+        status: "idle",
+      }));
+    }
+  }, [
+    artifact.status,
+    artifact.previewCallId,
+    busy,
+    ownerMessages,
+    setArtifact,
+  ]);
+  const visible = Boolean(conversationId && artifact.isVisible);
   return (
     <ChatLayout isSecondaryPanelVisible={visible}>
       <ChatLayoutMain defaultSize={visible ? 65 : 100}>
@@ -381,11 +459,22 @@ const Layout = ({
       <ChatLayoutSecondary>
         {visible && conversationId && (
           <EveArtifactPanel
-            conversationId={conversationId}
+            conversationId={artifact.conversationId ?? conversationId}
             documentActionsDisabled={documentActionsDisabled}
-            key={`${artifact.documentId}:${artifact.revisionId ?? "latest"}`}
-            messages={messages}
-            onDocumentAction={onDocumentAction}
+            executionBusy={busy}
+            onStop={
+              ownerId && onStopExecution
+                ? () => onStopExecution(ownerId)
+                : undefined
+            }
+            key={`${artifact.conversationId ?? conversationId}:${artifact.documentId}`}
+            messages={ownerMessages ?? messages}
+            onDocumentAction={
+              !artifact.conversationId ||
+              artifact.conversationId === conversationId
+                ? onDocumentAction
+                : undefined
+            }
             readOnly={readOnly}
           />
         )}
@@ -398,10 +487,15 @@ export const EveArtifactLayout = (
   props: {
     children: ReactNode;
     conversationId?: string;
+    logicalChatId?: string;
     readOnly?: boolean;
   } & DocumentActionProps
 ) => (
-  <ArtifactProvider key={props.conversationId ?? "new"}>
-    <Layout {...props} />
+  <ArtifactProvider key={props.logicalChatId ?? props.conversationId ?? "new"}>
+    <EveDocumentContext.Provider value={props.conversationId}>
+      <EveDocumentReplayContext.Provider value={props.replaying ?? false}>
+        <Layout {...props} />
+      </EveDocumentReplayContext.Provider>
+    </EveDocumentContext.Provider>
   </ArtifactProvider>
 );

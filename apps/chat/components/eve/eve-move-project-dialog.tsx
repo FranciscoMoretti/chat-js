@@ -32,7 +32,10 @@ export const EveMoveProjectDialog = ({
   const move = useMutation(
     trpc.eve.assignProject.mutationOptions({
       onSuccess: async () => {
-        await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
+        await Promise.all([
+          cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
+          cache.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
+        ]);
         router.refresh();
         onClose();
       },

@@ -64,7 +64,10 @@ export const safeStreamQuery = (params: URLSearchParams) => {
     if (
       key === "startIndex"
         ? !streamIndex.test(value)
-        : !(key === "includeTailIndex" && value === "1")
+        : !(
+            (key === "includeTailIndex" || key === "streamControlVersion") &&
+            value === "1"
+          )
     ) {
       return null;
     }

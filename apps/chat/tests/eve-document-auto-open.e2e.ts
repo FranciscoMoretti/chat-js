@@ -15,7 +15,7 @@ test("live document completion opens once without replacing an existing panel or
     "bun",
     [
       "-e",
-      'const result = await Bun.build({ entrypoints: ["tests/eve-document-auto-open.bootstrap.ts"], target: "browser", define: {"process.env.NODE_ENV": JSON.stringify("production"), "process.env": "{}"} }); if (!result.success) throw new Error(String(result.logs)); process.stdout.write(await result.outputs[0].text());',
+      'const result = await Bun.build({ plugins: [{ name: "fixture-prism", setup(build) { build.onResolve({ filter: /^prismjs$/ }, () => ({ path: Bun.resolveSync("prismjs", Bun.resolveSync("@lexical/code", process.cwd())) })); } }], entrypoints: ["tests/eve-document-auto-open.bootstrap.ts"], target: "browser", define: {"process.env.NODE_ENV": JSON.stringify("production"), "process.env": "{}"} }); if (!result.success) throw new Error(String(result.logs)); process.stdout.write(await result.outputs[0].text());',
     ],
     { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
   );
@@ -30,8 +30,25 @@ test("live document completion opens once without replacing an existing panel or
   const panel = page.getByRole("region", { exact: true, name: "Document" });
   await expect(page.getByText('Created "Orchard notes"')).toBeVisible();
   await expect(panel).toHaveCount(0);
+  await page.getByRole("button", { exact: true, name: "Start replay" }).click();
+  await expect(panel).toHaveCount(0);
+  await page
+    .getByRole("button", { exact: true, name: "Complete write" })
+    .click();
+  await page
+    .getByRole("button", { exact: true, name: "Finish replay" })
+    .click();
+  await expect(panel).toHaveCount(0);
   await page.getByRole("button", { exact: true, name: "Start write" }).click();
   await expect(page.getByRole("status")).toHaveText("Writing document…");
+  await expect(panel).toContainText("Partial apple planting instructions.");
+  await expect(
+    panel.getByRole("button", { name: "View Previous version" })
+  ).toHaveCount(0);
+  await page.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("partial-document.png"),
+  });
   await page
     .getByRole("button", { exact: true, name: "Complete write" })
     .click();
@@ -56,6 +73,7 @@ test("live document completion opens once without replacing an existing panel or
   await expect(panel).toContainText("Existing document content.");
   await page.getByRole("button", { exact: true, name: "Close" }).click();
   await page.getByRole("button", { exact: true, name: "Start write" }).click();
+  await page.getByRole("button", { exact: true, name: "Fail write" }).click();
   await page
     .getByRole("button", { exact: true, name: "Complete read" })
     .click();
@@ -66,5 +84,60 @@ test("live document completion opens once without replacing an existing panel or
     .getByRole("button", { exact: true, name: "Complete write" })
     .click();
   await expect(panel).toHaveCount(0);
+  await page.getByRole("button", { name: "Open existing" }).click();
+  await expect(panel).toContainText("Existing document content.");
+  await panel
+    .getByRole("button", { exact: true, name: "View Previous version" })
+    .click();
+  await expect(panel).toContainText("Historical orchard content.");
+  await expect(
+    panel.getByRole("button", { exact: true, name: "Restore this version" })
+  ).toBeVisible();
+  await panel.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("historical-version.png"),
+  });
+  await page
+    .getByRole("button", { exact: true, name: "Switch branch" })
+    .click();
+  await expect(panel).toContainText("Historical orchard content.");
+  // The fixture rejects any query/save through the newly selected branch ID.
+  await panel
+    .getByRole("button", { exact: true, name: "Back to latest version" })
+    .click();
+  await expect(panel).toContainText("Existing document content.");
+  await panel
+    .getByRole("button", { exact: true, name: "View Previous version" })
+    .click();
+  await panel
+    .getByRole("button", { exact: true, name: "Restore this version" })
+    .click();
+  await expect(panel).toContainText("Saving changes...");
+  await expect(panel).toContainText("Version 3 of 3");
+  await expect(panel).toContainText("Historical orchard content.");
+  await expect(
+    panel.getByRole("button", { exact: true, name: "Restore this version" })
+  ).toHaveCount(0);
+  await panel.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("restored-version.png"),
+  });
+  await expect(
+    panel.getByRole("button", { exact: true, name: "Add final polish" })
+  ).toBeDisabled();
+  await page
+    .getByRole("button", { exact: true, name: "Start background execution" })
+    .click();
+  await expect(
+    panel.getByRole("button", { exact: true, name: "Stop generation" })
+  ).toBeVisible();
+  await panel
+    .getByRole("button", { exact: true, name: "Stop generation" })
+    .click();
+  await expect(
+    page.getByText("Stopped session: 00000000-0000-4000-8000-000000000010", {
+      exact: true,
+    })
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });

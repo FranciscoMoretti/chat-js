@@ -26,6 +26,7 @@ import {
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 
+import { EveSessionMappingError } from "../eve/session-mapping-error";
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
@@ -53,6 +54,27 @@ export const getBoundEveConversationForSession = async (
     )
     .limit(1);
   return rows[0];
+};
+
+/** Internal mapping lookup includes tombstones so deletion cannot look like pending delivery. */
+export const readEveSessionMapping = async (
+  identity: { reservationId: string } | { sessionId: string }
+) => {
+  const [row] = await db
+    .select({
+      creationKind: eveConversation.creationKind,
+      id: eveConversation.id,
+      ownerId: eveConversation.ownerId,
+      sessionId: eveConversation.sessionId,
+      state: eveConversation.state,
+    })
+    .from(eveConversation)
+    .where(
+      "reservationId" in identity
+        ? eq(eveConversation.id, identity.reservationId)
+        : eq(eveConversation.sessionId, identity.sessionId)
+    );
+  return row;
 };
 
 export const ownsEveSession = async (ownerId: string, sessionId: string) =>
@@ -114,6 +136,7 @@ export const listEveConversations = async (
   const rows = await db
     .select({
       conversationId: routeConversationId,
+      createdAt: eveChat.createdAt,
       id: eveChat.id,
       isPinned: eveChat.isPinned,
       projectId: eveChatProject.projectId,
@@ -198,10 +221,6 @@ export const getEveChatPageConversation = async (
 ) => {
   const exact = await getEveConversation(ownerId, routeId);
   if (exact) {
-    await db
-      .update(eveChat)
-      .set({ activeConversationId: exact.id })
-      .where(and(eq(eveChat.id, exact.chatId), eq(eveChat.ownerId, ownerId)));
     return exact;
   }
   const [logical] = await db
@@ -244,11 +263,20 @@ export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   const [identity] = await db
     .select({
       chatId: eveChat.id,
+      isPinned: eveChat.isPinned,
+      projectId: eveChatProject.projectId,
       title: eveChat.title,
       titleStatus: eveChat.titleStatus,
       visibility: eveConversation.visibility,
     })
     .from(eveChat)
+    .leftJoin(
+      eveChatProject,
+      and(
+        eq(eveChatProject.chatId, eveChat.id),
+        eq(eveChatProject.ownerId, ownerId)
+      )
+    )
     .leftJoin(
       eveConversation,
       and(
@@ -636,6 +664,69 @@ const matchesEveFork = (
   existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
   existing.forkKind === forkKind;
 
+type CreationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+const bindConversationSession = async (
+  tx: CreationTransaction,
+  ownerId: string,
+  reservationId: string,
+  sessionId: string
+) => {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${`eve-binding:${sessionId}`}, 0))`
+  );
+  const [sessionBinding] = await tx
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .where(eq(eveConversation.sessionId, sessionId));
+  if (sessionBinding && sessionBinding.id !== reservationId) {
+    throw new EveSessionMappingError("binding_conflict");
+  }
+  const [bound] = await tx
+    .update(eveConversation)
+    .set({ initialRequest: null, sessionId, state: "bound" })
+    .where(
+      and(
+        eq(eveConversation.id, reservationId),
+        eq(eveConversation.ownerId, ownerId),
+        or(
+          and(
+            inArray(eveConversation.state, ["creating", "uncertain"]),
+            isNull(eveConversation.sessionId)
+          ),
+          and(
+            eq(eveConversation.state, "bound"),
+            eq(eveConversation.sessionId, sessionId)
+          )
+        )
+      )
+    )
+    .returning();
+  if (!bound?.sessionId) {
+    const [existing] = await tx
+      .select()
+      .from(eveConversation)
+      .where(eq(eveConversation.id, reservationId));
+    if (!existing) {
+      throw new EveSessionMappingError("identity_missing");
+    }
+    if (existing.ownerId !== ownerId) {
+      throw new EveSessionMappingError("owner_mismatch");
+    }
+    if (existing.state === "deleting" || existing.state === "deleted") {
+      throw new EveSessionMappingError("identity_deleted");
+    }
+    throw new EveSessionMappingError("binding_conflict");
+  }
+  await tx
+    .update(eveChat)
+    .set({
+      activeConversationId: sql`coalesce(${eveChat.activeConversationId}, ${bound.id}::uuid)`,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
+  return { id: bound.id, sessionId: bound.sessionId };
+};
+
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 export const createEveConversation = async (
@@ -645,6 +736,7 @@ export const createEveConversation = async (
   create: (id: string) => Promise<string>,
   {
     initialModelId,
+    initialRequest,
     initialContentHash,
     initialTitle = message,
     fork,
@@ -653,6 +745,7 @@ export const createEveConversation = async (
     initialProjectId,
     guestReservationId,
   }: {
+    initialRequest?: unknown;
     initialModelId?: string;
     initialContentHash?: string;
     initialTitle?: string;
@@ -680,6 +773,7 @@ export const createEveConversation = async (
       initialContentHash,
       initialModelId,
       initialProjectId,
+      initialRequest,
       operationId,
       ownerId,
     },
@@ -759,30 +853,12 @@ export const createEveConversation = async (
         );
       }
       const sessionId = await create(reservation.id);
-      const [bound] = await tx
-        .update(eveConversation)
-        .set({ sessionId, state: "bound" })
-        .where(
-          and(
-            eq(eveConversation.id, reservation.id),
-            or(
-              eq(eveConversation.state, "creating"),
-              eq(eveConversation.state, "uncertain")
-            )
-          )
-        )
-        .returning();
-      if (!bound?.sessionId) {
-        throw new Error("Session binding was not saved.");
-      }
-      await tx
-        .update(eveChat)
-        .set({
-          activeConversationId: sql`coalesce(${eveChat.activeConversationId}, ${bound.id}::uuid)`,
-          updatedAt: new Date(),
-        })
-        .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
-      return { id: bound.id, sessionId: bound.sessionId };
+      return await bindConversationSession(
+        tx,
+        ownerId,
+        reservation.id,
+        sessionId
+      );
     });
   } catch (error) {
     if (error instanceof CreationConflictError) {
@@ -984,7 +1060,10 @@ export const listEveConversationBranches = async (
   ownerId: string,
   conversationId: string
 ) => {
-  const conversation = await getEveConversation(ownerId, conversationId);
+  const conversation = await getEveChatPageConversation(
+    ownerId,
+    conversationId
+  );
   if (!conversation) {
     return;
   }
@@ -996,12 +1075,16 @@ export const listEveConversationBranches = async (
       forkKind: eveConversation.forkKind,
       forkMessageId: eveConversation.forkMessageId,
       forkTurnId: eveConversation.forkTurnId,
+      groupCandidates: eveResponseGroup.candidates,
       id: eveConversation.id,
+      initialModelId: eveConversation.initialModelId,
+      operationId: eveConversation.operationId,
       parentConversationId: eveConversation.parentConversationId,
       responseGroupId: eveResponseGroup.id,
       responseGroupIndex: sql<
         number | null
       >`array_position(${eveResponseGroup.candidateOperationIds}, ${eveConversation.operationId})`,
+      sessionId: eveConversation.sessionId,
     })
     .from(eveConversation)
     .leftJoin(
@@ -1020,7 +1103,7 @@ export const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  return { branches, rootId };
+  return { branches, chatId: conversation.chatId, rootId };
 };
 
 /** Internal cleanup only; does not grant browser or conversation access. */
@@ -1083,3 +1166,29 @@ export const getEveConversationProject = async (
     );
   return assigned ?? null;
 };
+
+/** Only interrupted message commands are replayable here; copies and deletion have separate journals. */
+export const listPendingEveCreations = async (ownerId: string) =>
+  await db
+    .select()
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.creationKind, "message"),
+        or(
+          eq(eveConversation.state, "creating"),
+          eq(eveConversation.state, "uncertain")
+        )
+      )
+    );
+
+/** Caller must verify a native operation receipt for this reservation and exact session. */
+export const bindAcceptedEveConversation = async (
+  ownerId: string,
+  reservationId: string,
+  sessionId: string
+) =>
+  await db.transaction((tx) =>
+    bindConversationSession(tx, ownerId, reservationId, sessionId)
+  );

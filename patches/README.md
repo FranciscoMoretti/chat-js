@@ -1,5 +1,7 @@
 # Maintained dependency patches
 
+> The package migration draft replaces the eve install-time patch with `@chat-js/eve`. See [the migration and local testing guide](../docs/eve-package-development.md). The eve files below remain as a portable backup until the first fork release. The instructions below describe the pre-migration packaging.
+
 The isolated ChatJS worktree installs **eve 0.61.0** with `eve@0.61.0.patch`. The readable implementation and tests are in **one** `eve-0.61.0.source.patch`, based on tag `eve@0.61.0` (`241e5004cb1ac1e2bcd716a154bbc64f5a61cc53`). Both `package.json` and `bun.lock` pin the installed artifact. Scaffold generation verifies and vendors that same installed package.
 
 The five old source patches, compiled 0.52.2 patch, and incremental experiment builder have been retired. They remain in Git at `27c14d41`. See the [reduction report](../docs/upstream-drafts/eve-fork-061-reduction.md) for retained contracts and migration limits.

@@ -11,7 +11,12 @@ import { useTRPC } from "@/trpc/react";
 
 import { EveDeleteDialog } from "./eve-delete-dialog";
 
-type Conversation = { id: string; title: string; state: string };
+type Conversation = {
+  id: string;
+  title: string;
+  state: string;
+  projectId?: string | null;
+};
 const DeletionContext = createContext<
   ((conversation: Conversation) => void) | null
 >(null);
@@ -47,11 +52,10 @@ export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
         });
         const status = await response.json();
         if (response.ok && status.rootId === rootId) {
-          router.replace(
-            route.source === "project" && route.projectId
-              ? `/project/${route.projectId}`
-              : "/"
-          );
+          const projectId =
+            conversation?.projectId ??
+            (route.source === "project" ? route.projectId : undefined);
+          router.replace(projectId ? `/project/${projectId}` : "/");
         }
       }
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required cache cleanup in finally.

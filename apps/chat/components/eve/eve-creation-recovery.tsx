@@ -62,7 +62,7 @@ export const EveCreationRecovery = ({
     setFailure("");
     /* oxlint-disable react/todo -- Preserve the recovery lock cleanup in finally. */
     try {
-      const id = await resolveCreationRequest(
+      const { id } = await resolveCreationRequest(
         sessionStorage,
         ownerId,
         pending,

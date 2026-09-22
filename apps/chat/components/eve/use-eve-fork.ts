@@ -2,7 +2,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
@@ -26,6 +25,7 @@ import { restoreEveAttachment } from "@/lib/eve/restore-attachment";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 
+import { useEveRuntime } from "./eve-logical-context";
 import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
@@ -75,7 +75,7 @@ export const useEveFork = (
   const family = useQuery(
     trpc.eve.branches.queryOptions({ id: conversationId })
   );
-  const router = useRouter();
+  const openRuntime = useEveRuntime();
   const [isNavigating, startTransition] = useTransition();
   const selectedModel = useDefaultModel();
   const files = useEveAttachments();
@@ -148,7 +148,7 @@ export const useEveFork = (
   }, [conversationId, ownerId, setAttachments]);
 
   const execute = async (operation: Operation) => {
-    const id = await resolveCreationRequest(
+    const binding = await resolveCreationRequest(
       sessionStorage,
       ownerId,
       operation,
@@ -163,6 +163,7 @@ export const useEveFork = (
       }),
       queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
     ]);
+    await openRuntime({ ...binding, operation, ownerId });
     startTransition(() => {
       // App Router Activity can keep this source route mounted while its successor
       // is active. Clear the fulfilled editor in the navigation transition so
@@ -176,7 +177,6 @@ export const useEveFork = (
       setModelSelectionValue(undefined);
       setEditRestoreFailed(false);
       setAttachments([]);
-      router.push(`/chat/${id}`, { scroll: false });
     });
   };
 

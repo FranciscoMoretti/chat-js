@@ -1,0 +1,206 @@
+status	path	coverage
+D	apps/chat/app/(chat)/actions.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/app/(chat)/agent/page.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/[id]/stream/route.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/add-explicit-tool-request-to-messages.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/filter-reasoning-parts.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/get-recent-generated-image.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/get-thread-up-to-message-id.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/api/chat/route.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/app/(chat)/api/files/content/route.test.ts	outside targeted audit / not deeply reviewed
+M	apps/chat/app/(chat)/api/files/content/route.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/app/(chat)/api/files/upload/route.test.ts	outside targeted audit / not deeply reviewed
+M	apps/chat/app/(chat)/api/files/upload/route.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/app/(chat)/chat-providers.tsx	cataloged
+D	apps/chat/app/(chat)/chat-route-host.tsx	cataloged
+M	apps/chat/app/(chat)/chat/[id]/page.tsx	cataloged
+M	apps/chat/app/(chat)/layout.tsx	cataloged
+M	apps/chat/app/(chat)/page.tsx	cataloged
+M	apps/chat/app/(chat)/project/[projectId]/chat/[chatId]/page.tsx	cataloged
+M	apps/chat/app/(chat)/project/[projectId]/page.tsx	cataloged
+M	apps/chat/app/(chat)/share/[id]/page.tsx	cataloged
+D	apps/chat/app/(chat)/share/[id]/shared-chat-page.tsx	cataloged
+M	apps/chat/components/ai-elements/code-block.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/context.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/ai-elements/extra/conversation-content-scroll-area.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/message.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/prompt-input.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/reasoning.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/shimmer.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ai-elements/tool.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/anonymous-session-init.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/app-sidebar-history-conditional.tsx	cataloged
+M	apps/chat/components/app-sidebar.tsx	cataloged
+D	apps/chat/components/artifact-actions.tsx	cataloged
+D	apps/chat/components/artifact-panel.tsx	cataloged
+D	apps/chat/components/assistant-message.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/attachment-card.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/attachment-list.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/attachments-button.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/auth-providers.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat-composer.tsx	cataloged
+A	apps/chat/components/chat-header-view.tsx	cataloged
+D	apps/chat/components/chat-header.tsx	cataloged
+M	apps/chat/components/chat-menu-items.tsx	cataloged
+M	apps/chat/components/chat-rename-dialog.tsx	cataloged
+D	apps/chat/components/chat-runtime-controller.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat-sync.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat-system.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat/chat-content.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/chat/chat-welcome-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat/chat-welcome.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat/main-chat-panel.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/chat/secondary-chat-panel.tsx	cataloged
+D	apps/chat/components/chat/use-chat-votes.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/components/clone-chat-button-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/clone-chat-button.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/code-editor.tsx	cataloged
+M	apps/chat/components/connectors-dropdown.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/console.tsx	cataloged
+M	apps/chat/components/context-bar.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/context-usage.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/controlled-chat-composer.tsx	cataloged
+D	apps/chat/components/create-artifact.tsx	cataloged
+D	apps/chat/components/data-stream-handler.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/deep-research-progress.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/delete-chat-dialog.tsx	cataloged
+M	apps/chat/components/delete-project-dialog.tsx	cataloged
+M	apps/chat/components/diffview.tsx	cataloged
+A	apps/chat/components/eve/eve-artifact-layout.tsx	cataloged
+A	apps/chat/components/eve/eve-attachment.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-chat-page.tsx	cataloged
+A	apps/chat/components/eve/eve-composer.tsx	cataloged
+A	apps/chat/components/eve/eve-conversation.tsx	cataloged
+A	apps/chat/components/eve/eve-copy-button.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-creation-recovery.tsx	cataloged
+A	apps/chat/components/eve/eve-delete-dialog.tsx	cataloged
+A	apps/chat/components/eve/eve-deletion-provider.tsx	cataloged
+A	apps/chat/components/eve/eve-document-actions.tsx	cataloged
+A	apps/chat/components/eve/eve-document-assistant-actions.tsx	cataloged
+A	apps/chat/components/eve/eve-document-comparison.tsx	cataloged
+A	apps/chat/components/eve/eve-document-run.tsx	cataloged
+A	apps/chat/components/eve/eve-document-tool.tsx	cataloged
+A	apps/chat/components/eve/eve-feedback-actions.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-fork-recovery.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-guest-bootstrap.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-history-list.tsx	cataloged
+A	apps/chat/components/eve/eve-history.tsx	cataloged
+A	apps/chat/components/eve/eve-initial-message.tsx	cataloged
+A	apps/chat/components/eve/eve-logical-context.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-logical-group-recovery.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-logical-navigation.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-mcp-result.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-messages.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-model-picker.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-move-project-dialog.tsx	cataloged
+A	apps/chat/components/eve/eve-optimistic-response-group.test.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-optimistic-response-group.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-platform-tool-result.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-project-home.tsx	cataloged
+A	apps/chat/components/eve/eve-research-result.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-response-group-cards.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-runtime-provider.tsx	cataloged
+A	apps/chat/components/eve/eve-share-dialog.tsx	cataloged
+A	apps/chat/components/eve/eve-shared-messages.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/eve-shared-page.tsx	cataloged
+A	apps/chat/components/eve/eve-tool-result.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/new-eve-conversation.tsx	cataloged
+A	apps/chat/components/eve/use-document-draft.ts	cataloged
+A	apps/chat/components/eve/use-eve-attachments.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/use-eve-composer-draft.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/use-eve-fork.test.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/use-eve-fork.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/use-eve-message-delivery.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/components/eve/use-logical-commands.ts	outside targeted audit / not deeply reviewed
+M	apps/chat/components/favicon.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/feedback-actions.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/followup-suggestions-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/followup-suggestions.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/greeting.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/header-breadcrumb.tsx	cataloged
+D	apps/chat/components/image-editor.tsx	cataloged
+M	apps/chat/components/image-modal.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/interactive-chart-impl.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/lexical-chat-input.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/message-actions-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/message-actions.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/message-editor.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/message-parts.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/message-siblings-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/message-siblings.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/message-vote-actions.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/message.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/messages-pane.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/messages.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/model-selector.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/model-toolbar-visual-fixture.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/multimodal-input.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/parallel-response-cards.test.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/components/parallel-response-cards.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/parallel-response-status.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/components/part/deep-research.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/part/document-common.tsx	cataloged
+D	apps/chat/components/part/document-preview.tsx	cataloged
+D	apps/chat/components/part/document-tool.tsx	cataloged
+D	apps/chat/components/part/dynamic-tool.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/part/mcp-tool-result.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/part/message-annotations.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/part/read-document.tsx	cataloged
+D	apps/chat/components/part/text-message-part.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/part/tool-part.test.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/part/tool-part.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/part/web-search.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/partial-message-loading.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/project-chat-item.tsx	cataloged
+D	apps/chat/components/project-chats.tsx	cataloged
+M	apps/chat/components/project-config.tsx	cataloged
+M	apps/chat/components/project-details-dialog.tsx	cataloged
+D	apps/chat/components/project-home.tsx	cataloged
+A	apps/chat/components/project-instructions-dialog.tsx	cataloged
+M	apps/chat/components/research-progress.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/response-choice-cards.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/response-error-message.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/responsive-tools.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/retry-button-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/retry-button.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/search-chats-dialog.tsx	cataloged
+D	apps/chat/components/search-chats.tsx	cataloged
+M	apps/chat/components/settings/mcp-create-dialog.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/settings/models-table.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/share-button.tsx	cataloged
+M	apps/chat/components/sheet-editor.tsx	cataloged
+M	apps/chat/components/sidebar-chat-item.tsx	cataloged
+D	apps/chat/components/sidebar-chats-list.tsx	cataloged
+D	apps/chat/components/sidebar-history.tsx	cataloged
+M	apps/chat/components/sidebar-project-item.tsx	cataloged
+M	apps/chat/components/sidebar-projects.tsx	cataloged
+M	apps/chat/components/sidebar-user-nav.tsx	cataloged
+M	apps/chat/components/sources.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/suggested-actions.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/text-editor.tsx	cataloged
+D	apps/chat/components/thinking-message.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/toolbar.tsx	cataloged
+M	apps/chat/components/ui/alert.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ui/breadcrumb.tsx	cataloged
+M	apps/chat/components/ui/button-group.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/ui/extra/scroll-area-viewport-ref.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ui/input-group.tsx	outside targeted audit / not deeply reviewed
+M	apps/chat/components/ui/sidebar.tsx	cataloged
+D	apps/chat/components/upgrade-cta/limit-display.tsx	outside targeted audit / not deeply reviewed
+A	apps/chat/components/user-message-view.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/user-message.tsx	outside targeted audit / not deeply reviewed
+D	apps/chat/components/version-footer.tsx	cataloged
+D	apps/chat/hooks/chat-sync-hooks.ts	cataloged
+M	apps/chat/hooks/use-artifact.tsx	cataloged
+D	apps/chat/hooks/use-chat-system-initial-state.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/hooks/use-credits.ts	cataloged
+D	apps/chat/hooks/use-navigate-to-message.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/hooks/use-navigate-to-sibling.ts	outside targeted audit / not deeply reviewed
+A	apps/chat/hooks/use-projects.ts	cataloged
+D	apps/chat/hooks/use-shared-chat.ts	outside targeted audit / not deeply reviewed
+D	apps/chat/lib/artifacts/code/client.tsx	cataloged
+D	apps/chat/lib/artifacts/sheet/client.tsx	cataloged
+D	apps/chat/lib/artifacts/text/client.tsx	cataloged
+A	apps/chat/lib/artifacts/types.ts	cataloged
+D	apps/chat/providers/chat-input-provider.tsx	outside targeted audit / not deeply reviewed

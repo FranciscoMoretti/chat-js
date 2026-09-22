@@ -6,8 +6,6 @@ import {
   Conversation,
   ConversationContent,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { AttachmentList } from "@/components/attachment-list";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import {
   expandSelectedModelValue,
@@ -29,16 +27,21 @@ import {
 
 import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
+import { EveInitialMessage } from "./eve-initial-message";
+import { useEveRuntime } from "./eve-logical-context";
 import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
 
 export const NewEveConversation = ({
   ownerId,
   projectId,
+  onPendingChange,
 }: {
   ownerId: string;
   projectId?: string;
+  onPendingChange?: (pending: boolean) => void;
 }) => {
+  const openRuntime = useEveRuntime();
   const scope = useMemo(
     () => (projectId ? { projectId } : undefined),
     [projectId]
@@ -64,6 +67,9 @@ export const NewEveConversation = ({
       >
     >();
   const lock = useRef(false);
+  useEffect(() => {
+    onPendingChange?.(busy || retained);
+  }, [busy, retained, onPendingChange]);
   useEffect(() => {
     try {
       const pending = readCreationRequest(sessionStorage, ownerId, scope);
@@ -115,13 +121,13 @@ export const NewEveConversation = ({
         selectedTool ?? undefined
       );
       retainOperation(operation);
-      const id = await resolveCreationRequest(
+      const binding = await resolveCreationRequest(
         sessionStorage,
         ownerId,
         operation,
         scope
       );
-      window.location.assign(`/chat/${id}`);
+      await openRuntime({ ...binding, operation, ownerId });
       navigating = true;
     } catch (error) {
       if (
@@ -203,13 +209,9 @@ export const NewEveConversation = ({
             {optimisticComparison ? (
               <EveOptimisticResponseGroup operation={optimisticComparison} />
             ) : (
-              <Message className="flex-col" from="user">
-                <MessageContent className="max-w-full min-w-0">
-                  <span className="sr-only">You</span>
-                  <p className="whitespace-pre-wrap">{draft}</p>
-                  <AttachmentList attachments={files.attachments} />
-                </MessageContent>
-              </Message>
+              <EveInitialMessage
+                message={draftMessage(draft, files.attachments)}
+              />
             )}
             <output className="sr-only">Sending…</output>
           </ConversationContent>

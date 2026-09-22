@@ -16,7 +16,11 @@ export default defineHook({
       context.update((current) => followupContext(current, event)),
     "message.received": (event) =>
       context.update((current) => followupContext(current, event)),
-    "turn.completed": () => generateEveFollowupSuggestions(context.get()),
+    "turn.completed": (_event, hookContext) =>
+      // Suggestions are actions for the user-facing branch, not a background task.
+      hookContext.session.parent
+        ? undefined
+        : generateEveFollowupSuggestions(context.get()),
     "turn.started": (event) =>
       context.update((current) => followupContext(current, event)),
   },

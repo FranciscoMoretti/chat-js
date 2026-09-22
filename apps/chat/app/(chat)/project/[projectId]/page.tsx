@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { z } from "zod";
 
 import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
@@ -8,7 +9,7 @@ import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
 import { getProjectById } from "@/lib/db/queries";
 
-const ProjectPageRoute = async ({
+const ProjectContent = async ({
   params,
 }: {
   params: Promise<{
@@ -48,5 +49,15 @@ const ProjectPageRoute = async ({
     />
   );
 };
+
+const ProjectPageRoute = (props: Parameters<typeof ProjectContent>[0]) => (
+  <Suspense
+    fallback={
+      <div className="text-muted-foreground p-4 text-sm">Loading project…</div>
+    }
+  >
+    <ProjectContent {...props} />
+  </Suspense>
+);
 
 export default ProjectPageRoute;

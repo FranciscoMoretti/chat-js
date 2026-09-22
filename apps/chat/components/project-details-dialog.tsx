@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ProjectIconPicker } from "@/components/project-icon-picker";
 import { Button } from "@/components/ui/button";
@@ -51,14 +51,16 @@ export const ProjectDetailsDialog = ({
     initialColor ?? null
   );
 
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (open) {
-      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with its latest server values.
+    if (open && !wasOpen.current) {
+      // oxlint-disable-next-line react/set-state-in-effect -- Initialize on opening; optimistic cache updates must not erase an open draft.
       setSubmitError("");
       setName(initialName ?? "");
       setIcon(initialIcon ?? null);
       setColor(initialColor ?? null);
     }
+    wasOpen.current = open;
   }, [open, initialName, initialIcon, initialColor]);
 
   // Computed values for submission

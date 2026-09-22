@@ -6,6 +6,7 @@ import { listEveOwnerBindings } from "../db/eve-queries";
 import { getEvePostgresStreamPositions } from "../db/eve-stream-positions";
 import { env } from "../env";
 import { ingestEveActivity } from "./activity";
+import { recoverEveCreations } from "./recover-creations";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 
@@ -59,6 +60,7 @@ export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
 };
 
 export const reconcileEveOwnerUsage = async (ownerId: string) => {
+  await recoverEveCreations(ownerId);
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
     throw new Error(

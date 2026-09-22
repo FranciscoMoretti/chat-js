@@ -31,7 +31,17 @@ const completed: Part = {
   toolName: "createTextDocument",
   type: "dynamic-tool",
 };
-const Fixture = () => {
+const Fixture = ({
+  switchBranch,
+  startBackground,
+  startReplay,
+  finishReplay,
+}: {
+  switchBranch: () => void;
+  startBackground: () => void;
+  startReplay: () => void;
+  finishReplay: () => void;
+}) => {
   const { artifact, setArtifact } = useArtifact();
   const [part, setPart] = useState<Part>(completed);
   const [readOnly, setReadOnly] = useState(false);
@@ -40,9 +50,41 @@ const Fixture = () => {
       <h1>Document opening</h1>
       <div className="flex flex-wrap gap-4">
         <button
+          type="button"
+          onClick={() => {
+            startReplay();
+            setPart({
+              input: {
+                content: "Replayed historical content",
+                title: "Orchard notes",
+              },
+              inputText: "{}",
+              state: "input-streaming",
+              toolCallId: "write-1",
+              toolName: "createTextDocument",
+              type: "dynamic-tool",
+            });
+          }}
+        >
+          Start replay
+        </button>
+        <button type="button" onClick={finishReplay}>
+          Finish replay
+        </button>
+        <button type="button" onClick={startBackground}>
+          Start background execution
+        </button>
+        <button type="button" onClick={switchBranch}>
+          Switch branch
+        </button>
+        <button
           onClick={() =>
             setPart({
-              input: {},
+              input: {
+                content:
+                  "# Orchard notes\n\nPartial apple planting instructions.",
+                title: "Orchard notes",
+              },
               state: "input-available",
               toolCallId: "write-1",
               toolName: "createTextDocument",
@@ -52,6 +94,21 @@ const Fixture = () => {
           type="button"
         >
           Start write
+        </button>
+        <button
+          onClick={() =>
+            setPart({
+              errorText: "Document cancelled.",
+              input: {},
+              state: "output-error",
+              toolCallId: "write-1",
+              toolName: "createTextDocument",
+              type: "dynamic-tool",
+            })
+          }
+          type="button"
+        >
+          Fail write
         </button>
         <button onClick={() => setPart({ ...completed })} type="button">
           Complete write
@@ -69,7 +126,9 @@ const Fixture = () => {
           onClick={() =>
             setArtifact({
               ...artifact,
+              conversationId,
               documentId: existingId,
+              followLive: true,
               isVisible: true,
               revisionId: undefined,
               title: "Existing draft",
@@ -85,6 +144,37 @@ const Fixture = () => {
     </main>
   );
 };
+const App = () => {
+  const [branch, setBranch] = useState(conversationId);
+  const [replaying, setReplaying] = useState(false);
+  const [busy, setBusy] = useState<boolean>();
+  const [stopped, setStopped] = useState("");
+  return (
+    <>
+      <p>Stopped session: {stopped}</p>
+      <EveArtifactLayout
+        conversationId={branch}
+        logicalChatId="logical-chat"
+        replaying={replaying}
+        isExecutionBusy={
+          busy === undefined ? undefined : (id) => busy && id === conversationId
+        }
+        onStopExecution={(id) => {
+          setStopped(id);
+          setBusy(false);
+          return Promise.resolve();
+        }}
+      >
+        <Fixture
+          startReplay={() => setReplaying(true)}
+          finishReplay={() => setReplaying(false)}
+          startBackground={() => setBusy(true)}
+          switchBranch={() => setBranch("00000000-0000-4000-8000-000000000099")}
+        />
+      </EveArtifactLayout>
+    </>
+  );
+};
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
@@ -93,9 +183,7 @@ createRoot(root).render(
   <QueryClientProvider client={queryClient}>
     <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
       <SidebarProvider defaultOpen={false}>
-        <EveArtifactLayout conversationId={conversationId}>
-          <Fixture />
-        </EveArtifactLayout>
+        <App />
       </SidebarProvider>
     </TRPCProvider>
   </QueryClientProvider>

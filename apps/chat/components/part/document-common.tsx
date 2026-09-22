@@ -1,6 +1,7 @@
 import { File, Loader2, Pencil } from "lucide-react";
 import { memo } from "react";
 
+import { useDocumentConversation } from "@/components/eve/eve-document-context";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 
@@ -41,6 +42,7 @@ const getActionText = (
 };
 
 interface DocumentToolResultProps {
+  followLive?: boolean;
   disabled?: boolean;
   isReadonly: boolean;
   messageId: string;
@@ -55,12 +57,14 @@ interface DocumentToolResultProps {
 
 const PureDocumentToolResult = ({
   disabled = false,
+  followLive = false,
   type,
   result,
   isReadonly: _isReadonly,
   messageId,
 }: DocumentToolResultProps) => {
   const { setArtifact } = useArtifact();
+  const conversationId = useDocumentConversation();
 
   return (
     <button
@@ -69,11 +73,13 @@ const PureDocumentToolResult = ({
       onClick={() => {
         setArtifact({
           content: "",
+          conversationId,
           documentId: result.id,
+          followLive,
           isVisible: true,
           kind: result.kind,
           messageId,
-          revisionId: result.revisionId,
+          revisionId: followLive ? undefined : result.revisionId,
           status: "idle",
           title: result.title,
         });
