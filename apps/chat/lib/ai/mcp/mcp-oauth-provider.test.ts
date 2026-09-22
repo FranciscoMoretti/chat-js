@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(),
   save: vi.fn(),
 }));
+vi.mock("./mcp-fetch", () => ({ mcpFetch: mocks.fetch }));
+
 vi.mock("@/lib/db/mcp-queries", () => ({
   getAuthenticatedSession: mocks.read,
   getSessionByState: mocks.read,
@@ -58,7 +60,6 @@ beforeEach(() => {
       return stored;
     }
   );
-  vi.stubGlobal("fetch", mocks.fetch);
 });
 afterEach(() => vi.unstubAllGlobals());
 

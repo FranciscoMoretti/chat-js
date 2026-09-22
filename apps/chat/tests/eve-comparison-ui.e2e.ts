@@ -240,3 +240,61 @@ test("multi-model creation retains exact partial operation across navigation and
   );
   expect(errors).toEqual([]);
 });
+
+test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
+  page,
+}, testInfo) => {
+  const script = execFileSync("bun", ["tests/eve-comparison-ui.build.mjs"], {
+    encoding: "utf-8",
+    maxBuffer: 40 * 1024 * 1024,
+  });
+  const css = execFileSync(
+    "bun",
+    [
+      "-e",
+      'import postcss from "postcss";import tailwind from "@tailwindcss/postcss";const from=process.cwd()+"/app/globals.css";process.stdout.write((await postcss([tailwind()]).process(await Bun.file(from).text(),{from})).css);',
+    ],
+    { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
+  );
+  const submissions: unknown[] = [];
+  await page.route("https://eve-recovery.test/**", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/fixture.js") {
+      return route.fulfill({ body: script, contentType: "text/javascript" });
+    }
+    if (path === "/api/agent-conversations") {
+      submissions.push(route.request().postDataJSON());
+      return route.fulfill({
+        json: { error: "Temporary transport failure" },
+        status: 503,
+      });
+    }
+    return route.fulfill({
+      body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div><script type="module" src="/fixture.js"></script></body></html>`,
+      contentType: "text/html",
+    });
+  });
+  await page.goto("https://eve-recovery.test/");
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("Keep this exact request");
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+  expect(submissions).toHaveLength(1);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+  await page.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("new-chat-recovery.png"),
+  });
+  await page.getByRole("button", { name: "Retry creation" }).click();
+  await expect.poll(() => submissions.length).toBe(2);
+  expect(submissions[1]).toEqual(submissions[0]);
+  await expect(
+    page.getByRole("button", { name: "Retry creation" })
+  ).toBeEnabled();
+});

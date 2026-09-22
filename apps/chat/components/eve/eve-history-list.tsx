@@ -56,7 +56,7 @@ export const EveHistoryList = ({
   const search = query.trim();
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { ownerScope: ownerId, projectId, search },
+      { ownerScope: ownerId, projectId: projectId ?? null, search },
       {
         getNextPageParam: (page) => page.nextCursor,
         initialData: search

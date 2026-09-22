@@ -44,10 +44,13 @@ beforeEach(() => {
   mocks.remove.mockResolvedValue({ rootId: id });
 });
 it("cleans an unaccepted copy with never-dispatched proof instead of native retirement", async () => {
+  const rootId = "00000000-0000-4000-8000-000000000099";
+  mocks.state.mockResolvedValue({ rootId, state: "bound" });
   mocks.unacceptedCopy.mockResolvedValue(true);
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://remote.example/db";
   const resolvedResult1 = await DELETE(request(), context);
   expect(resolvedResult1.status).toBe(200);
+  expect(await resolvedResult1.json()).toEqual({ rootId, status: "deleted" });
   expect(mocks.removeCopy).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });

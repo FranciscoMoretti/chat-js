@@ -12,6 +12,7 @@ import {
   releaseEveFamilyFileReferences,
 } from "../lib/db/eve-file-purge";
 import {
+  canReadEveFile,
   isEveFileUnavailable,
   referenceEveFiles,
   registerEveStoredFile,
@@ -277,27 +278,31 @@ test("file purge preserves outside references and keeps durable progress across 
     "survivor",
     async () => crypto.randomUUID()
   );
+  const [targetRow] = await db
+    .select({ chatId: eveConversation.chatId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, target.id));
   const exclusive = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   const shared = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, exclusive);
   await registerEveStoredFile(owner, shared);
   await referenceEveFiles(owner, target.id, [exclusive, shared]);
   await referenceEveFiles(owner, survivor.id, [shared]);
-  await expect(prepareEveFamilyFilePurge(owner, target.id)).rejects.toThrow(
-    "pending deletion"
-  );
+  await expect(
+    prepareEveFamilyFilePurge(owner, targetRow.chatId)
+  ).rejects.toThrow("pending deletion");
   await beginEveConversationDeletion(owner, target.id);
-  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([
+  expect(await prepareEveFamilyFilePurge(owner, targetRow.chatId)).toEqual([
     exclusive,
   ]);
-  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([
+  expect(await prepareEveFamilyFilePurge(owner, targetRow.chatId)).toEqual([
     exclusive,
   ]);
   await expect(
     referenceEveFiles(owner, survivor.id, [exclusive])
   ).rejects.toThrow("not owned");
   await completeEveFilePurge(owner, [exclusive]);
-  expect(await prepareEveFamilyFilePurge(owner, target.id)).toEqual([]);
+  expect(await prepareEveFamilyFilePurge(owner, targetRow.chatId)).toEqual([]);
   await expect(registerEveStoredFile(owner, exclusive)).rejects.toThrow(
     "cannot be reassigned"
   );
@@ -322,20 +327,28 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     "second",
     async () => crypto.randomUUID()
   );
+  const [firstRow] = await db
+    .select({ chatId: eveConversation.chatId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, first.id));
+  const [secondRow] = await db
+    .select({ chatId: eveConversation.chatId })
+    .from(eveConversation)
+    .where(eq(eveConversation.id, second.id));
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, key);
   await referenceEveFiles(owner, first.id, [key]);
   await referenceEveFiles(owner, second.id, [key]);
-  await expect(releaseEveFamilyFileReferences(owner, first.id)).rejects.toThrow(
-    "pending deletion"
-  );
+  await expect(
+    releaseEveFamilyFileReferences(owner, firstRow.chatId)
+  ).rejects.toThrow("pending deletion");
   await beginEveConversationDeletion(owner, first.id);
   await beginEveConversationDeletion(owner, second.id);
-  expect(await prepareEveFamilyFilePurge(owner, first.id)).toEqual([]);
-  expect(await prepareEveFamilyFilePurge(owner, second.id)).toEqual([]);
+  expect(await prepareEveFamilyFilePurge(owner, firstRow.chatId)).toEqual([]);
+  expect(await prepareEveFamilyFilePurge(owner, secondRow.chatId)).toEqual([]);
   const outcomes = await Promise.allSettled([
-    releaseEveFamilyFileReferences(owner, first.id),
-    releaseEveFamilyFileReferences(owner, second.id),
+    releaseEveFamilyFileReferences(owner, firstRow.chatId),
+    releaseEveFamilyFileReferences(owner, secondRow.chatId),
   ]);
   expect(
     outcomes.filter((result) => result.status === "fulfilled")
@@ -348,7 +361,10 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     .from(eveFileReference)
     .where(eq(eveFileReference.key, key));
   expect(references).toHaveLength(1);
-  const remaining = references[0].conversationId;
+  const remaining =
+    references[0].conversationId === first.id
+      ? firstRow.chatId
+      : secondRow.chatId;
   await expect(
     releaseEveFamilyFileReferences(stranger, remaining)
   ).rejects.toThrow("pending deletion");
@@ -474,4 +490,49 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
   expect(file.state).toBe("deleting");
+});
+
+test("file downloads follow ownership and current share visibility", async () => {
+  const id = crypto.randomUUID();
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await insertEveConversationFixtures({
+    firstMessage: "private file",
+    id,
+    operationId: crypto.randomUUID(),
+    ownerId: owner,
+    state: "bound",
+  });
+  await registerEveStoredFile(owner, key);
+  await referenceEveFiles(owner, id, [key]);
+  expect(await canReadEveFile(key, owner)).toEqual({
+    allowed: true,
+    managed: true,
+  });
+  expect(await canReadEveFile(key, stranger)).toEqual({
+    allowed: false,
+    managed: true,
+  });
+  expect(await canReadEveFile(key)).toEqual({ allowed: false, managed: true });
+  await db
+    .update(eveConversation)
+    .set({ visibility: "public" })
+    .where(eq(eveConversation.id, id));
+  expect(await canReadEveFile(key)).toEqual({ allowed: true, managed: true });
+  await db
+    .update(eveConversation)
+    .set({ visibility: "private" })
+    .where(eq(eveConversation.id, id));
+  expect(await canReadEveFile(key)).toEqual({ allowed: false, managed: true });
+  await db
+    .update(eveStoredFile)
+    .set({ state: "deleting" })
+    .where(eq(eveStoredFile.key, key));
+  expect(await canReadEveFile(key, owner)).toEqual({
+    allowed: false,
+    managed: true,
+  });
+  expect(await canReadEveFile("legacy-file")).toEqual({
+    allowed: true,
+    managed: false,
+  });
 });

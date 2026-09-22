@@ -106,4 +106,24 @@ describe("response group lineage", () => {
       sessionId: "session-regenerated",
     });
   });
+  it("does not treat regenerated imported history as the candidate's native answer", () => {
+    const copy = row("copy", "copy-operation");
+    const candidate = row("imported", "operation-a", {
+      forkKind: "comparison",
+      forkMessageId: "seed_message_2",
+      parentConversationId: copy.id,
+    });
+    const prefixRegeneration = row("prefix-regeneration", "retry-prefix", {
+      forkKind: "regenerate",
+      forkMessageId: "seed_message_2",
+      parentConversationId: candidate.id,
+    });
+    expect(
+      resolveEveResponseGroupLineage(
+        prefixRegeneration.id,
+        [copy, candidate, prefixRegeneration],
+        [group]
+      )
+    ).toBeUndefined();
+  });
 });

@@ -88,10 +88,7 @@ export const createEveConversationOperation = async (
       { status: 503 }
     );
   }
-  const fork = await resolveFork(ownerId, input.fork);
-  if (fork instanceof Response) {
-    return fork;
-  }
+  let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
   let preparedMessage:
     | Awaited<ReturnType<typeof prepareEveMessage>>
     | undefined;
@@ -118,6 +115,11 @@ export const createEveConversationOperation = async (
       );
     }
     if (!existing) {
+      const resolvedFork = await resolveFork(ownerId, input.fork);
+      if (resolvedFork instanceof Response) {
+        return resolvedFork;
+      }
+      fork = resolvedFork;
       try {
         await loadEveModelDefinition(input.modelId);
         await assertEveFilesOwned(ownerId, eveMessageFileKeys(input.message));
@@ -173,6 +175,14 @@ export const createEveConversationOperation = async (
           .safeParse(await existing.json().catch(() => null));
         if (existing.status !== 404 || !lookupFailure.success) {
           throw new Error("Native operation lookup is unavailable.");
+        }
+        // Recover an admitted native operation before consulting its former source.
+        if (input.fork && !fork) {
+          const resolvedFork = await resolveFork(ownerId, input.fork);
+          if (resolvedFork instanceof Response) {
+            throw new CreationConflictError("Source conversation not found.");
+          }
+          fork = resolvedFork;
         }
         if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
           await waitForEveCheckpoint(

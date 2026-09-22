@@ -72,7 +72,10 @@ export const DELETE = async (request: Request, context: Context) => {
   try {
     if (await isUnacceptedEveCopy(ownerId, id)) {
       await deleteUnacceptedEveCopy(ownerId, id);
-      return Response.json({ rootId: id, status: "deleted" }, { headers });
+      return Response.json(
+        { rootId: source.rootId, status: "deleted" },
+        { headers }
+      );
     }
     // Hosted native erasure is not implemented. Reject before revoking access.
     if (!localDeletionAvailable()) {

@@ -10,7 +10,10 @@ export const EveHistory = async () => {
   if (!principal) {
     return null;
   }
-  const current = await listEveConversations(principal.ownerId);
+  const current = await listEveConversations(principal.ownerId, {
+    projectId: null,
+    search: "",
+  });
   return (
     <EveHistoryList
       initialPage={current}

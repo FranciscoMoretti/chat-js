@@ -22,6 +22,8 @@ import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
+import { mcpFetch } from "./mcp-fetch";
+
 const log = createModuleLogger("mcp-oauth-provider");
 const refreshTokensSchema = z.object({
   access_token: z.string(),
@@ -231,11 +233,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         .get("content-type")
         ?.includes("application/x-www-form-urlencoded")
     ) {
-      return await globalThis.fetch(request);
+      return await mcpFetch(request);
     }
     const params = new URLSearchParams(await request.clone().text());
     if (params.get("grant_type") !== "refresh_token") {
-      return await globalThis.fetch(request);
+      return await mcpFetch(request);
     }
     const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
     return await withMcpOAuthRefreshLock(
@@ -263,7 +265,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
           this.committedRefreshes += 1;
           return Response.json(latest.tokens);
         }
-        const response = await globalThis.fetch(request, {
+        const response = await mcpFetch(request, {
           signal: AbortSignal.any([
             request.signal,
             AbortSignal.timeout(30_000),
