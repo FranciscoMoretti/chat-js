@@ -81,10 +81,10 @@ EVE_INTERNAL_ORIGIN=http://localhost:3080 bunx dotenv -e .env.worktree.local -e 
 
 It retains its test users/native sessions in the isolated database for inspection. The local installed-package probe and execution logs are under `/tmp/eve-native-identity-probe.mjs` and `/tmp/eve-identity-*` in this task's environment.
 
-## Limitations and baseline failures
+## Limitations and follow-up verification
 
 Existing bound sessions need no backfill. **An already-accepted, unbound session created before the attribute existed cannot be identified directly by the new hook path.** Reconcile those reservations with the existing owner recovery/caller retry before switching them to this hook implementation. Existing authored snapshots may keep their earlier hook code; this change does not backfill their auth attributes. The resolver reports pending identity rather than scanning or guessing. This task did not mutate or reconcile the source application's sessions.
 
 Native operation lookup resolves continuation ownership; it is not a new permanent application receipt store. This change does not establish an unlimited retention guarantee for missing receipts after native retirement. A continuing receipt/DB outage still prevents hook authorization; fail-closed classification is not a promise of eventual success during an outage.
 
-Broader copy verification produced five failures on both this change and a separately reconstructed, untouched handoff baseline: four cleanup/revocation cases encounter `The entire conversation family must be pending deletion`; one invalid-seed case receives a document-boundary validation error before its expected size error. The two suites contain 15 passing and five failing tests. They were not changed or concealed. The ordinary browser save-copy/follow-up/delete path passed separately.
+Follow-up copy verification reproduced and resolved the five baseline failures. Rejected-copy cleanup now passes the logical chat ID to family resource purges; branch IDs remain reserved for journal and tombstone operations. Tests now reflect native empty-seed support and logical chat metadata ownership. All 26 tests across the copy journal, save-copy, copy-document and family-deletion suites pass. Native child-hook verification and remaining production-delegation prerequisites are recorded in [the subagent report](./eve-subagent-verification.md).
