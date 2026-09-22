@@ -11,7 +11,7 @@ import { projectInstructions } from "../../lib/eve/project-instructions";
 export default defineHook({
   events: {
     "session.waiting": async (event, context) => {
-      if (!event.data.checkpoint) {
+      if (context.session.parent || !event.data.checkpoint) {
         return;
       }
       const scope = await resolveEveConversationScope(
@@ -31,9 +31,13 @@ export default defineHook({
       projectInstructions.update(() => ({ content: null }));
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
-        context.session.id,
+        context.session.parent?.rootSessionId ?? context.session.id,
         AbortSignal.timeout(10_000),
-        context.session.auth.initiator?.attributes.chatjsReservationId
+        // Native lineage identifies the existing root binding. An inherited
+        // reservation attribute never authorizes a child to claim that binding.
+        context.session.parent
+          ? undefined
+          : context.session.auth.initiator?.attributes.chatjsReservationId
       );
       const project = await getEveConversationProject(
         scope.ownerId,
@@ -42,11 +46,14 @@ export default defineHook({
       projectInstructions.update(() => ({
         content: project?.instructions ?? null,
       }));
-      await captureEveDocumentCheckpoint(
-        scope.ownerId,
-        scope.conversationId,
-        event.data.sequence
-      );
+      // Child turn indices and checkpoint IDs belong to the child's transcript.
+      if (!context.session.parent) {
+        await captureEveDocumentCheckpoint(
+          scope.ownerId,
+          scope.conversationId,
+          event.data.sequence
+        );
+      }
     },
   },
 });
