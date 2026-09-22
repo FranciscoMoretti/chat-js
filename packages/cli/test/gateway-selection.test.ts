@@ -684,7 +684,7 @@ assert.equal(new Gateway().type, "${gateway}");
 import { generateText } from "ai";
 process.env.DATABASE_URL = "postgres://fixture:fixture@127.0.0.1/fixture";
 process.env.AUTH_SECRET = "fixture-secret";
-process.env.EVE_GATEWAY_SECRET = "fixture-eve-gateway-secret";
+process.env.EVE_GATEWAY_SECRET = "fixture-eve-gateway-secret-at-least-32-characters";
 process.env.EVE_INTERNAL_ORIGIN = "http://localhost:3000";
 process.env.WORKFLOW_POSTGRES_URL = process.env.DATABASE_URL;
 process.env.ACME_BASE_URL = "http://127.0.0.1:${registryServer.port}/v1";
