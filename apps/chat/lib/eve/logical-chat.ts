@@ -18,7 +18,7 @@ export type LogicalBranch = EveBranchReference & {
       }[]
     | null;
 };
-export type LogicalNode = {
+type LogicalNode = {
   id: string;
   parentId: string | null;
   conversationId: string;

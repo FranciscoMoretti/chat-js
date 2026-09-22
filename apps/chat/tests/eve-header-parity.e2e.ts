@@ -68,6 +68,10 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   await expect(
     page.getByRole("link", { exact: true, name: "Optimistic header" })
   ).toBeVisible();
+  await expect(page.locator("header").first()).toHaveScreenshot(
+    "optimistic-header.png",
+    { animations: "disabled" }
+  );
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("optimistic-header.png"),
@@ -141,6 +145,10 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   await expect(
     page.getByRole("menuitem", { exact: true, name: "Share" })
   ).toBeVisible();
+  await expect(page.getByRole("menu")).toHaveScreenshot(
+    "mobile-header-menu.png",
+    { animations: "disabled" }
+  );
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("mobile-header-menu.png"),

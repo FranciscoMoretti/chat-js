@@ -295,8 +295,15 @@ export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   return identity;
 };
 export class CreationConflictError extends Error {
-  constructor(message?: string, options?: ErrorOptions) {
+  readonly code: "creation_conflict" | "creation_in_progress";
+  constructor(
+    message?: string,
+    options?: ErrorOptions & {
+      code?: "creation_conflict" | "creation_in_progress";
+    }
+  ) {
     super(message, options);
+    this.code = options?.code ?? "creation_conflict";
     this.name = "CreationConflictError";
   }
 }
@@ -830,7 +837,8 @@ export const createEveConversation = async (
       );
       if (!lock?.locked) {
         throw new CreationConflictError(
-          "Creation is still in progress. Retry the same operation shortly."
+          "Creation is still in progress. Retry the same operation shortly.",
+          { code: "creation_in_progress" }
         );
       }
       const [current] = await tx

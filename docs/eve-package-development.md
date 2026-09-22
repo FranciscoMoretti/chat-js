@@ -1,8 +1,8 @@
 # Developing the eve fork with ChatJS
 
-The package migration is part of [PR #447](https://github.com/FranciscoMoretti/chat-js/pull/447), on `codex/app-owned-branch-prototype`. It consumes `eve` through the npm alias `npm:@chat-js/eve@0.61.0-chatjs.0`. The implementation and native tests are prepared locally in the eve fork, based on upstream `eve@0.61.0`, on `francisco/chatjs-package`; that fork branch still needs to be committed and published.
+The package migration is part of [PR #447](https://github.com/FranciscoMoretti/chat-js/pull/447), on `codex/app-owned-branch-prototype`. It consumes `eve` through the npm alias `npm:@chat-js/eve@0.61.0-chatjs.0`. The implementation and native tests are published on [francisco/chatjs-package](https://github.com/FranciscoMoretti/eve/tree/3a7acfe6ba42a8dc9d330132b11856962a675705), based on upstream `eve@0.61.0`, with GitHub-verified signatures and DCO trailers. Native unit tests (9,149), types, invariants, lint, focused integrations, package build and consumer smoke checks passed.
 
-**Release gate:** the first scoped package has not been published. Do not merge this migration until it is published and `bun install` regenerates `bun.lock` against the registry. The existing lockfile is retained until that step; a frozen registry install of this draft is not expected to work yet.
+**Release gate:** the first scoped package has not been published. Do not merge this migration until it is published and `bun install` regenerates `bun.lock` against the registry. The existing lockfile is retained until that step; a frozen registry install of this PR is not expected to work yet.
 
 ## Local loop
 
@@ -32,7 +32,7 @@ Generated apps preserve the exact npm alias. They no longer reconstruct an eve p
 2. An authenticated owner of the `@chat-js` npm scope publishes the tested archive: `npm publish /absolute/path/to/chat-js-eve-0.61.0-chatjs.0.tgz --access public --tag chatjs`.
 3. Run `bun install` in ChatJS, verify the resolved package name/version, and run the same checks against the registry installation.
 4. Run `bun template:sync` and `bun template:check`.
-5. Remove `patches/eve-0.61.0.source.patch`, `patches/eve@0.61.0.patch` and `scripts/build-eve-patch.ts` once the fork source and release are available remotely. They remain in this draft as the existing portable backup.
+5. Remove `patches/eve-0.61.0.source.patch`, `patches/eve@0.61.0.patch` and `scripts/build-eve-patch.ts` once the fork source and release are available remotely. They remain in this PR as the existing portable backup.
 
 For subsequent releases, use npm trusted publishing with the fork's `chatjs-package.yml` workflow. It builds and checks a tarball before publishing that exact artifact. Package names and versions must agree in both ChatJS manifests and generated templates. No paid provider calls, existing databases, or live workflow migration are part of these checks.
 
