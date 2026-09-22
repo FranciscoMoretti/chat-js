@@ -19,6 +19,8 @@ The [100-file audit](catalog.md) and [findings](findings.md) describe the pre-fi
 
 ## Verification
 
+The [2026-09-22 verification follow-up](verification-2026-09-22.md) reruns the focused browser checks, adds matched header/project captures, and identifies the hosted failure as a Vitest-project versus screenshot/Playwright capture mismatch.
+
 - `bun lint`: passed, including docs doctor.
 - `bun test:types`: passed across all 7 workspace tasks.
 - EVE unit suite plus fork hook: **66 files / 343 tests passed**.
