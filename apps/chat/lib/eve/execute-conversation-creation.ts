@@ -64,6 +64,7 @@ const creationFailure = (cause: unknown) => {
   }
   return Response.json(
     {
+      ...(cause instanceof CreationConflictError ? { code: cause.code } : {}),
       error:
         cause instanceof CreationConflictError
           ? cause.message

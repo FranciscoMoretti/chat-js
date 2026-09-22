@@ -1,4 +1,4 @@
-export type EveSessionMappingErrorCode =
+type EveSessionMappingErrorCode =
   | "unauthenticated"
   | "identity_pending"
   | "identity_missing"
