@@ -7,7 +7,7 @@ const Spinner = ({
   "aria-label": label = "Loading",
   ...props
 }: React.ComponentProps<"svg">) => (
-  <output aria-label={label} className="contents">
+  <output aria-label={label} className="inline-flex">
     <Loader2Icon
       aria-hidden="true"
       className={cn("size-4 animate-spin", className)}
