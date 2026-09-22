@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import type { ProjectDetailsData } from "@/components/project-details-dialog";
@@ -27,11 +27,14 @@ export const SidebarProjects = () => {
   );
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
-  // Auto-expand project if we're on a project route
-  const currentProjectId = useMemo(
-    () => parseChatIdFromPathname(pathname).projectId,
-    [pathname]
+  const route = parseChatIdFromPathname(pathname);
+  const identity = useQuery(
+    trpc.eve.get.queryOptions(
+      { id: route.id ?? "" },
+      { enabled: route.type === "chat" || route.type === "projectChat" }
+    )
   );
+  const currentProjectId = route.projectId ?? identity.data?.projectId;
 
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({

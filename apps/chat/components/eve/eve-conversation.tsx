@@ -86,8 +86,6 @@ export const EveConversation = ({
   const cancelPending = command.cancelling;
   const setCommandFailure = (failure?: Error) =>
     controller.commands.update(conversationId, { failure });
-  const setCancelPending = (cancelling: boolean) =>
-    controller.commands.update(conversationId, { cancelling });
   const { text: draft, setText: setDraft } = composerDraft;
   const agent = snapshot.agents.get(conversationId);
   if (!agent) {
@@ -238,22 +236,29 @@ export const EveConversation = ({
       throw error;
     }
   };
-  const cancel = async () => {
-    setCancelPending(true);
-    controller.commands.update(conversationId, {
-      cancellation: controller.commands.get(conversationId).cancellation + 1,
+  const cancelExecution = async (executionId: string) => {
+    const execution = controller.getSnapshot().agents.get(executionId);
+    if (!execution || controller.commands.get(executionId).cancelling) {
+      return;
+    }
+    controller.commands.update(executionId, {
+      cancellation: controller.commands.get(executionId).cancellation + 1,
+      cancelling: true,
     });
     try {
-      await agent.cancel();
+      await execution.cancel();
     } catch {
-      setCommandFailure(
-        new Error("Cancellation failed. Reconnect to check the response.")
-      );
+      controller.commands.update(executionId, {
+        failure: new Error(
+          "Cancellation failed. Reconnect to check the response."
+        ),
+      });
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required cancellation cleanup in finally.
     } finally {
-      setCancelPending(false);
+      controller.commands.update(executionId, { cancelling: false });
     }
   };
+  const cancel = () => cancelExecution(conversationId);
   // Retain the selected tool across a pending or comparison recovery flow.
   // oxlint-disable-next-line eslint/no-use-before-define
   const displayedTool = retainedToolSelection(
@@ -270,7 +275,7 @@ export const EveConversation = ({
     statusLabel = "Responding…";
   }
   if (agent.status === "resuming") {
-    statusLabel = "Restoring conversation…";
+    statusLabel = "Loading conversation";
   }
   if (hasApproval) {
     statusLabel = "Waiting for your input";
@@ -280,6 +285,20 @@ export const EveConversation = ({
   }
   return (
     <EveArtifactLayout
+      replaying={agent.status === "resuming"}
+      onStopExecution={cancelExecution}
+      logicalChatId={controller.chatId}
+      getExecutionMessages={(id) =>
+        snapshot.agents.get(id)?.data.messages ?? []
+      }
+      isExecutionBusy={(id) => {
+        const status = snapshot.agents.get(id)?.status;
+        return (
+          status === "submitted" ||
+          status === "streaming" ||
+          status === "resuming"
+        );
+      }}
       conversationId={conversationId}
       documentActionsDisabled={
         busy ||

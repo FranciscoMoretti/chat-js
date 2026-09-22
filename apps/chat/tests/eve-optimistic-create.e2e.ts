@@ -33,6 +33,9 @@ for (const project of [false, true]) {
       ).toHaveAttribute("contenteditable", "true");
       if (project) {
         await page
+          .getByRole("button", { exact: true, name: "Expand sidebar" })
+          .click();
+        await page
           .getByRole("button", { exact: true, name: "New project" })
           .click();
         const dialog = page.getByRole("dialog");
@@ -85,6 +88,12 @@ for (const project of [false, true]) {
         path: testInfo.outputPath("optimistic-first-message.png"),
       });
       if (project) {
+        await expect(
+          page.getByRole("button", { exact: true, name: "Rename project" })
+        ).toBeHidden();
+        await expect(
+          page.getByText("No chats in this project", { exact: true })
+        ).toBeHidden();
         await expect(
           page
             .getByRole("log")
@@ -236,9 +245,7 @@ for (const identity of ["registered", "guest"]) {
       await expect(
         page.getByRole("log").getByText(message, { exact: true })
       ).toHaveCount(1);
-      await page
-        .getByRole("link", { exact: true, name: "New conversation" })
-        .click();
+      await page.getByRole("link", { name: /^New Chat/u }).click();
       await expect(input).toHaveText("");
       await expect(page.getByRole("log")).toHaveCount(0);
     } finally {

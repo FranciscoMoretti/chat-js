@@ -485,8 +485,9 @@ test("deletion fences the entire owned family and is retryable", async () => {
   await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
   expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
+  const rootCreation = await getEveConversation(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, child.id);
-  expect(deletion?.rootId).toBe(root.id);
+  expect(deletion?.rootId).toBe(rootCreation?.chatId);
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].toSorted()
   );
@@ -613,10 +614,9 @@ test("final application deletion erases family content, preserves accounting and
   await beginEveConversationDeletion(owner, child.id);
   await expect(
     completeEveConversationDeletion("other", root.id)
-  ).rejects.toThrow("pending deletion");
-  await expect(
-    completeEveConversationDeletion(owner, child.id)
-  ).rejects.toThrow("pending deletion");
+  ).rejects.toThrow("Conversation identity is unavailable");
+  // Any branch route resolves to its logical chat and retires the same family.
+  await completeEveConversationDeletion(owner, child.id);
   await completeEveConversationDeletion(owner, root.id);
   await completeEveConversationDeletion(owner, root.id);
   for (const id of [root.id, child.id]) {
@@ -628,9 +628,8 @@ test("final application deletion erases family content, preserves accounting and
       firstMessage: "",
       initialContentHash: null,
       initialModelId: null,
-      isPinned: false,
+      initialRequest: null,
       state: "deleted",
-      title: null,
       visibility: "private",
     });
     expect(row.sessionId).toBe(
@@ -638,6 +637,19 @@ test("final application deletion erases family content, preserves accounting and
     );
     expect(await getEveConversation(owner, id)).toBeUndefined();
   }
+  const deletedCreation = await getEveCreation(owner, operation);
+  if (!deletedCreation) {
+    throw new Error("Missing retained creation tombstone");
+  }
+  const [deletedChat] = await db
+    .select()
+    .from(eveChat)
+    .where(eq(eveChat.id, deletedCreation.chatId));
+  expect(deletedChat).toMatchObject({
+    title: "",
+    isPinned: false,
+    activeConversationId: null,
+  });
   expect((await getEveCreation(owner, operation))?.operationId).toBe(operation);
   expect((await getEveConversation(owner, unrelated.id))?.firstMessage).toBe(
     "Keep this"

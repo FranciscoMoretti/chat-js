@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -14,7 +13,6 @@ import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveGuestBootstrap } from "./eve-guest-bootstrap";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
-import { EveShareButton } from "./eve-share-dialog";
 import { NewEveConversation } from "./new-eve-conversation";
 
 // This server boundary selects the authenticated, recovery, comparison, and chat states.
@@ -45,20 +43,12 @@ export const EveChatPage = async ({
   }
   const header = (
     <ChatHeaderView
-      actions={
-        <>
-          {principal.kind === "registered" && selected?.sessionId && (
-            <EveShareButton chatId={selected.id} />
-          )}
-          <Link className="text-sm" href="/">
-            New conversation
-          </Link>
-        </>
-      }
       breadcrumb={
-        <h1 className="ml-2 truncate text-sm font-medium">
-          {selected?.title ?? selected?.firstMessage.slice(0, 100) ?? "Chat"}
-        </h1>
+        selected ? (
+          <h1 className="ml-2 truncate text-sm font-medium">
+            {selected.title ?? selected.firstMessage.slice(0, 100)}
+          </h1>
+        ) : null
       }
     />
   );

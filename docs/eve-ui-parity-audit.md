@@ -1,5 +1,7 @@
 # EVE UI parity audit
 
+Expanded follow-up: [100-file catalog](eve-ui-audit/catalog.md), [prioritized findings and screenshots](eve-ui-audit/findings.md).
+
 Compared fetched `origin/main` at `4584f093835f1667c010c8fc20c502fa3f2bde41` with controller commit `37905403` on 2026-09-20. This is a source-level audit, not a new browser or pixel-verification run. No UI fixes are included in this audit. The logical chat implementation and optimistic first send remain accepted.
 
 ## Findings
@@ -55,3 +57,5 @@ Additionally, a completed write leaves an already-visible artifact unchanged. Be
 3. Restore document header/actions and logical-chat panel lifetime; then add live document preview with explicit pending versus confirmed revision states.
 
 Verify desktop/mobile, empty/populated projects, slow and rejected metadata mutations, project first send, document create/edit streaming, old revision viewing, and document visibility across branch selection. Keep these UI parity fixes separate from the accepted controller commit.
+
+Follow-up implementation and verification: [UI parity implementation](eve-ui-audit/implementation.md).

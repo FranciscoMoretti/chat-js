@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   deleting: vi.fn(),
   descendant: vi.fn(),
   guest: vi.fn(),
+  mapping: vi.fn(),
   model: vi.fn(),
   owns: vi.fn(),
 }));
@@ -25,14 +26,22 @@ vi.mock("../env", () => ({
 vi.mock("../db/eve-queries", () => ({
   getDeletingEveConversationForSession: mocks.deleting,
   ownsEveSession: mocks.owns,
+  readEveSessionMapping: mocks.mapping,
 }));
 vi.mock("../db/eve-sandbox-coverage-proof", () => ({
   isFencedEveDescendant: mocks.descendant,
 }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
+const reservationId = "01912345-1234-7123-8123-123456789abc";
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.guest.mockResolvedValue(undefined);
+  mocks.mapping.mockResolvedValue({
+    id: reservationId,
+    ownerId: "owner",
+    state: "creating",
+  });
   mocks.descendant.mockResolvedValue(false);
   mocks.owns.mockResolvedValue(false);
   mocks.deleting.mockResolvedValue({ id: "conversation" });
@@ -46,6 +55,9 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
       "x-chatjs-owner": "owner",
     },
     method,
+    ...(path === "/eve/v1/session" && method === "POST"
+      ? { body: JSON.stringify({ operationId: reservationId }) }
+      : {}),
   });
 
 it.each([
@@ -229,4 +241,46 @@ it("derives guest identity from storage and enforces anonymous model/tool policy
       request("/eve/v1/session/session/reset", "POST")
     )
   ).toMatchObject({ attributes: { chatjsGuest: "true" } });
+});
+
+it("stamps the reservation from the body, ignoring forged identity headers and metadata", async () => {
+  const command = request("/eve/v1/session", "POST");
+  command.headers.delete("x-chatjs-deletion");
+  command.headers.set("x-chatjs-reservation", crypto.randomUUID());
+  expect(await authenticateEveGateway(command)).toMatchObject({
+    attributes: { chatjsReservationId: reservationId },
+  });
+  expect(await command.json()).toEqual({ operationId: reservationId });
+  expect(mocks.mapping).toHaveBeenCalledWith({ reservationId });
+});
+it.each([
+  undefined,
+  { id: reservationId, ownerId: "foreign", state: "creating" },
+  { id: reservationId, ownerId: "owner", state: "deleting" },
+  { id: reservationId, ownerId: "owner", state: "deleted" },
+])("rejects an unavailable creation identity: %j", async (row) => {
+  mocks.mapping.mockResolvedValue(row);
+  const command = request("/eve/v1/session", "POST");
+  command.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(command)).toBeNull();
+});
+
+it("does not let a seed reservation use the message operation namespace", async () => {
+  mocks.mapping.mockResolvedValue({
+    creationKind: "copy",
+    id: reservationId,
+    ownerId: "owner",
+    state: "creating",
+  });
+  const command = request("/eve/v1/session", "POST");
+  command.headers.delete("x-chatjs-deletion");
+  expect(await authenticateEveGateway(command)).toBeNull();
+  const seed = new Request(command.url, {
+    body: JSON.stringify({ operationId: reservationId, seed: true }),
+    headers: command.headers,
+    method: "POST",
+  });
+  expect(await authenticateEveGateway(seed)).toMatchObject({
+    attributes: { chatjsReservationId: reservationId },
+  });
 });

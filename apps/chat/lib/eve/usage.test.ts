@@ -51,3 +51,25 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
   ).toBe(true);
   expect(record).toHaveBeenCalledTimes(2);
 });
+
+it("retains failed-step evidence without reporting an unpriced completed call", async () => {
+  record.mockResolvedValue(false);
+  const event = {
+    data: {
+      code: "boundary_hook_failed",
+      message: "Binding unavailable",
+      sequence: 0,
+      stepIndex: 0,
+      turnId: "turn_0",
+    },
+    meta: { at: "2026-09-21T00:00:00Z", id: "failed-before-model" },
+    type: "step.failed",
+  } satisfies MessageStreamEvent;
+  expect(await ingestEveUsage("owner", "session", event)).toBeUndefined();
+  expect(record).toHaveBeenCalledWith(
+    expect.objectContaining({
+      costUsd: undefined,
+      eventId: "failed-before-model",
+    })
+  );
+});

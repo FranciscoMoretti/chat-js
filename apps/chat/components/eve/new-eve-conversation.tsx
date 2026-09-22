@@ -35,9 +35,11 @@ import { useEveAttachments } from "./use-eve-attachments";
 export const NewEveConversation = ({
   ownerId,
   projectId,
+  onPendingChange,
 }: {
   ownerId: string;
   projectId?: string;
+  onPendingChange?: (pending: boolean) => void;
 }) => {
   const openRuntime = useEveRuntime();
   const scope = useMemo(
@@ -65,6 +67,9 @@ export const NewEveConversation = ({
       >
     >();
   const lock = useRef(false);
+  useEffect(() => {
+    onPendingChange?.(busy || retained);
+  }, [busy, retained, onPendingChange]);
   useEffect(() => {
     try {
       const pending = readCreationRequest(sessionStorage, ownerId, scope);

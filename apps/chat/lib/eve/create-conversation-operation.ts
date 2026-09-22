@@ -1,79 +1,20 @@
-import { z } from "zod";
+import type { z } from "zod";
 
-import { canSpend } from "@/lib/db/credits";
-import { assertEveFilesOwned } from "@/lib/db/eve-files";
-import { readEveGuestOwner } from "@/lib/db/eve-guests";
-import {
-  CreationConflictError,
-  CreationProjectNotFoundError,
-  createEveConversation,
-  getEveConversation,
-  getEveCreation,
-} from "@/lib/db/eve-queries";
-import type {
-  createConversationInput,
-  EveForkInput,
-} from "@/lib/eve/contracts";
-import { eveConversationTitleFallback } from "@/lib/eve/conversation-title";
-import { eveMessageFileKeys } from "@/lib/eve/file-references";
-import { eveMessageTitle } from "@/lib/eve/message-input";
-import { loadEveModelDefinition } from "@/lib/eve/model-selection";
-import { prepareEveMessage } from "@/lib/eve/prepare-message";
-import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
-import { assertEveConfigured, eveRequest } from "@/lib/eve/server";
+import { canSpend } from "../db/credits";
+import { assertEveFilesOwned } from "../db/eve-files";
+import { readEveGuestOwner } from "../db/eve-guests";
+import { getEveCreation } from "../db/eve-queries";
+import { createModuleLogger } from "../logger";
+import type { createConversationInput } from "./contracts";
+import { EveCreationRecoveryError } from "./creation-recovery-error";
+import { executeEveConversationCreation } from "./execute-conversation-creation";
+import { eveMessageFileKeys } from "./file-references";
+import { loadEveModelDefinition } from "./model-selection";
+import { prepareEveMessage } from "./prepare-message";
+import { reconcileEveOwnerUsage } from "./reconcile-usage";
+import { assertEveConfigured } from "./server";
 
-import { waitForEveCheckpoint } from "./checkpoint-readiness";
-import { eveCreationContentHash } from "./creation-content-hash";
-import { eveMessageDeliveryMetadata } from "./message-delivery";
-
-const resolveFork = async (
-  ownerId: string,
-  input: EveForkInput | undefined
-) => {
-  if (!input) {
-    return;
-  }
-  const source = await getEveConversation(ownerId, input.conversationId);
-  if (!source?.sessionId || source.state !== "bound") {
-    return Response.json(
-      { creationRejected: true, error: "Source conversation not found." },
-      { status: 404 }
-    );
-  }
-  if (input.beforeMessageId) {
-    return {
-      beforeMessageId: input.beforeMessageId,
-      sessionId: source.sessionId,
-    };
-  }
-  return {
-    beforeTurnId: input.beforeTurnId,
-    sessionId: source.sessionId,
-    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
-  };
-};
-
-const creationFailure = (cause: unknown) => {
-  if (cause instanceof CreationProjectNotFoundError) {
-    return Response.json(
-      {
-        code: "project_not_found",
-        creationRejected: true,
-        error: cause.message,
-      },
-      { status: 404 }
-    );
-  }
-  return Response.json(
-    {
-      error:
-        cause instanceof CreationConflictError
-          ? cause.message
-          : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
-    },
-    { status: 409 }
-  );
-};
+const logger = createModuleLogger("eve/admission");
 
 export const createEveConversationOperation = async (
   ownerId: string,
@@ -87,10 +28,6 @@ export const createEveConversationOperation = async (
       { error: "The agent worker is not configured." },
       { status: 503 }
     );
-  }
-  const fork = await resolveFork(ownerId, input.fork);
-  if (fork instanceof Response) {
-    return fork;
   }
   let preparedMessage:
     | Awaited<ReturnType<typeof prepareEveMessage>>
@@ -141,7 +78,20 @@ export const createEveConversationOperation = async (
         }
       }
     }
-  } catch {
+  } catch (error) {
+    logger.error(
+      {
+        errorType: error instanceof Error ? error.name : "unknown",
+        operationId: input.operationId,
+      },
+      "Conversation admission failed"
+    );
+    if (error instanceof EveCreationRecoveryError) {
+      return Response.json(
+        { code: "creation_recovery_unavailable", error: error.message },
+        { status: 503 }
+      );
+    }
     return Response.json(
       {
         error:
@@ -150,89 +100,10 @@ export const createEveConversationOperation = async (
       { status: 503 }
     );
   }
-  try {
-    const binding = await createEveConversation(
-      ownerId,
-      input.operationId,
-      eveMessageTitle(input.message),
-      async (operationId) => {
-        const existing = await eveRequest(
-          ownerId,
-          `/eve/v1/operation/${operationId}`,
-          {
-            signal: AbortSignal.timeout(15_000),
-          }
-        );
-        if (existing.ok) {
-          return z
-            .object({ sessionId: z.string().min(1) })
-            .parse(await existing.json()).sessionId;
-        }
-        const lookupFailure = z
-          .object({ code: z.literal("eve_operation_not_found") })
-          .safeParse(await existing.json().catch(() => null));
-        if (existing.status !== 404 || !lookupFailure.success) {
-          throw new Error("Native operation lookup is unavailable.");
-        }
-        if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
-          await waitForEveCheckpoint(
-            ownerId,
-            fork.sessionId,
-            fork.beforeTurnId,
-            fork.checkpointId
-          );
-        }
-        // Uncertain reservations may have reached Eve before their reply was lost.
-        // Reuse the same operation with the original input; never dispatch an empty turn.
-        if (preparedMessage === undefined) {
-          await loadEveModelDefinition(input.modelId);
-          preparedMessage = await prepareEveMessage(
-            input.message,
-            input.modelId
-          );
-        }
-        const result = await eveRequest(
-          ownerId,
-          "/eve/v1/session",
-          {
-            body: JSON.stringify({
-              fork,
-              message: preparedMessage,
-              messageMetadata: eveMessageDeliveryMetadata(
-                input.operationId,
-                input.selectedTool
-              ),
-              operationId,
-            }),
-            method: "POST",
-            signal: AbortSignal.timeout(30_000),
-          },
-          input.modelId,
-          input.selectedTool
-        );
-        if (!result.ok) {
-          throw new Error("Session creation failed.");
-        }
-        return z
-          .object({ sessionId: z.string().min(1) })
-          .parse(await result.json()).sessionId;
-      },
-      {
-        fileKeys: eveMessageFileKeys(input.message),
-        fork: input.fork,
-        forkKind: input.forkKind,
-        guestReservationId,
-        initialContentHash: eveCreationContentHash(
-          input.message,
-          input.selectedTool
-        ),
-        initialModelId: input.modelId,
-        initialProjectId: input.projectId,
-        initialTitle: eveConversationTitleFallback(input.message),
-      }
-    );
-    return Response.json(binding);
-  } catch (error) {
-    return creationFailure(error);
-  }
+  return executeEveConversationCreation(
+    ownerId,
+    input,
+    guestReservationId,
+    preparedMessage
+  );
 };

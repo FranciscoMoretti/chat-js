@@ -17,7 +17,8 @@ export default defineHook({
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.id,
-        AbortSignal.timeout(10_000)
+        AbortSignal.timeout(10_000),
+        context.session.auth.initiator?.attributes.chatjsReservationId
       );
       await captureEveNamedDocumentCheckpoint(
         scope.ownerId,
@@ -31,7 +32,8 @@ export default defineHook({
       const scope = await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.id,
-        AbortSignal.timeout(10_000)
+        AbortSignal.timeout(10_000),
+        context.session.auth.initiator?.attributes.chatjsReservationId
       );
       const project = await getEveConversationProject(
         scope.ownerId,

@@ -8,6 +8,13 @@
       "when": 1789411557764,
       "tag": "0000_eve_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789979176755,
+      "tag": "0001_brainy_the_stranger",
+      "breakpoints": true
     }
   ]
 }

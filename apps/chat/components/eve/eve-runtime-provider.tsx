@@ -2,7 +2,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   useCallback,
@@ -13,13 +12,14 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
-import { ChatHeaderView } from "@/components/chat-header-view";
+import { Spinner } from "@/components/ui/spinner";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
-import { useSession } from "@/providers/session-provider";
+import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import { useTRPC } from "@/trpc/react";
 
+import { EveChatHeader } from "./eve-chat-header";
 import { EveConversation } from "./eve-conversation";
 import { EveInitialMessage } from "./eve-initial-message";
 import {
@@ -28,7 +28,6 @@ import {
   useEveRuntime,
 } from "./eve-logical-context";
 import type { OpenRequest } from "./eve-logical-context";
-import { EveShareButton } from "./eve-share-dialog";
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
 
@@ -47,7 +46,13 @@ const NativeObserver = ({
     host: "/api",
     initialSession: { sessionId, streamIndex: 0 },
     onEvent: (event) => {
-      if (event.type === "turn.completed") {
+      if (
+        event.type === "turn.completed" &&
+        pendingEveMetadataMutations(queryClient) === 0
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.eve.get.pathKey(),
+        });
         void queryClient.invalidateQueries({
           queryKey: trpc.eve.list.pathKey(),
         });
@@ -78,7 +83,6 @@ const RuntimeSlot = ({
   active: boolean;
 }) => {
   const trpc = useTRPC();
-  const { data: session } = useSession();
   const identity = useQuery(trpc.eve.get.queryOptions({ id: runtime.chatId }));
   const family = useQuery(
     trpc.eve.branches.queryOptions({ id: runtime.chatId })
@@ -109,24 +113,17 @@ const RuntimeSlot = ({
   );
   const agent = snapshot.agents.get(snapshot.conversationId);
   const header = (
-    <ChatHeaderView
-      actions={
-        <>
-          {session?.user && <EveShareButton chatId={snapshot.conversationId} />}
-          <Link className="text-sm" href="/">
-            New conversation
-          </Link>
-        </>
+    <EveChatHeader
+      chatId={runtime.chatId}
+      conversationId={snapshot.conversationId}
+      fallbackTitle={
+        identity.data?.title ??
+        runtime.title ??
+        (runtime.operation
+          ? eveMessageTitle(runtime.operation.message)
+          : "Chat")
       }
-      breadcrumb={
-        <h1 className="ml-2 truncate text-sm font-medium">
-          {identity.data?.title ??
-            runtime.title ??
-            (runtime.operation
-              ? eveMessageTitle(runtime.operation.message)
-              : "Chat")}
-        </h1>
-      }
+      hasMessages={snapshot.nodes.size > 0}
     />
   );
   return (
@@ -159,9 +156,13 @@ const RuntimeSlot = ({
               {runtime.operation && (
                 <EveInitialMessage message={runtime.operation.message} />
               )}
-              <output>
-                {family.error?.message ?? "Restoring conversation…"}
-              </output>
+              {family.error ? (
+                <p role="alert">{family.error.message}</p>
+              ) : (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner aria-label="Loading conversation" />
+                </div>
+              )}
             </section>
           )}
         </EveLogicalContext.Provider>
@@ -262,5 +263,11 @@ export const EveRuntimeRoute = ({
       setFailure(String(error))
     );
   }, [open, id, sessionId, ownerId, chatId, title]);
-  return <output>{failure ?? "Restoring conversation…"}</output>;
+  return failure ? (
+    <p role="alert">{failure}</p>
+  ) : (
+    <div className="flex h-full items-center justify-center">
+      <Spinner aria-label="Loading conversation" />
+    </div>
+  );
 };

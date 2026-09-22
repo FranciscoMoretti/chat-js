@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Suspense } from "react";
 
 import { EveHistory } from "@/components/eve/eve-history";
+import { EveSearchChats } from "@/components/eve/eve-search-chats";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import { SidebarProjects } from "@/components/sidebar-projects";
@@ -13,21 +14,49 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { auth } from "@/lib/auth";
+import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { SidebarUserNav } from "./sidebar-user-nav";
+
+const ScopedEveSearch = async () => {
+  const principal = await resolveEvePrincipal(await headers());
+  return (
+    <EveSearchChats
+      key={principal?.ownerId ?? "anonymous"}
+      ownerId={principal?.ownerId}
+    />
+  );
+};
+
+const HistorySkeleton = () => (
+  <SidebarGroup>
+    <div className="flex flex-col gap-2 px-2">
+      <Skeleton className="h-7 w-full" />
+      <Skeleton className="h-7 w-5/6" />
+      <Skeleton className="h-7 w-4/5" />
+      <Skeleton className="h-7 w-full" />
+    </div>
+  </SidebarGroup>
+);
 
 const RegisteredEveProjects = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   return session?.user ? (
-    <SidebarMenu className="px-2">
-      <SidebarProjects />
-    </SidebarMenu>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarMenu>
+        <SidebarProjects />
+      </SidebarMenu>
+    </SidebarGroup>
   ) : null;
 };
 
@@ -44,6 +73,11 @@ export const AppSidebar = () => (
 
         <NewChatButton />
         <SidebarMenuItem>
+          <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+            <ScopedEveSearch />
+          </Suspense>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Models">
             <InternalLink href="/settings/models">
               <Cpu className="size-4" />
@@ -57,10 +91,8 @@ export const AppSidebar = () => (
     </SidebarHeader>
     <SidebarSeparator />
     <ScrollArea className="relative flex-1 overflow-y-auto">
-      <SidebarContent className="max-w-(--sidebar-width) pr-2">
-        <Suspense
-          fallback={<p className="p-3 text-sm">Loading conversations…</p>}
-        >
+      <SidebarContent className="max-w-(--sidebar-width) pr-2 group-data-[collapsible=icon]:hidden">
+        <Suspense fallback={<HistorySkeleton />}>
           <RegisteredEveProjects />
           <EveHistory />
         </Suspense>

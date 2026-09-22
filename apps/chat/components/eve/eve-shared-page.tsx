@@ -1,11 +1,17 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
+import { EveSharedBadge } from "./eve-chat-header";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveSharedMessages } from "./eve-shared-messages";
 
@@ -25,15 +31,17 @@ export const EveSharedPage = async ({ id }: { id: string }) => {
     >
       <section className="flex h-full min-h-0 flex-col">
         <ChatHeaderView
-          actions={
-            <Link className="text-sm" href="/">
-              New conversation
-            </Link>
-          }
+          actions={<EveSharedBadge />}
           breadcrumb={
-            <h1 className="ml-2 truncate text-sm font-medium">
-              {conversation.title}
-            </h1>
+            <Breadcrumb className="ml-2 min-w-0">
+              <BreadcrumbList className="flex-nowrap">
+                <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbPage className="truncate">
+                    {conversation.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           }
         />
         <EveSharedMessages messages={conversation.messages}>

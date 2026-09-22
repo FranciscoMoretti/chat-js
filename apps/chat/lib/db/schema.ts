@@ -357,6 +357,7 @@ export const eveConversation = pgTable(
     initialModelId: text("initialModelId"),
     // Immutable creation intent; retained when the project is removed.
     initialProjectId: uuid("initialProjectId"),
+    initialRequest: jsonb("initialRequest").$type<unknown>(),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()

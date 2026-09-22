@@ -1,0 +1,906 @@
+{
+  "base": "4584f093835f1667c010c8fc20c502fa3f2bde41",
+  "head": "da78b23ae977ecafb997d36eb12b3c861b8057e1",
+  "files": [
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/chat-header.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Main desktop Share gating, shared badge and HeaderBreadcrumb composition removed; replacement is chat-header-view plus runtime header. H1, H2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat-header.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/header-breadcrumb.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Project icon/backlink, title dropdown, inline rename (Enter/Escape/blur), pin/delete/share actions removed. H1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/header-breadcrumb.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/chat-header-view.tsx",
+      "verdict": "Mixed / added",
+      "detail": "Retains sticky header classes, mobile sidebar trigger and HeaderActions, but receives plain text rather than main breadcrumb controls. H1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/chat-header-view.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/eve/eve-runtime-provider.tsx",
+      "verdict": "Gap / added",
+      "detail": "Plain title/New conversation; unqualified canonical URL; per-chat identity cache not invalidated by list mutations. Accepted observer ownership retained. H1, H3, O1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-runtime-provider.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/header-actions.tsx",
+      "verdict": "Unchanged",
+      "detail": "Sign-in, documentation and GitHub controls are identical. Missing on EVE project page because its caller bypasses this composition. P1.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/header-actions.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/header-actions.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/chat-menu-items.tsx",
+      "verdict": "Preserved + extension",
+      "detail": "Same rename/pin/share/delete menu appearance; adds optional Move to project and optional deletion. Reuse it in restored header rather than building another menu.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat-menu-items.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/chat-menu-items.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/chat-rename-dialog.tsx",
+      "verdict": "Equivalent",
+      "detail": "Only an explanatory lint suppression differs; dialog presentation is retained. Callers determine optimism/error propagation. O1.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat-rename-dialog.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/chat-rename-dialog.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/share-button.tsx",
+      "verdict": "Preserved + adaptation",
+      "detail": "Dialog content extracted into controlled ShareDialogView; awaits visibility and displays failures. Session gating and link-copy UI retained. Native branch versus logical chat sharing remains a deliberate contract.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/share-button.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/share-button.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/eve/eve-share-dialog.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Wraps main share view with EVE queries; refreshes only its exact identity key and exposes query failure. Does not forward header responsive className. H2.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-share-dialog.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/eve/eve-shared-page.tsx",
+      "verdict": "Gap / added",
+      "detail": "Shared header is a plain title and New conversation link; main Shared badge/tooltip is absent. Read-only document layout and copy action remain. H2.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-shared-page.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/eve/eve-chat-page.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Resolves bound conversation and registers logical runtime; header UI now lives in provider. Preserve stable logical identity when restoring metadata controls.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-chat-page.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/new-chat-button.tsx",
+      "verdict": "Unchanged",
+      "detail": "Existing sidebar new-chat button, tooltip and shortcut label retained.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/new-chat-button.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/new-chat-button.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/keyboard-shortcuts.tsx",
+      "verdict": "Unchanged / caller gap",
+      "detail": "Cmd/Ctrl+Shift+O retained; this component never handled Cmd/Ctrl+K. Search shortcut disappeared with search-chats.tsx. S2.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/keyboard-shortcuts.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/keyboard-shortcuts.tsx"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/lib/chat-route.ts",
+      "verdict": "Unchanged / usage gap",
+      "detail": "Existing route parser still distinguishes project/chat/share; history selection bypasses it with last pathname segment. H3, P3.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/lib/chat-route.ts",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/lib/chat-route.ts"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/providers/parse-chat-id-from-pathname.ts",
+      "verdict": "Unchanged / usage gap",
+      "detail": "Already supplies project identity. Sidebar uses it but EVE canonicalization removes project context. H3.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/providers/parse-chat-id-from-pathname.ts",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/providers/parse-chat-id-from-pathname.ts"
+    },
+    {
+      "section": "Header and navigation",
+      "path": "apps/chat/components/ui/breadcrumb.tsx",
+      "verdict": "Accessibility only",
+      "detail": "Removed misleading link role from current-page span; no geometry change. Do not revert to fix missing header content.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/ui/breadcrumb.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/ui/breadcrumb.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-home.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Empty-project vertical centering, container spacing and dedicated ProjectChats composition removed. Main project rename used optimistic hook. P1, O2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-home.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-project-home.tsx",
+      "verdict": "Gap / added",
+      "detail": "Top-aligned p-4 layout, desktop sidebar toggle, no HeaderActions, generic history search/empty state. Direct project update waits for server. P1, O2.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-project-home.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-chats.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Project-specific empty-state card and row separators replaced by generic sidebar-style list. P1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-chats.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-chat-item.tsx",
+      "verdict": "Mostly preserved",
+      "detail": "Same title/date row, menu and rename dialog; accessible link label added, date now optional, Move action and injected share content added. Route link still uses project/chat path that redirects. H3.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-chat-item.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-chat-item.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-config.tsx",
+      "verdict": "Accessibility only",
+      "detail": "Visual icon/name/rename/instructions layout unchanged; decorative plus/check hidden from accessibility name. Screenshot confirms surrounding layout is the main difference.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-config.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-config.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-details-dialog.tsx",
+      "verdict": "Preserved + improvement",
+      "detail": "Same name/icon/color dialog. Create now awaits callback and shows save errors. Captured matched New Project dialogs. Creation was not optimistic on main either. V1.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-details-dialog.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-details-dialog.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-instructions-dialog.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Extracted main dialog with changed explanatory copy, accessible textarea label, disabled editing/closing during save, explicit failure. Retain error/pending improvements.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-instructions-dialog.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-icon.tsx",
+      "verdict": "Unchanged",
+      "detail": "Same visual project icon primitive.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-icon.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-icon.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-icon-picker.tsx",
+      "verdict": "Unchanged",
+      "detail": "Same icon/color chooser and defaults; no evidence this shared component caused layout drift.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-icon-picker.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-icon-picker.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/project-menu-items.tsx",
+      "verdict": "Unchanged",
+      "detail": "Same Rename/Delete menu items.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/project-menu-items.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/project-menu-items.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/delete-project-dialog.tsx",
+      "verdict": "Preserved + improvement",
+      "detail": "Retains project-only deletion semantics; awaits success, blocks dismissal while pending, displays error and refreshes EVE history. Does not optimistically remove project (main also waited).",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/delete-project-dialog.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/delete-project-dialog.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-projects.tsx",
+      "verdict": "Mostly preserved",
+      "detail": "Same create button/list/dialog and server-success navigation; mutateAsync propagates failure. Active project remains pathname-derived, lost after EVE chat redirect. H3.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-projects.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-projects.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-project-item.tsx",
+      "verdict": "Equivalent",
+      "detail": "Only project mutation hook import changes. Existing row/icon/more menu and edit/delete dialogs retained.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-project-item.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-project-item.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/app-sidebar.tsx",
+      "verdict": "Gap",
+      "detail": "Projects moved into bare menu without Projects label/collapsed guard; SearchChatsButton removed; server Suspense loading text replaces main history wrapper. S1, S2.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/app-sidebar.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/app-sidebar.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/app-sidebar-history-conditional.tsx",
+      "verdict": "Mixed / deleted",
+      "detail": "Lost collapsed guard and skeleton; guest sign-in-only state intentionally differs because EVE supports guest history. Restore presentation without removing guest history. S1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/app-sidebar-history-conditional.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-history.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Projects and Chats group headings/composition removed. S1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-history.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-chats-list.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Pinned/date group labels and skeletons removed; main excluded project chats from general sidebar history. EVE includes them. S3.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-chats-list.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-history.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Server resolves signed-in or guest owner; calls list without project filter. Keep owner separation and guest history. S3.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-history.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-history-list.tsx",
+      "verdict": "Gap / added",
+      "detail": "Flat list + inline search; server-only rename/pin; UUID-last-segment identity query runs on project route and fails; explicit retry/pagination/deletion recovery are additions. P3, S2, S3, O1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-history-list.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-chat-item.tsx",
+      "verdict": "Mostly preserved",
+      "detail": "Inline title edit/menu geometry retained; Move and injected share added; memo comparator now includes callback/project changes. Missing optimism is in caller, not this view. O1.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-chat-item.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-chat-item.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/search-chats.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Search sidebar button, tooltip and Cmd/Ctrl+K handler removed. S2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/search-chats.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/search-chats-dialog.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Main modal/deferred title filtering/results replaced by inline server search. Treat this as changed search interaction, not absence of all search. S2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/search-chats-dialog.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-user-nav.tsx",
+      "verdict": "Equivalent",
+      "detail": "Only credits hook import changed; avatar/account/footer composition retained.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-user-nav.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-user-nav.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-top-row.tsx",
+      "verdict": "Unchanged",
+      "detail": "Brand and collapse/expand control unchanged.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-top-row.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-top-row.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/sidebar-toggle.tsx",
+      "verdict": "Unchanged",
+      "detail": "Existing toggle primitive retained; altered placement comes from callers.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sidebar-toggle.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sidebar-toggle.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/ui/sidebar.tsx",
+      "verdict": "Minor improvement",
+      "detail": "Rail gets type=button; skeleton width fixed at 70% instead of random. Cookie fallback only gains lint explanation. Not responsible for lost project grouping.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/ui/sidebar.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/ui/sidebar.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-delete-dialog.tsx",
+      "verdict": "Intentional adaptation",
+      "detail": "Native family/file deletion has confirm/pending/unconfirmed/check/retry phases. Different copy and Dialog vs main AlertDialog; preserve truthful durable cleanup status. O3.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-delete-dialog.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/delete-chat-dialog.tsx",
+      "verdict": "Deleted / replaced",
+      "detail": "Main simpler AlertDialog and optimistic removal replaced by EVE family deletion controller. Reuse styling where appropriate without falsely claiming completed deletion. O3.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/delete-chat-dialog.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-deletion-provider.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Layout-owned dialog survives mobile sidebar close; family status determines navigation and history refresh. Project return target can be lost after route canonicalization. H3.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-deletion-provider.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/components/eve/eve-move-project-dialog.tsx",
+      "verdict": "Extension / added",
+      "detail": "New project assignment dialog with native select, pending/error/invalid-target states. Refreshes lists/router but not logical identity metadata. O1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-move-project-dialog.tsx"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/hooks/use-projects.ts",
+      "verdict": "Preserved extraction",
+      "detail": "Sidebar project-name optimism and rollback retained; invalidates broader project namespace. Main only optimistically patched name, not icon/color. O2.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/hooks/use-projects.ts"
+    },
+    {
+      "section": "Projects and sidebar",
+      "path": "apps/chat/hooks/use-credits.ts",
+      "verdict": "Adaptation / added",
+      "detail": "Supplies retained footer credits independently of deleted chat-sync hooks; not a header/project layout replacement.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/hooks/use-credits.ts"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/artifact-panel.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Main title save/date subtitle, streaming document state, header actions, floating toolbar and previous-version footer removed. D1\u2013D5.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/artifact-panel.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-artifact-layout.tsx",
+      "verdict": "Mixed / added",
+      "detail": "Reuses split panes/editors; adds recovery rows but removes date subtitle/restoration; native conversation key resets panel; hides init preview and forces idle editor status. D1\u2013D6.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-artifact-layout.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/artifact-actions.tsx",
+      "verdict": "Gap / deleted",
+      "detail": "Main per-kind header actions, version navigation and action-disabled handling removed. EVE splits controls among several locations. D1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/artifact-actions.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-document-actions.tsx",
+      "verdict": "Partial replacement",
+      "detail": "Copy and text diff toggle retained; previous/next moved below document, code run moved out of header. D1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-document-actions.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/version-footer.tsx",
+      "verdict": "Functional gap / deleted",
+      "detail": "Restore this version and Back to latest version have no EVE UI equivalent. Previous/Next alone does not replace them. D2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/version-footer.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/toolbar.tsx",
+      "verdict": "Presentation gap / deleted",
+      "detail": "Main animated/floating artifact helper toolbar replaced by static Improve document dropdown above content. Action labels largely retained in new helper. D1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/toolbar.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-document-assistant-actions.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Static Improve document dropdown uses native revision-targeted commands and disables while draft/busy. Functional polish/comment/log/format/analyze choices survive, placement changes. D1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-document-assistant-actions.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-document-run.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Run code moved to bottom; native execution result shown in details. Explicit saved revision, language/config gates, selected transcript result. Not the old client execution console. D1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-document-run.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/console.tsx",
+      "verdict": "Deleted / replaced",
+      "detail": "Main code artifact output console replaced by native tool execution result details. Preserve output/error visibility when restoring layout; do not restore old execution authority.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/console.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-document-comparison.tsx",
+      "verdict": "Adaptation / added",
+      "detail": "Loads prior native revision with skeleton/retry, reuses DiffView; adds Changes from version label. Comparison unavailable during local draft.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-document-comparison.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/use-document-draft.ts",
+      "verdict": "Intentional adaptation",
+      "detail": "Immediate local edits + 2s save, sessionStorage recovery, serialized immutable requests, confirmed revision IDs, retry/discard. Main appended speculative cached revisions. Keep durability while aligning save UI. O4.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/use-document-draft.ts"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/part/document-tool.tsx",
+      "verdict": "Functional gap / deleted",
+      "detail": "Main partial input title/content opened and updated streaming panel; last artifact selected richer preview. EVE waits for completed tool output. D3, D4.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/part/document-tool.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/part/document-preview.tsx",
+      "verdict": "Functional/presentation gap / deleted",
+      "detail": "Inline content preview, skeleton and expand hitbox removed; EVE emits writing text then compact result chip. D4.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/part/document-preview.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/part/read-document.tsx",
+      "verdict": "Replaced",
+      "detail": "Dedicated read renderer merged into EveDocumentTool; completed read uses common compact card and does not auto-open panel.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/part/read-document.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/eve/eve-document-tool.tsx",
+      "verdict": "Gap / added",
+      "detail": "Pending output only; auto-opens on observed successful completion if panel closed. Already-visible panel is left unchanged, including explicit old revision selection. D3, D5.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-document-tool.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/part/document-common.tsx",
+      "verdict": "Preserved + improvement",
+      "detail": "Compact result card retained; adds read action, revision ID and disabled-before-client; removes always-true memo comparator. Regression lies in choosing only this compact view, not the chip itself. D4.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/part/document-common.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/part/document-common.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/document-skeleton.tsx",
+      "verdict": "Unchanged",
+      "detail": "Existing loading skeleton retained; missing live preview is due to parent routing/state.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/document-skeleton.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/document-skeleton.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/ai-elements/artifact.tsx",
+      "verdict": "Unchanged",
+      "detail": "Header/title/actions/close primitives identical. No need to rewrite these to restore main styling.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/ai-elements/artifact.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/ai-elements/artifact.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/text-editor.tsx",
+      "verdict": "Correctness improvement",
+      "detail": "Empty content now clears editor, read-only changes update editor state; existing text editor reused. Parent always supplies idle, so streaming loss is upstream. D3.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/text-editor.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/text-editor.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/code-editor.tsx",
+      "verdict": "Correctness improvement",
+      "detail": "Keeps CodeMirror instance; reconfigures language/editability with Compartment, handles empty content and remote updates. Avoid reverting fixes for visual parity.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/code-editor.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/code-editor.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/sheet-editor.tsx",
+      "verdict": "Correctness improvement",
+      "detail": "Distinct blank row arrays and preventGridDefault on edit selection; same grid view. Existing content-sync effect annotated.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/sheet-editor.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/sheet-editor.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/diffview.tsx",
+      "verdict": "Correctness improvement",
+      "detail": "Recreates span when diff styling changes; supports empty old/new content. Same general diff presentation.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/diffview.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/diffview.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/image-editor.tsx",
+      "verdict": "Deleted / adjacent",
+      "detail": "Old inline image document preview removed with DocumentPreview. EVE documents cover text/code/sheet; image generation uses separate result path. Image-tool parity is outside this audit's verified scope.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/image-editor.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/create-artifact.tsx",
+      "verdict": "Deleted / replaced",
+      "detail": "Artifact registry/type framework replaced by explicit native components/actions. Lost capabilities cataloged in D1\u2013D4 rather than treating every removed abstraction as a bug.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/create-artifact.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/hooks/use-artifact.tsx",
+      "verdict": "Equivalent implementation",
+      "detail": "Only type imports moved; reset on branch change comes from provider key in EveArtifactLayout, not this hook. D6.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/hooks/use-artifact.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/hooks/use-artifact.tsx"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/lib/artifacts/types.ts",
+      "verdict": "Adaptation / added",
+      "detail": "UIArtifact type moved and adds revisionId; retains streaming/title/content fields. Type supports preview even though EVE renderer does not currently use it. D3.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/lib/artifacts/types.ts"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/lib/artifacts/text/client.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Text copy/diff/version actions and polish toolbar map to EVE actions/comparison/helper. Version restoration still missing. D1, D2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/lib/artifacts/text/client.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/lib/artifacts/code/client.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Main run/console/version/copy/comments/logs split into EVE run/actions/helper. Native execution is deliberate; header placement differs. D1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/lib/artifacts/code/client.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/lib/artifacts/sheet/client.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Version/copy/format/analyze move to EVE components. CSV copying and helper labels retained, previous/next placed at bottom. D1.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/lib/artifacts/sheet/client.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/lib/eve/document-assistant-actions.ts",
+      "verdict": "Adaptation / added",
+      "detail": "Preserves main helper labels/model choices and adds explicit target document/revision in request; sheet analyze additionally gated on code-document support.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/lib/eve/document-assistant-actions.ts"
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/chat/secondary-chat-panel.tsx",
+      "verdict": "Deleted / replaced",
+      "detail": "Main session-aware ArtifactPanel wrapper replaced by native owned/read-only layout; layout lifetime differs. D6.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat/secondary-chat-panel.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Documents and artifacts",
+      "path": "apps/chat/components/chat/chat-layout.tsx",
+      "verdict": "Unchanged",
+      "detail": "Resizable panes, min widths, mobile hide-main behavior retained; outer project page no longer uses this container. P1.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat/chat-layout.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/chat/chat-layout.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/layout.tsx",
+      "verdict": "Accepted wiring",
+      "detail": "Native runtime/deletion providers replace main ChatProviders/ChatRouteHost. Keep layout-owned execution. Project list prefetch retained; legacy chat-list prefetch removed.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/layout.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/layout.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/chat-providers.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Main persistent chat and artifact provider ownership replaced by EVE runtime plus branch-keyed artifact provider. D6.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/chat-providers.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/chat-route-host.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Main route host served chat/project surfaces through common chat shell; EVE routes render separate server/client surfaces. P1, P2.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/chat-route-host.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/page.tsx",
+      "verdict": "Adaptation",
+      "detail": "New EVE welcome/guest/bootstrap composition; accepted first-message behavior. Empty header now has plain Chat/New conversation.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/page.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/page.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/chat/[id]/page.tsx",
+      "verdict": "Adaptation",
+      "detail": "Native chat page resolves logical identity; stable logical URL accepted. Restore header metadata independently.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/chat/[id]/page.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/chat/[id]/page.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/project/[projectId]/page.tsx",
+      "verdict": "Observed gap",
+      "detail": "Server-owned auth/project/list reads replaced null route consumed by host. Browser MCP reports uncached dynamic data outside Suspense during project navigation. P2.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/project/[projectId]/page.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/project/[projectId]/page.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/project/[projectId]/chat/[chatId]/page.tsx",
+      "verdict": "Gap",
+      "detail": "Checks project ownership then redirects to unqualified chat URL; loses project marker and return destination. H3.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/project/[projectId]/chat/[chatId]/page.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/project/[projectId]/chat/[chatId]/page.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/share/[id]/page.tsx",
+      "verdict": "Adaptation",
+      "detail": "Uses native public transcript component rather than main shared chat controller. Shared header badge missing in target view. H2.",
+      "status": "M",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/share/[id]/page.tsx",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/app/(chat)/share/[id]/page.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/app/(chat)/share/[id]/shared-chat-page.tsx",
+      "verdict": "Deleted / mapped",
+      "detail": "Main shared surface replaced by EveSharedPage; native clone/copy handling retained separately.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/app/(chat)/share/[id]/shared-chat-page.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/eve/new-eve-conversation.tsx",
+      "verdict": "Accepted behavior / layout gap",
+      "detail": "Optimistic first send/recovery retained. On project page only composer/message area changes while ProjectConfig/history remain mounted until navigation, unlike main whole chat transition. P4.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/new-eve-conversation.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/eve/eve-initial-message.tsx",
+      "verdict": "Accepted addition",
+      "detail": "First user bubble appears before admission completes; preserve it while changing outer project/header layout. Previous six-test verification applies, not rerun here.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-initial-message.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/eve/eve-creation-recovery.tsx",
+      "verdict": "Accepted addition",
+      "detail": "Retains send intent and supports unavailable-project recovery; keep safety/error state when restoring main shell.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-creation-recovery.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/eve/eve-conversation.tsx",
+      "verdict": "Accepted controller / artifact gap",
+      "detail": "Logical path/sibling/slot behavior accepted; document actions and panel still receive selected native conversationId. D6. No branch-controller redesign proposed.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-conversation.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/eve/eve-composer.tsx",
+      "verdict": "Boundary only",
+      "detail": "EVE-backed controlled composer used on project page. Full model/tool/attachment parity not re-audited; empty-project geometry captured but model preferences differ.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/eve/eve-composer.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/controlled-chat-composer.tsx",
+      "verdict": "Boundary only",
+      "detail": "Shared controlled presentation replaces main provider-connected composer. Included to identify project layout dependency; full composer audit deferred.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/components/controlled-chat-composer.tsx"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/components/chat-composer.tsx",
+      "verdict": "Deleted / boundary",
+      "detail": "Main provider-bound composer replaced by controlled/EVE composition; first-send behavior already accepted.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/components/chat-composer.tsx",
+      "eve_url": null
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/hooks/chat-sync-hooks.ts",
+      "verdict": "Deleted / mapped",
+      "detail": "Main optimism contracts for chat rename/pin/delete, project rename and document save split across new hooks/controllers. Rename/pin optimism missing; document/deletion differences deliberate. O1\u2013O4.",
+      "status": "D",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/hooks/chat-sync-hooks.ts",
+      "eve_url": null
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/trpc/routers/project.router.ts",
+      "verdict": "Unchanged",
+      "detail": "Project CRUD/instructions procedures unchanged; project UI changes come from callers, cache behavior and EVE association queries.",
+      "status": "=",
+      "main_url": "https://github.com/FranciscoMoretti/chat-js/blob/4584f093835f1667c010c8fc20c502fa3f2bde41/apps/chat/trpc/routers/project.router.ts",
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/trpc/routers/project.router.ts"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/trpc/routers/eve.router.ts",
+      "verdict": "Boundary reviewed",
+      "detail": "Logical metadata rename/pin/project/visibility procedures exist. Missing UI entry points should call these instead of restoring legacy chat procedures. O1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/trpc/routers/eve.router.ts"
+    },
+    {
+      "section": "Routes, metadata, first-send boundaries",
+      "path": "apps/chat/lib/db/eve-queries.ts",
+      "verdict": "Boundary reviewed",
+      "detail": "Logical list ordering retains pinned-first, but no date headings; unspecified project filter includes project chats. Metadata identity/detail separated from paginated lists. S3, O1.",
+      "status": "A",
+      "main_url": null,
+      "eve_url": "https://github.com/FranciscoMoretti/chat-js/blob/da78b23ae977ecafb997d36eb12b3c861b8057e1/apps/chat/lib/db/eve-queries.ts"
+    }
+  ]
+}

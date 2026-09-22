@@ -122,7 +122,9 @@ const Part = ({
   part,
   disabled,
   respond,
+  previewDocument = false,
 }: {
+  previewDocument?: boolean;
   messageId: string;
   isReadonly: boolean;
   part: EveMessagePart;
@@ -177,6 +179,7 @@ const Part = ({
   ) {
     return (
       <EveDocumentTool
+        preview={previewDocument}
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}
@@ -260,6 +263,14 @@ export const EveMessages = ({
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) => {
+  const latestDocumentCallId = messages
+    .flatMap((message) => message.parts)
+    .filter((part) => part.type === "dynamic-tool")
+    .findLast(
+      (part) =>
+        Object.hasOwn(eveDocumentOperations, part.toolName) ||
+        part.toolName === "readDocument"
+    )?.toolCallId;
   let precedingUser: EveMessage | undefined;
   // oxlint-disable-next-line eslint/complexity -- A row combines streamed content with its role-specific shared controls.
   return messages.map((message) => {
@@ -377,6 +388,10 @@ export const EveMessages = ({
               messageId={message.id}
               part={part}
               respond={respond}
+              previewDocument={
+                part.type === "dynamic-tool" &&
+                part.toolCallId === latestDocumentCallId
+              }
             />
           ))}
           {actions}

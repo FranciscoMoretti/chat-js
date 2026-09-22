@@ -4,6 +4,9 @@ export type ArtifactMetadata = object | null;
 
 export interface UIArtifact {
   content: string;
+  conversationId?: string;
+  followLive?: boolean;
+  previewCallId?: string;
   date?: string;
   documentId: string;
   isVisible: boolean;

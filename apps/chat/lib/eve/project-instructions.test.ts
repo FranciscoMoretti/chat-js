@@ -96,7 +96,8 @@ test("refreshes project instructions for each turn and clears them after detachm
   expect(mocks.resolve).toHaveBeenCalledWith(
     "owner",
     "native-session",
-    expect.any(AbortSignal)
+    expect.any(AbortSignal),
+    undefined
   );
   expect(mocks.project).toHaveBeenCalledWith("owner", "conversation");
   expect(readInstructions()).toEqual({
