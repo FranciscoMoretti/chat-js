@@ -29,7 +29,7 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
       if (url.endsWith("/internal/workflow/runtime.js")) return { format: "module", source: "export * from " + JSON.stringify(url + "?checkpoint-test-real") + "; export const getRun = globalThis.checkpointTestGetRun", shortCircuit: true };
       return nextLoad(url, context);
     }});
-    const { handleCheckpointReadiness } = await import(${JSON.stringify(eveRoot)} + "eve-patched-dist-src-execution-checkpoint-readiness.js");
+    const { handleCheckpointReadiness } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/checkpoint-readiness.js");
     const request = () => new Request("http://eve/session/source/checkpoint?beforeTurnId=turn_0");
     const pending = await handleCheckpointReadiness(request(), "source");
     assert.equal(pending.status, 404);
@@ -39,8 +39,8 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
     assert.equal(ready.status, 200);
     assert.deepEqual(await ready.json(), { ready: true, sessionId: "source", beforeTurnId: "turn_0" });
     assert.equal(ready.headers.get("cache-control"), "no-store");
-    const { readSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "read-session-checkpoint.js");
-    const { restoreSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "restore-session-checkpoint.js");
+    const { readSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/read-session-checkpoint.js");
+    const { restoreSessionCheckpoint } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/restore-session-checkpoint.js");
     const { createSession } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/session.js");
     const checkpoint = await readSessionCheckpoint({ sessionId: "source", beforeTurnId: "turn_0" });
     assert.equal(checkpoint.snapshot.version, 2);
@@ -55,7 +55,7 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
     const corrupt = await handleCheckpointReadiness(request(), "source");
     assert.equal(corrupt.status, 503);
     assert.deepEqual(await corrupt.json(), { error: "Checkpoint lookup is unavailable." });
-    const { handleSandboxIdentityRead } = await import(${JSON.stringify(eveRoot)} + "eve-patched-dist-src-execution-sandbox-identity-read.js");
+    const { handleSandboxIdentityRead } = await import(${JSON.stringify(eveRoot)} + "dist/src/execution/sandbox-identity-read.js");
     const identityRequest = () => new Request("http://eve/session/source/sandbox-identity");
     records = [];
     assert.equal((await handleSandboxIdentityRead(identityRequest(), "source")).status, 503);
