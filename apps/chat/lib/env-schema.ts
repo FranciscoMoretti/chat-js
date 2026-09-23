@@ -168,6 +168,17 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel OAuth integration client secret"),
+  VERCEL_AUTOMATION_BYPASS_SECRET: z
+    .string()
+    .optional()
+    .describe(
+      "Server-only credential for this project's protected Vercel deployments"
+    ),
+  VERCEL_BRANCH_URL: z
+    .string()
+    .optional()
+    .describe("Stable Vercel branch hostname"),
+  VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
   VERCEL_OIDC_TOKEN: z
     .string()
     .optional()

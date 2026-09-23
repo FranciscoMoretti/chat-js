@@ -1,7 +1,7 @@
 import { Client } from "eve/client";
 
 import { getPublicEveConversation } from "../db/eve-queries";
-import { env } from "../env";
+import { getEveConnectionOptions } from "./connection-options";
 import { eveCopyBoundaries } from "./copy-boundaries";
 import { prepareEveCopyTranscript } from "./copy-transcript";
 import { assertEveConfigured } from "./server";
@@ -12,11 +12,7 @@ export const readPublicEveCopySource = async (id: string) => {
     throw new Error("Shared conversation is unavailable.");
   }
   assertEveConfigured();
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": row.ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(row.ownerId));
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });

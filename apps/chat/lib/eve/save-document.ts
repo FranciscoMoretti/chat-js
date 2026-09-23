@@ -7,7 +7,7 @@ import {
   saveEveDocumentRevision,
 } from "../db/eve-documents";
 import { getEveConversation } from "../db/eve-queries";
-import { env } from "../env";
+import { getEveConnectionOptions } from "./connection-options";
 import { eveManualDocumentInput } from "./document-contracts";
 import { documentHistoryTurns } from "./document-history";
 import { assertEveConfigured } from "./server";
@@ -37,11 +37,7 @@ export const saveManualEveDocument = async (
     throw new Error("Document not found.");
   }
   assertEveConfigured();
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });

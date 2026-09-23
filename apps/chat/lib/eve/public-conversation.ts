@@ -1,7 +1,7 @@
 import { Client } from "eve/client";
 
 import { getPublicEveConversation } from "../db/eve-queries";
-import { env } from "../env";
+import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
 import { sharedEveMessages } from "./shared-messages";
 
@@ -11,11 +11,7 @@ export const getPublicEveTranscript = async (id: string) => {
     return null;
   }
   assertEveConfigured();
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": row.ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(row.ownerId));
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });

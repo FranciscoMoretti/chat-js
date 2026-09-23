@@ -6,6 +6,7 @@ import {
   getDeletingEveConversationForSession,
 } from "../db/eve-queries";
 import { env } from "../env";
+import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 
@@ -18,10 +19,10 @@ export const retireEveSessionForDeletion = async (
   if (!(await getDeletingEveConversationForSession(ownerId, sessionId))) {
     throw new Error("Conversation is not pending deletion.");
   }
+  const connection = getEveConnectionOptions(ownerId);
   const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-deletion": "1", "x-chatjs-owner": ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
+    ...connection,
+    headers: { ...connection.headers, "x-chatjs-deletion": "1" },
   });
   const session = client.sessions.attach(sessionId);
   await session.reset({
