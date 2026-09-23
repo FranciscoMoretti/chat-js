@@ -99,7 +99,7 @@
         "dotenv": "^17.2.3",
         "drizzle-orm": "^0.45.1",
         "echarts-for-react": "^3.0.2",
-        "eve": "0.61.0",
+        "eve": "npm:@chat-js/eve@0.61.0-chatjs.0",
         "fast-deep-equal": "^3.1.3",
         "files-sdk": "2.1.0",
         "guarded-fetch": "^0.1.4",
@@ -347,7 +347,6 @@
   "patchedDependencies": {
     "@ai-sdk/mcp@2.0.52": "patches/ai-sdk-mcp@2.0.52.patch",
     "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch",
-    "eve@0.61.0": "patches/eve@0.61.0.patch",
   },
   "overrides": {
     "//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",
@@ -2520,7 +2519,7 @@
 
     "etag": ["etag@1.8.1", "", {}, "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg=="],
 
-    "eve": ["eve@0.61.0", "", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.9.0" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.105", "braintrust": "^3.0.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.5.0" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "./bin/eve.js" } }, "sha512-el9Mm7VZW4QibR3WwUM3LsWDaqiyVJtv5JieREflVcTR3WkEn0kqeJ/wcbaZJ6+goTbi6yYO2tpEdWOhkIJQIg=="],
+    "eve": ["@chat-js/eve@0.61.0-chatjs.0", "", { "dependencies": { "nitro": "3.0.260903-beta", "undici": "8.9.0" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0", "ai": "^7.0.105", "braintrust": "^3.0.0", "dd-trace": "^6.13.0", "just-bash": "^3.1.0", "microsandbox": "^0.6.18" }, "optionalPeers": ["@opentelemetry/api", "braintrust", "dd-trace", "just-bash", "microsandbox"], "bin": { "eve": "bin/eve.js" } }, "sha512-WP5WVGsEkRO5hwRD+ZG3GUY+WeZpneoO9WWYRc1thNe7dzeRsCBqU//R5cSmXbzJFaWQJAX3ohH9S++0hi+zsQ=="],
 
     "event-target-shim": ["event-target-shim@5.0.1", "", {}, "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ=="],
 
