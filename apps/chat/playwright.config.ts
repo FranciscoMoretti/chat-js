@@ -30,21 +30,21 @@ export default defineConfig({
   projects: [
     {
       name: "chat",
-      testMatch: /chat.e2e.ts/u,
+      testMatch: "chat.e2e.ts",
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
       name: "reasoning",
-      testMatch: /reasoning.e2e.ts/u,
+      testMatch: "reasoning.e2e.ts",
       use: {
         ...devices["Desktop Chrome"],
       },
     },
     {
       name: "artifacts",
-      testMatch: /artifacts.e2e.ts/u,
+      testMatch: "artifacts.e2e.ts",
       use: {
         ...devices["Desktop Chrome"],
       },
