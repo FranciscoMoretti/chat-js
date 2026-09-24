@@ -130,34 +130,11 @@ Sandboxes run with:
 
 ### Required
 
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `AUTH_SECRET` | Session encryption key |
-| `AI_GATEWAY_API_KEY` | Vercel AI Gateway key (or `OPENROUTER_API_KEY` if using OpenRouter) |
+Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL`, `WORKFLOW_POSTGRES_URL`, `EVE_GATEWAY_SECRET`, and `EVE_INTERNAL_ORIGIN`. EVE settings must be available during the build and at runtime.
 
-The application and EVE worker need these values during `prebuild` as well as at runtime:
+Initialize both schemas using the [database setup guide](../reference/database#hosted-workflow-database). Use separate databases for previews and production, with branch-scoped preview credentials.
 
-| Variable | Purpose |
-| --- | --- |
-| `EVE_GATEWAY_SECRET` | Shared gateway/worker authentication secret, at least 32 characters. Generate with `openssl rand -base64 32`. |
-| `EVE_INTERNAL_ORIGIN` | Absolute HTTPS origin for server-to-EVE calls. With the integrated worker, use the matching environment's application origin. |
-| `WORKFLOW_POSTGRES_URL` | PostgreSQL connection for EVE workflow persistence, with the workflow schema initialized. |
-
-Use separate application and workflow databases for previews and production. Set branch-scoped preview values rather than inheriting the production `DATABASE_URL` or `WORKFLOW_POSTGRES_URL`. Initialize the application migrations and workflow schema against those isolated databases before exercising a preview. The local-only bootstrap command intentionally rejects hosted database URLs; it is not a hosted provisioning command.
-
-### Initialize the databases
-
-Use Node.js 24 or newer. In a generated application, configure `.env.local` with the isolated target database credentials and run:
-
-```bash
-npm run db:migrate
-node --env-file=.env.local -e 'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())'
-```
-
-The second command uses the World Postgres version installed by your app. Set `WORKFLOW_POSTGRES_URL` explicitly: its setup function falls back to `DATABASE_URL` when the workflow URL is absent. It installs the provider schema, not ChatJS's local deletion fences. Do not run the local-only fence installer against a hosted database.
-
-In this repository, run these application commands from `apps/chat` with the appropriate environment loaded. Production Vercel builds run application migrations automatically. Preview builds skip them, so initialize the preview application database explicitly before testing. Neither build path provisions the workflow database.
+Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Neither build path provisions the workflow database.
 
 ### Preview origins and OAuth
 

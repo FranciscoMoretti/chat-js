@@ -5,186 +5,54 @@ description: "Get ChatJS running in minutes"
 
 ## Prerequisites
 
-Before you begin, make sure you have:
+Install **Node.js 24+** and a package manager: npm, yarn, pnpm, or Bun.
 
-- **Node.js 24+** ([download](https://nodejs.org))
-- A package manager: **npm**, **yarn**, **pnpm**, or **bun**
-
-### 1. Create Your Project
-
-Scaffold a new ChatJS app using the CLI:
+## 1. Create your project
 
 ```bash
 npx @chat-js/cli@latest create my-app
 cd my-app
 ```
 
-The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It also asks whether to include a [Desktop app](/platforms/desktop). It preserves `bun`, `pnpm`, and `yarn` when launched from those tools, and defaults `npx`/npm launches to npm.
+Choose your AI gateway, features, and authentication providers. The CLI generates `chat.config.ts` and lists the credentials your choices require.
 
-## Understanding `chat.config.ts`
-
-The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with the CLI.
-
-<Accordion>
-<AccordionItem title="What the default config includes">
-  The default configuration gives you a minimal, working setup:
-
-| Setting | Default | Notes |
-| --- | --- | --- |
-| **Gateway** | Vercel AI Gateway | Use `create --gateway openrouter` for OpenRouter |
-| **Authentication** | GitHub only | Google and Vercel OAuth disabled |
-| **Features** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
-| **Anonymous users** | 10 credits | Limited access, no tools |
-| **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
-
-This keeps your initial setup simple. The CLI will tell you exactly which environment variables are needed based on your choices.
-
-Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
-
-</AccordionItem>
-</Accordion>
-
-### 2. Configure Environment Variables
+## 2. Configure environment variables
 
 ```bash
 cp .env.example .env.local
 ```
 
-After scaffolding, the CLI prints the environment variables required for your configuration. Fill in those values in `.env.local`.
+Fill in `.env.local` using the generated example. You need:
 
-The EVE-backed app needs two database connections: `DATABASE_URL` for application records such as users, chats, and projects, and `WORKFLOW_POSTGRES_URL` for EVE workflow state and transcripts. Use separate databases so you can provision and manage their schemas independently.
+| Setting | Setup guide |
+| --- | --- |
+| Application and EVE workflow database connections | [PostgreSQL setup](./reference/database#eve-workflow-database) |
+| AI gateway credentials | [Gateways](./gateways/overview) |
+| Authentication provider credentials and secrets | [Authentication](./core/authentication) and [environment variables](./reference/env-vars) |
+| Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
 
-For a local PostgreSQL installation:
+For the default local port, keep `APP_URL` and `EVE_INTERNAL_ORIGIN` set to `http://localhost:3000`. Generate independent values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET` with `openssl rand -base64 32`.
 
-```bash
-createdb chatjs
-createdb chatjs_workflow
-openssl rand -base64 32
-openssl rand -base64 32
-```
+## 3. Initialize the databases
 
-Use the two generated values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET`, respectively. Add your selected gateway and OAuth credentials alongside these settings:
-
-```dotenv
-DATABASE_URL=postgres://localhost:5432/chatjs
-WORKFLOW_POSTGRES_URL=postgres://localhost:5432/chatjs_workflow
-AUTH_SECRET=<first-generated-secret>
-EVE_GATEWAY_SECRET=<second-generated-secret>
-APP_URL=http://localhost:3000
-EVE_INTERNAL_ORIGIN=http://localhost:3000
-```
-
-Replace the database URLs with your local credentials if needed. `EVE_INTERNAL_ORIGIN` points to the same Next.js app in this setup. The `withEve` integration starts the development worker for you. You do not need to start a separate worker process.
-
-Expand the sections below for setup instructions:
-
-<Accordion>
-  <AccordionItem title="Database (PostgreSQL)">
-    **Option A: Neon** (generous free tier)
-    1. Go to [Neon](https://neon.tech)
-    2. Create a project and database
-    3. Copy the connection string → `DATABASE_URL`
-
-    **Option B: Vercel Postgres**
-    1. Go to [Vercel Storage](https://vercel.com/docs/storage/vercel-postgres/quickstart)
-    2. Create a new Postgres database
-    3. Copy the connection string → `DATABASE_URL`
-
-    **Option C: Local PostgreSQL**
-    ```bash
-    # macOS
-    brew install postgresql && brew services start postgresql
-    # Then create the two databases shown above.
-    ```
-
-  </AccordionItem>
-  <AccordionItem title="AI Gateway">
-    ChatJS supports multiple AI gateways. Pick one:
-
-    **Option A: Vercel AI Gateway** (default)
-    1. Go to [Vercel AI Gateway](https://vercel.com/ai-gateway)
-    2. Create an API key
-    3. Copy the key → `AI_GATEWAY_API_KEY`
-
-    **Option B: OpenRouter**
-    1. Go to [OpenRouter](https://openrouter.ai/keys)
-    2. Create an API key
-    3. Copy the key → `OPENROUTER_API_KEY`
-
-    **Option C: OpenAI**
-    1. Follow the [OpenAI quickstart](https://developers.openai.com/api/docs/quickstart) to create an API key
-    2. Create an API key
-    3. Copy the key → `OPENAI_API_KEY`
-
-    **Option D: OpenAI Compatible**
-    Use any endpoint that follows the OpenAI API format (Ollama, LM Studio, vLLM, Azure).
-
-    See [Gateways Overview](/gateways/overview) for a full comparison and configuration details.
-
-  </AccordionItem>
-  <AccordionItem title="Authentication (at least one provider required)">
-    **GitHub (Recommended)**
-    1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-    2. Click **New OAuth App**
-    3. Set **Homepage URL** to `http://localhost:3000`
-    4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
-    5. Copy the **Client ID** → `AUTH_GITHUB_ID`
-    6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
-
-    **Google**
-    1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-    2. Create a new **OAuth 2.0 Client ID** (Web application)
-    3. Add **Authorized redirect URI**: `http://localhost:3000/api/auth/callback/google`
-    4. Copy **Client ID** → `AUTH_GOOGLE_ID`
-    5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
-
-    **Vercel**
-    1. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
-    2. Create a new integration with **Sign In with Vercel**
-    3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
-    4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
-
-  </AccordionItem>
-  <AccordionItem title="File Storage (Optional)">
-    Required for file attachments, image generation, and video generation. The
-    installer asks you to select a Files SDK provider when you enable one of
-    these capabilities.
-
-    Configure the environment variables printed by the CLI for your selected
-    provider. For Vercel Blob, connect a Blob store and copy its token to
-    `BLOB_READ_WRITE_TOKEN` for local development.
-
-    See [File storage](./storage) for provider configuration,
-    credentials, and migration behavior.
-
-  </AccordionItem>
-</Accordion>
-
-### 3. Initialize Both Databases
-
-Run application migrations against a fresh application database:
+For fresh local PostgreSQL databases, run:
 
 ```bash
 npm run db:migrate
-```
-
-Then initialize the local EVE workflow database:
-
-```bash
 npm run eve:db:setup:local
 ```
 
-These scripts load `.env.local`. The second command bootstraps the pinned Workflow World Postgres schema and installs ChatJS's local lifecycle fences. It accepts only loopback database hosts (`localhost`, `127.0.0.1`, or `::1`). For a hosted workflow database, follow the [Vercel database setup](./deployment/vercel#initialize-the-databases).
+Using hosted PostgreSQL, such as Neon? Follow the [hosted workflow setup](./reference/database#hosted-workflow-database) instead of the local-only second command. This initialization is required once per fresh database.
 
-### 4. Start the Dev Server
+## 4. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`. You should see the ChatJS interface with a model selector and chat input. Sign in, send a message, then reload the conversation to check both execution and persistence.
+Open `http://localhost:3000` and send a message. The development server starts EVE automatically.
 
-If you change the port, update both `APP_URL` and `EVE_INTERNAL_ORIGIN` and your OAuth callback URLs. When developing in the monorepo, run `bun dev:info --json` from its root to find your worktree-specific URL, then use `bun dev` to load its environment overrides.
+Customize features and branding in `chat.config.ts`. See [Configuration](./core/configuration) when you're ready to make changes.
 
 ## Deploying to Production
 

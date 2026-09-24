@@ -260,7 +260,7 @@ ai: {
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Server-only deployment-protection bypass credential for calls to this Vercel project. Required when protection blocks internal EVE requests. |
 | `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
 
-`DATABASE_URL` stores application identity and metadata. `WORKFLOW_POSTGRES_URL` stores EVE workflows and native transcripts. Initialize both schemas before sending a message. See the [quickstart](../quickstart#3-initialize-both-databases).
+`DATABASE_URL` stores application identity and metadata. `WORKFLOW_POSTGRES_URL` stores EVE workflows and native transcripts. Initialize both schemas before sending a message. See the [database setup guide](./database#eve-workflow-database).
 
 `EVE_INTERNAL_ORIGIN` is independent of `APP_URL`. With the integrated Next.js worker, set it to the app origin. It must not contain an API route path. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to a separate worker or an arbitrary custom domain. The EVE bearer credential and owner identity are still required.
 
