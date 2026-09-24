@@ -52,7 +52,11 @@ it.each([
     name: "@ai-sdk/mcp",
     version: "2.0.45",
   },
-  { archiveName: "eve-0.52.2.tgz", name: "eve", version: "0.52.2" },
+  {
+    archiveName: "workflow-world-postgres-5.0.0-beta.40.tgz",
+    name: "@workflow/world-postgres",
+    version: "5.0.0-beta.40",
+  },
 ])(
   "ships the maintained $name archive with compatible metadata",
   async ({ name, version, archiveName }) => {
@@ -72,7 +76,6 @@ it.each([
         JSON.stringify({
           files: ["dist"],
           name,
-          peerDependencies: name === "eve" ? { microsandbox: "^0.5.0" } : {},
           version,
         })
       );
@@ -104,11 +107,6 @@ it.each([
         name,
         version,
       });
-      if (name === "eve") {
-        expect(
-          JSON.parse(metadata.toString()).peerDependencies.microsandbox
-        ).toBe("^0.6.18");
-      }
     } finally {
       await rm(root, { force: true, recursive: true });
     }

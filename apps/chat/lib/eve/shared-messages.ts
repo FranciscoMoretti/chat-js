@@ -78,6 +78,7 @@ const sharedTool = (
       return {
         ...base,
         output: part.output,
+        ...(part.outputType ? { outputType: part.outputType } : {}),
         partial: part.partial,
         state: part.state,
       };

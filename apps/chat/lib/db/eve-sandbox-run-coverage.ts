@@ -1,10 +1,11 @@
-// Pinned eve 0.52.2 workflow identities. Do not infer safety from suffixes or
+// Pinned eve 0.61.0 workflow identities. Do not infer safety from suffixes or
 // unknown wrapper names: authored workflow bodies can allocate resources.
 const sessionWorkflow = "workflow//eve//workflowEntry";
 const coveredWorkflows = new Set([
   "workflow//eve//turnWorkflow",
   "workflow//eve//sessionTimeoutWorkflow",
   "workflow//eve@0.52.2//executeSleepTool",
+  "workflow//eve@0.61.0//executeSleepTool",
 ]);
 
 /** Classification only; birth receipts, writer fences and local evidence are still required. */

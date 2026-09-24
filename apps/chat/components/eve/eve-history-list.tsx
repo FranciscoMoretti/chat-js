@@ -2,18 +2,17 @@
 
 import {
   useInfiniteQuery,
-  useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 
 import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -21,17 +20,40 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
+import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
+import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
-const uuidPathSegment =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const titlePollIntervalMs = 1000;
 const titlePollLimitMs = 30_000;
+
+const groupLabel = (
+  item: Awaited<ReturnType<typeof listEveConversations>>["items"][number]
+) => {
+  const date = new Date(item.updatedAt);
+  if (item.isPinned) {
+    return "Pinned";
+  }
+  if (isToday(date)) {
+    return "Today";
+  }
+  if (isYesterday(date)) {
+    return "Yesterday";
+  }
+  if (date > subWeeks(new Date(), 1)) {
+    return "Last 7 days";
+  }
+  if (date > subMonths(new Date(), 1)) {
+    return "Last 30 days";
+  }
+  return "Older";
+};
 
 export const EveHistoryList = ({
   initialPage,
@@ -45,33 +67,30 @@ export const EveHistoryList = ({
   const trpc = useTRPC();
   const { data: session } = useSession();
   const openDeletion = useEveDeletion();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [moving, setMoving] = useState<{
     id: string;
     title: string;
     projectId: string | null;
   }>();
-  const [query, setQuery] = useState("");
-  const search = query.trim();
+  const search = "";
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
       { ownerScope: ownerId, projectId: projectId ?? null, search },
       {
         getNextPageParam: (page) => page.nextCursor,
-        initialData: search
-          ? undefined
-          : { pageParams: [null], pages: [initialPage] },
+        initialData: { pageParams: [null], pages: [initialPage] },
       }
     )
   );
   const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
   const pathname = usePathname();
-  const routeId = pathname.split("/").at(-1);
+  const route = parseChatIdFromPathname(pathname);
+  const routeId = route.id;
   const selectedIdentity = useQuery(
     trpc.eve.get.queryOptions(
       { id: routeId ?? "" },
-      { enabled: Boolean(routeId && uuidPathSegment.test(routeId)) }
+      { enabled: route.type === "chat" || route.type === "projectChat" }
     )
   );
   const hadPendingTitle = useRef(false);
@@ -81,8 +100,11 @@ export const EveHistoryList = ({
   );
   useEffect(() => {
     if (!hasPendingTitle) {
-      if (hadPendingTitle.current) {
-        router.refresh();
+      if (
+        hadPendingTitle.current &&
+        pendingEveMetadataMutations(queryClient) === 0
+      ) {
+        queryClient.invalidateQueries({ queryKey: trpc.eve.get.pathKey() });
       }
       hadPendingTitle.current = false;
       titlePollStartedAt.current = undefined;
@@ -98,17 +120,21 @@ export const EveHistoryList = ({
       return;
     }
     const interval = window.setInterval(() => {
-      history.refetch();
+      if (pendingEveMetadataMutations(queryClient) === 0) {
+        history.refetch();
+      }
     }, titlePollIntervalMs);
     const timeout = window.setTimeout(() => {
       window.clearInterval(interval);
-      history.refetch();
+      if (pendingEveMetadataMutations(queryClient) === 0) {
+        history.refetch();
+      }
     }, remaining);
     return () => {
       window.clearInterval(interval);
       window.clearTimeout(timeout);
     };
-  }, [hasPendingTitle, history, router]);
+  }, [hasPendingTitle, history, queryClient, trpc]);
   // Activity can move a row across a loaded page boundary between requests.
   const seen = new Set<string>();
   const filtered = conversations.filter((item) => {
@@ -118,102 +144,104 @@ export const EveHistoryList = ({
     seen.add(item.id);
     return true;
   });
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
-    router.refresh();
-  };
-  const rename = useMutation(
-    trpc.eve.rename.mutationOptions({
-      onError: (error) => toast.error(error.message),
-      onSuccess: refresh,
-    })
-  );
-  const pin = useMutation(
-    trpc.eve.pin.mutationOptions({
-      onError: (error) => toast.error(error.message),
-      onSuccess: refresh,
-    })
-  );
+  const { rename, pin } = useEveMetadataMutations();
+  const grouped = projectId
+    ? [{ items: filtered, label: "" }]
+    : [
+        "Pinned",
+        "Today",
+        "Yesterday",
+        "Last 7 days",
+        "Last 30 days",
+        "Older",
+      ].map((label) => ({
+        items: filtered.filter((item) => groupLabel(item) === label),
+        label,
+      }));
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
-      className={projectId ? "px-0" : "group-data-[collapsible=icon]:hidden"}
+      className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
     >
-      <SidebarGroupLabel>Conversations</SidebarGroupLabel>
-      <Input
-        aria-label="Search conversations"
-        className="mb-2"
-        maxLength={255}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search conversations…"
-        value={query}
-      />
-      <SidebarMenu>
-        {filtered.map((item) => {
-          if (item.state === "deleting") {
-            return (
-              <li className="p-2 text-sm" key={item.id}>
-                <p className="truncate">{item.title}</p>
-                <Button
-                  onClick={() => openDeletion(item)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  Resume deletion
-                </Button>
-              </li>
-            );
-          }
-          if (projectId) {
-            return (
-              <li key={item.id}>
-                <ProjectChatItem
-                  chat={item}
-                  onDelete={() => openDeletion(item)}
-                  onMoveProject={
-                    session?.user && item.state === "bound"
-                      ? () => setMoving(item)
-                      : undefined
-                  }
-                  onRename={async (id, title) => {
-                    await rename.mutateAsync({ id, title });
-                  }}
-                  renderShareContent={(_chatId, onClose) => (
-                    <EveShareDialogContent
-                      chatId={item.conversationId}
-                      onClose={onClose}
-                    />
-                  )}
-                />
-              </li>
-            );
-          }
-          return (
-            <SidebarChatItem
-              chat={item}
-              isActive={selectedIdentity.data?.chatId === item.id}
-              key={item.id}
-              onDelete={() => openDeletion(item)}
-              onMoveProject={
-                session?.user && item.state === "bound"
-                  ? () => setMoving(item)
-                  : undefined
-              }
-              onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
-              onRename={async (id, title) => {
-                await rename.mutateAsync({ id, title });
-              }}
-              renderShareContent={(_chatId, onClose) => (
-                <EveShareDialogContent
-                  chatId={item.conversationId}
-                  onClose={onClose}
-                />
-              )}
-              setOpenMobile={setOpenMobile}
-            />
-          );
-        })}
-      </SidebarMenu>
+      {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
+      {grouped
+        .filter((group) => group.items.length)
+        .map((group) => (
+          <div className="[&:not(:first-child)]:mt-6" key={group.label}>
+            {group.label && (
+              <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
+                {group.label}
+              </div>
+            )}
+            <SidebarMenu>
+              {group.items.map((item, index) => {
+                if (item.state === "deleting") {
+                  return (
+                    <li className="p-2 text-sm" key={item.id}>
+                      <p className="truncate">{item.title}</p>
+                      <Button
+                        onClick={() => openDeletion(item)}
+                        size="sm"
+                        variant="ghost"
+                      >
+                        Resume deletion
+                      </Button>
+                    </li>
+                  );
+                }
+                if (projectId) {
+                  return (
+                    <li key={item.id}>
+                      {index > 0 && <Separator />}
+                      <ProjectChatItem
+                        chat={item}
+                        onDelete={() => openDeletion(item)}
+                        onMoveProject={
+                          session?.user && item.state === "bound"
+                            ? () => setMoving(item)
+                            : undefined
+                        }
+                        onRename={async (id, title) => {
+                          await rename.mutateAsync({ id, title });
+                        }}
+                        renderShareContent={(_chatId, onClose) => (
+                          <EveShareDialogContent
+                            chatId={item.conversationId}
+                            onClose={onClose}
+                          />
+                        )}
+                      />
+                    </li>
+                  );
+                }
+                return (
+                  <SidebarChatItem
+                    chat={item}
+                    isActive={selectedIdentity.data?.chatId === item.id}
+                    key={item.id}
+                    onDelete={() => openDeletion(item)}
+                    onMoveProject={
+                      session?.user && item.state === "bound"
+                        ? () => setMoving(item)
+                        : undefined
+                    }
+                    onPin={(id, isPinned) => pin.mutate({ id, isPinned })}
+                    onRename={async (id, title) => {
+                      await rename.mutateAsync({ id, title });
+                    }}
+                    renderShareContent={(_chatId, onClose) => (
+                      <EveShareDialogContent
+                        chatId={item.conversationId}
+                        onClose={onClose}
+                      />
+                    )}
+                    setOpenMobile={setOpenMobile}
+                  />
+                );
+              })}
+            </SidebarMenu>
+          </div>
+        ))}
       {history.isPending && (
         <output className="text-muted-foreground p-2 text-sm">
           Loading conversations…
@@ -246,13 +274,22 @@ export const EveHistoryList = ({
           {history.isFetchingNextPage ? "Loading…" : "Load more conversations"}
         </Button>
       )}
-      {!(filtered.length || history.isPending || history.isError) && (
-        <p className="text-muted-foreground p-2 text-sm">
-          {query
-            ? "No matching conversations."
-            : "Your conversations will appear here."}
-        </p>
-      )}
+      {!(filtered.length || history.isPending || history.isError) &&
+        (projectId ? (
+          <div className="border-border/60 rounded-xl border px-4 py-6">
+            <p className="text-foreground text-sm font-medium">
+              No chats in this project
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Start a chat to keep conversations organized and re-use project
+              knowledge.
+            </p>
+          </div>
+        ) : (
+          <p className="text-muted-foreground px-2 py-4 text-sm">
+            Start chatting to see your conversation history!
+          </p>
+        ))}
       {moving && (
         <EveMoveProjectDialog
           conversation={moving}

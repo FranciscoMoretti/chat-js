@@ -192,6 +192,17 @@ export const useDocumentDraft = ({
     edit,
     error: failure,
     ready,
+    restore: (content: string, title: string, baseRevisionId: string) => {
+      if (!(enabled && ready) || busy.current || latest.current) {
+        return;
+      }
+      update({
+        baseRevisionId,
+        content,
+        operationId: crypto.randomUUID(),
+        title,
+      });
+    },
     retry: () => save(),
     saving: isPending,
     storageError,

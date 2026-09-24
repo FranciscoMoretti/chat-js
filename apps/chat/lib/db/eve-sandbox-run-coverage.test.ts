@@ -53,22 +53,25 @@ it("rejects cycles even with a valid additional parent", () => {
     ]).unresolvedRunIds
   ).toEqual(["a", "b"]);
 });
-it("only covers the pinned sleep workflow identity", () => {
-  const sleep = {
-    ...run("sleep", "executeSleepTool", "root"),
-    workflowName: "workflow//eve@0.52.2//executeSleepTool",
-  };
-  expect(
-    classifyEveSandboxRuns([run("root", "workflowEntry"), sleep])
-      .unresolvedRunIds
-  ).toEqual([]);
-  expect(
-    classifyEveSandboxRuns([
-      run("root", "workflowEntry"),
-      { ...sleep, workflowName: "workflow//eve@0.53.0//executeSleepTool" },
-    ]).unresolvedRunIds
-  ).toEqual(["sleep"]);
-});
+it.each(["0.52.2", "0.61.0"])(
+  "only covers reviewed sleep workflow identities (%s)",
+  (version) => {
+    const sleep = {
+      ...run("sleep", "executeSleepTool", "root"),
+      workflowName: `workflow//eve@${version}//executeSleepTool`,
+    };
+    expect(
+      classifyEveSandboxRuns([run("root", "workflowEntry"), sleep])
+        .unresolvedRunIds
+    ).toEqual([]);
+    expect(
+      classifyEveSandboxRuns([
+        run("root", "workflowEntry"),
+        { ...sleep, workflowName: "workflow//eve@0.53.0//executeSleepTool" },
+      ]).unresolvedRunIds
+    ).toEqual(["sleep"]);
+  }
+);
 it("handles deep families without recursive stack growth", () => {
   const runs = [run("0", "workflowEntry")];
   for (let index = 1; index < 10_000; index += 1) {

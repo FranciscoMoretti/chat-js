@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   bindings: vi.fn(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
+  recover: vi.fn(),
 }));
+vi.mock("./recover-creations", () => ({ recoverEveCreations: mocks.recover }));
 vi.mock("../db/eve-queries", () => ({
   listEveOwnerBindings: mocks.bindings,
 }));
@@ -151,4 +153,22 @@ it("fails closed when authoritative stream positions cannot be read", async () =
     "world unavailable"
   );
   expect(mocks.read).not.toHaveBeenCalled();
+});
+
+it("finishes interrupted commands before selecting usage streams", async () => {
+  mocks.recover.mockImplementation(() => {
+    mocks.bindings.mockResolvedValue([
+      { sessionId: "recovered", state: "bound", usageStreamIndex: 0 },
+    ]);
+  });
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.recover).toHaveBeenCalledWith("owner");
+  expect(mocks.read).toHaveBeenCalledWith("recovered");
+});
+it("does not admit new work when recovery remains unavailable", async () => {
+  mocks.recover.mockRejectedValue(new Error("worker unavailable"));
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "worker unavailable"
+  );
+  expect(mocks.bindings).not.toHaveBeenCalled();
 });

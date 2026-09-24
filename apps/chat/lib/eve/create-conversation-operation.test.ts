@@ -196,6 +196,14 @@ it("persists a compact fallback title before native creation", async () => {
   );
 });
 
+it("journals the complete creation command before dispatch so another tab can recover it", async () => {
+  const command = { ...input, selectedTool: "webSearch" } satisfies Parameters<
+    typeof createEveConversationOperation
+  >[1];
+  await createEveConversationOperation("owner", command);
+  expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
+});
+
 it("recovers an accepted fork after the source was deleted", async () => {
   mocks.creation.mockResolvedValue({
     creationKind: "message",

@@ -1,0 +1,4 @@
+nextjs-portal,
+[aria-label="Open Tanstack query devtools"] {
+  display: none !important;
+}

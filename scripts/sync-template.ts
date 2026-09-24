@@ -106,15 +106,9 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 
   await vendorPatchedPackage({
     destination,
-    packageDir: await resolvePackageDirectory("eve", sourceDir),
-    packageName: "eve",
-    patchPath: join(rootDir, "patches", "eve@0.52.2.patch"),
-  });
-  await vendorPatchedPackage({
-    destination,
     packageDir: await resolvePackageDirectory("@ai-sdk/mcp", sourceDir),
     packageName: "@ai-sdk/mcp",
-    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.45.patch"),
+    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.52.patch"),
   });
   await vendorPatchedPackage({
     destination,

@@ -1,5 +1,7 @@
 # Draft: maintained EVE fork contract and retirement plan
 
+> Historical 0.52.2 audit. The installed fork is now 0.61.0; see [the current reduction report](eve-fork-061-reduction.md) and [patch instructions](../../patches/README.md). Older patch files remain available in commit `27c14d41`.
+
 Status: local maintenance record, unpublished. Baseline: EVE `eve@0.52.2` (`247b3f05244893170bcf4dbcf20a2e35e416ccee`). It records the installed fork's contract and evidence; it does not claim an upstream release, production cutover, or source-to-dist reproducibility.
 
 ## Boundary of responsibility

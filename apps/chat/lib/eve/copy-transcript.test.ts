@@ -1,4 +1,5 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
+import { createSessionHistorySeed } from "eve/transcript";
 import { expect, it } from "vitest";
 
 import {
@@ -598,4 +599,56 @@ it("preserves selected tools in copies without publishing unrelated custom metad
     parts: [{ text: "Create a document", type: "text" }],
     role: "user",
   });
+});
+
+it("preserves imported text tool results through the ChatJS shared-copy projection", () => {
+  const imported = createSessionHistorySeed([
+    { content: "Read the file", role: "user" },
+    {
+      content: [
+        {
+          input: { path: "notes.txt" },
+          toolCallId: "original",
+          toolName: "readFile",
+          type: "tool-call",
+        },
+      ],
+      role: "assistant",
+    },
+    {
+      content: [
+        {
+          output: { type: "text", value: "plain text" },
+          toolCallId: "original",
+          toolName: "readFile",
+          type: "tool-result",
+        },
+      ],
+      role: "tool",
+    },
+  ]);
+  const tool = imported.seed.messages[1]?.parts[0];
+  if (tool?.type !== "dynamic-tool" || tool.state !== "output-available") {
+    throw new Error("Expected settled imported tool");
+  }
+  const messages: EveMessage[] = [
+    {
+      id: "seed_message_0",
+      parts: [{ text: "Read the file", type: "text" }],
+      role: "user",
+    },
+    {
+      id: "seed_message_1",
+      parts: [{ ...tool, toolCallId: "seed_tool_0" }],
+      role: "assistant",
+    },
+  ];
+  const copied = prepareEveCopyTranscript(history(messages));
+  expect(copied.seed.messages[1]?.parts[0]).toMatchObject({
+    output: "plain text",
+    outputType: "text",
+    state: "output-available",
+    type: "dynamic-tool",
+  });
+  expect(JSON.stringify(copied.seed)).not.toContain("original");
 });

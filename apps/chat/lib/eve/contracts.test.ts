@@ -81,6 +81,24 @@ describe("Eve request policy", () => {
       )?.get("startIndex")
     ).toBe("0");
   });
+  it("preserves native stream control negotiation while rejecting unsupported queries", () => {
+    for (const query of [
+      "streamControlVersion=1&includeTailIndex=1",
+      "startIndex=12&streamControlVersion=1&includeTailIndex=1",
+    ]) {
+      expect(safeStreamQuery(new URLSearchParams(query))?.toString()).toBe(
+        query
+      );
+    }
+    for (const query of [
+      "streamControlVersion=2",
+      "streamControlVersion=",
+      "streamControlVersion=1&streamControlVersion=1",
+      "streamControlVersion=1&foo=true",
+    ]) {
+      expect(safeStreamQuery(new URLSearchParams(query))).toBeNull();
+    }
+  });
 });
 
 describe("Eve command recovery", () => {

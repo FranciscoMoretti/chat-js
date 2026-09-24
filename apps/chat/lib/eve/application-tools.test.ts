@@ -39,6 +39,7 @@ const resolveTools = async () => {
     {
       channel: {},
       messages: [],
+      model: null,
       session: { auth: { current: null, initiator: null }, id: "test" },
     }
   );

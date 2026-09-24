@@ -3,13 +3,13 @@ import {
   contextStorage,
 } from "@eve-test/dist/src/context/container.js";
 import { SessionKey } from "@eve-test/dist/src/context/keys.js";
-import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
-import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
-import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
 import {
   getToolApprovalReceipt,
   prepareToolApprovalReceipts,
-} from "@eve-test/eve-patched-dist-src-context-tool-approval-receipts.js";
+} from "@eve-test/dist/src/context/tool-approval-receipts.js";
+import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
+import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
+import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
 /* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -183,7 +183,7 @@ test.each(["owner", "stranger"])(
         agent: { modelReference: { id: "mock" }, system: "Test", tools: [] },
         compaction: { recentWindowSize: 10, threshold: 100_000 },
         continuationToken: "continuation",
-        history: [{ role: "user", content: "Write" }],
+        history: [{ role: "user", kind: "user", content: "Write" }],
         sessionId: "session",
       },
     });

@@ -34,9 +34,7 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
   await expect(page.getByRole("status")).toHaveText("Running saved code…");
   await expect(page.getByText("Document execution declined.")).toBeVisible();
   await expect(
-    page
-      .getByRole("button", { name: "Run code" })
-      .and(page.locator(":disabled"))
+    page.getByRole("button", { name: "Run" }).and(page.locator(":disabled"))
   ).toHaveCount(2);
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
@@ -87,20 +85,17 @@ test("artifact Run executes saved source, retains output across reload and shari
   const code = panel.locator(".cm-content");
   await code.fill('console.log("saved-revision-73")');
   await expect(
-    panel.getByRole("button", { exact: true, name: "Run code" })
+    panel.getByRole("button", { exact: true, name: "Run" })
   ).toBeDisabled();
   await expect(panel).toContainText("Version 2 of 2");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Preserve this draft.");
-  await panel.getByRole("button", { exact: true, name: "Run code" }).click();
+  await panel.getByRole("button", { exact: true, name: "Run" }).click();
   await expect(
-    panel.getByRole("button", { exact: true, name: "Run code" })
+    panel.getByRole("button", { exact: true, name: "Run" })
   ).toBeDisabled();
   const output = panel.getByTestId("document-run-result");
-  await output
-    .getByRole("tab", { exact: true, name: "Output" })
-    .click({ timeout: 90_000 });
-  await expect(output.getByRole("tabpanel")).toContainText("saved-revision-73");
+  await expect(output).toContainText("saved-revision-73");
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -159,13 +154,16 @@ test("artifact Run executes saved source, retains output across reload and shari
   await page
     .getByRole("button", { exact: true, name: 'Created "saved.js"' })
     .click();
-  await panel.getByRole("button", { exact: true, name: "Next" }).click();
-  await output.getByRole("tab", { exact: true, name: "Output" }).click();
-  await expect(output.getByRole("tabpanel")).toContainText("saved-revision-73");
-  await panel.getByRole("button", { exact: true, name: "Previous" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Next version" })
+    .click();
+  await expect(output).toContainText("saved-revision-73");
+  await panel
+    .getByRole("button", { exact: true, name: "View Previous version" })
+    .click();
   await expect(output).toHaveCount(0);
   await expect(
-    panel.getByRole("button", { exact: true, name: "Run code" })
+    panel.getByRole("button", { exact: true, name: "Run" })
   ).toBeDisabled();
 
   await db
@@ -195,17 +193,14 @@ test("artifact Run executes saved source, retains output across reload and shari
       exact: true,
       name: "Document",
     });
-    await shared.getByRole("button", { exact: true, name: "Next" }).click();
+    await shared
+      .getByRole("button", { exact: true, name: "View Next version" })
+      .click();
     await expect(
-      shared.getByRole("button", { exact: true, name: "Run code" })
+      shared.getByRole("button", { exact: true, name: "Run" })
     ).toHaveCount(0);
     const sharedOutput = shared.getByTestId("document-run-result");
-    await sharedOutput
-      .getByRole("tab", { exact: true, name: "Output" })
-      .click();
-    await expect(sharedOutput.getByRole("tabpanel")).toContainText(
-      "saved-revision-73"
-    );
+    await expect(sharedOutput).toContainText("saved-revision-73");
     await reader.setViewportSize({ height: 844, width: 390 });
     await shared.screenshot({
       animations: "disabled",

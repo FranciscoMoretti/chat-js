@@ -44,6 +44,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const invalidSeedError = /Too small|byte limit/u;
+const invalidBoundaryError = /boundaries must match imported user messages/u;
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
@@ -375,7 +376,7 @@ test("revocation before acceptance prevents dispatch and permits a never-dispatc
       Promise.resolve("forbidden")
     )
   ).rejects.toThrow();
-  await purgeEveFamilyDocuments(ownerId, f.saved.conversation.id);
+  await purgeEveFamilyDocuments(ownerId, f.saved.conversation.chatId);
   await db
     .delete(eveFileReference)
     .where(eq(eveFileReference.conversationId, f.saved.conversation.id));
@@ -420,7 +421,7 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
   expect(f.storage.writeDestinationFile).not.toHaveBeenCalled();
 });
 
-test("invalid initial native seeds never reserve resources or become accepted", async () => {
+test("invalid native seeds or document boundaries never reserve resources", async () => {
   for (const seed of [
     { attachments: "channel", messages: [] },
     { attachments: "channel", messages: [{ parts: [], role: "user" }] },
@@ -452,7 +453,9 @@ test("invalid initial native seeds never reserve resources or become accepted", 
         sourceSessionId: crypto.randomUUID(),
         title: "Invalid seed",
       })
-    ).rejects.toThrow(invalidSeedError);
+    ).rejects.toThrow(
+      seed.messages.length ? invalidSeedError : invalidBoundaryError
+    );
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
   }
 });

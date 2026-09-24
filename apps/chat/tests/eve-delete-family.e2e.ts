@@ -10,7 +10,12 @@ import {
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
 import { createEveConversation } from "../lib/db/eve-queries";
-import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
+import {
+  eveChat,
+  eveCodeSandbox,
+  eveConversation,
+  user,
+} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -102,14 +107,15 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     .from(eveConversation)
     .where(eq(eveConversation.id, target.id));
   expect(pending.state).toBe("deleting");
+  expect(pending.chatId).not.toBe(target.id);
   // The test never invoked an allocator for this reservation.
   await recordEveCodeSandboxDeletion(owner, target.id, name);
   expect(
     await deleteLocalEveConversationFamily(owner, child.id, "/fixture")
-  ).toEqual({ rootId: target.id });
+  ).toEqual({ rootId: pending.chatId });
   expect(
     await deleteLocalEveConversationFamily(owner, child.id, "/fixture")
-  ).toEqual({ rootId: target.id });
+  ).toEqual({ rootId: pending.chatId });
   for (const member of [target, child]) {
     expect(
       await native`select id from workflow.workflow_runs where id = ${member.sessionId}`
@@ -124,9 +130,16 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     expect(deleted).toMatchObject({
       firstMessage: "",
       state: "deleted",
-      title: null,
     });
   }
+  const [deletedChat] = await db
+    .select()
+    .from(eveChat)
+    .where(eq(eveChat.id, pending.chatId));
+  expect(deletedChat).toMatchObject({
+    activeConversationId: null,
+    title: "",
+  });
   expect(
     await deleteLocalEveConversationFamily("foreign", unrelated.id, "/fixture")
   ).toBeUndefined();

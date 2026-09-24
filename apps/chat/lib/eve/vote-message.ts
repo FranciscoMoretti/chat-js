@@ -2,7 +2,7 @@ import { Client, defaultMessageReducer } from "eve/client";
 
 import { getEveConversation } from "../db/eve-queries";
 import { saveEveMessageVote } from "../db/queries";
-import { env } from "../env";
+import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
 
 export const voteEveMessage = async (
@@ -18,11 +18,7 @@ export const voteEveMessage = async (
     return null;
   }
   assertEveConfigured();
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });

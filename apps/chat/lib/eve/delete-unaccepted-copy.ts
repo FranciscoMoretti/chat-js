@@ -11,19 +11,22 @@ export const deleteUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
 ) => {
-  const resolvedResult1 = await getEveDeletionState(ownerId, conversationId);
-  if (resolvedResult1?.state === "deleted") {
+  const deletion = await getEveDeletionState(ownerId, conversationId);
+  if (!deletion) {
+    throw new Error("Conversation identity is unavailable.");
+  }
+  if (deletion.state === "deleted") {
     return;
   }
   try {
     await rejectUnacceptedEveCopy(ownerId, conversationId);
-    await purgeEveFamilyDocuments(ownerId, conversationId);
-    await purgeEveFamilyFiles(ownerId, conversationId);
+    await purgeEveFamilyDocuments(ownerId, deletion.rootId);
+    await purgeEveFamilyFiles(ownerId, deletion.rootId);
     await completeEveConversationDeletion(ownerId, conversationId);
   } catch (error) {
     // A concurrent cleanup may have completed while this caller waited on the family lock.
-    const resolvedResult2 = await getEveDeletionState(ownerId, conversationId);
-    if (resolvedResult2?.state !== "deleted") {
+    const current = await getEveDeletionState(ownerId, conversationId);
+    if (current?.state !== "deleted") {
       throw error;
     }
   }

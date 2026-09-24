@@ -122,7 +122,9 @@ const Part = ({
   part,
   disabled,
   respond,
+  previewDocument = false,
 }: {
+  previewDocument?: boolean;
   messageId: string;
   isReadonly: boolean;
   part: EveMessagePart;
@@ -177,6 +179,7 @@ const Part = ({
   ) {
     return (
       <EveDocumentTool
+        preview={previewDocument}
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}
@@ -238,8 +241,10 @@ export const EveMessages = ({
   renderResponses,
   modelForMessage,
   actionsDisabled = disabled,
+  messageKey,
 }: {
   conversationId?: string;
+  messageKey?: (message: EveMessage) => string;
   messages: readonly EveMessage[];
   isReadonly: boolean;
   actionsDisabled?: boolean;
@@ -258,6 +263,14 @@ export const EveMessages = ({
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) => {
+  const latestDocumentCallId = messages
+    .flatMap((message) => message.parts)
+    .filter((part) => part.type === "dynamic-tool")
+    .findLast(
+      (part) =>
+        Object.hasOwn(eveDocumentOperations, part.toolName) ||
+        part.toolName === "readDocument"
+    )?.toolCallId;
   let precedingUser: EveMessage | undefined;
   // oxlint-disable-next-line eslint/complexity -- A row combines streamed content with its role-specific shared controls.
   return messages.map((message) => {
@@ -349,7 +362,7 @@ export const EveMessages = ({
             ))}
           editor={editing?.content}
           editDisabled={!canEdit}
-          key={message.id}
+          key={messageKey?.(message) ?? message.id}
           messageId={message.id}
           responses={renderResponses?.(message)}
           onEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
@@ -362,7 +375,7 @@ export const EveMessages = ({
         className="w-full max-w-full items-start py-1"
         data-message-id={message.id}
         from={message.role}
-        key={message.id}
+        key={messageKey?.(message) ?? message.id}
       >
         <MessageContent className="w-full px-0 py-0 text-left">
           <span className="sr-only">Assistant</span>
@@ -375,6 +388,10 @@ export const EveMessages = ({
               messageId={message.id}
               part={part}
               respond={respond}
+              previewDocument={
+                part.type === "dynamic-tool" &&
+                part.toolCallId === latestDocumentCallId
+              }
             />
           ))}
           {actions}

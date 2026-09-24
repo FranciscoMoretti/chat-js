@@ -10,7 +10,7 @@ const positionRows = z.array(
 );
 
 /**
- * Metadata-only adapter for Eve 0.52.2 and world-postgres 5.0.0-beta.40.
+ * Metadata-only adapter for Eve 0.61.0 and world-postgres 5.0.0-beta.40.
  * Uses the same default stream name and non-EOF chunk count as getReadable /
  * streams.getInfo. Callers must supply only owner-authorized sessions.
  * Missing streams are omitted, never certified as empty or settled.

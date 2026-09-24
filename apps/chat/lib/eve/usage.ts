@@ -49,7 +49,7 @@ export const ingestEveUsage = async (
   ) {
     return;
   }
-  return await recordEveUsage({
+  const priced = await recordEveUsage({
     costUsd:
       event.type === "step.failed" ? undefined : event.data.usage?.costUsd,
     eventId: event.meta.id,
@@ -61,4 +61,7 @@ export const ingestEveUsage = async (
     sessionId,
     turnId: event.data.turnId,
   });
+  // A failed step has no completed-call usage receipt. Keep its evidence without
+  // reporting a missing completed charge (the same policy used for failed hook calls).
+  return event.type === "step.failed" ? undefined : priced;
 };

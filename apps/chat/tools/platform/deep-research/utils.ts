@@ -36,6 +36,11 @@ export const withResearchTools = async <T>(
         !config.mcp_config.tools?.length ||
         config.mcp_config.tools.includes(name);
       if (allowed && !Object.hasOwn(tools, name)) {
+        // Automatic MCP discovery returns dynamic tools. Narrow the SDK's
+        // broader declaration without rebuilding tools or losing output conversion.
+        if (remoteTool.type !== "dynamic") {
+          throw new Error("Expected a dynamically discovered MCP tool.");
+        }
         tools[name] = remoteTool;
       }
     }

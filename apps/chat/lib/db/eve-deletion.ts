@@ -121,6 +121,7 @@ export const completeEveConversationDeletion = async (
         initialContentHash: null,
         initialModelId: null,
         initialProjectId: null,
+        initialRequest: null,
         state: "deleted",
         visibility: "private",
       })

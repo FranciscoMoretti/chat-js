@@ -70,7 +70,11 @@ export const resolveCreationRequest = async (
       );
     }
     retainResponseGroupDraft(storage, ownerId, operation, result, scope);
-    return bound.conversationId;
+    return {
+      group: result,
+      id: bound.conversationId,
+      sessionId: bound.sessionId,
+    };
   }
   const binding = await requestConversation(operation);
   if (
@@ -79,5 +83,5 @@ export const resolveCreationRequest = async (
   ) {
     finishCreation(storage, ownerId, scope);
   }
-  return binding.id;
+  return { ...binding, group: undefined };
 };

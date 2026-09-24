@@ -100,10 +100,10 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     ).toBeVisible({ timeout: 90_000 });
   }
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  for (const [title, content] of [
-    ["Artifact notes", "Amber apples."],
-    ["orchard.py", "print(42)"],
-    ["Harvest", "Apple"],
+  for (const [title, content, copyLabel] of [
+    ["Artifact notes", "Amber apples.", "Copy to clipboard"],
+    ["orchard.py", "print(42)", "Copy code to clipboard"],
+    ["Harvest", "Apple", "Copy as .csv"],
   ]) {
     await page
       .getByRole("button", { exact: true, name: `Created "${title}"` })
@@ -113,7 +113,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await panel
       .getByRole("button", {
         exact: true,
-        name: title === "Harvest" ? "Copy as CSV" : "Copy to clipboard",
+        name: copyLabel,
       })
       .click();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
@@ -126,21 +126,18 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     }
     await expect(
       panel.getByText("Version 1 of 1", { exact: true })
-    ).toBeInViewport();
+    ).toBeAttached();
     await panel.screenshot({
       animations: "disabled",
       path: testInfo.outputPath(`${title.replaceAll(".", "-")}.png`),
     });
-    await panel
-      .getByRole("button", { exact: true, name: "Improve document" })
-      .click();
-    await page.getByRole("menu").screenshot({
+    await panel.getByRole("toolbar", { name: "Document helpers" }).hover();
+    await panel.getByRole("toolbar", { name: "Document helpers" }).screenshot({
       animations: "disabled",
       path: testInfo.outputPath(
         `assistant-actions-${title.replaceAll(".", "-")}.png`
       ),
     });
-    await page.keyboard.press("Escape");
     await panel.getByRole("button", { exact: true, name: "Close" }).click();
   }
   await page
@@ -192,6 +189,8 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .click();
   const panel = page.getByTestId("artifact");
   await expect(panel).toContainText("Cobalt pears.");
+  // Rich previews may have read the previous revision. Make its cache stale before testing a failed refetch.
+  await page.clock.setFixedTime(new Date(Date.now() + 120_000));
   await page.route("**/api/trpc/eve.document*", (route) => route.abort());
   await panel
     .getByRole("button", { exact: true, name: "View changes" })
@@ -208,6 +207,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     path: testInfo.outputPath("comparison-error.png"),
   });
   await page.unroute("**/api/trpc/eve.document*");
+  await page.clock.setSystemTime(new Date());
   await panel
     .getByRole("button", { exact: true, name: "Retry comparison" })
     .click();
@@ -224,11 +224,15 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     path: testInfo.outputPath("comparison.png"),
   });
   await panel
-    .getByRole("button", { exact: true, name: "Show document" })
+    .getByRole("button", { exact: true, name: "View changes" })
     .click();
-  await panel.getByRole("button", { exact: true, name: "Previous" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Previous version" })
+    .click();
   await expect(panel).toContainText("Amber apples.");
-  await panel.getByRole("button", { exact: true, name: "Next" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Next version" })
+    .click();
   await expect(panel).toContainText("Cobalt pears.");
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(panel).toBeVisible();
@@ -278,7 +282,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await page
     .getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })
     .click();
-  await panel.getByRole("button", { exact: true, name: "Next" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Next version" })
+    .click();
   await expect(panel).toContainText("Manual grapes.");
   await expect(panel).toContainText("Version 3 of 3");
   const editor = panel.locator(".lexical-editor");
@@ -314,12 +320,16 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     path: testInfo.outputPath("comparison-empty.png"),
   });
   await panel
-    .getByRole("button", { exact: true, name: "Show document" })
+    .getByRole("button", { exact: true, name: "View changes" })
     .click();
-  await panel.getByRole("button", { exact: true, name: "Previous" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Previous version" })
+    .click();
   await expect(editor).toHaveText("Retained manual draft");
   await expect(editor).toHaveAttribute("contenteditable", "false");
-  await panel.getByRole("button", { exact: true, name: "Next" }).click();
+  await panel
+    .getByRole("button", { exact: true, name: "View Next version" })
+    .click();
   await expect(editor).toHaveText("");
   await expect(editor).toHaveAttribute("contenteditable", "true");
   await editor.fill("Final manual text");
@@ -366,7 +376,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   });
   await code.fill("");
   await expect(
-    panel.getByRole("button", { exact: true, name: "Improve document" })
+    panel.getByRole("button", { exact: true, name: "Add comments" })
   ).toBeDisabled();
   await expect(panel).toContainText("Version 3 of 3");
   await expect(code).toHaveText("");
@@ -381,18 +391,16 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       request.method() === "POST" &&
       request.url().includes("/api/eve/v1/session/")
   );
+  await panel.getByRole("toolbar", { name: "Document helpers" }).hover();
   await panel
-    .getByRole("button", { exact: true, name: "Improve document" })
-    .click();
-  await page
-    .getByRole("menuitem", { exact: true, name: "Add comments" })
+    .getByRole("button", { exact: true, name: "Add comments" })
     .click();
   expect((await actionRequest).headers()["x-chatjs-selected-model"]).toBe(
     config.ai.tools.code.edits
   );
   await expect(
-    panel.getByRole("button", { exact: true, name: "Improve document" })
-  ).toBeDisabled();
+    panel.getByRole("button", { exact: true, name: "Stop generation" })
+  ).toBeVisible();
   await expect(panel).toContainText("Version 5 of 5", { timeout: 90_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
@@ -443,7 +451,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       reader.getByRole("region", { exact: true, name: "Document" })
     ).toContainText("Cobalt pears.");
     await expect(
-      reader.getByRole("button", { exact: true, name: "Improve document" })
+      reader.getByRole("toolbar", { exact: true, name: "Document helpers" })
     ).toHaveCount(0);
     await reader
       .getByRole("button", { exact: true, name: "View changes" })

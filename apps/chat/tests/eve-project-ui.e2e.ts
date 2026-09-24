@@ -18,6 +18,16 @@ test("project UI edits instructions, creates a native conversation and lists it 
   test.setTimeout(180_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  if (
+    await page
+      .locator('[data-state="collapsed"][data-collapsible="icon"]')
+      .count()
+  ) {
+    await page
+      .getByRole("button", { exact: true, name: "Expand sidebar" })
+      .first()
+      .click();
+  }
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
     data: { model: modelId },
@@ -44,6 +54,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
   await expect(createDialog.getByPlaceholder("Project name")).toHaveValue(
     "Project UI fixture"
   );
+  await expect(createDialog).toHaveScreenshot("create-error.png", {
+    animations: "disabled",
+  });
   await createDialog.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("create-error.png"),
@@ -60,12 +73,52 @@ test("project UI edits instructions, creates a native conversation and lists it 
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
+    const invalidIdentityRequests: string[] = [];
+    page.on("request", (request) => {
+      if (
+        request.url().includes("eve.get") &&
+        decodeURIComponent(request.url()).includes(projectId)
+      ) {
+        invalidIdentityRequests.push(request.url());
+      }
+    });
     await page.goto(`/project/${projectId}`);
     await expect(
       page.getByRole("heading", { exact: true, name: "Project UI fixture" })
     ).toBeVisible();
+    await expect(
+      page.getByText("No chats in this project", { exact: true })
+    ).toBeVisible();
+    expect(invalidIdentityRequests).toEqual([]);
+    await page.keyboard.press("Control+k");
+    await expect(
+      page.getByRole("dialog", { name: "Search chats" })
+    ).toBeVisible();
+    await page.getByRole("dialog", { name: "Search chats" }).screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("sidebar-search.png"),
+    });
+    await page.keyboard.press("Escape");
+    await expect(
+      page.locator('[data-sidebar="header"]').first()
+    ).toHaveScreenshot("sidebar-controls.png", { animations: "disabled" });
+    await page
+      .locator('[data-sidebar="sidebar"]')
+      .first()
+      .screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("sidebar-projects.png"),
+      });
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
+      await expect(
+        page.locator("section").filter({
+          has: page.getByRole("textbox", { exact: true, name: "Message" }),
+        })
+      ).toHaveScreenshot(`project-empty-${width}.png`, {
+        animations: "disabled",
+        stylePath: "tests/visual-capture.css",
+      });
       await page
         .locator("section")
         .filter({
@@ -100,6 +153,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("button", { name: "Save instructions" })
       .click();
     await expect(instructionDialog.getByRole("alert")).toBeVisible();
+    await expect(instructionDialog).toHaveScreenshot("instructions-error.png", {
+      animations: "disabled",
+    });
     await instructionDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("instructions-error.png"),
@@ -115,20 +171,54 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await renameDialog
       .getByPlaceholder("Project name")
       .fill("Renamed project fixture");
+    const { promise: renameGate, resolve: rejectRename } =
+      Promise.withResolvers<boolean>();
     await page.route(
       (url) => url.pathname.includes("project.update"),
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await renameGate;
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await renameDialog
       .getByRole("button", { exact: true, name: "Save" })
       .click();
+    try {
+      await expect(
+        page.getByRole("heading", {
+          exact: true,
+          includeHidden: true,
+          name: "Renamed project fixture",
+        })
+      ).toBeVisible();
+      await expect(
+        page.locator(`a[href="/project/${projectId}"]`)
+      ).toContainText("Renamed project fixture");
+    } finally {
+      rejectRename(true);
+    }
     await expect(renameDialog.getByRole("alert")).toBeVisible();
+    await expect(renameDialog.getByPlaceholder("Project name")).toHaveValue(
+      "Renamed project fixture"
+    );
+    await expect(
+      renameDialog.getByRole("button", { exact: true, name: "Save" })
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("heading", {
+        exact: true,
+        includeHidden: true,
+        name: "Project UI fixture",
+      })
+    ).toBeVisible();
+    await expect(renameDialog).toHaveScreenshot("rename-error.png", {
+      animations: "disabled",
+    });
     await renameDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("rename-error.png"),
@@ -161,11 +251,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .filter({
         has: page.getByRole("textbox", { exact: true, name: "Message" }),
       })
-      .getByRole("link", {
-        exact: true,
-        name: "Follow the project instruction.",
-      });
+      .locator(`a[href="/project/${projectId}/chat/${conversationId}"]`);
     await expect(row).toBeVisible();
+    await expect(row).toHaveAccessibleName(/\S/u);
     await expect(row).toHaveAttribute(
       "href",
       `/project/${projectId}/chat/${conversationId}`
@@ -190,7 +278,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
         .count()
     ) {
       await page
-        .getByRole("button", { exact: true, name: "Toggle Sidebar" })
+        .getByRole("button", { exact: true, name: "Expand sidebar" })
         .first()
         .click();
     }
@@ -214,6 +302,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("button", { exact: true, name: "Delete" })
       .click();
     await expect(deleteDialog.getByRole("alert")).toBeVisible();
+    await expect(deleteDialog).toHaveScreenshot("delete-error.png", {
+      animations: "disabled",
+    });
     await deleteDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("delete-error.png"),

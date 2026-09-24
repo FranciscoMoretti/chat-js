@@ -1,10 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 
+import { z } from "zod";
+
 import { frontendToolsSchema } from "../ai/types";
 import { readEveGuestOwner } from "../db/eve-guests";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
+  readEveSessionMapping,
 } from "../db/eve-queries";
 import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
 import { env } from "../env";
@@ -71,7 +74,34 @@ const gatewaySessionPolicy = (path: string, method: string) => {
     : parseSessionRequest(path, method);
 };
 
-const readGatewayAttributes = async (request: Request) => {
+const readCreationReservation = async (request: Request, owner: string) => {
+  const command = z
+    .object({ operationId: z.uuid(), seed: z.boolean().optional() })
+    .safeParse(
+      await request
+        .clone()
+        .json()
+        .catch(() => null)
+    );
+  if (!command.success) {
+    return null;
+  }
+  const reservation = await readEveSessionMapping({
+    reservationId: command.data.operationId,
+  });
+  if (
+    !reservation ||
+    reservation.ownerId !== owner ||
+    reservation.state === "deleting" ||
+    reservation.state === "deleted" ||
+    (command.data.seed === true) !== (reservation.creationKind === "copy")
+  ) {
+    return null;
+  }
+  return reservation.id;
+};
+
+const readGatewayAttributes = async (request: Request, owner: string) => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
   if (modelId) {
     await loadEveModelDefinition(modelId);
@@ -89,6 +119,17 @@ const readGatewayAttributes = async (request: Request) => {
   }
   if (modelId) {
     attributes.modelId = modelId;
+  }
+  if (
+    new URL(request.url).pathname === "/eve/v1/session" &&
+    request.method === "POST"
+  ) {
+    const reservationId = await readCreationReservation(request, owner);
+    if (!reservationId) {
+      return null;
+    }
+    // Derive this from the authenticated command and durable reservation, never a header.
+    attributes.chatjsReservationId = reservationId;
   }
   return attributes;
 };
@@ -138,7 +179,7 @@ export const authenticateEveGateway = async (request: Request) => {
       return null;
     }
   }
-  const attributes = await readGatewayAttributes(request);
+  const attributes = await readGatewayAttributes(request, owner);
   if (!attributes) {
     return null;
   }

@@ -1,280 +1,147 @@
-import { execFileSync } from "node:child_process";
-
+/* oxlint-disable unicorn/no-await-expression-member -- Each response assertion is tied to its awaited browser action. */
 import { expect, test } from "@playwright/test";
 
-import {
-  completeGroup,
-  firstConversation,
-  firstModel,
-  groupId,
-  ownerId,
-  partialGroup,
-  secondConversation,
-  secondModel,
-} from "./eve-comparison-data.fixture";
+import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
-const secondModelLabel = /Second model$/u;
+const nano = /GPT-5 Nano/iu;
 
-test("multi-model creation retains exact partial operation across navigation and recovery", async ({
+test("nested comparisons retain both groups, duplicate-model slots and retry attempts under one chat URL", async ({
   page,
 }, testInfo) => {
-  page.setDefaultTimeout(10_000);
-  const errors: string[] = [];
-  const submissions: unknown[] = [];
-  const preferences: string[] = [];
-  const firstSubmission = Promise.withResolvers<undefined>();
-  let releaseFirstSubmission: (() => void) | undefined;
-  page.on("pageerror", (error) => errors.push(error.message));
-  const script = execFileSync("bun", ["tests/eve-comparison-ui.build.mjs"], {
-    encoding: "utf-8",
-    maxBuffer: 40 * 1024 * 1024,
+  test.setTimeout(240_000);
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  const { origin } = new URL(page.url());
+  const response = await page.request.post("/api/agent-response-groups", {
+    data: {
+      message: "Do not use tools. Reply with exactly amber.",
+      modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+      operationId: crypto.randomUUID(),
+    },
+    headers: { origin },
+    timeout: 90_000,
   });
-  const css = execFileSync(
-    "bun",
-    [
-      "-e",
-      'import postcss from "postcss";import tailwind from "@tailwindcss/postcss";const from=process.cwd()+"/app/globals.css";process.stdout.write((await postcss([tailwind()]).process(await Bun.file(from).text(),{from})).css);',
-    ],
-    { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
-  );
-  await page.route("https://eve-comparison.test/**", async (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname === "/fixture.js") {
-      return route.fulfill({ body: script, contentType: "text/javascript" });
-    }
-    if (url.pathname === "/api/chat-model") {
-      const { model } = route.request().postDataJSON();
-      preferences.push(model);
-      return route.fulfill({
-        headers: {
-          "set-cookie": `chat-model=${model}; Path=/; Secure; SameSite=Lax`,
-        },
-        json: {},
-      });
-    }
-    if (
-      url.pathname === "/api/agent-response-groups" &&
-      route.request().method() === "POST"
-    ) {
-      submissions.push(route.request().postDataJSON());
-      if (submissions.length === 1) {
-        releaseFirstSubmission = () => firstSubmission.resolve(undefined);
-        await firstSubmission.promise;
-      }
-      return route.fulfill({
-        json: submissions.length === 1 ? partialGroup : completeGroup,
-      });
-    }
-    if (url.pathname === `/api/agent-response-groups/${groupId}`) {
-      return route.fulfill({ json: partialGroup });
-    }
-    if (url.pathname === "/" || url.pathname.startsWith("/chat/")) {
-      return route.fulfill({
-        body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div><script type="module" src="/fixture.js"></script></body></html>`,
-        contentType: "text/html",
-      });
-    }
-    return route.fulfill({ body: "Unexpected fixture request", status: 404 });
-  });
-  await page.goto("https://eve-comparison.test/");
-  expect(errors).toEqual([]);
-  await expect(page.locator('[contenteditable="true"]'))
-    .toBeVisible({ timeout: 3000 })
-    .catch((error) => {
-      throw new Error(JSON.stringify(errors), { cause: error });
-    });
-  await page.getByTitle("Select Tools", { exact: true }).click();
-  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
-  await page.getByTestId("model-selector").click();
-  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-  await page.getByRole("option", { name: secondModelLabel }).click();
-  await page.keyboard.press("Escape");
-  await page
-    .locator('[contenteditable="true"]')
-    .fill("Compare a short greeting");
-  await page.screenshot({
-    animations: "disabled",
-    path: testInfo.outputPath("new-comparison.png"),
-  });
-  await page.getByRole("button", { exact: true, name: "Send" }).click();
-  await expect(page.getByTestId("optimistic-response-group")).toContainText(
-    "Compare a short greeting"
-  );
-  await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: "First model Generating...",
-    })
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: "Second model Generating...",
-    })
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("group", { name: "Message composer" })
-  ).not.toContainText("Compare a short greeting");
-  await page.screenshot({
-    animations: "disabled",
-    path: testInfo.outputPath("optimistic-comparison.png"),
-  });
-  if (!releaseFirstSubmission) {
-    throw new Error("Comparison request did not start.");
+  expect(response.ok(), await response.text()).toBe(true);
+  const group = eveResponseGroupResult.parse(await response.json());
+  const [first] = group.candidates;
+  if (first.state !== "bound") {
+    throw new Error("First candidate did not bind");
   }
-  releaseFirstSubmission();
-  await expect(page).toHaveURL(
-    `https://eve-comparison.test/chat/${firstConversation}`
-  );
-  expect(submissions).toHaveLength(1);
-  expect(submissions[0]).toMatchObject({
-    message: "Compare a short greeting",
-    modelIds: expect.arrayContaining([firstModel, secondModel]),
-    selectedTool: "createTextDocument",
+  await page.goto(`/chat/${first.conversationId}`);
+  const cards = page.getByRole("log").getByRole("button", { name: nano });
+  await expect(cards).toHaveCount(2);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
   });
-  const pending = await page.evaluate(
-    (key) => sessionStorage.getItem(key),
-    `chatjs.eve.comparison:${ownerId}:${groupId}`
-  );
-  expect(JSON.parse(pending ?? "null")).toEqual(submissions[0]);
-  await expect(page.getByLabel("Follow-up draft"))
-    .toBeVisible({ timeout: 3000 })
-    .catch((error) => {
-      throw new Error(JSON.stringify(errors), { cause: error });
-    });
-  await page.getByLabel("Follow-up draft").fill("Keep this unsent follow-up");
-  await page.getByTitle("Select Tools", { exact: true }).click();
-  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
-  await page
-    .getByRole("button", { exact: true, name: "Attach fixture PDF" })
-    .click();
-  await page
-    .getByRole("button", { exact: true, name: "Simulate pending send" })
-    .click();
-  await expect(page.getByTitle("Select Tools", { exact: true })).toBeDisabled();
+  const url = page.url();
+  const composer = page.getByRole("group", {
+    exact: true,
+    name: "Message composer",
+  });
+  await composer
+    .getByRole("textbox", { exact: true, name: "Message" })
+    .fill("Keep my unsent draft");
+  await cards.first().click();
+  await cards.last().click();
+  expect(page.url()).toBe(url);
   await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: "Second model Needs retry",
-    })
-  ).toBeDisabled();
-  await page
-    .getByRole("button", { exact: true, name: "Resolve pending send" })
-    .click();
+    composer.getByRole("textbox", { exact: true, name: "Message" })
+  ).toHaveText("Keep my unsent draft");
+  await cards.first().click();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  const checkpointId = crypto.randomUUID();
+  const checkpoint = await page.request.post(
+    `/api/agent-conversations/${first.conversationId}/checkpoint`,
+    {
+      data: { beforeTurnId: "turn_1", checkpointId },
+      headers: { origin },
+      timeout: 45_000,
+    }
+  );
+  expect(checkpoint.ok(), await checkpoint.text()).toBe(true);
+  const later = await page.request.post("/api/agent-response-groups", {
+    data: {
+      fork: {
+        beforeTurnId: "turn_1",
+        checkpointId,
+        conversationId: first.conversationId,
+      },
+      message: "Do not use tools. Reply with exactly cobalt.",
+      modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+      operationId: crypto.randomUUID(),
+    },
+    headers: { origin },
+    timeout: 90_000,
+  });
+  expect(later.ok(), await later.text()).toBe(true);
   await page.reload();
-  await expect(page.getByLabel("Follow-up draft")).toHaveValue(
-    "Keep this unsent follow-up"
+  await expect(cards).toHaveCount(4, { timeout: 90_000 });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(page.getByRole("log")).toContainText("exactly cobalt");
+  expect(page.url()).toBe(url);
+  await composer
+    .getByRole("textbox", { exact: true, name: "Message" })
+    .fill("");
+  const retry = page.waitForResponse(
+    (value) =>
+      value.url().endsWith("/api/agent-conversations") &&
+      value.request().method() === "POST"
   );
-  await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { exact: true, name: "Clear Canvas tool" })
-  ).toBeVisible();
-  await expect(
-    page.getByText("Selected native session: first-native")
-  ).toBeVisible();
-  await page
-    .getByRole("button", { exact: true, name: "Second model Needs retry" })
-    .click();
-  await expect(
-    page.getByRole("button", { exact: true, name: "Retry response" })
-  ).toBeVisible();
-  await page.getByRole("button", { exact: true, name: "Check again" }).click();
-  expect(submissions).toHaveLength(1);
+  await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
+  expect((await retry).ok()).toBe(true);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(cards).toHaveCount(4);
+  expect(page.url()).toBe(url);
   await page.screenshot({
     animations: "disabled",
-    path: testInfo.outputPath("comparison-recovery.png"),
+    path: testInfo.outputPath("nested-comparisons.png"),
   });
   await page
-    .getByRole("button", { exact: true, name: "Retry response" })
+    .getByRole("button", { exact: true, name: "Edit message" })
+    .last()
     .click();
-  await expect(page).toHaveURL(
-    `https://eve-comparison.test/chat/${secondConversation}`
+  const editor = page
+    .getByRole("log")
+    .getByRole("group", { exact: true, name: "Message composer" });
+  await editor
+    .getByRole("textbox", { exact: true, name: "Message" })
+    .fill("Do not use tools. Reply with exactly jade.");
+  const editedGroup = page.waitForResponse(
+    (value) =>
+      value.url().endsWith("/api/agent-response-groups") &&
+      value.request().method() === "POST"
   );
-  expect(submissions).toHaveLength(2);
-  expect(submissions[1]).toEqual(submissions[0]);
-  await expect(
-    page.getByText("Selected native session: second-native")
-  ).toBeVisible();
+  await editor.getByRole("button", { exact: true, name: "Send" }).click();
+  const edited = await editedGroup;
+  expect(edited.ok(), await edited.text()).toBe(true);
   expect(
-    await page.evaluate(
-      (key) => sessionStorage.getItem(key),
-      `chatjs.eve.comparison:${ownerId}:${groupId}`
-    )
-  ).toBeNull();
-  await expect(page.getByLabel("Follow-up draft")).toHaveValue(
-    "Keep this unsent follow-up"
-  );
-  await expect(page.getByText("notes.pdf", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { exact: true, name: "Clear Canvas tool" })
-  ).toBeVisible();
-  expect(preferences.at(-1)).toBe(secondModel);
-  await expect(
-    page.getByText(`Follow-up model: ${secondModel}`, { exact: true })
-  ).toBeVisible();
-  await page.setViewportSize({ height: 844, width: 390 });
-  await page.screenshot({
-    animations: "disabled",
-    path: testInfo.outputPath("comparison-mobile.png"),
-  });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth
-    )
-  ).toBe(true);
-  await page
-    .getByRole("button", {
-      exact: true,
-      name: "First model Open response",
-    })
-    .click();
-  await expect(page).toHaveURL(
-    `https://eve-comparison.test/chat/${firstConversation}`
-  );
-  expect(preferences.at(-1)).toBe(firstModel);
-  await expect(
-    page.getByText(`Follow-up model: ${firstModel}`, { exact: true })
-  ).toBeVisible();
-  await expect(page.getByLabel("Follow-up draft")).toHaveValue(
-    "Keep this unsent follow-up"
-  );
-  expect(errors).toEqual([]);
+    eveResponseGroupResult.parse(await edited.json()).candidates
+  ).toHaveLength(2);
+  await expect(page.getByRole("log")).toContainText("exactly jade");
+  await expect(cards).toHaveCount(4);
+  expect(page.url()).toBe(url);
 });
 
 test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
   page,
 }, testInfo) => {
-  const script = execFileSync("bun", ["tests/eve-comparison-ui.build.mjs"], {
-    encoding: "utf-8",
-    maxBuffer: 40 * 1024 * 1024,
-  });
-  const css = execFileSync(
-    "bun",
-    [
-      "-e",
-      'import postcss from "postcss";import tailwind from "@tailwindcss/postcss";const from=process.cwd()+"/app/globals.css";process.stdout.write((await postcss([tailwind()]).process(await Bun.file(from).text(),{from})).css);',
-    ],
-    { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
-  );
+  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.goto("/api/dev-login");
+  await page.goto("/");
   const submissions: unknown[] = [];
-  await page.route("https://eve-recovery.test/**", (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/fixture.js") {
-      return route.fulfill({ body: script, contentType: "text/javascript" });
-    }
-    if (path === "/api/agent-conversations") {
-      submissions.push(route.request().postDataJSON());
-      return route.fulfill({
-        json: { error: "Temporary transport failure" },
-        status: 503,
-      });
-    }
+  await page.route("**/api/agent-conversations", (route) => {
+    submissions.push(route.request().postDataJSON());
     return route.fulfill({
-      body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div><script type="module" src="/fixture.js"></script></body></html>`,
-      contentType: "text/html",
+      json: { error: "Temporary transport failure" },
+      status: 503,
     });
   });
-  await page.goto("https://eve-recovery.test/");
   await page
     .getByLabel("Message", { exact: true })
     .fill("Keep this exact request");
