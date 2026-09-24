@@ -251,7 +251,9 @@ describe("scaffoldFromTemplate", () => {
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
       "lib/db/migrations/0000_eve_baseline.sql",
-      "scripts/install-eve-local-postgres.ts",
+      "scripts/eve-setup.ts",
+      "scripts/eve-setup-config.ts",
+      "lib/eve/world-config.ts",
       "vitest.config.ts",
     ]) {
       expect(existsSync(join(destination, file))).toBe(true);

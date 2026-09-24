@@ -19,7 +19,7 @@ The CLI installs the same Drizzle and Postgres.js code for every Postgres host. 
 | Supabase | Project **Connect** panel | Use the connection mode appropriate to your deployment. Transaction pooling requires `DATABASE_PREPARE=false`. Use a direct or suitable session connection for migrations |
 | Local or another Postgres host | Your database administrator or host's Postgres connection details | Set `DATABASE_URL`. Leave the migration URL and pooling overrides unset unless needed |
 
-Use Postgres credentials, not a host's HTTP API URL or API key. Both connection URLs must target the same database and branch. The URLs can use different endpoints and roles, such as a limited runtime role and a migration role.
+Use Postgres credentials, not a host's HTTP API URL or API key. `DATABASE_URL` and `DATABASE_MIGRATION_URL` must target the same application database and branch. The URLs can use different endpoints and roles, such as a limited runtime role and a migration role.
 
 After filling in `.env.local`, run:
 
@@ -50,6 +50,54 @@ DATABASE_MAX_CONNECTIONS=5
 Use your host's connection strings and TLS settings. Do not disable certificate verification to make a connection succeed. For remote connections, require verified TLS (for example, `sslmode=verify-full`) and configure your host's CA trust when needed. Postgres.js does not enable TLS for a URL without TLS settings. `db:connect` uses those same settings and does not enforce a separate TLS policy. Local or private-network connections retain the settings you explicitly supply. Keep passwords in your environment.
 
 For [Supabase transaction pooling](https://supabase.com/docs/guides/database/postgres-js), disable prepared statements. Use a direct or suitable session connection for schema operations. [Neon](https://neon.com/docs/connect/connection-pooling) also recommends a direct connection for migration tools. A local Postgres instance or another host can use one URL for both purposes.
+
+## EVE workflow database
+
+ChatJS uses `DATABASE_URL` for application records and `WORKFLOW_POSTGRES_URL` for EVE messages and execution state. Provision separate databases for these two schemas. They can share the same PostgreSQL server. The application pooling settings above do not configure EVE's connection.
+
+### Local workflow database
+
+With PostgreSQL installed and running, create both databases:
+
+```bash
+createdb chatjs
+createdb chatjs_workflow
+```
+
+Set their connections in `.env.local`, adjusting credentials and ports for your installation:
+
+```dotenv
+DATABASE_URL=postgres://localhost:5432/chatjs
+WORKFLOW_POSTGRES_URL=postgres://localhost:5432/chatjs_workflow
+```
+
+From the generated app's root, initialize both schemas:
+
+```bash
+npm run setup
+```
+
+### Hosted workflow database
+
+Create application and workflow databases with your provider and set both connection URLs in `.env.local`. Run the same `npm run setup` command. Use a connection with permission to install the workflow provider schema.
+
+The command requires `WORKFLOW_POSTGRES_URL` explicitly, so provider setup cannot fall back to your application database. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
+
+### Setup commands
+
+| Command | Responsibility | When to run |
+| --- | --- | --- |
+| `npm run setup` | Validate the selected world, apply application migrations, and prepare EVE | Fresh installation or an upgrade requiring schema changes |
+| `npm run db:migrate` | Apply pending application migrations only | Application schema changes |
+| `npm run eve:setup` | Prepare the configured EVE world | Fresh workflow database or a provider upgrade requiring setup |
+| `npm run eve:check` | Check workflow connectivity and required tables without changing the schema | Troubleshooting or deployment checks |
+| `npm run dev` | Start the app and integrated EVE runtime | Everyday development |
+
+Setup uses your configured connections and does not create databases or provision a hosting account. It is safe to rerun against an initialized database. If one stage fails, fix the reported problem and rerun it. Application and workflow changes are separate operations, not one transaction.
+
+The agent and setup commands share the world setting in `lib/eve/world-config.ts`, currently `@workflow/world-postgres`. Other worlds fail setup explicitly until their setup and ChatJS lifecycle support are implemented and verified. Changing the world requires rebuilding EVE and planning any data migration. The CLI does not offer a world chooser yet.
+
+In the monorepo, these setup commands also work from the repository root. Neither an application build nor a successful connectivity check initializes the workflow database. `eve:check` checks required tables, not every schema version, permission, or end-to-end lifecycle behavior.
 
 ## Database Management
 

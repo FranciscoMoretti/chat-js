@@ -37,8 +37,10 @@
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
     "db:connect": "bun scripts/check-db.ts",
     "eve:build": "eve build",
-    "eve:db:setup:local": "bun scripts/install-eve-local-postgres.ts",
-    "eve:start": "NODE_ENV=production eve start --host 127.0.0.1"
+    "eve:start": "NODE_ENV=production eve start --host 127.0.0.1",
+    "setup": "tsx scripts/eve-setup.ts --validate && tsx lib/db/migrate.ts && tsx scripts/eve-setup.ts",
+    "eve:setup": "tsx scripts/eve-setup.ts",
+    "eve:check": "tsx scripts/eve-setup.ts --check"
   },
   "dependencies": {
     "@ai-sdk/devtools": "1.0.22",

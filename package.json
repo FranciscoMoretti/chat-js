@@ -42,10 +42,12 @@
     "dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
     "eve:test-package": "bun scripts/test-eve-package.ts",
     "build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",
-    "eve:db:setup:local": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:db:setup:local",
     "dev:supervise": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-supervisor.ts",
     "dev:service": "bun scripts/dev-service.ts",
-    "dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts"
+    "dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts",
+    "setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat setup",
+    "eve:setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:setup",
+    "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",

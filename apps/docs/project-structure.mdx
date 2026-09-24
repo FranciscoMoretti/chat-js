@@ -23,7 +23,7 @@ description: "How ChatJS is organized"
 │   ├── ai/                # AI SDK integration, tools, prompts
 │   │   └── gateways/      # Gateway abstraction (Vercel, OpenRouter)
 │   ├── db/                # Database schema, queries, and data access
-│   ├── eve/               # EVE gateway, ownership, and lifecycle integration
+│   ├── eve/               # EVE runtime integration
 │   ├── models/            # Model types and utilities
 │   └── artifacts/         # Client helpers for document artifacts
 │
@@ -83,13 +83,12 @@ components/
 
 ### Part Components
 
-Tool results are rendered by part components in `components/part/`. Each tool has a corresponding component:
+Shared message and tool presentation lives in `components/part/`. Installed tools can also provide their own renderers:
 
 ```
 components/part/
-├── web-search-part.tsx
-├── code-execution-part.tsx
-├── image-generation-part.tsx
+├── web-search.tsx
+├── document-common.tsx
 └── ...
 ```
 
@@ -99,21 +98,17 @@ See [Tool Part Pattern](/cookbook/tool-part) for implementation details.
 
 ### AI Integration
 
-```
+```text
 lib/ai/
-├── gateways/          # Gateway abstraction
-│   ├── types.ts       # GatewayProvider interface
-│   ├── index.ts       # Gateway registry + getActiveGateway()
-│   ├── vercel-gateway.ts
-│   └── openrouter-gateway.ts
+├── active-gateway.ts   # Active gateway selection
+├── gateways/registry.ts # Installed gateway registry
 ├── models.ts          # Model fetching and caching
 ├── models.generated.ts # Fallback model list
-├── tools/             # Tool definitions
-│   ├── web-search.ts
-│   ├── code-execution.ts
-│   └── ...
-└── prompts/           # System prompts
+├── installed-tools.ts # Installed tool wiring
+└── prompts.ts         # Shared prompts
 ```
+
+EVE agent instructions, hooks, and tool integration live in `agent/`. Installed tools live in `tools/chatjs/`, with application support in `tools/platform/`.
 
 ### Data Layer
 
@@ -158,11 +153,11 @@ PostgreSQL
 ## AI Streaming Flow
 
 ```
-Client (useEveAgent)
+Chat UI (EVE React integration)
        ↓
 Authenticated ChatJS gateway
        ↓
-EVE session and event stream
+EVE runtime and event stream
        ↓
 Gateway Abstraction → Provider (OpenAI, Anthropic, etc.)
        ↓

@@ -5,161 +5,53 @@ description: "Get ChatJS running in minutes"
 
 ## Prerequisites
 
-Before you begin, make sure you have:
+Install **Node.js 24+** and a package manager: npm, yarn, pnpm, or Bun.
 
-- **Node.js 24+** ([download](https://nodejs.org))
-- A package manager: **npm**, **yarn**, **pnpm**, or **bun**
-
-### 1. Create Your Project
-
-Scaffold a new ChatJS app using the CLI:
+## 1. Create your project
 
 ```bash
 npx @chat-js/cli@latest create my-app
 cd my-app
 ```
 
-The CLI walks you through selecting your AI gateway, features, and auth providers, then generates a configured project with `chat.config.ts` ready to go. It also asks whether to include a [Desktop app](/platforms/desktop). It preserves `bun`, `pnpm`, and `yarn` when launched from those tools, and defaults `npx`/npm launches to npm.
+Choose your AI gateway, features, and authentication providers. The CLI generates `chat.config.ts` and lists the credentials your choices require.
 
-## Understanding `chat.config.ts`
-
-The `chat.config.ts` file controls all feature toggles, branding, and app settings. It's generated with sensible defaults when you scaffold a project with the CLI.
-
-<Accordion>
-<AccordionItem title="What the default config includes">
-  The default configuration gives you a minimal, working setup:
-
-| Setting | Default | Notes |
-| --- | --- | --- |
-| **Gateway** | Vercel AI Gateway | Use `create --gateway openrouter` for OpenRouter |
-| **Authentication** | GitHub only | Google and Vercel OAuth disabled |
-| **Features** | All disabled | No sandbox, web search, MCP, image generation, or attachments |
-| **Anonymous users** | 10 credits | Limited access, no tools |
-| **Models** | Curated list | GPT-5 Nano/Mini, Gemini 2.5 Flash Lite, Claude Sonnet 4.5 |
-
-This keeps your initial setup simple. The CLI will tell you exactly which environment variables are needed based on your choices.
-
-Enable features incrementally by editing `chat.config.ts` and adding the required environment variables. See [Configuration](/core/configuration) for details.
-
-</AccordionItem>
-</Accordion>
-
-### 2. Configure Environment Variables
+## 2. Configure environment variables
 
 ```bash
 cp .env.example .env.local
 ```
 
-After scaffolding, the CLI prints the exact environment variables required for your configuration. Fill in those values in `.env.local`.
+Fill in `.env.local` using the generated example. You need:
 
-Expand the sections below for setup instructions:
+| Setting | Setup guide |
+| --- | --- |
+| Application and EVE workflow database connections | [PostgreSQL setup](./reference/database#eve-workflow-database) |
+| AI gateway credentials | [Gateways](./gateways/overview) |
+| Authentication provider credentials and secrets | [Authentication](./core/authentication) and [environment variables](./reference/env-vars) |
+| Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
 
-<Accordion>
-  <AccordionItem title="Database (PostgreSQL)">
-    **Option A: Neon** (generous free tier)
-    1. Go to [Neon](https://neon.tech)
-    2. Create a project and database
-    3. Copy the connection string → `DATABASE_URL`
+For the default local port, keep `APP_URL` and `EVE_INTERNAL_ORIGIN` set to `http://localhost:3000`. Generate independent values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET` with `openssl rand -base64 32`.
 
-    **Option B: Vercel Postgres**
-    1. Go to [Vercel Storage](https://vercel.com/docs/storage/vercel-postgres/quickstart)
-    2. Create a new Postgres database
-    3. Copy the connection string → `DATABASE_URL`
+## 3. Set up the application
 
-    **Option C: Local PostgreSQL**
-    ```bash
-    # macOS
-    brew install postgresql && brew services start postgresql
-    createdb chatjs
-    # DATABASE_URL=postgres://localhost:5432/chatjs
-    ```
-
-  </AccordionItem>
-  <AccordionItem title="AI Gateway">
-    ChatJS supports multiple AI gateways. Pick one:
-
-    **Option A: Vercel AI Gateway** (default)
-    1. Go to [Vercel AI Gateway](https://vercel.com/ai-gateway)
-    2. Create an API key
-    3. Copy the key → `AI_GATEWAY_API_KEY`
-
-    **Option B: OpenRouter**
-    1. Go to [OpenRouter](https://openrouter.ai/keys)
-    2. Create an API key
-    3. Copy the key → `OPENROUTER_API_KEY`
-
-    **Option C: OpenAI**
-    1. Follow the [OpenAI quickstart](https://developers.openai.com/api/docs/quickstart) to create an API key
-    2. Create an API key
-    3. Copy the key → `OPENAI_API_KEY`
-
-    **Option D: OpenAI Compatible**
-    Use any endpoint that follows the OpenAI API format (Ollama, LM Studio, vLLM, Azure).
-
-    See [Gateways Overview](/gateways/overview) for a full comparison and configuration details.
-
-  </AccordionItem>
-  <AccordionItem title="Authentication (at least one provider required)">
-    **GitHub (Recommended)**
-    1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-    2. Click **New OAuth App**
-    3. Set **Homepage URL** to `http://localhost:3000`
-    4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
-    5. Copy the **Client ID** → `AUTH_GITHUB_ID`
-    6. Generate a **Client Secret** → `AUTH_GITHUB_SECRET`
-
-    **Google**
-    1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-    2. Create a new **OAuth 2.0 Client ID** (Web application)
-    3. Add **Authorized redirect URI**: `http://localhost:3000/api/auth/callback/google`
-    4. Copy **Client ID** → `AUTH_GOOGLE_ID`
-    5. Copy **Client Secret** → `AUTH_GOOGLE_SECRET`
-
-    **Vercel**
-    1. Go to [Vercel Integration Console](https://vercel.com/docs/integrations/create-integration)
-    2. Create a new integration with **Sign In with Vercel**
-    3. Copy **Client ID** → `VERCEL_APP_CLIENT_ID`
-    4. Copy **Client Secret** → `VERCEL_APP_CLIENT_SECRET`
-
-  </AccordionItem>
-  <AccordionItem title="File Storage (Optional)">
-    Required for file attachments, image generation, and video generation. The
-    installer asks you to select a Files SDK provider when you enable one of
-    these capabilities.
-
-    Configure the environment variables printed by the CLI for your selected
-    provider. For Vercel Blob, connect a Blob store and copy its token to
-    `BLOB_READ_WRITE_TOKEN` for local development.
-
-    See [File storage](./storage) for provider configuration,
-    credentials, and migration behavior.
-
-  </AccordionItem>
-</Accordion>
-
-### 3. Push Database Schema
+After creating your databases and configuring `.env.local`, run:
 
 ```bash
-npm run db:push
+npm run setup
 ```
 
-This pushes the Drizzle schema directly to your database. For production migrations, see [deployment guides](/deployment/vercel).
+This applies application migrations and prepares the configured EVE world. The current setup supports local and hosted PostgreSQL. Run it for a fresh installation and when an upgrade requires database changes. See [database setup](./reference/database#eve-workflow-database) for details.
 
-For a blank local EVE workflow database, set a local `WORKFLOW_POSTGRES_URL` and run this once before starting the app:
-
-```bash
-bun eve:db:setup:local
-```
-
-It bootstraps the pinned Workflow World Postgres schema and installs the local lifecycle fences. The command accepts only `localhost` databases. Bootstrap a hosted workflow database with the World Postgres package's documented setup instead; this local command does not establish hosted deletion coverage.
-
-### 4. Start the Dev Server
+## 4. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`. You should see the ChatJS interface with a model selector and chat input.
+Open `http://localhost:3000` and send a message. The development server starts EVE automatically.
+
+Customize features and branding in `chat.config.ts`. See [Configuration](./core/configuration) when you're ready to make changes.
 
 ## Deploying to Production
 

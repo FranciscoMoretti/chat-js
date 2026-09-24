@@ -11,7 +11,7 @@ ChatJS stores application-owned records around that runtime: ownership, project 
 
 For a new conversation, the composer records a durable creation request before it asks ChatJS to create the EVE session. The page then navigates to `/chat/:id`. If the request is interrupted, the retained request can recover or retry without treating an uncertain network response as proof that creation failed.
 
-An existing conversation starts `useEveAgent` with its EVE session ID and resumes from the durable stream position. The client does not mount a second chat runtime or reconstruct an AI SDK stream from local message state.
+When you reopen a chat, ChatJS reconnects to EVE and restores its messages and execution state. Switching conversation branches keeps you in the same chat.
 
 ## Boundaries
 
@@ -21,13 +21,9 @@ An existing conversation starts `useEveAgent` with its EVE session ID and resume
 | Authentication, ownership, projects, sharing, billing, files, and document revisions | ChatJS |
 | Model calls, storage, and sandboxes | Configured providers |
 
-The same route family serves new conversations, registered-user project conversations, guest conversations, and public read-only shares. EVE history is the source for the sidebar and search.
-
-## Important limits
-
-Lifecycle and hosting validation still determine whether a deployment is ready. The EVE-only runtime design does not by itself establish provider deletion coverage, guest-hosting readiness, or production release approval.
+The same route family serves new conversations, registered-user project conversations, guest conversations, and public read-only shares. Application chat records supply the sidebar and title search.
 
 ## Related
 
-- [Architecture](/core/architecture) for the application and package boundaries
-- `docs/eve-migration-report.md` in the repository for current release-gate context
+- [Architecture](../core/architecture) for the application and runtime overview
+- [Branching](../features/branching) for editing and regenerating messages

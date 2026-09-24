@@ -2,6 +2,7 @@ import { defineAgent, defineDynamic } from "eve";
 import { defineState } from "eve/context";
 
 import { resolveEveModel } from "../lib/eve/model-selection";
+import { workflowWorld } from "../lib/eve/world-config";
 
 const selectedModel = defineState<{ modelId?: string }>(
   "chatjs.turn-model",
@@ -12,7 +13,7 @@ export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
-  experimental: { workflow: { world: "@workflow/world-postgres" } },
+  experimental: { workflow: { world: workflowWorld } },
   model: defineDynamic({
     events: {
       "step.started": (_event, context) => {

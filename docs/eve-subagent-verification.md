@@ -48,7 +48,7 @@ The native streams and database were read only for evidence. Diagnostic stream d
 
 ## Repeat the experiment
 
-Use an isolated checkout, the locally tested EVE package, separate test databases and a discovered worktree port. Apply the application migrations and run `bun eve:db:setup:local` against the new databases. Then:
+Use an isolated checkout, the locally tested EVE package, separate test databases and a discovered worktree port. Apply the application migrations and run `bun eve:setup` against the new databases. Then:
 
 1. Copy `apps/chat/tests/fixtures/eve-subagent-tool.ts` to `apps/chat/agent/tools/agent.ts`.
 2. Start `bun dev` with Node 24. Restart the worker after authored-hook changes and create a fresh conversation; old authored snapshots are not retroactively updated.

@@ -3,13 +3,7 @@ title: Branching
 description: Explore alternative conversation paths without losing context
 ---
 
-Branching lets you fork a conversation at any message and explore another direction without replacing the original path. Editing a message or generating another response creates a sibling that you can return to later.
-
-<Callout type="note">
-  This page is reference material for the standalone `@chat-js/thread` package.
-  The EVE-only ChatJS app uses native EVE forks and checkpoints instead of
-  mounting `useThread`.
-</Callout>
+Branching lets you explore another direction without replacing the original conversation path. Editing a message or generating another response creates a sibling that you can return to later.
 
 <Frame>
   <img
@@ -30,7 +24,7 @@ flowchart TD
     U2 --> A3[Assistant: Use staged environments]
 ```
 
-The selected message is the cursor. Sending a message continues from that cursor, so selecting an earlier node before sending creates a new branch.
+Sending a follow-up continues the selected branch. Edit an earlier user message or regenerate a response to explore an alternative path.
 
 ## Navigate branches
 
@@ -48,11 +42,9 @@ Switching branches:
 
 Editing creates a replacement branch. The original message and all of its descendants remain in the tree, so you can switch back with the same sibling controls.
 
-## Data model
+## Runtime
 
-Messages are persisted with a parent message ID. Root messages have no parent. The client uses `useThread` to project the selected path and to keep each active assistant response attached to its own reserved node.
-
-See [useThread](../threads) for the tree, cursor, active-path, and run model.
+EVE persists conversation messages and executes each branch. ChatJS keeps the branches together in one chat and displays the selected path.
 
 ## Related
 
