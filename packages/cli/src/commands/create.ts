@@ -553,7 +553,7 @@ const printNextSteps = (
     `  ${highlighter.dim("2.")} Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`
   );
   logger.log(
-    `  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run db:connect`)} then ${highlighter.info(`${packageManager} run db:push`)}`
+    `  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run setup`)}`
   );
   logger.log(
     `  ${highlighter.dim("4.")} ${highlighter.info(`${packageManager} run dev`)}`

@@ -33,16 +33,15 @@ Fill in `.env.local` using the generated example. You need:
 
 For the default local port, keep `APP_URL` and `EVE_INTERNAL_ORIGIN` set to `http://localhost:3000`. Generate independent values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET` with `openssl rand -base64 32`.
 
-## 3. Initialize the databases
+## 3. Set up the application
 
-For fresh local PostgreSQL databases, run:
+After creating your databases and configuring `.env.local`, run:
 
 ```bash
-npm run db:migrate
-npm run eve:db:setup:local
+npm run setup
 ```
 
-Using hosted PostgreSQL, such as Neon? Follow the [hosted workflow setup](./reference/database#hosted-workflow-database) instead of the local-only second command. This initialization is required once per fresh database.
+This applies application migrations and prepares the configured EVE world. The current setup supports local and hosted PostgreSQL. Run it for a fresh installation and when an upgrade requires database changes. See [database setup](./reference/database#eve-workflow-database) for details.
 
 ## 4. Start the app
 

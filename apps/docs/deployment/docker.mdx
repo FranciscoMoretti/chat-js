@@ -21,7 +21,7 @@ An EVE-aware container deployment needs all of the following:
 - `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN` at build and runtime
 - A primary ChatJS Postgres database and a World Postgres database for durable EVE workflows
 
-Bootstrap the pinned World Postgres package before the application starts. The `eve:db:setup:local` command accepts only loopback database URLs, so it cannot initialize a typical Compose service hostname or a hosted database. Provider bootstrap alone does not establish hosted deletion coverage.
+Run `npm run setup` with your application and workflow database connections before the application starts. It supports PostgreSQL service hostnames as well as loopback URLs. Provider schema setup alone does not establish hosted deletion coverage. See [database setup](../reference/database#eve-workflow-database).
 
 For self-hosted guest access, terminate traffic at a trusted proxy. Configure `TRUSTED_CLIENT_IP_HEADER` only when that proxy overwrites the caller-provided header with one verified client IP. Vercel uses its own trusted header.
 

@@ -72,7 +72,6 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.lint = "ultracite check";
   scripts.format = "oxfmt --write .";
   scripts["check-env"] = "tsx scripts/check-env.ts";
-  scripts["eve:db:setup:local"] = "tsx scripts/install-eve-local-postgres.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
   scripts["db:migrate"] = "tsx lib/db/migrate.ts";
   scripts["dev:neon"] =
