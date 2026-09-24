@@ -77,7 +77,7 @@ jobs:
         run: bun run --cwd apps/chat db:migrate
       - name: Bootstrap isolated EVE workflow database
         if: steps.affected.outputs.run == 'true'
-        run: bun run --cwd apps/chat eve:db:setup:local
+        run: bun run --cwd apps/chat eve:setup
       - uses: actions/cache@v4
         if: steps.affected.outputs.run == 'true'
         id: playwright-cache
