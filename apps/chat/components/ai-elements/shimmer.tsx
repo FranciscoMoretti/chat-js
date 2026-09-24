@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
-import { memo, useMemo } from "react";
-import type { CSSProperties, ElementType, JSX } from "react";
+import { useAnimate } from "motion/react";
+import { memo, useEffect } from "react";
+import type { CSSProperties, ElementType } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,9 +14,6 @@ export type TextShimmerProps = {
   spread?: number;
 };
 
-const createMotionComponent = (component: ElementType) =>
-  motion.create(component as keyof JSX.IntrinsicElements);
-
 const ShimmerComponent = ({
   children,
   as: Component = "p",
@@ -24,40 +21,41 @@ const ShimmerComponent = ({
   duration = 2,
   spread = 2,
 }: TextShimmerProps) => {
-  const MotionComponent = useMemo(
-    () => createMotionComponent(Component),
-    [Component]
-  );
-
-  const dynamicSpread = useMemo(
-    () => (children?.length ?? 0) * spread,
-    [children, spread]
-  );
+  const [scope, animate] = useAnimate<HTMLElement>();
+  useEffect(() => {
+    const animation = animate(
+      scope.current,
+      { backgroundPosition: ["100% center", "0% center"] },
+      {
+        duration,
+        ease: "linear",
+        repeat: Number.POSITIVE_INFINITY,
+      }
+    );
+    return () => animation.stop();
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- Changing `as` replaces the animated DOM node even when duration stays the same.
+  }, [animate, scope, duration, Component]);
+  const dynamicSpread = children.length * spread;
 
   return (
-    <MotionComponent
-      animate={{ backgroundPosition: "0% center" }}
+    <Component
+      ref={scope}
       className={cn(
         "relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent",
         "[background-repeat:no-repeat,padding-box] [--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--color-background),#0000_calc(50%+var(--spread)))]",
         className
       )}
-      initial={{ backgroundPosition: "100% center" }}
       style={
         {
           "--spread": `${dynamicSpread}px`,
           backgroundImage:
             "var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))",
+          backgroundPosition: "100% center",
         } as CSSProperties
       }
-      transition={{
-        duration,
-        ease: "linear",
-        repeat: Number.POSITIVE_INFINITY,
-      }}
     >
       {children}
-    </MotionComponent>
+    </Component>
   );
 };
 

@@ -1,4 +1,4 @@
-import type { ModelMessage } from "ai";
+import type { ModelMessage, ToolModelMessage, SystemModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
 
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
@@ -70,7 +70,7 @@ const extractSystemMessage = (
   messages: ModelMessage[],
   preserveSystemMessage: boolean
 ): {
-  systemMessage: ModelMessage | null;
+  systemMessage: SystemModelMessage | null;
   otherMessages: ModelMessage[];
 } => {
   const systemMessage =
@@ -82,7 +82,7 @@ const extractSystemMessage = (
 };
 
 const handleExceededSystemMessage = (
-  systemMessage: ModelMessage | null,
+  systemMessage: SystemModelMessage | null,
   maxTokens: number
 ): ModelMessage[] => {
   if (!systemMessage) {
@@ -91,7 +91,7 @@ const handleExceededSystemMessage = (
 
   if (typeof systemMessage.content === "string") {
     const truncatedContent = trimPrompt(systemMessage.content, maxTokens);
-    return [Object.assign({}, systemMessage, { content: truncatedContent })];
+    return [{ ...systemMessage, content: truncatedContent }];
   }
 
   return [systemMessage];
@@ -113,31 +113,26 @@ const removeOldestMessagesUntilFit = (
 };
 
 const truncateStringContent = (
-  lastMessage: ModelMessage,
+  lastMessage: Exclude<ModelMessage, ToolModelMessage>,
   availableTokens: number,
   currentTokens: number
 ): ModelMessage => {
   const tokensToRemove = currentTokens - availableTokens;
   const charsToRemove = tokensToRemove * 4;
-  const truncatedContent = (lastMessage.content as string).slice(
-    0,
-    -charsToRemove
-  );
+  if (typeof lastMessage.content !== "string") {
+    return lastMessage;
+  }
+  const truncatedContent = lastMessage.content.slice(0, -charsToRemove);
   const trimmedContent = trimPrompt(truncatedContent, availableTokens);
 
-  return Object.assign({}, lastMessage, { content: trimmedContent });
+  return { ...lastMessage, content: trimmedContent };
 };
 
 const truncateToolResultPart = (
-  part: {
-    type: string;
-    output?: {
-      value?: string;
-    };
-  },
+  part: ToolModelMessage["content"][number],
   tokensToRemove: number
 ): {
-  truncatedPart: unknown;
+  truncatedPart: ToolModelMessage["content"][number] | null;
   tokensRemoved: number;
 } => {
   if (
@@ -169,22 +164,17 @@ const truncateToolResultPart = (
 };
 
 const truncateToolArrayContent = (
-  lastMessage: ModelMessage,
+  lastMessage: ToolModelMessage,
   availableTokens: number
 ): ModelMessage => {
-  const content = [...(lastMessage.content as unknown[])];
+  const content = [...lastMessage.content];
   const currentMessageTokens = calculateMessagesTokens([lastMessage]);
   let tokensToRemove = currentMessageTokens - availableTokens;
 
   for (let i = content.length - 1; i >= 0 && tokensToRemove > 0; i -= 1) {
     const part = content[i];
     const { truncatedPart, tokensRemoved } = truncateToolResultPart(
-      part as {
-        type: string;
-        output?: {
-          value?: string;
-        };
-      },
+      part,
       tokensToRemove
     );
 
@@ -196,7 +186,7 @@ const truncateToolArrayContent = (
     tokensToRemove -= tokensRemoved;
   }
 
-  return Object.assign({}, lastMessage, { content });
+  return { ...lastMessage, content };
 };
 
 const truncateLastMessageIfNeeded = (

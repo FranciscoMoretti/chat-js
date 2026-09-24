@@ -81,7 +81,7 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun lint:fix`: apply safe Oxlint fixes
 - `bun test:types`: type-check the workspaces
 
-Ultracite supplies the Oxlint and Oxfmt presets. The `oxlint-baseline.json` files temporarily disable existing violations by file and rule; remove entries as the code is cleaned up. New files receive the full presets. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
+Ultracite supplies the Oxlint and Oxfmt presets. All files receive the full presets. Necessary exceptions are documented at the affected source lines rather than disabled through file-wide baselines. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
 
 Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
 

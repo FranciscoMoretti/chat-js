@@ -45,6 +45,7 @@ const getUrl = () => {
 export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
   const queryClient = getQueryClient();
 
+  // oxlint-disable-next-line react/hook-use-state -- A lazy state initializer keeps the client for this provider lifetime; it must never be replaced.
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [

@@ -57,10 +57,6 @@ export class VercelGateway
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
-  private getModelsUrl(): string {
-    return "https://ai-gateway.vercel.sh/v1/models";
-  }
-
   async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -69,7 +65,7 @@ export class VercelGateway
       return [...this.getFallbackModels(this.type)];
     }
 
-    const url = this.getModelsUrl();
+    const url = "https://ai-gateway.vercel.sh/v1/models";
     this.log.debug({ url }, "Fetching models from Vercel AI Gateway");
 
     try {

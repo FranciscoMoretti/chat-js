@@ -35,16 +35,16 @@ const useCompatibilityCheck = () => {
   return explicitHelpers;
 };
 
+class StateBackedThread extends AbstractThread<UIMessage> {
+  constructor(threadState: ThreadState<UIMessage>) {
+    super({ state: threadState });
+  }
+}
+
 const useExternalThreadCheck = () => {
   const thread = new Thread<UIMessage>();
   const defaultThread = useThread({ thread });
   const state = new MemoryThreadState<UIMessage>();
-
-  class StateBackedThread extends AbstractThread<UIMessage> {
-    constructor(threadState: ThreadState<UIMessage>) {
-      super({ state: threadState });
-    }
-  }
 
   const stateBackedThread = useThread({
     thread: new StateBackedThread(state),

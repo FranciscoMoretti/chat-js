@@ -9,6 +9,7 @@ export const DevLoginTool = () => {
   }
 
   return (
+    // oxlint-disable-next-line next/no-html-link-for-pages -- This auth API endpoint must set cookies and perform a full-document redirect; it is not a Next page.
     <a
       className={cn(
         buttonVariants({ size: "sm" }),

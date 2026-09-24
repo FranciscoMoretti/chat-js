@@ -422,6 +422,7 @@ export const promptAuth = async (
   let selectedProviders: AuthProvider[] = [];
 
   while (selectedProviders.length === 0) {
+    // oxlint-disable-next-line no-await-in-loop -- Retry only after the user submits an empty selection.
     const selected = await multiselect({
       initialValues: defaultProviders,
       message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,

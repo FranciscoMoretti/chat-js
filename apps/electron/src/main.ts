@@ -391,6 +391,7 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
     const hasCookie = hasSessionCookie(cookieHeader);
 
     try {
+      // oxlint-disable-next-line no-await-in-loop -- Poll sequentially until the native cookie and server session agree.
       const sessionResult = await electronAuthClient.getSession();
       const hasUser = !!sessionResult.data?.user;
 
@@ -401,6 +402,7 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
       console.warn("[electron-main] session check failed while waiting", error);
     }
 
+    // oxlint-disable-next-line no-await-in-loop -- Back off between session polls rather than issue overlapping requests.
     await sleep(250);
   }
 

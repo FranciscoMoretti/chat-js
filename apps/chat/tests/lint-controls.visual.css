@@ -1,0 +1,4 @@
+/* Hold the JS-driven shimmer at its initial frame for pixel comparisons. */
+[data-testid="lint-controls-fixture"] [style*="background-position"] {
+  background-position: 100% center !important;
+}

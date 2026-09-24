@@ -521,26 +521,26 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       get onData() {
         return thread.onData;
       },
-      set onData(callback) {
-        thread.onData = callback;
+      set onData(handler) {
+        thread.onData = handler;
       },
       get onError() {
         return thread.onError;
       },
-      set onError(callback) {
-        thread.onError = callback;
+      set onError(handler) {
+        thread.onError = handler;
       },
       get onFinish() {
         return thread.onFinish;
       },
-      set onFinish(callback) {
-        thread.onFinish = callback;
+      set onFinish(handler) {
+        thread.onFinish = handler;
       },
       get onToolCall() {
         return thread.onToolCall;
       },
-      set onToolCall(callback) {
-        thread.onToolCall = callback;
+      set onToolCall(handler) {
+        thread.onToolCall = handler;
       },
       registerToolCall: (runId, toolCallId) =>
         thread.registerToolCall(runId, toolCallId),
@@ -548,8 +548,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       get sendAutomaticallyWhen() {
         return thread.sendAutomaticallyWhen;
       },
-      set sendAutomaticallyWhen(callback) {
-        thread.sendAutomaticallyWhen = callback;
+      set sendAutomaticallyWhen(handler) {
+        thread.sendAutomaticallyWhen = handler;
       },
       setRunError: (runId, error) => thread.setRunError(runId, error),
       setRunStatus: (runId, status) => thread.setRunStatus(runId, status),

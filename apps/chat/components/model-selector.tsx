@@ -11,7 +11,6 @@ import {
   memo,
   startTransition,
   useCallback,
-  useEffect,
   useMemo,
   useOptimistic,
   useRef,
@@ -275,10 +274,13 @@ const PureModelSelector = ({
     model: AppModelDefinition;
   }
 
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- Keep the multi-model toggle synchronized with the controlled selection.
+  const [previousSelection, setPreviousSelection] = useState(
+    selectedModelSelection
+  );
+  if (previousSelection !== selectedModelSelection) {
+    setPreviousSelection(selectedModelSelection);
     setUseMultipleModels(isSelectedModelCounts(selectedModelSelection));
-  }, [selectedModelSelection]);
+  }
 
   const optimisticModelId = useMemo(
     () => getPrimarySelectedModelId(optimisticSelection) ?? selectedModelId,

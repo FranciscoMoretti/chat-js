@@ -16,9 +16,8 @@ const calculateLLMCost = (
     output: string;
   }
 ): number => {
-  const inputCost = (usage.inputTokens ?? 0) * Number.parseFloat(pricing.input);
-  const outputCost =
-    (usage.outputTokens ?? 0) * Number.parseFloat(pricing.output);
+  const inputCost = (usage.inputTokens ?? 0) * Number(pricing.input);
+  const outputCost = (usage.outputTokens ?? 0) * Number(pricing.output);
   return (inputCost + outputCost) * 100;
 };
 interface LLMCostEntry {

@@ -1,3 +1,5 @@
+import { createElement } from "react";
+import type { ComponentProps } from "react";
 import { act, create } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +14,10 @@ vi.mock("@/lib/auth-client", () => ({
     electron: { transferUser: mocks.transferUser },
     getSession: vi.fn(),
   },
+}));
+
+vi.mock("next/link", () => ({
+  default: (props: ComponentProps<"a">) => createElement("a", props),
 }));
 
 const searchParams = new URLSearchParams("done=1");
@@ -48,6 +54,8 @@ describe("device login page", () => {
     act(() => {
       renderer = create(<DeviceLoginPage />);
     });
+
+    expect(renderer?.root.findByType("a").props.href).toBe("/");
 
     const retryButton = renderer?.root.find(
       (node) => node.type === "button" && node.children.includes("Try again")

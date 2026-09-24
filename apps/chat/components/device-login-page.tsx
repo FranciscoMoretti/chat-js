@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -62,7 +63,7 @@ const DeviceAuthScreen = ({
             <CardContent className="text-center">
               <div className="mb-4">
                 <Button asChild className="w-full" variant="outline">
-                  <a href="/">Continue on web</a>
+                  <Link href="/">Continue on web</Link>
                 </Button>
               </div>
               <p className="text-muted-foreground/60 text-xs">

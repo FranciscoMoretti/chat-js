@@ -32,15 +32,15 @@ const archive = join(root, `chat-js-gateways-${gatewayPackage.version}.tgz`);
 
 afterAll(async () => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  const cleanupTimeout = Promise.withResolvers<never>();
   try {
+    timeout = setTimeout(
+      () => cleanupTimeout.reject(new Error("Gateway test cleanup timed out")),
+      180_000
+    );
     await Promise.race([
       rm(root, { force: true, recursive: true }),
-      new Promise<never>((_resolve, reject) => {
-        timeout = setTimeout(
-          () => reject(new Error("Gateway test cleanup timed out")),
-          180_000
-        );
-      }),
+      cleanupTimeout.promise,
     ]);
   } finally {
     clearTimeout(timeout);

@@ -31,13 +31,15 @@ for (const page of pages) {
 
     const frame = document.createElement("iframe");
     frame.title = `ChatJS docs: ${page.name}`;
+    const loaded = Promise.withResolvers<undefined>();
+    frame.addEventListener("load", () => loaded.resolve(undefined), {
+      once: true,
+    });
     frame.src = page.path;
     frame.style.cssText = "border:0;display:block;height:100vh;width:100vw";
     document.body.append(frame);
 
-    await new Promise<void>((resolve) => {
-      frame.addEventListener("load", () => resolve(), { once: true });
-    });
+    await loaded.promise;
 
     const source = frame.contentDocument;
     expect(source?.querySelector("main")).not.toBeNull();
