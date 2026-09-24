@@ -50,7 +50,31 @@ Enable features incrementally by editing `chat.config.ts` and adding the require
 cp .env.example .env.local
 ```
 
-After scaffolding, the CLI prints the exact environment variables required for your configuration. Fill in those values in `.env.local`.
+After scaffolding, the CLI prints the environment variables required for your configuration. Fill in those values in `.env.local`.
+
+The EVE-backed app needs two database connections: `DATABASE_URL` for application records such as users, chats, and projects, and `WORKFLOW_POSTGRES_URL` for EVE workflow state and transcripts. Use separate databases so you can provision and manage their schemas independently.
+
+For a local PostgreSQL installation:
+
+```bash
+createdb chatjs
+createdb chatjs_workflow
+openssl rand -base64 32
+openssl rand -base64 32
+```
+
+Use the two generated values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET`, respectively. Add your selected gateway and OAuth credentials alongside these settings:
+
+```dotenv
+DATABASE_URL=postgres://localhost:5432/chatjs
+WORKFLOW_POSTGRES_URL=postgres://localhost:5432/chatjs_workflow
+AUTH_SECRET=<first-generated-secret>
+EVE_GATEWAY_SECRET=<second-generated-secret>
+APP_URL=http://localhost:3000
+EVE_INTERNAL_ORIGIN=http://localhost:3000
+```
+
+Replace the database URLs with your local credentials if needed. `EVE_INTERNAL_ORIGIN` points to the same Next.js app in this setup. The `withEve` integration starts the development worker for you. You do not need to start a separate worker process.
 
 Expand the sections below for setup instructions:
 
@@ -70,8 +94,7 @@ Expand the sections below for setup instructions:
     ```bash
     # macOS
     brew install postgresql && brew services start postgresql
-    createdb chatjs
-    # DATABASE_URL=postgres://localhost:5432/chatjs
+    # Then create the two databases shown above.
     ```
 
   </AccordionItem>
@@ -137,21 +160,21 @@ Expand the sections below for setup instructions:
   </AccordionItem>
 </Accordion>
 
-### 3. Push Database Schema
+### 3. Initialize Both Databases
+
+Run application migrations against a fresh application database:
 
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
-This pushes the Drizzle schema directly to your database. For production migrations, see [deployment guides](/deployment/vercel).
-
-For a blank local EVE workflow database, set a local `WORKFLOW_POSTGRES_URL` and run this once before starting the app:
+Then initialize the local EVE workflow database:
 
 ```bash
-bun eve:db:setup:local
+npm run eve:db:setup:local
 ```
 
-It bootstraps the pinned Workflow World Postgres schema and installs the local lifecycle fences. The command accepts only `localhost` databases. Bootstrap a hosted workflow database with the World Postgres package's documented setup instead; this local command does not establish hosted deletion coverage.
+These scripts load `.env.local`. The second command bootstraps the pinned Workflow World Postgres schema and installs ChatJS's local lifecycle fences. It accepts only loopback database hosts (`localhost`, `127.0.0.1`, or `::1`). For a hosted workflow database, follow the [Vercel database setup](./deployment/vercel#initialize-the-databases).
 
 ### 4. Start the Dev Server
 
@@ -159,7 +182,9 @@ It bootstraps the pinned Workflow World Postgres schema and installs the local l
 npm run dev
 ```
 
-Open `http://localhost:3000`. You should see the ChatJS interface with a model selector and chat input.
+Open `http://localhost:3000`. You should see the ChatJS interface with a model selector and chat input. Sign in, send a message, then reload the conversation to check both execution and persistence.
+
+If you change the port, update both `APP_URL` and `EVE_INTERNAL_ORIGIN` and your OAuth callback URLs. When developing in the monorepo, run `bun dev:info --json` from its root to find your worktree-specific URL, then use `bun dev` to load its environment overrides.
 
 ## Deploying to Production
 

@@ -7,22 +7,20 @@ description: "How ChatJS is structured and how data flows through the system"
 
 ```mermaid
 flowchart LR
-    Client[Browser] --> App[Next.js]
-    App --> DB[(PostgreSQL)]
-    App --> AI[AI Providers]
-    App --> Storage[Files SDK Provider]
-    App --> Observability[Langfuse]
+    Browser[Browser] --> App[Next.js]
+    App --> Eve[EVE]
+    Eve --> AI[AI Providers]
+    Eve --> Tools[Tools]
 ```
 
 The current ChatJS application uses:
 
 - **Next.js App Router** for the frontend and API routes
-- **EVE** for the durable conversation transcript, execution state, approvals, checkpoints, and stream recovery
+- **EVE** for conversation execution, message persistence, tool calls, and stream recovery
 - **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for application-owned metadata such as users, ownership, projects, sharing, files, documents, and billing evidence
-- **AI SDK** to connect to multiple AI providers through a [gateway abstraction](/gateways/overview)
+- **AI SDK** to connect to multiple AI providers through a [gateway abstraction](../gateways/overview)
 - **Files SDK** through a configured [file storage provider](../storage) for attachments and generated media
 - **tRPC** for end-to-end type-safe API routes between client and server
-- **Langfuse** (optional) for LLM observability, tracing, and analytics
 
 ## EVE conversation flow
 
@@ -37,27 +35,22 @@ sequenceDiagram
     participant AI as Model provider
     UI->>Gateway: Authenticated EVE request
     Gateway->>Eve: Forward authorized command
-    Eve->>DB: Record application-owned evidence
+    Eve->>DB: Update application data through hooks
     Eve->>AI: Run selected model or tool
     AI-->>Eve: Stream result
-    Eve-->>UI: Native event stream
+    Eve-->>Gateway: Stream response
+    Gateway-->>UI: Display response
 ```
 
-EVE is the transcript authority. ChatJS records only the metadata and resources it owns around that transcript. Public sharing uses a controlled projection instead of exposing native session access.
-
-## Standalone thread package reference
-
-`@chat-js/thread` remains a separate package for applications that want an AI SDK-compatible `useThread` interface. The following reference describes that package, not the EVE-only ChatJS application runtime.
-
-`useThread` manages a selected conversation path, message tree, and independent response runs. See [useThread](../threads).
+EVE runs conversations and persists their messages and execution state. ChatJS manages authentication, chat organization, sharing, files, documents, and billing.
 
 ## Configuration
 
 All settings flow from a single source:
 
 1. `chat.config.ts` - Your configuration
-2. `lib/config/` - Parse and apply defaults
+2. `lib/config.ts` - Parse and apply defaults
 3. `lib/env.ts` - Validate environment variables
 4. Runtime - Features enabled/disabled
 
-This ensures type-safe configuration and build-time validation of environment variables. See [Configuration](/core/configuration) for the full reference.
+This ensures type-safe configuration and build-time validation of environment variables. See [Configuration](./configuration) for the full reference.

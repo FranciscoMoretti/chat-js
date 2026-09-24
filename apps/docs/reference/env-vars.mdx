@@ -13,14 +13,14 @@ This page lists every environment variable recognized by ChatJS, grouped by cate
 
 ## Required
 
-These two variables must always be set. Without them the app will not start.
+These variables must be set for the EVE-backed application.
 
 | Variable | Description | How to get it |
 | --- | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart), or any Postgres provider |
 | `AUTH_SECRET` | Secret used to sign and encrypt session tokens (Better Auth) | Run `openssl rand -base64 32` or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
 
-In addition to the two variables above, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
+The required EVE settings are `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN`, documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
 
 ---
 
@@ -257,7 +257,12 @@ ai: {
 | `EVE_GATEWAY_SECRET` | **Required.** Private credential used between ChatJS and EVE. Generate at least 32 random characters. |
 | `WORKFLOW_POSTGRES_URL` | **Required.** Postgres connection for durable EVE workflows. |
 | `EVE_INTERNAL_ORIGIN` | **Required.** Same-origin application URL or private worker origin. |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Server-only deployment-protection bypass credential for calls to this Vercel project. Required when protection blocks internal EVE requests. |
 | `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
+
+`DATABASE_URL` stores application identity and metadata. `WORKFLOW_POSTGRES_URL` stores EVE workflows and native transcripts. Initialize both schemas before sending a message. See the [quickstart](../quickstart#3-initialize-both-databases).
+
+`EVE_INTERNAL_ORIGIN` is independent of `APP_URL`. With the integrated Next.js worker, set it to the app origin. It must not contain an API route path. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to a separate worker or an arbitrary custom domain. The EVE bearer credential and owner identity are still required.
 
 ## Optional / Advanced
 
@@ -282,7 +287,18 @@ On Vercel, the platform automatically sends `CRON_SECRET` as a `Authorization: B
 | Variable | Required | Description |
 | --- | --- | --- |
 | `APP_URL` | Non-Vercel deployments | Full public URL of the app including protocol (e.g., `https://myapp.com`) |
-| `VERCEL_URL` | Auto-set by Vercel | Hostname auto-injected by the Vercel platform; used when `APP_URL` is not set |
+| `VERCEL_URL` | Auto-set by Vercel | Deployment hostname, without protocol |
+| `VERCEL_BRANCH_URL` | Auto-set by Vercel | Stable branch hostname used in preview environments |
+| `VERCEL_ENV` | Auto-set by Vercel | `development`, `preview`, or `production` |
+
+The shared `getBaseUrl()` helper resolves the application origin in this order:
+
+1. Explicit `APP_URL`.
+2. `https://${VERCEL_BRANCH_URL}` when `VERCEL_ENV=preview`.
+3. `https://${VERCEL_URL}`.
+4. `http://localhost:3000`.
+
+Better Auth uses `APP_URL` when set. On production Vercel deployments, its fallback is `appUrl` in `chat.config.ts`. Elsewhere, including previews, it uses `getBaseUrl()`. Register OAuth callbacks against the resulting auth origin. Do not carry a local or production `APP_URL` into a preview unless you intend to override its branch URL. This origin selection does not change `EVE_INTERNAL_ORIGIN`.
 
 ### Observability (Langfuse)
 
@@ -338,6 +354,9 @@ All variables in one place:
 | `CRON_SECRET` | Optional | Secure cleanup cron endpoint |
 | `APP_URL` | Optional | Required on non-Vercel deployments |
 | `VERCEL_URL` | Optional | Auto-set by Vercel platform |
+| `VERCEL_BRANCH_URL` | Optional | Stable preview branch hostname |
+| `VERCEL_ENV` | Optional | Vercel environment classification |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | EVE | Internal access to protected deployments |
 | `LANGFUSE_PUBLIC_KEY` | Optional | LLM observability |
 | `LANGFUSE_SECRET_KEY` | Optional | LLM observability |
 | `LANGFUSE_BASE_URL` | Optional | Self-hosted Langfuse endpoint |
