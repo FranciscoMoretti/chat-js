@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+import type { AttachmentViewData } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +25,10 @@ const ImagePreview = ({ name, url }: { name: string; url: string }) => {
   const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (imageUnavailable) {
     return (
-      <div
-        className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1"
-        role="status"
-      >
+      <output className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1">
         <ImageOffIcon className="size-5" />
         <span className="text-[10px]">Unavailable</span>
-      </div>
+      </output>
     );
   }
 
@@ -87,7 +84,7 @@ export const AttachmentCard = ({
   onRemove,
   className,
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading: boolean;
   onRemove?: () => void;
   className?: string;

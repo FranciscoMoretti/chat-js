@@ -1,16 +1,16 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
-import { z } from "zod";
 
 import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 import {
   DEFAULT_MAX_RESULTS,
-  searchQueriesSchema,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+
+import { webSearchInput } from "./schemas";
 
 const FIRECRAWL_COST_CENTS = 5;
 export const webSearch = tool({
@@ -76,7 +76,5 @@ Avoid:
 
     return result;
   },
-  inputSchema: z.object({
-    search_queries: searchQueriesSchema,
-  }),
+  inputSchema: webSearchInput,
 });

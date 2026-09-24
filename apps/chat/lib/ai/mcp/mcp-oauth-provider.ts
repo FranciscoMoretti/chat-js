@@ -5,7 +5,9 @@ import type {
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+import { z } from "zod";
 
+import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -20,7 +22,17 @@ import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 import type { McpOAuthSession } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
+import { mcpFetch } from "./mcp-fetch";
+
 const log = createModuleLogger("mcp-oauth-provider");
+const refreshTokensSchema = z.object({
+  access_token: z.string(),
+  expires_in: z.number().optional(),
+  id_token: z.string().optional(),
+  refresh_token: z.string().optional(),
+  scope: z.string().optional(),
+  token_type: z.string(),
+});
 
 /**
  * PostgreSQL-backed OAuth client provider for MCP.
@@ -31,6 +43,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private currentOAuthState = "";
   private cachedAuthData: McpOAuthSession | undefined;
   private initialized = false;
+  private committedRefreshes = 0;
   private saveCodeVerifierPromise: Promise<void> | null = null;
   private cachedAuthorizationUrl: URL | null = null;
   private readonly config: {
@@ -38,7 +51,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
-    // Optional: adopt existing state for callback reconciliation.
+    // Optional: adopt existing state (for callback reconciliation)
     state?: string;
   };
   private saveClientInformationPromise: Promise<void> | null = null;
@@ -48,7 +61,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
-    // Optional: adopt existing state for callback reconciliation.
+    // Optional: adopt existing state (for callback reconciliation)
     state?: string;
   }) {
     this.config = config;
@@ -56,8 +69,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   private initializationPromise: Promise<void> | null = null;
 
+  // Prevent concurrent initialization - return existing promise if in progress
+
   private async initializeOAuth() {
-    // Prevent concurrent initialization - return existing promise if in progress
     if (this.initializationPromise) {
       return this.initializationPromise;
     }
@@ -74,8 +88,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
   }
 
+  // If state was provided (e.g., from callback), adopt it
+
   private async doInitializeOAuth() {
-    // If state was provided (e.g., from callback), adopt it
     if (this.config.state) {
       const session = await getSessionByState({ state: this.config.state });
       if (session && session.mcpConnectorId === this.config.mcpConnectorId) {
@@ -84,9 +99,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         this.initialized = true;
         return;
       }
+      // Check for existing authenticated session
     }
-
-    // Check for existing authenticated session
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
@@ -95,9 +109,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.cachedAuthData = authenticated;
       this.initialized = true;
       return;
+      // Create new in-progress session
     }
-
-    // Create new in-progress session
     this.currentOAuthState = randomUUID();
     this.cachedAuthData = await createOAuthSession({
       mcpConnectorId: this.config.mcpConnectorId,
@@ -144,8 +157,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   async clientInformation(): Promise<OAuthClientInformationFull | undefined> {
     const authData = await this.getAuthData();
     if (authData?.clientInfo) {
-      const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       // Security: if redirect URI changed and no tokens yet, invalidate
+      const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       if (
         !authData.tokens &&
         clientInfo.redirect_uris[0] !== this.redirectUrl
@@ -163,9 +176,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         }
         this.cachedAuthData = undefined;
         this.initialized = false;
-      } else {
-        return clientInfo;
+        return;
       }
+      return clientInfo;
     }
   }
 
@@ -175,15 +188,14 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (this.saveClientInformationPromise) {
       await this.saveClientInformationPromise;
       return;
+      // If we already have a client registered for this state, keep it stable.
     }
-
-    // If we already have a client registered for this state, keep it stable.
     // Some OAuth servers treat authorization codes as bound to client_id.
+
     if (this.cachedAuthData?.clientInfo) {
       return;
+      // Optimistic set so subsequent calls in this instance skip.
     }
-
-    // Optimistic set so subsequent calls in this instance skip.
     if (this.cachedAuthData) {
       this.cachedAuthData = {
         ...this.cachedAuthData,
@@ -193,11 +205,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     this.saveClientInformationPromise = (async () => {
       try {
-        const session = await setOAuthClientInfoOnceByState({
+        this.cachedAuthData = await setOAuthClientInfoOnceByState({
           clientInfo: clientCredentials,
           state: this.currentOAuthState,
         });
-        this.cachedAuthData = session;
       } finally {
         this.saveClientInformationPromise = null;
       }
@@ -210,7 +221,85 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return authData?.tokens as OAuthTokens | undefined;
   }
 
+  /** The SDK uses this for transport and OAuth requests, including later 401 refreshes. */
+  fetch = async (
+    input: string | URL | Request,
+    init?: RequestInit
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    if (
+      request.method !== "POST" ||
+      !request.headers
+        .get("content-type")
+        ?.includes("application/x-www-form-urlencoded")
+    ) {
+      return await mcpFetch(request);
+    }
+    const params = new URLSearchParams(await request.clone().text());
+    if (params.get("grant_type") !== "refresh_token") {
+      return await mcpFetch(request);
+    }
+    const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
+    return await withMcpOAuthRefreshLock(
+      this.config.mcpConnectorId,
+      async () => {
+        request.signal.throwIfAborted();
+        const latest = await getSessionByState({
+          state: this.currentOAuthState,
+        });
+        if (
+          !latest?.tokens?.refresh_token ||
+          latest.mcpConnectorId !== this.config.mcpConnectorId ||
+          latest.serverUrl !== this.config.serverUrl
+        ) {
+          throw new Error("MCP credentials changed; reconnect this connector.");
+        }
+        if (
+          latest.tokens.refresh_token !== params.get("refresh_token") ||
+          latest.tokens.access_token !== observedAccessToken
+          // Another instance already rotated this credential. Return its result
+        ) {
+          // to the SDK instead of consuming the old single-use refresh token.
+
+          this.cachedAuthData = latest;
+          this.committedRefreshes += 1;
+          return Response.json(latest.tokens);
+        }
+        const response = await mcpFetch(request, {
+          signal: AbortSignal.any([
+            request.signal,
+            AbortSignal.timeout(30_000),
+          ]),
+        });
+        if (!response.ok) {
+          return response;
+        }
+        const refreshed = refreshTokensSchema.parse(
+          await response.clone().json()
+        );
+        // Preserve pinned metadata and the refresh token when it is not rotated.
+        this.cachedAuthData = await saveTokensAndCleanup({
+          mcpConnectorId: this.config.mcpConnectorId,
+          state: this.currentOAuthState,
+          tokens: { ...latest.tokens, ...refreshed },
+        });
+        this.committedRefreshes += 1;
+        return Response.json(refreshed);
+      }
+    );
+  };
+
   async saveTokens(tokens: OAuthTokens): Promise<void> {
+    if (this.committedRefreshes > 0) {
+      // Refresh was saved while holding the cross-process lock. The SDK's
+      this.committedRefreshes -= 1;
+      // later save must not overwrite a newer rotation from another client.
+
+      this.cachedAuthData = await getSessionByState({
+        state: this.currentOAuthState,
+      });
+      return;
+    }
     this.cachedAuthData = await saveTokensAndCleanup({
       mcpConnectorId: this.config.mcpConnectorId,
       state: this.currentOAuthState,
@@ -219,10 +308,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
-    authorizationUrl.searchParams.set("state", this.state());
-
     // If the SDK calls redirect twice, keep the first URL stable.
+    authorizationUrl.searchParams.set("state", this.state());
     // Otherwise the UI might open URL #1 while the DB ended up with verifier #2.
+
     if (this.cachedAuthorizationUrl) {
       await this.config.onRedirectToAuthorization(this.cachedAuthorizationUrl);
       return;
@@ -236,18 +325,15 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
       return;
+      // Only save verifier ONCE - the AI SDK calls this multiple times
     }
-
-    // Only save verifier ONCE - the AI SDK calls this multiple times
-    // but the code_challenge is generated from the FIRST verifier.
     // If we already have a verifier for this session, keep it.
+    // but the code_challenge is generated from the FIRST verifier.
     const existingVerifier = this.cachedAuthData?.codeVerifier;
 
     if (existingVerifier) {
       log.info(
         {
-          existingVerifierPrefix: existingVerifier.slice(0, 10),
-          newVerifierPrefix: pkceVerifier.slice(0, 10),
           state: this.currentOAuthState,
         },
         "saveCodeVerifier: SKIPPING - verifier already exists"
@@ -258,28 +344,24 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     log.info(
       {
-        codeVerifierPrefix: pkceVerifier.slice(0, 10),
         state: this.currentOAuthState,
       },
       "saveCodeVerifier: saving first verifier"
+      // Optimistic in-memory set so a concurrent call in this instance will skip.
     );
-
-    // Optimistic in-memory set so a concurrent call in this instance will skip.
     if (this.cachedAuthData) {
       this.cachedAuthData = {
         ...this.cachedAuthData,
         codeVerifier: pkceVerifier,
       };
+      // Serialize and make the DB write immutable (DB-side also guards against overwrite).
     }
-
-    // Serialize and make the DB write immutable (DB-side also guards against overwrite).
     this.saveCodeVerifierPromise = (async () => {
       try {
-        const session = await setOAuthCodeVerifierOnceByState({
+        this.cachedAuthData = await setOAuthCodeVerifierOnceByState({
           codeVerifier: pkceVerifier,
           state: this.currentOAuthState,
         });
-        this.cachedAuthData = session;
       } finally {
         this.saveCodeVerifierPromise = null;
       }
@@ -291,7 +373,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authData = await this.getAuthData();
     log.info(
       {
-        codeVerifierPrefix: authData?.codeVerifier?.slice(0, 10),
         hasCodeVerifier: !!authData?.codeVerifier,
         state: this.currentOAuthState,
       },
@@ -311,9 +392,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (!state) {
       log.warn("adoptState called with empty state");
       return;
+      // If already initialized with this exact state, skip DB lookup
     }
-
-    // If already initialized with this exact state, skip DB lookup
     if (this.initialized && this.currentOAuthState === state) {
       log.info({ state }, "adoptState: already initialized with this state");
       return;
@@ -361,17 +441,17 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.currentOAuthState = "";
     } else if (scope === "tokens") {
       await this.updateAuthData({ tokens: null });
-    } else if (scope === "client") {
       // Clear client credentials - this forces re-registration with the OAuth server
-      await this.updateAuthData({ clientInfo: null });
+    } else if (scope === "client") {
       // Reset state since client info is foundational to the OAuth flow
+      await this.updateAuthData({ clientInfo: null });
       this.initialized = false;
       this.currentOAuthState = "";
       this.cachedAuthData = undefined;
-    } else if (scope === "verifier") {
       // Clear the PKCE verifier - this invalidates any pending authorization
-      await this.updateAuthData({ codeVerifier: null });
+    } else if (scope === "verifier") {
       // Clear cached authorization URL since it's tied to the old verifier
+      await this.updateAuthData({ codeVerifier: null });
       this.cachedAuthorizationUrl = null;
     }
   }

@@ -1,0 +1,102 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { EveMessagePart } from "eve/client";
+import { useState } from "react";
+import { createRoot } from "react-dom/client";
+
+import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
+import { EveDocumentTool } from "../components/eve/eve-document-tool";
+import { SidebarProvider } from "../components/ui/sidebar";
+import { useArtifact } from "../hooks/use-artifact";
+import { TRPCProvider } from "../trpc/react";
+import {
+  conversationId,
+  existingId,
+  queryClient,
+  trpcClient,
+} from "./eve-artifact-query.fixture";
+
+type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
+const completed: Part = {
+  input: {},
+  output: {
+    date: "2026-01-01T00:00:00.000Z",
+    documentId: "00000000-0000-4000-8000-000000000001",
+    kind: "text",
+    revisionId: "00000000-0000-4000-8000-000000000002",
+    status: "success",
+    title: "Orchard notes",
+  },
+  state: "output-available",
+  toolCallId: "write-1",
+  toolName: "createTextDocument",
+  type: "dynamic-tool",
+};
+const Fixture = () => {
+  const { artifact, setArtifact } = useArtifact();
+  const [part, setPart] = useState<Part>(completed);
+  const [readOnly, setReadOnly] = useState(false);
+  return (
+    <main className="space-y-4 p-6">
+      <h1>Document opening</h1>
+      <div className="flex flex-wrap gap-4">
+        <button
+          onClick={() =>
+            setPart({
+              input: {},
+              state: "input-available",
+              toolCallId: "write-1",
+              toolName: "createTextDocument",
+              type: "dynamic-tool",
+            })
+          }
+          type="button"
+        >
+          Start write
+        </button>
+        <button onClick={() => setPart({ ...completed })} type="button">
+          Complete write
+        </button>
+        <button
+          onClick={() => setPart({ ...completed, toolName: "readDocument" })}
+          type="button"
+        >
+          Complete read
+        </button>
+        <button onClick={() => setReadOnly((value) => !value)} type="button">
+          Toggle readonly
+        </button>
+        <button
+          onClick={() =>
+            setArtifact({
+              ...artifact,
+              documentId: existingId,
+              isVisible: true,
+              revisionId: undefined,
+              title: "Existing draft",
+            })
+          }
+          type="button"
+        >
+          Open existing
+        </button>
+      </div>
+      <p>Mode: {readOnly ? "readonly" : "owner"}</p>
+      <EveDocumentTool isReadonly={readOnly} messageId="message" part={part} />
+    </main>
+  );
+};
+const root = document.querySelector("#root");
+if (!root) {
+  throw new Error("Missing fixture root");
+}
+createRoot(root).render(
+  <QueryClientProvider client={queryClient}>
+    <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
+      <SidebarProvider defaultOpen={false}>
+        <EveArtifactLayout conversationId={conversationId}>
+          <Fixture />
+        </EveArtifactLayout>
+      </SidebarProvider>
+    </TRPCProvider>
+  </QueryClientProvider>
+);

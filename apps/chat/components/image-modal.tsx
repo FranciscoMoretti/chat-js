@@ -124,25 +124,28 @@ export const ImageModal = ({
         </DialogClose>
         <button
           className="group flex h-full w-full cursor-pointer items-center justify-center"
-          onClick={() => onClose()}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              onClose();
+            }
+          }}
           type="button"
         >
           {imageUnavailable ? (
-            <span
-              className="flex flex-col items-center gap-3 text-white"
-              role="status"
-            >
+            <output className="flex flex-col items-center gap-3 text-white">
               <ImageOffIcon className="size-10" />
               <span>Image unavailable</span>
-            </span>
+            </output>
           ) : (
-            <img
-              alt={imageName ?? "Expanded image"}
-              className="max-h-[90vh] max-w-[90vw] object-contain"
-              onClick={(e) => e.stopPropagation()}
-              onError={handleImageError}
-              src={imageUrl || undefined}
-            />
+            <>
+              {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
+              <img
+                alt={imageName ?? "Expanded image"}
+                className="max-h-[90vh] max-w-[90vw] object-contain"
+                onError={handleImageError}
+                src={imageUrl || undefined}
+              />
+            </>
           )}
         </button>
         {showActions && !imageUnavailable && (

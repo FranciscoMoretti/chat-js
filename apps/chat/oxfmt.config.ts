@@ -7,6 +7,10 @@ export default defineConfig({
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
+    ".eve/**",
+    "tests/eve-results/**",
+    // The model catalog is generator-owned; avoid unrelated snapshot churn.
+    "lib/ai/models.generated.ts",
     "**/tools/chatjs/{tools,ui,search-config,code-execution-config,url-retrieval-config,image-generation-config,video-generation-config}.ts",
   ],
 });

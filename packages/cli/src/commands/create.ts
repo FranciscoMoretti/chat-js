@@ -469,6 +469,18 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
   return commands[packageManager];
 };
 
+const removeUnavailableToolTests = async (
+  targetDir: string,
+  installedTools: Awaited<ReturnType<typeof syncTools>>
+): Promise<void> => {
+  if (installedTools.some((tool) => tool.id === "vercel-code-execution")) {
+    return;
+  }
+  const sandboxLifecycleTest = "tests/eve-sandbox-lifecycle.e2e.ts";
+  await preflight(targetDir, [sandboxLifecycleTest]);
+  await rm(path.join(targetDir, sandboxLifecycleTest), { force: true });
+};
+
 const installRegistryItems = async (
   options: CreateOptions,
   packageManager: PackageManager,
@@ -492,6 +504,9 @@ const installRegistryItems = async (
     const installedTools = await syncTools(project.targetDir, {
       expected: setup.expectedTools,
     });
+    if (options.fromGit) {
+      await removeUnavailableToolTests(project.targetDir, installedTools);
+    }
     await runCommand(packageManager, ["install"], project.targetDir);
     if (!options.fromGit) {
       await runCommand(
@@ -554,9 +569,6 @@ const printNextSteps = (
   printEnvChecklist(envEntries);
   logger.log(
     "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
-  );
-  logger.log(
-    `  Optional Redis: set REDIS_URL, then run ${packageManager} run redis:connect. Setup: https://www.chatjs.dev/docs/reference/redis`
   );
   logger.break();
   logger.log(

@@ -1,11 +1,14 @@
 "use client";
+
 import type { UIToolInvocation } from "ai";
 
 import { WebSearch } from "@/components/part/web-search";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+import { webSearchInput, webSearchResult } from "./schemas";
 import type { webSearch } from "./tool";
 
-export const WebSearchRenderer = ({
+const WebSearchView = ({
   tool,
   messageId,
 }: {
@@ -13,3 +16,9 @@ export const WebSearchRenderer = ({
   messageId: string;
   isReadonly: boolean;
 }) => <WebSearch messageId={messageId} part={tool} />;
+
+export const WebSearchRenderer = defineToolRenderer({
+  inputSchema: webSearchInput,
+  outputSchema: webSearchResult,
+  render: WebSearchView,
+});

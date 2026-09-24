@@ -20,7 +20,6 @@ interface SheetEditorProps {
 
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
-
 const generateCsv = (data: (string | number)[][]) => unparse(data);
 
 const PureSpreadsheetEditor = ({
@@ -34,8 +33,9 @@ const PureSpreadsheetEditor = ({
 
   const parseData = useMemo(() => {
     if (!content) {
-      const emptyRow = Array.from({ length: MIN_COLS }, () => "");
-      return Array.from({ length: MIN_ROWS }, () => emptyRow);
+      return Array.from({ length: MIN_ROWS }, () =>
+        Array.from({ length: MIN_COLS }, () => "")
+      );
     }
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
@@ -101,6 +101,7 @@ const PureSpreadsheetEditor = ({
   const [localRows, setLocalRows] = useState(initialRows);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the controlled spreadsheet rows when the document changes.
     setLocalRows(initialRows);
   }, [initialRows]);
 
@@ -128,8 +129,9 @@ const PureSpreadsheetEditor = ({
         sortable: true,
       }}
       enableVirtualization
-      onCellClick={(args) => {
+      onCellClick={(args, event) => {
         if (args.column.key !== "rowNumber" && !isReadonly) {
+          event.preventGridDefault();
           args.selectCell(true);
         }
       }}

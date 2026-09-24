@@ -1,4 +1,4 @@
-import type { StreamWriter } from "@/lib/ai/types";
+import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { generateUUID } from "@/lib/utils";
 
 import { deduplicateByDomainAndUrl } from "./search-utils";
@@ -33,7 +33,7 @@ export const multiQueryWebSearchStep = async ({
     query: SearchQuery,
     index: number
   ) => Promise<{ title: string; url: string; content: string }[]>;
-  dataStream?: StreamWriter;
+  dataStream?: ToolProgressWriter;
   toolCallId: string;
 }): Promise<MultiQuerySearchResponse> => {
   const updateId = generateUUID();

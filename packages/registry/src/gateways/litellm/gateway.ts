@@ -68,6 +68,8 @@ export class LiteLLMGateway
     return provider.imageModel(modelId);
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
@@ -80,6 +82,8 @@ export class LiteLLMGateway
     return this.env.LITELLM_BASE_URL;
   }
 
+  // The URL shape is provider-defined and independent of instance state.
+  // eslint-disable-next-line class-methods-use-this
   private getModelsUrl(baseURL: string): string {
     const normalizedBaseURL = baseURL.replace(TRAILING_SLASHES_REGEX, "");
     if (normalizedBaseURL.endsWith("/v1")) {

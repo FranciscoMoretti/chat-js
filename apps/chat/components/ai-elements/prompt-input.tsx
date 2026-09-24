@@ -314,13 +314,16 @@ export const PromptInputAttachment = ({
           <div className="relative size-5 shrink-0">
             <div className="bg-background absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded transition-opacity group-hover:opacity-0">
               {isImage ? (
-                <img
-                  alt={filename || "attachment"}
-                  className="size-5 object-cover"
-                  height={20}
-                  src={data.url}
-                  width={20}
-                />
+                <>
+                  {/* oxlint-disable-next-line next/no-img-element -- Prompt attachments use arbitrary blob and data URLs. */}
+                  <img
+                    alt={filename || "attachment"}
+                    className="size-5 object-cover"
+                    height={20}
+                    src={data.url}
+                    width={20}
+                  />
+                </>
               ) : (
                 <div className="text-muted-foreground flex size-5 items-center justify-center">
                   <PaperclipIcon className="size-3" />
@@ -349,6 +352,7 @@ export const PromptInputAttachment = ({
         <div className="w-auto space-y-3">
           {isImage && (
             <div className="flex max-h-96 w-96 items-center justify-center overflow-hidden rounded-md border">
+              {/* oxlint-disable-next-line next/no-img-element -- Prompt attachments use arbitrary blob and data URLs. */}
               <img
                 alt={filename || "attachment preview"}
                 className="max-h-full max-w-full object-contain"
@@ -1099,12 +1103,8 @@ interface SpeechRecognitionErrorEvent extends Event {
 
 declare global {
   interface Window {
-    SpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new (): SpeechRecognition;
-    };
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
   }
 }
 
@@ -1176,6 +1176,7 @@ export const PromptInputSpeechButton = ({
       };
 
       recognitionRef.current = speechRecognition;
+      // oxlint-disable-next-line react/set-state-in-effect -- Publish the browser speech-recognition instance after setup.
       setRecognition(speechRecognition);
     }
 
@@ -1301,13 +1302,16 @@ export const PromptInputTabLabel = ({
   className,
   ...props
 }: PromptInputTabLabelProps) => (
-  <h3
-    className={cn(
-      "text-muted-foreground mb-2 px-3 text-xs font-medium",
-      className
-    )}
-    {...props}
-  />
+  <>
+    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
+    <h3
+      className={cn(
+        "text-muted-foreground mb-2 px-3 text-xs font-medium",
+        className
+      )}
+      {...props}
+    />
+  </>
 );
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;

@@ -1,10 +1,12 @@
 import { asSchema, createUIMessageStream } from "ai";
-import type { UIMessageChunk } from "ai";
+import type { UIMessage, UIMessageChunk } from "ai";
 import { expect, test, vi } from "vitest";
 
-import type { ChatMessage } from "@/lib/ai/types";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { webSearch } from "./tool";
+
+type SearchMessage = UIMessage<unknown, { researchUpdate: ResearchUpdate }>;
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
@@ -16,7 +18,7 @@ test("Tavily forwards native options and preserves source events", async () => {
       { content: "Evidence", title: "Source", url: "https://example.com" },
     ],
   });
-  const stream = createUIMessageStream<ChatMessage>({
+  const stream = createUIMessageStream<SearchMessage>({
     execute: async ({ writer }) => {
       const tool = webSearch;
       const context = { dataStream: writer, writeTopLevelUpdates: true };
@@ -74,7 +76,7 @@ test("Tavily forwards native options and preserves source events", async () => {
 
 test("strict tool fields remain required and explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });
-  const stream = createUIMessageStream<ChatMessage>({
+  const stream = createUIMessageStream<SearchMessage>({
     execute: async ({ writer }) => {
       const tool = webSearch;
       const context = { dataStream: writer, writeTopLevelUpdates: false };

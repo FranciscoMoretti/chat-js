@@ -3,7 +3,13 @@ title: "Web"
 description: "Run ChatJS as a web app in development and production"
 ---
 
-ChatJS is a web app first. When you scaffold a new project, the browser experience is the default runtime: local development, production deployments, authentication, model access, and all core product features work on the web without any extra platform wrapper.
+ChatJS is a web app first. When you scaffold a new project, the browser experience uses the EVE conversation runtime alongside authentication, model access, and the rest of the product stack.
+
+<Callout type="warning">
+  Hosted provider deletion and guest-hosting validation remain release gates for
+  the EVE-only app. The deployment guides describe configuration, not a
+  production-readiness guarantee.
+</Callout>
 
 ## What you get by default
 
@@ -11,11 +17,11 @@ The generated app is a standard Next.js application with the ChatJS product stac
 
 - App Router-based UI and routes
 - Authentication with Better Auth
-- Streaming chat, tools, attachments, and projects
+- EVE-backed conversations, tools, attachments, and projects
 - Model gateways and provider configuration
-- Production deployment support for Vercel, Docker, and self-hosted environments
+- Deployment configuration for Vercel, Docker, and self-hosted environments
 
-If you do nothing platform-specific, you are building and shipping the web app.
+If you do nothing platform-specific, you are running the web app locally.
 
 ## Development
 

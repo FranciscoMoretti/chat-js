@@ -5,6 +5,8 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
 
+import { retrievedInput } from "./schemas";
+
 const log = createModuleLogger("tools/retrieve-url");
 
 const app = env.FIRECRAWL_API_KEY
@@ -105,7 +107,5 @@ Avoid:
       return { error: "Failed to retrieve content" };
     }
   },
-  inputSchema: z.object({
-    url: z.string().describe("The URL to retrieve the information from."),
-  }),
+  inputSchema: retrievedInput,
 });

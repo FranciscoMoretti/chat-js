@@ -1,4 +1,4 @@
-import type { FileUIPart, ModelMessage, TextPart } from "ai";
+import type { ModelMessage } from "ai";
 import { clsx } from "clsx";
 import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -6,7 +6,6 @@ import { v7 as uuidv7 } from "uuid";
 
 import { ChatSDKError } from "./ai/errors";
 import type { ErrorCode } from "./ai/errors";
-import type { Attachment, ChatMessage } from "./ai/types";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
@@ -85,21 +84,6 @@ export const getLanguageFromFileName = (fileName: string): string => {
   // Default to Python.
   return extensionToLanguage[extension] || "python";
 };
-
-export const getAttachmentsFromMessage = (message: ChatMessage): Attachment[] =>
-  message.parts
-    .filter<FileUIPart>((part) => part.type === "file")
-    .map((part) => ({
-      contentType: part.mediaType,
-      name: part.filename || "",
-      url: part.url,
-    }));
-
-export const getTextContentFromMessage = (message: ChatMessage): string =>
-  message.parts
-    .filter<TextPart>((part) => part.type === "text")
-    .map((part) => part.text)
-    .join("");
 
 export const getTextContentFromModelMessage = (
   message: ModelMessage

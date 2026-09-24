@@ -37,11 +37,14 @@ const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h5
-    className={cn("mb-1 leading-none font-medium tracking-tight", className)}
-    ref={ref}
-    {...props}
-  />
+  <>
+    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
+    <h5
+      className={cn("mb-1 leading-none font-medium tracking-tight", className)}
+      ref={ref}
+      {...props}
+    />
+  </>
 ));
 AlertTitle.displayName = "AlertTitle";
 

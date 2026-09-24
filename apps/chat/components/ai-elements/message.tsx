@@ -369,6 +369,7 @@ export const MessageAttachment = ({
     >
       {isImage ? (
         <>
+          {/* oxlint-disable-next-line next/no-img-element -- Attachment URLs may be blob or data URLs. */}
           <img
             alt={filename || "attachment"}
             className="size-full object-cover"

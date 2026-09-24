@@ -33,14 +33,19 @@ const parseRange = (value: string, size: number) => {
     : null;
 };
 
-export const createFileContentResponse = async (request: Request) => {
+export const createFileContentResponse = async (
+  request: Request,
+  { allowRedirect = true }: { allowRedirect?: boolean } = {}
+) => {
   const key = keyFromFileUrl(request.url);
   if (!key) {
     return new Response("Invalid file URL", { status: 400 });
   }
 
   try {
-    const providerUrl = await getFileProviderUrl(key);
+    const providerUrl = allowRedirect
+      ? await getFileProviderUrl(key)
+      : undefined;
     if (providerUrl) {
       return new Response(null, {
         headers: {
@@ -71,6 +76,7 @@ export const createFileContentResponse = async (request: Request) => {
     const file = await downloadFile(key, range);
     const headers = new Headers({
       "Accept-Ranges": supportsRange ? "bytes" : "none",
+      "Cache-Control": "private, no-store",
       "Content-Length": String(file.size),
       "Content-Type": file.type || "application/octet-stream",
       "X-Content-Type-Options": "nosniff",

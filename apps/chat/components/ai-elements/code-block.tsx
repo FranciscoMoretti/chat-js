@@ -119,13 +119,15 @@ export const CodeBlock = ({
         {...props}
       >
         <div className="relative">
+          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            dangerouslySetInnerHTML={{ __html: html }}
+            {...{ dangerouslySetInnerHTML: { __html: html } }}
           />
+          {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            dangerouslySetInnerHTML={{ __html: darkHtml }}
+            {...{ dangerouslySetInnerHTML: { __html: darkHtml } }}
           />
           {children && (
             <div className="absolute top-2 right-2 flex items-center gap-2">

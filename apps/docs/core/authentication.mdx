@@ -34,14 +34,14 @@ Config validation runs at build time via `bun run prebuild`. A missing env var f
 
 ### Required environment variables
 
-| Provider | Variable                   | Description                      |
-| -------- | -------------------------- | -------------------------------- |
-| GitHub   | `AUTH_GITHUB_ID`           | OAuth App client ID              |
-| GitHub   | `AUTH_GITHUB_SECRET`       | OAuth App client secret          |
-| Google   | `AUTH_GOOGLE_ID`           | OAuth client ID                  |
-| Google   | `AUTH_GOOGLE_SECRET`       | OAuth client secret              |
-| Vercel   | `VERCEL_APP_CLIENT_ID`     | Vercel integration client ID     |
-| Vercel   | `VERCEL_APP_CLIENT_SECRET` | Vercel integration client secret |
+| Provider | Variable                   | Description              |
+| -------- | -------------------------- | ------------------------ |
+| GitHub   | `AUTH_GITHUB_ID`           | OAuth App client ID      |
+| GitHub   | `AUTH_GITHUB_SECRET`       | OAuth App client secret  |
+| Google   | `AUTH_GOOGLE_ID`           | OAuth client ID          |
+| Google   | `AUTH_GOOGLE_SECRET`       | OAuth client secret      |
+| Vercel   | `VERCEL_APP_CLIENT_ID`     | Vercel App client ID     |
+| Vercel   | `VERCEL_APP_CLIENT_SECRET` | Vercel App client secret |
 
 All providers also require a shared secret used to sign session tokens:
 
@@ -110,12 +110,12 @@ openssl rand -base64 32
 
 ### Vercel
 
-1. Go to **[Vercel Dashboard](https://vercel.com/dashboard) → Settings → Integrations → Create Integration**.
+1. Create a Vercel App using the **[Sign in with Vercel setup guide](https://vercel.com/docs/sign-in-with-vercel/getting-started)**.
 2. Under **Redirect URL** add:
    ```
    https://your-domain.com/api/auth/callback/vercel
    ```
-3. Copy the **Client ID** and **Client Secret** from the integration.
+3. Copy the **Client ID** and **Client Secret** from the Vercel App.
 4. Add to your environment:
    ```bash
    VERCEL_APP_CLIENT_ID=your_client_id

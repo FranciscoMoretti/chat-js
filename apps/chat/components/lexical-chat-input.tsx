@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 const EnterKeySubmitPlugin = ({
   onEnterSubmit,
 }: {
-  onEnterSubmit?: (event: KeyboardEvent) => boolean;
+  onEnterSubmit?: (event: globalThis.KeyboardEvent) => boolean;
 }) => {
   const [editor] = useLexicalComposerContext();
 
@@ -34,9 +34,9 @@ const EnterKeySubmitPlugin = ({
     () =>
       editor.registerCommand(
         KEY_ENTER_COMMAND,
-        (event: KeyboardEvent) => {
+        (event: globalThis.KeyboardEvent | null) => {
           // Call the custom handler if provided
-          if (onEnterSubmit) {
+          if (event && !event.isComposing && onEnterSubmit) {
             const handled = onEnterSubmit(event);
             if (handled) {
               // Prevent the default Enter behavior immediately
@@ -44,8 +44,9 @@ const EnterKeySubmitPlugin = ({
               // Prevent default Enter behavior (adding newline)
               return true;
             }
+            // Allow default behavior for non-submit cases (Shift+Enter, etc.)
+            return false;
           }
-          // Allow default behavior for non-submit cases (Shift+Enter, etc.)
           return false;
         },
         COMMAND_PRIORITY_HIGH
@@ -78,16 +79,18 @@ interface LexicalChatInputRef {
 }
 
 interface LexicalChatInputProps {
+  "aria-label"?: string;
   autoFocus?: boolean;
   className?: string;
   "data-testid"?: string;
   initialValue?: string;
   maxRows?: number;
-  onEnterSubmit?: (event: KeyboardEvent) => boolean;
+  onEnterSubmit?: (event: globalThis.KeyboardEvent) => boolean;
   onInputChange?: (value: string) => void;
   onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
   onPaste?: (event: ClipboardEvent<HTMLDivElement>) => void;
   placeholder?: string;
+  readOnly?: boolean;
 }
 
 const theme = {
@@ -104,6 +107,7 @@ const onError = (error: Error) => {
 
 export const LexicalChatInput = ({
   initialValue = "",
+  readOnly = false,
   onInputChange,
   onKeyDown,
   onPaste,
@@ -112,6 +116,7 @@ export const LexicalChatInput = ({
   autoFocus = false,
   className,
   "data-testid": testId,
+  "aria-label": ariaLabel,
   ref,
   ..._props
 }: LexicalChatInputProps & {
@@ -119,9 +124,15 @@ export const LexicalChatInput = ({
 }) => {
   const [editor, setEditor] = useState<LexicalEditor | null>(null);
 
+  useEffect(() => {
+    editor?.setEditable(!readOnly);
+  }, [editor, readOnly]);
+
   useAutoFocus({ autoFocus, editor });
 
   const initialConfig: InitialConfigType = {
+    // Accept input only after the editor and its change listeners are mounted.
+    editable: false,
     namespace: "LexicalChatInput",
     nodes: [],
     onError,
@@ -190,13 +201,10 @@ export const LexicalChatInput = ({
     }
   }, [editor, initialValue]);
 
-  const PlaceholderComponent = useCallback(
-    () => (
-      <div className="lexical-placeholder text-muted-foreground pointer-events-none absolute pt-2 pl-3">
-        {placeholder}
-      </div>
-    ),
-    [placeholder]
+  const placeholderElement = (
+    <div className="lexical-placeholder text-muted-foreground pointer-events-none absolute pt-2 pl-3">
+      {placeholder}
+    </div>
   );
 
   return (
@@ -210,6 +218,8 @@ export const LexicalChatInput = ({
         <PlainTextPlugin
           contentEditable={
             <ContentEditable
+              aria-label={ariaLabel}
+              aria-readonly={readOnly}
               className={cn(
                 "focus:outline-hidden focus-visible:outline-hidden",
                 "[&>.lexical-root]:min-h-[20px] [&>.lexical-root]:outline-hidden",
@@ -230,7 +240,7 @@ export const LexicalChatInput = ({
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
-          placeholder={<PlaceholderComponent />}
+          placeholder={placeholderElement}
         />
         <OnChangePlugin onChange={handleChange} />
         <HistoryPlugin />

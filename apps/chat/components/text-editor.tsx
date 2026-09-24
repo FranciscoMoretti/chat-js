@@ -45,55 +45,30 @@ const ContentUpdatePlugin = ({
   const isProgrammaticUpdate = useRef(false);
 
   useEffect(() => {
-    if (content) {
-      isProgrammaticUpdate.current = true;
+    editor.setEditable(!isReadonly);
+  }, [editor, isReadonly]);
 
-      if (status === "streaming") {
-        editor.update(
-          () => {
-            const root = $getRoot();
-            const children = root.getChildren();
-            for (const child of children) {
-              child.remove();
-            }
-            $convertFromMarkdownString(content);
-          },
-          {
-            discrete: true,
-            onUpdate: () => {
-              isProgrammaticUpdate.current = false;
-            },
-          }
-        );
-        return;
-      }
-
-      // For non-streaming, only update if content actually differs
-      let currentMarkdown = "";
-      editor.getEditorState().read(() => {
-        currentMarkdown = $convertToMarkdownString(TRANSFORMERS);
-      });
-
-      // Simple trim comparison is usually sufficient
-      if (currentMarkdown.trim() !== content.trim()) {
-        editor.update(
-          () => {
-            const root = $getRoot();
-            const children = root.getChildren();
-            for (const child of children) {
-              child.remove();
-            }
-            $convertFromMarkdownString(content);
-          },
-          {
-            discrete: true,
-            onUpdate: () => {
-              isProgrammaticUpdate.current = false;
-            },
-          }
-        );
-      }
+  useEffect(() => {
+    let currentMarkdown = "";
+    editor.getEditorState().read(() => {
+      currentMarkdown = $convertToMarkdownString(TRANSFORMERS);
+    });
+    if (status !== "streaming" && currentMarkdown.trim() === content.trim()) {
+      return;
     }
+    isProgrammaticUpdate.current = true;
+    editor.update(
+      () => {
+        $getRoot().clear();
+        $convertFromMarkdownString(content);
+      },
+      {
+        discrete: true,
+        onUpdate: () => {
+          isProgrammaticUpdate.current = false;
+        },
+      }
+    );
   }, [content, status, editor]);
 
   const handleChange = (editorState: EditorState) => {

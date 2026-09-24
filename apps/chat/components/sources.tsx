@@ -1,4 +1,5 @@
 import { ArrowRight, FileText } from "lucide-react";
+import { useId } from "react";
 
 import {
   Dialog,
@@ -30,6 +31,7 @@ const SourcesList = ({
   <div className="space-y-3">
     {sources?.map((source: SearchResultItem) => (
       <a
+        aria-label={source.title}
         className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
         href={source.url}
         key={source.url}
@@ -114,8 +116,9 @@ const ShowSourcesButton = ({
   dialogId: string;
 }) => (
   <button
+    aria-label="Show all sources"
     className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
-    onClick={() => document.getElementById(dialogId)?.click()}
+    onClick={() => document.querySelector<HTMLElement>(`#${dialogId}`)?.click()}
     type="button"
   >
     <FaviconGroup
@@ -134,11 +137,10 @@ const ShowSourcesButton = ({
 );
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
+  const sourcesDialogId = useId();
   if (sources.length === 0) {
     return null;
   }
-
-  const sourcesDialogId = "show-all-sources-dialog";
 
   return (
     <div className="space-y-3">

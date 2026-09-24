@@ -22,10 +22,12 @@ export const ResponsiveTools = ({
   tools,
   setTools,
   selectedModelId,
+  disabled = false,
 }: {
   tools: UiToolName | null;
   setTools: Dispatch<SetStateAction<UiToolName | null>>;
   selectedModelId: string;
+  disabled?: boolean;
 }) => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
@@ -38,6 +40,9 @@ export const ResponsiveTools = ({
   const activeTool = tools;
 
   const setTool = (tool: UiToolName | null) => {
+    if (disabled) {
+      return;
+    }
     if (hasUnspecifiedFeatures && tool !== null) {
       return;
     }
@@ -57,6 +62,7 @@ export const ResponsiveTools = ({
           <PopoverTrigger asChild>
             <Button
               className="h-8 gap-1 p-1.5 @[500px]:h-10 @[500px]:gap-2"
+              disabled={disabled}
               title="Select Tools"
               variant="ghost"
             >
@@ -76,6 +82,7 @@ export const ResponsiveTools = ({
           <DropdownMenuTrigger asChild>
             <Button
               className="h-8 gap-1 p-1.5 px-2.5 @[500px]:h-10 @[500px]:gap-2"
+              disabled={disabled}
               size="sm"
               title="Select Tools"
               variant="ghost"
@@ -96,7 +103,7 @@ export const ResponsiveTools = ({
               return (
                 <DropdownMenuItem
                   className="flex items-center gap-2"
-                  disabled={hasUnspecifiedFeatures}
+                  disabled={disabled || hasUnspecifiedFeatures}
                   key={key}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -125,7 +132,9 @@ export const ResponsiveTools = ({
             orientation="vertical"
           />
           <Button
+            aria-label={`Clear ${toolDefinitions[activeTool].shortName} tool`}
             className="text-primary hover:text-primary/80 h-8 gap-1 rounded-full @[500px]:h-10 @[500px]:gap-2"
+            disabled={disabled}
             onClick={() => setTool(null)}
             size="sm"
             variant="ghost"

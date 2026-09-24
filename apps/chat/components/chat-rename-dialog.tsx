@@ -30,6 +30,7 @@ export const ChatRenameDialog = ({
 
   useEffect(() => {
     if (open) {
+      // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with the latest title.
       setChatTitle(currentTitle);
     }
   }, [open, currentTitle]);

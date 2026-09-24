@@ -1,3 +1,4 @@
+import { withEve } from "eve/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -36,9 +37,9 @@ const nextConfig: NextConfig = {
     ],
   },
   partialPrefetching: true,
-  serverExternalPackages: ["pino", "pino-pretty"],
+  serverExternalPackages: ["pino", "pino-pretty", "microsandbox"],
   transpilePackages: ["@chat-js/gateways"],
   typedRoutes: true,
 };
 
-export default nextConfig;
+export default withEve(nextConfig, { devServerTimeoutMs: 600_000 });

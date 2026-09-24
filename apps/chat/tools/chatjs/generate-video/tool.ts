@@ -1,14 +1,12 @@
 import { experimental_generateVideo as generateVideo, tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
-import { z } from "zod";
 
-import { getAppModelDefinition } from "@/lib/ai/app-models";
-import type { AppModelId } from "@/lib/ai/app-models";
-import { getVideoModel } from "@/lib/ai/providers";
-import type { ChatToolContext } from "@/lib/ai/tool-context";
+import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
 import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
+
+import { generateVideoInput } from "./schemas";
 
 // Fixed estimate — not yet available from provider API
 const COST_CENTS = 50;
@@ -37,10 +35,13 @@ const resolveVideoExtension = (mediaType?: string): string => {
   return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
 };
 
-const resolveVideoModel = async (selectedModel?: string): Promise<string> => {
+const resolveVideoModel = async (
+  modelProvider: ToolModelProvider,
+  selectedModel?: string
+): Promise<string> => {
   if (selectedModel) {
     try {
-      const model = await getAppModelDefinition(selectedModel as AppModelId);
+      const model = await modelProvider.getModelDefinition(selectedModel);
       if (model.output.video) {
         return model.apiModelId;
       }
@@ -65,9 +66,14 @@ export const generateVideoTool = tool({
     "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
   execute: async (
     { prompt, aspectRatio, durationSeconds },
-    { context }: ToolExecutionOptions<ChatToolContext>
+    { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
   ): Promise<{ videoUrl: string; prompt: string }> => {
-    const { costAccumulator, selectedModel } = context ?? {};
+    const {
+      costAccumulator,
+      modelProvider,
+      selectedModel,
+      storeFile = uploadFile,
+    } = context ?? {};
     const startMs = Date.now();
     const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const finalDurationSeconds = durationSeconds ?? DEFAULT_DURATION_SECONDS;
@@ -83,16 +89,20 @@ export const generateVideoTool = tool({
     );
 
     try {
-      const modelId = await resolveVideoModel(selectedModel);
+      if (!modelProvider) {
+        throw new Error("Video generation requires model provider context.");
+      }
+      const modelId = await resolveVideoModel(modelProvider, selectedModel);
       const isGoogleModel =
         modelId.startsWith("google/") || modelId.includes("gemini");
 
       log.debug({ modelId }, "generateVideo: resolved model");
 
       const result = await generateVideo({
+        abortSignal,
         aspectRatio: finalAspectRatio,
         duration: finalDurationSeconds,
-        model: getVideoModel(modelId),
+        model: modelProvider.createVideoModel(modelId),
         prompt,
         providerOptions: {
           ...(isGoogleModel && {
@@ -115,7 +125,7 @@ export const generateVideoTool = tool({
       const timestamp = Date.now();
       const ext = resolveVideoExtension(video.mediaType);
       const filename = `generated-video-${timestamp}.${ext}`;
-      const uploaded = await uploadFile(filename, buffer, video.mediaType);
+      const uploaded = await storeFile(filename, buffer, video.mediaType);
 
       log.info(
         {
@@ -155,20 +165,5 @@ export const generateVideoTool = tool({
       throw error;
     }
   },
-  inputSchema: z.object({
-    aspectRatio: z
-      .enum(["16:9", "9:16", "1:1"])
-      .optional()
-      .describe("Optional output aspect ratio. Defaults to 16:9."),
-    durationSeconds: z
-      .number()
-      .int()
-      .min(1)
-      .max(10)
-      .optional()
-      .describe("Optional video duration in seconds. Defaults to 5."),
-    prompt: z
-      .string()
-      .describe("A descriptive prompt for the video to generate."),
-  }),
+  inputSchema: generateVideoInput,
 });

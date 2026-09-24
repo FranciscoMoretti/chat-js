@@ -2,7 +2,6 @@ import { hasToolCall, isStepCount, ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
 import type { AppModelId, ModelId } from "@/lib/ai/app-models";
-import { getLanguageModel } from "@/lib/ai/providers";
 
 import { leadResearcherPrompt } from "./prompts";
 import { runResearcher } from "./researcher-agent";
@@ -14,21 +13,24 @@ export const runSupervisor = async (
   researchBrief: string,
   options: AgentOptions
 ): Promise<string[]> => {
-  const { config, dataStream, toolCallId, abortSignal } = options;
-  const model = await getLanguageModel(config.research_model as ModelId);
+  const { abortSignal, config, dataStream, toolCallId } = options;
+  const model = await options.getLanguageModel(
+    config.research_model as ModelId
+  );
 
   // Sequential execution queue to avoid streaming race conditions and rate limits
-  let researchQueue = Promise.resolve<unknown>(null);
+  let researchQueue: Promise<unknown> = Promise.resolve();
 
   const conductResearchTool = tool({
     description: "Call this tool to conduct research on a specific topic.",
     execute: ({ research_topic }) => {
       const previousResearch = researchQueue;
-      researchQueue = (async () => {
+      const currentResearch = (async () => {
         await previousResearch;
         return runResearcher(research_topic, options);
       })();
-      return researchQueue as Promise<string>;
+      researchQueue = currentResearch;
+      return currentResearch;
     },
     inputSchema: z.object({
       research_topic: z
@@ -49,18 +51,13 @@ export const runSupervisor = async (
   const maxSteps = config.max_researcher_iterations + 1;
 
   const supervisorAgent = new ToolLoopAgent({
+    ...createTelemetry("supervisor", options),
     instructions: leadResearcherPrompt({
       date: getTodayStr(),
       max_concurrent_research_units: config.max_concurrent_research_units,
     }),
     maxOutputTokens: config.research_model_max_tokens,
     model,
-    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
-    tools: {
-      conductResearch: conductResearchTool,
-      researchComplete: researchCompleteTool,
-    },
-    ...createTelemetry("supervisor", options),
     onStepEnd: ({ usage, toolCalls }) => {
       if (usage) {
         options.costAccumulator?.addLLMCost(
@@ -89,6 +86,11 @@ export const runSupervisor = async (
           type: "data-researchUpdate",
         });
       }
+    },
+    stopWhen: [hasToolCall("researchComplete"), isStepCount(maxSteps)],
+    tools: {
+      conductResearch: conductResearchTool,
+      researchComplete: researchCompleteTool,
     },
   });
 

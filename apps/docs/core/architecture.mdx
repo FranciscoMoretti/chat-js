@@ -9,49 +9,47 @@ description: "How ChatJS is structured and how data flows through the system"
 flowchart LR
     Client[Browser] --> App[Next.js]
     App --> DB[(PostgreSQL)]
-    App --> Cache[(Redis)]
     App --> AI[AI Providers]
     App --> Storage[Files SDK Provider]
     App --> Observability[Langfuse]
 ```
 
-The application uses:
+The current ChatJS application uses:
 
 - **Next.js App Router** for the frontend and API routes
-- **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for persistent data (users, chats, messages, documents)
-- **Redis** for ephemeral data (resumable streams, caching). See [Resumable Streams](/cookbook/resumable-streams)
+- **EVE** for the durable conversation transcript, execution state, approvals, checkpoints, and stream recovery
+- **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for application-owned metadata such as users, ownership, projects, sharing, files, documents, and billing evidence
 - **AI SDK** to connect to multiple AI providers through a [gateway abstraction](/gateways/overview)
-- **`useThread`** to manage the selected conversation path, message tree, and independent response runs. See [useThread](./use-thread)
 - **Files SDK** through a configured [file storage provider](../storage) for attachments and generated media
 - **tRPC** for end-to-end type-safe API routes between client and server
 - **Langfuse** (optional) for LLM observability, tracing, and analytics
 
-## Chat Message Flow
+## EVE conversation flow
 
 When a user sends a message:
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Thread as useThread
-    participant API
-    participant DB
-    participant AI
-    participant Cache
-    Client->>Thread: Send message or start run
-    Thread->>API: Send selected path
-    API->>DB: Save messages
-    API->>AI: Stream response
-    AI-->>API: Model stream
-    API-->>Thread: UI message stream (SSE)
-    Thread-->>Client: Publish the assistant message
-    Note over API,Cache: Chunks stored in Redis for resumability
-    API->>DB: Save final response
+    participant UI as Browser UI
+    participant Gateway as ChatJS gateway
+    participant Eve as EVE
+    participant DB as ChatJS metadata DB
+    participant AI as Model provider
+    UI->>Gateway: Authenticated EVE request
+    Gateway->>Eve: Forward authorized command
+    Eve->>DB: Record application-owned evidence
+    Eve->>AI: Run selected model or tool
+    AI-->>Eve: Stream result
+    Eve-->>UI: Native event stream
 ```
 
-ChatJS stores messages with normalized **parts** (text, tool calls, files, reasoning) so you can query and stream updates efficiently. Each active assistant response has its own run. When you navigate to another branch, that response keeps streaming.
+EVE is the transcript authority. ChatJS records only the metadata and resources it owns around that transcript. Public sharing uses a controlled projection instead of exposing native session access.
 
-If [resumable streams](/cookbook/resumable-streams) are enabled, response chunks are published to Redis so clients can reconnect mid-generation without losing progress.
+## Standalone thread package reference
+
+`@chat-js/thread` remains a separate package for applications that want an AI SDK-compatible `useThread` interface. The following reference describes that package, not the EVE-only ChatJS application runtime.
+
+`useThread` manages a selected conversation path, message tree, and independent response runs. See [useThread](../threads).
 
 ## Configuration
 

@@ -1,29 +1,18 @@
 import { generateImage, generateText, tool } from "ai";
 import type { FileUIPart, ToolExecutionOptions } from "ai";
-import { z } from "zod";
 
-import { getAppModelDefinition } from "@/lib/ai/app-models";
-import type { AppModelId } from "@/lib/ai/app-models";
-import type { InstalledGateway } from "@/lib/ai/gateways/registry";
-import { getImageModel, getMultimodalImageModel } from "@/lib/ai/providers";
-import type { ChatToolContext } from "@/lib/ai/tool-context";
+import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
-import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
 import { downloadFile, uploadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
 
+import { generateImageInput } from "./schemas";
+
 const log = createModuleLogger("ai.tools.generate-image");
 
 type ImageMode = "edit" | "generate";
-type ActiveGatewayModelId = Parameters<
-  InstalledGateway["createLanguageModel"]
->[0];
-type ActiveGatewayImageModelId = Parameters<
-  InstalledGateway["createImageModel"]
->[0];
-
 /**
  * Resolve which model to use for image generation and whether it's a
  * multimodal language model (uses generateText) or a dedicated image model
@@ -31,15 +20,18 @@ type ActiveGatewayImageModelId = Parameters<
  * all gateways, not just the static models.generated snapshot.
  */
 const resolveImageModel = async (
+  modelProvider: ToolModelProvider,
   selectedModel?: string
 ): Promise<
   | {
-      modelId: ActiveGatewayModelId;
+      modelId: string;
       multimodal: true;
-      usageModelId: AppModelId;
+      usageModelId: Awaited<
+        ReturnType<ToolModelProvider["getModelDefinition"]>
+      >["id"];
     }
   | {
-      modelId: ActiveGatewayImageModelId;
+      modelId: string;
       multimodal: false;
       usageModelId?: never;
     }
@@ -47,7 +39,7 @@ const resolveImageModel = async (
   // If the user's selected chat model can generate images, prefer it
   if (selectedModel) {
     try {
-      const model = await getAppModelDefinition(selectedModel as AppModelId);
+      const model = await modelProvider.getModelDefinition(selectedModel);
       if (model.output.image) {
         return {
           modelId: model.apiModelId,
@@ -71,7 +63,7 @@ const resolveImageModel = async (
     );
   }
   try {
-    const model = await getAppModelDefinition(defaultId as AppModelId);
+    const model = await modelProvider.getModelDefinition(defaultId);
     // Default could be a multimodal language model (e.g. gemini-3-pro-image)
     if (model.output.image) {
       return {
@@ -177,22 +169,24 @@ const runGenerateImageTraditional = async ({
   lastGeneratedImage,
   startMs,
   costAccumulator,
+  abortSignal,
+  storeFile,
+  modelId,
+  modelProvider,
 }: {
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
-  costAccumulator?: CostAccumulator;
+  costAccumulator?: ChatToolContext["costAccumulator"];
+  abortSignal?: AbortSignal;
+  storeFile: typeof uploadFile;
+  modelId: string;
+  modelProvider: ToolModelProvider;
 }): Promise<{ imageUrl: string; prompt: string }> => {
   if (!config.ai.tools.image.enabled) {
     throw new Error("Image generation is not enabled");
-  }
-  const imageDefault = config.ai.tools.image.default;
-  if (!imageDefault) {
-    throw new Error(
-      "Set ai.tools.image.default to an image model supported by your gateway."
-    );
   }
   let promptInput:
     | string
@@ -221,7 +215,8 @@ const runGenerateImageTraditional = async ({
   }
 
   const res = await generateImage({
-    model: getImageModel(imageDefault),
+    abortSignal,
+    model: modelProvider.createImageModel(modelId),
     n: 1,
     prompt: promptInput,
     providerOptions: {
@@ -240,14 +235,14 @@ const runGenerateImageTraditional = async ({
   const buffer = Buffer.from(res.images[0].base64, "base64");
   const timestamp = Date.now();
   const filename = `generated-image-${timestamp}.png`;
-  const result = await uploadFile(filename, buffer, "image/png");
-
+  // Provider usage is billable even if the subsequent storage upload fails.
   costAccumulator?.addImageCost(
-    imageDefault,
+    modelId,
     res.images.length,
     res.usage ?? {},
     "generateImage-traditional"
   );
+  const result = await storeFile(filename, buffer, "image/png");
 
   log.info(
     {
@@ -271,15 +266,23 @@ const runGenerateImageMultimodal = async ({
   lastGeneratedImage,
   startMs,
   costAccumulator,
+  abortSignal,
+  storeFile,
+  modelProvider,
 }: {
-  modelId: ActiveGatewayModelId;
-  usageModelId: AppModelId;
+  modelId: string;
+  usageModelId: Awaited<
+    ReturnType<ToolModelProvider["getModelDefinition"]>
+  >["id"];
   mode: ImageMode;
   prompt: string;
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
-  costAccumulator?: CostAccumulator;
+  costAccumulator?: ChatToolContext["costAccumulator"];
+  abortSignal?: AbortSignal;
+  storeFile: typeof uploadFile;
+  modelProvider: ToolModelProvider;
 }): Promise<{ imageUrl: string; prompt: string }> => {
   // Build messages with image context if in edit mode
   interface ImageContent {
@@ -324,8 +327,9 @@ const runGenerateImageMultimodal = async ({
   const isOpenAIModel = modelId.startsWith("openai/");
 
   const res = await generateText({
+    abortSignal,
     messages: [{ content: userContent, role: "user" }],
-    model: getMultimodalImageModel(modelId),
+    model: modelProvider.createLanguageModel(modelId),
     providerOptions: {
       ...(isGoogleModel && {
         google: {
@@ -369,7 +373,7 @@ const runGenerateImageMultimodal = async ({
   const timestamp = Date.now();
   const ext = imageFile.mediaType.split("/")[1] || "png";
   const filename = `generated-image-${timestamp}.${ext}`;
-  const result = await uploadFile(filename, buffer, imageFile.mediaType);
+  const result = await storeFile(filename, buffer, imageFile.mediaType);
 
   log.info(
     {
@@ -394,13 +398,15 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
 `,
   execute: async (
     { prompt },
-    { context }: ToolExecutionOptions<ChatToolContext>
+    { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
   ): Promise<{ imageUrl: string; prompt: string }> => {
     const {
       attachments = [],
       lastGeneratedImage = null,
       selectedModel,
       costAccumulator,
+      modelProvider,
+      storeFile = uploadFile,
     } = context ?? {};
     const startMs = Date.now();
     const imageParts = attachments.filter(
@@ -424,34 +430,44 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
     );
 
     try {
+      if (!modelProvider) {
+        throw new Error("Image generation requires model provider context.");
+      }
       const {
         modelId: effectiveModelId,
         multimodal,
         usageModelId,
-      } = await resolveImageModel(selectedModel);
+      } = await resolveImageModel(modelProvider, selectedModel);
 
       // Use multimodal path for language models with image generation
       if (multimodal) {
         return await runGenerateImageMultimodal({
+          abortSignal,
           costAccumulator,
           imageParts,
           lastGeneratedImage,
           mode,
           modelId: effectiveModelId,
+          modelProvider,
           prompt,
           startMs,
+          storeFile,
           usageModelId,
         });
       }
 
       // Traditional image generation for dedicated image models
       return await runGenerateImageTraditional({
+        abortSignal,
         costAccumulator,
         imageParts,
         lastGeneratedImage,
         mode,
+        modelId: effectiveModelId,
+        modelProvider,
         prompt,
         startMs,
+        storeFile,
       });
     } catch (error) {
       const resolvedError = await resolveError(error);
@@ -468,11 +484,5 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
       throw resolvedError;
     }
   },
-  inputSchema: z.object({
-    prompt: z
-      .string()
-      .describe(
-        "The user’s image prompt. The original intent, message, and meaning must remain unchanged. No new ideas, claims, or content may be introduced."
-      ),
-  }),
+  inputSchema: generateImageInput,
 });

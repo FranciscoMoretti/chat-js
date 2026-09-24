@@ -19,7 +19,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useGetChatById, useSetVisibility } from "@/hooks/chat-sync-hooks";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
@@ -27,48 +26,40 @@ import { LoginPrompt } from "./upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
 
-// Dialog content component that only renders when dialog is open
-const ShareDialogContent = ({
+export const ShareDialogView = ({
   chatId,
+  isPublic,
+  isPending,
   onClose,
+  setVisibility,
 }: {
   chatId: string;
+  isPublic: boolean;
+  isPending: boolean;
   onClose: () => void;
+  setVisibility: (visibility: "private" | "public") => Promise<void>;
 }) => {
   const [step, setStep] = useState<ShareStep>("info");
-  const { data: chat } = useGetChatById(chatId);
-  const setVisibilityMutation = useSetVisibility();
-
-  const isPublic = chat?.visibility === "public";
-  const { isPending } = setVisibilityMutation;
-
-  const handleShare = () => {
-    setVisibilityMutation.mutate(
-      {
-        chatId,
-        visibility: "public",
-      },
-      {
-        onSuccess: () => {
-          setStep("shared");
-        },
-      }
-    );
+  const handleShare = async () => {
+    try {
+      await setVisibility("public");
+      setStep("shared");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to share chat."
+      );
+    }
   };
-
-  const handleUnshare = () => {
-    setVisibilityMutation.mutate(
-      {
-        chatId,
-        visibility: "private",
-      },
-      {
-        onSuccess: () => {
-          onClose();
-          setStep("info");
-        },
-      }
-    );
+  const handleUnshare = async () => {
+    try {
+      await setVisibility("private");
+      onClose();
+      setStep("info");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to make chat private."
+      );
+    }
   };
 
   const handleCopyLink = () => {
@@ -232,15 +223,15 @@ const ShareDialogContent = ({
 
 // Extracted dialog component that can be controlled externally
 export const ShareDialog = ({
-  chatId,
   open,
   onOpenChange,
   children,
+  renderContent,
 }: {
-  chatId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
+  renderContent: (onClose: () => void) => React.ReactNode;
 }) => {
   const handleDialogOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -250,22 +241,17 @@ export const ShareDialog = ({
     <Dialog onOpenChange={handleDialogOpenChange} open={open}>
       {children}
       <DialogContent className="sm:max-w-md">
-        {open && (
-          <ShareDialogContent
-            chatId={chatId}
-            onClose={() => onOpenChange(false)}
-          />
-        )}
+        {open && renderContent(() => onOpenChange(false))}
       </DialogContent>
     </Dialog>
   );
 };
 
 export const ShareButton = ({
-  chatId,
   className,
+  renderContent,
 }: {
-  chatId: string;
+  renderContent: (onClose: () => void) => React.ReactNode;
 } & React.ComponentProps<typeof Button>) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
@@ -293,7 +279,11 @@ export const ShareButton = ({
   }
 
   return (
-    <ShareDialog chatId={chatId} onOpenChange={setOpen} open={open}>
+    <ShareDialog
+      onOpenChange={setOpen}
+      open={open}
+      renderContent={renderContent}
+    >
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
     </ShareDialog>
   );

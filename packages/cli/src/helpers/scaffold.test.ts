@@ -188,6 +188,108 @@ describe("buildConfigTs", () => {
 });
 
 describe("scaffoldFromTemplate", () => {
+  it("ships each maintained runtime as a local archive", async () => {
+    const destination = await makeTempDir("chat-app-patched-runtimes");
+    await scaffoldFromTemplate(destination);
+    const manifest = JSON.parse(
+      await readFile(join(destination, "package.json"), "utf-8")
+    ) as { dependencies: Record<string, string> };
+    const archives = {
+      "@ai-sdk/mcp": "ai-sdk-mcp-2.0.45.tgz",
+      "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
+      eve: "eve-0.52.2.tgz",
+    };
+
+    for (const [packageName, archiveName] of Object.entries(archives)) {
+      expect(manifest.dependencies[packageName]).toBe(
+        `file:vendor/${archiveName}`
+      );
+      expect(
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Check each generated archive against the same staged scaffold.
+        await Bun.file(join(destination, "vendor", archiveName)).exists()
+      ).toBe(true);
+    }
+  });
+
+  it("omits maintainer harnesses while preserving application source and starter tests", async () => {
+    const destination = makeTempDir("maintainer-boundary");
+    await scaffoldFromTemplate(destination);
+    for (const file of [
+      "tests/ui-primitives.visual.e2e.ts",
+      "tests/layout-primitives.visual.e2e.ts",
+      "tests/model-toolbar.visual.e2e.ts",
+      "tests/ui-primitives.visual.e2e.ts-snapshots",
+      "tests/layout-primitives.visual.e2e.ts-snapshots",
+      "tests/model-toolbar.visual.e2e.ts-snapshots",
+      "app/(chat)/visual-fixtures",
+      "components/model-toolbar-visual-fixture.tsx",
+      "components/ui/layout-primitives-visual-fixture.tsx",
+      "components/ui/ui-primitives-visual-fixture.tsx",
+      "playwright.visual.config.ts",
+      "tests/eve-browser.e2e.ts",
+      "tests/eve-message-presentation.fixture.tsx",
+      "tests/fixtures/eve-oauth-mcp-server.ts",
+      "lib/eve/tool-selection.test.ts",
+      "lib/eve/local-sandbox-inventory.test.ts",
+      "lib/eve/purge-local-sandbox.test.ts",
+      "lib/eve/verify-local-coverage.test.ts",
+      "lib/db/eve-sandbox-run-coverage.test.ts",
+      "evals/my-eval.eval.ts",
+      "lib/ai/eval-agent.ts",
+      "evalite.config.ts",
+      "tsconfig.tsbuildinfo",
+      "lib/db/migrations/eve-runtime-migration.test.ts",
+      "playwright.eve.config.ts",
+      "vitest.eve.config.ts",
+    ]) {
+      expect(existsSync(join(destination, file))).toBe(false);
+    }
+    for (const file of [
+      "tests/chat.e2e.ts",
+      "tests/reasoning.e2e.ts",
+      "tests/artifacts.e2e.ts",
+      "components/eve/eve-conversation.tsx",
+      "lib/eve/message-delivery.test.ts",
+      "lib/db/migrations/0000_eve_baseline.sql",
+      "scripts/install-eve-local-postgres.ts",
+      "vitest.config.ts",
+    ]) {
+      expect(existsSync(join(destination, file))).toBe(true);
+    }
+    const playwright = await readFile(
+      join(destination, "playwright.config.ts"),
+      "utf-8"
+    );
+    expect(playwright).not.toContain('name: "visual"');
+    expect(playwright).toContain('name: "chat"');
+    expect(playwright).toContain('name: "reasoning"');
+    expect(playwright).toContain('name: "artifacts"');
+    const tsconfig = await readFile(
+      join(destination, "tsconfig.json"),
+      "utf-8"
+    );
+    expect(tsconfig).not.toContain("@eve-test");
+    expect(tsconfig).not.toContain("@world-postgres-test");
+    const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
+    expect(lint).not.toContain("tests/eve-fixture");
+    const manifest = JSON.parse(
+      await readFile(join(destination, "package.json"), "utf-8")
+    );
+    for (const dependency of [
+      "@electric-sql/pglite",
+      "pg",
+      "@types/pg",
+      "evalite",
+      "better-sqlite3",
+    ]) {
+      expect(manifest.devDependencies[dependency]).toBeUndefined();
+    }
+    expect(manifest.overrides?.evalite).toBeUndefined();
+    for (const script of ["eval:dev", "eval:serve"]) {
+      expect(manifest.scripts[script]).toBeUndefined();
+    }
+  });
+
   it("leaves the storage slot and provider peers to registry installation", async () => {
     const destination = await makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
@@ -222,7 +324,11 @@ describe("scaffoldFromTemplate", () => {
     expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
+    expect(packageJson.scripts?.build).toBe(
+      "tsx lib/db/migrate.ts --deployment && eve build && next build"
+    );
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
+    expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
     expect(existsSync(join(destination, "biome.jsonc"))).toBe(false);
     expect(existsSync(join(destination, "oxlint.config.ts"))).toBe(true);
@@ -233,15 +339,32 @@ describe("scaffoldFromTemplate", () => {
     );
     expect(lintBaseline).not.toContain("packages/thread/src/");
 
-    expect(existsSync(join(destination, "lib", "thread", "react.ts"))).toBe(
-      true
-    );
-    const chatStoreSource = await readFile(
-      join(destination, "lib", "stores", "base", "use-chat.ts"),
-      "utf-8"
-    );
-    expect(chatStoreSource).toContain('from "@/lib/thread"');
-    expect(chatStoreSource).toContain('from "@/lib/thread/react"');
+    for (const path of [
+      "app/(chat)/api/chat",
+      "app/(chat)/chat-providers.tsx",
+      "app/(chat)/chat-route-host.tsx",
+      "app/(chat)/chat-runtime-boundary.tsx",
+      "components/chat-runtime-controller.tsx",
+      "components/chat-header.tsx",
+      "components/chat-sync.tsx",
+      "components/chat-system.tsx",
+      "lib/app-chat-runtime.ts",
+      "lib/application-thread.ts",
+      "lib/chat-runtime-id.ts",
+      "lib/runtime-registry",
+      "lib/stores",
+      "lib/thread",
+      "providers/chat-input-provider.tsx",
+    ]) {
+      expect(existsSync(join(destination, path))).toBe(false);
+    }
+
+    expect(
+      existsSync(join(destination, "components/chat-header-view.tsx"))
+    ).toBe(true);
+    expect(
+      existsSync(join(destination, "components/chat/chat-layout.tsx"))
+    ).toBe(true);
   });
 
   it("rewrites the generated web app to be npm-friendly", async () => {
@@ -301,7 +424,8 @@ describe("scaffoldFromTemplate", () => {
     expect(packageJson.packageManager).toBe("pnpm@10.33.1");
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
-    expect(workspaceConfig).toContain("better-sqlite3: true");
+    expect(workspaceConfig).not.toContain("better-sqlite3");
+    expect(workspaceConfig).toContain("cbor-extract: true");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
     expect(workspaceConfig).toContain("esbuild: true");
@@ -356,7 +480,22 @@ describe("scaffoldFromTemplate", () => {
         devDependencies: Record<string, string>;
       };
 
+      expect(existsSync(join(projectDir, "tests/eve-browser.e2e.ts"))).toBe(
+        false
+      );
+      expect(
+        existsSync(
+          join(projectDir, "lib/db/migrations/eve-runtime-migration.test.ts")
+        )
+      ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
+      expect(packageJson.dependencies.eve).toBe("file:vendor/eve-0.52.2.tgz");
+      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe(
+        "file:vendor/ai-sdk-mcp-2.0.45.tgz"
+      );
+      expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
+        "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
+      );
       expect(electronPackageJson.devDependencies["@better-auth/electron"]).toBe(
         "1.5.6"
       );
@@ -610,7 +749,7 @@ describe("scaffoldElectron", () => {
     expect(workspaceConfig).toContain("onlyBuiltDependencies:");
     expect(workspaceConfig).toContain("allowBuilds:");
     expect(workspaceConfig).toContain("blockExoticSubdeps: false");
-    expect(workspaceConfig).toContain("better-sqlite3: true");
+    expect(workspaceConfig).not.toContain("better-sqlite3");
     expect(workspaceConfig).toContain("electron: true");
     expect(workspaceConfig).toContain("electron-winstaller: true");
     expect(workspaceConfig).toContain("esbuild: true");

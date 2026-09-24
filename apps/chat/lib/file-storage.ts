@@ -3,7 +3,11 @@ import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
 import { FILE_STORAGE_PREFIX } from "./constants";
-import { FILE_CONTENT_PATH, keyFromFileUrl } from "./file-url";
+import {
+  FILE_CONTENT_PATH,
+  isFileStorageKey,
+  keyFromFileUrl,
+} from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
@@ -32,7 +36,7 @@ const sanitizeFilename = (filename: string): string => {
   return withoutControlCharacters.trim() || "file";
 };
 
-const createStorageKey = (filename: string): string => {
+export const createFileStorageKey = (filename: string): string => {
   const clean = sanitizeFilename(filename);
   const dot = clean.lastIndexOf(".");
   const candidate = dot > 0 ? clean.slice(dot).toLowerCase() : "";
@@ -45,13 +49,18 @@ const createFileUrl = (key: string): string => {
   return `${FILE_CONTENT_PATH}?${search}`;
 };
 
-export const uploadFile = async (
+/** Internal preallocated key, recorded by the caller before external storage I/O. */
+export const uploadFileAtKey = async (
+  key: string,
   filename: string,
   body: Body,
   contentType?: string
 ) => {
+  if (!isFileStorageKey(key)) {
+    throw new Error("Invalid storage key.");
+  }
   const pathname = sanitizeFilename(filename);
-  const uploaded = await getFiles().upload(createStorageKey(pathname), body, {
+  const uploaded = await getFiles().upload(key, body, {
     contentType,
   });
 
@@ -61,6 +70,13 @@ export const uploadFile = async (
     url: createFileUrl(uploaded.key),
   };
 };
+
+export const uploadFile = (
+  filename: string,
+  body: Body,
+  contentType?: string
+) =>
+  uploadFileAtKey(createFileStorageKey(filename), filename, body, contentType);
 
 export const listFiles = async () => {
   const storedFiles: {
@@ -76,6 +92,17 @@ export const listFiles = async () => {
     });
   }
   return { files: storedFiles };
+};
+
+/** @yields {{ pathname: string; uploadedAt: Date; url: string }} stored file metadata. */
+export const iterateStoredFiles = async function* iterateStoredFiles() {
+  for await (const file of getFiles().listAll()) {
+    yield {
+      pathname: file.key,
+      uploadedAt: new Date(file.lastModified ?? Date.now()),
+      url: createFileUrl(file.key),
+    };
+  }
 };
 
 export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {

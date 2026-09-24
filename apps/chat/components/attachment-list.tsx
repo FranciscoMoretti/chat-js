@@ -20,9 +20,16 @@ import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
 import { HoverCardTrigger } from "@/components/ui/hover-card";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import type { Attachment } from "@/lib/ai/types";
 import { getFileImageProps } from "@/lib/file-url";
 import { cn } from "@/lib/utils";
+
+const emptyUploadQueue: string[] = [];
+
+export interface AttachmentViewData {
+  contentType: string;
+  name: string;
+  url: string;
+}
 
 const AttachmentIcon = ({
   isImage,
@@ -71,7 +78,7 @@ const AttachmentPill = ({
   isUploading,
   onRemove,
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading: boolean;
   onRemove?: () => void;
 }) => {
@@ -138,7 +145,7 @@ const AttachmentItem = ({
   onImageClick,
   variant = "card",
 }: {
-  attachment: Attachment;
+  attachment: AttachmentViewData;
   isUploading?: boolean;
   onRemove?: () => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
@@ -172,6 +179,7 @@ const AttachmentItem = ({
     <PromptInputHoverCard>
       <HoverCardTrigger asChild>
         <button
+          aria-label={attachmentLabel}
           className="inline-block cursor-default text-left"
           onClick={(e) => {
             e.stopPropagation();
@@ -206,6 +214,7 @@ const AttachmentItem = ({
               className="size-7"
               onClick={async (e) => {
                 e.stopPropagation();
+                /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
                 try {
                   const response = await fetch(url);
                   if (response.status === 404) {
@@ -213,6 +222,7 @@ const AttachmentItem = ({
                     return;
                   }
                   if (!response.ok) {
+                    // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
                     throw new Error(
                       `File download failed (${response.status})`
                     );
@@ -228,6 +238,7 @@ const AttachmentItem = ({
                   // Fallback: open in new tab if fetch fails
                   window.open(url, "_blank");
                 }
+                /* oxlint-enable react/todo */
               }}
               size="icon"
               title="Download"
@@ -244,16 +255,16 @@ const AttachmentItem = ({
 
 export const AttachmentList = ({
   attachments,
-  uploadQueue = [],
+  uploadQueue = emptyUploadQueue,
   onRemoveAction,
   onImageClick,
   variant = "card",
   testId = "attachments",
   className,
 }: {
-  attachments: Attachment[];
+  attachments: AttachmentViewData[];
   uploadQueue?: string[];
-  onRemoveAction?: (attachment: Attachment) => void;
+  onRemoveAction?: (attachment: AttachmentViewData) => void;
   onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
   testId?: string;

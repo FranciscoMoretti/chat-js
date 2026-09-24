@@ -29,7 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useGetCredits } from "@/hooks/chat-sync-hooks";
+import { useGetCredits } from "@/hooks/use-credits";
 import authClient from "@/lib/auth-client";
 import { isElectronRenderer } from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";

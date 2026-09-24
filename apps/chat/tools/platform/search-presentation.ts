@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { StreamWriter } from "@/lib/ai/types";
+import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { createModuleLogger } from "@/lib/logger";
 
 import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
@@ -42,7 +42,7 @@ export const executeMultiQuerySearch = async ({
     query: { query: string; maxResults: number },
     index: number
   ) => Promise<{ title: string; url: string; content: string }[]>;
-  dataStream?: StreamWriter;
+  dataStream?: ToolProgressWriter;
   toolCallId: string;
   writeTopLevelUpdates: boolean;
   title: string;

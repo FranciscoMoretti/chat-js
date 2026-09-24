@@ -83,6 +83,7 @@ export const ModelsTable = ({
   // Stable sort order: computed once on initial load, never changes
   const initialSortRef = useRef<AppModelId[] | null>(null);
   const sortedModels = useMemo(() => {
+    // oxlint-disable-next-line react/refs -- Keep the user's initial model ordering stable across query updates.
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest
       const enabledSet = new Set(enabledModels.map((m) => m.id));
@@ -95,10 +96,11 @@ export const ModelsTable = ({
     }
     // Subsequent renders: maintain original order
     const modelMap = new Map(allModels.map((m) => [m.id, m]));
+    // oxlint-disable-next-line react/refs -- Read the stable ordering captured on first render.
     return initialSortRef.current
       .map((id) => modelMap.get(id))
       .filter((m) => m !== undefined);
-  }, [allModels, enabledModels]);
+  }, [allModels, enabledModels, initialSortRef]);
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {

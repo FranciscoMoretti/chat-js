@@ -12,11 +12,25 @@ jobs:
     name: Playwright
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: chatjs_ci
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # These secrets are optional in CI: Playwright falls back to safe test
-      # defaults when they are unset so the anonymous e2e suite can still boot.
+      # CI owns an ephemeral database; never spend shared Neon transfer on tests.
+      CI_PLAYWRIGHT: "true"
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
+      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
+      EVE_INTERNAL_ORIGIN: http://localhost:3000
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +38,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Check affected
         id: affected
         shell: bash
@@ -58,6 +72,12 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
       - if: steps.affected.outputs.run == 'true'
         run: bun install --frozen-lockfile
+      - name: Migrate isolated test database
+        if: steps.affected.outputs.run == 'true'
+        run: bun run --cwd apps/chat db:migrate
+      - name: Bootstrap isolated EVE workflow database
+        if: steps.affected.outputs.run == 'true'
+        run: bun run --cwd apps/chat eve:db:setup:local
       - uses: actions/cache@v4
         if: steps.affected.outputs.run == 'true'
         id: playwright-cache

@@ -1,0 +1,184 @@
+import { expect, test } from "@playwright/test";
+import { APIError, Sandbox } from "@vercel/sandbox";
+import { eq } from "drizzle-orm";
+
+import { db } from "../lib/db/client";
+import {
+  confirmEveCodeSandboxCreation,
+  reserveEveCodeSandbox,
+} from "../lib/db/eve-code-sandboxes";
+import {
+  beginEveConversationDeletion,
+  createEveConversation,
+} from "../lib/db/eve-queries";
+import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
+import { env } from "../lib/env";
+import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
+import { eveCodeSandboxOwnership } from "../lib/eve/code-sandbox-ownership";
+import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
+import { createModuleLogger } from "../lib/logger";
+import { executeJavaScriptInSandbox } from "../tools/chatjs/vercel-code-execution/javascript";
+import { executePythonInSandbox } from "../tools/chatjs/vercel-code-execution/python";
+import {
+  cleanupSandbox,
+  createSandbox,
+  resolveSandboxAuth,
+} from "../tools/chatjs/vercel-code-execution/sandbox";
+import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
+import { assertEveTestDatabase } from "./eve-test-database";
+
+for (const language of ["javascript", "python"] as const) {
+  test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
+    test.setTimeout(120_000);
+    const auth = resolveSandboxAuth();
+    const name = eveCodeSandboxName({
+      callId: language,
+      ownerId: "local-sdk-fixture",
+      provider: auth,
+      sessionId: crypto.randomUUID(),
+    });
+    const sandbox = await createSandbox(
+      language === "javascript" ? "node22" : "python3.13",
+      AbortSignal.timeout(30_000),
+      name,
+      auth
+    );
+    const log = createModuleLogger("sandbox-sdk-test");
+    const requestId = crypto.randomUUID();
+    try {
+      expect(sandbox.persistent).toBe(false);
+      expect(sandbox.name).toBe(name);
+      const context = {
+        code: language === "javascript" ? "console.log(6 * 7)" : "print(6 * 7)",
+        log,
+        requestId,
+        sandbox,
+      };
+      const result =
+        language === "javascript"
+          ? await executeJavaScriptInSandbox(context)
+          : await executePythonInSandbox(context);
+      expect(result.message).toContain("42");
+    } finally {
+      await cleanupSandbox(sandbox, log, requestId);
+    }
+    let removed = false;
+    try {
+      await Sandbox.get({
+        name: sandbox.name,
+        resume: false,
+        signal: AbortSignal.timeout(15_000),
+        ...auth,
+      });
+    } catch (error) {
+      removed = error instanceof APIError && error.response.status === 404;
+    }
+    expect(
+      removed,
+      "Deleted sandbox must no longer be retrievable by its exact name"
+    ).toBe(true);
+  });
+}
+
+test("native sandbox ownership is durably released after real provider cleanup", async () => {
+  test.setTimeout(120_000);
+  assertEveTestDatabase(env.DATABASE_URL);
+  const ownerId = crypto.randomUUID();
+  await db.insert(user).values({
+    email: `${ownerId}@test.invalid`,
+    id: ownerId,
+    name: "Sandbox fixture",
+  });
+  const row = await createEveConversation(
+    ownerId,
+    crypto.randomUUID(),
+    "Ownership fixture",
+    () => Promise.resolve(crypto.randomUUID())
+  );
+  if (!row.sessionId) {
+    throw new Error("Missing native fixture session");
+  }
+  try {
+    const sandboxOwnership = eveCodeSandboxOwnership({
+      callId: "sdk-fixture",
+      session: {
+        auth: { initiator: { principalId: ownerId } },
+        id: row.sessionId,
+      },
+    });
+    const tool = codeExecution;
+    if (!tool.execute) {
+      throw new Error("Missing code executor");
+    }
+    const result = await tool.execute(
+      {
+        code: "console.log(6 * 7)",
+        language: "javascript",
+        title: "Ownership check",
+      },
+      {
+        abortSignal: AbortSignal.timeout(60_000),
+        context: { sandboxOwnership },
+        messages: [],
+        toolCallId: "sdk-fixture",
+      }
+    );
+    expect(result).toMatchObject({ message: expect.stringContaining("42") });
+    const resources = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.ownerId, ownerId));
+    expect(resources).toHaveLength(1);
+    expect(resources[0].state).toBe("deleted");
+    expect(resources[0].creationConfirmed).toBe(true);
+    let missing = false;
+    try {
+      await Sandbox.get({
+        name: resources[0].name,
+        resume: false,
+        signal: AbortSignal.timeout(15_000),
+        ...resolveSandboxAuth(),
+      });
+    } catch (error) {
+      missing = error instanceof APIError && error.response.status === 404;
+    }
+    expect(missing).toBe(true);
+    // Simulate process loss after the successful create reply was recorded.
+    const orphanName = await reserveEveCodeSandbox(
+      ownerId,
+      row.id,
+      "orphan-fixture",
+      resolveSandboxAuth()
+    );
+    const orphan = await createSandbox(
+      "node22",
+      AbortSignal.timeout(30_000),
+      orphanName,
+      resolveSandboxAuth()
+    );
+    await confirmEveCodeSandboxCreation(ownerId, row.id, orphan.name);
+    await beginEveConversationDeletion(ownerId, row.id);
+    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    const [recovered] = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.name, orphanName));
+    expect(recovered.state).toBe("deleted");
+  } finally {
+    const resources = await db
+      .select()
+      .from(eveCodeSandbox)
+      .where(eq(eveCodeSandbox.ownerId, ownerId));
+    // Preserve ownership evidence if allocation or cleanup had an uncertain outcome.
+    if (resources.every((resource) => resource.state === "deleted")) {
+      await db
+        .delete(eveCodeSandbox)
+        .where(eq(eveCodeSandbox.ownerId, ownerId));
+      await db
+        .delete(eveConversation)
+        .where(eq(eveConversation.ownerId, ownerId));
+      await db.delete(user).where(eq(user.id, ownerId));
+    }
+  }
+});

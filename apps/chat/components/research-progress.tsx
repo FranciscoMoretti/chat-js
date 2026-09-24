@@ -44,7 +44,7 @@ export const ResearchProgress = ({
     [updates]
   );
 
-  // TODO: First update is not showing
+  // Keep the fallback title while no update has been received.
   const lastUpdateTitle = (() => {
     if (!lastUpdate) {
       return "Researching";

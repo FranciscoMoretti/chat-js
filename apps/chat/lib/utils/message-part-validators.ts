@@ -4,58 +4,8 @@ import { z } from "zod";
 const providerMetadataSchema = z.unknown().optional();
 
 /**
- * Zod validators for each UI message part type
- * Used to validate parts before mapping to database Part rows
+ * Validate tool parts before mapping them to database Part rows.
  */
-
-const textPartSchema = z.object({
-  providerMetadata: providerMetadataSchema,
-  state: z.enum(["streaming", "done"]).optional(),
-  text: z.string(),
-  type: z.literal("text"),
-});
-
-const reasoningPartSchema = z.object({
-  providerMetadata: providerMetadataSchema,
-  state: z.enum(["streaming", "done"]).optional(),
-  text: z.string(),
-  type: z.literal("reasoning"),
-});
-
-const filePartSchema = z.object({
-  filename: z.string().optional(),
-  mediaType: z.string(),
-  providerMetadata: providerMetadataSchema,
-  type: z.literal("file"),
-  url: z.string(),
-});
-
-const sourceUrlPartSchema = z.object({
-  providerMetadata: providerMetadataSchema,
-  sourceId: z.string(),
-  title: z.string().optional(),
-  type: z.literal("source-url"),
-  url: z.string(),
-});
-
-const sourceDocumentPartSchema = z.object({
-  filename: z.string().optional(),
-  mediaType: z.string(),
-  providerMetadata: providerMetadataSchema,
-  sourceId: z.string(),
-  title: z.string(),
-  type: z.literal("source-document"),
-});
-
-const stepStartPartSchema = z.object({
-  type: z.literal("step-start"),
-});
-
-const dataPartSchema = z.object({
-  data: z.unknown(),
-  id: z.string().optional(),
-  type: z.string().startsWith("data-"),
-});
 
 // Tool part schemas for different states
 const toolPartInputStreamingSchema = z.object({
@@ -309,19 +259,6 @@ const dynamicToolPartSchema = z.union([
   dynamicToolPartOutputAvailableSchema,
   dynamicToolPartOutputErrorSchema,
   dynamicToolPartOutputDeniedSchema,
-]);
-
-// Union schema for all part types
-const _messagePartSchema = z.union([
-  textPartSchema,
-  reasoningPartSchema,
-  filePartSchema,
-  sourceUrlPartSchema,
-  sourceDocumentPartSchema,
-  stepStartPartSchema,
-  dataPartSchema,
-  toolPartSchema,
-  dynamicToolPartSchema,
 ]);
 
 /**

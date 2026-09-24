@@ -61,7 +61,7 @@ export const config = new Command()
         [code] = await once(child, "close");
       } catch (error) {
         throw new Error(
-          `Could not spawn ${cmd}. Make sure ${pm} is installed.`,
+          `Could not spawn ${cmd}. Make sure ${pm} is installed. ${error instanceof Error ? error.message : String(error)}`,
           {
             cause: error,
           }

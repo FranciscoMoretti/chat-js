@@ -18,7 +18,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@eve-test/*": ["./node_modules/eve/*", "../../node_modules/eve/*"],
+      "@world-postgres-test/*": [
+        "./node_modules/@workflow/world-postgres/*",
+        "../../node_modules/@workflow/world-postgres/*"
+      ]
     },
     "strictNullChecks": true,
     "types": ["node"]
@@ -31,5 +36,5 @@
     "next.config.js",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/.eve/**", "**/.output/**"]
 }

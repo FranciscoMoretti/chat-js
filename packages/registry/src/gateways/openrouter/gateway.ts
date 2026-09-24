@@ -114,12 +114,16 @@ export class OpenRouterGateway
     return provider.chat(modelId);
   }
 
+  // The gateway interface requires an image factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
     return null;
   }
 
+  // The gateway interface requires a video factory even when unsupported.
+  // eslint-disable-next-line class-methods-use-this
   createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
@@ -128,6 +132,8 @@ export class OpenRouterGateway
     return this.env.OPENROUTER_API_KEY;
   }
 
+  // The models endpoint is fixed by the provider contract.
+  // eslint-disable-next-line class-methods-use-this
   private getModelsUrl(): string {
     return "https://openrouter.ai/api/v1/models";
   }

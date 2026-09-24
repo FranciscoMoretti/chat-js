@@ -9,7 +9,7 @@ description: "How ChatJS is organized"
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # Auth routes (login, register)
 │   ├── (chat)/            # Main chat interface
-│   ├── api/               # API routes (chat, auth, trpc)
+│   ├── api/               # API routes (EVE gateway, auth, tRPC)
 │   └── actions/           # Server Actions
 │
 ├── components/
@@ -23,9 +23,11 @@ description: "How ChatJS is organized"
 │   ├── ai/                # AI SDK integration, tools, prompts
 │   │   └── gateways/      # Gateway abstraction (Vercel, OpenRouter)
 │   ├── db/                # Database schema, queries, and data access
+│   ├── eve/               # EVE gateway, ownership, and lifecycle integration
 │   ├── models/            # Model types and utilities
-│   └── stores/            # Zustand stores
+│   └── artifacts/         # Client helpers for document artifacts
 │
+├── agent/                  # EVE agent channels, hooks, and tools
 ├── trpc/                   # tRPC routers and procedures
 ├── hooks/                  # React hooks
 ├── providers/              # React context providers
@@ -59,7 +61,8 @@ description: "How ChatJS is organized"
 ```
 app/api/
 ├── auth/[...all]/    # Better Auth handler
-├── chat/             # AI streaming endpoint
+├── eve/[...path]/    # Authenticated EVE gateway
+├── agent-conversations/ # Conversation metadata operations
 ├── trpc/[trpc]/      # tRPC handler
 └── cron/             # Scheduled tasks
 ```
@@ -118,10 +121,12 @@ lib/ai/
 lib/
 ├── db/
 │   ├── schema.ts      # Drizzle schema
-│   ├── queries.ts     # Database queries (chats, messages, users)
+│   ├── queries.ts     # Database queries for application metadata
+│   ├── eve-queries.ts # EVE conversation metadata and ownership queries
 │   ├── credits.ts     # Credit balance queries
 │   └── client.ts      # Database connection
-└── stores/            # Client state (Zustand)
+├── eve/               # Gateway, message, copy, and lifecycle contracts
+└── artifacts/         # Client artifact metadata helpers
 ```
 
 ## Configuration Flow
@@ -139,9 +144,9 @@ Runtime                # Features toggle based on config + env
 ## Data Flow
 
 ```
-Client Component
+Browser UI or EVE gateway
        ↓
-tRPC Procedure (or Server Action)
+ChatJS metadata procedure
        ↓
 Database Queries (lib/db/)
        ↓
@@ -153,11 +158,11 @@ PostgreSQL
 ## AI Streaming Flow
 
 ```
-Client (useChat hook)
+Client (useEveAgent)
        ↓
-POST /api/chat
+Authenticated ChatJS gateway
        ↓
-Vercel AI SDK (streamText)
+EVE session and event stream
        ↓
 Gateway Abstraction → Provider (OpenAI, Anthropic, etc.)
        ↓

@@ -7,7 +7,9 @@ import { z } from "zod";
 import InteractiveChart from "@/components/interactive-charts";
 import type { BaseChart } from "@/components/interactive-charts";
 import { SandboxComposed } from "@/components/sandbox";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
 import type { codeExecution } from "./tool";
 
 export type CodeExecutionTool = UIToolInvocation<typeof codeExecution>;
@@ -49,7 +51,7 @@ const pngSchema = z.object({
   format: z.literal("png"),
 });
 
-export const CodeExecution = ({ tool }: { tool: CodeExecutionTool }) => {
+const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
   const args = tool.input ?? {
     code: "",
     icon: "default",
@@ -95,3 +97,9 @@ export const CodeExecution = ({ tool }: { tool: CodeExecutionTool }) => {
     </div>
   );
 };
+
+export const CodeExecution = defineToolRenderer({
+  inputSchema: codeExecutionInput,
+  outputSchema: codeExecutionResult,
+  render: CodeExecutionView,
+});

@@ -1,12 +1,6 @@
 import type { ToolName } from "../ai/types";
 import { config } from "../config";
 
-export interface AnonymousSession {
-  createdAt: Date;
-  id: string;
-  remainingCredits: number;
-}
-
 const anonConfig = config.anonymous;
 
 export const ANONYMOUS_LIMITS = {

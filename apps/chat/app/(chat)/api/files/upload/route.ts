@@ -4,7 +4,9 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
-import { uploadFile } from "@/lib/file-storage";
+import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
+import { env } from "@/lib/env";
+import { createFileStorageKey, uploadFileAtKey } from "@/lib/file-storage";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -63,7 +65,15 @@ export const POST = async (request: Request) => {
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      const data = await uploadFile(filename, fileBuffer, file.type);
+      const key = createFileStorageKey(filename);
+      if (env.WORKFLOW_POSTGRES_URL) {
+        await reserveEveUpload(session.user.id, key);
+      }
+      // Keep the reservation if storage fails: an uncertain write can still finish.
+      const write = () => uploadFileAtKey(key, filename, fileBuffer, file.type);
+      const data = env.WORKFLOW_POSTGRES_URL
+        ? await writeEveUpload(session.user.id, key, write)
+        : await write();
       return NextResponse.json(data);
     } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });

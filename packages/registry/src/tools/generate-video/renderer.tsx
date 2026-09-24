@@ -1,16 +1,14 @@
 "use client";
 
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
+import { generateVideoInput, generateVideoResult } from "./schemas";
 import type { generateVideoTool } from "./tool";
 
 type GenerateVideoTool = ToolPartFromTool<typeof generateVideoTool>;
 
-export const GenerateVideoRenderer = ({
-  tool,
-}: {
-  tool: GenerateVideoTool;
-}) => {
+const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
   if (tool.state === "input-streaming" || tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
@@ -56,3 +54,9 @@ export const GenerateVideoRenderer = ({
     </div>
   );
 };
+
+export const GenerateVideoRenderer = defineToolRenderer({
+  inputSchema: generateVideoInput,
+  outputSchema: generateVideoResult,
+  render: GenerateVideoView,
+});

@@ -1,0 +1,94 @@
+diff --git a/packages/eve/src/public/next/index.test.ts b/packages/eve/src/public/next/index.test.ts
+index 4ce4ea4..ebc30ec 100644
+--- a/packages/eve/src/public/next/index.test.ts
++++ b/packages/eve/src/public/next/index.test.ts
+@@ -296,6 +296,28 @@ describe("withEve", () => {
+     });
+   });
+ 
++  it("starts the managed eve server when Next.js loads production server config", async () => {
++    vi.stubEnv("NODE_ENV", "production");
++    vi.mocked(resolveEveDestinationPrefix).mockResolvedValueOnce("http://127.0.0.1:4274");
++
++    const config = await withEve<TestConfig>({})("phase-production-server", {
++      defaultConfig: {},
++    });
++
++    expect(resolveEveDestinationPrefix).toHaveBeenCalledOnce();
++    expect(resolveEveDestinationPrefix).toHaveBeenCalledWith({
++      appRoot: process.cwd(),
++      devServerTimeoutMs: undefined,
++      logLabel: undefined,
++      phase: "phase-production-server",
++      productionDestinationPrefix: "http://127.0.0.1:4274",
++      productionServerOrigin: "http://127.0.0.1:4274",
++    });
++
++    await config.rewrites?.();
++    expect(resolveEveDestinationPrefix).toHaveBeenCalledOnce();
++  });
++
+   it("accepts a custom stable local production port", async () => {
+     vi.stubEnv("NODE_ENV", "production");
+     vi.stubEnv("EVE_NEXT_PRODUCTION_PORT", "51234");
+diff --git a/packages/eve/src/public/next/index.ts b/packages/eve/src/public/next/index.ts
+index 94c40f0..7d13a6a 100644
+--- a/packages/eve/src/public/next/index.ts
++++ b/packages/eve/src/public/next/index.ts
+@@ -19,6 +19,7 @@ const EVE_NEXT_PRODUCTION_ORIGIN_ENV = "EVE_NEXT_PRODUCTION_ORIGIN";
+ const EVE_NEXT_PRODUCTION_PORT_ENV = "EVE_NEXT_PRODUCTION_PORT";
+ const DEFAULT_EVE_NEXT_PRODUCTION_PORT = 4274;
+ const EVE_NAMED_AGENT_ROUTE_PREFIX = "/eve/agents";
++const NEXT_PHASE_PRODUCTION_SERVER = "phase-production-server";
+ 
+ type ArrayElement<T> = T extends readonly (infer TElement)[] ? TElement : never;
+ type NextRewrites = Awaited<ReturnType<NonNullable<NextConfig["rewrites"]>>>;
+@@ -420,6 +421,21 @@ export function withEve<TConfig extends EveNextConfig>(
+         productionDestination,
+       };
+     });
++    const productionServerDestinations =
++      phase === NEXT_PHASE_PRODUCTION_SERVER
++        ? await Promise.all(
++            agentsWithDestinations.map((agent) =>
++              resolveEveDestinationPrefix({
++                appRoot: agent.appRoot,
++                devServerTimeoutMs,
++                logLabel: agent.name,
++                phase,
++                productionDestinationPrefix: agent.productionDestination.destinationPrefix,
++                productionServerOrigin: agent.productionDestination.localServerOrigin,
++              }),
++            ),
++          )
++        : undefined;
+ 
+     return {
+       ...nextConfig,
+@@ -427,15 +443,17 @@ export function withEve<TConfig extends EveNextConfig>(
+         const [existing, eveRules] = await Promise.all([
+           resolveExistingRewrites(existingRewrites),
+           Promise.all(
+-            agentsWithDestinations.map(async (agent) => {
+-              const destinationPrefix = await resolveEveDestinationPrefix({
+-                appRoot: agent.appRoot,
+-                devServerTimeoutMs,
+-                logLabel: agent.name,
+-                phase,
+-                productionDestinationPrefix: agent.productionDestination.destinationPrefix,
+-                productionServerOrigin: agent.productionDestination.localServerOrigin,
+-              });
++            agentsWithDestinations.map(async (agent, index) => {
++              const destinationPrefix =
++                productionServerDestinations?.[index] ??
++                (await resolveEveDestinationPrefix({
++                  appRoot: agent.appRoot,
++                  devServerTimeoutMs,
++                  logLabel: agent.name,
++                  phase,
++                  productionDestinationPrefix: agent.productionDestination.destinationPrefix,
++                  productionServerOrigin: agent.productionDestination.localServerOrigin,
++                }));
+ 
+               return createEveRewriteRule({
+                 destinationPrefix,

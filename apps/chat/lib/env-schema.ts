@@ -3,11 +3,44 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
-import { redisEnvOptions } from "./redis/connection";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
 );
+
+const httpUrl = z.url().refine(
+  (value) => {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  },
+  { message: "Must use an http:// or https:// URL" }
+);
+const postgresUrl = z.url().refine(
+  (value) => {
+    const { protocol } = new URL(value);
+    return protocol === "postgres:" || protocol === "postgresql:";
+  },
+  { message: "Must use a postgres:// or postgresql:// URL" }
+);
+
+export const eveRuntimeEnvOptions = {
+  EVE_GATEWAY_SECRET: z
+    .string()
+    .min(32)
+    .describe("Private EVE gateway secret (at least 32 characters)"),
+  EVE_INTERNAL_ORIGIN: httpUrl.describe(
+    "Same-origin EVE route or private worker origin"
+  ),
+  WORKFLOW_POSTGRES_URL: postgresUrl.describe(
+    "Postgres connection string for durable EVE workflows"
+  ),
+};
+
+const playwrightDefault = (value: unknown, fallback: string) =>
+  isPlaywrightTestEnvironmentEnabled &&
+  (value === null || value === undefined || value === "")
+    ? fallback
+    : value;
 
 /**
  * Server environment variable schemas with descriptions.
@@ -20,12 +53,19 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
  * without triggering `createEnv` runtime validation.
  */
 export const serverEnvSchema = {
-  ...databaseEnvOptions,
   // AI Gateway keys (one required depending on config.ai.gateway)
   AI_GATEWAY_API_KEY: z
     .string()
     .optional()
     .describe("Vercel AI Gateway API key"),
+  // Optional features (enable in chat.config.ts)
+  // App URL (for non-Vercel deployments) - full URL including https://
+  APP_URL: z
+    .url()
+    .optional()
+    .describe(
+      "App URL for non-Vercel deployments (full URL including https://)"
+    ),
   AUTH_GITHUB_ID: z.string().optional().describe("GitHub OAuth app client ID"),
   AUTH_GITHUB_SECRET: z
     .string()
@@ -52,6 +92,7 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("Secret for cleanup cron job endpoint"),
+  ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
     .preprocess(
@@ -63,6 +104,24 @@ export const serverEnvSchema = {
       z.string().min(1)
     )
     .describe("Postgres connection string"),
+  EVE_GATEWAY_SECRET: z.preprocess(
+    (value) => playwrightDefault(value, "playwright-test-eve-gateway-secret"),
+    eveRuntimeEnvOptions.EVE_GATEWAY_SECRET
+  ),
+  EVE_INTERNAL_ORIGIN: z.preprocess(
+    (value) =>
+      playwrightDefault(
+        value,
+        process.env.PLAYWRIGHT_TEST_BASE_URL ??
+          `http://localhost:${process.env.PORT ?? "3000"}`
+      ),
+    eveRuntimeEnvOptions.EVE_INTERNAL_ORIGIN
+  ),
+  EXA_API_KEY: z.string().optional().describe("Exa API key for web search"),
+  FIRECRAWL_API_KEY: z
+    .string()
+    .optional()
+    .describe("Firecrawl API key for web search and URL retrieval"),
   LITELLM_API_KEY: z
     .string()
     .optional()
@@ -72,6 +131,13 @@ export const serverEnvSchema = {
     .url()
     .optional()
     .describe("LiteLLM proxy base URL"),
+  MCP_ENCRYPTION_KEY: z
+    .union([z.string().length(44), z.literal("")])
+    .optional()
+    .describe("Encryption key for MCP server credentials (base64, 44 chars)"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
   OPENAI_API_KEY: z.string().optional().describe("OpenAI API key"),
   OPENAI_COMPATIBLE_API_KEY: z
     .string()
@@ -83,6 +149,17 @@ export const serverEnvSchema = {
     .optional()
     .describe("Base URL for OpenAI-compatible provider"),
   OPENROUTER_API_KEY: z.string().optional().describe("OpenRouter API key"),
+  TAVILY_API_KEY: z
+    .string()
+    .optional()
+    .describe("Tavily API key for web search"),
+  TRUSTED_CLIENT_IP_HEADER: z
+    .string()
+    .regex(/^[a-zA-Z0-9-]+$/u)
+    .optional()
+    .describe(
+      "Self-hosted reverse proxy header containing one verified client IP; the proxy must overwrite it"
+    ),
   VERCEL_APP_CLIENT_ID: z
     .string()
     .optional()
@@ -95,28 +172,6 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel OIDC token (auto-set on Vercel deployments)"),
-  // Optional features (enable in chat.config.ts)
-  ...redisEnvOptions,
-  // App URL (for non-Vercel deployments) - full URL including https://
-  APP_URL: z
-    .url()
-    .optional()
-    .describe(
-      "App URL for non-Vercel deployments (full URL including https://)"
-    ),
-  EXA_API_KEY: z.string().optional().describe("Exa API key for web search"),
-  FIRECRAWL_API_KEY: z
-    .string()
-    .optional()
-    .describe("Firecrawl API key for web search and URL retrieval"),
-  MCP_ENCRYPTION_KEY: z
-    .union([z.string().length(44), z.literal("")])
-    .optional()
-    .describe("Encryption key for MCP server credentials (base64, 44 chars)"),
-  TAVILY_API_KEY: z
-    .string()
-    .optional()
-    .describe("Tavily API key for web search"),
   VERCEL_PROJECT_ID: z
     .string()
     .optional()
@@ -147,4 +202,12 @@ export const serverEnvSchema = {
     .describe("Vercel API token for sandbox (non-Vercel deployments)"),
   // Vercel platform (auto-set by Vercel)
   VERCEL_URL: z.string().optional().describe("Auto-set by Vercel platform"),
+  WORKFLOW_POSTGRES_URL: z.preprocess(
+    (value) =>
+      playwrightDefault(
+        value,
+        "postgres://postgres:postgres@127.0.0.1:5432/playwright-eve"
+      ),
+    eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
+  ),
 };

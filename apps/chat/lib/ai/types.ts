@@ -1,23 +1,9 @@
-import type {
-  InferUITool,
-  LanguageModelUsage,
-  UIMessage,
-  UIMessageStreamWriter,
-} from "ai";
+import type { UIMessage, UIMessageStreamWriter } from "ai";
 import { z } from "zod";
 
-import type { deepResearch } from "@/tools/platform/deep-research/deep-research";
-import type { createCodeDocumentTool } from "@/tools/platform/documents/create-code-document";
-import type { createSheetDocumentTool } from "@/tools/platform/documents/create-sheet-document";
-import type { createTextDocumentTool } from "@/tools/platform/documents/create-text-document";
-import type { editCodeDocumentTool } from "@/tools/platform/documents/edit-code-document";
-import type { editSheetDocumentTool } from "@/tools/platform/documents/edit-sheet-document";
-import type { editTextDocumentTool } from "@/tools/platform/documents/edit-text-document";
-import type { readDocument } from "@/tools/platform/read-document";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import type { AppModelId } from "./app-models";
-import type { InstalledTools } from "./installed-tools";
 
 export const toolNameSchema = z.enum([
   "createTextDocument",
@@ -34,11 +20,9 @@ export const toolNameSchema = z.enum([
   "deepResearch",
 ]);
 
-const _ = toolNameSchema.options satisfies ToolName[];
+export type ToolName = z.infer<typeof toolNameSchema>;
 
-type ToolNameInternal = z.infer<typeof toolNameSchema>;
-
-const frontendToolsSchema = z.enum([
+export const frontendToolsSchema = z.enum([
   "webSearch",
   "deepResearch",
   "generateImage",
@@ -50,8 +34,6 @@ const frontendToolsSchema = z.enum([
   "editCodeDocument",
   "editSheetDocument",
 ]);
-
-const __ = frontendToolsSchema.options satisfies ToolNameInternal[];
 
 export type UiToolName = z.infer<typeof frontendToolsSchema>;
 
@@ -89,15 +71,12 @@ export const getPrimarySelectedModelId = (
   if (!selectedModel) {
     return null;
   }
-
   if (typeof selectedModel === "string") {
     return selectedModel;
   }
-
   const [firstSelectedModelId] = Object.entries(selectedModel).find(
     ([, count]) => typeof count === "number" && count > 0
   ) ?? [null];
-
   return firstSelectedModelId as AppModelId | null;
 };
 
@@ -107,98 +86,18 @@ export const expandSelectedModelValue = (
   if (typeof selectedModel === "string") {
     return [selectedModel];
   }
-
   const expanded: AppModelId[] = [];
-
   for (const [modelId, count] of Object.entries(selectedModel)) {
     if (!(typeof count === "number" && Number.isInteger(count) && count > 0)) {
       continue;
     }
-
     for (let index = 0; index < count; index += 1) {
       expanded.push(modelId as AppModelId);
     }
   }
-
   return expanded;
 };
 
-export const messageMetadataSchema = z.object({
-  activeStreamId: z.string().nullable(),
-  createdAt: z.date(),
-  isPrimaryParallel: z.boolean().nullable().optional(),
-  parallelGroupId: z.string().nullable().optional(),
-  parallelIndex: z.number().int().nullable().optional(),
-  parentMessageId: z.string().nullable(),
-  selectedModel: z.custom<SelectedModelValue>(isSelectedModelValue),
-  selectedTool: frontendToolsSchema.optional(),
-  usage: z.custom<LanguageModelUsage | undefined>((_val) => true).optional(),
-});
+type PlatformMessage = UIMessage<unknown, { researchUpdate: ResearchUpdate }>;
 
-export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
-
-type createTextDocumentToolType = InferUITool<
-  ReturnType<typeof createTextDocumentTool>
->;
-type createCodeDocumentToolType = InferUITool<
-  ReturnType<typeof createCodeDocumentTool>
->;
-type createSheetDocumentToolType = InferUITool<
-  ReturnType<typeof createSheetDocumentTool>
->;
-type editTextDocumentToolType = InferUITool<
-  ReturnType<typeof editTextDocumentTool>
->;
-type editCodeDocumentToolType = InferUITool<
-  ReturnType<typeof editCodeDocumentTool>
->;
-type editSheetDocumentToolType = InferUITool<
-  ReturnType<typeof editSheetDocumentTool>
->;
-type deepResearchTool = InferUITool<ReturnType<typeof deepResearch>>;
-type readDocumentTool = InferUITool<ReturnType<typeof readDocument>>;
-
-export type ChatTools = {
-  createCodeDocument: createCodeDocumentToolType;
-  createSheetDocument: createSheetDocumentToolType;
-  createTextDocument: createTextDocumentToolType;
-  deepResearch: deepResearchTool;
-  editCodeDocument: editCodeDocumentToolType;
-  editSheetDocument: editSheetDocumentToolType;
-  editTextDocument: editTextDocumentToolType;
-  readDocument: readDocumentTool;
-} & InstalledTools;
-
-interface FollowupSuggestions {
-  suggestions: string[];
-}
-
-export type CustomUIDataTypes = {
-  appendMessage: string;
-  userMessagePersisted: {
-    chatId: string;
-    parallelGroupId: string | null;
-    userMessageId: string;
-  };
-  followupSuggestions: FollowupSuggestions;
-  researchUpdate: ResearchUpdate;
-};
-
-export type ChatMessage = Omit<
-  UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>,
-  "metadata"
-> & {
-  metadata: MessageMetadata;
-};
-
-export type ToolName = keyof ChatTools | ToolNameInternal;
-
-export type ToolOutput<T extends keyof ChatTools> = ChatTools[T]["output"];
-
-export type StreamWriter = UIMessageStreamWriter<ChatMessage>;
-
-export interface Attachment {
-  contentType: string;
-  name: string;
-  url: string;
-}
+export type StreamWriter = UIMessageStreamWriter<PlatformMessage>;

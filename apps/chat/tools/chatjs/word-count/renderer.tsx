@@ -1,7 +1,9 @@
 "use client";
 
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
+import { wordCountInput, wordCountResult } from "./schemas";
 import type { wordCount } from "./tool";
 
 type WordCountRendererTool = ToolPartFromTool<typeof wordCount>;
@@ -13,7 +15,7 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
   </div>
 );
 
-export const WordCountRenderer = ({
+const WordCountView = ({
   tool,
 }: {
   tool: WordCountRendererTool;
@@ -47,3 +49,9 @@ export const WordCountRenderer = ({
     </div>
   );
 };
+
+export const WordCountRenderer = defineToolRenderer({
+  inputSchema: wordCountInput,
+  outputSchema: wordCountResult,
+  render: WordCountView,
+});

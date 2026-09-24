@@ -446,6 +446,9 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
       ).not.toContain("generate-image/renderer");
     }
+    expect(
+      await Bun.file(join(cwd, "tests/eve-sandbox-lifecycle.e2e.ts")).exists()
+    ).toBe(false);
     if (gateway === "vercel" || gateway === "acme") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
         /image:\s*\{[^}]*\benabled:\s*true/u
@@ -681,6 +684,9 @@ assert.equal(new Gateway().type, "${gateway}");
 import { generateText } from "ai";
 process.env.DATABASE_URL = "postgres://fixture:fixture@127.0.0.1/fixture";
 process.env.AUTH_SECRET = "fixture-secret";
+process.env.EVE_GATEWAY_SECRET = "fixture-eve-gateway-secret-at-least-32-characters";
+process.env.EVE_INTERNAL_ORIGIN = "http://localhost:3000";
+process.env.WORKFLOW_POSTGRES_URL = process.env.DATABASE_URL;
 process.env.ACME_BASE_URL = "http://127.0.0.1:${registryServer.port}/v1";
 process.env.ACME_API_KEY = "fixture-key";
 const { getActiveGateway } = await import("./lib/ai/active-gateway");

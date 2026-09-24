@@ -93,6 +93,7 @@ const SidebarProvider = ({
           value: String(openState),
         });
       } else {
+        // oxlint-disable-next-line unicorn/no-document-cookie -- Preserve the cookie fallback for browsers without Cookie Store support.
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       }
     },
@@ -312,6 +313,7 @@ const SidebarRail = ({
         "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
         className
       )}
+      type="button"
       data-sidebar="rail"
       data-slot="sidebar-rail"
       onClick={toggleSidebar}
@@ -614,11 +616,7 @@ const SidebarMenuSkeleton = ({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean;
 }) => {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(
-    () => `${Math.floor(Math.random() * 40) + 50}%`,
-    []
-  );
+  const width = "70%";
 
   return (
     <div
