@@ -15,6 +15,7 @@ export const KeyboardShortcuts = () => {
       if (e.shiftKey && e.key === "O" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpenMobile(false);
+        window.dispatchEvent(new Event("chatjs:new-chat"));
         router.push("/");
       }
     };
