@@ -1,8 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 
+import { eveSeedSearchText } from "../eve/search-text";
 import { db } from "./client";
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
 import { CreationConflictError } from "./eve-queries";
+import { writeEveSearchText } from "./eve-search";
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
 
 /** Used only by the authenticated native seed resolver; accepted copies no longer depend on their source. */
@@ -76,6 +78,12 @@ export const dispatchEveCopy = async (
         .where(
           and(eq(eveChat.id, conversation.chatId), eq(eveChat.ownerId, ownerId))
         );
+      await writeEveSearchText(
+        tx,
+        ownerId,
+        conversation.id,
+        eveSeedSearchText(copy.seed.messages)
+      );
       await tx
         .update(eveConversationCopy)
         .set({ phase: "bound", seed: null })

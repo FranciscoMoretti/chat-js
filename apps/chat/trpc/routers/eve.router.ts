@@ -9,6 +9,7 @@ import {
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
+import { searchEveConversations } from "@/lib/db/eve-search";
 import {
   assignEveConversationProject,
   getEveMessageVotes,
@@ -152,6 +153,20 @@ export const eveRouter = createTRPCRouter({
               : "Document could not be saved.",
         });
       }
+    }),
+  search: eveOwnedProcedure
+    .input(
+      z.object({
+        cursor: z.number().int().min(0).max(100_000).nullish(),
+        ownerScope: z.string().min(1).max(128),
+        search: z.string().trim().min(1).max(255),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (input.ownerScope !== ctx.eveOwnerId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      return await searchEveConversations(ctx.eveOwnerId, input);
     }),
   setVisibility: eveProcedure
     .input(

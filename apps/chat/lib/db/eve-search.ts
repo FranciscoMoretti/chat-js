@@ -1,0 +1,130 @@
+import { and, eq, sql } from "drizzle-orm";
+
+import type { EveSearchText } from "../eve/search-text";
+import { db } from "./client";
+import { eveConversation, eveSearchText } from "./schema";
+
+type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Share the binding row lock with deletion so a late backfill cannot resurrect text. */
+export const writeEveSearchText = async (
+  tx: SearchTransaction,
+  ownerId: string,
+  conversationId: string,
+  entries: readonly EveSearchText[]
+) => {
+  const [conversation] = await tx
+    .select({ id: eveConversation.id })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, conversationId),
+        eq(eveConversation.ownerId, ownerId),
+        eq(eveConversation.state, "bound")
+      )
+    )
+    .for("update");
+  if (!conversation) {
+    return;
+  }
+  // Bound vectors and insert batches even for unusually large pasted messages.
+  const chunks = entries.flatMap((entry) => {
+    const result: EveSearchText[] = [];
+    for (let offset = 0; offset < entry.text.length; offset += 8000) {
+      result.push({
+        key: `${entry.key}:${offset}`,
+        text: entry.text.slice(offset, offset + 8200),
+      });
+    }
+    return result;
+  });
+  for (let index = 0; index < chunks.length; index += 100) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each insert within the locked transaction.
+    await tx
+      .insert(eveSearchText)
+      .values(
+        chunks
+          .slice(index, index + 100)
+          .map((entry) => ({ ...entry, conversationId, ownerId }))
+      )
+      .onConflictDoNothing();
+  }
+};
+
+export const indexEveSearchText = async (
+  ownerId: string,
+  conversationId: string,
+  entries: readonly EveSearchText[]
+) => {
+  if (entries.length) {
+    await db.transaction((tx) =>
+      writeEveSearchText(tx, ownerId, conversationId, entries)
+    );
+  }
+};
+
+export type EveSearchResult = {
+  id: string;
+  conversationId: string;
+  title: string;
+  excerpt: string;
+  updatedAt: string;
+  rank: number;
+};
+
+// Modify only PostgreSQL's normalized final positive operand, never raw query syntax.
+// The leading boundary excludes !'negated' terms; closing groups remain intact.
+const finalSearchOperand = "(^|[ (|&])('[^']*(?:''[^']*)*')([)]*)$";
+const finalUnquotedWord = /[\p{L}\p{N}]$/u;
+
+/** One result per logical chat, with the branch containing its strongest match. */
+export const searchEveConversations = async (
+  ownerId: string,
+  input: { search: string; cursor?: number | null }
+) => {
+  const offset = input.cursor ?? 0;
+  const query = input.search.trim();
+  const prefixLastWord =
+    finalUnquotedWord.test(query) && query.split('"').length % 2 === 1;
+  const items = await db.execute<EveSearchResult>(sql`
+    with parsed as (select websearch_to_tsquery('simple', ${query}) as terms),
+    query as (
+      select case when ${prefixLastWord}
+        then to_tsquery('simple', regexp_replace(terms::text, ${finalSearchOperand}, ${"\\1\\2:*\\3"}))
+        else terms end as terms
+      from parsed
+    ),
+    matches as (
+      select chat.id, branch.id as "conversationId", chat.title, chat."updatedAt",
+        2 + ts_rank_cd(to_tsvector('simple', chat.title), query.terms) as rank,
+        ''::text as body
+      from "EveChat" chat cross join query
+      join lateral (
+        select id from "EveConversation"
+        where "chatId" = chat.id and "ownerId" = ${ownerId} and state = 'bound'
+        order by (id = chat."activeConversationId") desc, "createdAt", id limit 1
+      ) branch on true
+      where chat."ownerId" = ${ownerId} and to_tsvector('simple', chat.title) @@ query.terms
+      union all
+      select chat.id, branch.id, chat.title, chat."updatedAt",
+        ts_rank_cd(to_tsvector('simple', content.text), query.terms) as rank,
+        content.text as body
+      from "EveSearchText" content cross join query
+      join "EveConversation" branch on branch.id = content."conversationId" and branch."ownerId" = ${ownerId} and branch.state = 'bound'
+      join "EveChat" chat on chat.id = branch."chatId" and chat."ownerId" = ${ownerId}
+      where content."ownerId" = ${ownerId} and to_tsvector('simple', content.text) @@ query.terms
+    ), best as (
+      select distinct on (id) * from matches order by id, rank desc, "conversationId", body
+    )
+    select id, "conversationId", title, "updatedAt"::text, rank,
+      case when body = '' then '' else ts_headline('simple', body, query.terms,
+        'StartSel=⟦, StopSel=⟧, MaxWords=32, MinWords=12, MaxFragments=1') end as excerpt
+    from best cross join query
+    order by rank desc, "updatedAt" desc, id
+    limit 21 offset ${offset}
+  `);
+  return {
+    items: items.slice(0, 20),
+    nextCursor: items.length > 20 ? offset + 20 : null,
+  };
+};
