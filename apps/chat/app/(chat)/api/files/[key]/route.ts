@@ -13,14 +13,14 @@ export const GET = async (
   }
   const principal = await resolveEvePrincipal(request.headers);
   const access = await canReadEveFile(key, principal?.ownerId);
-  if (!access.allowed) {
+  if (!(access.allowed && access.managed)) {
     return new Response("File not found", {
       headers: { "Cache-Control": "private, no-store" },
       status: 404,
     });
   }
-  // Managed files must stay behind this revocable authorization boundary.
+  // Authorization is rechecked before issuing each short-lived download URL.
   return await createFileContentResponse(request, key, {
-    allowRedirect: !access.managed,
+    allowRedirect: true,
   });
 };

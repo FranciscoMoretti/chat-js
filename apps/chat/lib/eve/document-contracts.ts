@@ -1,7 +1,19 @@
 import { z } from "zod";
 
+import { isFileStorageKey } from "../file-url";
+
+export const documentFileIds = z
+  .array(z.string().refine(isFileStorageKey))
+  .max(256)
+  .default([])
+  .transform((ids) => [...new Set(ids)].toSorted())
+  .describe(
+    "Stable file IDs used by this document, including embedded images. Include every referenced file ID; never include presigned URLs."
+  );
+
 const documentContent = z.object({
   content: z.string().max(2_000_000),
+  fileIds: documentFileIds,
   title: z.string().min(1).max(1000),
 });
 export const eveDocumentCreateInput = documentContent;

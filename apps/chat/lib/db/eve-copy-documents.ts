@@ -202,6 +202,7 @@ export const snapshotPublicEveCopyDocuments = async (
             content: eveDocumentRevision.content,
             createdAt: eveDocumentRevision.createdAt,
             documentId: eveDocumentRevision.documentId,
+            fileIds: eveDocumentRevision.fileIds,
             id: eveDocumentRevision.id,
             kind: eveDocumentRevision.kind,
             parentRevisionId: eveDocumentRevision.parentRevisionId,

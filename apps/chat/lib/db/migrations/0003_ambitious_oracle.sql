@@ -1,0 +1,1 @@
+ALTER TABLE "EveDocumentRevision" ADD COLUMN "fileIds" jsonb DEFAULT '[]'::jsonb NOT NULL;

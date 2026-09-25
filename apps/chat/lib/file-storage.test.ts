@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 
 import { describe, it, vi } from "vitest";
 
-import { deleteFilesByUrls, listFiles, uploadFile } from "./file-storage";
+import {
+  deleteFilesByUrls,
+  listFiles,
+  createFileId,
+  uploadFileAtKey,
+} from "./file-storage";
 import { keyFromFileUrl } from "./file-url";
 
 vi.mock("@/lib/config", () => ({
@@ -18,7 +23,12 @@ vi.mock("./storage-provider", async () => {
 
 describe("file storage", () => {
   it("uploads, lists, and deletes through Files SDK", async () => {
-    const uploaded = await uploadFile("../hello.txt", "hello", "text/plain");
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      "../hello.txt",
+      "hello",
+      "text/plain"
+    );
     const key = keyFromFileUrl(uploaded.url);
 
     assert.ok(key);
@@ -40,3 +50,9 @@ describe("file storage", () => {
     assert.equal(remainingFiles.files.length, 0);
   });
 });
+
+vi.mock("./db/file-storage-keys", () => ({
+  fileIdForStorageKey: (key: string) =>
+    Promise.resolve(key.slice("objects/".length)),
+  storageKeyForFile: (id: string) => Promise.resolve(`objects/${id}`),
+}));

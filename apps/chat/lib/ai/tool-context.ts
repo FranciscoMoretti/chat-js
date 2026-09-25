@@ -3,7 +3,7 @@ import type { FileUIPart, ImageModel, LanguageModel } from "ai";
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { CostAccumulator } from "@/lib/credits/cost-accumulator";
-import type { uploadFile } from "@/lib/file-storage";
+import type { FileUploader } from "@/lib/file-storage";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 type ToolCostAccumulator = Pick<
@@ -47,7 +47,7 @@ export interface ChatToolContext {
     ) => Promise<string>;
   };
   selectedModel?: string;
-  storeFile?: typeof uploadFile;
+  storeFile?: FileUploader;
   toolCallIdOverride?: string;
   writeTopLevelUpdates?: boolean;
 }

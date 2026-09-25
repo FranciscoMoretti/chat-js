@@ -22,7 +22,7 @@ vi.mock("@/lib/db/eve-files", () => ({
   ) => await write(),
 }));
 vi.mock("@/lib/file-storage", () => ({
-  createFileStorageKey: () => "abcdefghijklmnopqrstuvwx.png",
+  createFileId: () => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
 

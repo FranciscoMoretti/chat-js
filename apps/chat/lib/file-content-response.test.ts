@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { describe, it, vi } from "vitest";
 
 import { createFileContentResponse } from "./file-content-response";
-import { uploadFile } from "./file-storage";
+import { createFileId, uploadFileAtKey } from "./file-storage";
 import { keyFromFileUrl } from "./file-url";
 
 vi.mock("@/lib/config", () => ({
@@ -19,7 +19,12 @@ vi.mock("./storage-provider", async () => {
 
 describe("file content response", () => {
   it("serves uploaded files when Next Image adds a deployment ID", async () => {
-    const uploaded = await uploadFile("hello.txt", "hello", "text/plain");
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      "hello.txt",
+      "hello",
+      "text/plain"
+    );
     const key = keyFromFileUrl(uploaded.url);
     assert.ok(key);
     const url = new URL(uploaded.url, "https://chat.example");
@@ -34,7 +39,12 @@ describe("file content response", () => {
   });
 
   it("serves byte ranges", async () => {
-    const uploaded = await uploadFile("hello.txt", "hello", "text/plain");
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      "hello.txt",
+      "hello",
+      "text/plain"
+    );
 
     const key = keyFromFileUrl(uploaded.url);
     assert.ok(key);
@@ -59,7 +69,12 @@ describe("file content response", () => {
   });
 
   it("rejects unsatisfiable ranges", async () => {
-    const uploaded = await uploadFile("short.txt", "hi", "text/plain");
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      "short.txt",
+      "hi",
+      "text/plain"
+    );
 
     const key = keyFromFileUrl(uploaded.url);
     assert.ok(key);
@@ -74,3 +89,9 @@ describe("file content response", () => {
     assert.equal(response.headers.get("content-range"), "bytes */2");
   });
 });
+
+vi.mock("./db/file-storage-keys", () => ({
+  fileIdForStorageKey: (key: string) =>
+    Promise.resolve(key.slice("objects/".length)),
+  storageKeyForFile: (id: string) => Promise.resolve(`objects/${id}`),
+}));

@@ -3,7 +3,8 @@ import type { FileUIPart, ToolExecutionOptions } from "ai";
 
 import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
-import { downloadFile, uploadFile } from "@/lib/file-storage";
+import { downloadFile } from "@/lib/file-storage";
+import type { FileUploader } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 import { createModuleLogger } from "@/lib/logger";
 import { getBaseUrl } from "@/lib/url";
@@ -181,10 +182,10 @@ const runGenerateImageTraditional = async ({
   startMs: number;
   costAccumulator?: ChatToolContext["costAccumulator"];
   abortSignal?: AbortSignal;
-  storeFile: typeof uploadFile;
+  storeFile: FileUploader;
   modelId: string;
   modelProvider: ToolModelProvider;
-}): Promise<{ imageUrl: string; prompt: string }> => {
+}): Promise<{ fileId: string; imageUrl: string; prompt: string }> => {
   if (!config.ai.tools.image.enabled) {
     throw new Error("Image generation is not enabled");
   }
@@ -254,7 +255,7 @@ const runGenerateImageTraditional = async ({
     "generateImage: success"
   );
 
-  return { imageUrl: result.url, prompt };
+  return { fileId: result.fileId, imageUrl: result.url, prompt };
 };
 
 const runGenerateImageMultimodal = async ({
@@ -281,9 +282,9 @@ const runGenerateImageMultimodal = async ({
   startMs: number;
   costAccumulator?: ChatToolContext["costAccumulator"];
   abortSignal?: AbortSignal;
-  storeFile: typeof uploadFile;
+  storeFile: FileUploader;
   modelProvider: ToolModelProvider;
-}): Promise<{ imageUrl: string; prompt: string }> => {
+}): Promise<{ fileId: string; imageUrl: string; prompt: string }> => {
   // Build messages with image context if in edit mode
   interface ImageContent {
     image: Buffer;
@@ -386,7 +387,7 @@ const runGenerateImageMultimodal = async ({
     "generateImage: multimodal success"
   );
 
-  return { imageUrl: result.url, prompt };
+  return { fileId: result.fileId, imageUrl: result.url, prompt };
 };
 
 export const generateImageTool = tool({
@@ -399,15 +400,18 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
   execute: async (
     { prompt },
     { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ imageUrl: string; prompt: string }> => {
+  ): Promise<{ fileId: string; imageUrl: string; prompt: string }> => {
     const {
       attachments = [],
       lastGeneratedImage = null,
       selectedModel,
       costAccumulator,
       modelProvider,
-      storeFile = uploadFile,
+      storeFile,
     } = context ?? {};
+    if (!storeFile) {
+      throw new Error("File generation requires an authorized file uploader.");
+    }
     const startMs = Date.now();
     const imageParts = attachments.filter(
       (part) => part.type === "file" && part.mediaType?.startsWith("image/")

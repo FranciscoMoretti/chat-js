@@ -3,7 +3,6 @@ import type { ToolExecutionOptions } from "ai";
 
 import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
-import { uploadFile } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 
 import { generateVideoInput } from "./schemas";
@@ -67,13 +66,12 @@ export const generateVideoTool = tool({
   execute: async (
     { prompt, aspectRatio, durationSeconds },
     { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ videoUrl: string; prompt: string }> => {
-    const {
-      costAccumulator,
-      modelProvider,
-      selectedModel,
-      storeFile = uploadFile,
-    } = context ?? {};
+  ): Promise<{ fileId: string; videoUrl: string; prompt: string }> => {
+    const { costAccumulator, modelProvider, selectedModel, storeFile } =
+      context ?? {};
+    if (!storeFile) {
+      throw new Error("File generation requires an authorized file uploader.");
+    }
     const startMs = Date.now();
     const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const finalDurationSeconds = durationSeconds ?? DEFAULT_DURATION_SECONDS;
@@ -136,7 +134,7 @@ export const generateVideoTool = tool({
         "generateVideo: success"
       );
 
-      return { prompt, videoUrl: uploaded.url };
+      return { fileId: uploaded.fileId, prompt, videoUrl: uploaded.url };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "";
       const isUnsupportedVideoGateway = errorMessage.includes(

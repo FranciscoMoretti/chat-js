@@ -18,6 +18,7 @@ export const generateVideoInput = z.object({
 });
 
 export const generateVideoResult = z.object({
+  fileId: z.string(),
   prompt: z.string(),
   videoUrl: z.string(),
 });

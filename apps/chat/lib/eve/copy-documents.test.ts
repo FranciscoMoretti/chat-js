@@ -16,6 +16,7 @@ const destinationFile = "abcdefghijklmnopqrstuvwZ.png";
 const base = {
   createdAt: new Date(0),
   documentId,
+  fileIds: [sourceFile],
   kind: "text",
   title: "Shared document",
 } satisfies Partial<
@@ -52,6 +53,7 @@ const allocations = {
 
 it("copies every revision with fresh ancestry, rewritten content, and no source turn identity", () => {
   const copied = prepareEveCopyDocuments(snapshot, allocations);
+  expect(copied[0].revisions[0].fileIds).toEqual([destinationFile]);
   expect(copied[0].documentId).toBe(destinationDoc);
   expect(copied[0].headRevisionId).toBe(destinationHead);
   expect(copied[0].revisions.map((row) => row.id)).toEqual([
