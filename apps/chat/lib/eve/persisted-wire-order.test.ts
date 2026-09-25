@@ -9,7 +9,7 @@ import { eveResponseGroupInput } from "./response-group-input";
 // These wire bytes predate the Oxfmt/Oxlint migration. Reordering a schema
 // changes a persisted admission hash and rejects a valid retry after restart.
 const creationWire =
-  '{"operationId":"11111111-1111-4111-8111-111111111111","modelId":"test/model","message":[{"type":"text","text":"hello"},{"type":"file","data":"/api/files/content?key=abcdefghijklmnopqrstuvwx.png","mediaType":"image/png","filename":"image.png"}],"fork":{"conversationId":"22222222-2222-4222-8222-222222222222","checkpointId":"33333333-3333-4333-8333-333333333333","beforeTurnId":"turn_1"}}';
+  '{"operationId":"11111111-1111-4111-8111-111111111111","modelId":"test/model","message":[{"type":"text","text":"hello"},{"type":"file","data":"/api/files/abcdefghijklmnopqrstuvwx.png","mediaType":"image/png","filename":"image.png"}],"fork":{"conversationId":"22222222-2222-4222-8222-222222222222","checkpointId":"33333333-3333-4333-8333-333333333333","beforeTurnId":"turn_1"}}';
 const groupWire =
   '{"operationId":"11111111-1111-4111-8111-111111111111","modelIds":["test/one","test/two"],"message":"hello","fork":{"conversationId":"22222222-2222-4222-8222-222222222222","beforeMessageId":"seed_message_1"}}';
 const digest = (value: string) =>

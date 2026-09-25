@@ -53,7 +53,7 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
       const parsed = imageResult.safeParse(part.output.value);
       if (
         parsed.success &&
-        parsed.data.imageUrl.startsWith("/api/files/content?") &&
+        parsed.data.imageUrl.startsWith("/api/files/") &&
         keyFromFileUrl(parsed.data.imageUrl)
       ) {
         lastGeneratedImage = {

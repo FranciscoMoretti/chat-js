@@ -51,7 +51,7 @@ for (const project of [false, true]) {
         await page.route("**/api/files/upload", (route) =>
           route.fulfill({
             json: {
-              url: "/api/files/content?key=012345678901234567890123.pdf",
+              url: "/api/files/012345678901234567890123.pdf",
             },
             status: 200,
           })

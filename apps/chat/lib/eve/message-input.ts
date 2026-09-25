@@ -16,8 +16,7 @@ const filePart = z
       .string()
       .refine(
         (value) =>
-          value.startsWith("/api/files/content?") &&
-          keyFromFileUrl(value) !== null,
+          value.startsWith("/api/files/") && keyFromFileUrl(value) !== null,
         "Use a ChatJS upload"
       ),
     mediaType: z.enum(["image/jpeg", "image/png", "application/pdf"]),

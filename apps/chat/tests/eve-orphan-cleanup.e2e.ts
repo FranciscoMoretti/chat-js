@@ -14,6 +14,7 @@ import {
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 const storage = vi.hoisted(() => ({
@@ -26,9 +27,7 @@ vi.mock("../lib/file-storage", () => ({
       return Promise.reject(new Error("Provider unavailable"));
     }
     for (const url of urls) {
-      storage.objects.delete(
-        new URL(url, "http://local").searchParams.get("key") ?? ""
-      );
+      storage.objects.delete(keyFromFileUrl(url) ?? "");
     }
     return Promise.resolve();
   },

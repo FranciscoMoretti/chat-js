@@ -3,8 +3,8 @@ import { expect, test } from "vitest";
 
 import { eveImageContext } from "./image-context";
 
-const url = "/api/files/content?key=abcdefghijklmnopqrstuvwx.png";
 test("uses only the latest user attachments and generated images from this native branch", () => {
+  const url = "/api/files/abcdefghijklmnopqrstuvwx.png";
   const messages: ModelMessage[] = [
     {
       content: [
@@ -52,7 +52,10 @@ test("uses only the latest user attachments and generated images from this nativ
         url: "data:image/png;base64,bmV3",
       },
     ],
-    lastGeneratedImage: { imageUrl: url, name: "generated-image-image-1.png" },
+    lastGeneratedImage: {
+      imageUrl: url,
+      name: "generated-image-image-1.png",
+    },
   });
   expect(eveImageContext([messages[0]])).toMatchObject({
     lastGeneratedImage: null,

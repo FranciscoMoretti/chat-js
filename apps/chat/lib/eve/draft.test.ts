@@ -20,7 +20,7 @@ describe("multipart draft recovery", () => {
         contentType: "image/png",
         digest: "abc",
         name: "square.png",
-        url: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+        url: "/api/files/abcdefghijklmnopqrstuvwx.png",
       },
     ]);
     const original = prepareCreation(storage, "owner", message, "model");
