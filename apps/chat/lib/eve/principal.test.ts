@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { resolveEvePrincipal } from "./principal";
 
 const session = vi.hoisted(() => vi.fn());
-vi.mock("../registered-session", () => ({ getRegisteredSession: session }));
+vi.mock("../auth", () => ({ auth: { api: { getSession: session } } }));
 vi.mock("../db/eve-guests", () => {
   throw new Error("Guest resolution must not load the database");
 });

@@ -3,20 +3,18 @@ import { afterEach, expect, test, vi } from "vitest";
 import { GET } from "./route";
 
 const database = vi.hoisted(() => vi.fn());
-const settings = vi.hoisted(() => ({
-  APP_URL: "http://localhost:3000",
-  CHATJS_GUEST_ONLY: false,
-  EVE_INTERNAL_ORIGIN: "http://localhost:3790",
-  NODE_ENV: "development",
-}));
 vi.mock("@/lib/db/health", () => ({ checkDatabase: database }));
-vi.mock("@/lib/env", () => ({ env: settings }));
+vi.mock("@/lib/env", () => ({
+  env: {
+    EVE_INTERNAL_ORIGIN: "http://localhost:3790",
+    NODE_ENV: "development",
+  },
+}));
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.resetAllMocks();
-  settings.CHATJS_GUEST_ONLY = false;
 });
 test("requires a genuine Eve health response, not a login page", async () => {
   database.mockResolvedValue(undefined);
@@ -59,24 +57,4 @@ test("bounds a stalled database check", async () => {
   await vi.advanceTimersByTimeAsync(4500);
   const resolvedResult4 = await response;
   expect(resolvedResult4.status).toBe(503);
-});
-
-test("guest-only readiness probes the guest agent without touching the database", async () => {
-  settings.CHATJS_GUEST_ONLY = true;
-  database.mockRejectedValue(new Error("No database configured"));
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({ ok: true, status: "ready", workflowId: "guest" })
-    );
-  vi.stubGlobal("fetch", fetcher);
-  const response = await GET();
-  expect(response.status).toBe(200);
-  expect(database).not.toHaveBeenCalled();
-  expect(String(fetcher.mock.calls[0][0])).toBe(
-    "http://localhost:3000/eve/guest/v1/health"
-  );
-  fetcher.mockResolvedValue(new Response(null, { status: 503 }));
-  const unavailable = await GET();
-  expect(unavailable.status).toBe(503);
 });

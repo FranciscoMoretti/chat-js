@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
 export const SidebarUserNav = () => {
-  const { data: session, isPending, accountsEnabled = true } = useSession();
+  const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
@@ -62,10 +62,6 @@ export const SidebarUserNav = () => {
         </SidebarMenuItem>
       </SidebarMenu>
     );
-  }
-
-  if (!accountsEnabled) {
-    return null;
   }
 
   if (!user) {

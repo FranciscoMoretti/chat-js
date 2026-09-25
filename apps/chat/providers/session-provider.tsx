@@ -12,7 +12,6 @@ import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
 interface SessionContextValue {
-  accountsEnabled?: boolean;
   data: Session | null;
   /**
    * True while the shell has neither a streamed server session nor a settled
@@ -28,23 +27,6 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 const SessionSeedContext = createContext<
   ((session: Session | null) => void) | null
 >(null);
-
-const anonymousSession: SessionContextValue = {
-  accountsEnabled: false,
-  data: null,
-  isPending: false,
-};
-
-/** A settled anonymous context for deployments with no account backend. */
-export const AnonymousSessionProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => (
-  <SessionContext.Provider value={anonymousSession}>
-    {children}
-  </SessionContext.Provider>
-);
 
 export const SessionProvider = ({
   children,

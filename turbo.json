@@ -4,7 +4,6 @@
     "affectedUsingTaskInputs": true
   },
   "globalEnv": [
-    "CHATJS_GUEST_ONLY",
     "DATABASE_URL",
     "EVE_INTERNAL_ORIGIN",
     "EVE_GATEWAY_SECRET",

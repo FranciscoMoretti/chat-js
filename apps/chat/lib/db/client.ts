@@ -5,19 +5,9 @@ import { env } from "@/lib/env";
 
 import { databaseConnection } from "./connection";
 
-const createDatabase = () => {
-  const connection = databaseConnection(env);
-  return drizzle(postgres(connection.url, connection.options));
-};
-
-// Next discovers application route modules during guest-only builds. They may
-// import this handle, but using any database feature in that mode fails closed.
-export const db = env.CHATJS_GUEST_ONLY
-  ? new Proxy(drizzle.mock(), {
-      get: () => {
-        throw new Error(
-          "Application database features are unavailable in guest-only mode."
-        );
-      },
-    })
-  : createDatabase();
+// Optionally, if not using email/pass login, you can
+// use the Drizzle adapter for Auth.js / NextAuth
+// https://authjs.dev/reference/adapter/drizzle
+const connection = databaseConnection(env);
+const client = postgres(connection.url, connection.options);
+export const db = drizzle(client);

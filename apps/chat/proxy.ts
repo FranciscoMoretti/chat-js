@@ -1,10 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { auth } from "@/lib/auth";
 import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
-import { env } from "@/lib/env";
-import { getRegisteredSession } from "@/lib/registered-session";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
 
@@ -65,13 +64,7 @@ export const proxy = async (req: NextRequest) => {
     return;
   }
 
-  if (env.CHATJS_GUEST_ONLY) {
-    return pathname === "/"
-      ? undefined
-      : NextResponse.redirect(new URL("/", url));
-  }
-
-  const session = await getRegisteredSession(req.headers);
+  const session = await auth.api.getSession({ headers: req.headers });
   const isLoggedIn = !!session?.user;
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);

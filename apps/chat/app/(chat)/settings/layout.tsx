@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";
-import { env } from "@/lib/env";
 
 const SettingsLayoutShell = ({ children }: { children?: React.ReactNode }) => (
   <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-2 py-2 md:px-4">
@@ -36,15 +35,10 @@ const SettingsLayoutContent = async ({
   return <SettingsLayoutShell>{children}</SettingsLayoutShell>;
 };
 
-const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
-  if (env.CHATJS_GUEST_ONLY) {
-    redirect("/");
-  }
-  return (
-    <Suspense fallback={<SettingsLayoutShell />}>
-      <SettingsLayoutContent>{children}</SettingsLayoutContent>
-    </Suspense>
-  );
-};
+const SettingsLayout = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<SettingsLayoutShell />}>
+    <SettingsLayoutContent>{children}</SettingsLayoutContent>
+  </Suspense>
+);
 
 export default SettingsLayout;

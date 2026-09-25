@@ -1,9 +1,6 @@
 import { withEve } from "eve/next";
 import type { NextConfig } from "next";
 
-// Next config runs before the application module/alias loader.
-const guestOnly = process.env.CHATJS_GUEST_ONLY === "true";
-
 const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
@@ -46,7 +43,7 @@ const nextConfig: NextConfig = {
 };
 
 const configureEve = withEve(nextConfig, {
-  agents: guestOnly ? { guest: "./guest" } : { chat: ".", guest: "./guest" },
+  agents: { chat: ".", guest: "./guest" },
   devServerTimeoutMs: 600_000,
 });
 
@@ -63,18 +60,13 @@ const configureChat = async (...args: Parameters<typeof configureEve>) => {
         // Resolve the existing registered-agent URL before EVE's named-agent
         // rewrites. EVE otherwise prepends its rules and misses this alias.
         beforeFiles: [
-          ...(guestOnly
-            ? []
-            : [
-                {
-                  // Vercel agents are separate services. An external rewrite
-                  // re-enters platform routing to select the named service.
-                  destination: process.env.VERCEL_URL
-                    ? `https://${process.env.VERCEL_URL}/eve/chat/v1/:path*`
-                    : "/eve/chat/v1/:path*",
-                  source: "/eve/v1/:path*",
-                },
-              ]),
+          {
+            // Re-enter Vercel platform routing to select the named chat service.
+            destination: process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}/eve/chat/v1/:path*`
+              : "/eve/chat/v1/:path*",
+            source: "/eve/v1/:path*",
+          },
           ...(sections?.beforeFiles ?? []),
         ],
       };

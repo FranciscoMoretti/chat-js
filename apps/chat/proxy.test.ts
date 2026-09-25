@@ -4,10 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { proxy } from "./proxy";
 
 const mocks = vi.hoisted(() => ({ session: vi.fn() }));
-vi.mock("@/lib/registered-session", () => ({
-  getRegisteredSession: mocks.session,
-}));
-vi.mock("@/lib/env", () => ({ env: { CHATJS_GUEST_ONLY: false } }));
+vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock("@/lib/config", () => ({ config: { desktopApp: { enabled: false } } }));
 vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));
 
@@ -15,7 +12,7 @@ beforeEach(() => {
   mocks.session.mockResolvedValue(null);
 });
 
-it("lets chat URLs reach the page-level registered ownership check", async () => {
+it("lets guest EVE conversations reach page-level ownership checks", async () => {
   expect(
     await proxy(new NextRequest("http://localhost/chat/guest-conversation"))
   ).toBeUndefined();

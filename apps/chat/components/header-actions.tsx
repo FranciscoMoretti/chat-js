@@ -15,13 +15,13 @@ import {
 import { useSession } from "@/providers/session-provider";
 
 const PureHeaderActions = () => {
-  const { data: session, accountsEnabled = true } = useSession();
+  const { data: session } = useSession();
   const user = session?.user;
   const router = useRouter();
 
   return (
     <div className="flex items-center gap-2">
-      {!user && accountsEnabled && (
+      {!user && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

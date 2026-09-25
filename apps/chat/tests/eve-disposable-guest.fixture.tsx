@@ -12,7 +12,6 @@ import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
-import { AnonymousSessionProvider } from "@/providers/session-provider";
 
 const [modelId] = ANONYMOUS_LIMITS.AVAILABLE_MODELS;
 const model: AppModelDefinition = {
@@ -52,42 +51,40 @@ export const GuestVisualFixture = () => {
   const [state, setState] = useState("welcome");
   const [draft, setDraft] = useState("");
   return (
-    <AnonymousSessionProvider>
-      <ChatModelsProvider models={[model]}>
-        <DefaultModelProvider defaultModel={modelId}>
-          <select
-            aria-label="Fixture state"
-            value={state}
-            onChange={(event) => setState(event.target.value)}
-          >
-            <option value="welcome">Welcome</option>
-            <option value="response">Response</option>
-            <option value="expired">Expired</option>
-          </select>
-          <div
-            data-testid="guest-visual"
-            className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
-          >
-            {state === "welcome" ? (
-              <DisposableGuestChat />
-            ) : (
-              <>
-                <ChatHeaderView breadcrumb={null} />
-                <GuestConversationView
-                  messages={messages}
-                  modelId={modelId}
-                  busy={false}
-                  expired={state === "expired"}
-                  draft={draft}
-                  onDraftChange={setDraft}
-                  onSend={() => null}
-                  onStop={() => null}
-                />
-              </>
-            )}
-          </div>
-        </DefaultModelProvider>
-      </ChatModelsProvider>
-    </AnonymousSessionProvider>
+    <ChatModelsProvider models={[model]}>
+      <DefaultModelProvider defaultModel={modelId}>
+        <select
+          aria-label="Fixture state"
+          value={state}
+          onChange={(event) => setState(event.target.value)}
+        >
+          <option value="welcome">Welcome</option>
+          <option value="response">Response</option>
+          <option value="expired">Expired</option>
+        </select>
+        <div
+          data-testid="guest-visual"
+          className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
+        >
+          {state === "welcome" ? (
+            <DisposableGuestChat />
+          ) : (
+            <>
+              <ChatHeaderView breadcrumb={null} />
+              <GuestConversationView
+                messages={messages}
+                modelId={modelId}
+                busy={false}
+                expired={state === "expired"}
+                draft={draft}
+                onDraftChange={setDraft}
+                onSend={() => null}
+                onStop={() => null}
+              />
+            </>
+          )}
+        </div>
+      </DefaultModelProvider>
+    </ChatModelsProvider>
   );
 };

@@ -1,4 +1,4 @@
-import { getRegisteredSession } from "../registered-session";
+import { auth } from "../auth";
 
 export type EvePrincipal =
   | { kind: "registered"; ownerId: string }
@@ -15,7 +15,7 @@ export type EvePrincipal =
 export const resolveEvePrincipal = async (
   headers: Headers
 ): Promise<EvePrincipal | null> => {
-  const session = await getRegisteredSession(headers);
+  const session = await auth.api.getSession({ headers });
   return session?.user
     ? { kind: "registered", ownerId: session.user.id }
     : null;

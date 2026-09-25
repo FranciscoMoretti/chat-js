@@ -6,7 +6,7 @@ const bindingSchema = z.object({
   sessionId: z.string(),
 });
 
-test("guest chat works without application storage and disappears on reload", async ({
+test("anonymous chat stays disposable and disappears on reload", async ({
   page,
 }, testInfo) => {
   test.setTimeout(120_000);
@@ -153,9 +153,9 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await expect(
-    page.getByRole("button", { exact: true, name: "Sign in" })
-  ).toHaveCount(0);
-  await expect(page.locator('a[href="/settings/models"]')).toHaveCount(0);
+    page.getByRole("main").getByRole("button", { exact: true, name: "Sign in" })
+  ).toBeVisible();
+  await expect(page.locator('a[href="/settings/models"]')).toBeVisible();
   await composer.fill("Discard this draft");
   await page.getByRole("link", { name: /New Chat/u }).click();
   await expect(composer).toHaveText("");
@@ -164,7 +164,6 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   await expect(composer).toHaveText("");
   await page.getByRole("button", { name: /logo/u }).click();
   await expect(page.getByRole("combobox")).toBeVisible();
-  await expect(page.getByText("Sign in to access more models")).toHaveCount(0);
   await page.addStyleTag({
     content: "nextjs-portal { display:none !important; }",
   });
