@@ -798,44 +798,50 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   ).toBeUndefined();
 });
 
-test("document references protect owned files across conversation families and retain revision history", async () => {
-  const source = await conversation();
-  const destination = await conversation();
-  const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
-  const foreignKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
-  await registerEveStoredFile(owner, key);
-  await registerEveStoredFile(stranger, foreignKey);
-  await referenceEveFiles(owner, source.id, [key]);
-  const input = {
-    ...draft(destination.id),
-    content: `![image](/api/files/content?key=${key})\nForeign URL: /api/files/content?key=${foreignKey}`,
-  };
-  const revision = await saveEveDocumentRevision(input);
-  await saveEveDocumentRevision({
-    ...input,
-    content: "Image removed from latest revision",
-    expectedRevisionId: revision.id,
-    operationId: crypto.randomUUID(),
-  });
-  expect(
-    await db
-      .select({ key: eveFileReference.key })
-      .from(eveFileReference)
-      .where(eq(eveFileReference.conversationId, destination.id))
-  ).toEqual([{ key }]);
-  await beginEveConversationDeletion(owner, source.id);
-  expect(await prepareEveFamilyFilePurge(owner, source.id)).toEqual([]);
-  expect(
-    (
-      await getEveDocumentRevision(
-        owner,
-        destination.id,
-        input.documentId,
-        revision.id
-      )
-    )?.content
-  ).toBe(input.content);
-});
+test.each(["/api/files/", "/api/files/content?key="])(
+  "document references protect owned files across families and revision history (%s)",
+  async (prefix) => {
+    const source = await conversation();
+    const destination = await conversation();
+    const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
+    const foreignKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
+    await registerEveStoredFile(owner, key);
+    await registerEveStoredFile(stranger, foreignKey);
+    await referenceEveFiles(owner, source.id, [key]);
+    const input = {
+      ...draft(destination.id),
+      content: `![image](${prefix}${key})\nForeign URL: ${prefix}${foreignKey}`,
+    };
+    const revision = await saveEveDocumentRevision(input);
+    await saveEveDocumentRevision({
+      ...input,
+      content: "Image removed from latest revision",
+      expectedRevisionId: revision.id,
+      operationId: crypto.randomUUID(),
+    });
+    expect(
+      await db
+        .select({ key: eveFileReference.key })
+        .from(eveFileReference)
+        .where(eq(eveFileReference.conversationId, destination.id))
+    ).toEqual([{ key }]);
+    const deletion = await beginEveConversationDeletion(owner, source.id);
+    if (!deletion) {
+      throw new Error("Missing source family deletion");
+    }
+    expect(await prepareEveFamilyFilePurge(owner, deletion.rootId)).toEqual([]);
+    expect(
+      (
+        await getEveDocumentRevision(
+          owner,
+          destination.id,
+          input.documentId,
+          revision.id
+        )
+      )?.content
+    ).toBe(input.content);
+  }
+);
 
 test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
   const chat = await conversation();

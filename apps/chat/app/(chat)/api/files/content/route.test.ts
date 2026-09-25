@@ -1,15 +1,15 @@
-import { beforeEach, expect, test, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { GET } from "./route";
+import { GET as getPathFile } from "../[key]/route";
+import { GET as getLegacyFile } from "./route";
 
 const mocks = vi.hoisted(() => ({
   access: vi.fn(),
   principal: vi.fn(),
   serve: vi.fn(),
 }));
-vi.mock("@/lib/db/eve-files", () => ({
-  canReadEveFile: mocks.access,
-}));
+vi.mock("@/lib/db/eve-files", () => ({ canReadEveFile: mocks.access }));
 vi.mock("@/lib/eve/principal", () => ({
   resolveEvePrincipal: mocks.principal,
 }));
@@ -23,27 +23,53 @@ beforeEach(() => {
   mocks.serve.mockResolvedValue(new Response("file"));
 });
 const key = "abcdefghijklmnopqrstuvwx.png";
-test("a deletion fence denies storage redirects and bytes even if an object reappears", async () => {
-  mocks.access.mockResolvedValue({ allowed: false, managed: true });
-  const response = await GET(
-    new Request(`http://localhost/api/files/content?key=${key}`)
+
+describe.each(["path", "legacy"])("%s file route", (format) => {
+  const request = new NextRequest(
+    format === "path"
+      ? `http://localhost/api/files/${key}?dpl=dpl_test&other=ignored`
+      : `http://localhost/api/files/content?key=${key}&dpl=dpl_test&other=ignored`
   );
-  expect(response.status).toBe(404);
-  expect(response.headers.get("cache-control")).toBe("private, no-store");
-  expect(mocks.access).toHaveBeenCalledWith(key, "owner");
+  const getFile = () =>
+    format === "path"
+      ? getPathFile(request, { params: Promise.resolve({ key }) })
+      : getLegacyFile(request);
+
+  test("a deletion fence denies storage redirects and bytes", async () => {
+    mocks.access.mockResolvedValue({ allowed: false, managed: true });
+    const response = await getFile();
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(mocks.access).toHaveBeenCalledWith(key, "owner");
+    expect(mocks.serve).not.toHaveBeenCalled();
+  });
+
+  test.each([true, false])(
+    "authorized managed=%s files use the correct storage access",
+    async (managed) => {
+      mocks.access.mockResolvedValue({ allowed: true, managed });
+      const response = await getFile();
+      expect(response.status).toBe(200);
+      expect(mocks.access).toHaveBeenCalledWith(key, "owner");
+      expect(mocks.serve).toHaveBeenCalledWith(request, key, {
+        allowRedirect: !managed,
+      });
+    }
+  );
+});
+
+test("invalid path keys and duplicate legacy keys are rejected before authorization", async () => {
+  const pathResponse = await getPathFile(
+    new Request("http://localhost/api/files/invalid"),
+    {
+      params: Promise.resolve({ key: "invalid" }),
+    }
+  );
+  const legacyResponse = await getLegacyFile(
+    new NextRequest(`http://localhost/api/files/content?key=${key}&key=${key}`)
+  );
+  expect(pathResponse.status).toBe(400);
+  expect(legacyResponse.status).toBe(400);
+  expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.serve).not.toHaveBeenCalled();
 });
-test.each([true, false])(
-  "authorized managed=%s files use the correct storage access",
-  async (managed) => {
-    mocks.access.mockResolvedValue({ allowed: true, managed });
-    const request = new Request(
-      `http://localhost/api/files/content?key=${key}`
-    );
-    const resolvedResult1 = await GET(request);
-    expect(resolvedResult1.status).toBe(200);
-    expect(mocks.serve).toHaveBeenCalledWith(request, {
-      allowRedirect: !managed,
-    });
-  }
-);

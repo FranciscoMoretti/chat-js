@@ -1,23 +1,12 @@
-import { canReadEveFile } from "@/lib/db/eve-files";
-import { resolveEvePrincipal } from "@/lib/eve/principal";
-import { createFileContentResponse } from "@/lib/file-content-response";
-import { keyFromFileUrl } from "@/lib/file-url";
+import type { NextRequest } from "next/server";
 
-export const GET = async (request: Request) => {
-  const key = keyFromFileUrl(request.url);
-  if (!key) {
-    return await createFileContentResponse(request);
+import { createFileAccessResponse } from "@/lib/file-access-response";
+
+/** Serve query-based URLs already persisted in chats and documents. */
+export const GET = async (request: NextRequest) => {
+  const keys = request.nextUrl.searchParams.getAll("key");
+  if (keys.length !== 1) {
+    return new Response("Invalid file key", { status: 400 });
   }
-  const principal = await resolveEvePrincipal(request.headers);
-  const access = await canReadEveFile(key, principal?.ownerId);
-  if (!access.allowed) {
-    return new Response("File not found", {
-      headers: { "Cache-Control": "private, no-store" },
-      status: 404,
-    });
-  }
-  // Managed files must stay behind this revocable authorization boundary.
-  return await createFileContentResponse(request, {
-    allowRedirect: !access.managed,
-  });
+  return await createFileAccessResponse(request, keys[0]);
 };

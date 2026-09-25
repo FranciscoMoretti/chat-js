@@ -9,24 +9,29 @@ import {
 } from "./file-url";
 
 describe("keyFromFileUrl", () => {
-  const url = "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png";
+  const key = "l_u0a2bkphKLFKsBI4q5Tue9.png";
 
-  it("accepts Next Image deployment metadata", () => {
-    assert.equal(
-      keyFromFileUrl(`${url}&dpl=dpl_test`),
-      "l_u0a2bkphKLFKsBI4q5Tue9.png"
-    );
+  it("reads path keys and persisted query-based URLs independently of metadata", () => {
+    for (const path of [`/api/files/${key}`, `/api/files/content?key=${key}`]) {
+      const url = new URL(path, "https://chat.example");
+      url.searchParams.set("dpl", "dpl_test");
+      url.searchParams.set("other", "ignored");
+      assert.equal(keyFromFileUrl(path), key);
+      assert.equal(keyFromFileUrl(url.href), key);
+    }
   });
 
-  it("still rejects unknown parameters, duplicate keys and invalid storage keys", () => {
-    assert.equal(keyFromFileUrl(`${url}&other=value`), null);
-    assert.equal(keyFromFileUrl(`${url}&dpl=dpl_test&other=value`), null);
-    assert.equal(keyFromFileUrl(`${url}&key=other&dpl=dpl_test`), null);
-    assert.equal(keyFromFileUrl(`${url}&dpl=one&dpl=two`), null);
-    assert.equal(
-      keyFromFileUrl("/api/files/content?key=../file&dpl=dpl_test"),
-      null
-    );
+  it("rejects invalid paths, invalid keys, and duplicate legacy keys", () => {
+    for (const url of [
+      "/api/files/../secret",
+      "/api/files/%2e%2e%2fsecret",
+      `/api/files/${key}/extra`,
+      `/api/files-other/${key}`,
+      "/api/files/content?key=../file",
+      `/api/files/content?key=${key}&key=${key}`,
+    ]) {
+      assert.equal(keyFromFileUrl(url), null);
+    }
   });
 });
 
@@ -45,7 +50,7 @@ describe("getFileImageProps", () => {
         "http://localhost:3030/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png"
       ),
       {
-        src: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+        src: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
         unoptimized: true,
       }
     );

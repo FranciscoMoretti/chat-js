@@ -57,7 +57,7 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
     deletedCount: 1,
     skipped: false,
   });
-  expect(mocks.remove).toHaveBeenCalledWith([`/api/files/content?key=${key}`]);
+  expect(mocks.remove).toHaveBeenCalledWith([`/api/files/${key}`]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
 test("a failed batch retains its deletion fence without starving subsequent batches", async () => {

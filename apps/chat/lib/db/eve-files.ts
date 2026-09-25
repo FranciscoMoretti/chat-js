@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { FILE_CONTENT_PATH, isFileStorageKey } from "../file-url";
+import { FILES_PATH, isFileStorageKey } from "../file-url";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
@@ -47,7 +47,7 @@ export const canReadEveFile = async (key: string, ownerId?: string) => {
 };
 
 const DOCUMENT_FILE_URL = new RegExp(
-  `${FILE_CONTENT_PATH}\\?key=([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
+  `${FILES_PATH}/(?:content\\?key=)?([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
   "gu"
 );
 

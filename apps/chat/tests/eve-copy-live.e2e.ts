@@ -383,7 +383,7 @@ for (const attachment of [
       .from(eveFileReference)
       .where(eq(eveFileReference.conversationId, destination.id));
     expect(refs).toHaveLength(1);
-    const copiedUrl = `/api/files/content?key=${refs[0].key}`;
+    const copiedUrl = `/api/files/${refs[0].key}`;
     expect(new URL(file.url, origin).searchParams.get("key")).not.toBe(
       refs[0].key
     );

@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { restoreEveAttachment } from "./restore-attachment";
 
 const origin = "http://localhost:3790";
-const path = "/api/files/content?key=abcdefghijklmnopqrstuvwx.png";
+const path = "/api/files/abcdefghijklmnopqrstuvwx.png";
 const part = {
   filename: "image.png",
   mediaType: "image/png",
@@ -20,7 +20,12 @@ it("restores exact bytes and filename from relative and absolute owned file URLs
     )
   );
   vi.stubGlobal("fetch", fetcher);
-  for (const url of [path, origin + path]) {
+  for (const url of [
+    path,
+    origin + path,
+    "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+    `${path}?dpl=dpl_test&other=ignored`,
+  ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     const file = await restoreEveAttachment({ ...part, url }, origin, 10);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
@@ -52,7 +57,6 @@ it("rejects external, malformed, and unsupported references without fetching", a
     `https://other.example${path}`,
     `//other.example${path}`,
     `${origin}/api/private`,
-    `${path}&other=1`,
     "data:text/html;base64,AQID",
     `${path}#fragment`,
   ]) {
