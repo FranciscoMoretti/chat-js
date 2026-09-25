@@ -18,19 +18,12 @@ const attachment = {
 };
 
 test("only accepts supported ChatJS attachment references", () => {
+  expect(eveMessageInput.safeParse([attachment]).success).toBe(true);
   for (const data of [
-    attachment.data,
-    "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-  ]) {
-    expect(eveMessageInput.safeParse([{ ...attachment, data }]).success).toBe(
-      true
-    );
-  }
-  for (const data of [
-    "https://evil.test/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+    "https://evil.test/api/files/abcdefghijklmnopqrstuvwx.png",
     "http://127.0.0.1/private",
     "data:image/png;base64,eA==",
-    "/api/files/content?key=../../secret",
+    "/api/files/../../secret",
   ]) {
     expect(eveMessageInput.safeParse([{ ...attachment, data }]).success).toBe(
       false

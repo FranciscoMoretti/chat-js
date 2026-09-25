@@ -23,7 +23,6 @@ it("restores exact bytes and filename from relative and absolute owned file URLs
   for (const url of [
     path,
     origin + path,
-    "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
     `${path}?dpl=dpl_test&other=ignored`,
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.

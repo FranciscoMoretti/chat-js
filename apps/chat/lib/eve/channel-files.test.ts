@@ -59,8 +59,8 @@ it("does not resolve files without authenticated session context", async () => {
 
 it.each([
   "https://foreign.example/private",
-  "/api/files/content?key=../../private",
-  "https://foreign.example/?next=/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+  "/api/files/../../private",
+  "https://foreign.example/?next=/api/files/abcdefghijklmnopqrstuvwx.png",
 ])(
   "leaves unrelated or malformed URL %s to the channel policy",
   async (url) => {

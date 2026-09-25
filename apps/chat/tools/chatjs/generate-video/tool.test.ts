@@ -51,7 +51,7 @@ beforeEach(() => {
     video: { mediaType: "video/mp4", uint8Array: Buffer.from("video") },
   });
   mocks.uploadFile.mockResolvedValue({
-    url: "/api/files/content?key=generated",
+    url: "/api/files/generated",
   });
 });
 
@@ -93,7 +93,7 @@ it("uses the selected model's provider ID and records the existing estimate", as
   );
   expect(result).toEqual({
     prompt: "Ocean",
-    videoUrl: "/api/files/content?key=generated",
+    videoUrl: "/api/files/generated",
   });
   expect(await costAccumulator.getTotalCost()).toBe(50);
 });

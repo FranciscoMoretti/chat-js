@@ -256,7 +256,7 @@ export const retainEveDocumentFiles = async (
   conversationId: string,
   content: string
 ) => {
-  // Recognize file URLs with the same parser as downloads, including legacy queries.
+  // Recognize file URLs with the same parser as downloads, independent of query metadata.
   // Retaining a file mentioned as text is preferable to deleting a referenced image.
   const candidates = [
     ...new Set(

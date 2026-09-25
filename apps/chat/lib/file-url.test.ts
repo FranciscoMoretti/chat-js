@@ -11,24 +11,23 @@ import {
 describe("keyFromFileUrl", () => {
   const key = "l_u0a2bkphKLFKsBI4q5Tue9.png";
 
-  it("reads path keys and persisted query-based URLs independently of metadata", () => {
-    for (const path of [`/api/files/${key}`, `/api/files/content?key=${key}`]) {
-      const url = new URL(path, "https://chat.example");
-      url.searchParams.set("dpl", "dpl_test");
-      url.searchParams.set("other", "ignored");
-      assert.equal(keyFromFileUrl(path), key);
-      assert.equal(keyFromFileUrl(url.href), key);
-    }
+  it("reads path keys independently of metadata", () => {
+    const path = `/api/files/${key}`;
+    const url = new URL(path, "https://chat.example");
+    url.searchParams.set("dpl", "dpl_test");
+    url.searchParams.set("other", "ignored");
+    assert.equal(keyFromFileUrl(path), key);
+    assert.equal(keyFromFileUrl(url.href), key);
   });
 
-  it("rejects invalid paths, invalid keys, and duplicate legacy keys", () => {
+  it("rejects invalid paths and query-only keys", () => {
     for (const url of [
       "/api/files/../secret",
       "/api/files/%2e%2e%2fsecret",
       `/api/files/${key}/extra`,
       `/api/files-other/${key}`,
-      "/api/files/content?key=../file",
-      `/api/files/content?key=${key}&key=${key}`,
+      "/api/files/../file",
+      `/api/files/content?key=${key}`,
     ]) {
       assert.equal(keyFromFileUrl(url), null);
     }
@@ -47,7 +46,7 @@ describe("getFileImageProps", () => {
   it("makes managed worktree files same-origin for Next Image", () => {
     assert.deepEqual(
       getFileImageProps(
-        "http://localhost:3030/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png"
+        "http://localhost:3030/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png"
       ),
       {
         src: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",

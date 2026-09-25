@@ -9,19 +9,14 @@ export const isFileStorageKey = (value: string): boolean =>
 export const createFileUrl = (key: string): string =>
   `${FILES_PATH}/${encodeURIComponent(key)}`;
 
-/** Read current paths and query-based URLs already saved in chat history. */
 export const keyFromFileUrl = (value: string): string | null => {
   try {
     const url = new URL(value, URL_PARSE_BASE);
     if (!url.pathname.startsWith(`${FILES_PATH}/`)) {
       return null;
     }
-    const keys =
-      url.pathname === `${FILES_PATH}/content`
-        ? url.searchParams.getAll("key")
-        : [url.pathname.slice(FILES_PATH.length + 1)];
-    const [key] = keys;
-    return keys.length === 1 && key && isFileStorageKey(key) ? key : null;
+    const key = url.pathname.slice(FILES_PATH.length + 1);
+    return isFileStorageKey(key) ? key : null;
   } catch {
     return null;
   }
