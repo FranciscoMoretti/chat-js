@@ -92,9 +92,15 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
         run: bunx turbo run test:e2e --affected
+      - name: Test conversation presentation
+        if: steps.affected.outputs.run == 'true'
+        working-directory: apps/chat
+        run: bunx playwright test --config playwright.eve-presentation.config.ts
       - uses: actions/upload-artifact@v4
         if: steps.affected.outputs.run == 'true' && always() && !cancelled()
         with:
           name: playwright-report
-          path: apps/chat/playwright-report/
+          path: |
+            apps/chat/playwright-report/
+            apps/chat/tests/eve-results/presentation/
           retention-days: 7
