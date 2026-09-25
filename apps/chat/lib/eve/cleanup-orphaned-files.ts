@@ -1,7 +1,7 @@
 import { completeEveFilePurge } from "../db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "../db/eve-orphaned-files";
 import { deleteFilesByUrls, iterateStoredFiles } from "../file-storage";
-import { FILE_CONTENT_PATH, isFileStorageKey } from "../file-url";
+import { createFileUrl, isFileStorageKey } from "../file-url";
 
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched. */
 export const cleanupEveOrphanedFiles = async (cutoff: Date) => {
@@ -14,11 +14,7 @@ export const cleanupEveOrphanedFiles = async (cutoff: Date) => {
       if (!files.length) {
         return;
       }
-      await deleteFilesByUrls(
-        files.map(
-          ({ key }) => `${FILE_CONTENT_PATH}?${new URLSearchParams({ key })}`
-        )
-      );
+      await deleteFilesByUrls(files.map(({ key }) => createFileUrl(key)));
       for (const ownerId of new Set(files.map((file) => file.ownerId))) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         await completeEveFilePurge(

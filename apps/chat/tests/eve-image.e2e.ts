@@ -36,7 +36,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
-  const image = page.locator('img[src*="/api/files/content?"]').first();
+  const image = page.locator('img[src*="/api/files/"]').first();
   await expect(image).toBeVisible({ timeout: 150_000 });
   await expect
     .poll(() =>
@@ -98,7 +98,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       "Use generateImage exactly once to edit the image you just generated: change the blue square to green and keep the white background."
     );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  const images = page.locator('img[src*="/api/files/content?"]');
+  const images = page.locator('img[src*="/api/files/"]');
   await expect(images).toHaveCount(2, { timeout: 150_000 });
   const edited = images.nth(1);
   await expect
@@ -174,7 +174,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       route.abort()
     );
     await shared.goto(new URL(`/share/${binding.id}`, page.url()).href);
-    const sharedImages = shared.locator('img[src*="/api/files/content?"]');
+    const sharedImages = shared.locator('img[src*="/api/files/"]');
     await expect(sharedImages).toHaveCount(2);
     await expect
       .poll(() =>

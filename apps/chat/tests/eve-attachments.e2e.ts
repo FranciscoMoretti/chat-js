@@ -386,12 +386,11 @@ test("an uncertain creation retains the same visible attachment and immutable re
   await page.goto("/");
   await page.route("**/api/files/upload", (route) =>
     route.fulfill({
-      json: { url: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png" },
+      json: { url: "/api/files/abcdefghijklmnopqrstuvwx.png" },
     })
   );
-  await page.route(
-    "**/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-    (route) => route.fulfill({ body: redPng, contentType: "image/png" })
+  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
+    route.fulfill({ body: redPng, contentType: "image/png" })
   );
   const requests: string[] = [];
   await page.route("**/api/agent-conversations", (route) => {

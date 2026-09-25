@@ -1,6 +1,6 @@
 import type { EveMessagePart } from "eve/client";
 
-import { keyFromFileUrl } from "../file-url";
+import { createFileUrl, keyFromFileUrl } from "../file-url";
 import { draftAttachment } from "./draft";
 
 /** Restore exact bytes from inline native history or an owned same-origin copy. */
@@ -31,7 +31,7 @@ export const restoreEveAttachment = async (
     ) {
       throw new Error("This attachment is not an owned ChatJS file.");
     }
-    source = `/api/files/content?key=${encodeURIComponent(key)}`;
+    source = createFileUrl(key);
   }
   const response = await fetch(source, {
     credentials: "same-origin",

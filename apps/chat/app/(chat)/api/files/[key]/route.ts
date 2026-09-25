@@ -1,12 +1,15 @@
 import { canReadEveFile } from "@/lib/db/eve-files";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { createFileContentResponse } from "@/lib/file-content-response";
-import { keyFromFileUrl } from "@/lib/file-url";
+import { isFileStorageKey } from "@/lib/file-url";
 
-export const GET = async (request: Request) => {
-  const key = keyFromFileUrl(request.url);
-  if (!key) {
-    return await createFileContentResponse(request);
+export const GET = async (
+  request: Request,
+  { params }: { params: Promise<{ key: string }> }
+) => {
+  const { key } = await params;
+  if (!isFileStorageKey(key)) {
+    return new Response("Invalid file key", { status: 400 });
   }
   const principal = await resolveEvePrincipal(request.headers);
   const access = await canReadEveFile(key, principal?.ownerId);
@@ -17,7 +20,7 @@ export const GET = async (request: Request) => {
     });
   }
   // Managed files must stay behind this revocable authorization boundary.
-  return await createFileContentResponse(request, {
+  return await createFileContentResponse(request, key, {
     allowRedirect: !access.managed,
   });
 };

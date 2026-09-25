@@ -162,7 +162,7 @@ async function fixture() {
     .values({ conversationId: source.id, key, ownerId: sourceOwnerId });
   await db.insert(eveDocumentRevision).values([
     {
-      content: `/api/files/content?key=${key}`,
+      content: `/api/files/${key}`,
       conversationId: source.id,
       documentId,
       id: first,

@@ -29,7 +29,7 @@ beforeEach(() => {
 
 it("checks the destination owner before reading local storage, regardless of the supplied host", async () => {
   const result = await fetchEveChannelFile(
-    `https://untrusted.example/api/files/content?key=${key}`,
+    `https://untrusted.example/api/files/${key}`,
     context
   );
   expect(mocks.owned).toHaveBeenCalledWith(owner.principalId, [key]);
@@ -44,23 +44,23 @@ it("checks the destination owner before reading local storage, regardless of the
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
   mocks.owned.mockRejectedValue(new Error("Not owned"));
   await expect(
-    fetchEveChannelFile(`/api/files/content?key=${key}`, context)
+    fetchEveChannelFile(`/api/files/${key}`, context)
   ).rejects.toThrow("Not owned");
   expect(mocks.download).not.toHaveBeenCalled();
 });
 
 it("does not resolve files without authenticated session context", async () => {
-  await expect(
-    fetchEveChannelFile(`/api/files/content?key=${key}`)
-  ).rejects.toThrow("authenticated owner");
+  await expect(fetchEveChannelFile(`/api/files/${key}`)).rejects.toThrow(
+    "authenticated owner"
+  );
   expect(mocks.owned).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
 });
 
 it.each([
   "https://foreign.example/private",
-  "/api/files/content?key=../../private",
-  "https://foreign.example/?next=/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+  "/api/files/../../private",
+  "https://foreign.example/?next=/api/files/abcdefghijklmnopqrstuvwx.png",
 ])(
   "leaves unrelated or malformed URL %s to the channel policy",
   async (url) => {

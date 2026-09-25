@@ -492,7 +492,7 @@ describe("useEveFork", () => {
               filename: "notes.pdf",
               mediaType: "application/pdf",
               type: "file",
-              url: "https://chatjs.example/api/files/content?key=notes.pdf",
+              url: "https://chatjs.example/api/files/notes.pdf",
             },
           ])
         );
