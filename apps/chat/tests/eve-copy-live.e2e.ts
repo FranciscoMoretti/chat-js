@@ -384,9 +384,7 @@ for (const attachment of [
       .where(eq(eveFileReference.conversationId, destination.id));
     expect(refs).toHaveLength(1);
     const copiedUrl = `/api/files/${refs[0].key}`;
-    expect(new URL(file.url, origin).searchParams.get("key")).not.toBe(
-      refs[0].key
-    );
+    expect(new URL(file.url, origin).pathname).not.toBe(copiedUrl);
     let saved = await native.sessions.attach(destination.sessionId).snapshot();
     await expect
       .poll(
@@ -527,9 +525,7 @@ for (const attachment of [
         expect(editedFile.filename).toBe(attachment.name);
         expect(editedFile.mediaType).toBe(attachment.mediaType);
         expect(new URL(editedFile.data, origin).origin).toBe(origin);
-        expect(
-          new URL(editedFile.data, origin).searchParams.get("key")
-        ).not.toBe(refs[0].key);
+        expect(new URL(editedFile.data, origin).pathname).not.toBe(copiedUrl);
         const restored = await page.request.get(editedFile.data);
         expect(restored.status()).toBe(200);
         expect(await restored.body()).toEqual(attachment.bytes);

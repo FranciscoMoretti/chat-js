@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { FILES_PATH, isFileStorageKey } from "../file-url";
+import { isFileStorageKey, keyFromFileUrl } from "../file-url";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
@@ -46,10 +46,8 @@ export const canReadEveFile = async (key: string, ownerId?: string) => {
   return { allowed: Boolean(reference), managed: true };
 };
 
-const DOCUMENT_FILE_URL = new RegExp(
-  `${FILES_PATH}/(?:content\\?key=)?([A-Za-z0-9_-]{24}(?:\\.[a-z0-9]{1,10})?)`,
-  "gu"
-);
+const DOCUMENT_URL_TOKEN = /[^\s<>()"'`[\]]+/gu;
+const SENTENCE_END = /[.,;:!?]+$/u;
 
 /** Reserve a fresh upload before storage I/O; never overwrite an existing key. */
 export const reserveEveUpload = async (ownerId: string, key: string) => {
@@ -258,11 +256,13 @@ export const retainEveDocumentFiles = async (
   conversationId: string,
   content: string
 ) => {
-  // Stored URLs are canonical paths with one ASCII key. Match conservatively:
-  // retaining a file mentioned as text is preferable to deleting a referenced image.
+  // Recognize file URLs with the same parser as downloads, including legacy queries.
+  // Retaining a file mentioned as text is preferable to deleting a referenced image.
   const candidates = [
     ...new Set(
-      [...content.matchAll(DOCUMENT_FILE_URL)].map((match) => match[1])
+      [...content.matchAll(DOCUMENT_URL_TOKEN)]
+        .map(([token]) => keyFromFileUrl(token.replace(SENTENCE_END, "")))
+        .filter((key) => key !== null)
     ),
   ];
   if (!candidates.length) {

@@ -798,7 +798,11 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   ).toBeUndefined();
 });
 
-test.each(["/api/files/", "/api/files/content?key="])(
+test.each([
+  "/api/files/",
+  "/api/files/content?key=",
+  "/api/files/content?dpl=dpl_test&key=",
+])(
   "document references protect owned files across families and revision history (%s)",
   async (prefix) => {
     const source = await conversation();
