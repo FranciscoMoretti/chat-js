@@ -31,7 +31,6 @@ vi.mock("@/lib/config", () => ({
 }));
 vi.mock("@/lib/file-storage", () => ({
   downloadFile: mocks.downloadFile,
-  uploadFile: mocks.uploadFile,
 }));
 vi.mock("@/lib/ai/models", () => ({
   fetchModels: mocks.fetchModels,

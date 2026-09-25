@@ -91,7 +91,9 @@ describe("file content response", () => {
 });
 
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdForStorageKey: (key: string) =>
-    Promise.resolve(key.slice("objects/".length)),
+  fileIdsForStorageKeys: (keys: string[]) =>
+    Promise.resolve(
+      new Map(keys.map((key) => [key, key.slice("objects/".length)]))
+    ),
   storageKeyForFile: (id: string) => Promise.resolve(`objects/${id}`),
 }));

@@ -25,7 +25,6 @@ vi.mock("@/lib/config", () => ({
     ai: { tools: { video: { default: "default-video", enabled: true } } },
   },
 }));
-vi.mock("@/lib/file-storage", () => ({ uploadFile: mocks.uploadFile }));
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));

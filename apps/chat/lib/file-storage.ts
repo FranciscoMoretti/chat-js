@@ -3,7 +3,10 @@ import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
 import { FILE_STORAGE_PREFIX } from "./constants";
-import { fileIdForStorageKey, storageKeyForFile } from "./db/file-storage-keys";
+import {
+  fileIdsForStorageKeys,
+  storageKeyForFile,
+} from "./db/file-storage-keys";
 import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
@@ -63,40 +66,34 @@ export type FileUploader = (
   contentType?: string
 ) => ReturnType<typeof uploadFileAtKey>;
 
-export const listFiles = async () => {
-  const storedFiles: {
-    pathname: string;
-    uploadedAt: Date;
-    url: string;
-  }[] = [];
-  for await (const file of getFiles().listAll()) {
-    const fileId = await fileIdForStorageKey(file.key);
-    if (!fileId) {
-      continue;
+/**
+ * Resolve one provider page at a time, bounding inventory memory and DB queries.
+ * @yields {{ pathname: string; uploadedAt: Date; url: string }} Registered file metadata.
+ */
+export const iterateStoredFiles = async function* iterateStoredFiles() {
+  let cursor: string | undefined;
+  do {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each page requires the preceding cursor.
+    const page = await getFiles().list({ cursor, limit: 100 });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Resolve only the current inventory page.
+    const ids = await fileIdsForStorageKeys(page.items.map((file) => file.key));
+    for (const file of page.items) {
+      const fileId = ids.get(file.key);
+      if (fileId) {
+        yield {
+          pathname: fileId,
+          uploadedAt: new Date(file.lastModified ?? Date.now()),
+          url: createFileUrl(fileId),
+        };
+      }
     }
-    storedFiles.push({
-      pathname: fileId,
-      uploadedAt: new Date(file.lastModified ?? Date.now()),
-      url: createFileUrl(fileId),
-    });
-  }
-  return { files: storedFiles };
+    ({ cursor } = page);
+  } while (cursor);
 };
 
-/** @yields {{ pathname: string; uploadedAt: Date; url: string }} stored file metadata. */
-export const iterateStoredFiles = async function* iterateStoredFiles() {
-  for await (const file of getFiles().listAll()) {
-    const fileId = await fileIdForStorageKey(file.key);
-    if (!fileId) {
-      continue;
-    }
-    yield {
-      pathname: fileId,
-      uploadedAt: new Date(file.lastModified ?? Date.now()),
-      url: createFileUrl(fileId),
-    };
-  }
-};
+export const listFiles = async () => ({
+  files: await Array.fromAsync(iterateStoredFiles()),
+});
 
 export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   const keys = [

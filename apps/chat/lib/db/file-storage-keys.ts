@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "./client";
 import { eveStoredFile } from "./schema";
@@ -15,10 +15,13 @@ export const storageKeyForFile = async (fileId: string) => {
   return file.storageKey;
 };
 
-export const fileIdForStorageKey = async (storageKey: string) => {
-  const [file] = await db
-    .select({ fileId: eveStoredFile.key })
+export const fileIdsForStorageKeys = async (storageKeys: string[]) => {
+  if (!storageKeys.length) {
+    return new Map<string, string>();
+  }
+  const files = await db
+    .select({ fileId: eveStoredFile.key, storageKey: eveStoredFile.storageKey })
     .from(eveStoredFile)
-    .where(eq(eveStoredFile.storageKey, storageKey));
-  return file?.fileId;
+    .where(inArray(eveStoredFile.storageKey, storageKeys));
+  return new Map(files.map((file) => [file.storageKey, file.fileId]));
 };

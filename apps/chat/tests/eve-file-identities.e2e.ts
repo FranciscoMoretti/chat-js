@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { db } from "../lib/db/client";
 import { reserveEveUpload } from "../lib/db/eve-files";
 import {
-  fileIdForStorageKey,
+  fileIdsForStorageKeys,
   storageKeyForFile,
 } from "../lib/db/file-storage-keys";
 import { eveStoredFile, user } from "../lib/db/schema";
@@ -24,14 +24,17 @@ test("file identity survives changing its private storage location", async () =>
     await reserveEveUpload(owner, fileId);
     const storageKey = await storageKeyForFile(fileId);
     expect(storageKey).not.toBe(fileId);
-    expect(await fileIdForStorageKey(storageKey)).toBe(fileId);
+    const ids = await fileIdsForStorageKeys([storageKey]);
+    expect(ids.get(storageKey)).toBe(fileId);
     const movedKey = `moved/${crypto.randomUUID()}`;
     await db
       .update(eveStoredFile)
       .set({ storageKey: movedKey })
       .where(eq(eveStoredFile.key, fileId));
     expect(await storageKeyForFile(fileId)).toBe(movedKey);
-    expect(await fileIdForStorageKey(storageKey)).toBeUndefined();
+    expect(await fileIdsForStorageKeys([storageKey, movedKey])).toEqual(
+      new Map([[movedKey, fileId]])
+    );
     await expect(storageKeyForFile("unregistered")).rejects.toThrow(
       "not registered"
     );
