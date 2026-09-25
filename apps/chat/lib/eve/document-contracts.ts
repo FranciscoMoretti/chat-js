@@ -5,10 +5,9 @@ import { isFileStorageKey } from "../file-url";
 export const documentFileIds = z
   .array(z.string().refine(isFileStorageKey))
   .max(256)
-  .default([])
   .transform((ids) => [...new Set(ids)].toSorted())
   .describe(
-    "Stable file IDs used by this document, including embedded images. Include every referenced file ID; never include presigned URLs."
+    "Stable file IDs used by this document, including embedded images. Provide the complete list on every save, or [] for no attachments; never include presigned URLs."
   );
 
 const documentContent = z.object({
@@ -28,6 +27,8 @@ export const eveDocumentEditInput = documentContent.extend({
 export const eveDocumentReadInput = z.object({ documentId: z.uuid() });
 export const eveManualDocumentInput = eveDocumentEditInput.extend({
   conversationId: z.uuid(),
+  // Manual editors preserve the previous revision's IDs in saveManualEveDocument.
+  fileIds: documentFileIds.default([]),
   operationId: z.uuid(),
 });
 

@@ -104,6 +104,7 @@ function draft(conversationId: string) {
     conversationId,
     documentId: crypto.randomUUID(),
     expectedRevisionId: null,
+    fileIds: [],
     kind: "text" as const,
     operationId: crypto.randomUUID(),
     ownerId: owner,
@@ -528,7 +529,14 @@ test("native document calls replay safely and reject stale edits and cross-conve
       turn: { id: "turn_0", sequence: 0 },
     },
   };
-  const input = { content: "Original", title: "Native notes" };
+  const input = { content: "Original", fileIds: [], title: "Native notes" };
+  await expect(
+    executeEveDocumentTool(
+      "createTextDocument",
+      { content: input.content, title: input.title },
+      context
+    )
+  ).rejects.toThrow("fileIds");
   const [created, replay] = await Promise.all([
     executeEveDocumentTool("createTextDocument", input, context),
     executeEveDocumentTool("createTextDocument", input, context),
