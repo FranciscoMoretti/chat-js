@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
@@ -12,6 +13,7 @@ const serializeSignedCookie = async (
     path?: string;
     httpOnly?: boolean;
     sameSite?: string;
+    secure?: boolean;
     expires?: Date;
   }
 ): Promise<string> => {
@@ -39,6 +41,9 @@ const serializeSignedCookie = async (
   }
   if (opt.httpOnly) {
     cookie += "; HttpOnly";
+  }
+  if (opt.secure) {
+    cookie += "; Secure";
   }
   if (opt.sameSite) {
     cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
@@ -80,8 +85,9 @@ export const GET = async () => {
     userId: devUser.id,
   });
 
+  const { authCookies } = await auth.$context;
   const signedSessionCookie = await serializeSignedCookie(
-    "better-auth.session_token",
+    authCookies.sessionToken.name,
     token,
     env.AUTH_SECRET,
     {
@@ -89,6 +95,7 @@ export const GET = async () => {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
+      secure: authCookies.sessionToken.attributes.secure,
     }
   );
 

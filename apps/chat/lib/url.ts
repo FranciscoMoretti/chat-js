@@ -14,5 +14,6 @@ export const getBaseUrl = (): string => {
   if (env.VERCEL_URL) {
     return `https://${env.VERCEL_URL}`;
   }
-  return "http://localhost:3000";
+  // Next sets PORT to the actual listener, including --port and automatic fallback.
+  return `http://localhost:${process.env.PORT || "3000"}`;
 };
