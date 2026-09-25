@@ -17,6 +17,19 @@ vi.mock("./storage-provider", async () => {
 });
 
 describe("file content response", () => {
+  it("serves uploaded files when Next Image adds a deployment ID", async () => {
+    const uploaded = await uploadFile("hello.txt", "hello", "text/plain");
+    const url = new URL(uploaded.url, "https://chat.example");
+    url.searchParams.set("dpl", "dpl_test");
+
+    const response = await createFileContentResponse(new Request(url), {
+      allowRedirect: false,
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), "hello");
+  });
+
   it("serves byte ranges", async () => {
     const uploaded = await uploadFile("hello.txt", "hello", "text/plain");
 

@@ -10,8 +10,10 @@ const parseFileUrl = (value: string): URL | null => {
   try {
     const url = new URL(value, URL_PARSE_BASE);
     const key = url.searchParams.get("key");
+    // Next Image adds deployment metadata to same-origin unoptimized images.
+    const parameterCount = url.searchParams.has("dpl") ? 2 : 1;
     return url.pathname === FILE_CONTENT_PATH &&
-      url.searchParams.size === 1 &&
+      url.searchParams.size === parameterCount &&
       key &&
       isFileStorageKey(key)
       ? url
