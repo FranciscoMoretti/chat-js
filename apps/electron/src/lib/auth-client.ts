@@ -38,7 +38,8 @@ export const authClient = createAuthClient({
     electronClient({
       callbackPath: ELECTRON_AUTH_CALLBACK_PATH,
       clientID: ELECTRON_AUTH_CLIENT_ID,
-      cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
+      // The server namespaces core session cookies in local development.
+      cookiePrefix: [ELECTRON_AUTH_COOKIE_PREFIX, "chatjs-dev-"],
       protocol: {
         scheme: APP_SCHEME,
       },
