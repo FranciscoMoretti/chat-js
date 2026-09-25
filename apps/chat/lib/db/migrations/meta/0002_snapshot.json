@@ -1,5 +1,5 @@
 {
-  "id": "0542f01f-1030-4af3-a688-024cbf77852d",
+  "id": "e356d1b4-1edb-4224-886f-dcd87769c07e",
   "prevId": "3c3b61f2-0aa9-448f-8529-6bf5c7193ffa",
   "version": "7",
   "dialect": "postgresql",
@@ -165,21 +165,6 @@
         }
       },
       "indexes": {
-        "EveChat_search_title": {
-          "name": "EveChat_search_title",
-          "columns": [
-            {
-              "expression": "to_tsvector('simple', \"title\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
         "EveChat_owner_activity": {
           "name": "EveChat_owner_activity",
           "columns": [
@@ -1835,89 +1820,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.EveSearchText": {
-      "name": "EveSearchText",
-      "schema": "",
-      "columns": {
-        "conversationId": {
-          "name": "conversationId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "EveSearchText_owner": {
-          "name": "EveSearchText_owner",
-          "columns": [
-            {
-              "expression": "ownerId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "EveSearchText_content": {
-          "name": "EveSearchText_content",
-          "columns": [
-            {
-              "expression": "to_tsvector('simple', \"text\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "EveSearchText_conversationId_ownerId_EveConversation_id_ownerId_fk": {
-          "name": "EveSearchText_conversationId_ownerId_EveConversation_id_ownerId_fk",
-          "tableFrom": "EveSearchText",
-          "tableTo": "EveConversation",
-          "columnsFrom": ["conversationId", "ownerId"],
-          "columnsTo": ["id", "ownerId"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "EveSearchText_conversationId_key_pk": {
-          "name": "EveSearchText_conversationId_key_pk",
-          "columns": ["conversationId", "key"]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.EveStoredFile": {
       "name": "EveStoredFile",
       "schema": "",
@@ -1934,6 +1836,13 @@
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "storageKey": {
+          "name": "storageKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()::text"
         },
         "ownerId": {
           "name": "ownerId",
@@ -1979,6 +1888,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "EveStoredFile_storageKey_unique": {
+          "name": "EveStoredFile_storageKey_unique",
+          "nullsNotDistinct": false,
+          "columns": ["storageKey"]
+        },
         "EveStoredFile_key_owner": {
           "name": "EveStoredFile_key_owner",
           "nullsNotDistinct": false,

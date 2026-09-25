@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
+import { generateVideoResult } from "./schemas";
 import { generateVideoTool } from "./tool";
 
 const MP4_EXTENSION = /\.mp4$/u;
@@ -25,7 +26,6 @@ vi.mock("@/lib/config", () => ({
     ai: { tools: { video: { default: "default-video", enabled: true } } },
   },
 }));
-vi.mock("@/lib/file-storage", () => ({ uploadFile: mocks.uploadFile }));
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
@@ -72,6 +72,7 @@ it("uses the selected model's provider ID and records the existing estimate", as
         costAccumulator,
         modelProvider,
         selectedModel: "selected-reasoning",
+        storeFile: mocks.uploadFile,
       },
       messages: [],
       toolCallId: "video",
@@ -104,7 +105,11 @@ it("works without optional request services", async () => {
   }
   await generateVideoTool.execute(
     { prompt: "Ocean" },
-    { context: { modelProvider }, messages: [], toolCallId: "video" }
+    {
+      context: { modelProvider, storeFile: mocks.uploadFile },
+      messages: [],
+      toolCallId: "video",
+    }
   );
   expect(mocks.getVideoModel).toHaveBeenCalledWith("default-video");
   expect(mocks.generateVideo).toHaveBeenCalledWith(
@@ -122,7 +127,11 @@ it("does not upload or charge when no video is generated", async () => {
     generateVideoTool.execute(
       { prompt: "Ocean" },
       {
-        context: { costAccumulator, modelProvider },
+        context: {
+          costAccumulator,
+          modelProvider,
+          storeFile: mocks.uploadFile,
+        },
         messages: [],
         toolCallId: "video",
       }
@@ -142,7 +151,11 @@ it("retains provider cost when storage upload fails", async () => {
     generateVideoTool.execute(
       { prompt: "Ocean" },
       {
-        context: { costAccumulator, modelProvider },
+        context: {
+          costAccumulator,
+          modelProvider,
+          storeFile: mocks.uploadFile,
+        },
         messages: [],
         toolCallId: "video",
       }
@@ -180,4 +193,12 @@ it("uses request-owned storage and forwards cancellation", async () => {
     throw new TypeError("Expected a non-streaming video result");
   }
   expect(result.videoUrl).toBe("eve://video");
+});
+
+it("accepts saved video results from before file IDs were returned", () => {
+  const saved = {
+    prompt: "Example",
+    videoUrl: "/api/files/abcdefghijklmnopqrstuvwx",
+  };
+  expect(generateVideoResult.parse(saved)).toEqual(saved);
 });

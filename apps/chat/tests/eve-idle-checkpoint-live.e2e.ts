@@ -58,6 +58,7 @@ test("compiled idle capture preserves native history and exact document revision
     conversationId: source.id,
     documentId: crypto.randomUUID(),
     expectedRevisionId: null,
+    fileIds: [],
     kind: "text" as const,
     operationId: crypto.randomUUID(),
     ownerId: binding.ownerId,

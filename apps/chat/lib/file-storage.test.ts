@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 
 import { describe, it, vi } from "vitest";
 
-import { deleteFilesByUrls, listFiles, uploadFile } from "./file-storage";
+import { fileIdsForStorageKeys } from "./db/file-storage-keys";
+import {
+  deleteFilesByUrls,
+  listFiles,
+  createFileId,
+  uploadFileAtKey,
+} from "./file-storage";
 import { keyFromFileUrl } from "./file-url";
 
 vi.mock("@/lib/config", () => ({
@@ -18,7 +24,12 @@ vi.mock("./storage-provider", async () => {
 
 describe("file storage", () => {
   it("uploads, lists, and deletes through Files SDK", async () => {
-    const uploaded = await uploadFile("../hello.txt", "hello", "text/plain");
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      "../hello.txt",
+      "hello",
+      "text/plain"
+    );
     const key = keyFromFileUrl(uploaded.url);
 
     assert.ok(key);
@@ -39,4 +50,36 @@ describe("file storage", () => {
     const remainingFiles = await listFiles();
     assert.equal(remainingFiles.files.length, 0);
   });
+  it("lists across page boundaries with one mapping query per page", async () => {
+    const uploads = await Promise.all(
+      Array.from({ length: 101 }, () =>
+        uploadFileAtKey(createFileId(), "file.txt", "content", "text/plain")
+      )
+    );
+    vi.mocked(fileIdsForStorageKeys).mockClear();
+    try {
+      const { files } = await listFiles();
+      assert.deepEqual(
+        new Set(files.map((file) => file.url)),
+        new Set(uploads.map((file) => file.url))
+      );
+      assert.deepEqual(
+        vi
+          .mocked(fileIdsForStorageKeys)
+          .mock.calls.map(([keys]) => keys.length),
+        [100, 1]
+      );
+    } finally {
+      await deleteFilesByUrls(uploads.map((file) => file.url));
+    }
+  });
 });
+
+vi.mock("./db/file-storage-keys", () => ({
+  fileIdsForStorageKeys: vi.fn((keys: string[]) =>
+    Promise.resolve(
+      new Map(keys.map((key) => [key, key.slice("objects/".length)]))
+    )
+  ),
+  storageKeyForFile: (id: string) => Promise.resolve(`objects/${id}`),
+}));

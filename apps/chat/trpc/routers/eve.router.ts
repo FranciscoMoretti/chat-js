@@ -157,7 +157,13 @@ export const eveRouter = createTRPCRouter({
   search: eveOwnedProcedure
     .input(
       z.object({
-        cursor: z.number().int().min(0).max(100_000).nullish(),
+        cursor: z
+          .object({
+            id: z.uuid(),
+            rank: z.number().finite().nonnegative(),
+            updatedAt: z.iso.datetime(),
+          })
+          .nullish(),
         ownerScope: z.string().min(1).max(128),
         search: z.string().trim().min(1).max(255),
       })

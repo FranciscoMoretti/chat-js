@@ -63,7 +63,7 @@ export const indexEveSearchText = async (
   }
 };
 
-export type EveSearchResult = {
+type EveSearchResult = {
   id: string;
   conversationId: string;
   title: string;
@@ -80,9 +80,12 @@ const finalUnquotedWord = /[\p{L}\p{N}]$/u;
 /** One result per logical chat, with the branch containing its strongest match. */
 export const searchEveConversations = async (
   ownerId: string,
-  input: { search: string; cursor?: number | null }
+  input: {
+    search: string;
+    cursor?: { rank: number; updatedAt: string; id: string } | null;
+  }
 ) => {
-  const offset = input.cursor ?? 0;
+  const { cursor } = input;
   const query = input.search.trim();
   const prefixLastWord =
     finalUnquotedWord.test(query) && query.split('"').length % 2 === 1;
@@ -114,17 +117,35 @@ export const searchEveConversations = async (
       join "EveChat" chat on chat.id = branch."chatId" and chat."ownerId" = ${ownerId}
       where content."ownerId" = ${ownerId} and to_tsvector('simple', content.text) @@ query.terms
     ), best as (
-      select distinct on (id) * from matches order by id, rank desc, "conversationId", body
+      select distinct on (id) *, max(rank) over (partition by id) as "chatRank"
+      from matches
+      order by id, (body <> '') desc, rank desc, "conversationId", body
     )
-    select id, "conversationId", title, "updatedAt"::text, rank,
+    select id, "conversationId", title,
+      to_char("updatedAt", 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "updatedAt",
+      "chatRank"::double precision as rank,
       case when body = '' then '' else ts_headline('simple', body, query.terms,
         'StartSel=⟦, StopSel=⟧, MaxWords=32, MinWords=12, MaxFragments=1') end as excerpt
     from best cross join query
-    order by rank desc, "updatedAt" desc, id
-    limit 21 offset ${offset}
+    where ${
+      cursor
+        ? sql`
+      "chatRank" < ${cursor.rank}::double precision
+      or ("chatRank" = ${cursor.rank}::double precision and "updatedAt" < ${cursor.updatedAt}::timestamp)
+      or ("chatRank" = ${cursor.rank}::double precision and "updatedAt" = ${cursor.updatedAt}::timestamp and id > ${cursor.id})
+    `
+        : sql`true`
+    }
+    order by "chatRank" desc, best."updatedAt" desc, id
+    limit 21
   `);
+  const page = items.slice(0, 20);
+  const last = page.at(-1);
   return {
-    items: items.slice(0, 20),
-    nextCursor: items.length > 20 ? offset + 20 : null,
+    items: page,
+    nextCursor:
+      items.length > 20 && last
+        ? { id: last.id, rank: last.rank, updatedAt: last.updatedAt }
+        : null,
   };
 };

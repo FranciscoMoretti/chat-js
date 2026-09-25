@@ -50,10 +50,11 @@ const main = async () => {
           snapshot.events.flatMap(eveEventSearchText)
         );
         indexed += 1;
-      } catch {
+      } catch (error) {
         failed += 1;
         console.error(
-          `Search backfill failed for conversation ${conversation.id}; rerun to retry.`
+          `Search backfill failed for conversation ${conversation.id}; rerun to retry.`,
+          error
         );
       }
     }
@@ -62,10 +63,14 @@ const main = async () => {
   }
   process.exit(failed ? 1 : 0);
 };
-// oxlint-disable-next-line promise/prefer-await-to-then -- This tsx CLI runs as CommonJS, which cannot use top-level await.
-main().catch(() => {
-  console.error(
-    "Search backfill could not start. Check the database and EVE configuration."
-  );
-  process.exit(1);
-});
+void (async () => {
+  try {
+    await main();
+  } catch (error) {
+    console.error(
+      "Search backfill could not start. Check the database and EVE configuration.",
+      error
+    );
+    process.exitCode = 1;
+  }
+})();

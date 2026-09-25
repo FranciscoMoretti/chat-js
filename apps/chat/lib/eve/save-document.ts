@@ -45,6 +45,7 @@ export const saveManualEveDocument = async (
   const saved = await saveEveDocumentRevision(
     {
       ...input,
+      fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
       kind: previous.kind,
       operationId: `manual:${input.operationId}`,
       ownerId,

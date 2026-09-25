@@ -35,7 +35,9 @@ beforeAll(async () => {
   for (const filename of [
     "0000_eve_baseline.sql",
     "0001_brainy_the_stranger.sql",
-    "0002_opposite_firelord.sql",
+    "0002_nappy_caretaker.sql",
+    "0003_ambitious_oracle.sql",
+    "0004_misty_next_avengers.sql",
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Apply the real migrations in sequence.
     await postgres.exec(
@@ -124,6 +126,52 @@ it.each([
     }
   }
 );
+
+it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
+  const matchingBranch = "00000000-0000-4000-8000-000000000007";
+  await postgres.query(
+    `insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
+     values ($1::uuid, $2, 'alice', '', $1::uuid, $1::text, 'bound')`,
+    [matchingBranch, titleChat]
+  );
+  await indexEveSearchText("alice", matchingBranch, [
+    { key: "matching", text: "Saffron cooking with rice." },
+  ]);
+  const result = await searchEveConversations("alice", { search: "saff" });
+  expect(result.items[0]).toMatchObject({
+    conversationId: matchingBranch,
+    id: titleChat,
+  });
+  expect(result.items[0].rank).toBeGreaterThan(2);
+  expect(result.items[0].excerpt).toContain("⟦Saffron⟧");
+});
+
+it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
+  await postgres.exec(`
+    insert into "user" (id, name, email) values ('pager', 'Pager', 'pager@example.test');
+    insert into "EveChat" (id, "ownerId", title, "updatedAt")
+      select md5(i::text)::uuid, 'pager', 'Pagination test', '2026-09-25 10:00:00.123456'::timestamp
+      from generate_series(1, 25) i;
+    insert into "EveConversation" (id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state)
+      select id, id, 'pager', '', id, id::text, 'bound' from "EveChat" where "ownerId" = 'pager';
+  `);
+  const first = await searchEveConversations("pager", { search: "pagin" });
+  expect(first.items).toHaveLength(20);
+  expect(first.nextCursor?.updatedAt).toBe("2026-09-25T10:00:00.123456Z");
+  await postgres.query(
+    `update "EveConversation" set state = 'deleting' where "chatId" = $1`,
+    [first.items[0].id]
+  );
+  const second = await searchEveConversations("pager", {
+    cursor: first.nextCursor,
+    search: "pagin",
+  });
+  expect(second.items).toHaveLength(5);
+  expect(second.nextCursor).toBeNull();
+  expect(
+    new Set([...first.items, ...second.items].map((item) => item.id)).size
+  ).toBe(25);
+});
 
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(

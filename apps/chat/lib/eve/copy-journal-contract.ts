@@ -29,6 +29,7 @@ export type EveCopyPlan = {
       parentRevisionId: string | null;
       title: string;
       content: string;
+      fileIds: string[];
       kind: "text" | "code" | "sheet";
       createdAt: string;
     }[];

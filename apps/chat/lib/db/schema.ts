@@ -597,6 +597,7 @@ export const eveStoredFile = pgTable(
   "EveStoredFile",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    /** Stable public file ID, independent of the storage object pathname. */
     key: text("key").primaryKey(),
     ownerId: text("ownerId")
       .notNull()
@@ -604,6 +605,10 @@ export const eveStoredFile = pgTable(
     state: text("state", { enum: ["active", "deleting", "deleted"] })
       .notNull()
       .default("active"),
+    storageKey: text("storageKey")
+      .notNull()
+      .default(sql`gen_random_uuid()::text`)
+      .unique(),
   },
   (table) => [
     index("EveStoredFile_owner").on(table.ownerId),
@@ -679,6 +684,7 @@ export const eveDocumentRevision = pgTable(
     conversationId: uuid("conversationId").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     documentId: uuid("documentId").notNull(),
+    fileIds: jsonb("fileIds").$type<string[]>().notNull().default([]),
     id: uuid("id").primaryKey().defaultRandom(),
     kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
     operationId: text("operationId").notNull(),

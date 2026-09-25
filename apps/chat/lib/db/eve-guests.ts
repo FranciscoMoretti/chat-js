@@ -59,24 +59,6 @@ export const createEveGuest = async (input: {
   });
 };
 
-/** An expired credential must never be mistaken for a not-yet-admitted guest. */
-export const readEveGuestCredential = async (tokenHash: string) => {
-  if (!hash.safeParse(tokenHash).success) {
-    return { status: "invalid" } as const;
-  }
-  const [guest] = await db
-    .select()
-    .from(eveGuest)
-    .where(eq(eveGuest.tokenHash, tokenHash));
-  if (!guest) {
-    return { status: "missing" } as const;
-  }
-  if (guest.expiresAt <= new Date()) {
-    return { status: "expired" } as const;
-  }
-  return { guest, status: "active" } as const;
-};
-
 export const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string

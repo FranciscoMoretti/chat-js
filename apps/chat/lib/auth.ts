@@ -6,6 +6,7 @@ import { lastLoginMethod } from "better-auth/plugins";
 
 import { env } from "@/lib/env";
 
+import { authSessionOptions } from "./auth-session-options";
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
@@ -40,13 +41,11 @@ export const auth = betterAuth({
   ],
   secret: env.AUTH_SECRET,
 
-  session: {
-    cookieCache: {
-      enabled: true,
-      // 5 minutes - reduces database queries for session validation
-      maxAge: 60 * 5,
-    },
-  },
+  ...authSessionOptions({
+    baseUrl,
+    databaseUrl: env.DATABASE_URL,
+    development: env.NODE_ENV === "development",
+  }),
 
   socialProviders: (() => {
     const googleId = env.AUTH_GOOGLE_ID;

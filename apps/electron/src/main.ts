@@ -12,10 +12,9 @@ import {
 } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 
-import { ELECTRON_AUTH_COOKIE_PREFIX } from "@/lib/electron-auth";
-
 import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
 import { electronAuthClient } from "./lib/auth-client";
+import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
 
 const isSquirrelStartupEvent = (): boolean => {
   if (process.platform !== "win32") {
@@ -267,12 +266,6 @@ ipcMain.handle("chatjs:cancel-auth-flow", async () => {
   await resetAuthFlow();
 });
 
-const isBetterAuthCookieName = (name: string): boolean =>
-  name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
-  name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
-  name.endsWith("session_token") ||
-  name.endsWith("session_data");
-
 const syncAuthSessionCookies = async (
   win?: BrowserWindow | null
 ): Promise<void> => {
@@ -346,9 +339,6 @@ ipcMain.handle("better-auth:getUser", async () => {
 
 const getAppAssetPath = (...segments: string[]): string =>
   path.join(app.getAppPath(), ...segments);
-
-const hasSessionCookie = (cookieHeader: string): boolean =>
-  /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/u.test(cookieHeader);
 
 const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
   try {

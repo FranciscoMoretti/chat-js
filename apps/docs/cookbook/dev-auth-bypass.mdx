@@ -23,7 +23,7 @@ Use any browser-capable agent or browser automation tool. Navigate to `/api/dev-
 
 1. Creates a `dev@localhost` user if it doesn't exist
 2. Generates a new session with 30-day expiry
-3. Sets a signed `better-auth.session_token` cookie
+3. Sets a signed session cookie using the configured auth cookie name and security attributes
 4. Redirects to home page
 
 ## Code
@@ -31,6 +31,7 @@ Use any browser-capable agent or browser automation tool. Navigate to `/api/dev-
 ```ts title="app/api/dev-login/route.ts"
 import { serializeSignedCookie } from "better-call";
 import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
@@ -69,14 +70,16 @@ export async function GET() {
     updatedAt: now,
   });
 
+  const { authCookies } = await auth.$context;
   const signedSessionCookie = await serializeSignedCookie(
-    "better-auth.session_token",
+    authCookies.sessionToken.name,
     token,
     env.AUTH_SECRET,
     {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
+      secure: authCookies.sessionToken.attributes.secure,
       expires: expiresAt,
     }
   );

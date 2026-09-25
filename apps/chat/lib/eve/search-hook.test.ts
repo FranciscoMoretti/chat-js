@@ -67,6 +67,7 @@ const dispatch = (event: HookEvent, hookContext = context) =>
   search.events?.["*"]?.(event, hookContext);
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.spyOn(console, "error").mockImplementation(() => {});
   mocks.state = [];
   mocks.resolve.mockResolvedValue({
     conversationId: "branch",
@@ -77,7 +78,8 @@ it("defers inherited history until binding and retains it if indexing fails", as
   await dispatch(restored);
   expect(mocks.index).not.toHaveBeenCalled();
   mocks.index.mockRejectedValueOnce(new Error("offline"));
-  await expect(dispatch(started)).rejects.toThrow("offline");
+  await expect(dispatch(started)).resolves.toBeUndefined();
+  expect(console.error).toHaveBeenCalled();
   await dispatch(started);
   expect(mocks.index).toHaveBeenLastCalledWith("owner", "branch", [
     { key: "seed:0", text: "inherited text" },
@@ -99,4 +101,27 @@ it("never indexes subagent-private text into the parent chat", async () => {
   });
   expect(mocks.state).toEqual([]);
   expect(mocks.resolve).not.toHaveBeenCalled();
+});
+
+it("does no scope or database work on a turn with no pending text", async () => {
+  await dispatch(started);
+  expect(mocks.resolve).not.toHaveBeenCalled();
+  expect(mocks.index).not.toHaveBeenCalled();
+});
+
+it("retains newly received text when scope resolution fails and retries it", async () => {
+  mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
+  await expect(
+    dispatch({
+      data: { message: "new text", sequence: 1, turnId: "turn_1" },
+      meta: { ...restored.meta, id: "received" },
+      type: "message.received",
+    })
+  ).resolves.toBeUndefined();
+  expect(mocks.state).toEqual([{ key: "event:received", text: "new text" }]);
+  await dispatch(started);
+  expect(mocks.index).toHaveBeenLastCalledWith("owner", "branch", [
+    { key: "event:received", text: "new text" },
+  ]);
+  expect(mocks.state).toEqual([]);
 });
