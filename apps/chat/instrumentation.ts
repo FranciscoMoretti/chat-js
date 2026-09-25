@@ -2,13 +2,14 @@ import { registerOTel } from "@vercel/otel";
 import { LangfuseExporter } from "langfuse-vercel";
 
 import { config } from "@/lib/config";
+import { env } from "@/lib/env";
 
 export const register = async () => {
   registerOTel({
     serviceName: config.appPrefix,
     traceExporter: new LangfuseExporter(),
   });
-  if (process.env.NEXT_RUNTIME === "nodejs") {
+  if (process.env.NEXT_RUNTIME === "nodejs" && !env.CHATJS_GUEST_ONLY) {
     const { startLocalEveGuestCleanup } =
       await import("./lib/eve/local-guest-cleanup-scheduler");
     startLocalEveGuestCleanup();

@@ -84,9 +84,18 @@ export const serverEnvSchema = {
         (value === null || value === undefined || value === "")
           ? "playwright-test-auth-secret"
           : value,
-      z.string().min(1)
+      process.env.CHATJS_GUEST_ONLY === "true"
+        ? z.string().default("")
+        : z.string().min(1)
     )
     .describe("NextAuth.js secret for signing session tokens"),
+  CHATJS_GUEST_ONLY: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true")
+    .describe(
+      "Run basic disposable chat without an application database or accounts"
+    ),
   // Optional cleanup cron job secret
   CRON_SECRET: z
     .string()
@@ -101,7 +110,9 @@ export const serverEnvSchema = {
         (value === null || value === undefined || value === "")
           ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
           : value,
-      z.string().min(1)
+      process.env.CHATJS_GUEST_ONLY === "true"
+        ? z.string().default("")
+        : z.string().min(1)
     )
     .describe("Postgres connection string"),
   EVE_GATEWAY_SECRET: z.preprocess(
@@ -219,6 +230,8 @@ export const serverEnvSchema = {
         value,
         "postgres://postgres:postgres@127.0.0.1:5432/playwright-eve"
       ),
-    eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
+    process.env.CHATJS_GUEST_ONLY === "true"
+      ? z.string().default("")
+      : eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };

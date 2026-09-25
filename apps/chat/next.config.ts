@@ -1,6 +1,9 @@
 import { withEve } from "eve/next";
 import type { NextConfig } from "next";
 
+// Next config runs before the application module/alias loader.
+const guestOnly = process.env.CHATJS_GUEST_ONLY === "true";
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
@@ -42,4 +45,37 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 };
 
-export default withEve(nextConfig, { devServerTimeoutMs: 600_000 });
+const configureEve = withEve(nextConfig, {
+  agents: guestOnly ? { guest: "./guest" } : { chat: ".", guest: "./guest" },
+  devServerTimeoutMs: 600_000,
+});
+
+const configureChat = async (...args: Parameters<typeof configureEve>) => {
+  const configured = await configureEve(...args);
+  const { rewrites } = configured;
+  return {
+    ...configured,
+    rewrites: async () => {
+      const rules = await rewrites?.();
+      const sections = Array.isArray(rules) ? { afterFiles: rules } : rules;
+      return {
+        ...sections,
+        // Resolve the existing registered-agent URL before EVE's named-agent
+        // rewrites. EVE otherwise prepends its rules and misses this alias.
+        beforeFiles: [
+          ...(guestOnly
+            ? []
+            : [
+                {
+                  destination: "/eve/chat/v1/:path*",
+                  source: "/eve/v1/:path*",
+                },
+              ]),
+          ...(sections?.beforeFiles ?? []),
+        ],
+      };
+    },
+  };
+};
+
+export default configureChat;

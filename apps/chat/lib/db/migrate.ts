@@ -17,6 +17,10 @@ config({
 });
 
 const runMigrate = async () => {
+  if (process.env.CHATJS_GUEST_ONLY === "true") {
+    console.log("Guest-only mode does not use application migrations");
+    return;
+  }
   // Deployment builds preserve the Vercel preview safeguard. Explicit db:migrate
   // runs on every host and never relies on a deployment vendor's environment.
   if (

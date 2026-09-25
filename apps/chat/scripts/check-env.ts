@@ -228,7 +228,12 @@ const checkEnv = async (): Promise<void> => {
         },
       ];
 
-  const eveOptions = z.object(eveRuntimeEnvOptions).safeParse(env);
+  const guestOnly = env.CHATJS_GUEST_ONLY === "true";
+  const eveOptions = (
+    guestOnly
+      ? z.object(eveRuntimeEnvOptions).omit({ WORKFLOW_POSTGRES_URL: true })
+      : z.object(eveRuntimeEnvOptions)
+  ).safeParse(env);
   const eveErrors = eveOptions.success
     ? []
     : [
@@ -242,16 +247,18 @@ const checkEnv = async (): Promise<void> => {
 
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
-  const storageError = validateStorage(env);
-  const installedToolErrors = await validateInstalledTools(env);
+  const storageError = guestOnly ? null : validateStorage(env);
+  const installedToolErrors = guestOnly
+    ? []
+    : await validateInstalledTools(env);
   const errors = [
     ...eveErrors,
     ...databaseErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),
-    ...validateAiTools(env),
-    ...validateAuthentication(env),
+    ...(guestOnly ? [] : validateAiTools(env)),
+    ...(guestOnly ? [] : validateAuthentication(env)),
     ...installedToolErrors,
   ];
 

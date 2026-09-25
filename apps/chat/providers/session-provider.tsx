@@ -28,6 +28,19 @@ const SessionSeedContext = createContext<
   ((session: Session | null) => void) | null
 >(null);
 
+const anonymousSession: SessionContextValue = { data: null, isPending: false };
+
+/** A settled anonymous context for deployments with no account backend. */
+export const AnonymousSessionProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => (
+  <SessionContext.Provider value={anonymousSession}>
+    {children}
+  </SessionContext.Provider>
+);
+
 export const SessionProvider = ({
   children,
 }: {

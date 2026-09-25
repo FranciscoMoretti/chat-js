@@ -22,8 +22,8 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { auth } from "@/lib/auth";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+import { getRegisteredSession } from "@/lib/registered-session";
 
 import { SidebarUserNav } from "./sidebar-user-nav";
 
@@ -49,7 +49,7 @@ const HistorySkeleton = () => (
 );
 
 const RegisteredEveProjects = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getRegisteredSession(await headers());
   return session?.user ? (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>

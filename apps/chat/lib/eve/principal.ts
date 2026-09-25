@@ -1,8 +1,4 @@
-import { auth } from "../auth";
-import { readEveGuestCredential } from "../db/eve-guests";
-import { eveGuestOwnerId, hashEveGuestToken } from "./guest-credential";
-
-export const EVE_GUEST_COOKIE = "chatjs-eve-guest";
+import { getRegisteredSession } from "../registered-session";
 
 export type EvePrincipal =
   | { kind: "registered"; ownerId: string }
@@ -14,42 +10,13 @@ export type EvePrincipal =
       remainingMessages?: number;
     };
 
-/** Cookie-only guest identity never creates a BetterAuth session or transfers history. */
+/** Disposable guests never enter application ownership, billing, or history routes.
+ * Old guest cookies grant no access. */
 export const resolveEvePrincipal = async (
   headers: Headers
 ): Promise<EvePrincipal | null> => {
-  const session = await auth.api.getSession({ headers });
-  if (session?.user) {
-    return { kind: "registered", ownerId: session.user.id };
-  }
-  const tokens = (headers.get("cookie") ?? "")
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .filter((cookie) => cookie.startsWith(`${EVE_GUEST_COOKIE}=`))
-    .map((cookie) => cookie.slice(EVE_GUEST_COOKIE.length + 1));
-  if (tokens.length !== 1) {
-    return null;
-  }
-  const tokenHash = hashEveGuestToken(tokens[0]);
-  if (!tokenHash) {
-    return null;
-  }
-  const identity = await readEveGuestCredential(tokenHash);
-  if (identity.status === "expired" || identity.status === "invalid") {
-    return null;
-  }
-  const ownerId = eveGuestOwnerId(tokenHash);
-  if (identity.status === "active") {
-    if (identity.guest.ownerId !== ownerId) {
-      return null;
-    }
-    return {
-      kind: "guest",
-      ownerId,
-      remainingMessages: identity.guest.remainingMessages,
-      state: "active",
-      tokenHash,
-    };
-  }
-  return { kind: "guest", ownerId, state: "pending", tokenHash };
+  const session = await getRegisteredSession(headers);
+  return session?.user
+    ? { kind: "registered", ownerId: session.user.id }
+    : null;
 };

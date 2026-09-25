@@ -11,15 +11,19 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+import { getRegisteredSession } from "@/lib/registered-session";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
-import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import {
+  AnonymousSessionProvider,
+  SessionProvider,
+  SessionSeed,
+} from "@/providers/session-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
-
-import { auth } from "../../lib/auth";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
@@ -35,7 +39,7 @@ const ChatLayoutDynamic = async ({
   ]);
   const session = isPlaywrightTestEnvironment
     ? null
-    : await auth.api.getSession({ headers: headersRes });
+    : await getRegisteredSession(headersRes);
   const principal = isPlaywrightTestEnvironment
     ? null
     : await resolveEvePrincipal(headersRes);
@@ -78,7 +82,7 @@ const ChatLayoutDynamic = async ({
 
   return (
     <HydrateClient>
-      <SessionSeed session={session} />
+      {!env.CHATJS_GUEST_ONLY && <SessionSeed session={session} />}
 
       <ChatModelsProvider models={chatModels}>
         <DefaultModelProvider defaultModel={defaultModel}>
@@ -109,13 +113,16 @@ const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
       </SidebarInset>
     </>
   );
+  const AccountProvider = env.CHATJS_GUEST_ONLY
+    ? AnonymousSessionProvider
+    : SessionProvider;
   return (
     <TRPCReactProvider>
-      <SessionProvider>
+      <AccountProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
           <EveDeletionProvider>{content}</EveDeletionProvider>
         </SidebarProvider>
-      </SessionProvider>
+      </AccountProvider>
     </TRPCReactProvider>
   );
 };
