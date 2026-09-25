@@ -8,6 +8,7 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 import superjson from "superjson";
 
+import { env } from "@/lib/env";
 import { getBaseUrl } from "@/lib/url";
 import type { AppRouter } from "@/trpc/routers/_app";
 
@@ -72,7 +73,10 @@ export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
       <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
         {props.children}
       </TRPCProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === "development" &&
+      env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
     </QueryClientProvider>
   );
 };
