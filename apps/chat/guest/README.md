@@ -4,14 +4,14 @@ Anonymous users get a text-only EVE session inside the shared ChatJS sidebar, he
 
 ## Deployment without an application database
 
-Set `CHATJS_GUEST_ONLY=true`, `EVE_GATEWAY_SECRET` (at least 32 random characters), `EVE_INTERNAL_ORIGIN` to this application's origin, and the selected model gateway's credentials. Set `APP_URL` to the public origin on non-Vercel hosts. `AUTH_SECRET`, `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` are not needed in this mode. Use Node 24+ and Bun. From the repository root:
+Set `CHATJS_GUEST_ONLY=true`, `EVE_GATEWAY_SECRET` (at least 32 random characters), `EVE_INTERNAL_ORIGIN` to this application's origin, and the selected model gateway's credentials. Set `APP_URL` to the public origin on non-Vercel hosts; guest bootstrap fails closed when it is missing. On Vercel, bootstrap uses the configured deployment hostname. `AUTH_SECRET`, `DATABASE_URL` and `WORKFLOW_POSTGRES_URL` are not needed in this mode. Use Node 24+ and Bun. From the repository root:
 
 ```sh
 bun install
 bun dev
 ```
 
-For production, run the chat application's build and start scripts. The Next.js EVE integration mounts the guest agent at `/eve/guest/v1/*`. On Vercel it uses managed Workflow; locally it uses EVE's local World. Only the guest agent is built in guest-only mode. The standard deployment also mounts the registered agent at `/eve/chat/v1/*`, with `/eve/v1/*` retained as its internal route alias.
+For production, run the chat application's build and start scripts. The Next.js EVE integration mounts the guest agent at `/eve/guest/v1/*`. On Vercel it uses managed Workflow; locally it uses EVE's local World. Only the guest agent is built in guest-only mode. The standard deployment also mounts the registered agent at `/eve/chat/v1/*`, with `/eve/v1/*` retained as its internal route alias. On Vercel the alias proxies to the deployment's named route so platform routing selects the chat service.
 
 Basic guest mode has no account login, projects, sharing, attachments, tools, comparison branches, saved history, message allowance or spending cap. Deployers can apply hosting-level limits. Registered-user quotas and billing are unchanged.
 
@@ -26,3 +26,5 @@ The guest agent sets `experimental.workflow.retention: 0`. This requests deletio
 ## Verification
 
 Run `bunx playwright test --config playwright.guest.config.ts` from `apps/chat` against the running guest-only app with application and workflow Postgres URLs unset. The live test covers real replies, session authorization, no browser persistence and reload behavior. Unit tests cover credential forgery, expiry, operation restrictions, bootstrap failures and registered principal resolution.
+
+Guest-only mode hides account-dependent actions (sign-in, account settings, unavailable models, attachments, and tools). Standard deployments retain the shared anonymous/account UI.

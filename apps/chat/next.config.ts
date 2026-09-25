@@ -67,7 +67,11 @@ const configureChat = async (...args: Parameters<typeof configureEve>) => {
             ? []
             : [
                 {
-                  destination: "/eve/chat/v1/:path*",
+                  // Vercel agents are separate services. An external rewrite
+                  // re-enters platform routing to select the named service.
+                  destination: process.env.VERCEL_URL
+                    ? `https://${process.env.VERCEL_URL}/eve/chat/v1/:path*`
+                    : "/eve/chat/v1/:path*",
                   source: "/eve/v1/:path*",
                 },
               ]),

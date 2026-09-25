@@ -250,7 +250,7 @@ const PureModelSelector = ({
   onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
   className?: string;
 }) => {
-  const { data: session } = useSession();
+  const { data: session, accountsEnabled = true } = useSession();
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
@@ -301,15 +301,23 @@ const PureModelSelector = ({
 
   const models = useMemo<ModelItem[]>(
     () =>
-      chatModels.map((m) => ({
-        disabled:
-          isAnonymous &&
-          !(
-            ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-          ).includes(m.id),
-        model: m,
-      })),
-    [isAnonymous, chatModels]
+      chatModels
+        .filter(
+          (m) =>
+            accountsEnabled ||
+            (
+              ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+            ).includes(m.id)
+        )
+        .map((m) => ({
+          disabled:
+            isAnonymous &&
+            !(
+              ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
+            ).includes(m.id),
+          model: m,
+        })),
+    [accountsEnabled, isAnonymous, chatModels]
   );
 
   const hasDisabledModels = useMemo(

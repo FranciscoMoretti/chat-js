@@ -240,6 +240,7 @@ describe("scaffoldFromTemplate", () => {
       "tsconfig.tsbuildinfo",
       "lib/db/migrations/eve-runtime-migration.test.ts",
       "playwright.eve.config.ts",
+      "playwright.guest.config.ts",
       "vitest.eve.config.ts",
     ]) {
       expect(existsSync(join(destination, file))).toBe(false);

@@ -5,13 +5,22 @@ import { readGuestCredential } from "@/lib/eve/disposable-guest";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), model: vi.fn() }));
-vi.mock("@/lib/env", () => ({
-  env: {
+const settings = vi.hoisted(
+  (): {
+    APP_URL: string | undefined;
+    EVE_GATEWAY_SECRET: string;
+    EVE_INTERNAL_ORIGIN: string;
+    VERCEL_AUTOMATION_BYPASS_SECRET: string;
+    VERCEL_URL: string;
+  } => ({
     APP_URL: "https://chat.example",
     EVE_GATEWAY_SECRET: "test-guest-signing-secret-at-least-32-characters",
-    EVE_INTERNAL_ORIGIN: "https://chat.example",
-  },
-}));
+    EVE_INTERNAL_ORIGIN: "https://separate-worker.example",
+    VERCEL_AUTOMATION_BYPASS_SECRET: "deployment-bypass-test",
+    VERCEL_URL: "",
+  })
+);
+vi.mock("@/lib/env", () => ({ env: settings }));
 vi.mock("@/lib/db/client", () => {
   throw new Error("Guest creation must not load the database");
 });
@@ -27,6 +36,8 @@ vi.mock("@/lib/types/anonymous", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  settings.VERCEL_URL = "";
+  settings.APP_URL = "https://chat.example";
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.fetch.mockImplementation(() =>
     Response.json({ sessionId: "owned-session" })
@@ -74,4 +85,36 @@ test("failed native creation never issues a browser credential", async () => {
   const response = await POST(request({ modelId: "guest-model" }));
   expect(response.status).toBe(502);
   expect(await response.json()).not.toHaveProperty("credential");
+});
+
+test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
+  settings.VERCEL_URL = "deployment.vercel.app";
+  await POST(request({ modelId: "guest-model" }));
+  const [[url, init]] = mocks.fetch.mock.calls;
+  expect(String(url)).toBe(
+    "https://deployment.vercel.app/eve/guest/v1/session"
+  );
+  expect(init.headers["x-vercel-protection-bypass"]).toBe(
+    "deployment-bypass-test"
+  );
+});
+
+test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
+  await POST(request({ modelId: "guest-model" }));
+  const [[url, init]] = mocks.fetch.mock.calls;
+  expect(String(url)).toBe("https://chat.example/eve/guest/v1/session");
+  expect(init.headers["x-vercel-protection-bypass"]).toBeUndefined();
+});
+
+test("never sends a creation credential to a request-derived host", async () => {
+  settings.APP_URL = undefined;
+  const response = await POST(
+    new Request("https://attacker.example/api/eve-guest", {
+      body: JSON.stringify({ modelId: "guest-model" }),
+      headers: { origin: "https://attacker.example" },
+      method: "POST",
+    })
+  );
+  expect(response.status).toBe(503);
+  expect(mocks.fetch).not.toHaveBeenCalled();
 });

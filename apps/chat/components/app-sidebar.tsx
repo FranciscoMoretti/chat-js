@@ -22,6 +22,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/lib/env";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { getRegisteredSession } from "@/lib/registered-session";
 
@@ -72,21 +73,25 @@ export const AppSidebar = () => (
         </div>
 
         <NewChatButton />
-        <SidebarMenuItem>
-          <Suspense fallback={<Skeleton className="h-8 w-full" />}>
-            <ScopedEveSearch />
-          </Suspense>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild tooltip="Models">
-            <InternalLink href="/settings/models">
-              <Cpu className="size-4" />
-              <span className="group-data-[collapsible=icon]:hidden">
-                Models
-              </span>
-            </InternalLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        {!env.CHATJS_GUEST_ONLY && (
+          <>
+            <SidebarMenuItem>
+              <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                <ScopedEveSearch />
+              </Suspense>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Models">
+                <InternalLink href="/settings/models">
+                  <Cpu className="size-4" />
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    Models
+                  </span>
+                </InternalLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </>
+        )}
       </SidebarMenu>
     </SidebarHeader>
     <SidebarSeparator />

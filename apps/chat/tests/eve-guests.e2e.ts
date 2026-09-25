@@ -10,7 +10,6 @@ import { recordEveUsage } from "../lib/db/eve-billing";
 import {
   commitEveGuestMessage,
   createEveGuest,
-  readEveGuestCredential,
   releaseEveGuestCreation,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
@@ -41,8 +40,11 @@ const owners: string[] = [];
 const ips: string[] = [];
 
 async function findEveGuest(tokenHash: string) {
-  const result = await readEveGuestCredential(tokenHash);
-  return result.status === "active" ? result.guest : undefined;
+  const [row] = await db
+    .select()
+    .from(eveGuest)
+    .where(eq(eveGuest.tokenHash, tokenHash));
+  return row && row.expiresAt > new Date() ? row : undefined;
 }
 
 async function guest(messageLimit = 10) {
@@ -344,9 +346,7 @@ test("denied first admission creates no account or quota rows", async () => {
     expect(result.status).toBe(
       denial === "rate" ? "rate-limited" : "exhausted"
     );
-    expect(await readEveGuestCredential(credential.tokenHash)).toEqual({
-      status: "missing",
-    });
+    expect(await findEveGuest(credential.tokenHash)).toBeUndefined();
     expect(await db.select().from(user).where(eq(user.id, ownerId))).toEqual(
       []
     );

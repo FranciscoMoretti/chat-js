@@ -60,15 +60,15 @@ export const proxy = async (req: NextRequest) => {
     return;
   }
 
+  if (isPlaywrightTestEnvironment) {
+    // Playwright CI runs the app anonymously and should never reach session I/O.
+    return;
+  }
+
   if (env.CHATJS_GUEST_ONLY) {
     return pathname === "/"
       ? undefined
       : NextResponse.redirect(new URL("/", url));
-  }
-
-  if (isPlaywrightTestEnvironment) {
-    // Playwright CI runs the app anonymously and should never reach session I/O.
-    return;
   }
 
   const session = await getRegisteredSession(req.headers);

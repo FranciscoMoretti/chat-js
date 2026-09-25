@@ -40,7 +40,7 @@ export const EveComposer = ({
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
 }) => {
   const input = useRef<HTMLInputElement>(null);
-  const { data: session } = useSession();
+  const { data: session, accountsEnabled = true } = useSession();
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
   const models = (
@@ -116,7 +116,7 @@ export const EveComposer = ({
         }}
         tools={
           <>
-            {config.features.attachments && (
+            {accountsEnabled && config.features.attachments && (
               <AttachmentsButton
                 acceptAll="image/jpeg,image/png,application/pdf"
                 acceptFiles="application/pdf"
@@ -131,13 +131,17 @@ export const EveComposer = ({
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}
             />
-            <ConnectorsDropdown />
-            <ResponsiveTools
-              disabled={locked || props.readOnly}
-              selectedModelId={models[0]?.id ?? ""}
-              setTools={onToolChange}
-              tools={selectedTool}
-            />
+            {accountsEnabled && (
+              <>
+                <ConnectorsDropdown />
+                <ResponsiveTools
+                  disabled={locked || props.readOnly}
+                  selectedModelId={models[0]?.id ?? ""}
+                  setTools={onToolChange}
+                  tools={selectedTool}
+                />
+              </>
+            )}
           </>
         }
       />

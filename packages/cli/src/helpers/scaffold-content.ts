@@ -9,6 +9,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "components/ui/ui-primitives-visual-fixture.tsx",
   "evalite.config.ts",
   "playwright.visual.config.ts",
+  "playwright.guest.config.ts",
   "lib/ai/eval-agent.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",

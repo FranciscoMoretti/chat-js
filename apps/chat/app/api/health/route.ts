@@ -18,12 +18,20 @@ export const GET = async () => {
   try {
     await Promise.race([
       Promise.all([
-        checkDatabase(),
-        fetch(new URL("/eve/v1/health", env.EVE_INTERNAL_ORIGIN), {
-          cache: "no-store",
-          redirect: "error",
-          signal: AbortSignal.timeout(4000),
-        }).then(async (response) => {
+        env.CHATJS_GUEST_ONLY ? Promise.resolve() : checkDatabase(),
+        fetch(
+          new URL(
+            env.CHATJS_GUEST_ONLY ? "/eve/guest/v1/health" : "/eve/v1/health",
+            env.CHATJS_GUEST_ONLY
+              ? (env.APP_URL ?? env.EVE_INTERNAL_ORIGIN)
+              : env.EVE_INTERNAL_ORIGIN
+          ),
+          {
+            cache: "no-store",
+            redirect: "error",
+            signal: AbortSignal.timeout(4000),
+          }
+        ).then(async (response) => {
           if (!response.ok) {
             throw new Error("Eve unavailable");
           }

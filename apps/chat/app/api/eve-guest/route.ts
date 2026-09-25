@@ -31,11 +31,18 @@ export const POST = async (request: Request) => {
       { status: 400 }
     );
   }
+  const host = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.APP_URL;
+  if (!host) {
+    return Response.json(
+      { error: "Configure APP_URL before starting guest chats." },
+      { status: 503 }
+    );
+  }
   await loadEveModelDefinition(value.data.modelId);
   const claims = newGuestClaims(value.data.modelId);
   const connection = getEveConnectionOptions(
     claims.ownerId,
-    new URL(env.APP_URL ?? request.url).origin
+    new URL(host).origin
   );
   const response = await fetch(
     new URL("/eve/guest/v1/session", connection.host),

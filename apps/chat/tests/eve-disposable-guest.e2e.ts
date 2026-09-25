@@ -152,6 +152,10 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   );
   await page.goto("/");
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
+  await expect(
+    page.getByRole("button", { exact: true, name: "Sign in" })
+  ).toHaveCount(0);
+  await expect(page.locator('a[href="/settings/models"]')).toHaveCount(0);
   await composer.fill("Discard this draft");
   await page.getByRole("link", { name: /New Chat/u }).click();
   await expect(composer).toHaveText("");
@@ -160,6 +164,7 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   await expect(composer).toHaveText("");
   await page.getByRole("button", { name: /logo/u }).click();
   await expect(page.getByRole("combobox")).toBeVisible();
+  await expect(page.getByText("Sign in to access more models")).toHaveCount(0);
   await page.addStyleTag({
     content: "nextjs-portal { display:none !important; }",
   });
@@ -173,4 +178,79 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
     animations: "disabled",
     path: testInfo.outputPath("guest-welcome-mobile.png"),
   });
+});
+
+test("New Chat discards late bootstrap results and retires their session", async ({
+  page,
+}) => {
+  const started = Promise.withResolvers<undefined>();
+  const release = Promise.withResolvers<undefined>();
+  const messages: string[] = [];
+  await page.route("**/api/eve-guest", async (route) => {
+    started.resolve(undefined);
+    await release.promise;
+    await route.fulfill({
+      json: {
+        credential: "fixture",
+        expiresAt: Date.now() + 60_000,
+        sessionId: "discarded-session",
+      },
+    });
+  });
+  await page.route("**/eve/guest/v1/session/**", (route) => {
+    if (route.request().method() === "POST") {
+      messages.push(new URL(route.request().url()).pathname);
+    }
+    return route.fulfill({ json: { ok: true } });
+  });
+  await page.goto("/");
+  const composer = page.getByRole("textbox", { exact: true, name: "Message" });
+  await composer.fill("Discard this private message");
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await started.promise;
+  await page.getByRole("link", { name: /New Chat/u }).click();
+  await expect(composer).toHaveText("");
+  await composer.fill("Fresh draft");
+  const retired = page.waitForRequest((request) =>
+    request.url().endsWith("/discarded-session/reset")
+  );
+  release.resolve(undefined);
+  await retired;
+  await expect(composer).toHaveText("Fresh draft");
+  await expect(page.getByRole("log")).toHaveCount(0);
+  expect(messages).toEqual(["/eve/guest/v1/session/discarded-session/reset"]);
+});
+
+test("back-forward cache restoration starts a fresh guest chat", async ({
+  page,
+}) => {
+  await page.route("**/api/eve-guest", (route) =>
+    route.fulfill({
+      json: {
+        credential: "fixture",
+        expiresAt: 0,
+        sessionId: "retired-session",
+      },
+    })
+  );
+  await page.route("**/eve/guest/v1/session/**", (route) =>
+    route.fulfill({ json: { error: "Expired" }, status: 401 })
+  );
+  await page.goto("/");
+  await page
+    .getByRole("textbox", { exact: true, name: "Message" })
+    .fill("Old chat");
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await expect(
+    page.getByText("This chat has expired. Start a new chat to continue.")
+  ).toBeVisible();
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true })
+    )
+  );
+  await expect(
+    page.getByRole("heading", { name: "How can I help you today?" })
+  ).toBeVisible();
+  await expect(page.getByRole("log")).toHaveCount(0);
 });
