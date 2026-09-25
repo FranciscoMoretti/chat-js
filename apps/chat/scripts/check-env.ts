@@ -20,7 +20,7 @@ import {
   isRequirementSatisfied,
 } from "../lib/config-requirements";
 import { databaseEnvOptions } from "../lib/db/connection";
-import { eveRuntimeEnvOptions } from "../lib/env-schema";
+import { clientEnvSchema, eveRuntimeEnvOptions } from "../lib/env-schema";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
@@ -216,6 +216,18 @@ const checkEnv = async (): Promise<void> => {
     return;
   }
 
+  const clientOptions = z.object(clientEnvSchema).safeParse(env);
+  const clientErrors = clientOptions.success
+    ? []
+    : [
+        {
+          feature: "Developer tools",
+          missing: clientOptions.error.issues.map(
+            (issue) => `${issue.path.join(".")}: ${issue.message}`
+          ),
+        },
+      ];
+
   const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
   const databaseErrors = databaseOptions.success
     ? []
@@ -245,6 +257,7 @@ const checkEnv = async (): Promise<void> => {
   const storageError = validateStorage(env);
   const installedToolErrors = await validateInstalledTools(env);
   const errors = [
+    ...clientErrors,
     ...eveErrors,
     ...databaseErrors,
     ...(baseUrlError ? [baseUrlError] : []),

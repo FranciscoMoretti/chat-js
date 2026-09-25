@@ -36,6 +36,11 @@ export const eveRuntimeEnvOptions = {
   ),
 };
 
+export const clientEnvSchema = {
+  NEXT_PUBLIC_REACT_QUERY_DEVTOOLS: z.enum(["0", "1"]).optional(),
+  NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
+};
+
 const playwrightDefault = (value: unknown, fallback: string) =>
   isPlaywrightTestEnvironmentEnabled &&
   (value === null || value === undefined || value === "")
