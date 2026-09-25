@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
@@ -8,10 +8,10 @@ import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
+import { DisposableGuestChat } from "./disposable-guest-chat";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
-import { EveGuestBootstrap } from "./eve-guest-bootstrap";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
 
@@ -24,7 +24,10 @@ export const EveChatPage = async ({
 }) => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
-    return <EveGuestBootstrap />;
+    if (conversationId) {
+      redirect("/");
+    }
+    return <DisposableGuestChat />;
   }
   if (conversationId && !z.uuid().safeParse(conversationId).success) {
     notFound();
