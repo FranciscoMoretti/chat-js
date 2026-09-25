@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { isFileStorageKey, keyFromFileUrl } from "../file-url";
+import { isFileStorageKey } from "../file-url";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
@@ -45,9 +45,6 @@ export const canReadEveFile = async (key: string, ownerId?: string) => {
     .limit(1);
   return { allowed: Boolean(reference), managed: true };
 };
-
-const DOCUMENT_URL_TOKEN = /[^\s<>()"'`[\]]+/gu;
-const SENTENCE_END = /[.,;:!?]+$/u;
 
 /** Reserve a fresh upload before storage I/O; never overwrite an existing key. */
 export const reserveEveUpload = async (ownerId: string, key: string) => {
@@ -254,17 +251,12 @@ export const retainEveDocumentFiles = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   conversationId: string,
-  content: string
+  fileIds: string[]
 ) => {
-  // Recognize file URLs with the same parser as downloads, independent of query metadata.
-  // Retaining a file mentioned as text is preferable to deleting a referenced image.
-  const candidates = [
-    ...new Set(
-      [...content.matchAll(DOCUMENT_URL_TOKEN)]
-        .map(([token]) => keyFromFileUrl(token.replace(SENTENCE_END, "")))
-        .filter((key) => key !== null)
-    ),
-  ];
+  const candidates = [...new Set(fileIds)];
+  if (candidates.some((id) => !isFileStorageKey(id))) {
+    throw new Error("Invalid document file reference.");
+  }
   if (!candidates.length) {
     return;
   }
@@ -278,6 +270,9 @@ export const retainEveDocumentFiles = async (
         inArray(eveStoredFile.key, candidates)
       )
     );
+  if (files.length !== candidates.length) {
+    throw new Error("Document references an unavailable or unowned file.");
+  }
   if (files.length) {
     await tx
       .insert(eveFileReference)

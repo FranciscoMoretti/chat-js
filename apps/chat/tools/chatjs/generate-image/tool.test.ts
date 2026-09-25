@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
+import { generateImageResult } from "./schemas";
 import { generateImageTool } from "./tool";
 
 const mocks = vi.hoisted(() => ({
@@ -31,7 +32,6 @@ vi.mock("@/lib/config", () => ({
 }));
 vi.mock("@/lib/file-storage", () => ({
   downloadFile: mocks.downloadFile,
-  uploadFile: mocks.uploadFile,
 }));
 vi.mock("@/lib/ai/models", () => ({
   fetchModels: mocks.fetchModels,
@@ -88,6 +88,7 @@ it("uses request attachments and prior image for editing and records model usage
           name: "previous.png",
         },
         modelProvider,
+        storeFile: mocks.uploadFile,
       },
       messages: [],
       toolCallId: "edit",
@@ -120,7 +121,11 @@ it("generates without optional request services", async () => {
   }
   const result = await generateImageTool.execute(
     { prompt: "Blue sky" },
-    { context: { modelProvider }, messages: [], toolCallId: "new" }
+    {
+      context: { modelProvider, storeFile: mocks.uploadFile },
+      messages: [],
+      toolCallId: "new",
+    }
   );
   expect(mocks.generateImage.mock.calls[0][0].prompt).toBe("Blue sky");
   expect(result).toEqual({
@@ -178,7 +183,7 @@ it("forwards request cancellation to the image provider", async () => {
     { prompt: "Blue sky" },
     {
       abortSignal: controller.signal,
-      context: { modelProvider },
+      context: { modelProvider, storeFile: mocks.uploadFile },
       messages: [],
       toolCallId: "cancelled",
     }
@@ -212,6 +217,7 @@ it("uses the selected multimodal model from request context", async () => {
         costAccumulator,
         modelProvider,
         selectedModel: "google/image-model-reasoning",
+        storeFile: mocks.uploadFile,
       },
       messages: [],
       toolCallId: "selected",
@@ -244,6 +250,7 @@ it.each([
         context: {
           lastGeneratedImage: { imageUrl, name: "image" },
           modelProvider,
+          storeFile: mocks.uploadFile,
         },
         messages: [],
         toolCallId: "bad",
@@ -268,6 +275,7 @@ it("reads uploaded images directly from storage", async () => {
           name: "image",
         },
         modelProvider,
+        storeFile: mocks.uploadFile,
       },
       messages: [],
       toolCallId: "stored",
@@ -285,4 +293,12 @@ it("finalizes known costs when the image pricing catalog is unavailable", async 
   accumulator.addAPICost("otherTool", 5);
   expect(await accumulator.getTotalCost()).toBe(5);
   expect(accumulator.getEntries()).toHaveLength(2);
+});
+
+it("accepts saved image results from before file IDs were returned", () => {
+  const saved = {
+    imageUrl: "/api/files/abcdefghijklmnopqrstuvwx",
+    prompt: "Example",
+  };
+  expect(generateImageResult.parse(saved)).toEqual(saved);
 });

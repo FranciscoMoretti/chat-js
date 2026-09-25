@@ -56,8 +56,7 @@ vi.mock("../lib/eve/server", () => ({
   eveRequest: mocks.request,
 }));
 vi.mock("../lib/file-storage", () => ({
-  createFileStorageKey: () =>
-    crypto.randomUUID().replaceAll("-", "").slice(0, 24),
+  createFileId: () => crypto.randomUUID().replaceAll("-", "").slice(0, 24),
   deleteFilesByUrls: mocks.remove,
   downloadFile: mocks.download,
   uploadFileAtKey: mocks.upload,

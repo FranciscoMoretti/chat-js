@@ -56,6 +56,7 @@ export const executeEveDocumentTool = async (
       content: revision.content,
       date: revision.createdAt.toISOString(),
       documentId: revision.documentId,
+      fileIds: revision.fileIds,
       kind: revision.kind,
       revisionId: revision.id,
       status: "success",
@@ -84,6 +85,7 @@ export const executeEveDocumentTool = async (
         edit?.documentId ??
         documentIdForCall(context.session.id, context.callId),
       expectedRevisionId: edit?.expectedRevisionId ?? null,
+      fileIds: input.fileIds,
       kind: operation.kind,
       operationId: `tool:${context.callId}`,
       title: input.title,

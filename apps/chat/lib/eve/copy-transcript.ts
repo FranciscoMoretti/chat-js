@@ -107,20 +107,29 @@ const completedPart = (part: EveMessagePart): SeedPart => {
 const visitStrings = (
   value: unknown,
   rewrite: (text: string, field?: string) => string,
-  mutate = false
+  mutate = false,
+  parentField?: string,
+  seen = new WeakSet<object>()
 ) => {
   if (!value || typeof value !== "object") {
     return;
   }
+  if (seen.has(value)) {
+    return;
+  }
+  seen.add(value);
   for (const key of Object.keys(value)) {
     const item: unknown = Reflect.get(value, key);
     if (typeof item === "string") {
-      const replacement = rewrite(item, key);
+      const replacement = rewrite(
+        item,
+        Array.isArray(value) ? parentField : key
+      );
       if (mutate) {
         Reflect.set(value, key, replacement);
       }
     } else {
-      visitStrings(item, rewrite, mutate);
+      visitStrings(item, rewrite, mutate, key, seen);
     }
   }
 };
@@ -154,6 +163,9 @@ export const eveCopyResources = (
   const documents = new Set<string>();
   const revisions = new Set<string>();
   visitStrings({ value }, (text, field) => {
+    if ((field === "fileId" || field === "fileIds") && isFileStorageKey(text)) {
+      files.add(text);
+    }
     transformFileReferences(text, (key) => {
       files.add(key);
       return key;
@@ -318,6 +330,16 @@ export const rewriteEveCopyResources = <T>(
   visitStrings(
     root,
     (text, field) => {
+      if (
+        (field === "fileId" || field === "fileIds") &&
+        isFileStorageKey(text)
+      ) {
+        const fileId = allocations.files.get(text);
+        if (!fileId) {
+          throw new Error("Missing copied file allocation.");
+        }
+        return fileId;
+      }
       let result = transformFileReferences(text, (source) => {
         const key = allocations.files.get(source);
         if (!key) {
