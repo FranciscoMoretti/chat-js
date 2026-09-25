@@ -39,3 +39,29 @@ describe("EVE deployment authentication", () => {
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
   });
 });
+
+it("sends protocol requests directly to the named chat worker", async () => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
+  vi.stubGlobal("fetch", fetcher);
+  await eveRequest("owner", "/eve/v1/operation/recovery?kind=seed");
+  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
+    "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
+  );
+  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+});
+
+it("routes the real SDK directly to the named chat worker", async () => {
+  const { Client } = await import("eve/client");
+  const { getEveConnectionOptions } = await import("./connection-options");
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      Response.json({ ok: true, status: "ready", workflowId: "workflow" })
+    );
+  vi.stubGlobal("fetch", fetcher);
+  await new Client(getEveConnectionOptions("owner")).health();
+  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
+    "https://preview.example.com/eve/chat/v1/health"
+  );
+  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+});

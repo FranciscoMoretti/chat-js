@@ -15,5 +15,14 @@ export const getEveConnectionOptions = (
   if (sameDeployment && env.VERCEL_AUTOMATION_BYPASS_SECRET) {
     headers["x-vercel-protection-bypass"] = env.VERCEL_AUTOMATION_BYPASS_SECRET;
   }
-  return { auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" }, headers, host };
+  return {
+    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
+    headers,
+    host: host ? new URL("/eve/chat", host).href : "/eve/chat",
+    redirect: "error" as const,
+  };
 };
+
+/** Map EVE protocol paths to the named worker without a cross-origin rewrite. */
+export const getEveChatUrl = (path: string, origin = env.EVE_INTERNAL_ORIGIN) =>
+  new URL(path.replace(/^\/eve\/v1(?=\/|$)/u, "/eve/chat/v1"), origin);

@@ -1,7 +1,7 @@
 import { env } from "@/lib/env";
 
 import type { UiToolName } from "../ai/types";
-import { getEveConnectionOptions } from "./connection-options";
+import { getEveChatUrl, getEveConnectionOptions } from "./connection-options";
 
 export const assertEveConfigured = () => {
   if (
@@ -39,7 +39,7 @@ export const eveRequest = async (
   if (init.body) {
     headers.set("content-type", "application/json");
   }
-  return await fetch(new URL(path, connection.host), {
+  return await fetch(getEveChatUrl(path, connection.host), {
     ...init,
     cache: "no-store",
     headers,

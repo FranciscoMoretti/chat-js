@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { verifyEveSandboxCoverage } from "../db/eve-sandbox-coverage-proof";
 import { env } from "../env";
+import { getEveChatUrl } from "./connection-options";
 import { assertEveConfigured } from "./server";
 
 const identitySchema = z.strictObject({
@@ -44,9 +45,8 @@ export const verifyLocalEveFamilyCoverage = async (
         { ...inventory, appRoot: canonicalRoot },
         async (sessionId) => {
           const response = await fetch(
-            new URL(
-              `/eve/v1/session/${encodeURIComponent(sessionId)}/sandbox-identity`,
-              env.EVE_INTERNAL_ORIGIN
+            getEveChatUrl(
+              `/eve/v1/session/${encodeURIComponent(sessionId)}/sandbox-identity`
             ),
             {
               cache: "no-store",

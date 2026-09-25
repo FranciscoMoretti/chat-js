@@ -42,36 +42,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 };
 
-const configureEve = withEve(nextConfig, {
+export default withEve(nextConfig, {
   agents: { chat: ".", guest: "./guest" },
   devServerTimeoutMs: 600_000,
 });
-
-const configureChat = async (...args: Parameters<typeof configureEve>) => {
-  const configured = await configureEve(...args);
-  const { rewrites } = configured;
-  return {
-    ...configured,
-    rewrites: async () => {
-      const rules = await rewrites?.();
-      const sections = Array.isArray(rules) ? { afterFiles: rules } : rules;
-      return {
-        ...sections,
-        // Resolve the existing registered-agent URL before EVE's named-agent
-        // rewrites. EVE otherwise prepends its rules and misses this alias.
-        beforeFiles: [
-          {
-            // Re-enter Vercel platform routing to select the named chat service.
-            destination: process.env.VERCEL_URL
-              ? `https://${process.env.VERCEL_URL}/eve/chat/v1/:path*`
-              : "/eve/chat/v1/:path*",
-            source: "/eve/v1/:path*",
-          },
-          ...(sections?.beforeFiles ?? []),
-        ],
-      };
-    },
-  };
-};
-
-export default configureChat;
