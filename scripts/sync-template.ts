@@ -42,6 +42,8 @@ const TEMPLATE_REMOVED_FILES = [
   "components/docs-link.tsx",
   // This reference-app test requires both built-in tools, which scaffolds may omit.
   "components/part/tool-part.test.tsx",
+  // This test covers the reference app's Vercel adapter; scaffolds select their own.
+  "lib/storage-provider.test.ts",
 ];
 
 /** Import lines stripped from template files after copying. */
