@@ -127,7 +127,7 @@ export const GuestConversationView = ({
           selectedTool={selectedTool}
           onToolChange={setSelectedTool}
           retainedModelId={modelId}
-          busy={busy}
+          status={busy ? "streaming" : "ready"}
           disabled={busy || expired}
           draft={draft}
           onDraftChange={onDraftChange}
@@ -330,7 +330,7 @@ export const DisposableGuestChat = () => {
               )}
               <EveComposer
                 autoFocus
-                busy={busy}
+                status={busy ? "submitted" : "ready"}
                 disabled={busy || !modelId}
                 draft={draft}
                 onDraftChange={setDraft}

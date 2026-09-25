@@ -232,7 +232,7 @@ it("uses the selected multimodal model from request context", async () => {
 it.each([
   "http://127.0.0.1/private",
   "https://attacker.example/image.png",
-  "https://attacker.example/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+  "https://attacker.example/api/files/abcdefghijklmnopqrstuvwx.png",
 ])("rejects unapproved image URL %s", async (imageUrl) => {
   if (!generateImageTool.execute) {
     throw new Error("Missing execution");
@@ -264,7 +264,7 @@ it("reads uploaded images directly from storage", async () => {
     {
       context: {
         lastGeneratedImage: {
-          imageUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+          imageUrl: "/api/files/abcdefghijklmnopqrstuvwx.png",
           name: "image",
         },
         modelProvider,

@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
 import { config } from "@/lib/config";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   description: config.appDescription,
@@ -80,13 +81,14 @@ const RootLayout = ({
       <Script id="theme-color-script" strategy="beforeInteractive">
         {THEME_COLOR_SCRIPT}
       </Script>
-      {process.env.NODE_ENV === "production" ||
-      process.env.PLAYWRIGHT ? null : (
+      {process.env.NODE_ENV === "development" &&
+      !process.env.PLAYWRIGHT &&
+      env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
         <Script
           src="https://unpkg.com/react-scan/dist/auto.global.js"
           strategy="beforeInteractive"
         />
-      )}
+      ) : null}
     </head>
     <body className="antialiased">
       <ElectronAuthHandler />

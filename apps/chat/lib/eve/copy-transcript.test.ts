@@ -17,8 +17,8 @@ const documentId = "60dbe86a-b2c4-4d32-ae09-a00e90b84e99";
 const copiedDocument = "12bb498e-9626-44e6-9497-9a53520458ce";
 const revisionId = "663ccf42-10c9-453f-b9da-ebf684a6da97";
 const copiedRevision = "1b5b66b4-41bf-4e0b-893f-c5b05a7931fb";
-const sourceUrl = `/api/files/content?key=${sourceFile}`;
-const copiedUrl = `/api/files/content?key=${copiedFile}`;
+const sourceUrl = `/api/files/${sourceFile}`;
+const copiedUrl = `/api/files/${copiedFile}`;
 const allocations = {
   documents: new Map([[documentId, copiedDocument]]),
   files: new Map([[sourceFile, copiedFile]]),
@@ -327,7 +327,7 @@ it("materializes only allocated destination attachments and remaps case-insensit
   );
   expect(reads).toEqual([copiedFile]);
   expect(JSON.stringify(result)).toContain(
-    `https://chatjs.example/api/files/content?key=${copiedFile}`
+    `https://chatjs.example/api/files/${copiedFile}`
   );
   expect(JSON.stringify(result)).toContain(copiedDocument);
   expect(JSON.stringify(result)).not.toContain(documentId);
@@ -652,3 +652,14 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
   });
   expect(JSON.stringify(copied.seed)).not.toContain("original");
 });
+
+it.each([sourceUrl, `${sourceUrl}?dpl=dpl_test`])(
+  "copies file references from %s into canonical paths",
+  (url) => {
+    const content = `![image](${url})`;
+    expect(eveCopyResources(content).fileKeys).toEqual([sourceFile]);
+    expect(rewriteEveCopyResources(content, allocations)).toBe(
+      `![image](${copiedUrl})`
+    );
+  }
+);

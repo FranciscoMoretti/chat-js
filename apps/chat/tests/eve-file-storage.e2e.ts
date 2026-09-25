@@ -25,7 +25,7 @@ import {
   getFileMetadata,
   uploadFileAtKey,
 } from "../lib/file-storage";
-import { FILE_CONTENT_PATH } from "../lib/file-url";
+import { createFileUrl } from "../lib/file-url";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("File removal acceptance requires local Postgres.");
@@ -36,9 +36,7 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
   const keys = Array.from({ length: 3 }, () =>
     createFileStorageKey("purge.txt")
   );
-  const urls = keys.map(
-    (key) => `${FILE_CONTENT_PATH}?${new URLSearchParams({ key })}`
-  );
+  const urls = keys.map(createFileUrl);
   await db.insert(user).values({
     email: `${owner}@test.invalid`,
     id: owner,

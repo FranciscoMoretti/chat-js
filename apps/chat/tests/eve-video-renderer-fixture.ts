@@ -20,9 +20,9 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     output: createEvePlatformResult(
       {
         ...(imageMode
-          ? { imageUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png" }
+          ? { imageUrl: "/api/files/abcdefghijklmnopqrstuvwx.png" }
           : {
-              videoUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4",
+              videoUrl: "/api/files/abcdefghijklmnopqrstuvwx.mp4",
             }),
         prompt: common.input.prompt,
       },

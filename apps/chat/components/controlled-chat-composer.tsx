@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChatStatus } from "ai";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
@@ -32,7 +33,7 @@ export const ControlledChatComposer = ({
   onDraftChange,
   onSubmit,
   disabled,
-  busy = false,
+  status = "ready",
   onStop,
   stopDisabled = false,
   autoFocus = false,
@@ -50,14 +51,14 @@ export const ControlledChatComposer = ({
   onDraftChange: (draft: string) => void;
   onSubmit: () => void;
   disabled: boolean;
-  busy?: boolean;
+  status?: ChatStatus;
   onStop?: () => void;
   stopDisabled?: boolean;
   autoFocus?: boolean;
   tools?: ReactNode;
 }) => {
   const isMobile = useIsMobile();
-  const activeStatus = onStop ? "streaming" : "submitted";
+  const busy = status === "submitted" || status === "streaming";
   const canSend =
     !disabled &&
     (Boolean(draft.trim()) || hasAttachments) &&
@@ -116,7 +117,7 @@ export const ControlledChatComposer = ({
                 submit();
               }
             }}
-            status={busy ? activeStatus : "ready"}
+            status={status}
           />
         }
         tools={tools}

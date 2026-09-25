@@ -27,7 +27,7 @@ test("failed storage removal leaves the durable deletion pending for retry", asy
   expect(mocks.release).not.toHaveBeenCalled();
   await purgeEveFamilyFiles("owner", "root");
   expect(mocks.remove).toHaveBeenLastCalledWith([
-    "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+    "/api/files/abcdefghijklmnopqrstuvwx.png",
   ]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", keys);
   expect(mocks.release).toHaveBeenCalledWith("owner", "root");

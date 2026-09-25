@@ -7,6 +7,7 @@ import {
   ConversationContent,
 } from "@/components/ai-elements/conversation";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
+import { ThinkingMessage } from "@/components/thinking-message";
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
@@ -173,7 +174,7 @@ export const NewEveConversation = ({
     <>
       <EveComposer
         autoFocus
-        busy={busy}
+        status={busy ? "submitted" : "ready"}
         disabled={busy}
         draft={busy ? "" : draft}
         files={busy ? { ...files, attachments: [] } : files}
@@ -215,6 +216,7 @@ export const NewEveConversation = ({
                 message={draftMessage(draft, files.attachments)}
               />
             )}
+            {!optimisticComparison && <ThinkingMessage />}
             <output className="sr-only">Sending…</output>
           </ConversationContent>
         </Conversation>

@@ -42,4 +42,10 @@ jobs:
         if: env.UIVERIFY_API_KEY != ''
         env:
           UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_API_KEY }}
-        run: bun run uiverify:upload:docs
+        # Merged UI becomes the baseline; PR builds still require review.
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            bun run uiverify:upload:docs --auto-accept-changes
+          else
+            bun run uiverify:upload:docs
+          fi

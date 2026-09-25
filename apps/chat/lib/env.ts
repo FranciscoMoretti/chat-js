@@ -1,11 +1,15 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 
 import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
-import { serverEnvSchema } from "./env-schema";
+import { clientEnvSchema, serverEnvSchema } from "./env-schema";
 
 export const env = createEnv({
-  client: {},
-  experimental__runtimeEnv: {},
+  client: clientEnvSchema,
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_REACT_QUERY_DEVTOOLS:
+      process.env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS,
+    NEXT_PUBLIC_REACT_SCAN: process.env.NEXT_PUBLIC_REACT_SCAN,
+  },
   server: serverEnvSchema,
 });
 

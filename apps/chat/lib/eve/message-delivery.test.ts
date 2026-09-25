@@ -93,7 +93,7 @@ describe("Eve message delivery recovery", () => {
           contentType: "image/png",
           digest: "digest",
           name: "image.png",
-          url: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+          url: "/api/files/abcdefghijklmnopqrstuvwx.png",
         },
       ],
       message: "restore me",

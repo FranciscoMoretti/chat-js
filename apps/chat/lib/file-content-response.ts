@@ -6,7 +6,6 @@ import {
   getFileProviderUrl,
   storageSupportsRange,
 } from "./file-storage";
-import { keyFromFileUrl } from "./file-url";
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
@@ -35,13 +34,9 @@ const parseRange = (value: string, size: number) => {
 
 export const createFileContentResponse = async (
   request: Request,
+  key: string,
   { allowRedirect = true }: { allowRedirect?: boolean } = {}
 ) => {
-  const key = keyFromFileUrl(request.url);
-  if (!key) {
-    return new Response("Invalid file URL", { status: 400 });
-  }
-
   try {
     const providerUrl = allowRedirect
       ? await getFileProviderUrl(key)

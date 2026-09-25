@@ -128,7 +128,7 @@ async function fixture() {
             id: revisionId,
             parentRevisionId: null,
             title: "Copied",
-            content: `Image: /api/files/content?key=${targetKey}`,
+            content: `Image: /api/files/${targetKey}`,
             kind: "text",
             createdAt: new Date(0).toISOString(),
           },
@@ -152,7 +152,7 @@ async function fixture() {
           parts: [
             {
               type: "file",
-              url: `https://chatjs.example/api/files/content?key=${targetKey}`,
+              url: `https://chatjs.example/api/files/${targetKey}`,
               mediaType: "image/png",
               size: bytes.length,
             },

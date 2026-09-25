@@ -28,7 +28,7 @@ const snapshot = [
     revisions: [
       {
         ...base,
-        content: `First version: /api/files/content?key=${sourceFile}`,
+        content: `First version: /api/files/${sourceFile}`,
         id: firstId,
         parentRevisionId: null,
       },

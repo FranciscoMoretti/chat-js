@@ -6,7 +6,8 @@ import type { EveMessagePart, MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import {
-  FILE_CONTENT_PATH,
+  createFileUrl,
+  FILES_PATH,
   isFileStorageKey,
   keyFromFileUrl,
 } from "../file-url";
@@ -129,7 +130,7 @@ const transformFileReferences = (
 ) =>
   text.replace(RESOURCE_TOKEN, (token) => {
     const candidate = token.replace(SENTENCE_END, "");
-    if (!candidate.includes(FILE_CONTENT_PATH)) {
+    if (!candidate.includes(FILES_PATH)) {
       return token;
     }
     let url: URL;
@@ -322,7 +323,7 @@ export const rewriteEveCopyResources = <T>(
         if (!key) {
           throw new Error("Missing copied file allocation.");
         }
-        return `${FILE_CONTENT_PATH}?key=${key}`;
+        return createFileUrl(key);
       });
       let map: ReadonlyMap<string, string> | undefined;
       if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
@@ -449,7 +450,7 @@ const copyAttachmentResolver = (
     ) {
       throw new Error("Copied attachment content metadata changed.");
     }
-    part.url = new URL(`${FILE_CONTENT_PATH}?key=${key}`, origin).href;
+    part.url = new URL(createFileUrl(key), origin).href;
     part.size = stored.size;
   };
 };
