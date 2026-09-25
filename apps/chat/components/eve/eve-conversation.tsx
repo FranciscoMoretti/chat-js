@@ -44,6 +44,7 @@ import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
+import { EveThinkingMessage } from "./eve-thinking-message";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
@@ -342,7 +343,7 @@ export const EveConversation = ({
                           <div className="w-full">
                             <EveComposer
                               autoFocus
-                              busy={fork.busy}
+                              status={fork.busy ? "submitted" : "ready"}
                               disabled={
                                 busy ||
                                 commandPending ||
@@ -460,6 +461,7 @@ export const EveConversation = ({
                   run(() => send(() => agent.respond([response])))
                 }
               />
+              <EveThinkingMessage messages={messages} status={agent.status} />
               {comparison &&
                 shouldAppendEveOptimisticResponseGroup(comparison) && (
                   <EveOptimisticResponseGroup operation={comparison} />
@@ -523,7 +525,7 @@ export const EveConversation = ({
               </output>
             )}
             <EveComposer
-              busy={busy}
+              status={agent.status === "resuming" ? "submitted" : agent.status}
               disabled={
                 !composerDraft.loaded ||
                 busy ||
