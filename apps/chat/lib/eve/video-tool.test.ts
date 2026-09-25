@@ -60,7 +60,7 @@ test("native video uses the selected model and persists its upload with the prov
     video: { mediaType: "video/mp4", uint8Array: new Uint8Array([1]) },
   });
   provider.upload.mockResolvedValue({
-    url: "/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4",
+    url: "/api/files/abcdefghijklmnopqrstuvwx.mp4",
   });
   const results = await Array.fromAsync(
     executeEvePlatformTool(
@@ -80,7 +80,7 @@ test("native video uses the selected model and persists its upload with the prov
   expect(results.at(-1)).toMatchObject({
     output: {
       prompt: input.prompt,
-      videoUrl: "/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4",
+      videoUrl: "/api/files/abcdefghijklmnopqrstuvwx.mp4",
     },
     usage: { costUsd: 0.5 },
   });

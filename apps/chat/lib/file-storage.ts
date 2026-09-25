@@ -3,11 +3,7 @@ import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
 import { FILE_STORAGE_PREFIX } from "./constants";
-import {
-  FILE_CONTENT_PATH,
-  isFileStorageKey,
-  keyFromFileUrl,
-} from "./file-url";
+import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
@@ -42,11 +38,6 @@ export const createFileStorageKey = (filename: string): string => {
   const candidate = dot > 0 ? clean.slice(dot).toLowerCase() : "";
   const extension = SAFE_EXTENSION.test(candidate) ? candidate : "";
   return `${nanoid(24)}${extension}`;
-};
-
-const createFileUrl = (key: string): string => {
-  const search = new URLSearchParams({ key });
-  return `${FILE_CONTENT_PATH}?${search}`;
 };
 
 /** Internal preallocated key, recorded by the caller before external storage I/O. */

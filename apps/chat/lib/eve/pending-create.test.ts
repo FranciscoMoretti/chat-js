@@ -29,7 +29,7 @@ describe("rejected project draft recovery", () => {
       [
         { text: "Keep my message", type: "text" },
         {
-          data: "/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
+          data: "/api/files/abcdefghijklmnopqrstuvwx.png",
           filename: "square.png",
           mediaType: "image/png",
           type: "file",

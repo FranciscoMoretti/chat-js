@@ -73,7 +73,10 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 
 ## Development
 
-- `bun dev`: run chat app
+- `bun dev`: run chat app with debugging overlays disabled
+- `bun dev:query`: run chat with React Query Devtools
+- `bun dev:scan`: run chat with React Scan
+- `bun dev:debug`: run chat with both tools
 - `bun dev:info`: print this worktree's assigned app URLs
 - `bun dev:docs`: run docs
 - `bun lint`: check repository-wide Oxlint rules and Oxfmt formatting, plus docs health
@@ -82,6 +85,8 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun test:types`: type-check the workspaces
 
 Ultracite supplies the Oxlint and Oxfmt presets. All files receive the full presets. Necessary exceptions are documented at the affected source lines rather than disabled through file-wide baselines. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
+
+Stop the dev server before switching debug commands, then reload the page. Both integrations remain available without reinstalling anything; React Scan loads from its existing CDN script. These flags only enable tools in development.
 
 Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
 

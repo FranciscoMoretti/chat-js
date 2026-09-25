@@ -106,7 +106,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -137,7 +137,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
         content: [
           { text: "Describe the earlier context", type: "text" },
           {
-            data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -191,7 +191,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -212,7 +212,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -278,7 +278,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
         {
           content: [
             {
-              data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+              data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
               mediaType: "image/png",
               type: "file",
             },
@@ -329,7 +329,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            data: "https://files.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "https://files.example/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -340,11 +340,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.equal(downloadFile.mock.calls.length, 0);
     assert.deepEqual(fetchImplementation.mock.calls, [
-      [
-        new URL(
-          "https://files.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png"
-        ),
-      ],
+      [new URL("https://files.example/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png")],
     ]);
   });
 
@@ -353,7 +349,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       {
         content: [
           {
-            data: "/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png",
+            data: "/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png",
             mediaType: "image/png",
             type: "file",
           },
@@ -381,7 +377,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.equal(
       downloadedUrl?.toString(),
-      "https://chat.example/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png"
+      "https://chat.example/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png"
     );
     const [message] = result;
     assert.ok(message && Array.isArray(message.content));

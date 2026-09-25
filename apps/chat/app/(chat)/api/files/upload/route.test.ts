@@ -32,7 +32,7 @@ beforeEach(() => {
   mocks.upload.mockResolvedValue({
     contentType: "image/png",
     pathname: "fixture.png",
-    url: `/api/files/content?key=${key}`,
+    url: `/api/files/${key}`,
   });
 });
 const request = () => {
@@ -52,7 +52,7 @@ test("records the authenticated owner of a server-created storage key before ret
   expect(response.status).toBe(200);
   expect(mocks.register).toHaveBeenCalledWith("owner", key);
   expect(await response.json()).toMatchObject({
-    url: `/api/files/content?key=${key}`,
+    url: `/api/files/${key}`,
   });
 });
 test("does not return a usable upload when ownership registration fails", async () => {

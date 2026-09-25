@@ -41,9 +41,8 @@ test("native video renderer covers progress, completion and failure states", asy
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route(
-    "**/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4",
-    (route) => route.abort()
+  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.mp4", (route) =>
+    route.abort()
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
@@ -64,7 +63,7 @@ test("native video renderer covers progress, completion and failure states", asy
   ).toBeVisible();
   await expect(page.locator("video")).toHaveAttribute(
     "src",
-    "/api/files/content?key=abcdefghijklmnopqrstuvwx.mp4"
+    "/api/files/abcdefghijklmnopqrstuvwx.mp4"
   );
   await expect(page.getByRole("alert")).toHaveCount(3);
   await expect(page.getByText("Request declined.")).toBeVisible();
@@ -85,13 +84,11 @@ test("native image renderer covers progress, completion and failure states", asy
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route(
-    "**/api/files/content?key=abcdefghijklmnopqrstuvwx.png",
-    (route) =>
-      route.fulfill({
-        body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
-        contentType: "image/svg+xml",
-      })
+  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
+    route.fulfill({
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
+      contentType: "image/svg+xml",
+    })
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
@@ -116,7 +113,7 @@ test("native image renderer covers progress, completion and failure states", asy
   ).toBeVisible();
   await expect(page.locator("img")).toHaveAttribute(
     "src",
-    "/api/files/content?key=abcdefghijklmnopqrstuvwx.png"
+    "/api/files/abcdefghijklmnopqrstuvwx.png"
   );
   await expect(page.getByRole("alert")).toHaveCount(3);
   await expect(page.getByText("Request declined.")).toBeVisible();

@@ -24,7 +24,7 @@ describe("file storage", () => {
     assert.ok(key);
     assert.equal(uploaded.pathname, "hello.txt");
     assert.equal(uploaded.contentType, "text/plain");
-    assert.equal(uploaded.url, `/api/files/content?key=${key}`);
+    assert.equal(uploaded.url, `/api/files/${key}`);
     const uploadedFiles = await listFiles();
     assert.deepEqual(
       uploadedFiles.files.map((file) => file.pathname),

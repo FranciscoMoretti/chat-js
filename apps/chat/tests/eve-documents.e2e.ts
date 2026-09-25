@@ -798,7 +798,8 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   ).toBeUndefined();
 });
 
-test("document references protect owned files across conversation families and retain revision history", async () => {
+test("document references protect owned files across families and revision history", async () => {
+  const prefix = "/api/files/";
   const source = await conversation();
   const destination = await conversation();
   const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
@@ -808,7 +809,7 @@ test("document references protect owned files across conversation families and r
   await referenceEveFiles(owner, source.id, [key]);
   const input = {
     ...draft(destination.id),
-    content: `![image](/api/files/content?key=${key})\nForeign URL: /api/files/content?key=${foreignKey}`,
+    content: `![image](${prefix}${key})\nForeign URL: ${prefix}${foreignKey}`,
   };
   const revision = await saveEveDocumentRevision(input);
   await saveEveDocumentRevision({
@@ -823,8 +824,11 @@ test("document references protect owned files across conversation families and r
       .from(eveFileReference)
       .where(eq(eveFileReference.conversationId, destination.id))
   ).toEqual([{ key }]);
-  await beginEveConversationDeletion(owner, source.id);
-  expect(await prepareEveFamilyFilePurge(owner, source.id)).toEqual([]);
+  const deletion = await beginEveConversationDeletion(owner, source.id);
+  if (!deletion) {
+    throw new Error("Missing source family deletion");
+  }
+  expect(await prepareEveFamilyFilePurge(owner, deletion.rootId)).toEqual([]);
   expect(
     (
       await getEveDocumentRevision(
