@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
+import { generateVideoResult } from "./schemas";
 import { generateVideoTool } from "./tool";
 
 const MP4_EXTENSION = /\.mp4$/u;
@@ -192,4 +193,12 @@ it("uses request-owned storage and forwards cancellation", async () => {
     throw new TypeError("Expected a non-streaming video result");
   }
   expect(result.videoUrl).toBe("eve://video");
+});
+
+it("accepts saved video results from before file IDs were returned", () => {
+  const saved = {
+    prompt: "Example",
+    videoUrl: "/api/files/abcdefghijklmnopqrstuvwx",
+  };
+  expect(generateVideoResult.parse(saved)).toEqual(saved);
 });

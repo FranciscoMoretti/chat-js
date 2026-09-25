@@ -66,7 +66,7 @@ export const generateVideoTool = tool({
   execute: async (
     { prompt, aspectRatio, durationSeconds },
     { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ fileId: string; videoUrl: string; prompt: string }> => {
+  ): Promise<{ fileId?: string; videoUrl: string; prompt: string }> => {
     const { costAccumulator, modelProvider, selectedModel, storeFile } =
       context ?? {};
     if (!storeFile) {

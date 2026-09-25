@@ -400,7 +400,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
   execute: async (
     { prompt },
     { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ fileId: string; imageUrl: string; prompt: string }> => {
+  ): Promise<{ fileId?: string; imageUrl: string; prompt: string }> => {
     const {
       attachments = [],
       lastGeneratedImage = null,

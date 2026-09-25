@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { CostAccumulator } from "@/lib/credits/cost-accumulator";
 
+import { generateImageResult } from "./schemas";
 import { generateImageTool } from "./tool";
 
 const mocks = vi.hoisted(() => ({
@@ -292,4 +293,12 @@ it("finalizes known costs when the image pricing catalog is unavailable", async 
   accumulator.addAPICost("otherTool", 5);
   expect(await accumulator.getTotalCost()).toBe(5);
   expect(accumulator.getEntries()).toHaveLength(2);
+});
+
+it("accepts saved image results from before file IDs were returned", () => {
+  const saved = {
+    imageUrl: "/api/files/abcdefghijklmnopqrstuvwx",
+    prompt: "Example",
+  };
+  expect(generateImageResult.parse(saved)).toEqual(saved);
 });
