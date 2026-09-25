@@ -20,7 +20,7 @@ These variables must be set for the EVE-backed application.
 | `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart), or any Postgres provider |
 | `AUTH_SECRET` | Secret used to sign and encrypt session tokens (Better Auth) | Run `openssl rand -base64 32` or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
 
-The required EVE settings are `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN`, documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
+The optional EVE overrides and their derived defaults are documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
 
 ---
 
@@ -254,15 +254,17 @@ ai: {
 
 | Variable | Description |
 | --- | --- |
-| `EVE_GATEWAY_SECRET` | **Required.** Private credential used between ChatJS and EVE. Generate at least 32 random characters. |
-| `WORKFLOW_POSTGRES_URL` | **Required.** Postgres connection for durable EVE workflows. |
-| `EVE_INTERNAL_ORIGIN` | **Required.** Same-origin application URL or private worker origin. |
+| `EVE_GATEWAY_SECRET` | Optional private credential override (at least 32 characters). Defaults to HKDF-SHA256 from `AUTH_SECRET`, with salt `chatjs` and purpose `eve-gateway/v1`. |
+| `WORKFLOW_POSTGRES_URL` | Optional workflow database override. Defaults to `DATABASE_MIGRATION_URL`, then `DATABASE_URL`; requires a direct or session connection. |
+| `EVE_INTERNAL_ORIGIN` | Optional worker origin override. Defaults to `https://${VERCEL_URL}`, otherwise `APP_URL`, then `http://localhost:${PORT}` (port 3000 by default). |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Server-only deployment-protection bypass credential for calls to this Vercel project. Required when protection blocks internal EVE requests. |
 | `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
 
-`DATABASE_URL` stores application identity and metadata. `WORKFLOW_POSTGRES_URL` stores EVE workflows and native transcripts. Initialize both schemas before sending a message. See the [database setup guide](./database#eve-workflow-database).
+Application records and EVE workflows can share a database using separate schemas. An explicit `WORKFLOW_POSTGRES_URL` can select a separate database. Initialize both schemas before sending a message. See the [database setup guide](./database#eve-workflow-database).
 
-`EVE_INTERNAL_ORIGIN` is independent of `APP_URL`. With the integrated Next.js worker, set it to the app origin. It must not contain an API route path. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to a separate worker or an arbitrary custom domain. The EVE bearer credential and owner identity are still required.
+Leave `EVE_INTERNAL_ORIGIN` unset for the integrated worker. Vercel internal calls use the exact deployment URL, even when OAuth uses a stable branch alias or `APP_URL`. Outside Vercel, the default follows `APP_URL` or the local port. An explicit origin must not contain a path, query, or credentials. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to a separate worker or an arbitrary custom domain. The EVE bearer credential and owner identity are still required.
+
+Rotating `AUTH_SECRET` also rotates the derived EVE credential and invalidates existing guest credentials. Existing explicit EVE secrets are preserved. Separate workers must use the same explicit gateway secret or derive it from the same auth secret. Empty overrides use defaults; malformed non-empty overrides fail validation.
 
 ## Optional / Advanced
 
@@ -296,9 +298,9 @@ The shared `getBaseUrl()` helper resolves the application origin in this order:
 1. Explicit `APP_URL`.
 2. `https://${VERCEL_BRANCH_URL}` when `VERCEL_ENV=preview`.
 3. `https://${VERCEL_URL}`.
-4. `http://localhost:3000`.
+4. `http://localhost:${PORT}` (port 3000 by default).
 
-Better Auth uses `APP_URL` when set. On production Vercel deployments, its fallback is `appUrl` in `chat.config.ts`. Elsewhere, including previews, it uses `getBaseUrl()`. Register OAuth callbacks against the resulting auth origin. Do not carry a local or production `APP_URL` into a preview unless you intend to override its branch URL. This origin selection does not change `EVE_INTERNAL_ORIGIN`.
+Better Auth uses `APP_URL` when set. On production Vercel deployments, its fallback is `appUrl` in `chat.config.ts`. Elsewhere, including previews, it uses `getBaseUrl()`. Register OAuth callbacks against the resulting auth origin. Do not carry a local or production `APP_URL` into a preview unless you intend to override its branch URL. EVE uses its separate deployment-first origin precedence described above.
 
 ### Observability (Langfuse)
 
@@ -347,9 +349,9 @@ All variables in one place:
 | `VERCEL_SANDBOX_RUNTIME_PYTHON` | Feature | Optional Python sandbox runtime override |
 | `VERCEL_SANDBOX_RUNTIME_JAVASCRIPT` | Feature | Optional JavaScript sandbox runtime override |
 | `VERCEL_SANDBOX_RUNTIME` | Feature | Legacy Python sandbox runtime override |
-| `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |
-| `WORKFLOW_POSTGRES_URL` | Required | Postgres connection for durable workflows |
-| `EVE_INTERNAL_ORIGIN` | Required | Same-origin application or private worker origin |
+| `EVE_GATEWAY_SECRET` | EVE | Optional override; derived from `AUTH_SECRET` |
+| `WORKFLOW_POSTGRES_URL` | EVE | Optional direct/session database override |
+| `EVE_INTERNAL_ORIGIN` | EVE | Optional worker origin override |
 | `TRUSTED_CLIENT_IP_HEADER` | EVE | Optional self-hosted trusted proxy header |
 | `CRON_SECRET` | Optional | Secure cleanup cron endpoint |
 | `APP_URL` | Optional | Required on non-Vercel deployments |

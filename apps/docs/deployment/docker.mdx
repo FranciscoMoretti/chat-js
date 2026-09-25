@@ -17,9 +17,9 @@ An EVE-aware container deployment needs all of the following:
 
 - **Node.js 24+** for the application and EVE runtime
 - The complete EVE `.output` tree produced by `eve build`, including `.output/server`; copying only `.next/standalone` and `.next/static` omits EVE output
-- A same-origin EVE gateway URL in `EVE_INTERNAL_ORIGIN` (for example, `http://localhost:3790`), rather than a raw worker origin
-- `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN` at build and runtime
-- A primary ChatJS Postgres database and a World Postgres database for durable EVE workflows
+- An application origin in `APP_URL` (or an explicit `EVE_INTERNAL_ORIGIN` for a separate worker)
+- `AUTH_SECRET` and database credentials at build and runtime; EVE defaults are derived from these
+- A compatible direct/session Postgres connection with application and workflow schemas initialized; they may share one database
 
 Run `npm run setup` with your application and workflow database connections before the application starts. It supports PostgreSQL service hostnames as well as loopback URLs. Provider schema setup alone does not establish hosted deletion coverage. See [database setup](../reference/database#eve-workflow-database).
 

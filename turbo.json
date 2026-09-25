@@ -5,6 +5,7 @@
   },
   "globalEnv": [
     "DATABASE_URL",
+    "DATABASE_MIGRATION_URL",
     "EVE_INTERNAL_ORIGIN",
     "EVE_GATEWAY_SECRET",
     "WORKFLOW_POSTGRES_URL",

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
+import { isWorkflowTransactionPooler } from "./eve/environment";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
@@ -10,6 +11,9 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
 
 const httpUrl = z.url().refine(
   (value) => {
+    if (!URL.canParse(value)) {
+      return false;
+    }
     const { protocol } = new URL(value);
     return protocol === "http:" || protocol === "https:";
   },
@@ -17,6 +21,9 @@ const httpUrl = z.url().refine(
 );
 const postgresUrl = z.url().refine(
   (value) => {
+    if (!URL.canParse(value)) {
+      return false;
+    }
     const { protocol } = new URL(value);
     return protocol === "postgres:" || protocol === "postgresql:";
   },
@@ -27,13 +34,49 @@ export const eveRuntimeEnvOptions = {
   EVE_GATEWAY_SECRET: z
     .string()
     .min(32)
-    .describe("Private EVE gateway secret (at least 32 characters)"),
-  EVE_INTERNAL_ORIGIN: httpUrl.describe(
-    "Same-origin EVE route or private worker origin"
-  ),
-  WORKFLOW_POSTGRES_URL: postgresUrl.describe(
-    "Postgres connection string for durable EVE workflows"
-  ),
+    .describe(
+      "Optional EVE credential override; otherwise derived from AUTH_SECRET"
+    ),
+  EVE_INTERNAL_ORIGIN: httpUrl
+    .refine(
+      (value) => {
+        if (!URL.canParse(value)) {
+          return false;
+        }
+        const url = new URL(value);
+        return (
+          url.pathname === "/" &&
+          !url.search &&
+          !url.hash &&
+          !url.username &&
+          !url.password
+        );
+      },
+      {
+        message:
+          "EVE_INTERNAL_ORIGIN must be an origin without a path, query, or credentials",
+      }
+    )
+    .describe(
+      "Optional worker origin override; defaults to the current deployment or local app"
+    ),
+  WORKFLOW_POSTGRES_URL: postgresUrl
+    .refine(
+      (value) => {
+        try {
+          return !isWorkflowTransactionPooler(value);
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "EVE needs a direct or session PostgreSQL connection; set DATABASE_MIGRATION_URL or WORKFLOW_POSTGRES_URL instead of a transaction pooler",
+      }
+    )
+    .describe(
+      "Optional workflow database override; defaults to DATABASE_MIGRATION_URL, then DATABASE_URL"
+    ),
 };
 
 export const clientEnvSchema = {

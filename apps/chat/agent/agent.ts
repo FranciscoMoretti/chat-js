@@ -1,8 +1,11 @@
 import { defineAgent, defineDynamic } from "eve";
 import { defineState } from "eve/context";
 
+import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { resolveEveModel } from "../lib/eve/model-selection";
 import { workflowWorld } from "../lib/eve/world-config";
+
+configureWorkflowEnvironment(process.env);
 
 const selectedModel = defineState<{ modelId?: string }>(
   "chatjs.turn-model",
