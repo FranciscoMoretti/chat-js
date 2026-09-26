@@ -13,6 +13,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/ai/eval-agent.ts",
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
+  "lib/db/eve-search.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",

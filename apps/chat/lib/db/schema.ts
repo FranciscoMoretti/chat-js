@@ -319,6 +319,10 @@ export const eveChat = pgTable(
   },
   (table) => [
     unique("EveChat_id_owner").on(table.id, table.ownerId),
+    index("EveChat_search_title").using(
+      "gin",
+      sql`to_tsvector('simple', ${table.title})`
+    ),
     index("EveChat_owner_activity").on(
       table.ownerId,
       table.isPinned,
@@ -922,5 +926,28 @@ export const eveImportedDocumentCheckpointEntry = pgTable(
       ],
       name: "EveImportedDocumentCheckpointEntry_revision_owner_fk",
     }),
+  ]
+);
+
+/** Rebuildable display-text projection; EVE remains the transcript source of truth. */
+export const eveSearchText = pgTable(
+  "EveSearchText",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    key: text("key").notNull(),
+    ownerId: text("ownerId").notNull(),
+    text: text("text").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.key] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }).onDelete("cascade"),
+    index("EveSearchText_owner").on(table.ownerId),
+    index("EveSearchText_content").using(
+      "gin",
+      sql`to_tsvector('simple', ${table.text})`
+    ),
   ]
 );

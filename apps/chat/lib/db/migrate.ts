@@ -89,6 +89,20 @@ const runMigrate = async () => {
     }
 
     await migrate(db, { migrationsFolder });
+    // Existing chat rows can be large: build outside Drizzle's transaction so
+    // regular chat writes remain available during rollout.
+    const [titleIndex] = await connection<{ valid: boolean }[]>`
+      select indisvalid as valid from pg_index
+      where indexrelid = to_regclass('public."EveChat_search_title"')
+    `;
+    if (titleIndex && !titleIndex.valid) {
+      // An interrupted concurrent build leaves an invalid index; retry it.
+      await connection.unsafe('DROP INDEX CONCURRENTLY "EveChat_search_title"');
+    }
+    await connection.unsafe(
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "EveChat_search_title"
+       ON "EveChat" USING gin (to_tsvector('simple', "title"))`
+    );
   } finally {
     await connection.end();
   }
