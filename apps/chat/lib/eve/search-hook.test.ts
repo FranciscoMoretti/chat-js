@@ -12,8 +12,8 @@ vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
 vi.mock("eve/context", () => ({
   defineState: () => ({
     get: () => mocks.state,
-    update: (update: () => EveSearchText[]) => {
-      mocks.state = update();
+    update: (update: (current: EveSearchText[]) => EveSearchText[]) => {
+      mocks.state = update(mocks.state);
     },
   }),
 }));
@@ -124,4 +124,48 @@ it("retains newly received text when scope resolution fails and retries it", asy
     { key: "event:received", text: "new text" },
   ]);
   expect(mocks.state).toEqual([]);
+});
+
+it("bounds failed retries by entry count and records how omitted events can be recovered", async () => {
+  mocks.index.mockRejectedValue(new Error("offline"));
+  for (let index = 0; index < 300; index += 1) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
+    await dispatch({
+      data: { message: "retry text", sequence: index, turnId: "turn_1" },
+      meta: { ...restored.meta, id: String(index) },
+      type: "message.received",
+    });
+  }
+  expect(mocks.state).toHaveLength(256);
+  expect(console.error).toHaveBeenCalledWith(
+    expect.stringContaining("run search:backfill"),
+    { omitted: 1, sessionId: "session" }
+  );
+  mocks.index.mockResolvedValue(undefined);
+  await dispatch(started);
+  expect(mocks.state).toEqual([]);
+});
+
+it("bounds pending text size and deduplicates replayed history", async () => {
+  const oversized: HookEvent = {
+    ...restored,
+    data: {
+      messages: [
+        {
+          id: "seed_message_0",
+          parts: [{ text: "x".repeat(256_001), type: "text" }],
+          role: "user",
+        },
+      ],
+    },
+  };
+  await dispatch(oversized);
+  expect(mocks.state).toEqual([]);
+  expect(console.error).toHaveBeenCalledWith(
+    expect.stringContaining("run search:backfill"),
+    { omitted: 1, sessionId: "session" }
+  );
+  await dispatch(restored);
+  await dispatch(restored);
+  expect(mocks.state).toHaveLength(1);
 });

@@ -1,5 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 
+export const MAX_SEARCH_QUERY_LENGTH = 255;
+
 export interface EveSearchText {
   key: string;
   text: string;

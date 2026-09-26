@@ -6,7 +6,7 @@ Search uses PostgreSQL full-text indexes over titles and visible user/assistant 
 
 `EveSearchText` is a rebuildable projection, not a transcript store. EVE remains the source of truth. Event hooks index received user text and completed assistant text; inherited history is buffered until its branch is bound. Saved copies index their seed in the binding transaction. Reasoning, tool payloads, attachments, and background-task inputs are excluded. Long text is divided into overlapping bounded chunks, so all query terms must match within one chunk or the title.
 
-Search requires the authenticated owner on both the chat and branch. Deleting branches are immediately excluded; completed conversation deletion erases the projection. Writers lock and recheck the binding, preventing a concurrent backfill from restoring deleted text. Replaying events is idempotent. Search-hook failures are logged without rejecting chat turns; pending text is retained for the next eligible event and can also be recovered by backfill.
+Search requires the authenticated owner on both the chat and branch. Deleting branches are immediately excluded; completed conversation deletion erases the projection. Writers lock and recheck the binding, preventing a concurrent backfill from restoring deleted text. Replaying events is idempotent. Search-hook failures are logged without rejecting chat turns; pending text is retained for the next eligible event, capped at 256 entries and 256,000 characters per session. Duplicate event keys are ignored. Overflow logs identify the session and omitted count with the `search:backfill` recovery command; omitted text remains in durable EVE events and is recovered by that backfill.
 
 ## Deploy and backfill
 
@@ -14,8 +14,16 @@ Search requires the authenticated owner on both the chat and branch. Deleting br
 2. Deploy both the app and EVE runtime so new events are indexed.
 3. For local development, run `bun search:backfill` from the repository root; it loads the worktree environment. For a deployed environment, export its database and EVE configuration and run `bun run --cwd apps/chat search:backfill` directly, without the local worktree wrapper. The command reads snapshots sequentially, reports counts without transcript text, and exits unsuccessfully if any snapshot fails. Rerun it to retry; existing rows are not duplicated.
 
-Existing titles remain searchable before backfill completes. Old message content becomes searchable as each branch is indexed. The same backfill command repairs missed event deliveries. EVE sessions pinned to an older runtime generation may require a subsequent backfill until they use the new hook generation.
+Existing titles remain searchable before backfill completes. Old message content becomes searchable as each branch is indexed. The same backfill command repairs missed event deliveries and refreshes existing chunks when their overlap changes; unchanged chunks remain untouched. EVE sessions pinned to an older runtime generation may require a subsequent backfill until they use the new hook generation.
 
 ## Verification
 
 The database tests apply the real migrations in embedded PostgreSQL and check content matching, title ranking, owner isolation, replay idempotency, and deletion. Playwright covers one request per typing burst, skeletons during a delayed response, suppressed cancellation errors, keyboard branch navigation, and a gallery of search states.
+
+## Databases from the unreleased search preview
+
+The initial PR commit `a84b363c` used `0002_opposite_firelord`. It was never part of main: main already owns migration slots 2 and 3 for attachments, and the final search migration is slot 4. Normal main-to-PR upgrades retain all existing migration identities.
+
+A development database that applied that initial preview needs a one-time repair. Do **not** provision an empty database or discard transcripts just to resolve this preview-history mismatch. Stop its app/EVE writers and back up the database. Run `apps/chat/scripts/repair-search-preview.sql` with `psql -v ON_ERROR_STOP=1` against that development database using its migration connection. The script locks and validates the exact three timestamp/hash pairs from the initial preview, rejects every other history, and transactionally removes only the rebuildable `EveSearchText` projection and its unpublished migration record. It leaves chats, EVE session identities, attachments, and transcripts intact.
+
+Then run `bun db:migrate`, deploy the current app/EVE runtime, and run `bun search:backfill` to reconstruct the index. This is an explicit development-preview recovery step, not an automatic rewrite of production migration history.

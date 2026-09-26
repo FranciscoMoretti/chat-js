@@ -1,4 +1,5 @@
 /* oxlint-disable eslint/no-await-in-loop -- Ordered migrations and fixtures exercise the real schema. */
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
@@ -173,6 +174,25 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
   ).toBe(25);
 });
 
+it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
+  const phrase = `start ${"word ".repeat(48)}endingz`;
+  expect(phrase.length + 2).toBe(255);
+  const text = "pad ".repeat(1999) + phrase;
+  // Simulate the shorter chunks written by the initial preview, then backfill.
+  await indexEveSearchText("alice", branch, [
+    { key: "boundary", text: text.slice(0, 8200) },
+  ]);
+  const before = await searchEveConversations("alice", {
+    search: `"${phrase}"`,
+  });
+  expect(before.items).toEqual([]);
+  await indexEveSearchText("alice", branch, [{ key: "boundary", text }]);
+  const result = await searchEveConversations("alice", {
+    search: `"${phrase}"`,
+  });
+  expect(result.items.map((item) => item.id)).toEqual([chat]);
+});
+
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where id = $1`,
@@ -187,4 +207,69 @@ it("hides deleting chats and permanently erases text without allowing a late bac
     [branch]
   );
   expect(count.rows[0].count).toBe(0);
+});
+
+it("repairs only the known unpublished preview history and preserves conversation data", async () => {
+  const preview = new PGlite();
+  try {
+    await preview.exec(`
+      create schema drizzle;
+      create table drizzle.__drizzle_migrations (hash text not null, created_at bigint not null);
+      create table "EveSearchText" (text text);
+      create table "EveChat" (title text);
+      insert into "EveChat" values ('Retained conversation');
+    `);
+    for (const [file, at] of [
+      ["0000_eve_baseline.sql", 1_789_411_557_764],
+      ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
+    ] as const) {
+      const hash = createHash("sha256")
+        .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
+        .digest("hex");
+      await preview.query(
+        "insert into drizzle.__drizzle_migrations values ($1, $2)",
+        [hash, at]
+      );
+    }
+    const repair = await readFile(
+      new URL("../../scripts/repair-search-preview.sql", import.meta.url),
+      "utf-8"
+    );
+    await preview.query(
+      "insert into drizzle.__drizzle_migrations values ($1, $2)",
+      ["unrecognized", 1_790_327_870_855]
+    );
+    await expect(preview.exec(repair)).rejects.toThrow("Not the known");
+    await preview.exec("rollback");
+    const rejectedHistory = await preview.query(
+      "select * from drizzle.__drizzle_migrations"
+    );
+    expect(rejectedHistory.rows).toHaveLength(3);
+    const retainedTable = await preview.query(
+      "select to_regclass('public.\"EveSearchText\"') as table_name"
+    );
+    expect(retainedTable.rows[0]).toMatchObject({
+      table_name: '"EveSearchText"',
+    });
+    await preview.query(
+      "update drizzle.__drizzle_migrations set hash = $1 where created_at = $2",
+      [
+        "7e6be9466a37bdfe7d71ed3ccfbae93c26e50b31f80314b49a2ad298c6f6ab60",
+        1_790_327_870_855,
+      ]
+    );
+    await preview.exec(repair);
+    const repairedHistory = await preview.query(
+      "select * from drizzle.__drizzle_migrations"
+    );
+    expect(repairedHistory.rows).toHaveLength(2);
+    const retainedChats = await preview.query('select * from "EveChat"');
+    expect(retainedChats.rows).toEqual([{ title: "Retained conversation" }]);
+    const removedTable = await preview.query(
+      "select to_regclass('public.\"EveSearchText\"') as table_name"
+    );
+    expect(removedTable.rows[0]).toMatchObject({ table_name: null });
+  } finally {
+    await preview.close();
+  }
 });

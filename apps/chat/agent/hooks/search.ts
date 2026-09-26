@@ -6,6 +6,9 @@ import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
 import { eveEventSearchText } from "../../lib/eve/search-text";
 import type { EveSearchText } from "../../lib/eve/search-text";
 
+const maxPendingEntries = 256;
+const maxPendingCharacters = 256_000;
+
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
 export default defineHook({
@@ -15,19 +18,49 @@ export default defineHook({
         return;
       }
       const entries = eveEventSearchText(event);
-      // History can arrive before the native creation receipt can bind the session.
-      // Saved copies are indexed atomically by their dispatch transaction.
-      if (
-        event.type === "history.restored" ||
-        event.type === "history.seeded"
-      ) {
-        pending.update(() => [...pending.get(), ...entries]);
+      const restoring =
+        event.type === "history.restored" || event.type === "history.seeded";
+      if (!restoring && event.type !== "turn.started" && !entries.length) {
         return;
       }
-      if (event.type !== "turn.started" && !entries.length) {
+      let omitted = 0;
+      pending.update((current) => {
+        const retained: EveSearchText[] = [];
+        const keys = new Set<string>();
+        let characters = 0;
+        for (const batch of [current, entries]) {
+          for (const entry of batch) {
+            if (keys.has(entry.key)) {
+              continue;
+            }
+            if (
+              retained.length >= maxPendingEntries ||
+              characters + entry.text.length > maxPendingCharacters
+            ) {
+              omitted += 1;
+              continue;
+            }
+            keys.add(entry.key);
+            retained.push(entry);
+            characters += entry.text.length;
+          }
+        }
+        return retained;
+      });
+      if (omitted) {
+        // Events remain durable in EVE; operators can rebuild omitted entries.
+        console.error(
+          "Search retry buffer overflow; run search:backfill to recover omitted text.",
+          {
+            omitted,
+            sessionId: context.session.id,
+          }
+        );
+      }
+      // History can arrive before the native creation receipt binds the session.
+      if (restoring) {
         return;
       }
-      pending.update(() => [...pending.get(), ...entries]);
       if (!pending.get().length) {
         return;
       }

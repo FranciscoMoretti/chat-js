@@ -18,6 +18,7 @@ import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
+import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { voteEveMessage } from "@/lib/eve/vote-message";
 import {
   createTRPCRouter,
@@ -165,7 +166,7 @@ export const eveRouter = createTRPCRouter({
           })
           .nullish(),
         ownerScope: z.string().min(1).max(128),
-        search: z.string().trim().min(1).max(255),
+        search: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH),
       })
     )
     .query(async ({ ctx, input }) => {

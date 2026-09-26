@@ -1,5 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 
+import { MAX_SEARCH_QUERY_LENGTH } from "../eve/search-text";
 import type { EveSearchText } from "../eve/search-text";
 import { db } from "./client";
 import { eveConversation, eveSearchText } from "./schema";
@@ -33,7 +34,7 @@ export const writeEveSearchText = async (
     for (let offset = 0; offset < entry.text.length; offset += 8000) {
       result.push({
         key: `${entry.key}:${offset}`,
-        text: entry.text.slice(offset, offset + 8200),
+        text: entry.text.slice(offset, offset + 8000 + MAX_SEARCH_QUERY_LENGTH),
       });
     }
     return result;
@@ -47,7 +48,11 @@ export const writeEveSearchText = async (
           .slice(index, index + 100)
           .map((entry) => ({ ...entry, conversationId, ownerId }))
       )
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: [eveSearchText.conversationId, eveSearchText.key],
+        set: { text: sql`excluded.text` },
+        setWhere: sql`${eveSearchText.text} is distinct from excluded.text`,
+      });
   }
 };
 
