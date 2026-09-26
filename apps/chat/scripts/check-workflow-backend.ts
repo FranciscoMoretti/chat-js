@@ -6,9 +6,6 @@ import { resolveWorkflowWorld } from "../lib/eve/world-config";
 
 const check = async () => {
   const world = resolveWorkflowWorld();
-  if (world !== "vercel") {
-    return;
-  }
   const settings = databaseConnection(
     {
       DATABASE_MIGRATION_URL: process.env.DATABASE_MIGRATION_URL,

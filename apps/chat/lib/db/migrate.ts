@@ -103,6 +103,19 @@ const runMigrate = async () => {
       `CREATE INDEX CONCURRENTLY IF NOT EXISTS "EveChat_search_title"
        ON "EveChat" USING gin (to_tsvector('simple', "title"))`
     );
+    const [usageIndex] = await connection<{ valid: boolean }[]>`
+      select indisvalid as valid from pg_index
+      where indexrelid = to_regclass('public."EveUsage_unpriced_owner"')
+    `;
+    if (usageIndex && !usageIndex.valid) {
+      await connection.unsafe(
+        'DROP INDEX CONCURRENTLY "EveUsage_unpriced_owner"'
+      );
+    }
+    await connection.unsafe(
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "EveUsage_unpriced_owner"
+       ON "EveUsage" USING btree ("ownerId") WHERE "costUsd" IS NULL`
+    );
   } finally {
     await connection.end();
   }

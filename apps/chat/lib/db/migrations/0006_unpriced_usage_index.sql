@@ -1,1 +1,2 @@
-CREATE INDEX "EveUsage_unpriced_owner" ON "EveUsage" USING btree ("ownerId") WHERE "EveUsage"."costUsd" is null;
+-- Built concurrently outside the migration transaction in lib/db/migrate.ts.
+SELECT 1;
