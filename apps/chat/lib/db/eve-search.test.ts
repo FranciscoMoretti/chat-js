@@ -196,6 +196,22 @@ it("shows an assistant-only Hello match even when the title also matches", async
   );
 });
 
+it.each([
+  ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],
+  ["istan", "İstanbul", "⟦İstan⟧bul"],
+])(
+  "uses positive operands and database case mapping for %s",
+  async (search, text, excerpt) => {
+    await indexEveSearchText("alice", branch, [
+      { key: `highlight:${search}`, text },
+    ]);
+    const result = await searchEveConversations("alice", { search });
+    expect(result.items.find((item) => item.id === chat)?.excerpt).toContain(
+      excerpt
+    );
+  }
+);
+
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
     insert into "user" (id, name, email) values ('pager', 'Pager', 'pager@example.test');
