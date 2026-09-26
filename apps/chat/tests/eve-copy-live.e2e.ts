@@ -12,6 +12,7 @@ import {
   eveFileReference,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import {
   conversationBinding,
   createConversationInput,
@@ -46,11 +47,7 @@ test("saves without generation, recovers after source revocation and reload, and
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, source.id));
-  const native = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": sourceRow.ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const native = new Client(getEveConnectionOptions(sourceRow.ownerId));
   await expect
     .poll(
       async () => {
@@ -341,11 +338,7 @@ for (const attachment of [
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, source.id));
-    const native = new Client({
-      auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-      headers: { "x-chatjs-owner": row.ownerId },
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
-    });
+    const native = new Client(getEveConnectionOptions(row.ownerId));
     await expect
       .poll(
         async () => {

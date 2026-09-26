@@ -10,6 +10,7 @@ import {
   eveStoredFile,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { evePlatformResult } from "../lib/eve/platform-result";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -62,11 +63,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": conversation.ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(conversation.ownerId));
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });

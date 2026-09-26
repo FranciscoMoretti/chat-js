@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -88,11 +89,7 @@ test("the single-model picker dispatches and retains the selected native model",
       page.getByRole("log").locator(".is-assistant").last()
     ).toContainText(marker, { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-    const client = new Client({
-      auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-      headers: { "x-chatjs-owner": user.id },
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
-    });
+    const client = new Client(getEveConnectionOptions(user.id));
     const snapshot = await client.sessions
       .attach(conversation.sessionId)
       .snapshot();

@@ -6,7 +6,7 @@ Anonymous users get a text-only EVE session inside the shared ChatJS sidebar, he
 
 Disposable anonymous chats run alongside registered chats in the normal application. Existing authentication, application database, and registered Workflow Postgres configuration remain required. A guest-only CLI scaffold without those dependencies is deferred to [issue #455](https://github.com/FranciscoMoretti/chat-js/issues/455).
 
-The guest agent is mounted at `/eve/guest/v1/*`; the registered agent uses `/eve/chat/v1/*`, with `/eve/v1/*` retained as its internal route alias. On Vercel the alias proxies to the deployment's named route so platform routing selects the chat service. Guest execution uses managed Workflow on Vercel and EVE's local World locally.
+The guest agent is mounted at `/eve/guest/v1/*`; the registered agent uses `/eve/chat/v1/*`. These are the supported application-facing mounts on local and hosted deployments. `/eve/v1/*` is only the worker-side protocol path behind EVE's generated routing; the application does not expose an alias for it. Guest execution uses managed Workflow on Vercel and EVE's local World locally.
 
 Set `APP_URL` to this application's public origin on non-Vercel hosts; guest bootstrap fails closed when it is missing. On Vercel, bootstrap uses the configured deployment hostname. The server-only bootstrap credential uses `EVE_GATEWAY_SECRET`.
 

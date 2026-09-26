@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { eveConversation, user } from "../lib/db/schema";
-import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -66,11 +66,9 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     if (!owner) {
       throw new Error("Missing fixture owner.");
     }
-    const native = new Client({
-      auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-      headers: { "x-chatjs-owner": owner.id },
-      host: env.EVE_INTERNAL_ORIGIN ?? "",
-    }).sessions.attach(binding.sessionId);
+    const native = new Client(
+      getEveConnectionOptions(owner.id)
+    ).sessions.attach(binding.sessionId);
     // Tool input can contain the same marker before an answer exists.
     await expect
       .poll(

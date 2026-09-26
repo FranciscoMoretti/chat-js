@@ -12,6 +12,7 @@ import {
   eveUsage,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import {
   conversationBinding,
   createConversationInput,
@@ -120,11 +121,7 @@ test("copied document history survives source deletion and supports native editi
     .from(eveDocumentHead)
     .where(eq(eveDocumentHead.conversationId, destination.id));
   expect(head.documentId).not.toBe(original.documentId);
-  const native = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": head.ownerId },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const native = new Client(getEveConnectionOptions(head.ownerId));
   const copiedSession = native.sessions.attach(destination.sessionId);
   let idle = await copiedSession.snapshot();
   await expect

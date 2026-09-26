@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -114,11 +115,7 @@ test("a lost native creation reply recovers the same session from the retained c
   const bound = await getEveCreation(session.user.id, operation.operationId);
   expect(bound?.sessionId).toBe(nativeSessionId);
   expect(bound?.state).toBe("bound");
-  const client = new Client({
-    auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
-    headers: { "x-chatjs-owner": session.user.id },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(session.user.id));
   const snapshot = await client.sessions
     .attach(nativeSessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
