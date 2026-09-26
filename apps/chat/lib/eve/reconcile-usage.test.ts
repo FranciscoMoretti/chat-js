@@ -16,7 +16,9 @@ vi.mock("../db/eve-billing", () => ({
   advanceEveUsageCursor: vi.fn(),
   getEveUsageCursor: () => Promise.resolve(0),
 }));
-vi.mock("../env", () => ({ env: {} }));
+vi.mock("../env", () => ({
+  env: { EVE_INTERNAL_ORIGIN: "http://worker.local" },
+}));
 vi.mock("../db/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: mocks.positions,
 }));

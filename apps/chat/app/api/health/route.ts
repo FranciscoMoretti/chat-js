@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { checkDatabase } from "@/lib/db/health";
 import { env } from "@/lib/env";
-import { getEveChatUrl } from "@/lib/eve/connection-options";
 
 const eveHealth = z.object({
   ok: z.literal(true),
@@ -20,7 +19,7 @@ export const GET = async () => {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        fetch(getEveChatUrl("/eve/v1/health"), {
+        fetch(new URL("/eve/chat/v1/health", env.EVE_INTERNAL_ORIGIN), {
           cache: "no-store",
           redirect: "error",
           signal: AbortSignal.timeout(4000),

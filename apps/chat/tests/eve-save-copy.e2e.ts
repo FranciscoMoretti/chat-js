@@ -115,7 +115,7 @@ beforeEach(() => {
   });
   mocks.request.mockImplementation(
     async (owner: string, path: string, init?: RequestInit) => {
-      if (path.startsWith("/eve/v1/operation/")) {
+      if (path.startsWith("/eve/chat/v1/operation/")) {
         const url = new URL(path, "http://fixture.invalid");
         if (url.searchParams.get("kind") !== "seed") {
           throw new Error("Wrong native operation namespace");
@@ -316,7 +316,7 @@ test("a lost native reply recovers without reopening or reading a revoked source
   }
   mocks.request.mockImplementation(async (...args) => {
     const response = await original(...args);
-    if (args[1] === "/eve/v1/session") {
+    if (args[1] === "/eve/chat/v1/session") {
       throw new Error("Lost native reply");
     }
     return response;
@@ -343,7 +343,9 @@ test("a lost native reply recovers without reopening or reading a revoked source
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(
-    mocks.request.mock.calls.filter((call) => call[1] === "/eve/v1/session")
+    mocks.request.mock.calls.filter(
+      (call) => call[1] === "/eve/chat/v1/session"
+    )
   ).toHaveLength(1);
 });
 
@@ -427,7 +429,9 @@ test("concurrent requests converge on the persisted allocation and one native co
   expect(mocks.native.size).toBe(1);
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(
-    mocks.request.mock.calls.filter((call) => call[1] === "/eve/v1/session")
+    mocks.request.mock.calls.filter(
+      (call) => call[1] === "/eve/chat/v1/session"
+    )
   ).toHaveLength(1);
 });
 

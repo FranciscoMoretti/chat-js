@@ -27,7 +27,7 @@ it("waits through source initialization and verifies exact checkpoint identity",
   expect(request).toHaveBeenCalledTimes(2);
   expect(request.mock.calls[0].slice(0, 2)).toEqual([
     "owner",
-    "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0",
+    "/eve/chat/v1/session/source/checkpoint?beforeTurnId=turn_0",
   ]);
 });
 it("does not accept an unrelated source receipt or a generic not found", async () => {
@@ -60,7 +60,7 @@ it("times out without allocating or changing the requested checkpoint", async ()
   expect(
     request.mock.calls.every(
       (call) =>
-        call[1] === "/eve/v1/session/source/checkpoint?beforeTurnId=turn_0"
+        call[1] === "/eve/chat/v1/session/source/checkpoint?beforeTurnId=turn_0"
     )
   ).toBe(true);
 });
@@ -77,7 +77,7 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
   await waitForEveCheckpoint("owner", "source", "turn_1", checkpointId);
   expect(request.mock.calls[0].slice(0, 2)).toEqual([
     "owner",
-    `/eve/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
+    `/eve/chat/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
   ]);
   for (const invalid of [
     { ...receipt, checkpointId: crypto.randomUUID() },

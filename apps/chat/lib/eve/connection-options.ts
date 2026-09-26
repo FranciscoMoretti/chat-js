@@ -3,7 +3,7 @@ import { env } from "../env";
 /** Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients. */
 export const getEveConnectionOptions = (
   ownerId: string,
-  host = env.EVE_INTERNAL_ORIGIN ?? ""
+  host = new URL("/eve/chat", env.EVE_INTERNAL_ORIGIN).href
 ) => {
   const headers: Record<string, string> = { "x-chatjs-owner": ownerId };
   // A separate worker must never receive this Vercel project's credential.
@@ -18,11 +18,7 @@ export const getEveConnectionOptions = (
   return {
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers,
-    host: host ? new URL("/eve/chat", host).href : "/eve/chat",
+    host,
     redirect: "error" as const,
   };
 };
-
-/** Map EVE protocol paths to the named worker without a cross-origin rewrite. */
-export const getEveChatUrl = (path: string, origin = env.EVE_INTERNAL_ORIGIN) =>
-  new URL(path.replace(/^\/eve\/v1(?=\/|$)/u, "/eve/chat/v1"), origin);

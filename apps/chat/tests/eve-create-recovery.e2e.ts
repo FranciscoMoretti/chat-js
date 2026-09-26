@@ -40,7 +40,7 @@ test("a lost native creation reply recovers the same session from the retained c
           [0, 1].map(() =>
             eveRequest(
               session.user.id,
-              "/eve/v1/session",
+              "/eve/chat/v1/session",
               {
                 body: JSON.stringify({
                   operationId: id,
@@ -78,13 +78,13 @@ test("a lost native creation reply recovers the same session from the retained c
   expect(reservation?.state).toBe("uncertain");
   const lookup = await eveRequest(
     session.user.id,
-    `/eve/v1/operation/${reservation?.id}`
+    `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(lookup.status).toBe(200);
   expect(await lookup.json()).toEqual({ sessionId: nativeSessionId });
   const otherOwner = await eveRequest(
     crypto.randomUUID(),
-    `/eve/v1/operation/${reservation?.id}`
+    `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(otherOwner.status).toBe(404);
   expect(await otherOwner.json()).toMatchObject({

@@ -187,7 +187,7 @@ const handle = async (
     }
     const result = await eveRequest(
       principal.ownerId,
-      upstreamPath + (query.size ? `?${query}` : ""),
+      `/eve/chat/${path.join("/")}${query.size ? `?${query}` : ""}`,
       {
         body,
         method: request.method,
