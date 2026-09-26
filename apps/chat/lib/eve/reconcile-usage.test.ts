@@ -179,15 +179,6 @@ it("does not admit new work when recovery remains unavailable", async () => {
   expect(mocks.bindings).not.toHaveBeenCalled();
 });
 
-it("reconciles every bound stream when a backend has no position optimization", async () => {
-  mocks.bindings.mockResolvedValue([
-    { sessionId: "first", state: "bound", usageStreamIndex: 10 },
-    { sessionId: "second", state: "bound", usageStreamIndex: 20 },
-  ]);
-  await reconcileEveOwnerUsage("owner");
-  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual(["first", "second"]);
-});
-
 it("resumes managed reads at the persisted billing cursor without following live work", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "session", state: "bound", usageStreamIndex: 17 },

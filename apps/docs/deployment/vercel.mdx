@@ -135,17 +135,9 @@ Configure the credentials listed in [Environment Variables](../reference/env-var
 
 Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
 
-Backend selection uses the Vercel platform environment and is shared by EVE compilation, ChatJS runtime checks, and setup. Local development remains on PostgreSQL. Rebuild for the destination environment rather than moving a self-hosted build onto Vercel.
-
 Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Managed Workflow does not require PostgreSQL workflow provisioning.
 
-### Existing PostgreSQL workflow deployments
-
-Switching backends does not move existing sessions or their transcripts. Validate the new deployment against an isolated application database first. Existing PostgreSQL sessions need a separate drain or migration plan before production cutover. Do not reuse their application bindings as though the managed backend contained those runs.
-
-Billing retains application-owned cursors and reads unread event suffixes through EVE on Vercel. The local PostgreSQL stream-position optimization is not used. Managed reconciliation reads each bound session with at most four concurrent requests.
-
-Hosted conversation erasure remains unavailable in the installed EVE version. ChatJS rejects deletion before revoking access, except for unaccepted copies that never created a native session. A managed retention policy is not a substitute for verified deletion.
+Changing backends does not migrate existing sessions. Use an isolated application database for previews and plan session migration before production cutover. Hosted conversation erasure remains unavailable.
 
 ### Preview origins and OAuth
 
