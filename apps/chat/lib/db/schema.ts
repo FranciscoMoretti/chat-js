@@ -685,7 +685,12 @@ export const eveUsage = pgTable(
     sessionId: text("sessionId").notNull(),
     turnId: text("turnId").notNull(),
   },
-  (table) => [index("EveUsage_session_turn").on(table.sessionId, table.turnId)]
+  (table) => [
+    index("EveUsage_session_turn").on(table.sessionId, table.turnId),
+    index("EveUsage_unpriced_owner")
+      .on(table.ownerId)
+      .where(sql`${table.costUsd} is null`),
+  ]
 );
 
 export const eveDocumentRevision = pgTable(

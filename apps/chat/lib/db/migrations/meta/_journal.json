@@ -43,6 +43,13 @@
       "when": 1790414931030,
       "tag": "0005_managed_workflow_safeguards",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790415355244,
+      "tag": "0006_unpriced_usage_index",
+      "breakpoints": true
     }
   ]
 }

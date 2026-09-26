@@ -1,0 +1,1 @@
+CREATE INDEX "EveUsage_unpriced_owner" ON "EveUsage" USING btree ("ownerId") WHERE "EveUsage"."costUsd" is null;

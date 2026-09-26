@@ -1,6 +1,10 @@
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
+import { env } from "../env";
 import { db } from "./client";
+import { databaseConnection } from "./connection";
 import {
   eveConversation,
   eveGuest,
@@ -191,42 +195,54 @@ export const withManagedUsageReconciliation = async (
   ownerId: string,
   reconcile: (sweepDue: boolean) => Promise<void>
 ) => {
-  await db.transaction(async (tx) => {
-    const [lock] = await tx.execute<{ locked: boolean }>(sql`
+  // Recovery queries use the app pool. Holding its only connection here would
+  // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
+  const settings = databaseConnection(env);
+  const connection = postgres(settings.url, {
+    ...settings.options,
+    max: 1,
+    prepare: false,
+  });
+  try {
+    await drizzle(connection).transaction(async (tx) => {
+      const [lock] = await tx.execute<{ locked: boolean }>(sql`
       select pg_try_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0)) as locked
     `);
-    if (!lock?.locked) {
-      throw new Error(
-        "Usage reconciliation is already running. Retry shortly."
-      );
-    }
-    const [owner] = await tx
-      .select({
-        sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < now() - interval '1 minute'`,
-      })
-      .from(user)
-      .where(eq(user.id, ownerId));
-    if (!owner) {
-      throw new Error("Usage reconciliation requires a registered owner.");
-    }
-    await reconcile(owner.sweepDue);
-    // A recorded but unpriced hook must block admission even during the cooldown.
-    const [unpriced] = await tx
-      .select({ id: eveUsage.eventId })
-      .from(eveUsage)
-      .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
-      .limit(1);
-    if (unpriced) {
-      throw new Error(
-        "Completed usage needs provider cost reconciliation before starting more work."
-      );
-    }
-    if (owner.sweepDue) {
-      // now() is transaction start: a long sweep cannot buy another minute of stale evidence.
-      await tx
-        .update(user)
-        .set({ eveUsageReconciledAt: sql`now()` })
+      if (!lock?.locked) {
+        throw new Error(
+          "Usage reconciliation is already running. Retry shortly."
+        );
+      }
+      const [owner] = await tx
+        .select({
+          sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < now() - interval '1 minute'`,
+        })
+        .from(user)
         .where(eq(user.id, ownerId));
-    }
-  });
+      if (!owner) {
+        throw new Error("Usage reconciliation requires a registered owner.");
+      }
+      await reconcile(owner.sweepDue);
+      // A recorded but unpriced hook must block admission even during the cooldown.
+      const [unpriced] = await tx
+        .select({ id: eveUsage.eventId })
+        .from(eveUsage)
+        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
+        .limit(1);
+      if (unpriced) {
+        throw new Error(
+          "Completed usage needs provider cost reconciliation before starting more work."
+        );
+      }
+      if (owner.sweepDue) {
+        // now() is transaction start: a long sweep cannot buy another minute of stale evidence.
+        await tx
+          .update(user)
+          .set({ eveUsageReconciledAt: sql`now()` })
+          .where(eq(user.id, ownerId));
+      }
+    });
+  } finally {
+    await connection.end();
+  }
 };
