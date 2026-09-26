@@ -44,6 +44,7 @@ const EXCLUDED_SEGMENTS = new Set([
   ".devtools",
   ".eve",
   ".output",
+  ".vercel",
   "eve-results",
   "node_modules",
   ".next",

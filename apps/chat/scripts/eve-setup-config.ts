@@ -1,4 +1,7 @@
 export const resolveEveSetup = (world: string, databaseUrl?: string) => {
+  if (world === "vercel") {
+    return { local: false, managed: true };
+  }
   if (world !== "@workflow/world-postgres") {
     throw new Error(
       `ChatJS setup does not support world "${world}". Add and verify its setup and lifecycle support before using it.`
@@ -23,5 +26,6 @@ export const resolveEveSetup = (world: string, databaseUrl?: string) => {
   }
   return {
     local: ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname),
+    managed: false,
   };
 };

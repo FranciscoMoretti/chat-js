@@ -1,6 +1,10 @@
 import { env } from "../env";
+import { resolveWorkflowWorld } from "./world-config";
 
 export const localDeletionAvailable = () => {
+  if (resolveWorkflowWorld(env) === "vercel") {
+    return false;
+  }
   try {
     const local = new Set(["localhost", "127.0.0.1", "[::1]"]);
     const world = new URL(env.WORKFLOW_POSTGRES_URL ?? "");

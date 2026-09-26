@@ -3,12 +3,11 @@ import type { MessageStreamEvent } from "eve/client";
 
 import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
-import { getEvePostgresStreamPositions } from "../db/eve-stream-positions";
-import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { getEveConnectionOptions } from "./connection-options";
 import { recoverEveCreations } from "./recover-creations";
 import { assertEveConfigured } from "./server";
+import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
@@ -65,8 +64,7 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
     );
   }
   assertEveConfigured();
-  const positions = await getEvePostgresStreamPositions(
-    env.WORKFLOW_POSTGRES_URL ?? "",
+  const positions = await getEveStreamPositions(
     bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : []))
   );
   for (const row of bindings) {

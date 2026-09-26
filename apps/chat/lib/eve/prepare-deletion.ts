@@ -4,6 +4,7 @@ import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "./retire-session";
+import { resolveWorkflowWorld } from "./world-config";
 
 /** Authorize and retire the whole family before fencing work for external-resource inventory. */
 export const prepareEveFamilyDeletion = async (
@@ -15,8 +16,13 @@ export const prepareEveFamilyDeletion = async (
     return;
   }
   const databaseUrl = env.WORKFLOW_POSTGRES_URL;
-  if (!databaseUrl) {
-    throw new Error("EVE Postgres is not configured.");
+  if (
+    resolveWorkflowWorld(env) !== "@workflow/world-postgres" ||
+    !databaseUrl
+  ) {
+    throw new Error(
+      "This deletion operation requires the PostgreSQL workflow backend."
+    );
   }
   const nativeInventories: {
     sessionId: string;

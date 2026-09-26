@@ -5,7 +5,7 @@ import postgres from "postgres";
 
 import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
 import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
-import { workflowWorld } from "../lib/eve/world-config";
+import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { resolveEveSetup } from "./eve-setup-config";
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
@@ -19,7 +19,17 @@ const run = async () => {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
   const databaseUrl = process.env.WORKFLOW_POSTGRES_URL;
-  const { local } = resolveEveSetup(workflowWorld, databaseUrl);
+  const { managed, local } = resolveEveSetup(
+    resolveWorkflowWorld(),
+    databaseUrl
+  );
+  if (managed) {
+    console.log(
+      "Workflow backend: Vercel (managed). No PostgreSQL workflow setup required."
+    );
+    return;
+  }
+  console.log("Workflow backend: PostgreSQL (local/self-hosted).");
   if (!databaseUrl) {
     throw new Error("Set WORKFLOW_POSTGRES_URL.");
   }

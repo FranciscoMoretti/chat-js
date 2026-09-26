@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
+import { resolveWorkflowWorld } from "./eve/world-config";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
@@ -23,7 +24,9 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-export const eveRuntimeEnvOptions = {
+export const getEveRuntimeEnvOptions = (
+  environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
+) => ({
   EVE_GATEWAY_SECRET: z
     .string()
     .min(32)
@@ -31,10 +34,18 @@ export const eveRuntimeEnvOptions = {
   EVE_INTERNAL_ORIGIN: httpUrl.describe(
     "Application gateway origin serving the named EVE chat worker"
   ),
-  WORKFLOW_POSTGRES_URL: postgresUrl.describe(
-    "Postgres connection string for durable EVE workflows"
-  ),
-};
+  WORKFLOW_POSTGRES_URL:
+    resolveWorkflowWorld(environment) === "vercel"
+      ? z
+          .string()
+          .optional()
+          .describe("Unused on Vercel; local/self-hosted workflows only")
+      : postgresUrl.describe(
+          "Required for local/self-hosted EVE workflows; unused on Vercel"
+        ),
+});
+
+const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
 export const clientEnvSchema = {
   NEXT_PUBLIC_REACT_QUERY_DEVTOOLS: z.enum(["0", "1"]).optional(),
@@ -165,6 +176,7 @@ export const serverEnvSchema = {
     .describe(
       "Self-hosted reverse proxy header containing one verified client IP; the proxy must overwrite it"
     ),
+  VERCEL: z.string().optional(),
   VERCEL_APP_CLIENT_ID: z
     .string()
     .optional()

@@ -4,9 +4,11 @@ import { reconcileEveOwnerUsage } from "./reconcile-usage";
 
 const mocks = vi.hoisted(() => ({
   bindings: vi.fn(),
+  cursor: vi.fn(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
+  streamOptions: vi.fn(),
 }));
 vi.mock("./recover-creations", () => ({ recoverEveCreations: mocks.recover }));
 vi.mock("../db/eve-queries", () => ({
@@ -14,13 +16,13 @@ vi.mock("../db/eve-queries", () => ({
 }));
 vi.mock("../db/eve-billing", () => ({
   advanceEveUsageCursor: vi.fn(),
-  getEveUsageCursor: () => Promise.resolve(0),
+  getEveUsageCursor: mocks.cursor,
 }));
 vi.mock("../env", () => ({
   env: { EVE_INTERNAL_ORIGIN: "http://worker.local" },
 }));
-vi.mock("../db/eve-stream-positions", () => ({
-  getEvePostgresStreamPositions: mocks.positions,
+vi.mock("./stream-positions", () => ({
+  getEveStreamPositions: mocks.positions,
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
@@ -29,7 +31,8 @@ vi.mock("eve/client", () => ({
   Client: class {
     sessions = {
       attach: (sessionId: string) => ({
-        async *stream() {
+        async *stream(options: unknown) {
+          mocks.streamOptions(options);
           await mocks.read(sessionId);
           yield* [];
         },
@@ -40,6 +43,7 @@ vi.mock("eve/client", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.cursor.mockResolvedValue(0);
   mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
     Array.from({ length: 8 }, (_, index) => ({
@@ -173,4 +177,24 @@ it("does not admit new work when recovery remains unavailable", async () => {
     "worker unavailable"
   );
   expect(mocks.bindings).not.toHaveBeenCalled();
+});
+
+it("reconciles every bound stream when a backend has no position optimization", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "first", state: "bound", usageStreamIndex: 10 },
+    { sessionId: "second", state: "bound", usageStreamIndex: 20 },
+  ]);
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.read.mock.calls.map(([id]) => id)).toEqual(["first", "second"]);
+});
+
+it("resumes managed reads at the persisted billing cursor without following live work", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "session", state: "bound", usageStreamIndex: 17 },
+  ]);
+  mocks.cursor.mockResolvedValue(17);
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.streamOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ follow: false, startIndex: 17 })
+  );
 });
