@@ -1,7 +1,13 @@
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db } from "./client";
-import { eveConversation, eveGuest, eveUsage, userCredit } from "./schema";
+import {
+  eveConversation,
+  eveGuest,
+  eveUsage,
+  user,
+  userCredit,
+} from "./schema";
 
 const hasConflictingCost = (stored: string | null, incoming: string | null) =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
@@ -178,4 +184,49 @@ export const advanceEveUsageCursor = async (
   if (!row) {
     throw new Error("Conversation not found.");
   }
+};
+
+/** Serialize managed fallback sweeps across deployments, without locking credit debits. */
+export const withManagedUsageReconciliation = async (
+  ownerId: string,
+  reconcile: (sweepDue: boolean) => Promise<void>
+) => {
+  await db.transaction(async (tx) => {
+    const [lock] = await tx.execute<{ locked: boolean }>(sql`
+      select pg_try_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0)) as locked
+    `);
+    if (!lock?.locked) {
+      throw new Error(
+        "Usage reconciliation is already running. Retry shortly."
+      );
+    }
+    const [owner] = await tx
+      .select({
+        sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < now() - interval '1 minute'`,
+      })
+      .from(user)
+      .where(eq(user.id, ownerId));
+    if (!owner) {
+      throw new Error("Usage reconciliation requires a registered owner.");
+    }
+    await reconcile(owner.sweepDue);
+    // A recorded but unpriced hook must block admission even during the cooldown.
+    const [unpriced] = await tx
+      .select({ id: eveUsage.eventId })
+      .from(eveUsage)
+      .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
+      .limit(1);
+    if (unpriced) {
+      throw new Error(
+        "Completed usage needs provider cost reconciliation before starting more work."
+      );
+    }
+    if (owner.sweepDue) {
+      // now() is transaction start: a long sweep cannot buy another minute of stale evidence.
+      await tx
+        .update(user)
+        .set({ eveUsageReconciledAt: sql`now()` })
+        .where(eq(user.id, ownerId));
+    }
+  });
 };

@@ -36,6 +36,13 @@
       "when": 1790352034533,
       "tag": "0004_misty_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790414931030,
+      "tag": "0005_managed_workflow_safeguards",
+      "breakpoints": true
     }
   ]
 }

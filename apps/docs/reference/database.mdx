@@ -97,9 +97,9 @@ Outside Vercel, the command requires `WORKFLOW_POSTGRES_URL` explicitly, so prov
 
 Setup uses your configured connections and does not create databases or provision a hosting account. It is safe to rerun against an initialized database. If one stage fails, fix the reported problem and rerun it. Application and workflow changes are separate operations, not one transaction.
 
-The agent and setup commands share the world setting in `lib/eve/world-config.ts`, currently `@workflow/world-postgres`. Other worlds fail setup explicitly until their setup and ChatJS lifecycle support are implemented and verified. Changing the world requires rebuilding EVE and planning any data migration. The CLI does not offer a world chooser yet.
+The agent and setup commands share backend selection in `lib/eve/world-config.ts`: managed Workflow on Vercel, PostgreSQL locally/self-hosted. Managed setup skips PostgreSQL initialization. Changing the world requires rebuilding EVE and planning any data migration. The CLI does not offer a world chooser yet.
 
-In the monorepo, these setup commands also work from the repository root. Neither an application build nor a successful connectivity check initializes the workflow database. `eve:check` checks required tables, not every schema version, permission, or end-to-end lifecycle behavior.
+In the monorepo, these setup commands also work from the repository root. Neither an application build nor a successful connectivity check initializes the workflow database. `eve:check` checks required tables only for PostgreSQL; on Vercel it reports the managed backend without checking SQL tables. Neither check verifies end-to-end lifecycle behavior.
 
 ## Database Management
 

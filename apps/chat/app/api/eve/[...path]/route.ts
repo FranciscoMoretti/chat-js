@@ -51,7 +51,7 @@ const checkTurnAdmission = async (
       selectedTool: command.selectedTool,
     });
   }
-  await reconcileEveOwnerUsage(principal.ownerId);
+  await reconcileEveOwnerUsage(principal.ownerId, sessionId);
   if (!(await canSpend(principal.ownerId))) {
     return rejectEveCommand("Insufficient credits", 402);
   }

@@ -131,13 +131,15 @@ Sandboxes run with:
 
 ### Required
 
+Keep **Automatically expose System Environment Variables** enabled in Vercel’s project settings for Preview and Production. Backend selection requires the platform-provided `VERCEL` and `VERCEL_ENV` values.
+
 Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL`, `EVE_GATEWAY_SECRET`, and `EVE_INTERNAL_ORIGIN`. EVE settings must be available during the build and at runtime.
 
 Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
 
 Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Managed Workflow does not require PostgreSQL workflow provisioning.
 
-Changing backends does not migrate existing sessions. Use an isolated application database for previews and plan session migration before production cutover. Hosted conversation erasure remains unavailable.
+Changing backends does not migrate existing sessions. Application migrations register existing conversations as PostgreSQL-backed, and Vercel builds reject a mismatched database. Keep the old deployment/database intact; use an isolated fresh database for previews and complete a verified migration before production cutover. Hosted conversation erasure remains unavailable.
 
 ### Preview origins and OAuth
 

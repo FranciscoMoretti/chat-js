@@ -21,10 +21,21 @@ import {
 import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
+/** One application database belongs to one durable workflow world. */
+export const eveWorkflowBackend = pgTable(
+  "EveWorkflowBackend",
+  {
+    id: integer("id").primaryKey().default(1),
+    world: text("world").notNull(),
+  },
+  (table) => [check("EveWorkflowBackend_singleton", sql`${table.id} = 1`)]
+);
+
 export const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  eveUsageReconciledAt: timestamp("eve_usage_reconciled_at"),
   id: text("id").primaryKey(),
   image: text("image"),
   name: text("name").notNull(),

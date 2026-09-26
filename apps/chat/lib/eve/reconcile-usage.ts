@@ -1,14 +1,20 @@
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 
-import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
+import {
+  advanceEveUsageCursor,
+  getEveUsageCursor,
+  withManagedUsageReconciliation,
+} from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
+import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { getEveConnectionOptions } from "./connection-options";
 import { recoverEveCreations } from "./recover-creations";
 import { assertEveConfigured } from "./server";
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
+import { resolveWorkflowWorld } from "./world-config";
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
 export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
@@ -55,8 +61,7 @@ export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
   }
 };
 
-export const reconcileEveOwnerUsage = async (ownerId: string) => {
-  await recoverEveCreations(ownerId);
+const reconcileAllOwnerUsage = async (ownerId: string) => {
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
     throw new Error(
@@ -110,4 +115,24 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
   if (failure) {
     throw failure.cause;
   }
+};
+
+export const reconcileEveOwnerUsage = async (
+  ownerId: string,
+  sessionId?: string
+) => {
+  await recoverEveCreations(ownerId);
+  if (resolveWorkflowWorld(env) !== "vercel") {
+    return await reconcileAllOwnerUsage(ownerId);
+  }
+  // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
+  // settled history must not be streamed on every message or new conversation.
+  await withManagedUsageReconciliation(ownerId, async (sweepDue) => {
+    if (sweepDue) {
+      await reconcileAllOwnerUsage(ownerId);
+    } else if (sessionId) {
+      // The conversation receiving new work is never covered by the cooldown.
+      await reconcileEveUsage(ownerId, sessionId);
+    }
+  });
 };

@@ -5,6 +5,12 @@ import { reconcileEveOwnerUsage } from "./reconcile-usage";
 const mocks = vi.hoisted(() => ({
   bindings: vi.fn(),
   cursor: vi.fn(),
+  env: {
+    EVE_INTERNAL_ORIGIN: "http://worker.local",
+    VERCEL: "",
+    VERCEL_ENV: "preview",
+  },
+  managed: vi.fn(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
@@ -17,9 +23,10 @@ vi.mock("../db/eve-queries", () => ({
 vi.mock("../db/eve-billing", () => ({
   advanceEveUsageCursor: vi.fn(),
   getEveUsageCursor: mocks.cursor,
+  withManagedUsageReconciliation: mocks.managed,
 }));
 vi.mock("../env", () => ({
-  env: { EVE_INTERNAL_ORIGIN: "http://worker.local" },
+  env: mocks.env,
 }));
 vi.mock("./stream-positions", () => ({
   getEveStreamPositions: mocks.positions,
@@ -43,6 +50,7 @@ vi.mock("eve/client", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.env.VERCEL = "";
   mocks.cursor.mockResolvedValue(0);
   mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
@@ -187,5 +195,25 @@ it("resumes managed reads at the persisted billing cursor without following live
   await reconcileEveOwnerUsage("owner");
   expect(mocks.streamOptions).toHaveBeenCalledWith(
     expect.objectContaining({ follow: false, startIndex: 17 })
+  );
+});
+
+it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
+  mocks.env.VERCEL = "1";
+  mocks.managed.mockImplementationOnce((_owner, reconcile) => reconcile(false));
+  await reconcileEveOwnerUsage("owner", "target");
+  expect(mocks.read.mock.calls).toEqual([["target"]]);
+  expect(mocks.bindings).not.toHaveBeenCalled();
+  mocks.read.mockClear();
+  mocks.managed.mockImplementationOnce((_owner, reconcile) => reconcile(true));
+  await reconcileEveOwnerUsage("owner", "target");
+  expect(mocks.read).toHaveBeenCalledTimes(8);
+});
+
+it("does not bypass managed reconciliation failures", async () => {
+  mocks.env.VERCEL = "1";
+  mocks.managed.mockRejectedValue(new Error("Unpriced usage"));
+  await expect(reconcileEveOwnerUsage("owner", "target")).rejects.toThrow(
+    "Unpriced usage"
   );
 });
