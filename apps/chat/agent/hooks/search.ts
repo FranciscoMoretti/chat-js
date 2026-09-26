@@ -3,12 +3,14 @@ import { defineHook } from "eve/hooks";
 
 import { indexEveSearchText } from "../../lib/db/eve-search";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
+import { backfillEveSearchConversation } from "../../lib/eve/search-backfill";
 import { eveEventSearchText } from "../../lib/eve/search-text";
 import type { EveSearchText } from "../../lib/eve/search-text";
 
 const maxPendingEntries = 256;
 const maxPendingCharacters = 256_000;
 
+const needsRecovery = defineState("chatjs.search-recovery", () => false);
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
 export default defineHook({
@@ -48,9 +50,10 @@ export default defineHook({
         return retained;
       });
       if (omitted) {
-        // Events remain durable in EVE; operators can rebuild omitted entries.
+        needsRecovery.update(() => true);
+        // Recover from durable EVE events after binding; manual backfill is a fallback.
         console.error(
-          "Search retry buffer overflow; run search:backfill to recover omitted text.",
+          "Search retry buffer overflow; automatic snapshot recovery queued. Run search:backfill if retries keep failing.",
           {
             omitted,
             sessionId: context.session.id,
@@ -61,7 +64,7 @@ export default defineHook({
       if (restoring) {
         return;
       }
-      if (!pending.get().length) {
+      if (!pending.get().length && !needsRecovery.get()) {
         return;
       }
       try {
@@ -71,11 +74,22 @@ export default defineHook({
           AbortSignal.timeout(10_000),
           context.session.auth.initiator?.attributes.chatjsReservationId
         );
-        await indexEveSearchText(
-          scope.ownerId,
-          scope.conversationId,
-          pending.get()
-        );
+        if (needsRecovery.get()) {
+          // Hook events are already durable, so the snapshot includes the current
+          // message as well as any restored history omitted from the retry buffer.
+          await backfillEveSearchConversation(
+            scope.ownerId,
+            scope.conversationId,
+            context.session.id
+          );
+          needsRecovery.update(() => false);
+        } else {
+          await indexEveSearchText(
+            scope.ownerId,
+            scope.conversationId,
+            pending.get()
+          );
+        }
         pending.update(() => []);
       } catch (error) {
         // Projection failures must not turn a successful chat into turn.failed.

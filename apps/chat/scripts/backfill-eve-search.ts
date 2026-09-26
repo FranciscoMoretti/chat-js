@@ -1,12 +1,9 @@
 /* oxlint-disable eslint/no-await-in-loop -- Sequential snapshots bound worker load and make retries predictable. */
 import { asc, eq, gt, and } from "drizzle-orm";
-import { Client } from "eve/client";
 
 import { db } from "../lib/db/client";
-import { indexEveSearchText } from "../lib/db/eve-search";
 import { eveConversation } from "../lib/db/schema";
-import { getEveConnectionOptions } from "../lib/eve/connection-options";
-import { eveEventSearchText } from "../lib/eve/search-text";
+import { backfillEveSearchConversation } from "../lib/eve/search-backfill";
 import { assertEveConfigured } from "../lib/eve/server";
 
 const main = async () => {
@@ -38,16 +35,10 @@ const main = async () => {
         continue;
       }
       try {
-        const client = new Client(
-          getEveConnectionOptions(conversation.ownerId)
-        );
-        const snapshot = await client.sessions
-          .attach(conversation.sessionId)
-          .snapshot({ signal: AbortSignal.timeout(30_000) });
-        await indexEveSearchText(
+        await backfillEveSearchConversation(
           conversation.ownerId,
           conversation.id,
-          snapshot.events.flatMap(eveEventSearchText)
+          conversation.sessionId
         );
         indexed += 1;
       } catch (error) {

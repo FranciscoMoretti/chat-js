@@ -6,16 +6,33 @@ import type { EveSearchText } from "./search-text";
 
 const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
-  return { index: vi.fn(), resolve: vi.fn(), state };
+  return {
+    index: vi.fn(),
+    recover: vi.fn(),
+    recovery: false,
+    resolve: vi.fn(),
+    state,
+  };
 });
 vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
 vi.mock("eve/context", () => ({
-  defineState: () => ({
-    get: () => mocks.state,
-    update: (update: (current: EveSearchText[]) => EveSearchText[]) => {
-      mocks.state = update(mocks.state);
-    },
-  }),
+  defineState: (name: string) =>
+    name === "chatjs.search-recovery"
+      ? {
+          get: () => mocks.recovery,
+          update: (update: (current: boolean) => boolean) => {
+            mocks.recovery = update(mocks.recovery);
+          },
+        }
+      : {
+          get: () => mocks.state,
+          update: (update: (current: EveSearchText[]) => EveSearchText[]) => {
+            mocks.state = update(mocks.state);
+          },
+        },
+}));
+vi.mock("./search-backfill", () => ({
+  backfillEveSearchConversation: mocks.recover,
 }));
 vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
 vi.mock("./conversation-scope", () => ({
@@ -69,6 +86,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {});
   mocks.state = [];
+  mocks.recovery = false;
   mocks.resolve.mockResolvedValue({
     conversationId: "branch",
     ownerId: "owner",
@@ -128,6 +146,7 @@ it("retains newly received text when scope resolution fails and retries it", asy
 
 it("bounds failed retries by entry count and records how omitted events can be recovered", async () => {
   mocks.index.mockRejectedValue(new Error("offline"));
+  mocks.recover.mockRejectedValue(new Error("offline"));
   for (let index = 0; index < 300; index += 1) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
     await dispatch({
@@ -138,12 +157,15 @@ it("bounds failed retries by entry count and records how omitted events can be r
   }
   expect(mocks.state).toHaveLength(256);
   expect(console.error).toHaveBeenCalledWith(
-    expect.stringContaining("run search:backfill"),
+    expect.stringContaining("snapshot recovery queued"),
     { omitted: 1, sessionId: "session" }
   );
-  mocks.index.mockResolvedValue(undefined);
+  expect(mocks.recovery).toBe(true);
+  mocks.recover.mockResolvedValue(undefined);
   await dispatch(started);
+  expect(mocks.recover).toHaveBeenLastCalledWith("owner", "branch", "session");
   expect(mocks.state).toEqual([]);
+  expect(mocks.recovery).toBe(false);
 });
 
 it("bounds pending text size and deduplicates replayed history", async () => {
@@ -162,10 +184,37 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   await dispatch(oversized);
   expect(mocks.state).toEqual([]);
   expect(console.error).toHaveBeenCalledWith(
-    expect.stringContaining("run search:backfill"),
+    expect.stringContaining("snapshot recovery queued"),
     { omitted: 1, sessionId: "session" }
   );
   await dispatch(restored);
   await dispatch(restored);
   expect(mocks.state).toHaveLength(1);
+});
+
+it("automatically recovers a large restored history and the next message on a healthy database", async () => {
+  await dispatch({
+    ...restored,
+    data: {
+      messages: Array.from({ length: 300 }, (_, index) => ({
+        id: `seed_message_${index}`,
+        parts: [{ text: `restored ${index}`, type: "text" }],
+        role: "user",
+      })),
+    },
+  });
+  expect(mocks.state).toHaveLength(256);
+  expect(mocks.recover).not.toHaveBeenCalled();
+  await dispatch({
+    data: {
+      message: "new message after history",
+      sequence: 1,
+      turnId: "turn_1",
+    },
+    meta: { ...restored.meta, id: "new-message" },
+    type: "message.received",
+  });
+  expect(mocks.recover).toHaveBeenCalledWith("owner", "branch", "session");
+  expect(mocks.state).toEqual([]);
+  expect(mocks.recovery).toBe(false);
 });
