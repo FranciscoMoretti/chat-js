@@ -49,9 +49,9 @@ export const writeEveSearchText = async (
           .map((entry) => ({ ...entry, conversationId, ownerId }))
       )
       .onConflictDoUpdate({
-        target: [eveSearchText.conversationId, eveSearchText.key],
         set: { text: sql`excluded.text` },
         setWhere: sql`${eveSearchText.text} is distinct from excluded.text`,
+        target: [eveSearchText.conversationId, eveSearchText.key],
       });
   }
 };
