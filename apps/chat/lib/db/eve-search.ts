@@ -75,12 +75,35 @@ type EveSearchResult = {
   excerpt: string;
   updatedAt: string;
   rank: number;
+  highlightQuery: string;
 };
 
 // Modify only PostgreSQL's normalized final positive operand, never raw query syntax.
 // The leading boundary excludes !'negated' terms; closing groups remain intact.
 const finalSearchOperand = "(^|[ (|&])('[^']*(?:''[^']*)*')([)]*)$";
 const finalUnquotedWord = /[\p{L}\p{N}]$/u;
+
+// Read PostgreSQL's normalized operands so highlighting shares its tokenization,
+// quoting and prefix rules instead of interpreting the user's query again.
+const positiveOperand = /(?:^|[ (|&])'(?<term>(?:[^']|'')*)'(?<prefix>:\*)?/gu;
+const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
+
+const highlightSearchExcerpt = (excerpt: string, query: string) => {
+  const terms = Array.from(query.matchAll(positiveOperand), (match) => ({
+    prefix: Boolean(match.groups?.prefix),
+    text: (match.groups?.term ?? "").replaceAll("''", "'"),
+  }));
+  return excerpt.replace(markedWord, (marked, word: string) => {
+    const normalized = word.toLowerCase();
+    const lengths = terms
+      .filter(({ prefix, text }) =>
+        prefix ? normalized.startsWith(text) : normalized === text
+      )
+      .map(({ text }) => text.length);
+    const length = Math.max(0, ...lengths);
+    return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
+  });
+};
 
 /** One result per logical chat, with the branch containing its strongest match. */
 export const searchEveConversations = async (
@@ -126,7 +149,7 @@ export const searchEveConversations = async (
       from matches
       order by id, (body <> '') desc, rank desc, "conversationId", body
     )
-    select id, "conversationId", title,
+    select id, "conversationId", title, query.terms::text as "highlightQuery",
       to_char("updatedAt", 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "updatedAt",
       "chatRank"::double precision as rank,
       case when body = '' then '' else ts_headline('simple', body, query.terms,
@@ -144,7 +167,10 @@ export const searchEveConversations = async (
     order by "chatRank" desc, best."updatedAt" desc, id
     limit 21
   `);
-  const page = items.slice(0, 20);
+  const page = items.slice(0, 20).map(({ highlightQuery, ...item }) => ({
+    ...item,
+    excerpt: highlightSearchExcerpt(item.excerpt, highlightQuery),
+  }));
   const last = page.at(-1);
   return {
     items: page,

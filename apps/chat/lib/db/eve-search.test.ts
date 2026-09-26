@@ -22,6 +22,7 @@ vi.mock("./client", () => {
 });
 vi.mock("@/lib/env", () => ({ env: {} }));
 
+const { eveEventSearchText } = await import("../eve/search-text");
 const { indexEveSearchText, searchEveConversations } =
   await import("./eve-search");
 const { completeEveConversationDeletion } = await import("./eve-deletion");
@@ -123,7 +124,7 @@ it.each([
     const result = await searchEveConversations("alice", { search });
     expect(result.items.map((item) => item.id)).toEqual(ids);
     if (search === "saffron ri") {
-      expect(result.items[0].excerpt).toContain("⟦rice⟧");
+      expect(result.items[0].excerpt).toContain("⟦ri⟧ce");
     }
   }
 );
@@ -144,7 +145,55 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
     id: titleChat,
   });
   expect(result.items[0].rank).toBeGreaterThan(2);
-  expect(result.items[0].excerpt).toContain("⟦Saffron⟧");
+  expect(result.items[0].excerpt).toContain("⟦Saff⟧ron");
+});
+
+it.each([
+  ["SAFF", "⟦Saff⟧ron"],
+  ["saffron OR saff", "⟦Saffron⟧"],
+  ['"saffron cooking"', "⟦Saffron⟧ ⟦cooking⟧"],
+  ["saffron -rice", "⟦saffron⟧"],
+])(
+  "preserves full matches and query syntax when highlighting %s",
+  async (search, excerpt) => {
+    const result = await searchEveConversations("alice", { search });
+    expect(result.items.some((item) => item.excerpt.includes(excerpt))).toBe(
+      true
+    );
+  }
+);
+
+it("shows an assistant-only Hello match even when the title also matches", async () => {
+  await postgres.query(
+    `update "EveChat" set title = 'Friendly Hello Chat' where id = $1`,
+    [titleChat]
+  );
+  await indexEveSearchText(
+    "alice",
+    titleBranch,
+    eveEventSearchText({
+      data: {
+        finishReason: "stop",
+        message: "Hello! How can I help you today?",
+        sequence: 1,
+        stepIndex: 0,
+        turnId: "turn_0",
+      },
+      meta: { at: "2026-09-26T10:00:00Z", id: "hello-assistant" },
+      type: "message.completed",
+    })
+  );
+  const result = await searchEveConversations("alice", { search: "hello" });
+  expect(result.items).toHaveLength(1);
+  expect(result.items[0]).toMatchObject({
+    conversationId: titleBranch,
+    id: titleChat,
+  });
+  expect(result.items[0].excerpt).toContain("⟦Hello⟧");
+  await postgres.query(
+    `update "EveChat" set title = 'Saffron cooking' where id = $1`,
+    [titleChat]
+  );
 });
 
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {

@@ -18,6 +18,28 @@ const states = [
   },
   { items: [item], label: "Best matches", query: "saffron" },
   {
+    items: [
+      {
+        ...item,
+        excerpt: "Hello ⟦Worl⟧d! How can I help you today?",
+        title: "Hello World",
+      },
+    ],
+    label: "Prefix match",
+    query: "worl",
+  },
+  {
+    items: [
+      {
+        ...item,
+        excerpt: "⟦Hello⟧! How can I help you today?",
+        title: "Friendly Hello Chat",
+      },
+    ],
+    label: "Assistant message match",
+    query: "hello",
+  },
+  {
     items: [],
     label: "Waiting for current query",
     pending: true,
