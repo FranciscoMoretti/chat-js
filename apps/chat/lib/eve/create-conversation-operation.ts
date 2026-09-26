@@ -13,6 +13,10 @@ import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
+import {
+  EveUsageReconciliationBusyError,
+  eveUsageBusyResponse,
+} from "./usage-reconciliation-busy";
 
 const logger = createModuleLogger("eve/admission");
 
@@ -79,6 +83,9 @@ export const createEveConversationOperation = async (
       }
     }
   } catch (error) {
+    if (error instanceof EveUsageReconciliationBusyError) {
+      return eveUsageBusyResponse(error);
+    }
     logger.error(
       {
         errorType: error instanceof Error ? error.name : "unknown",

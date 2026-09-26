@@ -2,6 +2,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
+import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
 
 import { POST } from "./route";
 
@@ -108,4 +109,21 @@ test("stamps the validated operation into server-owned durable metadata", async 
     "model",
     "createTextDocument"
   );
+});
+
+test("keeps a busy admission retryable without dispatching or rejecting its message", async () => {
+  mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());
+  const response = await POST(
+    request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }),
+    {
+      params: Promise.resolve({ path: ["v1", "session", "native"] }),
+    }
+  );
+  expect(response.status).toBe(503);
+  expect(response.headers.get("Retry-After")).toBe("2");
+  expect(await response.json()).toMatchObject({
+    code: "usage_reconciliation_busy",
+    retryable: true,
+  });
+  expect(mocks.eveRequest).not.toHaveBeenCalled();
 });

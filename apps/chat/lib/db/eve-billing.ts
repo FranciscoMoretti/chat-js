@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import { env } from "../env";
+import { EveUsageReconciliationBusyError } from "../eve/usage-reconciliation-busy";
 import { db } from "./client";
 import { databaseConnection } from "./connection";
 import {
@@ -205,6 +206,7 @@ export const withManagedUsageReconciliation = async (
   });
   try {
     await drizzle(connection).transaction(async (tx) => {
+      await tx.execute(sql`select set_config('lock_timeout', '5s', true)`);
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
       );
@@ -244,6 +246,12 @@ export const withManagedUsageReconciliation = async (
           .where(eq(user.id, ownerId));
       }
     });
+  } catch (error) {
+    const cause = error instanceof Error && error.cause ? error.cause : error;
+    if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
+      throw new EveUsageReconciliationBusyError();
+    }
+    throw error;
   } finally {
     await connection.end();
   }
