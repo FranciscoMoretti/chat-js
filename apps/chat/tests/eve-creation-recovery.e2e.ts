@@ -57,7 +57,7 @@ test.each(["before-dispatch", "lost-response"])(
     let fail = true;
     native.request.mockImplementation(
       (_owner: string, path: string, init: RequestInit) => {
-        if (path.startsWith("/eve/v1/operation/")) {
+        if (path.startsWith("/eve/chat/v1/operation/")) {
           const sessionId = receipts.get(path.split("/").at(-1) ?? "");
           return sessionId
             ? Response.json({ sessionId })

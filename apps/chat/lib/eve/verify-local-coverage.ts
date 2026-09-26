@@ -45,7 +45,7 @@ export const verifyLocalEveFamilyCoverage = async (
         async (sessionId) => {
           const response = await fetch(
             new URL(
-              `/eve/v1/session/${encodeURIComponent(sessionId)}/sandbox-identity`,
+              `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/sandbox-identity`,
               env.EVE_INTERNAL_ORIGIN
             ),
             {

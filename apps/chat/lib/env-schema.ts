@@ -29,7 +29,7 @@ export const eveRuntimeEnvOptions = {
     .min(32)
     .describe("Private EVE gateway secret (at least 32 characters)"),
   EVE_INTERNAL_ORIGIN: httpUrl.describe(
-    "Same-origin EVE route or private worker origin"
+    "Application gateway origin serving the named EVE chat worker"
   ),
   WORKFLOW_POSTGRES_URL: postgresUrl.describe(
     "Postgres connection string for durable EVE workflows"

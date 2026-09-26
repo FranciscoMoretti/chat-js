@@ -53,7 +53,7 @@ beforeEach(() => {
   );
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
-      path.startsWith("/eve/v1/operation/")
+      path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })
     )
@@ -65,7 +65,7 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   expect(response.status).toBe(409);
   expect(await response.json()).not.toHaveProperty("creationRejected");
   expect(mocks.request.mock.calls.map((call) => call[1])).toEqual([
-    `/eve/v1/operation/${input.operationId}`,
+    `/eve/chat/v1/operation/${input.operationId}`,
   ]);
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);

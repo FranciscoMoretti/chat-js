@@ -92,7 +92,7 @@ test("stamps the validated operation into server-owned durable metadata", async 
   expect(response.status).toBe(202);
   expect(mocks.eveRequest).toHaveBeenCalledExactlyOnceWith(
     "owner",
-    "/eve/v1/session/native",
+    "/eve/chat/v1/session/native",
     expect.objectContaining({
       body: JSON.stringify({
         message: "prepared",

@@ -63,7 +63,7 @@ export const POST = async (
     ) {
       const accepted = await eveRequest(
         principal.ownerId,
-        `/eve/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
+        `/eve/chat/v1/session/${encodeURIComponent(source.sessionId)}/checkpoint`,
         {
           body: JSON.stringify(input.data),
           method: "POST",

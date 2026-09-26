@@ -19,7 +19,7 @@ export const GET = async () => {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        fetch(new URL("/eve/v1/health", env.EVE_INTERNAL_ORIGIN), {
+        fetch(new URL("/eve/chat/v1/health", env.EVE_INTERNAL_ORIGIN), {
           cache: "no-store",
           redirect: "error",
           signal: AbortSignal.timeout(4000),

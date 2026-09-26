@@ -15,9 +15,13 @@ const assertNativeReceipt = async (
 ) => {
   let response: Response;
   try {
-    response = await eveRequest(ownerId, `/eve/v1/operation/${reservationId}`, {
-      signal: abortSignal,
-    });
+    response = await eveRequest(
+      ownerId,
+      `/eve/chat/v1/operation/${reservationId}`,
+      {
+        signal: abortSignal,
+      }
+    );
   } catch {
     abortSignal.throwIfAborted();
     throw new EveSessionMappingError("receipt_unavailable");

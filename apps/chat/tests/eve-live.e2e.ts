@@ -12,6 +12,7 @@ import { getEveUsageCursor } from "../lib/db/eve-billing";
 import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -101,13 +102,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   expect(replayed.reduce((total, row) => total + row.chargedCents, 0)).toBe(
     charged
   );
-  const client = new Client({
-    headers: {
-      authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
-      "x-chatjs-owner": ownerId,
-    },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   expect((await session.compact()).status).toBe("accepted");
@@ -246,13 +241,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
   ).toBeEmpty();
-  const client = new Client({
-    headers: {
-      authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
-      "x-chatjs-owner": conversation.ownerId,
-    },
-    host: env.EVE_INTERNAL_ORIGIN ?? "",
-  });
+  const client = new Client(getEveConnectionOptions(conversation.ownerId));
   await expect
     .poll(
       async () => {

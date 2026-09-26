@@ -73,7 +73,7 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   await verifyLocalEveFamilyCoverage("owner", root, inventories);
   const [[url, init]] = mocks.fetch.mock.calls;
   expect(String(url)).toBe(
-    "http://worker.local/eve/v1/session/session/sandbox-identity"
+    "http://worker.local/eve/chat/v1/session/session/sandbox-identity"
   );
   expect(init.headers).toMatchObject({
     "x-chatjs-deletion": "1",
