@@ -16,11 +16,13 @@ import {
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
+import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { responseModelReferences } from "@/lib/eve/response-model";
@@ -196,6 +198,31 @@ export const EveConversation = ({
       controller.commands.update(conversationId, { cancellation: 0 });
     }
   };
+  const sendPendingMessage = async (pending: ActivePendingEveMessage) => {
+    // oxlint-disable-next-line react/todo -- Preserve optimistic message recovery cleanup while React Compiler lacks finally support.
+    try {
+      await send(
+        () =>
+          agent.send(draftMessage(pending.message, pending.attachments), {
+            headers: {
+              [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
+              ...(pending.modelId
+                ? { "x-chatjs-selected-model": pending.modelId }
+                : {}),
+              ...(pending.selectedTool
+                ? { "x-chatjs-selected-tool": pending.selectedTool }
+                : {}),
+            },
+          }),
+        pending.operationId
+      );
+    } catch (error) {
+      if (isEveCommandRejection(error)) {
+        delivery.reject(pending, error.message, isEveAdmissionBusy(error));
+      }
+      throw error;
+    }
+  };
   const submitMessage = async (
     message: string,
     attachments: DraftAttachment[],
@@ -215,27 +242,7 @@ export const EveConversation = ({
       files.setAttachments([]);
       composerDraft.setSelectedTool(null);
     }
-    // oxlint-disable-next-line react/todo -- Preserve optimistic message recovery cleanup while React Compiler lacks finally support.
-    try {
-      await send(
-        () =>
-          agent.send(draftMessage(message, attachments), {
-            headers: {
-              [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
-              "x-chatjs-selected-model": modelId,
-              ...(selectedTool
-                ? { "x-chatjs-selected-tool": selectedTool }
-                : {}),
-            },
-          }),
-        pending.operationId
-      );
-    } catch (error) {
-      if (isEveCommandRejection(error)) {
-        delivery.reject(pending, error.message);
-      }
-      throw error;
-    }
+    await sendPendingMessage(pending);
   };
   const cancelExecution = async (executionId: string) => {
     const execution = controller.getSnapshot().agents.get(executionId);
@@ -490,38 +497,59 @@ export const EveConversation = ({
                 </p>
                 <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
                 <AttachmentList attachments={pendingMessage.attachments} />
-                <Button
-                  onClick={() => {
-                    setDraft((current) =>
-                      current
-                        ? `${current}\n\n${pendingMessage.message}`
-                        : pendingMessage.message
-                    );
-                    files.setAttachments((current) => [
-                      ...current,
-                      ...pendingMessage.attachments.filter(
-                        (file) =>
-                          !current.some((existing) => existing.url === file.url)
-                      ),
-                    ]);
-                    composerDraft.setSelectedTool(
-                      pendingMessage.selectedTool ?? null
-                    );
-                    delivery.release(pendingMessage);
-                    setCommandFailure(
-                      pendingMessage.rejection
-                        ? undefined
-                        : new Error(
-                            "Delivery is unconfirmed. Check the conversation before sending this message again."
-                          )
-                    );
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  Restore draft
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  {pendingMessage.retryable && pendingMessage.operationId && (
+                    <Button
+                      onClick={() =>
+                        run(async () => {
+                          const retried = delivery.retry(pendingMessage);
+                          if (retried) {
+                            await sendPendingMessage(retried);
+                          }
+                        })
+                      }
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Retry message
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setDraft((current) =>
+                        current
+                          ? `${current}\n\n${pendingMessage.message}`
+                          : pendingMessage.message
+                      );
+                      files.setAttachments((current) => [
+                        ...current,
+                        ...pendingMessage.attachments.filter(
+                          (file) =>
+                            !current.some(
+                              (existing) => existing.url === file.url
+                            )
+                        ),
+                      ]);
+                      composerDraft.setSelectedTool(
+                        pendingMessage.selectedTool ?? null
+                      );
+                      delivery.release(pendingMessage);
+                      setCommandFailure(
+                        pendingMessage.rejection
+                          ? undefined
+                          : new Error(
+                              "Delivery is unconfirmed. Check the conversation before sending this message again."
+                            )
+                      );
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Restore draft
+                  </Button>
+                </div>
               </output>
             )}
             <EveComposer

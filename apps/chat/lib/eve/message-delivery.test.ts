@@ -118,3 +118,35 @@ describe("Eve message delivery recovery", () => {
     });
   });
 });
+
+it("retries a busy saved delivery with its original identity and clears rejection before dispatch", () => {
+  const storage = memoryStorage();
+  const original = eveMessageDelivery.begin(storage, "session", {
+    attachments: [],
+    message: "retry me",
+    modelId: "model",
+  });
+  eveMessageDelivery.reject(storage, "session", original, "Busy", true);
+  const reloaded = eveMessageDelivery.read(storage, "session");
+  expect(reloaded?.retryable).toBe(true);
+  if (!reloaded) {
+    throw new Error("Missing saved delivery");
+  }
+  const retry = eveMessageDelivery.retry(storage, "session", reloaded);
+  expect(retry?.operationId).toBe(original.operationId);
+  expect(retry?.rejection).toBeUndefined();
+  expect(retry?.retryable).toBeUndefined();
+  // An ambiguous failed retry must never remain automatically replayable.
+  expect(
+    eveMessageDelivery.retry(storage, "session", original)
+  ).toBeUndefined();
+  eveMessageDelivery.acknowledge(
+    storage,
+    "session",
+    original,
+    received("retry me", original.operationId)
+  );
+  expect(
+    eveMessageDelivery.retry(storage, "session", original)
+  ).toBeUndefined();
+});
