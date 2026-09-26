@@ -205,7 +205,6 @@ export const withManagedUsageReconciliation = async (
   });
   try {
     await drizzle(connection).transaction(async (tx) => {
-      await tx.execute(sql`select set_config('lock_timeout', '30s', true)`);
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
       );
