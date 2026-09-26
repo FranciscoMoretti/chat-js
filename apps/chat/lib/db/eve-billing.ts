@@ -1,7 +1,18 @@
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
+import { env } from "../env";
+import { EveUsageReconciliationBusyError } from "../eve/usage-reconciliation-busy";
 import { db } from "./client";
-import { eveConversation, eveGuest, eveUsage, userCredit } from "./schema";
+import { databaseConnection } from "./connection";
+import {
+  eveConversation,
+  eveGuest,
+  eveUsage,
+  user,
+  userCredit,
+} from "./schema";
 
 const hasConflictingCost = (stored: string | null, incoming: string | null) =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
@@ -177,5 +188,71 @@ export const advanceEveUsageCursor = async (
     .returning({ id: eveConversation.id });
   if (!row) {
     throw new Error("Conversation not found.");
+  }
+};
+
+/** Serialize managed fallback sweeps across deployments, without locking credit debits. */
+export const withManagedUsageReconciliation = async (
+  ownerId: string,
+  reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
+) => {
+  // Recovery queries use the app pool. Holding its only connection here would
+  // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
+  const settings = databaseConnection(env);
+  const connection = postgres(settings.url, {
+    ...settings.options,
+    max: 1,
+    prepare: false,
+  });
+  try {
+    await drizzle(connection).transaction(async (tx) => {
+      await tx.execute(sql`select set_config('lock_timeout', '5s', true)`);
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
+      );
+      const [owner] = await tx
+        .select({
+          sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < clock_timestamp() - interval '1 minute'`,
+        })
+        .from(user)
+        .where(eq(user.id, ownerId));
+      if (!owner) {
+        throw new Error("Usage reconciliation requires a registered owner.");
+      }
+      const unpricedSessions = await tx
+        .selectDistinct({ sessionId: eveUsage.sessionId })
+        .from(eveUsage)
+        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)));
+      await reconcile(
+        owner.sweepDue,
+        new Set(unpricedSessions.map((row) => row.sessionId))
+      );
+      // A recorded but unpriced hook must block admission even during the cooldown.
+      const [unpriced] = await tx
+        .select({ id: eveUsage.eventId })
+        .from(eveUsage)
+        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
+        .limit(1);
+      if (unpriced) {
+        throw new Error(
+          "Completed usage needs provider cost reconciliation before starting more work."
+        );
+      }
+      if (owner.sweepDue) {
+        // now() is transaction start: a long sweep cannot buy another minute of stale evidence.
+        await tx
+          .update(user)
+          .set({ eveUsageReconciledAt: sql`now()` })
+          .where(eq(user.id, ownerId));
+      }
+    });
+  } catch (error) {
+    const cause = error instanceof Error && error.cause ? error.cause : error;
+    if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
+      throw new EveUsageReconciliationBusyError();
+    }
+    throw error;
+  } finally {
+    await connection.end();
   }
 };

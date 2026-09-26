@@ -20,7 +20,7 @@ These variables must be set for the EVE-backed application.
 | `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart), or any Postgres provider |
 | `AUTH_SECRET` | Secret used to sign and encrypt session tokens (Better Auth) | Run `openssl rand -base64 32` or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
 
-The required EVE settings are `EVE_GATEWAY_SECRET`, `WORKFLOW_POSTGRES_URL`, and `EVE_INTERNAL_ORIGIN`, documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
+The required EVE settings are `EVE_GATEWAY_SECRET` and `EVE_INTERNAL_ORIGIN`. Local and self-hosted runs also require `WORKFLOW_POSTGRES_URL`. Vercel deployments use managed Workflow automatically. These settings are documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
 
 ---
 
@@ -255,12 +255,12 @@ ai: {
 | Variable | Description |
 | --- | --- |
 | `EVE_GATEWAY_SECRET` | **Required.** Private credential used between ChatJS and EVE. Generate at least 32 random characters. |
-| `WORKFLOW_POSTGRES_URL` | **Required.** Postgres connection for durable EVE workflows. |
+| `WORKFLOW_POSTGRES_URL` | **Local/self-hosted only.** Postgres connection for registered-chat workflows. Unused on Vercel deployments. |
 | `EVE_INTERNAL_ORIGIN` | **Required.** Application gateway origin serving `/eve/chat/v1/*`. |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Server-only deployment-protection bypass credential for calls to this Vercel project. Required when protection blocks internal EVE requests. |
 | `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
 
-`DATABASE_URL` stores application identity and metadata. `WORKFLOW_POSTGRES_URL` stores EVE workflows and native transcripts. Initialize both schemas before sending a message. See the [database setup guide](./database#eve-workflow-database).
+`DATABASE_URL` stores application identity and metadata everywhere. Vercel Preview and Production use managed Workflow for EVE execution and transcripts. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` and require both schemas to be initialized. Disposable guest chats keep their isolated local backend during development. See the [database setup guide](./database#eve-workflow-database).
 
 `EVE_INTERNAL_ORIGIN` is independent of `APP_URL`. Set it to the application gateway origin serving the named `/eve/chat/v1/*` mount, without an API route path. A raw EVE worker exposing only `/eve/v1/*` is not a supported endpoint. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to other origins, including arbitrary custom domains. The EVE bearer credential and owner identity are still required.
 
@@ -348,7 +348,7 @@ All variables in one place:
 | `VERCEL_SANDBOX_RUNTIME_JAVASCRIPT` | Feature | Optional JavaScript sandbox runtime override |
 | `VERCEL_SANDBOX_RUNTIME` | Feature | Legacy Python sandbox runtime override |
 | `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |
-| `WORKFLOW_POSTGRES_URL` | Required | Postgres connection for durable workflows |
+| `WORKFLOW_POSTGRES_URL` | EVE | Required locally/self-hosted, unused on Vercel |
 | `EVE_INTERNAL_ORIGIN` | Required | Application gateway origin serving the named chat worker |
 | `TRUSTED_CLIENT_IP_HEADER` | EVE | Optional self-hosted trusted proxy header |
 | `CRON_SECRET` | Optional | Secure cleanup cron endpoint |

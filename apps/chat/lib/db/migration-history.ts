@@ -27,6 +27,7 @@ export const KNOWN_CHATJS_TABLE_NAMES = [
   "EveResponseGroup",
   "EveStoredFile",
   "EveUsage",
+  "EveWorkflowBackend",
   "EveVote",
   "McpConnector",
   "McpOAuthSession",

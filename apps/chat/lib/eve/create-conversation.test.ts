@@ -109,3 +109,27 @@ it("identifies a missing project only on a definitive rejection", async () => {
     projectUnavailable: false,
   });
 });
+
+it("automatically retries busy creation with the same operation identity", async () => {
+  vi.useFakeTimers();
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(
+      Response.json(
+        { code: "usage_reconciliation_busy", error: "Busy" },
+        { status: 503 }
+      )
+    )
+    .mockResolvedValueOnce(
+      Response.json({ id: operation.operationId, sessionId: "session" })
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  const result = requestConversation(operation);
+  await vi.advanceTimersByTimeAsync(2000);
+  await expect(result).resolves.toMatchObject({ sessionId: "session" });
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock.mock.calls.map(([, init]) => init.body)).toEqual([
+    JSON.stringify(operation),
+    JSON.stringify(operation),
+  ]);
+});

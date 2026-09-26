@@ -35,6 +35,8 @@ test.each([
       "nested/custom.tsbuildinfo",
       ".devtools/session.json",
       ".next/cache.json",
+      ".vercel/project.json",
+      "guest/.vercel/output/config.json",
       ...excluded,
     ];
     const retainedFiles = [

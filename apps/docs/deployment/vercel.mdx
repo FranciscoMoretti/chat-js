@@ -3,7 +3,7 @@ title: Deploy to Vercel
 description: Production deployment with Vercel's integrated platform
 ---
 
-You can deploy the Next.js application and its integrated EVE worker to one Vercel project. Configure both database connections, private EVE credentials, and OAuth origins before deploying.
+You can deploy the Next.js application and its integrated EVE worker to one Vercel project. Configure your application database, private EVE credentials, and OAuth origins before deploying. Registered and guest agents use managed Vercel Workflow automatically.
 
 <Callout type="note">
   If you haven't set up your project yet, start with the
@@ -16,7 +16,8 @@ ChatJS uses several Vercel platform features. Enable them in your Vercel dashboa
 
 | Integration | Purpose | Required |
 | --- | --- | --- |
-| **Vercel Postgres** or **Neon** | Application database and EVE workflow database | Yes |
+| **PostgreSQL** (for example, Neon) | Application database | Yes |
+| **Vercel Workflow** | EVE execution and durable transcripts | Selected automatically |
 | **Vercel Blob** | File attachments, generated images | If using attachments/image gen |
 | **AI Gateway** | Unified access to 120+ AI models | Yes |
 
@@ -130,11 +131,15 @@ Sandboxes run with:
 
 ### Required
 
-Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL`, `WORKFLOW_POSTGRES_URL`, `EVE_GATEWAY_SECRET`, and `EVE_INTERNAL_ORIGIN`. EVE settings must be available during the build and at runtime.
+Keep **Automatically expose System Environment Variables** enabled in Vercel’s project settings for Preview and Production. Backend selection requires the platform-provided `VERCEL` and `VERCEL_ENV` values.
 
-Initialize both schemas using the [database setup guide](../reference/database#hosted-workflow-database). Use separate databases for previews and production, with branch-scoped preview credentials.
+Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL`, `EVE_GATEWAY_SECRET`, and `EVE_INTERNAL_ORIGIN`. EVE settings must be available during the build and at runtime.
 
-Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Neither build path provisions the workflow database.
+Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
+
+Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Managed Workflow does not require PostgreSQL workflow provisioning.
+
+Changing backends does not migrate existing sessions. Application migrations register existing conversations as PostgreSQL-backed, and Vercel builds reject a mismatched database. Keep the old deployment/database intact; use an isolated fresh database for previews and complete a verified migration before production cutover. Hosted conversation erasure remains unavailable.
 
 ### Preview origins and OAuth
 

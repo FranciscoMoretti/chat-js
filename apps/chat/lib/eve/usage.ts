@@ -14,7 +14,7 @@ export const ingestEveUsage = async (
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
       const priced = await recordEveUsage({
-        costUsd: call.usage?.costUsd,
+        costUsd: call.usage?.costUsd ?? (call.failed ? 0 : undefined),
         eventId: `${event.meta.id}:model-call:${index}`,
         generationId: call.providerMetadata?.gateway?.generationId,
         ownerId,
@@ -50,8 +50,7 @@ export const ingestEveUsage = async (
     return;
   }
   const priced = await recordEveUsage({
-    costUsd:
-      event.type === "step.failed" ? undefined : event.data.usage?.costUsd,
+    costUsd: event.type === "step.failed" ? 0 : event.data.usage?.costUsd,
     eventId: event.meta.id,
     generationId:
       event.type === "step.failed"

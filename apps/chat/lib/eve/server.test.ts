@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { eveRequest } from "./server";
+import { assertEveConfigured, eveRequest } from "./server";
 
 const mocks = vi.hoisted(() => ({
   env: {
     EVE_GATEWAY_SECRET: "eve-secret",
     EVE_INTERNAL_ORIGIN: "https://preview.example.com",
+    VERCEL: "",
     VERCEL_AUTOMATION_BYPASS_SECRET: "deployment-secret",
     VERCEL_BRANCH_URL: "preview.example.com",
+    VERCEL_ENV: "",
     VERCEL_URL: "deployment.example.com",
     WORKFLOW_POSTGRES_URL: "postgres://localhost/test",
   },
@@ -15,6 +17,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/env", () => ({ env: mocks.env }));
 
 beforeEach(() => {
+  mocks.env.VERCEL = "";
+  mocks.env.VERCEL_ENV = "";
+  mocks.env.WORKFLOW_POSTGRES_URL = "postgres://localhost/test";
   mocks.env.EVE_INTERNAL_ORIGIN = "https://preview.example.com";
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -64,4 +69,12 @@ it("routes the real SDK directly to the named chat worker", async () => {
     "https://preview.example.com/eve/chat/v1/health"
   );
   expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+});
+
+it("requires a workflow database locally but not on managed Vercel", () => {
+  mocks.env.WORKFLOW_POSTGRES_URL = "";
+  expect(assertEveConfigured).toThrow("local workflow database");
+  mocks.env.VERCEL = "1";
+  mocks.env.VERCEL_ENV = "preview";
+  expect(assertEveConfigured).not.toThrow();
 });

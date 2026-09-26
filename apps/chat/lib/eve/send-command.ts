@@ -1,3 +1,5 @@
+import { retryEveAdmission } from "./admission-retry";
+
 /** Eve may report errors through onError even when the command promise resolves. */
 export const sendCommand = async (
   send: () => Promise<void>,
@@ -6,11 +8,13 @@ export const sendCommand = async (
   getError: () => Error | undefined,
   hasAcceptedInput: () => boolean = () => true
 ) => {
-  await send();
-  const sendError = getError();
-  if (sendError) {
-    throw sendError;
-  }
+  await retryEveAdmission(async () => {
+    await send();
+    const sendError = getError();
+    if (sendError) {
+      throw sendError;
+    }
+  });
   // Eve 0.52.2 can end a send reader at the preceding cancellation boundary.
   if (afterCancellation) {
     const deadline = Date.now() + 15_000;

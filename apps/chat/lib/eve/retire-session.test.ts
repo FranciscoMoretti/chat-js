@@ -9,18 +9,19 @@ const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
   client: vi.fn(),
   deleting: vi.fn(),
+  env: {
+    EVE_GATEWAY_SECRET: "fixture",
+    EVE_INTERNAL_ORIGIN: "http://localhost",
+    VERCEL: "",
+    VERCEL_ENV: "",
+    WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
+  },
   reset: vi.fn(),
   retireMany: vi.fn(),
   snapshot: vi.fn(),
   usage: vi.fn(),
 }));
-vi.mock("../env", () => ({
-  env: {
-    EVE_GATEWAY_SECRET: "fixture",
-    EVE_INTERNAL_ORIGIN: "http://localhost",
-    WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
-  },
-}));
+vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("../db/eve-queries", () => ({
   beginEveConversationDeletion: mocks.begin,
@@ -102,5 +103,15 @@ it("does not enter native family cleanup for an inaccessible family or a missing
   await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
     "missing session binding"
   );
+  expect(mocks.retireMany).not.toHaveBeenCalled();
+});
+
+it("rejects PostgreSQL retirement on Vercel before changing application access", async () => {
+  mocks.env.VERCEL = "1";
+  mocks.env.VERCEL_ENV = "production";
+  await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
+    "requires the PostgreSQL workflow backend"
+  );
+  expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });

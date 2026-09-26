@@ -5,7 +5,8 @@ import { resolveEveModel } from "../../lib/eve/model-selection";
 
 export default defineAgent({
   defaultTools: false,
-  // Vercel uses managed Workflow; local development uses its local World.
+  // Disposable guests use Vercel Workflow when deployed and isolated local storage
+  // in development. Sharing the registered agent's PostgreSQL queue is unsafe.
   experimental: { workflow: { retention: 0 } },
   limits: { sessionTimeoutMs: GUEST_SESSION_DURATION_MS },
   model: defineDynamic({

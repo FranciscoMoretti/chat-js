@@ -28,6 +28,10 @@ import {
   sameOrigin,
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
+import {
+  EveUsageReconciliationBusyError,
+  eveUsageBusyResponse,
+} from "@/lib/eve/usage-reconciliation-busy";
 
 const rejectRequest = (request: Request, message: string, status: number) =>
   // A failed stream read cannot prove that an earlier POST was rejected.
@@ -51,7 +55,7 @@ const checkTurnAdmission = async (
       selectedTool: command.selectedTool,
     });
   }
-  await reconcileEveOwnerUsage(principal.ownerId);
+  await reconcileEveOwnerUsage(principal.ownerId, sessionId);
   if (!(await canSpend(principal.ownerId))) {
     return rejectEveCommand("Insufficient credits", 402);
   }
@@ -218,7 +222,10 @@ const handle = async (
       }
     }
     return new Response(result.body, { headers, status: result.status });
-  } catch {
+  } catch (error) {
+    if (error instanceof EveUsageReconciliationBusyError) {
+      return eveUsageBusyResponse(error);
+    }
     return Response.json(
       {
         error:
