@@ -44,6 +44,7 @@
         "@lexical/rich-text": "^0.32.1",
         "@mendable/firecrawl-js": "1.29.1",
         "@modelcontextprotocol/sdk": "^1.24.3",
+        "@noble/hashes": "2.0.1",
         "@opentelemetry/api-logs": "^0.200.0",
         "@opentelemetry/instrumentation": "^0.200.0",
         "@opentelemetry/sdk-logs": "^0.200.0",

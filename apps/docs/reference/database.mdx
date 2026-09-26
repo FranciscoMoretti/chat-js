@@ -53,22 +53,22 @@ For [Supabase transaction pooling](https://supabase.com/docs/guides/database/pos
 
 ## EVE workflow database
 
-ChatJS uses `DATABASE_URL` for application records and `WORKFLOW_POSTGRES_URL` for EVE messages and execution state. Provision separate databases for these two schemas. They can share the same PostgreSQL server. The application pooling settings above do not configure EVE's connection.
+ChatJS uses `DATABASE_URL` for application records. EVE messages and execution state use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Application and workflow schemas can share one database. Set an explicit workflow URL to keep them separate. The application pooling settings above do not configure EVE's connection.
+
+EVE needs a direct or session connection for its queue and `LISTEN` sessions. Validation rejects known transaction-pooler URLs (including Neon pooled endpoints and Supabase transaction endpoints), but cannot identify every custom pooler. Verify your endpoint with your provider. If your migration role has more privileges than you want to grant the worker, set `WORKFLOW_POSTGRES_URL` to a dedicated runtime role on a compatible endpoint.
 
 ### Local workflow database
 
-With PostgreSQL installed and running, create both databases:
+With PostgreSQL installed and running, create the database:
 
 ```bash
 createdb chatjs
-createdb chatjs_workflow
 ```
 
-Set their connections in `.env.local`, adjusting credentials and ports for your installation:
+Set its connection in `.env.local`, adjusting credentials and ports for your installation:
 
 ```dotenv
 DATABASE_URL=postgres://localhost:5432/chatjs
-WORKFLOW_POSTGRES_URL=postgres://localhost:5432/chatjs_workflow
 ```
 
 From the generated app's root, initialize both schemas:
@@ -79,9 +79,9 @@ npm run setup
 
 ### Hosted workflow database
 
-Create application and workflow databases with your provider and set both connection URLs in `.env.local`. Run the same `npm run setup` command. Use a connection with permission to install the workflow provider schema.
+Create a database with your provider and configure a direct or session connection through `DATABASE_MIGRATION_URL` or `DATABASE_URL`. Alternatively, set `WORKFLOW_POSTGRES_URL` for a separate workflow database. Run the same `npm run setup` command with permission to install the workflow provider schema.
 
-The command requires `WORKFLOW_POSTGRES_URL` explicitly, so provider setup cannot fall back to your application database. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
+The setup command and runtime use the same connection precedence. When no workflow override is set, setup installs the workflow schemas in the application database. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
 
 ### Setup commands
 

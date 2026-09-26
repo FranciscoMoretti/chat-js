@@ -12,7 +12,7 @@ describe("EVE setup selection", () => {
   });
 
   it.each([undefined, "", "postgres://%", "https://example.com"])(
-    "rejects an absent or invalid workflow URL without falling back to the app database: %s",
+    "rejects an absent or invalid workflow URL after connection resolution: %s",
     (url) => {
       expect(() => resolveEveSetup(world, url)).toThrow();
     }
@@ -35,4 +35,10 @@ describe("EVE setup selection", () => {
       );
     }
   );
+});
+
+it("rejects transaction-pooled connections during setup too", () => {
+  expect(() =>
+    resolveEveSetup(world, "postgres://db/workflows?pool_mode=transaction")
+  ).toThrow("direct or session");
 });

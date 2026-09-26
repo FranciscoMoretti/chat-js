@@ -26,16 +26,16 @@ Fill in `.env.local` using the generated example. You need:
 
 | Setting | Setup guide |
 | --- | --- |
-| Application and EVE workflow database connections | [PostgreSQL setup](./reference/database#eve-workflow-database) |
+| PostgreSQL connection | [PostgreSQL setup](./reference/database#eve-workflow-database) |
 | AI gateway credentials | [Gateways](./gateways/overview) |
 | Authentication provider credentials and secrets | [Authentication](./core/authentication) and [environment variables](./reference/env-vars) |
 | Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
 
-For the default local port, keep `APP_URL` and `EVE_INTERNAL_ORIGIN` set to `http://localhost:3000`. Generate independent values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET` with `openssl rand -base64 32`.
+Generate `AUTH_SECRET` with `openssl rand -base64 32`. Leave the three EVE overrides blank for the integrated worker: its credential is derived from `AUTH_SECRET`, its origin follows the deployment or local app, and its database defaults to `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Use a direct or session database connection; transaction pooling is not supported for workflows.
 
 ## 3. Set up the application
 
-After creating your databases and configuring `.env.local`, run:
+After creating your database and configuring `.env.local`, run:
 
 ```bash
 npm run setup
