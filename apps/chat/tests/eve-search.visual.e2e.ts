@@ -30,7 +30,12 @@ test("search states", async ({ page }, testInfo) => {
   await page.goto("/search-fixture");
   await page.addScriptTag({ content: script, type: "module" });
   await expect(page.getByRole("heading", { name: "Pagination" })).toBeVisible();
-  await expect(page.locator("mark")).toHaveCount(2);
+  await expect(page.locator("mark")).toHaveText([
+    "saffron",
+    "Worl",
+    "Hello",
+    "saffron",
+  ]);
   await page.screenshot({
     animations: "disabled",
     fullPage: true,

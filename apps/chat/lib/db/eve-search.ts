@@ -75,12 +75,60 @@ type EveSearchResult = {
   excerpt: string;
   updatedAt: string;
   rank: number;
+  highlightQuery: string;
+  highlightWords: Record<string, string>;
 };
 
 // Modify only PostgreSQL's normalized final positive operand, never raw query syntax.
 // The leading boundary excludes !'negated' terms; closing groups remain intact.
 const finalSearchOperand = "(^|[ (|&])('[^']*(?:''[^']*)*')([)]*)$";
 const finalUnquotedWord = /[\p{L}\p{N}]$/u;
+
+// Read PostgreSQL's normalized operands so highlighting shares its tokenization,
+// quoting and prefix rules instead of interpreting the user's query again.
+const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
+const escapedQueryCharacter = /\\(?<character>.)/gu;
+const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
+
+const highlightSearchExcerpt = (
+  excerpt: string,
+  query: string,
+  words: Record<string, string>
+) => {
+  const terms: { prefix: boolean; text: string }[] = [];
+  const groups = [false];
+  let negateNext = false;
+  for (const token of query.matchAll(queryToken)) {
+    const negated = (groups.at(-1) ?? false) !== negateNext;
+    if (token[0] === "!") {
+      negateNext = !negateNext;
+      continue;
+    }
+    if (token[0] === "(") {
+      groups.push(negated);
+    } else if (token[0] === ")") {
+      groups.pop();
+    } else if (!negated && token.groups?.term) {
+      terms.push({
+        prefix: Boolean(token.groups.prefix),
+        text: token.groups.term
+          .replace(escapedQueryCharacter, "$1")
+          .replaceAll("''", "'"),
+      });
+    }
+    negateNext = false;
+  }
+  return excerpt.replace(markedWord, (marked, word: string) => {
+    const normalized = words[word] ?? word;
+    const lengths = terms
+      .filter(({ prefix, text }) =>
+        prefix ? normalized.startsWith(text) : normalized === text
+      )
+      .map(({ text }) => text.length);
+    const length = Math.max(0, ...lengths);
+    return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
+  });
+};
 
 /** One result per logical chat, with the branch containing its strongest match. */
 export const searchEveConversations = async (
@@ -125,8 +173,8 @@ export const searchEveConversations = async (
       select distinct on (id) *, max(rank) over (partition by id) as "chatRank"
       from matches
       order by id, (body <> '') desc, rank desc, "conversationId", body
-    )
-    select id, "conversationId", title,
+    ), headlines as (
+    select id, "conversationId", title, query.terms::text as "highlightQuery",
       to_char("updatedAt", 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "updatedAt",
       "chatRank"::double precision as rank,
       case when body = '' then '' else ts_headline('simple', body, query.terms,
@@ -143,8 +191,25 @@ export const searchEveConversations = async (
     }
     order by "chatRank" desc, best."updatedAt" desc, id
     limit 21
+    )
+    -- Use the same dictionary as the search vector, including its locale rules.
+    select headlines.*, (
+      select coalesce(jsonb_object_agg(word[1], (ts_lexize('simple', word[1]))[1]), '{}'::jsonb)
+      from regexp_matches(excerpt, '⟦([^⟧]*)⟧', 'g') as word
+    ) as "highlightWords"
+    from headlines
+    order by rank desc, "updatedAt" desc, id
   `);
-  const page = items.slice(0, 20);
+  const page = items
+    .slice(0, 20)
+    .map(({ highlightQuery, highlightWords, ...item }) => ({
+      ...item,
+      excerpt: highlightSearchExcerpt(
+        item.excerpt,
+        highlightQuery,
+        highlightWords
+      ),
+    }));
   const last = page.at(-1);
   return {
     items: page,
