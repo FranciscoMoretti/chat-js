@@ -193,7 +193,7 @@ export const advanceEveUsageCursor = async (
 /** Serialize managed fallback sweeps across deployments, without locking credit debits. */
 export const withManagedUsageReconciliation = async (
   ownerId: string,
-  reconcile: (sweepDue: boolean) => Promise<void>
+  reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
 ) => {
   // Recovery queries use the app pool. Holding its only connection here would
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
@@ -205,24 +205,27 @@ export const withManagedUsageReconciliation = async (
   });
   try {
     await drizzle(connection).transaction(async (tx) => {
-      const [lock] = await tx.execute<{ locked: boolean }>(sql`
-      select pg_try_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0)) as locked
-    `);
-      if (!lock?.locked) {
-        throw new Error(
-          "Usage reconciliation is already running. Retry shortly."
-        );
-      }
+      await tx.execute(sql`select set_config('lock_timeout', '30s', true)`);
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`eve-usage:${ownerId}`}, 0))`
+      );
       const [owner] = await tx
         .select({
-          sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < now() - interval '1 minute'`,
+          sweepDue: sql<boolean>`${user.eveUsageReconciledAt} is null or ${user.eveUsageReconciledAt} < clock_timestamp() - interval '1 minute'`,
         })
         .from(user)
         .where(eq(user.id, ownerId));
       if (!owner) {
         throw new Error("Usage reconciliation requires a registered owner.");
       }
-      await reconcile(owner.sweepDue);
+      const unpricedSessions = await tx
+        .selectDistinct({ sessionId: eveUsage.sessionId })
+        .from(eveUsage)
+        .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)));
+      await reconcile(
+        owner.sweepDue,
+        new Set(unpricedSessions.map((row) => row.sessionId))
+      );
       // A recorded but unpriced hook must block admission even during the cooldown.
       const [unpriced] = await tx
         .select({ id: eveUsage.eventId })

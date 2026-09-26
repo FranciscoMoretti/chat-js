@@ -17,9 +17,15 @@ import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
-export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
+export const reconcileEveUsage = async (
+  ownerId: string,
+  sessionId: string,
+  replayUnpriced = false
+) => {
   assertEveConfigured();
-  const startIndex = await getEveUsageCursor(ownerId, sessionId);
+  const startIndex = replayUnpriced
+    ? 0
+    : await getEveUsageCursor(ownerId, sessionId);
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   let streamIndex = startIndex;
@@ -61,7 +67,10 @@ export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
   }
 };
 
-const reconcileAllOwnerUsage = async (ownerId: string) => {
+const reconcileAllOwnerUsage = async (
+  ownerId: string,
+  unpricedSessions = new Set<string>()
+) => {
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
     throw new Error(
@@ -83,7 +92,9 @@ const reconcileAllOwnerUsage = async (ownerId: string) => {
   const pending = bindings
     .filter(
       (row) =>
-        !row.sessionId || positions.get(row.sessionId) !== row.usageStreamIndex
+        !row.sessionId ||
+        unpricedSessions.has(row.sessionId) ||
+        positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();
   let failure:
@@ -102,7 +113,11 @@ const reconcileAllOwnerUsage = async (ownerId: string) => {
       try {
         if (next.value.sessionId) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
-          await reconcileEveUsage(ownerId, next.value.sessionId);
+          await reconcileEveUsage(
+            ownerId,
+            next.value.sessionId,
+            unpricedSessions.has(next.value.sessionId)
+          );
         }
       } catch (error) {
         failure ??= { cause: error };
@@ -127,12 +142,17 @@ export const reconcileEveOwnerUsage = async (
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
   // settled history must not be streamed on every message or new conversation.
-  await withManagedUsageReconciliation(ownerId, async (sweepDue) => {
-    if (sweepDue) {
-      await reconcileAllOwnerUsage(ownerId);
-    } else if (sessionId) {
-      // The conversation receiving new work is never covered by the cooldown.
-      await reconcileEveUsage(ownerId, sessionId);
+  await withManagedUsageReconciliation(
+    ownerId,
+    async (sweepDue, unpricedSessions) => {
+      if (sweepDue || unpricedSessions.size > 0) {
+        // Older cursors can have passed failed attempts before their explicit
+        // zero-charge classification; replay that evidence rather than strand it.
+        await reconcileAllOwnerUsage(ownerId, unpricedSessions);
+      } else if (sessionId) {
+        // The conversation receiving new work is never covered by the cooldown.
+        await reconcileEveUsage(ownerId, sessionId);
+      }
     }
-  });
+  );
 };

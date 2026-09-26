@@ -200,12 +200,16 @@ it("resumes managed reads at the persisted billing cursor without following live
 
 it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
   mocks.env.VERCEL = "1";
-  mocks.managed.mockImplementationOnce((_owner, reconcile) => reconcile(false));
+  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    reconcile(false, new Set())
+  );
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read.mock.calls).toEqual([["target"]]);
   expect(mocks.bindings).not.toHaveBeenCalled();
   mocks.read.mockClear();
-  mocks.managed.mockImplementationOnce((_owner, reconcile) => reconcile(true));
+  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    reconcile(true, new Set())
+  );
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read).toHaveBeenCalledTimes(8);
 });
@@ -215,5 +219,20 @@ it("does not bypass managed reconciliation failures", async () => {
   mocks.managed.mockRejectedValue(new Error("Unpriced usage"));
   await expect(reconcileEveOwnerUsage("owner", "target")).rejects.toThrow(
     "Unpriced usage"
+  );
+});
+
+it("replays historical unpriced evidence even when its stream cursor already advanced", async () => {
+  mocks.env.VERCEL = "1";
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
+  ]);
+  mocks.cursor.mockResolvedValue(20);
+  mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    reconcile(false, new Set(["failed-attempt"]))
+  );
+  await reconcileEveOwnerUsage("owner", "failed-attempt");
+  expect(mocks.streamOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ startIndex: 0 })
   );
 });
