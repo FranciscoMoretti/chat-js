@@ -115,8 +115,20 @@ describe("EVE environment defaults", () => {
   });
 
   it.each([
+    "postgresql://postgres:secret@db.project.supabase.co:5432/postgres",
+    "postgresql://postgres:secret@db.project.supabase.co/postgres",
+    "postgres://aws-0-region.pooler.supabase.com:5432/chat",
+    "postgres://db.example.com:6543/chat",
+  ])("accepts direct or session connections: %s", (DATABASE_URL) => {
+    expect(
+      schema.safeParse(resolveEveEnvironment({ ...base, DATABASE_URL })).success
+    ).toBe(true);
+  });
+
+  it.each([
     "postgres://ep-test-pooler.region.aws.neon.tech/chat",
     "postgres://aws-0-region.pooler.supabase.com:6543/chat",
+    "postgresql://postgres:secret@db.project.supabase.co:6543/postgres",
     "postgres://db/chat?pgbouncer=true",
     "postgres://db/chat?pool_mode=transaction",
   ])("rejects a known transaction pooler: %s", (DATABASE_URL) => {

@@ -1,12 +1,22 @@
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 
-export const resolveEveSetup = (world: string, databaseUrl?: string) => {
+export const resolveEveSetup = (
+  world: string,
+  databaseUrl?: string
+):
+  | { local: false; managed: true }
+  | { local: boolean; managed: false; databaseUrl: string } => {
   if (world === "vercel") {
     return { local: false, managed: true };
   }
   if (world !== "@workflow/world-postgres") {
     throw new Error(
       `ChatJS setup does not support world "${world}". Add and verify its setup and lifecycle support before using it.`
+    );
+  }
+  if (!databaseUrl) {
+    throw new Error(
+      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL URL, or provide DATABASE_MIGRATION_URL or DATABASE_URL (checked in that order as fallbacks)."
     );
   }
   const validated = getEveRuntimeEnvOptions({}).WORKFLOW_POSTGRES_URL.safeParse(
@@ -30,6 +40,7 @@ export const resolveEveSetup = (world: string, databaseUrl?: string) => {
     );
   }
   return {
+    databaseUrl,
     local: ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname),
     managed: false,
   };
