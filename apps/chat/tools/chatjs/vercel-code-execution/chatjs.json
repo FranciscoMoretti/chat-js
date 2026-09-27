@@ -4,6 +4,7 @@
   "id": "vercel-code-execution",
   "toolExport": "codeExecution",
   "rendererExport": "CodeExecution",
+  "runtimeAuth": "vercel-oidc",
   "slot": "codeExecution",
   "envRequirements": [
     {

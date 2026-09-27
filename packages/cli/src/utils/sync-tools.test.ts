@@ -312,3 +312,21 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
     server
   );
 });
+
+test("sync preserves request-context auth and environment credential fallbacks", async () => {
+  const root = await project();
+  await installExecution(root, "vercel-runner");
+  const descriptor = join(root, "tools/chatjs/vercel-runner/chatjs.json");
+  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  definition.runtimeAuth = "vercel-oidc";
+  await writeFile(descriptor, JSON.stringify(definition));
+  await syncTools(root);
+  const { codeExecutionEnvRequirement } = await import(
+    join(root, "tools/chatjs/code-execution-config.ts")
+  );
+  expect(codeExecutionEnvRequirement.runtimeAuth).toBe("vercel-oidc");
+  expect(codeExecutionEnvRequirement.options).toEqual([
+    ["RUNNER_TOKEN", "RUNNER_REGION"],
+    ["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
+  ]);
+});

@@ -16,7 +16,8 @@ test("sandbox code updates while streaming without switching tabs", async () => 
   const root = createRoot(container);
   const render = async (
     code: string,
-    state: "input-streaming" | "output-available"
+    state: "input-streaming" | "output-available",
+    language = "python"
   ) => {
     await act(() =>
       root.render(
@@ -26,7 +27,7 @@ test("sandbox code updates while streaming without switching tabs", async () => 
           tool={{
             input: {
               code,
-              language: "python",
+              language,
               title: "Calculate 53 multiplied by 41244",
             },
             output: { chart: "", message: "2185932" },
@@ -42,7 +43,7 @@ test("sandbox code updates while streaming without switching tabs", async () => 
   await expect
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 *");
-  await render("print(53 * 41244)", "input-streaming");
+  await render("print(53 * 41244)", "input-streaming", "pyth");
   await expect
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 * 41244)");

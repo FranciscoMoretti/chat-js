@@ -16,6 +16,7 @@ export const toolDefinitionSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
   rendererExport: identifier.optional(),
+  runtimeAuth: z.literal("vercel-oidc").optional(),
   slot: z
     .enum([
       "webSearch",

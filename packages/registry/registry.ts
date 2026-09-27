@@ -152,6 +152,7 @@ export const codeExecutionItem = {
       id: "vercel-code-execution",
       kind: "tool",
       rendererExport: "CodeExecution",
+      runtimeAuth: "vercel-oidc",
       slot: "codeExecution",
       toolExport: "codeExecution",
     }),

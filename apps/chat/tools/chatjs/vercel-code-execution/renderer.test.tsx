@@ -38,3 +38,21 @@ test("does not render malformed partial code", () => {
   expect(html).not.toContain("invalid");
   expect(html).toContain("<pre></pre>");
 });
+
+test.each(["pyth", "java"])(
+  "keeps code visible while language is %s",
+  (language) => {
+    const html = renderToStaticMarkup(
+      <CodeExecution
+        isReadonly={false}
+        messageId="stream"
+        tool={{
+          input: { code: "print(1)", language },
+          state: "input-streaming",
+          toolCallId: "stream",
+        }}
+      />
+    );
+    expect(html).toContain("print(1)");
+  }
+);

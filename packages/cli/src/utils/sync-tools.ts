@@ -248,7 +248,7 @@ const writeSelectionConfigs = async (
   await writeFile(
     join(dir, `${spec.file}-config.ts`),
     generatedSource(
-      `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
+      `export const ${spec.requirement} = ${JSON.stringify({ description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions, ...(selected?.runtimeAuth ? { runtimeAuth: selected.runtimeAuth } : {}) })};\n`
     )
   );
   await writeSelectionConfigs(dir, definitions, entries, index + 1);

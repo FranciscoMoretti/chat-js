@@ -43,6 +43,7 @@ const toolEnvironmentSchema = z.object({
       })
     )
     .default([]),
+  runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 
 const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
@@ -169,7 +170,10 @@ const validateInstalledTools = async (
       const toolSource = await fs.readFile(toolPath, "utf-8");
       const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
       return mod.envRequirements.flatMap((toolEnvVar) => {
-        const missing = getMissingRequirement(toolEnvVar, env);
+        const missing = getMissingRequirement(
+          { ...toolEnvVar, runtimeAuth: mod.runtimeAuth },
+          env
+        );
         return missing
           ? [{ feature: `tools.${entry.name}`, missing: [missing] }]
           : [];

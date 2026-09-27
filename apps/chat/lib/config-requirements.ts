@@ -11,6 +11,7 @@ type EnvVarName = keyof NodeJS.ProcessEnv;
 export interface EnvRequirement {
   description?: string;
   options: EnvVarName[][];
+  runtimeAuth?: string;
 }
 
 export const formatRequirementDescription = (
@@ -56,6 +57,7 @@ export const isRequirementSatisfied = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
 ): boolean =>
+  (requirement.runtimeAuth === "vercel-oidc" && env.VERCEL === "1") ||
   requirement.options.some((option) => option.every((name) => !!env[name]));
 
 export const getMissingRequirement = (
