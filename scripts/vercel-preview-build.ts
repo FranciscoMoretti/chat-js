@@ -48,10 +48,12 @@ const build = async () => {
 
 try {
   await build();
-} catch {
+} catch (error) {
   // Connection errors may contain credentials. Keep provider details out of logs.
   console.error(
-    "Maintainer build failed. Check preview database configuration and the build output."
+    error instanceof Error && error.message.startsWith("Preview database")
+      ? error.message
+      : "Maintainer build failed. Check preview database configuration and the build output."
   );
   process.exitCode = 1;
 }
